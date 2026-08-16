@@ -115,6 +115,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "random-tables-and-decks",
       "voice-chat",
       "guest-character-chat",
+      "adventure",
       "public-world-directory",
     ],
   },

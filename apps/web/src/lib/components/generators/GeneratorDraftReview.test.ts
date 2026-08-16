@@ -150,4 +150,40 @@ describe("GeneratorDraftReview", () => {
         .getAttribute("disabled"),
     ).not.toBeNull();
   });
+
+  it("shows in-vault context provenance when present", () => {
+    render(GeneratorDraftReview, {
+      props: {
+        draft: dungeonDraft({
+          contextProvenance: [
+            { id: "e1", title: "Silver Keep" },
+            { id: "e2", title: "Lord Varis" },
+          ],
+        }),
+        categories,
+        saving: false,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+      },
+    });
+
+    const badge = screen.getByTestId("in-vault-provenance");
+    expect(badge.textContent).toContain("Used context:");
+    expect(badge.textContent).toContain("Silver Keep");
+    expect(badge.textContent).toContain("Lord Varis");
+  });
+
+  it("omits in-vault context provenance when absent", () => {
+    render(GeneratorDraftReview, {
+      props: {
+        draft: dungeonDraft({ contextProvenance: undefined }),
+        categories,
+        saving: false,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+      },
+    });
+
+    expect(screen.queryByTestId("in-vault-provenance")).toBeNull();
+  });
 });

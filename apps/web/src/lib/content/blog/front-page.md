@@ -13,6 +13,8 @@ keywords:
     "Local-First World Building",
   ]
 publishedAt: 2026-04-04T12:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/front-page/front-page-hero.png"
+imageAlt: "The Codex Cryptica World Front Page showing briefing, cover art, and recent activity"
 ---
 
 ![The Front Page](https://assets.codexcryptica.com/images/blog/front-page/front-page-hero.png)

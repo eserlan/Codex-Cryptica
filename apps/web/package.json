@@ -24,6 +24,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "dependencies": {
+    "@codex/adventure-engine": "workspace:*",
     "@codex/ai-engine": "workspace:*",
     "@codex/audio-engine": "workspace:*",
     "@codex/canvas-engine": "workspace:*",

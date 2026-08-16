@@ -6,6 +6,7 @@
     RA_SERIES,
     RA_SERIES_SLUGS,
   } from "$lib/content/responsible-ai-series";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   let { data } = $props();
 
@@ -29,14 +30,19 @@
   );
 </script>
 
-<svelte:head>
-  <title>The Archive | Codex Cryptica Blog</title>
-  <meta
-    name="description"
-    content="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
-  />
-  <link rel="canonical" href={data.canonicalUrl} />
-</svelte:head>
+<SeoHead
+  title="The Archive | Codex Cryptica Blog"
+  description="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
+  canonicalUrl={data.canonicalUrl}
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="A Codex Cryptica campaign vault showing an entity graph beside an open character record"
+  keywords={[
+    "rpg blog",
+    "worldbuilding blog",
+    "local-first rpg",
+    "ttrpg campaign manager",
+  ]}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"

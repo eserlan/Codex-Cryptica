@@ -11,6 +11,8 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import AdventureSurface from "./adventure/AdventureSurface.svelte";
+  let adventureMode = $state(false);
 
   const _isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
@@ -92,7 +94,7 @@
       </div>
       <div class="flex items-center gap-1">
         <!-- Clear Chat -->
-        {#if oracle.messages.length > 0}
+        {#if !adventureMode && oracle.messages.length > 0}
           <button
             type="button"
             class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
@@ -143,12 +145,27 @@
       </div>
     </div>
 
-    <OracleChat
-      onOpenSettings={() => {
-        modalUIStore.openSettings();
-        oracle.toggle();
-      }}
-    />
+    <div class="border-b border-theme-border px-3 py-2">
+      <button
+        type="button"
+        class="rounded-md px-3 py-2 text-xs text-theme-primary {adventureMode
+          ? 'bg-theme-primary/15'
+          : ''}"
+        onclick={() => (adventureMode = !adventureMode)}
+        aria-pressed={adventureMode}>Adventure</button
+      >
+    </div>
+
+    {#if adventureMode}
+      <AdventureSurface />
+    {:else}
+      <OracleChat
+        onOpenSettings={() => {
+          modalUIStore.openSettings();
+          oracle.toggle();
+        }}
+      />
+    {/if}
 
     {#if sessionModeStore.isDemoMode}
       <div

@@ -40,8 +40,9 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.31.62",
+      "version": "0.31.64",
       "dependencies": {
+        "@codex/adventure-engine": "workspace:*",
         "@codex/ai-engine": "workspace:*",
         "@codex/audio-engine": "workspace:*",
         "@codex/canvas-engine": "workspace:*",
@@ -139,10 +140,23 @@
         "vitest": "^4.1.7",
       },
     },
+    "packages/adventure-engine": {
+      "name": "@codex/adventure-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
     "packages/ai-engine": {
       "name": "@codex/ai-engine",
       "version": "0.0.0",
       "dependencies": {
+        "@codex/adventure-engine": "workspace:*",
         "@codex/oracle-engine": "workspace:*",
         "@google/generative-ai": "^0.24.1",
         "compromise": "^14.15.0",
@@ -583,6 +597,8 @@
     "@cloudflare/workerd-linux-arm64": ["@cloudflare/workerd-linux-arm64@1.20260611.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-GEp4XbuIKjlF8pakqXcUDJfKiJosD/Q7S83J0d+r+z9XIlYGfF3ntm08e2aiF5TFTwp3fnG4yMoPUAKNhNJpvQ=="],
 
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260611.1", "", { "os": "win32", "cpu": "x64" }, "sha512-S6JkS0kEbcCKs19RGqEPhjCRbP8GBkQwqYLp2fhBJtD/KTlwqLzOJ9E6PQ7gQKgWHtxy1NBG3oXarlNFRNU/dw=="],
+
+    "@codex/adventure-engine": ["@codex/adventure-engine@workspace:packages/adventure-engine"],
 
     "@codex/ai-engine": ["@codex/ai-engine@workspace:packages/ai-engine"],
 

@@ -1,6 +1,9 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
-import { aiClientManager } from "@codex/ai-engine";
+import {
+  aiClientManager,
+  AdventureTurnGenerationService,
+} from "@codex/ai-engine";
 import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
 import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
@@ -18,9 +21,13 @@ class OracleWorker {
   private textGeneration: DefaultTextGenerationService;
   private eventBus: BroadcastChannel;
   private sessionToken: RelayedSessionToken;
+  private adventureGeneration: AdventureTurnGenerationService;
 
   constructor() {
     this.textGeneration = new DefaultTextGenerationService(aiClientManager);
+    this.adventureGeneration = new AdventureTurnGenerationService(
+      aiClientManager,
+    );
     this.eventBus = new BroadcastChannel("codex-oracle-events");
 
     // This worker has its own isolated aiClientManager instance (Workers
@@ -265,6 +272,13 @@ class OracleWorker {
     } finally {
       this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
     }
+  }
+
+  async generateAdventureTurn(
+    request: any,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<any> {
+    return this.adventureGeneration.generate(request, options);
   }
 
   async propose(

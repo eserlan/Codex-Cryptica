@@ -55,11 +55,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/157-random-tables-decks/plan.md).
+shell commands, and other important information, read the [current plan](./specs/160-solo-adventure-mode/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `@codex/oracle-engine`, `@codex/vault-engine`, `dice-engine`, `schema`/Zod, `idb`/Dexie, and `@codex/events`; no new third-party dependency (160-solo-adventure-mode)
+- One versioned JSON document per session at `.codex/adventures/<session-id>.json`; transient cross-tab lease in existing IndexedDB `appSettings`; vault records remain canonical Markdown/metadata (160-solo-adventure-mode)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
 - N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
