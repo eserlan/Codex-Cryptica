@@ -55,26 +55,30 @@
   const speakerSyncedSessions = $derived(
     transcripts.filter((t) => t.characterId !== entity.id),
   );
-  const speakerSessions = $derived([
-    ...speakerSyncedSessions,
-    ...speakerLocalSessions,
-  ]);
+  const speakerSessions = $derived(
+    [...speakerSyncedSessions, ...speakerLocalSessions].sort(
+      (a, b) => b.lastUpdated - a.lastUpdated,
+    ),
+  );
 
   // Load Host transcripts
   const loadHostTranscripts = async () => {
     if (vault.isGuest || entity.type !== "character") return;
+    const requestedId = entity.id;
     isLoadingTranscripts = true;
     try {
       const [synced, asSpeaker] = await Promise.all([
         vault.loadTranscriptsForCharacter(entity.id),
         guestChatStore.listSessionsAsSpeaker(entity.id),
       ]);
+      // Guard against a stale response landing after the entity changed.
+      if (entity.id !== requestedId) return;
       transcripts = synced;
       speakerLocalSessions = asSpeaker;
     } catch (err) {
       console.error("[DetailChatsTab] Failed to load transcripts:", err);
     } finally {
-      isLoadingTranscripts = false;
+      if (entity.id === requestedId) isLoadingTranscripts = false;
     }
   };
 
