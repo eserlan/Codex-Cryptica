@@ -212,6 +212,7 @@ export class AdventureManager {
       this.session = saved.session;
       this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
     } catch (cause) {
+      if (signal.aborted) return;
       this.errorMessage =
         cause instanceof Error ? cause.message : String(cause);
       this.phase = this.errorMessage === "offline" ? "offline" : "error";
@@ -298,6 +299,7 @@ export class AdventureManager {
       this.draft = "";
       this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
     } catch (cause) {
+      if (signal.aborted) return;
       this.errorMessage =
         cause instanceof Error ? cause.message : String(cause);
       const cancelled =

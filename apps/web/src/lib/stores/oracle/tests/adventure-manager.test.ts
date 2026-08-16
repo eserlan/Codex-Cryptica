@@ -129,4 +129,60 @@ describe("AdventureManager", () => {
     expect(manager.phase).toBe("offline");
     expect(manager.draft).toBe("Wait for dawn");
   });
+
+  it("ignores a late cancelled response when a newer action is active", async () => {
+    let actionCalls = 0;
+    let resolveFirst!: (proposal: typeof completeProposal) => void;
+    let resolveStarted!: () => void;
+    const generationStarted = new Promise<void>((resolve) => {
+      resolveStarted = resolve;
+    });
+    const firstResponse = new Promise<typeof completeProposal>((resolve) => {
+      resolveFirst = resolve;
+    });
+    let firstSignal: AbortSignal | undefined;
+    const deps = dependencies();
+    deps.generation = {
+      async generate(request: any, options?: { signal?: AbortSignal }) {
+        if (request.phase === "opening") return completeProposal;
+        actionCalls += 1;
+        if (actionCalls === 1) {
+          firstSignal = options?.signal;
+          resolveStarted();
+          return firstResponse;
+        }
+        return {
+          ...completeProposal,
+          narration: "The second action wins.",
+        };
+      },
+    };
+    const manager = new AdventureManager(deps as any);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: { onLine: true },
+    });
+    const first = manager.submitAction("first action");
+    await generationStarted;
+    manager.cancel();
+    const second = manager.submitAction("second action");
+    await second;
+    resolveFirst(completeProposal);
+    await first;
+
+    expect(firstSignal?.aborted).toBe(true);
+    expect(manager.session?.turns.at(-1)?.playerAction).toBe("second action");
+    expect(manager.errorMessage).toBeNull();
+  });
 });
