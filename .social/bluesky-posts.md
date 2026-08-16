@@ -6,6 +6,23 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-08-16 — Vaults (ad hoc)
+
+- **Text:** I run a few campaigns, and I never want an NPC from one bleeding into another.
+
+  Codex Cryptica keeps each in its own vault. Click the vault name, switch, and you're in a clean, separate world.
+
+  More soon on moving things between vaults on purpose.
+
+  https://codexcryptica.com
+
+  #TTRPG #Worldbuilding
+
+- **Image:** cropped screenshot of the live Vault Selector modal, captured via Playwright against the local dev server (three vaults created live for the shot: Voidreach Frontier, Aetherium Ascendant, Default Vault)
+- **Alt:** The Vault Selector in Codex Cryptica listing three separate campaign vaults, Voidreach Frontier, Aetherium Ascendant, and Default Vault, with options to switch, create, or import a vault
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt6uy6fkjc22
+- **Note:** Posted ad hoc at the user's request, as a lead-in before a follow-up post about the Shelf (see 2026-08-14 entry below) which explains how entities move between vaults.
+
 ### 2026-08-15 — Faction Generator (queue #4)
 
 - **Text:** I needed factions that gave players something to push against, not just a name and a crest.
