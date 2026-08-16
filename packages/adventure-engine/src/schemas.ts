@@ -14,6 +14,7 @@ export const MAX_GENERATION_INPUT_CHARS = 96_000;
 export const MAX_TEXT_CHARS = 600;
 
 const text = z.string().trim().min(1).max(MAX_TEXT_CHARS);
+const narration = z.string().trim().min(1).max(2_000);
 const id = z.string().trim().min(1).max(160);
 const timestamp = z.string().datetime({ offset: true });
 
@@ -100,8 +101,9 @@ const bandSchema = z.object({
 const pendingRollSchema = z.object({
   id,
   inputId: id,
-  playerAction: text,
-  setupNarration: text.optional(),
+  // Opening rolls have no player action yet; action-turn rolls still carry it.
+  playerAction: z.string().max(MAX_TEXT_CHARS),
+  setupNarration: narration.optional(),
   uncertainty: text,
   stakes: text,
   dice: z
@@ -111,6 +113,7 @@ const pendingRollSchema = z.object({
   suppliedOutcome: outcomeSchema.optional(),
   createdAt: timestamp,
   outcomeRecordedAt: timestamp.optional(),
+  suggestedActions: z.array(text).length(3).optional(),
 });
 
 const playerCharacterSchema = z.discriminatedUnion("kind", [
@@ -141,7 +144,7 @@ export const hiddenPatchSchema = z.object({
 
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
-  narration: text,
+  narration,
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
@@ -149,11 +152,12 @@ const completeProposalSchema = z.object({
     provisionalFactSchema.omit({ introducedOnTurnId: true }),
   ),
   sourceRecordIds: z.array(id),
+  suggestedActions: z.array(text).length(3).optional(),
 });
 
 const rollProposalSchema = z.object({
   kind: z.literal("roll-required"),
-  setupNarration: text.optional(),
+  setupNarration: narration.optional(),
   uncertainty: text,
   stakes: text,
   dice: z
@@ -163,6 +167,7 @@ const rollProposalSchema = z.object({
     })
     .optional(),
   sourceRecordIds: z.array(id),
+  suggestedActions: z.array(text).length(3).optional(),
 });
 
 export const turnProposalSchema = z.discriminatedUnion("kind", [
@@ -191,15 +196,17 @@ export const adventureSessionSchema = z.object({
       id,
       sequence: z.number().int().nonnegative(),
       inputId: id,
-      playerAction: text,
+      // The opening turn has no player action yet.
+      playerAction: z.string().max(MAX_TEXT_CHARS),
       rollOutcome: outcomeSchema.optional(),
-      narration: text,
+      narration,
       visiblePatch: visiblePatchSchema,
       hiddenPatch: hiddenPatchSchema,
       revealedSecretIds: z.array(id),
       sourceRecordIds: z.array(id),
       provisionalFactIds: z.array(id),
       committedAt: timestamp,
+      suggestedActions: z.array(text).length(3).optional(),
     }),
   ),
   pendingRoll: pendingRollSchema.nullable(),

@@ -45,12 +45,8 @@ describe("extractJsonObject", () => {
 });
 
 describe("ProxyAIGeneratorGateway", () => {
-  it("routes generator interactions to a different model than chat and revision", () => {
-    // The whole point of the split (2026-08-11): generators sit on Gemini for
-    // latency, while Oracle chat and entity revision stay on Luna. If these
-    // ever converge again, the split has been undone by accident.
-    expect(GENERATOR_INTERACTION_MODEL_KEY).not.toBe(INTERACTION_MODEL_KEY);
-    expect(GENERATOR_INTERACTION_MODEL_KEY).toBe("gemini-flash-lite");
+  it("routes generator interactions through the Luna conversation model", () => {
+    expect(GENERATOR_INTERACTION_MODEL_KEY).toBe(INTERACTION_MODEL_KEY);
     expect(INTERACTION_MODEL_KEY).toBe("luna-fast");
   });
 

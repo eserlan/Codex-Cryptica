@@ -5,6 +5,14 @@
   let recorded = $derived(
     Boolean(manager.session?.pendingRoll?.suppliedOutcome),
   );
+  let bandSummary = $derived(
+    manager.session?.pendingRoll?.dice?.bands
+      .map(
+        (band) =>
+          `${band.minimum ?? "?"}–${band.maximum ?? "?"}: ${band.label}`,
+      )
+      .join(" · ") ?? "",
+  );
   async function report() {
     if (outcome.trim())
       await manager.recordRollOutcome({ kind: "narrative", value: outcome });
@@ -20,6 +28,11 @@
     <h3 id="roll-heading" class="font-semibold text-theme-primary">
       A roll matters
     </h3>
+    {#if manager.session.pendingRoll.setupNarration}
+      <p class="whitespace-pre-wrap text-sm text-theme-primary">
+        {manager.session.pendingRoll.setupNarration}
+      </p>
+    {/if}
     <p class="text-sm text-theme-primary">
       {manager.session.pendingRoll.uncertainty}
     </p>
@@ -27,22 +40,33 @@
       <strong>At stake:</strong>
       {manager.session.pendingRoll.stakes}
     </p>
-    {#if manager.session.pendingRoll.dice}<p
-        class="text-sm text-theme-secondary"
-      >
-        Roll {manager.session.pendingRoll.dice.expression}; {manager.session.pendingRoll.dice.bands
-          .map((band) => band.label)
-          .join(" · ")}
-      </p>{/if}
-    {#if recorded}<p class="text-sm text-theme-secondary">
-        Result recorded. Waiting for Oracle to resolve it; you cannot reroll.
+    {#if manager.errorMessage}
+      <p class="text-sm text-theme-danger" role="alert">
+        {manager.errorMessage}
       </p>
-      <button
-        class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary"
-        type="button"
-        onclick={() => void manager.resolveRoll()}
-        >Continue with recorded result</button
-      >
+    {/if}
+    {#if manager.session.pendingRoll.dice}
+      <p class="flex items-center gap-1 text-sm text-theme-secondary">
+        Roll {manager.session.pendingRoll.dice.expression}
+        <span
+          class="icon-[lucide--info] h-4 w-4 text-theme-secondary"
+          aria-label="Roll outcome bands: {bandSummary}"
+          title={bandSummary}
+        ></span>
+      </p>
+    {/if}
+    {#if recorded}
+      {#if manager.errorMessage}
+        <button
+          class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary"
+          type="button"
+          onclick={() => void manager.resolveRoll()}>Retry resolution</button
+        >
+      {:else}
+        <p class="text-sm text-theme-secondary">
+          Result recorded. Oracle is resolving it.
+        </p>
+      {/if}
     {:else}<label class="block text-sm text-theme-primary" for="roll-outcome"
         >Your outcome</label
       ><input

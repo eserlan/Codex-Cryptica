@@ -61,8 +61,8 @@ describe("getModel", () => {
 describe("getOperationDefaults", () => {
   it("returns the matching operation/context pair", () => {
     const defaults = getOperationDefaults("freeform-generation", "public");
-    expect(defaults?.defaultModelKey).toBe("gemini-flash-lite");
-    expect(defaults?.fallbackModelKey).toBe("luna-fast");
+    expect(defaults?.defaultModelKey).toBe("luna-fast");
+    expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
   });
 
   it("returns luna-fast as utility's default, with gemini-flash-lite fallback", () => {
@@ -71,22 +71,18 @@ describe("getOperationDefaults", () => {
     expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
   });
 
-  it("serves the generator operations from Gemini, with Luna as fallback (2026-08-11)", () => {
-    // Swapped back from Luna on latency: the public generator pages are the
-    // app's biggest prompts and a logged-out visitor waits on the result.
+  it("serves the generator operations from Luna, with Gemini as fallback", () => {
     for (const operation of [
       "structured-generation",
       "freeform-generation",
     ] as const) {
       const defaults = getOperationDefaults(operation, "public");
-      expect(defaults?.defaultModelKey, operation).toBe("gemini-flash-lite");
-      expect(defaults?.fallbackModelKey, operation).toBe("luna-fast");
+      expect(defaults?.defaultModelKey, operation).toBe("luna-fast");
+      expect(defaults?.fallbackModelKey, operation).toBe("gemini-flash-lite");
     }
   });
 
-  it("leaves the non-generator operations on Luna", () => {
-    // classification and utility are not user-facing generator surfaces, so
-    // the latency argument does not apply to them.
+  it("keeps classification and utility on Luna", () => {
     for (const operation of ["classification", "utility"] as const) {
       expect(getOperationDefaults(operation, "public")?.defaultModelKey).toBe(
         "luna-fast",
