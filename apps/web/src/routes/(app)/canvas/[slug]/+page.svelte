@@ -25,6 +25,14 @@
   });
 </script>
 
+<svelte:head>
+  <title>Spatial Canvas | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="Visual spatial canvas for designing dungeons, relationship webs, and campaign nodes."
+  />
+</svelte:head>
+
 <SvelteFlowProvider>
   <CanvasWorkspace {engine} />
 </SvelteFlowProvider>

@@ -131,6 +131,35 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByRole("link", { name: /github/i })).toBeTruthy();
   });
 
+  it("renders complete Open Graph and Twitter Card tags in head", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(document.title).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const description = document.querySelector('meta[name="description"]');
+    expect(description?.getAttribute("content")).toContain(
+      "free, local-first RPG campaign manager",
+    );
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    expect(ogTitle?.getAttribute("content")).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    expect(ogImage?.getAttribute("content")).toBe(
+      "https://assets.codexcryptica.com/screenshots/living-lore-graph.png",
+    );
+
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+  });
+
   it("sizes the app route shell to its parent instead of recomputing viewport height", () => {
     render(RoutePage);
 
