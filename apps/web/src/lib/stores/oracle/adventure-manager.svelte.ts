@@ -114,10 +114,17 @@ export class AdventureManager {
     this.deps = {
       repository: deps.repository ?? adventureSessionRepository,
       generation: deps.generation ?? {
-        generate: (request: any, options?: any) =>
-          oracleBridge.isReady
-            ? (oracleBridge.generateAdventureTurn(request, options) as any)
-            : adventureTurnGenerationService.generate(request, options),
+        generate: (request: any, options?: any) => {
+          if (oracleBridge.isReady) {
+            // AbortSignal is not structured-cloneable and must not cross Comlink.
+            const { signal: _signal, ...workerOptions } = options ?? {};
+            return oracleBridge.generateAdventureTurn(
+              request,
+              workerOptions,
+            ) as any;
+          }
+          return adventureTurnGenerationService.generate(request, options);
+        },
       },
       context: deps.context ?? adventureContextService,
       authority: deps.authority ?? adventureControlAuthority,
@@ -256,6 +263,7 @@ export class AdventureManager {
     this.errorMessage = null;
     this.generationController?.abort();
     this.generationController = new AbortController();
+    const signal = this.generationController.signal;
     try {
       await this.verifyControl();
       const anchors = await this.deps.context.resolveAnchors(session);
@@ -265,8 +273,9 @@ export class AdventureManager {
       );
       const proposal = await this.deps.generation.generate(
         { session, phase: "action", playerAction: action, anchors, relevant },
-        { signal: this.generationController.signal },
+        { signal },
       );
+      if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
       const meta: CommitMetadata = {
         turnId: newId(),
         inputId: newId(),
@@ -289,6 +298,7 @@ export class AdventureManager {
       this.draft = "";
       this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
     } catch (cause) {
+      if (signal.aborted) return;
       this.errorMessage =
         cause instanceof Error ? cause.message : String(cause);
       const cancelled =
@@ -300,7 +310,8 @@ export class AdventureManager {
             ? "ready"
             : "error";
     } finally {
-      this.generationController = null;
+      if (this.generationController?.signal === signal)
+        this.generationController = null;
     }
   }
 
@@ -347,6 +358,7 @@ export class AdventureManager {
     const session = this.session;
     this.generationController?.abort();
     this.generationController = new AbortController();
+    const signal = this.generationController.signal;
     try {
       const anchors = await this.deps.context.resolveAnchors(session);
       const proposal = await this.deps.generation.generate(
@@ -357,8 +369,9 @@ export class AdventureManager {
           anchors,
           relevant: [],
         },
-        { signal: this.generationController.signal },
+        { signal },
       );
+      if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
       if (proposal.kind !== "complete")
         throw new Error("roll-resolution-requires-complete-turn");
       const result = resolveRecordedRoll(session, proposal, {
@@ -378,6 +391,7 @@ export class AdventureManager {
       this.session = saved.session;
       this.phase = "ready";
     } catch (cause) {
+      if (signal.aborted) return;
       this.errorMessage =
         cause instanceof Error ? cause.message : String(cause);
       const cancelled =
@@ -387,7 +401,8 @@ export class AdventureManager {
           ? "ready-to-resolve"
           : "error";
     } finally {
-      this.generationController = null;
+      if (this.generationController?.signal === signal)
+        this.generationController = null;
     }
   }
 

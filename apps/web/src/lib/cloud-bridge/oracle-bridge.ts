@@ -65,7 +65,7 @@ export class OracleBridge {
 
   public generateAdventureTurn(
     request: unknown,
-    options?: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+    options?: { apiKey?: string; modelName?: string },
   ): Promise<unknown> {
     if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
     return this.api.generateAdventureTurn(request, options);
