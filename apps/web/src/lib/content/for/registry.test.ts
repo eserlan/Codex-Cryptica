@@ -114,7 +114,6 @@ describe("Landing Page Registry", () => {
       expect(copy).toContain("pantheons");
       expect(copy).toContain("dynasties");
       expect(copy).toContain("provinces");
-      expect(copy).toContain("genealogies");
       expect(copy).toContain("schisms");
       expect(copy).toContain("artefacts");
       expect(copy).toContain("chronology");
@@ -122,11 +121,11 @@ describe("Landing Page Registry", () => {
       // Verify graph structure
       expect(fantasy.exampleGraph).toBeDefined();
       expect(fantasy.exampleGraph?.steps).toHaveLength(5);
-      expect(fantasy.exampleGraph?.steps[0].label).toBe("High Queen Vaeloria");
-      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Reigns from");
-      expect(fantasy.exampleGraph?.steps[2].relation).toBe("Opposed by");
-      expect(fantasy.exampleGraph?.steps[3].relation).toBe("Guards");
-      expect(fantasy.exampleGraph?.steps[4].relation).toBe("Advised by");
+      expect(fantasy.exampleGraph?.steps[0].label).toBe("Queen Maera II");
+      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Heir of");
+      expect(fantasy.exampleGraph?.steps[2].relation).toBe("Claims");
+      expect(fantasy.exampleGraph?.steps[3].relation).toBe("Broke treaty with");
+      expect(fantasy.exampleGraph?.steps[4].relation).toBe("Controls");
     });
   });
 

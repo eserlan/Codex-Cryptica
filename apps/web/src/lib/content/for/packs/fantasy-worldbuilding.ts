@@ -8,13 +8,13 @@ export const fantasyWorldbuilding: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Fantasy Worldbuilding",
     description:
-      "Connect kingdoms to dynasties, faiths to pantheons, factions to rivalries, and historical epochs to the lands they shaped in one local-first lore bible.",
+      "Connect realms to dynasties, faiths to schisms, factions to treaties, and history to the lands they shape in one local-first lore bible.",
   },
   hero: {
     eyebrow: "Setting Lore & World Bible",
     title: "Codex Cryptica for Fantasy Worldbuilding",
     tagline:
-      "Build deep, cohesive fantasy settings without losing track of your lore. Connect realms, dynasties, sacred pantheons, trade syndicates, and centuries of history in one living web.",
+      "Build a fantasy setting without losing track of how it fits together. Connect realms, dynasties, religions, factions and centuries of history in one place.",
     problemStatement:
       "When a setting spans multiple provinces, ancient bloodlines, rival faiths, and historical eras, flat notes and scattered documents break down. Codex Cryptica keeps your geography, factions, characters, and timelines interconnected so your world stays consistent.",
   },
@@ -22,7 +22,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     {
       title: "Pantheons, Faiths & Holy Orders",
       description:
-        "Map divine genealogies, religious schisms, sacred rites, monastic orders, and local superstitions across your cultures.",
+        "Track gods, faiths, schisms, holy orders and regional religious traditions across your cultures.",
       icon: "icon-[lucide--sun]",
     },
     {
@@ -32,52 +32,52 @@ export const fantasyWorldbuilding: LandingPageConfig = {
       icon: "icon-[lucide--crown]",
     },
     {
-      title: "Relics, Arcana & Ancient Mysteries",
+      title: "Magic, Artefacts & Ruins",
       description:
-        "Connect legendary artefacts, lost magical traditions, and forgotten ruins to the civilisations that forged them.",
+        "Connect artefacts, magical traditions and ruins to the cultures, people and events that created them.",
       icon: "icon-[lucide--sparkles]",
     },
     {
-      title: "Epochs, Eras & Living Timelines",
+      title: "History & Timelines",
       description:
-        "Anchor cataclysms, dynastic wars, migrations, and pivotal historical turning points to an interactive chronology.",
+        "Anchor cataclysms, dynastic wars, migrations, and major historical events to an interactive chronology.",
       icon: "icon-[lucide--hourglass]",
     },
   ],
   exampleGraph: {
     title: "Sample Setting Lore Web",
     description:
-      "See how monarchies, regional capitals, outlaw syndicates, ancient relics, and court scholars link together in one connected setting graph.",
+      "See how successions, treaties, trade confederations, and provincial capitals link together in one connected setting graph.",
     badgeLabel: "Setting Knowledge Graph",
     steps: [
       {
-        label: "High Queen Vaeloria",
-        sublabel: "Sovereign of Sunreach",
+        label: "Queen Maera II",
+        sublabel: "Ruler of Ardel",
         category: "character",
       },
       {
-        label: "Oakhaven Citadel",
-        sublabel: "Provincial Capital",
-        relation: "Reigns from",
-        category: "location",
-      },
-      {
-        label: "The Iron Syndicate",
-        sublabel: "Outlaw Merchant Guild",
-        relation: "Opposed by",
+        label: "House Veren",
+        sublabel: "Noble Dynasty",
+        relation: "Heir of",
         category: "faction",
       },
       {
-        label: "Sunstone Relic",
-        sublabel: "Pre-Cataclysm Artefact",
-        relation: "Guards",
+        label: "The Crown of Ardel",
+        sublabel: "Coronation Artefact",
+        relation: "Claims",
         category: "item",
       },
       {
-        label: "Archivist Eldrin",
-        sublabel: "Royal Lorekeeper",
-        relation: "Advised by",
-        category: "character",
+        label: "The Northroad League",
+        sublabel: "Trade Confederation",
+        relation: "Broke treaty with",
+        category: "faction",
+      },
+      {
+        label: "Old Temple District",
+        sublabel: "Provincial Capital",
+        relation: "Controls",
+        category: "location",
       },
     ],
   },
@@ -85,34 +85,34 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     {
       title: "Fantasy Name Generator",
       description:
-        "Generate culturally consistent names for noble houses, forgotten ruins, provincial settlements, and historical figures.",
+        "Generate culturally consistent names for noble houses, ruins, provincial settlements, and historical figures.",
       href: "/generators/fantasy-names",
       badge: "Generator",
     },
     {
       title: "Pantheon Generator",
       description:
-        "Forge custom mythologies, divine portfolios, holy symbols, and regional religious tenets.",
+        "Create pantheons, myths, divine domains, holy symbols and regional religious traditions.",
       href: "/generators/pantheon-generator",
       badge: "Generator",
     },
     {
       title: "Kingdom & Realm Generator",
       description:
-        "Build sovereign realms, feudal hierarchies, disputed successions, regional rivalries, and trade exports.",
+        "Create kingdoms and realms with rulers, political structures, rival powers, regions and trade.",
       href: "/generators/kingdom",
       badge: "Generator",
     },
     {
       title: "Dungeon & Ruin Generator",
       description:
-        "Design multi-level ancient vaults, subterranean temples, and dangerous ruins for your setting.",
+        "Design subterranean sites, ancient ruins, and fortified strongholds for your setting.",
       href: "/generators/dungeon-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Build Your Living Setting",
+    title: "Build Your World",
     description:
       "Connect your realms, factions, and histories in a fast, local-first workspace built for worldbuilders and storytellers.",
     buttonText: "Start Worldbuilding Free",
