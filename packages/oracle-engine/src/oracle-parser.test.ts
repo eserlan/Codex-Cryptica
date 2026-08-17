@@ -197,4 +197,45 @@ describe("OracleCommandParser: /table and /deck (#2247)", () => {
   it("does not treat /tables as a table command", () => {
     expect(parse("/tables").type).not.toBe("roll-table");
   });
+
+  describe("extractCueAndQuery", () => {
+    it("extracts prefix (Cue: ...) and leaves the rest as query", async () => {
+      const { extractCueAndQuery } = await import("./oracle-parser");
+      expect(
+        extractCueAndQuery("(Cue: Crown, Cushion) What treasure is here?"),
+      ).toEqual({
+        query: "What treasure is here?",
+        cue: "Crown, Cushion",
+      });
+    });
+
+    it("extracts prefix [Oracle: ...] and leaves the rest as query", async () => {
+      const { extractCueAndQuery } = await import("./oracle-parser");
+      expect(
+        extractCueAndQuery("[Oracle: Yes, but... / Debt] Will you help me?"),
+      ).toEqual({
+        query: "Will you help me?",
+        cue: "Yes, but... / Debt",
+      });
+    });
+
+    it("extracts suffix (Cue: ...)", async () => {
+      const { extractCueAndQuery } = await import("./oracle-parser");
+      expect(
+        extractCueAndQuery("Will you grant us passage? (Cue: No, and...)"),
+      ).toEqual({
+        query: "Will you grant us passage?",
+        cue: "No, and...",
+      });
+    });
+
+    it("attaches cue to parsed chat intent", () => {
+      expect(parse("(Cue: Crown, Cushion) Tell me a tale")).toEqual({
+        type: "chat",
+        query: "Tell me a tale",
+        cue: "Crown, Cushion",
+        isAIIntent: true,
+      });
+    });
+  });
 });
