@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventurePlay from "./AdventurePlay.svelte";
 
@@ -35,5 +35,18 @@ describe("AdventurePlay", () => {
     render(AdventurePlay, { props: { manager: manager("ready") } });
 
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("offers Focus Mode from the normal adventure header", async () => {
+    const onEnterFocus = vi.fn();
+    render(AdventurePlay, {
+      props: { manager: manager("ready"), onEnterFocus },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Enter Focus Mode" }),
+    );
+
+    expect(onEnterFocus).toHaveBeenCalledOnce();
   });
 });

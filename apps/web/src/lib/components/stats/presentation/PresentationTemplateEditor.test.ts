@@ -310,4 +310,43 @@ describe("PresentationTemplateEditor", () => {
       }),
     );
   });
+
+  it("reflects added and renamed schema fields in the available fields list and excludes deleted fields", () => {
+    const updatedSchema: StatSheetTemplate = {
+      id: "schema-reconciled",
+      name: "Reconciled Schema",
+      isBuiltIn: false,
+      fields: [
+        { id: "str", label: "Might", type: "number" }, // renamed
+        { id: "mana", label: "Mana Points", type: "counter" }, // added
+      ],
+    };
+
+    render(PresentationTemplateEditor, { schema: updatedSchema });
+
+    // Available fields sidebar and visual cards show Might [str] and Mana Points [mana]
+    expect(screen.getAllByText("Might").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("[str]")).toBeTruthy();
+    expect(screen.getAllByText("Mana Points").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("[mana]")).toBeTruthy();
+    // Deleted field (e.g. hp) does not appear in sidebar or canvas
+    expect(screen.queryByText("Hit Points")).toBeNull();
+    expect(screen.queryByText("[hp]")).toBeNull();
+  });
+
+  it("renders an explicit missing indicator on visual card chips referencing a deleted field", () => {
+    const customTemplate = {
+      ...builtIn,
+      id: "presentation-with-deleted-field",
+      isBuiltIn: false,
+      source: ":::card\n[deleted_field]\n:::",
+    };
+
+    render(PresentationTemplateEditor, {
+      schema,
+      template: customTemplate,
+    });
+
+    expect(screen.getByText(/deleted_field \(missing\)/i)).toBeTruthy();
+  });
 });

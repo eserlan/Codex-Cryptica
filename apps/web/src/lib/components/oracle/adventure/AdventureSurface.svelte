@@ -1,14 +1,8 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
-  import AdventureStart from "./AdventureStart.svelte";
-  import AdventurePlay from "./AdventurePlay.svelte";
-  import AdventureRollPrompt from "./AdventureRollPrompt.svelte";
-  import AdventureStateSummary from "./AdventureStateSummary.svelte";
-  import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
-  import AdventureRollHistory from "./AdventureRollHistory.svelte";
-  import AdventureResourceCounters from "./AdventureResourceCounters.svelte";
   import AdventureArchive from "./AdventureArchive.svelte";
-  import AdventureProvisionalFacts from "./AdventureProvisionalFacts.svelte";
+  import AdventureStart from "./AdventureStart.svelte";
+  import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import { adventureContextService } from "$lib/services/adventure/adventure-context-service";
   import { adventureSessionRepository } from "$lib/services/adventure/adventure-session-repository";
   import { createAdventureEntityDraft } from "$lib/services/adventure/adventure-provisional-fact-creator";
@@ -116,26 +110,28 @@
       Checking for an active adventure…
     </div>
   {:else if oracle.adventure.session}
-    <AdventureStateSummary manager={oracle.adventure} />
-    <AdventureCorrectionForm manager={oracle.adventure} />
-    <AdventurePlay manager={oracle.adventure} />
-    <AdventureRollPrompt manager={oracle.adventure} />
-    <AdventureRollHistory manager={oracle.adventure} />
-    <AdventureResourceCounters manager={oracle.adventure} />
-    <AdventureProvisionalFacts
-      facts={oracle.adventure.session.provisionalFacts}
-      existingTitles={existingEntityTitles}
-      onAdd={addProvisionalFact}
-    />
+    {#key oracle.adventure.session.id}
+      <AdventureFocusPlay
+        manager={oracle.adventure}
+        existingTitles={existingEntityTitles}
+        onAddProvisionalFact={addProvisionalFact}
+        repository={adventureSessionRepository}
+        {vaultId}
+        onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
+        onResumeArchived={async (sessionId) => {
+          await oracle.adventure.resumeArchived(vaultId, sessionId);
+        }}
+      />
+    {/key}
   {:else}
     <AdventureStart manager={oracle.adventure} {vaultId} />
+    <AdventureArchive
+      repository={adventureSessionRepository}
+      {vaultId}
+      onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
+      onResumeArchived={async (sessionId) => {
+        await oracle.adventure.resumeArchived(vaultId, sessionId);
+      }}
+    />
   {/if}
-  <AdventureArchive
-    repository={adventureSessionRepository}
-    {vaultId}
-    onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
-    onResumeArchived={async (sessionId) => {
-      await oracle.adventure.resumeArchived(vaultId, sessionId);
-    }}
-  />
 </div>
