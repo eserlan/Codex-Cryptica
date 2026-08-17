@@ -33,7 +33,7 @@ Implement both only when requested. Shared content design does not make either s
 2. In `campaign-generator-types.ts`, add the id to both `GeneratorId` and `SUPPORTED_GENERATOR_IDS`, in matching order.
 3. In `campaign-generator-registry.ts`:
    - Map the generator to its correct vault entity type.
-   - Add a few-shot `EXEMPLARS` entry.
+   - Add a few-shot entry in `campaign-generator-exemplars.ts`.
    - Use the existing prompt helpers (`contextChain`, `OUTPUT_SCHEMA`, `exemplarBlock`, `groundingNote`, `loreGuidance`) rather than assembling duplicate context.
    - Add the local fallback and complete `REGISTRY` definition, including a valid Iconify/Lucide icon name.
    - Use `mapOutputToDraft(id)` unless a proven custom mapping is necessary.
