@@ -559,7 +559,6 @@ export const solutions: Record<string, SEOPageData> = {
 export { featuresConfig } from "./seo-features";
 export type { SEOImportPageData } from "./seo-types";
 
-
 export { importsConfig } from "./seo-imports";
 
 export const worldbuildingToolRoot: SEOPageData = {

@@ -92,9 +92,9 @@
     >
       <span aria-hidden="true" class="icon-[lucide--map] w-4 h-4"></span>
     </button>
-    <GraphViewPresets {cy} />
-    <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
   {/if}
+  <GraphViewPresets {cy} />
+  <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
   <TimelineControls
     onApply={(req) => {
       void onApplyLayout(req).catch((e: any) => console.error(e));
