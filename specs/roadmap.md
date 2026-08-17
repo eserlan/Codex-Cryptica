@@ -8,14 +8,15 @@ This document maps the evolution of Codex Cryptica from its architectural founda
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
 
-### [PROPOSED] Oracle Adventure Mode
+### [IN PROGRESS] Oracle Adventure Mode
 
 - **Target Area**: Oracle, campaign context, and local-first adventure sessions
 - **Objective**: Close the loop between creating campaign material and playing with it by letting the Oracle run a system-light solo adventure grounded in the user's existing vault.
 - **Vision**: Tracked in issue [#2278](https://github.com/eserlan/Codex-Cryptica/issues/2278). The issue remains the product vision and roadmap parent; each phase below should receive its own focused specification, acceptance criteria, branch, and pull request.
 - **MVP boundaries**: The initial player is the vault owner playing solo while the Oracle acts as GM. Adventure inventions remain session-local until explicitly accepted into the vault. "Hidden" state means absent from the player-facing transcript and play surface, not encrypted from the vault owner. Multiplayer, system-specific automation, generator launch points, and saving discoveries are later phases.
+- **Status**: Phase 1 shipped to staging (PR [#2311](https://github.com/eserlan/Codex-Cryptica/pull/2311) plus follow-up fixes). Phases 2–5 remain proposals.
 
-#### Phase 1 — Solo Adventure Foundation
+#### Phase 1 — Solo Adventure Foundation ✅ Shipped
 
 - Start, continue, end, and archive an adventure, with one effective active adventure per vault and preserved read-only recovery conflicts after an external restore.
 - Keep normal Oracle chat and every adventure session isolated; Adventure continuity comes from bounded vault-local state supplied to stateless structured-generation calls, not retained provider conversations.

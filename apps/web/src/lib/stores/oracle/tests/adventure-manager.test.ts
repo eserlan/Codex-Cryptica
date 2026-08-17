@@ -559,3 +559,126 @@ describe("AdventureManager", () => {
     expect(manager.errorMessage).toBeNull();
   });
 });
+
+async function startedManager() {
+  const manager = new AdventureManager(dependencies() as any);
+  await manager.start({
+    vaultId: "vault-1",
+    title: "Road",
+    premise: "Find the road",
+    playerCharacter: {
+      kind: "provisional",
+      name: "Mara",
+      description: "Guide",
+    },
+  });
+  return manager;
+}
+
+describe("AdventureManager Phase 2 tools", () => {
+  it("recap and roll history are empty view models with no session", () => {
+    const manager = new AdventureManager(dependencies() as any);
+    expect(manager.recap).toBeNull();
+    expect(manager.rollHistory).toEqual([]);
+  });
+
+  it("recap reflects committed visible state and narration only", async () => {
+    const manager = await startedManager();
+    expect(manager.recap?.situation?.text).toBe("A lantern flickers");
+    expect(manager.recap?.recentTurnSummaries).toContain(
+      "A lantern flickers at the road's end.",
+    );
+  });
+
+  it("applies a visible-state correction and persists it", async () => {
+    const manager = await startedManager();
+    const revisionBefore = manager.session!.revision;
+    const outcome = await manager.submitCorrection({
+      location: {
+        id: "loc-1",
+        text: "The east crossing",
+        source: "provisional",
+      },
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: { add: [], update: [], removeIds: [] },
+      relationships: { add: [], update: [], removeIds: [] },
+    });
+    expect(outcome).toBe("applied");
+    expect(manager.session?.visibleState.location?.text).toBe(
+      "The east crossing",
+    );
+    expect(manager.session!.revision).toBe(revisionBefore + 1);
+  });
+
+  it("adds, uses, and removes a dice preset", async () => {
+    const manager = await startedManager();
+    await manager.addDicePreset("Advantage", "2d20kh1");
+    expect(manager.session?.dicePresets).toHaveLength(1);
+    const presetId = manager.session!.dicePresets[0]!.id;
+    await manager.removeDicePreset(presetId);
+    expect(manager.session?.dicePresets).toHaveLength(0);
+  });
+
+  it("adds, adjusts, and removes a resource counter", async () => {
+    const manager = await startedManager();
+    await manager.addResourceCounter("Ammo", 6);
+    const counterId = manager.session!.resourceCounters[0]!.id;
+    expect(manager.session?.resourceCounters[0]?.value).toBe(6);
+
+    await manager.adjustResourceCounter(counterId, 3);
+    expect(manager.session?.resourceCounters[0]?.value).toBe(3);
+
+    await manager.removeResourceCounter(counterId);
+    expect(manager.session?.resourceCounters).toHaveLength(0);
+  });
+
+  it("rejects a non-finite resource counter value", async () => {
+    const manager = await startedManager();
+    await expect(
+      manager.addResourceCounter("Ammo", Number.NaN),
+    ).rejects.toThrow();
+  });
+
+  it("resumes an archived adventure as active when none is currently active", async () => {
+    const deps: any = dependencies();
+    let current: any = {
+      id: "archived-1",
+      vaultId: "vault-1",
+      status: "archived",
+      revision: 2,
+      turns: [],
+      pendingRoll: null,
+    };
+    deps.repository.list = async () => ({
+      effectiveActiveId: null,
+      entries: [],
+    });
+    deps.repository.load = async () => ({
+      condition: "normal",
+      session: current,
+    });
+    deps.repository.save = async (_rev: number, session: any) => {
+      current = session;
+      return { ok: true, session };
+    };
+    const manager = new AdventureManager(deps);
+
+    const resumed = await manager.resumeArchived("vault-1", "archived-1");
+    expect(resumed.status).toBe("active");
+    expect(manager.session?.status).toBe("active");
+  });
+
+  it("refuses to resume when an adventure is already active", async () => {
+    const deps: any = dependencies();
+    deps.repository.list = async () => ({
+      effectiveActiveId: "already-active",
+      entries: [],
+    });
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.resumeArchived("vault-1", "archived-1"),
+    ).rejects.toThrow("active-adventure-exists");
+  });
+});

@@ -57,7 +57,7 @@ function patchCollection<T extends { id: string }>(
   };
 }
 
-function applyVisiblePatch(
+export function applyVisiblePatch(
   state: AdventureSession["visibleState"],
   patch: VisibleStatePatch,
 ): Result<AdventureSession["visibleState"], string> {
@@ -280,8 +280,13 @@ export function resolveRecordedRoll(
   if (!result.ok) return result;
   const candidate = result.value;
   candidate.pendingRoll = null;
-  candidate.turns[candidate.turns.length - 1]!.rollOutcome =
-    pendingRoll.suppliedOutcome;
+  const resolvedTurn = candidate.turns[candidate.turns.length - 1]!;
+  resolvedTurn.rollOutcome = pendingRoll.suppliedOutcome;
+  resolvedTurn.resolvedRoll = {
+    expression: pendingRoll.dice?.expression,
+    bands: pendingRoll.dice?.bands,
+    outcome: pendingRoll.suppliedOutcome!,
+  };
   return { ok: true, value: candidate };
 }
 
