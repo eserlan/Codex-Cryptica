@@ -14,14 +14,13 @@ const mythras: StatSheetTemplate = {
 };
 
 describe("resolveStatSheetSchema", () => {
-  it("appends a character's own fields to the bound template's vocabulary", () => {
-    // The whole point: Mythras/BRP/WFRP/GURPS characters each carry a
-    // different set of skills, so the template is only the starting sheet.
+  it("reflects an entity's current fields including additions, renames, and deletions", () => {
+    // Entity added shooting_ak47, renamed str -> Might, and deleted athletics
     const schema = resolveStatSheetSchema(
       {
         templateId: "tpl-mythras",
         fields: [
-          { id: "str", label: "STR", type: "number", value: 13 },
+          { id: "str", label: "Might", type: "number", value: 13 },
           {
             id: "shooting_ak47",
             label: "Shooting (AK47)",
@@ -35,10 +34,14 @@ describe("resolveStatSheetSchema", () => {
       LOCAL_ID,
     );
 
-    expect(schema?.fields.map((f) => f.id)).toEqual([
-      "str",
-      "athletics",
-      "shooting_ak47",
+    expect(schema?.fields).toEqual([
+      { id: "str", label: "Might", type: "number" },
+      {
+        id: "shooting_ak47",
+        label: "Shooting (AK47)",
+        type: "dice",
+        formula: "1d100",
+      },
     ]);
   });
 
@@ -59,7 +62,7 @@ describe("resolveStatSheetSchema", () => {
     expect(schema?.name).toBe("Mythras");
   });
 
-  it("strips per-entity value and UI state from the appended fields", () => {
+  it("strips per-entity value and UI state from the resolved fields", () => {
     const schema = resolveStatSheetSchema(
       {
         templateId: "tpl-mythras",
@@ -87,27 +90,14 @@ describe("resolveStatSheetSchema", () => {
     });
   });
 
-  it("does not duplicate a field the character shares with its template", () => {
-    const schema = resolveStatSheetSchema(
-      {
-        templateId: "tpl-mythras",
-        fields: [{ id: "str", label: "STR", type: "number", value: 13 }],
-      },
-      mythras,
-      LOCAL_ID,
-    );
-
-    expect(schema?.fields.map((f) => f.id)).toEqual(["str", "athletics"]);
-  });
-
-  it("returns the template untouched when the character adds nothing", () => {
+  it("falls back to the bound template starting fields when the character has no fields defined yet", () => {
     const schema = resolveStatSheetSchema(
       { templateId: "tpl-mythras", fields: [] },
       mythras,
       LOCAL_ID,
     );
 
-    expect(schema).toBe(mythras);
+    expect(schema?.fields).toEqual(mythras.fields);
   });
 
   it("falls back to null when the bound template no longer exists", () => {
