@@ -12,3 +12,7 @@
 
 **Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant inline parsing and AST walking logic (`parseCardsFromSource`) that maps data to a visual builder, this pure parsing logic can be safely extracted to a sibling `.ts` file (`visual-card-parser.ts`) to dramatically reduce the god file's size and improve component scanability. State dependencies (like `schema.fields`) should be refactored into function parameters.
 **Action:** Extract AST walking and parsing functions into sibling `.ts` files, passing any component state as explicit parameters.
+## 2025-02-15 - Extract Exemplars from Generator Registry
+
+**Learning:** The `campaign-generator-registry.ts` file contains a massive `EXEMPLARS` constant (large raw JSON string constants) that pollutes the business logic of the registry. This is a clear case for extraction to a dedicated `-constants.ts` file to improve readability of the core registry logic, adhering to the "God-File Config" pattern.
+**Action:** Extract large constants like `EXEMPLARS` from `campaign-generator-registry.ts` to a separate file (e.g., `campaign-generator-exemplars.ts`) and import them.
