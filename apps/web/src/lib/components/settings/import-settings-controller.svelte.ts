@@ -48,7 +48,7 @@ import { ImportReviewManager } from "./import-review-manager";
 import { processChronicaFiles } from "./import-chronica-processor";
 import { processScabardFile } from "./import-scabard-processor";
 import { runOracleFileAnalysis } from "./import-oracle-analyzer";
-import { ImportPackManager } from "./import-pack-manager";
+import { ImportPackManager } from "./import-pack-manager.svelte";
 import { VaultFilesProcessor } from "./import-vault-files-processor";
 import { wrapWithAbort } from "./import-abort-utils";
 

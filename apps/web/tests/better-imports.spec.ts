@@ -209,7 +209,7 @@ test.describe("Better Imports E2E", () => {
     });
 
     // 3. Upload a file to trigger the importer
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await expect(fileInput).toBeAttached();
 
     await fileInput.setInputFiles({
@@ -220,32 +220,39 @@ test.describe("Better Imports E2E", () => {
 
     // 4. Verify Review step
     await expect(
-      page.locator('h3:has-text("Review Identified Entities")'),
+      page.locator('h3:has-text("Review Import Package")'),
     ).toBeVisible({ timeout: 20000 });
 
-    // Check for Existing Dragon
-    const existingCard = page.locator(".entity-card").filter({
-      has: page.locator("strong", { hasText: "Existing Dragon" }),
-    });
-    await expect(existingCard).toBeVisible();
-    await expect(existingCard.locator(".existing-badge")).toBeVisible();
+    // Check for Existing Dragon — matched items get an "Existing" badge and
+    // per-row skip/update/create buttons; row found by walking up from the
+    // item's own checkbox, since rows have no stable class/testid.
+    const existingCheckbox = page.getByLabel("Include Existing Dragon");
+    const existingRow = existingCheckbox.locator(
+      "xpath=ancestor::div[contains(@class,'grid-cols-')]",
+    );
+    await expect(existingRow).toBeVisible();
+    await expect(
+      existingRow.getByText("Existing", { exact: true }),
+    ).toBeVisible();
 
     // Force select Existing Dragon to trigger the "Connect to it" logic
-    await existingCard.locator('input[type="checkbox"]').check();
+    await existingCheckbox.check();
 
-    // Check for New Kingdom
-    const newCard = page.locator(".entity-card").filter({
-      has: page.locator("strong", { hasText: "New Kingdom" }),
-    });
-    await expect(newCard).toBeVisible();
-    await expect(newCard.locator(".existing-badge")).not.toBeVisible();
-    await expect(newCard.locator('input[type="checkbox"]')).toBeChecked();
+    // Check for New Kingdom — unmatched items get a "New" badge and a plain
+    // "Create" label instead of skip/update/create buttons.
+    const newCheckbox = page.getByLabel("Include New Kingdom");
+    const newRow = newCheckbox.locator(
+      "xpath=ancestor::div[contains(@class,'grid-cols-')]",
+    );
+    await expect(newRow).toBeVisible();
+    await expect(newRow.getByText("New", { exact: true })).toBeVisible();
+    await expect(newCheckbox).toBeChecked();
 
     // 5. Click Import (should import 2 items: 1 create, 1 update)
-    await page.click('button:has-text("Import 2 Items")');
+    await page.click('button:has-text("Import 2")');
 
     // 6. Verify Success
-    await expect(page.locator("text=Import Successful")).toBeVisible();
+    await expect(page.locator('h3:has-text("Import Report")')).toBeVisible();
 
     // 7. Verify Vault Content
     const entities = await page.evaluate(() => {
@@ -287,7 +294,7 @@ test.describe("Better Imports E2E", () => {
     });
 
     // 3. Upload a file
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await expect(fileInput).toBeAttached();
 
     await fileInput.setInputFiles({
@@ -298,18 +305,17 @@ test.describe("Better Imports E2E", () => {
 
     // 4. Verify Review step identifies the match
     await expect(
-      page.locator('h3:has-text("Review Identified Entities")'),
+      page.locator('h3:has-text("Review Import Package")'),
     ).toBeVisible({ timeout: 20000 });
 
-    const card = page.locator(".entity-card").filter({
-      has: page.locator("strong", { hasText: "Eldrin the Wise" }),
-    });
-    await expect(card).toBeVisible();
-
-    // It should have the "Already in Vault" badge because of the fuzzy match
-    await expect(card.locator(".existing-badge")).toContainText(
-      "Already in Vault: Eldrin",
+    const checkbox = page.getByLabel("Include Eldrin the Wise");
+    const row = checkbox.locator(
+      "xpath=ancestor::div[contains(@class,'grid-cols-')]",
     );
-    await expect(card.locator('input[type="checkbox"]')).not.toBeChecked();
+    await expect(row).toBeVisible();
+
+    // It should have the "Existing" match badge because of the fuzzy match
+    await expect(row.getByText("Existing", { exact: true })).toBeVisible();
+    await expect(checkbox).not.toBeChecked();
   });
 });
