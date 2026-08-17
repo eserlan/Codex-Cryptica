@@ -11,8 +11,8 @@ import { systemClock } from "./runtime";
 export interface GDriveSyncConfig {
   getDB: () => Promise<any>;
   /** Passed into the worker's own openDB(...) call so it stays in sync with the host app's IndexedDB name/version rather than hard-coding them. */
-  dbName: string;
-  dbVersion: number;
+  dbName?: string;
+  dbVersion?: number;
   appEventBus: { emit: (event: any) => void };
   vault: {
     activeVaultId: string | null;
