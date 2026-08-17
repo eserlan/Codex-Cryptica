@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { graph } from "$lib/stores/graph.svelte";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -45,6 +47,11 @@ describe("/table page", () => {
     mutableVault.activeVaultId = "v1";
     mutableVault.isInitialized = true;
     mutableVault.allEntities = [];
+    // typeFilters/labelFilters now read from these module-level singletons
+    // (shared with the Graph view), not private component state, so they
+    // must be reset between tests to avoid cross-test leakage.
+    graph.clearCategoryFilters();
+    explorerUIStore.clearLabelFilters();
     vi.clearAllMocks();
   });
 
@@ -107,5 +114,24 @@ describe("/table page", () => {
     const clearBtn = screen.getByTestId("entity-table-clear-filters");
     await fireEvent.click(clearBtn);
     expect(screen.queryByTestId("entity-table-active-filter-badge")).toBeNull();
+  });
+
+  it("shares type/label filter state with the graph view", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const toggleBtn = screen.getByTestId("entity-table-mobile-filters-toggle");
+    await fireEvent.click(toggleBtn);
+    await fireEvent.click(screen.getAllByTestId("entity-table-type-filter")[0]);
+
+    // The toggle should have written through to the shared graph store, not
+    // a table-private copy, so the Graph view sees the same filter.
+    expect(graph.activeCategories.size).toBe(1);
+
+    const graphLink = screen.getByTestId("table-browse-as-graph");
+    expect(graphLink.getAttribute("href")).toBe("/");
   });
 });

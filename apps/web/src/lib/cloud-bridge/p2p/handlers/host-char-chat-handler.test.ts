@@ -503,4 +503,22 @@ describe("HostCharChatHandler — mockChatHistory", () => {
     expect(msgs).toHaveLength(1);
     expect(msgs[0].id).toBe("new");
   });
+
+  it("forwards cue from request into oracle executor intent", async () => {
+    const h = new HostCharChatHandler();
+    const conn = makeConn();
+    const oracle = makeOracle();
+    const ctx = makeContext(oracle);
+
+    await h.handle(
+      makeRequest({
+        cue: "Suspicious / Yes, but...",
+      }),
+      conn,
+      ctx,
+    );
+
+    const [actionArg] = oracle.executor.execute.mock.calls[0];
+    expect(actionArg.cue).toBe("Suspicious / Yes, but...");
+  });
 });

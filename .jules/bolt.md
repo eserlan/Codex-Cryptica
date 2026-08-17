@@ -206,3 +206,8 @@
 
 **Learning:** When acting as the 'Bolt' persona, do not replace single native array methods like `array.filter()` or `array.every()` with verbose imperative loops, as this is a micro-optimization that degrades readability. Reserve imperative loop optimizations for replacing chained array methods (e.g., `.map().filter().slice()`), eliminating unnecessary allocations (e.g., `[...set].map()`), or introducing early exits to reduce algorithmic complexity (e.g., O(N) to O(K)).
 **Action:** When working with large datasets, replace chains of array mapping and filtering (like `[...set].map().filter().slice()`) with a single imperative `for...of` loop and an early `break` condition to avoid massive intermediate array allocations.
+
+## 2026-08-14 - Limit imperative array optimizations to high-impact bulk paths
+
+**Learning:** While it is beneficial to avoid allocating intermediate arrays in Svelte reactive blocks for truly massive state arrays or bulk processing logic (like in `apps/web/src/lib/stores/vault/bulk-results.ts`), replacing simple, concise 1-line statements like `array.filter(...).length` with verbose 10-line imperative loops inside standard UI components (like `ImportWizard.svelte`) violates the 'never sacrifice code readability for micro-optimizations' rule.
+**Action:** When acting as the 'Bolt' persona, only refactor array pipelines to imperative loops in non-UI modules (e.g. stores, workers, data-processing pipelines) or when specifically querying massive global arrays (e.g. `vault.allEntities`). Do not optimize small, ephemeral arrays inside UI components unless profiling shows they are an active bottleneck.

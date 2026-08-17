@@ -74,7 +74,7 @@ describe("GuestChatExecutor", () => {
     );
   });
 
-  it("rejects disabled or personality-less characters", async () => {
+  it("rejects disabled characters with an unavailable notice", async () => {
     const executor = new GuestChatExecutor();
     const addMessage = vi.fn();
     const generateResponse = vi.fn();
@@ -97,6 +97,35 @@ describe("GuestChatExecutor", () => {
     expect(addMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         content: expect.stringContaining("no longer available"),
+      }),
+    );
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
+
+  it("rejects characters without personality or voice guidance with an actionable error", async () => {
+    const executor = new GuestChatExecutor();
+    const addMessage = vi.fn();
+    const generateResponse = vi.fn();
+    const ctx = makeContext(
+      {
+        "char-1": {
+          id: "char-1",
+          type: "character",
+          lore: "## Other Section\nSome notes.",
+          guestChatConfig: { isEnabled: true, extraInstructions: "" },
+        },
+      },
+      { textGeneration: { generateResponse } },
+    );
+    ctx.chatHistory.addMessage = addMessage;
+
+    await executor.execute(
+      { type: "guest-chat", query: "hello", entityId: "char-1" },
+      ctx,
+    );
+    expect(addMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("Personality & Voice"),
       }),
     );
     expect(generateResponse).not.toHaveBeenCalled();
@@ -477,22 +506,60 @@ describe("GuestChatExecutor", () => {
     expect(prompt).toContain("heir to the throne");
   });
 
-  it("public scope: lore personality and knowledge sections appear; other lore does not", async () => {
+  it("injects SCENE DIRECTION / ORACLE OVERRIDE block when intent.cue is provided", async () => {
     const executor = new GuestChatExecutor();
-    const ctx = makeContext({
-      "char-1": makeCharacter({
-        content: "Mae keeps cattle near Briar Ford.",
-        lore: `## Personality & Voice\n- Plain-spoken.\n\n## Knowledge & Expertise\n- Cattle, grazing land.\n\n## Secrets\nMae hides a royal brand in the barn.`,
-        guestChatConfig: { isEnabled: true, contextScope: "public" },
-      }),
-    });
+    const ctx = makeContext({ "char-1": makeCharacter() });
     await executor.execute(
-      { type: "guest-chat", query: "What do you know?", entityId: "char-1" },
+      {
+        type: "guest-chat",
+        query: "What treasure lies within?",
+        cue: "Crown, Cushion",
+        entityId: "char-1",
+      },
       ctx,
     );
     const prompt = systemPromptFrom(ctx);
-    expect(prompt).toContain("Plain-spoken");
-    expect(prompt).toContain("Cattle, grazing land");
-    expect(prompt).not.toContain("royal brand");
+    expect(prompt).toContain("SCENE DIRECTION / ORACLE OVERRIDE");
+    expect(prompt).toContain("Crown, Cushion");
+    expect(prompt).toContain("MANDATORY INSTRUCTION FOR ORACLE CUE");
+  });
+
+  it("extracts inline (Cue: ...) syntax and injects it into system prompt", async () => {
+    const executor = new GuestChatExecutor();
+    const ctx = makeContext({ "char-1": makeCharacter() });
+    await executor.execute(
+      {
+        type: "guest-chat",
+        query: "(Cue: No, and... / Suspicious) Will you grant us passage?",
+        entityId: "char-1",
+      },
+      ctx,
+    );
+    const prompt = systemPromptFrom(ctx);
+    expect(prompt).toContain("SCENE DIRECTION / ORACLE OVERRIDE");
+    expect(prompt).toContain("No, and... / Suspicious");
+    // Verify query passed to LLM is cleaned of the cue prefix
+    expect(ctx.textGeneration.generateResponse.mock.calls[0][1]).toBe(
+      "Will you grant us passage?",
+    );
+  });
+
+  it("extracts inline [Oracle: ...] syntax with brackets", async () => {
+    const executor = new GuestChatExecutor();
+    const ctx = makeContext({ "char-1": makeCharacter() });
+    await executor.execute(
+      {
+        type: "guest-chat",
+        query: "Will you grant us passage? [Oracle: Yes, but...]",
+        entityId: "char-1",
+      },
+      ctx,
+    );
+    const prompt = systemPromptFrom(ctx);
+    expect(prompt).toContain("SCENE DIRECTION / ORACLE OVERRIDE");
+    expect(prompt).toContain("Yes, but...");
+    expect(ctx.textGeneration.generateResponse.mock.calls[0][1]).toBe(
+      "Will you grant us passage?",
+    );
   });
 });

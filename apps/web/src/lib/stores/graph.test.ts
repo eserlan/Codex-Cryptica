@@ -469,8 +469,15 @@ describe("GraphStore", () => {
     await graph.init();
 
     expect(getAllSpy).toHaveBeenCalledTimes(1);
-    // 5 global graph settings + 1 vault-scoped view presets key
-    expect(getSpy).toHaveBeenCalledTimes(6);
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphShowLabels");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphShowImages");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphStableLayout");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphRecentLabels");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphLabelFilterMode");
+    expect(getSpy).toHaveBeenCalledWith(
+      "settings",
+      expect.stringMatching(/^viewPresets:/),
+    );
     expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
 
     addEventListenerSpy.mockRestore();
@@ -630,7 +637,7 @@ describe("GraphStore", () => {
         expect.arrayContaining([
           expect.objectContaining({ name: "Quest Arc" }),
         ]),
-        "graphViewPresets:vault-1",
+        "viewPresets:vault-1",
       );
     });
 
@@ -692,7 +699,7 @@ describe("GraphStore", () => {
       expect(db.put).toHaveBeenLastCalledWith(
         "settings",
         [],
-        "graphViewPresets:vault-1",
+        "viewPresets:vault-1",
       );
     });
 
@@ -729,7 +736,7 @@ describe("GraphStore", () => {
 
       expect(graph.viewPresets).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Failed to load graph view presets"),
+        expect.stringContaining("Failed to load view presets"),
         expect.anything(),
       );
     });
