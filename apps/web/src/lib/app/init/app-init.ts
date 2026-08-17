@@ -90,6 +90,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       message.includes("INTERNET_DISCONNECTED") ||
       message.includes("Failed to fetch") ||
       message.includes("NetworkError") ||
+      message.includes("higher version than the version requested") ||
+      message.includes("VersionError") ||
       message.includes(
         "ResizeObserver loop completed with delivered notifications",
       ) ||
@@ -121,7 +123,9 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       message.includes("Failed to fetch") ||
       message.includes("NetworkError") ||
       message.includes("Load failed") ||
-      message.includes("INTERNET_DISCONNECTED")
+      message.includes("INTERNET_DISCONNECTED") ||
+      message.includes("higher version than the version requested") ||
+      message.includes("VersionError")
     ) {
       return;
     }

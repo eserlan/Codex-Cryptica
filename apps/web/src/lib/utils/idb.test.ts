@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { openDB } from "idb";
 import {
   getDB,
   persistHandle,
@@ -12,6 +13,17 @@ import {
 
 describe("idb.ts utility", () => {
   beforeEach(async () => {
+    const prevPromise = (globalThis as any)["__codex_idb_db_promise__"];
+    (globalThis as any)["__codex_idb_db_promise__"] = undefined;
+    if (prevPromise) {
+      try {
+        const db = await prevPromise;
+        db.close();
+      } catch {
+        // Ignore close error on stale test db connection
+      }
+    }
+
     // Clear the database before each test
     const dbs = await indexedDB.databases();
     for (const db of dbs) {
@@ -93,5 +105,25 @@ describe("idb.ts utility", () => {
   it("should return null for non-existent handle", async () => {
     const retrieved = await getPersistedHandle();
     expect(retrieved).toBeNull();
+  });
+
+  it("gracefully falls back when the stored database has a higher version", async () => {
+    // Reset global promise cache
+    (globalThis as any)["__codex_idb_db_promise__"] = undefined;
+
+    // Seed database at a future version (e.g. 99) using openDB and close it cleanly
+    const seedDb = await openDB(DB_NAME, 99, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains("settings")) {
+          db.createObjectStore("settings");
+        }
+      },
+    });
+    seedDb.close();
+
+    // Calling getDB should catch VersionError and fall back to opening at current stored version
+    const db = await getDB();
+    expect(db.name).toBe(DB_NAME);
+    expect(db.version).toBe(99);
   });
 });

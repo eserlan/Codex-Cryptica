@@ -58,6 +58,17 @@ const mockService = {
   verifyProposal: vi.fn().mockResolvedValue(undefined),
   reEvaluateProposal: vi.fn().mockResolvedValue(undefined),
   clearVault: vi.fn().mockResolvedValue(undefined),
+  generateConnectionProposal: vi.fn().mockResolvedValue({
+    id: "p1",
+    type: "ally_of",
+    label: "Ally",
+  }),
+  parseConnectionIntent: vi.fn().mockResolvedValue({
+    sourceName: "A",
+    targetName: "B",
+    type: "ally_of",
+    label: "Ally",
+  }),
 };
 
 vi.mock("@codex/proposer", () => ({
@@ -478,5 +489,40 @@ describe("proposerStore", () => {
 
     proposerStore.clearDraftEntity();
     expect(proposerStore.draftEntity).toBeNull();
+  });
+
+  it("delegates generateConnectionProposal and parseConnectionIntent to service", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+
+    const proposal = await proposerStore.generateConnectionProposal(
+      "key",
+      "model",
+      "src",
+      "tgt",
+      "Title A",
+      "Title B",
+    );
+    expect(mockService.generateConnectionProposal).toHaveBeenCalledWith(
+      "key",
+      "model",
+      "src",
+      "tgt",
+      "Title A",
+      "Title B",
+    );
+    expect(proposal.type).toBe("ally_of");
+
+    const intent = await proposerStore.parseConnectionIntent(
+      "key",
+      "model",
+      "connect A to B",
+    );
+    expect(mockService.parseConnectionIntent).toHaveBeenCalledWith(
+      "key",
+      "model",
+      "connect A to B",
+    );
+    expect(intent?.sourceName).toBe("A");
   });
 });
