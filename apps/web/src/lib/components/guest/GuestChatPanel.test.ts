@@ -98,4 +98,43 @@ describe("GuestChatPanel", () => {
       expect.objectContaining({ characterTitle: "Mara the Blacksmith" }),
     );
   });
+
+  it("populates cue input with Quick Oracle rolls in GuestChatPanel", async () => {
+    render(GuestChatPanel);
+
+    // Toggle Cue input open
+    const cueToggle = screen.getByTitle("Toggle Oracle / Director Cue");
+    await fireEvent.click(cueToggle);
+
+    const cueInput = screen.getByPlaceholderText(
+      /Oracle \/ Director Cue/i,
+    ) as HTMLInputElement;
+    expect(cueInput.value).toBe("");
+
+    // Click Oracle 50/50
+    const oracle50Btn = screen.getByTestId("guest-quick-oracle-btn");
+    await fireEvent.click(oracle50Btn);
+    expect(cueInput.value).toMatch(
+      /^Oracle: (Yes, and\.\.\.|Yes|Yes, but\.\.\.|No, but\.\.\.|No|No, and\.\.\.)$/,
+    );
+
+    await fireEvent.click(screen.getByTestId("guest-quick-oracle-likely-btn"));
+    expect(cueInput.value).toMatch(/^Oracle \(likely\): /);
+
+    await fireEvent.click(
+      screen.getByTestId("guest-quick-oracle-unlikely-btn"),
+    );
+    expect(cueInput.value).toMatch(/^Oracle \(unlikely\): /);
+
+    // Click 2d6
+    const pbtaBtn = screen.getByTestId("guest-quick-pbta-btn");
+    await fireEvent.click(pbtaBtn);
+    expect(cueInput.value).toMatch(/^2d6 = \d+: (Strong Hit|Weak Hit|Miss)/);
+
+    await fireEvent.click(screen.getByTestId("guest-quick-d20-btn"));
+    expect(cueInput.value).toMatch(/^d20 = (?:[1-9]|1\d|20)$/);
+
+    await fireEvent.click(screen.getByTestId("guest-quick-spark-btn"));
+    expect(cueInput.value).toMatch(/^Spark: [A-Za-z]+ [A-Za-z ]+$/);
+  });
 });
