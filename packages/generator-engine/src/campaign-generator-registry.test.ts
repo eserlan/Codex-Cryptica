@@ -15,8 +15,10 @@ import {
 import {
   type GeneratorRunRequest,
   type GeneratorVaultContext,
+  SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import { EXEMPLARS } from "./campaign-generator-exemplars";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -780,6 +782,13 @@ describe("buildPrompt quality + schema", () => {
     ] as const) {
       const prompt = getGenerator(id).buildPrompt(run(id));
       expect(prompt).toContain("Example (illustrative only");
+    }
+  });
+
+  it("defines a parseable JSON exemplar for every supported generator id", () => {
+    for (const id of SUPPORTED_GENERATOR_IDS) {
+      expect(EXEMPLARS[id]).toBeDefined();
+      expect(() => JSON.parse(EXEMPLARS[id])).not.toThrow();
     }
   });
 
