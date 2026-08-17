@@ -14,6 +14,8 @@ export interface AdventureArchiveEntry {
   updatedAt?: string;
   loadCondition: AdventureLoadCondition;
   revision?: number;
+  /** Absent for unreadable entries. Included for client-side archive search (FR-003). */
+  premise?: string;
 }
 
 export interface AdventureListResult {
@@ -31,6 +33,10 @@ export type AdventureSaveResult =
 
 export type AdventureDeleteResult = { ok: true } | { ok: false; error: Error };
 
+export type AdventureDuplicateResult =
+  | { condition: "duplicated"; id: string }
+  | { condition: "unreadable"; error: Error };
+
 export interface AdventureVaultRootResolver {
   (vaultId: string): Promise<FileSystemDirectoryHandle>;
 }
@@ -42,9 +48,14 @@ function isSafeSessionId(value: string): boolean {
 export class AdventureSessionRepository {
   private readonly writes = new Map<string, Promise<void>>();
   private rootResolver: AdventureVaultRootResolver;
+  private readonly generateId: () => string;
 
-  constructor(resolveVaultRoot: AdventureVaultRootResolver) {
+  constructor(
+    resolveVaultRoot: AdventureVaultRootResolver,
+    generateId: () => string = () => crypto.randomUUID(),
+  ) {
     this.rootResolver = resolveVaultRoot;
+    this.generateId = generateId;
   }
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
@@ -116,6 +127,7 @@ export class AdventureSessionRepository {
           updatedAt: session.updatedAt,
           revision: session.revision,
           loadCondition: "normal",
+          premise: session.premise,
         });
       } catch {
         entries.push({
@@ -213,6 +225,67 @@ export class AdventureSessionRepository {
       updatedAt: new Date().toISOString(),
     };
     return this.save(expectedRevision, archived);
+  }
+
+  /**
+   * Renames an adventure without altering its transcript, state, or source
+   * references. Goes through the same optimistic-revision `save` path as
+   * every other mutation, so a stale `expectedRevision` is rejected rather
+   * than silently overwritten.
+   */
+  async rename(
+    vaultId: string,
+    sessionId: string,
+    expectedRevision: number,
+    title: string,
+  ): Promise<AdventureSaveResult> {
+    const trimmed = title.trim();
+    if (trimmed.length === 0) {
+      return { ok: false, error: new Error("title-required") };
+    }
+    const loaded = await this.load(vaultId, sessionId);
+    if (loaded.condition === "unreadable")
+      return { ok: false, error: loaded.error };
+    if (loaded.session.revision !== expectedRevision)
+      return { ok: false, error: new Error("revision-conflict") };
+    const renamed: AdventureSession = {
+      ...loaded.session,
+      title: trimmed,
+      revision: loaded.session.revision + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.save(expectedRevision, renamed);
+  }
+
+  /**
+   * Deep-copies an adventure (transcript, visible state, hidden state,
+   * source references, Phase 2 fields) into a new, independent archived
+   * adventure. Never mutates the source document — the copy is written
+   * under a freshly generated id.
+   */
+  async duplicate(
+    vaultId: string,
+    sessionId: string,
+  ): Promise<AdventureDuplicateResult> {
+    const loaded = await this.load(vaultId, sessionId);
+    if (loaded.condition === "unreadable") {
+      return { condition: "unreadable", error: loaded.error };
+    }
+    const now = new Date().toISOString();
+    const id = this.generateId();
+    const duplicated: AdventureSession = {
+      ...loaded.session,
+      id,
+      status: "archived",
+      createdAt: now,
+      updatedAt: now,
+      revision: 0,
+    };
+    const result = await this.save(null, duplicated);
+    if (!result.ok) {
+      return { condition: "unreadable", error: result.error };
+    }
+    return { condition: "duplicated", id };
   }
 
   async deleteArchived(

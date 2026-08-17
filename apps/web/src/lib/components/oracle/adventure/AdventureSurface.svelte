@@ -4,6 +4,9 @@
   import AdventurePlay from "./AdventurePlay.svelte";
   import AdventureRollPrompt from "./AdventureRollPrompt.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
+  import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
+  import AdventureRollHistory from "./AdventureRollHistory.svelte";
+  import AdventureResourceCounters from "./AdventureResourceCounters.svelte";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureProvisionalFacts from "./AdventureProvisionalFacts.svelte";
   import { adventureContextService } from "$lib/services/adventure/adventure-context-service";
@@ -114,8 +117,11 @@
     </div>
   {:else if oracle.adventure.session}
     <AdventureStateSummary manager={oracle.adventure} />
+    <AdventureCorrectionForm manager={oracle.adventure} />
     <AdventurePlay manager={oracle.adventure} />
     <AdventureRollPrompt manager={oracle.adventure} />
+    <AdventureRollHistory manager={oracle.adventure} />
+    <AdventureResourceCounters manager={oracle.adventure} />
     <AdventureProvisionalFacts
       facts={oracle.adventure.session.provisionalFacts}
       existingTitles={existingEntityTitles}
@@ -128,5 +134,8 @@
     repository={adventureSessionRepository}
     {vaultId}
     onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
+    onResumeArchived={async (sessionId) => {
+      await oracle.adventure.resumeArchived(vaultId, sessionId);
+    }}
   />
 </div>

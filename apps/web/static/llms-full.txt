@@ -50,7 +50,7 @@ The Oracle works in two modes: System Proxy (free, uses shared access) or Custom
 The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
 
 ### Solo Adventure Mode
-Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner.
+Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows — it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.
 
 ### Family Tree
 Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
@@ -197,7 +197,7 @@ Organize your world hierarchically. Drag and drop entities in the explorer to ne
 When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.
 
 ### Guest Character Chat
-Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship.
+Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears — read-only, with a link back — under that character's own Chat tab.
 
 ### Campaign Generators
 Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.
@@ -666,6 +666,92 @@ Using your own key ensures higher availability, faster response times, and acces
 
 - [Worldbuilding Tool Without Mandatory AI](/blog/worldbuilding-tool-without-ai) — How Codex Cryptica remains fully functional offline and without AI keys.
 - [Why AI Slop is a Context Failure](/blog/ai-slop-is-context-failure) — How structured vault retrieval ensures OpenAI/Luna produces rich, setting-accurate lore.
+
+---
+
+### SAVED VIEWS & VIEW SYNC
+
+**Saved Views** (also known as View Presets) allow you to save any combination of filters, search queries, and presentation settings as a named, reusable lens over your vault.
+
+Instead of locking notes into rigid hierarchical folders, Codex Cryptica uses dynamic, rule-based views. When you define a view, any entity matching its criteria is automatically included across both the **Interactive Graph** and the **Entity Table**.
+
+---
+
+## How It Works: Rule-Based Lenses vs. Folders
+
+Codex Cryptica does not use file folders. Everything in your vault lives in a flat, interconnected knowledge graph. Saved Views act as real-time queries:
+
+1. **Automatic Membership**: Entities appear in a view whenever their metadata matches the view's criteria.
+2. **Same Content, Different Perspectives**: A saved view captures the _same content scope_ whether you inspect it as a network of nodes in the Graph or as a dense, sortable matrix in the Table.
+
+---
+
+## What a Saved View Captures
+
+When you save a view, it stores:
+
+- **Categories & Types**: Active entity types (e.g., _Characters_, _Locations_, _Factions_).
+- **Labels & Tags**: Any filtered `#labels` (e.g., `#quest-lead`, `#act-2`, `#patron`).
+- **Search Queries**: Active search terms and keyword filters.
+- **Incompleteness Status**: The "Incomplete only" toggle to isolate notes missing summaries, labels, or connections.
+- **Column Filters**: Column-level criteria configured in the Entity Table.
+- **Table Presentation**: Active sort column and sort direction.
+- **Graph Presentation**: Timeline layout, orbit mode, selected central node, and camera viewport pan/zoom.
+
+---
+
+## Creating & Using Saved Views
+
+### In the Entity Table
+
+1. Apply your desired filters (e.g. select categories, type in search, toggle "Incomplete only", or configure column filters).
+2. Click the **Saved views** dropdown in the table toolbar.
+3. Type a descriptive name into the _Name this view..._ input.
+4. Click **`+`** (or press `Enter`) to save.
+
+### In the Knowledge Graph
+
+1. Filter the graph using the HUD controls, search bar, or timeline mode.
+2. Click the **Saved Views** bookmark icon in the bottom toolbar.
+3. Type a name and click **`+`** to save your filters along with the current camera position.
+
+---
+
+## How to Add Entities to a View
+
+Because views are query-based, you don't drag-and-drop entities into them:
+
+- **To add an entity to an automatic view**: Update the entity's type, content, or metadata so it matches the view's filter criteria (for example, setting its category to _NPC_ or giving it a summary).
+- **To build a hand-curated view** (e.g., _Session 14 Cast_ or _Dungeon Bosses_):
+  1. Create a dedicated label such as `#session-14` or `#boss`.
+  2. Filter for that label in the Table or Graph and save the view.
+  3. Tag any relevant entity with that `#label` in the detail panel or table. It will immediately appear in that view!
+
+---
+
+## Managing Views
+
+- **Switch Views**: Open the **Saved Views** dropdown and click any named view to activate it.
+- **Reset to Default**: Click _Reset to default_ inside the dropdown to clear all active filters.
+- **Rename**: Hover over a preset in the dropdown list and click the **Pencil icon** (or focus with keyboard), edit the name, and confirm.
+- **Delete**: Click the **Trash icon** to remove a view. (This only deletes the view preset; your entities remain completely untouched).
+
+---
+
+## Mobile Usage
+
+Saved Views are fully accessible on mobile devices:
+
+- **On Table View**: Tap the **Saved views** button in the header toolbar.
+- **On Graph View**: Tap the floating **Settings / Graph Controls** button in the bottom corner to open the mobile controls panel, then tap the **Bookmark** icon.
+
+---
+
+## Related Blog Posts
+
+- [Same Content, Different Perspectives: Unified Saved Views in Codex Cryptica](/blog/same-content-different-views) — How to seamlessly switch between topological graphs and dense tables.
+- [Supercharged Lore Discovery](/blog/supercharged-discovery) — Mastering labels and filters for dynamic campaign prep.
+- [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — Graph-first worldbuilding without brittle folder structures.
 
 ---
 

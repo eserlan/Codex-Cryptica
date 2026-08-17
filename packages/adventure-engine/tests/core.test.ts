@@ -218,5 +218,56 @@ describe("adventure engine", () => {
     expect(resolved.ok).toBe(true);
     expect(resolved.ok && resolved.value.pendingRoll).toBeNull();
     expect(resolved.ok && resolved.value.turns[0]?.rollOutcome?.value).toBe(5);
+    expect(
+      resolved.ok && resolved.value.turns[0]?.resolvedRoll?.outcome.value,
+    ).toBe(5);
+  });
+
+  it("snapshots the dice expression and bands onto the resolved roll", () => {
+    const pending = applyRollRequest(
+      session(),
+      {
+        kind: "roll-required",
+        uncertainty: "Risk",
+        stakes: "Consequence",
+        dice: {
+          expression: "d20",
+          outcomeBands: [{ id: "band-1", label: "Success", minimum: 11 }],
+        },
+        sourceRecordIds: [],
+      },
+      { turnId: "roll-1", inputId: "input-1", now },
+    );
+    if (!pending.ok) throw new Error("pending setup failed");
+    const recorded = recordPendingRollOutcome(
+      pending.value,
+      "input-1",
+      { kind: "numeric", value: 15 },
+      { turnId: "record-1", inputId: "input-1", now },
+    );
+    if (!recorded.ok) throw new Error("record setup failed");
+    const resolved = resolveRecordedRoll(
+      recorded.value,
+      {
+        kind: "complete",
+        narration: "The blow lands true.",
+        visiblePatch: emptyPatch,
+        hiddenPatch: emptyHiddenPatch,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      },
+      {
+        turnId: "turn-1",
+        inputId: "resolution-1",
+        playerAction: "Strike",
+        now,
+      },
+    );
+    if (!resolved.ok) throw new Error("resolve failed");
+    expect(resolved.value.turns[0]?.resolvedRoll?.expression).toBe("d20");
+    expect(resolved.value.turns[0]?.resolvedRoll?.bands?.[0]?.label).toBe(
+      "Success",
+    );
   });
 });

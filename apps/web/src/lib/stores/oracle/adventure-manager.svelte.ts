@@ -1,14 +1,24 @@
 import {
+  addDicePreset,
+  addResourceCounter,
+  adjustResourceCounter,
   applyCompletedTurn,
   applyRollRequest,
+  applyStateCorrection,
+  buildAdventureRecap,
   createPlayerTranscript,
   dismissPendingRoll,
+  getRollHistory,
   recordPendingRollOutcome,
+  removeDicePreset,
+  removeResourceCounter,
   resolveRecordedRoll,
   type AdventureSession,
   type CommitMetadata,
   type PlayerCharacter,
+  type StateCorrectionOutcome,
   type SuppliedRollOutcome,
+  type VisibleStatePatch,
 } from "@codex/adventure-engine";
 import type { AdventureTurnGenerationService } from "@codex/ai-engine";
 import {
@@ -65,7 +75,7 @@ function initialSession(input: {
   now: string;
 }): AdventureSession {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: newId(),
     vaultId: input.vaultId,
     title: input.title,
@@ -87,6 +97,8 @@ function initialSession(input: {
     provisionalFacts: [],
     turns: [],
     pendingRoll: null,
+    dicePresets: [],
+    resourceCounters: [],
   };
 }
 
@@ -611,6 +623,144 @@ export class AdventureManager {
     await this.deps.coordinator.stop();
     this.lease = null;
     this.phase = "ready";
+  }
+
+  /**
+   * Resumes an archived (or freshly duplicated) adventure as the vault's
+   * active adventure. Throws `active-adventure-exists` under the same rule
+   * `start()` already enforces — the caller must end or continue the
+   * current active adventure first (FR-005).
+   */
+  async resumeArchived(
+    vaultId: string,
+    sessionId: string,
+  ): Promise<AdventureSession> {
+    const current = await this.deps.repository.list(vaultId);
+    if (current.effectiveActiveId) {
+      throw new Error("active-adventure-exists");
+    }
+    const loaded = await this.deps.repository.load(vaultId, sessionId);
+    if (loaded.condition === "unreadable") throw loaded.error;
+    const now = this.deps.now();
+    const resumed: AdventureSession = {
+      ...loaded.session,
+      status: "active",
+      revision: loaded.session.revision + 1,
+      updatedAt: now,
+      lastPlayedAt: now,
+    };
+    const saved = await this.deps.repository.save(
+      loaded.session.revision,
+      resumed,
+    );
+    if (!saved.ok) throw saved.error;
+    await this.open(vaultId, sessionId);
+    if (!this.session) throw new Error("resume-failed");
+    return this.session;
+  }
+
+  /** Deterministic, client-side recap — never draws on hidden state (FR-006). */
+  get recap() {
+    return this.session ? buildAdventureRecap(this.session) : null;
+  }
+
+  /** Turns with a resolved roll, in commit order (FR-012). */
+  get rollHistory() {
+    return this.session ? getRollHistory(this.session) : [];
+  }
+
+  private async persistLocalMutation(
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    if (!this.session) throw new Error("no-active-session");
+    const saved = await this.deps.repository.save(this.session.revision, next);
+    if (!saved.ok) throw saved.error;
+    this.session = saved.session;
+    return saved.session;
+  }
+
+  /**
+   * Applies an explicit, player-visible-state-only correction. Rejects with
+   * `stale-revision` rather than silently overwriting or being overwritten
+   * by a concurrently completing turn (FR-009, FR-010).
+   */
+  async submitCorrection(
+    patch: VisibleStatePatch,
+  ): Promise<StateCorrectionOutcome> {
+    if (!this.session || this.readOnly) throw new Error("no-active-session");
+    const result = applyStateCorrection(this.session, patch, this.deps.now());
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "invalid-correction");
+    }
+    const saved = await this.deps.repository.save(
+      this.session.revision,
+      result.value,
+    );
+    if (!saved.ok) {
+      if (saved.error.message === "revision-conflict") return "stale-revision";
+      throw saved.error;
+    }
+    this.session = saved.session;
+    return "applied";
+  }
+
+  async addDicePreset(label: string, expression: string): Promise<void> {
+    if (!this.session || this.readOnly) throw new Error("no-active-session");
+    const result = addDicePreset(
+      this.session,
+      { id: newId(), label, expression },
+      this.deps.now(),
+    );
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "invalid-dice-preset");
+    }
+    await this.persistLocalMutation(result.value);
+  }
+
+  async removeDicePreset(presetId: string): Promise<void> {
+    if (!this.session || this.readOnly) throw new Error("no-active-session");
+    const next = removeDicePreset(this.session, presetId, this.deps.now());
+    await this.persistLocalMutation(next);
+  }
+
+  async addResourceCounter(label: string, initialValue: number): Promise<void> {
+    if (!this.session || this.readOnly) throw new Error("no-active-session");
+    const result = addResourceCounter(
+      this.session,
+      { id: newId(), label, value: initialValue },
+      this.deps.now(),
+    );
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "invalid-resource-counter");
+    }
+    await this.persistLocalMutation(result.value);
+  }
+
+  async adjustResourceCounter(
+    counterId: string,
+    newValue: number,
+  ): Promise<void> {
+    if (!this.session || this.readOnly) throw new Error("no-active-session");
+    const result = adjustResourceCounter(
+      this.session,
+      counterId,
+      newValue,
+      this.deps.now(),
+    );
+    if (!result.ok) {
+      throw new Error(result.errors[0]?.message ?? "invalid-resource-counter");
+    }
+    await this.persistLocalMutation(result.value);
+  }
+
+  async removeResourceCounter(counterId: string): Promise<void> {
+    if (!this.session || this.readOnly) throw new Error("no-active-session");
+    const next = removeResourceCounter(
+      this.session,
+      counterId,
+      this.deps.now(),
+    );
+    await this.persistLocalMutation(next);
   }
 
   async destroy(): Promise<void> {
