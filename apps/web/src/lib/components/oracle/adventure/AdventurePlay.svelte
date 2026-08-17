@@ -1,6 +1,14 @@
 <script lang="ts">
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
-  let { manager }: { manager: AdventureManager } = $props();
+  let {
+    manager,
+    showHeader = true,
+    onEnterFocus,
+  }: {
+    manager: AdventureManager;
+    showHeader?: boolean;
+    onEnterFocus?: () => void;
+  } = $props();
   let action = $derived(manager.draft);
   let disabled = $derived(
     manager.readOnly ||
@@ -11,29 +19,46 @@
   );
 </script>
 
-<section class="space-y-4" aria-labelledby="adventure-heading">
-  <div class="flex items-center justify-between gap-3">
-    <div>
-      <h2
-        id="adventure-heading"
-        class="text-lg font-semibold text-theme-primary"
-      >
-        {manager.session?.title ?? "Adventure"}
-      </h2>
-      <p class="text-sm text-theme-secondary">
-        {manager.readOnly
-          ? "Read-only in this tab"
-          : manager.phase === "offline"
-            ? "Waiting for connection"
-            : manager.phase}
-      </p>
+<section class="space-y-4" aria-label="Adventure play">
+  {#if showHeader}
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2
+          id="adventure-heading"
+          class="text-lg font-semibold text-theme-primary"
+        >
+          {manager.session?.title ?? "Adventure"}
+        </h2>
+        <p class="text-sm text-theme-secondary">
+          {manager.readOnly
+            ? "Read-only in this tab"
+            : manager.phase === "offline"
+              ? "Waiting for connection"
+              : manager.phase}
+        </p>
+      </div>
+      <div class="flex shrink-0 flex-wrap justify-end gap-2">
+        {#if onEnterFocus}
+          <button
+            class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            type="button"
+            onclick={onEnterFocus}
+          >
+            <span class="inline-flex items-center gap-2">
+              <span aria-hidden="true" class="icon-[lucide--focus] h-4 w-4"
+              ></span>
+              Enter Focus Mode
+            </span>
+          </button>
+        {/if}
+        {#if manager.session && !manager.readOnly}<button
+            class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary"
+            type="button"
+            onclick={() => void manager.end()}>End adventure</button
+          >{/if}
+      </div>
     </div>
-    {#if manager.session && !manager.readOnly}<button
-        class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary"
-        type="button"
-        onclick={() => void manager.end()}>End adventure</button
-      >{/if}
-  </div>
+  {/if}
   {#if manager.lastRollResult}
     <p class="text-sm text-theme-secondary" aria-live="polite">
       <strong>Roll result:</strong>
