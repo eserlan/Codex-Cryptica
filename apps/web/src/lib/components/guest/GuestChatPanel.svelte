@@ -3,6 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible, type Entity } from "schema";
   import { characterChatExportService } from "$lib/services/character-chat-export";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import GuestChatBubble from "./GuestChatBubble.svelte";
   import { tick } from "svelte";
 
@@ -37,6 +38,8 @@
   let currentTranscript = $derived(guestChatStore.activeTranscript);
 
   let messageInput = $state("");
+  let cueInput = $state("");
+  let showCueInput = $state(false);
   let chatContainer = $state<HTMLElement | null>(null);
 
   const starterPrompts = [
@@ -51,6 +54,8 @@
   async function selectCharacter(id: string, title: string) {
     await guestChatStore.startChat(id, title);
     messageInput = "";
+    cueInput = "";
+    showCueInput = false;
     await scrollToBottom();
   }
 
@@ -58,8 +63,11 @@
     if (!activeCharacter || !content.trim() || guestChatStore.isGenerating)
       return;
     const targetId = activeCharacter.id;
+    const cue = cueInput.trim() || undefined;
     messageInput = "";
-    await guestChatStore.sendMessage(targetId, content);
+    cueInput = "";
+    showCueInput = false;
+    await guestChatStore.sendMessage(targetId, content, cue);
     await scrollToBottom();
   }
 
@@ -104,6 +112,20 @@
       );
     } finally {
       isSavingJournal = false;
+    }
+  }
+
+  async function handleResetMemory() {
+    if (!activeCharacter) return;
+    const confirmed = await notificationStore.confirm({
+      title: "Reset Memory",
+      message: `Are you sure you want to reset your conversation memory with ${activeCharacter.title}?`,
+      confirmLabel: "Reset Memory",
+      cancelLabel: "Keep Memory",
+      isDangerous: true,
+    });
+    if (confirmed) {
+      await guestChatStore.clearTranscript(activeCharacter.id);
     }
   }
 
@@ -234,15 +256,7 @@
           {/if}
           <button
             type="button"
-            onclick={() => {
-              if (
-                confirm(
-                  `Are you sure you want to reset your conversation memory with ${activeCharacter?.title}?`,
-                )
-              ) {
-                guestChatStore.clearTranscript(activeCharacter.id);
-              }
-            }}
+            onclick={handleResetMemory}
             class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-danger hover:border-theme-danger/30 transition flex items-center gap-1.5 cursor-pointer"
             title="Clear local conversation memory"
             aria-label="Reset conversation memory"
@@ -310,13 +324,59 @@
 
       <!-- Input Bar -->
       <footer
-        class="p-4 border-t border-theme-border/60 bg-theme-surface/10 shrink-0"
+        class="p-4 border-t border-theme-border/60 bg-theme-surface/10 shrink-0 space-y-2"
       >
-        <div class="flex gap-2">
+        {#if showCueInput}
+          <div
+            class="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-xs"
+          >
+            <span
+              class="icon-[lucide--sparkles] w-3.5 h-3.5 text-amber-400 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <label for="guest-chat-cue" class="sr-only"
+              >Oracle / Director Cue</label
+            >
+            <input
+              id="guest-chat-cue"
+              type="text"
+              bind:value={cueInput}
+              placeholder="Oracle / Director Cue (e.g. Yes, but... / Crown, Cushion / Angry refusal)"
+              class="flex-1 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
+            />
+            {#if cueInput}
+              <button
+                type="button"
+                onclick={() => (cueInput = "")}
+                class="text-theme-muted hover:text-theme-text p-0.5 cursor-pointer"
+                aria-label="Clear cue"
+              >
+                <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"
+                ></span>
+              </button>
+            {/if}
+          </div>
+        {/if}
+
+        <div class="flex gap-2 items-center">
+          <button
+            type="button"
+            onclick={() => (showCueInput = !showCueInput)}
+            class="p-2.5 rounded-xl border transition flex items-center justify-center cursor-pointer {showCueInput ||
+            cueInput
+              ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+              : 'border-theme-border bg-theme-bg/60 text-theme-muted hover:text-theme-text'}"
+            title="Toggle Oracle / Director Cue"
+            aria-label="Toggle Oracle / Director Cue"
+            aria-pressed={showCueInput}
+          >
+            <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"
+            ></span>
+          </button>
           <textarea
             bind:value={messageInput}
             onkeydown={handleKeydown}
-            placeholder="Type your message in-character..."
+            placeholder="Type your message in-character or (Cue: ...) to steer..."
             rows="1"
             class="flex-1 bg-theme-bg/60 border border-theme-border rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-theme-primary resize-none text-theme-text custom-scrollbar"
           ></textarea>
@@ -324,7 +384,7 @@
             type="button"
             onclick={() => sendMessage(messageInput)}
             disabled={!messageInput.trim() || guestChatStore.isGenerating}
-            class="px-4 bg-theme-primary text-theme-bg hover:bg-theme-secondary font-bold uppercase tracking-widest text-[10px] rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+            class="px-4 py-2.5 bg-theme-primary text-theme-bg hover:bg-theme-secondary font-bold uppercase tracking-widest text-[10px] rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             aria-label="Send message"
           >
             <span aria-hidden="true" class="icon-[lucide--send] w-4 h-4"></span>

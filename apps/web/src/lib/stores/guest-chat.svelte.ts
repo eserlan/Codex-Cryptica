@@ -6,6 +6,7 @@ import { oracle } from "./oracle.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { OracleExecutionContext } from "@codex/oracle-engine";
+import { extractCueAndQuery } from "@codex/oracle-engine";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import {
@@ -181,16 +182,21 @@ export class GuestChatStore {
     { characterId: string; assistantMsgId: string }
   >();
 
-  async sendMessage(characterId: string, content: string) {
+  async sendMessage(characterId: string, content: string, cue?: string) {
     if (!content.trim()) return;
 
     const transcript = this.transcripts[characterId];
     if (!transcript) return;
 
+    const { query: parsedQuery, cue: parsedCue } = extractCueAndQuery(content);
+    const effectiveQuery = parsedQuery || content.trim();
+    const effectiveCue = cue?.trim() || parsedCue;
+
     const userMsg: GuestChatMessage = {
       id: this.idGenerator.uuid(),
       role: "user",
-      content: content.trim(),
+      content: effectiveQuery,
+      cue: effectiveCue || undefined,
       timestamp: systemClock.now(),
     };
 
@@ -204,15 +210,26 @@ export class GuestChatStore {
     this.isGenerating = true;
 
     if (vault.isGuest && p2pGuestService.connected) {
-      await this.sendMessageViaHost(characterId, content.trim(), transcript);
+      await this.sendMessageViaHost(
+        characterId,
+        effectiveQuery,
+        effectiveCue,
+        transcript,
+      );
     } else {
-      await this.sendMessageLocally(characterId, content.trim(), transcript);
+      await this.sendMessageLocally(
+        characterId,
+        effectiveQuery,
+        effectiveCue,
+        transcript,
+      );
     }
   }
 
   private async sendMessageViaHost(
     characterId: string,
     query: string,
+    cue: string | undefined,
     transcript: GuestChatTranscript,
   ) {
     const assistantMsgId = this.idGenerator.uuid();
@@ -238,6 +255,7 @@ export class GuestChatStore {
       characterId,
       guestUsername: sessionModeStore.guestUsername ?? "",
       query,
+      cue,
       history,
     });
 
@@ -290,6 +308,7 @@ export class GuestChatStore {
   private async sendMessageLocally(
     characterId: string,
     query: string,
+    cue: string | undefined,
     transcript: GuestChatTranscript,
   ) {
     try {
@@ -432,6 +451,7 @@ export class GuestChatStore {
         {
           type: "guest-chat",
           query,
+          cue,
           entityId: characterId,
           data: guestCharacterId ? { guestCharacterId } : undefined,
         },

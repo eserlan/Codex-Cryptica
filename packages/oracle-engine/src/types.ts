@@ -31,6 +31,7 @@ export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
+  cue?: string;
   type?: "text" | "image" | "wizard" | "roll";
   imageUrl?: string;
   imageBlob?: Blob;
@@ -75,6 +76,7 @@ export type OracleIntentType =
 export interface OracleIntent {
   type: OracleIntentType;
   query?: string;
+  cue?: string;
   data?: any;
   entityId?: string;
   entityName?: string;
