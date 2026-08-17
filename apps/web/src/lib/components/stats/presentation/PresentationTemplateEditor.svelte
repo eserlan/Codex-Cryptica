@@ -166,6 +166,8 @@
               } else {
                 out += `[${fid}]\n`;
               }
+            } else {
+              out += `[${fid}]\n`;
             }
           }
           out += `:::\n`;
@@ -1109,7 +1111,9 @@
                                 )}
                                 {@const override = fieldDisplayOverrides[fid]}
                                 <div
-                                  class="inline-flex items-center gap-1 rounded bg-theme-primary/10 border border-theme-primary/20 px-2 py-0.5 text-xs text-theme-text font-medium hover:border-theme-primary transition-colors select-none"
+                                  class="inline-flex items-center gap-1 rounded {f
+                                    ? 'bg-theme-primary/10 border border-theme-primary/20 text-theme-text hover:border-theme-primary'
+                                    : 'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-600 dark:text-amber-400 hover:border-amber-500'} px-2 py-0.5 text-xs font-medium transition-colors select-none"
                                 >
                                   <button
                                     type="button"
@@ -1137,13 +1141,24 @@
                                       )}
                                     class="inline-flex items-center gap-1 cursor-grab active:cursor-grabbing"
                                     aria-label={`${f?.label ?? fid} field options`}
-                                    title="Right-click for display options"
+                                    title={f
+                                      ? "Right-click for display options"
+                                      : "Field no longer exists in schema"}
                                   >
                                     <span
                                       class="icon-[lucide--grip-vertical] h-3 w-3 text-theme-muted"
                                       aria-hidden="true"
                                     ></span>
-                                    {f?.label ?? fid}
+                                    {#if !f}
+                                      <span
+                                        class="icon-[lucide--alert-triangle] h-3 w-3 text-amber-500 shrink-0"
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span class="italic">{fid} (missing)</span
+                                      >
+                                    {:else}
+                                      {f.label}
+                                    {/if}
                                     {#if override?.displayMode && override.displayMode !== "plain"}
                                       <span
                                         class="rounded bg-theme-primary/20 px-1 py-0.2 text-[9px] font-mono text-theme-primary font-bold"

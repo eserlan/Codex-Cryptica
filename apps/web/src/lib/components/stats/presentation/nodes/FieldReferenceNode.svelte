@@ -49,15 +49,9 @@
         : undefined),
   );
   const label = $derived(
-    node.hideLabel
-      ? ""
-      : node.label !== undefined
-        ? node.label
-        : (field?.label ?? node.fieldId),
+    node.hideLabel ? "" : (field?.label ?? node.label ?? node.fieldId),
   );
-  const accessibleLabel = $derived(
-    node.label !== undefined ? node.label : (field?.label ?? node.fieldId),
-  );
+  const accessibleLabel = $derived(field?.label ?? node.label ?? node.fieldId);
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
   const isNameTargetDice = $derived(mode === "name-target");
