@@ -183,6 +183,7 @@
 - [ ] T078 Add explicit standard-profile performance assertions for reducer p95 below 50 ms, visible busy feedback within 16 ms, non-model turn start below 2 minutes, and 100-turn restore below 2 seconds in `packages/adventure-engine/tests/performance.test.ts` and `apps/web/tests/performance/adventure-mode.spec.ts`, then run the scripted 30-turn, hidden-canary, agency, roll, isolation, offline, backup, and two-tab suite documented in `specs/160-solo-adventure-mode/quickstart.md`
 - [ ] T079 Run `bun run lint:types`, `bun run lint`, `bun run test`, `bun run test:coverage`, and `bun run build`; keep `packages/adventure-engine` at or above 70% coverage and record any justified exceptions in `specs/160-solo-adventure-mode/quickstart.md`
 - [ ] T080 Complete the manual acceptance walkthrough and confirm every stop-ship condition is absent, recording verification results in `specs/160-solo-adventure-mode/quickstart.md`
+- [x] T081 Add active-session Focus Mode with an optional browser fullscreen action, a collapsible utility rail, Escape-preserving Focus Mode behavior, user help, and focused success/failure component tests in `apps/web/src/lib/components/oracle/adventure/AdventureFocusPlay.svelte`, `apps/web/src/lib/components/oracle/adventure/adventure-fullscreen.ts`, and `apps/web/src/lib/config/help-content.ts`
 
 ---
 

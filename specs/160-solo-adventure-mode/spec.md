@@ -148,6 +148,9 @@ As a player, I want Oracle to request a roll only when an uncertain outcome matt
 - **FR-034**: If an adventure cannot be safely loaded, the system MUST preserve the original record, explain that it could not be opened, and avoid silently resetting or overwriting it.
 - **FR-035**: Adventure Mode MUST clearly communicate that owner-hidden GM state is hidden from the play surface but is not encrypted from the vault owner.
 - **FR-036**: When generation is unavailable offline, users MUST still be able to read the latest committed active or archived adventure, MUST retain any typed action or recorded roll outcome, and MUST receive a clear option to retry the unresolved action after reconnection without rerolling or changing committed state.
+- **FR-037**: During an active adventure, users MUST be able to enter and exit an optional, session-local Focus Mode that keeps the current play surface available while allowing supporting adventure tools to be shown or hidden.
+- **FR-038**: Focus Mode MAY offer browser fullscreen only through an explicit user action. If fullscreen is unavailable or denied, Focus Mode MUST remain usable; leaving browser fullscreen with Escape MUST NOT exit Focus Mode.
+- **FR-039**: Focus Mode MUST NOT alter, persist into, or expose additional adventure, vault, or owner-hidden GM data.
 
 ### Key Entities
 
