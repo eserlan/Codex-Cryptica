@@ -3,7 +3,6 @@ import { openDB, type IDBPDatabase } from "idb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const DB_NAME = "CodexCryptica";
-const DB_VERSION = 7;
 const PROPOSAL_STORE = "proposals";
 
 function normalizeTargetId(value: string): string {
@@ -49,12 +48,12 @@ export class ProposerService implements IProposerService {
   };
 
   private dbName: string;
-  private dbVersion: number;
+  private dbVersion: number | undefined;
   private now: () => number;
 
   constructor(
     dbName: string = DB_NAME,
-    dbVersion: number = DB_VERSION,
+    dbVersion?: number,
     externalDbPromise?: Promise<IDBPDatabase<any>>,
     now: () => number = Date.now,
   ) {
@@ -68,47 +67,52 @@ export class ProposerService implements IProposerService {
 
   private getDB() {
     if (!this.dbPromise) {
-      this.dbPromise = openDB(this.dbName, this.dbVersion, {
-        // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
-        // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
-        // for creating the 'proposals' store.
-        upgrade(db, oldVersion, _newVersion, transaction) {
-          if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
-            const store = db.createObjectStore(PROPOSAL_STORE, {
-              keyPath: "id",
-            });
-            store.createIndex("by-source", "sourceId");
-            store.createIndex("by-status", "status");
-            store.createIndex("by-vault", "vaultId");
-            store.createIndex("by-vault-status", ["vaultId", "status"]);
-            store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
-          } else if (oldVersion < 8) {
-            const store = transaction.objectStore(PROPOSAL_STORE);
-            if (!store.indexNames.contains("by-vault")) {
+      if (this.dbVersion !== undefined) {
+        this.dbPromise = openDB(this.dbName, this.dbVersion, {
+          // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
+          // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
+          // for creating the 'proposals' store.
+          upgrade(db, oldVersion, _newVersion, transaction) {
+            if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
+              const store = db.createObjectStore(PROPOSAL_STORE, {
+                keyPath: "id",
+              });
+              store.createIndex("by-source", "sourceId");
+              store.createIndex("by-status", "status");
               store.createIndex("by-vault", "vaultId");
-            }
-            if (!store.indexNames.contains("by-vault-status")) {
               store.createIndex("by-vault-status", ["vaultId", "status"]);
-            }
-            if (!store.indexNames.contains("by-vault-source")) {
               store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+            } else if (oldVersion < 8) {
+              const store = transaction.objectStore(PROPOSAL_STORE);
+              if (!store.indexNames.contains("by-vault")) {
+                store.createIndex("by-vault", "vaultId");
+              }
+              if (!store.indexNames.contains("by-vault-status")) {
+                store.createIndex("by-vault-status", ["vaultId", "status"]);
+              }
+              if (!store.indexNames.contains("by-vault-source")) {
+                store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+              }
             }
-          }
-        },
-        blocking: () => {
-          console.warn(
-            "[ProposerService] DB Upgrade requested. Closing connection.",
-          );
-          if (this.dbPromise) {
-            this.dbPromise.then((db) => db.close());
+          },
+          blocking: () => {
+            console.warn(
+              "[ProposerService] DB Upgrade requested. Closing connection.",
+            );
+            if (this.dbPromise) {
+              this.dbPromise.then((db) => db.close());
+              this.dbPromise = undefined;
+            }
+          },
+          terminated: () => {
+            console.error("[ProposerService] DB Connection terminated.");
             this.dbPromise = undefined;
-          }
-        },
-        terminated: () => {
-          console.error("[ProposerService] DB Connection terminated.");
-          this.dbPromise = undefined;
-        },
-      });
+          },
+        });
+      } else {
+        // When no dbVersion is specified, open without forcing a version downgrade to avoid VersionError.
+        this.dbPromise = openDB(this.dbName);
+      }
     }
     return this.dbPromise;
   }

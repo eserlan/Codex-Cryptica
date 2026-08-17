@@ -29,7 +29,7 @@ export class GDriveSyncWorker {
     authProxy: WorkerAuthProxy,
     eventBusProxy: WorkerEventBusProxy,
     dbName: string,
-    dbVersion: number,
+    dbVersion?: number,
   ) {
     console.log(
       `[GDriveSyncWorker] Starting ${direction} for vault: ${vaultId}`,
@@ -43,7 +43,10 @@ export class GDriveSyncWorker {
     });
 
     try {
-      const db = await openDB(dbName, dbVersion);
+      const db =
+        dbVersion !== undefined
+          ? await openDB(dbName, dbVersion)
+          : await openDB(dbName);
       const registry = new SyncRegistry(db);
       const syncService = new SyncService(registry);
       const metadataService = new CloudSyncMetadataService(registry);
