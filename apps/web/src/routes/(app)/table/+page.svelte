@@ -1,9 +1,14 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import { base } from "$app/paths";
   import { vault } from "$lib/stores/vault.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import {
     filterEntities,
@@ -37,8 +42,11 @@
   const vaultId = $derived(vault.activeVaultId);
 
   let searchQuery = $state("");
-  let typeFilters = $state<Set<string>>(new Set());
-  let labelFilters = $state<Set<string>>(new Set());
+  // Shared with the Graph view (same content, different presentation) so
+  // switching between "View as graph" / "Browse as table" keeps the same
+  // entities in view instead of silently resetting to everything.
+  const typeFilters = $derived(graph.activeCategories);
+  const labelFilters = $derived(graph.activeLabels);
   let showIncompleteOnly = $state(false);
   let columnFilters = $state<TableColumnFilters>({});
   let textMatchIds = $state<Set<string> | null>(null);
@@ -56,6 +64,12 @@
   const tableOpenSpan = browserPerformanceRecorder.start("table_open");
 
   const totalEntities = $derived(vault.allEntities.length);
+
+  const graphHref = $derived(
+    sessionModeStore.isGuestMode && guestVault.publishId
+      ? `${base}/guest/${guestVault.publishId}`
+      : `${base}/`,
+  );
 
   $effect(() => {
     const unsubscribe = searchService.subscribeIndexProgress((progress) => {
@@ -426,25 +440,15 @@
 
   function toggleType(type: string) {
     measureTableOperation("table_filter", () => {
-      const next = new Set(typeFilters);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      typeFilters = next;
+      graph.toggleCategoryFilter(type);
     });
   }
 
   function toggleLabel(label: string) {
     measureTableOperation("table_filter", () => {
-      const next = new Set(labelFilters);
-      if (next.has(label)) {
-        next.delete(label);
-      } else {
-        next.add(label);
-      }
-      labelFilters = next;
+      // Always multi-select: the table's label filters are checkboxes, not
+      // the graph HUD's click-vs-modifier-click chips.
+      explorerUIStore.toggleLabelFilter(label, true);
     });
   }
 
@@ -463,8 +467,8 @@
   function clearFilters() {
     measureTableOperation("table_filter", () => {
       searchQuery = "";
-      typeFilters = new Set();
-      labelFilters = new Set();
+      graph.clearCategoryFilters();
+      graph.clearLabelFilters();
       showIncompleteOnly = false;
       columnFilters = {};
     });
@@ -510,8 +514,8 @@
   function handleApplyPreset(preset: ViewPreset) {
     const s = preset.state;
     searchQuery = s.searchQuery ?? "";
-    typeFilters = new Set(s.activeCategories);
-    labelFilters = new Set(s.activeLabels);
+    graph.activeCategories = new Set(s.activeCategories);
+    graph.activeLabels = new Set(s.activeLabels);
     showIncompleteOnly = s.showIncompleteOnly ?? false;
     columnFilters = s.columnFilters ? { ...s.columnFilters } : {};
     if (s.tableSort) {
@@ -521,8 +525,8 @@
 
   function handleResetFilters() {
     searchQuery = "";
-    typeFilters = new Set();
-    labelFilters = new Set();
+    graph.clearCategoryFilters();
+    graph.clearLabelFilters();
     showIncompleteOnly = false;
     columnFilters = {};
     sort = { key: "title", direction: "asc" };
@@ -543,15 +547,27 @@
   class="flex h-full flex-col gap-3 md:gap-4 bg-theme-bg p-3 sm:p-4 md:p-6"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <header class="flex flex-col gap-0.5 md:gap-1">
-    <h1
-      class="font-header text-base md:text-lg font-bold uppercase tracking-wider text-theme-text"
+  <header class="flex items-start justify-between gap-3">
+    <div class="flex flex-col gap-0.5 md:gap-1">
+      <h1
+        class="font-header text-base md:text-lg font-bold uppercase tracking-wider text-theme-text"
+      >
+        Entity Table
+      </h1>
+      <p class="text-xs text-theme-muted hidden sm:block">
+        Browse, filter, and sort every entity in this vault.
+      </p>
+    </div>
+
+    <a
+      href={graphHref}
+      class="flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-theme-border bg-theme-surface/80 px-2 text-[10px] font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
+      data-testid="table-browse-as-graph"
+      title="Browse the same entities as a knowledge graph"
     >
-      Entity Table
-    </h1>
-    <p class="text-xs text-theme-muted hidden sm:block">
-      Browse, filter, and sort every entity in this vault.
-    </p>
+      <span aria-hidden="true" class="icon-[lucide--network] h-4 w-4"></span>
+      View as graph
+    </a>
   </header>
 
   {#if !vault.isInitialized}
