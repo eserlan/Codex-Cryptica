@@ -50,12 +50,13 @@ if (fs.existsSync(helpContentFile)) {
     fullContent += `## Core Features\n\n`;
     const featureHintsSection = featureHintsMatch[1];
     
-    // Use a more robust regex with /s flag for multi-line support
-    const featureRegex = /title:\s*"(.*?)",\s*content:\s*"(.*?)"/gs;
+    // Support single quotes, double quotes, and template literals for title and content
+    const featureRegex = /title:\s*["'](.*?)["'],\s*content:\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`)/gs;
     let match;
     while ((match = featureRegex.exec(featureHintsSection)) !== null) {
       const title = match[1];
-      const description = match[2].replace(/\\n/g, '\n'); // Handle escaped newlines
+      const rawContent = match[2] ?? match[3] ?? match[4] ?? '';
+      const description = rawContent.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\'/g, "'");
       fullContent += `### ${title}\n${description}\n\n`;
     }
   }
