@@ -4,16 +4,20 @@ import { runWithConcurrency, summarizeBulkMutation } from "./bulk-results";
 describe("bulk mutation results", () => {
   it("normalizes missing IDs and groups outcomes", () => {
     const result = summarizeBulkMutation(
-      ["a", "b", "c"],
+      ["a", "b", "c", "d"],
       [
         { id: "a", status: "success" },
         { id: "b", status: "failed" },
+        { id: "d", status: "cancelled" },
       ],
     );
 
+    expect(result.requested).toBe(4);
     expect(result.succeededIds).toEqual(["a"]);
     expect(result.failedIds).toEqual(["b"]);
     expect(result.skippedIds).toEqual(["c"]);
+    expect(result.cancelledIds).toEqual(["d"]);
+    expect(result.items).toHaveLength(4);
   });
 
   it("does not exceed the configured concurrency", async () => {
