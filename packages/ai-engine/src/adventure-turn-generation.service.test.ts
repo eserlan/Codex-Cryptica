@@ -28,6 +28,8 @@ const session = {
   provisionalFacts: [],
   turns: [],
   pendingRoll: null,
+  dicePresets: [],
+  resourceCounters: [],
 };
 
 const completeResponse = JSON.stringify({

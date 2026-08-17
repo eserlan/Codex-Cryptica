@@ -125,12 +125,21 @@ export interface HiddenStatePatch {
   gmThreads: CollectionPatch<HiddenThread>;
 }
 
+/** Snapshot of a resolved roll, captured on the turn that resolved it. See data-model.md "Resolved Roll snapshot". */
+export interface ResolvedRollSnapshot {
+  expression?: string;
+  bands?: OutcomeBand[];
+  outcome: SuppliedRollOutcome;
+}
+
 export interface CommittedAdventureTurn {
   id: string;
   sequence: number;
   inputId: string;
   playerAction: string;
   rollOutcome?: SuppliedRollOutcome;
+  /** Set once, at commit time, when this turn resolves the session's pendingRoll. Never mutated afterward. */
+  resolvedRoll?: ResolvedRollSnapshot;
   narration: string;
   visiblePatch: VisibleStatePatch;
   hiddenPatch: HiddenStatePatch;
@@ -141,8 +150,25 @@ export interface CommittedAdventureTurn {
   suggestedActions?: string[];
 }
 
+/** A user-named, reusable dice expression. Convenience only — never changes when Oracle requests a roll. */
+export interface DicePreset {
+  id: string;
+  label: string;
+  expression: string;
+  createdAt: string;
+}
+
+/** A user-named, system-agnostic numeric value scoped to an adventure (e.g. ammo, favor, a countdown). */
+export interface ResourceCounter {
+  id: string;
+  label: string;
+  value: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AdventureSession {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   id: string;
   vaultId: string;
   title: string;
@@ -159,6 +185,10 @@ export interface AdventureSession {
   provisionalFacts: ProvisionalFact[];
   turns: CommittedAdventureTurn[];
   pendingRoll: PendingRoll | null;
+  /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
+  dicePresets: DicePreset[];
+  /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
+  resourceCounters: ResourceCounter[];
 }
 
 export interface CompletedTurnProposal {
@@ -231,3 +261,25 @@ export interface ResolvedSourceExcerpt {
   lore?: string;
   role: SourceRecordReference["role"];
 }
+
+/**
+ * A deterministic, client-side render of committed visible state and recent
+ * transcript. No field here may ever be sourced from HiddenAdventureState —
+ * see research.md "Recap and visible-state inspection".
+ */
+export interface AdventureRecap {
+  location?: StateFact;
+  situation?: StateFact;
+  objectives: StateFact[];
+  activeCharacters: StateFact[];
+  knownFacts: StateFact[];
+  recentTurnSummaries: string[];
+}
+
+/** A roll history entry: a committed turn paired with the roll it resolved. */
+export interface RollHistoryEntry {
+  turn: CommittedAdventureTurn;
+  resolvedRoll: ResolvedRollSnapshot;
+}
+
+export type StateCorrectionOutcome = "applied" | "stale-revision";

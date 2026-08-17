@@ -2,9 +2,12 @@ import { z } from "zod";
 import type {
   AdventureSession,
   AdventureTurnProposal,
+  DicePreset,
   HiddenStatePatch,
   OutcomeBand,
   ProvisionalFact,
+  ResolvedRollSnapshot,
+  ResourceCounter,
   SuppliedRollOutcome,
   VisibleStatePatch,
 } from "./types";
@@ -98,6 +101,27 @@ const bandSchema = z.object({
   maximum: z.number().finite().optional(),
 });
 
+const resolvedRollSchema = z.object({
+  expression: text.optional(),
+  bands: z.array(bandSchema).min(1).max(12).optional(),
+  outcome: outcomeSchema,
+});
+
+const dicePresetSchema = z.object({
+  id,
+  label: text,
+  expression: text,
+  createdAt: timestamp,
+});
+
+const resourceCounterSchema = z.object({
+  id,
+  label: text,
+  value: z.number().finite(),
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+
 const pendingRollSchema = z.object({
   id,
   inputId: id,
@@ -176,7 +200,7 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
 ]);
 
 export const adventureSessionSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.union([z.literal(1), z.literal(2)]),
   id,
   vaultId: id,
   title: text,
@@ -199,6 +223,7 @@ export const adventureSessionSchema = z.object({
       // The opening turn has no player action yet.
       playerAction: z.string().max(MAX_TEXT_CHARS),
       rollOutcome: outcomeSchema.optional(),
+      resolvedRoll: resolvedRollSchema.optional(),
       narration,
       visiblePatch: visiblePatchSchema,
       hiddenPatch: hiddenPatchSchema,
@@ -210,6 +235,13 @@ export const adventureSessionSchema = z.object({
     }),
   ),
   pendingRoll: pendingRollSchema.nullable(),
+  // Phase 2, additive: absent on a schemaVersion 1 document, defaulted to [] on load.
+  dicePresets: z.array(dicePresetSchema).max(20).optional().default([]),
+  resourceCounters: z
+    .array(resourceCounterSchema)
+    .max(20)
+    .optional()
+    .default([]),
 });
 
 export function parseAdventureSession(input: unknown): AdventureSession {
@@ -248,3 +280,6 @@ export type SchemaHiddenPatch = HiddenStatePatch;
 export type SchemaOutcome = SuppliedRollOutcome;
 export type SchemaOutcomeBand = OutcomeBand;
 export type SchemaProvisionalFact = ProvisionalFact;
+export type SchemaResolvedRoll = ResolvedRollSnapshot;
+export type SchemaDicePreset = DicePreset;
+export type SchemaResourceCounter = ResourceCounter;
