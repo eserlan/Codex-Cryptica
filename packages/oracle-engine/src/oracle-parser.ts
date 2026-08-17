@@ -160,7 +160,8 @@ export class OracleCommandParser {
         };
     }
 
-    return { type: "chat", query, isAIIntent: !aiDisabled };
+    const { query: cleanQuery, cue } = extractCueAndQuery(query);
+    return { type: "chat", query: cleanQuery, cue, isAIIntent: !aiDisabled };
   }
 
   static detectImageIntent(query: string): boolean {
@@ -311,4 +312,43 @@ export class OracleCommandParser {
 
     return false;
   }
+}
+
+/**
+ * Extracts optional director/oracle cues formatted as `(Cue: ...)`, `[Cue: ...]`,
+ * `[Oracle: ...]`, or `(Oracle: ...)` either at the beginning or end of a query string.
+ */
+export function extractCueAndQuery(rawQuery: string): {
+  query: string;
+  cue?: string;
+} {
+  const trimmed = rawQuery.trim();
+  if (!trimmed) return { query: "" };
+
+  // Match prefix: (Cue: ...) or [Cue: ...] or [Oracle: ...] or (Oracle: ...)
+  const prefixMatch = trimmed.match(
+    /^(?:\((?:cue|oracle):\s*([\s\S]*?)\)|\[(?:cue|oracle):\s*([\s\S]*?)\])\s*([\s\S]*)$/i,
+  );
+  if (prefixMatch) {
+    const cue = (prefixMatch[1] ?? prefixMatch[2] ?? "").trim();
+    const restQuery = prefixMatch[3].trim();
+    return {
+      query: restQuery || cue,
+      cue: cue || undefined,
+    };
+  }
+
+  // Match suffix: <query> (Cue: ...) or <query> [Oracle: ...]
+  const suffixMatch = trimmed.match(
+    /^([\s\S]*?)\s*(?:\((?:cue|oracle):\s*([\s\S]*?)\)|\[(?:cue|oracle):\s*([\s\S]*?)\])$/i,
+  );
+  if (suffixMatch && suffixMatch[1].trim()) {
+    const cue = (suffixMatch[2] ?? suffixMatch[3] ?? "").trim();
+    return {
+      query: suffixMatch[1].trim(),
+      cue: cue || undefined,
+    };
+  }
+
+  return { query: trimmed };
 }

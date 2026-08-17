@@ -3,6 +3,7 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { characterChatExportService } from "$lib/services/character-chat-export";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { tick } from "svelte";
 
   let { entity } = $props<{ entity: Entity }>();
@@ -10,6 +11,8 @@
   let editingMessageId = $state<string | null>(null);
   let messageEditContent = $state("");
   let messageInput = $state("");
+  let cueInput = $state("");
+  let showCueInput = $state(false);
   let chatContainer = $state<HTMLElement | null>(null);
   let isStarting = $state(false);
   let isSending = $state(false);
@@ -160,8 +163,11 @@
     isSending = true;
     try {
       const message = messageInput;
+      const cue = cueInput.trim() || undefined;
       messageInput = "";
-      await guestChatStore.sendMessage(entity.id, message);
+      cueInput = "";
+      showCueInput = false;
+      await guestChatStore.sendMessage(entity.id, message, cue);
       await scrollToBottom();
     } finally {
       isSending = false;
@@ -190,11 +196,15 @@
   }
 
   async function deleteMessage(messageId: string) {
-    if (
-      confirm(
+    const confirmed = await notificationStore.confirm({
+      title: "Delete Message",
+      message:
         "Are you sure you want to delete this message from your chat history?",
-      )
-    ) {
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+    if (confirmed) {
       await guestChatStore.deleteMessage(entity.id, messageId);
     }
   }
@@ -528,6 +538,23 @@
               </div>
             </div>
           {:else}
+            {#if message.cue}
+              <div
+                class="flex items-center gap-1 text-[10px] font-semibold text-amber-400/90 mb-0.5 {message.role ===
+                'user'
+                  ? 'justify-end'
+                  : 'justify-start'}"
+              >
+                <span
+                  class="icon-[lucide--sparkles] w-3 h-3 text-amber-400 shrink-0"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px]"
+                  >Cue: {message.cue}</span
+                >
+              </div>
+            {/if}
             <div
               class="w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
               {message.role === 'user'
@@ -569,31 +596,79 @@
     </div>
 
     <div
-      class="flex gap-2 items-end border-t border-theme-border/50 pt-2 shrink-0"
+      class="flex flex-col gap-1.5 border-t border-theme-border/50 pt-2 shrink-0"
     >
-      <label class="sr-only" for="character-chat-message"
-        >Message {entity.title}</label
-      >
-      <textarea
-        id="character-chat-message"
-        bind:value={messageInput}
-        onkeydown={handleKeydown}
-        placeholder="Type a message..."
-        disabled={guestChatStore.isGenerating}
-        class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
-        rows="2"
-      ></textarea>
-      <button
-        type="button"
-        onclick={sendMessage}
-        disabled={!messageInput.trim() ||
-          guestChatStore.isGenerating ||
-          isSending}
-        class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
-        aria-label="Send message to {entity.title}"
-      >
-        <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"></span>
-      </button>
+      {#if showCueInput}
+        <div
+          class="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-xs"
+        >
+          <span
+            class="icon-[lucide--sparkles] w-3.5 h-3.5 text-amber-400 shrink-0"
+            aria-hidden="true"
+          ></span>
+          <label for="character-chat-cue" class="sr-only"
+            >Oracle / Director Cue</label
+          >
+          <input
+            id="character-chat-cue"
+            type="text"
+            bind:value={cueInput}
+            placeholder="Oracle / Director Cue (e.g. Yes, but... / Crown, Cushion / Angry refusal)"
+            class="flex-1 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
+          />
+          {#if cueInput}
+            <button
+              type="button"
+              onclick={() => (cueInput = "")}
+              class="text-theme-muted hover:text-theme-text p-0.5 cursor-pointer"
+              aria-label="Clear cue"
+            >
+              <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"></span>
+            </button>
+          {/if}
+        </div>
+      {/if}
+
+      <div class="flex gap-2 items-end">
+        <button
+          type="button"
+          onclick={() => (showCueInput = !showCueInput)}
+          class="flex min-h-12 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition p-2.5 {showCueInput ||
+          cueInput
+            ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+            : 'border-theme-border bg-theme-surface/50 text-theme-muted hover:text-theme-text'}"
+          title="Toggle Oracle / Director Cue"
+          aria-label="Toggle Oracle / Director Cue"
+          aria-pressed={showCueInput}
+        >
+          <span aria-hidden="true" class="icon-[lucide--sparkles] w-4.5 h-4.5"
+          ></span>
+        </button>
+        <label class="sr-only" for="character-chat-message"
+          >Message {entity.title}</label
+        >
+        <textarea
+          id="character-chat-message"
+          bind:value={messageInput}
+          onkeydown={handleKeydown}
+          placeholder="Type a message or (Cue: ...) to steer..."
+          disabled={guestChatStore.isGenerating}
+          class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
+          rows="2"
+        ></textarea>
+        <button
+          type="button"
+          onclick={sendMessage}
+          disabled={!messageInput.trim() ||
+            guestChatStore.isGenerating ||
+            isSending}
+          class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
+          aria-label="Send message to {entity.title}"
+        >
+          <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"
+          ></span>
+        </button>
+      </div>
     </div>
   {/if}
 </div>

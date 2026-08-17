@@ -122,6 +122,7 @@ export const GuestChatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
   content: z.string(),
+  cue: z.string().optional(),
   timestamp: z.number(),
 });
 
