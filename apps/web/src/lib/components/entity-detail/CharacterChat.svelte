@@ -47,6 +47,14 @@
     sessions.filter((session) => session.id !== transcript?.id),
   );
 
+  const hasPersonality = $derived.by(() => {
+    const lore = entity.lore || "";
+    return (
+      /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore) ||
+      Boolean(entity.guestChatConfig?.extraInstructions?.trim())
+    );
+  });
+
   function speakerLabel(forSpeakerId?: string) {
     if (!forSpeakerId) return "Yourself";
     return vault.entities[forSpeakerId]?.title ?? "Unknown character";
@@ -238,6 +246,27 @@
         Chat with {entity.title}. The AI will respond in character using the
         configured scope.
       </p>
+      {#if !hasPersonality}
+        <div
+          class="mb-4 w-full max-w-sm rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-left text-xs text-amber-400"
+          role="alert"
+        >
+          <div class="flex items-center gap-1.5 font-bold">
+            <span
+              class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0"
+              aria-hidden="true"
+            ></span>
+            Voice Guidance Missing
+          </div>
+          <p class="mt-1 text-[11px] leading-relaxed text-amber-300/90">
+            This character lacks a <code
+              class="rounded bg-black/30 px-1 py-0.5 font-mono text-[10px]"
+              >## Personality & Voice</code
+            > section in GM Lore. Edit this character or add the section so the AI
+            knows how to respond.
+          </p>
+        </div>
+      {/if}
       <div class="mb-4 w-full max-w-sm text-left">
         <label
           for="character-chat-speaker"
@@ -406,6 +435,24 @@
             </button>
           </div>
         </div>
+      </div>
+    {/if}
+
+    {#if !hasPersonality}
+      <div
+        class="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-400"
+        role="alert"
+      >
+        <span
+          class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0"
+          aria-hidden="true"
+        ></span>
+        <span>
+          <strong>Voice Guidance Missing:</strong> Add a
+          <code class="rounded bg-black/30 px-1 py-0.5 font-mono text-[11px]"
+            >## Personality & Voice</code
+          > section in GM Lore or edit this character to generate one.
+        </span>
       </div>
     {/if}
     <div

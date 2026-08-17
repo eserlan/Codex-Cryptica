@@ -56,6 +56,24 @@ describe("CharacterChat", () => {
     guestChatStore.isGenerating = false;
   });
 
+  it("displays a voice guidance warning when character lacks personality notes", () => {
+    render(CharacterChat, { entity: character });
+
+    expect(screen.getByText("Voice Guidance Missing")).toBeTruthy();
+    expect(screen.getByText(/This character lacks a/i)).toBeTruthy();
+  });
+
+  it("does not show voice guidance warning when personality notes are present in lore", () => {
+    render(CharacterChat, {
+      entity: {
+        ...character,
+        lore: "## Personality & Voice\n- Speaks gruffly.",
+      },
+    });
+
+    expect(screen.queryByText("Voice Guidance Missing")).toBeNull();
+  });
+
   it("lets a host start a character chat once it is enabled", async () => {
     render(CharacterChat, { entity: character });
 

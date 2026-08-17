@@ -74,7 +74,7 @@ describe("GuestChatExecutor", () => {
     );
   });
 
-  it("rejects disabled or personality-less characters", async () => {
+  it("rejects disabled characters with an unavailable notice", async () => {
     const executor = new GuestChatExecutor();
     const addMessage = vi.fn();
     const generateResponse = vi.fn();
@@ -97,6 +97,35 @@ describe("GuestChatExecutor", () => {
     expect(addMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         content: expect.stringContaining("no longer available"),
+      }),
+    );
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
+
+  it("rejects characters without personality or voice guidance with an actionable error", async () => {
+    const executor = new GuestChatExecutor();
+    const addMessage = vi.fn();
+    const generateResponse = vi.fn();
+    const ctx = makeContext(
+      {
+        "char-1": {
+          id: "char-1",
+          type: "character",
+          lore: "## Other Section\nSome notes.",
+          guestChatConfig: { isEnabled: true, extraInstructions: "" },
+        },
+      },
+      { textGeneration: { generateResponse } },
+    );
+    ctx.chatHistory.addMessage = addMessage;
+
+    await executor.execute(
+      { type: "guest-chat", query: "hello", entityId: "char-1" },
+      ctx,
+    );
+    expect(addMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("Personality & Voice"),
       }),
     );
     expect(generateResponse).not.toHaveBeenCalled();

@@ -374,7 +374,8 @@ export class GuestChatExecutor
           await context.chatHistory.addMessage({
             id: this.idGenerator.uuid(),
             role: "system",
-            content: "❌ This character is no longer available for guest chat.",
+            content:
+              "❌ Character chat requires a 'Personality & Voice' section in GM Lore or custom instructions in Guest Chat settings.",
           });
           await this.emit(context, {
             type: ORACLE_EVENTS.COMMAND_COMPLETED,
