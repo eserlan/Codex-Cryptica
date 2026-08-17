@@ -27,6 +27,7 @@ jobs:
           node-version: 24
 
       - name: Sync semantic labels
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/pr-labeler.mjs
