@@ -1,5 +1,6 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
+  import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import { adventureContextService } from "$lib/services/adventure/adventure-context-service";
@@ -117,11 +118,20 @@
         repository={adventureSessionRepository}
         {vaultId}
         onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
-        onResumeArchived={(sessionId) =>
-          oracle.adventure.resumeArchived(vaultId, sessionId)}
+        onResumeArchived={async (sessionId) => {
+          await oracle.adventure.resumeArchived(vaultId, sessionId);
+        }}
       />
     {/key}
   {:else}
     <AdventureStart manager={oracle.adventure} {vaultId} />
+    <AdventureArchive
+      repository={adventureSessionRepository}
+      {vaultId}
+      onResume={(sessionId) => oracle.adventure.open(vaultId, sessionId)}
+      onResumeArchived={async (sessionId) => {
+        await oracle.adventure.resumeArchived(vaultId, sessionId);
+      }}
+    />
   {/if}
 </div>

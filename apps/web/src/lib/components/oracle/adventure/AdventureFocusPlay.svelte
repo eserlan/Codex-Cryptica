@@ -38,6 +38,7 @@
   let utilitiesOpen = $state(true);
   let focusElement = $state<HTMLElement>();
   let fullscreenElement = $state<Element | null>(null);
+  let fullscreenTransitioning = $state(false);
   const isFullscreen = $derived(fullscreenElement === focusElement);
 
   async function enterFullscreen(): Promise<void> {
@@ -51,16 +52,30 @@
   }
 
   async function toggleFullscreen(): Promise<void> {
-    if (isFullscreen) {
-      await exitAdventureFullscreen(document);
-      return;
+    if (fullscreenTransitioning) return;
+    fullscreenTransitioning = true;
+
+    try {
+      if (isFullscreen) {
+        await exitAdventureFullscreen(document);
+        return;
+      }
+      await enterFullscreen();
+    } finally {
+      fullscreenTransitioning = false;
     }
-    await enterFullscreen();
   }
 
   async function leaveFocusMode(): Promise<void> {
-    await exitAdventureFullscreen(document);
-    focusMode = false;
+    if (fullscreenTransitioning) return;
+    fullscreenTransitioning = true;
+
+    try {
+      await exitAdventureFullscreen(document);
+      focusMode = false;
+    } finally {
+      fullscreenTransitioning = false;
+    }
   }
 </script>
 
@@ -122,6 +137,7 @@
           class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           type="button"
           aria-pressed={isFullscreen}
+          disabled={fullscreenTransitioning}
           onclick={() => void toggleFullscreen()}
         >
           <span class="inline-flex items-center gap-2">
@@ -137,6 +153,7 @@
         <button
           class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           type="button"
+          disabled={fullscreenTransitioning}
           onclick={() => void leaveFocusMode()}
         >
           <span class="inline-flex items-center gap-2">
