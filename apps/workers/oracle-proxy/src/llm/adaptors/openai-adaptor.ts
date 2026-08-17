@@ -19,6 +19,29 @@ const OPENAI_CHAT_COMPLETIONS_URL =
   "https://api.openai.com/v1/chat/completions";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 
+function supportsOpenAiJsonSchema(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as { type?: unknown }).type === "object" &&
+    !Array.isArray((schema as { oneOf?: unknown }).oneOf)
+  );
+}
+
+function ensureJsonInstruction(
+  messages: Array<{ role: string; content: string }>,
+): void {
+  if (
+    messages.some((message) => message.content.toLowerCase().includes("json"))
+  ) {
+    return;
+  }
+  messages.unshift({
+    role: "system",
+    content: "Respond with valid JSON.",
+  });
+}
+
 interface OpenAiEnv {
   OPENAI_API_KEY?: string;
 }
@@ -74,7 +97,7 @@ export async function callOpenAi(
   }
 
   if (wantsStructuredOutput(request)) {
-    if (request.schema) {
+    if (request.schema && supportsOpenAiJsonSchema(request.schema)) {
       // OpenAI's `strict: true` structured-output mode rejects any schema
       // that doesn't set `additionalProperties: false` on every object level
       // and list every property as `required` — callers of this pipeline
@@ -95,6 +118,7 @@ export async function callOpenAi(
       // prompt mentions JSON when requesting structured-generation without
       // a schema.
       body.response_format = { type: "json_object" };
+      ensureJsonInstruction(messages);
     }
   }
 
@@ -244,11 +268,13 @@ export async function forwardInteractionToOpenAi(
     const mimeType = genConfig.responseMimeType ?? genConfig.response_mime_type;
     if (mimeType === "application/json") {
       payload.text = { format: { type: "json_object" } };
-      // OpenAI's schema-less json_object mode 400s unless "json" appears
-      // somewhere in the instructions/input (same constraint callOpenAi
-      // documents for chat/completions' json_object mode). Guarantee it here
-      // rather than trusting every Interactions-path caller's system
-      // instruction to happen to mention it.
+      // The Responses API checks the submitted turn input itself for "json";
+      // mentioning it only in `instructions` still produces a 400. Keep the
+      // marker in both places: input satisfies that API constraint, while
+      // instructions keeps the rule explicit across continued turns.
+      if (typeof payload.input === "string") {
+        payload.input = `Respond with valid JSON.\n\n${payload.input}`;
+      }
       payload.instructions = payload.instructions
         ? `${payload.instructions}\n\nRespond with valid JSON.`
         : "Respond with valid JSON.";

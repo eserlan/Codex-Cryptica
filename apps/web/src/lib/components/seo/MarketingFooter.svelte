@@ -1,5 +1,11 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import {
+    DISCORD_URL,
+    GITHUB_URL,
+    REDDIT_URL,
+    PATREON_URL,
+  } from "$lib/config";
   const cleanBase = base === "/" ? "" : base;
 
   let {
@@ -18,6 +24,38 @@
   >
     <div>© 2026 Codex Cryptica. All rights reserved.</div>
     <div class="flex flex-wrap items-center justify-center gap-6">
+      {#if DISCORD_URL}
+        <a
+          href={DISCORD_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-theme-primary transition-colors">Discord</a
+        >
+      {/if}
+      {#if REDDIT_URL}
+        <a
+          href={REDDIT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-theme-primary transition-colors">Reddit</a
+        >
+      {/if}
+      {#if GITHUB_URL}
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-theme-primary transition-colors">GitHub</a
+        >
+      {/if}
+      {#if PATREON_URL}
+        <a
+          href={PATREON_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-theme-primary transition-colors">Patreon</a
+        >
+      {/if}
       {#each extraLinks as link (link.href)}
         <a
           href="{cleanBase}{link.href}"

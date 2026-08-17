@@ -4,6 +4,9 @@ test.describe("AI Disabled", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
+      // The Activity Bar (including the Oracle tool this test drives) is
+      // hidden in Guided Mode, which is on by default.
+      localStorage.setItem("codex_guided_mode_active", "false");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),

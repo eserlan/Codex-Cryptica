@@ -57,6 +57,7 @@ describe("registry lookup", () => {
       "secret-society",
       "star-system",
       "alien-race",
+      "random-table",
     ]);
   });
 
@@ -626,6 +627,56 @@ describe("draft mapping", () => {
     );
     expect(draft.unmappedDetails).toBe("extra");
   });
+
+  it("extracts and deduplicates contextProvenance from vaultContext", () => {
+    const gen = getGenerator("npc");
+    const draft = gen.mapOutputToDraft(
+      { title: "X", summary: "s", lore: "l", labels: [] },
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          sourceEntity: {
+            id: "source-1",
+            title: "Silver Keep",
+            type: "location",
+            contentExcerpt: "",
+          },
+          neighbors: [
+            {
+              id: "neighbor-1",
+              title: "Lord Varis",
+              type: "character",
+              contentExcerpt: "",
+            },
+            {
+              id: "source-1",
+              title: "Silver Keep",
+              type: "location",
+              contentExcerpt: "",
+            },
+          ],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(draft.contextProvenance).toEqual([
+      { id: "source-1", title: "Silver Keep" },
+      { id: "neighbor-1", title: "Lord Varis" },
+    ]);
+  });
+
+  it("leaves contextProvenance undefined when vaultContext has no sourceEntity or neighbors", () => {
+    const gen = getGenerator("npc");
+    const draft = gen.mapOutputToDraft(
+      { title: "X", summary: "s", lore: "l", labels: [] },
+      run("npc"),
+    );
+    expect(draft.contextProvenance).toBeUndefined();
+  });
 });
 
 describe("buildPrompt template injection", () => {
@@ -1174,6 +1225,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "secret-society": "faction",
       "star-system": "location",
       "alien-race": "creature",
+      "random-table": "table",
     });
   });
 

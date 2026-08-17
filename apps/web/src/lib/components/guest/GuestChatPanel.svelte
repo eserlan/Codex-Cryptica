@@ -2,6 +2,7 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible, type Entity } from "schema";
+  import { characterChatExportService } from "$lib/services/character-chat-export";
   import GuestChatBubble from "./GuestChatBubble.svelte";
   import { tick } from "svelte";
 
@@ -73,6 +74,36 @@
     await tick();
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }
+
+  let isCopying = $state(false);
+  let isSavingJournal = $state(false);
+
+  async function copyConversation() {
+    if (!currentTranscript || !activeCharacter || isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(currentTranscript, {
+        characterTitle: activeCharacter.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
+
+  async function sendToJournal() {
+    if (!currentTranscript || !activeCharacter || isSavingJournal) return;
+    isSavingJournal = true;
+    try {
+      await characterChatExportService.sendConversationToJournal(
+        currentTranscript,
+        {
+          characterTitle: activeCharacter.title,
+        },
+      );
+    } finally {
+      isSavingJournal = false;
     }
   }
 
@@ -170,23 +201,57 @@
           </div>
         </div>
 
-        <button
-          type="button"
-          onclick={() => {
-            if (
-              confirm(
-                `Are you sure you want to reset your conversation memory with ${activeCharacter?.title}?`,
-              )
-            ) {
-              guestChatStore.clearTranscript(activeCharacter.id);
-            }
-          }}
-          class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-danger hover:border-theme-danger/30 transition flex items-center gap-1.5 cursor-pointer"
-          title="Clear local conversation memory"
-        >
-          <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
-          Reset Memory
-        </button>
+        <div class="flex items-center gap-2">
+          {#if currentTranscript?.messages?.length}
+            <button
+              type="button"
+              onclick={copyConversation}
+              disabled={isCopying}
+              class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Copy conversation"
+              aria-label="Copy conversation"
+            >
+              <span class="icon-[lucide--copy] w-3 h-3" aria-hidden="true"
+              ></span>
+              Copy
+            </button>
+            {#if !vault.isGuest}
+              <button
+                type="button"
+                onclick={sendToJournal}
+                disabled={isSavingJournal}
+                class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                title="Send to Journal"
+                aria-label="Send to Journal"
+              >
+                <span
+                  class="icon-[lucide--book-marked] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                Journal
+              </button>
+            {/if}
+          {/if}
+          <button
+            type="button"
+            onclick={() => {
+              if (
+                confirm(
+                  `Are you sure you want to reset your conversation memory with ${activeCharacter?.title}?`,
+                )
+              ) {
+                guestChatStore.clearTranscript(activeCharacter.id);
+              }
+            }}
+            class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-danger hover:border-theme-danger/30 transition flex items-center gap-1.5 cursor-pointer"
+            title="Clear local conversation memory"
+            aria-label="Reset conversation memory"
+          >
+            <span class="icon-[lucide--refresh-cw] w-3 h-3" aria-hidden="true"
+            ></span>
+            Reset Memory
+          </button>
+        </div>
       </header>
 
       <!-- Message History -->

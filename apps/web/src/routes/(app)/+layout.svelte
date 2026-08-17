@@ -5,6 +5,7 @@
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
   import { shelf } from "$lib/features/shelf";
+  import { ensureRandomSourcesLoaded } from "$lib/features/random";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -28,6 +29,7 @@
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
+  import AppFooter from "$lib/components/layout/AppFooter.svelte";
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
@@ -90,7 +92,8 @@
     page.url.pathname === `${base}/oracle` ||
       page.url.pathname === `${base}/help` ||
       page.url.pathname.startsWith(`${base}/help/`) ||
-      page.url.pathname === `${base}/import`,
+      page.url.pathname === `${base}/import` ||
+      page.url.pathname === `${base}/dice`,
   );
   const anyModalOpen = $derived(
     modalUIStore.isAnyModalOpen ||
@@ -223,6 +226,13 @@
           console.error("Failed to lazy-load VTTSharedImageLightbox", err);
         });
     }
+  });
+
+  // Tables and decks are needed wherever /table and /deck can be typed, which
+  // is anywhere the Oracle is — not only on their own routes (#2247, FR-039).
+  $effect(() => {
+    void vault.activeVaultId;
+    void ensureRandomSourcesLoaded();
   });
 
   // Initialization Logic
@@ -647,6 +657,13 @@
 <svelte:document
   onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
 />
+<svelte:head>
+  <title>Codex Cryptica | AI RPG Campaign Manager</title>
+  <meta
+    name="description"
+    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with OpenAI/Luna."
+  />
+</svelte:head>
 <NavigationShortcuts />
 
 <div
@@ -701,6 +718,10 @@
         {/if}
       </main>
     </div>
+
+    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      <AppFooter />
+    {/if}
   </div>
 
   <!-- Modals rendered outside the inert wrapper -->

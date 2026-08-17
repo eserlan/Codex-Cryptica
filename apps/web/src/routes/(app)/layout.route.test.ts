@@ -26,11 +26,6 @@ vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
     return { $$render: () => "<div data-testid='app-header'></div>" };
   },
 }));
-vi.mock("$lib/components/layout/AppFooter.svelte", () => ({
-  default: function AppFooterMock() {
-    return { $$render: () => "<div data-testid='app-footer'></div>" };
-  },
-}));
 vi.mock("$lib/components/layout/NotificationToast.svelte", () => ({
   default: function NotificationToastMock() {
     return { $$render: () => "" };
@@ -58,7 +53,9 @@ vi.mock("$lib/components/layout/MobileDemoBanner.svelte", () => ({
 }));
 vi.mock("$lib/components/modals/GlobalModalProvider.svelte", () => ({
   default: function GlobalModalProviderMock() {
-    return { $$render: () => "" };
+    return {
+      $$render: () => "<div data-testid='global-modal-provider'></div>",
+    };
   },
 }));
 vi.mock("$lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
@@ -140,6 +137,8 @@ vi.mock("$lib/config/help-content", () => ({
 }));
 vi.mock("$lib/config", () => ({
   VERSION: "0.0.0",
+  PATREON_URL: "https://patreon.com/codexcryptica",
+  DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
 vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [],
@@ -291,10 +290,21 @@ describe("+layout.svelte", () => {
     expect(screen.getByTestId("layout-children")).toBeTruthy();
   });
 
-  it("does not mount marketing footer chrome in the application shell", () => {
+  it("mounts the application footer in the standard application shell", () => {
     render(LayoutTestHost);
 
+    expect(screen.getByTestId("app-footer")).toBeTruthy();
+  });
+
+  it("keeps the dice pop-out free of the application shell and global overlays", () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    expect(screen.queryByTestId("app-header")).toBeNull();
     expect(screen.queryByTestId("app-footer")).toBeNull();
+    expect(screen.queryByTestId("global-modal-provider")).toBeNull();
+    expect(quickNoteScratchpadMock).not.toHaveBeenCalled();
   });
 
   it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {

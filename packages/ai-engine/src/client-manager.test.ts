@@ -100,6 +100,27 @@ describe("DefaultAIClientManager", () => {
       expect(fetch).not.toHaveBeenCalled();
       expect(result).toEqual({ id: "i1", text: "ok" });
     });
+
+    it("appends the proxy's error code on interaction failure too", async () => {
+      // Character chat goes through sendInteraction, not generateContent —
+      // the code has to survive on this path as well for classifyApiError
+      // to recognize a blocked verification handshake there.
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+      } as any);
+
+      await expect(
+        manager.sendInteraction({ model: "m", input: "hi" }),
+      ).rejects.toThrow(
+        "[OracleProxy] Interaction failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      );
+    });
   });
 
   describe("createProxyModel", () => {
@@ -294,6 +315,30 @@ describe("DefaultAIClientManager", () => {
       );
     });
 
+    it("appends the proxy's machine-readable error code so classifyApiError can pattern-match it", async () => {
+      // Regression: SESSION_TOKEN_MISSING/INVALID/EXPIRED used to be
+      // indistinguishable from any other generic failure once it reached
+      // the UI as "Generation failed. Please try again." — the code has to
+      // survive into the thrown message for the classifier to recognize it.
+      const mockResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+
+      await expect(model.generateContent("Test")).rejects.toThrow(
+        "[OracleProxy] Request failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      );
+    });
+
     it("should handle malformed proxy response gracefully", async () => {
       const mockResponse = {
         ok: false,
@@ -450,6 +495,74 @@ describe("DefaultAIClientManager", () => {
 
       expect(body.contents).toEqual(request.contents);
       expect(body.generationConfig).toEqual(request.generationConfig);
+    });
+  });
+
+  describe("session token retry", () => {
+    it("retries once on any 401, not just an expired-token response", async () => {
+      // Regression: a missing token (e.g. the Turnstile handshake failed
+      // because an ad blocker blocks challenges.cloudflare.com) used to
+      // return the 401 straight to the caller — only SESSION_TOKEN_EXPIRED
+      // triggered a re-handshake.
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 401,
+          ok: false,
+          json: vi
+            .fn()
+            .mockResolvedValue({ error: { code: "SESSION_TOKEN_MISSING" } }),
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          ok: true,
+          json: vi.fn().mockResolvedValue({ content: "ok" }),
+        });
+
+      const sessionManager = {
+        getToken: vi
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce("fresh-token"),
+        invalidate: vi.fn(),
+      };
+
+      const isolated = new DefaultAIClientManager(
+        fetcher as any,
+        sessionManager as any,
+      );
+      const model = await isolated.getModel("", "gemini-1.5-pro");
+      const result = await model.generateContent("Test message");
+
+      expect(sessionManager.invalidate).toHaveBeenCalledOnce();
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      const retryInit = fetcher.mock.calls[1][1] as RequestInit;
+      const headers = new Headers(retryInit.headers);
+      expect(headers.get("Authorization")).toBe("Bearer fresh-token");
+      expect(result.response.text()).toBe("ok");
+    });
+
+    it("returns the 401 unchanged when the retry also can't get a token", async () => {
+      const fetcher = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi
+          .fn()
+          .mockResolvedValue({ error: { code: "SESSION_TOKEN_MISSING" } }),
+      });
+      const sessionManager = {
+        getToken: vi.fn().mockResolvedValue(null),
+        invalidate: vi.fn(),
+      };
+
+      const isolated = new DefaultAIClientManager(
+        fetcher as any,
+        sessionManager as any,
+      );
+      const model = await isolated.getModel("", "gemini-1.5-pro");
+
+      await expect(model.generateContent("Test")).rejects.toThrow();
+      expect(fetcher).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -167,11 +167,11 @@ export class GraphTransformer {
 
       // Visibility markers for Admin visual cues
       let isRevealed = false;
-      const tags = entity.tags;
-      if (tags) {
-        for (let j = 0; j < tags.length; j++) {
-          const t = tags[j].toLowerCase();
-          if (t === "revealed" || t === "visible") {
+      const labels = entity.labels;
+      if (labels) {
+        for (let k = 0; k < labels.length; k++) {
+          const l = labels[k].toLowerCase();
+          if (l === "revealed" || l === "visible") {
             isRevealed = true;
             break;
           }
@@ -179,11 +179,11 @@ export class GraphTransformer {
       }
 
       if (!isRevealed) {
-        const labels = entity.labels;
-        if (labels) {
-          for (let k = 0; k < labels.length; k++) {
-            const l = labels[k].toLowerCase();
-            if (l === "revealed" || l === "visible") {
+        const legacyTags = (entity as { tags?: string[] }).tags;
+        if (legacyTags) {
+          for (let j = 0; j < legacyTags.length; j++) {
+            const t = legacyTags[j].toLowerCase();
+            if (t === "revealed" || t === "visible") {
               isRevealed = true;
               break;
             }

@@ -8,7 +8,7 @@ const versionFromBuild =
     : undefined;
 
 export const VERSION =
-  import.meta.env.VITE_APP_VERSION ?? versionFromBuild ?? "0.31.60";
+  import.meta.env.VITE_APP_VERSION ?? versionFromBuild ?? "0.31.68";
 export const CODENAME = import.meta.env.VITE_APP_CODENAME ?? "Cryptica";
 
 export const APP_NAME = "Codex Cryptica";
@@ -30,6 +30,8 @@ export const SITE_AUTHOR = {
   url: PATREON_URL,
 } as const;
 export const DISCORD_URL = "https://discord.gg/5UUMCChF2u";
+export const GITHUB_URL = "https://github.com/eserlan/Codex-Cryptica";
+export const REDDIT_URL = "https://www.reddit.com/r/codexcryptica/";
 
 export const IS_STAGING =
   import.meta.env.VITE_APP_ENV === "staging" ||
@@ -94,11 +96,7 @@ export const SCHEMA_ORG = {
       name: "Codex Cryptica",
       url: "https://codexcryptica.com",
       logo: "https://codexcryptica.com/logo.png",
-      sameAs: [
-        "https://github.com/eserlan/Codex-Cryptica",
-        DISCORD_URL,
-        PATREON_URL,
-      ],
+      sameAs: [GITHUB_URL, DISCORD_URL, PATREON_URL, REDDIT_URL],
     },
     {
       "@type": "WebSite",

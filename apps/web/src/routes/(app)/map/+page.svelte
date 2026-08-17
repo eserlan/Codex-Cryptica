@@ -51,6 +51,14 @@
   });
 </script>
 
+<svelte:head>
+  <title>Battle Map | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="Interactive battle maps, fog of war, and tactical token management for tabletop RPGs."
+  />
+</svelte:head>
+
 <div
   class="w-full h-full min-h-0 flex-1 flex flex-col bg-theme-bg overflow-hidden relative"
 >

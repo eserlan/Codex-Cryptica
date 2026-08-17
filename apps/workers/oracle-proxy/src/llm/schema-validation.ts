@@ -1,7 +1,7 @@
 /**
  * Lightweight structural validator for the subset of JSON Schema this
  * pipeline actually needs to check (type, required, properties, items,
- * enum) — deliberately not a full JSON Schema engine (no $ref, oneOf,
+ * enum, oneOf) — deliberately not a full JSON Schema engine (no $ref,
  * pattern, format, etc.). A "valid JSON" response is not the same claim as
  * "matches the requested schema"; without this, a schema-invalid response
  * (e.g. missing a required field) would be marked
@@ -44,12 +44,56 @@ export function validateAgainstSchema(
 ): boolean {
   if (!schema) return true;
 
+  if (Array.isArray(schema.oneOf)) {
+    return (
+      schema.oneOf
+        .filter(
+          (branch): branch is JsonSchema =>
+            !!branch && typeof branch === "object",
+        )
+        .filter((branch) => validateAgainstSchema(value, branch)).length === 1
+    );
+  }
+
   const schemaType = schema.type;
   if (typeof schemaType === "string" && !matchesType(value, schemaType)) {
     return false;
   }
 
   if (Array.isArray(schema.enum) && !schema.enum.includes(value)) {
+    return false;
+  }
+
+  if (Array.isArray(schema.anyOf)) {
+    return schema.anyOf.some(
+      (branch): branch is JsonSchema =>
+        !!branch &&
+        typeof branch === "object" &&
+        validateAgainstSchema(value, branch),
+    );
+  }
+
+  if (
+    typeof schema.minLength === "number" &&
+    typeof value === "string" &&
+    value.length < schema.minLength
+  ) {
+    return false;
+  }
+
+  if (
+    typeof schema.maxLength === "number" &&
+    typeof value === "string" &&
+    value.length > schema.maxLength
+  ) {
+    return false;
+  }
+
+  if (
+    typeof schema.pattern === "string" &&
+    typeof value === "string" &&
+    !new RegExp(schema.pattern).test(value)
+  ) {
     return false;
   }
 
@@ -78,6 +122,18 @@ export function validateAgainstSchema(
     schema.items &&
     typeof schema.items === "object"
   ) {
+    if (
+      typeof schema.minItems === "number" &&
+      (value as unknown[]).length < schema.minItems
+    ) {
+      return false;
+    }
+    if (
+      typeof schema.maxItems === "number" &&
+      (value as unknown[]).length > schema.maxItems
+    ) {
+      return false;
+    }
     const itemSchema = schema.items as JsonSchema;
     for (const item of value as unknown[]) {
       if (!validateAgainstSchema(item, itemSchema)) return false;

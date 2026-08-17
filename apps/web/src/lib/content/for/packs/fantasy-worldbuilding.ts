@@ -8,75 +8,76 @@ export const fantasyWorldbuilding: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Fantasy Worldbuilding",
     description:
-      "Your fantasy world is more than a folder of notes. Connect kingdoms to rulers, gods to temples, factions to enemies, and historical events to the world they changed.",
+      "Connect realms to dynasties, faiths to schisms, factions to treaties, and history to the lands they shape in one local-first lore bible.",
   },
   hero: {
-    eyebrow: "Fantasy Worldbuilding",
+    eyebrow: "Setting Lore & World Bible",
     title: "Codex Cryptica for Fantasy Worldbuilding",
     tagline:
-      "Your fantasy world is more than a folder of notes. Connect kingdoms to rulers, gods to temples, factions to enemies, and historical events to the world they changed.",
+      "Build a fantasy setting without losing track of how it fits together. Connect realms, dynasties, religions, factions and centuries of history in one place.",
     problemStatement:
-      "When your world grows to dozens of towns, historical eras, and rival houses, linear notebooks break down. Codex Cryptica turns scattered world notes into an interconnected knowledge web.",
+      "When a setting spans multiple provinces, lineages, rival faiths, and historical eras, flat notes and scattered documents break down. Codex Cryptica keeps your geography, factions, characters, and timelines interconnected so your world stays consistent.",
   },
   useCases: [
     {
-      title: "Pantheons & Holy Orders",
+      title: "Pantheons, Faiths & Holy Orders",
       description:
-        "Define divine hierarchies, clerical domains, planar cosmology, and religious orders in one linked system.",
+        "Track gods, faiths, schisms, holy orders and regional religious traditions across your cultures.",
       icon: "icon-[lucide--sun]",
     },
     {
-      title: "Kingdom Dynasties & Alliances",
+      title: "Realms, Dynasties & Political Factions",
       description:
-        "Map out noble houses, succession lines, regional rivalries, and trade routes across your continents.",
+        "Track royal successions, disputed borders, treaties, guild rivalries, and trade routes across your provinces.",
       icon: "icon-[lucide--crown]",
     },
     {
-      title: "Relics & Magical Artifacts",
+      title: "Magic, Artefacts & Ruins",
       description:
-        "Link legendary magic items to the heroes who wield them, the villains who seek them, and the vaults where they rest.",
+        "Connect artefacts, magical traditions and ruins to the cultures, people and events that created them.",
       icon: "icon-[lucide--sparkles]",
     },
     {
-      title: "World History & Eras",
+      title: "History & Timelines",
       description:
-        "Track historical ages, cataclysms, battles, and campaign events with an interactive timeline engine.",
+        "Anchor cataclysms, dynastic wars, migrations, and major historical events to an interactive chronology.",
       icon: "icon-[lucide--hourglass]",
     },
   ],
   exampleGraph: {
-    title: "Sample Realm Relationship Graph",
+    title: "Sample Setting Lore Web",
     description:
-      "Demonstrating how a connected graph links rulers, trade cities, factions, artifacts, and mages in one living web.",
+      "See how successions, treaties, trade confederations, and provincial capitals link together in one connected setting graph.",
+    badgeLabel: "Setting Knowledge Graph",
     steps: [
       {
-        label: "High Queen Vaeloria",
-        sublabel: "Ruler of Sunspire",
+        label: "Queen Maera II",
+        sublabel: "Ruler of Ardel",
         category: "character",
       },
       {
-        label: "Oakhaven Harbour",
-        sublabel: "Capital Trade City",
-        relation: "Rules",
-        category: "location",
-      },
-      {
-        label: "The Iron Syndicate",
-        sublabel: "Outlaw Merchant Faction",
-        relation: "Opposed by",
+        label: "House Veren",
+        sublabel: "Noble Dynasty",
+        relation: "Head of",
         category: "faction",
       },
       {
-        label: "Sunstone Relic",
-        sublabel: "Ancient Power Source",
-        relation: "Protects",
+        label: "The Crown of Ardel",
+        sublabel: "Coronation Artefact",
+        relation: "Claims",
         category: "item",
       },
       {
-        label: "Archmage Eldrin",
-        sublabel: "Court Sorcerer",
-        relation: "Advised by",
-        category: "character",
+        label: "The Northroad League",
+        sublabel: "Trade Confederation",
+        relation: "Broke treaty with",
+        category: "faction",
+      },
+      {
+        label: "Old Temple District",
+        sublabel: "Capital District",
+        relation: "Controls",
+        category: "location",
       },
     ],
   },
@@ -84,37 +85,37 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     {
       title: "Fantasy Name Generator",
       description:
-        "Generate names for noble lineages, ancient ruins, regional strongholds, and mythical figures.",
+        "Generate culturally consistent names for noble houses, ruins, provincial settlements, and historical figures.",
       href: "/generators/fantasy-names",
       badge: "Generator",
     },
     {
       title: "Pantheon Generator",
       description:
-        "Forge custom mythologies, divine portfolios, sacred symbols, and clerical tenets.",
+        "Create pantheons, myths, divine domains, holy symbols and regional religious traditions.",
       href: "/generators/pantheon-generator",
       badge: "Generator",
     },
     {
-      title: "Kingdom Generator",
+      title: "Kingdom & Realm Generator",
       description:
-        "Build feudal realms, government structures, regional rivalries, and economic exports.",
+        "Create kingdoms and realms with rulers, political structures, rival powers, regions and trade.",
       href: "/generators/kingdom",
       badge: "Generator",
     },
     {
-      title: "Dungeon Generator",
+      title: "Dungeon & Ruin Generator",
       description:
-        "Design multi-level vaults, subterranean temples, and dangerous ruins for your campaign.",
+        "Design subterranean sites, ancient ruins, and fortified strongholds for your setting.",
       href: "/generators/dungeon-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Build Your World Graph",
+    title: "Build Your World",
     description:
-      "Transform your scattered campaign notes into a living, visual world web with local-first privacy.",
-    buttonText: "Start Building Free",
+      "Connect your realms, factions, and histories in a fast, local-first workspace built for worldbuilders and storytellers.",
+    buttonText: "Start Worldbuilding Free",
     buttonHref: "/app",
   },
 };

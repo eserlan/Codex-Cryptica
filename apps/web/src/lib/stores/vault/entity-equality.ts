@@ -14,7 +14,6 @@ export function isGraphRelevantEntityChange(
   if (oldEntity.thumbnail !== newEntity.thumbnail) return true;
 
   if (!stringArrayEqual(oldEntity.labels, newEntity.labels)) return true;
-  if (!stringArrayEqual(oldEntity.tags, newEntity.tags)) return true;
   if (!stringArrayEqual(oldEntity.aliases, newEntity.aliases)) return true;
   if (!connectionsEqual(oldEntity.connections, newEntity.connections))
     return true;

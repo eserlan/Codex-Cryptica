@@ -7,6 +7,10 @@ import {
   SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import {
+  generateRandomTableLocal,
+  parseRandomTableResponse,
+} from "./public-random-table";
 import { generateShipLocal } from "./public-ship";
 import {
   buildLanguagePrompt,
@@ -97,6 +101,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   // A species, not an individual — creature rather than character.
   "alien-race": "creature",
   "plot-twist": "note",
+  "random-table": "table",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -162,6 +167,24 @@ function mapOutputToDraft(
     request: GeneratorRunRequest,
   ): GeneratedDraft => {
     const availableIds = request.vaultContext?.categoryLabels?.map((c) => c.id);
+    const contextProvenance: Array<{ id: string; title: string }> = [];
+    const seenIds = new Set<string>();
+    if (request.vaultContext?.sourceEntity) {
+      seenIds.add(request.vaultContext.sourceEntity.id);
+      contextProvenance.push({
+        id: request.vaultContext.sourceEntity.id,
+        title: request.vaultContext.sourceEntity.title,
+      });
+    }
+    if (request.vaultContext?.neighbors?.length) {
+      for (const n of request.vaultContext.neighbors) {
+        if (!seenIds.has(n.id)) {
+          seenIds.add(n.id);
+          contextProvenance.push({ id: n.id, title: n.title });
+        }
+      }
+    }
+
     return {
       title: output.title,
       entityType: resolveEntityType(generatorId, availableIds),
@@ -183,6 +206,11 @@ function mapOutputToDraft(
       languageProfileVersion: output.languageProfileVersion,
       primaryLanguageId: request.vaultContext?.selectedLanguage?.id,
       primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
+      bodies: output.bodies ? [...output.bodies] : undefined,
+      starType: output.starType,
+      contextProvenance: contextProvenance.length
+        ? contextProvenance
+        : undefined,
     };
   };
 }
@@ -414,6 +442,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
   "alien-race": `{"title":"Ith'vareen","summary":"A six-limbed species whose chemical speech makes their emotions public and their motives unreadable.","lore":"## Overview\\nThe Ith'vareen are a hard sci-fi species with six limbs, the forward pair specialised for fine work, native to a high-gravity world.\\n## Evolutionary Origin\\nHeavy gravity selected for compact frames and cautious movement; a fall at home is usually fatal, so recklessness never became a virtue.\\n## Homeworld & Environment\\nTheir world weighs nearly twice what visitors expect, and their architecture assumes it.\\n## Biology & Lifecycle\\nSix limbs, four load-bearing, and a working lifespan of roughly ninety years.\\n## Senses, Communication & Psychology\\nThey speak in emitted chemical signals, so emotional state is broadcast whether or not they intend it — they cannot lie about how they feel, only about why.\\n## Culture & Social Structure\\nThey have no concept of \\"free hands\\": standing, carrying and working are simultaneous, and idleness reads to them as illness.\\n## Technology\\nTools are built for three-point grip and are near-unusable by two-handed species; their script runs in three parallel columns because three limbs write at once.\\n## Beliefs & Worldview\\nA truth nobody has agreed to is treated as a proposal, which outsiders mistake for relativism.\\n## Relations with Outsiders\\nTrade works, which is exactly why neither side has had to resolve what they think of each other.\\n## Internal Factions & Conflicts\\nOne faction would trade their structural engineering openly for standing; another calls that the first step to being absorbed.\\n## Weaknesses & Constraints\\n- The forward limbs break easily, and losing one is a maiming their medicine has never solved.\\n- Standard gravity feels unsafe to them; they misjudge distances constantly off-world.\\n## Naming Conventions\\nSpoken names are transliterations of a scent-signature, with several equally valid written forms.\\n## Typical Archetypes\\n- **The Intermediary** — works comfortably with outsiders, and is quietly distrusted at home for it.\\n## Adventure Hooks\\n- A delegation needs an outsider to carry a message their own speech cannot safely encode.","labels":["alien-race","hard-sci-fi","hexapodal","high-gravity-world"],"connections":[]}`,
   "secret-society": `{"title":"The Lantern Choir","summary":"A charitable order whose midnight hymns call something awake beneath the city.","lore":"## Belief & Doctrine\\nThe Choir teaches that darkness is a mercy offered by an imprisoned star.\\n## Public Face\\nIts soup kitchens and night shelters make it beloved in the poorest wards.\\n## Secret Truth\\nThe hymns are a map for the thing beneath the city.\\n## Adventure Hooks\\nA missing initiate left the party a verse that should not exist.","labels":["secret-society","cult","urban"],"connections":[]}`,
+  "random-table": `{"title":"Smuggler's Harbor Encounters","summary":"A table of encounters and occurrences at the docks.","lore":"1. A dockside patrol checking cargo manifests\\n2. A sudden {fog_rolling_in} blinding the pier","labels":["table","encounters","random-table"],"connections":[]}`,
 };
 
 /**
@@ -534,6 +563,16 @@ function languagePrompt(request: GeneratorRunRequest): string {
     ],
   });
   return result.userMessage;
+}
+
+function randomTablePrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+Generate a campaign random table — a numbered list of thematic encounters, occurrences, or findings. Return ONLY a JSON object matching this schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "random-table")}${groundingNote(request)}
+${syntheticAdaptationNote(request)}
+${loreGuidance(request, "a numbered list of distinct thematic entries with details and hooks")}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -2259,6 +2298,102 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateCouncilVote,
     mapOutputToDraft: mapOutputToDraft("council-vote"),
     buildPrompt: councilVoteFoundationPrompt,
+  },
+  "random-table": {
+    id: "random-table",
+    label: "Random Roll Table",
+    description:
+      "Generate an atmospheric, world-grounded random roll table populated with your vault's lore and nested table references.",
+    entityType: GENERATOR_ENTITY_TYPE["random-table"],
+    defaultInstruction:
+      "A thematic random roll table with specific, evocative entries grounded in the world's factions, locations, and characters.",
+    icon: "lucide:dices",
+    options: [
+      {
+        id: "topic",
+        label: "Table Topic / Purpose",
+        description:
+          "What happens when someone rolls this table (e.g. Docklands Encounters, Dungeon Rumors)",
+        control: "text",
+        required: true,
+      },
+      {
+        id: "count",
+        label: "Entry Count",
+        control: "number",
+        defaultValue: 10,
+      },
+    ],
+    defaults: {
+      topic: "",
+      count: 10,
+    },
+    generate: (
+      request: GeneratorRunRequest,
+      rawText?: string,
+    ): GeneratorOutput => {
+      if (rawText) {
+        try {
+          const parsed = JSON.parse(rawText) as Partial<GeneratorOutput>;
+          if (
+            typeof parsed.title === "string" &&
+            typeof parsed.summary === "string" &&
+            typeof parsed.lore === "string"
+          ) {
+            return {
+              title: parsed.title,
+              summary: parsed.summary,
+              lore: parsed.lore,
+              content:
+                typeof parsed.content === "string"
+                  ? parsed.content
+                  : parsed.lore,
+              labels: Array.isArray(parsed.labels)
+                ? parsed.labels
+                : ["random-table", "table"],
+              connections: parsed.connections ?? [],
+            };
+          }
+        } catch {
+          // Fall through to parseRandomTableResponse
+        }
+        const parsedTable = parseRandomTableResponse(rawText);
+        return {
+          title: parsedTable.title,
+          summary:
+            parsedTable.description ??
+            `Random table for ${optionString(request, "topic", "encounters")}.`,
+          lore: parsedTable.entries
+            .map((e, idx) => `${idx + 1}. ${e.text}`)
+            .join("\n"),
+          content: parsedTable.entries
+            .map((e, idx) => `${idx + 1}. ${e.text}`)
+            .join("\n"),
+          labels: ["random-table", "table"],
+        };
+      }
+      const fallback = generateRandomTableLocal({
+        topic: optionString(request, "topic", "Random Events & Encounters"),
+        count:
+          typeof request.options.count === "number"
+            ? request.options.count
+            : 10,
+        theme: request.themeId,
+      });
+      return {
+        title: fallback.title,
+        summary: fallback.description ?? `Random table for ${fallback.title}.`,
+        lore: fallback.entries
+          .map((e, idx) => `${idx + 1}. ${e.text}`)
+          .join("\n"),
+        content: fallback.entries
+          .map((e, idx) => `${idx + 1}. ${e.text}`)
+          .join("\n"),
+        labels: ["random-table", "table"],
+      };
+    },
+    mapOutputToDraft: mapOutputToDraft("random-table"),
+    buildPrompt: randomTablePrompt,
   },
 };
 

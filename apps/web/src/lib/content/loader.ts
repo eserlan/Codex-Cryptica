@@ -42,7 +42,12 @@ export function parseHelpArticle(
     return {
       id: metadata.id,
       title: metadata.title || "Untitled",
-      labels: metadata.labels || metadata.tags || [],
+      labels:
+        Array.isArray(metadata.labels) && metadata.labels.length > 0
+          ? metadata.labels
+          : Array.isArray(metadata.tags)
+            ? metadata.tags
+            : [],
       rank: metadata.rank,
       hidden: metadata.hidden === true,
       content: content ? content.trim() : "",

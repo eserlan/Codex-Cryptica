@@ -25,7 +25,8 @@ export type GeneratorId =
   | "council-vote"
   | "secret-society"
   | "star-system"
-  | "alien-race";
+  | "alien-race"
+  | "random-table";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -45,6 +46,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "secret-society",
   "star-system",
   "alien-race",
+  "random-table",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -209,6 +211,11 @@ export interface GeneratedDraft {
   bodies?: StarSystemBody[];
   /** Carried through from {@link GeneratorOutput.starType}. */
   starType?: string;
+  /**
+   * Source and direct neighbor entity references supplied from the vault context
+   * that grounded this generation.
+   */
+  contextProvenance?: Array<{ id: string; title: string }>;
 }
 
 /** The user's explicit decision to save a reviewed draft. */
@@ -336,4 +343,59 @@ export class UnsupportedGeneratorError extends Error {
     super(`That generator ("${generatorId}") is not available.`);
     this.name = "UnsupportedGeneratorError";
   }
+}
+
+/**
+ * Context provided to the random table generator.
+ */
+export interface RandomTableGenerationContext {
+  /** The theme or topic of the table (e.g. "Docklands Encounters", "Smuggler Rumors") */
+  topic: string;
+  /** Number of entries to generate (2-50, defaults to standard dice sizes like 6, 8, 10, 12, 20) */
+  count?: number;
+  /** Freeform user instructions or campaign notes taking highest priority */
+  campaignContext?: string;
+  /** Names of existing tables and decks available for sub-table reference emission */
+  availableTables?: string[];
+  /** Relevant entities retrieved from the active vault for lore grounding */
+  worldEntities?: Array<{
+    title: string;
+    category?: string;
+    summary?: string;
+  }>;
+  /** The active visual/genre theme for stylistic tone matching */
+  theme?: string;
+}
+
+/**
+ * A generated candidate entry awaiting user review.
+ */
+export interface CandidateTableEntry {
+  /** Unique transient client ID for UI selection & editing tracking */
+  id: string;
+  /** Generated entry text (may contain {table_name} nested references) */
+  text: string;
+  /** Inferred default weight (usually 1) */
+  weight: number;
+  /** Discovered entity names referenced in the text */
+  matchedEntities?: string[];
+  /** Discovered sub-table names referenced in the text */
+  matchedSubTables?: string[];
+  /** Selection status in the review preview (defaults to true) */
+  selected: boolean;
+}
+
+/**
+ * Structured output schema from the AI model.
+ */
+export interface GeneratedTableOutput {
+  /** Suggested table title based on the topic */
+  title: string;
+  /** Suggested short description */
+  description?: string;
+  /** List of generated row texts */
+  entries: Array<{
+    text: string;
+    weight?: number;
+  }>;
 }

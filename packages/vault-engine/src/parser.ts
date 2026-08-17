@@ -1,13 +1,7 @@
 import { EntitySchema } from "schema";
 import { load as yamlLoad } from "js-yaml";
 
-const MarkdownFrontmatterSchema = EntitySchema.partial()
-  .omit({ tags: true })
-  .passthrough()
-  .refine((data) => !("tags" in data), {
-    message: "Use labels instead of tags in imported frontmatter",
-    path: ["tags"],
-  });
+const MarkdownFrontmatterSchema = EntitySchema.partial().passthrough();
 
 export function validateMarkdownFrontmatter(text: string): {
   success: boolean;

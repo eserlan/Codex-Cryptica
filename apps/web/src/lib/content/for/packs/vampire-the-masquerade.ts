@@ -9,39 +9,39 @@ export const vampireTheMasquerade: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Vampire: The Masquerade",
     description:
-      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
+      "Whether you run V5, V20, or classic Revised, manage your Vampire: The Masquerade chronicle in one connected, local-first workspace.",
   },
   hero: {
-    eyebrow: "Chronicle & Campaign Management",
+    eyebrow: "Edition-Agnostic Chronicle Management",
     title: "Codex Cryptica for Vampire: The Masquerade",
     tagline:
-      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
+      "Whether you run V5, V20, or classic Revised, a Vampire chronicle quickly becomes a web of Kindred politics, hunting grounds, boons, and lethal secrets. Keep that web connected in one place.",
     problemStatement:
-      "Standard campaign notes struggle when every NPC is connected to three secrets and four rival factions. When a Primogen member shifts their support, you shouldn’t have to manually update five separate documents to remember who owes what to whom.",
+      "Standard notes break down when every Kindred is tied to three debts, two mortal Touchstones, and a rival faction. When a Primogen shifts allegiance or a Masquerade breach threatens the city, you shouldn’t have to scramble through scattered documents to know who holds leverage over whom.",
   },
   useCases: [
     {
       title: "Interactive Relationship Graph",
       description:
-        "Map Blood Bonds, sire-childe lineages, Primogen rivalries, and mortal assets visually so you never lose track of who influences whom.",
+        "Map Blood Bonds, sire-childe lineages, Primogen rivalries, and boons visually so you never lose track of who influences whom.",
       icon: "icon-[lucide--network]",
     },
     {
-      title: "Domains & Hunting Grounds",
+      title: "Domains, Elysium & Hunting Grounds",
       description:
-        "Track Elysium sanctuaries, rack territories, clan domains, and contested havens across your nocturnal city.",
+        "Track Elysium, feeding racks, clan territory, contested havens, and mortal herds across your city.",
       icon: "icon-[lucide--map-pin]",
     },
     {
-      title: "Touchstones & Mortal Connections",
+      title: "Touchstones & Humanity Anchors",
       description:
-        "Keep track of coterie touchstones, human disguises, feeding grounds, and blackmail material alongside your campaign lore.",
+        "Anchor your coterie’s Humanity with mortal Touchstones and Convictions, tracking who keeps your Kindred grounded before the Beast takes hold.",
       icon: "icon-[lucide--heart-handshake]",
     },
     {
-      title: "Session Notes & Secret Lore",
+      title: "The Masquerade & Storyteller Secrets",
       description:
-        "Organise elder decrees, ancient lore fragments, coterie decisions, and private GM secrets in local-first storage.",
+        "Track Masquerade breaches, Second Inquisition pressure, court decrees, and private Storyteller plots in local-first storage.",
       icon: "icon-[lucide--book-open]",
     },
   ],
@@ -73,13 +73,13 @@ export const vampireTheMasquerade: LandingPageConfig = {
       },
       {
         label: "The Cinderhall Anarchs",
-        sublabel: "Faction • Anarch Cell",
-        relation: "Owes favour to",
+        sublabel: "Faction • Anarch Coterie",
+        relation: "Owes a major boon to",
         category: "faction",
       },
       {
         label: "Sgt Iona Brack",
-        sublabel: "Mortal • Police Liaison",
+        sublabel: "Mortal • Police Contact",
         relation: "Blackmails",
         category: "character",
       },
@@ -89,37 +89,37 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Vampire Clan Generator",
       description:
-        "Generate bloodlines, clan histories, and founder lore for homebrew or custom VtM factions.",
+        "Create custom bloodlines, faction histories, and founder lore for homebrew Vampire clans.",
       href: "/generators/vampire-clan",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Spin up rival Kindred, Primogen members, and mortal assets with distinct motives and backgrounds.",
+        "Spin up rival Kindred, Primogen, and mortal assets with distinct motives and backgrounds.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
-      title: "Settlement Generator",
+      title: "Domain & District Generator",
       description:
-        "Use the Settlement Generator to create districts, domains, havens, and feeding grounds for your chronicle.",
+        "Generate urban neighbourhoods, nightlife districts, and city blocks you can claim as domains, havens, and hunting grounds.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Secret Society Generator",
       description:
-        "Design secretive cults, Anarch cells, and conspiracy webs operating in the shadows.",
+        "Design cults, secret factions, and conspiracy networks operating behind the city's visible power structure.",
       href: "/generators/secret-society",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Organise Your Chronicle",
+    title: "Claim Your Domain",
     description:
-      "Start managing your Vampire: The Masquerade campaign with local-first privacy and visual relationship graphs.",
-    buttonText: "Try Codex Cryptica Free",
+      "Take command of your nocturnal city. Map bloodlines, track boons and breaches, and run your Vampire chronicle with complete local privacy.",
+    buttonText: "Start Your Chronicle Free",
     buttonHref: "/app",
   },
   disclaimer:

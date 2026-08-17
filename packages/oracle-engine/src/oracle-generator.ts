@@ -301,9 +301,9 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         // Flag passed explicitly: text generation runs in a worker that can't
         // read a main-thread module-global.
         loreEntries,
-        // One oracle worker per tab means one chat session per vault; vaultId
-        // is effectively a unique conversation key in the current architecture.
-        conversationId: context.vaultId,
+        // Keep normal Oracle context namespaced away from Adventure sessions
+        // and any future Oracle surfaces that use the same worker.
+        conversationId: `oracle:${context.vaultId}:normal`,
         interactionsEnabled: context.interactionsEnabled,
       },
     );

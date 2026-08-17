@@ -27,6 +27,7 @@ import { readOpfsBlob, getDirHandle } from "../../utils/opfs";
 import { pickDirectory } from "../../utils/fs";
 import { convertToWebP, generateThumbnail } from "../../utils/image-processing";
 import { DEFAULT_ENTITY_TYPE } from "schema";
+import type { LocalEntity } from "./types";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export const fileIOAdapter: IFileIOAdapter = {
@@ -78,7 +79,17 @@ export const fileIOAdapter: IFileIOAdapter = {
       }
     }
 
-    const entity = {
+    const rawMeta = parsed.metadata as Record<string, unknown>;
+    const parsedLabels = Array.isArray(rawMeta.labels)
+      ? rawMeta.labels.filter((l): l is string => typeof l === "string")
+      : [];
+    const parsedTags = Array.isArray(rawMeta.tags)
+      ? rawMeta.tags.filter((t): t is string => typeof t === "string")
+      : [];
+    const labels: string[] =
+      parsedLabels.length > 0 ? parsedLabels : parsedTags;
+
+    const entity: LocalEntity = {
       ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
@@ -88,8 +99,7 @@ export const fileIOAdapter: IFileIOAdapter = {
           ? path[path.length - 1].replace(/\.(md|markdown)$/i, "")
           : rawId),
       status: parsed.metadata.status || "active",
-      tags: parsed.metadata.tags || [],
-      labels: parsed.metadata.labels || parsed.metadata.tags || [],
+      labels,
       aliases: parsed.metadata.aliases || [],
       connections,
       content: parsed.content,
@@ -97,6 +107,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       parent,
       _path: path,
     };
+    delete (entity as { tags?: unknown }).tags;
 
     const hasEndDate =
       entity.end_date &&
@@ -106,7 +117,7 @@ export const fileIOAdapter: IFileIOAdapter = {
     if (hasEndDate && !hasPastLabel) {
       entity.labels = [...entity.labels, "past"];
     } else if (!hasEndDate && hasPastLabel) {
-      entity.labels = entity.labels.filter((l) => l !== "past");
+      entity.labels = entity.labels.filter((l: string) => l !== "past");
     }
 
     return entity;

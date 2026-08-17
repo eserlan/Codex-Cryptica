@@ -7,7 +7,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
-  import { SCHEMA_ORG } from "$lib/config";
+  import { SCHEMA_ORG, DISCORD_URL, REDDIT_URL, GITHUB_URL } from "$lib/config";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
@@ -244,6 +244,44 @@
       content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
     />
     <link rel="canonical" href="https://codexcryptica.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Codex Cryptica" />
+    <meta
+      property="og:title"
+      content="Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool"
+    />
+    <meta
+      property="og:description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <meta property="og:url" content="https://codexcryptica.com/" />
+    <meta
+      property="og:image"
+      content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="Codex Cryptica campaign vault showing an interactive knowledge graph and note editor"
+    />
+    <meta property="og:image:width" content="1600" />
+    <meta property="og:image:height" content="1000" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool"
+    />
+    <meta
+      name="twitter:description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <meta
+      name="twitter:image"
+      content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Codex Cryptica campaign vault showing an interactive knowledge graph and note editor"
+    />
   {/if}
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -560,6 +598,46 @@
               ></span>
               Changelog
             </a>
+            {#if DISCORD_URL}
+              <a
+                href={DISCORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              >
+                <span
+                  class="icon-[lucide--message-square] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                Discord
+              </a>
+            {/if}
+            {#if REDDIT_URL}
+              <a
+                href={REDDIT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              >
+                <span
+                  class="icon-[lucide--message-circle] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                Reddit
+              </a>
+            {/if}
+            {#if GITHUB_URL}
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              >
+                <span class="icon-[lucide--github] w-3 h-3" aria-hidden="true"
+                ></span>
+                GitHub
+              </a>
+            {/if}
             <a
               href="https://groupfinder.gg/library/codex-cryptica"
               target="_blank"

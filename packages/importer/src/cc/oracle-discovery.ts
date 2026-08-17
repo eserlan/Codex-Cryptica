@@ -47,7 +47,6 @@ export function discoveredEntitiesToPackage(
       title: entity.suggestedTitle,
       content: entity.chronicle || entity.content || "",
       lore: entity.lore || undefined,
-      tags: [],
       labels: Array.isArray(labels) ? labels : [],
       image: typeof image === "string" ? image : undefined,
       thumbnail: typeof thumbnail === "string" ? thumbnail : undefined,

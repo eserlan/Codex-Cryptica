@@ -26,26 +26,22 @@ export class InteractionExpiredError extends Error {
 export const INTERACTION_MODEL_KEY = "luna-fast";
 
 /**
- * Registry key for generator interactions specifically (2026-08-11).
- *
- * Split from {@link INTERACTION_MODEL_KEY} so the in-app campaign generators
- * can sit on Gemini alongside the public ones, for the same reason: the user
- * is waiting on a draft with nothing else to do, and Luna's latency is felt
- * there far more than in Oracle chat, which reads as conversational. Chat and
- * entity revision keep Luna via the key above.
+ * Named separately so generator callers can retain an explicit model choice
+ * in their request shape while sharing the same Luna conversation route as
+ * Oracle chat and entity revision.
  *
  * oracle-proxy's `handleInteraction` branches on the resolved model's
  * provider, so a Gemini key here routes to Gemini's Interactions API — the
  * original path, with the OpenAI Responses branch added alongside it later.
  */
-export const GENERATOR_INTERACTION_MODEL_KEY = "gemini-flash-lite";
+export const GENERATOR_INTERACTION_MODEL_KEY = INTERACTION_MODEL_KEY;
 
 /**
  * Sends a plain-text generateContent request through oracle-proxy's
  * provider-neutral operation pipeline (specs/153-llm-model-registry)
  * instead of the legacy Gemini-only `contents`/`generationConfig` shape.
- * The Worker resolves the actual model (Gemini today, potentially Luna or
- * another provider later) via its registry — no model name is sent, per
+ * The Worker resolves the actual model via its registry — no model name is
+ * sent, per
  * that pipeline's contract. Returns a response shaped like the Google SDK's
  * `GenerativeModel.generateContent()` result so callers see no interface
  * change.
@@ -136,7 +132,7 @@ async function sendViaOperationPipeline(params: {
     }));
     console.error("[OracleProxy] Request failed:", error);
     throw new Error(
-      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
     );
   }
 
@@ -177,6 +173,16 @@ async function sendViaOperationPipeline(params: {
   };
 }
 
+/**
+ * Appends `(code: X)` to a thrown error message when the proxy supplied a
+ * machine-readable error code, so `classifyApiError` can pattern-match on
+ * it instead of the free-text message (which is prose meant for a human,
+ * not a stable identifier).
+ */
+function formatErrorCode(code: unknown): string {
+  return typeof code === "string" && code ? ` (code: ${code})` : "";
+}
+
 /** Adds `Authorization: Bearer <token>` without disturbing existing headers. */
 function withBearerToken(
   init: RequestInit | undefined,
@@ -186,24 +192,6 @@ function withBearerToken(
   const headers = new Headers(init?.headers);
   headers.set("Authorization", `Bearer ${token}`);
   return { ...init, headers };
-}
-
-/**
- * Whether a 401 is specifically an expired capability token (the recoverable
- * case) rather than a missing or forged one.
- *
- * Reads a clone so the caller can still consume the original body when this
- * turns out not to be a refresh case.
- */
-async function isExpiredSessionToken(response: Response): Promise<boolean> {
-  try {
-    const body = (await response.clone().json()) as {
-      error?: { code?: string };
-    };
-    return body?.error?.code === "SESSION_TOKEN_EXPIRED";
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -254,10 +242,12 @@ export class DefaultAIClientManager {
    * exactly one place. Adding token logic at any individual call site instead
    * would guarantee one of them eventually gets missed.
    *
-   * On a 401 caused by an expired token it re-handshakes and replays the
-   * request **once**. A second 401 is returned to the caller: a persistently
-   * rejected token means something is actually wrong, and retrying it in a
-   * loop would hammer both Turnstile and the proxy.
+   * On any 401 — an expired token, a missing one (e.g. the Turnstile
+   * handshake failed, such as when an ad blocker blocks
+   * challenges.cloudflare.com), or a forged one — it re-handshakes and
+   * replays the request **once**. A second 401 is returned to the caller: a
+   * persistently rejected token means something is actually wrong, and
+   * retrying it in a loop would hammer both Turnstile and the proxy.
    *
    * An arrow property, not a method, because it is passed around as a bare
    * `doFetch` callback and must stay bound.
@@ -276,9 +266,6 @@ export class DefaultAIClientManager {
     if (init?.body !== undefined && typeof init.body !== "string") {
       return response;
     }
-
-    const expired = await isExpiredSessionToken(response);
-    if (!expired) return response;
 
     manager.invalidate();
     const freshToken = await manager.getToken();
@@ -338,7 +325,7 @@ export class DefaultAIClientManager {
         );
       }
       throw new Error(
-        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}`,
+        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}${formatErrorCode(data?.error?.code)}`,
       );
     }
 
@@ -573,7 +560,7 @@ export class DefaultAIClientManager {
             }));
             console.error("[OracleProxy] Request failed:", error);
             throw new Error(
-              `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+              `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
             );
           }
 

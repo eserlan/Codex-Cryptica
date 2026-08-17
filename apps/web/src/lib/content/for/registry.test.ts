@@ -74,6 +74,27 @@ describe("Landing Page Registry", () => {
       expect(vtm?.slug).toBe("vampire-the-masquerade");
       expect(vtm?.disclaimer).toContain("Paradox Interactive");
     });
+
+    it("uses authentic VtM terminology and Storyteller framing", () => {
+      const vtm = getLandingPage("vampire-the-masquerade")!;
+      const copy = JSON.stringify(vtm);
+
+      // Avoid non-native / outsider combinations
+      expect(copy).not.toMatch(/Primogen member/i);
+      expect(copy).not.toMatch(/Elysium sanctuary|Elysium sanctuaries/i);
+      expect(copy).not.toMatch(/human disguise|human disguises/i);
+      expect(copy).not.toMatch(/coterie touchstone/i);
+      expect(copy).not.toMatch(/Anarch cell/i);
+
+      // Verify authentic terminology presence
+      expect(vtm.hero.eyebrow).toBe("Edition-Agnostic Chronicle Management");
+      expect(copy).toContain("Storyteller");
+      expect(copy).toContain("Touchstones");
+      expect(copy).toContain("Humanity");
+      expect(copy).toContain("Masquerade");
+      expect(copy).toContain("Anarch Coterie");
+      expect(copy).toContain("Owes a major boon to");
+    });
   });
 
   describe("Fantasy Worldbuilding Pack", () => {
@@ -82,6 +103,29 @@ describe("Landing Page Registry", () => {
       expect(fantasy).toBeDefined();
       expect(fantasy?.slug).toBe("fantasy-worldbuilding");
       expect(fantasy?.disclaimer).toBeUndefined();
+    });
+
+    it("uses authentic worldbuilding terminology and concrete, system-agnostic setting concepts", () => {
+      const fantasy = getLandingPage("fantasy-worldbuilding")!;
+      const copy = JSON.stringify(fantasy);
+
+      // Verify authentic worldbuilding concepts
+      expect(fantasy.hero.eyebrow).toBe("Setting Lore & World Bible");
+      expect(copy).toContain("pantheons");
+      expect(copy).toContain("dynasties");
+      expect(copy).toContain("provinces");
+      expect(copy).toContain("schisms");
+      expect(copy).toContain("artefacts");
+      expect(copy).toContain("chronology");
+
+      // Verify graph structure
+      expect(fantasy.exampleGraph).toBeDefined();
+      expect(fantasy.exampleGraph?.steps).toHaveLength(5);
+      expect(fantasy.exampleGraph?.steps[0].label).toBe("Queen Maera II");
+      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Head of");
+      expect(fantasy.exampleGraph?.steps[2].relation).toBe("Claims");
+      expect(fantasy.exampleGraph?.steps[3].relation).toBe("Broke treaty with");
+      expect(fantasy.exampleGraph?.steps[4].relation).toBe("Controls");
     });
   });
 

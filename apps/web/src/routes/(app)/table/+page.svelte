@@ -476,6 +476,8 @@
     });
   }
 
+  let showMobileFilters = $state(false);
+
   const hasActiveColumnFilters = $derived(
     Boolean(
       columnFilters.nameQuery ||
@@ -488,6 +490,13 @@
       (columnFilters.createdMode && columnFilters.createdMode !== "all") ||
       (columnFilters.modifiedMode && columnFilters.modifiedMode !== "all"),
     ),
+  );
+
+  const activeFilterCount = $derived(
+    typeFilters.size +
+      labelFilters.size +
+      (showIncompleteOnly ? 1 : 0) +
+      (hasActiveColumnFilters ? 1 : 0),
   );
 
   const hasActiveFilters = $derived(
@@ -518,6 +527,10 @@
     columnFilters = {};
     sort = { key: "title", direction: "asc" };
   }
+
+  const hasFilterPanel = $derived(
+    typeCounts.size > 0 || labelFilters.size > 0 || hasActiveFilters,
+  );
 </script>
 
 <svelte:head>
@@ -527,16 +540,16 @@
 <svelte:window onkeydown={handleKeyDown} />
 
 <div
-  class="flex h-full flex-col gap-4 bg-theme-bg p-4 md:p-6"
+  class="flex h-full flex-col gap-3 md:gap-4 bg-theme-bg p-3 sm:p-4 md:p-6"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <header class="flex flex-col gap-1">
+  <header class="flex flex-col gap-0.5 md:gap-1">
     <h1
-      class="font-header text-lg font-bold uppercase tracking-wider text-theme-text"
+      class="font-header text-base md:text-lg font-bold uppercase tracking-wider text-theme-text"
     >
       Entity Table
     </h1>
-    <p class="text-xs text-theme-muted">
+    <p class="text-xs text-theme-muted hidden sm:block">
       Browse, filter, and sort every entity in this vault.
     </p>
   </header>
@@ -564,9 +577,9 @@
     />
   {:else}
     <!-- Controls -->
-    <div class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="relative min-w-[240px] max-w-md flex-1">
+    <div class="flex flex-col gap-2.5 md:gap-3">
+      <div class="flex items-center gap-2 md:gap-3">
+        <div class="relative min-w-0 flex-1 max-w-md">
           <span
             class="icon-[lucide--search] pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-theme-muted"
             aria-hidden="true"
@@ -578,16 +591,44 @@
             placeholder="Search by name, content, or #label…"
             aria-label="Search entities"
             data-testid="entity-table-search"
-            class="w-full rounded-lg border border-theme-border bg-theme-surface py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+            class="w-full rounded-lg border border-theme-border bg-theme-surface py-1.5 md:py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
           />
         </div>
 
+        <!-- Mobile filters toggle button -->
+        <button
+          type="button"
+          onclick={() => (showMobileFilters = !showMobileFilters)}
+          aria-expanded={showMobileFilters}
+          aria-controls={hasFilterPanel
+            ? "entity-table-filter-panel"
+            : undefined}
+          data-testid="entity-table-mobile-filters-toggle"
+          class="inline-flex md:hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 shrink-0 {showMobileFilters ||
+          activeFilterCount > 0
+            ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
+            : 'border-theme-border bg-theme-surface text-theme-muted hover:text-theme-text'}"
+        >
+          <span class="icon-[lucide--filter] h-3.5 w-3.5" aria-hidden="true"
+          ></span>
+          <span>Filters</span>
+          {#if activeFilterCount > 0}
+            <span
+              class="rounded-full bg-theme-primary px-1.5 py-0.2 text-[10px] font-bold text-theme-bg"
+              data-testid="entity-table-active-filter-badge"
+            >
+              {activeFilterCount}
+            </span>
+          {/if}
+        </button>
+
+        <!-- Desktop Incomplete only toggle -->
         <button
           type="button"
           onclick={toggleIncompleteOnly}
           aria-pressed={showIncompleteOnly}
           data-testid="entity-table-incomplete-filter"
-          class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showIncompleteOnly
+          class="hidden md:inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showIncompleteOnly
             ? 'border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400'
             : 'border-theme-border bg-theme-surface text-theme-muted hover:border-amber-500/50 hover:text-theme-text'}"
         >
@@ -626,8 +667,31 @@
         </p>
       {/if}
 
-      {#if typeCounts.size > 0 || labelFilters.size > 0 || hasActiveFilters}
-        <div class="flex flex-wrap items-center gap-1.5">
+      {#if hasFilterPanel}
+        <div
+          id="entity-table-filter-panel"
+          class="{showMobileFilters
+            ? 'flex'
+            : 'hidden'} md:flex flex-wrap items-center gap-1.5"
+        >
+          <!-- Mobile Incomplete filter chip in expanded drawer -->
+          <button
+            type="button"
+            onclick={toggleIncompleteOnly}
+            aria-pressed={showIncompleteOnly}
+            data-testid="entity-table-incomplete-filter-mobile"
+            class="inline-flex md:hidden items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showIncompleteOnly
+              ? 'border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400'
+              : 'border-theme-border text-theme-muted hover:border-amber-500/50'}"
+          >
+            <span
+              class="icon-[lucide--alert-circle] h-3.5 w-3.5"
+              aria-hidden="true"
+            ></span>
+            Incomplete
+            <span class="text-theme-muted/60">{incompleteCount}</span>
+          </button>
+
           {#each [...typeCounts.entries()].sort( (a, b) => (a[0] ?? "").localeCompare(b[0] ?? "") ) as [type, count] (type)}
             {@const cat = categories.getCategory(type)}
             {@const active = typeFilters.has(type)}

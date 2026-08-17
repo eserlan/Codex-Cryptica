@@ -4,6 +4,10 @@ import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
 import { interactionSessions } from "@codex/ai-engine";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
+import { createRandomSourceOracleAdapter } from "$lib/features/random/oracle-adapter.svelte";
+
+/** One adapter for the session; it reads the open vault on every call. */
+const randomSourceOracle = createRandomSourceOracleAdapter();
 
 export class OracleContextManager {
   constructor(private store: IOracleStore) {}
@@ -197,6 +201,14 @@ export class OracleContextManager {
       },
       diceHistory: {
         addResult: wrap(s.diceHistory.addResult?.bind(s.diceHistory)),
+      },
+      // `/table` and `/deck`. Every member is wrapped because the executor may
+      // be running in the Oracle worker (#2247, FR-039).
+      randomSources: {
+        findByName: wrap(randomSourceOracle.findByName),
+        suggestNames: wrap(randomSourceOracle.suggestNames),
+        roll: wrap(randomSourceOracle.roll),
+        draw: wrap(randomSourceOracle.draw),
       },
       graph: {
         requestFit: wrap(s.graph.requestFit?.bind(s.graph)),

@@ -18,7 +18,6 @@ const mockEntities: Entity[] = [
     labels: ["NPC", "Guard"],
     status: "active",
     content: "A city guard patrolling the gates.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -30,7 +29,6 @@ const mockEntities: Entity[] = [
     labels: ["Guard", "Castle"],
     status: "active",
     content: "Guard inside the castle.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -42,7 +40,6 @@ const mockEntities: Entity[] = [
     labels: ["NPC", "MerchantLabel"],
     status: "active",
     content: "Selling goods.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -54,7 +51,6 @@ const mockEntities: Entity[] = [
     labels: [],
     status: "active",
     content: "The legendary king.",
-    tags: [],
     aliases: ["Wart"],
     connections: [],
     updatedAt: 0,
@@ -66,7 +62,6 @@ const mockEntities: Entity[] = [
     labels: ["Draft"],
     status: "draft",
     content: "Work in progress.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -135,7 +130,7 @@ describe("entityListFiltering pure functions", () => {
     });
 
     it("matches legacy tags as labels when an entity has no labels", () => {
-      const legacy: Entity = {
+      const legacy = {
         id: "legacy",
         title: "Old Timer",
         type: "npc",
@@ -146,7 +141,7 @@ describe("entityListFiltering pure functions", () => {
         aliases: [],
         connections: [],
         updatedAt: 0,
-      } as Entity;
+      } as unknown as Entity;
       const result = filterEntities([...mockEntities, legacy], {
         searchQuery: "",
         typeFilters: new Set(),
@@ -158,7 +153,7 @@ describe("entityListFiltering pure functions", () => {
     });
 
     it("matches legacy tags as labels for #label search tokens", () => {
-      const legacy: Entity = {
+      const legacy = {
         id: "legacy",
         title: "Old Timer",
         type: "npc",
@@ -169,7 +164,7 @@ describe("entityListFiltering pure functions", () => {
         aliases: [],
         connections: [],
         updatedAt: 0,
-      } as Entity;
+      } as unknown as Entity;
       const result = filterEntities([...mockEntities, legacy], {
         searchQuery: "#Guard",
         typeFilters: new Set(),
@@ -336,7 +331,6 @@ describe("entityListFiltering pure functions", () => {
         title: "Empty Node",
         type: "npc",
         labels: [],
-        tags: [],
         aliases: [],
         connections: [],
         content: "",
@@ -358,7 +352,6 @@ describe("entityListFiltering pure functions", () => {
         title: "Complete Node",
         type: "npc",
         labels: ["Hero"],
-        tags: [],
         aliases: [],
         connections: [],
         content: "Detailed backstory.",
@@ -381,7 +374,6 @@ describe("entityListFiltering pure functions", () => {
         title: "Alpha",
         type: "npc",
         labels: ["Hero"],
-        tags: [],
         aliases: [],
         connections: [],
         content: "Story of Alpha",
@@ -395,7 +387,6 @@ describe("entityListFiltering pure functions", () => {
         title: "Beta",
         type: "location",
         labels: [],
-        tags: [],
         aliases: [],
         connections: [],
         content: "Story of Beta",
@@ -407,7 +398,6 @@ describe("entityListFiltering pure functions", () => {
         title: "Gamma",
         type: "item",
         labels: ["Relic"],
-        tags: [],
         aliases: [],
         connections: [],
         content: "",
