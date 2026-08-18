@@ -46,7 +46,14 @@ function manager() {
     transcript: null,
     suggestedActions: [],
     errorMessage: null,
-    recap: null,
+    recap: {
+      location: { id: "loc-1", text: "The lantern road" },
+      situation: { id: "sit-1", text: "The ward is failing" },
+      objectives: [],
+      activeCharacters: [],
+      knownFacts: [],
+      recentTurnSummaries: [],
+    },
     rollHistory: [],
     submitAction: vi.fn(),
     submitCorrection: vi.fn(),
@@ -68,7 +75,9 @@ const originalFullscreenElement = Object.getOwnPropertyDescriptor(
   "fullscreenElement",
 );
 
-function props() {
+function props(
+  overrides: Partial<{ manager: ReturnType<typeof manager> }> = {},
+) {
   return {
     manager: manager(),
     existingTitles: [],
@@ -77,14 +86,8 @@ function props() {
     vaultId: "vault-1",
     onResume: vi.fn(),
     onResumeArchived: vi.fn(),
+    ...overrides,
   };
-}
-
-async function enterFocusMode() {
-  await fireEvent.click(
-    screen.getByRole("button", { name: "Enter Focus Mode" }),
-  );
-  return screen.getByTestId("adventure-focus-mode");
 }
 
 afterEach(() => {
@@ -101,11 +104,10 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
-  it("can end the adventure from inside Focus Mode", async () => {
+  it("can end the adventure from the management menu", async () => {
     const m = manager();
-    render(AdventureFocusPlay, { props: { ...props(), manager: m } });
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
 
-    await enterFocusMode();
     await fireEvent.click(
       screen.getByTestId("adventure-management-menu-button"),
     );
@@ -116,29 +118,22 @@ describe("AdventureFocusPlay", () => {
     expect(m.end).toHaveBeenCalledOnce();
   });
 
-  it("keeps the ordinary adventure layout until the player enters Focus Mode", async () => {
-    render(AdventureFocusPlay, {
-      props: props(),
-    });
+  it("shows the current situation without opening the tools panel", () => {
+    render(AdventureFocusPlay, { props: props() });
 
-    expect(screen.queryByTestId("adventure-focus-mode")).toBeNull();
+    expect(screen.getByText("The lantern road")).toBeTruthy();
+    expect(screen.getByText("The ward is failing")).toBeTruthy();
+  });
 
-    await enterFocusMode();
+  it("keeps the tools panel collapsed by default and can expand it without hiding the play column", async () => {
+    render(AdventureFocusPlay, { props: props() });
 
-    expect(screen.getByTestId("adventure-focus-mode")).toBeTruthy();
     expect(
       screen
         .getByRole("button", { name: "Adventure tools" })
         .getAttribute("aria-expanded"),
-    ).toBe("true");
-  });
+    ).toBe("false");
 
-  it("can collapse utility panels without hiding the active play column", async () => {
-    render(AdventureFocusPlay, {
-      props: props(),
-    });
-
-    await enterFocusMode();
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
@@ -147,48 +142,53 @@ describe("AdventureFocusPlay", () => {
       screen
         .getByRole("button", { name: "Adventure tools" })
         .getAttribute("aria-expanded"),
-    ).toBe("false");
+    ).toBe("true");
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
   });
 
-  it("opens the tools drawer from the ordinary adventure layout", async () => {
+  it("keeps dice presets and resource trackers inside the collapsed tools panel", async () => {
     render(AdventureFocusPlay, { props: props() });
 
-    expect(screen.queryByTestId("adventure-tools-drawer")).toBeNull();
+    expect(screen.getByLabelText("Adventure tools").className).toContain(
+      "hidden",
+    );
+    expect(screen.getByText("Dice presets")).toBeTruthy();
+    expect(screen.getByText("Resource trackers")).toBeTruthy();
 
-    await fireEvent.click(screen.getByRole("button", { name: "Tools" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
 
-    expect(screen.getByTestId("adventure-tools-drawer")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Close adventure tools" }),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("Adventure tools").className).not.toContain(
+      "hidden",
+    );
   });
 
-  it("keeps Focus Mode open when fullscreen is denied", async () => {
+  it("keeps the adventure surface visible when fullscreen is denied", async () => {
     render(AdventureFocusPlay, { props: props() });
-    const focusMode = await enterFocusMode();
-    Object.assign(focusMode, {
+    const surface = screen.getByTestId("adventure-play-surface");
+    Object.assign(surface, {
       requestFullscreen: vi.fn().mockRejectedValue(new Error("denied")),
     });
 
     await fireEvent.click(screen.getByRole("button", { name: "Fullscreen" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("adventure-focus-mode")).toBeTruthy();
+      expect(screen.getByTestId("adventure-play-surface")).toBeTruthy();
     });
   });
 
-  it("keeps Focus Mode open when Escape exits browser fullscreen", async () => {
+  it("keeps the adventure surface visible when Escape exits browser fullscreen", async () => {
     render(AdventureFocusPlay, { props: props() });
-    const focusMode = await enterFocusMode();
+    const surface = screen.getByTestId("adventure-play-surface");
     let fullscreenElement: Element | null = null;
     Object.defineProperty(document, "fullscreenElement", {
       configurable: true,
       get: () => fullscreenElement,
     });
-    Object.assign(focusMode, {
+    Object.assign(surface, {
       requestFullscreen: vi.fn().mockImplementation(async () => {
-        fullscreenElement = focusMode;
+        fullscreenElement = surface;
         document.dispatchEvent(new Event("fullscreenchange"));
       }),
     });
@@ -206,14 +206,14 @@ describe("AdventureFocusPlay", () => {
     document.dispatchEvent(new Event("fullscreenchange"));
 
     await waitFor(() => {
-      expect(screen.getByTestId("adventure-focus-mode")).toBeTruthy();
+      expect(screen.getByTestId("adventure-play-surface")).toBeTruthy();
       expect(screen.getByRole("button", { name: "Fullscreen" })).toBeTruthy();
     });
   });
 
   it("ignores repeated fullscreen requests while a transition is pending", async () => {
     render(AdventureFocusPlay, { props: props() });
-    const focusMode = await enterFocusMode();
+    const surface = screen.getByTestId("adventure-play-surface");
     let resolveFullscreen: (() => void) | undefined;
     const requestFullscreen = vi.fn(
       () =>
@@ -221,7 +221,7 @@ describe("AdventureFocusPlay", () => {
           resolveFullscreen = resolve;
         }),
     );
-    Object.assign(focusMode, { requestFullscreen });
+    Object.assign(surface, { requestFullscreen });
 
     const fullscreenButton = screen.getByRole("button", {
       name: "Fullscreen",
