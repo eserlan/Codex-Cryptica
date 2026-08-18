@@ -1,16 +1,19 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { isEntityVisible } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
+  import {
+    buildConnectionNeighbors,
+    vaultConnectionContext,
+    type ConnectionNeighbor,
+  } from "./entity-connections";
   import {
     MAX_CONNECTION_NODES,
-    buildConnectionNeighbors,
     edgeLabelPosition,
     layoutConnectionGraph,
-    type ConnectionNeighbor,
   } from "./connections-graph";
 
   let {
@@ -22,17 +25,7 @@
   } = $props();
 
   const allNeighbors = $derived.by<ConnectionNeighbor[]>(() =>
-    buildConnectionNeighbors(entity, {
-      getEntity: (id) => vault.entities[id],
-      inbound: vault.inboundConnections,
-      allEntities: vault.allEntities ?? [],
-      isVisible: (candidate) =>
-        !vault.isGuest ||
-        isEntityVisible(candidate, {
-          sharedMode: vault.isGuest,
-          defaultVisibility: vault.defaultVisibility,
-        }),
-    }),
+    buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
   );
 
   const neighbors = $derived(allNeighbors.slice(0, MAX_CONNECTION_NODES));
@@ -53,7 +46,7 @@
     color ? `color-mix(in srgb, ${color} ${amount}, transparent)` : undefined;
 
   const relationText = (neighbor: ConnectionNeighbor) =>
-    neighbor.relations.map((r) => r.label).join(" · ");
+    neighbor.relations.map((r) => r.displayLabel).join(" · ");
 
   const relationIcon = (neighbor: ConnectionNeighbor) => {
     const outbound = neighbor.relations.some((r) => r.direction === "outbound");
@@ -66,14 +59,17 @@
     const relations = neighbor.relations
       .map((r) =>
         r.direction === "outbound"
-          ? `${entity.title} ${r.label} ${neighbor.title}`
-          : `${neighbor.title} ${r.label} ${entity.title}`,
+          ? `${entity.title} ${r.displayLabel} ${neighbor.title}`
+          : `${neighbor.title} ${r.displayLabel} ${entity.title}`,
       )
       .join(", ");
-    return `Open ${neighbor.title} (${relations})`;
+    // The "*" past marker is a purely visual footnote elsewhere in the app; the
+    // accessible name has to spell it out instead.
+    const past = neighbor.hasPastLabel ? " (past)" : "";
+    return `Open ${neighbor.title}${past} (${relations})`;
   };
 
-  function open(neighborId: string, event: MouseEvent) {
+  function openNeighbor(neighborId: string, event: MouseEvent) {
     if (onNavigate) {
       onNavigate(neighborId, event);
       return;
@@ -94,6 +90,8 @@
   <div
     class="relative aspect-[4/3] max-h-[32rem] min-h-[22rem] w-full overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40"
     data-testid="connections-graph"
+    role="group"
+    aria-label="Direct connections of {entity.title}"
   >
     <!-- Edges. Drawn in the same 0-100 percentage space the nodes are placed
          in, so the two layers stay aligned at any container size. -->
@@ -122,15 +120,16 @@
     <!-- Relationship labels, as HTML so they inherit theme type styles and
          can carry a direction glyph. -->
     {#each neighbors as neighbor, i (neighbor.id)}
-      {@const label = edgeLabelPosition(positions[i], 0.5)}
+      {@const label = edgeLabelPosition(positions[i])}
       <span
         class="pointer-events-none absolute z-10 flex max-w-[8rem] -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-theme-border bg-theme-bg/90 px-1.5 py-0.5 text-[9px] leading-none font-medium text-theme-muted"
         style:left="{label.x}%"
         style:top="{label.y}%"
         data-testid="connection-edge-label"
+        aria-hidden="true"
       >
         <span class="{relationIcon(neighbor)} h-2.5 w-2.5 shrink-0"></span>
-        <span class="truncate">{relationText(neighbor)}</span>
+        <span class="min-w-0 truncate">{relationText(neighbor)}</span>
       </span>
     {/each}
 
@@ -173,7 +172,7 @@
         data-entity-id={neighbor.id}
         aria-label={describe(neighbor)}
         title={neighbor.title}
-        onclick={(event) => open(neighbor.id, event)}
+        onclick={(event) => openNeighbor(neighbor.id, event)}
       >
         <span
           class="flex h-10 w-10 items-center justify-center rounded-full border transition group-hover:scale-110"
@@ -203,6 +202,8 @@
       </p>
     {/if}
   </div>
+
+  <FeatureHint hintId="connections" />
 
   {#if hiddenCount > 0}
     <p class="text-xs text-theme-muted" data-testid="connections-overflow">

@@ -1,125 +1,11 @@
-import type { Connection, Entity } from "schema";
-
 /**
- * Data + layout helpers for the Connections tab (issue #2350): a focused
- * 1-hop graph of a single entity and the entities it is directly connected to.
+ * Radial layout for the Connections tab (issue #2350): the entity at the
+ * centre, its direct connections around it.
  *
- * Deliberately NOT a miniature world graph — no traversal past the first hop,
- * no physics. Positions are percentages of the container box so the view is
- * responsive by construction (the component places nodes with `left`/`top`).
+ * Deliberately not a physics simulation — positions are plain percentages of
+ * the container box, so the view is responsive by construction (the component
+ * places nodes with `left`/`top`) and the layout is testable without a DOM.
  */
-
-export type ConnectionDirection = "outbound" | "inbound";
-
-export type ConnectionRelation = {
-  /** Human-readable relationship label ("spouse", "located in", ...). */
-  label: string;
-  direction: ConnectionDirection;
-};
-
-export type ConnectionNeighbor = {
-  id: string;
-  title: string;
-  type: string;
-  hasPastLabel: boolean;
-  /** Every relationship between the centre entity and this neighbour. */
-  relations: ConnectionRelation[];
-};
-
-export type ConnectionGraphContext = {
-  getEntity: (id: string) => Entity | undefined;
-  /** Connections pointing *at* the centre entity, keyed by target id. */
-  inbound: Record<string, { sourceId: string; connection: Connection }[]>;
-  /** Used to pick up hierarchy children, which the Status tab also lists. */
-  allEntities: Entity[];
-  /** Guest-mode visibility gate; defaults to "everything is visible". */
-  isVisible?: (entity: Entity) => boolean;
-};
-
-const hasPast = (entity: Entity) =>
-  entity.labels?.some((label) => label.toLowerCase() === "past") ?? false;
-
-/**
- * Falls back to the connection *type* when no custom label was written, so an
- * edge is never unlabelled: "located_in" reads as "located in".
- */
-export function connectionLabel(connection: {
-  label?: string;
-  type?: string;
-}): string {
-  const custom = connection.label?.trim();
-  if (custom) return custom;
-  const type = connection.type?.trim();
-  if (!type) return "related to";
-  return type.replace(/[_-]+/g, " ").toLowerCase();
-}
-
-/**
- * Collects the entity's direct (1-hop) neighbours: outgoing connections,
- * incoming connections and hierarchy children — the same set the Status tab
- * lists, so the two views never disagree. One node per neighbour entity;
- * multiple relationships to the same entity collapse into one node.
- */
-export function buildConnectionNeighbors(
-  entity: Entity,
-  context: ConnectionGraphContext,
-): ConnectionNeighbor[] {
-  const isVisible = context.isVisible ?? (() => true);
-  const byId = new Map<string, ConnectionNeighbor>();
-
-  const add = (
-    neighborId: string,
-    relation: ConnectionRelation,
-  ): ConnectionNeighbor | undefined => {
-    if (!neighborId || neighborId === entity.id) return undefined;
-    const existing = byId.get(neighborId);
-    if (existing) {
-      const duplicate = existing.relations.some(
-        (r) => r.label === relation.label && r.direction === relation.direction,
-      );
-      if (!duplicate) existing.relations.push(relation);
-      return existing;
-    }
-
-    const target = context.getEntity(neighborId);
-    if (!target || !isVisible(target)) return undefined;
-
-    const neighbor: ConnectionNeighbor = {
-      id: target.id,
-      title: target.title || target.id,
-      type: target.type,
-      hasPastLabel: hasPast(target),
-      relations: [relation],
-    };
-    byId.set(neighborId, neighbor);
-    return neighbor;
-  };
-
-  for (const connection of entity.connections ?? []) {
-    add(connection.target, {
-      label: connectionLabel(connection),
-      direction: "outbound",
-    });
-  }
-
-  for (const item of context.inbound[entity.id] ?? []) {
-    add(item.sourceId, {
-      label: connectionLabel(item.connection),
-      direction: "inbound",
-    });
-  }
-
-  const entityId = entity.id.toLowerCase();
-  for (const candidate of context.allEntities) {
-    if (candidate.parent?.toLowerCase() !== entityId) continue;
-    // A child that already has an explicit connection keeps that relationship
-    // rather than gaining a second, weaker "Child" edge.
-    if (byId.has(candidate.id)) continue;
-    add(candidate.id, { label: "child", direction: "inbound" });
-  }
-
-  return [...byId.values()];
-}
 
 export type ConnectionNodePosition = {
   /** Percentage of the container width / height (0-100). */
@@ -128,8 +14,11 @@ export type ConnectionNodePosition = {
   ring: number;
 };
 
-/** Rings past this get crowded; the rest are summarised as "+N more". */
+/** Past this the rings get crowded; the rest are summarised as "+N more". */
 export const MAX_CONNECTION_NODES = 20;
+/** Fraction of the centre→node distance where the label pill sits. */
+export const EDGE_LABEL_FRACTION = 0.5;
+
 const SINGLE_RING_MAX = 9;
 const INNER_RING_MAX = 6;
 
@@ -138,6 +27,8 @@ const RING_RADII = [
   { rx: 22, ry: 24 }, // inner ring (two-ring layout)
   { rx: 40, ry: 42 }, // outer ring (two-ring layout)
 ];
+
+const round = (value: number) => Math.round(value * 100) / 100;
 
 function ringPositions(
   count: number,
@@ -160,11 +51,9 @@ function ringPositions(
   return positions;
 }
 
-const round = (value: number) => Math.round(value * 100) / 100;
-
 /**
- * Radial layout around a fixed centre. Up to nine neighbours sit on one ring;
- * beyond that they split across two interleaved rings so labels stay legible.
+ * Up to nine neighbours sit on one ring; beyond that they split across two
+ * interleaved rings so labels stay legible.
  */
 export function layoutConnectionGraph(count: number): ConnectionNodePosition[] {
   const shown = Math.min(Math.max(count, 0), MAX_CONNECTION_NODES);
@@ -186,7 +75,7 @@ export function layoutConnectionGraph(count: number): ConnectionNodePosition[] {
 /** Point along the centre→node line where the relationship label is drawn. */
 export function edgeLabelPosition(
   node: ConnectionNodePosition,
-  fraction = 0.55,
+  fraction = EDGE_LABEL_FRACTION,
 ): { x: number; y: number } {
   return {
     x: round(50 + (node.x - 50) * fraction),

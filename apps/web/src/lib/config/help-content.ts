@@ -254,6 +254,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       'Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. The play surface stays quiet by default — dice presets, roll history, resource counters, provisional facts, and the adventure archive live behind the Adventure tools panel, open it when you need them. Fullscreen is optional for an even quieter view; Escape leaves browser fullscreen without leaving the adventure. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows — it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.',
     icon: "icon-[lucide--map]",
   },
+  connections: {
+    id: "connections",
+    title: "Connections",
+    content:
+      "The Connections tab puts this entity in the middle and draws everything linked straight to it around the edge — links you made, links others made to it, and anything filed under it — with the relationship written on each line. Click any surrounding entity to open it. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.",
+    icon: "icon-[lucide--waypoints]",
+  },
   "family-tree": {
     id: "family-tree",
     title: "Family Tree",

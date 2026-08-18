@@ -382,6 +382,7 @@
       </button>
       <button
         bind:this={tabConnections}
+        type="button"
         role="tab"
         id="tab-connections"
         aria-selected={activeTab === "connections"}

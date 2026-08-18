@@ -41,6 +41,16 @@ const { entities, vaultMock } = vi.hoisted(() => {
     connections: [{ target: "duke", type: "enemy", strength: 1 }],
   } as unknown as Entity;
 
+  const wraith = {
+    id: "wraith",
+    type: "creature",
+    title: "Old Wraith",
+    labels: ["past"],
+    connections: [
+      { target: "king", type: "enemy", label: "haunts", strength: 1 },
+    ],
+  } as unknown as Entity;
+
   const hermit = {
     id: "hermit",
     type: "character",
@@ -48,12 +58,15 @@ const { entities, vaultMock } = vi.hoisted(() => {
     connections: [],
   } as unknown as Entity;
 
-  const entities = { king, duke, guard, kingdom, rival, hermit };
+  const entities = { king, duke, guard, kingdom, rival, hermit, wraith };
   const vaultMock = {
     entities,
     allEntities: Object.values(entities),
     inboundConnections: {
-      king: [{ sourceId: "kingdom", connection: kingdom.connections[0] }],
+      king: [
+        { sourceId: "kingdom", connection: kingdom.connections[0] },
+        { sourceId: "wraith", connection: wraith.connections[0] },
+      ],
       duke: [
         { sourceId: "king", connection: king.connections[0] },
         { sourceId: "rival", connection: rival.connections[0] },
@@ -104,7 +117,7 @@ describe("DetailConnectionsTab", () => {
   it("renders only direct connections, in both directions", () => {
     render(DetailConnectionsTab, { entity: entities.king });
 
-    expect(nodeTitles().sort()).toEqual(["duke", "guard", "kingdom"]);
+    expect(nodeTitles().sort()).toEqual(["duke", "guard", "kingdom", "wraith"]);
   });
 
   it("does not render second-degree connections", () => {
@@ -159,6 +172,16 @@ describe("DetailConnectionsTab", () => {
     expect(
       screen.getByLabelText(
         "Open Kingdom of Pagen (Kingdom of Pagen rules King Béla)",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("spells out the past marker in the accessible name", () => {
+    render(DetailConnectionsTab, { entity: entities.king });
+
+    expect(
+      screen.getByLabelText(
+        "Open Old Wraith (past) (Old Wraith haunts King Béla)",
       ),
     ).toBeTruthy();
   });
