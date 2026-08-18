@@ -6,10 +6,12 @@
     manager,
     showHeader = true,
     onEnterFocus,
+    onOpenTools,
   }: {
     manager: AdventureManager;
     showHeader?: boolean;
     onEnterFocus?: () => void;
+    onOpenTools?: () => void;
   } = $props();
 </script>
 
@@ -32,6 +34,19 @@
         </p>
       </div>
       <div class="flex shrink-0 flex-wrap justify-end gap-2">
+        {#if onOpenTools}
+          <button
+            class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            type="button"
+            onclick={onOpenTools}
+          >
+            <span class="inline-flex items-center gap-2">
+              <span aria-hidden="true" class="icon-[lucide--wrench] h-4 w-4"
+              ></span>
+              Tools
+            </span>
+          </button>
+        {/if}
         {#if onEnterFocus}
           <button
             class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
