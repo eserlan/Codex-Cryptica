@@ -129,3 +129,33 @@ export type BlockNode =
   | UnknownDirectiveNode;
 
 export type PresentationAst = BlockNode[];
+
+/** Container keys through which every BlockNode/InlineNode variant nests
+ * further nodes (see the interfaces above). Kept in one place so consumers
+ * that need to walk the presentation AST (editor diagnostics, override
+ * hydration, etc.) share a single traversal contract instead of each
+ * re-deriving this list and risking drift when a new variant is added. */
+const PRESENTATION_NODE_CHILD_KEYS = [
+  "children",
+  "items",
+  "header",
+  "rows",
+] as const;
+
+/** Recursively visits every node in a parsed presentation AST (or any
+ * subtree of it), including nested inline/block/table structures. */
+export function walkPresentationNodes(
+  nodes: unknown[],
+  visit: (node: Record<string, unknown>) => void,
+): void {
+  for (const n of nodes) {
+    const node = n as Record<string, unknown>;
+    visit(node);
+    for (const key of PRESENTATION_NODE_CHILD_KEYS) {
+      const val = node[key];
+      if (Array.isArray(val)) {
+        walkPresentationNodes((val as unknown[]).flat(2), visit);
+      }
+    }
+  }
+}

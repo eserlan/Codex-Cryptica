@@ -334,6 +334,47 @@ describe("PresentationTemplateEditor", () => {
     expect(screen.queryByText("[hp]")).toBeNull();
   });
 
+  it("preserves a previously saved hide-label field across an unrelated visual edit and reload", async () => {
+    const twoFieldSchema: StatSheetTemplate = {
+      id: "schema-two-fields",
+      name: "Two Field Schema",
+      isBuiltIn: true,
+      fields: [
+        { id: "hp", label: "Hit Points", type: "text" },
+        { id: "mp", label: "Mana", type: "text" },
+      ],
+    };
+    const hideLabelTemplate = {
+      ...builtIn,
+      id: "presentation-hide-label",
+      schemaTemplateId: twoFieldSchema.id,
+      isBuiltIn: false,
+      source: ":::card\n{{stat.hp hide-label}}\n[mp]\n:::",
+    };
+    saveTemplate.mockResolvedValueOnce(hideLabelTemplate);
+    render(PresentationTemplateEditor, {
+      schema: twoFieldSchema,
+      template: hideLabelTemplate,
+    });
+
+    // Perform an unrelated visual edit (toggle hide-label on the *other*
+    // field) which regenerates the whole source from fieldDisplayOverrides.
+    await fireEvent.contextMenu(screen.getByLabelText("Mana field options"));
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Hide Label" }));
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("{{stat.hp hide-label}}"),
+      }),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("{{stat.mp hide-label}}"),
+      }),
+    );
+  });
+
   it("renders an explicit missing indicator on visual card chips referencing a deleted field", () => {
     const customTemplate = {
       ...builtIn,

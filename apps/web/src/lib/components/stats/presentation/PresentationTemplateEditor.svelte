@@ -17,6 +17,7 @@
     validateAst,
     exportPresentationTemplate,
     sanitizeSource,
+    walkPresentationNodes,
     DISPLAY_MODES_BY_FIELD_TYPE,
   } from "@codex/stat-sheet-engine";
   import type {
@@ -442,9 +443,38 @@
   let autocompleteFilter = $state("");
   let textareaEl: HTMLTextAreaElement | undefined = $state();
 
+  // Reconstructs per-field overrides (hide-label, non-default display mode)
+  // from the raw saved source so reopening the visual editor doesn't start
+  // from a blank slate — syncSourceFromVisualCards() regenerates the whole
+  // template from this map, so a stale/empty seed silently drops previously
+  // saved overrides on the next visual edit.
+  function deriveFieldDisplayOverrides(
+    src: string,
+  ): Record<string, { displayMode?: string; hideLabel?: boolean }> {
+    const result = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
+    if (!result.ok) return {};
+    const overrides: Record<
+      string,
+      { displayMode?: string; hideLabel?: boolean }
+    > = {};
+    walkPresentationNodes(result.ast, (node) => {
+      if (node.type !== "field-reference") return;
+      const fieldId = node.fieldId as string;
+      const displayMode = node.displayMode as string | undefined;
+      const hideLabel = node.hideLabel as boolean | undefined;
+      if (displayMode || hideLabel) {
+        overrides[fieldId] = {
+          ...(displayMode ? { displayMode } : {}),
+          ...(hideLabel ? { hideLabel: true } : {}),
+        };
+      }
+    });
+    return overrides;
+  }
+
   let fieldDisplayOverrides = $state<
     Record<string, { displayMode?: string; hideLabel?: boolean }>
-  >({});
+  >(deriveFieldDisplayOverrides(source));
   let chipContextMenu = $state<{
     x: number;
     y: number;
@@ -549,24 +579,14 @@
     const missing: MissingFieldNode[] = [];
     const unknown: UnknownDirectiveNode[] = [];
     const mismatched: FieldReferenceNode[] = [];
-    function walk(list: unknown[]) {
-      for (const n of list) {
-        const node = n as Record<string, unknown>;
-        if (node.type === "missing-field")
-          missing.push(node as unknown as MissingFieldNode);
-        if (node.type === "unknown-directive")
-          unknown.push(node as unknown as UnknownDirectiveNode);
-        if (node.type === "field-reference" && node.requestedDisplayMode)
-          mismatched.push(node as unknown as FieldReferenceNode);
-        for (const key of ["children", "items", "header", "rows"]) {
-          const val = node[key];
-          if (Array.isArray(val)) {
-            walk((val as unknown[]).flat(2));
-          }
-        }
-      }
-    }
-    walk(nodes);
+    walkPresentationNodes(nodes, (node) => {
+      if (node.type === "missing-field")
+        missing.push(node as unknown as MissingFieldNode);
+      if (node.type === "unknown-directive")
+        unknown.push(node as unknown as UnknownDirectiveNode);
+      if (node.type === "field-reference" && node.requestedDisplayMode)
+        mismatched.push(node as unknown as FieldReferenceNode);
+    });
     return { missing, unknown, mismatched };
   }
 
