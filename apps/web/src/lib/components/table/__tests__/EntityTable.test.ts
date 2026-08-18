@@ -67,6 +67,24 @@ describe("EntityTable", () => {
     expect(link?.getAttribute("href")).toBe("/vault/v1/entity/e1");
   });
 
+  it("colors each row's left border by its entity type, so types stay scannable across the table (#2329)", () => {
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        connectionCounts,
+        onSort: vi.fn(),
+      },
+    });
+
+    const renderedRows = screen.getAllByTestId("entity-table-row");
+    // character -> #60a5fa, location -> #4ade80 (DEFAULT_CATEGORIES).
+    expect(renderedRows[0].style.borderLeftColor).toBe("rgb(96, 165, 250)");
+    expect(renderedRows[1].style.borderLeftColor).toBe("rgb(74, 222, 128)");
+    expect(renderedRows[0].style.borderLeftWidth).toBe("3px");
+  });
+
   it("renders combined inbound and outbound connection counts, including zero", () => {
     render(EntityTable, {
       props: {

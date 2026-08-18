@@ -99,13 +99,18 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
     list: [
-      { id: "npc", label: "NPC", icon: "user", color: "#fff" },
-      { id: "location", label: "Locations", icon: "map-pin", color: "#fff" },
+      { id: "npc", label: "NPC", icon: "user", color: "#60a5fa" },
+      {
+        id: "location",
+        label: "Locations",
+        icon: "map-pin",
+        color: "#4ade80",
+      },
     ],
     getCategory: (id: string) =>
       id === "location"
-        ? { label: "Locations", icon: "map-pin" }
-        : { label: "NPC", icon: "user" },
+        ? { label: "Locations", icon: "map-pin", color: "#4ade80" }
+        : { label: "NPC", icon: "user", color: "#60a5fa" },
   },
 }));
 
@@ -223,6 +228,21 @@ describe("EntityList", () => {
     expect(screen.queryByRole("button", { expanded: true })).toBeNull();
     expect(screen.getByText("Ava")).not.toBeNull();
     expect(screen.queryByText("Parent Entity")).toBeNull();
+  });
+
+  it("colors each entity row's left border by its type, so types stay scannable in the tree (#2329)", () => {
+    render(EntityList);
+
+    const npcRow = screen
+      .getByText("Ava")
+      .closest("[data-testid='entity-list-item']") as HTMLElement;
+    const locationRow = screen
+      .getByText("Parent Entity")
+      .closest("[data-testid='entity-list-item']") as HTMLElement;
+
+    expect(npcRow.style.borderLeftColor).toBe("rgb(96, 165, 250)");
+    expect(locationRow.style.borderLeftColor).toBe("rgb(74, 222, 128)");
+    expect(npcRow.style.borderLeftWidth).toBe("3px");
   });
 
   it("clears the search query when the clear button is clicked", async () => {
