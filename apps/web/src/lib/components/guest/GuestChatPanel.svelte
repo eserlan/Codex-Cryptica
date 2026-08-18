@@ -4,6 +4,12 @@
   import { isEntityVisible, type Entity } from "schema";
   import { characterChatExportService } from "$lib/services/character-chat-export";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import {
+    rollOracleOutcome,
+    rollPbtAMove,
+    rollD20,
+    rollActionSpark,
+  } from "@codex/oracle-engine";
   import GuestChatBubble from "./GuestChatBubble.svelte";
   import { tick } from "svelte";
 
@@ -328,33 +334,112 @@
       >
         {#if showCueInput}
           <div
-            class="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-xs"
+            class="flex flex-col gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-xs"
           >
-            <span
-              class="icon-[lucide--sparkles] w-3.5 h-3.5 text-amber-400 shrink-0"
-              aria-hidden="true"
-            ></span>
-            <label for="guest-chat-cue" class="sr-only"
-              >Oracle / Director Cue</label
+            <div class="flex items-center gap-2">
+              <span
+                class="icon-[lucide--sparkles] w-3.5 h-3.5 text-amber-400 shrink-0"
+                aria-hidden="true"
+              ></span>
+              <label for="guest-chat-cue" class="sr-only"
+                >Oracle / Director Cue</label
+              >
+              <input
+                id="guest-chat-cue"
+                type="text"
+                bind:value={cueInput}
+                placeholder="Oracle / Director Cue (e.g. Yes, but... / 2d6 = 10 / Angry refusal)"
+                class="flex-1 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
+              />
+              {#if cueInput}
+                <button
+                  type="button"
+                  onclick={() => (cueInput = "")}
+                  class="text-theme-muted hover:text-theme-text p-0.5 cursor-pointer"
+                  aria-label="Clear cue"
+                >
+                  <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+
+            <!-- Quick Oracle & Roll Shortcuts -->
+            <div
+              class="flex flex-wrap items-center gap-1 pt-1.5 border-t border-amber-500/10 text-[10px]"
             >
-            <input
-              id="guest-chat-cue"
-              type="text"
-              bind:value={cueInput}
-              placeholder="Oracle / Director Cue (e.g. Yes, but... / Crown, Cushion / Angry refusal)"
-              class="flex-1 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
-            />
-            {#if cueInput}
+              <span
+                class="text-amber-400/70 font-mono text-[9px] uppercase tracking-wider select-none mr-0.5"
+                >Quick Roll:</span
+              >
               <button
                 type="button"
-                onclick={() => (cueInput = "")}
-                class="text-theme-muted hover:text-theme-text p-0.5 cursor-pointer"
-                aria-label="Clear cue"
+                onclick={() =>
+                  (cueInput = rollOracleOutcome("even").formattedCue)}
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+                title="Roll 50/50 Yes/No Oracle"
+                data-testid="guest-quick-oracle-btn"
               >
-                <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"
+                <span
+                  class="icon-[lucide--help-circle] w-2.5 h-2.5"
+                  aria-hidden="true"
                 ></span>
+                Oracle 50/50
               </button>
-            {/if}
+              <button
+                type="button"
+                onclick={() =>
+                  (cueInput = rollOracleOutcome("likely").formattedCue)}
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+                title="Roll Likely (+odds) Oracle"
+                data-testid="guest-quick-oracle-likely-btn"
+              >
+                Likely
+              </button>
+              <button
+                type="button"
+                onclick={() =>
+                  (cueInput = rollOracleOutcome("unlikely").formattedCue)}
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+                title="Roll Unlikely (-odds) Oracle"
+                data-testid="guest-quick-oracle-unlikely-btn"
+              >
+                Unlikely
+              </button>
+              <button
+                type="button"
+                onclick={() => (cueInput = rollPbtAMove().formattedCue)}
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+                title="Roll 2d6 (Strong Hit, Weak Hit, Miss)"
+                data-testid="guest-quick-pbta-btn"
+              >
+                <span
+                  class="icon-[lucide--dices] w-2.5 h-2.5"
+                  aria-hidden="true"
+                ></span>
+                2d6
+              </button>
+              <button
+                type="button"
+                onclick={() => (cueInput = rollD20().formattedCue)}
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+                title="Roll d20"
+                data-testid="guest-quick-d20-btn"
+              >
+                d20
+              </button>
+              <button
+                type="button"
+                onclick={() => (cueInput = rollActionSpark().formattedCue)}
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+                title="Roll Action & Theme Spark"
+                data-testid="guest-quick-spark-btn"
+              >
+                <span class="icon-[lucide--zap] w-2.5 h-2.5" aria-hidden="true"
+                ></span>
+                Spark
+              </button>
+            </div>
           </div>
         {/if}
 
