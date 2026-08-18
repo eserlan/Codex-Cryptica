@@ -8,80 +8,80 @@ export const traveller: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Traveller Campaign Management",
     description:
-      "Organise your Traveller campaign with connected subsectors, worlds, patrons, mercenary tickets, trade routes, and rival powers.",
+      "Organise your Traveller campaign with connected subsectors, worlds, patrons, speculative trade, jump routes, and rival powers.",
   },
   hero: {
     eyebrow: "Traveller Campaign Management",
     title: "Codex Cryptica for Traveller",
     tagline:
-      "Keep subsectors, worlds, patrons, crews, trade routes, and rival powers connected in one place.",
+      "Keep subsectors, worlds, patrons, Travellers, trade, and rival powers connected in one place.",
     problemStatement:
-      "A Traveller campaign is a sandbox built from dozens of jump-linked worlds, each with its own government, trade goods, and local trouble. When your crew takes a patron's job three parsecs out, you shouldn't have to dig through subsector notes to remember who they owe, who's hunting them, and what the last system taught you about the next.",
+      "A Traveller campaign is a sandbox built from dozens of jump-linked worlds, each with its own government, trade goods, and local trouble. When your Travellers take a patron's job three parsecs out, you shouldn't have to dig through subsector notes to remember who they owe, who's hunting them, what cargo is in the hold, and what waits at the next jump.",
   },
   useCases: [
     {
       title: "Subsectors, Worlds & Starports",
       description:
-        "Map subsectors down to individual worlds, starports, and orbital installations, all linked to the systems they sit in.",
+        "Map subsectors down to individual worlds, UWPs, starports, bases and jump routes, all linked to the systems they sit in.",
       icon: "icon-[lucide--orbit]",
     },
     {
-      title: "Governments, Megacorps & Rival Powers",
+      title: "Governments, Corporations & Rival Powers",
       description:
-        "Track polities, trade conglomerates, scout bases, and rival powers competing for influence across the frontier.",
+        "Track governments, corporations, naval and scout bases, local factions, and rival powers competing across the subsector.",
       icon: "icon-[lucide--building-2]",
     },
     {
-      title: "Patrons, Crew & Contacts",
+      title: "Patrons, Travellers & Contacts",
       description:
-        "Connect patrons, crew members, informants, rivals, and creditors using a visual relationship graph.",
+        "Connect patrons, Travellers, ship crew, informants, rivals, and creditors using a visual relationship graph.",
       icon: "icon-[lucide--users]",
     },
     {
-      title: "Trade Routes & Mercenary Tickets",
+      title: "Trade, Jobs & Contracts",
       description:
-        "Chart jump routes, trade goods, contested territories, and active tickets alongside the worlds and factions involved.",
+        "Track speculative trade, freight, passengers, patron jobs, and mercenary tickets alongside the worlds and factions involved.",
       icon: "icon-[lucide--route]",
     },
   ],
   exampleGraph: {
     title: "Sample Traveller Campaign Web",
     description:
-      "See how a subsector world, its ruling government, a crew's ship, and a patron's ticket connect in a frontier trade web.",
+      "See how a Free Trader's registration, financing, patron, and freight contracts connect across a subsector.",
     steps: [
+      {
+        label: "Free Trader Wayfinder",
+        sublabel: "Free Trader",
+        category: "item",
+      },
       {
         label: "Kestrel's Reach",
         sublabel: "Frontier World",
+        relation: "Registered at",
         category: "location",
       },
       {
-        label: "Kestrel Consulate",
-        sublabel: "Local Government",
-        relation: "Governs",
+        label: "Kestrel Mercantile Bank",
+        sublabel: "Mortgage Underwriter",
+        relation: "Owes mortgage to",
         category: "faction",
-      },
-      {
-        label: "Free Trader Wayfinder",
-        sublabel: "Crew Vessel",
-        relation: "Registered at",
-        category: "item",
       },
       {
         label: "Factor Harn Delis",
         sublabel: "Trade Patron",
-        relation: "Hires",
+        relation: "Hired by",
         category: "character",
       },
       {
-        label: "Outbound Consortium",
-        sublabel: "Rival Trade Conglomerate",
-        relation: "Undercuts",
+        label: "Outbound Shipping",
+        sublabel: "Regional Freight Company",
+        relation: "Carries freight for",
         category: "faction",
       },
       {
         label: "Salvage Rights Dispute",
         sublabel: "Active Ticket",
-        relation: "Complicates",
+        relation: "Contracted for",
         category: "event",
       },
     ],
@@ -111,7 +111,7 @@ export const traveller: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design governments, trade conglomerates, and rival powers with their own agendas and territory.",
+        "Design governments, shipping companies, commercial interests, and rival powers with their own agendas and territory.",
       href: "/generators/faction",
       badge: "Generator",
     },
@@ -119,7 +119,7 @@ export const traveller: LandingPageConfig = {
   cta: {
     title: "Chart Your Frontier",
     description:
-      "Keep your Traveller campaign connected with relationship graphs, interactive maps, and local-first storage.",
+      "Keep your Referee notes, patrons, worlds, and faction relationships connected with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },
