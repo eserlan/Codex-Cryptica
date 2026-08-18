@@ -129,3 +129,6 @@
 
 **Learning:** Svelte dropdown items acting as options (like those in Autocomplete) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads.
 **Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere.
+## 2025-02-18 - Decorative Icons in Modals
+**Learning:** Decorative icons (using the `icon-[lucide--...]` pattern) nested inside functional `<button>` or `<a>` elements within global modals like `SettingsModal.svelte` frequently lack `aria-hidden="true"`, causing screen readers to mistakenly announce structural visual hints rather than relying solely on the text label.
+**Action:** Always scan for unhidden `icon-[...]` spans inside interactive elements and apply `aria-hidden="true"` to them to declutter the accessibility tree.

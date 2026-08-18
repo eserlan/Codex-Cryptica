@@ -211,3 +211,8 @@
 
 **Learning:** While it is beneficial to avoid allocating intermediate arrays in Svelte reactive blocks for truly massive state arrays or bulk processing logic (like in `apps/web/src/lib/stores/vault/bulk-results.ts`), replacing simple, concise 1-line statements like `array.filter(...).length` with verbose 10-line imperative loops inside standard UI components (like `ImportWizard.svelte`) violates the 'never sacrifice code readability for micro-optimizations' rule.
 **Action:** When acting as the 'Bolt' persona, only refactor array pipelines to imperative loops in non-UI modules (e.g. stores, workers, data-processing pipelines) or when specifically querying massive global arrays (e.g. `vault.allEntities`). Do not optimize small, ephemeral arrays inside UI components unless profiling shows they are an active bottleneck.
+
+## 2026-08-18 - Replacing chained array generation methods over iterators with imperative loops
+
+**Learning:** In markdown parsing components (like `generator-document-layout.ts` and `markdown-sections.ts`), using `Array.from(markdown.matchAll(...)).map()` forces the JavaScript engine to eagerly evaluate the entire iterator into an intermediate array of match objects, only to immediately throw it away after mapping it into another array. For large generator documents, this spikes unnecessary garbage collection pressure during formatting.
+**Action:** Replace `Array.from(iterator).map()` with a single imperative `for...of` loop over the iterator. This processes the matches lazily, avoids the intermediate `.map` array allocation, and pushes directly into the final array.

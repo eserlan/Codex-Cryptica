@@ -174,33 +174,34 @@ function splitMarkdownSections(markdown: string): MarkdownSection[] {
   const normalized = markdown.trim();
   if (!normalized) return [];
 
-  const matches = Array.from(normalized.matchAll(/^#{2,3}\s+(.+)$/gm));
-  if (matches.length === 0) {
-    return [];
-  }
-
+  // ⚡ Bolt Optimization: Replace Array.from(matchAll).map() with an imperative iterator loop
+  // to avoid intermediate array allocations, reducing GC pressure for large documents.
+  const iterator = normalized.matchAll(/^#{2,3}\s+(.+)$/gm);
   const sections: MarkdownSection[] = [];
+  let prevMatch: RegExpExecArray | null = null;
 
-  const preamble = normalized.slice(0, matches[0].index ?? 0).trim();
-  if (preamble) {
-    sections.push({ heading: "", body: preamble });
+  for (const match of iterator) {
+    if (!prevMatch) {
+      const preamble = normalized.slice(0, match.index ?? 0).trim();
+      if (preamble) {
+        sections.push({ heading: "", body: preamble });
+      }
+    } else {
+      const heading = prevMatch[1]?.trim() ?? "";
+      const start = prevMatch.index ?? 0;
+      const end = match.index ?? normalized.length;
+      sections.push({ heading, body: normalized.slice(start, end).trim() });
+    }
+    prevMatch = match;
   }
 
-  return sections.concat(
-    matches.map((match, index) => {
-      const heading = match[1]?.trim() ?? "";
-      const start = match.index ?? 0;
-      const end =
-        index + 1 < matches.length
-          ? (matches[index + 1].index ?? normalized.length)
-          : normalized.length;
+  if (prevMatch) {
+    const heading = prevMatch[1]?.trim() ?? "";
+    const start = prevMatch.index ?? 0;
+    sections.push({ heading, body: normalized.slice(start).trim() });
+  }
 
-      return {
-        heading,
-        body: normalized.slice(start, end).trim(),
-      };
-    }),
-  );
+  return sections;
 }
 
 function extractBullets(body: string, labels: Set<string>) {
