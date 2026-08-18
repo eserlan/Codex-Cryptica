@@ -12,6 +12,7 @@ export interface PanZoomBounds {
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
+export const PAN_ZOOM_LIMITS = { min: MIN_ZOOM, max: MAX_ZOOM };
 
 /**
  * Pan/zoom viewport state for the lineage canvas: pointer drag-pan, wheel
@@ -138,6 +139,29 @@ export class PanZoomState {
     if (!update) return;
     event.preventDefault();
     this.viewport = { pan: update.pan, zoom: update.zoom };
+  }
+
+  /**
+   * Steps the zoom by `factor`, keeping the middle of the container fixed —
+   * what a "+" / "−" button should do, since there is no cursor to anchor to.
+   */
+  zoomBy(factor: number) {
+    const container = this.getContainerSize();
+    const anchor = { x: container.width / 2, y: container.height / 2 };
+    const next = clamp(this.viewport.zoom * factor, MIN_ZOOM, MAX_ZOOM);
+    if (next === this.viewport.zoom) return;
+
+    const contentX = (anchor.x - this.viewport.pan.x) / this.viewport.zoom;
+    const contentY = (anchor.y - this.viewport.pan.y) / this.viewport.zoom;
+    this.viewport = {
+      pan: { x: anchor.x - contentX * next, y: anchor.y - contentY * next },
+      zoom: next,
+    };
+  }
+
+  /** Back to 1:1, centred. */
+  reset() {
+    this.viewport = { pan: { x: 0, y: 0 }, zoom: 1 };
   }
 
   /** Centres and scales the viewport so `bounds` fits the current container. */

@@ -238,6 +238,82 @@ describe("DetailConnectionsTab", () => {
     );
   });
 
+  it("zooms with the controls and snaps back on reset", async () => {
+    render(DetailConnectionsTab, { entity: entities.king });
+    const camera = screen.getByTestId("connections-viewport");
+    const scaleOf = (el: HTMLElement) =>
+      Number(el.style.transform.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
+
+    expect(scaleOf(camera)).toBe(1);
+
+    await fireEvent.click(screen.getByTestId("connections-zoom-in"));
+    expect(scaleOf(camera)).toBeGreaterThan(1);
+    expect(screen.getByTestId("connections-zoom-reset").textContent).toContain(
+      "125%",
+    );
+
+    await fireEvent.click(screen.getByTestId("connections-zoom-reset"));
+    expect(scaleOf(camera)).toBe(1);
+
+    await fireEvent.click(screen.getByTestId("connections-zoom-out"));
+    expect(scaleOf(camera)).toBeLessThan(1);
+  });
+
+  it("leaves the page scrollable until the view is zoomed in", async () => {
+    render(DetailConnectionsTab, { entity: entities.king });
+    const graph = screen.getByTestId("connections-graph");
+
+    // At 1:1 a finger must still scroll the tab it sits in.
+    expect(graph.style.touchAction).toBe("pan-y");
+
+    await fireEvent.click(screen.getByTestId("connections-zoom-in"));
+    expect(graph.style.touchAction).toBe("none");
+  });
+
+  it("only zooms the wheel when the pinch modifier is held", async () => {
+    render(DetailConnectionsTab, { entity: entities.king });
+    const graph = screen.getByTestId("connections-graph");
+    const camera = screen.getByTestId("connections-viewport");
+    const scaleOf = () =>
+      Number(camera.style.transform.match(/scale\(([\d.]+)\)/)?.[1] ?? 1);
+
+    await fireEvent.wheel(graph, { deltaY: -240 });
+    expect(scaleOf(), "a plain wheel must scroll the tab, not zoom").toBe(1);
+
+    await fireEvent.wheel(graph, { deltaY: -240, ctrlKey: true });
+    expect(scaleOf()).not.toBe(1);
+  });
+
+  it("does not open a connection when the pointer was dragged across it", async () => {
+    render(DetailConnectionsTab, { entity: entities.king });
+    const graph = screen.getByTestId("connections-graph");
+    const duke = screen
+      .getAllByTestId("connection-node")
+      .find((n) => n.getAttribute("data-entity-id") === "duke")!;
+
+    await fireEvent.pointerDown(graph, {
+      pointerId: 1,
+      pointerType: "mouse",
+      isPrimary: true,
+      clientX: 100,
+      clientY: 100,
+    });
+    await fireEvent.pointerMove(graph, {
+      pointerId: 1,
+      pointerType: "mouse",
+      clientX: 160,
+      clientY: 140,
+    });
+    await fireEvent.pointerUp(graph, { pointerId: 1, pointerType: "mouse" });
+    await fireEvent.click(duke);
+
+    expect(vaultMock.selectedEntityId).toBeNull();
+
+    // The next, undragged click still opens it.
+    await fireEvent.click(duke);
+    expect(vaultMock.selectedEntityId).toBe("duke");
+  });
+
   it("shows an empty state for an unconnected entity", () => {
     render(DetailConnectionsTab, { entity: entities.hermit });
 

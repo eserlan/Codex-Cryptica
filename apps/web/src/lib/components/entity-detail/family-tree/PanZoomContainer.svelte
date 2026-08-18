@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { PanZoomState } from "./pan-zoom.svelte";
+  import { PanZoomState } from "../pan-zoom.svelte";
 
   let { panZoom, onElement, children } = $props<{
     panZoom: PanZoomState;
