@@ -92,4 +92,15 @@ describe("EntityExplorer", () => {
     expect(modalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
     expect(focusEntity).not.toHaveBeenCalled();
   });
+
+  it("keeps the mobile Entity List drawer open behind Zen Mode so closing the entity returns to the list", async () => {
+    layoutUIStore.isMobile = true;
+    render(EntityExplorer);
+
+    await fireEvent.click(screen.getByTestId("entity-select"));
+
+    expect(modalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
+    expect(layoutUIStore.leftSidebarOpen).toBe(true);
+    expect(layoutUIStore.activeSidebarTool).toBe("explorer");
+  });
 });
