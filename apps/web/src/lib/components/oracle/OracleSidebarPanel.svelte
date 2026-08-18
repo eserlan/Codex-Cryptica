@@ -27,6 +27,12 @@
   let activeTab = $state<"oracle" | "activity" | "chat" | "adventure">(
     "oracle",
   );
+  let mobileChromeExpanded = $state(false);
+  let isPlayingAdventureOnMobile = $derived(
+    activeTab === "adventure" &&
+      layoutUIStore.isMobile &&
+      Boolean(oracle.adventure.session),
+  );
   let activityCount = $derived(discoveryPolicyStore.archiveActivityLog.length);
   let headerTitle = $derived(
     activeTab === "oracle"
@@ -145,60 +151,86 @@
   </div>
 
   <!-- Navigation Tabs -->
-  <div
-    class="flex border-b border-theme-border bg-theme-bg/10 px-0.5 pt-0.5 sm:px-1 sm:pt-1 shrink-0"
-  >
-    <button
-      onclick={() => (activeTab = "oracle")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all
-             {activeTab === 'oracle'
-        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
-        : 'text-theme-muted hover:text-theme-text'}"
-    >
-      Oracle
-    </button>
-    <button
-      onclick={() => (activeTab = "activity")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
-             {activeTab === 'activity'
-        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
-        : 'text-theme-muted hover:text-theme-text'}"
-    >
-      Activity
-      {#if activityCount > 0}
-        <span
-          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
-          aria-label={`${activityCount} activity events`}>{activityCount}</span
-        >
-      {/if}
-    </button>
-    <button
-      onclick={() => (activeTab = "chat")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
-             {activeTab === 'chat'
-        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
-        : 'text-theme-muted hover:text-theme-text'}"
-    >
-      VTT Chat
-      {#if mapSession.chatMessages.length > 0}
-        <span
-          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
-          aria-label={`${mapSession.chatMessages.length} chat messages`}
-          >{mapSession.chatMessages.length}</span
-        >
-      {/if}
-    </button>
+  {#if isPlayingAdventureOnMobile && !mobileChromeExpanded}
     <button
       type="button"
-      onclick={() => (activeTab = "adventure")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all {activeTab ===
-      'adventure'
-        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
-        : 'text-theme-muted hover:text-theme-text'}"
+      class="flex items-center gap-1.5 border-b border-theme-border bg-theme-bg/10 px-3 py-1.5 text-[11px] font-bold uppercase font-header tracking-widest text-theme-muted transition-colors hover:text-theme-text shrink-0"
+      onclick={() => (mobileChromeExpanded = true)}
+      aria-label="Show Oracle, Activity, and VTT Chat tabs"
     >
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] h-3.5 w-3.5"
+      ></span>
       Adventure
     </button>
-  </div>
+  {:else}
+    <div
+      class="flex border-b border-theme-border bg-theme-bg/10 px-0.5 pt-0.5 sm:px-1 sm:pt-1 shrink-0"
+    >
+      <button
+        onclick={() => {
+          activeTab = "oracle";
+          mobileChromeExpanded = false;
+        }}
+        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all
+             {activeTab === 'oracle'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        Oracle
+      </button>
+      <button
+        onclick={() => {
+          activeTab = "activity";
+          mobileChromeExpanded = false;
+        }}
+        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+             {activeTab === 'activity'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        Activity
+        {#if activityCount > 0}
+          <span
+            class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+            aria-label={`${activityCount} activity events`}
+            >{activityCount}</span
+          >
+        {/if}
+      </button>
+      <button
+        onclick={() => {
+          activeTab = "chat";
+          mobileChromeExpanded = false;
+        }}
+        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+             {activeTab === 'chat'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        VTT Chat
+        {#if mapSession.chatMessages.length > 0}
+          <span
+            class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+            aria-label={`${mapSession.chatMessages.length} chat messages`}
+            >{mapSession.chatMessages.length}</span
+          >
+        {/if}
+      </button>
+      <button
+        type="button"
+        onclick={() => {
+          activeTab = "adventure";
+          mobileChromeExpanded = false;
+        }}
+        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all {activeTab ===
+        'adventure'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        Adventure
+      </button>
+    </div>
+  {/if}
 
   <!-- Chat Content -->
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">

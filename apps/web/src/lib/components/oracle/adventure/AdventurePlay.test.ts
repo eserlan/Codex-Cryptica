@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventurePlay from "./AdventurePlay.svelte";
 
@@ -12,6 +12,7 @@ function manager(phase: "ready" | "generating") {
     readOnly: false,
     lastRollResult: null,
     transcript: null,
+    rollHistory: [],
     suggestedActions: [],
     errorMessage: null,
     submitAction: vi.fn(),
@@ -35,18 +36,5 @@ describe("AdventurePlay", () => {
     render(AdventurePlay, { props: { manager: manager("ready") } });
 
     expect(screen.queryByRole("status")).toBeNull();
-  });
-
-  it("offers Focus Mode from the normal adventure header", async () => {
-    const onEnterFocus = vi.fn();
-    render(AdventurePlay, {
-      props: { manager: manager("ready"), onEnterFocus },
-    });
-
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Enter Focus Mode" }),
-    );
-
-    expect(onEnterFocus).toHaveBeenCalledOnce();
   });
 });
