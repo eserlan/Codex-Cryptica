@@ -1,7 +1,10 @@
 <script lang="ts">
   import type { Entity } from "schema";
+  import type { Core } from "cytoscape";
+  import { initGraph, GraphImageManager } from "graph-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
@@ -11,11 +14,9 @@
     type ConnectionNeighbor,
   } from "./entity-connections";
   import {
-    WIDE_CONTAINER_PX,
-    edgeSegment,
-    layoutConnectionGraph,
-    ringCapacity,
-  } from "./connections-graph";
+    buildConnectionsElements,
+    buildConnectionsStyle,
+  } from "./connections-cytoscape";
   import { PanZoomState } from "./pan-zoom.svelte";
 
   let {
@@ -26,29 +27,23 @@
     onNavigate?: (id: string, event?: MouseEvent) => void;
   } = $props();
 
-  // The composition depends on how much room this tab actually has, not on the
-  // viewport: the same component renders in a ~330px side panel and in the
-  // ~900px zen view. Before measurement (and in jsdom) assume the wide layout.
+  /** A picture of a handful of connections reads well; a picture of thirty
+   * does not. The list beneath the picture is unabridged either way. */
+  const MAX_SHOWN = 20;
+
+  // The composition depends on how much room this tab actually has, not on
+  // the viewport: the same component renders in a ~330px side panel and in
+  // the ~900px zen view. Before measurement (and in jsdom) assume the wide
+  // layout.
   let measuredWidth = $state(0);
   const width = $derived(measuredWidth || 640);
-  const isWide = $derived(width >= WIDE_CONTAINER_PX);
+  const isWide = $derived(width >= 420);
 
   const allNeighbors = $derived.by<ConnectionNeighbor[]>(() =>
     buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
   );
-
-  // A picture of a handful of connections reads well; a picture of thirty does
-  // not. The rest keep their own row below, still one tap from being opened.
-  const ringNeighbors = $derived(allNeighbors.slice(0, ringCapacity(width)));
-  const overflowNeighbors = $derived(allNeighbors.slice(ringNeighbors.length));
-  const positions = $derived(layoutConnectionGraph(ringNeighbors.length));
-
-  const centreColor = $derived(
-    categories.getCategory(entity.type)?.color ?? null,
-  );
-  const entityIsPast = $derived(
-    entity.labels?.some((l: string) => l.toLowerCase() === "past") ?? false,
-  );
+  const shownNeighbors = $derived(allNeighbors.slice(0, MAX_SHOWN));
+  const overflowCount = $derived(allNeighbors.length - shownNeighbors.length);
 
   const colorOf = (type: string) => categories.getCategory(type)?.color ?? null;
   const iconOf = (type: string) =>
@@ -80,80 +75,105 @@
     return `Open ${neighbor.title}${past} (${relations})`;
   };
 
-  // --- Image resolution ---------------------------------------------------
-  let centerImageUrl = $state<string | null>(null);
+  // --- Cytoscape: layout + paint only ---------------------------------
+  // Concentric puts one node in the middle and rings the rest around it,
+  // which is exactly this view's shape — no hand-rolled arc trigonometry.
+  // Relationship text never renders on the canvas (cytoscape's edge labels
+  // are the "Often found at the cor…" truncation this tab exists to avoid),
+  // so the canvas is aria-hidden and the always-visible list below it is
+  // both the a11y path and the place people actually read a relationship.
+  let canvasElement = $state<HTMLDivElement>();
+  let cy = $state<Core | null>(null);
+  let imageManager: GraphImageManager | null = null;
+
+  const elements = $derived(buildConnectionsElements(entity, shownNeighbors));
+  const style = $derived(
+    buildConnectionsStyle({
+      tokens: themeStore.activeTheme.tokens,
+      getCategoryColor: (type) => colorOf(type) ?? undefined,
+    }),
+  );
+
   $effect(() => {
-    const imagePath = entity.thumbnail || entity.image;
-    let stale = false;
-
-    if (!imagePath || typeof vault.resolveImageUrl !== "function") {
-      centerImageUrl = null;
-      return;
-    }
-
+    if (!canvasElement) return;
+    let cancelled = false;
     void (async () => {
-      try {
-        const url = await vault.resolveImageUrl(imagePath);
-        if (!stale) {
-          centerImageUrl = url || null;
-        }
-      } catch {
-        if (!stale) {
-          centerImageUrl = null;
-        }
+      const instance = await initGraph({
+        container: canvasElement,
+        elements: [],
+        style: [],
+        layout: { name: "preset" },
+        // Tuned for a fixed, ≤20-node widget, not the panning world graph:
+        // labels must stay legible mid-gesture, and zoom/pan gestures are
+        // handled entirely by `panZoom` below (see the comment there), so
+        // cytoscape's own aren't used.
+        hideLabelsOnViewport: false,
+        userPanningEnabled: false,
+        userZoomingEnabled: false,
+        boxSelectionEnabled: false,
+        autoungrabify: true,
+      } as any);
+      if (cancelled) {
+        instance.destroy();
+        return;
       }
+      imageManager = new GraphImageManager(instance);
+      instance.on("tap", "node", (evt: any) => {
+        if (evt.target.data("isCentre")) return;
+        openNeighbor(evt.target.id(), evt.originalEvent as MouseEvent);
+      });
+      cy = instance;
     })();
-
     return () => {
-      stale = true;
+      cancelled = true;
+      cy?.destroy();
+      cy = null;
+      imageManager = null;
     };
   });
 
-  let neighborImageUrls = $state<Record<string, string>>({});
+  // Re-sync elements/style/layout whenever the connection set or theme
+  // changes. Simplest correct approach for a graph this small: replace the
+  // whole element set and re-run layout rather than diffing it.
   $effect(() => {
-    let stale = false;
-    const currentNeighbors = ringNeighbors;
-    const toResolve = currentNeighbors.filter(
-      (n) =>
-        (n.thumbnail || n.image) && typeof vault.resolveImageUrl === "function",
-    );
-
-    if (toResolve.length === 0) {
-      neighborImageUrls = {};
-      return;
-    }
-
-    void (async () => {
-      const results: Record<string, string> = {};
-      await Promise.all(
-        toResolve.map(async (n) => {
-          const path = n.thumbnail || n.image;
-          if (!path) return;
-          try {
-            const url = await vault.resolveImageUrl(path);
-            if (url) {
-              results[n.id] = url;
-            }
-          } catch {
-            // Ignore error
-          }
-        }),
-      );
-
-      if (!stale) {
-        neighborImageUrls = results;
-      }
-    })();
-
-    return () => {
-      stale = true;
-    };
+    if (!cy) return;
+    const nextElements = elements;
+    const nextStyle = style;
+    const spacing = isWide ? 70 : 52;
+    cy.style(nextStyle as any);
+    cy.batch(() => {
+      cy!.elements().remove();
+      cy!.add(nextElements as any);
+    });
+    cy.layout({
+      name: "concentric",
+      concentric: (n: any) => (n.data("isCentre") ? 2 : 1),
+      levelWidth: () => 1,
+      minNodeSpacing: spacing,
+      fit: true,
+      padding: 28,
+      animate: false,
+    } as any).run();
+    imageManager?.sync({
+      showImages: true,
+      resolveImageUrl: (path: string) => vault.resolveImageUrl(path),
+      releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+    });
   });
 
-  // --- Pan & zoom ---------------------------------------------------------
-  // Same viewport maths the lineage canvas uses, but a different input policy:
-  // this view lives inside a scrolling tab, so it must never swallow the
-  // gesture people use to scroll the page.
+  $effect(() => {
+    if (cy && measuredWidth) {
+      cy.resize();
+      cy.fit(undefined, 28);
+    }
+  });
+
+  // --- Pan & zoom -----------------------------------------------------
+  // Cytoscape's own gestures are disabled above (see the mount effect) — this
+  // is the single source of truth for the camera, applied to the canvas via
+  // `cy.viewport()`. The input policy differs from a full-page canvas because
+  // this view lives inside a scrolling tab and must never swallow the
+  // gesture people use to scroll it:
   //
   //  - touch drag pans only once zoomed in; at 1:1 the finger scrolls the tab
   //  - the wheel zooms only with ctrl/⌘ held (which is what a trackpad pinch
@@ -167,7 +187,15 @@
   const viewport = $derived(panZoom.viewport);
   const isZoomed = $derived(viewport.zoom !== 1);
 
-  // A new entity means a new picture; keep the camera from carrying over.
+  $effect(() => {
+    if (cy) cy.viewport({ zoom: viewport.zoom, pan: viewport.pan });
+  });
+
+  // A new centre entity means a new picture; keep the camera from carrying
+  // over. Deliberately its own effect, independent of the cytoscape mount —
+  // folding this into that effect meant it also fired the moment cytoscape
+  // finished its async load, silently resetting any zoom a user had already
+  // applied in the meantime.
   $effect(() => {
     if (entity.id) panZoom.reset();
   });
@@ -250,173 +278,46 @@
   <div
     bind:this={graphElement}
     class="relative w-full shrink-0 overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40 {isWide
-      ? 'aspect-[16/10] max-h-[34rem]'
-      : 'aspect-[3/4] max-h-[32rem]'} {isZoomed ? 'cursor-grab' : ''}"
+      ? 'aspect-[16/10] max-h-[28rem]'
+      : 'aspect-square max-h-[22rem]'} {isZoomed ? 'cursor-grab' : ''}"
     style:touch-action={isZoomed ? "none" : "pan-y"}
     data-testid="connections-graph"
     role="group"
-    aria-label="Direct connections of {entity.title}"
+    aria-label="{entity.title} connections diagram — see the list below for the same connections as text"
     onpointerdown={onPointerDown}
     onpointermove={onPointerMove}
     onpointerup={onPointerEnd}
     onpointercancel={onPointerEnd}
     onwheel={onWheel}
   >
-    <!-- Everything inside the picture moves together under the camera. The
-         controls below sit outside this layer so they stay put. -->
-    <div
-      class="absolute inset-0 origin-top-left"
-      style:transform="translate({viewport.pan.x}px, {viewport.pan.y}px) scale({viewport.zoom})"
-      data-testid="connections-viewport"
-    >
-      <!-- Spokes. Drawn in the same 0-100 percentage space the cards are placed
-         in, so the two layers stay aligned at any container size. Each one is
-         only the middle stretch of the line, so it never runs under the centre
-         or under a card. -->
-      <svg
-        class="absolute inset-0 h-full w-full"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        {#each ringNeighbors as neighbor, i (neighbor.id)}
-          {@const segment = edgeSegment(positions[i])}
-          <line
-            x1={segment.x1}
-            y1={segment.y1}
-            x2={segment.x2}
-            y2={segment.y2}
-            stroke={colorOf(neighbor.type) ?? "currentColor"}
-            stroke-opacity="0.35"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            vector-effect="non-scaling-stroke"
-            class="text-theme-border"
-          />
-        {/each}
-      </svg>
+    <!-- Cytoscape paints pixels, not DOM — no node here is focusable or
+         nameable, so the whole canvas is hidden from assistive tech and the
+         list below is the equivalent, real, operable surface.
 
-      <!-- Centre entity: fixed in the middle, and the only thing allowed in this
-         horizontal band, so it reads as the focal point. -->
+         Two nested divs, deliberately: cytoscape sets `position: relative`
+         inline on whatever container it's given (so its own absolutely-
+         positioned canvas layers stack correctly inside it). An inline style
+         beats a class, so a single `absolute inset-0` div handed straight to
+         cytoscape would have that positioning silently overridden and never
+         actually fill its parent. The outer div here does the "fill the
+         parent" job; cytoscape only ever touches the plain, un-positioned
+         inner one. -->
+    <div class="absolute inset-0" aria-hidden="true">
       <div
-        class="absolute top-1/2 left-1/2 z-20 flex w-[60%] max-w-[16rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2"
-        data-testid="connections-centre"
-      >
-        <span
-          class="relative flex items-center justify-center overflow-hidden rounded-full border-2 ring-4 ring-theme-primary/15 {isWide
-            ? 'h-20 w-20'
-            : 'h-16 w-16'}"
-          style:border-color={centreColor ?? undefined}
-          style:background-color={tint(centreColor, "26%")}
-        >
-          {#if centerImageUrl}
-            <img
-              src={centerImageUrl}
-              alt={entity.title}
-              class="h-full w-full object-cover"
-              data-testid="connections-centre-image"
-            />
-          {:else}
-            <span
-              class="{iconOf(entity.type)} {isWide ? 'h-8 w-8' : 'h-7 w-7'}"
-              style:color={centreColor ?? undefined}
-            ></span>
-          {/if}
-        </span>
-        <span class="flex flex-col items-center gap-0.5 text-center">
-          <span
-            class="font-header leading-tight font-bold tracking-wide text-theme-text {isWide
-              ? 'text-base'
-              : 'text-sm'}"
-          >
-            {entity.title}{#if entityIsPast}<sup aria-hidden="true">*</sup><span
-                class="sr-only"
-              >
-                (past)</span
-              >{/if}
-          </span>
-          <span
-            class="font-header text-[9px] tracking-[0.2em] text-theme-muted uppercase"
-            >{entity.type}</span
-          >
-        </span>
-      </div>
-
-      <!-- Satellites. The relationship rides on the card rather than floating on
-         the line: long labels then wrap instead of colliding with the art. -->
-      {#each ringNeighbors as neighbor, i (neighbor.id)}
-        {@const position = positions[i]}
-        {@const color = colorOf(neighbor.type)}
-        {@const neighborImageUrl = neighborImageUrls[neighbor.id]}
-        <button
-          type="button"
-          class="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-lg p-1 transition hover:bg-theme-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
-          style:left="{position.x}%"
-          style:top="{position.y}%"
-          style:width="{position.widthPct}%"
-          data-testid="connection-node"
-          data-entity-id={neighbor.id}
-          aria-label={describe(neighbor)}
-          title="{neighbor.title} — {relationText(neighbor)}"
-          onclick={(event) => openNeighbor(neighbor.id, event)}
-        >
-          <span
-            class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border transition group-hover:scale-110 {isWide
-              ? 'h-12 w-12'
-              : 'h-10 w-10'}"
-            style:border-color={color ?? undefined}
-            style:background-color={tint(color, "22%")}
-          >
-            {#if neighborImageUrl}
-              <img
-                src={neighborImageUrl}
-                alt={neighbor.title}
-                class="h-full w-full object-cover"
-                data-testid="connection-node-image"
-              />
-            {:else}
-              <span
-                class="{iconOf(neighbor.type)} {isWide ? 'h-5 w-5' : 'h-4 w-4'}"
-                style:color={color ?? undefined}
-              ></span>
-            {/if}
-          </span>
-          <span
-            class="flex w-full flex-col items-center gap-0.5"
-            aria-hidden="true"
-          >
-            <span
-              class="line-clamp-2 leading-tight font-semibold text-balance text-theme-text transition-colors group-hover:text-theme-primary {isWide
-                ? 'text-xs'
-                : 'text-[11px]'}"
-            >
-              {neighbor.title}{#if neighbor.hasPastLabel}<sup>*</sup>{/if}
-            </span>
-            <span
-              class="flex w-full items-start justify-center gap-0.5 leading-tight text-theme-muted {isWide
-                ? 'text-[10px]'
-                : 'text-[9px]'}"
-              data-testid="connection-relation"
-            >
-              <span class="{relationIcon(neighbor)} mt-px h-2.5 w-2.5 shrink-0"
-              ></span>
-              <span class="line-clamp-2 min-w-0 text-balance"
-                >{relationText(neighbor)}</span
-              >
-            </span>
-          </span>
-        </button>
-      {/each}
-
-      {#if ringNeighbors.length === 0}
-        <p
-          class="absolute inset-x-0 bottom-8 text-center text-sm text-theme-muted italic"
-          data-testid="connections-empty"
-        >
-          No direct connections yet.
-        </p>
-      {/if}
+        bind:this={canvasElement}
+        class="h-full w-full"
+        data-testid="connections-canvas"
+      ></div>
     </div>
+
+    {#if shownNeighbors.length === 0}
+      <p
+        class="pointer-events-none absolute inset-x-0 bottom-8 text-center text-sm text-theme-muted italic"
+        data-testid="connections-empty"
+      >
+        No direct connections yet.
+      </p>
+    {/if}
 
     <!-- Zoom controls: the gestures above are discoverable only if you already
          know they are there, and a phone has no wheel. -->
@@ -458,47 +359,54 @@
     </div>
   </div>
 
-  {#if overflowNeighbors.length > 0}
-    <div class="space-y-2" data-testid="connections-overflow">
-      <h3
-        class="font-header text-[10px] font-bold tracking-widest text-theme-muted uppercase"
-      >
-        {overflowNeighbors.length} more connection{overflowNeighbors.length ===
-        1
-          ? ""
-          : "s"}
-      </h3>
-      <div class="flex flex-wrap gap-1.5">
-        {#each overflowNeighbors as neighbor (neighbor.id)}
-          {@const color = colorOf(neighbor.type)}
+  <!-- The real, operable equivalent of the picture above: every shown
+       connection as a focusable button naming its relationship in full. -->
+  {#if shownNeighbors.length > 0}
+    <ul class="space-y-1" data-testid="connections-list">
+      {#each shownNeighbors as neighbor (neighbor.id)}
+        {@const color = colorOf(neighbor.type)}
+        <li>
           <button
             type="button"
-            class="flex max-w-full items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface/60 py-1 pr-2.5 pl-1.5 text-left transition hover:border-theme-primary/50 hover:bg-theme-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
-            data-testid="connection-chip"
+            class="flex w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-left transition hover:border-theme-border hover:bg-theme-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+            data-testid="connection-row"
             data-entity-id={neighbor.id}
             aria-label={describe(neighbor)}
-            title="{neighbor.title} — {relationText(neighbor)}"
             onclick={(event) => openNeighbor(neighbor.id, event)}
           >
             <span
-              class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
               style:background-color={tint(color, "22%")}
+              aria-hidden="true"
             >
               <span
-                class="{iconOf(neighbor.type)} h-3 w-3"
+                class="{iconOf(neighbor.type)} h-3.5 w-3.5"
                 style:color={color ?? undefined}
               ></span>
             </span>
-            <span class="min-w-0 truncate text-[11px] text-theme-text">
+            <span class="min-w-0 flex-1 truncate text-sm text-theme-text">
               {neighbor.title}{#if neighbor.hasPastLabel}<sup>*</sup>{/if}
             </span>
-            <span class="min-w-0 truncate text-[10px] text-theme-muted"
-              >{relationText(neighbor)}</span
+            <span
+              class="flex min-w-0 shrink-0 items-center gap-1 text-xs text-theme-muted"
+              aria-hidden="true"
             >
+              <span class="{relationIcon(neighbor)} h-3 w-3 shrink-0"></span>
+              <span class="max-w-[10rem] truncate"
+                >{relationText(neighbor)}</span
+              >
+            </span>
           </button>
-        {/each}
-      </div>
-    </div>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+
+  {#if overflowCount > 0}
+    <p class="text-xs text-theme-muted" data-testid="connections-overflow">
+      {overflowCount} more connection{overflowCount === 1 ? "" : "s"} — open the graph
+      view to see the rest.
+    </p>
   {/if}
 
   <FeatureHint hintId="connections" />

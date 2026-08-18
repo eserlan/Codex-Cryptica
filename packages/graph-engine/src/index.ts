@@ -16,6 +16,24 @@ export interface GraphOptions {
   elements?: any[];
   style?: any[];
   headless?: boolean;
+  /** Cytoscape layout to run at construction. Defaults to "preset" — callers
+   * that lay out elements themselves (the world graph via LayoutManager) rely
+   * on this; a small, fixed-shape graph can pass e.g. `{ name: "concentric" }`
+   * to skip that step. */
+  layout?: any;
+  /**
+   * Render/interaction knobs tuned by default for a large, panning world
+   * graph (labels hidden while moving, coarse wheel steps, a minZoom that
+   * shrinks with node count). A small, contained graph — a handful of nodes
+   * in a fixed box — wants the opposite: labels always readable, gentler
+   * zoom, and its own fixed bounds. All default to the existing world-graph
+   * behavior, so omitting them changes nothing for existing callers.
+   */
+  hideLabelsOnViewport?: boolean;
+  motionBlur?: boolean;
+  minZoom?: number;
+  maxZoom?: number;
+  wheelSensitivity?: number;
 }
 
 export const LARGE_GRAPH_NODE_THRESHOLD = 700;
@@ -123,14 +141,14 @@ export const initGraph = async (options: GraphOptions) => {
         },
       },
     ],
-    layout: {
+    layout: options.layout ?? {
       name: "preset",
     },
     // Rendering Optimizations
-    hideLabelsOnViewport: true,
+    hideLabelsOnViewport: options.hideLabelsOnViewport ?? true,
     hideEdgesOnViewport: isLargeGraph,
     textureOnViewport: true,
-    motionBlur: isLargeGraph,
+    motionBlur: options.motionBlur ?? isLargeGraph,
     motionBlurOpacity: 0.08,
     // Cap DPR at 1.5 — on 2× retina "auto" rasterises at 4× pixel area,
     // which dominates GPU cost for large graphs. 1.5 is imperceptible to
@@ -139,8 +157,8 @@ export const initGraph = async (options: GraphOptions) => {
       typeof window !== "undefined"
         ? Math.min(window.devicePixelRatio || 1, 1.5)
         : 1,
-    minZoom: Math.max(0.01, 0.3 - nodeCount * 0.0005),
-    maxZoom: 9.0,
-    wheelSensitivity: 1.0,
+    minZoom: options.minZoom ?? Math.max(0.01, 0.3 - nodeCount * 0.0005),
+    maxZoom: options.maxZoom ?? 9.0,
+    wheelSensitivity: options.wheelSensitivity ?? 1.0,
   });
 };
