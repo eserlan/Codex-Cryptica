@@ -12,6 +12,7 @@ function manager(phase: "ready" | "generating") {
     readOnly: false,
     lastRollResult: null,
     transcript: null,
+    rollHistory: [],
     suggestedActions: [],
     errorMessage: null,
     submitAction: vi.fn(),
