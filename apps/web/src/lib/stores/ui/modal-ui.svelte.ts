@@ -54,7 +54,13 @@ export class ModalUIStore {
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
   zenModeActiveTab = $state<
-    "overview" | "map" | "chats" | "family" | "timeline" | "stats"
+    | "overview"
+    | "connections"
+    | "map"
+    | "chats"
+    | "family"
+    | "timeline"
+    | "stats"
   >("overview");
 
   mergeDialog = $state<{
@@ -437,6 +443,7 @@ export class ModalUIStore {
     entityId: string,
     tab:
       | "overview"
+      | "connections"
       | "map"
       | "chats"
       | "family"

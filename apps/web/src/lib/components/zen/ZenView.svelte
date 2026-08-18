@@ -6,6 +6,7 @@
   import ZenHeader from "./ZenHeader.svelte";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
+  import DetailConnectionsTab from "$lib/components/entity-detail/DetailConnectionsTab.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
   import DetailFamilyTab from "$lib/components/entity-detail/DetailFamilyTab.svelte";
@@ -57,6 +58,7 @@
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
+  let tabConnections = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
   let tabChats = $state<HTMLButtonElement>();
   let tabFamily = $state<HTMLButtonElement>();
@@ -175,8 +177,14 @@
 
   const visibleZenTabs = $derived.by(() => {
     const list: (
-      "overview" | "map" | "chats" | "family" | "timeline" | "stats"
-    )[] = ["overview"];
+      | "overview"
+      | "connections"
+      | "map"
+      | "chats"
+      | "family"
+      | "timeline"
+      | "stats"
+    )[] = ["overview", "connections"];
     if (!vault.isGuest) {
       list.push("map");
     }
@@ -202,6 +210,7 @@
       const nextTab = tabs[nextIndex];
       modalUIStore.zenModeActiveTab = nextTab;
       if (nextTab === "overview") tabOverview?.focus();
+      else if (nextTab === "connections") tabConnections?.focus();
       else if (nextTab === "map") tabMap?.focus();
       else if (nextTab === "chats") tabChats?.focus();
       else if (nextTab === "family") tabFamily?.focus();
@@ -371,6 +380,22 @@
       >
         OVERVIEW
       </button>
+      <button
+        bind:this={tabConnections}
+        role="tab"
+        id="tab-connections"
+        aria-selected={activeTab === "connections"}
+        aria-controls="panel-connections"
+        tabindex={activeTab === "connections" ? 0 : -1}
+        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        'connections'
+          ? 'text-theme-primary border-theme-primary'
+          : 'text-theme-muted border-transparent hover:text-theme-text'}"
+        onclick={() => (modalUIStore.zenModeActiveTab = "connections")}
+        onkeydown={handleTabKeydown}
+      >
+        CONNECTIONS
+      </button>
       {#if !vault.isGuest}
         <button
           bind:this={tabMap}
@@ -497,6 +522,18 @@
             onNavigate={navigateTo}
             {isPopout}
           />
+        </div>
+      {:else if activeTab === "connections"}
+        <div
+          role="tabpanel"
+          id="panel-connections"
+          aria-labelledby="tab-connections"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <div class="max-w-4xl mx-auto">
+            <DetailConnectionsTab {entity} onNavigate={navigateTo} />
+          </div>
         </div>
       {:else if activeTab === "map"}
         <div
