@@ -8,15 +8,15 @@ export const spaceOpera: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Space Opera Campaigns",
     description:
-      "Organise sprawling space opera campaigns with connected star systems, worlds, empires, rebel cells, crews, and trade routes in one local-first setting bible.",
+      "Organise sprawling space opera campaigns with connected star systems, worlds, governments, crews, and trade routes in one local-first setting bible.",
   },
   hero: {
     eyebrow: "Space Opera Worldbuilding",
     title: "Codex Cryptica for Space Opera",
     tagline:
-      "Keep star systems, worlds, empires, rebel factions, crews, and trade routes connected across your galaxy.",
+      "Keep star systems, worlds, governments, factions, crews, and trade routes connected across your galaxy.",
     problemStatement:
-      "Space opera campaigns span dozens of systems, rival governments, criminal syndicates, and a crew's tangled web of contacts and enemies. When your players jump to a new sector, you shouldn't have to reconstruct who controls it, who they owe favours to, and what's already gone wrong there.",
+      "Space opera campaigns span dozens of systems, rival governments, criminal syndicates, and a crew's tangled web of contacts and enemies. When your players reach a new sector, you shouldn't have to reconstruct who controls it, who they owe favours to, and what's already gone wrong there.",
   },
   useCases: [
     {
@@ -26,9 +26,9 @@ export const spaceOpera: LandingPageConfig = {
       icon: "icon-[lucide--orbit]",
     },
     {
-      title: "Empires, Megacorps & Rival Powers",
+      title: "Governments, Factions & Rival Powers",
       description:
-        "Track governments, corporate conglomerates, rebel movements, and criminal syndicates competing across your galaxy.",
+        "Track empires, republics, corporations, rebel movements, and criminal organisations competing across your setting.",
       icon: "icon-[lucide--building-2]",
     },
     {
@@ -38,51 +38,51 @@ export const spaceOpera: LandingPageConfig = {
       icon: "icon-[lucide--users]",
     },
     {
-      title: "Trade Routes & Territorial Conflict",
+      title: "Routes, Borders & Conflict",
       description:
-        "Chart hyperlanes, contested territories, blockades, and the political relationships that shape them.",
+        "Chart major routes, contested systems, blockades, and the political relationships that shape travel across your setting.",
       icon: "icon-[lucide--route]",
     },
   ],
   exampleGraph: {
     title: "Sample Space Opera Campaign Web",
     description:
-      "See how a star system, its controlling faction, a crew's ship, and a rival power connect in a galaxy-spanning web.",
+      "See how an independent crew's ship, ruling power, home port, and pursuers connect in a galaxy-spanning web.",
     steps: [
       {
-        label: "Veyla Expanse",
-        sublabel: "Frontier Star System",
-        category: "location",
-      },
-      {
-        label: "The Ashcrown Dominion",
-        sublabel: "Ruling Empire",
-        relation: "Occupies",
-        category: "faction",
-      },
-      {
         label: "The Longtail Compact",
-        sublabel: "Smuggler Crew",
-        relation: "Runs blockade in",
+        sublabel: "Independent Crew",
         category: "faction",
       },
       {
         label: "The Marrow Skiff",
-        sublabel: "Crew Vessel",
-        relation: "Registered to",
+        sublabel: "Freighter",
+        relation: "Flies",
         category: "item",
-      },
-      {
-        label: "Freeport Kestral",
-        sublabel: "Independent Trade Station",
-        relation: "Trades through",
-        category: "location",
       },
       {
         label: "Commander Reyes Alt",
         sublabel: "Dominion Enforcer",
-        relation: "Hunts",
+        relation: "Wanted by",
         category: "character",
+      },
+      {
+        label: "The Ashcrown Dominion",
+        sublabel: "Ruling Empire",
+        relation: "Opposes",
+        category: "faction",
+      },
+      {
+        label: "Freeport Kestrel",
+        sublabel: "Independent Trade Station",
+        relation: "Operates from",
+        category: "location",
+      },
+      {
+        label: "Veyla Expanse",
+        sublabel: "Frontier Star System",
+        relation: "Runs blockade through",
+        category: "location",
       },
     ],
   },
@@ -104,14 +104,14 @@ export const spaceOpera: LandingPageConfig = {
     {
       title: "Ship Generator",
       description:
-        "Create starships with a crew, a mission, a complication, and a secret worth uncovering.",
+        "Create starships with crews, roles, missions, complications, and histories.",
       href: "/generators/ship-generator",
       badge: "Generator",
     },
     {
       title: "Faction Generator",
       description:
-        "Design empires, megacorps, rebel movements, and criminal syndicates with rival powers and agendas.",
+        "Design governments, corporations, political movements, and criminal organisations with their own goals, allies, and rivals.",
       href: "/generators/faction",
       badge: "Generator",
     },
