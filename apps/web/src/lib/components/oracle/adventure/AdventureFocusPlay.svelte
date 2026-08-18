@@ -11,6 +11,7 @@
   import AdventureRollHistory from "./AdventureRollHistory.svelte";
   import AdventureRollPrompt from "./AdventureRollPrompt.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
+  import AdventureToolsDrawer from "./AdventureToolsDrawer.svelte";
   import {
     exitAdventureFullscreen,
     requestAdventureFullscreen,
@@ -36,6 +37,7 @@
 
   let focusMode = $state(false);
   let utilitiesOpen = $state(true);
+  let toolsOpen = $state(false);
   let focusElement = $state<HTMLElement>();
   let fullscreenElement = $state<Element | null>(null);
   let fullscreenTransitioning = $state(false);
@@ -185,14 +187,19 @@
 {:else}
   <AdventureStateSummary {manager} />
   <AdventureCorrectionForm {manager} />
-  <AdventurePlay {manager} onEnterFocus={() => (focusMode = true)} />
+  <AdventurePlay
+    {manager}
+    onEnterFocus={() => (focusMode = true)}
+    onOpenTools={() => (toolsOpen = true)}
+  />
   <AdventureRollPrompt {manager} />
-  <AdventureRollHistory {manager} />
-  <AdventureResourceCounters {manager} />
   <AdventureProvisionalFacts
     facts={manager.session?.provisionalFacts ?? []}
     {existingTitles}
     onAdd={onAddProvisionalFact}
   />
   <AdventureArchive {repository} {vaultId} {onResume} {onResumeArchived} />
+  {#if toolsOpen}
+    <AdventureToolsDrawer {manager} onClose={() => (toolsOpen = false)} />
+  {/if}
 {/if}

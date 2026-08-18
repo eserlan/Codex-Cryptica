@@ -1,8 +1,25 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
+
+vi.mock("$lib/actions/focusTrap", () => ({
+  focusTrap: () => ({ destroy() {} }),
+}));
+
+beforeEach(() => {
+  if (!Element.prototype.animate) {
+    Element.prototype.animate = vi.fn(
+      () =>
+        ({
+          finished: Promise.resolve(),
+          cancel: vi.fn(),
+          play: vi.fn(),
+        }) as unknown as Animation,
+    );
+  }
+});
 
 function manager() {
   return {
@@ -117,6 +134,19 @@ describe("AdventureFocusPlay", () => {
         .getAttribute("aria-expanded"),
     ).toBe("false");
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
+  });
+
+  it("opens the tools drawer from the ordinary adventure layout", async () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    expect(screen.queryByTestId("adventure-tools-drawer")).toBeNull();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Tools" }));
+
+    expect(screen.getByTestId("adventure-tools-drawer")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Close adventure tools" }),
+    ).toBeTruthy();
   });
 
   it("keeps Focus Mode open when fullscreen is denied", async () => {
