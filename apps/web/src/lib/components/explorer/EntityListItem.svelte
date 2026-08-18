@@ -49,6 +49,12 @@
   const labelFilters = $derived(explorerUIStore.labelFilters);
   const focusedEntityId = $derived(layoutUIStore.focusedEntityId);
   const cat = $derived(categories.getCategory(entity.type));
+  // Type accent: a colored left border + tinted icon so entity types stay
+  // scannable at a glance in dense/nested trees, per issue #2329. Virtual
+  // "folder" grouping nodes have no real category, so they stay neutral.
+  const typeColor = $derived(
+    (entity as any).isVirtual ? null : (cat?.color ?? null),
+  );
 </script>
 
 <div
@@ -66,6 +72,8 @@
     : ''} {isDragging ? 'dragging-active' : ''} {isDragSource
     ? 'dragging-source'
     : ''}"
+  style:border-left-width={typeColor ? "3px" : null}
+  style:border-left-color={typeColor}
   role="listitem"
   data-testid="entity-list-item"
   data-entity-id={entity.id}
@@ -163,7 +171,10 @@
         ? 'icon-[lucide--folder]'
         : getIconClass(
             cat?.icon,
-          )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
+          )} h-3.5 w-3.5 shrink-0 transition-colors {typeColor
+        ? ''
+        : 'text-theme-muted group-hover:text-theme-primary'}"
+      style:color={typeColor}
     ></span>
     <div class="flex-1 min-w-0 flex flex-col gap-0.5">
       <div
