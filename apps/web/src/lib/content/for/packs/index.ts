@@ -7,6 +7,8 @@ import { callOfCthulhu } from "./call-of-cthulhu";
 import { gothicHorror } from "./gothic-horror";
 import { cyberpunkRed } from "./cyberpunk-red";
 import { dystopianSciFi } from "./dystopian-sci-fi";
+import { spaceOpera } from "./space-opera";
+import { traveller } from "./traveller";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -17,4 +19,6 @@ export const packs: Record<string, LandingPageConfig> = {
   "gothic-horror": gothicHorror,
   "cyberpunk-red": cyberpunkRed,
   "dystopian-sci-fi": dystopianSciFi,
+  "space-opera": spaceOpera,
+  traveller,
 };
