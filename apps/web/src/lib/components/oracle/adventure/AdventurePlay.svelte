@@ -2,6 +2,7 @@
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
   import AdventureComposer from "./AdventureComposer.svelte";
   import AdventureLiveTranscript from "./AdventureLiveTranscript.svelte";
+  import AdventureManagementMenu from "./AdventureManagementMenu.svelte";
   let {
     manager,
     showHeader = true,
@@ -60,11 +61,7 @@
             </span>
           </button>
         {/if}
-        {#if manager.session && !manager.readOnly}<button
-            class="min-h-12 rounded-md border border-theme-border px-3 text-theme-primary"
-            type="button"
-            onclick={() => void manager.end()}>End adventure</button
-          >{/if}
+        <AdventureManagementMenu {manager} />
       </div>
     </div>
   {/if}

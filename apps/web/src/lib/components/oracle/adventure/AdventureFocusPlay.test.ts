@@ -101,6 +101,21 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
+  it("can end the adventure from inside Focus Mode", async () => {
+    const m = manager();
+    render(AdventureFocusPlay, { props: { ...props(), manager: m } });
+
+    await enterFocusMode();
+    await fireEvent.click(
+      screen.getByTestId("adventure-management-menu-button"),
+    );
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: /end adventure/i }),
+    );
+
+    expect(m.end).toHaveBeenCalledOnce();
+  });
+
   it("keeps the ordinary adventure layout until the player enters Focus Mode", async () => {
     render(AdventureFocusPlay, {
       props: props(),

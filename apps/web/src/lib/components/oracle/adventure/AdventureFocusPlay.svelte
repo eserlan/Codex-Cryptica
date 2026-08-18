@@ -5,6 +5,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
+  import AdventureManagementMenu from "./AdventureManagementMenu.svelte";
   import AdventurePlay from "./AdventurePlay.svelte";
   import AdventureProvisionalFacts from "./AdventureProvisionalFacts.svelte";
   import AdventureResourceCounters from "./AdventureResourceCounters.svelte";
@@ -163,6 +164,7 @@
             Exit Focus Mode
           </span>
         </button>
+        <AdventureManagementMenu {manager} />
       </div>
     </header>
 
