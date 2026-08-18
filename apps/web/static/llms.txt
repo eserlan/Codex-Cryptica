@@ -69,6 +69,16 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Quest Hook Generator](https://codexcryptica.com/tools/quest-hook-generator): RPG quest hook and adventure seed generator.
 - [Vampire Clan Generator](https://codexcryptica.com/tools/vampire-clan-generator): Gothic vampire clan generator for World of Darkness-style games.
 
+## Live In-Browser Generators
+
+The pages above are informational landing pages; these are the canonical, no-login-required tools that actually generate and let you save a draft into a vault. The `/tools/*` pages above link into these for the interactive experience.
+
+- [Generators Hub](https://codexcryptica.com/generators): Directory of every live in-browser RPG generator, grouped by genre.
+- [RPG NPC Generator](https://codexcryptica.com/generators/npc): Generate a full NPC — name, ancestry, role, secret, faction tie, and GM hook — across any genre, no account required.
+- [Faction Generator](https://codexcryptica.com/generators/faction): Generate a faction with agenda, leadership, resources, rivals, and hooks.
+- [Settlement Generator](https://codexcryptica.com/generators/settlement): Generate a town, city, or outpost with population, industry, threats, and points of interest.
+- [Magic Item Generator](https://codexcryptica.com/generators/magic-item): Generate a magic item with properties, history, and drawbacks.
+
 ## Technical Documentation
 
 - [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.

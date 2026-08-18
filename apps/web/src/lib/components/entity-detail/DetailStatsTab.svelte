@@ -5,6 +5,7 @@
   import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
   import StatSheetTemplateModal from "$lib/components/stats/StatSheetTemplateModal.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { presentationUIStore } from "$lib/stores/ui/presentation-ui.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import PresentationRenderer from "$lib/components/stats/presentation/PresentationRenderer.svelte";
@@ -12,6 +13,7 @@
   import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
   import type { PresentationRenderContext } from "$lib/components/stats/presentation/types";
   import {
+    computeSectionKeys,
     isTemplateUsable,
     parseTemplate,
     resolvePresentationTemplate,
@@ -81,6 +83,10 @@
     return validateAst(parsed.ast, schema);
   });
 
+  const sectionKeys = $derived(
+    presentationAst ? computeSectionKeys(presentationAst) : new Map(),
+  );
+
   function persistFields(nextFields: StatSheetField[]) {
     if (readOnly) return;
     vault.updateEntity(entity.id, {
@@ -101,6 +107,13 @@
       return readOnly;
     },
     mode: "view",
+    get sectionKeys() {
+      return sectionKeys;
+    },
+    isSectionCollapsed: (sectionKey) =>
+      presentationUIStore.getCollapsedSections(entity.id).has(sectionKey),
+    onToggleSection: (sectionKey) =>
+      presentationUIStore.toggleSection(entity.id, sectionKey),
     onUpdateFieldValue: (fieldId, value) => {
       persistFields(
         (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>

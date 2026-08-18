@@ -129,3 +129,51 @@ export type BlockNode =
   | UnknownDirectiveNode;
 
 export type PresentationAst = BlockNode[];
+
+/** Container keys through which every BlockNode/InlineNode variant nests
+ * further nodes (see the interfaces above). Kept in one place so consumers
+ * that need to walk the presentation AST (editor diagnostics, override
+ * hydration, etc.) share a single traversal contract instead of each
+ * re-deriving this list and risking drift when a new variant is added. */
+const PRESENTATION_NODE_CHILD_KEYS = [
+  "children",
+  "items",
+  "header",
+  "rows",
+] as const;
+
+/** Recursively visits every node in a parsed presentation AST (or any
+ * subtree of it), including nested inline/block/table structures. */
+export function walkPresentationNodes(
+  nodes: unknown[],
+  visit: (node: Record<string, unknown>) => void,
+): void {
+  for (const n of nodes) {
+    const node = n as Record<string, unknown>;
+    visit(node);
+    for (const key of PRESENTATION_NODE_CHILD_KEYS) {
+      const val = node[key];
+      if (Array.isArray(val)) {
+        walkPresentationNodes((val as unknown[]).flat(2), visit);
+      }
+    }
+  }
+}
+
+/** Assigns each `SectionNode` a stable key based on its position in
+ * document order (e.g. `"section-0"`, `"section-1"`, ...). `SectionNode`
+ * carries no id of its own, so viewer-only state (collapse/expand, #2331)
+ * that needs to key off a section must derive a key this way, by object
+ * identity, from a fresh parse of the same source. */
+export function computeSectionKeys(
+  nodes: PresentationAst,
+): Map<SectionNode, string> {
+  const keys = new Map<SectionNode, string>();
+  let counter = 0;
+  walkPresentationNodes(nodes, (node) => {
+    if (node.type === "section") {
+      keys.set(node as unknown as SectionNode, `section-${counter++}`);
+    }
+  });
+  return keys;
+}

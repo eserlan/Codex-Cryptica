@@ -30,22 +30,20 @@ describe("buildSoftwareApplicationJsonLd", () => {
     const json = buildSoftwareApplicationJsonLd({
       canonicalPath: undefined,
       metaDescription: "desc",
-      faqs: [],
     });
     const parsed = JSON.parse(json);
     expect(parsed.url).toBe("https://codexcryptica.com/tools");
     expect(parsed.mainEntity).toBeUndefined();
   });
 
-  it("includes an embedded FAQPage mainEntity when faqs are present", () => {
+  it("does not embed a FAQPage mainEntity (FAQ schema is emitted separately by buildFaqJsonLd)", () => {
     const json = buildSoftwareApplicationJsonLd({
       canonicalPath: "/generators/npc",
       metaDescription: "desc",
-      faqs: [{ question: "Q?", answer: "A." }],
     });
     const parsed = JSON.parse(json);
     expect(parsed.url).toBe("https://codexcryptica.com/generators/npc");
-    expect(parsed.mainEntity["@type"]).toBe("FAQPage");
+    expect(parsed.mainEntity).toBeUndefined();
   });
 });
 

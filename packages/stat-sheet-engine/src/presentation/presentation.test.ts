@@ -14,9 +14,11 @@ import type {
   HeadingNode,
   MissingFieldNode,
   ParagraphNode,
+  SectionNode,
   TableNode,
   UnknownDirectiveNode,
 } from "./ast";
+import { computeSectionKeys } from "./ast";
 
 function mkTemplate(id: string): PresentationTemplate {
   return {
@@ -450,5 +452,41 @@ describe("exportPresentationTemplate / importPresentationTemplatePackage", () =>
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reason).toBe("invalid-package");
+  });
+});
+
+describe("computeSectionKeys", () => {
+  it("assigns keys to sections in document order, including nested sections", () => {
+    const first: SectionNode = { type: "section", title: "A", children: [] };
+    const second: SectionNode = {
+      type: "section",
+      title: "B",
+      children: [{ type: "section", title: "C", children: [] }],
+    };
+    const keys = computeSectionKeys([first, second]);
+
+    expect(keys.get(first)).toBe("section-0");
+    expect(keys.get(second)).toBe("section-1");
+    expect(keys.get(second.children[0] as SectionNode)).toBe("section-2");
+  });
+
+  it("ignores non-section nodes and sections nested in groups/cards/rows", () => {
+    const nested: SectionNode = {
+      type: "section",
+      title: "Nested",
+      children: [],
+    };
+    const ast = [
+      { type: "heading", level: 1, children: [] } as HeadingNode,
+      {
+        type: "group",
+        children: [{ type: "card", children: [nested] }],
+      } as unknown as GroupNode,
+    ];
+
+    const keys = computeSectionKeys(ast);
+
+    expect(keys.size).toBe(1);
+    expect(keys.get(nested)).toBe("section-0");
   });
 });

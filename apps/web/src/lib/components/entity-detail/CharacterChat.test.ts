@@ -345,5 +345,49 @@ describe("CharacterChat", () => {
       );
       expect(guestChatStore.deleteMessage).toHaveBeenCalledWith("char-1", "m1");
     });
+
+    it("populates cue input with Quick Oracle rolls when buttons are clicked", async () => {
+      guestChatStore.transcripts = {
+        "char-1": { ...activeTranscript, messages: [] } as any,
+      };
+      render(CharacterChat, { entity: character });
+
+      // Toggle Cue input open
+      const cueToggle = screen.getByTitle("Toggle Oracle / Director Cue");
+      await fireEvent.click(cueToggle);
+
+      const cueInput = screen.getByPlaceholderText(
+        /Oracle \/ Director Cue/i,
+      ) as HTMLInputElement;
+      expect(cueInput.value).toBe("");
+
+      // Click Oracle 50/50
+      const oracle50Btn = screen.getByTestId("quick-oracle-btn");
+      await fireEvent.click(oracle50Btn);
+      expect(cueInput.value).toMatch(
+        /^Oracle: (Yes, and\.\.\.|Yes|Yes, but\.\.\.|No, but\.\.\.|No|No, and\.\.\.)$/,
+      );
+
+      await fireEvent.click(screen.getByTestId("quick-oracle-likely-btn"));
+      expect(cueInput.value).toMatch(/^Oracle \(likely\): /);
+
+      await fireEvent.click(screen.getByTestId("quick-oracle-unlikely-btn"));
+      expect(cueInput.value).toMatch(/^Oracle \(unlikely\): /);
+
+      // Click 2d6
+      const pbtaBtn = screen.getByTestId("quick-pbta-btn");
+      await fireEvent.click(pbtaBtn);
+      expect(cueInput.value).toMatch(/^2d6 = \d+: (Strong Hit|Weak Hit|Miss)/);
+
+      // Click d20
+      const d20Btn = screen.getByTestId("quick-d20-btn");
+      await fireEvent.click(d20Btn);
+      expect(cueInput.value).toMatch(/^d20 = (?:[1-9]|1\d|20)$/);
+
+      // Click Spark
+      const sparkBtn = screen.getByTestId("quick-spark-btn");
+      await fireEvent.click(sparkBtn);
+      expect(cueInput.value).toMatch(/^Spark: [A-Za-z]+ [A-Za-z ]+$/);
+    });
   });
 });

@@ -42,6 +42,9 @@
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
+  // Type accent: colored left border so entity types stay scannable at a
+  // glance in Table view too, matching the List view treatment (#2329).
+  const typeColor = $derived(cat?.color ?? null);
   // In guest mode the entity popout route can't resolve the snapshot, so the
   // title link falls back to the guest page (clicks are intercepted anyway).
   const href = $derived(
@@ -117,6 +120,8 @@
   class="grid grid-cols-[1fr_auto] items-start gap-x-2 gap-y-1 p-3 md:table-row md:p-0 group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5 {selected
     ? 'bg-theme-primary/10'
     : ''}"
+  style:border-left-width={typeColor ? "3px" : null}
+  style:border-left-color={typeColor}
   data-testid="entity-table-row"
   data-selected={selected}
   onclick={handleRowClick}
