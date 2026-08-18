@@ -22,7 +22,7 @@ export const traveller: LandingPageConfig = {
     {
       title: "Subsectors, Worlds & Starports",
       description:
-        "Map subsectors down to individual worlds, UWPs, starports, bases and jump routes, all linked to the systems they sit in.",
+        "Map subsectors down to individual worlds, world profiles (UWPs), starports, bases and jump routes, all linked to the systems they sit in.",
       icon: "icon-[lucide--orbit]",
     },
     {
@@ -34,7 +34,7 @@ export const traveller: LandingPageConfig = {
     {
       title: "Patrons, Travellers & Contacts",
       description:
-        "Connect patrons, Travellers, ship crew, informants, rivals, and creditors using a visual relationship graph.",
+        "Connect patrons, Travellers, crew members, informants, rivals, and creditors using a visual relationship graph.",
       icon: "icon-[lucide--users]",
     },
     {
@@ -62,7 +62,7 @@ export const traveller: LandingPageConfig = {
       },
       {
         label: "Kestrel Mercantile Bank",
-        sublabel: "Mortgage Underwriter",
+        sublabel: "Ship Financier",
         relation: "Owes mortgage to",
         category: "faction",
       },
@@ -80,7 +80,7 @@ export const traveller: LandingPageConfig = {
       },
       {
         label: "Salvage Rights Dispute",
-        sublabel: "Active Ticket",
+        sublabel: "Active Contract",
         relation: "Contracted for",
         category: "event",
       },
