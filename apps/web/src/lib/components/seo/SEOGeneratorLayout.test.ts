@@ -124,7 +124,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       document.head.innerHTML = "";
     });
 
-    it("generates and injects correct SoftwareApplication and BreadcrumbList schemas", () => {
+    it("generates and injects correct SoftwareApplication, BreadcrumbList, and FAQPage schemas (FAQPage emitted once, not duplicated in SoftwareApplication)", () => {
       const mockGenerate = vi.fn().mockResolvedValue({});
 
       render(SEOGeneratorLayout, {
@@ -143,6 +143,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
       let softwareAppFound = false;
       let breadcrumbFound = false;
+      let faqPageCount = 0;
 
       scripts.forEach((script) => {
         try {
@@ -150,13 +151,15 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           if (json["@type"] === "SoftwareApplication") {
             softwareAppFound = true;
             expect(json.name).toBe("Codex Cryptica");
-            expect(json.mainEntity["@type"]).toBe("FAQPage");
-            expect(json.mainEntity.mainEntity[0].name).toBe("FAQ Q1?");
+            expect(json.mainEntity).toBeUndefined();
           } else if (json["@type"] === "BreadcrumbList") {
             breadcrumbFound = true;
             expect(json.itemListElement).toHaveLength(3);
             expect(json.itemListElement[1].name).toBe("Generators");
             expect(json.itemListElement[2].name).toBe("RPG NPC Generator");
+          } else if (json["@type"] === "FAQPage") {
+            faqPageCount += 1;
+            expect(json.mainEntity[0].name).toBe("FAQ Q1?");
           }
         } catch {
           // ignore
@@ -165,6 +168,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
 
       expect(softwareAppFound).toBe(true);
       expect(breadcrumbFound).toBe(true);
+      expect(faqPageCount).toBe(1);
     });
 
     it("generates and injects correct Person/Place schemas when generatedData is set", async () => {
