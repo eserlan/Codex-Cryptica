@@ -18,6 +18,7 @@
     exportPresentationTemplate,
     sanitizeSource,
     walkPresentationNodes,
+    computeSectionKeys,
     DISPLAY_MODES_BY_FIELD_TYPE,
   } from "@codex/stat-sheet-engine";
   import type {
@@ -570,6 +571,12 @@
   const previewAst = $derived(
     parsed.ok ? validateAst(parsed.ast, schema) : null,
   );
+  const previewSectionKeys = $derived(
+    previewAst ? computeSectionKeys(previewAst) : new Map(),
+  );
+  // Collapse state in the editor preview is scratch-only: it doesn't
+  // represent any real entity, so it's never persisted (#2331).
+  let previewCollapsedSections = $state<Set<string>>(new Set());
 
   function collectDiagnostics(nodes: unknown[]): {
     missing: MissingFieldNode[];
@@ -602,6 +609,20 @@
     },
     readOnly: true,
     mode: "preview",
+    get sectionKeys() {
+      return previewSectionKeys;
+    },
+    isSectionCollapsed: (sectionKey) =>
+      previewCollapsedSections.has(sectionKey),
+    onToggleSection: (sectionKey) => {
+      const next = new Set(previewCollapsedSections);
+      if (next.has(sectionKey)) {
+        next.delete(sectionKey);
+      } else {
+        next.add(sectionKey);
+      }
+      previewCollapsedSections = next;
+    },
     onUpdateFieldValue: () => {},
     onUpdateField: () => {},
     onAdjustCounter: () => {},
