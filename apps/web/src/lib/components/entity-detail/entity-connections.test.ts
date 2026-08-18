@@ -202,6 +202,26 @@ describe("buildConnectionNeighbors", () => {
 
     expect(neighbors[0].hasPastLabel).toBe(true);
   });
+
+  it("passes through image and thumbnail properties on neighbors", () => {
+    const source = entity({
+      id: "source",
+      connections: [{ target: "target", type: "knows", strength: 1 }],
+    });
+    const target = entity({
+      id: "target",
+      image: "portrait.png",
+      thumbnail: "thumb.png",
+    });
+
+    const neighbors = buildConnectionNeighbors(
+      source,
+      context([source, target]),
+    );
+
+    expect(neighbors[0].image).toBe("portrait.png");
+    expect(neighbors[0].thumbnail).toBe("thumb.png");
+  });
 });
 
 describe("toConnectionRows", () => {

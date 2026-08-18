@@ -29,6 +29,8 @@ export type ConnectionNeighbor = {
   id: string;
   title: string;
   type: string;
+  image?: string;
+  thumbnail?: string;
   hasPastLabel: boolean;
   /** Every relationship between the centre entity and this neighbour. */
   relations: ConnectionRelation[];
@@ -125,6 +127,8 @@ export function buildConnectionNeighbors(
       id: target.id,
       title: target.title || target.id,
       type: target.type,
+      image: target.image,
+      thumbnail: target.thumbnail,
       hasPastLabel: hasPast(target),
       relations: [relation],
     });

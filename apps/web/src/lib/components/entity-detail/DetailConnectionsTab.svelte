@@ -80,6 +80,76 @@
     return `Open ${neighbor.title}${past} (${relations})`;
   };
 
+  // --- Image resolution ---------------------------------------------------
+  let centerImageUrl = $state<string | null>(null);
+  $effect(() => {
+    const imagePath = entity.thumbnail || entity.image;
+    let stale = false;
+
+    if (!imagePath || typeof vault.resolveImageUrl !== "function") {
+      centerImageUrl = null;
+      return;
+    }
+
+    void (async () => {
+      try {
+        const url = await vault.resolveImageUrl(imagePath);
+        if (!stale) {
+          centerImageUrl = url || null;
+        }
+      } catch {
+        if (!stale) {
+          centerImageUrl = null;
+        }
+      }
+    })();
+
+    return () => {
+      stale = true;
+    };
+  });
+
+  let neighborImageUrls = $state<Record<string, string>>({});
+  $effect(() => {
+    let stale = false;
+    const currentNeighbors = ringNeighbors;
+    const toResolve = currentNeighbors.filter(
+      (n) =>
+        (n.thumbnail || n.image) && typeof vault.resolveImageUrl === "function",
+    );
+
+    if (toResolve.length === 0) {
+      neighborImageUrls = {};
+      return;
+    }
+
+    void (async () => {
+      const results: Record<string, string> = {};
+      await Promise.all(
+        toResolve.map(async (n) => {
+          const path = n.thumbnail || n.image;
+          if (!path) return;
+          try {
+            const url = await vault.resolveImageUrl(path);
+            if (url) {
+              results[n.id] = url;
+            }
+          } catch {
+            // Ignore error
+          }
+        }),
+      );
+
+      if (!stale) {
+        neighborImageUrls = results;
+      }
+    })();
+
+    return () => {
+      stale = true;
+    };
+  });
+
   // --- Pan & zoom ---------------------------------------------------------
   // Same viewport maths the lineage canvas uses, but a different input policy:
   // this view lives inside a scrolling tab, so it must never swallow the
@@ -233,16 +303,25 @@
         data-testid="connections-centre"
       >
         <span
-          class="flex items-center justify-center rounded-full border-2 ring-4 ring-theme-primary/15 {isWide
+          class="relative flex items-center justify-center overflow-hidden rounded-full border-2 ring-4 ring-theme-primary/15 {isWide
             ? 'h-20 w-20'
             : 'h-16 w-16'}"
           style:border-color={centreColor ?? undefined}
           style:background-color={tint(centreColor, "26%")}
         >
-          <span
-            class="{iconOf(entity.type)} {isWide ? 'h-8 w-8' : 'h-7 w-7'}"
-            style:color={centreColor ?? undefined}
-          ></span>
+          {#if centerImageUrl}
+            <img
+              src={centerImageUrl}
+              alt={entity.title}
+              class="h-full w-full object-cover"
+              data-testid="connections-centre-image"
+            />
+          {:else}
+            <span
+              class="{iconOf(entity.type)} {isWide ? 'h-8 w-8' : 'h-7 w-7'}"
+              style:color={centreColor ?? undefined}
+            ></span>
+          {/if}
         </span>
         <span class="flex flex-col items-center gap-0.5 text-center">
           <span
@@ -268,6 +347,7 @@
       {#each ringNeighbors as neighbor, i (neighbor.id)}
         {@const position = positions[i]}
         {@const color = colorOf(neighbor.type)}
+        {@const neighborImageUrl = neighborImageUrls[neighbor.id]}
         <button
           type="button"
           class="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-lg p-1 transition hover:bg-theme-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
@@ -281,16 +361,25 @@
           onclick={(event) => openNeighbor(neighbor.id, event)}
         >
           <span
-            class="flex shrink-0 items-center justify-center rounded-full border transition group-hover:scale-110 {isWide
+            class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border transition group-hover:scale-110 {isWide
               ? 'h-12 w-12'
               : 'h-10 w-10'}"
             style:border-color={color ?? undefined}
             style:background-color={tint(color, "22%")}
           >
-            <span
-              class="{iconOf(neighbor.type)} {isWide ? 'h-5 w-5' : 'h-4 w-4'}"
-              style:color={color ?? undefined}
-            ></span>
+            {#if neighborImageUrl}
+              <img
+                src={neighborImageUrl}
+                alt={neighbor.title}
+                class="h-full w-full object-cover"
+                data-testid="connection-node-image"
+              />
+            {:else}
+              <span
+                class="{iconOf(neighbor.type)} {isWide ? 'h-5 w-5' : 'h-4 w-4'}"
+                style:color={color ?? undefined}
+              ></span>
+            {/if}
           </span>
           <span
             class="flex w-full flex-col items-center gap-0.5"

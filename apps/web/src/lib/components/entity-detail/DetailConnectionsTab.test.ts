@@ -76,6 +76,11 @@ const { entities, vaultMock } = vi.hoisted(() => {
     isGuest: false,
     defaultVisibility: "visible",
     selectedEntityId: null as string | null,
+    resolveImageUrl: vi.fn().mockImplementation(async (path: string) => {
+      if (path === "king.png") return "blob:king-portrait";
+      if (path === "duke.png") return "blob:duke-portrait";
+      return "";
+    }),
   };
   return { entities, vaultMock };
 });
@@ -322,5 +327,41 @@ describe("DetailConnectionsTab", () => {
     expect(screen.getByTestId("connections-centre").textContent).toContain(
       "The Hermit",
     );
+  });
+
+  it("renders a portrait image in the center node when entity has an image", async () => {
+    const kingWithImage = {
+      ...entities.king,
+      image: "king.png",
+    } as unknown as Entity;
+
+    render(DetailConnectionsTab, { entity: kingWithImage });
+
+    // Center node image should be rendered after resolution
+    const image = await screen.findByTestId("connections-centre-image");
+    expect(image).toBeTruthy();
+    expect(image.getAttribute("src")).toBe("blob:king-portrait");
+  });
+
+  it("renders portrait images in satellite nodes when neighbor entities have images", async () => {
+    const dukeWithImage = {
+      ...entities.duke,
+      image: "duke.png",
+    } as unknown as Entity;
+
+    const entitiesCopy = {
+      ...entities,
+      duke: dukeWithImage,
+    };
+    vaultMock.entities = entitiesCopy;
+    vaultMock.allEntities = Object.values(entitiesCopy);
+
+    render(DetailConnectionsTab, { entity: entities.king });
+
+    const satelliteImages = await screen.findAllByTestId(
+      "connection-node-image",
+    );
+    expect(satelliteImages.length).toBeGreaterThanOrEqual(1);
+    expect(satelliteImages[0].getAttribute("src")).toBe("blob:duke-portrait");
   });
 });
