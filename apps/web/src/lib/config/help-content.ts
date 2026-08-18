@@ -258,7 +258,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "connections",
     title: "Connections",
     content:
-      "The Connections tab puts this entity in the middle and draws everything linked straight to it around the edge — links you made, links others made to it, and anything filed under it — with the relationship written on each line. Click any surrounding entity to open it. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.",
+      "The Connections tab puts this entity in the middle and arranges everything linked straight to it around the edge — links you made, links others made to it, and anything filed under it — each one labelled with its relationship. Click any surrounding entity to open it. Connections that do not fit comfortably in the picture are listed underneath it, still one tap away. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.",
     icon: "icon-[lucide--waypoints]",
   },
   "family-tree": {

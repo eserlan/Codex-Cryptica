@@ -11,9 +11,10 @@
     type ConnectionNeighbor,
   } from "./entity-connections";
   import {
-    MAX_CONNECTION_NODES,
-    edgeLabelPosition,
+    WIDE_CONTAINER_PX,
+    edgeSegment,
     layoutConnectionGraph,
+    ringCapacity,
   } from "./connections-graph";
 
   let {
@@ -24,13 +25,22 @@
     onNavigate?: (id: string, event?: MouseEvent) => void;
   } = $props();
 
+  // The composition depends on how much room this tab actually has, not on the
+  // viewport: the same component renders in a ~330px side panel and in the
+  // ~900px zen view. Before measurement (and in jsdom) assume the wide layout.
+  let measuredWidth = $state(0);
+  const width = $derived(measuredWidth || 640);
+  const isWide = $derived(width >= WIDE_CONTAINER_PX);
+
   const allNeighbors = $derived.by<ConnectionNeighbor[]>(() =>
     buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
   );
 
-  const neighbors = $derived(allNeighbors.slice(0, MAX_CONNECTION_NODES));
-  const hiddenCount = $derived(allNeighbors.length - neighbors.length);
-  const positions = $derived(layoutConnectionGraph(neighbors.length));
+  // A picture of a handful of connections reads well; a picture of thirty does
+  // not. The rest keep their own row below, still one tap from being opened.
+  const ringNeighbors = $derived(allNeighbors.slice(0, ringCapacity(width)));
+  const overflowNeighbors = $derived(allNeighbors.slice(ringNeighbors.length));
+  const positions = $derived(layoutConnectionGraph(ringNeighbors.length));
 
   const centreColor = $derived(
     categories.getCategory(entity.type)?.color ?? null,
@@ -82,120 +92,146 @@
   }
 </script>
 
-<div class="space-y-3" data-testid="connections-tab">
+<div
+  class="space-y-3"
+  data-testid="connections-tab"
+  bind:clientWidth={measuredWidth}
+>
   <p class="text-xs text-theme-muted">
     Direct connections only — entities linked straight to {entity.title}.
   </p>
 
   <div
-    class="relative aspect-[4/3] max-h-[32rem] min-h-[22rem] w-full overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40"
+    class="relative w-full shrink-0 overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40 {isWide
+      ? 'aspect-[16/10] max-h-[34rem]'
+      : 'aspect-[3/4] max-h-[32rem]'}"
     data-testid="connections-graph"
     role="group"
     aria-label="Direct connections of {entity.title}"
   >
-    <!-- Edges. Drawn in the same 0-100 percentage space the nodes are placed
-         in, so the two layers stay aligned at any container size. -->
+    <!-- Spokes. Drawn in the same 0-100 percentage space the cards are placed
+         in, so the two layers stay aligned at any container size. Each one is
+         only the middle stretch of the line, so it never runs under the centre
+         or under a card. -->
     <svg
       class="absolute inset-0 h-full w-full"
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      {#each neighbors as neighbor, i (neighbor.id)}
-        {@const position = positions[i]}
+      {#each ringNeighbors as neighbor, i (neighbor.id)}
+        {@const segment = edgeSegment(positions[i])}
         <line
-          x1="50"
-          y1="50"
-          x2={position.x}
-          y2={position.y}
+          x1={segment.x1}
+          y1={segment.y1}
+          x2={segment.x2}
+          y2={segment.y2}
           stroke={colorOf(neighbor.type) ?? "currentColor"}
-          stroke-opacity="0.45"
+          stroke-opacity="0.35"
           stroke-width="1.5"
+          stroke-linecap="round"
           vector-effect="non-scaling-stroke"
           class="text-theme-border"
         />
       {/each}
     </svg>
 
-    <!-- Relationship labels, as HTML so they inherit theme type styles and
-         can carry a direction glyph. -->
-    {#each neighbors as neighbor, i (neighbor.id)}
-      {@const label = edgeLabelPosition(positions[i])}
-      <span
-        class="pointer-events-none absolute z-10 flex max-w-[8rem] -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-theme-border bg-theme-bg/90 px-1.5 py-0.5 text-[9px] leading-none font-medium text-theme-muted"
-        style:left="{label.x}%"
-        style:top="{label.y}%"
-        data-testid="connection-edge-label"
-        aria-hidden="true"
-      >
-        <span class="{relationIcon(neighbor)} h-2.5 w-2.5 shrink-0"></span>
-        <span class="min-w-0 truncate">{relationText(neighbor)}</span>
-      </span>
-    {/each}
-
-    <!-- Centre entity: always fixed at the middle, visually dominant. -->
+    <!-- Centre entity: fixed in the middle, and the only thing allowed in this
+         horizontal band, so it reads as the focal point. -->
     <div
-      class="absolute top-1/2 left-1/2 z-20 flex w-[9rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5"
+      class="absolute top-1/2 left-1/2 z-20 flex w-[60%] max-w-[16rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2"
       data-testid="connections-centre"
     >
       <span
-        class="flex h-16 w-16 items-center justify-center rounded-full border-2 shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] ring-2 ring-theme-primary/50 ring-offset-2 ring-offset-theme-bg"
+        class="flex items-center justify-center rounded-full border-2 ring-4 ring-theme-primary/15 {isWide
+          ? 'h-20 w-20'
+          : 'h-16 w-16'}"
         style:border-color={centreColor ?? undefined}
-        style:background-color={tint(centreColor, "28%")}
+        style:background-color={tint(centreColor, "26%")}
       >
         <span
-          class="{iconOf(entity.type)} h-7 w-7"
+          class="{iconOf(entity.type)} {isWide ? 'h-8 w-8' : 'h-7 w-7'}"
           style:color={centreColor ?? undefined}
         ></span>
       </span>
-      <span
-        class="max-w-full truncate font-header text-xs font-bold tracking-widest text-theme-text uppercase"
-        title={entity.title}
-      >
-        {entity.title}{#if entityIsPast}<sup aria-hidden="true">*</sup><span
-            class="sr-only"
-          >
-            (past)</span
-          >{/if}
+      <span class="flex flex-col items-center gap-0.5 text-center">
+        <span
+          class="font-header leading-tight font-bold tracking-wide text-theme-text {isWide
+            ? 'text-base'
+            : 'text-sm'}"
+        >
+          {entity.title}{#if entityIsPast}<sup aria-hidden="true">*</sup><span
+              class="sr-only"
+            >
+              (past)</span
+            >{/if}
+        </span>
+        <span
+          class="font-header text-[9px] tracking-[0.2em] text-theme-muted uppercase"
+          >{entity.type}</span
+        >
       </span>
     </div>
 
-    {#each neighbors as neighbor, i (neighbor.id)}
+    <!-- Satellites. The relationship rides on the card rather than floating on
+         the line: long labels then wrap instead of colliding with the art. -->
+    {#each ringNeighbors as neighbor, i (neighbor.id)}
       {@const position = positions[i]}
       {@const color = colorOf(neighbor.type)}
       <button
         type="button"
-        class="group absolute z-20 flex w-[5.5rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-lg p-1 transition hover:bg-theme-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        class="group absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 rounded-lg p-1 transition hover:bg-theme-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         style:left="{position.x}%"
         style:top="{position.y}%"
+        style:width="{position.widthPct}%"
         data-testid="connection-node"
         data-entity-id={neighbor.id}
         aria-label={describe(neighbor)}
-        title={neighbor.title}
+        title="{neighbor.title} — {relationText(neighbor)}"
         onclick={(event) => openNeighbor(neighbor.id, event)}
       >
         <span
-          class="flex h-10 w-10 items-center justify-center rounded-full border transition group-hover:scale-110"
+          class="flex shrink-0 items-center justify-center rounded-full border transition group-hover:scale-110 {isWide
+            ? 'h-12 w-12'
+            : 'h-10 w-10'}"
           style:border-color={color ?? undefined}
           style:background-color={tint(color, "22%")}
         >
           <span
-            class="{iconOf(neighbor.type)} h-4 w-4"
+            class="{iconOf(neighbor.type)} {isWide ? 'h-5 w-5' : 'h-4 w-4'}"
             style:color={color ?? undefined}
           ></span>
         </span>
         <span
-          class="max-w-full truncate text-[10px] leading-tight font-semibold text-theme-text transition-colors group-hover:text-theme-primary"
+          class="flex w-full flex-col items-center gap-0.5"
           aria-hidden="true"
         >
-          {neighbor.title}{#if neighbor.hasPastLabel}<sup>*</sup>{/if}
+          <span
+            class="line-clamp-2 leading-tight font-semibold text-balance text-theme-text transition-colors group-hover:text-theme-primary {isWide
+              ? 'text-xs'
+              : 'text-[11px]'}"
+          >
+            {neighbor.title}{#if neighbor.hasPastLabel}<sup>*</sup>{/if}
+          </span>
+          <span
+            class="flex w-full items-start justify-center gap-0.5 leading-tight text-theme-muted {isWide
+              ? 'text-[10px]'
+              : 'text-[9px]'}"
+            data-testid="connection-relation"
+          >
+            <span class="{relationIcon(neighbor)} mt-px h-2.5 w-2.5 shrink-0"
+            ></span>
+            <span class="line-clamp-2 min-w-0 text-balance"
+              >{relationText(neighbor)}</span
+            >
+          </span>
         </span>
       </button>
     {/each}
 
-    {#if neighbors.length === 0}
+    {#if ringNeighbors.length === 0}
       <p
-        class="absolute inset-x-0 bottom-6 text-center text-sm text-theme-muted italic"
+        class="absolute inset-x-0 bottom-8 text-center text-sm text-theme-muted italic"
         data-testid="connections-empty"
       >
         No direct connections yet.
@@ -203,12 +239,48 @@
     {/if}
   </div>
 
-  <FeatureHint hintId="connections" />
-
-  {#if hiddenCount > 0}
-    <p class="text-xs text-theme-muted" data-testid="connections-overflow">
-      Showing {neighbors.length} of {allNeighbors.length} connections — open the graph
-      view to see the rest.
-    </p>
+  {#if overflowNeighbors.length > 0}
+    <div class="space-y-2" data-testid="connections-overflow">
+      <h3
+        class="font-header text-[10px] font-bold tracking-widest text-theme-muted uppercase"
+      >
+        {overflowNeighbors.length} more connection{overflowNeighbors.length ===
+        1
+          ? ""
+          : "s"}
+      </h3>
+      <div class="flex flex-wrap gap-1.5">
+        {#each overflowNeighbors as neighbor (neighbor.id)}
+          {@const color = colorOf(neighbor.type)}
+          <button
+            type="button"
+            class="flex max-w-full items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface/60 py-1 pr-2.5 pl-1.5 text-left transition hover:border-theme-primary/50 hover:bg-theme-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+            data-testid="connection-chip"
+            data-entity-id={neighbor.id}
+            aria-label={describe(neighbor)}
+            title="{neighbor.title} — {relationText(neighbor)}"
+            onclick={(event) => openNeighbor(neighbor.id, event)}
+          >
+            <span
+              class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+              style:background-color={tint(color, "22%")}
+            >
+              <span
+                class="{iconOf(neighbor.type)} h-3 w-3"
+                style:color={color ?? undefined}
+              ></span>
+            </span>
+            <span class="min-w-0 truncate text-[11px] text-theme-text">
+              {neighbor.title}{#if neighbor.hasPastLabel}<sup>*</sup>{/if}
+            </span>
+            <span class="min-w-0 truncate text-[10px] text-theme-muted"
+              >{relationText(neighbor)}</span
+            >
+          </button>
+        {/each}
+      </div>
+    </div>
   {/if}
+
+  <FeatureHint hintId="connections" />
 </div>

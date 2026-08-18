@@ -1,84 +1,125 @@
 /**
- * Radial layout for the Connections tab (issue #2350): the entity at the
- * centre, its direct connections around it.
+ * Composition for the Connections tab (issue #2350): one entity in the middle,
+ * its direct connections arranged around it.
  *
- * Deliberately not a physics simulation — positions are plain percentages of
- * the container box, so the view is responsive by construction (the component
- * places nodes with `left`/`top`) and the layout is testable without a DOM.
+ * The arrangement is deliberate rather than a raw radial dump of the data:
+ *
+ *  - Satellites live in a top arc and a bottom arc only. The horizontal band
+ *    through the middle belongs to the centre entity and its name, so nothing
+ *    ever crosses or crowds the focal point (the first pass put nodes at 3 and
+ *    9 o'clock, and their labels landed on top of the centre).
+ *  - Each satellite gets a width derived from how much room it actually has,
+ *    so cards in the same band can never overlap.
+ *  - The ring holds a handful of connections; anything past that is listed
+ *    below the picture instead of being crammed into it.
+ *
+ * Positions are percentages of the container box, so the same numbers work on
+ * a 330px side panel and a 900px zen view, and the layout is unit-testable
+ * without a DOM.
  */
 
 export type ConnectionNodePosition = {
   /** Percentage of the container width / height (0-100). */
   x: number;
   y: number;
-  ring: number;
+  /** Card width as a percentage of the container width. */
+  widthPct: number;
 };
 
-/** Past this the rings get crowded; the rest are summarised as "+N more". */
-export const MAX_CONNECTION_NODES = 20;
-/** Fraction of the centre→node distance where the label pill sits. */
-export const EDGE_LABEL_FRACTION = 0.5;
+/** Satellites in the picture. Narrow containers get fewer, and more room each. */
+export const RING_CAPACITY_NARROW = 6;
+export const RING_CAPACITY_WIDE = 9;
+/** Container width (px) at which the wider ring starts to read comfortably. */
+export const WIDE_CONTAINER_PX = 420;
 
-const SINGLE_RING_MAX = 9;
-const INNER_RING_MAX = 6;
+export const ringCapacity = (containerWidth: number) =>
+  containerWidth >= WIDE_CONTAINER_PX
+    ? RING_CAPACITY_WIDE
+    : RING_CAPACITY_NARROW;
 
-const RING_RADII = [
-  { rx: 32, ry: 34 }, // single ring
-  { rx: 22, ry: 24 }, // inner ring (two-ring layout)
-  { rx: 40, ry: 42 }, // outer ring (two-ring layout)
-];
+/**
+ * How far a satellite must stay off the horizontal axis, in radians. Sized so
+ * the vertical gap it forces (sin(38°) × ry) clears the centre entity's circle
+ * and name at every container size we render at.
+ */
+const ARC_MARGIN = (38 * Math.PI) / 180;
+const RADIUS = { rx: 38, ry: 38 };
+
+/** Card widths, as a percentage of the container. */
+const MAX_CARD_WIDTH = 32;
+/** Cards this close vertically are treated as sharing a band. */
+const BAND_HEIGHT = 16;
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
-function ringPositions(
-  count: number,
-  radius: { rx: number; ry: number },
-  ring: number,
-  angleOffset: number,
-): ConnectionNodePosition[] {
-  const positions: ConnectionNodePosition[] = [];
-  const step = (Math.PI * 2) / Math.max(count, 1);
-  for (let i = 0; i < count; i++) {
-    // -90° puts the first neighbour straight above the centre, matching the
-    // sketch in issue #2350.
-    const angle = -Math.PI / 2 + angleOffset + step * i;
-    positions.push({
-      x: round(50 + Math.cos(angle) * radius.rx),
-      y: round(50 + Math.sin(angle) * radius.ry),
-      ring,
-    });
-  }
-  return positions;
+/** Angles for `count` satellites spread across one arc, endpoints included. */
+function arcAngles(count: number, centre: number): number[] {
+  if (count <= 0) return [];
+  const halfSpan = Math.PI / 2 - ARC_MARGIN;
+  if (count === 1) return [centre];
+  const start = centre - halfSpan;
+  const step = (halfSpan * 2) / (count - 1);
+  return Array.from({ length: count }, (_, i) => start + step * i);
 }
 
 /**
- * Up to nine neighbours sit on one ring; beyond that they split across two
- * interleaved rings so labels stay legible.
+ * Widths come from the geometry: a card may claim most of the gap to its
+ * nearest neighbour in the same horizontal band, and never more room than it
+ * has to the container edge. Two cards in a band therefore cannot collide.
  */
-export function layoutConnectionGraph(count: number): ConnectionNodePosition[] {
-  const shown = Math.min(Math.max(count, 0), MAX_CONNECTION_NODES);
-  if (shown === 0) return [];
-  if (shown <= SINGLE_RING_MAX) {
-    return ringPositions(shown, RING_RADII[0], 0, 0);
+function widthFor(
+  node: { x: number; y: number },
+  all: { x: number; y: number }[],
+): number {
+  let nearest = Infinity;
+  for (const other of all) {
+    if (other === node) continue;
+    if (Math.abs(other.y - node.y) >= BAND_HEIGHT) continue;
+    nearest = Math.min(nearest, Math.abs(other.x - node.x));
   }
-
-  const inner = Math.min(INNER_RING_MAX, Math.ceil(shown * 0.35));
-  const outer = shown - inner;
-  return [
-    ...ringPositions(inner, RING_RADII[1], 1, 0),
-    // Half-step offset so outer nodes fall between the inner ones instead of
-    // hiding behind them.
-    ...ringPositions(outer, RING_RADII[2], 2, Math.PI / Math.max(outer, 1)),
-  ];
+  const edgeRoom = 2 * Math.min(node.x, 100 - node.x);
+  return round(Math.min(nearest * 0.92, edgeRoom, MAX_CARD_WIDTH));
 }
 
-/** Point along the centre→node line where the relationship label is drawn. */
-export function edgeLabelPosition(
-  node: ConnectionNodePosition,
-  fraction = EDGE_LABEL_FRACTION,
-): { x: number; y: number } {
-  return {
+/**
+ * Places `count` satellites around the centre: the first half across the top
+ * arc, the rest across the bottom, both reading left to right.
+ */
+export function layoutConnectionGraph(count: number): ConnectionNodePosition[] {
+  if (count <= 0) return [];
+
+  const top = Math.ceil(count / 2);
+  const angles = [
+    ...arcAngles(top, -Math.PI / 2),
+    ...arcAngles(count - top, Math.PI / 2),
+  ];
+
+  const points = angles.map((angle) => ({
+    x: round(50 + Math.cos(angle) * RADIUS.rx),
+    y: round(50 + Math.sin(angle) * RADIUS.ry),
+  }));
+
+  return points.map((point) => ({
+    ...point,
+    widthPct: widthFor(point, points),
+  }));
+}
+
+/**
+ * The visible part of a spoke: a segment in the middle of the centre→node
+ * line, so the connector never runs under the centre circle or the card.
+ */
+export function edgeSegment(node: { x: number; y: number }): {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+} {
+  const at = (fraction: number) => ({
     x: round(50 + (node.x - 50) * fraction),
     y: round(50 + (node.y - 50) * fraction),
-  };
+  });
+  const start = at(0.26);
+  const end = at(0.74);
+  return { x1: start.x, y1: start.y, x2: end.x, y2: end.y };
 }

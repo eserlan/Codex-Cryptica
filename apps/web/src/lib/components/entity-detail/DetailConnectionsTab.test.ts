@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { render, screen, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import type { Entity } from "schema";
 
 const { entities, vaultMock } = vi.hoisted(() => {
@@ -101,6 +101,17 @@ const nodeTitles = () =>
     .map((node) => node.getAttribute("data-entity-id"));
 
 describe("DetailConnectionsTab", () => {
+  // `bind:clientWidth`, which sizes the composition, observes the element.
+  beforeAll(() => {
+    if (!(globalThis as any).ResizeObserver) {
+      (globalThis as any).ResizeObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+    }
+  });
+
   beforeEach(() => {
     vaultMock.selectedEntityId = null;
     vaultMock.isGuest = false;
@@ -126,11 +137,11 @@ describe("DetailConnectionsTab", () => {
     expect(nodeTitles()).not.toContain("rival");
   });
 
-  it("labels each edge with the relationship", () => {
+  it("carries the relationship on each connection's card", () => {
     render(DetailConnectionsTab, { entity: entities.king });
 
     const labels = screen
-      .getAllByTestId("connection-edge-label")
+      .getAllByTestId("connection-relation")
       .map((el) => el.textContent?.trim());
     expect(labels).toEqual(
       expect.arrayContaining(["ally", "commands", "rules"]),
@@ -184,6 +195,47 @@ describe("DetailConnectionsTab", () => {
         "Open Old Wraith (past) (Old Wraith haunts King Béla)",
       ),
     ).toBeTruthy();
+  });
+
+  it("lists connections past the ring's capacity as chips instead of cramming them in", async () => {
+    const crowd = Array.from({ length: 14 }, (_, i) => ({
+      id: `extra-${i}`,
+      type: "character",
+      title: `Extra ${i}`,
+      connections: [],
+    })) as unknown as Entity[];
+    const hub = {
+      id: "hub",
+      type: "faction",
+      title: "The Guild",
+      connections: crowd.map((c) => ({
+        target: c.id,
+        type: "friendly",
+        label: "member",
+        strength: 1,
+      })),
+    } as unknown as Entity;
+    for (const member of [...crowd, hub]) {
+      (vaultMock.entities as Record<string, Entity>)[member.id] = member;
+    }
+    vaultMock.allEntities = Object.values(vaultMock.entities);
+
+    render(DetailConnectionsTab, { entity: hub });
+
+    const drawn = screen.getAllByTestId("connection-node");
+    const chips = screen.getAllByTestId("connection-chip");
+    // Everything stays reachable: nothing is dropped, it just moves out of
+    // the picture and into a list.
+    expect(drawn.length + chips.length).toBe(crowd.length);
+    expect(drawn.length).toBeLessThan(crowd.length);
+    expect(screen.getByTestId("connections-overflow").textContent).toContain(
+      `${chips.length} more connections`,
+    );
+
+    await fireEvent.click(chips[0]);
+    expect(vaultMock.selectedEntityId).toBe(
+      chips[0].getAttribute("data-entity-id"),
+    );
   });
 
   it("shows an empty state for an unconnected entity", () => {
