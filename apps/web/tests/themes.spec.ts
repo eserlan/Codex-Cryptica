@@ -5,6 +5,9 @@ test.describe("Visual Styling Templates", () => {
     await page.addInitScript(() => {
       try {
         localStorage.setItem("codex_skip_landing", "true");
+        // The Activity Bar (including the map/explorer buttons this spec
+        // checks) is hidden in Guided Mode, which is on by default.
+        localStorage.setItem("codex_guided_mode_active", "false");
         localStorage.setItem(
           "codex-cryptica-help-state",
           JSON.stringify({ completedTours: ["initial-onboarding"] }),
@@ -80,7 +83,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("tab", { name: "Theme" }).click();
 
     // Force Light appearance
-    await page.getByRole("button", { name: "Light" }).click();
+    await page.getByRole("button", { name: "Light", exact: true }).click();
 
     // 3. Select Fantasy theme
     await page.getByRole("button", { name: "Ancient Parchment" }).click();
@@ -209,7 +212,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("tab", { name: "Theme" }).click();
 
     // Force Dark appearance
-    await page.getByRole("button", { name: "Dark" }).click();
+    await page.getByRole("button", { name: "Dark", exact: true }).click();
 
     // 3. Select Horror theme
     await page.getByRole("button", { name: "Blood & Noir" }).click();
@@ -249,7 +252,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("tab", { name: "Theme" }).click();
 
     // Force Dark appearance
-    await page.getByRole("button", { name: "Dark" }).click();
+    await page.getByRole("button", { name: "Dark", exact: true }).click();
 
     await page.getByRole("button", { name: "Neon Night" }).click();
 
@@ -276,7 +279,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("tab", { name: "Theme" }).click();
 
     // Force Dark appearance
-    await page.getByRole("button", { name: "Dark" }).click();
+    await page.getByRole("button", { name: "Dark", exact: true }).click();
 
     await page.getByRole("button", { name: "Neon Night" }).click();
 
@@ -339,7 +342,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("button", { name: "Ancient Parchment" }).click();
 
     // 3. Select App Appearance: Light
-    await page.getByRole("button", { name: "Light" }).click();
+    await page.getByRole("button", { name: "Light", exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "fantasy");
     await expect(page.locator("html")).toHaveAttribute(
       "data-app-appearance",
@@ -351,7 +354,7 @@ test.describe("Visual Styling Templates", () => {
     );
 
     // 4. Select App Appearance: Dark
-    await page.getByRole("button", { name: "Dark" }).click();
+    await page.getByRole("button", { name: "Dark", exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme",
       "fantasy_dark",
@@ -375,7 +378,7 @@ test.describe("Visual Styling Templates", () => {
     );
 
     // 6. Select App Appearance: Light
-    await page.getByRole("button", { name: "Light" }).click();
+    await page.getByRole("button", { name: "Light", exact: true }).click();
     // Sci-Fi resolves to "scifi_light" in light mode
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme",

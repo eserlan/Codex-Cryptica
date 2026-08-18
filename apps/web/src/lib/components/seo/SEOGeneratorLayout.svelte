@@ -269,7 +269,7 @@
   const faqJsonLd = $derived(buildFaqJsonLd(faqs));
 
   const softwareApplicationJsonLd = $derived(
-    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription, faqs }),
+    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription }),
   );
 
   const breadcrumbJsonLd = $derived(
@@ -658,102 +658,13 @@
   <div
     class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
-    <!-- Output Card Column: controls first on mobile, middle column on desktop -->
-    <div
-      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
-      bind:this={outputCard}
-    >
-      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
-        <div class="mb-6">
-          <StarSystemDiagram
-            bind:this={starSystemDiagramRef}
-            bodies={generatedData.bodies}
-            starType={generatedData.starType}
-            title={generatedData.title}
-            onCopy={() =>
-              trackPublicGeneratorAction("copy", {
-                generator_type: generatorType,
-                copy_target: "diagram_image",
-              })}
-          />
-        </div>
-      {/if}
-      <GeneratorOutputCard
-        {generatedData}
-        {aiFallbackDismissed}
-        {isBusy}
-        {isExampleDraft}
-        {generatedSingular}
-        {variant}
-        worldTheme={theme || worldTheme}
-        documentContent={documentLayout.content}
-        {documentSections}
-        {copied}
-        {copiedSectionId}
-        contextTrimmed={contextSelection.trimmed}
-        onDismissAiFallback={() => (aiFallbackDismissed = true)}
-        onSaveToCodex={handleSaveToCodex}
-        onCopyMarkdown={handleCopyMarkdown}
-        onCopySection={(sectionId, markdown) =>
-          void handleCopySection(sectionId, markdown)}
-        onContainerClick={handleContainerClick}
-        onContainerKeydown={handleContainerKeydown}
-        onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
-        onSaveHubToCodex={handleSaveHubToCodex}
-        onBuildDelveCanvas={handleBuildDelveCanvas}
-        onBuildAdventureCanvas={handleBuildAdventureCanvas}
-        onGeneratePlotTwist={userGenerationSucceeded
-          ? onGeneratePlotTwist
-          : undefined}
-      />
-    </div>
-
-    <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
-    <div class="lg:col-span-3 order-3 lg:order-3">
-      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
-      <p
-        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
-      >
-        GM Reference
-      </p>
-      <div class="sticky top-24 flex flex-col gap-6">
-        <div
-          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
-        >
-          {#if generatedData}
-            <div
-              in:fade={{ duration: 250 }}
-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
-              'names'
-                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
-                : ''}"
-            >
-              {@html renderGeneratorLore(documentLayout.lore, variant)}
-              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
-                <ProvenanceBadge
-                  record={sessionHubStore.provenance[currentEntityId]}
-                  onSelect={(e) => (selectedHubEntity = e)}
-                />
-              {/if}
-            </div>
-          {:else}
-            <div
-              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-            >
-              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
-              <p class="text-[10px] uppercase tracking-widest font-header">
-                At the Table
-              </p>
-              <p class="text-sm mt-2 leading-relaxed">
-                GM utility details appear here after generation.
-              </p>
-            </div>
-          {/if}
-        </div>
-      </div>
-    </div>
-
-    <!-- Parameters Column: rendered last in DOM, positioned on the left on desktop -->
+    <!--
+      DOM order matches visual order (Parameters -> Output -> At the Table)
+      via order-1/2/3 below, so SEO/LLM crawlers that read raw markup instead
+      of applying CSS grid order see the H1 and intro copy before the
+      generator's empty-state placeholders (#2320).
+    -->
+    <!-- Parameters Column: positioned on the left on desktop -->
     <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
@@ -888,6 +799,101 @@
         {/if}
 
         <!-- Related links moved to bottom discover section -->
+      </div>
+    </div>
+
+    <!-- Output Card Column: middle column on desktop -->
+    <div
+      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
+      bind:this={outputCard}
+    >
+      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
+        <div class="mb-6">
+          <StarSystemDiagram
+            bind:this={starSystemDiagramRef}
+            bodies={generatedData.bodies}
+            starType={generatedData.starType}
+            title={generatedData.title}
+            onCopy={() =>
+              trackPublicGeneratorAction("copy", {
+                generator_type: generatorType,
+                copy_target: "diagram_image",
+              })}
+          />
+        </div>
+      {/if}
+      <GeneratorOutputCard
+        {generatedData}
+        {aiFallbackDismissed}
+        {isBusy}
+        {isExampleDraft}
+        {generatedSingular}
+        {variant}
+        worldTheme={theme || worldTheme}
+        documentContent={documentLayout.content}
+        {documentSections}
+        {copied}
+        {copiedSectionId}
+        contextTrimmed={contextSelection.trimmed}
+        onDismissAiFallback={() => (aiFallbackDismissed = true)}
+        onSaveToCodex={handleSaveToCodex}
+        onCopyMarkdown={handleCopyMarkdown}
+        onCopySection={(sectionId, markdown) =>
+          void handleCopySection(sectionId, markdown)}
+        onContainerClick={handleContainerClick}
+        onContainerKeydown={handleContainerKeydown}
+        onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
+        onSaveHubToCodex={handleSaveHubToCodex}
+        onBuildDelveCanvas={handleBuildDelveCanvas}
+        onBuildAdventureCanvas={handleBuildAdventureCanvas}
+        onGeneratePlotTwist={userGenerationSucceeded
+          ? onGeneratePlotTwist
+          : undefined}
+      />
+    </div>
+
+    <!-- At the Table Column: positioned on the right on desktop -->
+    <div class="lg:col-span-3 order-3 lg:order-3">
+      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
+      <p
+        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
+      >
+        GM Reference
+      </p>
+      <div class="sticky top-24 flex flex-col gap-6">
+        <div
+          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
+        >
+          {#if generatedData}
+            <div
+              in:fade={{ duration: 250 }}
+              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
+              'names'
+                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
+                : ''}"
+            >
+              {@html renderGeneratorLore(documentLayout.lore, variant)}
+              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
+                <ProvenanceBadge
+                  record={sessionHubStore.provenance[currentEntityId]}
+                  onSelect={(e) => (selectedHubEntity = e)}
+                />
+              {/if}
+            </div>
+          {:else}
+            <div
+              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
+            >
+              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
+              <p class="text-[10px] uppercase tracking-widest font-header">
+                At the Table
+              </p>
+              <p class="text-sm mt-2 leading-relaxed">
+                GM utility details appear here after generation.
+              </p>
+            </div>
+          {/if}
+        </div>
       </div>
     </div>
   </div>
