@@ -159,3 +159,21 @@ export function walkPresentationNodes(
     }
   }
 }
+
+/** Assigns each `SectionNode` a stable key based on its position in
+ * document order (e.g. `"section-0"`, `"section-1"`, ...). `SectionNode`
+ * carries no id of its own, so viewer-only state (collapse/expand, #2331)
+ * that needs to key off a section must derive a key this way, by object
+ * identity, from a fresh parse of the same source. */
+export function computeSectionKeys(
+  nodes: PresentationAst,
+): Map<SectionNode, string> {
+  const keys = new Map<SectionNode, string>();
+  let counter = 0;
+  walkPresentationNodes(nodes, (node) => {
+    if (node.type === "section") {
+      keys.set(node as unknown as SectionNode, `section-${counter++}`);
+    }
+  });
+  return keys;
+}
