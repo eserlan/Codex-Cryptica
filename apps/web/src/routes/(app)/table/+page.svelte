@@ -733,7 +733,7 @@
               aria-pressed="true"
               title="Remove label filter"
               data-testid="entity-table-label-filter"
-              class="inline-flex items-center gap-1 rounded-full border border-theme-primary bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+              class="inline-flex items-center gap-1 rounded-full border border-theme-primary bg-theme-primary/10 px-2.5 py-1 text-xs uppercase font-medium text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
             >
               <span class="icon-[lucide--tag] h-3 w-3" aria-hidden="true"
               ></span>

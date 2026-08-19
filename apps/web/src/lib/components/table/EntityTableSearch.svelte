@@ -257,7 +257,7 @@
             : ''}"
           ><span class="text-theme-primary/60 shrink-0"
             >{autocompletePrefix}</span
-          ><span class="truncate min-w-0">{label}</span></button
+          ><span class="truncate min-w-0 uppercase">{label}</span></button
         >
       {/each}
     </div>
