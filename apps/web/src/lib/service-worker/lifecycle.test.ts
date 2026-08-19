@@ -1,5 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { activateBuild, getPrecacheAssets, precacheBuild } from "./lifecycle";
+
+const pagesHeaders = readFileSync(
+  resolve(process.cwd(), "static/_headers"),
+  "utf8",
+);
+const serviceWorkerHeaders = pagesHeaders.match(
+  /\/service-worker\.js\s+([^\n]+)(?=\n\n|$)/,
+)?.[1];
+
+describe("Cloudflare Pages cache headers", () => {
+  it("always revalidates the service worker after a deployment", () => {
+    expect(serviceWorkerHeaders).toBe(
+      "Cache-Control: no-cache, must-revalidate",
+    );
+  });
+
+  it("does not permit a stale service worker to be kept for a fixed duration", () => {
+    expect(serviceWorkerHeaders).not.toContain("max-age=");
+  });
+});
 
 describe("getPrecacheAssets", () => {
   it("drops Cloudflare Pages' _headers and _redirects from the static files list", () => {
