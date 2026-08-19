@@ -183,7 +183,7 @@ describe("ActivityBar", () => {
       name: "Activity Bar",
     });
     expect(activityBar.className).toContain(
-      "pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))]",
+      "pb-[env(safe-area-inset-bottom,0px)]",
     );
     expect(activityBar.className).toContain("pt-1");
     expect(activityBar.className).not.toContain("py-1");
