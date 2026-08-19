@@ -31,6 +31,7 @@
     onToggleAll,
     onFilterType,
     onFilterLabel,
+    activeLabels = new Set<string>(),
     onRowContextMenu,
   }: {
     entities: Entity[];
@@ -51,6 +52,7 @@
     onToggleAll?: () => void;
     onFilterType?: (type: string) => void;
     onFilterLabel?: (label: string) => void;
+    activeLabels?: Set<string>;
     onRowContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
 
@@ -310,6 +312,7 @@
           {vaultId}
           {onFilterType}
           {onFilterLabel}
+          {activeLabels}
           {showIncompleteOnly}
           selected={selectedIds.has(entity.id)}
           onToggleSelect={onToggleRow}

@@ -2,8 +2,6 @@
   import { tick } from "svelte";
   import { base } from "$app/paths";
   import { vault } from "$lib/stores/vault.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -21,6 +19,7 @@
   import { searchService } from "@codex/search-orchestrator";
   import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
+  import EntityTableSearch from "$lib/components/table/EntityTableSearch.svelte";
   import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
   import type { ViewPreset } from "$lib/stores/view-presets";
@@ -42,11 +41,8 @@
   const vaultId = $derived(vault.activeVaultId);
 
   let searchQuery = $state("");
-  // Shared with the Graph view (same content, different presentation) so
-  // switching between "View as graph" / "Browse as table" keeps the same
-  // entities in view instead of silently resetting to everything.
-  const typeFilters = $derived(graph.activeCategories);
-  const labelFilters = $derived(graph.activeLabels);
+  let typeFilters = $state<Set<string>>(new Set());
+  let labelFilters = $state<Set<string>>(new Set());
   let showIncompleteOnly = $state(false);
   let columnFilters = $state<TableColumnFilters>({});
   let textMatchIds = $state<Set<string> | null>(null);
@@ -440,15 +436,25 @@
 
   function toggleType(type: string) {
     measureTableOperation("table_filter", () => {
-      graph.toggleCategoryFilter(type);
+      const next = new Set(typeFilters);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      typeFilters = next;
     });
   }
 
   function toggleLabel(label: string) {
     measureTableOperation("table_filter", () => {
-      // Always multi-select: the table's label filters are checkboxes, not
-      // the graph HUD's click-vs-modifier-click chips.
-      explorerUIStore.toggleLabelFilter(label, true);
+      const next = new Set(labelFilters);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      labelFilters = next;
     });
   }
 
@@ -467,8 +473,8 @@
   function clearFilters() {
     measureTableOperation("table_filter", () => {
       searchQuery = "";
-      graph.clearCategoryFilters();
-      graph.clearLabelFilters();
+      typeFilters = new Set();
+      labelFilters = new Set();
       showIncompleteOnly = false;
       columnFilters = {};
     });
@@ -514,8 +520,8 @@
   function handleApplyPreset(preset: ViewPreset) {
     const s = preset.state;
     searchQuery = s.searchQuery ?? "";
-    graph.activeCategories = new Set(s.activeCategories);
-    graph.activeLabels = new Set(s.activeLabels);
+    typeFilters = new Set(s.activeCategories);
+    labelFilters = new Set(s.activeLabels);
     showIncompleteOnly = s.showIncompleteOnly ?? false;
     columnFilters = s.columnFilters ? { ...s.columnFilters } : {};
     if (s.tableSort) {
@@ -525,8 +531,8 @@
 
   function handleResetFilters() {
     searchQuery = "";
-    graph.clearCategoryFilters();
-    graph.clearLabelFilters();
+    typeFilters = new Set();
+    labelFilters = new Set();
     showIncompleteOnly = false;
     columnFilters = {};
     sort = { key: "title", direction: "asc" };
@@ -595,21 +601,11 @@
     <!-- Controls -->
     <div class="flex flex-col gap-2.5 md:gap-3">
       <div class="flex items-center gap-2 md:gap-3">
-        <div class="relative min-w-0 flex-1 max-w-md">
-          <span
-            class="icon-[lucide--search] pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-theme-muted"
-            aria-hidden="true"
-          ></span>
-          <input
-            type="search"
-            value={searchQuery}
-            oninput={(event) => setSearchQuery(event.currentTarget.value)}
-            placeholder="Search by name, content, or #label…"
-            aria-label="Search entities"
-            data-testid="entity-table-search"
-            class="w-full rounded-lg border border-theme-border bg-theme-surface py-1.5 md:py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-          />
-        </div>
+        <EntityTableSearch
+          bind:searchQuery
+          bind:labelFilters
+          onSearchChange={setSearchQuery}
+        />
 
         <!-- Mobile filters toggle button -->
         <button
@@ -731,19 +727,22 @@
             </button>
           {/each}
           {#each [...labelFilters].sort() as label (label)}
-            <button
-              type="button"
-              onclick={() => toggleLabel(label)}
-              aria-pressed="true"
-              title="Remove label filter"
+            <div
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
               data-testid="entity-table-label-filter"
-              class="inline-flex items-center gap-1 rounded-full border border-theme-primary bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
             >
-              <span class="icon-[lucide--tag] h-3 w-3" aria-hidden="true"
-              ></span>
-              {label}
-              <span class="icon-[lucide--x] h-3 w-3" aria-hidden="true"></span>
-            </button>
+              <span>{label}</span>
+              <button
+                type="button"
+                onclick={() => toggleLabel(label)}
+                title="Remove {label} filter"
+                aria-label="Remove {label} filter"
+                class="hover:text-theme-text transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"
+                ></span>
+              </button>
+            </div>
           {/each}
           {#if hasActiveFilters}
             <button
@@ -816,6 +815,7 @@
           {connectionCounts}
           {showIncompleteOnly}
           {columnFilters}
+          activeLabels={labelFilters}
           onUpdateColumnFilters={handleUpdateColumnFilters}
           onSort={handleSort}
           {selectedIds}

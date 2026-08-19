@@ -128,7 +128,7 @@ describe("EntityTable", () => {
         },
       });
 
-      await fireEvent.click(screen.getByText("hero"));
+      await fireEvent.click(screen.getByText(/hero/i));
       expect(onFilterLabel).toHaveBeenCalledWith("hero");
 
       await fireEvent.click(
@@ -144,7 +144,7 @@ describe("EntityTable", () => {
         props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
       });
 
-      expect(screen.getByText("hero").closest("button")).toBeNull();
+      expect(screen.getByText(/hero/i).closest("button")).toBeNull();
     });
   });
 

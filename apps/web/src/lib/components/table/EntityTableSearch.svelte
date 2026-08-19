@@ -1,25 +1,37 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
   let {
     searchQuery = $bindable(""),
+    labelFilters = $bindable<Set<string>>(new Set()),
+    placeholder = "Search by name, content, or #label…",
+    onSearchChange,
+    onLabelFilterChange,
   }: {
-    searchQuery: string;
+    searchQuery?: string;
+    labelFilters?: Set<string>;
+    placeholder?: string;
+    onSearchChange?: (query: string) => void;
+    onLabelFilterChange?: (filters: Set<string>) => void;
   } = $props();
 
+  let inputElement = $state<HTMLInputElement | null>(null);
   let isFocused = $state(false);
   let autocompleteDismissed = $state(false);
+  let activeIndex = $state(-1);
 
   // Unique labels in the current vault (deduplicated case-insensitively)
   const uniqueLabels = $derived.by(() => {
     const labelsMap = new Map<string, string>();
     const entities = vault.allEntities || [];
     for (let i = 0; i < entities.length; i++) {
-      const labels = entities[i].labels || [];
-      for (let j = 0; j < labels.length; j++) {
-        const raw = labels[j];
+      const e = entities[i];
+      const effectiveLabels: string[] = e.labels?.length
+        ? e.labels
+        : ((e as { tags?: string[] }).tags ?? []);
+      for (let j = 0; j < effectiveLabels.length; j++) {
+        const raw = effectiveLabels[j];
         if (raw && typeof raw === "string") {
           const trimmed = raw.trim();
           if (trimmed) {
@@ -51,8 +63,6 @@
 
   const suggestions = $derived.by(() => {
     if (!isLabelAutocompleteActive) return [];
-    // ⚡ Bolt Optimization: Replace chained .filter().slice() with a bounded imperative loop
-    // to avoid intermediate array allocations and reduce GC overhead during rapid keystrokes.
     const result: string[] = [];
     for (const label of uniqueLabels) {
       if (label.toLowerCase().includes(autocompleteSearch)) {
@@ -65,7 +75,7 @@
 
   // Reset dismissed state when the word being typed changes
   $effect(() => {
-    const _word = activeWord; // track dependency
+    const _word = activeWord;
     untrack(() => {
       autocompleteDismissed = false;
     });
@@ -78,8 +88,6 @@
       suggestions.length > 0,
   );
 
-  let activeIndex = $state(-1);
-
   $effect(() => {
     if (!showAutocomplete || suggestions.length === 0) {
       activeIndex = -1;
@@ -88,7 +96,7 @@
     }
   });
 
-  // Sync from searchQuery to explorerUIStore.labelFilters (extracting fully matched label tokens and stripping them)
+  // Sync from searchQuery to table's local labelFilters (extracting fully matched label tokens and stripping them)
   $effect(() => {
     const query = searchQuery; // track dependency
     const tokens = query.split(/\s+/);
@@ -119,8 +127,8 @@
 
     if (hasLabelToken) {
       untrack(() => {
-        // Add parsed labels to active filters
-        const currentFilters = new Set(explorerUIStore.labelFilters);
+        // Add parsed labels to table's active filters
+        const currentFilters = new Set(labelFilters);
         let changed = false;
         for (const pl of parsedLabels) {
           if (!currentFilters.has(pl)) {
@@ -129,11 +137,15 @@
           }
         }
         if (changed) {
-          explorerUIStore.labelFilters = currentFilters;
+          labelFilters = currentFilters;
+          onLabelFilterChange?.(currentFilters);
         }
 
         // Update searchQuery without the label tokens
-        searchQuery = cleanTokens.join(" ") + (query.endsWith(" ") ? " " : "");
+        const nextQuery =
+          cleanTokens.join(" ") + (query.endsWith(" ") ? " " : "");
+        searchQuery = nextQuery;
+        onSearchChange?.(nextQuery);
       });
     }
   });
@@ -141,60 +153,90 @@
   function selectLabel(label: string) {
     const words = searchQuery.split(/\s+/);
     if (words.length > 0) {
-      words.pop(); // Remove the autocomplete prefix (e.g. #p)
+      words.pop();
     }
-    // Auto-apply selected label to active filters
-    if (!explorerUIStore.labelFilters.has(label)) {
-      explorerUIStore.toggleLabelFilter(label, true);
+    // Auto-apply selected label to table's active label filters
+    const currentFilters = new Set(labelFilters);
+    if (!currentFilters.has(label)) {
+      currentFilters.add(label);
+      labelFilters = currentFilters;
+      onLabelFilterChange?.(currentFilters);
     }
-    searchQuery = words.join(" ").trim() + (words.length > 0 ? " " : "");
+    const nextQuery = words.join(" ").trim() + (words.length > 0 ? " " : "");
+    searchQuery = nextQuery;
+    onSearchChange?.(nextQuery);
+    inputElement?.focus();
+  }
+
+  function clearSearch() {
+    searchQuery = "";
+    onSearchChange?.("");
+    inputElement?.focus();
   }
 
   function handleKeyDown(event: KeyboardEvent) {
     if (showAutocomplete && suggestions.length > 0) {
       if (event.key === "ArrowDown") {
         event.preventDefault();
+        event.stopPropagation();
         activeIndex = (activeIndex + 1) % suggestions.length;
       } else if (event.key === "ArrowUp") {
         event.preventDefault();
+        event.stopPropagation();
         activeIndex =
           (activeIndex - 1 + suggestions.length) % suggestions.length;
       } else if (event.key === "Enter" || event.key === "Tab") {
         if (activeIndex >= 0 && activeIndex < suggestions.length) {
           event.preventDefault();
+          event.stopPropagation();
           selectLabel(suggestions[activeIndex]);
         } else if (event.key === "Tab" && suggestions.length > 0) {
           event.preventDefault();
+          event.stopPropagation();
           selectLabel(suggestions[0]);
         }
       } else if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
         autocompleteDismissed = true;
       }
     }
   }
 </script>
 
-<div class="relative mb-3">
+<div class="relative min-w-0 flex-1 max-w-md">
   <span
-    class="absolute left-3 top-1/2 -translate-y-1/2 icon-[lucide--search] w-3.5 h-3.5 text-theme-muted"
+    class="icon-[lucide--search] pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-theme-muted"
+    aria-hidden="true"
   ></span>
   <input
-    type="text"
+    bind:this={inputElement}
+    type="search"
     bind:value={searchQuery}
+    oninput={(e) =>
+      onSearchChange?.((e.currentTarget as HTMLInputElement).value)}
     onfocus={() => (isFocused = true)}
     onblur={() => setTimeout(() => (isFocused = false), 200)}
     onkeydown={handleKeyDown}
-    placeholder="Search entities..."
+    {placeholder}
     aria-label="Search entities"
-    class="w-full rounded-lg border border-theme-border bg-theme-bg/50 py-2 pl-9 pr-9 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+    aria-autocomplete="list"
+    aria-expanded={showAutocomplete}
+    aria-controls={showAutocomplete
+      ? "table-search-autocomplete-list"
+      : undefined}
+    role="combobox"
+    data-testid="entity-table-search"
+    class="w-full rounded-lg border border-theme-border bg-theme-surface py-1.5 md:py-2 pl-9 pr-9 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
   />
   {#if searchQuery}
     <button
       type="button"
-      onclick={() => (searchQuery = "")}
+      onclick={clearSearch}
       class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-theme-muted hover:text-theme-text transition-colors"
       title="Clear search"
       aria-label="Clear search"
+      data-testid="entity-table-search-clear"
     >
       <span aria-hidden="true" class="icon-[lucide--x] w-3.5 h-3.5"></span>
     </button>
@@ -202,22 +244,28 @@
 
   {#if showAutocomplete && suggestions.length > 0}
     <div
+      id="table-search-autocomplete-list"
+      role="listbox"
+      aria-label="Label suggestions"
+      data-testid="table-search-autocomplete"
       class="absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-lg border border-theme-border bg-theme-surface/95 backdrop-blur-md p-1 shadow-lg"
     >
       {#each suggestions as label, index}
         <button
           type="button"
+          role="option"
+          aria-selected={activeIndex === index}
+          data-testid="table-search-autocomplete-option"
+          onmousedown={(e) => e.preventDefault()}
           onclick={() => selectLabel(label)}
           class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-theme-primary/10 text-theme-text hover:text-theme-primary font-mono transition-colors flex items-center gap-1.5 {activeIndex ===
           index
             ? 'bg-theme-primary/10 text-theme-primary'
             : ''}"
-        >
-          <span class="text-theme-primary/60 shrink-0"
+          ><span class="text-theme-primary/60 shrink-0"
             >{autocompletePrefix}</span
-          >
-          <span class="truncate min-w-0 uppercase">{label}</span>
-        </button>
+          ><span class="truncate min-w-0 uppercase">{label}</span></button
+        >
       {/each}
     </div>
   {/if}

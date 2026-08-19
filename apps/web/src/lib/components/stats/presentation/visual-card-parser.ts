@@ -139,6 +139,15 @@ export function parseCardsFromSource(
         }
       }
     } else if (node.type === "section" || node.type === "row") {
+      if (node.type === "section") {
+        activeTitle =
+          node.title ||
+          node.heading?.children
+            ?.filter((child: any) => child.type === "text")
+            .map((child: any) => child.text)
+            .join("") ||
+          activeTitle;
+      }
       for (const child of node.children ?? []) {
         activeTitle = processBlockNode(child, activeTitle);
       }

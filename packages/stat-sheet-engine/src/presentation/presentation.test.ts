@@ -58,6 +58,22 @@ describe("getBuiltInPresentationTemplates", () => {
     );
     expect(mythrasTemplate?.source).toContain("{{stat.str hide-label}}");
   });
+
+  it("exposes collapsible sections in every titled built-in layout", () => {
+    const titles = [
+      "Standard Form",
+      "D&D Character Sheet",
+      "Mythras Character Sheet",
+    ];
+
+    for (const template of getBuiltInPresentationTemplates("builtin-test")) {
+      if (!titles.includes(template.name)) continue;
+      const parsed = parseTemplate(template.source, template.formatVersion);
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) continue;
+      expect(computeSectionKeys(parsed.ast).size).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe("parseTemplate", () => {
@@ -65,12 +81,45 @@ describe("parseTemplate", () => {
     const result = parseTemplate("# Title\n\nSome text.", 1);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.ast[0]).toMatchObject({ type: "heading", level: 1 });
-    expect((result.ast[0] as HeadingNode).children[0]).toEqual({
+    const section = result.ast[0] as SectionNode;
+    expect(section).toMatchObject({ type: "section" });
+    expect(section.heading).toMatchObject({ type: "heading", level: 1 });
+    expect(section.heading?.children[0]).toEqual({
       type: "text",
       text: "Title",
     });
-    expect(result.ast[1]).toMatchObject({ type: "paragraph" });
+    expect(section.children[0]).toMatchObject({ type: "paragraph" });
+  });
+
+  it("promotes a Markdown heading and its table into a collapsible section", () => {
+    const result = parseTemplate(
+      "### Characteristics\n\n| STR | DEX |\n| --- | --- |\n| {{stat.hp}} | {{stat.ac}} |",
+      1,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const section = result.ast[0] as SectionNode;
+    expect(section.heading?.children).toEqual([
+      { type: "text", text: "Characteristics" },
+    ]);
+    expect(section.children[0]).toMatchObject({ type: "table" });
+    expect(computeSectionKeys(result.ast).get(section)).toBe("section-0");
+  });
+
+  it("keeps nested Markdown heading sections independently collapsible", () => {
+    const result = parseTemplate(
+      "## Abilities\n\n### Strength\n\n{{stat.hp}}",
+      1,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const abilities = result.ast[0] as SectionNode;
+    const strength = abilities.children[0] as SectionNode;
+    expect(strength).toMatchObject({ type: "section" });
+    expect(computeSectionKeys(result.ast).get(abilities)).toBe("section-0");
+    expect(computeSectionKeys(result.ast).get(strength)).toBe("section-1");
   });
 
   it("parses {{stat.field}} inline tokens", () => {
