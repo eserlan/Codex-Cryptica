@@ -21,9 +21,9 @@
   let autocompleteDismissed = $state(false);
   let activeIndex = $state(-1);
 
-  // Unique labels in the current vault
+  // Unique labels in the current vault (deduplicated case-insensitively)
   const uniqueLabels = $derived.by(() => {
-    const labelsSet = new Set<string>();
+    const labelsMap = new Map<string, string>();
     const entities = vault.allEntities || [];
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
@@ -31,13 +31,20 @@
         ? e.labels
         : ((e as { tags?: string[] }).tags ?? []);
       for (let j = 0; j < effectiveLabels.length; j++) {
-        if (effectiveLabels[j]) {
-          labelsSet.add(effectiveLabels[j]);
+        const raw = effectiveLabels[j];
+        if (raw && typeof raw === "string") {
+          const trimmed = raw.trim();
+          if (trimmed) {
+            const key = trimmed.toLowerCase();
+            if (!labelsMap.has(key)) {
+              labelsMap.set(key, trimmed);
+            }
+          }
         }
       }
     }
-    return Array.from(labelsSet).sort((a, b) =>
-      (a ?? "").localeCompare(b ?? ""),
+    return Array.from(labelsMap.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
     );
   });
 

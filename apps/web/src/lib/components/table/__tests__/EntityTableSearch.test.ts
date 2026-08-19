@@ -37,6 +37,20 @@ const mockVault = vi.hoisted(() => {
         labels: [],
         tags: ["Artifact"], // legacy tags fallback
       },
+      {
+        id: "e5",
+        title: "Session 1",
+        type: "note",
+        labels: ["Session Logs", "village"], // mixed-case duplicate of Village
+        tags: [],
+      },
+      {
+        id: "e6",
+        title: "Session 2",
+        type: "note",
+        labels: ["session logs"], // lowercase duplicate of Session Logs
+        tags: [],
+      },
     ],
   };
 });
@@ -75,7 +89,7 @@ describe("EntityTableSearch", () => {
     expect(screen.queryByTestId("table-search-autocomplete")).toBeNull();
   });
 
-  it("opens autocomplete with suggestions when typing #", async () => {
+  it("opens autocomplete with suggestions when typing # and deduplicates case variants", async () => {
     render(EntityTableSearch, {
       props: {
         searchQuery: "",
@@ -91,10 +105,16 @@ describe("EntityTableSearch", () => {
     expect(dropdown).not.toBeNull();
 
     const options = screen.getAllByTestId("table-search-autocomplete-option");
-    // Unique labels: Artifact (from tags), Boss, Hero, Quest, Safehouse, Village
-    expect(options.length).toBe(6);
-    expect(options[0].textContent?.trim()).toBe("#Artifact");
-    expect(options[1].textContent?.trim()).toBe("#Boss");
+    // Unique deduplicated labels (case-insensitive): Artifact, Boss, Hero, Quest, Safehouse, Session Logs, Village
+    expect(options.length).toBe(7);
+    const textContents = options.map((o) =>
+      o.textContent?.trim().toUpperCase(),
+    );
+    expect(textContents).toContain("#SESSION LOGS");
+    expect(textContents).toContain("#VILLAGE");
+    // Ensure no duplicate case entries exist
+    const uniqueUpper = new Set(textContents);
+    expect(uniqueUpper.size).toBe(7);
   });
 
   it("filters suggestions based on text following #", async () => {
