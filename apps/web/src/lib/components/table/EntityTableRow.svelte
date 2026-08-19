@@ -236,22 +236,30 @@
               onclick={() => onFilterLabel(chip)}
               title="Filter by {chip}"
               data-testid="entity-table-row-label-filter"
-              class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] uppercase font-semibold tracking-wide cursor-pointer transition-colors {activeLabels?.has(
+              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono transition-all border cursor-pointer {activeLabels?.has(
                 chip,
               )
-                ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/40'
-                : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+                ? 'bg-theme-primary text-theme-bg border-theme-primary'
+                : chip === 'chatty'
+                  ? 'bg-theme-secondary/15 text-theme-secondary border-transparent hover:border-theme-secondary/50 hover:bg-theme-secondary/25'
+                  : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-accent/40"
               >{chip}</button
             >
           {:else}
             <span
-              class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] uppercase font-semibold tracking-wide text-theme-muted"
+              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono border {activeLabels?.has(
+                chip,
+              )
+                ? 'bg-theme-primary text-theme-bg border-theme-primary'
+                : 'border-transparent bg-theme-primary/10 text-theme-primary'}"
               >{chip}</span
             >
           {/if}
         {/each}
         {#if extraChips > 0}
-          <span class="text-[10px] text-theme-muted/60">+{extraChips}</span>
+          <span class="text-[7px] text-theme-muted font-mono flex items-center"
+            >+{extraChips}</span
+          >
         {/if}
       </span>
     {:else if showIncompleteOnly}
