@@ -245,6 +245,17 @@ describe("EntityList", () => {
     expect(npcRow.style.borderLeftWidth).toBe("3px");
   });
 
+  it("shows a hierarchy guide bar for a nested child and hides it once collapsed (#2361)", async () => {
+    render(EntityList);
+
+    expect(screen.getAllByTestId("tree-guides").length).toBeGreaterThan(0);
+
+    await fireEvent.click(screen.getByTitle("Collapse"));
+    await tick();
+
+    expect(screen.queryAllByTestId("tree-guides")).toHaveLength(0);
+  });
+
   it("clears the search query when the clear button is clicked", async () => {
     render(EntityList);
 

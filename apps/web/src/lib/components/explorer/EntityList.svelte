@@ -483,16 +483,47 @@
     class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
-    {#snippet treeNode(node: TreeNode, depth: number, includeChildren = true)}
+    {#snippet treeNode(
+      node: TreeNode,
+      depth: number,
+      includeChildren = true,
+      isLast = true,
+      ancestorLines: boolean[] = [],
+    )}
       {@const entity = node.entity}
       {@const hasChildren = node.children.length > 0}
       {@const isCollapsed =
         searchQuery.trim() !== "" ? false : collapsedEntities.has(entity.id)}
 
       <div
-        class="space-y-1"
+        class="space-y-1 relative"
         style:margin-left={`${Math.min(depth, 8) * 0.75}rem`}
       >
+        {#if depth > 0}
+          <div
+            class="tree-guides pointer-events-none absolute inset-y-0 flex"
+            style:left={`-${Math.min(depth, 8) * 0.75}rem`}
+            style:width={`${Math.min(depth, 8) * 0.75}rem`}
+            data-testid="tree-guides"
+            aria-hidden="true"
+          >
+            {#each Array(Math.min(depth, 8)) as _, level (level)}
+              {#if level === Math.min(depth, 8) - 1}
+                <span class="tree-guide-col tree-guide-elbow-col">
+                  <span class="tree-guide-elbow-top"></span>
+                  {#if !isLast}
+                    <span class="tree-guide-elbow-bottom"></span>
+                  {/if}
+                  <span class="tree-guide-elbow-arm"></span>
+                </span>
+              {:else if ancestorLines[level]}
+                <span class="tree-guide-col tree-guide-line"></span>
+              {:else}
+                <span class="tree-guide-col"></span>
+              {/if}
+            {/each}
+          </div>
+        {/if}
         <EntityListItem
           {entity}
           isMatching={node.isMatchingQuery}
@@ -539,9 +570,7 @@
         />
 
         {#if inlineCreationParentId === entity.id}
-          <div
-            class={depth < 8 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
-          >
+          <div class={depth < 8 ? "tree-guide-bar ml-3 pl-2" : ""}>
             <div
               class="flex items-center gap-2 p-2 border border-theme-border/50 bg-theme-surface/30 rounded-xl"
             >
@@ -611,13 +640,15 @@
         {/if}
 
         {#if includeChildren && hasChildren && !isCollapsed}
-          <div
-            class="space-y-1 {depth < 8
-              ? 'border-l border-theme-border/15 ml-3 pl-2'
-              : ''}"
-          >
-            {#each node.children as child (child.entity.id)}
-              {@render treeNode(child, depth + 1)}
+          <div class="space-y-1" data-testid="tree-guide-children">
+            {#each node.children as child, childIndex (child.entity.id)}
+              {@render treeNode(
+                child,
+                depth + 1,
+                true,
+                childIndex === node.children.length - 1,
+                [...ancestorLines, !isLast],
+              )}
             {/each}
           </div>
         {/if}
@@ -681,7 +712,13 @@
         </div>
       {/if}
       {#each pagedTreeRows as row (row.node.entity.id)}
-        {@render treeNode(row.node, row.depth, false)}
+        {@render treeNode(
+          row.node,
+          row.depth,
+          false,
+          row.isLast,
+          row.ancestorLines,
+        )}
       {:else}
         <div data-testid="no-entities-found">
           {#if vault.allEntities.length === 0}
@@ -796,5 +833,58 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Tree hierarchy guides (issue #2361): a vertical bar per active ancestor
+     level, with a short horizontal elbow connecting each child row into its
+     parent's line, so parent/child structure reads clearly without relying
+     on indentation alone. Rendered per-row (rather than as a single wrapping
+     border) because rows are flattened for large-vault pagination. */
+  .tree-guide-bar {
+    border-left: 1px solid var(--tree-guide-color);
+    box-shadow: var(--theme-text-glow, none);
+  }
+
+  .tree-guides {
+    --tree-guide-color: color-mix(
+      in srgb,
+      var(--color-theme-accent),
+      transparent 60%
+    );
+  }
+  .tree-guide-col {
+    position: relative;
+    flex: 0 0 0.75rem;
+  }
+  .tree-guide-line::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 50%;
+    width: 1px;
+    background: var(--tree-guide-color);
+    box-shadow: var(--theme-text-glow, none);
+  }
+  .tree-guide-elbow-top,
+  .tree-guide-elbow-bottom {
+    position: absolute;
+    left: 50%;
+    width: 1px;
+    background: var(--tree-guide-color);
+  }
+  .tree-guide-elbow-top {
+    top: 0;
+    height: 50%;
+  }
+  .tree-guide-elbow-bottom {
+    bottom: 0;
+    height: 50%;
+  }
+  .tree-guide-elbow-arm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    height: 1px;
+    background: var(--tree-guide-color);
   }
 </style>
