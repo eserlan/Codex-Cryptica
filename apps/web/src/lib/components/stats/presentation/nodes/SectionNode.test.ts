@@ -80,6 +80,26 @@ describe("SectionNode", () => {
     ).toBe("false");
   });
 
+  it("uses a promoted Markdown heading as the accessible collapse control", () => {
+    const heading = makeHeading("Characteristics");
+    const node: SectionNodeType = {
+      type: "section",
+      heading,
+      children: [makeHeading("Strength")],
+    };
+    render(SectionNode, {
+      props: {
+        node,
+        context: makeContext({ sectionKeys: new Map([[node, "section-0"]]) }),
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Characteristics" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Strength")).toBeTruthy();
+  });
+
   it("toggles by calling onToggleSection with the section's key", async () => {
     const node: SectionNodeType = {
       type: "section",
