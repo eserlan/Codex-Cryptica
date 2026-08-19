@@ -3,6 +3,7 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+  import { browser } from "$app/environment";
   import type {
     Diagnostic,
     ExportFormat,
@@ -42,6 +43,7 @@
     allowImport = false,
     editor,
     player,
+    storage,
   }: {
     kind: "table" | "deck";
     heading: string;
