@@ -114,16 +114,22 @@ describe("EntityTableSearch", () => {
     expect(options[0].textContent?.trim()).toBe("#Village");
   });
 
-  it("inserts selected label into search query on click", async () => {
+  it("applies selected label to labelFilters and cleans query on click", async () => {
     let currentQuery = "";
+    let currentFilters = new Set<string>();
     const onSearchChange = vi.fn((q: string) => {
       currentQuery = q;
+    });
+    const onLabelFilterChange = vi.fn((f: Set<string>) => {
+      currentFilters = f;
     });
 
     render(EntityTableSearch, {
       props: {
         searchQuery: currentQuery,
+        labelFilters: currentFilters,
         onSearchChange,
+        onLabelFilterChange,
       },
     });
 
@@ -136,20 +142,28 @@ describe("EntityTableSearch", () => {
     await fireEvent.click(option);
     await tick();
 
-    expect(onSearchChange).toHaveBeenCalledWith("#Village ");
+    expect(onLabelFilterChange).toHaveBeenCalled();
+    expect(currentFilters.has("Village")).toBe(true);
+    expect(onSearchChange).toHaveBeenCalledWith("");
     expect(screen.queryByTestId("table-search-autocomplete")).toBeNull();
   });
 
-  it("preserves existing query terms when selecting an autocomplete suggestion", async () => {
-    let currentQuery = "";
+  it("preserves free-text query terms and applies label filter", async () => {
+    let currentQuery = "ancient dragon #he";
+    let currentFilters = new Set<string>();
     const onSearchChange = vi.fn((q: string) => {
       currentQuery = q;
+    });
+    const onLabelFilterChange = vi.fn((f: Set<string>) => {
+      currentFilters = f;
     });
 
     render(EntityTableSearch, {
       props: {
         searchQuery: currentQuery,
+        labelFilters: currentFilters,
         onSearchChange,
+        onLabelFilterChange,
       },
     });
 
@@ -165,19 +179,27 @@ describe("EntityTableSearch", () => {
     await fireEvent.click(options[0]);
     await tick();
 
-    expect(onSearchChange).toHaveBeenCalledWith("ancient dragon #Hero ");
+    expect(onLabelFilterChange).toHaveBeenCalled();
+    expect(currentFilters.has("Hero")).toBe(true);
+    expect(onSearchChange).toHaveBeenCalledWith("ancient dragon ");
   });
 
   it("supports @ prefix for label suggestions", async () => {
     let currentQuery = "";
+    let currentFilters = new Set<string>();
     const onSearchChange = vi.fn((q: string) => {
       currentQuery = q;
+    });
+    const onLabelFilterChange = vi.fn((f: Set<string>) => {
+      currentFilters = f;
     });
 
     render(EntityTableSearch, {
       props: {
         searchQuery: currentQuery,
+        labelFilters: currentFilters,
         onSearchChange,
+        onLabelFilterChange,
       },
     });
 
@@ -193,19 +215,27 @@ describe("EntityTableSearch", () => {
     await fireEvent.click(options[0]);
     await tick();
 
-    expect(onSearchChange).toHaveBeenCalledWith("@Quest ");
+    expect(onLabelFilterChange).toHaveBeenCalled();
+    expect(currentFilters.has("Quest")).toBe(true);
+    expect(onSearchChange).toHaveBeenCalledWith("");
   });
 
   it("supports keyboard navigation with ArrowDown, ArrowUp, and Enter", async () => {
     let currentQuery = "";
+    let currentFilters = new Set<string>();
     const onSearchChange = vi.fn((q: string) => {
       currentQuery = q;
+    });
+    const onLabelFilterChange = vi.fn((f: Set<string>) => {
+      currentFilters = f;
     });
 
     render(EntityTableSearch, {
       props: {
         searchQuery: currentQuery,
+        labelFilters: currentFilters,
         onSearchChange,
+        onLabelFilterChange,
       },
     });
 
@@ -239,20 +269,28 @@ describe("EntityTableSearch", () => {
     await fireEvent.keyDown(input, { key: "Enter" });
     await tick();
 
-    expect(onSearchChange).toHaveBeenCalledWith("#Artifact ");
+    expect(onLabelFilterChange).toHaveBeenCalled();
+    expect(currentFilters.has("Artifact")).toBe(true);
+    expect(onSearchChange).toHaveBeenCalledWith("");
     expect(screen.queryByTestId("table-search-autocomplete")).toBeNull();
   });
 
   it("supports Tab key to select the active or first suggestion", async () => {
     let currentQuery = "";
+    let currentFilters = new Set<string>();
     const onSearchChange = vi.fn((q: string) => {
       currentQuery = q;
+    });
+    const onLabelFilterChange = vi.fn((f: Set<string>) => {
+      currentFilters = f;
     });
 
     render(EntityTableSearch, {
       props: {
         searchQuery: currentQuery,
+        labelFilters: currentFilters,
         onSearchChange,
+        onLabelFilterChange,
       },
     });
 
@@ -265,7 +303,9 @@ describe("EntityTableSearch", () => {
     await fireEvent.keyDown(input, { key: "Tab" });
     await tick();
 
-    expect(onSearchChange).toHaveBeenCalledWith("#Safehouse ");
+    expect(onLabelFilterChange).toHaveBeenCalled();
+    expect(currentFilters.has("Safehouse")).toBe(true);
+    expect(onSearchChange).toHaveBeenCalledWith("");
   });
 
   it("dismisses autocomplete on Escape", async () => {

@@ -4,12 +4,16 @@
 
   let {
     searchQuery = $bindable(""),
+    labelFilters = $bindable<Set<string>>(new Set()),
     placeholder = "Search by name, content, or #label…",
     onSearchChange,
+    onLabelFilterChange,
   }: {
     searchQuery?: string;
+    labelFilters?: Set<string>;
     placeholder?: string;
     onSearchChange?: (query: string) => void;
+    onLabelFilterChange?: (filters: Set<string>) => void;
   } = $props();
 
   let inputElement = $state<HTMLInputElement | null>(null);
@@ -85,15 +89,73 @@
     }
   });
 
+  // Sync from searchQuery to table's local labelFilters (extracting fully matched label tokens and stripping them)
+  $effect(() => {
+    const query = searchQuery; // track dependency
+    const tokens = query.split(/\s+/);
+    const parsedLabels = new Set<string>();
+    const cleanTokens: string[] = [];
+    let hasLabelToken = false;
+
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (t.startsWith("#") || t.startsWith("@")) {
+        const val = t.slice(1);
+        if (val) {
+          // Find case-insensitive match
+          const match = uniqueLabels.find(
+            (l) => l.toLowerCase() === val.toLowerCase(),
+          );
+          if (match) {
+            parsedLabels.add(match);
+            hasLabelToken = true;
+            continue; // Skip adding to cleanTokens (strip it)
+          }
+        }
+      }
+      if (t !== "") {
+        cleanTokens.push(t);
+      }
+    }
+
+    if (hasLabelToken) {
+      untrack(() => {
+        // Add parsed labels to table's active filters
+        const currentFilters = new Set(labelFilters);
+        let changed = false;
+        for (const pl of parsedLabels) {
+          if (!currentFilters.has(pl)) {
+            currentFilters.add(pl);
+            changed = true;
+          }
+        }
+        if (changed) {
+          labelFilters = currentFilters;
+          onLabelFilterChange?.(currentFilters);
+        }
+
+        // Update searchQuery without the label tokens
+        const nextQuery =
+          cleanTokens.join(" ") + (query.endsWith(" ") ? " " : "");
+        searchQuery = nextQuery;
+        onSearchChange?.(nextQuery);
+      });
+    }
+  });
+
   function selectLabel(label: string) {
     const words = searchQuery.split(/\s+/);
     if (words.length > 0) {
       words.pop();
     }
-    const prefix = autocompletePrefix || "#";
-    const labelToken = `${prefix}${label}`;
-    const base = words.join(" ").trim();
-    const nextQuery = base ? `${base} ${labelToken} ` : `${labelToken} `;
+    // Auto-apply selected label to table's active label filters
+    const currentFilters = new Set(labelFilters);
+    if (!currentFilters.has(label)) {
+      currentFilters.add(label);
+      labelFilters = currentFilters;
+      onLabelFilterChange?.(currentFilters);
+    }
+    const nextQuery = words.join(" ").trim() + (words.length > 0 ? " " : "");
     searchQuery = nextQuery;
     onSearchChange?.(nextQuery);
     inputElement?.focus();

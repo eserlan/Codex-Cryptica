@@ -6,7 +6,7 @@ test.describe("Table View Label Autocomplete", () => {
     await setupVaultPage(page);
   });
 
-  test("suggests and autocompletes labels when typing # in table search", async ({
+  test("suggests and autocompletes labels when typing # in table search and applies local filter", async ({
     page,
   }) => {
     await seedEntities(page, [
@@ -36,14 +36,21 @@ test.describe("Table View Label Autocomplete", () => {
     await expect(options).toHaveCount(1);
     await expect(options.first()).toContainText("Village");
 
-    // 3. Clicking suggestion inserts it into the query and filters table rows
+    // 3. Clicking suggestion applies the label filter chip and cleans the query
     await options.first().click();
-    await expect(searchInput).toHaveValue("#Village ");
+    await expect(searchInput).toHaveValue("");
     await expect(autocomplete).not.toBeVisible();
 
     // Only Beta Village should be shown in table rows
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText("Beta Village");
+
+    // 4. Verify Explorer UI Store is decoupled and has not been mutated
+    const explorerLabelsCount = await page.evaluate(() => {
+      const store = (window as any).explorerUIStore;
+      return store?.labelFilters?.size ?? 0;
+    });
+    expect(explorerLabelsCount).toBe(0);
   });
 
   test("keyboard navigation works in table search label autocomplete", async ({
@@ -71,6 +78,7 @@ test.describe("Table View Label Autocomplete", () => {
     await page.keyboard.press("Enter");
 
     await expect(autocomplete).not.toBeVisible();
-    await expect(searchInput).toHaveValue(/#(Hero|Village) /);
+    await expect(searchInput).toHaveValue("");
+    await expect(rows).toHaveCount(1);
   });
 });

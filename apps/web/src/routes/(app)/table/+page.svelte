@@ -2,8 +2,6 @@
   import { tick } from "svelte";
   import { base } from "$app/paths";
   import { vault } from "$lib/stores/vault.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -43,11 +41,8 @@
   const vaultId = $derived(vault.activeVaultId);
 
   let searchQuery = $state("");
-  // Shared with the Graph view (same content, different presentation) so
-  // switching between "View as graph" / "Browse as table" keeps the same
-  // entities in view instead of silently resetting to everything.
-  const typeFilters = $derived(graph.activeCategories);
-  const labelFilters = $derived(graph.activeLabels);
+  let typeFilters = $state<Set<string>>(new Set());
+  let labelFilters = $state<Set<string>>(new Set());
   let showIncompleteOnly = $state(false);
   let columnFilters = $state<TableColumnFilters>({});
   let textMatchIds = $state<Set<string> | null>(null);
@@ -441,15 +436,25 @@
 
   function toggleType(type: string) {
     measureTableOperation("table_filter", () => {
-      graph.toggleCategoryFilter(type);
+      const next = new Set(typeFilters);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      typeFilters = next;
     });
   }
 
   function toggleLabel(label: string) {
     measureTableOperation("table_filter", () => {
-      // Always multi-select: the table's label filters are checkboxes, not
-      // the graph HUD's click-vs-modifier-click chips.
-      explorerUIStore.toggleLabelFilter(label, true);
+      const next = new Set(labelFilters);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      labelFilters = next;
     });
   }
 
@@ -468,8 +473,8 @@
   function clearFilters() {
     measureTableOperation("table_filter", () => {
       searchQuery = "";
-      graph.clearCategoryFilters();
-      graph.clearLabelFilters();
+      typeFilters = new Set();
+      labelFilters = new Set();
       showIncompleteOnly = false;
       columnFilters = {};
     });
@@ -515,8 +520,8 @@
   function handleApplyPreset(preset: ViewPreset) {
     const s = preset.state;
     searchQuery = s.searchQuery ?? "";
-    graph.activeCategories = new Set(s.activeCategories);
-    graph.activeLabels = new Set(s.activeLabels);
+    typeFilters = new Set(s.activeCategories);
+    labelFilters = new Set(s.activeLabels);
     showIncompleteOnly = s.showIncompleteOnly ?? false;
     columnFilters = s.columnFilters ? { ...s.columnFilters } : {};
     if (s.tableSort) {
@@ -526,8 +531,8 @@
 
   function handleResetFilters() {
     searchQuery = "";
-    graph.clearCategoryFilters();
-    graph.clearLabelFilters();
+    typeFilters = new Set();
+    labelFilters = new Set();
     showIncompleteOnly = false;
     columnFilters = {};
     sort = { key: "title", direction: "asc" };
@@ -596,7 +601,11 @@
     <!-- Controls -->
     <div class="flex flex-col gap-2.5 md:gap-3">
       <div class="flex items-center gap-2 md:gap-3">
-        <EntityTableSearch bind:searchQuery onSearchChange={setSearchQuery} />
+        <EntityTableSearch
+          bind:searchQuery
+          bind:labelFilters
+          onSearchChange={setSearchQuery}
+        />
 
         <!-- Mobile filters toggle button -->
         <button
