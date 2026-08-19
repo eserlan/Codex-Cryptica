@@ -146,6 +146,7 @@ vi.mock("$lib/content/changelog/releases.json", () => ({
 vi.mock("schema", () => ({
   THEMES: {},
   isEntityVisible: vi.fn(),
+  DEFAULT_ITEM_TABLE_COLUMNS: [],
 }));
 vi.mock("$lib/app/init/app-init", () => ({
   bootSystem: vi.fn(() => true),
