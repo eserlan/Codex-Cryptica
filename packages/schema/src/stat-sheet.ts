@@ -64,6 +64,26 @@ export const StatSheetFieldSchema = z.object({
 
 export type StatSheetField = z.infer<typeof StatSheetFieldSchema>;
 
+/**
+ * Fallback columns for "item-table" fields that predate the configurable
+ * column editor, and the seed used when a template author switches a field
+ * to "item-table" for the first time. Single source of truth — the
+ * built-in Mythras template, the template editor's seeding logic, and the
+ * renderer's legacy fallback all import this instead of redeclaring the
+ * weapon column list.
+ */
+export const DEFAULT_ITEM_TABLE_COLUMNS: NonNullable<
+  StatSheetField["columns"]
+> = [
+  { id: "name", label: "Weapon Type", type: "text" },
+  { id: "size", label: "Size", type: "text" },
+  { id: "reach", label: "Reach (Force)", type: "text" },
+  { id: "damage", label: "Damage", type: "dice" },
+  { id: "ap_hp", label: "AP/HP", type: "text" },
+  { id: "effects", label: "Special Effects", type: "text" },
+  { id: "range_load", label: "Range & Load", type: "text" },
+];
+
 export const StatSheetSchema = z.object({
   templateId: z.string().nullable().optional(),
   fields: z.array(StatSheetFieldSchema).default([]),

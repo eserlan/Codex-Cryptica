@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { Entity, StatSheetField, StatSheetFieldType } from "schema";
+  import {
+    DEFAULT_ITEM_TABLE_COLUMNS,
+    type Entity,
+    type StatSheetField,
+    type StatSheetFieldType,
+  } from "schema";
   import { untrack } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -34,16 +39,6 @@
     { value: "dice", label: "Dice Formula" },
     { value: "counter", label: "Counter" },
     { value: "checkbox", label: "Checkbox" },
-  ];
-
-  const DEFAULT_ITEM_TABLE_COLUMNS: NonNullable<StatSheetField["columns"]> = [
-    { id: "name", label: "Weapon Type", type: "text" },
-    { id: "size", label: "Size", type: "text" },
-    { id: "reach", label: "Reach (Force)", type: "text" },
-    { id: "damage", label: "Damage", type: "dice" },
-    { id: "ap_hp", label: "AP/HP", type: "text" },
-    { id: "effects", label: "Special Effects", type: "text" },
-    { id: "range_load", label: "Range & Load", type: "text" },
   ];
 
   let fields = $state<StatSheetField[]>(
@@ -449,7 +444,7 @@
               <input
                 type="text"
                 class="flex-1 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
-                aria-label="Column label"
+                aria-label={`Label for column ${colIndex + 1}`}
                 value={col.label}
                 oninput={(e) =>
                   updateColumn(field, col.id, {
@@ -458,7 +453,7 @@
               />
               <select
                 class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
-                aria-label="Column type"
+                aria-label={`Type for column ${colIndex + 1}`}
                 value={col.type}
                 onchange={(e) =>
                   updateColumn(field, col.id, {

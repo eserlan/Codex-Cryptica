@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { Entity, StatSheetField } from "schema";
+  import {
+    DEFAULT_ITEM_TABLE_COLUMNS,
+    type Entity,
+    type StatSheetField,
+  } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
   import { vault } from "$lib/stores/vault.svelte";
@@ -14,17 +18,7 @@
     context: PresentationRenderContext;
   } = $props();
 
-  const columns = $derived(
-    field.columns ?? [
-      { id: "name", label: "Weapon Type", type: "text" },
-      { id: "size", label: "Size", type: "text" },
-      { id: "reach", label: "Reach (Force)", type: "text" },
-      { id: "damage", label: "Damage", type: "dice" },
-      { id: "ap_hp", label: "AP/HP", type: "text" },
-      { id: "effects", label: "Special Effects", type: "text" },
-      { id: "range_load", label: "Range & Load", type: "text" },
-    ],
-  );
+  const columns = $derived(field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS);
 
   let rows = $derived<Record<string, any>[]>(field.rows ?? []);
 

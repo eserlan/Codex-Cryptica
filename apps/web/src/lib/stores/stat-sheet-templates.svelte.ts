@@ -1,5 +1,9 @@
 import { getDB } from "../utils/idb";
-import type { StatSheetTemplate, StatSheetField } from "schema";
+import {
+  DEFAULT_ITEM_TABLE_COLUMNS,
+  type StatSheetTemplate,
+  type StatSheetField,
+} from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import { importTemplatePackage } from "@codex/stat-sheet-engine";
@@ -420,15 +424,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
         id: "weapons_table",
         label: "Weapons & Equipment",
         type: "item-table",
-        columns: [
-          { id: "name", label: "Weapon Type", type: "text" },
-          { id: "size", label: "Size", type: "text" },
-          { id: "reach", label: "Reach (Force)", type: "text" },
-          { id: "damage", label: "Damage", type: "dice" },
-          { id: "ap_hp", label: "AP/HP", type: "text" },
-          { id: "effects", label: "Special Effects", type: "text" },
-          { id: "range_load", label: "Range & Load", type: "text" },
-        ],
+        columns: DEFAULT_ITEM_TABLE_COLUMNS,
         rows: [],
       },
     ],

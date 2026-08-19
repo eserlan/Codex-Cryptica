@@ -374,7 +374,7 @@ describe("StatSheetEditor", () => {
     await fireEvent.input(screen.getByDisplayValue("Skill"), {
       target: { value: "Skill Name" },
     });
-    await fireEvent.change(screen.getByLabelText("Column type"), {
+    await fireEvent.change(screen.getByLabelText("Type for column 1"), {
       target: { value: "checkbox" },
     });
 
@@ -395,6 +395,38 @@ describe("StatSheetEditor", () => {
         }),
       }),
     );
+  });
+
+  it("gives each column's label/type inputs a distinct accessible name", () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "skills",
+            label: "Skills",
+            type: "item-table",
+            columns: [
+              { id: "skill", label: "Skill", type: "text" },
+              { id: "rank", label: "Rank", type: "number" },
+            ],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    expect(
+      (screen.getByLabelText("Label for column 1") as HTMLInputElement).value,
+    ).toBe("Skill");
+    expect(
+      (screen.getByLabelText("Label for column 2") as HTMLInputElement).value,
+    ).toBe("Rank");
+    expect(
+      (screen.getByLabelText("Type for column 1") as HTMLSelectElement).value,
+    ).toBe("text");
+    expect(
+      (screen.getByLabelText("Type for column 2") as HTMLSelectElement).value,
+    ).toBe("number");
   });
 
   it("removes a column from a Repeatable Table field", async () => {
