@@ -6,7 +6,6 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { getIconClass } from "$lib/utils/icon";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import {
     buildConnectionNeighbors,
@@ -16,6 +15,7 @@
   import {
     buildConnectionsElements,
     buildConnectionsStyle,
+    carryForwardResolvedImages,
   } from "./connections-cytoscape";
   import { PanZoomState } from "./pan-zoom.svelte";
 
@@ -43,38 +43,8 @@
     buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
   );
   const shownNeighbors = $derived(allNeighbors.slice(0, MAX_SHOWN));
-  const overflowCount = $derived(allNeighbors.length - shownNeighbors.length);
 
   const colorOf = (type: string) => categories.getCategory(type)?.color ?? null;
-  const iconOf = (type: string) =>
-    getIconClass(categories.getCategory(type)?.icon);
-  const tint = (color: string | null, amount: string) =>
-    color ? `color-mix(in srgb, ${color} ${amount}, transparent)` : undefined;
-
-  const relationText = (neighbor: ConnectionNeighbor) =>
-    neighbor.relations.map((r) => r.displayLabel).join(" · ");
-
-  const relationIcon = (neighbor: ConnectionNeighbor) => {
-    const outbound = neighbor.relations.some((r) => r.direction === "outbound");
-    const inbound = neighbor.relations.some((r) => r.direction === "inbound");
-    if (outbound && inbound) return "icon-[lucide--arrow-left-right]";
-    return outbound ? "icon-[lucide--move-right]" : "icon-[lucide--move-left]";
-  };
-
-  const describe = (neighbor: ConnectionNeighbor) => {
-    const relations = neighbor.relations
-      .map((r) =>
-        r.direction === "outbound"
-          ? `${entity.title} ${r.displayLabel} ${neighbor.title}`
-          : `${neighbor.title} ${r.displayLabel} ${entity.title}`,
-      )
-      .join(", ");
-    // The "*" past marker is a purely visual footnote elsewhere in the app; the
-    // accessible name has to spell it out instead.
-    const past = neighbor.hasPastLabel ? " (past)" : "";
-    return `Open ${neighbor.title}${past} (${relations})`;
-  };
-
   // --- Cytoscape: layout + paint only ---------------------------------
   // Concentric puts one node in the middle and rings the rest around it,
   // which is exactly this view's shape — no hand-rolled arc trigonometry.
@@ -137,9 +107,16 @@
   // whole element set and re-run layout rather than diffing it.
   $effect(() => {
     if (!cy) return;
-    const nextElements = elements;
     const nextStyle = style;
     const spacing = isWide ? 70 : 52;
+
+    // Elements are fully replaced below rather than diffed — simplest correct
+    // approach for a graph this small. That destroys every node object,
+    // though, so a portrait cytoscape already resolved must be carried
+    // forward explicitly or it flashes blank again while it silently
+    // re-resolves (see carryForwardResolvedImages's own doc).
+    const nextElements = carryForwardResolvedImages(elements, cy.nodes());
+
     cy.style(nextStyle as any);
     cy.batch(() => {
       cy!.elements().remove();
@@ -359,55 +336,18 @@
     </div>
   </div>
 
-  <!-- The real, operable equivalent of the picture above: every shown
-       connection as a focusable button naming its relationship in full. -->
-  {#if shownNeighbors.length > 0}
-    <ul class="space-y-1" data-testid="connections-list">
-      {#each shownNeighbors as neighbor (neighbor.id)}
-        {@const color = colorOf(neighbor.type)}
-        <li>
-          <button
-            type="button"
-            class="flex w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-left transition hover:border-theme-border hover:bg-theme-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
-            data-testid="connection-row"
-            data-entity-id={neighbor.id}
-            aria-label={describe(neighbor)}
-            onclick={(event) => openNeighbor(neighbor.id, event)}
-          >
-            <span
-              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-              style:background-color={tint(color, "22%")}
-              aria-hidden="true"
-            >
-              <span
-                class="{iconOf(neighbor.type)} h-3.5 w-3.5"
-                style:color={color ?? undefined}
-              ></span>
-            </span>
-            <span class="min-w-0 flex-1 truncate text-sm text-theme-text">
-              {neighbor.title}{#if neighbor.hasPastLabel}<sup>*</sup>{/if}
-            </span>
-            <span
-              class="flex min-w-0 shrink-0 items-center gap-1 text-xs text-theme-muted"
-              aria-hidden="true"
-            >
-              <span class="{relationIcon(neighbor)} h-3 w-3 shrink-0"></span>
-              <span class="max-w-[10rem] truncate"
-                >{relationText(neighbor)}</span
-              >
-            </span>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  {/if}
-
-  {#if overflowCount > 0}
-    <p class="text-xs text-theme-muted" data-testid="connections-overflow">
-      {overflowCount} more connection{overflowCount === 1 ? "" : "s"} — open the graph
-      view to see the rest.
-    </p>
-  {/if}
+  <!-- The canvas above paints pixels, not DOM — nothing in it is reachable
+       by keyboard or a screen reader. This tab has no operable equivalent of
+       its own (unlike the world graph, which points at "Browse as table"),
+       but the Status tab lists the same connections as real, focusable rows,
+       so AT users are pointed there rather than left with nothing. -->
+  <p class="sr-only" data-testid="connections-a11y-note">
+    {allNeighbors.length} direct connection{allNeighbors.length === 1
+      ? ""
+      : "s"}, shown as a diagram that a screen reader cannot read. Open the
+    Status tab on this entity for the same connections as a keyboard-friendly
+    list.
+  </p>
 
   <FeatureHint hintId="connections" />
 </div>

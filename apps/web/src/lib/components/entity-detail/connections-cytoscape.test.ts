@@ -4,6 +4,7 @@ import {
   FALLBACK_COLOR,
   buildConnectionsElements,
   buildConnectionsStyle,
+  carryForwardResolvedImages,
 } from "./connections-cytoscape";
 import type { ConnectionNeighbor } from "./entity-connections";
 
@@ -168,5 +169,64 @@ describe("buildConnectionsStyle", () => {
     const fakeNode = { data: (key: string) => ({ type: "unregistered" })[key] };
 
     expect(nodeRule.style["background-color"](fakeNode)).toBe(FALLBACK_COLOR);
+  });
+});
+
+describe("carryForwardResolvedImages", () => {
+  const fakeNode = (id: string, resolvedImage?: string) => ({
+    id: () => id,
+    data: (key: string) =>
+      key === "resolvedImage" ? resolvedImage : undefined,
+  });
+
+  it("copies a previously-resolved portrait onto the matching new element", () => {
+    const next = buildConnectionsElements(entity({ id: "king" }), [
+      neighbor({ id: "duke" }),
+    ]);
+
+    const carried = carryForwardResolvedImages(next, [
+      fakeNode("duke", "blob:duke-portrait"),
+    ]);
+
+    const duke = carried.find((el) => el.data.id === "duke")!;
+    expect(duke.data.resolvedImage).toBe("blob:duke-portrait");
+  });
+
+  it("leaves edges and unmatched nodes untouched", () => {
+    const next = buildConnectionsElements(entity({ id: "king" }), [
+      neighbor({ id: "duke" }),
+      neighbor({ id: "guard" }),
+    ]);
+
+    const carried = carryForwardResolvedImages(next, [
+      fakeNode("duke", "blob:duke-portrait"),
+    ]);
+
+    const guard = carried.find((el) => el.data.id === "guard")!;
+    const edge = carried.find((el) => el.group === "edges")!;
+    expect(guard.data.resolvedImage).toBeUndefined();
+    expect((edge.data as any).resolvedImage).toBeUndefined();
+  });
+
+  it("is a no-op when nothing was previously resolved", () => {
+    const next = buildConnectionsElements(entity({ id: "king" }), [
+      neighbor({ id: "duke" }),
+    ]);
+
+    const carried = carryForwardResolvedImages(next, [fakeNode("duke")]);
+
+    expect(carried).toBe(next);
+  });
+
+  it("ignores a node id that no longer appears in the new set", () => {
+    const next = buildConnectionsElements(entity({ id: "king" }), [
+      neighbor({ id: "guard" }),
+    ]);
+
+    const carried = carryForwardResolvedImages(next, [
+      fakeNode("duke", "blob:duke-portrait"),
+    ]);
+
+    expect(carried.some((el) => "resolvedImage" in el.data)).toBe(false);
   });
 });

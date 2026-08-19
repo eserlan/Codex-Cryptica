@@ -12,10 +12,10 @@ import type { ConnectionNeighbor } from "./entity-connections";
  * are the world graph's `text-max-width` + ellipsis, which is the exact
  * "Often found at the cor…" collision this tab was built to avoid — a
  * concentric ring compounds it further, since neighbours are no longer kept
- * off the centre's own band. The full relationship text lives in the
- * always-visible list beside the canvas instead (also this view's a11y path:
- * cytoscape paints a `<canvas>`, so the drawing itself is `aria-hidden` and
- * every connection needs a real, nameable equivalent regardless).
+ * off the centre's own band. Node titles alone are enough context on the
+ * canvas; the Status tab already lists the full relationships as real,
+ * focusable rows (cytoscape paints a `<canvas>`, so this drawing itself has
+ * no DOM to make operable — see the `sr-only` note in the component).
  */
 
 const hasPast = (entity: { labels?: string[] }) =>
@@ -67,6 +67,33 @@ export function buildConnectionsElements(
   }));
 
   return [...nodes, ...edges];
+}
+
+/**
+ * A resolved portrait lives as data cytoscape attached imperatively to a
+ * live node (`GraphImageManager.sync` sets it after an always-async round
+ * trip, even on a cache hit) — never on the plain element objects
+ * `buildConnectionsElements` returns. Rebuilding the element set from
+ * scratch (the elements-sync effect does this on every entity/theme change)
+ * therefore always starts every portrait over from blank, however briefly,
+ * unless the previous value is carried forward by node id first.
+ */
+export function carryForwardResolvedImages(
+  nextElements: ElementDefinition[],
+  previousNodes: Iterable<{ id: () => string; data: (key: string) => unknown }>,
+): ElementDefinition[] {
+  const resolved = new Map<string, string>();
+  for (const node of previousNodes) {
+    const value = node.data("resolvedImage");
+    if (typeof value === "string" && value) resolved.set(node.id(), value);
+  }
+  if (resolved.size === 0) return nextElements;
+
+  return nextElements.map((el) => {
+    if (el.group !== "nodes") return el;
+    const url = resolved.get(el.data.id as string);
+    return url ? { ...el, data: { ...el.data, resolvedImage: url } } : el;
+  });
 }
 
 export interface ConnectionsStyleOptions {

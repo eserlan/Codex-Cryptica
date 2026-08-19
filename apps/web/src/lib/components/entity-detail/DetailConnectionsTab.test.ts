@@ -93,11 +93,22 @@ const { entities, vaultMock, cyInstances, imageManagerInstances } = vi.hoisted(
 vi.mock("graph-engine", () => {
   function makeCy() {
     const listeners: Record<string, ((evt: any) => void)[]> = {};
+    const nodeData = new Map<string, Record<string, unknown>>();
     const cy = {
       style: vi.fn(),
       batch: vi.fn((cb: () => void) => cb()),
       elements: vi.fn(() => ({ remove: vi.fn() })),
-      add: vi.fn(),
+      nodes: vi.fn(() =>
+        Array.from(nodeData.entries()).map(([id, data]) => ({
+          id: () => id,
+          data: (key?: string) => (key ? data[key] : data),
+        })),
+      ),
+      add: vi.fn((els: any[]) => {
+        for (const el of els) {
+          if (el.group === "nodes") nodeData.set(el.data.id, { ...el.data });
+        }
+      }),
       layout: vi.fn(() => ({ run: vi.fn() })),
       resize: vi.fn(),
       fit: vi.fn(),
@@ -148,12 +159,16 @@ vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
 
 import DetailConnectionsTab from "./DetailConnectionsTab.svelte";
 
-const rowTitles = () =>
-  screen
-    .getAllByTestId("connection-row")
-    .map((row) => row.getAttribute("data-entity-id"));
-
 const lastCy = () => cyInstances[cyInstances.length - 1];
+
+const tapNode = (cy: any, id: string, isCentre = false) =>
+  cy.__emit("tap", {
+    target: {
+      id: () => id,
+      data: (k: string) => (k === "isCentre" ? isCentre : undefined),
+    },
+    originalEvent: new MouseEvent("click"),
+  });
 
 describe("DetailConnectionsTab", () => {
   beforeAll(() => {
@@ -173,81 +188,15 @@ describe("DetailConnectionsTab", () => {
     imageManagerInstances.length = 0;
   });
 
-  it("renders only direct connections, in both directions, as real buttons", async () => {
+  it("names the diagram for assistive tech and points at the Status tab's operable equivalent", async () => {
     render(DetailConnectionsTab, { entity: entities.king });
     await Promise.resolve();
 
-    expect(rowTitles().sort()).toEqual(["duke", "guard", "kingdom", "wraith"]);
-  });
-
-  it("does not render second-degree connections", async () => {
-    render(DetailConnectionsTab, { entity: entities.king });
-    await Promise.resolve();
-
-    expect(rowTitles()).not.toContain("rival");
-  });
-
-  it("names each row with its full relationship for assistive tech", async () => {
-    render(DetailConnectionsTab, { entity: entities.king });
-    await Promise.resolve();
-
-    expect(
-      screen.getByLabelText("Open Duke Miklós (King Béla ally Duke Miklós)"),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(
-        "Open Kingdom of Pagen (Kingdom of Pagen rules King Béla)",
-      ),
-    ).toBeTruthy();
-  });
-
-  it("spells out the past marker in the accessible name", async () => {
-    render(DetailConnectionsTab, { entity: entities.king });
-    await Promise.resolve();
-
-    expect(
-      screen.getByLabelText(
-        "Open Old Wraith (past) (Old Wraith haunts King Béla)",
-      ),
-    ).toBeTruthy();
-  });
-
-  it("shows the relationship text next to each row", async () => {
-    render(DetailConnectionsTab, { entity: entities.king });
-    await Promise.resolve();
-
-    const row = screen
-      .getAllByTestId("connection-row")
-      .find((r) => r.getAttribute("data-entity-id") === "duke")!;
-    expect(row.textContent).toContain("ally");
-  });
-
-  it("selects a connected entity on click by default", async () => {
-    render(DetailConnectionsTab, { entity: entities.king });
-    await Promise.resolve();
-
-    await fireEvent.click(
-      screen
-        .getAllByTestId("connection-row")
-        .find((r) => r.getAttribute("data-entity-id") === "duke")!,
-    );
-
-    expect(vaultMock.selectedEntityId).toBe("duke");
-  });
-
-  it("prefers the onNavigate callback when one is given", async () => {
-    const onNavigate = vi.fn();
-    render(DetailConnectionsTab, { entity: entities.king, onNavigate });
-    await Promise.resolve();
-
-    await fireEvent.click(
-      screen
-        .getAllByTestId("connection-row")
-        .find((r) => r.getAttribute("data-entity-id") === "guard")!,
-    );
-
-    expect(onNavigate).toHaveBeenCalledWith("guard", expect.anything());
-    expect(vaultMock.selectedEntityId).toBeNull();
+    const note = screen
+      .getByTestId("connections-a11y-note")
+      .textContent!.replace(/\s+/g, " ");
+    expect(note).toContain("4 direct connections");
+    expect(note).toContain("Status tab");
   });
 
   it("shows an empty state for an unconnected entity", async () => {
@@ -255,40 +204,6 @@ describe("DetailConnectionsTab", () => {
     await Promise.resolve();
 
     expect(screen.getByTestId("connections-empty")).toBeTruthy();
-    expect(screen.queryAllByTestId("connection-row")).toHaveLength(0);
-  });
-
-  it("lists overflow past the shown cap without dropping anything", async () => {
-    const crowd = Array.from({ length: 25 }, (_, i) => ({
-      id: `extra-${i}`,
-      type: "character",
-      title: `Extra ${i}`,
-      connections: [],
-    })) as unknown as Entity[];
-    const hub = {
-      id: "hub",
-      type: "faction",
-      title: "The Guild",
-      connections: crowd.map((c) => ({
-        target: c.id,
-        type: "friendly",
-        label: "member",
-        strength: 1,
-      })),
-    } as unknown as Entity;
-    for (const member of [...crowd, hub]) {
-      (vaultMock.entities as Record<string, Entity>)[member.id] = member;
-    }
-    vaultMock.allEntities = Object.values(vaultMock.entities);
-
-    render(DetailConnectionsTab, { entity: hub });
-    await Promise.resolve();
-
-    const shown = screen.getAllByTestId("connection-row");
-    expect(shown.length).toBe(20);
-    expect(screen.getByTestId("connections-overflow").textContent).toContain(
-      "5 more connections",
-    );
   });
 
   describe("cytoscape wiring", () => {
@@ -306,7 +221,7 @@ describe("DetailConnectionsTab", () => {
       );
     });
 
-    it("loads elements and runs a concentric layout after mount", async () => {
+    it("loads only direct connections, in both directions, and runs a concentric layout", async () => {
       render(DetailConnectionsTab, { entity: entities.king });
       await Promise.resolve();
       await Promise.resolve();
@@ -315,7 +230,13 @@ describe("DetailConnectionsTab", () => {
       const cy = lastCy();
       expect(cy.add).toHaveBeenCalled();
       const added = cy.add.mock.calls[0][0];
+      const ids = added.map((el: any) => el.data.id ?? el.data.target);
       expect(added.some((el: any) => el.data.isCentre)).toBe(true);
+      expect(ids).toEqual(
+        expect.arrayContaining(["duke", "guard", "kingdom", "wraith"]),
+      );
+      // Second-degree (connected to the duke, never to the king) never appears.
+      expect(ids).not.toContain("rival");
       expect(cy.layout).toHaveBeenCalledWith(
         expect.objectContaining({ name: "concentric" }),
       );
@@ -343,16 +264,21 @@ describe("DetailConnectionsTab", () => {
       await Promise.resolve();
 
       const cy = lastCy();
-      cy.__emit("tap", {
-        target: { id: () => "king", data: (k: string) => k === "isCentre" },
-      });
-      cy.__emit("tap", {
-        target: { id: () => "duke", data: () => false },
-        originalEvent: new MouseEvent("click"),
-      });
+      tapNode(cy, "king", true);
+      tapNode(cy, "duke");
 
       expect(onNavigate).toHaveBeenCalledTimes(1);
       expect(onNavigate).toHaveBeenCalledWith("duke", expect.anything());
+    });
+
+    it("selects a connected entity by default when no onNavigate is given", async () => {
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      tapNode(lastCy(), "guard");
+
+      expect(vaultMock.selectedEntityId).toBe("guard");
     });
 
     it("destroys the cytoscape instance on unmount", async () => {
@@ -436,13 +362,11 @@ describe("DetailConnectionsTab", () => {
       ).not.toContain("100%");
     });
 
-    it("does not open a connection when the pointer was dragged across it", async () => {
+    it("does not open a connection when the pointer was dragged across the canvas", async () => {
       render(DetailConnectionsTab, { entity: entities.king });
       await Promise.resolve();
+      await Promise.resolve();
       const graph = screen.getByTestId("connections-graph");
-      const duke = screen
-        .getAllByTestId("connection-row")
-        .find((r) => r.getAttribute("data-entity-id") === "duke")!;
 
       await fireEvent.pointerDown(graph, {
         pointerId: 1,
@@ -458,12 +382,12 @@ describe("DetailConnectionsTab", () => {
         clientY: 140,
       });
       await fireEvent.pointerUp(graph, { pointerId: 1, pointerType: "mouse" });
-      await fireEvent.click(duke);
+      tapNode(lastCy(), "duke");
 
       expect(vaultMock.selectedEntityId).toBeNull();
 
-      // The next, undragged click still opens it.
-      await fireEvent.click(duke);
+      // The next, undragged tap still opens it.
+      tapNode(lastCy(), "duke");
       expect(vaultMock.selectedEntityId).toBe("duke");
     });
   });
