@@ -236,6 +236,87 @@ describe("ItemTableNode", () => {
     expect(container.querySelector(".text-green-400")).toBeNull();
   });
 
+  it("hides the vault item link controls when linkVaultItems is disabled", () => {
+    const field: StatSheetField = {
+      id: "skills_table",
+      label: "Skills",
+      type: "item-table",
+      linkVaultItems: false,
+      columns: [{ id: "skill", label: "Skill", type: "text" }],
+      rows: [],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    expect(screen.queryByTestId("item-table-link-item")).toBeNull();
+  });
+
+  it("shows the vault item link controls by default for tables without linkVaultItems set", () => {
+    const field: StatSheetField = {
+      id: "skills_table",
+      label: "Skills",
+      type: "item-table",
+      columns: [{ id: "skill", label: "Skill", type: "text" }],
+      rows: [],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    expect(screen.getByTestId("item-table-link-item")).toBeTruthy();
+  });
+
+  it("renders and persists a checkbox column", async () => {
+    const field: StatSheetField = {
+      id: "skills_table",
+      label: "Skills",
+      type: "item-table",
+      linkVaultItems: false,
+      columns: [
+        { id: "skill", label: "Skill", type: "text" },
+        { id: "trained", label: "Trained", type: "checkbox" },
+      ],
+      rows: [{ skill: "Athletics", trained: false }],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Trained for item 1",
+    });
+    expect((checkbox as HTMLInputElement).checked).toBe(false);
+
+    await fireEvent.click(checkbox);
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "skills_table",
+      expect.objectContaining({
+        rows: [expect.objectContaining({ trained: true })],
+      }),
+    );
+  });
+
+  it("defaults checkbox columns to false on new rows", async () => {
+    const field: StatSheetField = {
+      id: "skills_table",
+      label: "Skills",
+      type: "item-table",
+      linkVaultItems: false,
+      columns: [{ id: "trained", label: "Trained", type: "checkbox" }],
+      rows: [],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    await fireEvent.click(screen.getByTestId("item-table-add-row"));
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "skills_table",
+      expect.objectContaining({
+        rows: [{ trained: false }],
+      }),
+    );
+  });
+
   it("renders successful dice rolls with a success colour", async () => {
     rollStatSheetDiceField.mockResolvedValueOnce({
       text: "7",

@@ -245,6 +245,122 @@ describe("EntityList", () => {
     expect(npcRow.style.borderLeftWidth).toBe("3px");
   });
 
+  it("shows a hierarchy guide bar for a nested child and hides it once collapsed (#2361)", async () => {
+    render(EntityList);
+
+    expect(screen.getAllByTestId("tree-guides").length).toBeGreaterThan(0);
+
+    await fireEvent.click(screen.getByTitle("Collapse"));
+    await tick();
+
+    expect(screen.queryAllByTestId("tree-guides")).toHaveLength(0);
+  });
+
+  it("draws elbow connectors and ancestor lines correctly across multiple sibling and nesting levels (#2361)", async () => {
+    // Root has two children (Child One, not last; Child Two, last). Child
+    // One has a single grandchild. This is deep/wide enough to exercise
+    // both the elbow's own isLast branch and the ancestorLines pass-through
+    // branch, which the single-parent/single-child fixture above can't.
+    const originalEntities = mockVault.allEntities;
+    const originalEntitiesMap = mockVault.entities;
+    try {
+      mockVault.allEntities = [
+        {
+          id: "root",
+          title: "Root",
+          type: "npc",
+          tags: [],
+          labels: [],
+          connections: [],
+          content: "",
+          updatedAt: 0,
+        },
+        {
+          id: "child-one",
+          title: "Child One",
+          type: "npc",
+          tags: [],
+          labels: [],
+          connections: [],
+          content: "",
+          updatedAt: 0,
+          parent: "root",
+        },
+        {
+          id: "child-two",
+          title: "Child Two",
+          type: "npc",
+          tags: [],
+          labels: [],
+          connections: [],
+          content: "",
+          updatedAt: 0,
+          parent: "root",
+        },
+        {
+          id: "grandchild",
+          title: "Grandchild",
+          type: "npc",
+          tags: [],
+          labels: [],
+          connections: [],
+          content: "",
+          updatedAt: 0,
+          parent: "child-one",
+        },
+      ] as any[];
+      mockVault.entities = {} as Record<string, any>;
+      for (const e of mockVault.allEntities) {
+        mockVault.entities[e.id] = e;
+      }
+
+      render(EntityList);
+      await tick();
+
+      const rowGuides = (title: string) =>
+        screen
+          .getByText(title)
+          .closest("[data-testid='entity-list-item']")!
+          .parentElement!.querySelector("[data-testid='tree-guides']");
+
+      // Root is the only top-level entity, so neither child's guide column 0
+      // (root's column) should show a continuing ancestor line.
+      const childOneGuides = rowGuides("Child One")!;
+      const childTwoGuides = rowGuides("Child Two")!;
+      expect(childOneGuides.querySelectorAll(".tree-guide-line").length).toBe(
+        0,
+      );
+      expect(childTwoGuides.querySelectorAll(".tree-guide-line").length).toBe(
+        0,
+      );
+
+      // Child One has a following sibling (Child Two) -> its own elbow
+      // continues below (elbow-bottom present). Child Two is the last
+      // sibling -> no elbow-bottom.
+      expect(
+        childOneGuides.querySelector(".tree-guide-elbow-bottom"),
+      ).not.toBeNull();
+      expect(
+        childTwoGuides.querySelector(".tree-guide-elbow-bottom"),
+      ).toBeNull();
+
+      // Grandchild's ancestor column 0 (root) has no following sibling, so
+      // it's blank; column 1 (its own elbow, under Child One) reflects that
+      // Grandchild is an only child (isLast, no elbow-bottom).
+      const grandchildGuides = rowGuides("Grandchild")!;
+      const grandchildColumns =
+        grandchildGuides.querySelectorAll(".tree-guide-col");
+      expect(grandchildColumns).toHaveLength(2);
+      expect(grandchildColumns[0].classList).not.toContain("tree-guide-line");
+      expect(
+        grandchildGuides.querySelector(".tree-guide-elbow-bottom"),
+      ).toBeNull();
+    } finally {
+      mockVault.allEntities = originalEntities;
+      mockVault.entities = originalEntitiesMap;
+    }
+  });
+
   it("clears the search query when the clear button is clicked", async () => {
     render(EntityList);
 

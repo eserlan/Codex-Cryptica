@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { Entity, StatSheetField } from "schema";
+  import {
+    DEFAULT_ITEM_TABLE_COLUMNS,
+    type Entity,
+    type StatSheetField,
+  } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
   import { vault } from "$lib/stores/vault.svelte";
@@ -14,19 +18,13 @@
     context: PresentationRenderContext;
   } = $props();
 
-  const columns = $derived(
-    field.columns ?? [
-      { id: "name", label: "Weapon Type", type: "text" },
-      { id: "size", label: "Size", type: "text" },
-      { id: "reach", label: "Reach (Force)", type: "text" },
-      { id: "damage", label: "Damage", type: "dice" },
-      { id: "ap_hp", label: "AP/HP", type: "text" },
-      { id: "effects", label: "Special Effects", type: "text" },
-      { id: "range_load", label: "Range & Load", type: "text" },
-    ],
-  );
+  const columns = $derived(field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS);
 
   let rows = $derived<Record<string, any>[]>(field.rows ?? []);
+
+  // Defaults to enabled for back-compat with existing weapon/item tables
+  // (which never set this flag); template authors can opt custom tables out.
+  const linkEnabled = $derived(field.linkVaultItems ?? true);
 
   let rollStateMap = $state<
     Record<
@@ -85,6 +83,8 @@
         newRow[col.id] = 0;
       } else if (col.type === "dice") {
         newRow[col.id] = "1d6";
+      } else if (col.type === "checkbox") {
+        newRow[col.id] = false;
       } else {
         newRow[col.id] = "";
       }
@@ -183,15 +183,17 @@
     </span>
     {#if !context.readOnly}
       <div class="flex items-center gap-1">
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-          onclick={() => (showItemPicker = !showItemPicker)}
-          data-testid="item-table-link-item"
-        >
-          <span class="icon-[lucide--link] h-3 w-3" aria-hidden="true"></span>
-          Link Vault Item
-        </button>
+        {#if linkEnabled}
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+            onclick={() => (showItemPicker = !showItemPicker)}
+            data-testid="item-table-link-item"
+          >
+            <span class="icon-[lucide--link] h-3 w-3" aria-hidden="true"></span>
+            Link Vault Item
+          </button>
+        {/if}
         <button
           type="button"
           class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
@@ -199,13 +201,13 @@
           data-testid="item-table-add-row"
         >
           <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>
-          Add Item
+          Add Row
         </button>
       </div>
     {/if}
   </div>
 
-  {#if showItemPicker && !context.readOnly}
+  {#if showItemPicker && linkEnabled && !context.readOnly}
     <div
       class="flex items-center gap-2 border-b border-theme-border/60 bg-theme-surface/20 px-3 py-2"
     >
@@ -256,8 +258,7 @@
               colspan={columns.length + (context.readOnly ? 0 : 1)}
               class="px-3 py-3 text-center text-xs italic text-theme-muted"
             >
-              No items listed. {#if !context.readOnly}Click "+ Add Item" to add
-                one.{/if}
+              No rows yet. {#if !context.readOnly}Click "+ Add Row" to add one.{/if}
             </td>
           </tr>
         {:else}
@@ -397,6 +398,19 @@
                         </button>
                       </div>
                     {/if}
+                  {:else if col.type === "checkbox"}
+                    <input
+                      type="checkbox"
+                      aria-label={`${col.label} for item ${rIdx + 1}`}
+                      checked={row[col.id] === true}
+                      disabled={context.readOnly}
+                      onchange={(e) =>
+                        handleCellChange(
+                          rIdx,
+                          col.id,
+                          (e.target as HTMLInputElement).checked,
+                        )}
+                    />
                   {/if}
                 </td>
               {/each}

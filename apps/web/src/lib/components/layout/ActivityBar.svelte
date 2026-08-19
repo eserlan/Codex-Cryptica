@@ -32,7 +32,7 @@
 
 <nav
   class="bg-chrome-surface border-chrome-border flex shrink-0 z-[80]
-    flex-row md:flex-col items-center justify-center-safe md:justify-start pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))] md:py-4 gap-0 md:gap-4
+    flex-row md:flex-col items-center justify-center-safe md:justify-start pt-1 pb-[env(safe-area-inset-bottom,0px)] md:py-4 gap-0 md:gap-4
     w-full md:w-14 min-h-13 h-auto md:h-full border-t md:border-t-0 md:border-r
     overflow-x-auto md:overflow-x-visible"
   aria-label="Activity Bar"
