@@ -19,9 +19,9 @@ flowchart LR
 ```
 
 - **Application ID**: `com.codexcryptica.app`
-- **Output Target**: Android App Bundle (`.aab`)
+- **Output Target**: Android App Bundle (`.aab`) & APK (`.apk`)
 - **Minimum SDK**: 24 (Android 7.0+)
-- **Target SDK**: 34+ (Android 14+)
+- **Target SDK / Compile SDK**: 36 (Android 16 / latest modern target)
 
 ---
 
@@ -61,15 +61,71 @@ To enable automated GitHub Actions builds, encode the keystore in Base64 and add
 
 ## 3. Local Build & Packaging
 
-To manually produce a signed release `.aab` locally:
+### Step 1: Build Web App & Sync Native Assets
+
+Whenever web application code or assets change, run the build and sync pipeline to copy static assets into the native Android wrapper:
 
 ```bash
-# 1. Build web application and sync native assets
+# From apps/web directory:
 cd apps/web
 bun run build:mobile
 
-# 2. Build release bundle
-cd android
+# Or from repository root:
+bun run --filter web build:mobile
+```
+
+This compiles the SvelteKit frontend to `apps/web/build` and copies assets to `apps/web/android/app/src/main/assets/public`.
+
+### Step 2: Configure Android SDK Environment
+
+#### Option A: Using Android Studio (Recommended GUI)
+
+Open the Android native project in Android Studio:
+
+```bash
+cd apps/web
+bun run cap:open:android
+```
+
+Android Studio will automatically detect the SDK, index Gradle dependencies, and allow visual building and running.
+
+#### Option B: Using Gradle CLI
+
+If building from the command line, ensure Gradle knows where your Android SDK is located:
+
+```bash
+# Set ANDROID_HOME in your shell:
+export ANDROID_HOME="$HOME/Android/Sdk"
+
+# Or configure local.properties for the Android project:
+echo "sdk.dir=$HOME/Android/Sdk" > apps/web/android/local.properties
+```
+
+### Step 3: Bundle & Packaging Commands
+
+Navigate to `apps/web/android`:
+
+```bash
+cd apps/web/android
+```
+
+#### A. Build a Debug APK (For fast local testing / sideloading)
+
+```bash
+./gradlew assembleDebug
+```
+
+- **Output artifact**: `apps/web/android/app/build/outputs/apk/debug/app-debug.apk`
+- **Direct install to USB-connected device / emulator**:
+  ```bash
+  ./gradlew installDebug
+  ```
+
+#### B. Build a Release Android App Bundle (.aab) (For Google Play Store)
+
+Google Play requires `.aab` format for publishing:
+
+```bash
 export KEYSTORE_FILE="/path/to/codex-release.keystore"
 export KEYSTORE_PASSWORD="your-keystore-password"
 export KEY_ALIAS="codex-release"
@@ -78,8 +134,38 @@ export KEY_PASSWORD="your-key-password"
 ./gradlew bundleRelease
 ```
 
-The output bundle is generated at:
-`apps/web/android/app/build/outputs/bundle/release/app-release.aab`
+- **Output artifact**: `apps/web/android/app/build/outputs/bundle/release/app-release.aab`
+
+#### C. Build an Unsigned Release APK
+
+If you need a standalone release `.apk` for manual distribution or testing:
+
+```bash
+./gradlew assembleRelease
+```
+
+- **Output artifact**: `apps/web/android/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+### Step 4: Manual Signing (If Not Signed via Gradle)
+
+If you have an unsigned `.aab` or `.apk` and wish to sign it manually:
+
+```bash
+# Sign Android App Bundle (.aab):
+jarsigner -verbose \
+  -sigalg SHA256withRSA \
+  -digestalg SHA-256 \
+  -keystore /path/to/codex-release.keystore \
+  app-release.aab \
+  codex-release
+
+# Or sign an APK with apksigner (from Android SDK build-tools):
+$ANDROID_HOME/build-tools/36.0.0/apksigner sign \
+  --ks /path/to/codex-release.keystore \
+  --ks-key-alias codex-release \
+  --out app-release-signed.apk \
+  app-release-unsigned.apk
+```
 
 ---
 
