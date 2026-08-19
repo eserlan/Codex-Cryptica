@@ -28,7 +28,8 @@
   } = $props();
 
   /** A picture of a handful of connections reads well; a picture of thirty
-   * does not. The list beneath the picture is unabridged either way. */
+   * does not. Past this the diagram just stops at the first `MAX_SHOWN` —
+   * the Status tab still lists every connection regardless. */
   const MAX_SHOWN = 20;
 
   // The composition depends on how much room this tab actually has, not on
@@ -49,9 +50,10 @@
   // Concentric puts one node in the middle and rings the rest around it,
   // which is exactly this view's shape — no hand-rolled arc trigonometry.
   // Relationship text never renders on the canvas (cytoscape's edge labels
-  // are the "Often found at the cor…" truncation this tab exists to avoid),
-  // so the canvas is aria-hidden and the always-visible list below it is
-  // both the a11y path and the place people actually read a relationship.
+  // are the "Often found at the cor…" truncation this tab exists to avoid);
+  // node titles alone are enough context on the canvas. The canvas is
+  // aria-hidden below — see the sr-only note near the template's end for
+  // where a screen-reader/keyboard user is pointed instead.
   let canvasElement = $state<HTMLDivElement>();
   let cy = $state<Core | null>(null);
   let imageManager: GraphImageManager | null = null;
