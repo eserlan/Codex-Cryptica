@@ -193,9 +193,9 @@
           index
             ? 'bg-theme-primary/10 text-theme-primary'
             : ''}"
-          ><span class="text-theme-primary/60">{autocompletePrefix}</span><span
-            >{label}</span
-          ></button
+          ><span class="text-theme-primary/60 shrink-0"
+            >{autocompletePrefix}</span
+          ><span class="truncate min-w-0">{label}</span></button
         >
       {/each}
     </div>
