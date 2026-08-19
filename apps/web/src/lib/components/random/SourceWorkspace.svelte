@@ -2,7 +2,7 @@
   import { onMount, type Snippet } from "svelte";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { browser } from "$app/environment";
+  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
   import type {
     Diagnostic,
     ExportFormat,
@@ -50,6 +50,7 @@
     allowImport?: boolean;
     editor: Snippet<[EditorContext]>;
     player: Snippet<[PlayerContext]>;
+    storage?: StorageLike;
   } = $props();
 
   const noun = $derived(kind === "table" ? "table" : "deck");
@@ -69,7 +70,7 @@
   let mode = $state<SourceMode>(
     resolveMode(
       page.url.searchParams,
-      browser ? localStorage.getItem(MODE_STORAGE_KEY) : null,
+      (storage ?? browserStorage).getItem(MODE_STORAGE_KEY),
     ),
   );
 
@@ -95,7 +96,7 @@
   function setMode(next: SourceMode) {
     if (next === mode) return;
     mode = next;
-    if (browser) localStorage.setItem(MODE_STORAGE_KEY, next);
+    (storage ?? browserStorage).setItem(MODE_STORAGE_KEY, next);
   }
 
   /**
