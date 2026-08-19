@@ -292,6 +292,35 @@ describe("DetailConnectionsTab", () => {
       expect(king.data.resolvedImage).toBe("blob:king-portrait");
     });
 
+    it("creates a fresh GraphImageManager on every rebuild instead of reusing one across an entity switch", async () => {
+      // Unlike the side panel (EntityDetailPanel wraps its tab body in
+      // `{#key activeEntity.id}`, destroying this component outright), zen
+      // mode keeps the same component instance alive across navigation —
+      // only the `entity` prop changes. The bug this guards: an old
+      // GraphImageManager's `resolvingIds` bookkeeping survives
+      // `cy.elements().remove()` even though the node objects it refers to
+      // don't, so a resolve still in-flight for one entity's nodes could
+      // make the manager think an id from the *next* entity's node set (a
+      // coincidentally-revisited id) was "already resolving" and skip it —
+      // silently never painting that portrait.
+      const { rerender } = render(DetailConnectionsTab, {
+        entity: entities.king,
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      const firstManager = imageManagerInstances.at(-1);
+
+      await rerender({ entity: entities.kingdom });
+      await Promise.resolve();
+
+      const secondManager = imageManagerInstances.at(-1);
+      expect(secondManager).not.toBe(firstManager);
+      expect(imageManagerInstances.length).toBeGreaterThan(1);
+      // The cytoscape instance itself, though, is the SAME one — no remount.
+      expect(cyInstances).toHaveLength(1);
+    });
+
     it("opens a neighbour when cytoscape reports a tap on its node, ignoring the centre", async () => {
       const onNavigate = vi.fn();
       render(DetailConnectionsTab, { entity: entities.king, onNavigate });

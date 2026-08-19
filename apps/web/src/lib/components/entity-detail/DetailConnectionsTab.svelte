@@ -90,7 +90,6 @@
         instance.destroy();
         return;
       }
-      imageManager = new GraphImageManager(instance);
       instance.on("tap", "node", (evt: any) => {
         if (evt.target.data("isCentre")) return;
         openNeighbor(evt.target.id(), evt.originalEvent as MouseEvent);
@@ -125,6 +124,17 @@
       cy!.elements().remove();
       cy!.add(nextElements as any);
     });
+    // A fresh GraphImageManager per rebuild, not one reused across it: this
+    // component's host (zen/focused mode, unlike the side panel) keeps the
+    // SAME cytoscape instance alive across an entity switch, so the old
+    // manager's `resolvingIds` bookkeeping survives the `remove()` above even
+    // though the node objects it refers to don't. If a resolve was still
+    // in-flight for an id when the rebuild happened, the old manager would
+    // treat that id as "already resolving" on the next sync and skip it —
+    // silently never resolving the new node with that id until the orphaned
+    // promise happens to finish on its own. A fresh manager has no such
+    // memory, so every rebuild resolves its current nodes correctly.
+    imageManager = new GraphImageManager(cy);
     cy.layout({
       name: "concentric",
       concentric: (n: any) => (n.data("isCentre") ? 2 : 1),
