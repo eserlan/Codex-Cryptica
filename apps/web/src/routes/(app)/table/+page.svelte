@@ -21,6 +21,7 @@
   import { searchService } from "@codex/search-orchestrator";
   import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
+  import EntityTableSearch from "$lib/components/table/EntityTableSearch.svelte";
   import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
   import type { ViewPreset } from "$lib/stores/view-presets";
@@ -595,21 +596,7 @@
     <!-- Controls -->
     <div class="flex flex-col gap-2.5 md:gap-3">
       <div class="flex items-center gap-2 md:gap-3">
-        <div class="relative min-w-0 flex-1 max-w-md">
-          <span
-            class="icon-[lucide--search] pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-theme-muted"
-            aria-hidden="true"
-          ></span>
-          <input
-            type="search"
-            value={searchQuery}
-            oninput={(event) => setSearchQuery(event.currentTarget.value)}
-            placeholder="Search by name, content, or #label…"
-            aria-label="Search entities"
-            data-testid="entity-table-search"
-            class="w-full rounded-lg border border-theme-border bg-theme-surface py-1.5 md:py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-          />
-        </div>
+        <EntityTableSearch bind:searchQuery onSearchChange={setSearchQuery} />
 
         <!-- Mobile filters toggle button -->
         <button
