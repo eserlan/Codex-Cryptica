@@ -22,7 +22,28 @@
     { value: "longtext", label: "Long Text" },
     { value: "heading", label: "Section Heading" },
     { value: "dice", label: "Dice Roll" },
-    { value: "item-table", label: "Item / Equipment Table" },
+    { value: "item-table", label: "Repeatable Table" },
+  ];
+
+  const COLUMN_TYPES: {
+    value: NonNullable<StatSheetField["columns"]>[number]["type"];
+    label: string;
+  }[] = [
+    { value: "text", label: "Text" },
+    { value: "number", label: "Number" },
+    { value: "dice", label: "Dice Formula" },
+    { value: "counter", label: "Counter" },
+    { value: "checkbox", label: "Checkbox" },
+  ];
+
+  const DEFAULT_ITEM_TABLE_COLUMNS: NonNullable<StatSheetField["columns"]> = [
+    { id: "name", label: "Weapon Type", type: "text" },
+    { id: "size", label: "Size", type: "text" },
+    { id: "reach", label: "Reach (Force)", type: "text" },
+    { id: "damage", label: "Damage", type: "dice" },
+    { id: "ap_hp", label: "AP/HP", type: "text" },
+    { id: "effects", label: "Special Effects", type: "text" },
+    { id: "range_load", label: "Range & Load", type: "text" },
   ];
 
   let fields = $state<StatSheetField[]>(
@@ -55,6 +76,55 @@
 
   function updateField(id: string, updates: Partial<StatSheetField>) {
     persist(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
+  }
+
+  function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
+    const updates: Partial<StatSheetField> = { type: newType };
+    if (newType === "item-table" && !field.columns) {
+      updates.columns = DEFAULT_ITEM_TABLE_COLUMNS.map((c) => ({ ...c }));
+    }
+    updateField(field.id, updates);
+  }
+
+  function tableColumns(field: StatSheetField) {
+    return field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS;
+  }
+
+  function addColumn(field: StatSheetField) {
+    const id = `col-${idGenerator.uuid()}`;
+    updateField(field.id, {
+      columns: [
+        ...tableColumns(field),
+        { id, label: "New Column", type: "text" },
+      ],
+    });
+  }
+
+  function updateColumn(
+    field: StatSheetField,
+    columnId: string,
+    updates: Partial<NonNullable<StatSheetField["columns"]>[number]>,
+  ) {
+    updateField(field.id, {
+      columns: tableColumns(field).map((c) =>
+        c.id === columnId ? { ...c, ...updates } : c,
+      ),
+    });
+  }
+
+  function removeColumn(field: StatSheetField, columnId: string) {
+    updateField(field.id, {
+      columns: tableColumns(field).filter((c) => c.id !== columnId),
+    });
+  }
+
+  function moveColumn(field: StatSheetField, index: number, direction: -1 | 1) {
+    const cols = tableColumns(field);
+    const target = index + direction;
+    if (target < 0 || target >= cols.length) return;
+    const next = [...cols];
+    [next[index], next[target]] = [next[target], next[index]];
+    updateField(field.id, { columns: next });
   }
 
   let draggedIndex = $state<number | null>(null);
@@ -241,9 +311,10 @@
           value={field.type}
           aria-label="Field type"
           onchange={(e) =>
-            updateField(field.id, {
-              type: (e.target as HTMLSelectElement).value as StatSheetFieldType,
-            })}
+            changeFieldType(
+              field,
+              (e.target as HTMLSelectElement).value as StatSheetFieldType,
+            )}
         >
           {#each FIELD_TYPES as t (t.value)}
             <option value={t.value}>{t.label}</option>
@@ -359,6 +430,88 @@
                 })}
             />
           </label>
+        </div>
+      {:else if field.type === "item-table"}
+        <div class="flex flex-col gap-1.5 text-[10px] text-theme-muted">
+          <label class="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={field.linkVaultItems ?? true}
+              onchange={(e) =>
+                updateField(field.id, {
+                  linkVaultItems: (e.target as HTMLInputElement).checked,
+                })}
+            />
+            Allow linking rows to vault items
+          </label>
+          {#each tableColumns(field) as col, colIndex (col.id)}
+            <div class="flex items-center gap-1.5">
+              <input
+                type="text"
+                class="flex-1 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+                aria-label="Column label"
+                value={col.label}
+                oninput={(e) =>
+                  updateColumn(field, col.id, {
+                    label: (e.target as HTMLInputElement).value,
+                  })}
+              />
+              <select
+                class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+                aria-label="Column type"
+                value={col.type}
+                onchange={(e) =>
+                  updateColumn(field, col.id, {
+                    type: (e.target as HTMLSelectElement)
+                      .value as (typeof COLUMN_TYPES)[number]["value"],
+                  })}
+              >
+                {#each COLUMN_TYPES as t (t.value)}
+                  <option value={t.value}>{t.label}</option>
+                {/each}
+              </select>
+              <button
+                type="button"
+                class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+                onclick={() => moveColumn(field, colIndex, -1)}
+                disabled={colIndex === 0}
+                aria-label={`Move column ${col.label} left`}
+              >
+                <span
+                  class="icon-[lucide--chevron-up] h-3 w-3"
+                  aria-hidden="true"
+                ></span>
+              </button>
+              <button
+                type="button"
+                class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+                onclick={() => moveColumn(field, colIndex, 1)}
+                disabled={colIndex === tableColumns(field).length - 1}
+                aria-label={`Move column ${col.label} right`}
+              >
+                <span
+                  class="icon-[lucide--chevron-down] h-3 w-3"
+                  aria-hidden="true"
+                ></span>
+              </button>
+              <button
+                type="button"
+                class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-red-500 hover:text-red-500"
+                onclick={() => removeColumn(field, col.id)}
+                aria-label={`Delete column ${col.label}`}
+              >
+                <span class="icon-[lucide--trash-2] h-3 w-3" aria-hidden="true"
+                ></span>
+              </button>
+            </div>
+          {/each}
+          <button
+            type="button"
+            class="self-start rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            onclick={() => addColumn(field)}
+          >
+            + Add Column
+          </button>
         </div>
       {/if}
     </div>

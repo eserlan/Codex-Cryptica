@@ -30,7 +30,7 @@ export const StatSheetFieldSchema = z.object({
       z.object({
         id: z.string().min(1),
         label: z.string().min(1),
-        type: z.enum(["text", "number", "dice", "counter"]),
+        type: z.enum(["text", "number", "dice", "counter", "checkbox"]),
       }),
     )
     .optional(),
@@ -47,6 +47,12 @@ export const StatSheetFieldSchema = z.object({
       ),
     )
     .optional(),
+  // For "item-table" type fields: whether rows can be populated by linking
+  // to an existing vault item/weapon entity, in addition to typed manually.
+  // Undefined defaults to enabled (back-compat with existing weapon/item
+  // tables, which never set this); template authors can opt custom
+  // non-item tables (e.g. a Mythras skills table) out explicitly.
+  linkVaultItems: z.boolean().optional(),
   // Id of another field on the same sheet (typically a "number" ability
   // score) whose value drives this field's dice modifier — e.g. a "STR
   // Check" dice field derives its flat bonus from a "STR" score field via
