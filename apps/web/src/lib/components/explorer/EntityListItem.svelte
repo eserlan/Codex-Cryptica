@@ -199,7 +199,7 @@
 
   {#if entity.labels && entity.labels.length > 0}
     <div
-      class="w-full md:w-auto order-last md:order-none pl-9 pr-2 md:px-2 pb-2 md:pb-0 flex gap-1 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
+      class="w-full md:w-auto order-last md:order-none pl-9 pr-2 md:px-2 pb-2 md:pb-0 flex gap-1.5 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
     >
       {#each entity.labels.slice(0, 2) as label, index (`${entity.id}-label-${index}`)}
         <button
@@ -209,19 +209,21 @@
             explorerUIStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
           }}
           onmousedown={(e) => e.stopPropagation()}
-          class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
+          class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider truncate max-w-[90px] transition-all border {labelFilters.has(
             label,
           )
-            ? 'bg-theme-primary text-theme-bg border-theme-primary'
-            : label === 'chatty'
-              ? 'bg-theme-secondary/15 text-theme-secondary border-transparent hover:border-theme-secondary/50 hover:bg-theme-secondary/25'
-              : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
+            ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
+            : label.toLowerCase() === 'chatty'
+              ? 'bg-theme-secondary/20 text-theme-secondary border-theme-secondary/35 hover:border-theme-secondary/60 hover:bg-theme-secondary/30'
+              : 'bg-theme-primary/20 text-theme-primary border-theme-primary/35 hover:border-theme-primary/60 hover:bg-theme-primary/30'}"
         >
-          {label}
+          {label.toUpperCase()}
         </button>
       {/each}
       {#if entity.labels.length > 2}
-        <div class="text-[7px] text-theme-muted font-mono flex items-center">
+        <div
+          class="text-[9px] text-theme-muted font-header font-bold flex items-center"
+        >
           +{entity.labels.length - 2}
         </div>
       {/if}

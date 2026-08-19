@@ -228,7 +228,7 @@
   <!-- Labels -->
   <td class="hidden md:table-cell px-3 py-2 align-top">
     {#if chips.length}
-      <span class="flex flex-wrap gap-1">
+      <span class="flex flex-wrap gap-1.5">
         {#each chips as chip (chip)}
           {#if onFilterLabel}
             <button
@@ -236,28 +236,29 @@
               onclick={() => onFilterLabel(chip)}
               title="Filter by {chip}"
               data-testid="entity-table-row-label-filter"
-              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono transition-all border cursor-pointer {activeLabels?.has(
+              class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider transition-all border cursor-pointer {activeLabels?.has(
                 chip,
               )
-                ? 'bg-theme-primary text-theme-bg border-theme-primary'
-                : chip === 'chatty'
-                  ? 'bg-theme-secondary/15 text-theme-secondary border-transparent hover:border-theme-secondary/50 hover:bg-theme-secondary/25'
-                  : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-accent/40"
-              >{chip}</button
+                ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
+                : chip.toLowerCase() === 'chatty'
+                  ? 'bg-theme-secondary/20 text-theme-secondary border-theme-secondary/35 hover:border-theme-secondary/60 hover:bg-theme-secondary/30'
+                  : 'bg-theme-primary/20 text-theme-primary border-theme-primary/35 hover:border-theme-primary/60 hover:bg-theme-primary/30'} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-accent/40"
+              >{chip.toUpperCase()}</button
             >
           {:else}
             <span
-              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono border {activeLabels?.has(
+              class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider border {activeLabels?.has(
                 chip,
               )
-                ? 'bg-theme-primary text-theme-bg border-theme-primary'
-                : 'border-transparent bg-theme-primary/10 text-theme-primary'}"
-              >{chip}</span
+                ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
+                : 'border-theme-primary/35 bg-theme-primary/20 text-theme-primary'}"
+              >{chip.toUpperCase()}</span
             >
           {/if}
         {/each}
         {#if extraChips > 0}
-          <span class="text-[7px] text-theme-muted font-mono flex items-center"
+          <span
+            class="text-[9px] text-theme-muted font-header font-bold flex items-center"
             >+{extraChips}</span
           >
         {/if}
