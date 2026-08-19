@@ -1634,7 +1634,8 @@
                   <td class="py-1 px-1 text-theme-primary font-bold">table</td>
                   <td class="py-1 px-1 text-theme-muted">item-table</td>
                   <td class="py-1 px-1 font-sans"
-                    >Interactive equipment table</td
+                    >Interactive repeatable table (weapons/items or custom
+                    columns)</td
                   >
                 </tr>
               </tbody>

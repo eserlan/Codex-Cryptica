@@ -30,7 +30,7 @@ export const StatSheetFieldSchema = z.object({
       z.object({
         id: z.string().min(1),
         label: z.string().min(1),
-        type: z.enum(["text", "number", "dice", "counter"]),
+        type: z.enum(["text", "number", "dice", "counter", "checkbox"]),
       }),
     )
     .optional(),
@@ -47,6 +47,12 @@ export const StatSheetFieldSchema = z.object({
       ),
     )
     .optional(),
+  // For "item-table" type fields: whether rows can be populated by linking
+  // to an existing vault item/weapon entity, in addition to typed manually.
+  // Undefined defaults to enabled (back-compat with existing weapon/item
+  // tables, which never set this); template authors can opt custom
+  // non-item tables (e.g. a Mythras skills table) out explicitly.
+  linkVaultItems: z.boolean().optional(),
   // Id of another field on the same sheet (typically a "number" ability
   // score) whose value drives this field's dice modifier — e.g. a "STR
   // Check" dice field derives its flat bonus from a "STR" score field via
@@ -57,6 +63,26 @@ export const StatSheetFieldSchema = z.object({
 });
 
 export type StatSheetField = z.infer<typeof StatSheetFieldSchema>;
+
+/**
+ * Fallback columns for "item-table" fields that predate the configurable
+ * column editor, and the seed used when a template author switches a field
+ * to "item-table" for the first time. Single source of truth — the
+ * built-in Mythras template, the template editor's seeding logic, and the
+ * renderer's legacy fallback all import this instead of redeclaring the
+ * weapon column list.
+ */
+export const DEFAULT_ITEM_TABLE_COLUMNS: NonNullable<
+  StatSheetField["columns"]
+> = [
+  { id: "name", label: "Weapon Type", type: "text" },
+  { id: "size", label: "Size", type: "text" },
+  { id: "reach", label: "Reach (Force)", type: "text" },
+  { id: "damage", label: "Damage", type: "dice" },
+  { id: "ap_hp", label: "AP/HP", type: "text" },
+  { id: "effects", label: "Special Effects", type: "text" },
+  { id: "range_load", label: "Range & Load", type: "text" },
+];
 
 export const StatSheetSchema = z.object({
   templateId: z.string().nullable().optional(),
