@@ -187,6 +187,31 @@
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
+    <button
+      id={tabIds.connections}
+      type="button"
+      role="tab"
+      class:shrink-0={true}
+      aria-selected={activeTab === "connections"}
+      aria-controls={panelIds.connections}
+      tabindex={activeTab === "connections" ? 0 : -1}
+      data-testid="tab-connections"
+      class={activeTab === "connections"
+        ? isFantasyTheme
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : isFantasyTheme
+          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+          : "hover:text-theme-text transition"}
+      style:border-color={activeTab === "connections" && isFantasyTheme
+        ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "connections" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
+      onclick={() => (activeTab = "connections")}>CONNECTIONS</button
+    >
+
     {#if !vault.isGuest || canGuestEdit}
       <button
         id={tabIds.lore}

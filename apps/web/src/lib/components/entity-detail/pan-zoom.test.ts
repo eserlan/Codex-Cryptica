@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PanZoomState } from "./pan-zoom.svelte";
+import { PAN_ZOOM_LIMITS, PanZoomState } from "./pan-zoom.svelte";
 
 function pointerEvent(
   pointerId: number,
@@ -124,5 +124,48 @@ describe("PanZoomState — touch interactions (T021)", () => {
     // Only one pointer remains; further single-pointer move should pan, not zoom.
     state.onPointerMove(pointerEvent(1, 130, 100));
     expect(state.viewport.zoom).toBe(zoomBefore);
+  });
+});
+
+describe("button zoom", () => {
+  const state = () => {
+    const panZoom = new PanZoomState(() => ({ width: 400, height: 300 }));
+    return panZoom;
+  };
+
+  it("zooms around the middle of the container", () => {
+    const panZoom = state();
+    const centre = { x: 200, y: 150 };
+    /** Which point of the content currently sits under the container centre. */
+    const contentAtCentre = () => ({
+      x: (centre.x - panZoom.viewport.pan.x) / panZoom.viewport.zoom,
+      y: (centre.y - panZoom.viewport.pan.y) / panZoom.viewport.zoom,
+    });
+    const before = contentAtCentre();
+
+    panZoom.zoomBy(2);
+
+    expect(panZoom.viewport.zoom).toBe(2);
+    // Whatever was in the middle before is still in the middle after.
+    expect(contentAtCentre()).toEqual(before);
+  });
+
+  it("stays within the zoom limits", () => {
+    const panZoom = state();
+
+    for (let i = 0; i < 20; i++) panZoom.zoomBy(2);
+    expect(panZoom.viewport.zoom).toBe(PAN_ZOOM_LIMITS.max);
+
+    for (let i = 0; i < 40; i++) panZoom.zoomBy(0.5);
+    expect(panZoom.viewport.zoom).toBe(PAN_ZOOM_LIMITS.min);
+  });
+
+  it("resets to 1:1 and centred", () => {
+    const panZoom = state();
+    panZoom.zoomBy(2);
+
+    panZoom.reset();
+
+    expect(panZoom.viewport).toEqual({ pan: { x: 0, y: 0 }, zoom: 1 });
   });
 });
