@@ -494,21 +494,23 @@
       {@const hasChildren = node.children.length > 0}
       {@const isCollapsed =
         searchQuery.trim() !== "" ? false : collapsedEntities.has(entity.id)}
+      {@const cappedDepth = Math.min(depth, 8)}
+      {@const elbowColumn = depth <= 8 ? cappedDepth - 1 : -1}
 
       <div
         class="space-y-1 relative"
-        style:margin-left={`${Math.min(depth, 8) * 0.75}rem`}
+        style:margin-left={`${cappedDepth * 0.75}rem`}
       >
         {#if depth > 0}
           <div
             class="tree-guides pointer-events-none absolute inset-y-0 flex"
-            style:left={`-${Math.min(depth, 8) * 0.75}rem`}
-            style:width={`${Math.min(depth, 8) * 0.75}rem`}
+            style:left={`-${cappedDepth * 0.75}rem`}
+            style:width={`${cappedDepth * 0.75}rem`}
             data-testid="tree-guides"
             aria-hidden="true"
           >
-            {#each Array(Math.min(depth, 8)) as _, level (level)}
-              {#if level === Math.min(depth, 8) - 1}
+            {#each Array(cappedDepth) as _, level (level)}
+              {#if level === elbowColumn}
                 <span class="tree-guide-col tree-guide-elbow-col">
                   <span class="tree-guide-elbow-top"></span>
                   {#if !isLast}
@@ -839,18 +841,21 @@
      level, with a short horizontal elbow connecting each child row into its
      parent's line, so parent/child structure reads clearly without relying
      on indentation alone. Rendered per-row (rather than as a single wrapping
-     border) because rows are flattened for large-vault pagination. */
-  .tree-guide-bar {
-    border-left: 1px solid var(--tree-guide-color);
-    box-shadow: var(--theme-text-glow, none);
-  }
-
-  .tree-guides {
+     border) because rows are flattened for large-vault pagination.
+     --tree-guide-color is defined here (the shared list container) rather
+     than on .tree-guides so that .tree-guide-bar — used for the inline
+     add-child form, which is a sibling of .tree-guides, not a descendant —
+     also inherits it. */
+  .custom-scrollbar {
     --tree-guide-color: color-mix(
       in srgb,
       var(--color-theme-accent),
       transparent 60%
     );
+  }
+  .tree-guide-bar {
+    border-left: 1px solid var(--tree-guide-color);
+    box-shadow: var(--theme-text-glow, none);
   }
   .tree-guide-col {
     position: relative;
