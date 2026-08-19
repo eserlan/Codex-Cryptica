@@ -815,6 +815,7 @@
           {connectionCounts}
           {showIncompleteOnly}
           {columnFilters}
+          activeLabels={labelFilters}
           onUpdateColumnFilters={handleUpdateColumnFilters}
           onSort={handleSort}
           {selectedIds}

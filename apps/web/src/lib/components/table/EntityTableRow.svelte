@@ -25,6 +25,7 @@
     connectionSummary,
     onFilterType,
     onFilterLabel,
+    activeLabels,
     onContextMenu,
   }: {
     entity: Entity;
@@ -38,6 +39,7 @@
     connectionSummary: ConnectionSummary;
     onFilterType?: (type: string) => void;
     onFilterLabel?: (label: string) => void;
+    activeLabels?: Set<string>;
     onContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
 
@@ -234,12 +236,22 @@
               onclick={() => onFilterLabel(chip)}
               title="Filter by {chip}"
               data-testid="entity-table-row-label-filter"
-              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono transition-all border border-transparent bg-theme-primary/10 text-theme-primary hover:border-theme-primary/50 hover:bg-theme-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-accent/40"
+              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono transition-all border {activeLabels?.has(
+                chip,
+              )
+                ? 'bg-theme-primary text-theme-bg border-theme-primary'
+                : chip === 'chatty'
+                  ? 'bg-theme-secondary/15 text-theme-secondary border-transparent hover:border-theme-secondary/50 hover:bg-theme-secondary/25'
+                  : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-accent/40"
               >{chip}</button
             >
           {:else}
             <span
-              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono border border-transparent bg-theme-primary/10 text-theme-primary"
+              class="text-[7px] px-1 rounded uppercase tracking-[0.1em] font-mono border {activeLabels?.has(
+                chip,
+              )
+                ? 'bg-theme-primary text-theme-bg border-theme-primary'
+                : 'border-transparent bg-theme-primary/10 text-theme-primary'}"
               >{chip}</span
             >
           {/if}
