@@ -213,8 +213,10 @@
             ? 'bg-theme-primary/10 text-theme-primary'
             : ''}"
         >
-          <span class="text-theme-primary/60">{autocompletePrefix}</span>
-          <span>{label}</span>
+          <span class="text-theme-primary/60 shrink-0"
+            >{autocompletePrefix}</span
+          >
+          <span class="truncate min-w-0 uppercase">{label}</span>
         </button>
       {/each}
     </div>
