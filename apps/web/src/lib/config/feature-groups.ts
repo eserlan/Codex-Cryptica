@@ -91,6 +91,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "spatial-canvas",
       "family-tree",
       "lineage-controls",
+      "connections",
       "world-chronology",
       "entity-timeline",
       "node-merging",

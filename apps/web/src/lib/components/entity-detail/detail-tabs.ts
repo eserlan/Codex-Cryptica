@@ -1,5 +1,6 @@
 export const entityDetailTabs = [
   "status",
+  "connections",
   "lore",
   "map",
   "chats",
