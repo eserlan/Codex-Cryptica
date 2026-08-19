@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { Entity } from "schema";
 import {
   FALLBACK_COLOR,
+  applyKnownImageUrls,
   buildConnectionsElements,
   buildConnectionsStyle,
-  carryForwardResolvedImages,
+  resolvedImageUrlCache,
 } from "./connections-cytoscape";
 import type { ConnectionNeighbor } from "./entity-connections";
 
@@ -172,61 +173,72 @@ describe("buildConnectionsStyle", () => {
   });
 });
 
-describe("carryForwardResolvedImages", () => {
-  const fakeNode = (id: string, resolvedImage?: string) => ({
-    id: () => id,
-    data: (key: string) =>
-      key === "resolvedImage" ? resolvedImage : undefined,
+describe("applyKnownImageUrls", () => {
+  beforeEach(() => {
+    resolvedImageUrlCache.clear();
   });
 
-  it("copies a previously-resolved portrait onto the matching new element", () => {
+  it("paints a node from the cache by its image path", () => {
+    resolvedImageUrlCache.set("duke.png", "blob:duke-portrait");
     const next = buildConnectionsElements(entity({ id: "king" }), [
-      neighbor({ id: "duke" }),
+      neighbor({ id: "duke", image: "duke.png" }),
     ]);
 
-    const carried = carryForwardResolvedImages(next, [
-      fakeNode("duke", "blob:duke-portrait"),
-    ]);
+    const painted = applyKnownImageUrls(next);
 
-    const duke = carried.find((el) => el.data.id === "duke")!;
+    const duke = painted.find((el) => el.data.id === "duke")!;
     expect(duke.data.resolvedImage).toBe("blob:duke-portrait");
   });
 
-  it("leaves edges and unmatched nodes untouched", () => {
+  it("prefers the thumbnail path over the full image when both are cached", () => {
+    resolvedImageUrlCache.set("duke.png", "blob:duke-full");
+    resolvedImageUrlCache.set("duke-thumb.png", "blob:duke-thumb");
     const next = buildConnectionsElements(entity({ id: "king" }), [
-      neighbor({ id: "duke" }),
+      neighbor({ id: "duke", image: "duke.png", thumbnail: "duke-thumb.png" }),
+    ]);
+
+    const painted = applyKnownImageUrls(next);
+
+    expect(
+      painted.find((el) => el.data.id === "duke")!.data.resolvedImage,
+    ).toBe("blob:duke-thumb");
+  });
+
+  it("survives across a wholly fresh element set — the actual bug: {#key entity.id}", () => {
+    // EntityDetailPanel destroys and recreates this whole component on every
+    // entity selection, so the cache — not anything scoped to one cytoscape
+    // instance — is what has to carry the portrait across that boundary.
+    resolvedImageUrlCache.set("king.png", "blob:king-portrait");
+    const freshMountElements = buildConnectionsElements(
+      entity({ id: "king", image: "king.png" }),
+      [],
+    );
+
+    const painted = applyKnownImageUrls(freshMountElements);
+
+    expect(painted[0].data.resolvedImage).toBe("blob:king-portrait");
+  });
+
+  it("leaves edges and nodes with no known path untouched", () => {
+    resolvedImageUrlCache.set("duke.png", "blob:duke-portrait");
+    const next = buildConnectionsElements(entity({ id: "king" }), [
+      neighbor({ id: "duke", image: "duke.png" }),
       neighbor({ id: "guard" }),
     ]);
 
-    const carried = carryForwardResolvedImages(next, [
-      fakeNode("duke", "blob:duke-portrait"),
-    ]);
+    const painted = applyKnownImageUrls(next);
 
-    const guard = carried.find((el) => el.data.id === "guard")!;
-    const edge = carried.find((el) => el.group === "edges")!;
+    const guard = painted.find((el) => el.data.id === "guard")!;
+    const edge = painted.find((el) => el.group === "edges")!;
     expect(guard.data.resolvedImage).toBeUndefined();
     expect((edge.data as any).resolvedImage).toBeUndefined();
   });
 
-  it("is a no-op when nothing was previously resolved", () => {
+  it("is a no-op when the cache is empty", () => {
     const next = buildConnectionsElements(entity({ id: "king" }), [
-      neighbor({ id: "duke" }),
+      neighbor({ id: "duke", image: "duke.png" }),
     ]);
 
-    const carried = carryForwardResolvedImages(next, [fakeNode("duke")]);
-
-    expect(carried).toBe(next);
-  });
-
-  it("ignores a node id that no longer appears in the new set", () => {
-    const next = buildConnectionsElements(entity({ id: "king" }), [
-      neighbor({ id: "guard" }),
-    ]);
-
-    const carried = carryForwardResolvedImages(next, [
-      fakeNode("duke", "blob:duke-portrait"),
-    ]);
-
-    expect(carried.some((el) => "resolvedImage" in el.data)).toBe(false);
+    expect(applyKnownImageUrls(next)).toBe(next);
   });
 });

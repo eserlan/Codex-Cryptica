@@ -73,25 +73,37 @@ export function buildConnectionsElements(
  * A resolved portrait lives as data cytoscape attached imperatively to a
  * live node (`GraphImageManager.sync` sets it after an always-async round
  * trip, even on a cache hit) — never on the plain element objects
- * `buildConnectionsElements` returns. Rebuilding the element set from
- * scratch (the elements-sync effect does this on every entity/theme change)
- * therefore always starts every portrait over from blank, however briefly,
- * unless the previous value is carried forward by node id first.
+ * `buildConnectionsElements` returns. Two different things throw that
+ * imperative data away:
+ *
+ *  - the elements-sync effect replaces the whole element set on every
+ *    entity/theme change (simplest correct approach for a graph this small)
+ *  - `EntityDetailPanel` wraps its tab body in `{#key activeEntity.id}`, so
+ *    selecting a different entity destroys this component outright — a
+ *    brand new cytoscape instance starts with zero resolved images, no
+ *    matter what the last one knew
+ *
+ * `resolvedImageUrlCache` is a plain module-level map (path → blob URL,
+ * *not* scoped to any one component instance or cytoscape core) that
+ * survives both, so a portrait already fetched once this session can be
+ * repainted immediately instead of flashing blank while it silently
+ * re-resolves. It is intentionally never invalidated here: nothing today
+ * releases the vault's own reference-counted URL, so nothing revokes it
+ * either — see the `resolveImageUrl` wiring in the component. `sync()`
+ * still runs on every rebuild regardless, so a path this cache does not yet
+ * know about, or a genuinely new image, resolves the normal way.
  */
-export function carryForwardResolvedImages(
-  nextElements: ElementDefinition[],
-  previousNodes: Iterable<{ id: () => string; data: (key: string) => unknown }>,
-): ElementDefinition[] {
-  const resolved = new Map<string, string>();
-  for (const node of previousNodes) {
-    const value = node.data("resolvedImage");
-    if (typeof value === "string" && value) resolved.set(node.id(), value);
-  }
-  if (resolved.size === 0) return nextElements;
+export const resolvedImageUrlCache = new Map<string, string>();
 
-  return nextElements.map((el) => {
+export function applyKnownImageUrls(
+  elements: ElementDefinition[],
+): ElementDefinition[] {
+  if (resolvedImageUrlCache.size === 0) return elements;
+
+  return elements.map((el) => {
     if (el.group !== "nodes") return el;
-    const url = resolved.get(el.data.id as string);
+    const path = (el.data.thumbnail ?? el.data.image) as string | undefined;
+    const url = path ? resolvedImageUrlCache.get(path) : undefined;
     return url ? { ...el, data: { ...el.data, resolvedImage: url } } : el;
   });
 }

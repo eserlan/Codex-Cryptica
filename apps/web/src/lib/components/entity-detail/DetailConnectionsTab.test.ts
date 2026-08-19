@@ -257,6 +257,41 @@ describe("DetailConnectionsTab", () => {
       );
     });
 
+    it("remembers a resolved portrait so a later mount can paint it immediately", async () => {
+      const { resolvedImageUrlCache } = await import("./connections-cytoscape");
+      resolvedImageUrlCache.clear();
+      const kingWithImage = { ...entities.king, image: "king.png" } as Entity;
+      vaultMock.resolveImageUrl.mockResolvedValueOnce("blob:king-portrait");
+
+      // First mount: nothing cached yet, so the portrait comes from the
+      // normal async resolve/sync path.
+      const first = render(DetailConnectionsTab, { entity: kingWithImage });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      const manager = imageManagerInstances[imageManagerInstances.length - 1];
+      const resolveImageUrl =
+        manager.sync.mock.calls.at(-1)?.[0].resolveImageUrl;
+      await resolveImageUrl("king.png");
+      expect(resolvedImageUrlCache.get("king.png")).toBe("blob:king-portrait");
+      first.unmount();
+
+      // This is the reported bug: EntityDetailPanel remounts this whole
+      // component (`{#key activeEntity.id}`) on every entity selection, so
+      // the *only* thing that can survive to the next mount is the cache —
+      // nothing scoped to the destroyed cytoscape instance does.
+      cyInstances.length = 0;
+      render(DetailConnectionsTab, { entity: kingWithImage });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const cy = lastCy();
+      const added = cy.add.mock.calls[0][0];
+      const king = added.find((el: any) => el.data.isCentre);
+      expect(king.data.resolvedImage).toBe("blob:king-portrait");
+    });
+
     it("opens a neighbour when cytoscape reports a tap on its node, ignoring the centre", async () => {
       const onNavigate = vi.fn();
       render(DetailConnectionsTab, { entity: entities.king, onNavigate });

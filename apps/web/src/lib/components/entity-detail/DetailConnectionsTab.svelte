@@ -13,9 +13,10 @@
     type ConnectionNeighbor,
   } from "./entity-connections";
   import {
+    applyKnownImageUrls,
     buildConnectionsElements,
     buildConnectionsStyle,
-    carryForwardResolvedImages,
+    resolvedImageUrlCache,
   } from "./connections-cytoscape";
   import { PanZoomState } from "./pan-zoom.svelte";
 
@@ -113,11 +114,11 @@
     const spacing = isWide ? 70 : 52;
 
     // Elements are fully replaced below rather than diffed — simplest correct
-    // approach for a graph this small. That destroys every node object,
-    // though, so a portrait cytoscape already resolved must be carried
-    // forward explicitly or it flashes blank again while it silently
-    // re-resolves (see carryForwardResolvedImages's own doc).
-    const nextElements = carryForwardResolvedImages(elements, cy.nodes());
+    // approach for a graph this small — so pre-paint anything already known
+    // from a past resolution (this render, an earlier one, or a since-
+    // destroyed instance of this same tab) rather than starting blank.
+    // See resolvedImageUrlCache's doc for why this stays correct.
+    const nextElements = applyKnownImageUrls(elements);
 
     cy.style(nextStyle as any);
     cy.batch(() => {
@@ -135,7 +136,11 @@
     } as any).run();
     imageManager?.sync({
       showImages: true,
-      resolveImageUrl: (path: string) => vault.resolveImageUrl(path),
+      resolveImageUrl: async (path: string) => {
+        const url = await vault.resolveImageUrl(path);
+        if (url) resolvedImageUrlCache.set(path, url);
+        return url;
+      },
       releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
     });
   });
