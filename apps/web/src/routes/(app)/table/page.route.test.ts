@@ -116,7 +116,7 @@ describe("/table page", () => {
     expect(screen.queryByTestId("entity-table-active-filter-badge")).toBeNull();
   });
 
-  it("shares type/label filter state with the graph view", async () => {
+  it("keeps type/label filter state isolated from graph view", async () => {
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character" }),
       entity({ id: "e2", title: "Brindlewood", type: "location" }),
@@ -127,9 +127,8 @@ describe("/table page", () => {
     await fireEvent.click(toggleBtn);
     await fireEvent.click(screen.getAllByTestId("entity-table-type-filter")[0]);
 
-    // The toggle should have written through to the shared graph store, not
-    // a table-private copy, so the Graph view sees the same filter.
-    expect(graph.activeCategories.size).toBe(1);
+    // Table view filters are isolated and do not mutate the shared graph store
+    expect(graph.activeCategories.size).toBe(0);
 
     const graphLink = screen.getByTestId("table-browse-as-graph");
     expect(graphLink.getAttribute("href")).toBe("/");
