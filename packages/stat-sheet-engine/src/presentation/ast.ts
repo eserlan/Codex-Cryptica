@@ -85,6 +85,8 @@ export type LayoutDirectiveName = "stat-group" | "section" | "card" | "row";
 
 export interface SectionNode {
   type: "section";
+  /** A Markdown heading promoted to a collapsible section title. */
+  heading?: HeadingNode;
   title?: string;
   children: BlockNode[];
 }
