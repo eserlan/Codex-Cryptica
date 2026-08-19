@@ -28,6 +28,7 @@ vi.mock("@capacitor/status-bar", () => ({
   StatusBar: {
     setStyle: vi.fn(),
     setOverlaysWebView: vi.fn(),
+    setBackgroundColor: vi.fn(),
   },
   Style: {
     Dark: "DARK",
@@ -69,7 +70,7 @@ describe("CapacitorBridge", () => {
 
     await bridge.init();
 
-    expect(StatusBar.setStyle).toHaveBeenCalledWith({ style: Style.Dark });
+    expect(StatusBar.setStyle).toHaveBeenCalledWith({ style: Style.Default });
     expect(StatusBar.setOverlaysWebView).toHaveBeenCalledWith({
       overlay: true,
     });
