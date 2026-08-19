@@ -727,19 +727,22 @@
             </button>
           {/each}
           {#each [...labelFilters].sort() as label (label)}
-            <button
-              type="button"
-              onclick={() => toggleLabel(label)}
-              aria-pressed="true"
-              title="Remove label filter"
+            <div
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
               data-testid="entity-table-label-filter"
-              class="inline-flex items-center gap-1 rounded-full border border-theme-primary bg-theme-primary/10 px-2.5 py-1 text-xs uppercase font-medium text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
             >
-              <span class="icon-[lucide--tag] h-3 w-3" aria-hidden="true"
-              ></span>
-              {label}
-              <span class="icon-[lucide--x] h-3 w-3" aria-hidden="true"></span>
-            </button>
+              <span>{label}</span>
+              <button
+                type="button"
+                onclick={() => toggleLabel(label)}
+                title="Remove {label} filter"
+                aria-label="Remove {label} filter"
+                class="hover:text-theme-text transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"
+                ></span>
+              </button>
+            </div>
           {/each}
           {#if hasActiveFilters}
             <button
