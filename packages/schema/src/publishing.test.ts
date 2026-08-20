@@ -7,6 +7,7 @@ import {
   ListingDraftSchema,
   PUBLISH_LIMITS,
   PublicListingSchema,
+  PublicTemplatePackageSchema,
   PublishedNoticeSchema,
   SuspensionMarkerSchema,
 } from "./publishing";
@@ -223,6 +224,80 @@ describe("publishing directory schemas", () => {
           mode: "invalid-mode",
         }).success,
       ).toBe(false);
+    });
+  });
+
+  describe("template package schemas", () => {
+    const validPackage = {
+      schemaVersion: 1 as const,
+      template: {
+        name: "Mythras Warrior",
+        description: "Standard Mythras combatant layout.",
+        system: "Mythras",
+        labels: ["npc", "combat"],
+        fields: [
+          {
+            id: "str_check",
+            label: "STR Check",
+            type: "dice" as const,
+            formula: "1d20+2",
+            modifierSource: "str_score",
+          },
+          {
+            id: "weapons",
+            label: "Weapons",
+            type: "item-table" as const,
+            linkVaultItems: true,
+            columns: [
+              { id: "weapon", label: "Weapon", type: "text" as const },
+              { id: "damage", label: "Damage", type: "dice" as const },
+            ],
+          },
+        ],
+      },
+    };
+
+    it("accepts valid template package with item-table and modifierSource", () => {
+      expect(PublicTemplatePackageSchema.parse(validPackage)).toEqual(
+        validPackage,
+      );
+    });
+
+    it("rejects template without system or category", () => {
+      const invalid = {
+        ...validPackage,
+        template: {
+          ...validPackage.template,
+          system: undefined,
+          category: undefined,
+        },
+      };
+      expect(PublicTemplatePackageSchema.safeParse(invalid).success).toBe(
+        false,
+      );
+    });
+
+    it("rejects template with field min > max", () => {
+      const invalid = {
+        ...validPackage,
+        template: {
+          ...validPackage.template,
+          fields: [
+            {
+              id: "hp",
+              label: "HP",
+              type: "counter" as const,
+              min: 20,
+              max: 10,
+            },
+          ],
+        },
+      };
+      const result = PublicTemplatePackageSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(["template", "fields", 0]);
+      }
     });
   });
 });
