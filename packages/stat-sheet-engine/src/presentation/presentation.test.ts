@@ -5,6 +5,7 @@ import { isTemplateUsable, validateAst } from "./validate";
 import { resolvePresentationTemplate } from "./resolve";
 import { getBuiltInPresentationTemplates } from "./built-ins";
 import {
+  analyzePresentationCompatibility,
   exportPresentationTemplate,
   importPresentationTemplatePackage,
 } from "./package";
@@ -501,6 +502,77 @@ describe("exportPresentationTemplate / importPresentationTemplatePackage", () =>
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reason).toBe("invalid-package");
+  });
+
+  it("retargets imported package to targetSchema and identifies unmapped fields", () => {
+    const pkg = {
+      formatVersion: 1,
+      name: "Imported from Another Character",
+      description: null,
+      schemaTemplateId: "entity-local-stat-sheet:char-1",
+      source: "{{stat.hp}}\n\n{{stat.ac}}\n\n{{stat.mana}}",
+    };
+
+    const targetSchema: StatSheetTemplate = {
+      id: "entity-local-stat-sheet:char-2",
+      name: "Character 2",
+      isBuiltIn: false,
+      fields: [
+        { id: "hp", label: "Hit Points", type: "counter" },
+        { id: "ac", label: "Armor Class", type: "number" },
+      ],
+    };
+
+    const result = importPresentationTemplatePackage(pkg, [], targetSchema);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.package.schemaTemplateId).toBe(
+      "entity-local-stat-sheet:char-2",
+    );
+    expect(result.unmappedFields).toEqual(["mana"]);
+  });
+});
+
+describe("analyzePresentationCompatibility", () => {
+  it("detects fully compatible presentation when all fields exist", () => {
+    const targetSchema: StatSheetTemplate = {
+      id: "schema-test",
+      name: "Test",
+      isBuiltIn: false,
+      fields: [
+        { id: "hp", label: "HP", type: "counter" },
+        { id: "str", label: "STR", type: "number" },
+      ],
+    };
+
+    const analysis = analyzePresentationCompatibility(
+      "{{stat.hp}}\n\n[str]",
+      1,
+      targetSchema,
+    );
+    expect(analysis.compatible).toBe(true);
+    expect(analysis.matchedFields).toContain("hp");
+    expect(analysis.matchedFields).toContain("str");
+    expect(analysis.unmappedFields).toEqual([]);
+  });
+
+  it("identifies missing field references in unmappedFields", () => {
+    const targetSchema: StatSheetTemplate = {
+      id: "schema-test",
+      name: "Test",
+      isBuiltIn: false,
+      fields: [{ id: "hp", label: "HP", type: "counter" }],
+    };
+
+    const analysis = analyzePresentationCompatibility(
+      "{{stat.hp}}\n\n{{stat.mana}}\n\n[spell_slots]",
+      1,
+      targetSchema,
+    );
+    expect(analysis.compatible).toBe(false);
+    expect(analysis.matchedFields).toEqual(["hp"]);
+    expect(analysis.unmappedFields).toContain("mana");
+    expect(analysis.unmappedFields).toContain("spell_slots");
   });
 });
 

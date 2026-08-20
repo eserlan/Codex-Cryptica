@@ -159,4 +159,49 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     expect(resaved?.name).toBe("My Layout");
     expect(resaved?.source).toBe("two");
   });
+
+  it("copies a template from one schema to another with unique naming", async () => {
+    const store = makeStore();
+    const original = await store.saveTemplate({
+      schemaTemplateId: "entity-local-stat-sheet:char-1",
+      name: "Hero Custom Layout",
+      description: "A custom character layout",
+      source: "{{stat.hp}}\n\n{{stat.ac}}",
+      formatVersion: 1,
+    });
+    expect(original).not.toBeNull();
+
+    const copied = await store.copyTemplateToSchema(
+      original!,
+      "entity-local-stat-sheet:char-2",
+    );
+
+    expect(copied).not.toBeNull();
+    expect(copied?.schemaTemplateId).toBe("entity-local-stat-sheet:char-2");
+    expect(copied?.name).toBe("Hero Custom Layout");
+    expect(copied?.source).toBe("{{stat.hp}}\n\n{{stat.ac}}");
+    expect(copied?.description).toBe("A custom character layout");
+    expect(copied?.id).not.toBe(original?.id);
+  });
+
+  it("returns all vault templates via getAllVaultTemplates", async () => {
+    const store = makeStore();
+    await store.saveTemplate({
+      schemaTemplateId: "schema-1",
+      name: "Template A",
+      source: "a",
+      formatVersion: 1,
+    });
+    await store.saveTemplate({
+      schemaTemplateId: "schema-2",
+      name: "Template B",
+      source: "b",
+      formatVersion: 1,
+    });
+
+    const all = store.getAllVaultTemplates();
+    expect(all.length).toBeGreaterThanOrEqual(2);
+    expect(all.some((t) => t.name === "Template A")).toBe(true);
+    expect(all.some((t) => t.name === "Template B")).toBe(true);
+  });
 });
