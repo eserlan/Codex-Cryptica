@@ -117,10 +117,33 @@ export interface VillainPrompt {
 
 const CONSISTENCY_PASS = `Before returning, run a consistency pass: the multi-stage plan must escalate logically stage-to-stage and remain usable even if a stage is disrupted early (state how disruption changes later stages); the stated weakness must connect coherently to the fatal flaw, methods, or organisation rather than being an unrelated add-on; every lieutenant's stated loyalty and motivation must not contradict the organisation/power structure described elsewhere; and the selected threat scale must be reflected consistently across resources, methods, and the plan's scope — do not describe cosmic-scale resources for a Local-scale villain or vice versa.`;
 
+const OVERUSED_DOMAINS = [
+  "logistics",
+  "supply chains",
+  "corporate consolidation",
+  "municipal bureaucracy",
+  "data-routing",
+];
+
+/**
+ * Builds the "avoid an overused domain" guardrail using the villain's own
+ * *recent* generation history, so the instruction is enforced against real
+ * session state rather than only asked for in the abstract (#2325 follow-up).
+ */
+function domainVarietyGuardrail(recentDomains: readonly string[]): string {
+  const avoidList = OVERUSED_DOMAINS.join(", ");
+  const recentNote =
+    recentDomains.length > 0
+      ? ` Domains used in this session's recent villains, most recent first: ${recentDomains.join(", ")} — vary away from these unless the campaign context specifically calls for a repeat.`
+      : "";
+  return `Before expanding the villain, identify the dominant conflict domain driving their plan and record it in the "conflictDomain" field (a short 2-5 word label, e.g. "Political Corruption", "Cult Ritual", "Military Conquest", "Personal Vendetta", "Cosmic Incursion", "Criminal Empire", "Ideological Revolution", "Forbidden Magic"). Avoid using ${avoidList} as that dominant domain unless the campaign context explicitly selects one of them, or unless none of these have appeared in recent generations.${recentNote}`;
+}
+
 export function buildVillainPrompt(
   options: VillainGeneratorOptions = {},
   sessionContext = "",
   rng: Rng = defaultRng,
+  recentDomains: readonly string[] = [],
 ): VillainPrompt {
   const resolved = resolveVillain(options, rng);
 
@@ -136,11 +159,13 @@ ${formatCampaignContextBlock(resolved.campaignContext)}
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "The villain's name, and an epithet or title if one fits the genre (3-8 words)",
+  "conflictDomain": "A short 2-5 word label for the dominant conflict domain driving this villain's plan (see guardrail below)",
   "content": "Player/table-facing markdown (what the party can plausibly learn without metagaming) with these sections: '### Public Face' (what the wider world believes about them — tyrant, philanthropist, legend, or supposedly nonexistent threat), '### Signature / Calling Card' (a recurring motif, tactic, or trace that lets players recognise their influence before meeting them), '### First Signs' (several concrete, indirect early clues the campaign can reveal, e.g. strange orders, missing people, unusual movements — not the villain appearing personally).",
   "lore": "GM-only markdown (use exactly these '###' headings, in this order): '### Core Concept' (what makes this antagonist distinctive and campaign-worthy, one concise paragraph), '### True Nature' (what the GM knows that the world does not), '### Ultimate Goal' (a concrete desired end state — never a vague objective like 'gain power' or 'conquer the world'; explain what the world looks like when they have won), '### Why Now' (what changed recently that makes the villain act now, explaining why the campaign begins at this moment), '### Motivation' (an internally coherent reason for pursuing the goal, from the villain's own perspective), '### Fatal Flaw' (a weakness that affects behaviour, not decorative trivia), '### Methods' (how they actually advance their agenda), '### Resources' (what gives them power), '### Lieutenants & Inner Circle' (2-4 named subordinates, each as a bullet with role, relationship to the villain, personal motivation, degree of loyalty, and a vulnerability/secret/independent agenda — write these so each is usable later as a linked Character), '### Organisation & Power Structure' (how their power functions around them), '### Territory / Lair' (where they operate from and why it matters — avoid an isolated fortress by default), '### The Villain's Plan' (5-7 escalating numbered stages as '**Stage N: <name>**' sub-entries; each stage covers its objective, what the villain/agents do, clues available to players, factions or NPCs involved, consequences if successful, opportunities for player interference, and how disruption changes later stages), '### Escalation If Ignored' (how the situation develops if the party never intervenes), '### Discovery Layers' (three sub-parts: 'What the World Knows', 'What Their Servants Know', 'GM-Only Truth'), '### Personal Connections' (several optional hooks tying the villain to PCs without assuming backstory, e.g. former mentor, destroyed homeland, ideological rival), '### Weakness / Vulnerability' (at least one meaningful vulnerability discoverable and exploitable through play, not a single arbitrary object unless genre-appropriate), '### Moral Complication' (where appropriate, a reason defeating the villain does not cleanly solve the problem), '### Final Confrontation' (likely circumstances and stakes — not combat statistics), '### If Defeated' (consequences of removing the villain, appropriate to the threat scale).",
   "labels": ["villain", "bbeg-generator", "imported-draft"]
 }
 Quality guardrails: the villain should do things, not merely possess lore. Avoid generic evil-for-evil's-sake, avoid defaulting every villain to a misunderstood antihero, avoid every secret being 'serving an even bigger evil', avoid every organisation being a cult, avoid every goal being apocalypse/immortality/godhood unless the archetype specifically calls for it. Ensure goals, methods, resources, lieutenants, and plan stages logically reinforce one another, and that clues arise naturally from the villain's own actions.
+${domainVarietyGuardrail(recentDomains)}
 ${CONSISTENCY_PASS}
 ${NAME_BAN_PROMPT}
 ${sessionContext}
@@ -169,6 +194,10 @@ export function parseVillainResponse(
       ? data.labels
       : ["villain", "bbeg-generator", "imported-draft"],
     status: "active",
+    conflictDomain:
+      typeof data.conflictDomain === "string" && data.conflictDomain.trim()
+        ? data.conflictDomain.trim()
+        : undefined,
   };
 }
 
@@ -192,6 +221,81 @@ const SIGNATURE_POOL = [
 ] as const;
 
 /**
+ * Domain-specific flavour for the local fallback's Methods/Resources/
+ * Organisation/Territory/Plan sections. Randomly selected per generation so
+ * the deterministic fallback doesn't always default to the same domain
+ * (originally always logistics/bureaucracy — #2325 follow-up).
+ */
+interface VillainDomainFlavor {
+  domain: string;
+  methods: string;
+  resources: string;
+  organisation: string;
+  territory: string;
+  planStages: readonly [string, string, string, string, string, string];
+}
+
+const DOMAIN_FLAVORS: readonly VillainDomainFlavor[] = [
+  {
+    domain: "Political Corruption",
+    methods:
+      "Selective enforcement of real law, requisition powers, and quiet leverage over the officials who administer them — always favouring legitimacy over spectacle.",
+    resources:
+      "A genuine legal mandate, a loyal inspectorate or council bloc, and the gratitude of a population who credit them with an earlier crisis.",
+    organisation:
+      "A public office with real authority, quietly staffed at the top with people who owe their careers to the villain.",
+    territory:
+      "Their own official chambers — legitimately theirs, its lower levels holding what no audit has reached.",
+    planStages: [
+      "**Stage 1: Fail the independents** — Use lawful authority to remove or discredit the first rivals. Clues: suspicious rulings, sudden closures. Disruption exposes the standard as selectively enforced.",
+      "**Stage 2: Absorb their position** — Redirect what the rivals controlled into the villain's own network. Clues: new exclusive arrangements. Undisrupted, dependency deepens quietly.",
+      "**Stage 3: Extend emergency powers** — Petition to make temporary authority permanent, citing continued risk. Clues: a conveniently timed near-crisis. Disruption forces a public vote they might lose.",
+      "**Stage 4: Remove the last independent check** — Discredit or reassign whoever could still oversee them. Clues: a sudden transfer order. This is the last stage stoppable without direct confrontation.",
+      "**Stage 5: Consolidate the mandate** — Formalise permanent control through legitimate process. Clues are now public record. Stopping this requires exposing Stage 1 outright.",
+      "**Stage 6: Enact the finished order** — Use the now-unassailable authority to complete the Ultimate Goal. Clues are unmistakable, but resources to stop it are scarce.",
+    ],
+  },
+  {
+    domain: "Military Conquest",
+    methods:
+      "Disciplined force projection, forward garrisons, and calculated provocations that let them claim retaliation rather than aggression.",
+    resources:
+      "A standing force loyal to them personally, war materiel stockpiled ahead of need, and client commanders who owe their rank to the villain.",
+    organisation:
+      "A chain of command that answers to the villain alone, with political oversight kept deliberately thin.",
+    territory:
+      "A forward staging ground close enough to strike quickly, defended by troops who believe they are the ones under threat.",
+    planStages: [
+      "**Stage 1: Seize the border ground** — Occupy a contested position under a pretext of security. Clues: troop movements, a sudden border incident. Disruption forces a cruder, more exposed pretext later.",
+      "**Stage 2: Provoke the retaliation** — Goad a response that can be framed as unprovoked aggression. Clues: a staged attack, a suspiciously convenient casualty. Undisrupted, public opinion turns in the villain's favour.",
+      "**Stage 3: Mobilise under popular support** — Use the manufactured outrage to raise and deploy real force. Clues: rapid conscription, requisitioned supply lines. Disruption strips away their moral cover.",
+      "**Stage 4: Break the defensive coalition** — Isolate or bribe whichever ally could unify resistance. Clues: a sudden defection or broken treaty. This is the last stage stoppable before open war.",
+      "**Stage 5: Take the objective by force** — Commit to open conflict for the true target. Clues are now unmistakable — armies in the field.",
+      "**Stage 6: Impose the peace on their terms** — Dictate the settlement that fulfils the Ultimate Goal. Resources to reverse it are scarce once signed.",
+    ],
+  },
+  {
+    domain: "Cult Ritual",
+    methods:
+      "Careful recruitment, staged revelations, and rites that bind followers to secrets they cannot safely walk away from.",
+    resources:
+      "Devoted followers who genuinely believe, accumulated ritual knowledge, and sites already prepared for what comes next.",
+    organisation:
+      "Concentric circles of belief — most followers know only comforting half-truths; a small inner circle knows what the rites actually do.",
+    territory:
+      "A site made sacred by repetition rather than grandeur, its true purpose hidden behind an innocuous public use.",
+    planStages: [
+      "**Stage 1: Gather the first believers** — Recruit through genuine unmet need, not coercion. Clues: a new gathering, missing people who join willingly. Disruption exposes recruitment methods early.",
+      "**Stage 2: Bind them with a shared secret** — Stage a rite that implicates every attendee. Clues: a strange symbol, a night no one will discuss. Undisrupted, loyalty deepens through complicity.",
+      "**Stage 3: Prepare the site** — Ready the location for the culminating rite. Clues: unusual construction, sourced materials. Disruption forces a rushed, more exposed alternative site.",
+      "**Stage 4: Remove the last outside witness** — Silence or convert whoever could still expose them. Clues: a sudden disappearance or conversion. This is the last stage stoppable quietly.",
+      "**Stage 5: Perform the culminating rite** — Enact the ritual that fulfils the Ultimate Goal. Clues are now unmistakable — the site itself changes.",
+      "**Stage 6: Consolidate what the rite unleashed** — Secure and direct whatever the ritual achieved before others can claim or contest it.",
+    ],
+  },
+] as const;
+
+/**
  * Local (non-AI) fallback. Deliberately lighter than the AI prompt's full
  * checklist — a usable, internally consistent draft rather than an attempt to
  * hand-author every section the prompt asks the model for.
@@ -201,6 +305,7 @@ export function generateVillainLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveVillain(options, rng);
+  const flavor = pickFrom(DOMAIN_FLAVORS, rng);
   const lieutenantNames = [generateName(rng), generateName(rng)];
   const firstSign = pickFrom(FIRST_SIGNS_POOL, rng);
   const secondSign = pickFrom(
@@ -238,28 +343,23 @@ Their reasoning holds together on its own terms: ${resolved.sympathy.toLowerCase
 They trust their own read of people more than the evidence in front of them, and that overconfidence is what eventually hands the party their opening.
 
 ### Methods
-${resolved.archetype} tactics — a mix of leverage, infiltration, and applied pressure suited to a ${resolved.threatScale.toLowerCase()} stage, always favouring control over spectacle.
+${flavor.methods}
 
 ### Resources
-Loyal agents, accumulated leverage over key figures, and a base of operations that gives them room to operate without immediate scrutiny.
+${flavor.resources}
 
 ### Lieutenants & Inner Circle
 - **${lieutenantNames[0]}** — Enforcer. Loyal out of genuine belief, not fear; privately doubts one specific order they have not yet refused.
 - **${lieutenantNames[1]}** — Fixer. Loyal only as long as it pays; keeps a private insurance policy against betrayal that could expose the whole operation.
 
 ### Organisation & Power Structure
-A tight inner circle radiating outward into looser, deniable layers of agents, so the villain's name rarely touches the actions taken in their service.
+${flavor.organisation}
 
 ### Territory / Lair
-A working base of operations hidden inside something legitimate, chosen so that raiding it means disrupting whatever it hides behind.
+${flavor.territory}
 
 ### The Villain's Plan
-**Stage 1: Secure the leverage** — Acquire the first piece of concrete power (a hold over a person, place, or resource). Clues: irregular orders, a disappearance. Consequence if unchecked: the leverage becomes permanent and harder to contest.
-**Stage 2: Install the proxy** — Place a loyal or compromised figure in a position of visible authority. Clues: an unlikely appointment, an old ally suddenly silent. Interference here removes their public cover early.
-**Stage 3: Manufacture the pretext** — Engineer a crisis that justifies further consolidation. Clues: a conveniently timed disaster. If disrupted, the villain must improvise a cruder, more exposed pretext.
-**Stage 4: Consolidate under cover of the crisis** — Use emergency powers or fear to remove remaining opposition. Clues: sudden law changes, arrests. Undisrupted, opposition is dismantled cleanly.
-**Stage 5: Eliminate the last check** — Move against whoever could still stop them cleanly. Clues: a threat against a specific named figure. This is the last stage that can be stopped before the plan becomes self-sustaining.
-**Stage 6: Execute the endgame** — Enact the final act that fulfils the Ultimate Goal. Clues are now unmistakable, but resources to stop it are scarce.
+${flavor.planStages.join("\n")}
 
 ### Escalation If Ignored
 Left unopposed, each stage completes roughly on schedule; by Stage 4 the villain's position becomes semi-official, and by Stage 6 removing them creates as much damage as leaving them would have.
@@ -284,7 +384,7 @@ Removing them cleanly may not resolve the underlying condition that let them ris
 The stakes extend beyond the villain's own life — whatever mechanism completes Stage 6 needs to be addressed independently of whether the villain personally survives it.
 
 ### If Defeated
-Their network does not vanish with them: expect a contested succession, freed leverage victims, and at least one lieutenant left to pursue their own agenda.`;
+Their network does not vanish with them: expect a contested succession, those they held sway over left to fend for themselves, and at least one lieutenant left to pursue their own agenda.`;
 
   return {
     type: "character",
@@ -294,5 +394,6 @@ Their network does not vanish with them: expect a contested succession, freed le
     lore,
     labels: ["villain", "bbeg-generator", "imported-draft"],
     status: "active",
+    conflictDomain: flavor.domain,
   };
 }

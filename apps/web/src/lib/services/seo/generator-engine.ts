@@ -118,6 +118,12 @@ import {
   languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
+import { villainDomainHistoryStore } from "./villain-domain-history";
+import {
+  generationInputHistoryStore,
+  summarizeResolvedInputs,
+  formatRecentInputsNote,
+} from "./generation-input-history";
 
 export {
   nameTable,
@@ -289,12 +295,17 @@ export class DefaultGeneratorEngine {
     options: NpcGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...npcOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("npc");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
           npcOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "npc",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNpcResponse(text, npcOptions, resolved);
@@ -308,12 +319,17 @@ export class DefaultGeneratorEngine {
     options: FactionGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...factionOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("faction");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildFactionPrompt(
           factionOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "faction",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseFactionResponse(text, resolved);
@@ -327,12 +343,17 @@ export class DefaultGeneratorEngine {
     options: VampireGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...vampireOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("vampire-clan");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildVampirePrompt(
           vampireOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "vampire-clan",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseVampireResponse(text, resolved);
@@ -346,11 +367,19 @@ export class DefaultGeneratorEngine {
     options: NomadClanGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...nomadOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("nomad-clan");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildNomadClanPrompt(nomadOptions, getSessionContext());
+          buildNomadClanPrompt(
+            nomadOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "nomad-clan",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNomadClanResponse(text, resolved);
       },
@@ -363,11 +392,19 @@ export class DefaultGeneratorEngine {
     options: SettlementGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...settlementOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("settlement");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildSettlementPrompt(settlementOptions, getSessionContext());
+          buildSettlementPrompt(
+            settlementOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "settlement",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseSettlementResponse(text, resolved);
       },
@@ -380,11 +417,19 @@ export class DefaultGeneratorEngine {
     options: MagicItemGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...itemOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("magic-item");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildMagicItemPrompt(itemOptions, getSessionContext());
+          buildMagicItemPrompt(
+            itemOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "magic-item",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseMagicItemResponse(text, resolved);
       },
@@ -396,12 +441,17 @@ export class DefaultGeneratorEngine {
     options: QuestGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...questOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("quest");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildQuestPrompt(
           questOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "quest",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseQuestResponse(text, resolved);
@@ -414,24 +464,35 @@ export class DefaultGeneratorEngine {
     options: VillainGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...villainOptions } = options;
-    return this.runWithAIFallback(
+    const recentDomains = villainDomainHistoryStore.recent();
+    const recentInputs = generationInputHistoryStore.recent("villain");
+    const result = await this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildVillainPrompt(
           villainOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+          undefined,
+          recentDomains,
+        );
+        generationInputHistoryStore.record(
+          "villain",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseVillainResponse(text, resolved);
       },
       () => generateVillainLocal(villainOptions),
     );
+    villainDomainHistoryStore.record(result.conflictDomain);
+    return result;
   }
 
   async generateCouncilVote(
     options: CouncilVoteGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...councilVoteOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("council-vote");
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -441,7 +502,11 @@ export class DefaultGeneratorEngine {
           resolved,
         } = buildCouncilVoteFoundationPrompt(
           councilVoteOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "council-vote",
+          summarizeResolvedInputs(resolved),
         );
         const chat = await this.startChat(systemInstruction);
 
@@ -499,11 +564,19 @@ export class DefaultGeneratorEngine {
     options: SecretSocietyGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...secretSocietyOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("secret-society");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildSecretSocietyPrompt(secretSocietyOptions, getSessionContext());
+          buildSecretSocietyPrompt(
+            secretSocietyOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "secret-society",
+          summarizeResolvedInputs(resolved),
+        );
         return parseSecretSocietyResponse(
           await this.runModel(systemInstruction, userMessage),
           resolved,
@@ -521,8 +594,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        // buildNamesPrompt has no sessionContext param, so this is track-only
+        // (no variety feedback into the prompt).
         const { systemInstruction, userMessage, resolved } =
           buildNamesPrompt(nameOptions);
+        generationInputHistoryStore.record(
+          "names",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNamesResponse(text, resolved);
       },
@@ -534,12 +613,18 @@ export class DefaultGeneratorEngine {
     options: SocialHubGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...hubOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("social-hub");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildSocialHubPrompt(
-          hubOptions,
-          getSessionContext(),
+        const { systemInstruction, userMessage, resolved } =
+          buildSocialHubPrompt(
+            hubOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "social-hub",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseSocialHubResponse(text);
@@ -552,12 +637,17 @@ export class DefaultGeneratorEngine {
     options: TavernGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...tavernOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("tavern");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildTavernPrompt(
+        const { systemInstruction, userMessage, resolved } = buildTavernPrompt(
           tavernOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "tavern",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseTavernResponse(text);
@@ -570,12 +660,17 @@ export class DefaultGeneratorEngine {
     options: KingdomGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...kingdomOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("kingdom");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildKingdomPrompt(
+        const { systemInstruction, userMessage, resolved } = buildKingdomPrompt(
           kingdomOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "kingdom",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseKingdomResponse(text);
@@ -589,12 +684,17 @@ export class DefaultGeneratorEngine {
     options: NationGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...nationOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("nation");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildNationPrompt(
+        const { systemInstruction, userMessage, resolved } = buildNationPrompt(
           nationOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "nation",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNationResponse(text);
@@ -608,11 +708,19 @@ export class DefaultGeneratorEngine {
     options: PantheonGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...pantheonOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("pantheon");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildPantheonPrompt(pantheonOptions, getSessionContext());
+          buildPantheonPrompt(
+            pantheonOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "pantheon",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parsePantheonResponse(text, resolved);
       },
@@ -625,12 +733,17 @@ export class DefaultGeneratorEngine {
     options: ShipGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...shipOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("ship");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildShipPrompt(
           shipOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "ship",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseShipResponse(text, resolved);
@@ -653,14 +766,20 @@ export class DefaultGeneratorEngine {
       structure: rest.structure || languageConfig.structures[0],
       context: rest.context || rest.campaignContext || "",
     };
+    const recentInputs = generationInputHistoryStore.recent("language");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
           buildLanguagePrompt(
             langOptions,
-            getSessionContext({ excludeLanguageDrafts: true }),
+            getSessionContext({ excludeLanguageDrafts: true }) +
+              formatRecentInputsNote(recentInputs),
           );
+        generationInputHistoryStore.record(
+          "language",
+          summarizeResolvedInputs(resolved),
+        );
         const expected = {
           genre: resolved.genre,
           tone: resolved.tone,
@@ -772,12 +891,18 @@ export class DefaultGeneratorEngine {
     options: NewsSheetGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...sheetOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("news-sheet");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildNewsSheetPrompt(
-          sheetOptions,
-          getSessionContext(),
+        const { systemInstruction, userMessage, resolved } =
+          buildNewsSheetPrompt(
+            sheetOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "news-sheet",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNewsSheetResponse(text);
@@ -794,8 +919,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        // buildDungeonPrompt has no sessionContext param, so this is
+        // track-only (no variety feedback into the prompt).
         const { systemInstruction, userMessage, resolved } =
           buildDungeonPrompt(dungeonOptions);
+        generationInputHistoryStore.record(
+          "dungeon",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         const first = parseDungeonResponseDetailed(
           text,
@@ -839,8 +970,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        // buildAdventurePrompt has no sessionContext param, so this is
+        // track-only (no variety feedback into the prompt).
         const { systemInstruction, userMessage, resolved } =
           buildAdventurePrompt(adventureOptions);
+        generationInputHistoryStore.record(
+          "adventure",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         const first = parseAdventureResponseDetailed(
           text,
@@ -877,8 +1014,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } =
+        // buildPlotTwistPrompt has no sessionContext param, so this is
+        // track-only (no variety feedback into the prompt).
+        const { systemInstruction, userMessage, resolved } =
           buildPlotTwistPrompt(plotTwistOptions);
+        generationInputHistoryStore.record(
+          "plot-twist",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parsePlotTwistResponse(text, plotTwistOptions);
       },
@@ -891,6 +1034,9 @@ export class DefaultGeneratorEngine {
     options: WorldGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...worldOptions } = options;
+    // buildWorldPrompt's WorldPrompt return type has no `resolved` field
+    // (it resolves options inline without exposing them), so it's not
+    // wired into generationInputHistoryStore.
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -915,6 +1061,8 @@ export class DefaultGeneratorEngine {
     options: StarSystemGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...starSystemOptions } = options;
+    // buildStarSystemPrompt's StarSystemPrompt return type has no `resolved`
+    // field, so it's not wired into generationInputHistoryStore.
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -942,6 +1090,8 @@ export class DefaultGeneratorEngine {
     options: AlienRaceGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...alienRaceOptions } = options;
+    // buildAlienRacePrompt's AlienRacePrompt return type has no `resolved`
+    // field, so it's not wired into generationInputHistoryStore.
     return this.runWithAIFallback(
       useAI,
       async () => {
