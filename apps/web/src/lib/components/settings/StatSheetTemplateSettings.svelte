@@ -145,7 +145,7 @@
           : "";
       notificationStore.notify(
         `Imported template "${saved.name}"${strippedNotice}${unmappedNotice}`,
-        unmappedNotice ? "warning" : "success",
+        unmappedNotice ? "info" : "success",
       );
     } catch {
       presImportError = "This file isn't a valid presentation template.";

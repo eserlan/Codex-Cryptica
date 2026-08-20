@@ -96,7 +96,7 @@
     if (!analysis.compatible && analysis.unmappedFields.length > 0) {
       notificationStore.notify(
         `Copied "${saved.name}" (Note: unmapped fields: ${analysis.unmappedFields.join(", ")})`,
-        "warning",
+        "info",
       );
     } else {
       notificationStore.notify(
@@ -133,7 +133,7 @@
     if (!analysis.compatible && analysis.unmappedFields.length > 0) {
       notificationStore.notify(
         `Saved "${saved.name}" to template "${targetTemplate.name}" (Note: unmapped fields: ${analysis.unmappedFields.join(", ")})`,
-        "warning",
+        "info",
       );
     } else {
       notificationStore.notify(
@@ -204,7 +204,7 @@
           : "";
       notificationStore.notify(
         `Imported template "${saved.name}"${strippedNotice}${unmappedNotice}`,
-        unmappedNotice ? "warning" : "success",
+        unmappedNotice ? "info" : "success",
       );
     } catch {
       importError = "This file isn't a valid presentation template.";

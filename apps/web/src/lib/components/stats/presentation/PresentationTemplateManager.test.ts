@@ -299,7 +299,7 @@ describe("PresentationTemplateManager", () => {
 
     expect(notify).toHaveBeenCalledWith(
       expect.stringContaining('Imported template "Imported Presentation"'),
-      "warning",
+      "info",
     );
   });
 });
