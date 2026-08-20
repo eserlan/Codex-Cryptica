@@ -10,6 +10,7 @@ export interface RandomIdeaCategory {
     | "nation"
     | "npc"
     | "quest"
+    | "villain"
     | "council-vote"
     | "secret-society"
     | "social-hub"
@@ -84,6 +85,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Quest Hook",
     generate: (engine, useAI, theme) =>
       engine.generateQuestHook({ genre: themeToQuestGenre[theme], useAI }),
+  },
+  {
+    key: "villain",
+    label: "BBEG / Campaign Villain",
+    generate: (engine, useAI, theme) =>
+      engine.generateVillain({ genre: theme, useAI }),
   },
   {
     key: "council-vote",

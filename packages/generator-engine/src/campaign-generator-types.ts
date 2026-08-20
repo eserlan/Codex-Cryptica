@@ -21,6 +21,7 @@ export type GeneratorId =
   | "adventure"
   | "quest"
   | "plot-twist"
+  | "villain"
   | "world"
   | "council-vote"
   | "secret-society"
@@ -41,6 +42,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "adventure",
   "quest",
   "plot-twist",
+  "villain",
   "world",
   "council-vote",
   "secret-society",

@@ -26,6 +26,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "adventure-generator",
   "adventure-idea-generator",
   "plot-twist-generator",
+  "bbeg-generator",
   "world",
   "council-vote",
   "secret-society",
@@ -34,7 +35,7 @@ const allExpectedSlugs: ValidSlug[] = [
 ];
 
 describe("generator-page-meta completeness and social preview tags", () => {
-  it("has metadata entries for all 29 valid generator slugs", () => {
+  it("has metadata entries for all 30 valid generator slugs", () => {
     const keys = Object.keys(slugMeta);
     expect(keys.length).toBe(allExpectedSlugs.length);
     for (const slug of allExpectedSlugs) {

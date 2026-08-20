@@ -761,6 +761,53 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "tabletop plot reversals",
     ],
   },
+  "bbeg-generator": {
+    pageTitle:
+      "BBEG / Campaign Villain Generator | Free RPG Antagonist Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a campaign-scale RPG villain with a concrete goal, methods, lieutenants, an escalating multi-stage plan, and consequences — not just a biography. Works for any genre.",
+    introTitle: "BBEG / Campaign Villain Generator",
+    eyebrow: "Campaign Villain Generator",
+    introText:
+      "Create a campaign antagonist who functions as a campaign engine: a goal, motivation, methods, lieutenants, an escalating plan the party can discover and disrupt, and consequences whether they act or not. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/bbeg-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-bbeg-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica BBEG / campaign villain generator drafting an antagonist's goal, methods, lieutenants, and escalating plan",
+    keywords: [
+      "bbeg generator",
+      "campaign villain generator",
+      "rpg antagonist generator",
+      "dnd villain generator",
+      "tabletop villain creator",
+    ],
+    faqs: [
+      {
+        question: "What does the BBEG generator create?",
+        answer:
+          "It creates a full campaign villain: a public face and true nature, a concrete ultimate goal, motivation, a fatal flaw, methods and resources, named lieutenants, an escalating 5-7 stage plan with clues and consequences, what happens if the party does nothing, discoverable weaknesses, and the consequences of defeating them.",
+      },
+      {
+        question: "Is the villain tied to a specific game system?",
+        answer:
+          "No. The generator is system-neutral — it produces narrative goals, plans, and stakes rather than stat blocks, so it works for D&D, Pathfinder, OSR games, or any other RPG.",
+      },
+      {
+        question: "Can the villain's plan survive the party ignoring it?",
+        answer:
+          "Yes. Each generated villain includes an escalation path describing how their plan advances if the party never intervenes, so the antagonist stays a live threat rather than waiting in a final dungeon.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      {
+        href: "/generators/secret-society",
+        label: "Secret Society Generator",
+      },
+    ],
+  },
   "adventure-idea-generator": {
     pageTitle:
       "Adventure Idea Generator | Multi-Genre RPG Scenario Generator | Codex Cryptica",
