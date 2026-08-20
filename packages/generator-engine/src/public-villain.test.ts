@@ -134,6 +134,17 @@ describe("buildVillainPrompt", () => {
     expect(userMessage).toContain(
       "Avoid using logistics, supply chains, corporate consolidation, municipal bureaucracy, data-routing as that dominant domain",
     );
+
+    // Motif-variety guardrail (avoid one symbolic image reused across sections).
+    expect(userMessage).toContain(
+      "Avoid repeatedly expressing the villain's theme through the same symbolic object, image, or vocabulary across sections",
+    );
+    expect(userMessage).toContain(
+      "subsequent fields must reveal a different dimension of the villain rather than restating the same image",
+    );
+    expect(userMessage).toContain(
+      "no single symbolic motif, object, or turn of phrase should be reused verbatim or near-verbatim across more than one of Signature/Calling Card, Territory/Lair, Methods, Resources, and Weakness/Vulnerability",
+    );
   });
 
   it("embeds the World Relation option, its definition, and the anti-default guardrail", () => {
