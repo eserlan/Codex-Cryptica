@@ -118,6 +118,7 @@ import {
   languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
+import { villainDomainHistoryStore } from "./villain-domain-history";
 
 export {
   nameTable,
@@ -414,18 +415,23 @@ export class DefaultGeneratorEngine {
     options: VillainGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...villainOptions } = options;
-    return this.runWithAIFallback(
+    const recentDomains = villainDomainHistoryStore.recent();
+    const result = await this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildVillainPrompt(
           villainOptions,
           getSessionContext(),
+          undefined,
+          recentDomains,
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseVillainResponse(text, resolved);
       },
       () => generateVillainLocal(villainOptions),
     );
+    villainDomainHistoryStore.record(result.conflictDomain);
+    return result;
   }
 
   async generateCouncilVote(

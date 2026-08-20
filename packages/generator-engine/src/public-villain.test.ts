@@ -51,6 +51,18 @@ describe("generateVillainLocal", () => {
       generateVillainLocal({}, seededRng(9)),
     );
   });
+
+  it("tags a conflictDomain and varies it across seeds instead of always defaulting to one domain", () => {
+    const domains = new Set(
+      [1, 2, 3, 4, 5, 6, 7, 8].map(
+        (seed) => generateVillainLocal({}, seededRng(seed)).conflictDomain,
+      ),
+    );
+    for (const domain of domains) {
+      expect(typeof domain).toBe("string");
+    }
+    expect(domains.size).toBeGreaterThan(1);
+  });
 });
 
 describe("buildVillainPrompt", () => {
@@ -87,6 +99,27 @@ describe("buildVillainPrompt", () => {
     expect(userMessage).toContain(
       "threat scale must be reflected consistently across resources, methods, and the plan's scope",
     );
+
+    // Conflict-domain variety guardrail.
+    expect(userMessage).toContain('"conflictDomain"');
+    expect(userMessage).toContain(
+      "Avoid using logistics, supply chains, corporate consolidation, municipal bureaucracy, data-routing as that dominant domain",
+    );
+  });
+
+  it("includes recent conflict domains in the variety guardrail when provided", () => {
+    const { userMessage } = buildVillainPrompt({}, "", seededRng(1), [
+      "Cult Ritual",
+      "Military Conquest",
+    ]);
+    expect(userMessage).toContain(
+      "Domains used in this session's recent villains, most recent first: Cult Ritual, Military Conquest",
+    );
+  });
+
+  it("omits the recent-domains note when no history is provided", () => {
+    const { userMessage } = buildVillainPrompt({}, "", seededRng(1), []);
+    expect(userMessage).not.toContain("Domains used in this session");
   });
 
   it("reuses the canonical 13-theme genre vocabulary", () => {
@@ -101,16 +134,18 @@ describe("parseVillainResponse", () => {
 
   it("parses fenced JSON and keeps the rich body", () => {
     const json =
-      '```json\n{"title":"Vesk Ashgrave","content":"### Public Face\\ny","lore":"### Core Concept","labels":["villain"]}\n```';
+      '```json\n{"title":"Vesk Ashgrave","conflictDomain":"Cosmic Incursion","content":"### Public Face\\ny","lore":"### Core Concept","labels":["villain"]}\n```';
     const out = parseVillainResponse(json, resolved);
     expect(out.title).toBe("Vesk Ashgrave");
     expect(out.content).toContain("Public Face");
     expect(out.type).toBe("character");
+    expect(out.conflictDomain).toBe("Cosmic Incursion");
   });
 
   it("falls back to the resolved name and throws on bad JSON", () => {
     const out = parseVillainResponse('{"content":"x","lore":"y"}', resolved);
     expect(out.title).toBe(resolved.villainName);
+    expect(out.conflictDomain).toBeUndefined();
     expect(() => parseVillainResponse("nope", resolved)).toThrow();
   });
 });

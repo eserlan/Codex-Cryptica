@@ -46,6 +46,13 @@ export interface PublicGeneratorOutput {
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
   starType?: string;
+  /**
+   * Short label for the dominant conflict domain driving a BBEG villain's
+   * plan (e.g. "Political Corruption", "Cult Ritual"). Used to track domain
+   * variety across a session so repeated generations don't default to the
+   * same domain (#2325 follow-up).
+   */
+  conflictDomain?: string;
 }
 
 /** First non-blank value, or the last one if all are blank. */
