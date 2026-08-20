@@ -23,9 +23,7 @@
 
 <section class="flex flex-col gap-2" data-testid="presentation-section">
   {#if node.title || node.heading}
-    <h3
-      class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
-    >
+    <h3 class="text-base font-bold uppercase tracking-widest text-theme-muted">
       <button
         type="button"
         class="flex w-full items-center gap-1.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
