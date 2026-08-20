@@ -3,7 +3,6 @@
   import { browser } from "$app/environment";
   import { fly } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { systemClock } from "$lib/utils/runtime-deps";
 
   async function startDemo(theme: string) {
     if (browser) {
@@ -141,29 +140,6 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24">
-    <!-- Header Navigation -->
-    <nav class="flex justify-between items-center mb-16">
-      <a
-        href="{base}/?ref=landing"
-        class="font-mono text-xs text-theme-primary hover:opacity-80 transition-opacity flex items-center gap-2"
-      >
-        <span class="icon-[lucide--shield] w-4 h-4"></span>
-        Codex Cryptica
-      </a>
-      <div class="flex gap-6">
-        <a
-          href="{base}/features"
-          class="text-xs font-mono hover:text-theme-primary transition-colors"
-          >Features</a
-        >
-        <a
-          href="{base}/blog"
-          class="text-xs font-mono hover:text-theme-primary transition-colors"
-          >Blog</a
-        >
-      </div>
-    </nav>
-
     <!-- Hero Section -->
     <header class="text-center mb-24 max-w-4xl mx-auto">
       <h1
@@ -378,8 +354,8 @@
       </div>
     </section>
 
-    <!-- Footer Links (GEO internal links) -->
-    <footer
+    <!-- Related Links Section -->
+    <section
       class="mt-32 pt-8 border-t border-theme-border/40 text-center text-xs text-theme-muted space-y-4"
     >
       <div class="flex flex-wrap justify-center gap-6">
@@ -402,10 +378,6 @@
           >DnD NPC Generator</a
         >
       </div>
-      <p>
-        © {new Date(systemClock.now()).getFullYear()} Codex Cryptica. Your world is
-        your own.
-      </p>
-    </footer>
+    </section>
   </div>
 </div>
