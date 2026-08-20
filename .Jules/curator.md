@@ -16,3 +16,8 @@
 
 **Learning:** The `campaign-generator-registry.ts` file contains a massive `EXEMPLARS` constant (large raw JSON string constants) that pollutes the business logic of the registry. This is a clear case for extraction to a dedicated `-constants.ts` file to improve readability of the core registry logic, adhering to the "God-File Config" pattern.
 **Action:** Extract large constants like `EXEMPLARS` from `campaign-generator-registry.ts` to a separate file (e.g., `campaign-generator-exemplars.ts`) and import them.
+## 2025-02-22 - Extracting types that are still used in the source file
+
+**Learning:** When extracting types from a file into a separate file, if the original file still uses those types internally, you must explicitly import them (`import type { X } from './types';`) before re-exporting them (`export type { X };`). Using `export type { X } from './types';` alone will cause a TypeScript compilation error because it does not make the types available within the local file's scope.
+
+**Action:** Ensure both an `import` and an `export` are used when extracting and re-exporting types that are still utilized in the original file.
