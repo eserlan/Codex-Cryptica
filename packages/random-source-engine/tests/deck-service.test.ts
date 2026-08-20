@@ -39,10 +39,15 @@ function makeDeck(
 
 const ctx: ResolutionContext = { lookup: () => undefined };
 
-function service(store = new MemoryStore()) {
+function service(store = new MemoryStore(), now?: () => number) {
   return {
     store,
-    svc: new DeckService(store, new DiceEngine(seededCrypto(17))),
+    svc: new DeckService(
+      store,
+      new DiceEngine(seededCrypto(17)),
+      undefined,
+      now,
+    ),
   };
 }
 
@@ -151,11 +156,14 @@ describe("reset and shuffle (FR-025)", () => {
   });
 
   it("clears the discard pile", async () => {
-    const { svc, store } = service();
+    const mockTime = 1234567890;
+    const { svc, store } = service(new MemoryStore(), () => mockTime);
     const deck = makeDeck(4);
     await svc.draw(deck, 2, ctx);
     await svc.reset(deck);
-    expect((await store.read("d1"))!.drawn).toEqual([]);
+    const finalState = await store.read("d1");
+    expect(finalState!.drawn).toEqual([]);
+    expect(finalState!.updatedAt).toBe(mockTime);
   });
 });
 
