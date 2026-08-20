@@ -63,8 +63,11 @@ export function formatTemplatePackageIssues(issues: ZodIssue[]): string {
 
     let reason = issue.message;
     const lowerMessage = (issue.message || "").toLowerCase();
+    const code = issue.code as string;
+
     if (
-      issue.code === "too_small" ||
+      code === "too_small" ||
+      code === "invalid_length" ||
       lowerMessage.includes("too small") ||
       lowerMessage.includes("at least 1")
     ) {
@@ -83,7 +86,7 @@ export function formatTemplatePackageIssues(issues: ZodIssue[]): string {
         reason = "must contain at least 1 item";
       }
     } else if (
-      issue.code === "too_big" ||
+      code === "too_big" ||
       lowerMessage.includes("too big") ||
       lowerMessage.includes("maximum")
     ) {
@@ -104,21 +107,24 @@ export function formatTemplatePackageIssues(issues: ZodIssue[]): string {
           ? `cannot contain more than ${max} items`
           : "has too many items";
       }
-    } else if (issue.code === "invalid_enum_value") {
+    } else if (
+      code === "invalid_enum_value" ||
+      code === "invalid_value" ||
+      lowerMessage.includes("invalid enum")
+    ) {
       const options = (issue as any).options;
       reason =
         options && Array.isArray(options)
           ? `invalid value (must be one of: ${options.join(", ")})`
           : "invalid value";
     } else if (
-      (issue.code === "invalid_type" &&
-        lowerMessage.includes("invalid input")) ||
+      (code === "invalid_type" && lowerMessage.includes("invalid input")) ||
       lowerMessage === "invalid input"
     ) {
       reason = "invalid value";
     }
 
-    if (issue.code === "custom") {
+    if (code === "custom") {
       return prefix ? `${prefix}: ${reason}` : reason;
     }
 
