@@ -152,6 +152,18 @@ const LAYOUT_RULES: LayoutRule[] = [
     ]),
   },
   {
+    label: "bbeg-generator",
+    // Lieutenants & Inner Circle and The Villain's Plan are each a full
+    // narrative payoff (per-lieutenant paragraphs, per-stage breakdowns) —
+    // deliberately NOT in the rail, mirroring council-vote's Council Members
+    // exclusion. Only genuinely compact lookup sections stay in the rail.
+    railSections: new Set([
+      "Discovery Layers",
+      "Weakness / Vulnerability",
+      "Territory / Lair",
+    ]),
+  },
+  {
     label: "council-vote",
     // Council Members is deliberately NOT in the rail: each entry is a full
     // paragraph (public position, true agenda, persuasion angle, secret),

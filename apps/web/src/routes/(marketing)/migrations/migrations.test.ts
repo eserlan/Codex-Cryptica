@@ -54,4 +54,11 @@ describe("Migration Hub", () => {
     });
     expect(found).toBe(true);
   });
+
+  it("renders without an internal navigation header", () => {
+    const { container } = render(Page);
+    expect(container.querySelector("header")).toBeNull();
+    expect(container.querySelector("#logo-link")).toBeNull();
+    expect(container.querySelector("#nav-cta-btn")).toBeNull();
+  });
 });

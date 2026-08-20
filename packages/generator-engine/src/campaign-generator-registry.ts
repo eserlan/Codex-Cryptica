@@ -50,6 +50,12 @@ import {
   type QuestGeneratorOptions,
 } from "./public-quest";
 import {
+  buildVillainPrompt,
+  generateVillainLocal,
+  villainConfig,
+  type VillainGeneratorOptions,
+} from "./public-villain";
+import {
   buildWorldPrompt,
   generateWorldLocal,
   type WorldGeneratorOptions,
@@ -95,6 +101,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   quest: "event",
+  villain: "character",
   world: "location",
   "council-vote": "note",
   "secret-society": "faction",
@@ -425,7 +432,6 @@ function loreGuidance(request: GeneratorRunRequest, builtin: string): string {
  * depth, tone, and JSON shape. Newlines inside "lore" are escaped so the model
  * is reinforced to emit valid JSON.
  */
-
 
 /**
  * The stock exemplars above each hard-code their own "lore" markdown
@@ -927,6 +933,41 @@ function generateQuest(request: GeneratorRunRequest): GeneratorOutput {
 
 function questPrompt(request: GeneratorRunRequest): string {
   const prompt = buildQuestPrompt(questOptions(request), contextChain(request));
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function villainOptions(request: GeneratorRunRequest): VillainGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    tone: optionString(request, "tone", ""),
+    threatScale: optionString(request, "threatScale", ""),
+    archetype: optionString(request, "archetype", ""),
+    sympathy: optionString(request, "sympathy", ""),
+    worldRelation: optionString(request, "worldRelation", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateVillain(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateVillainLocal(villainOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function villainPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildVillainPrompt(
+    villainOptions(request),
+    contextChain(request),
+  );
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
@@ -1819,6 +1860,77 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generatePlotTwist,
     mapOutputToDraft: mapOutputToDraft("plot-twist"),
     buildPrompt: plotTwistPrompt,
+  },
+  villain: {
+    id: "villain",
+    label: "BBEG / Campaign Villain",
+    description:
+      "Generate a campaign-scale antagonist — goal, methods, lieutenants, an escalating plan, and consequences — not just a biography.",
+    entityType: GENERATOR_ENTITY_TYPE.villain,
+    defaultInstruction:
+      "A campaign villain who functions as a campaign engine: a concrete goal, coherent motivation, an escalating multi-stage plan the party can discover and disrupt, and consequences whether they act or not.",
+    icon: "lucide:skull",
+    options: [
+      {
+        id: "genre",
+        label: "Genre / Theme",
+        control: "select",
+        choices: villainConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: villainConfig.tones.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "threatScale",
+        label: "Threat Scale",
+        control: "select",
+        choices: villainConfig.threatScales.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "archetype",
+        label: "Villain Archetype",
+        control: "select",
+        choices: villainConfig.archetypes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "sympathy",
+        label: "Degree of Sympathy / Redeemability",
+        control: "select",
+        choices: villainConfig.sympathyLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "worldRelation",
+        label: "World Relation",
+        control: "select",
+        choices: villainConfig.worldRelations.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      genre: "",
+      tone: "",
+      threatScale: "",
+      archetype: "Random",
+      sympathy: "",
+      worldRelation: "Random",
+    },
+    generate: generateVillain,
+    mapOutputToDraft: mapOutputToDraft("villain"),
+    buildPrompt: villainPrompt,
   },
   world: {
     id: "world",

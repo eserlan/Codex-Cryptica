@@ -30,6 +30,7 @@
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
+  import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
@@ -56,6 +57,7 @@
     dungeonConfig,
     adventureConfig,
     plotTwistConfig,
+    villainConfig,
     worldConfig,
     starSystemConfig,
     alienRaceConfig,
@@ -398,6 +400,16 @@
     if (premise) plotTwist.premise = premise;
   });
 
+  let villain = $state({
+    genre: factionConfig.themes[0],
+    tone: villainConfig.tones[0],
+    threatScale: villainConfig.threatScales[0],
+    archetype: villainConfig.archetypes[0],
+    sympathy: villainConfig.sympathyLevels[0],
+    worldRelation: villainConfig.worldRelations[0],
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -512,6 +524,7 @@
     )
       adventure.genre = activeTheme;
     else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
+    else if (slug === "bbeg-generator") villain.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -762,6 +775,12 @@
           handedOffQuestPremise,
         ),
         themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+      }),
+    "bbeg-generator": (useAI) =>
+      generatorEngine.generateVillain({
+        ...villain,
         genre: activeTheme,
         useAI,
       }),
@@ -1063,6 +1082,17 @@
         bind:premise={plotTwist.premise}
         bind:constraints={plotTwist.constraints}
         bind:campaignContext={plotTwist.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "bbeg-generator"}
+      <VillainFormFields
+        bind:theme={activeTheme}
+        bind:tone={villain.tone}
+        bind:threatScale={villain.threatScale}
+        bind:archetype={villain.archetype}
+        bind:sympathy={villain.sympathy}
+        bind:worldRelation={villain.worldRelation}
+        bind:campaignContext={villain.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}

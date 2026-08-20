@@ -65,6 +65,13 @@
       icon: "icon-[lucide--shuffle]",
     },
     {
+      slug: "bbeg-generator",
+      label: "BBEG / Campaign Villain Generator",
+      summary:
+        "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+      icon: "icon-[lucide--skull]",
+    },
+    {
       slug: "council-vote",
       label: "Council Vote Generator",
       summary:
