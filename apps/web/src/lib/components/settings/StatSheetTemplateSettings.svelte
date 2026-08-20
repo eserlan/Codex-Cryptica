@@ -115,6 +115,7 @@
       const result = importPresentationTemplatePackage(
         json,
         availableSchemaIds,
+        selectedPresentationSchema,
       );
       if (!result.ok) {
         presImportError = result.message;
@@ -134,13 +135,17 @@
         presImportError = "Failed to import template.";
         return;
       }
-      const notice =
+      const unmappedNotice =
+        result.unmappedFields && result.unmappedFields.length > 0
+          ? ` (Note: unmapped fields: ${result.unmappedFields.join(", ")})`
+          : "";
+      const strippedNotice =
         result.removedFragments.length > 0
           ? ` (${result.removedFragments.length} disallowed item${result.removedFragments.length === 1 ? "" : "s"} removed)`
           : "";
       notificationStore.notify(
-        `Imported template "${saved.name}"${notice}`,
-        "success",
+        `Imported template "${saved.name}"${strippedNotice}${unmappedNotice}`,
+        unmappedNotice ? "warning" : "success",
       );
     } catch {
       presImportError = "This file isn't a valid presentation template.";
@@ -932,6 +937,18 @@
           </div>
 
           <div class="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+              onclick={() => {
+                presentationTemplates.exportTemplate(t);
+                notificationStore.notify(`Exported "${t.name}"`, "info");
+              }}
+              data-testid="presentation-manager-export"
+              aria-label={`Export ${t.name}`}
+            >
+              Export
+            </button>
             {#if t.isBuiltIn}
               <button
                 type="button"
