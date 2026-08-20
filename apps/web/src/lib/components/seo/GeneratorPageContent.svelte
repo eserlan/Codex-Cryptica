@@ -406,6 +406,7 @@
     threatScale: villainConfig.threatScales[0],
     archetype: villainConfig.archetypes[0],
     sympathy: villainConfig.sympathyLevels[0],
+    worldRelation: villainConfig.worldRelations[0],
     campaignContext: "",
   });
 
@@ -1090,6 +1091,7 @@
         bind:threatScale={villain.threatScale}
         bind:archetype={villain.archetype}
         bind:sympathy={villain.sympathy}
+        bind:worldRelation={villain.worldRelation}
         bind:campaignContext={villain.campaignContext}
         onSurprise={trigger}
       />

@@ -63,6 +63,35 @@ describe("generateVillainLocal", () => {
     }
     expect(domains.size).toBeGreaterThan(1);
   });
+
+  it("varies the Ultimate Goal text by World Relation instead of always reading Reformer/Guardian", () => {
+    const predator = generateVillainLocal(
+      { worldRelation: "Predator" },
+      seededRng(1),
+    );
+    const escapee = generateVillainLocal(
+      { worldRelation: "Escapee" },
+      seededRng(1),
+    );
+    const servant = generateVillainLocal(
+      { worldRelation: "Servant" },
+      seededRng(1),
+    );
+    expect(predator.lore).toContain(
+      "wants the current system left standing but quietly rigged",
+    );
+    expect(escapee.lore).toContain("wants out of an obligation");
+    expect(servant.lore).toContain("is carrying out the will of something");
+    expect(predator.lore).not.toContain("wants out of an obligation");
+    expect(escapee.lore).not.toContain(
+      "wants the current system left standing but quietly rigged",
+    );
+  });
+
+  it("resolves the Random world relation to a concrete one", () => {
+    const out = generateVillainLocal({ worldRelation: "Random" }, seededRng(3));
+    expect(out.lore).not.toMatch(/at heart a random,/i);
+  });
 });
 
 describe("buildVillainPrompt", () => {
@@ -105,6 +134,32 @@ describe("buildVillainPrompt", () => {
     expect(userMessage).toContain(
       "Avoid using logistics, supply chains, corporate consolidation, municipal bureaucracy, data-routing as that dominant domain",
     );
+  });
+
+  it("embeds the World Relation option, its definition, and the anti-default guardrail", () => {
+    const { userMessage, resolved } = buildVillainPrompt(
+      { worldRelation: "Escapee" },
+      "",
+      seededRng(1),
+    );
+    expect(resolved.worldRelation).toBe("Escapee");
+    expect(userMessage).toContain("- World Relation: Escapee");
+    expect(userMessage).toContain(
+      "wants out of their situation or obligations, regardless of what collateral damage",
+    );
+    expect(userMessage).toContain(
+      "MUST shape 'Ultimate Goal', 'Motivation', and 'Why Now' directly",
+    );
+    expect(userMessage).toContain(
+      'do not default to a Reformer/Guardian "the existing institutions have failed, I must take control" framing unless World Relation is literally Reformer or Guardian',
+    );
+  });
+
+  it("reuses the canonical 12-relation world-relation vocabulary", () => {
+    expect(villainConfig.worldRelations).toContain("Predator");
+    expect(villainConfig.worldRelations).toContain("Servant");
+    // 12 relations + "Random".
+    expect(villainConfig.worldRelations.length).toBe(13);
   });
 
   it("includes recent conflict domains in the variety guardrail when provided", () => {

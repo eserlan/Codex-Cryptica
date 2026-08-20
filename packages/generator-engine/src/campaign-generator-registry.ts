@@ -947,6 +947,7 @@ function villainOptions(request: GeneratorRunRequest): VillainGeneratorOptions {
     threatScale: optionString(request, "threatScale", ""),
     archetype: optionString(request, "archetype", ""),
     sympathy: optionString(request, "sympathy", ""),
+    worldRelation: optionString(request, "worldRelation", ""),
     campaignContext: request.instructions?.trim() || undefined,
   };
 }
@@ -1909,6 +1910,15 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           label: value,
         })),
       },
+      {
+        id: "worldRelation",
+        label: "World Relation",
+        control: "select",
+        choices: villainConfig.worldRelations.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
     ],
     defaults: {
       genre: "",
@@ -1916,6 +1926,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       threatScale: "",
       archetype: "Random",
       sympathy: "",
+      worldRelation: "Random",
     },
     generate: generateVillain,
     mapOutputToDraft: mapOutputToDraft("villain"),

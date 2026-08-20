@@ -55,6 +55,27 @@ export const villainConfig = {
     "Tragic and Sympathetic",
     "Arguably Justified",
   ],
+  // The villain's fundamental relationship to the status quo — a structural
+  // axis distinct from archetype (their profession/method) and sympathy
+  // (how understandable they are). Without this being an explicit choice,
+  // AI generation kept defaulting to a Reformer/Guardian "institutions have
+  // failed, I must take control" framing regardless of other options (#2325
+  // follow-up).
+  worldRelations: [
+    "Random",
+    "Predator",
+    "Reformer",
+    "Guardian",
+    "Destroyer",
+    "Prophet",
+    "Competitor",
+    "Escapee",
+    "Creator",
+    "Avenger",
+    "Curator",
+    "Revealer",
+    "Servant",
+  ],
   epithets: [
     "the Unmaking",
     "the Patient",
@@ -73,6 +94,7 @@ export interface VillainGeneratorOptions {
   threatScale?: string;
   archetype?: string;
   sympathy?: string;
+  worldRelation?: string;
   campaignContext?: string;
 }
 
@@ -82,12 +104,45 @@ export interface ResolvedVillain {
   threatScale: string;
   archetype: string;
   sympathy: string;
+  worldRelation: string;
   campaignContext?: string;
   villainName: string;
 }
 
-function resolveArchetype(requested: string | undefined, rng: Rng): string {
-  const real = villainConfig.archetypes.filter((a) => a !== "Random");
+/** Definitions embedded in the prompt so the model treats each relation as a distinct structural choice, not just a label. */
+export const WORLD_RELATION_DEFINITIONS: Record<string, string> = {
+  Predator:
+    "wants to exploit the existing system for personal gain, and needs it to keep functioning so they can keep feeding off it — not overthrow it",
+  Reformer:
+    "wants to replace the existing system entirely with a different order they believe is better",
+  Guardian:
+    "is willing to commit atrocities to preserve or protect something they believe is under existential threat",
+  Destroyer:
+    "wants the existing order gone, with no coherent replacement in mind — the goal is the ending itself, not what comes after",
+  Prophet:
+    "believes a transformation or reckoning is inevitable and is hastening or preparing the world for it, not choosing to cause it out of ambition",
+  Competitor:
+    "is driven by rivalry with one specific person or power, not by any grievance with the system itself",
+  Escapee:
+    "wants out of their situation or obligations, regardless of what collateral damage that costs everyone else",
+  Creator:
+    "is trying to build something that has never existed before, and the plan exists to make that possible",
+  Avenger:
+    "wants a specific debt repaid against those they hold responsible for a specific wrong",
+  Curator:
+    "wants to freeze society, or one part of it, in its current preferred state and prevent any further change",
+  Revealer:
+    "wants to expose a truth the world is not equipped to survive learning",
+  Servant:
+    "is fulfilling an obligation or directive to something or someone else, and is not acting on a personal agenda",
+};
+
+function resolvePick(
+  requested: string | undefined,
+  options: readonly string[],
+  rng: Rng,
+): string {
+  const real = options.filter((o) => o !== "Random");
   if (!requested || requested === "Random") return pickFrom(real, rng);
   return requested;
 }
@@ -102,8 +157,13 @@ function resolveVillain(
     tone: options.tone || pickFrom(villainConfig.tones, rng),
     threatScale:
       options.threatScale || pickFrom(villainConfig.threatScales, rng),
-    archetype: resolveArchetype(options.archetype, rng),
+    archetype: resolvePick(options.archetype, villainConfig.archetypes, rng),
     sympathy: options.sympathy || pickFrom(villainConfig.sympathyLevels, rng),
+    worldRelation: resolvePick(
+      options.worldRelation,
+      villainConfig.worldRelations,
+      rng,
+    ),
     campaignContext: options.campaignContext?.trim() || undefined,
     villainName: `${generateName(rng)}, ${pickFrom(villainConfig.epithets, rng)}`,
   };
@@ -154,6 +214,7 @@ Options:
 - Threat Scale: ${resolved.threatScale}
 - Villain Archetype: ${resolved.archetype}
 - Degree of Sympathy / Redeemability: ${resolved.sympathy}
+- World Relation: ${resolved.worldRelation} — this villain ${WORLD_RELATION_DEFINITIONS[resolved.worldRelation]}. This is the villain's FUNDAMENTAL relationship to the status quo and MUST shape 'Ultimate Goal', 'Motivation', and 'Why Now' directly — do not default to a Reformer/Guardian "the existing institutions have failed, I must take control" framing unless World Relation is literally Reformer or Guardian. A Predator's goal preserves the system it feeds on; a Destroyer's goal has no replacement order in mind; an Escapee's goal is to leave, not to rule; a Servant's goal belongs to whoever or whatever they serve, not to them personally — and so on for each relation.
 ${formatCampaignContextBlock(resolved.campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly:
@@ -219,6 +280,89 @@ const SIGNATURE_POOL = [
   "They leave one survivor from every failure, always with the same warning.",
   "Their followers mark completed work with a private, unassuming symbol.",
 ] as const;
+
+/**
+ * Ultimate Goal / Motivation fragments per World Relation, so the local
+ * fallback's goal text actually varies by structural relationship to the
+ * world instead of always reading as a Reformer/Guardian "institutions have
+ * failed, I must take control" story regardless of options (#2325 follow-up).
+ */
+const RELATION_FLAVORS: Record<
+  string,
+  { ultimateGoal: string; motivation: string }
+> = {
+  Predator: {
+    ultimateGoal:
+      "wants the current system left standing but quietly rigged so it keeps producing exactly what they need, for as long as they need it — the system is the resource, not the obstacle.",
+    motivation:
+      "sees no reason to change what works for them, only to protect their access to it from anyone who might notice.",
+  },
+  Reformer: {
+    ultimateGoal:
+      "wants to dismantle the current order and replace it with a specific, described alternative they believe is genuinely better, whatever it costs to install.",
+    motivation:
+      "is convinced the existing institutions have already failed everyone who depends on them, and that replacing them is the only honest option left.",
+  },
+  Guardian: {
+    ultimateGoal:
+      "wants whatever they are protecting kept safe permanently, even if the methods required to guarantee that safety are themselves the campaign's real threat.",
+    motivation:
+      "believes the thing they protect would already be gone without the atrocities they have committed, and that the trade was worth it.",
+  },
+  Destroyer: {
+    ultimateGoal:
+      "wants the current order gone entirely, with no coherent plan for what replaces it — ending it is the goal, not what follows.",
+    motivation:
+      "has stopped believing the current order can be reformed or is worth preserving in any form.",
+  },
+  Prophet: {
+    ultimateGoal:
+      "wants the world prepared for a transformation they believe is already inevitable, so that when it arrives, they and theirs are the ones who understood it first.",
+    motivation:
+      "is not choosing this out of ambition — they are certain the change is coming regardless, and acting accordingly.",
+  },
+  Competitor: {
+    ultimateGoal:
+      "wants to decisively beat one specific rival, on terms that rival cannot dispute — the wider world is collateral, not the point.",
+    motivation:
+      "is driven by a rivalry that has nothing to do with the system itself and everything to do with one person or power they need to surpass.",
+  },
+  Escapee: {
+    ultimateGoal:
+      "wants out of an obligation, debt, or identity permanently, whatever collateral damage that costs the people left behind.",
+    motivation:
+      "no longer cares what happens to the system they are escaping, only that they are gone from it for good.",
+  },
+  Creator: {
+    ultimateGoal:
+      "wants to bring something into existence that has never existed before, and the entire plan exists to make that one act of creation possible.",
+    motivation:
+      "is driven by the thing they are building, not by grievance against anything that already exists.",
+  },
+  Avenger: {
+    ultimateGoal:
+      "wants a specific debt repaid in full by those they hold personally responsible, and will accept nothing that falls short of that reckoning.",
+    motivation: "has never stopped counting exactly what is owed, and to whom.",
+  },
+  Curator: {
+    ultimateGoal:
+      "wants society, or one part of it, frozen permanently in its current preferred state, with every further change treated as a threat to be stopped.",
+    motivation:
+      "believes the present arrangement is the best it will ever be, and that change from here can only be loss.",
+  },
+  Revealer: {
+    ultimateGoal:
+      "wants a specific truth exposed to everyone, certain that the world's reaction to learning it will reshape everything that follows.",
+    motivation:
+      "believes concealment has done more damage than the truth itself ever could.",
+  },
+  Servant: {
+    ultimateGoal:
+      "is carrying out the will of something or someone else exactly as directed, and the goal belongs to that master, not to them personally.",
+    motivation:
+      "is bound by an obligation they did not choose to question, only to fulfil.",
+  },
+};
 
 /**
  * Domain-specific flavour for the local fallback's Methods/Resources/
@@ -306,6 +450,7 @@ export function generateVillainLocal(
 ): PublicGeneratorOutput {
   const resolved = resolveVillain(options, rng);
   const flavor = pickFrom(DOMAIN_FLAVORS, rng);
+  const relationFlavor = RELATION_FLAVORS[resolved.worldRelation];
   const lieutenantNames = [generateName(rng), generateName(rng)];
   const firstSign = pickFrom(FIRST_SIGNS_POOL, rng);
   const secondSign = pickFrom(
@@ -325,19 +470,19 @@ ${signature}
 - ${secondSign}`;
 
   const lore = `### Core Concept
-A ${resolved.threatScale.toLowerCase()}-scale ${resolved.archetype.toLowerCase()} whose ${resolved.sympathy.toLowerCase()} motives make them a campaign engine rather than a final-dungeon obstacle — every stage of their plan gives the party something to discover and something to lose by waiting.
+A ${resolved.threatScale.toLowerCase()}-scale ${resolved.archetype.toLowerCase()}, and at heart a ${resolved.worldRelation.toLowerCase()}, whose ${resolved.sympathy.toLowerCase()} motives make them a campaign engine rather than a final-dungeon obstacle — every stage of their plan gives the party something to discover and something to lose by waiting.
 
 ### True Nature
 Behind the public face lies a deliberate, patient design: every visible action is one piece of a larger plan the world has not yet recognised as connected.
 
 ### Ultimate Goal
-${resolved.villainName.split(",")[0]} wants to remake their sphere of influence into a state they alone control the terms of — not conquest for its own sake, but a specific, described order they believe is owed to them or the world.
+${resolved.villainName.split(",")[0]} ${relationFlavor.ultimateGoal}
 
 ### Why Now
 A recent shift — a rival's death, a discovered resource, an expiring constraint — has removed the last obstacle that kept them from acting, forcing the timeline the campaign now begins inside.
 
 ### Motivation
-Their reasoning holds together on its own terms: ${resolved.sympathy.toLowerCase()}, shaped by ${resolved.archetype.toLowerCase()} logic, and not merely villainy for its own sake.
+As a ${resolved.worldRelation.toLowerCase()}, they ${relationFlavor.motivation} Their reasoning holds together on its own terms: ${resolved.sympathy.toLowerCase()}, shaped by ${resolved.archetype.toLowerCase()} methods.
 
 ### Fatal Flaw
 They trust their own read of people more than the evidence in front of them, and that overconfidence is what eventually hands the party their opening.

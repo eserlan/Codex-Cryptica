@@ -12,6 +12,7 @@
     threatScale = $bindable(villainConfig.threatScales[0]),
     archetype = $bindable(villainConfig.archetypes[0]),
     sympathy = $bindable(villainConfig.sympathyLevels[0]),
+    worldRelation = $bindable(villainConfig.worldRelations[0]),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
@@ -20,6 +21,7 @@
     threatScale: string;
     archetype: string;
     sympathy: string;
+    worldRelation: string;
     campaignContext: string;
     onSurprise?: () => void;
   } = $props();
@@ -94,6 +96,24 @@
   customPlaceholder="Enter a custom sympathy level"
 />
 
+<SelectWithCustomOption
+  id="villain-world-relation-select"
+  label="World Relation"
+  bind:value={worldRelation}
+  choices={villainConfig.worldRelations.map((w: string) => ({
+    value: w,
+    label: w,
+  }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom world relation"
+/>
+<p class="text-[10px] text-theme-muted leading-relaxed -mt-1">
+  The villain's fundamental relationship to the status quo — exploit it, replace
+  it, protect it, end it, and so on. Distinct from Archetype (their methods).
+</p>
+
 <div class="pt-2 flex justify-end">
   <button
     type="button"
@@ -102,6 +122,7 @@
       threatScale = pickFrom(villainConfig.threatScales);
       archetype = pickFrom(villainConfig.archetypes);
       sympathy = pickFrom(villainConfig.sympathyLevels);
+      worldRelation = pickFrom(villainConfig.worldRelations);
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
