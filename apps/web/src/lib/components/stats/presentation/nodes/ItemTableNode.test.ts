@@ -335,4 +335,26 @@ describe("ItemTableNode", () => {
     expect(screen.getByText("(7)")).toBeTruthy();
     expect(container.querySelector(".text-green-400")).toBeTruthy();
   });
+
+  it("applies compact column classes and aligns text columns appropriately", () => {
+    const context = makeContext([itemTableField]);
+    const { container } = render(ItemTableNode, {
+      props: { field: itemTableField, context },
+    });
+
+    const headers = container.querySelectorAll("th");
+    // Header for "Weapon" (name column) should be left-aligned with min-width
+    expect(headers[0].className).toContain("text-left");
+    expect(headers[0].className).toContain("min-w-[7rem]");
+
+    // Header for "Size/Force" (short text column) should be compact centered
+    expect(headers[1].className).toContain("text-center");
+    expect(headers[1].className).toContain("min-w-[4rem]");
+
+    // Header for "AP" (number column) should have compact width
+    expect(headers[4].className).toContain("w-16");
+
+    // Header for "HP" (counter column) should have compact width
+    expect(headers[5].className).toContain("w-24");
+  });
 });
