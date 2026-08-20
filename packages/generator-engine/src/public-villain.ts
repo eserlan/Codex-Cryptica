@@ -175,7 +175,9 @@ export interface VillainPrompt {
   resolved: ResolvedVillain;
 }
 
-const CONSISTENCY_PASS = `Before returning, run a consistency pass: the multi-stage plan must escalate logically stage-to-stage and remain usable even if a stage is disrupted early (state how disruption changes later stages); the stated weakness must connect coherently to the fatal flaw, methods, or organisation rather than being an unrelated add-on; every lieutenant's stated loyalty and motivation must not contradict the organisation/power structure described elsewhere; and the selected threat scale must be reflected consistently across resources, methods, and the plan's scope — do not describe cosmic-scale resources for a Local-scale villain or vice versa.`;
+const MOTIF_VARIETY_GUARDRAIL = `Avoid repeatedly expressing the villain's theme through the same symbolic object, image, or vocabulary across sections (e.g. reusing one motif for Signature/Calling Card, Territory/Lair, Methods, and Weakness alike). Once a motif is established in one field, subsequent fields must reveal a different dimension of the villain rather than restating the same image in new words.`;
+
+const CONSISTENCY_PASS = `Before returning, run a consistency pass: no single symbolic motif, object, or turn of phrase should be reused verbatim or near-verbatim across more than one of Signature/Calling Card, Territory/Lair, Methods, Resources, and Weakness/Vulnerability — each of these must add new information rather than re-describing the same image; the multi-stage plan must escalate logically stage-to-stage and remain usable even if a stage is disrupted early (state how disruption changes later stages); the stated weakness must connect coherently to the fatal flaw, methods, or organisation rather than being an unrelated add-on; every lieutenant's stated loyalty and motivation must not contradict the organisation/power structure described elsewhere; and the selected threat scale must be reflected consistently across resources, methods, and the plan's scope — do not describe cosmic-scale resources for a Local-scale villain or vice versa.`;
 
 const OVERUSED_DOMAINS = [
   "logistics",
@@ -226,6 +228,7 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["villain", "bbeg-generator", "imported-draft"]
 }
 Quality guardrails: the villain should do things, not merely possess lore. Avoid generic evil-for-evil's-sake, avoid defaulting every villain to a misunderstood antihero, avoid every secret being 'serving an even bigger evil', avoid every organisation being a cult, avoid every goal being apocalypse/immortality/godhood unless the archetype specifically calls for it. Ensure goals, methods, resources, lieutenants, and plan stages logically reinforce one another, and that clues arise naturally from the villain's own actions.
+${MOTIF_VARIETY_GUARDRAIL}
 ${domainVarietyGuardrail(recentDomains)}
 ${CONSISTENCY_PASS}
 ${NAME_BAN_PROMPT}
