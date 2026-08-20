@@ -54,6 +54,7 @@ describe("registry lookup", () => {
       "adventure",
       "quest",
       "plot-twist",
+      "villain",
       "world",
       "council-vote",
       "secret-society",
@@ -98,6 +99,36 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "event",
       sourceGeneratorId: "quest",
+    });
+  });
+
+  it("builds and generates a BBEG villain as a character draft", () => {
+    const generator = getGenerator("villain");
+    const request = run("villain", {
+      options: {
+        genre: "Classic Fantasy",
+        threatScale: "Regional",
+        archetype: "Corrupt Ruler",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.villain).toBe("character");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("campaign-scale BBEG / campaign villain");
+    expect(prompt).toContain("- Threat Scale: Regional");
+    expect(prompt).toContain("- Villain Archetype: Corrupt Ruler");
+    expect(prompt).toContain("escalate logically stage-to-stage");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["villain", "bbeg-generator"]),
+    );
+    expect(output.lore).toContain("### The Villain's Plan");
+    expect(draft).toMatchObject({
+      entityType: "character",
+      sourceGeneratorId: "villain",
     });
   });
 
@@ -1229,6 +1260,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       adventure: "note",
       quest: "event",
       "plot-twist": "note",
+      villain: "character",
       world: "location",
       "council-vote": "note",
       "secret-society": "faction",

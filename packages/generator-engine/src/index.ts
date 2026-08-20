@@ -104,6 +104,14 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  buildVillainPrompt,
+  parseVillainResponse,
+  generateVillainLocal,
+  villainConfig,
+  type VillainGeneratorOptions,
+  type VillainPrompt,
+} from "./public-villain";
+export {
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   parseCouncilVoteFoundation,

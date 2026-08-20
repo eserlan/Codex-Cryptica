@@ -73,6 +73,10 @@
           label: "Plot Twist & Complication Generator",
           path: "/generators/plot-twist-generator",
         },
+        {
+          label: "BBEG / Campaign Villain Generator",
+          path: "/generators/bbeg-generator",
+        },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {
           label: "Secret Society Generator",

@@ -25,6 +25,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildVillainPrompt,
+  parseVillainResponse,
+  generateVillainLocal,
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   parseCouncilVoteFoundation,
@@ -94,6 +97,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
@@ -137,6 +141,7 @@ export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
@@ -402,6 +407,24 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generateVillain(
+    options: VillainGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...villainOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildVillainPrompt(
+          villainOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseVillainResponse(text, resolved);
+      },
+      () => generateVillainLocal(villainOptions),
     );
   }
 
