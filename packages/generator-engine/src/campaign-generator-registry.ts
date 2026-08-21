@@ -993,6 +993,10 @@ function minorMagicItemOptions(
     activation: optionString(request, "activation", ""),
     quirkSeverity: optionString(request, "quirkSeverity", ""),
     campaignContext: request.instructions?.trim() || undefined,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
   };
 }
 

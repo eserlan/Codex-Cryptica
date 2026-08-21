@@ -12,7 +12,10 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  formatCampaignContextBlock,
+  avoidNamesExcludingContext,
+} from "./campaign-context";
 import { factionConfig } from "./public-faction-constants";
 
 export const minorMagicItemConfig = {
@@ -197,6 +200,7 @@ export interface MinorMagicItemGeneratorOptions {
   activation?: string;
   quirkSeverity?: string;
   campaignContext?: string;
+  avoidNames?: string[];
 }
 
 export interface ResolvedMinorMagicItem {
@@ -300,7 +304,16 @@ export function resolveMinorMagicItem(
     "Tallow",
   ];
 
-  const suggestedName = `${pickFrom(nameAdjectives, rng)} ${pickFrom(nameNouns, rng)}`;
+  let suggestedName = `${pickFrom(nameAdjectives, rng)} ${pickFrom(nameNouns, rng)}`;
+  if (options.avoidNames && options.avoidNames.length > 0) {
+    const avoidedSet = new Set(
+      options.avoidNames.map((n) => n.trim().toLowerCase()),
+    );
+    for (let attempts = 0; attempts < 10; attempts++) {
+      if (!avoidedSet.has(suggestedName.toLowerCase())) break;
+      suggestedName = `${pickFrom(nameAdjectives, rng)} ${pickFrom(nameNouns, rng)}`;
+    }
+  }
 
   return {
     genre,
@@ -326,6 +339,18 @@ export function buildMinorMagicItemPrompt(
   rng: Rng = defaultRng,
 ): MinorMagicItemPrompt {
   const resolved = resolveMinorMagicItem(options, rng);
+
+  const extraAvoidedNames = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    resolved.campaignContext,
+  )
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  const avoidBlock =
+    extraAvoidedNames.length > 0
+      ? `\nAlready created or used this session — do NOT reuse these item names or generate an item with the same concept/function:\n${extraAvoidedNames.map((n) => `- ${n}`).join("\n")}\n`
+      : "";
 
   const userMessage = `Generate a creative, minor, single-use or limited-use magic item (or technological curiosity/trinket) in JSON format.
 
@@ -359,6 +384,7 @@ You must return a valid JSON object matching this schema:
   "lore": "Markdown formatted GM reference with the following exact headings:\\n\\n### Quick Reference\\n- **Item Form**: ${resolved.form}\\n- **Usage Limit**: ${resolved.usageLimit}\\n- **Activation**: ${resolved.activation}\\n- **Primary Utility**: ${resolved.utility}\\n\\n### Magical Effect & Mechanics\\nDetailed description of what happens upon activation, sensory effects, concrete narrative result, and duration.\\n\\n### Quirk or Drawback\\nThe minor quirk, odd sensory tell, aesthetic side effect, or subtle inconvenience.\\n\\n### Suggested Use in Play\\nTactical, investigative, social, or creative scenarios where this item shines.\\n\\n### Provenance & Rumour\\nA 1-2 sentence hook about who made it, how it found its way into circulation, or a local rumour.",
   "labels": ["minor-magic-item", "imported-draft"]
 }
+${avoidBlock}
 ${NAME_BAN_PROMPT}
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;

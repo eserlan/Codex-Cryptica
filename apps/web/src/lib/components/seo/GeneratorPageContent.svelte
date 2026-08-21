@@ -720,6 +720,7 @@
         ...minorMagicItem,
         genre: activeTheme,
         useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),

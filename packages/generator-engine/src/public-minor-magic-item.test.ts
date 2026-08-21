@@ -97,6 +97,19 @@ describe("buildMinorMagicItemPrompt", () => {
     expect(userMessage).toContain("- Existing: Dusk Lantern (item)");
     expect(resolved.suggestedName).toBeTruthy();
   });
+
+  it("includes avoidNames ban list in prompt and filters names present in context", () => {
+    const { userMessage } = buildMinorMagicItemPrompt({
+      avoidNames: ["Cinder Bead", "Glimmer Phial", "Whispering Woods"],
+      campaignContext: "A dark forest campaign set in the Whispering Woods.",
+    });
+
+    expect(userMessage).toContain("Already created or used this session");
+    expect(userMessage).toContain("- Cinder Bead");
+    expect(userMessage).toContain("- Glimmer Phial");
+    // Whispering Woods was in the campaignContext so it is excluded from the avoidNames ban list
+    expect(userMessage).not.toContain("- Whispering Woods");
+  });
 });
 
 describe("parseMinorMagicItemResponse", () => {
