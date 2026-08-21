@@ -40,7 +40,7 @@
   $effect(() => {
     if (
       habitat !== "Random" &&
-      creatureConfig.habitats.includes(habitat as any) &&
+      (creatureConfig.habitats as readonly string[]).includes(habitat) &&
       !activeHabitats.includes(habitat)
     ) {
       habitat = "Random";
