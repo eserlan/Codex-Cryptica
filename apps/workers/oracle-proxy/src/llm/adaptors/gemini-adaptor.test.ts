@@ -317,7 +317,7 @@ describe("callGemini (new provider-neutral adaptor)", () => {
 
     vi.useFakeTimers();
     const resultPromise = callGemini(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(15_001);
+    await vi.advanceTimersByTimeAsync(60_001);
     const result = await resultPromise;
     vi.useRealTimers();
 
@@ -341,7 +341,7 @@ describe("callGemini (new provider-neutral adaptor)", () => {
 
     vi.useFakeTimers();
     const resultPromise = callGemini(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(15_001);
+    await vi.advanceTimersByTimeAsync(60_001);
     const result = await resultPromise;
     vi.useRealTimers();
 

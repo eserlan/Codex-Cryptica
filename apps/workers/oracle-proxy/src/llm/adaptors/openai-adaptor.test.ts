@@ -330,7 +330,7 @@ describe("callOpenAi", () => {
 
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(15_001);
+    await vi.advanceTimersByTimeAsync(60_001);
     const result = await resultPromise;
     vi.useRealTimers();
 
@@ -349,7 +349,7 @@ describe("callOpenAi", () => {
 
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(15_001);
+    await vi.advanceTimersByTimeAsync(60_001);
     const result = await resultPromise;
     vi.useRealTimers();
 
