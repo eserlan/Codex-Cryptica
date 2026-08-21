@@ -397,6 +397,87 @@ describe("StatSheetEditor", () => {
     );
   });
 
+  it("edits the dice formula for a Dice Formula column", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "weapons",
+            label: "Weapons",
+            type: "item-table",
+            columns: [{ id: "damage", label: "Damage", type: "dice" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByLabelText("Formula for column 1"), {
+      target: { value: "1d8+2" },
+    });
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [
+                expect.objectContaining({ id: "damage", formula: "1d8+2" }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("edits min/max/step for a Counter column", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "weapons",
+            label: "Weapons",
+            type: "item-table",
+            columns: [{ id: "hp", label: "HP", type: "counter" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByLabelText("Min for column 1"), {
+      target: { value: "0" },
+    });
+    await fireEvent.input(screen.getByLabelText("Max for column 1"), {
+      target: { value: "10" },
+    });
+    await fireEvent.input(screen.getByLabelText("Step for column 1"), {
+      target: { value: "2" },
+    });
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [
+                expect.objectContaining({
+                  id: "hp",
+                  min: 0,
+                  max: 10,
+                  step: 2,
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
   it("gives each column's label/type inputs a distinct accessible name", () => {
     const entity = buildEntity({
       statSheet: {

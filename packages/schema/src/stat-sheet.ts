@@ -31,6 +31,15 @@ export const StatSheetFieldSchema = z.object({
         id: z.string().min(1),
         label: z.string().min(1),
         type: z.enum(["text", "number", "dice", "counter", "checkbox"]),
+        // "dice" columns: the roll formula applied to every row (e.g.
+        // "1d6+2"). Rows may still override it per-row (see `rows` below).
+        formula: z.string().optional(),
+        // "counter" columns: bounds/step shared by every row's counter.
+        // `max` also seeds new rows' starting value/max (see
+        // ItemTableNode.svelte's handleAddRow).
+        min: z.number().optional(),
+        max: z.number().optional(),
+        step: z.number().optional(),
       }),
     )
     .optional(),
