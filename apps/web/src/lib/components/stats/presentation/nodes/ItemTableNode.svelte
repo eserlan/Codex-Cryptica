@@ -301,7 +301,7 @@
             </th>
           {/each}
           {#if !context.readOnly}
-            <th scope="col" class="w-20 px-1 py-1 text-center">
+            <th scope="col" class="w-12 px-1 py-1 text-center">
               <span class="sr-only">Actions</span>
             </th>
           {/if}
@@ -493,35 +493,39 @@
                   (linked ? linked.title : undefined) ||
                   `item ${rIdx + 1}`}
                 <td
-                  class="w-20 px-1 py-1 text-center align-middle whitespace-nowrap"
+                  class="w-12 px-1 py-0.5 text-center align-middle whitespace-nowrap"
                 >
                   <div class="inline-flex items-center justify-center gap-0.5">
-                    <button
-                      type="button"
-                      aria-label={`Move ${rowLabel} up`}
-                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:text-theme-primary disabled:opacity-25 transition-colors"
-                      disabled={rIdx === 0}
-                      onclick={() => handleMoveRow(rIdx, -1)}
-                      title="Move item up"
+                    <div
+                      class="flex flex-col items-center justify-center -space-y-0.5"
                     >
-                      <span
-                        class="icon-[lucide--arrow-up] h-3.5 w-3.5"
-                        aria-hidden="true"
-                      ></span>
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`Move ${rowLabel} down`}
-                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:text-theme-primary disabled:opacity-25 transition-colors"
-                      disabled={rIdx === rows.length - 1}
-                      onclick={() => handleMoveRow(rIdx, 1)}
-                      title="Move item down"
-                    >
-                      <span
-                        class="icon-[lucide--arrow-down] h-3.5 w-3.5"
-                        aria-hidden="true"
-                      ></span>
-                    </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${rowLabel} up`}
+                        class="flex h-3 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary disabled:opacity-20 transition-colors"
+                        disabled={rIdx === 0}
+                        onclick={() => handleMoveRow(rIdx, -1)}
+                        title="Move item up"
+                      >
+                        <span
+                          class="icon-[lucide--chevron-up] h-3 w-3"
+                          aria-hidden="true"
+                        ></span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${rowLabel} down`}
+                        class="flex h-3 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary disabled:opacity-20 transition-colors"
+                        disabled={rIdx === rows.length - 1}
+                        onclick={() => handleMoveRow(rIdx, 1)}
+                        title="Move item down"
+                      >
+                        <span
+                          class="icon-[lucide--chevron-down] h-3 w-3"
+                          aria-hidden="true"
+                        ></span>
+                      </button>
+                    </div>
                     <button
                       type="button"
                       aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
