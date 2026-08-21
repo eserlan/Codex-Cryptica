@@ -25,6 +25,7 @@ const ALL_SLUGS = [
   "settlement",
   "magic-item",
   "minor-magic-item",
+  "artifact-generator",
   "faction",
   "quest",
   "item",

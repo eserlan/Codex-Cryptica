@@ -12,6 +12,7 @@ export interface RandomIdeaCategory {
     | "quest"
     | "villain"
     | "minor-magic-item"
+    | "artifact"
     | "council-vote"
     | "secret-society"
     | "social-hub"
@@ -98,6 +99,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Minor Magic Item",
     generate: (engine, useAI, theme) =>
       engine.generateMinorMagicItem({ genre: theme, useAI }),
+  },
+  {
+    key: "artifact",
+    label: "Artifact / Relic",
+    generate: (engine, useAI, theme) =>
+      engine.generateArtifact({ genre: theme, useAI }),
   },
   {
     key: "council-vote",

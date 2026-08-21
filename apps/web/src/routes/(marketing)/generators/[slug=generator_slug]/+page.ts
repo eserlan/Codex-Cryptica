@@ -8,6 +8,7 @@ const validSlugs = new Set([
   "settlement",
   "magic-item",
   "minor-magic-item",
+  "artifact-generator",
   "faction",
   "quest",
   "item",
@@ -47,6 +48,7 @@ export const load: PageLoad = ({ params }) => {
       | "settlement"
       | "magic-item"
       | "minor-magic-item"
+      | "artifact-generator"
       | "faction"
       | "quest"
       | "item"
@@ -83,6 +85,7 @@ export const entries: EntryGenerator = () => {
     { slug: "settlement" },
     { slug: "magic-item" },
     { slug: "minor-magic-item" },
+    { slug: "artifact-generator" },
     { slug: "faction" },
     { slug: "quest" },
     { slug: "item" },
