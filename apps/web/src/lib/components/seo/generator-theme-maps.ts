@@ -128,6 +128,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "settlement",
   "magic-item",
   "minor-magic-item",
+  "artifact-generator",
   "item",
   "names",
   "dungeon-generator",
