@@ -623,7 +623,16 @@ Key Design Principles:
 4. Consequential Costs & Taboos: Drawbacks must feel weighty and campaign-relevant (e.g. physical decay, moral prohibitions, psychic strain, or beacon-like attraction of rivals), never trivial cosmetic quirks.
 5. Living Setting Connections: Provide 2–3 distinct factions, rulers, or rivals actively hunting or guarding the artifact, each with a different motivation.
 6. Concrete Destruction / Sealing Conditions: State at least one difficult, legendary condition or ritual required to permanently destroy, unmake, or safely seal the artifact.
-7. Evocative & Thorough Depth: Describe the artifact with rich, immersive detail, conveying its physical presence, historical weight, and campaign-shaping potential as needed to serve as a centerpiece worldbuilding object.
+7. Section Length & Compression Guidelines: Maintain high evocative quality while compressing each section tightly:
+   - Physical description: 2–3 paragraphs max
+   - Powers: 1 compact paragraph or 2–3 bullets per tier (Dormant, Awakened, Ascendant)
+   - Attunement: 1 short paragraph
+   - Cost / Curse / Taboo: 1–2 paragraphs
+   - History: 2–3 short paragraphs max
+   - Interested Factions: 3 bullets, 1–2 sentences each
+   - Rumours & Legends: 3 bullets
+   - Adventure Hooks: 2–3 hooks, one sentence each
+   - Destruction / Sealing: 1 compact paragraph
 8. System-Agnostic: Focus on concrete narrative and physical effects that any GM can interpret immediately without relying on specific RPG rulesets or numeric stat blocks.
 
 Before returning, run a consistency pass:
@@ -631,14 +640,15 @@ Before returning, run a consistency pass:
 - The underlying causal logic strictly matches "${resolved.genre}".
 - The artifact form matches "${resolved.form}" and physical materials matter to its handling.
 - The cost or curse matches "${resolved.curseCost}" with meaningful campaign stakes.
+- Section lengths strictly adhere to the compression guidelines (Description: 2–3 paragraphs max; Powers: 1 compact paragraph or 2–3 bullets per tier; Attunement: 1 short paragraph; Cost: 1–2 paragraphs; History: 2–3 short paragraphs max; Factions: 3 bullets of 1–2 sentences; Rumours: 3 bullets; Hooks: 2–3 one-sentence hooks; Destruction: 1 compact paragraph).
 - Factions, rumors, and adventure hooks provide immediate gameplay fuel for the GM.
 - Destruction or sealing conditions are clear and legendary.
 
 You must return a valid JSON object matching this schema:
 {
   "title": "Evocative Artifact Name",
-  "content": "Rich markdown describing physical appearance, materials, ancient craftsmanship, tactile texture, sensory aura, and visual details when inspected.",
-  "lore": "Markdown formatted GM reference with the following exact headings:\\n\\n### Quick Reference\\n- **Item Form**: ${resolved.form}\\n- **Origin Era**: ${resolved.originEra}\\n- **Power Tier**: ${resolved.powerTier}\\n- **Current Status**: ${resolved.currentStatus}\\n- **Curse / Cost**: ${resolved.curseCost}\\n- **Setting / Theme**: ${resolved.genre}\\n\\n### ${powersHeading}\\n- **Dormant Powers**: Baseline subtle effects, sensory tells, and passive benefits.\\n- **Awakened Powers**: Activated major abilities, tactical advantages, and world effects.\\n- **Ascendant / Zenith Powers**: Cataclysmic, reality-altering, or campaign-scale powers.\\n\\n### Attunement & Awakening Requirements\\nWhat a mortal, hero, or engineer must do, sacrifice, or understand to awaken its true potential.\\n\\n### Cost, Curse, Corruption, or Taboo\\nThe consequential price, taboo, or lingering corruption of wielding or keeping the artifact.\\n\\n### Known History & Previous Keepers\\nKey historical moments, ancient creators, milestones, and what became of previous wielders.\\n\\n### Interested Factions & Pursuers\\n2-3 specific groups, lords, or entities actively seeking, guarding, or hunting the artifact.\\n\\n### Rumours & Conflicting Legends\\nFolk beliefs, false assumptions, and exaggerated tales surrounding it.\\n\\n### Adventure Hooks\\n3 concrete hooks for finding, stealing, protecting, or neutralizing the artifact.\\n\\n### Destruction or Sealing Conditions\\nThe specific ritual, environment, or feat required to permanently destroy or seal it.",
+  "content": "2–3 paragraphs max describing physical appearance, materials, ancient craftsmanship, tactile texture, sensory aura, and visual details when inspected.",
+  "lore": "Markdown formatted GM reference with the following exact headings:\\n\\n### Quick Reference\\n- **Item Form**: ${resolved.form}\\n- **Origin Era**: ${resolved.originEra}\\n- **Power Tier**: ${resolved.powerTier}\\n- **Current Status**: ${resolved.currentStatus}\\n- **Curse / Cost**: ${resolved.curseCost}\\n- **Setting / Theme**: ${resolved.genre}\\n\\n### ${powersHeading}\\n- **Dormant Powers**: 1 compact paragraph or 2–3 bullets of baseline subtle effects and sensory tells.\\n- **Awakened Powers**: 1 compact paragraph or 2–3 bullets of activated major abilities and world effects.\\n- **Ascendant / Zenith Powers**: 1 compact paragraph or 2–3 bullets of cataclysmic or campaign-scale powers.\\n\\n### Attunement & Awakening Requirements\\n1 short paragraph on what a mortal, hero, or engineer must do, sacrifice, or understand.\\n\\n### Cost, Curse, Corruption, or Taboo\\n1–2 paragraphs on the consequential price, taboo, or lingering corruption of wielding or keeping the artifact.\\n\\n### Known History & Previous Keepers\\n2–3 short paragraphs max covering ancient creators, milestones, and what became of previous wielders.\\n\\n### Interested Factions & Pursuers\\n3 bullets (1–2 sentences each) detailing interested factions, rivals, or rulers and their motives.\\n\\n### Rumours & Conflicting Legends\\n3 bullets of folk beliefs, false assumptions, or exaggerated tales.\\n\\n### Adventure Hooks\\n2–3 scenario hooks (one sentence each) for finding, stealing, protecting, or neutralizing the artifact.\\n\\n### Destruction or Sealing Conditions\\n1 compact paragraph describing the specific ritual, environment, or feat required to permanently destroy or seal it.",
   "labels": ["artifact", "relic", "imported-draft"]
 }
 ${avoidBlock}
