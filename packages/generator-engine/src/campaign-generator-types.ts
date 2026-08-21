@@ -29,6 +29,7 @@ export type GeneratorId =
   | "secret-society"
   | "star-system"
   | "alien-race"
+  | "creature"
   | "random-table";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
@@ -52,6 +53,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "secret-society",
   "star-system",
   "alien-race",
+  "creature",
   "random-table",
 ] as const;
 

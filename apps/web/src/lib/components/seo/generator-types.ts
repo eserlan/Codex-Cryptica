@@ -30,7 +30,8 @@ export type ValidSlug =
   | "council-vote"
   | "secret-society"
   | "star-system"
-  | "alien-race";
+  | "alien-race"
+  | "creature";
 
 export type SlugMetaEntry = {
   pageTitle: string;

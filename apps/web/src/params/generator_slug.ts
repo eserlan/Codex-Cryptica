@@ -33,6 +33,7 @@ const validSlugs = new Set([
   "secret-society",
   "star-system",
   "alien-race",
+  "creature",
   "random",
 ]);
 

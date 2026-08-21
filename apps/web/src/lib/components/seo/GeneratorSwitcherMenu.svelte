@@ -46,6 +46,7 @@
         { label: "Settlement Generator", path: "/generators/settlement" },
         { label: "Star System Generator", path: "/generators/star-system" },
         { label: "Alien Race Generator", path: "/generators/alien-race" },
+        { label: "Creature Generator", path: "/generators/creature" },
         { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",

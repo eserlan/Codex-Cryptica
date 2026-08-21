@@ -1157,4 +1157,62 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/faction", label: "Faction Generator" },
     ],
   },
+  creature: {
+    pageTitle:
+      "Creature Generator | RPG Monster, Beast & Fauna Creator | Codex Cryptica",
+    metaDescription:
+      "Generate monsters, beasts, alien fauna, undead, and magical creatures for any tabletop RPG. Complete with appearance, ecology, signs, tactics, weaknesses, and adventure hooks.",
+    introTitle: "Creature Generator",
+    eyebrow: "Monster & Creature Generator",
+    introText:
+      "Create table-ready monsters, beasts, alien fauna, undead, constructs, and mounts across any genre. Generates distinctive appearance, sensory signs, ecological roles, tactical combat behaviour, harvestable remains, and adventure hooks beyond just fighting them.",
+    canonicalPath: "/generators/creature",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-creature.jpg",
+    ogImageAlt:
+      "Codex Cryptica creature generator drafting monsters and beasts with ecology, signs, abilities, and adventure hooks",
+    keywords: [
+      "creature generator",
+      "monster generator",
+      "fantasy monster generator",
+      "rpg monster creator",
+      "alien fauna generator",
+      "dnd monster maker",
+      "tabletop beast generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Creature Generator create?",
+        answer:
+          "It produces a complete RPG creature — name, category, size, habitat, threat level, temperament, physical appearance, tracks and sensory signs, ecological role, abilities and defences, exploitable weaknesses, encounter behaviour, harvestable materials, lore and rumours, and 2–4 adventure hooks.",
+      },
+      {
+        question: "Is this only a fantasy monster generator?",
+        answer:
+          "No. While it functions as a powerful fantasy monster generator, it natively adapts to all 13 world themes — creating cyberpunk security bioweapons, sci-fi vacuum organisms, post-apocalyptic mutants, cosmic horror aberrations, and gothic undead.",
+      },
+      {
+        question:
+          "Can it generate non-hostile creatures, mounts, or familiars?",
+        answer:
+          "Yes. Select ecological roles like Herbivore / Migratory Grazer, Mount / Domesticated Beast, Familiar / Companion, or Scavenger, and choose appropriate threat levels from Harmless to Apex Predator.",
+      },
+      {
+        question: "How are intelligent or sapient creatures handled?",
+        answer:
+          "When a semi-sapient, fully sapient, or alien-minded temperament is selected, the generator adds communication methods, motives, social hierarchy, and relationship with nearby settlements, enabling memorable alien societies or monster cultures.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate, customize, and copy creature notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault with full Markdown notes — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
+      { href: "/generators/alien-race", label: "Alien Race Generator" },
+      { href: "/generators/npc", label: "RPG NPC Generator" },
+    ],
+  },
 };

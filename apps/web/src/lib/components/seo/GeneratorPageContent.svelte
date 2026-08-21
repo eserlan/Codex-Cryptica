@@ -36,6 +36,7 @@
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
+  import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -65,6 +66,7 @@
     worldConfig,
     starSystemConfig,
     alienRaceConfig,
+    creatureConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -489,6 +491,26 @@
     campaignContext: "",
   });
 
+  let creature = $state<{
+    genre: string;
+    category: string;
+    threatLevel: string;
+    size: string;
+    temperament: string;
+    habitat: string;
+    ecologicalRole: string;
+    campaignContext: string;
+  }>({
+    genre: factionConfig.themes[0],
+    category: creatureConfig.categories[0],
+    threatLevel: creatureConfig.threatLevels[0],
+    size: creatureConfig.sizes[0],
+    temperament: creatureConfig.temperaments[0],
+    habitat: creatureConfig.habitats[0],
+    ecologicalRole: creatureConfig.ecologicalRoles[0],
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
@@ -551,6 +573,7 @@
     else if (slug === "bbeg-generator") villain.genre = activeTheme;
     else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
     else if (slug === "artifact-generator") artifact.genre = activeTheme;
+    else if (slug === "creature") creature.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -840,6 +863,12 @@
     "alien-race": (useAI) =>
       generatorEngine.generateAlienRace({
         ...alienRace,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    creature: (useAI) =>
+      generatorEngine.generateCreature({
+        ...creature,
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
@@ -1201,6 +1230,21 @@
         bind:campaignContext={alienRace.campaignContext}
         onGenreChange={(genre) => {
           activeTheme = mapAlienRaceGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "creature"}
+      <CreatureFormFields
+        bind:genre={creature.genre}
+        bind:category={creature.category}
+        bind:threatLevel={creature.threatLevel}
+        bind:size={creature.size}
+        bind:temperament={creature.temperament}
+        bind:habitat={creature.habitat}
+        bind:ecologicalRole={creature.ecologicalRole}
+        bind:campaignContext={creature.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = genre;
         }}
         onSurprise={trigger}
       />

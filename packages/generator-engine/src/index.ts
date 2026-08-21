@@ -360,3 +360,13 @@ export {
   STARTER_CONSTELLATION_THEME_IDS,
   type StarterConstellationPrompt,
 } from "./starter-constellation";
+export {
+  buildCreaturePrompt,
+  parseCreatureResponse,
+  generateCreatureLocal,
+  resolveCreature,
+  creatureConfig,
+  type CreatureGeneratorOptions,
+  type CreaturePrompt,
+  type ResolvedCreature,
+} from "./public-creature";

@@ -62,6 +62,7 @@ describe("registry lookup", () => {
       "secret-society",
       "star-system",
       "alien-race",
+      "creature",
       "random-table",
     ]);
   });
@@ -306,6 +307,34 @@ describe("registry lookup", () => {
     expect(draft.entityType).toBe("creature");
     expect(draft.lore).toContain("## Overview");
     expect(draft.lore).toContain("## Weaknesses & Constraints");
+  });
+
+  it("builds a context-aware creature prompt and maps to creature entityType", () => {
+    const generator = getGenerator("creature");
+    const request = run("creature", {
+      options: {
+        genre: "Classic Fantasy",
+        category: "Magical Beast / Chimera",
+        threatLevel: "Dangerous / Predator",
+        habitat: "Dense Forest / Deep Jungle",
+        ecologicalRole: "Ambush Hunter",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE["creature"]).toBe("creature");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Classic Fantasy");
+    expect(prompt).toContain("Magical Beast / Chimera");
+    expect(prompt).toContain("Ambush Hunter");
+    expect(prompt).toContain("consistency pass");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+    expect(draft.entityType).toBe("creature");
+    expect(draft.labels).toContain("creature");
+    expect(draft.labels).toContain("monster-generator");
+    expect(draft.lore).toContain("### Core Concept & Ecology");
+    expect(draft.lore).toContain("### Abilities & Defences");
   });
 
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
@@ -1340,6 +1369,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "secret-society": "faction",
       "star-system": "location",
       "alien-race": "creature",
+      creature: "creature",
       "random-table": "table",
     });
   });

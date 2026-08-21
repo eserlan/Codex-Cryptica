@@ -114,6 +114,13 @@
               icon: "icon-[lucide--dna]",
             },
             {
+              href: "/generators/creature",
+              label: "Creature Generator",
+              summary:
+                "Generate memorable monsters, beasts, alien fauna, and undead with ecology, signs, combat tactics, and adventure hooks.",
+              icon: "icon-[lucide--paw-print]",
+            },
+            {
               href: "/generators/world",
               label: "Sci-Fi World Generator",
               summary:
