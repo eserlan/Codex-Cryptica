@@ -86,14 +86,14 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 
 ### Tests for User Story 2
 
-- [ ] T022 [P] [US2] **Write this test first.** In `packages/faction-engine/src/eligibility.test.ts`, assert `source === "realWorld"` yields state `no-world-date` with `canAct: false` and `canOverride: false` (FR-008a) — this tier returns the actual present-day date and would otherwise make every faction eligible forever with history stamped in the wrong millennium
-- [ ] T023 [P] [US2] Extend `eligibility.test.ts` covering `never-acted` (FR-011), `eligible`, `too-soon` with `nextEligibleDate` (FR-012), and `clock-behind` returning ineligible with no error or repair prompt (FR-014)
-- [ ] T024 [P] [US2] Write test asserting eligibility is computed from the most recent **non-undone** turn (FR-010, edge case)
-- [ ] T025 [P] [US2] Write test asserting a vault with only `presentYear` set resolves to `source: "vaultSetting"` and gates eligibility correctly with an absent `day` (FR-008)
+- [x] T022 [P] [US2] **Write this test first.** In `packages/faction-engine/src/eligibility.test.ts`, assert `source === "realWorld"` yields state `no-world-date` with `canAct: false` and `canOverride: false` (FR-008a) — this tier returns the actual present-day date and would otherwise make every faction eligible forever with history stamped in the wrong millennium
+- [x] T023 [P] [US2] Extend `eligibility.test.ts` covering `never-acted` (FR-011), `eligible`, `too-soon` with `nextEligibleDate` (FR-012), and `clock-behind` returning ineligible with no error or repair prompt (FR-014)
+- [x] T024 [P] [US2] Write test asserting eligibility is computed from the most recent **non-undone** turn (FR-010, edge case)
+- [x] T025 [P] [US2] Write test asserting a vault with only `presentYear` set resolves to `source: "vaultSetting"` and gates eligibility correctly with an absent `day` (FR-008)
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Create `packages/faction-engine/src/eligibility.ts` implementing `evaluateEligibility()` per `contracts/faction-engine.md`, never throwing, with plain-language `reason` strings (Principle IX)
+- [x] T026 [US2] Create `packages/faction-engine/src/eligibility.ts` implementing `evaluateEligibility()` per `contracts/faction-engine.md`, never throwing, with plain-language `reason` strings (Principle IX)
 - [ ] T027 [US2] Create `FactionTurnSettings` persistence in `apps/web/src/lib/stores/faction-turn.svelte.ts` — interval unit/amount, randomness, two AI switches, baseline opposition — stored per vault in the existing `settings` IDB store alongside `calendar_${vaultId}` (no `DB_VERSION` bump)
 - [ ] T028 [US2] Add a Faction Turn settings section to `apps/web/src/lib/components/settings/VaultSettings.svelte`. The two AI toggles MUST carry inline text stating what leaves the device when they are on — the faction's and target's names and short descriptions — not bare labels (Principle V, Principle IX)
 - [ ] T029 [US2] Surface eligibility state in `DetailFactionTurnTab.svelte` — the reason, last turn date, next eligible date, and a "run anyway" override for `too-soon`/`clock-behind` only (FR-013)
@@ -113,21 +113,21 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 
 ### Tests for User Story 3
 
-- [ ] T031 [P] [US3] Write `packages/faction-engine/src/opposition.test.ts` covering all three FR-020 tiers, asserting an unclaimed target opposes at exactly the baseline (FR-020c), that only relationships **directed at** the target count (FR-020b), and that the acting faction's own hold is excluded
-- [ ] T032 [P] [US3] Write `packages/faction-engine/src/resolution.test.ts` asserting identical inputs produce identical band and changes with randomness and AI both off (SC-006, FR-019)
-- [ ] T033 [P] [US3] Extend `resolution.test.ts` asserting `permittedBands` never extends more than one band either side and is truncated at the scale ends (FR-021a)
-- [ ] T034 [P] [US3] Write `packages/faction-engine/src/ai-band.test.ts` asserting `null`, an unknown band, and an out-of-range band each leave the resolution unchanged with `aiUsed: false` (FR-021c)
-- [ ] T035 [P] [US3] Extend `ai-band.test.ts` with a hostile response — extra fields, a magnitude, a stat value, an eligibility hint — asserting only `band` and `narrative` are ever consumed and no other value is touched (FR-021e)
-- [ ] T036 [P] [US3] Extend `ai-band.test.ts` asserting a band change carrying a missing or empty reason is rejected and falls back to the mechanical band (FR-021b)
+- [x] T031 [P] [US3] Write `packages/faction-engine/src/opposition.test.ts` covering all three FR-020 tiers, asserting an unclaimed target opposes at exactly the baseline (FR-020c), that only relationships **directed at** the target count (FR-020b), and that the acting faction's own hold is excluded
+- [x] T032 [P] [US3] Write `packages/faction-engine/src/resolution.test.ts` asserting identical inputs produce identical band and changes with randomness and AI both off (SC-006, FR-019)
+- [x] T033 [P] [US3] Extend `resolution.test.ts` asserting `permittedBands` never extends more than one band either side and is truncated at the scale ends (FR-021a)
+- [x] T034 [P] [US3] Write `packages/faction-engine/src/ai-band.test.ts` asserting `null`, an unknown band, and an out-of-range band each leave the resolution unchanged with `aiUsed: false` (FR-021c)
+- [x] T035 [P] [US3] Extend `ai-band.test.ts` with a hostile response — extra fields, a magnitude, a stat value, an eligibility hint — asserting only `band` and `narrative` are ever consumed and no other value is touched (FR-021e)
+- [x] T036 [P] [US3] Extend `ai-band.test.ts` asserting a band change carrying a missing or empty reason is rejected and falls back to the mechanical band (FR-021b)
 - [ ] T037 [P] [US3] Write `packages/ai-engine/src/faction-turn-generation.service.test.ts` asserting the service **never rejects** — unreachable provider, timeout, malformed JSON, and out-of-range band all resolve to all-null with `aiUsed: false` (SC-012, FR-021d), and that both flags false makes no network call (Principle V)
-- [ ] T038 [P] [US3] Write test asserting self-target and unmapped-role return typed `ResolveFailure` values rather than throwing (FR-005, US3 scenario 7)
-- [ ] T039 [P] [US3] Write `packages/faction-engine/src/patches.test.ts` covering `buildChanges()` output shape and `computeStateHash()` stability — identical inputs hash equal, and any touched stat value or connection strength hashes differently (FR-026). Written **before** T043, so `patches.ts` is not implemented ahead of its tests (Principle II)
+- [x] T038 [P] [US3] Write test asserting self-target and unmapped-role return typed `ResolveFailure` values rather than throwing (FR-005, US3 scenario 7)
+- [x] T039 [P] [US3] Write `packages/faction-engine/src/patches.test.ts` covering `buildChanges()` output shape and `computeStateHash()` stability — identical inputs hash equal, and any touched stat value or connection strength hashes differently (FR-026). Written **before** T043, so `patches.ts` is not implemented ahead of its tests (Principle II)
 
 ### Implementation for User Story 3
 
-- [ ] T040 [US3] Create `packages/faction-engine/src/opposition.ts` implementing `computeOpposition()` — FR-020a → FR-020b → FR-020c in order, returning value, source and human-readable detail
-- [ ] T041 [US3] Create `packages/faction-engine/src/resolution.ts` implementing `resolveInfluence()` returning `Result<FactionResolution, ResolveFailure>`, with `diceEngine` injected per Principle VIII and skipped entirely when randomness is off
-- [ ] T042 [US3] Create `packages/faction-engine/src/ai-band.ts` implementing `applyAiBand()` — the single enforcement point for the permitted range and the FR-021e value boundary, since a provider schema can express neither
+- [x] T040 [US3] Create `packages/faction-engine/src/opposition.ts` implementing `computeOpposition()` — FR-020a → FR-020b → FR-020c in order, returning value, source and human-readable detail
+- [x] T041 [US3] Create `packages/faction-engine/src/resolution.ts` implementing `resolveInfluence()` returning `Result<FactionResolution, ResolveFailure>`, with `diceEngine` injected per Principle VIII and skipped entirely when randomness is off
+- [x] T042 [US3] Create `packages/faction-engine/src/ai-band.ts` implementing `applyAiBand()` — the single enforcement point for the permitted range and the FR-021e value boundary, since a provider schema can express neither
 - [ ] T043 [US3] Create `packages/faction-engine/src/patches.ts` — `buildChanges()` producing forward and inverse lists, and `computeStateHash()` scoped to the touched stat values and connection, using `entityContentHash` imported **deep** from `@codex/oracle-engine/src/lore-delta`. Do **not** import the package barrel: `oracle-engine/src/index.ts` re-exports `oracle-settings.svelte`, `chat-history.svelte` and `undo-redo.svelte`, which would pull Svelte runes into this rune-free package and break `bun test`
 - [ ] T044 [US3] Create `packages/ai-engine/src/faction-turn-generation.service.ts` per `contracts/faction-ai.md`, exporting `FACTION_AI_TIMEOUT_MS = 8000` as a **named constant** (the one place to retune it) plus a constructor `timeoutMs` override
 - [ ] T045 [US3] Implement the provider schema and prompt in the AI service — state the mechanical band, the at-most-one-step rule, the roll and margin, and forbid inventing entities, dates or numbers
@@ -149,15 +149,15 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 
 ### Tests for User Story 4
 
-- [ ] T051 [P] [US4] Write `packages/faction-engine/src/patches.test.ts` asserting across **all five bands** that applying `changes` then `inverse` restores exact prior values (SC-005)
-- [ ] T052 [P] [US4] Extend `patches.test.ts` with the clamped case — a change capped at a stat bound still reverses to the true original value, not the clamped one (FR-034a)
-- [ ] T053 [P] [US4] Write test asserting a proposal never mutates its inputs (FR-022) and that discarding leaves no stat, relationship, entity or history change across all five bands (SC-004)
-- [ ] T054 [P] [US4] Write `packages/faction-engine/src/engine.test.ts` asserting commit returns `{kind: "stale"}` when the state hash no longer matches (FR-026, SC-007)
-- [ ] T055 [P] [US4] Extend `engine.test.ts` asserting `reverse()` on a non-most-recent record returns `{kind: "not-most-recent"}` (US4 scenario 7) and that a missing target returns `{kind: "target-missing"}`
-- [ ] T056 [P] [US4] Write test asserting no change is ever produced for an edge directed from the target back to the faction (FR-032c)
-- [ ] T057 [P] [US4] Write test asserting that committing **without** opting into a suggested type change leaves the relationship type exactly as the GM authored it, moving only strength (FR-032b, US4 scenario 3a)
+- [x] T051 [P] [US4] Write `packages/faction-engine/src/patches.test.ts` asserting across **all five bands** that applying `changes` then `inverse` restores exact prior values (SC-005)
+- [x] T052 [P] [US4] Extend `patches.test.ts` with the clamped case — a change capped at a stat bound still reverses to the true original value, not the clamped one (FR-034a)
+- [x] T053 [P] [US4] Write test asserting a proposal never mutates its inputs (FR-022) and that discarding leaves no stat, relationship, entity or history change across all five bands (SC-004)
+- [x] T054 [P] [US4] Write `packages/faction-engine/src/engine.test.ts` asserting commit returns `{kind: "stale"}` when the state hash no longer matches (FR-026, SC-007)
+- [x] T055 [P] [US4] Extend `engine.test.ts` asserting `reverse()` on a non-most-recent record returns `{kind: "not-most-recent"}` (US4 scenario 7) and that a missing target returns `{kind: "target-missing"}`
+- [x] T056 [P] [US4] Write test asserting no change is ever produced for an edge directed from the target back to the faction (FR-032c)
+- [x] T057 [P] [US4] Write test asserting that committing **without** opting into a suggested type change leaves the relationship type exactly as the GM authored it, moving only strength (FR-032b, US4 scenario 3a)
 - [ ] T058 [P] [US4] Write test asserting the first turn against a target with no existing edge creates one at neutral type (FR-033)
-- [ ] T059 [P] [US4] Write store test forcing a failure on the connection write and on the history append, asserting in each case that already-applied writes are rolled back, the vault matches its pre-commit state, and the result reports the turn as not applied (FR-025, FR-025a)
+- [x] T059 [P] [US4] Write store test forcing a failure on the connection write and on the history append, asserting in each case that already-applied writes are rolled back, the vault matches its pre-commit state, and the result reports the turn as not applied (FR-025, FR-025a)
 
 ### Implementation for User Story 4
 
@@ -168,7 +168,7 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 - [ ] T064 [US4] Extend `FactionTurnPreview.svelte` with the change summary and actions — every stat change with before/after, the strength shift with before/after, the opt-in relationship type change, and Commit / Discard (FR-023)
 - [ ] T065 [US4] Make the narrative editable before commit, with the edited text stored (FR-021h), and discard the edit on re-resolve (edge case)
 - [ ] T066 [US4] Implement the navigate-away confirmation for an unreviewed preview (FR-022b), and confirm no preview state is persisted or restored (FR-022a)
-- [ ] T067 [US4] Implement undo in the store, including the FR-030 warning when affected entities changed since commit, marking the record undone rather than deleting it (FR-029), and recomputing `lastTurnDate` from remaining non-undone history
+- [x] T067 [US4] Implement undo in the store, including the FR-030 warning when affected entities changed since commit, marking the record undone rather than deleting it (FR-029), and recomputing `lastTurnDate` from remaining non-undone history
 
 **Checkpoint**: The full write path is safe, atomic and reversible. This is the first point the feature is genuinely usable.
 
@@ -182,11 +182,11 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 
 ### Tests for User Story 5
 
-- [ ] T068 [P] [US5] Write `packages/faction-engine/src/history.test.ts` asserting chronological ordering by world date then commit time (FR-036), and that entries whose calendar revision no longer validates sort last and render as undated
-- [ ] T069 [P] [US5] Write test asserting a history entry remains readable after its target entity is deleted, displaying the snapshotted title (FR-040)
-- [ ] T070 [P] [US5] Write test asserting no event entity is created anywhere without explicit promotion (FR-037, SC-009)
-- [ ] T071 [P] [US5] Write test asserting an already-promoted entry cannot be promoted twice (FR-038)
-- [ ] T072 [P] [US5] Write test appending 600 records and asserting every one survives a save/load round trip with full resolution detail intact — nothing is pruned, capped or trimmed (FR-041)
+- [x] T068 [P] [US5] Write `packages/faction-engine/src/history.test.ts` asserting chronological ordering by world date then commit time (FR-036), and that entries whose calendar revision no longer validates sort last and render as undated
+- [x] T069 [P] [US5] Write test asserting a history entry remains readable after its target entity is deleted, displaying the snapshotted title (FR-040)
+- [x] T070 [P] [US5] Write test asserting no event entity is created anywhere without explicit promotion (FR-037, SC-009)
+- [x] T071 [P] [US5] Write test asserting an already-promoted entry cannot be promoted twice (FR-038)
+- [x] T072 [P] [US5] Write test appending 600 records and asserting every one survives a save/load round trip with full resolution detail intact — nothing is pruned, capped or trimmed (FR-041)
 
 ### Implementation for User Story 5
 
