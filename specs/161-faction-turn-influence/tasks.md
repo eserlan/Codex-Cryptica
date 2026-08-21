@@ -62,12 +62,12 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 ### Tests for User Story 1
 
 - [x] T013 [P] [US1] Write test in `packages/faction-engine/src/roles.test.ts` asserting a role mapped to a field id survives the stat being renamed, and that a mapping pointing at a deleted field reads as unmapped rather than throwing
-- [ ] T014 [P] [US1] Write test in `apps/web/src/lib/stores/faction-turn.test.ts` asserting an entity without `factionTurn` reports the layer as off and exposes no stats or history (FR-002, SC-008)
+- [x] T014 [P] [US1] Write test in `apps/web/src/lib/stores/faction-turn.test.ts` asserting an entity without `factionTurn` reports the layer as off and exposes no stats or history (FR-002, SC-008)
 
 ### Implementation for User Story 1
 
 - [x] T015 [US1] Create `packages/faction-engine/src/roles.ts` with `resolveRole(faction, role)` returning the stat sheet field, its label and value, or an unmapped marker (FR-004a, FR-005)
-- [ ] T016 [US1] Create `apps/web/src/lib/stores/faction-turn.svelte.ts` with constructor DI (`vault`, `calendarStore`, `mutations`, `engine`) per Principle VIII, exporting both class and singleton — enable/disable the layer and read/write `statRoles`
+- [x] T016 [US1] Create `apps/web/src/lib/stores/faction-turn.svelte.ts` with constructor DI (`vault`, `calendarStore`, `mutations`, `engine`) per Principle VIII, exporting both class and singleton — enable/disable the layer and read/write `statRoles`
 - [ ] T017 [US1] Add `"faction"` to the tab array in `apps/web/src/lib/components/entity-detail/detail-tabs.ts`
 - [ ] T018 [US1] Create `apps/web/src/lib/components/entity-detail/DetailFactionTurnTab.svelte` — shown only for `type === "faction"`, with the opt-in control when the layer is off
 - [ ] T019 [US1] Wire the new tab into `apps/web/src/lib/components/EntityDetailPanel.svelte` following the `DetailTimelineTab` precedent at line 569 (hidden/`{#if}` pattern)
@@ -119,7 +119,7 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 - [x] T034 [P] [US3] Write `packages/faction-engine/src/ai-band.test.ts` asserting `null`, an unknown band, and an out-of-range band each leave the resolution unchanged with `aiUsed: false` (FR-021c)
 - [x] T035 [P] [US3] Extend `ai-band.test.ts` with a hostile response — extra fields, a magnitude, a stat value, an eligibility hint — asserting only `band` and `narrative` are ever consumed and no other value is touched (FR-021e)
 - [x] T036 [P] [US3] Extend `ai-band.test.ts` asserting a band change carrying a missing or empty reason is rejected and falls back to the mechanical band (FR-021b)
-- [ ] T037 [P] [US3] Write `packages/ai-engine/src/faction-turn-generation.service.test.ts` asserting the service **never rejects** — unreachable provider, timeout, malformed JSON, and out-of-range band all resolve to all-null with `aiUsed: false` (SC-012, FR-021d), and that both flags false makes no network call (Principle V)
+- [x] T037 [P] [US3] Write `packages/ai-engine/src/faction-turn-generation.service.test.ts` asserting the service **never rejects** — unreachable provider, timeout, malformed JSON, and out-of-range band all resolve to all-null with `aiUsed: false` (SC-012, FR-021d), and that both flags false makes no network call (Principle V)
 - [x] T038 [P] [US3] Write test asserting self-target and unmapped-role return typed `ResolveFailure` values rather than throwing (FR-005, US3 scenario 7)
 - [x] T039 [P] [US3] Write `packages/faction-engine/src/patches.test.ts` covering `buildChanges()` output shape and `computeStateHash()` stability — identical inputs hash equal, and any touched stat value or connection strength hashes differently (FR-026). Written **before** T043, so `patches.ts` is not implemented ahead of its tests (Principle II)
 
@@ -128,12 +128,12 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 - [x] T040 [US3] Create `packages/faction-engine/src/opposition.ts` implementing `computeOpposition()` — FR-020a → FR-020b → FR-020c in order, returning value, source and human-readable detail
 - [x] T041 [US3] Create `packages/faction-engine/src/resolution.ts` implementing `resolveInfluence()` returning `Result<FactionResolution, ResolveFailure>`, with `diceEngine` injected per Principle VIII and skipped entirely when randomness is off
 - [x] T042 [US3] Create `packages/faction-engine/src/ai-band.ts` implementing `applyAiBand()` — the single enforcement point for the permitted range and the FR-021e value boundary, since a provider schema can express neither
-- [ ] T043 [US3] Create `packages/faction-engine/src/patches.ts` — `buildChanges()` producing forward and inverse lists, and `computeStateHash()` scoped to the touched stat values and connection, using `entityContentHash` imported **deep** from `@codex/oracle-engine/src/lore-delta`. Do **not** import the package barrel: `oracle-engine/src/index.ts` re-exports `oracle-settings.svelte`, `chat-history.svelte` and `undo-redo.svelte`, which would pull Svelte runes into this rune-free package and break `bun test`
-- [ ] T044 [US3] Create `packages/ai-engine/src/faction-turn-generation.service.ts` per `contracts/faction-ai.md`, exporting `FACTION_AI_TIMEOUT_MS = 8000` as a **named constant** (the one place to retune it) plus a constructor `timeoutMs` override
-- [ ] T045 [US3] Implement the provider schema and prompt in the AI service — state the mechanical band, the at-most-one-step rule, the roll and margin, and forbid inventing entities, dates or numbers
-- [ ] T046 [US3] Wrap every AI failure mode in the service so none escapes as a rejection (FR-021d)
+- [x] T043 [US3] Create `packages/faction-engine/src/patches.ts` — `buildChanges()` producing forward and inverse lists, and `computeStateHash()` scoped to the touched stat values and connection, using `entityContentHash` imported **deep** from `@codex/oracle-engine/src/lore-delta`. Do **not** import the package barrel: `oracle-engine/src/index.ts` re-exports `oracle-settings.svelte`, `chat-history.svelte` and `undo-redo.svelte`, which would pull Svelte runes into this rune-free package and break `bun test`
+- [x] T044 [US3] Create `packages/ai-engine/src/faction-turn-generation.service.ts` per `contracts/faction-ai.md`, exporting `FACTION_AI_TIMEOUT_MS = 8000` as a **named constant** (the one place to retune it) plus a constructor `timeoutMs` override
+- [x] T045 [US3] Implement the provider schema and prompt in the AI service — state the mechanical band, the at-most-one-step rule, the roll and margin, and forbid inventing entities, dates or numbers
+- [x] T046 [US3] Wrap every AI failure mode in the service so none escapes as a rejection (FR-021d)
 - [ ] T047 [US3] Export the service from `packages/ai-engine/src/index.ts`
-- [ ] T048 [US3] Create `apps/web/src/lib/components/entity-detail/faction-turn/FactionTurnAction.svelte` — target picker excluding the acting faction (FR-016), reusing the existing entity search component
+- [x] T048 [US3] Create `apps/web/src/lib/components/entity-detail/faction-turn/FactionTurnAction.svelte` — target picker excluding the acting faction (FR-016), reusing the existing entity search component
 - [ ] T049 [US3] Add `propose()` orchestration to the store: resolve mechanically, call AI when enabled, apply the band, build changes and inverse, compute the state hash, assemble the proposal
 - [ ] T050 [US3] Create `apps/web/src/lib/components/entity-detail/faction-turn/FactionTurnPreview.svelte` with the resolution breakdown — acting stat and value, opposition with its tier and provenance, modifiers, individual dice, total, permitted range, mechanical band, final band, and the AI's reason when they differ (FR-018, FR-021g)
 
@@ -156,18 +156,18 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 - [x] T055 [P] [US4] Extend `engine.test.ts` asserting `reverse()` on a non-most-recent record returns `{kind: "not-most-recent"}` (US4 scenario 7) and that a missing target returns `{kind: "target-missing"}`
 - [x] T056 [P] [US4] Write test asserting no change is ever produced for an edge directed from the target back to the faction (FR-032c)
 - [x] T057 [P] [US4] Write test asserting that committing **without** opting into a suggested type change leaves the relationship type exactly as the GM authored it, moving only strength (FR-032b, US4 scenario 3a)
-- [ ] T058 [P] [US4] Write test asserting the first turn against a target with no existing edge creates one at neutral type (FR-033)
+- [x] T058 [P] [US4] Write test asserting the first turn against a target with no existing edge creates one at neutral type (FR-033)
 - [x] T059 [P] [US4] Write store test forcing a failure on the connection write and on the history append, asserting in each case that already-applied writes are rolled back, the vault matches its pre-commit state, and the result reports the turn as not applied (FR-025, FR-025a)
 
 ### Implementation for User Story 4
 
-- [ ] T060 [US4] Create `packages/faction-engine/src/engine.ts` with `FactionTurnEngine` (class + singleton) implementing `propose`, `commit` and `reverse`, all returning **plans** rather than performing mutations
-- [ ] T061 [US4] Implement atomic plan application in the store per research R10 — capture prior values, apply stats → connection → history **in that order**, and on any failure replay the plan's `inverse` for completed steps in reverse order before reporting failure. History is written last so a failure can never leave a record describing changes that did not happen (FR-025a)
-- [ ] T062 [US4] Apply connection writes through `EntityMutationService.addConnection` / `updateConnection` (`entity-mutations.ts:586,630`) — never by mutating the entity blob, so inbound-map and graph callbacks fire
+- [x] T060 [US4] Create `packages/faction-engine/src/engine.ts` with `FactionTurnEngine` (class + singleton) implementing `propose`, `commit` and `reverse`, all returning **plans** rather than performing mutations
+- [x] T061 [US4] Implement atomic plan application in the store per research R10 — capture prior values, apply stats → connection → history **in that order**, and on any failure replay the plan's `inverse` for completed steps in reverse order before reporting failure. History is written last so a failure can never leave a record describing changes that did not happen (FR-025a)
+- [x] T062 [US4] Apply connection writes through `EntityMutationService.addConnection` / `updateConnection` (`entity-mutations.ts:586,630`) — never by mutating the entity blob, so inbound-map and graph callbacks fire
 - [ ] T063 [US4] Implement stat writes in the store, respecting min/max bounds and recording clamping (FR-034)
 - [ ] T064 [US4] Extend `FactionTurnPreview.svelte` with the change summary and actions — every stat change with before/after, the strength shift with before/after, the opt-in relationship type change, and Commit / Discard (FR-023)
 - [ ] T065 [US4] Make the narrative editable before commit, with the edited text stored (FR-021h), and discard the edit on re-resolve (edge case)
-- [ ] T066 [US4] Implement the navigate-away confirmation for an unreviewed preview (FR-022b), and confirm no preview state is persisted or restored (FR-022a)
+- [x] T066 [US4] Implement the navigate-away confirmation for an unreviewed preview (FR-022b), and confirm no preview state is persisted or restored (FR-022a)
 - [x] T067 [US4] Implement undo in the store, including the FR-030 warning when affected entities changed since commit, marking the record undone rather than deleting it (FR-029), and recomputing `lastTurnDate` from remaining non-undone history
 
 **Checkpoint**: The full write path is safe, atomic and reversible. This is the first point the feature is genuinely usable.
@@ -193,7 +193,7 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 - [ ] T073 [US5] Create `packages/faction-engine/src/history.ts` with ordering and undated-entry handling
 - [ ] T074 [US5] Create `apps/web/src/lib/components/entity-detail/faction-turn/FactionTurnHistory.svelte` with **windowed rendering** — 500 entries must open in under 200 ms (SC-011); follow the `2147-timeline-agenda-bounded-rendering` prior art
 - [ ] T075 [US5] Display each entry with world date, action, target, outcome band and expandable full resolution detail, including whether the band was mechanical or AI-selected and the reason (FR-035a)
-- [ ] T076 [US5] Add the empty state explaining what history will contain (US5 scenario 7)
+- [x] T076 [US5] Add the empty state explaining what history will contain (US5 scenario 7)
 - [ ] T077 [US5] Implement promotion — create an event entity carrying the turn's date, narrative and participants via `EntityMutationService.createEntity`, and store `promotedEventId` on the record (FR-038, FR-039)
 - [ ] T078 [US5] On undo of a promoted turn, tell the GM the event exists and offer to remove it (US5 scenario 6)
 - [ ] T079 [US5] Mark undone entries visibly in the list without removing them (FR-029)

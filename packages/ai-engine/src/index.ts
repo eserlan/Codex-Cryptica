@@ -10,3 +10,4 @@ export * from "./context-retrieval.service";
 export * from "./adventure-turn-generation.service";
 export * from "./text-generation.service.svelte";
 export * from "./image-generation.service";
+export * from "./faction-turn-generation.service";

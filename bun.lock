@@ -55,6 +55,7 @@
         "@codex/content-packs": "workspace:*",
         "@codex/entity-shelf": "workspace:*",
         "@codex/events": "workspace:*",
+        "@codex/faction-engine": "workspace:*",
         "@codex/family-engine": "workspace:*",
         "@codex/gdrive-sync": "workspace:*",
         "@codex/importer": "workspace:*",
