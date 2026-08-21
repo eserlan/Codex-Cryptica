@@ -7,23 +7,23 @@ export const GENERIC_TEMPLATES: Record<string, string> = {
   character: `## Summary
 A brief overview of who this character is and their place in the world.
 
-## Appearance
-Physical features, style of dress, distinctive markers, or mannerisms.
+## First Impression & Mannerisms
+Physical appearance, clothing, distinctive vocal cadence, and a memorable physical habit or behavioral quirk.
 
-## Personality & Voice
-Key behavioral traits, temperaments, core beliefs, speech rhythm, word choice, and in-character behavior rules.
+## Personality & Stances
+- **Core Drive**: What primary motive drives their daily actions.
+- **Opinions & Biases**: 2–3 sharp, biased stances on local factions, institutions, or rival groups.
+- **The Line**: The moral taboo or boundary they will never cross.
+
+## Leverage & Pressure Points
+- **What Buys Them**: The favor, coin, or guarantee needed to secure their cooperation.
+- **What Breaks Them**: Their deepest fear, vulnerability, or pressure point.
 
 ## Knowledge & Expertise
 What domains, skills, and subjects does this character know well? What are the limits of their knowledge — cultural blind spots, restricted access, or topics they are simply ignorant of?
 
-## Goals
-What do they actively strive to achieve or protect?
-
-## Methods
-How do they go about accomplishing their goals? What resources or skills do they rely on?
-
-## Relationships
-Key links and attitudes toward other characters, factions, or places.
+## Relationships & Allegiances
+Key links, debts owed, and attitudes toward other characters, factions, or places.
 
 ## Secrets
 Hidden motives, buried pasts, or vulnerabilities known only to a few.

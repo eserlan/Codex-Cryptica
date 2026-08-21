@@ -144,16 +144,17 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
   "title": "NPC name (follow the naming directive in the user message)",
   "summary": "One sentence: who this NPC is and what makes them interesting (e.g. 'A disgraced noble archivist who sells secrets to fund a private obsession.').",
   "content": "Markdown. Use exactly these four section headers in order: '### Who they are', '### What they want', '### Why they are useful', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Moral Stance**: behavioral anchor\\n- **Secret**: hidden truth that would change everything\\n- **Immediate Hook**: one-sentence GM hook\\n### Personality\\n- two distinct personality traits as bullet points\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Mannerism / Vocal Tell**: distinctive physical habit, speech cadence, or behavioral quirk\\n- **Moral Stance**: behavioral anchor\\n- **Faction Stance & Biases**: sharp, biased opinion on relevant factions, institutions, or rival groups\\n- **Leverage & Price**: what buys their cooperation vs. what pressure point breaks them\\n- **Secret**: hidden truth that would change everything\\n- **Immediate Hook**: one-sentence GM hook\\n### Personality\\n- two distinct personality traits as bullet points\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
   "labels": ["2-4 lowercase labels describing their role and traits, plus 'rpg-character', 'npc-generator', 'imported-draft'"]
 }
 
 QUALITY RULES:
 - Every NPC must feel like a completely different person — avoid repeating names, archetypes, or backstory structures.
+- Give the NPC strong, opinionated stances rather than generic neutrality.
 - ${NAME_BAN_PROMPT}
 ${sessionContext}
 - The secret should be genuinely surprising and table-usable, not a generic "dark past."
-- Before finalising, silently check for: name not on the forbidden list; secret is genuinely surprising and not contradicted by the stated role or faction connection; all four content sections are internally consistent (what they want should explain why they are useful; their secret should reframe who they are). Rewrite any section where a contradiction exists.`;
+- Before finalising, silently check for: name not on the forbidden list; mannerism is tangible and playable; faction stance and leverage are actionable for GM social encounters; secret is genuinely surprising and not contradicted by the stated role or faction connection; all four content sections are internally consistent (what they want should explain why they are useful; their secret should reframe who they are). Rewrite any section where a contradiction exists.`;
 
   const behavioralDirective = moralityAnchor?.aiPromptDirective ?? alignment;
   const moralityLabel = moralityAnchor?.label ?? alignment;
@@ -258,6 +259,31 @@ const HOW_TO_USE_CLOSERS = [
   "The more the party relies on them, the more interesting the moment when those loyalties are tested.",
 ] as const;
 
+const LOCAL_MANNERISMS = [
+  "Speaks in a quiet, measured cadence, continuously evaluating the room.",
+  "Fidgets with a worn token or ring whenever answering a direct question.",
+  "Speaks with abrupt efficiency, rarely using polite filler words.",
+  "Maintains intense, unblinking eye contact while listening.",
+  "Speaks in a gravelly whisper, leaning in close as if every word is contraband.",
+  "Chuckles dryly before delivering bad news or complicated terms.",
+] as const;
+
+const LOCAL_FACTION_STANCES = [
+  "Pragmatically cooperative with whoever holds local authority, deeply cynical about idealistic reformists.",
+  "Distrusts large centralized institutions; favors small, decentralized alliances and personal handshakes.",
+  "Publicly obedient to ruling factions while privately hedging bets with independent operators.",
+  "Harbors deep resentment toward bureaucratic oversight; loyal only to those who pay promptly.",
+  "Views competing factions as expendable pawns in a long-term survival game.",
+] as const;
+
+const LOCAL_LEVERAGE_PRICES = [
+  "Can be bought with immunity or hard currency; breaks if their family or sanctuary is threatened.",
+  "Cooperation costs rare technical or arcane favors; folds under public exposure of their past debts.",
+  "Requires guarantees of safe passage; folds under threats to their remaining personal network.",
+  "Demands respect and reciprocal secrets; yields when their hidden patron is named.",
+  "Works for exclusive trade rights or leverage; panics if their operational ledger is seized.",
+] as const;
+
 /** Local, AI-free NPC generator — the fallback when AI is unavailable. */
 export function generateNpcLocal(
   options: NpcGeneratorOptions = {},
@@ -292,6 +318,9 @@ export function generateNpcLocal(
     rng,
   );
   const plotHook = pickFrom(npcConfig.plotHooks, rng);
+  const mannerism = pickFrom(LOCAL_MANNERISMS, rng);
+  const factionStance = pickFrom(LOCAL_FACTION_STANCES, rng);
+  const leverage = pickFrom(LOCAL_LEVERAGE_PRICES, rng);
   const moralityLabel = moralityAnchor?.label ?? alignment;
 
   const whoIntro = pickFrom(WHO_THEY_ARE_INTROS, rng)(name, race, role);
@@ -316,7 +345,10 @@ ${howIntro} ${howCloser}`;
 - **Theme / Genre**: ${theme}
 - **Ancestry**: ${race}
 - **Role**: ${role}
+- **Mannerism / Vocal Tell**: ${mannerism}
 - **Moral Stance**: ${moralityLabel}
+- **Faction Stance & Biases**: ${factionStance}
+- **Leverage & Price**: ${leverage}
 - **Secret**: ${secret}
 - **Immediate Hook**: ${plotHook}
 
