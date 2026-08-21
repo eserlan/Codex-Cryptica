@@ -18,19 +18,16 @@ async function getProseThemeOverrides() {
 
 describe("Markdown Typography theme contract", () => {
   it("overrides Typography's utility-layer defaults with world-theme tokens", async () => {
-    const { css, proseBlock, proseBlockStart } =
-      await getProseThemeOverrides();
+    const { css, proseBlock, proseBlockStart } = await getProseThemeOverrides();
 
-    expect(proseBlockStart).toBeGreaterThan(css.lastIndexOf("@layer utilities"));
-    expect(proseBlock).toContain(
-      "--tw-prose-body: var(--color-text-primary)",
+    expect(proseBlockStart).toBeGreaterThan(
+      css.lastIndexOf("@layer utilities"),
     );
+    expect(proseBlock).toContain("--tw-prose-body: var(--color-text-primary)");
     expect(proseBlock).toContain(
       "--tw-prose-links: var(--color-accent-primary)",
     );
-    expect(proseBlock).toContain(
-      "--tw-prose-kbd: var(--color-text-primary)",
-    );
+    expect(proseBlock).toContain("--tw-prose-kbd: var(--color-text-primary)");
   });
 
   it("does not leave Markdown prose on Typography's fixed gray palette", async () => {

@@ -40,12 +40,12 @@ existing PR) already exists for the current work.
      differently — don't rely on `.comments` alone:
      - `gh pr view <n> --json comments` — plain top-level PR comments.
      - `gh pr view <n> --json reviews` — "Review changes" submissions (a body
-       + approve/request-changes/comment state).
+       - approve/request-changes/comment state).
      - `gh api repos/{owner}/{repo}/pulls/<n>/comments` — inline comments
        anchored to a specific diff line, not exposed via `gh pr view` at all.
    - Fetch all three and filter out anything posted by this skill's own
      identity (same `gh` account posts both human replies and agent
-     comments here — only exclude what *this workflow* posted, not the
+     comments here — only exclude what _this workflow_ posted, not the
      human's own prior comments). What's left is feedback from other
      reviewers: human co-reviewers or automated bots (e.g. a
      `copilot-pull-request-reviewer` auto-review).

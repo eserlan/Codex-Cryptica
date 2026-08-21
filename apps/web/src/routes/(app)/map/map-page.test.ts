@@ -221,8 +221,6 @@ describe("map/+page", () => {
 
     render(MapPage);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("modal-stub")).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByTestId("modal-stub")).toBeTruthy());
   });
 });

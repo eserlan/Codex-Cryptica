@@ -32,10 +32,10 @@ generate, inspect, validate, and migrate from other worldbuilding tools.
 
 Use one of these package forms:
 
-| Form | Use when | Contents |
-| --- | --- | --- |
-| `.cif.json` | The world has no local binary files. | One UTF-8 JSON document. |
-| `.cif.zip` | The world includes images, audio, maps, or other files. | `manifest.json` and an `assets/` directory. |
+| Form        | Use when                                                | Contents                                    |
+| ----------- | ------------------------------------------------------- | ------------------------------------------- |
+| `.cif.json` | The world has no local binary files.                    | One UTF-8 JSON document.                    |
+| `.cif.zip`  | The world includes images, audio, maps, or other files. | `manifest.json` and an `assets/` directory. |
 
 The JSON object described below is the package manifest. A text-only package
 may use it directly as its `.cif.json` file. In a ZIP package it is stored as

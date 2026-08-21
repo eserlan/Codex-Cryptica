@@ -19,7 +19,9 @@
       aria-hidden="true"
     ></span>
     <div class="flex flex-col">
-      <span class="text-[10px] font-bold text-theme-primary uppercase tracking-widest">
+      <span
+        class="text-[10px] font-bold text-theme-primary uppercase tracking-widest"
+      >
         AI Revision in Progress
       </span>
       <span class="text-[9px] text-theme-muted uppercase tracking-tight">
@@ -33,7 +35,10 @@
     class="flex items-center justify-between gap-4 p-3 bg-theme-primary/10 border-y border-theme-primary/30 backdrop-blur-sm sticky bottom-0 z-50 shadow-lg"
   >
     <div class="flex items-center gap-2">
-      <span class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary" aria-hidden="true"></span>
+      <span
+        class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"
+        aria-hidden="true"
+      ></span>
       <div class="flex flex-col">
         <span
           class="text-[10px] font-bold text-theme-primary uppercase tracking-widest"

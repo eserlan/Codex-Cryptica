@@ -29,14 +29,14 @@ loss.
 
 The current importer package already provides useful building blocks:
 
-| Existing capability | Location | CIF use |
-| --- | --- | --- |
-| Versioned, validated import staging package | `packages/importer/src/cc/package.ts` | Target model after a CIF package is parsed and normalized. |
-| Review session, create/update/skip choices | `packages/importer/src/cc/session.ts` | Reuse for duplicate matching and import review. |
-| Two-phase entity then relationship commit | `packages/importer/src/cc/engine.ts` | Preserve the endpoint-safe commit order. |
-| Stable source-reference matching | `packages/importer/src/cc/source-ref.ts` | Make repeated CIF imports identifiable. |
-| Web vault adapter | `apps/web/src/lib/features/importer/web-vault-writer.ts` | Extend to persist supported CIF assets and attach them to entities. |
-| Source-specific adapters | `chronica.ts`, `scabard.ts` | Follow the same adapter pattern without coupling CIF to a source system. |
+| Existing capability                         | Location                                                 | CIF use                                                                  |
+| ------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Versioned, validated import staging package | `packages/importer/src/cc/package.ts`                    | Target model after a CIF package is parsed and normalized.               |
+| Review session, create/update/skip choices  | `packages/importer/src/cc/session.ts`                    | Reuse for duplicate matching and import review.                          |
+| Two-phase entity then relationship commit   | `packages/importer/src/cc/engine.ts`                     | Preserve the endpoint-safe commit order.                                 |
+| Stable source-reference matching            | `packages/importer/src/cc/source-ref.ts`                 | Make repeated CIF imports identifiable.                                  |
+| Web vault adapter                           | `apps/web/src/lib/features/importer/web-vault-writer.ts` | Extend to persist supported CIF assets and attach them to entities.      |
+| Source-specific adapters                    | `chronica.ts`, `scabard.ts`                              | Follow the same adapter pattern without coupling CIF to a source system. |
 
 Two gaps define the initial scope:
 
@@ -138,17 +138,17 @@ entity and which package fields an update can change.
 
 The normalizer maps CIF's external model into the current `CCImportPackage`:
 
-| CIF field | Current target | Decision needed in the spec |
-| --- | --- | --- |
-| `entity.key` | `EntityDraft.sourceId` | Preserve the raw key and generate a collision-safe source reference. |
-| `entity.kind` | `EntityDraft.sourceType` | Define built-in mappings and how users choose a category for unknown kinds. |
-| `title` | `title` | Direct mapping. |
-| Markdown body | `content` | Direct mapping; decide where optional `summary` is shown or stored. |
-| `labels` | `labels` | Direct mapping; do not introduce a new public `tags` concept. |
-| `parent` | `parentRef` | Resolve to the created CC entity ID before persistence, rather than storing a package key. |
-| `relationships` | `RelationshipDraft` | Resolve endpoint keys after entity creation. |
-| `source` | `discoverySource` | Preserve package identity for repeat import. |
-| `media` and `assets` | asset persistence + entity fields/content | Define supported roles and deterministic attachment behavior. |
+| CIF field            | Current target                            | Decision needed in the spec                                                                |
+| -------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `entity.key`         | `EntityDraft.sourceId`                    | Preserve the raw key and generate a collision-safe source reference.                       |
+| `entity.kind`        | `EntityDraft.sourceType`                  | Define built-in mappings and how users choose a category for unknown kinds.                |
+| `title`              | `title`                                   | Direct mapping.                                                                            |
+| Markdown body        | `content`                                 | Direct mapping; decide where optional `summary` is shown or stored.                        |
+| `labels`             | `labels`                                  | Direct mapping; do not introduce a new public `tags` concept.                              |
+| `parent`             | `parentRef`                               | Resolve to the created CC entity ID before persistence, rather than storing a package key. |
+| `relationships`      | `RelationshipDraft`                       | Resolve endpoint keys after entity creation.                                               |
+| `source`             | `discoverySource`                         | Preserve package identity for repeat import.                                               |
+| `media` and `assets` | asset persistence + entity fields/content | Define supported roles and deterministic attachment behavior.                              |
 
 `CCImportPackage` is an internal staging model, not the external CIF contract.
 The normalizer may extend it where necessary, but external authors must never
