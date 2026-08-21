@@ -54,21 +54,95 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      "@codex/adventure-engine": resolve(
+        __dirname,
+        "../../packages/adventure-engine/src/index.ts",
+      ),
+      "@codex/ai-engine": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/index.ts",
+      ),
+      "@codex/audio-engine": resolve(
+        __dirname,
+        "../../packages/audio-engine/src/index.ts",
+      ),
+      "@codex/canvas-engine": resolve(
+        __dirname,
+        "../../packages/canvas-engine/src/index.ts",
+      ),
+      "@codex/content-packs": resolve(
+        __dirname,
+        "../../packages/content-packs/src/index.ts",
+      ),
+      "@codex/entity-shelf": resolve(
+        __dirname,
+        "../../packages/entity-shelf/src/index.ts",
+      ),
       "@codex/events": resolve(__dirname, "../../packages/events/src/index.ts"),
+      "@codex/family-engine": resolve(
+        __dirname,
+        "../../packages/family-engine/src/index.ts",
+      ),
+      "@codex/gdrive-sync": resolve(
+        __dirname,
+        "../../packages/gdrive-sync/src/index.ts",
+      ),
+      "@codex/importer": resolve(
+        __dirname,
+        "../../packages/importer/src/index.ts",
+      ),
+      "@codex/oracle-engine": resolve(
+        __dirname,
+        "../../packages/oracle-engine/src/index.ts",
+      ),
+      "@codex/performance-observability": resolve(
+        __dirname,
+        "../../packages/performance-observability/src/index.ts",
+      ),
+      "@codex/proposer": resolve(
+        __dirname,
+        "../../packages/proposer/src/index.ts",
+      ),
       "@codex/runtime": resolve(
         __dirname,
         "../../packages/runtime/src/index.ts",
+      ),
+      "@codex/search-engine": resolve(
+        __dirname,
+        "../../packages/search-engine/src/index.ts",
+      ),
+      "@codex/search-orchestrator": resolve(
+        __dirname,
+        "../../packages/search-orchestrator/src/index.ts",
+      ),
+      "@codex/stat-sheet-engine": resolve(
+        __dirname,
+        "../../packages/stat-sheet-engine/src/index.ts",
+      ),
+      "@codex/sync-engine": resolve(
+        __dirname,
+        "../../packages/sync-engine/src/index.ts",
       ),
       "@codex/vault-engine": resolve(
         __dirname,
         "../../packages/vault-engine/src/index.ts",
       ),
+      "chronology-engine": resolve(
+        __dirname,
+        "../../packages/chronology-engine/src",
+      ),
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
+      "editor-core": resolve(__dirname, "../../packages/editor-core/src"),
       "generator-engine": resolve(
         __dirname,
         "../../packages/generator-engine/src",
       ),
+      "graph-engine": resolve(__dirname, "../../packages/graph-engine/src"),
       "map-engine": resolve(__dirname, "../../packages/map-engine/src"),
+      "random-source-engine": resolve(
+        __dirname,
+        "../../packages/random-source-engine/src",
+      ),
       schema: resolve(__dirname, "../../packages/schema/src/index.ts"),
     },
     dedupe: ["svelte"],

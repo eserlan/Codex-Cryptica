@@ -94,6 +94,9 @@ import {
   buildAlienRacePrompt,
   parseAlienRaceResponse,
   generateAlienRaceLocal,
+  buildCreaturePrompt,
+  parseCreatureResponse,
+  generateCreatureLocal,
   BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
@@ -122,6 +125,7 @@ import {
   type WorldGeneratorOptions,
   type StarSystemGeneratorOptions,
   type AlienRaceGeneratorOptions,
+  type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -174,6 +178,7 @@ export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
 export { starSystemConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
+export { creatureConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -1166,6 +1171,37 @@ export class DefaultGeneratorEngine {
         generateAlienRaceLocal({
           ...alienRaceOptions,
           avoidNames: [...BANNED_NAMES, ...(alienRaceOptions.avoidNames ?? [])],
+        }),
+    );
+  }
+
+  /** Creature generation delegates to the shared offline-first generator package. */
+  async generateCreature(
+    options: CreatureGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...creatureOptions } = options;
+    const historyNote = formatRecentInputsNote(
+      generationInputHistoryStore.recent("creature"),
+    );
+    const sessionContext = [getSessionContext(), historyNote]
+      .filter(Boolean)
+      .join("\n\n");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildCreaturePrompt(creatureOptions, sessionContext);
+        const text = await this.runModel(systemInstruction, userMessage);
+        generationInputHistoryStore.record(
+          "creature",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseCreatureResponse(text, resolved);
+      },
+      () =>
+        generateCreatureLocal({
+          ...creatureOptions,
+          avoidNames: [...BANNED_NAMES, ...(creatureOptions.avoidNames ?? [])],
         }),
     );
   }
