@@ -92,7 +92,25 @@ describe("buildMinorMagicItemPrompt", () => {
     expect(userMessage).toContain(
       "A dark forest campaign set in the Whispering Woods",
     );
+    expect(userMessage).toContain(
+      "Single Core Function: Keep each minor item centred on ONE core function.",
+    );
+    expect(userMessage).toContain(
+      "Avoid adding secondary effects such as memory alteration unless they are strictly integral to that function.",
+    );
+    expect(userMessage).toContain(
+      "Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.",
+    );
+    expect(userMessage).toContain(
+      "Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations.",
+    );
     expect(userMessage).toContain("Before returning, run a consistency pass:");
+    expect(userMessage).toContain(
+      "The item is centred on one core function without extraneous secondary effects",
+    );
+    expect(userMessage).toContain(
+      "The item stands on its own without forced links to prior generation lore",
+    );
     expect(userMessage).toContain(NAME_BAN_PROMPT);
     expect(userMessage).toContain("- Existing: Dusk Lantern (item)");
     expect(resolved.suggestedName).toBeTruthy();

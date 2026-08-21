@@ -364,17 +364,22 @@ Constraints & Tone:
 ${formatCampaignContextBlock(resolved.campaignContext)}
 
 Key Design Principles:
-1. Low Impact & Creative Utility: This is NOT an epic artifact, a +2 sword, or a high-tier armor set. It is a disposable tool, a clever charm, an emergency consumable, an alchemical preparation, or an evocative curiosity.
-2. System-Agnostic: Avoid rigid numeric stat blocks or ruleset-specific keywords (no spell slots, D&D 5e DC formulas, or gold piece lists). Focus on concrete physical/narrative effects that any GM can interpret immediately.
-3. Clear Limits: Ensure the item has a clear single-use, charge-based, or temporal expiration as requested.
-4. Memorable Flavour: Include tactile details, sensory tells, and a small quirk or provenance note.
+1. Single Core Function: Keep each minor item centred on ONE core function. Avoid adding secondary effects such as memory alteration unless they are strictly integral to that function.
+2. Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.
+3. Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations. Each item should stand on its own unless the provided campaign context explicitly requests a connection.
+4. Low Impact & Creative Utility: This is NOT an epic artifact, a +2 sword, or a high-tier armor set. It is a disposable tool, a clever charm, an emergency consumable, an alchemical preparation, or an evocative curiosity.
+5. System-Agnostic: Avoid rigid numeric stat blocks or ruleset-specific keywords (no spell slots, D&D 5e DC formulas, or gold piece lists). Focus on concrete physical/narrative effects that any GM can interpret immediately.
+6. Clear Limits: Ensure the item has a clear single-use, charge-based, or temporal expiration as requested.
+7. Memorable Flavour: Include tactile details, sensory tells, and a small quirk or provenance note.
 
 Before returning, run a consistency pass:
-- The item form matches "${resolved.form}".
+- The item is centred on one core function without extraneous secondary effects (such as memory alteration).
+- The item form matches "${resolved.form}" and physically matters to its operation.
 - The activation method matches "${resolved.activation}".
 - The usage limit matches "${resolved.usageLimit}".
 - The primary utility directly aligns with "${resolved.utility}".
 - The quirk or limitation matches "${resolved.quirkSeverity}".
+- The item stands on its own without forced links to prior generation lore.
 - The item is evocative, tactile, and immediately playable.
 
 You must return a valid JSON object matching this schema:
