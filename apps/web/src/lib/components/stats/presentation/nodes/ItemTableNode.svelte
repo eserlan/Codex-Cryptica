@@ -98,6 +98,15 @@
     showItemPicker = false;
   }
 
+  function handleMoveRow(index: number, direction: -1 | 1) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= rows.length) return;
+    const next = [...rows];
+    const [moved] = next.splice(index, 1);
+    next.splice(targetIndex, 0, moved);
+    updateRows(next);
+  }
+
   function handleRemoveRow(index: number) {
     const next = [...rows];
     next.splice(index, 1);
@@ -245,7 +254,7 @@
             </th>
           {/each}
           {#if !context.readOnly}
-            <th scope="col" class="w-8 px-1 py-1.5 text-center">
+            <th scope="col" class="w-20 px-1 py-1.5 text-center">
               <span class="sr-only">Actions</span>
             </th>
           {/if}
@@ -415,16 +424,53 @@
                 </td>
               {/each}
               {#if !context.readOnly}
-                <td class="px-1 py-1.5 text-center align-middle">
-                  <button
-                    type="button"
-                    aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
-                    class="text-theme-muted hover:text-red-400"
-                    onclick={() => handleRemoveRow(rIdx)}
-                    title="Remove item"
-                  >
-                    ✕
-                  </button>
+                {@const rowLabel =
+                  row.name ||
+                  (linked ? linked.title : undefined) ||
+                  `item ${rIdx + 1}`}
+                <td
+                  class="px-1 py-1.5 text-center align-middle whitespace-nowrap"
+                >
+                  <div class="inline-flex items-center justify-center gap-0.5">
+                    <button
+                      type="button"
+                      aria-label={`Move ${rowLabel} up`}
+                      class="rounded p-0.5 text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-25"
+                      disabled={rIdx === 0}
+                      onclick={() => handleMoveRow(rIdx, -1)}
+                      title="Move item up"
+                    >
+                      <span
+                        class="icon-[lucide--arrow-up] h-3.5 w-3.5"
+                        aria-hidden="true"
+                      ></span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Move ${rowLabel} down`}
+                      class="rounded p-0.5 text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-25"
+                      disabled={rIdx === rows.length - 1}
+                      onclick={() => handleMoveRow(rIdx, 1)}
+                      title="Move item down"
+                    >
+                      <span
+                        class="icon-[lucide--arrow-down] h-3.5 w-3.5"
+                        aria-hidden="true"
+                      ></span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
+                      class="rounded p-0.5 text-theme-muted transition-colors hover:text-red-400"
+                      onclick={() => handleRemoveRow(rIdx)}
+                      title="Remove item"
+                    >
+                      <span
+                        class="icon-[lucide--trash-2] h-3.5 w-3.5"
+                        aria-hidden="true"
+                      ></span>
+                    </button>
+                  </div>
                 </td>
               {/if}
             </tr>
