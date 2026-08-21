@@ -291,6 +291,12 @@ describe("ItemTableNode", () => {
     expect(
       screen.queryByRole("button", { name: "Remove War Hammer" }),
     ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Move War Hammer up" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Move War Hammer down" }),
+    ).toBeNull();
   });
 
   it("renders dice roll errors without a success colour", async () => {
@@ -410,6 +416,64 @@ describe("ItemTableNode", () => {
 
     expect(screen.getByText("(7)")).toBeTruthy();
     expect(container.querySelector(".text-green-400")).toBeTruthy();
+  });
+
+  it("disables move up for the first row and move down for the last row", () => {
+    const multiRowField: StatSheetField = {
+      ...itemTableField,
+      rows: [{ name: "Sword" }, { name: "Shield" }, { name: "Bow" }],
+    };
+    const context = makeContext([multiRowField]);
+    render(ItemTableNode, { props: { field: multiRowField, context } });
+
+    const swordUp = screen.getByRole("button", { name: "Move Sword up" });
+    const swordDown = screen.getByRole("button", { name: "Move Sword down" });
+    const shieldUp = screen.getByRole("button", { name: "Move Shield up" });
+    const shieldDown = screen.getByRole("button", { name: "Move Shield down" });
+    const bowUp = screen.getByRole("button", { name: "Move Bow up" });
+    const bowDown = screen.getByRole("button", { name: "Move Bow down" });
+
+    expect(swordUp.hasAttribute("disabled")).toBe(true);
+    expect(swordDown.hasAttribute("disabled")).toBe(false);
+    expect(shieldUp.hasAttribute("disabled")).toBe(false);
+    expect(shieldDown.hasAttribute("disabled")).toBe(false);
+    expect(bowUp.hasAttribute("disabled")).toBe(false);
+    expect(bowDown.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("reorders rows down and up", async () => {
+    const multiRowField: StatSheetField = {
+      ...itemTableField,
+      rows: [{ name: "Sword" }, { name: "Shield" }, { name: "Bow" }],
+    };
+    const context = makeContext([multiRowField]);
+    const { unmount } = render(ItemTableNode, {
+      props: { field: multiRowField, context },
+    });
+
+    // Move Sword down
+    const swordDown = screen.getByRole("button", { name: "Move Sword down" });
+    await fireEvent.click(swordDown);
+
+    expect(context.onUpdateField).toHaveBeenCalledWith("weapons_table", {
+      rows: [{ name: "Shield" }, { name: "Sword" }, { name: "Bow" }],
+    });
+
+    unmount();
+
+    // Re-render with new order and move Bow up
+    const updatedField: StatSheetField = {
+      ...multiRowField,
+      rows: [{ name: "Shield" }, { name: "Sword" }, { name: "Bow" }],
+    };
+    render(ItemTableNode, { props: { field: updatedField, context } });
+
+    const bowUp = screen.getByRole("button", { name: "Move Bow up" });
+    await fireEvent.click(bowUp);
+
+    expect(context.onUpdateField).toHaveBeenCalledWith("weapons_table", {
+      rows: [{ name: "Shield" }, { name: "Bow" }, { name: "Sword" }],
+    });
   });
 
   it("applies compact column classes and aligns text columns appropriately", () => {
