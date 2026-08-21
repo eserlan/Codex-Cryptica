@@ -141,7 +141,35 @@ describe("buildMinorMagicItemPrompt", () => {
     );
     expect(userMessage).toContain(NAME_BAN_PROMPT);
     expect(userMessage).toContain("- Existing: Dusk Lantern (item)");
+    expect(userMessage).toContain("Genre-Appropriate Causal Logic:");
+    expect(userMessage).toContain(
+      'The underlying causal logic strictly matches "Classic Fantasy"',
+    );
     expect(resolved.suggestedName).toBeTruthy();
+  });
+
+  it("adapts causal logic and mechanics heading for technological genres", () => {
+    const { userMessage } = buildMinorMagicItemPrompt({
+      genre: "Cyberpunk / Corporate",
+    });
+    expect(userMessage).toContain("Technological / Hard-Sci-Fi Causality");
+    expect(userMessage).toContain("NEVER introduce supernatural spells");
+    expect(userMessage).toContain("### Technical Effect & Mechanism");
+  });
+
+  it("generates technological mechanics and names in local fallback for sci-fi/cyberpunk", () => {
+    const out = generateMinorMagicItemLocal(
+      {
+        genre: "Cyberpunk / Corporate",
+      },
+      seededRng(1),
+    );
+    expect(out.lore).toContain("### Technical Effect & Mechanism");
+    expect(out.lore).not.toContain("### Magical Effect & Mechanics");
+    expect(out.content).toMatch(
+      /anti-static polymer|composite|tactical webbing/,
+    );
+    expect(out.title).toBe("Static Filter");
   });
 
   it("includes avoidNames ban list in prompt and filters names present in context", () => {
