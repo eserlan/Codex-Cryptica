@@ -51,6 +51,10 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set(["Quick Reference"]),
   },
   {
+    label: "artifact",
+    railSections: new Set(["Quick Reference"]),
+  },
+  {
     label: "npc-generator",
     railSections: new Set(["At a Glance", "Personality"]),
     documentBullets: {

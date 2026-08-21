@@ -3,6 +3,7 @@ export type ValidSlug =
   | "settlement"
   | "magic-item"
   | "minor-magic-item"
+  | "artifact-generator"
   | "faction"
   | "quest"
   | "item"

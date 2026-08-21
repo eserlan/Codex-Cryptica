@@ -159,6 +159,69 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     relatedLinks: [
       { href: "/generators/magic-item", label: "Major Magic Item Generator" },
+      {
+        href: "/generators/artifact-generator",
+        label: "Artifact & Relic Generator",
+      },
+      { href: "/generators/quest", label: "RPG Quest Generator" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
+  },
+  "artifact-generator": {
+    pageTitle:
+      "RPG Artifact & Relic Generator | Legendary Magical & Precursor Relics | Codex Cryptica",
+    metaDescription:
+      "Generate campaign-shaping artifacts, ancient relics, and legendary objects with tiered powers, consequential curses, pursuing factions, and destruction conditions. System-agnostic worldbuilding anchors.",
+    introTitle: "RPG Artifact & Relic Generator",
+    eyebrow: "Artifact & Relic Generator",
+    introText:
+      "Create legendary artifacts and ancient relics with deep lore, multi-tier powers (dormant, awakened, ascendant), consequential costs, pursuing factions, and adventure hooks. Works without login.",
+    canonicalPath: "/generators/artifact-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-artifact-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica artifact generator drafting legendary relics with multi-tier powers, attunement criteria, curses, and adventure hooks",
+    keywords: [
+      "rpg artifact generator",
+      "relic generator",
+      "legendary magic item generator",
+      "dnd artifact generator",
+      "campaign relic creator",
+      "cursed artifact generator",
+      "precursor technology generator",
+    ],
+    faqs: [
+      {
+        question: "How do Artifacts differ from standard magic items?",
+        answer:
+          "Artifacts and Relics are unique, named worldbuilding anchors that function as campaign engines rather than simple stat-sticks. They feature tiered powers (dormant, awakened, ascendant), attunement rituals, consequential costs or curses, interested factions hunting them, and legendary destruction conditions.",
+      },
+      {
+        question: "Does this generator support non-fantasy genres?",
+        answer:
+          "Yes. When you choose a genre like Sci-Fi, Cyberpunk, Western, Steampunk, or Cosmic Horror, the generator adapts the underlying causal logic — creating lost precursor super-tech, cursed outlaw iron, or eldritch relics without forcing fantasy spells into modern or technological settings.",
+      },
+      {
+        question: "What details are included in each generated artifact?",
+        answer:
+          "Each artifact contains an evocative title, tactile craftsmanship description, Quick Reference metadata, multi-tier powers, attunement requirements, a consequential curse or taboo, historical provenance, 2-3 interested factions, rumours, adventure hooks, and destruction/sealing conditions.",
+      },
+      {
+        question:
+          "Can I save generated relics directly into my Codex Cryptica vault?",
+        answer:
+          "Yes. Clicking 'Save to Codex' stores the artifact draft in your browser. Open Codex Cryptica and it imports directly as an Item entity with full Markdown notes, ready to link to your factions, locations, and campaign timeline.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/magic-item", label: "Magic Item Generator" },
+      {
+        href: "/generators/minor-magic-item",
+        label: "Minor Magic Item & Trinket Generator",
+      },
       { href: "/generators/quest", label: "RPG Quest Generator" },
       {
         href: "/free-rpg-campaign-manager",

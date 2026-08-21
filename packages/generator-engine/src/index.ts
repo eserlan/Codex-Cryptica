@@ -71,6 +71,18 @@ export {
   type ResolvedMinorMagicItem,
 } from "./public-minor-magic-item";
 export {
+  buildArtifactPrompt,
+  parseArtifactResponse,
+  generateArtifactLocal,
+  resolveArtifact,
+  artifactConfig,
+  getGenreCausality,
+  type ArtifactGeneratorOptions,
+  type ArtifactPrompt,
+  type ResolvedArtifact,
+  type GenreCausality,
+} from "./public-artifact";
+export {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,

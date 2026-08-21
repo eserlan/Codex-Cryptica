@@ -172,6 +172,13 @@
           icon: "icon-[lucide--sparkles]",
         },
         {
+          href: "/generators/artifact-generator",
+          label: "Artifact & Relic Generator",
+          summary:
+            "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+          icon: "icon-[lucide--gem]",
+        },
+        {
           href: "/generators/tavern",
           label: "Tavern Generator",
           summary:

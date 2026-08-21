@@ -14,6 +14,7 @@ export type GeneratorId =
   | "settlement"
   | "magic-item"
   | "minor-magic-item"
+  | "artifact"
   | "event"
   | "ship"
   | "language"
@@ -36,6 +37,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "settlement",
   "magic-item",
   "minor-magic-item",
+  "artifact",
   "event",
   "ship",
   "language",

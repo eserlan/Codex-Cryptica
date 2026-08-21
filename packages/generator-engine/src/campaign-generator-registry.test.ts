@@ -47,6 +47,7 @@ describe("registry lookup", () => {
       "settlement",
       "magic-item",
       "minor-magic-item",
+      "artifact",
       "event",
       "ship",
       "language",
@@ -98,6 +99,40 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "item",
       sourceGeneratorId: "minor-magic-item",
+    });
+  });
+
+  it("builds and generates an artifact as an item draft", () => {
+    const generator = getGenerator("artifact");
+    const request = run("artifact", {
+      options: {
+        genre: "Classic Fantasy",
+        form: "Crown / Regalia of Rule",
+        originEra: "Primordial / Mythic Age",
+        powerTier: "Heroic Wonder (Alters individuals & skirmishes)",
+        currentStatus: "Sealed in Royal / High-Security Vault",
+        curseCost: "Sacrificial Price (Requires vital tribute/blood)",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.artifact).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Major Artifact or Ancient Relic");
+    expect(prompt).toContain("- Item Form: Crown / Regalia of Rule");
+    expect(prompt).toContain("- Origin Era: Primordial / Mythic Age");
+    expect(prompt).toContain("### Quick Reference");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["artifact", "relic", "imported-draft"]),
+    );
+    expect(output.lore).toContain("### Quick Reference");
+    expect(output.lore).toContain("### Artifact Powers & Manifestations");
+    expect(draft).toMatchObject({
+      entityType: "item",
+      sourceGeneratorId: "artifact",
     });
   });
 
@@ -1290,6 +1325,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       settlement: "location",
       "magic-item": "item",
       "minor-magic-item": "item",
+      artifact: "item",
       event: "event",
       ship: "location",
       language: "note",
