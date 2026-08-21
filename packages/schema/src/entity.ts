@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ConnectionSchema } from "./connection";
 import { LanguageProfileV1Schema } from "./language-profile";
 import { StatSheetSchema } from "./stat-sheet";
+import { FactionTurnStateSchema } from "./faction-turn";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -215,6 +216,12 @@ export const EntitySchema = z.object({
   languageProfileVersion: z.literal(1).optional(),
   languageProfile: LanguageProfileV1Schema.optional(),
   statSheet: StatSheetSchema.optional(),
+  /**
+   * Faction Turn opt-in block (feature 161). Absent on every entity that has
+   * not opted in — including every faction in every vault written before this
+   * feature — which is what keeps opted-out factions byte-identical to today.
+   */
+  factionTurn: FactionTurnStateSchema.optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;
