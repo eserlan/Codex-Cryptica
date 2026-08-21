@@ -32,6 +32,7 @@ They always share _content design_ (pools of options, per-councillor/per-NPC str
 3. **`campaign-generator-registry.ts`**:
    - `GENERATOR_ENTITY_TYPE[id]` — the vault category this generator writes to (`"note"` for adventure/quest-shaped content, `"character"` for NPCs, etc.)
    - Add an entry to `EXEMPLARS` in `packages/generator-engine/src/campaign-generator-exemplars.ts` (the few-shot JSON example) — every generator needs one; several tests assert this.
+   - In the options helper `fooOptions(request)`, pass `avoidNames: [...(request.vaultContext?.bannedNames ?? []), ...(request.vaultContext?.existingTitles ?? [])]` so the model avoids reusing existing campaign names.
    - Write the prompt-builder function using the shared helpers: `contextChain(request)`, `OUTPUT_SCHEMA`, `exemplarBlock(id)`, `groundingNote(request)`, `loreGuidance(request, checklist)`. Don't hand-roll context assembly.
    - Write the `generate*` local-fallback function (simple tier: inline with `pick()`/`optionString()`/`generateName()`; rich tier: wraps the imported `generateXLocal`).
    - Add the `REGISTRY` block: `id`, `label`, `description`, `entityType`, `defaultInstruction`, `icon` (a plain `lucide:name` string, no build-time validation — verify the icon exists via the `@iconify-json/lucide` icons.json before assuming), `options` (`GeneratorOptionDefinition[]`), `defaults`, `generate`, `mapOutputToDraft: mapOutputToDraft(id)`, `buildPrompt`.
@@ -51,13 +52,15 @@ Only needed if the user wants the no-login web tool too. This is genuinely ~13 f
 
 1. **`packages/generator-engine/src/public-<name>.ts`** — new file, mirror `public-quest.ts`'s shape exactly:
    - `<name>Config` object (option pools).
-   - `<Name>GeneratorOptions` interface.
-   - `resolve<Name>()` — picks defaults for unset options.
-   - `build<Name>Prompt(options, sessionContext, rng)` → `{ systemInstruction, userMessage, resolved }`. If the generator has cross-section constraints the model could violate without noticing (counts that must match a stated number, claims in one section that must agree with another, "at least N distinct X" requirements, entities whose state depends on other entities), end the prompt with an explicit consistency-pass instruction naming the specific things to check by their actual field/section names — not a generic "double check your work." For council-vote this reads: "Before returning, run a consistency pass: the voting rule and tally must be mathematically correct for N seats; every councillor's stance matches across all sections; each persuasion route directly addresses that councillor's stated motive; the possible paths can actually achieve the required result; the best solution genuinely resolves both sides of the dilemma; and any dependency where influencing one entity changes another's options is stated explicitly." Place it right before the "return only JSON" formatting line, and assert its presence (and the field-specific phrases, not just that _some_ text exists) in the prompt test.
+   - `<Name>GeneratorOptions` interface (always include `avoidNames?: string[];` for session diversification).
+   - `resolve<Name>()` — picks defaults for unset options and avoids picking suggested names in `options.avoidNames`.
+   - `build<Name>Prompt(options, sessionContext, rng)` → `{ systemInstruction, userMessage, resolved }`.
+     - **Session Anti-Repetition / Diversification:** Use `avoidNamesExcludingContext(options.avoidNames ?? [], resolved.campaignContext)` from `./campaign-context` to format an `"Already created or used this session — do NOT reuse these names or generate duplicate concepts:"` block before `${NAME_BAN_PROMPT}` so consecutive generation turns stay diverse.
+     - **Consistency Pass:** If the generator has cross-section constraints the model could violate without noticing (counts that must match a stated number, claims in one section that must agree with another, "at least N distinct X" requirements, entities whose state depends on other entities), end the prompt with an explicit consistency-pass instruction naming the specific things to check by their actual field/section names — not a generic "double check your work." For council-vote this reads: "Before returning, run a consistency pass: the voting rule and tally must be mathematically correct for N seats; every councillor's stance matches across all sections; each persuasion route directly addresses that councillor's stated motive; the possible paths can actually achieve the required result; the best solution genuinely resolves both sides of the dilemma; and any dependency where influencing one entity changes another's options is stated explicitly." Place it right before the "return only JSON" formatting line, and assert its presence (and the field-specific phrases, not just that _some_ text exists) in the prompt test.
    - `parse<Name>Response(text, resolved)` → `PublicGeneratorOutput` (via `parseFencedJson`).
    - `generate<Name>Local(options, rng)` → `PublicGeneratorOutput`.
    - Include a `genre?: string` option from the start if the content should vary by world theme (see Part C) — cheaper to add now than retrofit.
-   - Write a matching `public-<name>.test.ts` (seeded-RNG determinism, option pass-through, prompt content, parse fallback-on-bad-JSON).
+   - Write a matching `public-<name>.test.ts` (seeded-RNG determinism, option pass-through, prompt content including `avoidNames` filtering, parse fallback-on-bad-JSON).
 
 2. **`packages/generator-engine/src/index.ts`** — export `build<Name>Prompt`, `parse<Name>Response`, `generate<Name>Local`, `<name>Config`, and the option/prompt types.
 
@@ -65,6 +68,7 @@ Only needed if the user wants the no-login web tool too. This is genuinely ~13 f
    - Import the new exports from `"generator-engine"`.
    - Re-export `<name>Config` (form fields need it): `export { <name>Config } from "generator-engine";`
    - Add a `generate<Name>()` method on the engine class matching `generateQuestHook`'s shape: `runWithAIFallback(useAI, aiPath, () => generate<Name>Local(options))`.
+   - Use `generationInputHistoryStore.recent("<slug>")` + `formatRecentInputsNote` and `generationInputHistoryStore.record("<slug>", summarizeResolvedInputs(resolved))` so the prompt receives context about recent rolls in the session.
 
 4. **New `apps/web/src/lib/components/seo/<Name>FormFields.svelte`** — mirror `QuestFormFields.svelte`: `$bindable` props per option (defaulted from `<name>Config`), `SelectWithCustomOption` per select field, a "Surprise Me" randomizer button, free-text fields as plain `<textarea>`/`<input>`. Only declare a `selectClass` var if you actually use it separately from `inputClass` — eslint's `no-unused-vars` will fail the commit otherwise.
 
@@ -73,7 +77,7 @@ Only needed if the user wants the no-login web tool too. This is genuinely ~13 f
 6. **`apps/web/src/lib/components/seo/GeneratorPageContent.svelte`** (the ~800-line per-slug switch — every edit here is additive, don't restructure):
    - Import the new `<Name>FormFields` component and `<name>Config`.
    - Add a `let <name> = $state({...})` block with defaults from `<name>Config`.
-   - Add to the generate-handlers `Record`: `"<slug>": (useAI) => generatorEngine.generate<Name>({ ...<name>, useAI })`.
+   - Add to the generate-handlers `Record`: `"<slug>": (useAI) => generatorEngine.generate<Name>({ ...<name>, useAI, avoidNames: collectSessionNames(sessionHubStore.entities) })`.
    - Add a `{:else if slug === "<slug>"}` render branch instantiating `<Name>FormFields` with all the `bind:` props.
    - **Only** add a theme-sync branch to the big `$effect` (`else if (slug === "<slug>") <name>.genre = activeTheme;`) if you're doing Part C.
 
