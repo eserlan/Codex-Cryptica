@@ -25,7 +25,7 @@ import {
   wantsStructuredOutput,
 } from "../schema-validation";
 
-const PROVIDER_TIMEOUT_MS = 15_000;
+const PROVIDER_TIMEOUT_MS = 60_000;
 
 interface GeminiEnv {
   GEMINI_API_KEY: string;

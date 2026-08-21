@@ -119,6 +119,13 @@
         "Generate small-scale charms, consumable potions, single-use devices, and curiosities with clear limits and quirks.",
       icon: "icon-[lucide--sparkles]",
     },
+    {
+      slug: "artifact-generator",
+      label: "Artifact & Relic Generator",
+      summary:
+        "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+      icon: "icon-[lucide--gem]",
+    },
   ];
 
   const surpriseMeCard: GeneratorCard = {

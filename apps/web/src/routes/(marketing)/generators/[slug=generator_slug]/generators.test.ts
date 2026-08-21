@@ -25,6 +25,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "settlement" },
         { slug: "magic-item" },
         { slug: "minor-magic-item" },
+        { slug: "artifact-generator" },
         { slug: "faction" },
         { slug: "quest" },
         { slug: "item" },

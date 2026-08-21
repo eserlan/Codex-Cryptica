@@ -16,6 +16,7 @@
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
   import MinorMagicItemFormFields from "$lib/components/seo/MinorMagicItemFormFields.svelte";
+  import ArtifactFormFields from "$lib/components/seo/ArtifactFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
@@ -42,6 +43,7 @@
     settlementConfig,
     magicItemConfig,
     minorMagicItemConfig,
+    artifactConfig,
     factionConfig,
     questConfig,
     councilVoteConfig,
@@ -191,6 +193,16 @@
     utility: minorMagicItemConfig.utilities[0],
     activation: minorMagicItemConfig.activations[0],
     quirkSeverity: minorMagicItemConfig.quirkSeverities[0],
+    campaignContext: "",
+  });
+
+  let artifact = $state({
+    genre: factionConfig.themes[0],
+    form: artifactConfig.forms[0],
+    originEra: artifactConfig.originEras[0],
+    powerTier: artifactConfig.powerTiers[0],
+    currentStatus: artifactConfig.currentStatuses[0],
+    curseCost: artifactConfig.curseCosts[0],
     campaignContext: "",
   });
 
@@ -538,6 +550,7 @@
     else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
     else if (slug === "bbeg-generator") villain.genre = activeTheme;
     else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
+    else if (slug === "artifact-generator") artifact.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -722,6 +735,13 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
+    "artifact-generator": (useAI) =>
+      generatorEngine.generateArtifact({
+        ...artifact,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
@@ -902,6 +922,17 @@
         bind:activation={minorMagicItem.activation}
         bind:quirkSeverity={minorMagicItem.quirkSeverity}
         bind:campaignContext={minorMagicItem.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "artifact-generator"}
+      <ArtifactFormFields
+        bind:theme={activeTheme}
+        bind:form={artifact.form}
+        bind:originEra={artifact.originEra}
+        bind:powerTier={artifact.powerTier}
+        bind:currentStatus={artifact.currentStatus}
+        bind:curseCost={artifact.curseCost}
+        bind:campaignContext={artifact.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "faction"}

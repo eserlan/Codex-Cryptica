@@ -56,6 +56,12 @@ import {
   type MinorMagicItemGeneratorOptions,
 } from "./public-minor-magic-item";
 import {
+  buildArtifactPrompt,
+  generateArtifactLocal,
+  artifactConfig,
+  type ArtifactGeneratorOptions,
+} from "./public-artifact";
+import {
   buildVillainPrompt,
   generateVillainLocal,
   villainConfig,
@@ -101,6 +107,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   settlement: "location",
   "magic-item": "item",
   "minor-magic-item": "item",
+  artifact: "item",
   event: "event",
   ship: "location",
   language: "note",
@@ -1019,6 +1026,47 @@ function minorMagicItemPrompt(request: GeneratorRunRequest): string {
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
+function artifactOptions(
+  request: GeneratorRunRequest,
+): ArtifactGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    form: optionString(request, "form", ""),
+    originEra: optionString(request, "originEra", ""),
+    powerTier: optionString(request, "powerTier", ""),
+    currentStatus: optionString(request, "currentStatus", ""),
+    curseCost: optionString(request, "curseCost", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateArtifact(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateArtifactLocal(artifactOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function artifactPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildArtifactPrompt(
+    artifactOptions(request),
+    contextChain(request),
+  );
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
 function plotTwistOptions(
   request: GeneratorRunRequest,
 ): PlotTwistGeneratorOptions {
@@ -1571,6 +1619,98 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateMinorMagicItem,
     mapOutputToDraft: mapOutputToDraft("minor-magic-item"),
     buildPrompt: minorMagicItemPrompt,
+  },
+  artifact: {
+    id: "artifact",
+    label: "Artifact / Relic",
+    description:
+      "Generate a unique, named, lore-heavy major artifact or ancient relic with tiered powers, consequential costs, and campaign hooks.",
+    entityType: GENERATOR_ENTITY_TYPE.artifact,
+    defaultInstruction:
+      "A campaign-shaping major artifact or ancient relic with profound history, dormant/awakened/ascendant powers, attunement criteria, a consequential cost or curse, pursuing factions, and destruction conditions.",
+    icon: "lucide:sparkles",
+    options: [
+      {
+        id: "genre",
+        label: "Theme / Genre",
+        control: "select",
+        choices: artifactConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "form",
+        label: "Item Form",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.forms.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "originEra",
+        label: "Origin Era",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.originEras.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "powerTier",
+        label: "Power Tier / Scope",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.powerTiers.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "currentStatus",
+        label: "Current Status",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.currentStatuses.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "curseCost",
+        label: "Curse / Cost / Drawback",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.curseCosts.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+    ],
+    defaults: {
+      genre: "",
+      form: "",
+      originEra: "",
+      powerTier: "",
+      currentStatus: "",
+      curseCost: "",
+    },
+    generate: generateArtifact,
+    mapOutputToDraft: mapOutputToDraft("artifact"),
+    buildPrompt: artifactPrompt,
   },
   event: {
     id: "event",

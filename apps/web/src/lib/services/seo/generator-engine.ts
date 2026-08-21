@@ -10,6 +10,9 @@ import {
   buildMinorMagicItemPrompt,
   parseMinorMagicItemResponse,
   generateMinorMagicItemLocal,
+  buildArtifactPrompt,
+  parseArtifactResponse,
+  generateArtifactLocal,
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -95,6 +98,7 @@ import {
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type MinorMagicItemGeneratorOptions,
+  type ArtifactGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
@@ -151,6 +155,7 @@ export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
+export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
@@ -463,6 +468,31 @@ export class DefaultGeneratorEngine {
         return parseMinorMagicItemResponse(text, resolved);
       },
       () => generateMinorMagicItemLocal(itemOptions),
+    );
+  }
+
+  async generateArtifact(
+    options: ArtifactGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...artifactOptions } = options;
+    const recentInputs =
+      generationInputHistoryStore.recent("artifact-generator");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildArtifactPrompt(
+            artifactOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "artifact-generator",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseArtifactResponse(text, resolved);
+      },
+      () => generateArtifactLocal(artifactOptions),
     );
   }
 

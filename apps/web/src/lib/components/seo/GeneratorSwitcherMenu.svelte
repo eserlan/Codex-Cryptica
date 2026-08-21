@@ -87,6 +87,10 @@
           label: "Minor Magic Item & Trinket Generator",
           path: "/generators/minor-magic-item",
         },
+        {
+          label: "Artifact & Relic Generator",
+          path: "/generators/artifact-generator",
+        },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
         {
