@@ -95,6 +95,7 @@ export async function GET() {
     "npc",
     "settlement",
     "magic-item",
+    "minor-magic-item",
     "faction",
     "tavern",
     "social-hub",

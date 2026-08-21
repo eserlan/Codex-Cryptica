@@ -50,6 +50,12 @@ import {
   type QuestGeneratorOptions,
 } from "./public-quest";
 import {
+  buildMinorMagicItemPrompt,
+  generateMinorMagicItemLocal,
+  minorMagicItemConfig,
+  type MinorMagicItemGeneratorOptions,
+} from "./public-minor-magic-item";
+import {
   buildVillainPrompt,
   generateVillainLocal,
   villainConfig,
@@ -94,6 +100,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   faction: "faction",
   settlement: "location",
   "magic-item": "item",
+  "minor-magic-item": "item",
   event: "event",
   ship: "location",
   language: "note",
@@ -971,6 +978,47 @@ function villainPrompt(request: GeneratorRunRequest): string {
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
+function minorMagicItemOptions(
+  request: GeneratorRunRequest,
+): MinorMagicItemGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    form: optionString(request, "form", ""),
+    usageLimit: optionString(request, "usageLimit", ""),
+    utility: optionString(request, "utility", ""),
+    activation: optionString(request, "activation", ""),
+    quirkSeverity: optionString(request, "quirkSeverity", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateMinorMagicItem(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateMinorMagicItemLocal(minorMagicItemOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function minorMagicItemPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildMinorMagicItemPrompt(
+    minorMagicItemOptions(request),
+    contextChain(request),
+  );
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
 function plotTwistOptions(
   request: GeneratorRunRequest,
 ): PlotTwistGeneratorOptions {
@@ -1444,6 +1492,85 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateMagicItem,
     mapOutputToDraft: mapOutputToDraft("magic-item"),
     buildPrompt: magicItemPrompt,
+  },
+  "minor-magic-item": {
+    id: "minor-magic-item",
+    label: "Minor Magic Item / Trinket",
+    description:
+      "Generate a flavourful, low-impact, single-use, or consumable magic item or gadget.",
+    entityType: GENERATOR_ENTITY_TYPE["minor-magic-item"],
+    defaultInstruction:
+      "A creative, small-scale magic item or single-use curiosity with memorable utility, clear usage limits, a minor quirk, and tactile details.",
+    icon: "lucide:sparkles",
+    options: [
+      {
+        id: "genre",
+        label: "Theme / Genre",
+        control: "select",
+        choices: minorMagicItemConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "usageLimit",
+        label: "Usage Limit / Charges",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.usageLimits.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "utility",
+        label: "Focus / Primary Utility",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.utilities.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "activation",
+        label: "Activation Method",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.activations.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "quirkSeverity",
+        label: "Quirk or Side Effect",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.quirkSeverities.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+    ],
+    defaults: {
+      genre: "",
+      usageLimit: "",
+      utility: "",
+      activation: "",
+      quirkSeverity: "",
+    },
+    generate: generateMinorMagicItem,
+    mapOutputToDraft: mapOutputToDraft("minor-magic-item"),
+    buildPrompt: minorMagicItemPrompt,
   },
   event: {
     id: "event",

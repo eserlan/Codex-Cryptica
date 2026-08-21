@@ -83,6 +83,10 @@
           path: "/generators/secret-society",
         },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
+        {
+          label: "Minor Magic Item & Trinket Generator",
+          path: "/generators/minor-magic-item",
+        },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
         {

@@ -15,6 +15,7 @@
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
+  import MinorMagicItemFormFields from "$lib/components/seo/MinorMagicItemFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
@@ -40,6 +41,7 @@
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
+    minorMagicItemConfig,
     factionConfig,
     questConfig,
     councilVoteConfig,
@@ -179,6 +181,16 @@
   let magicItem = $state({
     type: magicItemConfig.typesByTheme["Classic Fantasy"][0],
     rarity: magicItemConfig.rarities[1],
+    campaignContext: "",
+  });
+
+  let minorMagicItem = $state({
+    genre: factionConfig.themes[0],
+    form: "",
+    usageLimit: minorMagicItemConfig.usageLimits[0],
+    utility: minorMagicItemConfig.utilities[0],
+    activation: minorMagicItemConfig.activations[0],
+    quirkSeverity: minorMagicItemConfig.quirkSeverities[0],
     campaignContext: "",
   });
 
@@ -525,6 +537,7 @@
       adventure.genre = activeTheme;
     else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
     else if (slug === "bbeg-generator") villain.genre = activeTheme;
+    else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -702,6 +715,13 @@
       generatorEngine.generateSettlement({ ...settlement, useAI }),
     "magic-item": (useAI) =>
       generatorEngine.generateMagicItem({ ...magicItem, useAI }),
+    "minor-magic-item": (useAI) =>
+      generatorEngine.generateMinorMagicItem({
+        ...minorMagicItem,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
@@ -872,6 +892,17 @@
         bind:type={magicItem.type}
         bind:rarity={magicItem.rarity}
         bind:campaignContext={magicItem.campaignContext}
+      />
+    {:else if slug === "minor-magic-item"}
+      <MinorMagicItemFormFields
+        bind:theme={activeTheme}
+        bind:form={minorMagicItem.form}
+        bind:usageLimit={minorMagicItem.usageLimit}
+        bind:utility={minorMagicItem.utility}
+        bind:activation={minorMagicItem.activation}
+        bind:quirkSeverity={minorMagicItem.quirkSeverity}
+        bind:campaignContext={minorMagicItem.campaignContext}
+        onSurprise={trigger}
       />
     {:else if slug === "faction"}
       <FactionFormFields

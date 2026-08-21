@@ -165,6 +165,13 @@
           icon: "icon-[lucide--sparkles]",
         },
         {
+          href: "/generators/minor-magic-item",
+          label: "Minor Magic Item & Trinket Generator",
+          summary:
+            "Create low-impact, consumable charms, potions, talismans, and disposable tools with quirks and limited charges.",
+          icon: "icon-[lucide--sparkles]",
+        },
+        {
           href: "/generators/tavern",
           label: "Tavern Generator",
           summary:
