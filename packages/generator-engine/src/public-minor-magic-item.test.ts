@@ -100,10 +100,16 @@ describe("buildMinorMagicItemPrompt", () => {
       "Single Core Function: Keep each minor item centred on ONE core function.",
     );
     expect(userMessage).toContain(
-      "Avoid adding secondary effects such as memory alteration unless they are strictly integral to that function.",
+      "Prioritise Practical, Gameable Utility: Even for strange, odd, or whimsical items, the core effect must have clear, immediate practical or gameable utility",
+    );
+    expect(userMessage).toContain(
+      "Avoid adding secondary effects such as memory alteration or information-gathering (e.g. mood detection, aura sensing, or heartbeat tracking)",
     );
     expect(userMessage).toContain(
       "Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.",
+    );
+    expect(userMessage).toContain(
+      "No Arbitrary Quirks for Pure Charm: Quirks must be subtle sensory tells, clear activation trade-offs, or minor physical residues",
     );
     expect(userMessage).toContain(
       "Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations.",
@@ -116,10 +122,16 @@ describe("buildMinorMagicItemPrompt", () => {
     );
     expect(userMessage).toContain("Before returning, run a consistency pass:");
     expect(userMessage).toContain(
+      "The item's core utility is immediately understandable, practical, and tempting to a player to use at the table",
+    );
+    expect(userMessage).toContain(
       "The item is centred on one core function without extraneous secondary effects",
     );
     expect(userMessage).toContain(
       "In Quick Reference, **Primary Utility** describes ONLY the specific effect actually present",
+    );
+    expect(userMessage).toContain(
+      'The quirk or limitation matches "Harmless Sensory Tell (Ozone smell, faint chime, spark of light)" and acts as a functional tell or trade-off rather than arbitrary charm-only eccentricity.',
     );
     expect(userMessage).toContain(
       "The Provenance & Rumour section avoids generic generator tropes",
