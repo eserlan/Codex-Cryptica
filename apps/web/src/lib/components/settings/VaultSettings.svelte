@@ -1,5 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import { factionTurn } from "$lib/stores/faction-turn.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { slide } from "svelte/transition";
   import { demoService } from "$lib/services/demo";
@@ -313,6 +314,93 @@
             class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
           />
         </div>
+      </div>
+
+      <div class="pt-4 border-t border-theme-border/20 space-y-3">
+        <h4
+          class="text-[11px] font-bold text-theme-muted uppercase font-header"
+        >
+          Faction Turns
+        </h4>
+        <p class="text-xs text-theme-muted">
+          How factions act on your world between sessions. Faction turns read
+          your campaign's current date and never change it.
+        </p>
+
+        <div class="space-y-1">
+          <label
+            class="text-[11px] font-bold text-theme-muted uppercase font-header"
+            for="faction-turn-interval">Years between a faction's turns</label
+          >
+          <input
+            id="faction-turn-interval"
+            type="number"
+            min="1"
+            value={factionTurn.settings.turnIntervalAmount}
+            oninput={(e) => {
+              const parsed = parseInt(e.currentTarget.value, 10);
+              if (!isNaN(parsed) && parsed >= 1) {
+                factionTurn.saveSettings({ turnIntervalAmount: parsed });
+              }
+            }}
+            class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
+          />
+        </div>
+
+        <label class="flex items-start gap-2 text-xs text-theme-text">
+          <input
+            type="checkbox"
+            checked={factionTurn.settings.useRandomness}
+            onchange={(e) =>
+              factionTurn.saveSettings({
+                useRandomness: e.currentTarget.checked,
+              })}
+          />
+          <span>
+            Roll dice for outcomes
+            <span class="block text-theme-muted">
+              Turn this off to decide outcomes by comparing stats alone.
+            </span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 text-xs text-theme-text">
+          <input
+            type="checkbox"
+            checked={factionTurn.settings.aiNarration}
+            onchange={(e) =>
+              factionTurn.saveSettings({
+                aiNarration: e.currentTarget.checked,
+              })}
+          />
+          <span>
+            Let AI write the account
+            <span class="block text-theme-muted">
+              Sends the faction's and target's names and short descriptions to
+              your AI provider. Turn it off and outcomes are described locally
+              instead, with nothing leaving your device.
+            </span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 text-xs text-theme-text">
+          <input
+            type="checkbox"
+            checked={factionTurn.settings.aiBandSelection}
+            onchange={(e) =>
+              factionTurn.saveSettings({
+                aiBandSelection: e.currentTarget.checked,
+              })}
+          />
+          <span>
+            Let AI adjust the outcome
+            <span class="block text-theme-muted">
+              AI may shift an outcome one step better or worse when the
+              situation warrants it, and must say why. Sends the same
+              information as above. Dice still decide the starting point.
+            </span>
+          </span>
+        </label>
       </div>
 
       {#if !calendarStore.config.useGregorian}

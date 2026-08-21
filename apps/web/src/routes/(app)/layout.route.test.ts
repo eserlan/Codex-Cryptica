@@ -147,6 +147,17 @@ vi.mock("schema", () => ({
   THEMES: {},
   isEntityVisible: vi.fn(),
   DEFAULT_ITEM_TABLE_COLUMNS: [],
+  // Reached via ai-engine's faction turn service (161-faction-turn-influence).
+  OUTCOME_BANDS: [
+    "decisive-success",
+    "success",
+    "mixed",
+    "failure",
+    "backfire",
+  ],
+  FACTION_STAT_ROLES: ["power", "influence", "resources", "stability"],
+  DEFAULT_FACTION_TURN_SETTINGS: {},
+  FactionTurnSettingsSchema: { parse: (v: unknown) => v },
 }));
 vi.mock("$lib/app/init/app-init", () => ({
   bootSystem: vi.fn(() => true),

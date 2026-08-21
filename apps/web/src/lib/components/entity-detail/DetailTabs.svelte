@@ -56,6 +56,10 @@
     if (entity.type !== "character") {
       tabs = tabs.filter((tab) => tab !== "chats" && tab !== "family");
     }
+    // FR-002: a non-faction entity must show no trace of the turn layer.
+    if (entity.type !== "faction") {
+      tabs = tabs.filter((tab) => tab !== "faction");
+    }
     return tabs;
   });
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
@@ -368,6 +372,31 @@
         ? "var(--theme-focus-bg)"
         : undefined}
       onclick={() => (activeTab = "timeline")}>TIMELINE</button
+    >
+
+    <button
+      id={tabIds.faction}
+      type="button"
+      role="tab"
+      class:shrink-0={true}
+      aria-selected={activeTab === "faction"}
+      aria-controls={panelIds.faction}
+      tabindex={activeTab === "faction" ? 0 : -1}
+      data-testid="tab-faction"
+      class={activeTab === "faction"
+        ? isFantasyTheme
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : isFantasyTheme
+          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+          : "hover:text-theme-text transition"}
+      style:border-color={activeTab === "faction" && isFantasyTheme
+        ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "faction" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
+      onclick={() => (activeTab = "faction")}>TURNS</button
     >
   </div>
 </div>

@@ -17,6 +17,7 @@
   import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
   import DetailStatsTab from "./entity-detail/DetailStatsTab.svelte";
   import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
+  import DetailFactionTurnTab from "./entity-detail/DetailFactionTurnTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
@@ -567,6 +568,17 @@
               >
                 {#if activeTab === "timeline"}
                   <DetailTimelineTab entity={activeEntity} />
+                {/if}
+              </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.faction}
+                aria-labelledby={tabIds.faction}
+                hidden={activeTab !== "faction"}
+              >
+                {#if activeTab === "faction" && activeEntity.type === "faction"}
+                  <DetailFactionTurnTab entity={activeEntity} />
                 {/if}
               </div>
             </div>
