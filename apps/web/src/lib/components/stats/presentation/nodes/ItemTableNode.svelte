@@ -78,11 +78,13 @@
     const newRow: Record<string, any> = {};
     for (const col of columns) {
       if (col.type === "counter") {
-        newRow[col.id] = { value: 6, max: 6 };
+        const max = col.max ?? 6;
+        const value = Math.max(col.min ?? 0, max);
+        newRow[col.id] = { value, max };
       } else if (col.type === "number") {
         newRow[col.id] = 0;
       } else if (col.type === "dice") {
-        newRow[col.id] = "1d6";
+        newRow[col.id] = col.formula || "1d6";
       } else if (col.type === "checkbox") {
         newRow[col.id] = false;
       } else {
@@ -113,6 +115,8 @@
   }
 
   function handleCounterAdjust(rowIndex: number, colId: string, delta: number) {
+    const col = columns.find((c) => c.id === colId);
+    const min = col?.min ?? 0;
     const next = rows.map((r, i) => {
       if (i !== rowIndex) return r;
       const current = r[colId];
@@ -125,7 +129,7 @@
       const currentValue = Number.isFinite(value) ? value : 0;
       const adjustedValue = currentValue + delta;
       const nextValue = Math.max(
-        0,
+        min,
         Number.isFinite(max) ? Math.min(max, adjustedValue) : adjustedValue,
       );
       return {
@@ -371,7 +375,7 @@
                       />
                     {/if}
                   {:else if col.type === "dice"}
-                    {@const formula = row[col.id] || "1d6"}
+                    {@const formula = row[col.id] || col.formula || "1d6"}
                     {@const key = `${rIdx}-${col.id}`}
                     {@const rollState = rollStateMap[key]}
                     {#if context.mode === "view"}
@@ -438,7 +442,8 @@
                           type="button"
                           aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
                           class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
-                          onclick={() => handleCounterAdjust(rIdx, col.id, -1)}
+                          onclick={() =>
+                            handleCounterAdjust(rIdx, col.id, -(col.step ?? 1))}
                         >
                           —
                         </button>
@@ -449,7 +454,8 @@
                           type="button"
                           aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
                           class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
-                          onclick={() => handleCounterAdjust(rIdx, col.id, 1)}
+                          onclick={() =>
+                            handleCounterAdjust(rIdx, col.id, col.step ?? 1)}
                         >
                           +
                         </button>
