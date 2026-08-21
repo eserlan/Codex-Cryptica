@@ -109,6 +109,19 @@
     updateRows(next);
   }
 
+  function handleRowKeyDown(e: KeyboardEvent, rIdx: number) {
+    if (context.readOnly) return;
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        handleMoveRow(rIdx, -1);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        handleMoveRow(rIdx, 1);
+      }
+    }
+  }
+
   function handleRemoveRow(index: number) {
     const next = [...rows];
     next.splice(index, 1);
@@ -321,7 +334,8 @@
           {#each rows as row, rIdx (rIdx)}
             {@const linked = linkedEntity(row)}
             <tr
-              class="border-b border-theme-border/30 transition-colors hover:bg-theme-surface/10"
+              class="group/row border-b border-theme-border/30 transition-colors hover:bg-theme-surface/30"
+              onkeydown={(e) => handleRowKeyDown(e, rIdx)}
             >
               {#each columns as col (col.id)}
                 {@const isTextLeft = [
@@ -495,17 +509,19 @@
                 <td
                   class="w-12 px-1 py-0.5 text-center align-middle whitespace-nowrap"
                 >
-                  <div class="inline-flex items-center justify-center gap-0.5">
+                  <div
+                    class="inline-flex items-center justify-center gap-0.5 opacity-70 group-hover/row:opacity-100 transition-opacity"
+                  >
                     <div
                       class="flex flex-col items-center justify-center -space-y-0.5"
                     >
                       <button
                         type="button"
                         aria-label={`Move ${rowLabel} up`}
-                        class="flex h-3 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary disabled:opacity-20 transition-colors"
+                        class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
                         disabled={rIdx === 0}
                         onclick={() => handleMoveRow(rIdx, -1)}
-                        title="Move item up"
+                        title="Move item up (Ctrl+↑)"
                       >
                         <span
                           class="icon-[lucide--chevron-up] h-3 w-3"
@@ -515,10 +531,10 @@
                       <button
                         type="button"
                         aria-label={`Move ${rowLabel} down`}
-                        class="flex h-3 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary disabled:opacity-20 transition-colors"
+                        class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
                         disabled={rIdx === rows.length - 1}
                         onclick={() => handleMoveRow(rIdx, 1)}
-                        title="Move item down"
+                        title="Move item down (Ctrl+↓)"
                       >
                         <span
                           class="icon-[lucide--chevron-down] h-3 w-3"
@@ -529,7 +545,7 @@
                     <button
                       type="button"
                       aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
-                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/15 hover:text-red-400 active:scale-95 transition-all"
                       onclick={() => handleRemoveRow(rIdx)}
                       title="Remove item"
                     >
