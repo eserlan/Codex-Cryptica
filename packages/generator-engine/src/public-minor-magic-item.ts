@@ -185,7 +185,7 @@ export const minorMagicItemConfig = {
     "Harmless Sensory Tell (Ozone smell, faint chime, spark of light)",
     "Minor Cosmetic Effect (Skin tint, glowing eyes, echoing whisper)",
     "Subtle Functional Drawback (Slightly attracts minor insects, leaves faint luminous residue, temporary chill)",
-    "Environmental Flavour (Open flames bend towards it, stray animals watch)",
+    "Environmental Reaction (Faint thermal ripple, localized draft, subtle surface vibration)",
     "Emotional Resonance (Brief wave of nostalgia or sudden boldness)",
     "Mild Inconvenience (Leaves chalky residue, sticky fingers, slight static shock)",
     "None (Clean, quiet, functional)",
@@ -760,19 +760,21 @@ ${formatCampaignContextBlock(resolved.campaignContext)}
 
 Key Design Principles:
 1. Genre-Appropriate Causal Logic: When a genre is selected (${resolved.genre}), adapt not only terminology and aesthetics but also the underlying causal logic. Effects, activations, limitations, failure modes, provenance, and item forms must make plausible sense within this genre. Avoid presenting supernatural or magical mechanics in non-magical/technological genres unless the selected setting explicitly permits them.
-2. Single Core Function: Keep each minor item centred on ONE core function. Avoid adding secondary effects such as memory alteration or information-gathering (e.g. mood detection, aura sensing, or heartbeat tracking) unless they are strictly integral to that primary function.
-3. Prioritise Practical, Gameable Utility: Even for strange, odd, or whimsical items, the core effect must have clear, immediate practical or gameable utility (e.g. distraction, navigation, infiltration, environmental protection, or creative problem-solving). A player holding this item should immediately understand its concrete use and feel tempted to deploy it. Avoid cosmetic novelties that have no table application.
-4. Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.
-5. No Arbitrary Quirks for Pure Charm: Quirks must be subtle sensory tells, clear activation trade-offs, or minor physical residues—NOT arbitrary whimsical cravings, personality shifts, or cutesy eccentricities added purely for superficial charm.
-6. Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations. Each item should stand on its own unless the provided campaign context explicitly requests a connection.
-7. Accurate Quick Reference: In the Quick Reference section, **Primary Utility** must name ONLY the single specific function or effect actually present in this item (e.g. 'Water Source Detection' or 'Footstep Silencing'). Do NOT repeat the full parenthetical list of examples from the prompt.
-8. Grounded Provenance Variety: Avoid recurring fantasy-generator clichés (no "ancient forgotten empires", "mad wizards who vanished", "burned-down apothecaries", or "mysterious cloaked strangers"). Provide a grounded, varied origin rooted in practical trade, municipal labor, navigation, craft guilds, salvage, or local folk customs.
-9. Low Impact & Creative Utility: This is NOT an epic artifact, a +2 sword, or a high-tier armor set. It is a disposable tool, a clever charm, an emergency consumable, an alchemical preparation, or an evocative curiosity.
-10. System-Agnostic: Avoid rigid numeric stat blocks or ruleset-specific keywords (no spell slots, D&D 5e DC formulas, or gold piece lists). Focus on concrete physical/narrative effects that any GM can interpret immediately.
-11. Clear Limits: Ensure the item has a clear single-use, charge-based, or temporal expiration as requested.
-12. Memorable Flavour: Include tactile details, sensory tells, and a small quirk or provenance note.
+2. Enforce Required Output Sections: Every single generated item MUST include both the "### Quick Reference" and the full "### ${mechanicsHeading}" section. Flavour sections (Description, Suggested Use in Play, Provenance) must NEVER replace, condense, or omit the core mechanical sections.
+3. Single Core Function: Keep each minor item centred on ONE core function. Avoid adding secondary effects such as memory alteration or information-gathering (e.g. mood detection, aura sensing, or heartbeat tracking) unless they are strictly integral to that primary function.
+4. Prioritise Practical, Gameable Utility: Even for strange, odd, or whimsical items, the core effect must have clear, immediate practical or gameable utility (e.g. distraction, navigation, infiltration, environmental protection, or creative problem-solving). A player holding this item should immediately understand its concrete use and feel tempted to deploy it. Avoid cosmetic novelties that have no table application.
+5. Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.
+6. Restrained Drawbacks & Tells: Keep quirks and drawbacks strictly restrained to one or two subtle, relevant tells (e.g. slight temperature shift, brief static tingle, faint mineral scent, minor physical residue). Avoid setting-specific assumptions such as common animals, open hearths, or candle flames unless they strictly fit the chosen genre and context.
+7. Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations. Each item should stand on its own unless the provided campaign context explicitly requests a connection.
+8. Accurate Quick Reference: In the Quick Reference section, **Primary Utility** must name ONLY the single specific function or effect actually present in this item (e.g. 'Water Source Detection' or 'Footstep Silencing'). Do NOT repeat the full parenthetical list of examples from the prompt.
+9. Grounded Provenance Variety: Avoid recurring fantasy-generator clichés (no "ancient forgotten empires", "mad wizards who vanished", "burned-down apothecaries", or "mysterious cloaked strangers"). Provide a grounded, varied origin rooted in practical trade, municipal labor, navigation, craft guilds, salvage, or local folk customs.
+10. Low Impact & Creative Utility: This is NOT an epic artifact, a +2 sword, or a high-tier armor set. It is a disposable tool, a clever charm, an emergency consumable, an alchemical preparation, or an evocative curiosity.
+11. System-Agnostic: Avoid rigid numeric stat blocks or ruleset-specific keywords (no spell slots, D&D 5e DC formulas, or gold piece lists). Focus on concrete physical/narrative effects that any GM can interpret immediately.
+12. Clear Limits: Ensure the item has a clear single-use, charge-based, or temporal expiration as requested.
+13. Memorable Flavour: Include tactile details, sensory tells, and a small quirk or provenance note.
 
 Before returning, run a consistency pass:
+- Both "### Quick Reference" and the core mechanics section ("### ${mechanicsHeading}") are present in full with clear, concrete mechanics and have not been replaced or omitted by flavour text.
 - The underlying causal logic strictly matches "${resolved.genre}" (${causalityNotes[causality]}).
 - The item's core utility is immediately understandable, practical, and tempting to a player to use at the table (even for whimsical/strange items).
 - The item is centred on one core function without extraneous secondary effects (such as memory alteration, mood sensing, or aura detection).
@@ -781,7 +783,7 @@ Before returning, run a consistency pass:
 - The activation method matches "${resolved.activation}".
 - The usage limit matches "${resolved.usageLimit}".
 - The primary utility directly aligns with "${resolved.utility}".
-- The quirk or limitation matches "${resolved.quirkSeverity}" and acts as a functional tell or trade-off rather than arbitrary charm-only eccentricity.
+- Quirks and drawbacks are restrained to 1-2 subtle, relevant tells without setting-specific assumptions like open flames or stray animals unless appropriate to the genre.
 - The Provenance & Rumour section avoids generic generator tropes and gives a specific, grounded origin.
 - The item stands on its own without forced links to prior generation lore.
 - The item is evocative, tactile, and immediately playable.
@@ -811,12 +813,43 @@ export function parseMinorMagicItemResponse(
   resolved: ResolvedMinorMagicItem,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  const causality = getGenreCausality(resolved.genre);
+  const mechanicsHeading =
+    causality === "technological"
+      ? "Technical Effect & Mechanism"
+      : causality === "industrial-frontier"
+        ? "Mechanical Effect & Operation"
+        : "Magical Effect & Mechanics";
+
+  let lore = (data.lore || "").trim();
+
+  // Enforce required Quick Reference section
+  if (!lore.includes("### Quick Reference")) {
+    const conciseUtility = resolved.utility.replace(/\s*\([^)]*\)/, "").trim();
+    lore =
+      `### Quick Reference\n- **Item Form**: ${resolved.form}\n- **Usage Limit**: ${resolved.usageLimit}\n- **Activation**: ${resolved.activation}\n- **Primary Utility**: ${conciseUtility}\n- **Setting / Theme**: ${resolved.genre}\n\n${lore}`.trim();
+  }
+
+  // Enforce required Effect & Mechanics section
+  const hasMechanicsHeading =
+    lore.includes("### Magical Effect & Mechanics") ||
+    lore.includes("### Technical Effect & Mechanism") ||
+    lore.includes("### Mechanical Effect & Operation") ||
+    lore.includes("### Effect & Mechanics") ||
+    lore.includes("### Core Effect & Mechanics");
+
+  if (!hasMechanicsHeading) {
+    const fallbackEffect =
+      data.summary || data.content || "Activates with the designated effect.";
+    lore = `${lore}\n\n### ${mechanicsHeading}\n${fallbackEffect}`.trim();
+  }
+
   return {
     type: "item",
     title: data.title || resolved.suggestedName,
     summary: data.summary || "",
     content: data.content || "",
-    lore: data.lore || "",
+    lore,
     labels: Array.isArray(data.labels)
       ? data.labels
       : ["minor-magic-item", "imported-draft"],
@@ -964,7 +997,7 @@ export function generateMinorMagicItemLocal(
       : [
           `When used, the air within five feet smells briefly of crushed pine needles and fresh ozone.`,
           `The bearer's fingertips tingle with a mild static sensation for twenty minutes after activation.`,
-          `Open candle flames within ten paces tilt slightly towards the item while its effect remains active.`,
+          `A brief, localized draft or subtle temperature drop occurs within arm's reach during activation.`,
           `A fine, non-staining veil of grey chalk clings to the user's fingers for several minutes after handling.`,
           `A faint, musical chime resonates from the empty shell or remnant of the item as it expends its charge.`,
           `The user's eyes catch reflections with a momentary amber glimmer in dim light.`,

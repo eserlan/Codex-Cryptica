@@ -106,10 +106,13 @@ describe("buildMinorMagicItemPrompt", () => {
       "Avoid adding secondary effects such as memory alteration or information-gathering (e.g. mood detection, aura sensing, or heartbeat tracking)",
     );
     expect(userMessage).toContain(
+      'Enforce Required Output Sections: Every single generated item MUST include both the "### Quick Reference" and the full "### Magical Effect & Mechanics" section',
+    );
+    expect(userMessage).toContain(
       "Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.",
     );
     expect(userMessage).toContain(
-      "No Arbitrary Quirks for Pure Charm: Quirks must be subtle sensory tells, clear activation trade-offs, or minor physical residues",
+      "Restrained Drawbacks & Tells: Keep quirks and drawbacks strictly restrained to one or two subtle, relevant tells",
     );
     expect(userMessage).toContain(
       "Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations.",
@@ -122,6 +125,9 @@ describe("buildMinorMagicItemPrompt", () => {
     );
     expect(userMessage).toContain("Before returning, run a consistency pass:");
     expect(userMessage).toContain(
+      'Both "### Quick Reference" and the core mechanics section ("### Magical Effect & Mechanics") are present in full with clear, concrete mechanics',
+    );
+    expect(userMessage).toContain(
       "The item's core utility is immediately understandable, practical, and tempting to a player to use at the table",
     );
     expect(userMessage).toContain(
@@ -131,7 +137,7 @@ describe("buildMinorMagicItemPrompt", () => {
       "In Quick Reference, **Primary Utility** describes ONLY the specific effect actually present",
     );
     expect(userMessage).toContain(
-      'The quirk or limitation matches "Harmless Sensory Tell (Ozone smell, faint chime, spark of light)" and acts as a functional tell or trade-off rather than arbitrary charm-only eccentricity.',
+      "Quirks and drawbacks are restrained to 1-2 subtle, relevant tells without setting-specific assumptions",
     );
     expect(userMessage).toContain(
       "The Provenance & Rumour section avoids generic generator tropes",
@@ -195,6 +201,17 @@ describe("parseMinorMagicItemResponse", () => {
     expect(out.title).toBe("Glimmer Phial");
     expect(out.content).toContain("A small glass phial.");
     expect(out.labels).toEqual(["minor-magic-item", "imported-draft"]);
+  });
+
+  it("enforces required Quick Reference and mechanics heading when omitted by model", () => {
+    const out = parseMinorMagicItemResponse(
+      '{"title":"Iron Charm","content":"A heavy iron charm.","lore":"### Quirk or Drawback\\nCold to the touch."}',
+      resolved,
+    );
+    expect(out.lore).toContain("### Quick Reference");
+    expect(out.lore).toContain("- **Item Form**:");
+    expect(out.lore).toContain("### Magical Effect & Mechanics");
+    expect(out.lore).toContain("### Quirk or Drawback");
   });
 
   it("falls back to resolved suggestedName when title is missing and throws on unparseable JSON", () => {
