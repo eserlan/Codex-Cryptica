@@ -4,6 +4,7 @@ const validSlugs = new Set([
   "npc",
   "settlement",
   "magic-item",
+  "minor-magic-item",
   "faction",
   "quest",
   "item",

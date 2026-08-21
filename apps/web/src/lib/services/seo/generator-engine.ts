@@ -7,6 +7,9 @@ import {
   buildMagicItemPrompt,
   parseMagicItemResponse,
   generateMagicItemLocal,
+  buildMinorMagicItemPrompt,
+  parseMinorMagicItemResponse,
+  generateMinorMagicItemLocal,
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -91,6 +94,7 @@ import {
   BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
+  type MinorMagicItemGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
@@ -146,6 +150,7 @@ export {
 export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
+export { minorMagicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
@@ -434,6 +439,30 @@ export class DefaultGeneratorEngine {
         return parseMagicItemResponse(text, resolved);
       },
       () => generateMagicItemLocal(itemOptions),
+    );
+  }
+
+  async generateMinorMagicItem(
+    options: MinorMagicItemGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...itemOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("minor-magic-item");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildMinorMagicItemPrompt(
+            itemOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "minor-magic-item",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseMinorMagicItemResponse(text, resolved);
+      },
+      () => generateMinorMagicItemLocal(itemOptions),
     );
   }
 

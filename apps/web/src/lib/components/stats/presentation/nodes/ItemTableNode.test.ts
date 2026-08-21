@@ -207,6 +207,82 @@ describe("ItemTableNode", () => {
     );
   });
 
+  it("seeds new rows with the column's configured dice formula and counter max", async () => {
+    const field: StatSheetField = {
+      id: "weapons_table",
+      label: "Weapons",
+      type: "item-table",
+      linkVaultItems: false,
+      columns: [
+        { id: "damage", label: "Damage", type: "dice", formula: "2d8+3" },
+        { id: "hp", label: "HP", type: "counter", max: 12 },
+      ],
+      rows: [],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    await fireEvent.click(screen.getByTestId("item-table-add-row"));
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "weapons_table",
+      expect.objectContaining({
+        rows: [
+          expect.objectContaining({
+            damage: "2d8+3",
+            hp: { value: 12, max: 12 },
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("seeds new counter rows at least at the column's configured minimum", async () => {
+    const field: StatSheetField = {
+      id: "weapons_table",
+      label: "Weapons",
+      type: "item-table",
+      linkVaultItems: false,
+      columns: [{ id: "hp", label: "HP", type: "counter", min: 10 }],
+      rows: [],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    await fireEvent.click(screen.getByTestId("item-table-add-row"));
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "weapons_table",
+      expect.objectContaining({
+        rows: [expect.objectContaining({ hp: { value: 10, max: 6 } })],
+      }),
+    );
+  });
+
+  it("adjusts counters by the column's configured step and respects its configured minimum", async () => {
+    const field: StatSheetField = {
+      id: "weapons_table",
+      label: "Weapons",
+      type: "item-table",
+      linkVaultItems: false,
+      columns: [{ id: "hp", label: "HP", type: "counter", min: 5, step: 3 }],
+      rows: [{ name: "Ogre", hp: { value: 8, max: 12 } }],
+    };
+    const context = makeContext([field]);
+    render(ItemTableNode, { props: { field, context } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Decrease HP for Ogre" }),
+    );
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "weapons_table",
+      expect.objectContaining({
+        rows: [expect.objectContaining({ hp: { value: 5, max: 12 } })],
+      }),
+    );
+  });
+
   it("hides row controls in read-only mode", () => {
     const context = makeContext([itemTableField], true);
     render(ItemTableNode, { props: { field: itemTableField, context } });
