@@ -88,9 +88,8 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 
 ## Presentation Templates
 
-Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or create a Markdown-based view with a live preview. Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
+Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
 
 ## Related reading
 
-- [Build Stat Sheets That Keep Your Table Moving](/blog/custom-stat-sheet-templates) — Design reusable layouts around the information you need during play.
-- [Present Your Stat Sheets Your Way](/blog/presentation-templates) — Build, preview, and share Markdown-based Presentation Templates.
+- [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.
