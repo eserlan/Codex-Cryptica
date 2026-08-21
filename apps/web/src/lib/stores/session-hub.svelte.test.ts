@@ -57,7 +57,10 @@ describe("SessionHubStore", () => {
     expect(store.entities[0].selectedForSave).toBe(true);
     expect(store.nextOrder).toBe(2);
 
-    expect(mockStorage.setItem).toHaveBeenCalledWith(SESSION_DRAFTS_KEY, expect.any(String));
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      SESSION_DRAFTS_KEY,
+      expect.any(String),
+    );
   });
 
   it("updates an entity", () => {
@@ -153,7 +156,10 @@ describe("SessionHubStore", () => {
     expect(newStore.nextOrder).toBe(2);
 
     // Should have saved the migrated state
-    expect(mockStorage.setItem).toHaveBeenCalledWith(SESSION_DRAFTS_KEY, expect.any(String));
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      SESSION_DRAFTS_KEY,
+      expect.any(String),
+    );
   });
 
   it("clears all state", () => {

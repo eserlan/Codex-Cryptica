@@ -222,7 +222,10 @@ export class ExplorerUIStore {
       for (const key in parsed) {
         if (Object.prototype.hasOwnProperty.call(parsed, key)) {
           const value = parsed[key];
-          if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+          if (
+            !Array.isArray(value) ||
+            !value.every((item) => typeof item === "string")
+          ) {
             isValid = false;
             break;
           }
