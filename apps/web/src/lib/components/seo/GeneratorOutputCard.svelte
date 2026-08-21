@@ -125,7 +125,7 @@
   {#if isBusy}
     <div
       in:fade={{ duration: 150 }}
-      class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
+      class="absolute inset-0 z-10 flex flex-col items-center justify-start pt-12 sm:pt-16 gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
       role="status"
       aria-live="polite"
     >
