@@ -61,6 +61,16 @@ export {
   type MagicItemPrompt,
 } from "./public-magic-item";
 export {
+  buildMinorMagicItemPrompt,
+  parseMinorMagicItemResponse,
+  generateMinorMagicItemLocal,
+  resolveMinorMagicItem,
+  minorMagicItemConfig,
+  type MinorMagicItemGeneratorOptions,
+  type MinorMagicItemPrompt,
+  type ResolvedMinorMagicItem,
+} from "./public-minor-magic-item";
+export {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,

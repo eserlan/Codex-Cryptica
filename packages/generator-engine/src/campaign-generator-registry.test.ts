@@ -46,6 +46,7 @@ describe("registry lookup", () => {
       "faction",
       "settlement",
       "magic-item",
+      "minor-magic-item",
       "event",
       "ship",
       "language",
@@ -62,6 +63,42 @@ describe("registry lookup", () => {
       "alien-race",
       "random-table",
     ]);
+  });
+
+  it("builds and generates a minor magic item as an item draft", () => {
+    const generator = getGenerator("minor-magic-item");
+    const request = run("minor-magic-item", {
+      options: {
+        genre: "Classic Fantasy",
+        form: "Charm / Talisman",
+        usageLimit: "Single Use (Breaks / Consumed on Activation)",
+        utility:
+          "Sensory & Detection (Finding water, detecting lies, seeing warmth, hearing whispers)",
+        activation: "Snapping / Crushing in hand",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE["minor-magic-item"]).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("minor, single-use or limited-use magic item");
+    expect(prompt).toContain("- Item Form: Charm / Talisman");
+    expect(prompt).toContain(
+      "- Usage Limit / Charges: Single Use (Breaks / Consumed on Activation)",
+    );
+    expect(prompt).toContain("Low Impact & Creative Utility");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["minor-magic-item", "imported-draft"]),
+    );
+    expect(output.lore).toContain("### Quick Reference");
+    expect(output.lore).toContain("### Magical Effect & Mechanics");
+    expect(draft).toMatchObject({
+      entityType: "item",
+      sourceGeneratorId: "minor-magic-item",
+    });
   });
 
   it("maps the event generator to the event vault category", () => {
@@ -1252,6 +1289,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       faction: "faction",
       settlement: "location",
       "magic-item": "item",
+      "minor-magic-item": "item",
       event: "event",
       ship: "location",
       language: "note",

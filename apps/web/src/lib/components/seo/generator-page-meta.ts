@@ -112,6 +112,60 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "rpg artifact tool",
     ],
   },
+  "minor-magic-item": {
+    pageTitle:
+      "Minor Magic Item & Trinket Generator | Single-Use Charms, Potions & Gadgets | Codex Cryptica",
+    metaDescription:
+      "Generate flavourful minor magic items, consumable potions, charms, talismans, and disposable tools for tabletop RPGs. System-agnostic, low-impact loot with quirks, clear limits, and creative utility.",
+    introTitle: "Minor Magic Item & Trinket Generator",
+    eyebrow: "Minor Magic Item Generator",
+    introText:
+      "Generate small-scale, consumable, and limited-use magic items, charms, alchemical draughts, and curiosities designed for creative problem-solving rather than numerical stat bloat. Works without login.",
+    canonicalPath: "/generators/minor-magic-item",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-minor-magic-item.jpg",
+    ogImageAlt:
+      "Codex Cryptica minor magic item generator drafting consumable charms, alchemical potions, and disposable magical gadgets with quirks and usage limits",
+    keywords: [
+      "minor magic item generator",
+      "single use magic items",
+      "rpg trinket generator",
+      "dnd consumable items",
+      "potion generator",
+      "charm generator",
+      "tabletop rpg loot",
+    ],
+    faqs: [
+      {
+        question: "What makes these magic items 'minor' or single-use?",
+        answer:
+          "Unlike legendary artifacts or weapons with permanent mathematical bonuses, minor magic items focus on situational utility, creative tricks, sensory quirks, and limited charges (single-use consumables, fragile charges, or temporary blessings). They add flavour and tactical problem-solving without breaking campaign balance.",
+      },
+      {
+        question: "Are these items system-agnostic?",
+        answer:
+          "Yes. All generated items use clear, concrete narrative and physical descriptions instead of system-specific math (like spell slot levels or exact DC numbers), making them immediately usable in D&D, Pathfinder, OSR, Shadowdark, Cairn, cyberpunk, and modern RPGs.",
+      },
+      {
+        question: "What details are included in each generated item?",
+        answer:
+          "Each item includes an evocative name, tactile description of materials and craftsmanship, item form, usage limit or charge count, activation trigger, primary utility effect, a memorable quirk or sensory side effect, suggested tactical use in play, and a brief provenance or rumour.",
+      },
+      {
+        question: "Can I save generated items directly to my campaign vault?",
+        answer:
+          "Yes. Clicking 'Save to Codex' stores the item draft in your browser's local storage. Open Codex Cryptica and it imports directly as an Item entity with frontmatter, Markdown notes, and linking ready to connect with your characters and factions.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/magic-item", label: "Major Magic Item Generator" },
+      { href: "/generators/quest", label: "RPG Quest Generator" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
+  },
   faction: {
     pageTitle:
       "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica",

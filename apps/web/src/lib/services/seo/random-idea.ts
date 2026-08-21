@@ -11,6 +11,7 @@ export interface RandomIdeaCategory {
     | "npc"
     | "quest"
     | "villain"
+    | "minor-magic-item"
     | "council-vote"
     | "secret-society"
     | "social-hub"
@@ -91,6 +92,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "BBEG / Campaign Villain",
     generate: (engine, useAI, theme) =>
       engine.generateVillain({ genre: theme, useAI }),
+  },
+  {
+    key: "minor-magic-item",
+    label: "Minor Magic Item",
+    generate: (engine, useAI, theme) =>
+      engine.generateMinorMagicItem({ genre: theme, useAI }),
   },
   {
     key: "council-vote",

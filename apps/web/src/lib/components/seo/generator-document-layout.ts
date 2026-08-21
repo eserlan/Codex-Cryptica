@@ -47,6 +47,10 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set(["GM Reference Information", "Magical Properties"]),
   },
   {
+    label: "minor-magic-item",
+    railSections: new Set(["Quick Reference"]),
+  },
+  {
     label: "npc-generator",
     railSections: new Set(["At a Glance", "Personality"]),
     documentBullets: {

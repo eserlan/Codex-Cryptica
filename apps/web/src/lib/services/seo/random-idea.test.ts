@@ -18,6 +18,7 @@ describe("randomIdeaCategories", () => {
       "council-vote",
       "deity",
       "faction",
+      "minor-magic-item",
       "nation",
       "npc",
       "pantheon",
@@ -42,6 +43,9 @@ describe("randomIdeaCategories", () => {
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
       generateVillain: vi.fn().mockResolvedValue("villain-result"),
+      generateMinorMagicItem: vi
+        .fn()
+        .mockResolvedValue("minor-magic-item-result"),
       generateCouncilVote: vi.fn().mockResolvedValue("council-vote-result"),
       generateSecretSociety: vi.fn().mockResolvedValue("secret-society-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
@@ -75,6 +79,10 @@ describe("randomIdeaCategories", () => {
       genre: "Cyberpunk",
     });
     expect(engine.generateVillain).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateMinorMagicItem).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
     });

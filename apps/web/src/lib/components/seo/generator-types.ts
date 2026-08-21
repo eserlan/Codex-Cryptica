@@ -2,6 +2,7 @@ export type ValidSlug =
   | "npc"
   | "settlement"
   | "magic-item"
+  | "minor-magic-item"
   | "faction"
   | "quest"
   | "item"

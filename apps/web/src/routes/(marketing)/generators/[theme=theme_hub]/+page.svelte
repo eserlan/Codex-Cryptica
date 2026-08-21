@@ -112,6 +112,13 @@
         "Generate campaign-ready adventure concepts with initial situation, primary pressure, key locations, threats, and non-linear outcomes.",
       icon: "icon-[lucide--map]",
     },
+    {
+      slug: "minor-magic-item",
+      label: "Minor Magic Item Generator",
+      summary:
+        "Generate small-scale charms, consumable potions, single-use devices, and curiosities with clear limits and quirks.",
+      icon: "icon-[lucide--sparkles]",
+    },
   ];
 
   const surpriseMeCard: GeneratorCard = {
