@@ -163,6 +163,18 @@ describe("buildMinorMagicItemPrompt", () => {
     expect(userMessage).toContain("### Technical Effect & Mechanism");
   });
 
+  it("adapts causal logic and mechanics heading for Western / Frontier themes", () => {
+    const { userMessage } = buildMinorMagicItemPrompt({
+      genre: "Western / Frontier",
+    });
+    expect(userMessage).toContain("Western / Frontier Causality");
+    expect(userMessage).toContain("Prefer frontier-era materials");
+    expect(userMessage).toContain(
+      "Avoid defaulting to sci-fi/steampunk mechanisms",
+    );
+    expect(userMessage).toContain("### Frontier Effect & Mechanics");
+  });
+
   it("generates technological mechanics and names in local fallback for sci-fi/cyberpunk", () => {
     const out = generateMinorMagicItemLocal(
       {
@@ -176,6 +188,22 @@ describe("buildMinorMagicItemPrompt", () => {
       /anti-static polymer|composite|tactical webbing/,
     );
     expect(out.title).toBe("Static Filter");
+  });
+
+  it("generates period-appropriate frontier mechanics and materials in local fallback for Western", () => {
+    const out = generateMinorMagicItemLocal(
+      {
+        genre: "Western / Frontier",
+      },
+      seededRng(1),
+    );
+    expect(out.lore).toContain("### Frontier Effect & Mechanics");
+    expect(out.lore).not.toContain("### Technical Effect & Mechanism");
+    expect(out.lore).not.toContain("### Magical Effect & Mechanics");
+    expect(out.content).toMatch(
+      /stamped sheet brass|saddle leather|whittled pine|tin canister|beeswax|notched copper|rawhide/,
+    );
+    expect(out.title).toBe("Prairie Notch");
   });
 
   it("includes avoidNames ban list in prompt and filters names present in context", () => {

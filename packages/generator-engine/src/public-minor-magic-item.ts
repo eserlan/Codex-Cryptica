@@ -215,7 +215,12 @@ export interface ResolvedMinorMagicItem {
 }
 
 export type GenreCausality =
-  "magical" | "occult" | "technological" | "industrial-frontier";
+  | "magical"
+  | "occult"
+  | "technological"
+  | "steampunk-industrial"
+  | "western-frontier"
+  | "post-apocalyptic";
 
 export function getGenreCausality(genre: string): GenreCausality {
   if (
@@ -230,8 +235,14 @@ export function getGenreCausality(genre: string): GenreCausality {
   ) {
     return "technological";
   }
-  if (["Steampunk", "Western / Frontier", "Post-Apocalyptic"].includes(genre)) {
-    return "industrial-frontier";
+  if (genre === "Western / Frontier") {
+    return "western-frontier";
+  }
+  if (genre === "Steampunk") {
+    return "steampunk-industrial";
+  }
+  if (genre === "Post-Apocalyptic") {
+    return "post-apocalyptic";
   }
   if (["Vampire / Gothic Noir", "Cosmic Horror"].includes(genre)) {
     return "occult";
@@ -720,8 +731,12 @@ export function buildMinorMagicItemPrompt(
   const causalityNotes: Record<GenreCausality, string> = {
     technological:
       "Technological / Hard-Sci-Fi Causality: All mechanisms, activations, effects, and limitations MUST be grounded in plausible electronics, software subroutines, pharmacology, nanotech, chemical reactions, optics, or micro-mechanics. NEVER introduce supernatural spells, enchantments, or mystical forces unless explicitly requested in campaign context.",
-    "industrial-frontier":
-      "Industrial / Mechanical / Frontier Causality: Ground mechanisms in physical gears, clockwork escapements, pressurized steam/gas, galvanic sparks, trick-machining, chemical combustion, or folk herbalism. Avoid high-fantasy spells unless explicitly requested.",
+    "western-frontier":
+      "Western / Frontier Causality: Prefer frontier-era materials (lead, stamped brass, tallow, black powder, beeswax, flint, prairie herbs, pine pitch), folk magic/superstition, mechanical tricks, surveyor/gunsmith/railroad tools, gambler's sleights, and patent-medicine oddities. Avoid defaulting to sci-fi/steampunk mechanisms (such as optical projections, advanced micro-tech, synthetic vapours, clockwork computers, or abstract energy fields) unless the selected setting explicitly supports Weird West technology. Adapt causal logic to the chosen frontier setting.",
+    "steampunk-industrial":
+      "Steampunk / Clockwork Causality: Ground mechanisms in clockwork gears, escapement springs, pressurized steam/gas valves, galvanic sparkers, or aetheric distillations.",
+    "post-apocalyptic":
+      "Post-Apocalyptic / Wasteland Causality: Ground mechanisms in salvaged pre-collapse hardware, jury-rigged batteries, scrap chemistry, or survivalist improvisations.",
     occult:
       "Occult / Gothic / Cosmic Causality: Ground effects in dark alchemy, blood-binding, sympathetic relics, or sanity-straining eldritch resonance.",
     magical:
@@ -731,9 +746,11 @@ export function buildMinorMagicItemPrompt(
   const mechanicsHeading =
     causality === "technological"
       ? "Technical Effect & Mechanism"
-      : causality === "industrial-frontier"
+      : causality === "steampunk-industrial" || causality === "post-apocalyptic"
         ? "Mechanical Effect & Operation"
-        : "Magical Effect & Mechanics";
+        : causality === "western-frontier"
+          ? "Frontier Effect & Mechanics"
+          : "Magical Effect & Mechanics";
 
   const extraAvoidedNames = avoidNamesExcludingContext(
     options.avoidNames ?? [],
@@ -759,7 +776,7 @@ Constraints & Tone:
 ${formatCampaignContextBlock(resolved.campaignContext)}
 
 Key Design Principles:
-1. Genre-Appropriate Causal Logic: When a genre is selected (${resolved.genre}), adapt not only terminology and aesthetics but also the underlying causal logic. Effects, activations, limitations, failure modes, provenance, and item forms must make plausible sense within this genre. Avoid presenting supernatural or magical mechanics in non-magical/technological genres unless the selected setting explicitly permits them.
+1. Genre-Appropriate Causal Logic: When a genre is selected (${resolved.genre}), adapt not only terminology and aesthetics but also the underlying causal logic. Effects, activations, limitations, failure modes, provenance, and item forms must make plausible sense within this genre. For Western themes, avoid defaulting to sci-fi/steampunk mechanisms (such as optical projection, advanced micro-tech, synthetic vapours, or abstract fields) unless the selected setting explicitly supports Weird West technology; prefer frontier-era materials, folk magic, superstition, mechanical tricks, surveyor/gunsmith/railroad tools, and patent-medicine oddities.
 2. Enforce Required Output Sections: Every single generated item MUST include both the "### Quick Reference" and the full "### ${mechanicsHeading}" section. Flavour sections (Description, Suggested Use in Play, Provenance) must NEVER replace, condense, or omit the core mechanical sections.
 3. Single Core Function: Keep each minor item centred on ONE core function. Avoid adding secondary effects such as memory alteration or information-gathering (e.g. mood detection, aura sensing, or heartbeat tracking) unless they are strictly integral to that primary function.
 4. Prioritise Practical, Gameable Utility: Even for strange, odd, or whimsical items, the core effect must have clear, immediate practical or gameable utility (e.g. distraction, navigation, infiltration, environmental protection, or creative problem-solving). A player holding this item should immediately understand its concrete use and feel tempted to deploy it. Avoid cosmetic novelties that have no table application.
@@ -817,9 +834,11 @@ export function parseMinorMagicItemResponse(
   const mechanicsHeading =
     causality === "technological"
       ? "Technical Effect & Mechanism"
-      : causality === "industrial-frontier"
+      : causality === "steampunk-industrial" || causality === "post-apocalyptic"
         ? "Mechanical Effect & Operation"
-        : "Magical Effect & Mechanics";
+        : causality === "western-frontier"
+          ? "Frontier Effect & Mechanics"
+          : "Magical Effect & Mechanics";
 
   let lore = (data.lore || "").trim();
 
@@ -835,6 +854,7 @@ export function parseMinorMagicItemResponse(
     lore.includes("### Magical Effect & Mechanics") ||
     lore.includes("### Technical Effect & Mechanism") ||
     lore.includes("### Mechanical Effect & Operation") ||
+    lore.includes("### Frontier Effect & Mechanics") ||
     lore.includes("### Effect & Mechanics") ||
     lore.includes("### Core Effect & Mechanics");
 
@@ -876,9 +896,11 @@ export function generateMinorMagicItemLocal(
   const mechanicsHeading =
     causality === "technological"
       ? "Technical Effect & Mechanism"
-      : causality === "industrial-frontier"
+      : causality === "steampunk-industrial" || causality === "post-apocalyptic"
         ? "Mechanical Effect & Operation"
-        : "Magical Effect & Mechanics";
+        : causality === "western-frontier"
+          ? "Frontier Effect & Mechanics"
+          : "Magical Effect & Mechanics";
 
   const appearanceDetails =
     causality === "technological"
@@ -887,18 +909,25 @@ export function generateMinorMagicItemLocal(
           `Fabricated as a streamlined ${form.toLowerCase()}, the ${suggestedName} is sealed in anti-static polymer with micro-etched serial designations along its connector strip.`,
           `An unadorned ${form.toLowerCase()} designed for field deployment, the ${suggestedName} easily fits into a flight suit pocket or tactical webbing with zero exterior branding.`,
         ]
-      : causality === "industrial-frontier"
+      : causality === "western-frontier"
         ? [
-            `The ${suggestedName} takes the form of a rugged ${form.toLowerCase()}. Constructed from machined brass and oiled steel, its seams are sealed with vulcanized rubber and stamped with a workshop proof-mark.`,
-            `Crafted as a sturdy ${form.toLowerCase()}, the ${suggestedName} combines utilitarian metalwork with a protective cord wrap, built to endure vibration and weather.`,
-            `An unassuming ${form.toLowerCase()} showing clean artisan lathe-work, with a subtle balance in the hand that indicates precise internal weighting.`,
+            `The ${suggestedName} takes the form of a rugged ${form.toLowerCase()}. Fashioned from stamped sheet brass, weathered saddle leather, and whittled pine, it carries the distinct patina of a frontier trail kit and the faint scent of linseed oil and prairie sage.`,
+            `Housed in a small tin canister with an amber beeswax seal, the ${suggestedName} bears the paper label of a frontier apothecary and a handwritten batch number.`,
+            `An unassuming ${form.toLowerCase()} carried by railway surveyors and prospectors, crafted from notched copper and bound with waxed rawhide cord.`,
           ]
-        : [
-            `The ${suggestedName} takes the form of a modest ${form.toLowerCase()}. The craftsmanship is deliberate but unpretentious, showing the hand of an artisan who valued utility over ceremonial polish. When held in the palm, it carries a faint temperature gradient—distinctly cooler on one edge and subtly warm along the spine.`,
-            `Crafted as a small ${form.toLowerCase()}, the ${suggestedName} is fashioned from local materials bound with fine cord and sealed with a thin layer of protective varnish. Subtle geometric etchings line its rim, catching the light only when tilted at an angle.`,
-            `The ${suggestedName} is an unassuming ${form.toLowerCase()} that easily fits into a pouch or waistcoat pocket. Its surface bears minor handling marks and a faint, pleasant scent of dried herbs and ozone.`,
-            `A pocket-sized ${form.toLowerCase()}, the ${suggestedName} is marked with a simple maker's notch near its base. It feels surprisingly lightweight for its composition, with a faint tactile hum that subsides when gripped firmly.`,
-          ];
+        : causality === "steampunk-industrial" ||
+            causality === "post-apocalyptic"
+          ? [
+              `The ${suggestedName} takes the form of a rugged ${form.toLowerCase()}. Constructed from machined brass and oiled steel, its seams are sealed with vulcanized rubber and stamped with a workshop proof-mark.`,
+              `Crafted as a sturdy ${form.toLowerCase()}, the ${suggestedName} combines utilitarian metalwork with a protective cord wrap, built to endure vibration and weather.`,
+              `An unassuming ${form.toLowerCase()} showing clean artisan lathe-work, with a subtle balance in the hand that indicates precise internal weighting.`,
+            ]
+          : [
+              `The ${suggestedName} takes the form of a modest ${form.toLowerCase()}. The craftsmanship is deliberate but unpretentious, showing the hand of an artisan who valued utility over ceremonial polish. When held in the palm, it carries a faint temperature gradient—distinctly cooler on one edge and subtly warm along the spine.`,
+              `Crafted as a small ${form.toLowerCase()}, the ${suggestedName} is fashioned from local materials bound with fine cord and sealed with a thin layer of protective varnish. Subtle geometric etchings line its rim, catching the light only when tilted at an angle.`,
+              `The ${suggestedName} is an unassuming ${form.toLowerCase()} that easily fits into a pouch or waistcoat pocket. Its surface bears minor handling marks and a faint, pleasant scent of dried herbs and ozone.`,
+              `A pocket-sized ${form.toLowerCase()}, the ${suggestedName} is marked with a simple maker's notch near its base. It feels surprisingly lightweight for its composition, with a faint tactile hum that subsides when gripped firmly.`,
+            ];
 
   const effectsByUtility: Record<string, string[]> =
     causality === "technological"
@@ -939,43 +968,81 @@ export function generateMinorMagicItemLocal(
             `Activating the unit projects an undulating refractive field that bends light within ten paces for three minutes, creating visual interference that covers a rapid withdrawal.`,
           ],
         }
-      : {
-          "Sensory & Detection": [
-            `Upon ${activation.toLowerCase()}, the item pulses with a soft resonance for ten minutes. During this time, the user senses the precise direction of the nearest source of clean running water or breathable air within one hundred paces, perceived as a gentle tug in the back of the throat.`,
-            `When ${activation.toLowerCase()}, the user gains the ability to hear faint whispers carried on drafts of air for up to five minutes. Ordinary ambient noise dims slightly, bringing hidden murmurs or footsteps within thirty feet into clear focus.`,
-            `Activating the item reveals recent temperature changes in the immediate area. Footprints or handholds warm from living contact within the past hour illuminate with a dim, violet luminescence for three minutes.`,
-          ],
-          "Infiltration & Stealth": [
-            `Upon ${activation.toLowerCase()}, all footfalls and gear clatter produced by the user are completely silenced for three minutes. Dropped metal or heavy boots strike the floor with no louder sound than falling down feathers.`,
-            `When ${activation.toLowerCase()}, the item emits a cloud of translucent, clinging mist that dampens ambient light and diffuses shadows in a fifteen-foot sphere for five minutes, making silent passage effortless.`,
-            `Activating the item masks the user's natural scent and thermal footprint, replacing it with the neutral aroma of damp stone and cool earth for thirty minutes. Tracking beasts and automated sensors overlook the user unless visually confronted.`,
-          ],
-          "Exploration & Travel": [
-            `Upon ${activation.toLowerCase()}, the soles of the user's boots or palms adhere firmly to slippery, sheer, or icy surfaces for ten minutes, allowing safe traversal across frozen ledges or wet slate roofs without slipping.`,
-            `When ${activation.toLowerCase()}, the item produces steady, soothing warmth equivalent to a small hearth fire for six hours, protecting the carrier from hypothermia in freezing winds without producing smoke or flame.`,
-            `Activating the item instantly purifies up to five gallons of fouled, brackish, or mildly poisoned liquid, converting it into sweet, potable water with a faint mineral finish.`,
-          ],
-          "Social & Persuasion": [
-            `Upon ${activation.toLowerCase()}, the user is enveloped in a subtle aura of reassuring calm for ten minutes. Bystanders find the user approachable and trustworthy, lowering initial hostility in tense negotiations.`,
-            `When ${activation.toLowerCase()}, the user's voice takes on a resonant, melodic timbre for one conversation. Deceptions spoken during this period carry no telltale hesitation, and the listener is left with a warm impression of the speaker.`,
-            `Activating the item creates a brief, harmless sensory distraction—such as the distant scent of baking bread or the phantom chiming of a carriage bell—drawing curious eyes away for five crucial seconds.`,
-          ],
-          "Combat Utility & Escape": [
-            `Upon ${activation.toLowerCase()}, the item bursts into a dense, non-toxic smoke screen that expands to fill a twenty-foot radius within two seconds, extinguishing small open flames and obscuring line of sight for one minute.`,
-            `When ${activation.toLowerCase()}, the item releases a sharp, dazzling flash of silver light that disorients and momentarily blinds anyone looking directly at it within twenty paces, buying precious seconds for retreat.`,
-            `Activating the item coats the ground in a ten-foot circle with an impossibly slick, frictionless sheen that lasts for two minutes. Any creature attempting to sprint or turn abruptly across it loses balance immediately.`,
-          ],
-          "Crafting & Utility": [
-            `Upon ${activation.toLowerCase()}, the item generates an intense, pinpoint heat for ninety seconds, sufficient to soften metal rivets, ignite damp tinder, or cleanly weld a broken iron link without an anvil.`,
-            `When ${activation.toLowerCase()}, the item instantly lifts stains, grime, blood, and corrosive residue from up to ten square feet of cloth, leather, or steel, leaving the material clean, dry, and supple.`,
-            `Activating the item mends a single non-magical object weighing up to five pounds that has suffered a clean break or tear, fusing the fracture seamlessly as though whole.`,
-          ],
-          "Oddity & Whimsy": [
-            `Upon ${activation.toLowerCase()}, the item projects a vibrant, auditory-and-visual decoy spark that darts up to thirty paces away, emitting a sharp chattering sound that draws guard attention away for ten seconds before dissolving.`,
-            `When ${activation.toLowerCase()}, whatever drink or food the user touches over the next hour has all bitter, spoiled, or tainted flavours masked with a neutral, crisp finish, allowing fouled rations or bitter medicines to be consumed without reaction.`,
-            `Activating the item causes all shadows within thirty feet to stretch and sway erratically in reverse for three minutes, disorienting observers and providing visual confusion that covers an escape.`,
-          ],
-        };
+      : causality === "western-frontier"
+        ? {
+            "Sensory & Detection": [
+              `Upon ${activation.toLowerCase()}, the balanced dowsing pendulum or tallow-treated needle pulls with a steady magnetic tug toward the nearest sweet spring, water seep, or shallow well within one hundred paces for ten minutes.`,
+              `When ${activation.toLowerCase()}, the user's hearing tunes acutely to low ground vibrations traveling through trail dirt and railway iron for five minutes, picking up approaching riders or footsteps half a mile off.`,
+              `Activating the charcoal powder or coin reveals recent disturbances in trail dust, illuminating fresh horse tracks or boot prints from the past hour with a dim luminescence for three minutes.`,
+            ],
+            "Infiltration & Stealth": [
+              `Upon ${activation.toLowerCase()}, rubbing the tallow salve or shaking the pouch muffles the squeak of saddle leather, boot spurs, and holster friction for three minutes, allowing silent passage across dry brush or loose floorboards.`,
+              `When ${activation.toLowerCase()}, the dried cedar-and-sulfur pouch releases a dense, low-hanging cloud of alkali smoke that blinds lanterns and obscures sight across a twenty-foot yard for one minute.`,
+              `Activating the salve masks the scent of saddle sweat and trail grime with the neutral aroma of dry alkali dust and mountain juniper for thirty minutes, preventing tracking dogs from catching the scent.`,
+            ],
+            "Exploration & Travel": [
+              `Upon ${activation.toLowerCase()}, pine-pitch wax applied to boot soles and stirrups provides unyielding friction across slick river rock, wet timber bridges, or scree slopes for ten minutes without slipping.`,
+              `When ${activation.toLowerCase()}, the liniment produces a penetrating, sustained muscle warmth that prevents frostbite and numb extremities in freezing mountain passes for six hours.`,
+              `Activating the mineral tablet or charcoal filter cleanses two gallons of alkali-fouled or muddy creek water into crisp, potable water in seconds.`,
+            ],
+            "Social & Persuasion": [
+              `Upon ${activation.toLowerCase()}, the patent-tonic tincture or silver pocket token settles racing pulses and eases hand tremors, providing an unreadable poker face and steady eye during tense showdowns or saloon disputes.`,
+              `When ${activation.toLowerCase()}, the patent-medicine lozenge clears trail gravel from the throat, giving the speaker's voice an authoritative, resonant timbre that commands quiet in a rowdy bunkhouse for one conversation.`,
+              `Activating the trick coin or pocket whistle creates a sharp, ringing diversion—like a dropped silver dollar or distant train whistle—drawing eyes away for five crucial seconds.`,
+            ],
+            "Combat Utility & Escape": [
+              `Upon ${activation.toLowerCase()}, the modified blasting cartridge or flash-paper bursts in a dazzling sulfur flare and thunderous crack, blinding anyone in the saloon or alley for ten paces and buying seconds to duck behind cover.`,
+              `When ${activation.toLowerCase()}, the powder flask expels a stinging cloud of fine prairie-pepper dust that causes pursuing riders or brawlers to cough and drop back for ninety seconds.`,
+              `Activating the grease pellet coats a doorway or boardwalk in slick axle tallow, causing charging opponents to lose balance immediately.`,
+            ],
+            "Crafting & Utility": [
+              `Upon ${activation.toLowerCase()}, the miniature friction fuse burns with intense white-hot heat for thirty seconds, fusing severed bridle rings or heating iron rivets red-hot in the field.`,
+              `When ${activation.toLowerCase()}, the solvent salve dissolves rust, gummed black powder fouling, and axle grease from locks or revolver cylinders in thirty seconds.`,
+              `Activating the hide-glue compound mends cracked rifle stocks or torn harness traces under hand pressure in two minutes.`,
+            ],
+            "Oddity & Whimsy": [
+              `Upon ${activation.toLowerCase()}, the trick cartridge or whistle throws an eerie, echoing coyote howl or distant train horn thirty paces down the gulch, diverting night watchmen for ten seconds.`,
+              `When ${activation.toLowerCase()}, a pinch of the patent powder completely masks the foul bite of bad rotgut whiskey or tainted trail rations for one hour.`,
+              `Activating the folk charm causes dust devils and trail smoke to swirl in confusing eddies around the user for two minutes, obscuring their tracks.`,
+            ],
+          }
+        : {
+            "Sensory & Detection": [
+              `Upon ${activation.toLowerCase()}, the item pulses with a soft resonance for ten minutes. During this time, the user senses the precise direction of the nearest source of clean running water or breathable air within one hundred paces, perceived as a gentle tug in the back of the throat.`,
+              `When ${activation.toLowerCase()}, the user gains the ability to hear faint whispers carried on drafts of air for up to five minutes. Ordinary ambient noise dims slightly, bringing hidden murmurs or footsteps within thirty feet into clear focus.`,
+              `Activating the item reveals recent temperature changes in the immediate area. Footprints or handholds warm from living contact within the past hour illuminate with a dim, violet luminescence for three minutes.`,
+            ],
+            "Infiltration & Stealth": [
+              `Upon ${activation.toLowerCase()}, all footfalls and gear clatter produced by the user are completely silenced for three minutes. Dropped metal or heavy boots strike the floor with no louder sound than falling down feathers.`,
+              `When ${activation.toLowerCase()}, the item emits a cloud of translucent, clinging mist that dampens ambient light and diffuses shadows in a fifteen-foot sphere for five minutes, making silent passage effortless.`,
+              `Activating the item masks the user's natural scent and thermal footprint, replacing it with the neutral aroma of damp stone and cool earth for thirty minutes. Tracking beasts and automated sensors overlook the user unless visually confronted.`,
+            ],
+            "Exploration & Travel": [
+              `Upon ${activation.toLowerCase()}, the soles of the user's boots or palms adhere firmly to slippery, sheer, or icy surfaces for ten minutes, allowing safe traversal across frozen ledges or wet slate roofs without slipping.`,
+              `When ${activation.toLowerCase()}, the item produces steady, soothing warmth equivalent to a small hearth fire for six hours, protecting the carrier from hypothermia in freezing winds without producing smoke or flame.`,
+              `Activating the item instantly purifies up to five gallons of fouled, brackish, or mildly poisoned liquid, converting it into sweet, potable water with a faint mineral finish.`,
+            ],
+            "Social & Persuasion": [
+              `Upon ${activation.toLowerCase()}, the user is enveloped in a subtle aura of reassuring calm for ten minutes. Bystanders find the user approachable and trustworthy, lowering initial hostility in tense negotiations.`,
+              `When ${activation.toLowerCase()}, the user's voice takes on a resonant, melodic timbre for one conversation. Deceptions spoken during this period carry no telltale hesitation, and the listener is left with a warm impression of the speaker.`,
+              `Activating the item creates a brief, harmless sensory distraction—such as the distant scent of baking bread or the phantom chiming of a carriage bell—drawing curious eyes away for five crucial seconds.`,
+            ],
+            "Combat Utility & Escape": [
+              `Upon ${activation.toLowerCase()}, the item bursts into a dense, non-toxic smoke screen that expands to fill a twenty-foot radius within two seconds, extinguishing small open flames and obscuring line of sight for one minute.`,
+              `When ${activation.toLowerCase()}, the item releases a sharp, dazzling flash of silver light that disorients and momentarily blinds anyone looking directly at it within twenty paces, buying precious seconds for retreat.`,
+              `Activating the item coats the ground in a ten-foot circle with an impossibly slick, frictionless sheen that lasts for two minutes. Any creature attempting to sprint or turn abruptly across it loses balance immediately.`,
+            ],
+            "Crafting & Utility": [
+              `Upon ${activation.toLowerCase()}, the item generates an intense, pinpoint heat for ninety seconds, sufficient to soften metal rivets, ignite damp tinder, or cleanly weld a broken iron link without an anvil.`,
+              `When ${activation.toLowerCase()}, the item instantly lifts stains, grime, blood, and corrosive residue from up to ten square feet of cloth, leather, or steel, leaving the material clean, dry, and supple.`,
+              `Activating the item mends a single non-magical object weighing up to five pounds that has suffered a clean break or tear, fusing the fracture seamlessly as though whole.`,
+            ],
+            "Oddity & Whimsy": [
+              `Upon ${activation.toLowerCase()}, the item projects a vibrant, auditory-and-visual decoy spark that darts up to thirty paces away, emitting a sharp chattering sound that draws guard attention away for ten seconds before dissolving.`,
+              `When ${activation.toLowerCase()}, whatever drink or food the user touches over the next hour has all bitter, spoiled, or tainted flavours masked with a neutral, crisp finish, allowing fouled rations or bitter medicines to be consumed without reaction.`,
+              `Activating the item causes all shadows within thirty feet to stretch and sway erratically in reverse for three minutes, disorienting observers and providing visual confusion that covers an escape.`,
+            ],
+          };
 
   const selectedUtilityKey =
     Object.keys(effectsByUtility).find((k) => utility.startsWith(k)) ??
@@ -994,14 +1061,21 @@ export function generateMinorMagicItemLocal(
           `Nearby optical displays display a brief horizontal scanline artifact at the instant of activation.`,
           `The casing vents a small wisp of inert heat-dissipation vapor upon exhausting its chemical matrix.`,
         ]
-      : [
-          `When used, the air within five feet smells briefly of crushed pine needles and fresh ozone.`,
-          `The bearer's fingertips tingle with a mild static sensation for twenty minutes after activation.`,
-          `A brief, localized draft or subtle temperature drop occurs within arm's reach during activation.`,
-          `A fine, non-staining veil of grey chalk clings to the user's fingers for several minutes after handling.`,
-          `A faint, musical chime resonates from the empty shell or remnant of the item as it expends its charge.`,
-          `The user's eyes catch reflections with a momentary amber glimmer in dim light.`,
-        ];
+      : causality === "western-frontier"
+        ? [
+            `Leaves a faint smell of woodsmoke, sulfur, and dried sage in the air for a few moments after use.`,
+            `Leaves a thin dusting of fine white alkali chalk on the user's palms.`,
+            `The user's fingers feel a brief, pleasant warmth, like handling a freshly fired brass shell casing.`,
+            `A faint ringing chime, like a silver coin dropping onto hardwood, echoes as the item finishes its work.`,
+          ]
+        : [
+            `When used, the air within five feet smells briefly of crushed pine needles and fresh ozone.`,
+            `The bearer's fingertips tingle with a mild static sensation for twenty minutes after activation.`,
+            `A brief, localized draft or subtle temperature drop occurs within arm's reach during activation.`,
+            `A fine, non-staining veil of grey chalk clings to the user's fingers for several minutes after handling.`,
+            `A faint, musical chime resonates from the empty shell or remnant of the item as it expends its charge.`,
+            `The user's eyes catch reflections with a momentary amber glimmer in dim light.`,
+          ];
   const quirk = quirkSeverity.startsWith("None")
     ? "The item functions cleanly with no discernible side effect or telltale residue."
     : pickFrom(quirks, rng);
@@ -1014,12 +1088,19 @@ export function generateMinorMagicItemLocal(
           `Invaluable during off-grid operations where environmental hazards or equipment breakdowns threaten mission success.`,
           `Useful as a tactical breach-and-clear asset, forcing hostiles to react to sudden sensory degradation.`,
         ]
-      : [
-          `Ideal for bypassing guard checkpoints or creating an escape route through crowded alleys.`,
-          `Superb when dealing with tense social negotiations where a small edge in composure or distraction turns the tide.`,
-          `Invaluable during wilderness survival situations where sudden weather or spoiled provisions threaten the expedition.`,
-          `Useful as an unconventional opening move in an ambush, forcing opponents to react to unexpected conditions.`,
-        ];
+      : causality === "western-frontier"
+        ? [
+            `Ideal for getting the upper hand in a dusty saloon standoff or slipping past border sentries.`,
+            `Superb when bluffing high-stakes games or buying crucial seconds during a train or stagecoach hold-up.`,
+            `Invaluable during dry desert treks or high mountain crossings where foul water or harsh exposure threatens survival.`,
+            `Useful as an emergency edge during a midnight trail ambush, forcing attackers to hesitate.`,
+          ]
+        : [
+            `Ideal for bypassing guard checkpoints or creating an escape route through crowded alleys.`,
+            `Superb when dealing with tense social negotiations where a small edge in composure or distraction turns the tide.`,
+            `Invaluable during wilderness survival situations where sudden weather or spoiled provisions threaten the expedition.`,
+            `Useful as an unconventional opening move in an ambush, forcing opponents to react to unexpected conditions.`,
+          ];
   const tactical = pickFrom(tacticalUses, rng);
 
   const origins =
@@ -1033,28 +1114,38 @@ export function generateMinorMagicItemLocal(
           `Smuggled off a production line by orbital dockworkers who trade them as high-value currency in black markets.`,
           `Produced as an evaluation prototype by an engineering startup that lost its funding before full deployment.`,
         ]
-      : [
-          `Manufactured in small batches for riverboat navigators and canal locksmen, who carry them in waxed pouches to handle seasonal squalls.`,
-          `Found packed in dry grain husks inside an unmarked shipping crate impounded at a municipal tollgate.`,
-          `Crafted by a guild surveyor as an emergency field measure during an unmapped tunnel expansion project.`,
-          `Standard-issue emergency provision once distributed to night watchmen and lantern-tenders along the outer wall.`,
-          `Pressed and cured by a rural herbalist cooperative as a practical seasonal trade good for traveling shearers.`,
-          `Salvaged from the tool locker of an abandoned drydock crane, still wrapped in oiled canvas.`,
-          `Traded by itinerant tinkerers who forge them from melted-down brass fittings and residual alchemical dross.`,
-          `Carried by courier runners as a lightweight contingency for forced marches across rugged borderlands.`,
-          `Sold from a back-alley apothecary stall specializing in practical domestic charms for cellar mold and hearth drafts.`,
-          `A surplus custom commission produced for an expeditionary quartermaster who cancelled the order before departure.`,
-          `Folk charm traditionally woven by coastal fisherfolk before venturing into deep seasonal fog banks.`,
-          `Produced in modest quantities by an eccentric clockmaker who used tension springs to store transient charges.`,
-          `Confiscated from a street gambler's sleeve by market inspectors and later auctioned off as forfeited sundries.`,
-          `Stitched into the lining of an old cavalry saddlebag bought third-hand at an estate clearance.`,
-          `Fabricated by a mine engineer to provide crews with a reliable non-flame signal in gas-heavy coal seams.`,
-          `A journeyman exercise from an alchemical workshop, demonstrating clean material binding without precious metal gilding.`,
-          `Traded among caravan drovers at desert waystations as an indispensable survival precaution.`,
-          `Pawned by an out-of-work stage actor who used it to manage stage lighting cues during traveling plays.`,
-          `Recovered from a flooded basement archive where it had been used as an improvised paperweight for decades.`,
-          `Assembled by a tracklayer mechanic to quickly test insulation continuity on electrified rail conduits.`,
-        ];
+      : causality === "western-frontier"
+        ? [
+            `Brewed in small batches by a traveling snake-oil merchant and sold out of the back of an itinerant prairie wagon.`,
+            `Hand-turned by a frontier gunsmith for stagecoach guards crossing hazardous badlands.`,
+            `A folk charm woven from rawhide and river gravel by a frontier homesteader during a seasonal drought.`,
+            `Recovered from an abandoned prospector's cabin deep in the canyon country, wrapped in waxed canvas.`,
+            `Carried by pony express riders as an emergency contingency for forced night rides across uncharted territories.`,
+            `Crafted by a railway line mechanic to keep survey transits calibrated in fluctuating desert heat.`,
+            `Confiscated from a cardsharp's boot heel by a county sheriff after a disputed faro game in a border town.`,
+          ]
+        : [
+            `Manufactured in small batches for riverboat navigators and canal locksmen, who carry them in waxed pouches to handle seasonal squalls.`,
+            `Found packed in dry grain husks inside an unmarked shipping crate impounded at a municipal tollgate.`,
+            `Crafted by a guild surveyor as an emergency field measure during an unmapped tunnel expansion project.`,
+            `Standard-issue emergency provision once distributed to night watchmen and lantern-tenders along the outer wall.`,
+            `Pressed and cured by a rural herbalist cooperative as a practical seasonal trade good for traveling shearers.`,
+            `Salvaged from the tool locker of an abandoned drydock crane, still wrapped in oiled canvas.`,
+            `Traded by itinerant tinkerers who forge them from melted-down brass fittings and residual alchemical dross.`,
+            `Carried by courier runners as a lightweight contingency for forced marches across rugged borderlands.`,
+            `Sold from a back-alley apothecary stall specializing in practical domestic charms for cellar mold and hearth drafts.`,
+            `A surplus custom commission produced for an expeditionary quartermaster who cancelled the order before departure.`,
+            `Folk charm traditionally woven by coastal fisherfolk before venturing into deep seasonal fog banks.`,
+            `Produced in modest quantities by an eccentric clockmaker who used tension springs to store transient charges.`,
+            `Confiscated from a street gambler's sleeve by market inspectors and later auctioned off as forfeited sundries.`,
+            `Stitched into the lining of an old cavalry saddlebag bought third-hand at an estate clearance.`,
+            `Fabricated by a mine engineer to provide crews with a reliable non-flame signal in gas-heavy coal seams.`,
+            `A journeyman exercise from an alchemical workshop, demonstrating clean material binding without precious metal gilding.`,
+            `Traded among caravan drovers at desert waystations as an indispensable survival precaution.`,
+            `Pawned by an out-of-work stage actor who used it to manage stage lighting cues during traveling plays.`,
+            `Recovered from a flooded basement archive where it had been used as an improvised paperweight for decades.`,
+            `Assembled by a tracklayer mechanic to quickly test insulation continuity on electrified rail conduits.`,
+          ];
   const provenance = pickFrom(origins, rng);
   const conciseUtility =
     utility.replace(/\s*\([^)]*\)/, "").trim() || selectedUtilityKey;
