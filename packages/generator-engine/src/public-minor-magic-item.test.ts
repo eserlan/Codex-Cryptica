@@ -50,6 +50,10 @@ describe("generateMinorMagicItemLocal", () => {
     expect(out.lore).toContain(
       "- **Activation**: Speaking a whisper / command word",
     );
+    expect(out.lore).toContain("- **Primary Utility**: Infiltration & Stealth");
+    expect(out.lore).not.toContain(
+      "(Muffling sound, masking scent, creating distraction, dimming light)",
+    );
     expect(out.lore).toContain("- **Setting / Theme**: Cyberpunk / Corporate");
     expect(out.lore).toContain(
       "The item functions cleanly with no discernible side effect",
@@ -104,9 +108,21 @@ describe("buildMinorMagicItemPrompt", () => {
     expect(userMessage).toContain(
       "Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations.",
     );
+    expect(userMessage).toContain(
+      "Accurate Quick Reference: In the Quick Reference section, **Primary Utility** must name ONLY the single specific function",
+    );
+    expect(userMessage).toContain(
+      "Grounded Provenance Variety: Avoid recurring fantasy-generator clichés",
+    );
     expect(userMessage).toContain("Before returning, run a consistency pass:");
     expect(userMessage).toContain(
       "The item is centred on one core function without extraneous secondary effects",
+    );
+    expect(userMessage).toContain(
+      "In Quick Reference, **Primary Utility** describes ONLY the specific effect actually present",
+    );
+    expect(userMessage).toContain(
+      "The Provenance & Rumour section avoids generic generator tropes",
     );
     expect(userMessage).toContain(
       "The item stands on its own without forced links to prior generation lore",

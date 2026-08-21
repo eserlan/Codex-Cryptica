@@ -166,7 +166,7 @@ export const minorMagicItemConfig = {
     "Sensory & Detection (Finding water, detecting lies, seeing warmth, hearing whispers)",
     "Infiltration & Stealth (Muffling sound, masking scent, creating distraction, dimming light)",
     "Exploration & Travel (Sure footing, temporary heat, purification, climbing grip)",
-    "Social & Persuasion (Minor glamour, soothing aura, catching attention, memory haze)",
+    "Social & Persuasion (Minor glamour, soothing aura, catching attention, voice resonance)",
     "Combat Utility & Escape (Smoke cloud, sudden flash, slick surface, minor kinetic shove)",
     "Crafting & Utility (Quick weld, instant stain removal, fire-starting, drying gear)",
     "Oddity & Whimsy (Bizarre sensory phenomenon, harmless curiosity, strange illusion)",
@@ -367,18 +367,22 @@ Key Design Principles:
 1. Single Core Function: Keep each minor item centred on ONE core function. Avoid adding secondary effects such as memory alteration unless they are strictly integral to that function.
 2. Physical Form Matters: Make the physical form matter directly to how the item is handled, activated, and used in play.
 3. Independent Identity: Avoid automatically connecting newly generated items to lore, factions, or history from previous generations. Each item should stand on its own unless the provided campaign context explicitly requests a connection.
-4. Low Impact & Creative Utility: This is NOT an epic artifact, a +2 sword, or a high-tier armor set. It is a disposable tool, a clever charm, an emergency consumable, an alchemical preparation, or an evocative curiosity.
-5. System-Agnostic: Avoid rigid numeric stat blocks or ruleset-specific keywords (no spell slots, D&D 5e DC formulas, or gold piece lists). Focus on concrete physical/narrative effects that any GM can interpret immediately.
-6. Clear Limits: Ensure the item has a clear single-use, charge-based, or temporal expiration as requested.
-7. Memorable Flavour: Include tactile details, sensory tells, and a small quirk or provenance note.
+4. Accurate Quick Reference: In the Quick Reference section, **Primary Utility** must name ONLY the single specific function or effect actually present in this item (e.g. 'Water Source Detection' or 'Footstep Silencing'). Do NOT repeat the full parenthetical list of examples from the prompt.
+5. Grounded Provenance Variety: Avoid recurring fantasy-generator clichés (no "ancient forgotten empires", "mad wizards who vanished", "burned-down apothecaries", or "mysterious cloaked strangers"). Provide a grounded, varied origin rooted in practical trade, municipal labor, navigation, craft guilds, salvage, or local folk customs.
+6. Low Impact & Creative Utility: This is NOT an epic artifact, a +2 sword, or a high-tier armor set. It is a disposable tool, a clever charm, an emergency consumable, an alchemical preparation, or an evocative curiosity.
+7. System-Agnostic: Avoid rigid numeric stat blocks or ruleset-specific keywords (no spell slots, D&D 5e DC formulas, or gold piece lists). Focus on concrete physical/narrative effects that any GM can interpret immediately.
+8. Clear Limits: Ensure the item has a clear single-use, charge-based, or temporal expiration as requested.
+9. Memorable Flavour: Include tactile details, sensory tells, and a small quirk or provenance note.
 
 Before returning, run a consistency pass:
 - The item is centred on one core function without extraneous secondary effects (such as memory alteration).
+- In Quick Reference, **Primary Utility** describes ONLY the specific effect actually present in this item without extraneous parenthetical lists.
 - The item form matches "${resolved.form}" and physically matters to its operation.
 - The activation method matches "${resolved.activation}".
 - The usage limit matches "${resolved.usageLimit}".
 - The primary utility directly aligns with "${resolved.utility}".
 - The quirk or limitation matches "${resolved.quirkSeverity}".
+- The Provenance & Rumour section avoids generic generator tropes and gives a specific, grounded origin.
 - The item stands on its own without forced links to prior generation lore.
 - The item is evocative, tactile, and immediately playable.
 
@@ -386,7 +390,7 @@ You must return a valid JSON object matching this schema:
 {
   "title": "Evocative Item Name",
   "content": "Markdown describing physical appearance, materials, tactile texture, markings, and sensory details when handled or inspected.",
-  "lore": "Markdown formatted GM reference with the following exact headings:\\n\\n### Quick Reference\\n- **Item Form**: ${resolved.form}\\n- **Usage Limit**: ${resolved.usageLimit}\\n- **Activation**: ${resolved.activation}\\n- **Primary Utility**: ${resolved.utility}\\n\\n### Magical Effect & Mechanics\\nDetailed description of what happens upon activation, sensory effects, concrete narrative result, and duration.\\n\\n### Quirk or Drawback\\nThe minor quirk, odd sensory tell, aesthetic side effect, or subtle inconvenience.\\n\\n### Suggested Use in Play\\nTactical, investigative, social, or creative scenarios where this item shines.\\n\\n### Provenance & Rumour\\nA 1-2 sentence hook about who made it, how it found its way into circulation, or a local rumour.",
+  "lore": "Markdown formatted GM reference with the following exact headings:\\n\\n### Quick Reference\\n- **Item Form**: ${resolved.form}\\n- **Usage Limit**: ${resolved.usageLimit}\\n- **Activation**: ${resolved.activation}\\n- **Primary Utility**: Concise name of the specific effect actually present in this item (e.g. 'Water Direction Finding' — do NOT copy the full parenthetical list of examples)\\n\\n### Magical Effect & Mechanics\\nDetailed description of what happens upon activation, sensory effects, concrete narrative result, and duration.\\n\\n### Quirk or Drawback\\nThe minor quirk, odd sensory tell, aesthetic side effect, or subtle inconvenience.\\n\\n### Suggested Use in Play\\nTactical, investigative, social, or creative scenarios where this item shines.\\n\\n### Provenance & Rumour\\nA 1-2 sentence hook about who made it, how it found its way into circulation, or a local rumour.",
   "labels": ["minor-magic-item", "imported-draft"]
 }
 ${avoidBlock}
@@ -509,12 +513,30 @@ export function generateMinorMagicItemLocal(
   const tactical = pickFrom(tacticalUses, rng);
 
   const origins = [
-    `Crafted in modest quantities by an apothecary whose shop burned down three years ago, leaving these few tokens scattered among frontier traders.`,
-    `Traded across caravan routes as a practical curio; sailors and couriers often keep one tucked into their boot lining for emergency use.`,
-    `Discovered in a cache of surplus supplies from a defunct expeditionary guild that prioritized lightweight survival gear.`,
-    `Created as a journeyman piece by an apprentice artificer, demonstrating practical competence without lavish material cost.`,
+    `Manufactured in small batches for riverboat navigators and canal locksmen, who carry them in waxed pouches to handle seasonal squalls.`,
+    `Found packed in dry grain husks inside an unmarked shipping crate impounded at a municipal tollgate.`,
+    `Crafted by a guild surveyor as an emergency field measure during an unmapped tunnel expansion project.`,
+    `Standard-issue emergency provision once distributed to night watchmen and lantern-tenders along the outer wall.`,
+    `Pressed and cured by a rural herbalist cooperative as a practical seasonal trade good for traveling shearers.`,
+    `Salvaged from the tool locker of an abandoned drydock crane, still wrapped in oiled canvas.`,
+    `Traded by itinerant tinkerers who forge them from melted-down brass fittings and residual alchemical dross.`,
+    `Carried by courier runners as a lightweight contingency for forced marches across rugged borderlands.`,
+    `Sold from a back-alley apothecary stall specializing in practical domestic charms for cellar mold and hearth drafts.`,
+    `A surplus custom commission produced for an expeditionary quartermaster who cancelled the order before departure.`,
+    `Folk charm traditionally woven by coastal fisherfolk before venturing into deep seasonal fog banks.`,
+    `Produced in modest quantities by an eccentric clockmaker who used tension springs to store transient charges.`,
+    `Confiscated from a street gambler's sleeve by market inspectors and later auctioned off as forfeited sundries.`,
+    `Stitched into the lining of an old cavalry saddlebag bought third-hand at an estate clearance.`,
+    `Fabricated by a mine engineer to provide crews with a reliable non-flame signal in gas-heavy coal seams.`,
+    `A journeyman exercise from an alchemical workshop, demonstrating clean material binding without precious metal gilding.`,
+    `Traded among caravan drovers at desert waystations as an indispensable survival precaution.`,
+    `Pawned by an out-of-work stage actor who used it to manage stage lighting cues during traveling plays.`,
+    `Recovered from a flooded basement archive where it had been used as an improvised paperweight for decades.`,
+    `Assembled by a tracklayer mechanic to quickly test insulation continuity on electrified rail conduits.`,
   ];
   const provenance = pickFrom(origins, rng);
+  const conciseUtility =
+    utility.replace(/\s*\([^)]*\)/, "").trim() || selectedUtilityKey;
 
   const content = `### Description
 ${pickFrom(appearanceDetails, rng)}`;
@@ -523,7 +545,7 @@ ${pickFrom(appearanceDetails, rng)}`;
 - **Item Form**: ${form}
 - **Usage Limit**: ${usageLimit}
 - **Activation**: ${activation}
-- **Primary Utility**: ${utility}
+- **Primary Utility**: ${conciseUtility}
 - **Setting / Theme**: ${genre}
 
 ### Magical Effect & Mechanics
