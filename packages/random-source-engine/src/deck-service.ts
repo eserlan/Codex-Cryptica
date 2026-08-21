@@ -50,6 +50,7 @@ export class DeckService {
     private store: DeckStateStore,
     private dice: DiceEngine = defaultDice,
     engine?: RandomSourceEngine,
+    private now: () => number = Date.now,
   ) {
     // The engine defaults to one sharing this service's dice, so a seeded
     // provider makes both card selection and reference resolution
@@ -102,7 +103,7 @@ export class DeckService {
       await this.store.write({
         deckId: deck.id,
         drawn: [],
-        updatedAt: Date.now(),
+        updatedAt: this.now(),
       });
     });
   }
@@ -171,7 +172,7 @@ export class DeckService {
       await this.store.write({
         deckId: deck.id,
         drawn: [...state.drawn, ...picked.map((c) => c.id)],
-        updatedAt: Date.now(),
+        updatedAt: this.now(),
       });
     }
 
