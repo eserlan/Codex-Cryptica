@@ -15,6 +15,10 @@ const SHELL_PAGES = [
   "/tools",
   "/features",
   "/tools/dnd-npc-generator",
+  "/responsible-ai-worldbuilding",
+  "/free-rpg-campaign-manager",
+  "/migrations",
+  "/import/obsidian-vault",
 ];
 
 const landmarkCounts = (page: Page) =>

@@ -1,11 +1,30 @@
 <script lang="ts">
-  import type { StatSheetTemplate } from "schema";
+  import type { PublicTemplatePackage, StatSheetTemplate } from "schema";
   import { projectTemplatePackage } from "@codex/stat-sheet-engine";
   import {
     publishBatch,
     type PublishBatchResult,
   } from "$lib/services/publishing/publish-batch";
   import { publicTemplateDirectoryService } from "$lib/services/publishing/PublicTemplateDirectoryService";
+
+  const VALID_CATEGORIES = [
+    { id: "character", label: "Character" },
+    { id: "npc", label: "NPC" },
+    { id: "location", label: "Location" },
+    { id: "settlement", label: "Settlement" },
+    { id: "faction", label: "Faction" },
+    { id: "item", label: "Item" },
+    { id: "event", label: "Event" },
+    { id: "note", label: "Note" },
+    { id: "ship", label: "Ship" },
+    { id: "threat", label: "Threat" },
+    { id: "organization", label: "Organization" },
+    { id: "other", label: "Other" },
+  ] as const;
+
+  function isValidCategory(cat: string): boolean {
+    return VALID_CATEGORIES.some((c) => c.id === cat);
+  }
 
   type PublishDraft = {
     template: StatSheetTemplate;
@@ -32,13 +51,17 @@
   // metadata until it is closed.
   // svelte-ignore state_referenced_locally
   let draftList = $state<PublishDraft[]>(
-    $state.snapshot(templates).map((template: StatSheetTemplate) => ({
-      template,
-      description: template.description ?? "",
-      system: template.category ? "" : "Homebrew",
-      category: template.category ?? "",
-      ownerDisplayName: "",
-    })),
+    $state.snapshot(templates).map((template: StatSheetTemplate) => {
+      const isKnownCategory =
+        template.category && isValidCategory(template.category);
+      return {
+        template,
+        description: template.description ?? "",
+        system: isKnownCategory ? "" : template.category || "Homebrew",
+        category: isKnownCategory ? template.category || "" : "",
+        ownerDisplayName: "",
+      };
+    }),
   );
   let acknowledged = $state(false);
   let isPublishing = $state(false);
@@ -70,12 +93,23 @@
     return count;
   });
 
-  function packageFor(draft: PublishDraft) {
-    return projectTemplatePackage(draft.template, {
-      description: draft.description.trim() || undefined,
-      system: draft.system.trim() || undefined,
-      category: draft.category || undefined,
-    });
+  function getDraftValidation(draft: PublishDraft): {
+    valid: boolean;
+    pkg?: PublicTemplatePackage;
+    error?: string;
+  } {
+    try {
+      const pkg = projectTemplatePackage(draft.template, {
+        description: draft.description.trim() || undefined,
+        system: draft.system.trim() || undefined,
+        category: draft.category || undefined,
+      });
+      return { valid: true, pkg };
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Invalid template package";
+      return { valid: false, error: msg };
+    }
   }
 
   async function publish(ids = draftList.map((draft) => draft.template.id)) {
@@ -89,12 +123,17 @@
 
     await publishBatch(
       selected.map((draft) => ({ id: draft.template.id, value: draft })),
-      (draft, signal) =>
-        publicTemplateDirectoryService.publishTemplate({
-          package: packageFor(draft),
+      (draft, signal) => {
+        const validation = getDraftValidation(draft);
+        if (!validation.valid || !validation.pkg) {
+          throw new Error(validation.error || "Invalid template package");
+        }
+        return publicTemplateDirectoryService.publishTemplate({
+          package: validation.pkg,
           ownerDisplayName: draft.ownerDisplayName.trim() || undefined,
           signal,
-        }),
+        });
+      },
       {
         signal: activeController.signal,
         onResult: (result) => {
@@ -159,7 +198,7 @@
     <div class="mt-5 space-y-4">
       {#each draftList as draft (draft.template.id)}
         {@const result = resultFor(draft.template.id)}
-        {@const templatePackage = packageFor(draft)}
+        {@const validation = getDraftValidation(draft)}
         <section
           class="rounded-lg border border-theme-border p-4"
           data-testid="template-publish-draft"
@@ -208,13 +247,10 @@
               disabled={isPublishing || result?.status === "success"}
               class="-mt-2 w-full rounded border border-theme-border bg-theme-bg px-2 py-2 text-sm text-theme-text"
             >
-              <option value="">None</option><option value="character"
-                >Character</option
-              ><option value="npc">NPC</option><option value="location"
-                >Location</option
-              ><option value="faction">Faction</option><option value="item"
-                >Item</option
-              ><option value="ship">Ship</option>
+              <option value="">None</option>
+              {#each VALID_CATEGORIES as cat}
+                <option value={cat.id}>{cat.label}</option>
+              {/each}
             </select>
             <label
               class="text-xs font-bold uppercase tracking-wide text-theme-muted"
@@ -231,17 +267,22 @@
             />
           </div>
           <details class="mt-4 rounded border border-theme-border p-3">
-            <summary class="cursor-pointer text-sm font-bold text-theme-text"
-              >Fields shared ({templatePackage.template.fields.length})</summary
-            >
+            <summary class="cursor-pointer text-sm font-bold text-theme-text">
+              Fields shared ({draft.template.fields?.length ?? 0})
+            </summary>
             <ul class="mt-2 grid gap-1 text-sm text-theme-muted sm:grid-cols-2">
-              {#each templatePackage.template.fields as field (field.id)}
+              {#each draft.template.fields ?? [] as field (field.id)}
                 <li>
                   {field.label} <span class="text-xs">({field.type})</span>
                 </li>
               {/each}
             </ul>
           </details>
+          {#if !validation.valid && result?.status !== "success" && result?.status !== "failed"}
+            <p class="mt-3 text-sm text-red-400" role="alert">
+              {validation.error}
+            </p>
+          {/if}
           {#if result?.status === "failed"}
             <p class="mt-3 text-sm text-red-400" role="alert">
               {result.error.message}

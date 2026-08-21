@@ -15,15 +15,18 @@ import { nationConfig } from "generator-engine";
 describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
+      "artifact",
       "council-vote",
       "deity",
       "faction",
+      "minor-magic-item",
       "nation",
       "npc",
       "pantheon",
       "quest",
       "secret-society",
       "social-hub",
+      "villain",
     ]);
   });
 
@@ -40,6 +43,11 @@ describe("randomIdeaCategories", () => {
       generateNation: vi.fn().mockResolvedValue("nation-result"),
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
+      generateVillain: vi.fn().mockResolvedValue("villain-result"),
+      generateMinorMagicItem: vi
+        .fn()
+        .mockResolvedValue("minor-magic-item-result"),
+      generateArtifact: vi.fn().mockResolvedValue("artifact-result"),
       generateCouncilVote: vi.fn().mockResolvedValue("council-vote-result"),
       generateSecretSociety: vi.fn().mockResolvedValue("secret-society-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
@@ -71,6 +79,18 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateQuestHook).toHaveBeenCalledWith({
       useAI: true,
       genre: "Cyberpunk",
+    });
+    expect(engine.generateVillain).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateMinorMagicItem).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateArtifact).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
       useAI: true,

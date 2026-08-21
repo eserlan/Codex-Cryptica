@@ -65,6 +65,13 @@
       icon: "icon-[lucide--shuffle]",
     },
     {
+      slug: "bbeg-generator",
+      label: "BBEG / Campaign Villain Generator",
+      summary:
+        "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+      icon: "icon-[lucide--skull]",
+    },
+    {
       slug: "council-vote",
       label: "Council Vote Generator",
       summary:
@@ -104,6 +111,20 @@
       summary:
         "Generate campaign-ready adventure concepts with initial situation, primary pressure, key locations, threats, and non-linear outcomes.",
       icon: "icon-[lucide--map]",
+    },
+    {
+      slug: "minor-magic-item",
+      label: "Minor Magic Item Generator",
+      summary:
+        "Generate small-scale charms, consumable potions, single-use devices, and curiosities with clear limits and quirks.",
+      icon: "icon-[lucide--sparkles]",
+    },
+    {
+      slug: "artifact-generator",
+      label: "Artifact & Relic Generator",
+      summary:
+        "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+      icon: "icon-[lucide--gem]",
     },
   ];
 

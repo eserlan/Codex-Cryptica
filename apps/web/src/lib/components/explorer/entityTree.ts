@@ -14,6 +14,16 @@ export interface TreeNode {
 export interface FlattenedTreeNode {
   node: TreeNode;
   depth: number;
+  /** Whether this row is the last among its visible siblings (issue #2361). */
+  isLast: boolean;
+  /**
+   * For each ancestor level 0..depth-1, whether that ancestor has a visible
+   * sibling after it — i.e. whether the hierarchy guide bar in that column
+   * must keep drawing through this row to reach the ancestor's next
+   * sibling. Used to render tree guide bars for the flattened row list
+   * (issue #2361).
+   */
+  ancestorLines: boolean[];
 }
 
 /** Return only the currently visible tree rows, preserving their depth. */
@@ -23,18 +33,23 @@ export function flattenVisibleEntityTree(
   forceExpand = false,
 ): FlattenedTreeNode[] {
   const result: FlattenedTreeNode[] = [];
-  const visit = (items: TreeNode[], depth: number) => {
-    for (const node of items) {
-      result.push({ node, depth });
+  const visit = (
+    items: TreeNode[],
+    depth: number,
+    ancestorLines: boolean[],
+  ) => {
+    items.forEach((node, index) => {
+      const isLast = index === items.length - 1;
+      result.push({ node, depth, isLast, ancestorLines });
       if (
         node.children.length > 0 &&
         (forceExpand || !collapsedIds.has(node.entity.id))
       ) {
-        visit(node.children, depth + 1);
+        visit(node.children, depth + 1, [...ancestorLines, !isLast]);
       }
-    }
+    });
   };
-  visit(nodes, 0);
+  visit(nodes, 0, []);
   return result;
 }
 

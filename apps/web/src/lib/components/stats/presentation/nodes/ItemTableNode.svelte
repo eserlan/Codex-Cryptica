@@ -78,11 +78,13 @@
     const newRow: Record<string, any> = {};
     for (const col of columns) {
       if (col.type === "counter") {
-        newRow[col.id] = { value: 6, max: 6 };
+        const max = col.max ?? 6;
+        const value = Math.max(col.min ?? 0, max);
+        newRow[col.id] = { value, max };
       } else if (col.type === "number") {
         newRow[col.id] = 0;
       } else if (col.type === "dice") {
-        newRow[col.id] = "1d6";
+        newRow[col.id] = col.formula || "1d6";
       } else if (col.type === "checkbox") {
         newRow[col.id] = false;
       } else {
@@ -122,6 +124,8 @@
   }
 
   function handleCounterAdjust(rowIndex: number, colId: string, delta: number) {
+    const col = columns.find((c) => c.id === colId);
+    const min = col?.min ?? 0;
     const next = rows.map((r, i) => {
       if (i !== rowIndex) return r;
       const current = r[colId];
@@ -134,7 +138,7 @@
       const currentValue = Number.isFinite(value) ? value : 0;
       const adjustedValue = currentValue + delta;
       const nextValue = Math.max(
-        0,
+        min,
         Number.isFinite(max) ? Math.min(max, adjustedValue) : adjustedValue,
       );
       return {
@@ -177,10 +181,51 @@
       };
     }
   }
+
+  function getColumnHeaderClass(col: { id: string; type: string }): string {
+    if (col.type === "checkbox") return "w-10 px-1 py-1 text-center";
+    if (col.type === "number")
+      return "w-16 px-1 py-1 text-center whitespace-nowrap";
+    if (col.type === "dice")
+      return "w-24 px-1.5 py-1 text-center whitespace-nowrap";
+    if (col.type === "counter")
+      return "w-24 px-1.5 py-1 text-center whitespace-nowrap";
+    if (["name", "title", "item"].includes(col.id))
+      return "min-w-[7rem] px-2 py-1 text-left";
+    if (
+      ["effects", "traits", "description", "notes", "special"].includes(col.id)
+    )
+      return "min-w-[8rem] px-2 py-1 text-left";
+    return "min-w-[4rem] px-1.5 py-1 text-center whitespace-nowrap";
+  }
+
+  function getColumnCellClass(col: { id: string; type: string }): string {
+    if (col.type === "checkbox")
+      return "w-10 px-1 py-1 text-center align-middle";
+    if (col.type === "number") return "w-16 px-1 py-1 text-center align-middle";
+    if (col.type === "dice") return "w-24 px-1.5 py-1 text-center align-middle";
+    if (col.type === "counter")
+      return "w-24 px-1.5 py-1 text-center align-middle";
+    if (
+      [
+        "name",
+        "title",
+        "item",
+        "effects",
+        "traits",
+        "description",
+        "notes",
+        "special",
+      ].includes(col.id)
+    ) {
+      return "min-w-[7rem] px-2 py-1 text-left align-middle";
+    }
+    return "min-w-[4rem] px-1.5 py-1 text-center align-middle";
+  }
 </script>
 
 <div
-  class="my-3 overflow-hidden rounded-lg border border-theme-border/60 bg-theme-bg/40 shadow-sm"
+  class="my-3 overflow-hidden rounded-lg border border-theme-border/60 bg-theme-bg/40 shadow-xs"
 >
   <div
     class="flex items-center justify-between border-b border-theme-border/60 bg-theme-surface/30 px-3 py-1.5"
@@ -242,19 +287,21 @@
   {/if}
 
   <div class="overflow-x-auto">
-    <table class="w-full border-collapse text-xs text-theme-text">
+    <table class="w-full min-w-full border-collapse text-xs text-theme-text">
       <thead>
         <tr class="border-b border-theme-border/60 bg-theme-surface/20">
           {#each columns as col (col.id)}
             <th
               scope="col"
-              class="px-2.5 py-1.5 text-center font-bold text-theme-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+              class="{getColumnHeaderClass(
+                col,
+              )} font-bold text-theme-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
             >
               {col.label}
             </th>
           {/each}
           {#if !context.readOnly}
-            <th scope="col" class="w-20 px-1 py-1.5 text-center">
+            <th scope="col" class="w-20 px-1 py-1 text-center">
               <span class="sr-only">Actions</span>
             </th>
           {/if}
@@ -274,10 +321,20 @@
           {#each rows as row, rIdx (rIdx)}
             {@const linked = linkedEntity(row)}
             <tr
-              class="border-b border-theme-border/40 transition-colors hover:bg-theme-surface/10"
+              class="border-b border-theme-border/30 transition-colors hover:bg-theme-surface/10"
             >
               {#each columns as col (col.id)}
-                <td class="px-2.5 py-1.5 text-center align-middle">
+                {@const isTextLeft = [
+                  "name",
+                  "title",
+                  "item",
+                  "effects",
+                  "traits",
+                  "description",
+                  "notes",
+                  "special",
+                ].includes(col.id)}
+                <td class={getColumnCellClass(col)}>
                   {#if col.type === "text"}
                     {#if context.readOnly}
                       <span class="font-medium text-theme-text"
@@ -291,7 +348,9 @@
                       <input
                         type="text"
                         aria-label={`${col.label} for item ${rIdx + 1}`}
-                        class="w-full rounded border border-theme-border/60 bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+                        class="w-full rounded border border-theme-border/60 bg-theme-bg/80 px-1.5 py-0.5 {isTextLeft
+                          ? 'text-left'
+                          : 'text-center'} text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
                         value={row[col.id] ?? ""}
                         oninput={(e) =>
                           handleCellChange(
@@ -314,7 +373,7 @@
                       <input
                         type="number"
                         aria-label={`${col.label} for item ${rIdx + 1}`}
-                        class="w-16 rounded border border-theme-border/60 bg-theme-bg px-1.5 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+                        class="w-full max-w-[4rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
                         value={row[col.id] ?? 0}
                         oninput={(e) =>
                           handleCellChange(
@@ -325,30 +384,30 @@
                       />
                     {/if}
                   {:else if col.type === "dice"}
-                    {@const formula = row[col.id] || "1d6"}
+                    {@const formula = row[col.id] || col.formula || "1d6"}
                     {@const key = `${rIdx}-${col.id}`}
                     {@const rollState = rollStateMap[key]}
                     {#if context.mode === "view"}
                       <button
                         type="button"
                         aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
-                        class="inline-flex items-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-2 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
+                        class="inline-flex max-w-full items-center justify-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-1.5 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
                         disabled={rollState?.rolling}
                         onclick={() => handleDiceRoll(rIdx, col.id, formula)}
                         title="Click to roll {formula}"
                       >
                         <span
-                          class="icon-[lucide--dice-5] h-3 w-3"
+                          class="icon-[lucide--dice-5] h-3 w-3 shrink-0"
                           aria-hidden="true"
                         ></span>
-                        <span>{formula}</span>
+                        <span class="truncate">{formula}</span>
                         {#if rollState?.text}
                           <span
                             class={rollState.isError
-                              ? "ml-1 font-bold text-red-400"
+                              ? "ml-0.5 font-bold text-red-400"
                               : rollState.success === false
-                                ? "ml-1 font-bold text-red-400"
-                                : "ml-1 font-bold text-green-400"}
+                                ? "ml-0.5 font-bold text-red-400"
+                                : "ml-0.5 font-bold text-green-400"}
                             >({rollState.text})</span
                           >
                         {/if}
@@ -361,7 +420,7 @@
                       <input
                         type="text"
                         aria-label={`${col.label} formula for item ${rIdx + 1}`}
-                        class="w-20 rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+                        class="w-full max-w-[5.5rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
                         value={formula}
                         oninput={(e) =>
                           handleCellChange(
@@ -385,23 +444,27 @@
                         {val}{max !== undefined ? ` / ${max}` : ""}
                       </span>
                     {:else}
-                      <div class="inline-flex items-center gap-1">
+                      <div
+                        class="inline-flex items-center justify-center gap-0.5"
+                      >
                         <button
                           type="button"
                           aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
-                          class="rounded px-1 text-theme-muted hover:text-theme-primary disabled:opacity-30"
-                          onclick={() => handleCounterAdjust(rIdx, col.id, -1)}
+                          class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
+                          onclick={() =>
+                            handleCounterAdjust(rIdx, col.id, -(col.step ?? 1))}
                         >
                           —
                         </button>
-                        <span class="font-mono text-xs text-theme-text">
+                        <span class="font-mono text-xs text-theme-text px-0.5">
                           {val}{max !== undefined ? ` / ${max}` : ""}
                         </span>
                         <button
                           type="button"
                           aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
-                          class="rounded px-1 text-theme-muted hover:text-theme-primary disabled:opacity-30"
-                          onclick={() => handleCounterAdjust(rIdx, col.id, 1)}
+                          class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
+                          onclick={() =>
+                            handleCounterAdjust(rIdx, col.id, col.step ?? 1)}
                         >
                           +
                         </button>
@@ -411,6 +474,7 @@
                     <input
                       type="checkbox"
                       aria-label={`${col.label} for item ${rIdx + 1}`}
+                      class="h-3.5 w-3.5 rounded border-theme-border text-theme-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       checked={row[col.id] === true}
                       disabled={context.readOnly}
                       onchange={(e) =>
@@ -429,13 +493,13 @@
                   (linked ? linked.title : undefined) ||
                   `item ${rIdx + 1}`}
                 <td
-                  class="px-1 py-1.5 text-center align-middle whitespace-nowrap"
+                  class="w-20 px-1 py-1 text-center align-middle whitespace-nowrap"
                 >
                   <div class="inline-flex items-center justify-center gap-0.5">
                     <button
                       type="button"
                       aria-label={`Move ${rowLabel} up`}
-                      class="rounded p-0.5 text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-25"
+                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:text-theme-primary disabled:opacity-25 transition-colors"
                       disabled={rIdx === 0}
                       onclick={() => handleMoveRow(rIdx, -1)}
                       title="Move item up"
@@ -448,7 +512,7 @@
                     <button
                       type="button"
                       aria-label={`Move ${rowLabel} down`}
-                      class="rounded p-0.5 text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-25"
+                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:text-theme-primary disabled:opacity-25 transition-colors"
                       disabled={rIdx === rows.length - 1}
                       onclick={() => handleMoveRow(rIdx, 1)}
                       title="Move item down"
@@ -461,7 +525,7 @@
                     <button
                       type="button"
                       aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
-                      class="rounded p-0.5 text-theme-muted transition-colors hover:text-red-400"
+                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/10 hover:text-red-400 transition-colors"
                       onclick={() => handleRemoveRow(rIdx)}
                       title="Remove item"
                     >

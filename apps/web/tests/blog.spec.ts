@@ -180,4 +180,31 @@ test.describe("Blog editorial structure", () => {
       .find((j) => j?.["@type"] === "BlogPosting");
     expect(posting.dateModified).toBe(posting.datePublished);
   });
+
+  test("renders exactly one header on mobile and desktop breakpoints for responsible-ai-worldbuilding", async ({
+    page,
+  }) => {
+    // Desktop check
+    await page.goto("/responsible-ai-worldbuilding");
+    await expect(page.locator("header")).toHaveCount(1);
+    await expect(page.getByTestId("shell-wordmark")).toBeVisible();
+    await expect(page.getByTestId("shell-cta")).toBeVisible();
+
+    // Mobile viewport check
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(page.locator("header")).toHaveCount(1);
+    const menuToggle = page.getByTestId("shell-menu-toggle");
+    await expect(menuToggle).toBeVisible();
+    await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
+
+    // Toggle menu
+    await page.waitForLoadState("networkidle");
+    await menuToggle.click();
+    await expect(page.getByTestId("shell-mobile-nav")).toBeVisible();
+    await expect(
+      page
+        .getByTestId("shell-mobile-nav")
+        .getByRole("link", { name: "Devlog" }),
+    ).toBeVisible();
+  });
 });

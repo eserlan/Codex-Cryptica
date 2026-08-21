@@ -1,62 +1,5 @@
-export type ValidSlug =
-  | "npc"
-  | "settlement"
-  | "magic-item"
-  | "faction"
-  | "quest"
-  | "item"
-  | "tavern"
-  | "social-hub"
-  | "kingdom"
-  | "nation"
-  | "vampire-clan"
-  | "nomad-clan"
-  | "names"
-  | "fantasy-names"
-  | "dnd-npc"
-  | "pantheon-generator"
-  | "god-generator"
-  | "ship-generator"
-  | "language-generator"
-  | "news-sheet-generator"
-  | "dungeon-generator"
-  | "adventure-generator"
-  | "adventure-idea-generator"
-  | "plot-twist-generator"
-  | "world"
-  | "council-vote"
-  | "secret-society"
-  | "star-system"
-  | "alien-race";
-
-export type SlugMetaEntry = {
-  pageTitle: string;
-  metaDescription: string;
-  introTitle: string;
-  eyebrow: string;
-  introText: string;
-  canonicalPath: string;
-  /**
-   * Link-preview image for this generator, as a plain (untransformed) R2 URL —
-   * social crawlers do not negotiate formats, so they must not go through
-   * `cdn-cgi/image`. Falls back to the shared product screenshot when unset.
-   * Capture new ones with `scripts/og-images/capture-generator-og.mjs`.
-   */
-  ogImage?: string;
-  ogImageAlt?: string;
-  keywords?: string[];
-  faqs?: {
-    question: string;
-    answer: string;
-    image?: string;
-    imageAlt?: string;
-    inlineImage?: string;
-    inlineImageAlt?: string;
-    exclusiveLabel?: string;
-    inlineImageCaption?: string;
-  }[];
-  relatedLinks?: { href: string; label: string }[];
-};
+import type { ValidSlug, SlugMetaEntry } from "./generator-types";
+export type { ValidSlug, SlugMetaEntry };
 
 const ADVENTURE_CANVAS_FAQ: NonNullable<SlugMetaEntry["faqs"]>[number] = {
   question: "Can I turn this into an interactive adventure canvas?",
@@ -167,6 +110,123 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "dnd magic items",
       "fantasy weapon creator",
       "rpg artifact tool",
+    ],
+  },
+  "minor-magic-item": {
+    pageTitle:
+      "Minor Magic Item & Trinket Generator | Single-Use Charms, Potions & Gadgets | Codex Cryptica",
+    metaDescription:
+      "Generate flavourful minor magic items, consumable potions, charms, talismans, and disposable tools for tabletop RPGs. System-agnostic, low-impact loot with quirks, clear limits, and creative utility.",
+    introTitle: "Minor Magic Item & Trinket Generator",
+    eyebrow: "Minor Magic Item Generator",
+    introText:
+      "Generate small-scale, consumable, and limited-use magic items, charms, alchemical draughts, and curiosities designed for creative problem-solving rather than numerical stat bloat. Works without login.",
+    canonicalPath: "/generators/minor-magic-item",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-minor-magic-item.jpg",
+    ogImageAlt:
+      "Codex Cryptica minor magic item generator drafting consumable charms, alchemical potions, and disposable magical gadgets with quirks and usage limits",
+    keywords: [
+      "minor magic item generator",
+      "single use magic items",
+      "rpg trinket generator",
+      "dnd consumable items",
+      "potion generator",
+      "charm generator",
+      "tabletop rpg loot",
+    ],
+    faqs: [
+      {
+        question: "What makes these magic items 'minor' or single-use?",
+        answer:
+          "Unlike legendary artifacts or weapons with permanent mathematical bonuses, minor magic items focus on situational utility, creative tricks, sensory quirks, and limited charges (single-use consumables, fragile charges, or temporary blessings). They add flavour and tactical problem-solving without breaking campaign balance.",
+      },
+      {
+        question: "Are these items system-agnostic?",
+        answer:
+          "Yes. All generated items use clear, concrete narrative and physical descriptions instead of system-specific math (like spell slot levels or exact DC numbers), making them immediately usable in D&D, Pathfinder, OSR, Shadowdark, Cairn, cyberpunk, and modern RPGs.",
+      },
+      {
+        question: "What details are included in each generated item?",
+        answer:
+          "Each item includes an evocative name, tactile description of materials and craftsmanship, item form, usage limit or charge count, activation trigger, primary utility effect, a memorable quirk or sensory side effect, suggested tactical use in play, and a brief provenance or rumour.",
+      },
+      {
+        question: "Can I save generated items directly to my campaign vault?",
+        answer:
+          "Yes. Clicking 'Save to Codex' stores the item draft in your browser's local storage. Open Codex Cryptica and it imports directly as an Item entity with frontmatter, Markdown notes, and linking ready to connect with your characters and factions.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/magic-item", label: "Major Magic Item Generator" },
+      {
+        href: "/generators/artifact-generator",
+        label: "Artifact & Relic Generator",
+      },
+      { href: "/generators/quest", label: "RPG Quest Generator" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
+  },
+  "artifact-generator": {
+    pageTitle:
+      "RPG Artifact & Relic Generator | Legendary Magical & Precursor Relics | Codex Cryptica",
+    metaDescription:
+      "Generate campaign-shaping artifacts, ancient relics, and legendary objects with tiered powers, consequential curses, pursuing factions, and destruction conditions. System-agnostic worldbuilding anchors.",
+    introTitle: "RPG Artifact & Relic Generator",
+    eyebrow: "Artifact & Relic Generator",
+    introText:
+      "Create legendary artifacts and ancient relics with deep lore, multi-tier powers (dormant, awakened, ascendant), consequential costs, pursuing factions, and adventure hooks. Works without login.",
+    canonicalPath: "/generators/artifact-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-artifact-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica artifact generator drafting legendary relics with multi-tier powers, attunement criteria, curses, and adventure hooks",
+    keywords: [
+      "rpg artifact generator",
+      "relic generator",
+      "legendary magic item generator",
+      "dnd artifact generator",
+      "campaign relic creator",
+      "cursed artifact generator",
+      "precursor technology generator",
+    ],
+    faqs: [
+      {
+        question: "How do Artifacts differ from standard magic items?",
+        answer:
+          "Artifacts and Relics are unique, named worldbuilding anchors that function as campaign engines rather than simple stat-sticks. They feature tiered powers (dormant, awakened, ascendant), attunement rituals, consequential costs or curses, interested factions hunting them, and legendary destruction conditions.",
+      },
+      {
+        question: "Does this generator support non-fantasy genres?",
+        answer:
+          "Yes. When you choose a genre like Sci-Fi, Cyberpunk, Western, Steampunk, or Cosmic Horror, the generator adapts the underlying causal logic — creating lost precursor super-tech, cursed outlaw iron, or eldritch relics without forcing fantasy spells into modern or technological settings.",
+      },
+      {
+        question: "What details are included in each generated artifact?",
+        answer:
+          "Each artifact contains an evocative title, tactile craftsmanship description, Quick Reference metadata, multi-tier powers, attunement requirements, a consequential curse or taboo, historical provenance, 2-3 interested factions, rumours, adventure hooks, and destruction/sealing conditions.",
+      },
+      {
+        question:
+          "Can I save generated relics directly into my Codex Cryptica vault?",
+        answer:
+          "Yes. Clicking 'Save to Codex' stores the artifact draft in your browser. Open Codex Cryptica and it imports directly as an Item entity with full Markdown notes, ready to link to your factions, locations, and campaign timeline.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/magic-item", label: "Magic Item Generator" },
+      {
+        href: "/generators/minor-magic-item",
+        label: "Minor Magic Item & Trinket Generator",
+      },
+      { href: "/generators/quest", label: "RPG Quest Generator" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
     ],
   },
   faction: {
@@ -816,6 +876,53 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "story complication generator",
       "quest twist creator",
       "tabletop plot reversals",
+    ],
+  },
+  "bbeg-generator": {
+    pageTitle:
+      "BBEG / Campaign Villain Generator | Free RPG Antagonist Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a campaign-scale RPG villain with a concrete goal, methods, lieutenants, an escalating multi-stage plan, and consequences — not just a biography. Works for any genre.",
+    introTitle: "BBEG / Campaign Villain Generator",
+    eyebrow: "Campaign Villain Generator",
+    introText:
+      "Create a campaign antagonist who functions as a campaign engine: a goal, motivation, methods, lieutenants, an escalating plan the party can discover and disrupt, and consequences whether they act or not. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/bbeg-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-bbeg-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica BBEG / campaign villain generator drafting an antagonist's goal, methods, lieutenants, and escalating plan",
+    keywords: [
+      "bbeg generator",
+      "campaign villain generator",
+      "rpg antagonist generator",
+      "dnd villain generator",
+      "tabletop villain creator",
+    ],
+    faqs: [
+      {
+        question: "What does the BBEG generator create?",
+        answer:
+          "It creates a full campaign villain: a public face and true nature, a concrete ultimate goal, motivation, a fatal flaw, methods and resources, named lieutenants, an escalating 5-7 stage plan with clues and consequences, what happens if the party does nothing, discoverable weaknesses, and the consequences of defeating them.",
+      },
+      {
+        question: "Is the villain tied to a specific game system?",
+        answer:
+          "No. The generator is system-neutral — it produces narrative goals, plans, and stakes rather than stat blocks, so it works for D&D, Pathfinder, OSR games, or any other RPG.",
+      },
+      {
+        question: "Can the villain's plan survive the party ignoring it?",
+        answer:
+          "Yes. Each generated villain includes an escalation path describing how their plan advances if the party never intervenes, so the antagonist stays a live threat rather than waiting in a final dungeon.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      {
+        href: "/generators/secret-society",
+        label: "Secret Society Generator",
+      },
     ],
   },
   "adventure-idea-generator": {

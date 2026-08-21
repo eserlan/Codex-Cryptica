@@ -465,6 +465,8 @@ export interface GeneratorOutput {
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
   starType?: string;
+  /** Dominant conflict domain of a generated BBEG villain (e.g. "Cult Ritual"), tracked for session variety. */
+  conflictDomain?: string;
 }
 
 /**

@@ -135,6 +135,13 @@
               icon: "icon-[lucide--shuffle]",
             },
             {
+              href: "/generators/bbeg-generator",
+              label: "BBEG / Campaign Villain Generator",
+              summary:
+                "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+              icon: "icon-[lucide--skull]",
+            },
+            {
               href: "/generators/council-vote",
               label: "Council Vote Generator",
               summary:
@@ -175,6 +182,20 @@
               summary:
                 "Generate item concepts with rarity, properties, history, and GM-facing lore.",
               icon: "icon-[lucide--sparkles]",
+            },
+            {
+              href: "/generators/minor-magic-item",
+              label: "Minor Magic Item & Trinket Generator",
+              summary:
+                "Create low-impact, consumable charms, potions, talismans, and disposable tools with quirks and limited charges.",
+              icon: "icon-[lucide--sparkles]",
+            },
+            {
+              href: "/generators/artifact-generator",
+              label: "Artifact & Relic Generator",
+              summary:
+                "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+              icon: "icon-[lucide--gem]",
             },
             {
               href: "/generators/tavern",

@@ -7,6 +7,8 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "npc",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "faction",
   "quest",
   "council-vote",
@@ -32,6 +34,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "adventure-generator",
   "adventure-idea-generator",
   "plot-twist-generator",
+  "bbeg-generator",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -124,12 +127,15 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "secret-society",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "item",
   "names",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
   "plot-twist-generator",
+  "bbeg-generator",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship

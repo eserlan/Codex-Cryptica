@@ -50,6 +50,24 @@ import {
   type QuestGeneratorOptions,
 } from "./public-quest";
 import {
+  buildMinorMagicItemPrompt,
+  generateMinorMagicItemLocal,
+  minorMagicItemConfig,
+  type MinorMagicItemGeneratorOptions,
+} from "./public-minor-magic-item";
+import {
+  buildArtifactPrompt,
+  generateArtifactLocal,
+  artifactConfig,
+  type ArtifactGeneratorOptions,
+} from "./public-artifact";
+import {
+  buildVillainPrompt,
+  generateVillainLocal,
+  villainConfig,
+  type VillainGeneratorOptions,
+} from "./public-villain";
+import {
   buildWorldPrompt,
   generateWorldLocal,
   type WorldGeneratorOptions,
@@ -88,6 +106,8 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   faction: "faction",
   settlement: "location",
   "magic-item": "item",
+  "minor-magic-item": "item",
+  artifact: "item",
   event: "event",
   ship: "location",
   language: "note",
@@ -95,6 +115,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   quest: "event",
+  villain: "character",
   world: "location",
   "council-vote": "note",
   "secret-society": "faction",
@@ -425,7 +446,6 @@ function loreGuidance(request: GeneratorRunRequest, builtin: string): string {
  * depth, tone, and JSON shape. Newlines inside "lore" are escaped so the model
  * is reinforced to emit valid JSON.
  */
-
 
 /**
  * The stock exemplars above each hard-code their own "lore" markdown
@@ -930,6 +950,123 @@ function questPrompt(request: GeneratorRunRequest): string {
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
+function villainOptions(request: GeneratorRunRequest): VillainGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    tone: optionString(request, "tone", ""),
+    threatScale: optionString(request, "threatScale", ""),
+    archetype: optionString(request, "archetype", ""),
+    sympathy: optionString(request, "sympathy", ""),
+    worldRelation: optionString(request, "worldRelation", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateVillain(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateVillainLocal(villainOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function villainPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildVillainPrompt(
+    villainOptions(request),
+    contextChain(request),
+  );
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function minorMagicItemOptions(
+  request: GeneratorRunRequest,
+): MinorMagicItemGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    form: optionString(request, "form", ""),
+    usageLimit: optionString(request, "usageLimit", ""),
+    utility: optionString(request, "utility", ""),
+    activation: optionString(request, "activation", ""),
+    quirkSeverity: optionString(request, "quirkSeverity", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateMinorMagicItem(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateMinorMagicItemLocal(minorMagicItemOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function minorMagicItemPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildMinorMagicItemPrompt(
+    minorMagicItemOptions(request),
+    contextChain(request),
+  );
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function artifactOptions(
+  request: GeneratorRunRequest,
+): ArtifactGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    form: optionString(request, "form", ""),
+    originEra: optionString(request, "originEra", ""),
+    powerTier: optionString(request, "powerTier", ""),
+    currentStatus: optionString(request, "currentStatus", ""),
+    curseCost: optionString(request, "curseCost", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateArtifact(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateArtifactLocal(artifactOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function artifactPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildArtifactPrompt(
+    artifactOptions(request),
+    contextChain(request),
+  );
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
 function plotTwistOptions(
   request: GeneratorRunRequest,
 ): PlotTwistGeneratorOptions {
@@ -1404,6 +1541,177 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     mapOutputToDraft: mapOutputToDraft("magic-item"),
     buildPrompt: magicItemPrompt,
   },
+  "minor-magic-item": {
+    id: "minor-magic-item",
+    label: "Minor Magic Item / Trinket",
+    description:
+      "Generate a flavourful, low-impact, single-use, or consumable magic item or gadget.",
+    entityType: GENERATOR_ENTITY_TYPE["minor-magic-item"],
+    defaultInstruction:
+      "A creative, small-scale magic item or single-use curiosity with memorable utility, clear usage limits, a minor quirk, and tactile details.",
+    icon: "lucide:sparkles",
+    options: [
+      {
+        id: "genre",
+        label: "Theme / Genre",
+        control: "select",
+        choices: minorMagicItemConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "usageLimit",
+        label: "Usage Limit / Charges",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.usageLimits.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "utility",
+        label: "Focus / Primary Utility",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.utilities.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "activation",
+        label: "Activation Method",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.activations.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "quirkSeverity",
+        label: "Quirk or Side Effect",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...minorMagicItemConfig.quirkSeverities.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+    ],
+    defaults: {
+      genre: "",
+      usageLimit: "",
+      utility: "",
+      activation: "",
+      quirkSeverity: "",
+    },
+    generate: generateMinorMagicItem,
+    mapOutputToDraft: mapOutputToDraft("minor-magic-item"),
+    buildPrompt: minorMagicItemPrompt,
+  },
+  artifact: {
+    id: "artifact",
+    label: "Artifact / Relic",
+    description:
+      "Generate a unique, named, lore-heavy major artifact or ancient relic with tiered powers, consequential costs, and campaign hooks.",
+    entityType: GENERATOR_ENTITY_TYPE.artifact,
+    defaultInstruction:
+      "A campaign-shaping major artifact or ancient relic with profound history, dormant/awakened/ascendant powers, attunement criteria, a consequential cost or curse, pursuing factions, and destruction conditions.",
+    icon: "lucide:sparkles",
+    options: [
+      {
+        id: "genre",
+        label: "Theme / Genre",
+        control: "select",
+        choices: artifactConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "form",
+        label: "Item Form",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.forms.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "originEra",
+        label: "Origin Era",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.originEras.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "powerTier",
+        label: "Power Tier / Scope",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.powerTiers.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "currentStatus",
+        label: "Current Status",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.currentStatuses.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+      {
+        id: "curseCost",
+        label: "Curse / Cost / Drawback",
+        control: "select",
+        choices: [
+          { value: "", label: "Random" },
+          ...artifactConfig.curseCosts.map((value) => ({
+            value,
+            label: value,
+          })),
+        ],
+      },
+    ],
+    defaults: {
+      genre: "",
+      form: "",
+      originEra: "",
+      powerTier: "",
+      currentStatus: "",
+      curseCost: "",
+    },
+    generate: generateArtifact,
+    mapOutputToDraft: mapOutputToDraft("artifact"),
+    buildPrompt: artifactPrompt,
+  },
   event: {
     id: "event",
     label: "Event",
@@ -1819,6 +2127,77 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generatePlotTwist,
     mapOutputToDraft: mapOutputToDraft("plot-twist"),
     buildPrompt: plotTwistPrompt,
+  },
+  villain: {
+    id: "villain",
+    label: "BBEG / Campaign Villain",
+    description:
+      "Generate a campaign-scale antagonist — goal, methods, lieutenants, an escalating plan, and consequences — not just a biography.",
+    entityType: GENERATOR_ENTITY_TYPE.villain,
+    defaultInstruction:
+      "A campaign villain who functions as a campaign engine: a concrete goal, coherent motivation, an escalating multi-stage plan the party can discover and disrupt, and consequences whether they act or not.",
+    icon: "lucide:skull",
+    options: [
+      {
+        id: "genre",
+        label: "Genre / Theme",
+        control: "select",
+        choices: villainConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: villainConfig.tones.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "threatScale",
+        label: "Threat Scale",
+        control: "select",
+        choices: villainConfig.threatScales.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "archetype",
+        label: "Villain Archetype",
+        control: "select",
+        choices: villainConfig.archetypes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "sympathy",
+        label: "Degree of Sympathy / Redeemability",
+        control: "select",
+        choices: villainConfig.sympathyLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "worldRelation",
+        label: "World Relation",
+        control: "select",
+        choices: villainConfig.worldRelations.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      genre: "",
+      tone: "",
+      threatScale: "",
+      archetype: "Random",
+      sympathy: "",
+      worldRelation: "Random",
+    },
+    generate: generateVillain,
+    mapOutputToDraft: mapOutputToDraft("villain"),
+    buildPrompt: villainPrompt,
   },
   world: {
     id: "world",

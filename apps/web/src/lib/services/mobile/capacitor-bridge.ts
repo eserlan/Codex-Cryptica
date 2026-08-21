@@ -66,7 +66,7 @@ export class CapacitorBridge {
     }
 
     try {
-      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setStyle({ style: Style.Default });
       await StatusBar.setOverlaysWebView({ overlay: true });
     } catch (_err) {
       // Non-critical on unsupported webviews / desktop platforms

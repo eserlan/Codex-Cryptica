@@ -15,6 +15,8 @@
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
+  import MinorMagicItemFormFields from "$lib/components/seo/MinorMagicItemFormFields.svelte";
+  import ArtifactFormFields from "$lib/components/seo/ArtifactFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
@@ -30,6 +32,7 @@
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
+  import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
@@ -39,6 +42,8 @@
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
+    minorMagicItemConfig,
+    artifactConfig,
     factionConfig,
     questConfig,
     councilVoteConfig,
@@ -56,6 +61,7 @@
     dungeonConfig,
     adventureConfig,
     plotTwistConfig,
+    villainConfig,
     worldConfig,
     starSystemConfig,
     alienRaceConfig,
@@ -177,6 +183,26 @@
   let magicItem = $state({
     type: magicItemConfig.typesByTheme["Classic Fantasy"][0],
     rarity: magicItemConfig.rarities[1],
+    campaignContext: "",
+  });
+
+  let minorMagicItem = $state({
+    genre: factionConfig.themes[0],
+    form: "",
+    usageLimit: minorMagicItemConfig.usageLimits[0],
+    utility: minorMagicItemConfig.utilities[0],
+    activation: minorMagicItemConfig.activations[0],
+    quirkSeverity: minorMagicItemConfig.quirkSeverities[0],
+    campaignContext: "",
+  });
+
+  let artifact = $state({
+    genre: factionConfig.themes[0],
+    form: artifactConfig.forms[0],
+    originEra: artifactConfig.originEras[0],
+    powerTier: artifactConfig.powerTiers[0],
+    currentStatus: artifactConfig.currentStatuses[0],
+    curseCost: artifactConfig.curseCosts[0],
     campaignContext: "",
   });
 
@@ -398,6 +424,16 @@
     if (premise) plotTwist.premise = premise;
   });
 
+  let villain = $state({
+    genre: factionConfig.themes[0],
+    tone: villainConfig.tones[0],
+    threatScale: villainConfig.threatScales[0],
+    archetype: villainConfig.archetypes[0],
+    sympathy: villainConfig.sympathyLevels[0],
+    worldRelation: villainConfig.worldRelations[0],
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -512,6 +548,9 @@
     )
       adventure.genre = activeTheme;
     else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
+    else if (slug === "bbeg-generator") villain.genre = activeTheme;
+    else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
+    else if (slug === "artifact-generator") artifact.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -689,6 +728,20 @@
       generatorEngine.generateSettlement({ ...settlement, useAI }),
     "magic-item": (useAI) =>
       generatorEngine.generateMagicItem({ ...magicItem, useAI }),
+    "minor-magic-item": (useAI) =>
+      generatorEngine.generateMinorMagicItem({
+        ...minorMagicItem,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "artifact-generator": (useAI) =>
+      generatorEngine.generateArtifact({
+        ...artifact,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
@@ -762,6 +815,12 @@
           handedOffQuestPremise,
         ),
         themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+      }),
+    "bbeg-generator": (useAI) =>
+      generatorEngine.generateVillain({
+        ...villain,
         genre: activeTheme,
         useAI,
       }),
@@ -853,6 +912,28 @@
         bind:type={magicItem.type}
         bind:rarity={magicItem.rarity}
         bind:campaignContext={magicItem.campaignContext}
+      />
+    {:else if slug === "minor-magic-item"}
+      <MinorMagicItemFormFields
+        bind:theme={activeTheme}
+        bind:form={minorMagicItem.form}
+        bind:usageLimit={minorMagicItem.usageLimit}
+        bind:utility={minorMagicItem.utility}
+        bind:activation={minorMagicItem.activation}
+        bind:quirkSeverity={minorMagicItem.quirkSeverity}
+        bind:campaignContext={minorMagicItem.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "artifact-generator"}
+      <ArtifactFormFields
+        bind:theme={activeTheme}
+        bind:form={artifact.form}
+        bind:originEra={artifact.originEra}
+        bind:powerTier={artifact.powerTier}
+        bind:currentStatus={artifact.currentStatus}
+        bind:curseCost={artifact.curseCost}
+        bind:campaignContext={artifact.campaignContext}
+        onSurprise={trigger}
       />
     {:else if slug === "faction"}
       <FactionFormFields
@@ -1063,6 +1144,17 @@
         bind:premise={plotTwist.premise}
         bind:constraints={plotTwist.constraints}
         bind:campaignContext={plotTwist.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "bbeg-generator"}
+      <VillainFormFields
+        bind:theme={activeTheme}
+        bind:tone={villain.tone}
+        bind:threatScale={villain.threatScale}
+        bind:archetype={villain.archetype}
+        bind:sympathy={villain.sympathy}
+        bind:worldRelation={villain.worldRelation}
+        bind:campaignContext={villain.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}

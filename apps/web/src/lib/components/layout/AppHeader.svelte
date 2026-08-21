@@ -41,7 +41,7 @@
 
 <header
   bind:this={headerEl}
-  class="px-4 md:px-6 py-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
+  class="px-4 md:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
 >
   {#if isStaging}
     <div

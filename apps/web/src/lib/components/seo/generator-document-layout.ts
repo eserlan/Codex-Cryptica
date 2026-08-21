@@ -47,6 +47,14 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set(["GM Reference Information", "Magical Properties"]),
   },
   {
+    label: "minor-magic-item",
+    railSections: new Set(["Quick Reference"]),
+  },
+  {
+    label: "artifact",
+    railSections: new Set(["Quick Reference"]),
+  },
+  {
     label: "npc-generator",
     railSections: new Set(["At a Glance", "Personality"]),
     documentBullets: {
@@ -149,6 +157,18 @@ const LAYOUT_RULES: LayoutRule[] = [
       "History",
       "System-Wide Conflict or Mystery",
       "Adventure Hooks",
+    ]),
+  },
+  {
+    label: "bbeg-generator",
+    // Lieutenants & Inner Circle and The Villain's Plan are each a full
+    // narrative payoff (per-lieutenant paragraphs, per-stage breakdowns) —
+    // deliberately NOT in the rail, mirroring council-vote's Council Members
+    // exclusion. Only genuinely compact lookup sections stay in the rail.
+    railSections: new Set([
+      "Discovery Layers",
+      "Weakness / Vulnerability",
+      "Territory / Lair",
     ]),
   },
   {

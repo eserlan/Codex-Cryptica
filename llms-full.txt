@@ -50,7 +50,10 @@ The Oracle works in two modes: System Proxy (free, uses shared access) or Custom
 The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
 
 ### Solo Adventure Mode
-Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows — it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.
+Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. The play surface stays quiet by default — dice presets, roll history, resource counters, provisional facts, and the adventure archive live behind the Adventure tools panel, open it when you need them. Fullscreen is optional for an even quieter view; Escape leaves browser fullscreen without leaving the adventure. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows — it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.
+
+### Connections
+The Connections tab puts this entity in the middle and arranges everything linked straight to it around the edge — links you made, links others made to it, and anything filed under it — each one labelled with its relationship. Click any surrounding entity to open it. Connections that do not fit comfortably in the picture are listed underneath it, still one tap away. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.
 
 ### Family Tree
 Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
@@ -956,6 +959,36 @@ If you want to re-analyze a file from scratch, click the **Restart** button in t
 ## Related Blog Posts
 
 - [How Import Works: Local-First Migration](/blog/how-import-works) — Comprehensive guide to converting notes into structured knowledge graphs.
+
+---
+
+### CONNECTIONS TAB
+
+Open the **Connections** tab on any entity to answer one question: what is this directly linked to?
+
+## Reading the view
+
+The entity you are looking at sits in the middle, larger than the rest. Everything drawn around it is one step away:
+
+- **Links you made from this entity** — the small arrow beside the relationship points away from the middle.
+- **Links other entities made to this one** — the arrow points back toward the middle.
+- **Entities filed under this one** in the hierarchy, shown as "child".
+
+Each surrounding entity carries its own relationship underneath its name: whatever label you wrote, or the connection type if you did not write one. Entities keep their type colour and icon, the same ones the graph and the entity list use.
+
+## Opening a connection
+
+Click any surrounding entity to open it, exactly as you would from the list or the graph. Its own Connections tab then shows what _it_ is linked to, so you can walk a chain one step at a time.
+
+## What it deliberately does not do
+
+This is not a small copy of the world graph. It stops at one step: it never draws the connections of your connections, and it has no filters or layout controls. For the wider picture, or for anything you want to rearrange, use the graph.
+
+A picture of a handful of connections reads well; a picture of thirty does not. The view draws as many as it can show comfortably — fewer on a phone than on a wide screen — and lists the rest underneath as buttons you can still open with one tap. Nothing is hidden.
+
+## Where the links come from
+
+Nothing here is stored twice. The view is built from the same connections you manage in the **Status** tab, so adding, editing, or removing a connection there changes what you see here immediately.
 
 ---
 

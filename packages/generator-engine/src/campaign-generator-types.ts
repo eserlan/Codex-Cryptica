@@ -13,6 +13,8 @@ export type GeneratorId =
   | "faction"
   | "settlement"
   | "magic-item"
+  | "minor-magic-item"
+  | "artifact"
   | "event"
   | "ship"
   | "language"
@@ -21,6 +23,7 @@ export type GeneratorId =
   | "adventure"
   | "quest"
   | "plot-twist"
+  | "villain"
   | "world"
   | "council-vote"
   | "secret-society"
@@ -33,6 +36,8 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "faction",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact",
   "event",
   "ship",
   "language",
@@ -41,6 +46,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "adventure",
   "quest",
   "plot-twist",
+  "villain",
   "world",
   "council-vote",
   "secret-society",

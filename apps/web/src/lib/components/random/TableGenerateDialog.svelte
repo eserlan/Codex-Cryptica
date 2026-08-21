@@ -143,7 +143,7 @@
           aria-label="Close"
           class="rounded p-1 text-theme-muted hover:bg-theme-bg hover:text-theme-text"
         >
-          <span class="icon-[lucide--x] h-4 w-4"></span>
+          <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
         </button>
       </div>
 

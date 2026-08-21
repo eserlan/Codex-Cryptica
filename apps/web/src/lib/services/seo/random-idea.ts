@@ -10,6 +10,9 @@ export interface RandomIdeaCategory {
     | "nation"
     | "npc"
     | "quest"
+    | "villain"
+    | "minor-magic-item"
+    | "artifact"
     | "council-vote"
     | "secret-society"
     | "social-hub"
@@ -84,6 +87,24 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Quest Hook",
     generate: (engine, useAI, theme) =>
       engine.generateQuestHook({ genre: themeToQuestGenre[theme], useAI }),
+  },
+  {
+    key: "villain",
+    label: "BBEG / Campaign Villain",
+    generate: (engine, useAI, theme) =>
+      engine.generateVillain({ genre: theme, useAI }),
+  },
+  {
+    key: "minor-magic-item",
+    label: "Minor Magic Item",
+    generate: (engine, useAI, theme) =>
+      engine.generateMinorMagicItem({ genre: theme, useAI }),
+  },
+  {
+    key: "artifact",
+    label: "Artifact / Relic",
+    generate: (engine, useAI, theme) =>
+      engine.generateArtifact({ genre: theme, useAI }),
   },
   {
     key: "council-vote",

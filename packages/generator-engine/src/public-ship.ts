@@ -22,7 +22,6 @@ import { parseFencedJson } from "./llm-response-utils";
 import { shipConfig } from "./public-ship-constants";
 export { shipConfig };
 
-
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
   return record[genre] ?? record["Sci-Fi"] ?? Object.values(record)[0];
 }
@@ -96,14 +95,8 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     forGenre(shipConfig.captainDetailsByGenre, genre),
     rng,
   );
-  const officerNamePool = forGenre(
-    shipConfig.officerNamesByGenre,
-    genre,
-  );
-  const officerDetailPool = forGenre(
-    shipConfig.officerDetailsByGenre,
-    genre,
-  );
+  const officerNamePool = forGenre(shipConfig.officerNamesByGenre, genre);
+  const officerDetailPool = forGenre(shipConfig.officerDetailsByGenre, genre);
   const selectedOfficers = getRandomItems(
     officerNamePool.map((name, index) => ({
       name,

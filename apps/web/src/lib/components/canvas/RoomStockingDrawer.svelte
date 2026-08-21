@@ -119,7 +119,7 @@
           aria-label="Close Area details"
           class="text-theme-muted hover:text-theme-text transition-colors"
         >
-          <span class="icon-[lucide--x] w-4 h-4"></span>
+          <span class="icon-[lucide--x] w-4 h-4" aria-hidden="true"></span>
         </button>
       </div>
 

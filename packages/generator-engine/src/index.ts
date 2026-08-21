@@ -61,6 +61,28 @@ export {
   type MagicItemPrompt,
 } from "./public-magic-item";
 export {
+  buildMinorMagicItemPrompt,
+  parseMinorMagicItemResponse,
+  generateMinorMagicItemLocal,
+  resolveMinorMagicItem,
+  minorMagicItemConfig,
+  type MinorMagicItemGeneratorOptions,
+  type MinorMagicItemPrompt,
+  type ResolvedMinorMagicItem,
+} from "./public-minor-magic-item";
+export {
+  buildArtifactPrompt,
+  parseArtifactResponse,
+  generateArtifactLocal,
+  resolveArtifact,
+  artifactConfig,
+  getGenreCausality,
+  type ArtifactGeneratorOptions,
+  type ArtifactPrompt,
+  type ResolvedArtifact,
+  type GenreCausality,
+} from "./public-artifact";
+export {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -103,6 +125,14 @@ export {
   type QuestGeneratorOptions,
   type QuestPrompt,
 } from "./public-quest";
+export {
+  buildVillainPrompt,
+  parseVillainResponse,
+  generateVillainLocal,
+  villainConfig,
+  type VillainGeneratorOptions,
+  type VillainPrompt,
+} from "./public-villain";
 export {
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,

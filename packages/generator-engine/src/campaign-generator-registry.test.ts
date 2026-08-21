@@ -46,6 +46,8 @@ describe("registry lookup", () => {
       "faction",
       "settlement",
       "magic-item",
+      "minor-magic-item",
+      "artifact",
       "event",
       "ship",
       "language",
@@ -54,6 +56,7 @@ describe("registry lookup", () => {
       "adventure",
       "quest",
       "plot-twist",
+      "villain",
       "world",
       "council-vote",
       "secret-society",
@@ -61,6 +64,76 @@ describe("registry lookup", () => {
       "alien-race",
       "random-table",
     ]);
+  });
+
+  it("builds and generates a minor magic item as an item draft", () => {
+    const generator = getGenerator("minor-magic-item");
+    const request = run("minor-magic-item", {
+      options: {
+        genre: "Classic Fantasy",
+        form: "Charm / Talisman",
+        usageLimit: "Single Use (Breaks / Consumed on Activation)",
+        utility:
+          "Sensory & Detection (Finding water, detecting lies, seeing warmth, hearing whispers)",
+        activation: "Snapping / Crushing in hand",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE["minor-magic-item"]).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("minor, single-use or limited-use magic item");
+    expect(prompt).toContain("- Item Form: Charm / Talisman");
+    expect(prompt).toContain(
+      "- Usage Limit / Charges: Single Use (Breaks / Consumed on Activation)",
+    );
+    expect(prompt).toContain("Low Impact & Creative Utility");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["minor-magic-item", "imported-draft"]),
+    );
+    expect(output.lore).toContain("### Quick Reference");
+    expect(output.lore).toContain("### Magical Effect & Mechanics");
+    expect(draft).toMatchObject({
+      entityType: "item",
+      sourceGeneratorId: "minor-magic-item",
+    });
+  });
+
+  it("builds and generates an artifact as an item draft", () => {
+    const generator = getGenerator("artifact");
+    const request = run("artifact", {
+      options: {
+        genre: "Classic Fantasy",
+        form: "Crown / Regalia of Rule",
+        originEra: "Primordial / Mythic Age",
+        powerTier: "Heroic Wonder (Alters individuals & skirmishes)",
+        currentStatus: "Sealed in Royal / High-Security Vault",
+        curseCost: "Sacrificial Price (Requires vital tribute/blood)",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.artifact).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Major Artifact or Ancient Relic");
+    expect(prompt).toContain("- Item Form: Crown / Regalia of Rule");
+    expect(prompt).toContain("- Origin Era: Primordial / Mythic Age");
+    expect(prompt).toContain("### Quick Reference");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["artifact", "relic", "imported-draft"]),
+    );
+    expect(output.lore).toContain("### Quick Reference");
+    expect(output.lore).toContain("### Artifact Powers & Manifestations");
+    expect(draft).toMatchObject({
+      entityType: "item",
+      sourceGeneratorId: "artifact",
+    });
   });
 
   it("maps the event generator to the event vault category", () => {
@@ -98,6 +171,36 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "event",
       sourceGeneratorId: "quest",
+    });
+  });
+
+  it("builds and generates a BBEG villain as a character draft", () => {
+    const generator = getGenerator("villain");
+    const request = run("villain", {
+      options: {
+        genre: "Classic Fantasy",
+        threatScale: "Regional",
+        archetype: "Corrupt Ruler",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.villain).toBe("character");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("campaign-scale BBEG / campaign villain");
+    expect(prompt).toContain("- Threat Scale: Regional");
+    expect(prompt).toContain("- Villain Archetype: Corrupt Ruler");
+    expect(prompt).toContain("escalate logically stage-to-stage");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["villain", "bbeg-generator"]),
+    );
+    expect(output.lore).toContain("### The Villain's Plan");
+    expect(draft).toMatchObject({
+      entityType: "character",
+      sourceGeneratorId: "villain",
     });
   });
 
@@ -1221,6 +1324,8 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       faction: "faction",
       settlement: "location",
       "magic-item": "item",
+      "minor-magic-item": "item",
+      artifact: "item",
       event: "event",
       ship: "location",
       language: "note",
@@ -1229,6 +1334,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       adventure: "note",
       quest: "event",
       "plot-twist": "note",
+      villain: "character",
       world: "location",
       "council-vote": "note",
       "secret-society": "faction",

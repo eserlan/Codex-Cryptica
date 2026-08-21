@@ -150,3 +150,13 @@
 **Learning:** The `Clock` interface from `@codex/runtime` defines `now()` as returning a `number` (milliseconds since epoch), identical to `Date.now()`. This allows seamless injection of `clock.now()` without altering timestamp type definitions downstream.
 
 **Action:** When injecting `systemClock` to replace `Date.now()`, safely use `clock.now()` directly without converting it to a Date object.
+
+## 2025-02-23 - Svelte 5 Component Prop Injection
+
+**Learning:** When applying Dependency Injection to Svelte 5 components to replace hardcoded globals (like `localStorage` with `browser` checks), simply importing an SSR-safe wrapper (`browserStorage` from `$lib/utils/runtime-deps`) is insufficient for testability.
+**Action:** The dependency must be explicitly exposed as an optional component prop using the `$props()` rune (e.g., `let { storage = browserStorage }: { storage?: StorageLike } = $props();`). This pattern preserves the safe production default while allowing Vitest tests to inject deterministic mock storage objects.
+
+## 2026-08-20 - Use functional defaults for DI seams instead of missing dependencies
+
+**Learning:** When refactoring a package (e.g. `random-source-engine`) to inject an ambient dependency like `Clock` or `Date.now()`, the package might not have `@codex/runtime` installed. Adding an external dependency purely for a testability seam creates unnecessary coupling.
+**Action:** Instead of importing `Clock` and `systemClock`, use a simple, native functional parameter (e.g., `private now: () => number = Date.now`) in the constructor. This creates a perfect test seam (allowing `() => mockTime` in tests) while preserving the natural production default seamlessly without new dependencies.
