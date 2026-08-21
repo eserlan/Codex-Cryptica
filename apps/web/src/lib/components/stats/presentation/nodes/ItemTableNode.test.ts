@@ -497,4 +497,86 @@ describe("ItemTableNode", () => {
     // Header for "HP" (counter column) should have compact width
     expect(headers[5].className).toContain("w-24");
   });
+
+  it("reorders rows using Ctrl+ArrowUp and Ctrl+ArrowDown keyboard shortcuts", async () => {
+    const multiRowField: StatSheetField = {
+      ...itemTableField,
+      rows: [{ name: "Sword" }, { name: "Shield" }, { name: "Bow" }],
+    };
+    const context = makeContext([multiRowField]);
+    const { unmount } = render(ItemTableNode, {
+      props: { field: multiRowField, context },
+    });
+
+    const swordInput = screen.getByRole("textbox", {
+      name: "Weapon for item 1",
+    });
+
+    // Press Ctrl+ArrowDown on item 1 (Sword)
+    await fireEvent.keyDown(swordInput, {
+      key: "ArrowDown",
+      ctrlKey: true,
+    });
+
+    expect(context.onUpdateField).toHaveBeenCalledWith("weapons_table", {
+      rows: [{ name: "Shield" }, { name: "Sword" }, { name: "Bow" }],
+    });
+
+    unmount();
+
+    // Re-render and test Ctrl+ArrowUp on item 3 (Bow)
+    const updatedField: StatSheetField = {
+      ...multiRowField,
+      rows: [{ name: "Shield" }, { name: "Sword" }, { name: "Bow" }],
+    };
+    const updatedContext = makeContext([updatedField]);
+    render(ItemTableNode, {
+      props: { field: updatedField, context: updatedContext },
+    });
+
+    const bowInput = screen.getByRole("textbox", {
+      name: "Weapon for item 3",
+    });
+
+    // Press Ctrl+ArrowUp on item 3 (Bow)
+    await fireEvent.keyDown(bowInput, {
+      key: "ArrowUp",
+      ctrlKey: true,
+    });
+
+    expect(updatedContext.onUpdateField).toHaveBeenCalledWith("weapons_table", {
+      rows: [{ name: "Shield" }, { name: "Bow" }, { name: "Sword" }],
+    });
+  });
+
+  it("does not reorder past boundaries with keyboard shortcuts", async () => {
+    const multiRowField: StatSheetField = {
+      ...itemTableField,
+      rows: [{ name: "Sword" }, { name: "Shield" }],
+    };
+    const context = makeContext([multiRowField]);
+    render(ItemTableNode, { props: { field: multiRowField, context } });
+
+    const swordInput = screen.getByRole("textbox", {
+      name: "Weapon for item 1",
+    });
+
+    // Ctrl+ArrowUp on first row is boundary no-op
+    await fireEvent.keyDown(swordInput, {
+      key: "ArrowUp",
+      ctrlKey: true,
+    });
+    expect(context.onUpdateField).not.toHaveBeenCalled();
+
+    const shieldInput = screen.getByRole("textbox", {
+      name: "Weapon for item 2",
+    });
+
+    // Ctrl+ArrowDown on last row is boundary no-op
+    await fireEvent.keyDown(shieldInput, {
+      key: "ArrowDown",
+      ctrlKey: true,
+    });
+    expect(context.onUpdateField).not.toHaveBeenCalled();
+  });
 });
