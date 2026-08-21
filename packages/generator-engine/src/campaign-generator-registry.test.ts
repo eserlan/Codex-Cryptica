@@ -332,9 +332,10 @@ describe("registry lookup", () => {
     const draft = generator.mapOutputToDraft(output, request);
     expect(draft.entityType).toBe("creature");
     expect(draft.labels).toContain("creature");
-    expect(draft.labels).toContain("monster-generator");
-    expect(draft.lore).toContain("### Core Concept & Ecology");
-    expect(draft.lore).toContain("### Abilities & Defences");
+    expect(draft.content).toContain("### Core Concept & Ecology");
+    expect(draft.content).toContain("### Observable Abilities & Defences");
+    expect(draft.lore).toContain("### True Origin & Hidden Ecology");
+    expect(draft.lore).toContain("### Hidden Abilities & Surprises");
   });
 
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {

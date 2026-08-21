@@ -1309,7 +1309,7 @@ ${OUTPUT_SCHEMA}
 ${exemplarBlock(request, "creature")}${groundingNote(request)}
 ${loreGuidance(
   request,
-  "the core concept & ecology; appearance & anatomy; signs & foreshadowing; abilities & defences; weaknesses & limitations; combat & encounter behaviour; harvest & remains; lore & rumours; adventure & encounter hooks; and sapience & society if applicable",
+  "the true origin & hidden ecology; hidden abilities & surprises; secret weaknesses; tactical notes & ambush strategies; truth behind rumours; adventure & encounter hooks; and secret motives if sapient",
 )}`;
 }
 
@@ -2797,10 +2797,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       ecologicalRole: "Random",
     },
     generate: generateCreature,
-    mapOutputToDraft: (output, request) => ({
-      ...mapOutputToDraft("creature")(output, request),
-      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
-    }),
+    mapOutputToDraft: mapOutputToDraft("creature"),
     buildPrompt: creaturePrompt,
   },
   "random-table": {

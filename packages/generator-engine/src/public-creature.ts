@@ -298,7 +298,7 @@ export function resolveCreature(
 }
 
 const CONSISTENCY_PASS =
-  "Before returning, run a consistency pass: the creature's appearance, size, and body plan must match its ecological role and habitat; its signature ability and weaknesses must directly reflect its classification and anatomy; combat behaviour must align with its temperament and threat level (e.g. herbivores, scavengers, or harmless fauna must not fight to the death as mindless predators; sapient creatures must have distinct communication methods, motives, and culture); harvestable materials must be biologically or magically justified rather than generic loot drops; and all signs/foreshadowing must logically result from the creature's physical traits, movement, or supernatural presence.";
+  "Before returning, run a consistency pass: the creature's appearance, size, and body plan must match its ecological role and habitat; its signature ability and weaknesses must directly reflect its classification and anatomy; combat behaviour must align with its temperament and threat level (e.g. herbivores, scavengers, or harmless fauna must not fight to the death as mindless predators; sapient creatures must have distinct communication methods, motives, and culture); harvestable materials must be biologically or magically justified rather than generic loot drops; and all signs/foreshadowing must logically result from the creature's physical traits, movement, or supernatural presence. Decide what is observable to players versus what is secret GM knowledge: put observable biology, known abilities, combat instincts, common weaknesses, and field signs into 'content'; put hidden mechanisms, obscure weaknesses, surprise tactics, true origins behind rumours, and adventure hooks into 'lore'.";
 
 export function buildCreaturePrompt(
   options: CreatureGeneratorOptions = {},
@@ -335,11 +335,16 @@ Return a JSON object with:
 {
   "title": "Evocative name of the creature (2-5 words)",
   "summary": "1-2 sentence core concept and ecological essence.",
-  "content": "Player/table-facing markdown with sections: '### At a Glance' (bullet list with Classification, Size & Form, Habitat, Threat Level, Temperament / Sapience, Ecological Role), '### Appearance & Anatomy' (detailed physical form, color/texture, unusual anatomy, locomotion, sensory details), '### Signs & Foreshadowing' (3-5 concrete tracks, sounds, smells, environmental disturbances, or omens players encounter before the creature itself).",
-  "lore": "GM-only markdown with sections: '### Core Concept & Ecology' (habitat range, diet/prey, hunting/foraging strategy, lifecycle/reproduction, social structure, wider ecological impact), '### Abilities & Defences' (signature ability, secondary powers, defences, movement, senses — descriptive and system-neutral), '### Weaknesses & Limitations' (exploitable vulnerabilities, environmental tells, behavioral limits), '### Combat & Encounter Behaviour' (how it acts when hunting, threatened, defending young, or injured; morale and retreat conditions), '### Harvest & Remains' (useful or dangerous salvage: venom, hide, organs, bio-tech, components; do not make every creature conveniently lootable), '### Lore & Rumours' (mixture of true, false, and distorted local beliefs), '### Adventure & Encounter Hooks' (2-4 distinct hooks beyond 'fight it', such as capturing, tracking, avoiding, researching, domesticating, harvesting, or bargaining if sapient)${
+  "content": "Player/table-facing markdown with sections: '### At a Glance' (bullet list with Classification, Size & Form, Habitat, Threat Level, Temperament / Sapience, Ecological Role), '### Appearance & Anatomy' (detailed physical form, color/texture, unusual anatomy, locomotion, sensory details), '### Core Concept & Ecology' (diet, typical range, visible environmental role, foraging/hunting patterns), '### Observable Abilities & Defences' (signature ability, secondary powers, defences, movement, visible senses — descriptive and system-neutral), '### Known Weaknesses & Limitations' (observable vulnerabilities and behavioral limits), '### Combat & Encounter Behaviour' (how it acts when hunting, threatened, defending young, or injured; morale and retreat conditions), '### Harvest & Remains' (useful or dangerous salvage: venom, hide, organs, bio-tech, components), '### Known Lore & Signs' (concrete field signs/tracks/sounds and common folklore or regional beliefs)${
     resolved.temperament.includes("Sapient") ||
     resolved.temperament.includes("Alien")
-      ? ", '### Sapience & Society' (communication style, motives, social hierarchy, relationship with nearby peoples/factions)"
+      ? ", '### Sapience & Society' (communication style, visible customs, public relations with outsiders)"
+      : ""
+  }.",
+  "lore": "GM-only markdown with hidden depths and scenario material: '### True Origin & Hidden Ecology' (secret lifecycle facts, obscure reproduction, unseen ecological dependencies, supernatural or manufactured origins), '### Hidden Abilities & Surprises' (unexpected powers, second-phase triggers, surprise reactions), '### Secret Weaknesses' (obscure or non-obvious vulnerabilities that require research or discovery), '### Tactical Notes' (ambush stratagems, dirty tricks, territory traps, encounter guidance for running it dynamically), '### Truth Behind Rumours' (explanations separating local myth and superstition from reality), '### Adventure & Encounter Hooks' (2-4 distinct hooks beyond 'fight it', such as capturing, tracking, avoiding, researching, domesticating, harvesting, or bargaining)${
+    resolved.temperament.includes("Sapient") ||
+    resolved.temperament.includes("Alien")
+      ? ", '### Secret Motives & Hidden Society' (true allegiances, covert hierarchy, bargaining leverage, secret taboos)"
       : ""
   }.",
   "labels": ["creature", "monster-generator"]
@@ -421,6 +426,10 @@ export function generateCreatureLocal(
       ],
       salvage:
         "Intact glandular sac yielding a caustic desiccant solvent; petrified scale plates suitable for acid-resistant plating.",
+      hiddenAbility:
+        "Secondary calcification reaction: any organic tissue struck by its silt spray hardens progressively over hours unless treated with weak acid.",
+      secretWeakness:
+        "Submersion in aerated freshwater triggers sudden violent osmotic shock, paralyzing its lateral respiratory gills.",
     },
     {
       ability: "Bio-Electric Stun Discharge",
@@ -435,6 +444,10 @@ export function generateCreatureLocal(
       ],
       salvage:
         "Conductive dorsal filaments capable of storing galvanic charges; amber-tinted ocular lenses.",
+      hiddenAbility:
+        "Galvanic Overcharge: after absorbing electrical or energetic attacks, its next physical strike arcs chain-lightning to all adjacent grounded metal.",
+      secretWeakness:
+        "Driving a conductive rod directly into its dorsal node shorts out its nervous system, rendering it comatose for several minutes.",
     },
     {
       ability: "Chameleonic Refraction",
@@ -449,12 +462,32 @@ export function generateCreatureLocal(
       ],
       salvage:
         "Chromatophoric hide patches that retain light-bending qualities for several weeks if preserved in alcohol.",
+      hiddenAbility:
+        "Refractive Mirage Decoy: when startled, sheds a phantom afterimage while slipping silently into shadows in the opposite direction.",
+      secretWeakness:
+        "Extreme cold temperatures freeze the lipid layer beneath its dermal chromatophores, locking it into a stark, luminescent white silhouette.",
     },
   ];
 
   const trait = pickFrom(signatureTraits, rng);
 
   const summary = `A ${r.size.toLowerCase()} ${r.category.toLowerCase()} that acts as a ${r.ecologicalRole.toLowerCase()} in ${r.habitat.toLowerCase()}, known for its ${trait.ability.toLowerCase()}.`;
+
+  const isSapient =
+    r.temperament.includes("Sapient") || r.temperament.includes("Alien");
+
+  const publicSapience = isSapient
+    ? `\n\n### Sapience & Society
+- **Communication**: Communicates through complex tactile gestures, chemical pheromone markers, and resonant vocal thrums.
+- **Visible Customs**: Deeply territorial and clan-oriented; values reciprocal gift-giving and formal boundary markings.
+- **Outsider Relations**: Treats armed intruders as potential competition, but will negotiate trade when approached with respect and non-threatening tribute.`
+    : "";
+
+  const secretSapience = isSapient
+    ? `\n\n### Secret Motives & Hidden Society
+- **Covert Hierarchy**: Governed by an elder brood-council communicating through deep infrasound below mortal hearing range.
+- **Secret Leverage**: Guards ancient subterranean relics from predecessor civilizations that they hold sacred but do not fully understand.`
+    : "";
 
   const content = `### At a Glance
 - **Classification**: ${r.category}
@@ -467,28 +500,15 @@ export function generateCreatureLocal(
 ### Appearance & Anatomy
 The ${r.creatureName} possesses a dense, adapted physique tailored for survival in ${r.habitat.toLowerCase()}. Its outer layer displays mottled coloration suited for natural concealment, reinforced with fibrous sinew and hardened plates along its dorsal ridge. Movement is deliberate and efficient, conserving energy until an immediate need demands sudden bursts of speed.
 
-### Signs & Foreshadowing
-${trait.signs.map((s) => `- ${s}`).join("\n")}`;
+### Core Concept & Ecology
+The ${r.creatureName} functions as a ${r.ecologicalRole.toLowerCase()} within ${r.habitat.toLowerCase()}. It establishes seasonal territory around natural food caches and migratory choke-points, patrolling its perimeter with predictable frequency. It feeds primarily on local flora, fauna, and mineral deposits, shaping the surrounding biome through its feeding corridors.
 
-  const isSapient =
-    r.temperament.includes("Sapient") || r.temperament.includes("Alien");
-
-  const sapientSection = isSapient
-    ? `\n\n### Sapience & Society
-- **Communication**: Communicates through complex tactile gestures, chemical pheromone markers, and resonant vocal thrums.
-- **Motives & Culture**: Deeply territorial and clan-oriented; values reciprocal gift-giving and territorial pacts.
-- **Outsider Relations**: Treats armed intruders as potential competition, but will negotiate trade when approached with respect and non-threatening tribute.`
-    : "";
-
-  const lore = `### Core Concept & Ecology
-The ${r.creatureName} functions as a ${r.ecologicalRole.toLowerCase()} within ${r.habitat.toLowerCase()}. It establishes seasonal territory around natural food caches and migratory choke-points, patrolling its perimeter with predictable frequency. Its reproductive cycle is tied to environmental shifts, producing small clutches of resilient young that disperse within their first year.
-
-### Abilities & Defences
+### Observable Abilities & Defences
 - **${trait.ability}**: ${trait.abilityDesc}
 - **Adaptive Mobility**: Navigates difficult terrain within ${r.habitat.toLowerCase()} without loss of momentum or balance.
 - **Sensory Acuity**: Acute olfactory and vibrational perception, detecting encroaching entities long before visual contact.
 
-### Weaknesses & Limitations
+### Known Weaknesses & Limitations
 - **${trait.weakness}**
 - **Behavioural Limitation**: Reluctant to cross open, exposed areas with bright light or strong drafts unless starved.
 
@@ -498,14 +518,33 @@ When threatened, the creature adopts a defensive posture, issuing low warning si
 ### Harvest & Remains
 ${trait.salvage}
 
-### Lore & Rumours
-- **Local Belief (True)**: The creature's warning calls reliably precede major atmospheric and seasonal changes.
-- **Folklore (Distorted)**: Legends claim it is born from the concentrated malice of lost wanderers, though in reality it is simply an apex survivor of ancient stock.
+### Known Lore & Signs
+- **Field Signs**: ${trait.signs.join("; ")}.
+- **Common Belief**: Regional hunters and scouts recognise the creature by its distinct seasonal calls and territory scrapings.${publicSapience}`;
+
+  const lore = `### True Origin & Hidden Ecology
+The ${r.creatureName}'s presence is deeply tied to subterranean ley-seams and nutrient surges. Its reproductive cycle is tied to environmental shifts, producing small clutches of dormant cocoons that remain viable for decades until specific seasonal moisture or etheric resonance triggers emergence.
+
+### Hidden Abilities & Surprises
+- **${trait.hiddenAbility}**
+- **Symbiotic Alarm**: Disturbed nests release airborne spore markers that agitate other nearby fauna into a defensive frenzy.
+
+### Secret Weaknesses
+- **${trait.secretWeakness}**
+- **Metabolic Crash**: Expending its **${trait.ability}** consecutively rapidly depletes its internal reserves, leaving it sluggish for several minutes afterward.
+
+### Tactical Notes
+- **Choke-Point Ambush**: Uses environmental shadows and acoustic echoes to split adventuring parties, striking the rearguard while creating simulated noise ahead.
+- **Lair Traps**: Pre-excavates false sinkholes and loose talus slopes around its den to collapse under heavy intruders.
+
+### Truth Behind Rumours
+- **Local Legend (Distorted)**: Legends claim it is born from the concentrated malice of lost wanderers.
+- **The Reality**: It is simply an ancient evolutionary offshoot preserved in isolated biomes, displaying heightened predator intelligence rather than supernatural cursed malice.
 
 ### Adventure & Encounter Hooks
 - **The Blocked Route**: A family of ${r.creatureName}s has claimed a crucial trade pass as their nesting territory, halting transit until they can be peacefully relocated or driven off.
 - **The Harvester's Contract**: A local apothecary or researcher offers a substantial bounty for intact biological samples without killing the specimen.
-- **The Omens Below**: Sightings of ${r.creatureName}s fleeing their native deep habitats suggest a far greater seismic or supernatural disturbance is waking beneath the region.${sapientSection}`;
+- **The Omens Below**: Sightings of ${r.creatureName}s fleeing their native deep habitats suggest a far greater seismic or supernatural disturbance is waking beneath the region.${secretSapience}`;
 
   const labels = [
     "creature",

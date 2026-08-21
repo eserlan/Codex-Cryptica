@@ -54,21 +54,31 @@ describe("Public Creature generator", () => {
     expect(output.kind).toBe("creature");
     expect(output.title).toBeTruthy();
     expect(output.summary).toBeTruthy();
+
+    // Public / Table-visible content assertions
     expect(output.content).toContain("### At a Glance");
     expect(output.content).toContain("### Appearance & Anatomy");
-    expect(output.content).toContain("### Signs & Foreshadowing");
-    expect(output.lore).toContain("### Core Concept & Ecology");
-    expect(output.lore).toContain("### Abilities & Defences");
-    expect(output.lore).toContain("### Weaknesses & Limitations");
-    expect(output.lore).toContain("### Combat & Encounter Behaviour");
-    expect(output.lore).toContain("### Harvest & Remains");
+    expect(output.content).toContain("### Core Concept & Ecology");
+    expect(output.content).toContain("### Observable Abilities & Defences");
+    expect(output.content).toContain("### Known Weaknesses & Limitations");
+    expect(output.content).toContain("### Combat & Encounter Behaviour");
+    expect(output.content).toContain("### Harvest & Remains");
+    expect(output.content).toContain("### Known Lore & Signs");
+
+    // GM-only secret lore assertions
+    expect(output.lore).toContain("### True Origin & Hidden Ecology");
+    expect(output.lore).toContain("### Hidden Abilities & Surprises");
+    expect(output.lore).toContain("### Secret Weaknesses");
+    expect(output.lore).toContain("### Tactical Notes");
+    expect(output.lore).toContain("### Truth Behind Rumours");
     expect(output.lore).toContain("### Adventure & Encounter Hooks");
+
     expect(output.labels).toContain("creature");
     expect(output.labels).toContain("monster-generator");
     expect(output.status).toBe("active");
   });
 
-  it("includes sapience & society details when creature is sapient", () => {
+  it("includes public and secret sapience details when creature is sapient", () => {
     const output = generateCreatureLocal(
       {
         genre: "Sci-Fi / Space Opera",
@@ -78,8 +88,11 @@ describe("Public Creature generator", () => {
       fixedRng,
     );
 
-    expect(output.lore).toContain("### Sapience & Society");
-    expect(output.lore).toContain("Communication");
+    expect(output.content).toContain("### Sapience & Society");
+    expect(output.content).toContain("Communication");
+    expect(output.content).toContain("Visible Customs");
+    expect(output.lore).toContain("### Secret Motives & Hidden Society");
+    expect(output.lore).toContain("Covert Hierarchy");
   });
 
   it("builds a prompt with consistency pass, quality guardrails, and avoidNames", () => {
@@ -103,7 +116,7 @@ describe("Public Creature generator", () => {
     expect(prompt.userMessage).toContain("Void-Stalker");
     expect(prompt.userMessage).toContain("Dusk-Gorgon");
     expect(prompt.userMessage).toContain(
-      "Before returning, run a consistency pass: the creature's appearance, size, and body plan must match its ecological role and habitat",
+      "Decide what is observable to players versus what is secret GM knowledge",
     );
     expect(prompt.userMessage).toContain(
       "Session Context: previous monsters generated.",
