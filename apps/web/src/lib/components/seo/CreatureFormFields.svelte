@@ -31,10 +31,10 @@
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 
-  let activeHabitats = $derived(
+  let activeHabitats: string[] = $derived(
     creatureConfig.habitatByTheme[genre]
       ? ["Random", ...creatureConfig.habitatByTheme[genre]]
-      : creatureConfig.habitats,
+      : [...creatureConfig.habitats],
   );
 
   $effect(() => {
