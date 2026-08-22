@@ -55,7 +55,13 @@
         ></span>
       </p>
     {/if}
-    {#if recorded}
+    <!-- Both branches below stay mounted and are hidden with a class rather
+         than an {#if}/{:else} swap. The buttons here are the ones the user
+         just clicked when `recorded` flips true (report/roll outcome), and
+         removing a focused element from the DOM mid-click silently exits
+         native fullscreen in Chrome — see AdventureFocusPlay.svelte's
+         Fullscreen toggle. -->
+    <div class={recorded ? "" : "hidden"}>
       {#if manager.errorMessage}
         <button
           class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary"
@@ -67,28 +73,36 @@
           Result recorded. Oracle is resolving it.
         </p>
       {/if}
-    {:else}<label class="block text-sm text-theme-primary" for="roll-outcome"
+    </div>
+    <div class={recorded ? "hidden" : "space-y-2"}>
+      <label class="block text-sm text-theme-primary" for="roll-outcome"
         >Your outcome</label
-      ><input
+      >
+      <input
         id="roll-outcome"
         class="w-full rounded-md border border-theme-border bg-theme-surface px-3 py-2 text-theme-primary"
         bind:value={outcome}
+        disabled={recorded}
       />
       <div class="flex flex-wrap gap-2">
         <button
           class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary"
           type="button"
+          disabled={recorded}
           onclick={() => void report()}>Report outcome</button
         >{#if manager.session.pendingRoll.dice}<button
             class="min-h-12 rounded-md border border-theme-border px-4 py-2 text-theme-primary"
             type="button"
+            disabled={recorded}
             onclick={() => void manager.rollCodexDice()}
             >Roll {manager.session.pendingRoll.dice.expression}</button
           >{/if}<button
           class="min-h-12 rounded-md border border-theme-border px-4 py-2 text-theme-primary"
           type="button"
+          disabled={recorded}
           onclick={() => void manager.dismissRoll()}>Change approach</button
         >
-      </div>{/if}
+      </div>
+    </div>
   </section>
 {/if}

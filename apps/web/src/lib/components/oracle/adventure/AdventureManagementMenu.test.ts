@@ -9,9 +9,17 @@ function manager(overrides: Record<string, unknown> = {}) {
     session: { title: "The Drowned March" },
     readOnly: false,
     end: vi.fn(),
+    forceEnd: vi.fn(),
     ...overrides,
   } as any;
 }
+
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: {
+    confirm: vi.fn().mockResolvedValue(true),
+    notify: vi.fn(),
+  },
+}));
 
 describe("AdventureManagementMenu", () => {
   it("renders nothing when there is no active session", () => {
@@ -22,12 +30,23 @@ describe("AdventureManagementMenu", () => {
     expect(screen.queryByTestId("adventure-management-menu-button")).toBeNull();
   });
 
-  it("renders nothing when the tab is read-only", () => {
-    render(AdventureManagementMenu, {
-      props: { manager: manager({ readOnly: true }) },
-    });
+  it("offers a recovery action instead of End adventure when the tab is read-only", async () => {
+    const m = manager({ readOnly: true });
+    render(AdventureManagementMenu, { props: { manager: m } });
 
-    expect(screen.queryByTestId("adventure-management-menu-button")).toBeNull();
+    expect(screen.getByTestId("adventure-management-menu-button")).toBeTruthy();
+    await fireEvent.click(
+      screen.getByTestId("adventure-management-menu-button"),
+    );
+
+    expect(
+      screen.queryByRole("menuitem", { name: /end adventure/i }),
+    ).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: /force end stuck adventure/i }),
+    );
+
+    expect(m.forceEnd).toHaveBeenCalledOnce();
   });
 
   it("ends the adventure from the menu", async () => {

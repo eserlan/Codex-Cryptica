@@ -1,11 +1,20 @@
 <script lang="ts">
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
-  let { manager, vaultId }: { manager: AdventureManager; vaultId: string } =
-    $props();
-  let title = $state("");
-  let premise = $state("");
-  let characterName = $state("");
-  let characterDescription = $state("");
+  let {
+    manager,
+    vaultId,
+    title = $bindable(""),
+    premise = $bindable(""),
+    characterName = $bindable(""),
+    characterDescription = $bindable(""),
+  }: {
+    manager: AdventureManager;
+    vaultId: string;
+    title?: string;
+    premise?: string;
+    characterName?: string;
+    characterDescription?: string;
+  } = $props();
   let interacted = $state(false);
   let submitting = $state(false);
 
@@ -24,6 +33,24 @@
           description: characterDescription || characterName,
         },
       });
+      // manager.start() resolves normally even when the opening generation
+      // itself fails — generateOpening() catches its own errors internally
+      // (archiving the incomplete session and setting errorMessage) rather
+      // than rethrowing, so a resolved promise here is NOT the same as
+      // success. Only clear the draft once errorMessage confirms nothing
+      // went wrong; otherwise these bindable fields (which survive this
+      // component being torn down and remounted when session flips
+      // non-null then back to null) are left in place to retry.
+      if (!manager.errorMessage) {
+        title = "";
+        premise = "";
+        characterName = "";
+        characterDescription = "";
+        interacted = false;
+      }
+    } catch {
+      // manager.errorMessage already carries the failure for display below;
+      // the drafted fields are deliberately left in place to retry.
     } finally {
       submitting = false;
     }

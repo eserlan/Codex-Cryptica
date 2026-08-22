@@ -681,4 +681,58 @@ describe("AdventureManager Phase 2 tools", () => {
       manager.resumeArchived("vault-1", "archived-1"),
     ).rejects.toThrow("active-adventure-exists");
   });
+
+  it("forceEnd archives a stuck read-only session and clears it back to idle", async () => {
+    const deps: any = dependencies();
+    const clearGenerationInteraction = vi.fn(async () => undefined);
+    deps.clearGenerationInteraction = clearGenerationInteraction;
+    const coordinatorStop = vi.fn(async () => undefined);
+    deps.coordinator.stop = coordinatorStop;
+    const manager = new AdventureManager(deps as any);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    // Simulate what open() produces when this tab couldn't acquire the
+    // lease for an otherwise-orphaned active session.
+    manager.readOnly = true;
+    manager.lease = null;
+
+    await manager.forceEnd();
+
+    expect(manager.session).toBeNull();
+    expect(manager.readOnly).toBe(false);
+    expect(manager.phase).toBe("idle");
+    expect(coordinatorStop).toHaveBeenCalled();
+    expect(clearGenerationInteraction).toHaveBeenCalled();
+  });
+
+  it("forceEnd surfaces a revision conflict instead of cutting off a genuinely active tab", async () => {
+    const deps: any = dependencies();
+    deps.repository.archive = async () => ({
+      ok: false,
+      error: new Error("revision-conflict"),
+    });
+    const manager = new AdventureManager(deps as any);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    manager.readOnly = true;
+
+    await expect(manager.forceEnd()).rejects.toThrow("revision-conflict");
+    expect(manager.session).not.toBeNull();
+  });
 });

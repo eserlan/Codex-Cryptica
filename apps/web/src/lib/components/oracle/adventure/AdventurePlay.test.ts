@@ -22,13 +22,16 @@ function manager(phase: "ready" | "generating") {
 }
 
 describe("AdventurePlay", () => {
-  it("replaces the action composer with a pending Oracle status", () => {
+  it("shows a pending Oracle status without removing the composer field", () => {
     render(AdventurePlay, { props: { manager: manager("generating") } });
 
     expect(screen.getByRole("status").textContent).toContain(
       "Oracle is responding to your action…",
     );
-    expect(screen.queryByLabelText("What do you do?")).toBeNull();
+    // The field stays mounted (just hidden) rather than being torn out —
+    // removing a focused element from the DOM mid-interaction silently
+    // exits native fullscreen in Chrome.
+    expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
   });
 

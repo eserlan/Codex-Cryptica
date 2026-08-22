@@ -12,6 +12,15 @@
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   let restoringActiveAdventure = $state(true);
   let activeRestoreRequest = 0;
+
+  // Held here, not in AdventureStart, because a failed start briefly creates
+  // then archives a session (manager.session flips non-null then back to
+  // null), which unmounts and remounts AdventureStart. This component never
+  // unmounts, so the draft survives that round-trip instead of being lost.
+  let startTitle = $state("");
+  let startPremise = $state("");
+  let startCharacterName = $state("");
+  let startCharacterDescription = $state("");
   let existingEntityTitles = $derived(
     oracle.vault.allEntities.map((entity) => entity.title),
   );
@@ -124,7 +133,14 @@
       />
     {/key}
   {:else}
-    <AdventureStart manager={oracle.adventure} {vaultId} />
+    <AdventureStart
+      manager={oracle.adventure}
+      {vaultId}
+      bind:title={startTitle}
+      bind:premise={startPremise}
+      bind:characterName={startCharacterName}
+      bind:characterDescription={startCharacterDescription}
+    />
     <AdventureArchive
       repository={adventureSessionRepository}
       {vaultId}
