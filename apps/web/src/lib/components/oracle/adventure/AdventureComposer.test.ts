@@ -4,7 +4,9 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureComposer from "./AdventureComposer.svelte";
 
-function manager(phase: "ready" | "generating") {
+function manager(
+  phase: "ready" | "generating" | "awaiting-roll" | "ready-to-resolve",
+) {
   return {
     phase,
     draft: "Cross the flooded causeway",
@@ -66,6 +68,22 @@ describe("AdventureComposer", () => {
 
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
   });
+
+  it.each(["awaiting-roll", "ready-to-resolve"] as const)(
+    "hides competing action controls while a roll is %s",
+    (phase) => {
+      const m = manager(phase);
+      m.suggestedActions = ["Hold the sea wall"];
+      render(AdventureComposer, { props: { manager: m } });
+
+      expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
+        "hidden",
+      );
+      expect(screen.getByTestId("adventure-free-action").className).toBe(
+        "hidden",
+      );
+    },
+  );
 
   it("keeps a just-clicked suggested action in the DOM (disabled) once generating starts", async () => {
     const m = manager("ready");

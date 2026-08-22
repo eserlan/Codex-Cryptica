@@ -12,12 +12,141 @@ import type {
   CollectionPatch,
   CommittedAdventureTurn,
   HiddenStatePatch,
+  HiddenStateProposalPatch,
   PendingRoll,
   ProvisionalFact,
   Result,
   SuppliedRollOutcome,
   VisibleStatePatch,
+  VisibleStateProposalPatch,
 } from "./types";
+
+type IdFactory = () => string;
+
+const MAX_ID_ALLOCATION_ATTEMPTS = 10;
+
+function existingIds(session: AdventureSession): Set<string> {
+  return new Set([
+    session.id,
+    ...session.sourceRecords.map((source) => source.recordId),
+    ...session.visibleState.objectives.map((fact) => fact.id),
+    ...session.visibleState.activeCharacters.map((fact) => fact.id),
+    ...session.visibleState.knownFacts.map((fact) => fact.id),
+    ...session.visibleState.relationships.map((fact) => fact.id),
+    ...(session.visibleState.location
+      ? [session.visibleState.location.id]
+      : []),
+    ...(session.visibleState.situation
+      ? [session.visibleState.situation.id]
+      : []),
+    ...session.hiddenState.secrets.map((secret) => secret.id),
+    ...session.hiddenState.gmThreads.map((thread) => thread.id),
+    ...session.provisionalFacts.map((fact) => fact.id),
+    ...session.turns.map((turn) => turn.id),
+  ]);
+}
+
+function allocateId(ids: Set<string>, createId: IdFactory): string | null {
+  for (let attempt = 0; attempt < MAX_ID_ALLOCATION_ATTEMPTS; attempt += 1) {
+    const id = createId();
+    if (id.trim().length > 0 && !ids.has(id)) {
+      ids.add(id);
+      return id;
+    }
+  }
+  return null;
+}
+
+function materializeCollectionPatch<T extends { id: string }, TNew>(
+  patch: { add: TNew[]; update: T[]; removeIds: string[] },
+  ids: Set<string>,
+  createId: IdFactory,
+): Result<CollectionPatch<T>, string> {
+  const add: T[] = [];
+  for (const entry of patch.add) {
+    const id = allocateId(ids, createId);
+    if (!id) return { ok: false, errors: "id-allocation-failed" };
+    add.push({ ...entry, id } as unknown as T);
+  }
+  return {
+    ok: true,
+    value: { add, update: patch.update, removeIds: patch.removeIds },
+  };
+}
+
+function materializeVisiblePatch(
+  patch: VisibleStateProposalPatch,
+  ids: Set<string>,
+  createId: IdFactory,
+): Result<VisibleStatePatch, string> {
+  const location =
+    patch.location === undefined || patch.location === null
+      ? patch.location
+      : (() => {
+          const id = allocateId(ids, createId);
+          return id ? { ...patch.location, id } : null;
+        })();
+  const situation =
+    patch.situation === undefined || patch.situation === null
+      ? patch.situation
+      : (() => {
+          const id = allocateId(ids, createId);
+          return id ? { ...patch.situation, id } : null;
+        })();
+  if ((patch.location && !location) || (patch.situation && !situation)) {
+    return { ok: false, errors: "id-allocation-failed" };
+  }
+  const objectives = materializeCollectionPatch(
+    patch.objectives,
+    ids,
+    createId,
+  );
+  const activeCharacters = materializeCollectionPatch(
+    patch.activeCharacters,
+    ids,
+    createId,
+  );
+  const knownFacts = materializeCollectionPatch(
+    patch.knownFacts,
+    ids,
+    createId,
+  );
+  const relationships = materializeCollectionPatch(
+    patch.relationships,
+    ids,
+    createId,
+  );
+  if (!objectives.ok) return objectives;
+  if (!activeCharacters.ok) return activeCharacters;
+  if (!knownFacts.ok) return knownFacts;
+  if (!relationships.ok) return relationships;
+  return {
+    ok: true,
+    value: {
+      location,
+      situation,
+      objectives: objectives.value,
+      activeCharacters: activeCharacters.value,
+      knownFacts: knownFacts.value,
+      relationships: relationships.value,
+    },
+  };
+}
+
+function materializeHiddenPatch(
+  patch: HiddenStateProposalPatch,
+  ids: Set<string>,
+  createId: IdFactory,
+): Result<HiddenStatePatch, string> {
+  const secrets = materializeCollectionPatch(patch.secrets, ids, createId);
+  const gmThreads = materializeCollectionPatch(patch.gmThreads, ids, createId);
+  if (!secrets.ok) return secrets;
+  if (!gmThreads.ok) return gmThreads;
+  return {
+    ok: true,
+    value: { secrets: secrets.value, gmThreads: gmThreads.value },
+  };
+}
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -100,6 +229,7 @@ export function applyCompletedTurn(
   proposalInput: AdventureTurnProposal,
   meta: CommitMetadata,
   now = meta.now,
+  createId: IdFactory = () => crypto.randomUUID(),
 ): Result<AdventureSession, AdventureValidationError[]> {
   if (session.status !== "active" || session.pendingRoll) {
     return error(
@@ -126,12 +256,40 @@ export function applyCompletedTurn(
       "The response contains unrevealed GM information.",
     );
   }
-  const visible = applyVisiblePatch(
-    session.visibleState,
+  const ids = existingIds(session);
+  const visiblePatch = materializeVisiblePatch(
     proposal.visiblePatch,
+    ids,
+    createId,
   );
+  if (!visiblePatch.ok)
+    return error(
+      "id-allocation-failed",
+      "Could not allocate unique IDs for the generated state.",
+    );
+  const hiddenPatch = materializeHiddenPatch(
+    proposal.hiddenPatch,
+    ids,
+    createId,
+  );
+  if (!hiddenPatch.ok)
+    return error(
+      "id-allocation-failed",
+      "Could not allocate unique IDs for the generated state.",
+    );
+  const provisionalFacts: ProvisionalFact[] = [];
+  for (const fact of proposal.provisionalFacts) {
+    const id = allocateId(ids, createId);
+    if (!id)
+      return error(
+        "id-allocation-failed",
+        "Could not allocate unique IDs for the generated state.",
+      );
+    provisionalFacts.push({ ...fact, id, introducedOnTurnId: meta.turnId });
+  }
+  const visible = applyVisiblePatch(session.visibleState, visiblePatch.value);
   if (!visible.ok) return error("conflicting-patch", visible.errors);
-  const hidden = applyHiddenPatch(session.hiddenState, proposal.hiddenPatch);
+  const hidden = applyHiddenPatch(session.hiddenState, hiddenPatch.value);
   if (!hidden.ok) return error("conflicting-patch", hidden.errors);
   const revealed = new Set(proposal.revealSecretIds);
   for (const secretId of revealed) {
@@ -140,12 +298,6 @@ export function applyCompletedTurn(
     secret.status = "revealed";
     secret.revealedOnTurnId = meta.turnId;
   }
-  const provisionalFacts: ProvisionalFact[] = proposal.provisionalFacts.map(
-    (fact) => ({
-      ...fact,
-      introducedOnTurnId: meta.turnId,
-    }),
-  );
   const candidate = clone(session);
   candidate.visibleState = visible.value;
   candidate.hiddenState = hidden.value;
@@ -159,8 +311,8 @@ export function applyCompletedTurn(
     inputId: meta.inputId,
     playerAction: meta.playerAction ?? "",
     narration: proposal.narration,
-    visiblePatch: proposal.visiblePatch,
-    hiddenPatch: proposal.hiddenPatch,
+    visiblePatch: visiblePatch.value,
+    hiddenPatch: hiddenPatch.value,
     revealedSecretIds: proposal.revealSecretIds,
     sourceRecordIds: proposal.sourceRecordIds,
     provisionalFactIds: provisionalFacts.map((fact) => fact.id),

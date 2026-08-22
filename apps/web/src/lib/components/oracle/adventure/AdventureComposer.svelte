@@ -9,6 +9,13 @@
       manager.phase === "awaiting-roll" ||
       manager.phase === "ready-to-resolve",
   );
+  // A pending roll is the current decision. Keep action controls mounted for
+  // fullscreen focus stability, but do not leave competing choices visible.
+  let actionControlsVisible = $derived(
+    manager.phase !== "generating" &&
+      manager.phase !== "awaiting-roll" &&
+      manager.phase !== "ready-to-resolve",
+  );
 </script>
 
 <div
@@ -41,10 +48,9 @@
     </div>
     {#if manager.suggestedActions.length > 0}
       <div
-        class={manager.phase === "generating"
-          ? "hidden"
-          : "flex flex-wrap gap-2"}
+        class={actionControlsVisible ? "flex flex-wrap gap-2" : "hidden"}
         aria-label="Suggested actions"
+        data-testid="adventure-suggested-actions"
       >
         {#each manager.suggestedActions as suggestion (suggestion)}
           <button
@@ -57,7 +63,10 @@
         {/each}
       </div>
     {/if}
-    <div class={manager.phase === "generating" ? "hidden" : "space-y-2"}>
+    <div
+      class={actionControlsVisible ? "space-y-2" : "hidden"}
+      data-testid="adventure-free-action"
+    >
       <label class="block text-sm text-theme-primary" for="adventure-action"
         >What do you do?</label
       >
