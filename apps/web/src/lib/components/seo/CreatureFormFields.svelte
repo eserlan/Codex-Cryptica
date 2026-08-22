@@ -4,12 +4,12 @@
 
   let {
     genre = $bindable(creatureConfig.genres[0]),
-    category = $bindable("Random"),
-    threatLevel = $bindable("Random"),
-    size = $bindable("Random"),
-    temperament = $bindable("Random"),
-    habitat = $bindable("Random"),
-    ecologicalRole = $bindable("Random"),
+    category = $bindable(creatureConfig.categories[0]),
+    threatLevel = $bindable(creatureConfig.threatLevels[0]),
+    size = $bindable(creatureConfig.sizes[0]),
+    temperament = $bindable(creatureConfig.temperaments[0]),
+    habitat = $bindable(creatureConfig.habitats[0]),
+    ecologicalRole = $bindable(creatureConfig.ecologicalRoles[0]),
     campaignContext = $bindable(""),
     onGenreChange = undefined,
     onSurprise = undefined,
@@ -33,17 +33,16 @@
 
   let activeHabitats: string[] = $derived(
     creatureConfig.habitatByTheme[genre]
-      ? ["Random", ...creatureConfig.habitatByTheme[genre]]
+      ? [...creatureConfig.habitatByTheme[genre]]
       : [...creatureConfig.habitats],
   );
 
   $effect(() => {
     if (
-      habitat !== "Random" &&
       (creatureConfig.habitats as readonly string[]).includes(habitat) &&
       !activeHabitats.includes(habitat)
     ) {
-      habitat = "Random";
+      habitat = activeHabitats[0];
     }
   });
 </script>
@@ -152,23 +151,14 @@
     onclick={() => {
       // Genre is deliberately left alone: it is a user-controlled axis and
       // also drives the page's visual skin.
-      category = pickFrom(
-        creatureConfig.categories.filter((c) => c !== "Random"),
-      );
-      threatLevel = pickFrom(
-        creatureConfig.threatLevels.filter((t) => t !== "Random"),
-      );
-      size = pickFrom(creatureConfig.sizes.filter((s) => s !== "Random"));
-      temperament = pickFrom(
-        creatureConfig.temperaments.filter((t) => t !== "Random"),
-      );
-      const availableHabitats = (
-        creatureConfig.habitatByTheme[genre] ?? creatureConfig.habitats
-      ).filter((h) => h !== "Random");
+      category = pickFrom(creatureConfig.categories);
+      threatLevel = pickFrom(creatureConfig.threatLevels);
+      size = pickFrom(creatureConfig.sizes);
+      temperament = pickFrom(creatureConfig.temperaments);
+      const availableHabitats =
+        creatureConfig.habitatByTheme[genre] ?? creatureConfig.habitats;
       habitat = pickFrom(availableHabitats);
-      ecologicalRole = pickFrom(
-        creatureConfig.ecologicalRoles.filter((r) => r !== "Random"),
-      );
+      ecologicalRole = pickFrom(creatureConfig.ecologicalRoles);
       onSurprise?.();
     }}
   >
