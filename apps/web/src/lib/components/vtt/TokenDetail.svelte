@@ -116,6 +116,24 @@
         </p>
       </label>
 
+      <label class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          class="h-4 w-4 rounded border-theme-border accent-theme-primary"
+          checked={selectedToken.isVisionSource === true}
+          onchange={(e) =>
+            mapSession.setVisionSource(
+              selectedToken.id,
+              e.currentTarget.checked,
+            )}
+        />
+        <span
+          class="text-[10px] uppercase tracking-widest font-bold text-theme-muted"
+        >
+          Vision Source (PC)
+        </span>
+      </label>
+
       <div class="flex items-stretch gap-2">
         {#if !isInInitiative}
           <button

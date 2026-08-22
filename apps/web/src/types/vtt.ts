@@ -62,6 +62,7 @@ export interface TokenCreationInput {
   visibleTo?: LegacyTokenVisibility;
   color?: string;
   imageUrl?: string | null;
+  isVisionSource?: boolean;
 }
 
 export const TOKEN_STATUS_EFFECTS = [
@@ -112,6 +113,7 @@ export interface TokenStateUpdateInput {
   ownerGuestName?: string | null;
   imageUrl?: string | null;
   statusEffects?: string[];
+  isVisionSource?: boolean;
 }
 
 export interface SessionSnapshotPayload {
