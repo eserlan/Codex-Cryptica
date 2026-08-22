@@ -120,6 +120,13 @@
       icon: "icon-[lucide--sparkles]",
     },
     {
+      slug: "creature",
+      label: "Creature Generator",
+      summary:
+        "Generate monsters, beasts, alien fauna, and undead with ecology, signs, combat tactics, and adventure hooks.",
+      icon: "icon-[lucide--paw-print]",
+    },
+    {
       slug: "artifact-generator",
       label: "Artifact & Relic Generator",
       summary:

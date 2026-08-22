@@ -23,3 +23,9 @@
 **Learning:** When extracting types from a file into a separate file, if the original file still uses those types internally, you must explicitly import them (`import type { X } from './types';`) before re-exporting them (`export type { X };`). Using `export type { X } from './types';` alone will cause a TypeScript compilation error because it does not make the types available within the local file's scope.
 
 **Action:** Ensure both an `import` and an `export` are used when extracting and re-exporting types that are still utilized in the original file.
+
+## 2025-03-01 - Extract Visual Card Serializer
+
+**Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant string generation and formatting logic (`syncSourceFromVisualCards`) to serialize internal visual structures into a source string, this serialization logic can be cleanly extracted to a sibling `.ts` file (`visual-card-serializer.ts`). State dependencies (like `schema.fields` and `fieldDisplayOverrides`) should be refactored into function parameters, returning the final string which the component then assigns to its local state. This drastically improves the readability of the component, and also makes the serialization logic fully unit-testable.
+
+**Action:** Extract large serialization or string-formatting functions into sibling `.ts` files, passing any component state as explicit parameters.

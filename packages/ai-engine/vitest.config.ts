@@ -1,5 +1,9 @@
 import { defineConfig } from "vitest/config";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   define: {
@@ -14,6 +18,20 @@ export default defineConfig({
     __HMR_ENABLE_OVERLAY__: "false",
   },
   plugins: [svelte()],
+  resolve: {
+    alias: {
+      "@codex/adventure-engine": resolve(
+        __dirname,
+        "../adventure-engine/src/index.ts",
+      ),
+      "@codex/oracle-engine": resolve(
+        __dirname,
+        "../oracle-engine/src/index.ts",
+      ),
+      "generator-engine": resolve(__dirname, "../generator-engine/src"),
+      schema: resolve(__dirname, "../schema/src/index.ts"),
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

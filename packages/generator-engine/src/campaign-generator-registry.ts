@@ -94,6 +94,12 @@ import {
   secretSocietyConfig,
   type SecretSocietyGeneratorOptions,
 } from "./public-secret-society";
+import {
+  buildCreaturePrompt,
+  generateCreatureLocal,
+  creatureConfig,
+  type CreatureGeneratorOptions,
+} from "./public-creature";
 
 /**
  * Generator id -> default vault category id.
@@ -122,6 +128,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "star-system": "location",
   // A species, not an individual — creature rather than character.
   "alien-race": "creature",
+  creature: "creature",
   "plot-twist": "note",
   "random-table": "table",
 };
@@ -1257,6 +1264,52 @@ ${exemplarBlock(request, "star-system")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the core concept; the star(s); 3-12 major bodies; settlements and factions; resources and strategic importance; travel hazards; history; the system-wide conflict or mystery; and adventure hooks",
+)}`;
+}
+
+function creatureOptions(
+  request: GeneratorRunRequest,
+): CreatureGeneratorOptions {
+  return {
+    genre:
+      request.vaultContext?.themeName ||
+      optionString(request, "genre", "Classic Fantasy"),
+    category: optionString(request, "category", "Random"),
+    threatLevel: optionString(request, "threatLevel", "Random"),
+    size: optionString(request, "size", "Random"),
+    temperament: optionString(request, "temperament", "Random"),
+    habitat: optionString(request, "habitat", "Random"),
+    ecologicalRole: optionString(request, "ecologicalRole", "Random"),
+    campaignContext: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateCreature(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateCreatureLocal(creatureOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+  };
+}
+
+function creaturePrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+${buildCreaturePrompt(creatureOptions(request)).userMessage}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "creature")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  "the true origin & hidden ecology; hidden abilities & surprises; secret weaknesses; tactical notes & ambush strategies; truth behind rumours; adventure & encounter hooks; and secret motives if sapient",
 )}`;
 }
 
@@ -2659,6 +2712,93 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateCouncilVote,
     mapOutputToDraft: mapOutputToDraft("council-vote"),
     buildPrompt: councilVoteFoundationPrompt,
+  },
+  creature: {
+    id: "creature",
+    label: "Creature",
+    description:
+      "Generate memorable beasts, monsters, alien fauna, constructs, spirits, or mounts with ecology, signs, tactics, and adventure hooks.",
+    entityType: GENERATOR_ENTITY_TYPE["creature"],
+    defaultInstruction:
+      "A distinctive creature or monster grounded in the setting's ecology — with concrete appearance, signs, abilities, weaknesses, encounter behaviour, and adventure hooks beyond just fighting it.",
+    icon: "lucide:paw-print",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: creatureConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "category",
+        label: "Category / Origin",
+        control: "select",
+        choices: creatureConfig.categories.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "threatLevel",
+        label: "Threat Level",
+        control: "select",
+        choices: creatureConfig.threatLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "size",
+        label: "Size",
+        control: "select",
+        choices: creatureConfig.sizes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "temperament",
+        label: "Intelligence / Temperament",
+        control: "select",
+        choices: creatureConfig.temperaments.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "habitat",
+        label: "Habitat",
+        control: "select",
+        choices: creatureConfig.habitats.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "ecologicalRole",
+        label: "Ecological Role",
+        control: "select",
+        choices: creatureConfig.ecologicalRoles.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      genre: "Classic Fantasy",
+      category: "Random",
+      threatLevel: "Random",
+      size: "Random",
+      temperament: "Random",
+      habitat: "Random",
+      ecologicalRole: "Random",
+    },
+    generate: generateCreature,
+    mapOutputToDraft: mapOutputToDraft("creature"),
+    buildPrompt: creaturePrompt,
   },
   "random-table": {
     id: "random-table",

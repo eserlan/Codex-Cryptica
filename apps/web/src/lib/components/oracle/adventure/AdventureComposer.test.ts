@@ -18,10 +18,13 @@ function manager(phase: "ready" | "generating") {
 }
 
 describe("AdventureComposer", () => {
-  it("replaces the action form with a Cancel affordance while generating", () => {
+  it("shows a Cancel affordance while generating, without removing the form", () => {
     render(AdventureComposer, { props: { manager: manager("generating") } });
 
-    expect(screen.queryByLabelText("What do you do?")).toBeNull();
+    // The field stays mounted (just hidden) so a focused element is never
+    // yanked out from under the user — see the comment in the component for
+    // why: removing it mid-interaction silently exits native fullscreen.
+    expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
   });
 
@@ -62,5 +65,27 @@ describe("AdventureComposer", () => {
     );
 
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
+  });
+
+  it("keeps a just-clicked suggested action in the DOM (disabled) once generating starts", async () => {
+    const m = manager("ready");
+    m.suggestedActions = ["Search the wreckage"];
+    const { rerender } = render(AdventureComposer, { props: { manager: m } });
+
+    const button = screen.getByRole("button", { name: "Search the wreckage" });
+    button.focus();
+    expect(document.activeElement).toBe(button);
+
+    // Simulate the phase flipping to "generating" right after the click, as
+    // the real manager does once submitSuggestedAction resolves — the real
+    // manager's suggestedActions getter still reflects the prior turn until
+    // the new one commits, so it stays populated during generating too.
+    const generating = manager("generating");
+    generating.suggestedActions = ["Search the wreckage"];
+    await rerender({ manager: generating });
+
+    // The button must still exist in the DOM (merely disabled elsewhere),
+    // not be torn out — see the component comment for why that matters.
+    expect(document.body.contains(button)).toBe(true);
   });
 });

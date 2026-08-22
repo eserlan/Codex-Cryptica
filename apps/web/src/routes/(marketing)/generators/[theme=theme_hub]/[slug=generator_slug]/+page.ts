@@ -37,6 +37,7 @@ const validSlugs = new Set([
   "secret-society",
   "star-system",
   "alien-race",
+  "creature",
 ]);
 
 export const load: PageLoad = ({ params }) => {

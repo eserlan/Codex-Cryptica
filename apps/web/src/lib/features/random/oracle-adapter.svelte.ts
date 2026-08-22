@@ -11,6 +11,7 @@ import {
   type RandomSourceRollPayload,
 } from "$lib/stores/dice-history.svelte";
 import { deckService, randomSources } from ".";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 /**
  * What `/table` and `/deck` talk to (#2247, FR-039).
@@ -35,12 +36,14 @@ export interface OracleAdapterDeps {
   sources?: RandomSourceStore;
   service?: DeckService;
   history?: DiceHistoryStore;
+  clock?: Clock;
 }
 
 export function createRandomSourceOracleAdapter({
   sources = randomSources,
   service = deckService,
   history = diceHistory,
+  clock = systemClock,
 }: OracleAdapterDeps = {}): RandomSourceOracleAdapter {
   /**
    * Sources cross into the Oracle worker, where a reactive proxy cannot go.
@@ -55,7 +58,7 @@ export function createRandomSourceOracleAdapter({
         total: dieValue ?? payload.drawnCards?.length ?? 0,
         parts: [],
         formula: payload.kind === "deck" ? "draw" : "table roll",
-        timestamp: Date.now(),
+        timestamp: clock.now(),
       },
       "table",
       { label: payload.sourceName, source: payload },

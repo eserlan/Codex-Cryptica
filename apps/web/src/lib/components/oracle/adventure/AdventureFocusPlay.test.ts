@@ -146,22 +146,45 @@ describe("AdventureFocusPlay", () => {
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
   });
 
-  it("keeps dice presets and resource trackers inside the collapsed tools panel", async () => {
+  it("keeps dice presets and resource trackers out of the DOM until the tools sheet opens", async () => {
     render(AdventureFocusPlay, { props: props() });
 
-    expect(screen.getByLabelText("Adventure tools").className).toContain(
-      "hidden",
-    );
-    expect(screen.getByText("Dice presets")).toBeTruthy();
-    expect(screen.getByText("Resource trackers")).toBeTruthy();
+    // The tools sheet is a bottom sheet mounted only while open, not a
+    // side-by-side panel hidden via class — see the component comment for
+    // why: a lg: viewport breakpoint still fires even when this surface is
+    // hosted in the app's own narrow sidebar, so it can never rely on an
+    // actual side-by-side split reading as usable.
+    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+    expect(screen.queryByText("Dice presets")).toBeNull();
+    expect(screen.queryByText("Resource trackers")).toBeNull();
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Adventure tools" }),
     );
 
-    expect(screen.getByLabelText("Adventure tools").className).not.toContain(
-      "hidden",
+    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+    expect(screen.getByText("Dice presets")).toBeTruthy();
+    expect(screen.getByText("Resource trackers")).toBeTruthy();
+  });
+
+  it("closes the tools sheet via the backdrop, the close button, or Escape", async () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
     );
+    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+
+    await fireEvent.click(screen.getAllByLabelText("Close adventure tools")[0]);
+    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(screen.getByLabelText("Adventure tools")).toBeTruthy();
+
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByLabelText("Adventure tools")).toBeNull();
   });
 
   it("keeps the adventure surface visible when fullscreen is denied", async () => {

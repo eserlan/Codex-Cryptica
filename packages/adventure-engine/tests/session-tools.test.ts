@@ -93,6 +93,63 @@ describe("buildAdventureRecap", () => {
     expect(recap).not.toHaveProperty("secrets");
     expect(JSON.stringify(recap)).not.toContain("ferryman");
   });
+
+  it("falls back to the pending roll's setup narration when no situation has been committed yet", () => {
+    // A roll-required opening never writes a visiblePatch — applyRollRequest
+    // only records the pending roll — so visibleState.situation would
+    // otherwise stay blank until the roll resolves, even though the setup
+    // narration is already shown to the player in the roll prompt.
+    const withPendingRoll = session({
+      visibleState: {
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      pendingRoll: {
+        id: "roll-1",
+        inputId: "input-1",
+        playerAction: "",
+        setupNarration: "Three masked riders crest the dune.",
+        uncertainty: "Can Kizzt reach cover before they close in?",
+        stakes: "A poor result cornered by the riders.",
+        resolutionStatus: "awaiting-outcome",
+        createdAt: now,
+      },
+    });
+
+    const recap = buildAdventureRecap(withPendingRoll);
+    expect(recap.situation?.text).toBe("Three masked riders crest the dune.");
+  });
+
+  it("prefers a committed situation over the pending roll's setup narration", () => {
+    const withBoth = session({
+      visibleState: {
+        situation: {
+          id: "sit-1",
+          text: "Committed situation",
+          source: "provisional",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      pendingRoll: {
+        id: "roll-1",
+        inputId: "input-1",
+        playerAction: "",
+        setupNarration: "Should not be used.",
+        uncertainty: "?",
+        stakes: "?",
+        resolutionStatus: "awaiting-outcome",
+        createdAt: now,
+      },
+    });
+
+    const recap = buildAdventureRecap(withBoth);
+    expect(recap.situation?.text).toBe("Committed situation");
+  });
 });
 
 describe("getRollHistory", () => {

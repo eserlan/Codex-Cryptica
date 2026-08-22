@@ -144,6 +144,13 @@
           icon: "icon-[lucide--dna]",
         },
         {
+          href: "/generators/creature",
+          label: "Creature Generator",
+          summary:
+            "Generate memorable monsters, beasts, alien fauna, and undead with ecology, sensory signs, combat tactics, and adventure hooks.",
+          icon: "icon-[lucide--paw-print]",
+        },
+        {
           href: "/generators/dungeon-generator",
           label: "Dungeon & Delve Generator",
           summary:

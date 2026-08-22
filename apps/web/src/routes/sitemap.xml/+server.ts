@@ -124,6 +124,7 @@ export async function GET() {
     "secret-society",
     "star-system",
     "alien-race",
+    "creature",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,
