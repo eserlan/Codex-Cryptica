@@ -72,6 +72,10 @@ describe("ModalUIStore", () => {
     store.openZenMode("789", "family");
     expect(store.zenModeActiveTab).toBe("family");
 
+    store.openZenMode("faction-1", "faction");
+    expect(store.zenModeEntityId).toBe("faction-1");
+    expect(store.zenModeActiveTab).toBe("faction");
+
     store.openReadMode("456");
     expect(store.showZenMode).toBe(true);
     expect(store.zenModeEntityId).toBe("456");

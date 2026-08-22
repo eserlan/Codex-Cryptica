@@ -47,6 +47,17 @@ const schema: StatSheetTemplate = {
 };
 
 describe("getBuiltInPresentationTemplates", () => {
+  it("includes an Influence Board layout for the faction turns schema", () => {
+    const factionBoard = getBuiltInPresentationTemplates(
+      "builtin-faction-turn",
+    ).find((template) => template.name === "Faction Influence Board");
+
+    expect(factionBoard?.source).toContain("{{stat.influence");
+    expect(factionBoard?.source).toContain("{{stat.stability");
+    expect(factionBoard?.source).toContain("{{stat.power");
+    expect(factionBoard?.source).toContain("{{stat.resources");
+  });
+
   it("keeps Mythras attributes, combat styles, and professional skills in the character sheet", () => {
     const mythrasTemplate = getBuiltInPresentationTemplates(
       "builtin-mythras-character",

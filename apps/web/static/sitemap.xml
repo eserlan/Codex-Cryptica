@@ -217,6 +217,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/blog/faction-turns</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-08-22T10:00:00.000Z</lastmod>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/same-content-different-views</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -227,12 +233,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-08-13T10:00:00.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://codexcryptica.com/blog/presentation-templates</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>2026-08-02T12:00:00.000Z</lastmod>
   </url>
   <url>
     <loc>https://codexcryptica.com/blog/custom-stat-sheet-templates</loc>
