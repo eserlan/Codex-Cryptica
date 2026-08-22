@@ -44,5 +44,9 @@ export function punchFogCircle(
   radius: number,
   center: Point,
 ) {
-  drawFogStroke(ctx, image, radius, center, center, true);
+  // isHiding=false: paint white onto the mask (source-over), which marks
+  // this area as revealed. isHiding=true is destination-out, which erases
+  // existing reveal marks and would re-fog the area — the opposite of what
+  // an auto-reveal should do.
+  drawFogStroke(ctx, image, radius, center, center, false);
 }

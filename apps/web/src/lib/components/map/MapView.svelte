@@ -6,7 +6,7 @@
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
   import { TokenVisionRevealer } from "./token-vision-revealer";
-  import { resolveVisionSourceTokens } from "./vtt-vision";
+  import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
@@ -157,6 +157,13 @@
       .map((token) => `${token.id}:${token.x}:${token.y}`)
       .join("|"),
   );
+  const visionRadiusPx = $derived(
+    visionRangeToPixels(
+      mapStore.visionRange,
+      mapSession.gridDistance,
+      mapStore.gridSize,
+    ),
+  );
 
   const vttTokens = $derived.by(() => {
     const isHost = mapStore.isGMMode;
@@ -287,7 +294,7 @@
 
   $effect(() => {
     const signature = visionSourceSignature;
-    const radius = mapStore.visionRadius;
+    const radius = visionRadiusPx;
     const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
     if (!canAutoReveal || !signature) return;
 

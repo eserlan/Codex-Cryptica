@@ -28,3 +28,18 @@ export function resolveVisionSourceTokens(
 
   return partySources;
 }
+
+/**
+ * Converts a vision range authored in grid units (e.g. 60 feet) to pixels
+ * using the map's grid scale, so vision distance stays consistent with the
+ * ruler regardless of how large a grid square renders on screen — e.g. 60'
+ * vision on a map where each square is 5' spans 60/5 = 12 grid squares.
+ */
+export function visionRangeToPixels(
+  visionRange: number,
+  gridDistance: number,
+  gridSize: number,
+): number {
+  if (gridDistance <= 0) return visionRange;
+  return (visionRange / gridDistance) * gridSize;
+}
