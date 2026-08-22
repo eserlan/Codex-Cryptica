@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import {
     DEFAULT_ITEM_TABLE_COLUMNS,
     type Entity,
@@ -17,6 +18,8 @@
     field: StatSheetField;
     context: PresentationRenderContext;
   } = $props();
+
+  let tableContainer: HTMLDivElement | undefined = $state();
 
   const columns = $derived(field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS);
 
@@ -103,20 +106,110 @@
   function handleMoveRow(index: number, direction: -1 | 1) {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= rows.length) return;
+
+    let focusSelector: string | null = null;
+    let selectionStart: number | null = null;
+    let selectionEnd: number | null = null;
+
+    const activeEl = document.activeElement as HTMLElement | null;
+    if (activeEl && tableContainer && tableContainer.contains(activeEl)) {
+      const activeRow =
+        activeEl.closest<HTMLTableRowElement>("tr[data-row-index]");
+      if (activeRow && Number(activeRow.dataset.rowIndex) === index) {
+        if (activeEl.tagName === "TR") {
+          focusSelector = `tr[data-row-index="${targetIndex}"]`;
+        } else if (activeEl.dataset.colId) {
+          const colId = activeEl.dataset.colId;
+          const counterAction = activeEl.dataset.counterAction;
+          const action = activeEl.dataset.action;
+          if (counterAction) {
+            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"][data-counter-action="${counterAction}"]`;
+          } else if (action) {
+            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"][data-action="${action}"]`;
+          } else {
+            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"]`;
+          }
+          if (
+            activeEl instanceof HTMLInputElement &&
+            (activeEl.type === "text" ||
+              activeEl.type === "search" ||
+              activeEl.type === "url" ||
+              activeEl.type === "tel" ||
+              activeEl.type === "password" ||
+              activeEl.type === "number")
+          ) {
+            try {
+              selectionStart = activeEl.selectionStart;
+              selectionEnd = activeEl.selectionEnd;
+            } catch {
+              // Ignore for inputs that do not support selection
+            }
+          }
+        } else if (activeEl.dataset.action) {
+          const action = activeEl.dataset.action;
+          focusSelector = `tr[data-row-index="${targetIndex}"] [data-action="${action}"]`;
+        }
+      }
+    }
+
     const next = [...rows];
     const [moved] = next.splice(index, 1);
     next.splice(targetIndex, 0, moved);
     updateRows(next);
+
+    if (focusSelector) {
+      const selector = focusSelector;
+      const restoreFocus = () => {
+        if (!tableContainer) return;
+        let targetEl = tableContainer.querySelector<HTMLElement>(selector);
+        // If the specific target button is disabled (e.g. Move Up at index 0), fallback to alternate move or row
+        if (targetEl && (targetEl as HTMLButtonElement).disabled) {
+          targetEl =
+            tableContainer.querySelector<HTMLElement>(
+              `tr[data-row-index="${targetIndex}"] [data-action="move-down"]`,
+            ) ??
+            tableContainer.querySelector<HTMLElement>(
+              `tr[data-row-index="${targetIndex}"] [data-action="move-up"]`,
+            ) ??
+            tableContainer.querySelector<HTMLElement>(
+              `tr[data-row-index="${targetIndex}"]`,
+            );
+        }
+        if (targetEl) {
+          targetEl.focus();
+          if (
+            targetEl instanceof HTMLInputElement &&
+            selectionStart !== null &&
+            selectionEnd !== null
+          ) {
+            try {
+              targetEl.setSelectionRange(selectionStart, selectionEnd);
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      };
+
+      void tick().then(() => {
+        restoreFocus();
+        if (typeof requestAnimationFrame !== "undefined") {
+          requestAnimationFrame(restoreFocus);
+        }
+      });
+    }
   }
 
   function handleRowKeyDown(e: KeyboardEvent, rIdx: number) {
     if (context.readOnly) return;
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+    if ((e.ctrlKey || e.metaKey || e.altKey) && !e.shiftKey) {
       if (e.key === "ArrowUp") {
         e.preventDefault();
+        e.stopPropagation();
         handleMoveRow(rIdx, -1);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
+        e.stopPropagation();
         handleMoveRow(rIdx, 1);
       }
     }
@@ -238,6 +331,8 @@
 </script>
 
 <div
+  bind:this={tableContainer}
+  data-testid="item-table-node"
   class="my-3 overflow-hidden rounded-lg border border-theme-border/60 bg-theme-bg/40 shadow-xs"
 >
   <div
@@ -335,6 +430,7 @@
             {@const linked = linkedEntity(row)}
             <tr
               class="group/row border-b border-theme-border/30 transition-colors hover:bg-theme-surface/30"
+              data-row-index={rIdx}
               onkeydown={(e) => handleRowKeyDown(e, rIdx)}
             >
               {#each columns as col (col.id)}
@@ -361,6 +457,7 @@
                     {:else}
                       <input
                         type="text"
+                        data-col-id={col.id}
                         aria-label={`${col.label} for item ${rIdx + 1}`}
                         class="w-full rounded border border-theme-border/60 bg-theme-bg/80 px-1.5 py-0.5 {isTextLeft
                           ? 'text-left'
@@ -386,6 +483,7 @@
                     {:else}
                       <input
                         type="number"
+                        data-col-id={col.id}
                         aria-label={`${col.label} for item ${rIdx + 1}`}
                         class="w-full max-w-[4rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
                         value={row[col.id] ?? 0}
@@ -404,6 +502,8 @@
                     {#if context.mode === "view"}
                       <button
                         type="button"
+                        data-col-id={col.id}
+                        data-action="roll"
                         aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
                         class="inline-flex max-w-full items-center justify-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-1.5 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
                         disabled={rollState?.rolling}
@@ -433,6 +533,7 @@
                     {:else}
                       <input
                         type="text"
+                        data-col-id={col.id}
                         aria-label={`${col.label} formula for item ${rIdx + 1}`}
                         class="w-full max-w-[5.5rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
                         value={formula}
@@ -463,6 +564,8 @@
                       >
                         <button
                           type="button"
+                          data-col-id={col.id}
+                          data-counter-action="dec"
                           aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
                           class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
                           onclick={() =>
@@ -475,6 +578,8 @@
                         </span>
                         <button
                           type="button"
+                          data-col-id={col.id}
+                          data-counter-action="inc"
                           aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
                           class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
                           onclick={() =>
@@ -487,6 +592,7 @@
                   {:else if col.type === "checkbox"}
                     <input
                       type="checkbox"
+                      data-col-id={col.id}
                       aria-label={`${col.label} for item ${rIdx + 1}`}
                       class="h-3.5 w-3.5 rounded border-theme-border text-theme-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       checked={row[col.id] === true}
@@ -517,6 +623,7 @@
                     >
                       <button
                         type="button"
+                        data-action="move-up"
                         aria-label={`Move ${rowLabel} up`}
                         class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
                         disabled={rIdx === 0}
@@ -530,6 +637,7 @@
                       </button>
                       <button
                         type="button"
+                        data-action="move-down"
                         aria-label={`Move ${rowLabel} down`}
                         class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
                         disabled={rIdx === rows.length - 1}
@@ -544,6 +652,7 @@
                     </div>
                     <button
                       type="button"
+                      data-action="remove"
                       aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
                       class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/15 hover:text-red-400 active:scale-95 transition-all"
                       onclick={() => handleRemoveRow(rIdx)}

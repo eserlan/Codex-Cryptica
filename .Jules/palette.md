@@ -132,3 +132,6 @@
 ## 2025-02-18 - Decorative Icons in Modals
 **Learning:** Decorative icons (using the `icon-[lucide--...]` pattern) nested inside functional `<button>` or `<a>` elements within global modals like `SettingsModal.svelte` frequently lack `aria-hidden="true"`, causing screen readers to mistakenly announce structural visual hints rather than relying solely on the text label.
 **Action:** Always scan for unhidden `icon-[...]` spans inside interactive elements and apply `aria-hidden="true"` to them to declutter the accessibility tree.
+## 2025-02-18 - Missing Type and ARIA in Dice Components
+**Learning:** Decorative icons inside interactive elements like `RollLog.svelte` and `DiceVault.svelte` frequently lack `aria-hidden="true"`, causing screen reader verbosity. Additionally, dynamic buttons (like generated dice buttons and expand/collapse logs) often miss `type="button"`, risking accidental form submissions if wrapped in a parent form.
+**Action:** When creating or reviewing components with dynamically generated buttons or internal decorative spans (especially those derived from helpers like `getDiceIcon`), enforce `type="button"`, `aria-label`, and `aria-hidden="true"` as standard practice.
