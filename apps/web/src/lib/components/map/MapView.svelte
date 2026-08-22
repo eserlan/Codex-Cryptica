@@ -5,6 +5,10 @@
   import { vault } from "../../stores/vault.svelte";
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
+  import { TokenVisionRevealer } from "./token-vision-revealer";
+  import { resolveVisionSourceTokens } from "./vtt-vision";
+  import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
   import MapCanvas from "./MapCanvas.svelte";
@@ -51,6 +55,12 @@
   const interactions = new MapInteractionManager({
     painter,
     getContainer: () => container,
+  });
+
+  const visionRevealer = new TokenVisionRevealer({
+    mapStore,
+    getMaskCanvas: () => maskCanvas,
+    getMapImage: () => mapImage,
   });
 
   const mapAssets = new MapViewAssetLoader({
@@ -135,11 +145,29 @@
   let tokenImageCache = $state<Record<string, HTMLImageElement | null>>({});
   let tokenImageSourceCache = $state<Record<string, string>>({});
 
+  const visionSourceTokens = $derived.by(() =>
+    resolveVisionSourceTokens(
+      mapSession.allTokens,
+      mapStore.visionMode,
+      mapSession.selection,
+    ),
+  );
+  const visionSourceSignature = $derived(
+    visionSourceTokens
+      .map((token) => `${token.id}:${token.x}:${token.y}`)
+      .join("|"),
+  );
+
   const vttTokens = $derived.by(() => {
     const isHost = mapStore.isGMMode;
     const peerId = mapSession.myPeerId;
     const selected = mapSession.selectedTokens;
     const tokens = mapSession.allTokens;
+    const visionSourceIds = new Set(
+      mapStore.visionMode === "selected"
+        ? visionSourceTokens.map((token) => token.id)
+        : [],
+    );
     const result = [];
 
     for (let i = 0; i < tokens.length; i++) {
@@ -153,6 +181,7 @@
           primarySelected: mapSession.selection === token.id,
           active: mapSession.activeTokenId === token.id,
           visible: true,
+          visionActive: visionSourceIds.has(token.id),
           healthBar: resolveHealthBar(
             token.entityId
               ? vault.entities[token.entityId]?.statSheet?.fields
@@ -254,6 +283,19 @@
     return () => {
       cancelled = true;
     };
+  });
+
+  $effect(() => {
+    const signature = visionSourceSignature;
+    const radius = mapStore.visionRadius;
+    const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
+    if (!canAutoReveal || !signature) return;
+
+    void visionRevealer.reveal(visionSourceTokens, radius).then((revealed) => {
+      if (revealed && mapSession.vttEnabled) {
+        void broadcastActiveMapFogSync();
+      }
+    });
   });
 </script>
 
