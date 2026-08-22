@@ -41,7 +41,7 @@ export function syncSourceFromVisualCards(
               override.displayMode !==
                 (f?.type === "counter" ? "current-max" : undefined))
           ) {
-            let attrs = [];
+            const attrs = [];
             if (mode) attrs.push(`display="${mode}"`);
             if (hideLabel) attrs.push("hide-label");
             return `{{stat.${fid}${attrs.length > 0 ? " " + attrs.join(" ") : ""}}}`;
@@ -77,7 +77,7 @@ export function syncSourceFromVisualCards(
                 override.displayMode !==
                   (f.type === "counter" ? "current-max" : undefined))
             ) {
-              let attrs = [];
+              const attrs = [];
               if (mode) attrs.push(`display="${mode}"`);
               if (hideLabel) attrs.push("hide-label");
               out += `{{stat.${fid}${attrs.length > 0 ? " " + attrs.join(" ") : ""}}}\n`;
