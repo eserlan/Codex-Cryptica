@@ -126,8 +126,7 @@
             <h2
               class="mb-2 font-header text-base font-bold text-theme-text sm:text-lg"
             >
-              Why {config.kind === "system" ? "chronicles" : "fantasy worlds"} get
-              complicated
+              Why {config.kind === "system" ? "campaigns" : "worlds"} get complicated
             </h2>
             <p
               class="font-light text-sm sm:text-base leading-relaxed text-theme-muted"
@@ -242,7 +241,7 @@
                   >
                     {tool.title}
                   </h3>
-                  {#if tool.badge}
+                  {#if tool.badge && !tool.title.endsWith(tool.badge)}
                     <span
                       class="rounded-[var(--for-surface-radius)] border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
                       >{tool.badge}</span
