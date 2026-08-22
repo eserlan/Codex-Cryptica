@@ -157,6 +157,14 @@
       .map((token) => `${token.id}:${token.x}:${token.y}`)
       .join("|"),
   );
+  // Vision range is authored in grid units (e.g. feet), not pixels — convert
+  // using the map's grid scale so 60' vision on a map where each square is
+  // 5' spans 60/5 = 12 grid squares, regardless of gridSize in pixels.
+  const visionRadiusPx = $derived(
+    mapSession.gridDistance > 0
+      ? (mapStore.visionRange / mapSession.gridDistance) * mapStore.gridSize
+      : mapStore.visionRange,
+  );
 
   const vttTokens = $derived.by(() => {
     const isHost = mapStore.isGMMode;
@@ -287,7 +295,7 @@
 
   $effect(() => {
     const signature = visionSourceSignature;
-    const radius = mapStore.visionRadius;
+    const radius = visionRadiusPx;
     const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
     if (!canAutoReveal || !signature) return;
 
