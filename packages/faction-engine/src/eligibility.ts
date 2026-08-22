@@ -65,6 +65,16 @@ function compareDates(
   return (a.day ?? 1) - (b.day ?? 1);
 }
 
+/**
+ * Keeps the month and optional day stored on a faction turn visible, so a
+ * monthly or quarterly wait does not collapse into an unhelpful year alone.
+ */
+function formatWorldDate(date: WorldDateStamp): string {
+  const parts = [String(date.year), `month ${date.month}`];
+  if (date.day !== undefined) parts.push(`day ${date.day}`);
+  return parts.join(", ");
+}
+
 /** The earliest date at which a faction that last acted on `from` may act again. */
 export function nextEligibleDate(
   from: WorldDateStamp,
@@ -141,7 +151,7 @@ export function evaluateEligibility(
       canOverride: true,
       lastTurnDate,
       nextEligibleDate: next,
-      reason: `This faction acted in ${lastTurnDate.year} and can act again in ${next.year}.`,
+      reason: `This faction acted in ${formatWorldDate(lastTurnDate)} and can act again in ${formatWorldDate(next)}.`,
     };
   }
 

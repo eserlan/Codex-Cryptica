@@ -327,25 +327,55 @@
           your campaign's current date and never change it.
         </p>
 
-        <div class="space-y-1">
-          <label
+        <fieldset class="space-y-1">
+          <legend
             class="text-[11px] font-bold text-theme-muted uppercase font-header"
-            for="faction-turn-interval">Years between a faction's turns</label
           >
-          <input
-            id="faction-turn-interval"
-            type="number"
-            min="1"
-            value={factionTurn.settings.turnIntervalAmount}
-            oninput={(e) => {
-              const parsed = parseInt(e.currentTarget.value, 10);
-              if (!isNaN(parsed) && parsed >= 1) {
-                factionTurn.saveSettings({ turnIntervalAmount: parsed });
-              }
-            }}
-            class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
-          />
-        </div>
+            Turn frequency
+          </legend>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <label
+              class="flex items-start gap-2 rounded border border-theme-border bg-theme-bg/40 p-2 text-xs text-theme-text cursor-pointer hover:border-theme-primary/60"
+            >
+              <input
+                type="radio"
+                name="faction-turn-frequency"
+                checked={factionTurn.settings.turnIntervalUnit === "month" &&
+                  factionTurn.settings.turnIntervalAmount === 1}
+                onchange={() =>
+                  factionTurn.saveSettings({
+                    turnIntervalUnit: "month",
+                    turnIntervalAmount: 1,
+                  })}
+              />
+              <span>
+                <span class="block font-medium">Monthly</span>
+                <span class="block text-theme-muted">One turn each month.</span>
+              </span>
+            </label>
+            <label
+              class="flex items-start gap-2 rounded border border-theme-border bg-theme-bg/40 p-2 text-xs text-theme-text cursor-pointer hover:border-theme-primary/60"
+            >
+              <input
+                type="radio"
+                name="faction-turn-frequency"
+                checked={factionTurn.settings.turnIntervalUnit === "month" &&
+                  factionTurn.settings.turnIntervalAmount === 3}
+                onchange={() =>
+                  factionTurn.saveSettings({
+                    turnIntervalUnit: "month",
+                    turnIntervalAmount: 3,
+                  })}
+              />
+              <span>
+                <span class="block font-medium">Quarterly</span>
+                <span class="block text-theme-muted"
+                  >One turn every three months.</span
+                >
+              </span>
+            </label>
+          </div>
+        </fieldset>
 
         <label class="flex items-start gap-2 text-xs text-theme-text">
           <input
@@ -398,6 +428,26 @@
               AI may shift an outcome one step better or worse when the
               situation warrants it, and must say why. Sends the same
               information as above. Dice still decide the starting point.
+            </span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 text-xs text-theme-text">
+          <input
+            type="checkbox"
+            checked={factionTurn.settings.includeParticipantLore}
+            onchange={(e) =>
+              factionTurn.saveSettings({
+                includeParticipantLore: e.currentTarget.checked,
+              })}
+          />
+          <span>
+            Include participant lore with AI
+            <span class="block text-theme-muted">
+              Off by default. When on, AI also receives each participant's
+              aliases, up to 1,200 characters of their text and lore, and up to
+              five named outgoing connections. This is sent only for the turn
+              you resolve, when either AI setting above is on.
             </span>
           </span>
         </label>

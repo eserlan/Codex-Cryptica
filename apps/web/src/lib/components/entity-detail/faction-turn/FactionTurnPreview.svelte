@@ -115,19 +115,21 @@
     <dl class="text-theme-muted mb-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
       <dt>{r.actingLabel}</dt>
       <dd>{r.actingValue}</dd>
-      <dt>Resistance</dt>
-      <dd>{r.opposingValue}</dd>
-      <dt>Why that much</dt>
+      <dt>Why they resist</dt>
       <dd>{r.oppositionDetail}</dd>
       {#if r.roll}
-        <dt>Rolled</dt>
-        <dd>{r.roll.formula} → {r.roll.dice.join(", ")} ({r.roll.total})</dd>
+        <dt>They rolled</dt>
+        <dd>{r.roll.dice.join(", ")} ({r.roll.total})</dd>
+        {#if r.roll.opposingDice}
+          <dt>Resistance rolled</dt>
+          <dd>{r.roll.opposingDice.join(", ")} ({r.roll.opposingTotal})</dd>
+        {/if}
       {:else}
         <dt>Rolled</dt>
         <dd>No dice — compared directly</dd>
       {/if}
-      <dt>Total</dt>
-      <dd>{r.total}</dd>
+      <dt>Totals</dt>
+      <dd>{r.total} against {r.opposingValue}</dd>
       <dt>Rules said</dt>
       <dd>{bandLabel(r.mechanicalBand)}</dd>
       {#if r.aiUsed && r.aiReason}

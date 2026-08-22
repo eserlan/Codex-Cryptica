@@ -142,10 +142,13 @@ describe("outcome bands", () => {
 });
 
 describe("FactionTurnSettingsSchema", () => {
-  it("defaults both AI switches on and randomness on", () => {
+  it("defaults to monthly turns and leaves expanded participant lore off", () => {
+    expect(DEFAULT_FACTION_TURN_SETTINGS.turnIntervalUnit).toBe("month");
+    expect(DEFAULT_FACTION_TURN_SETTINGS.turnIntervalAmount).toBe(1);
     expect(DEFAULT_FACTION_TURN_SETTINGS.useRandomness).toBe(true);
     expect(DEFAULT_FACTION_TURN_SETTINGS.aiBandSelection).toBe(true);
     expect(DEFAULT_FACTION_TURN_SETTINGS.aiNarration).toBe(true);
+    expect(DEFAULT_FACTION_TURN_SETTINGS.includeParticipantLore).toBe(false);
   });
 
   it("rejects a turn interval below one unit", () => {

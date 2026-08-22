@@ -107,7 +107,7 @@
               <button
                 type="button"
                 class="underline hover:text-theme-text"
-                disabled={busyId === record.id}
+                disabled={busyId === record.id || factionTurn.isCommitting}
                 onclick={() => promote(record)}
               >
                 Add to timeline
@@ -117,7 +117,7 @@
               <button
                 type="button"
                 class="underline hover:text-theme-text"
-                disabled={busyId === record.id}
+                disabled={busyId === record.id || factionTurn.isCommitting}
                 data-testid="faction-undo"
                 onclick={() => undo(record)}
               >

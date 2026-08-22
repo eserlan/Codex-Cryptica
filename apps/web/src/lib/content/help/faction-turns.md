@@ -33,7 +33,7 @@ Because the mapping remembers the stat itself rather than its name, renaming "In
 
 ## When a faction can act
 
-Faction turns are paced by your campaign's current date. A faction that acted recently has to wait before acting again — by default, a year of world time.
+Faction turns are paced by your campaign's current date. A faction that acted recently has to wait before acting again — by default, a month of world time. In vault settings, choose either monthly turns or quarterly turns (every three months).
 
 Your campaign's current date comes from whichever of these you have:
 
@@ -85,6 +85,8 @@ Two separate settings in vault settings, both on by default:
 - **Let AI adjust the outcome** — lets AI shift an outcome one step better or worse when the situation warrants it, and it has to say why. The dice still decide the starting point.
 
 When either is on, **the faction's and the target's names and short descriptions are sent to your AI provider.** Turn them off and nothing leaves your device: outcomes are described locally instead, and everything else works exactly the same.
+
+There is also an off-by-default **Include participant lore with AI** setting. Turn it on only when you want a richer account: for that turn, the AI also receives each participant's aliases, up to 1,200 characters of their text and lore, and up to five of their named outgoing connections. It does not send unrelated entities or your whole vault.
 
 Faction turns never wait on AI. If your provider is slow, unreachable, or you have none set up, the dice result stands and the turn is described locally.
 

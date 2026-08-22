@@ -44,11 +44,30 @@ export interface FactionAiResolutionContext {
   permittedBands: OutcomeBandId[];
 }
 
+/** Additional participant context, included only after the GM opts in. */
+export interface FactionAiParticipantLore {
+  aliases: string[];
+  lore: string;
+  connections: {
+    entityTitle: string;
+    type: string;
+    strength: number;
+  }[];
+}
+
 export interface FactionTurnAiRequest {
   factionTitle: string;
   factionSummary: string;
   targetTitle: string;
   targetSummary: string;
+  /**
+   * Bounded participant details explicitly opted into in vault settings.
+   * Omitted by default so the normal request remains names plus summaries.
+   */
+  participantLore?: {
+    faction: FactionAiParticipantLore;
+    target: FactionAiParticipantLore;
+  };
   resolution: FactionAiResolutionContext;
   existingHold: { factionTitle: string; strength: number }[];
   /** FR-021f — independently switchable from narration. */
@@ -129,6 +148,17 @@ function buildPrompt(request: FactionTurnAiRequest): string {
         .map((h) => `- ${h.factionTitle} holds it at strength ${h.strength}`)
         .join("\n")
     : "- Nobody currently holds it.";
+  const participantLore = request.participantLore
+    ? [
+        "",
+        "Additional participant lore (use only as campaign context):",
+        formatParticipantLore(
+          "Acting faction",
+          request.participantLore.faction,
+        ),
+        formatParticipantLore("Target", request.participantLore.target),
+      ].join("\n")
+    : "";
 
   return [
     `Acting faction: ${request.factionTitle}`,
@@ -145,6 +175,29 @@ function buildPrompt(request: FactionTurnAiRequest): string {
     resolution.rollTotal !== null
       ? `They rolled ${resolution.rollTotal}, for a total of ${resolution.total}.`
       : "No dice were used; this was resolved by comparison alone.",
+    participantLore,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function formatParticipantLore(
+  label: string,
+  participant: FactionAiParticipantLore,
+): string {
+  const connections = participant.connections.length
+    ? participant.connections
+        .map(
+          (connection) =>
+            `- ${connection.entityTitle}: ${connection.type} (strength ${connection.strength})`,
+        )
+        .join("\n")
+    : "- No recorded outgoing connections.";
+
+  return [
+    `${label} aliases: ${participant.aliases.join(", ") || "None recorded."}`,
+    participant.lore ? `${label} lore: ${participant.lore}` : "",
+    `${label} connections:\n${connections}`,
   ]
     .filter(Boolean)
     .join("\n");

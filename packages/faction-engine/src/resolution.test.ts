@@ -116,6 +116,8 @@ describe("determinism (FR-019, SC-006)", () => {
     if (!result.ok) return;
     expect(result.value.roll).not.toBe(null);
     expect(result.value.roll?.dice.length).toBeGreaterThan(0);
+    // Opposed: the opposing side rolls too, so both totals move.
+    expect(result.value.roll?.opposingDice?.length).toBeGreaterThan(0);
     expect(result.value.total).toBeGreaterThan(result.value.actingValue);
   });
 });

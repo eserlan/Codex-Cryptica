@@ -26,6 +26,8 @@ import { vault as defaultVault } from "./vault.svelte";
 import type { LocalEntity } from "./vault/types";
 import { calendarStore as defaultCalendarStore } from "./calendar.svelte";
 import { getDB } from "../utils/idb";
+import { buildParticipantLore } from "./faction-turn-ai-context";
+import { builtInFactionTurnRoleMappings } from "./faction-turn-stat-roles";
 
 /**
  * Faction Turn store.
@@ -123,7 +125,10 @@ export class FactionTurnStore {
     await this.deps.vault.updateEntity(faction.id, {
       factionTurn: {
         enabled,
-        statRoles: faction.factionTurn?.statRoles ?? {},
+        statRoles: {
+          ...(faction.factionTurn?.statRoles ?? {}),
+          ...(enabled ? builtInFactionTurnRoleMappings(faction) : {}),
+        },
         lastTurnDate: faction.factionTurn?.lastTurnDate,
         history: faction.factionTurn?.history ?? [],
       },
@@ -233,6 +238,15 @@ export class FactionTurnStore {
         factionSummary: (faction.content ?? "").slice(0, 400),
         targetTitle: target.title,
         targetSummary: (target.content ?? "").slice(0, 400),
+        participantLore: this.settings.includeParticipantLore
+          ? {
+              faction: buildParticipantLore(
+                faction,
+                this.deps.vault.allEntities,
+              ),
+              target: buildParticipantLore(target, this.deps.vault.allEntities),
+            }
+          : undefined,
         resolution: {
           actingLabel: mechanical.value.resolution.actingLabel,
           actingValue: mechanical.value.resolution.actingValue,

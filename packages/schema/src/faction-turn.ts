@@ -122,6 +122,14 @@ export const FactionRollSnapshotSchema = z.object({
   formula: z.string(),
   total: z.number(),
   dice: z.array(z.number()).default([]),
+  /**
+   * The opposing side's roll. Influence is resolved as an *opposed* roll —
+   * both sides roll, and the margin decides the band. Rolling for only one
+   * side skews every matchup toward whoever rolled: an evenly matched pair
+   * would succeed essentially always.
+   */
+  opposingTotal: z.number().optional(),
+  opposingDice: z.array(z.number()).optional(),
 });
 
 export type FactionRollSnapshot = z.infer<typeof FactionRollSnapshotSchema>;
@@ -206,12 +214,17 @@ export type FactionTurnState = z.infer<typeof FactionTurnStateSchema>;
 
 /** Per-vault settings. Stored beside the calendar settings, not on any entity. */
 export const FactionTurnSettingsSchema = z.object({
-  turnIntervalUnit: z.enum(["year", "month"]).default("year"),
+  turnIntervalUnit: z.enum(["year", "month"]).default("month"),
   turnIntervalAmount: z.number().min(1).default(1),
   useRandomness: z.boolean().default(true),
   /** Independently switchable from narration (FR-021f). */
   aiBandSelection: z.boolean().default(true),
   aiNarration: z.boolean().default(true),
+  /**
+   * Off by default: a GM must explicitly choose to send more than the short
+   * participant summaries needed for ordinary AI turn narration.
+   */
+  includeParticipantLore: z.boolean().default(false),
   /** Opposition for a target no faction holds (FR-020c). */
   baselineOpposition: z.number().default(5),
 });

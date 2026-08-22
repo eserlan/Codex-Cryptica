@@ -571,6 +571,39 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     ],
   },
   {
+    id: "builtin-faction-turn",
+    name: "Faction Turns",
+    description:
+      "Influence, stability, power, and resources for factions that take turns between sessions.",
+    category: "faction",
+    isBuiltIn: true,
+    fields: [
+      { id: "sec_faction_turn", label: "Faction Turn", type: "heading" },
+      {
+        id: "influence",
+        label: "Influence",
+        type: "number",
+        min: 0,
+        max: 20,
+      },
+      {
+        id: "stability",
+        label: "Stability",
+        type: "number",
+        min: 0,
+        max: 20,
+      },
+      { id: "power", label: "Power", type: "number", min: 0, max: 20 },
+      {
+        id: "resources",
+        label: "Resources",
+        type: "number",
+        min: 0,
+        max: 20,
+      },
+    ],
+  },
+  {
     id: "builtin-item-generic",
     name: "Generic Item",
     description: "Quantity, weight, value, and charges for any item.",

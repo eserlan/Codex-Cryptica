@@ -80,21 +80,30 @@ export function resolveInfluence(
   // makes the deterministic mode genuinely reproducible (FR-019, SC-006).
   let roll: FactionResolution["roll"] = null;
   let actingTotal = acting.value;
+  let opposingTotal = opposition.value;
 
   if (settings.useRandomness) {
     const dice = deps.dice ?? defaultDice;
+
+    // Opposed: both sides roll. Rolling for only the acting side skews every
+    // matchup toward it — an evenly matched pair would succeed essentially
+    // always, and a faction could never lose ground to an equal rival.
     // `evaluate` parses and rolls in one step; `roll` takes a pre-parsed command.
-    const result = dice.evaluate(INFLUENCE_ROLL);
-    const dieValues = result.parts.flatMap((part) => part.rolls ?? []);
+    const actingRoll = dice.evaluate(INFLUENCE_ROLL);
+    const opposingRoll = dice.evaluate(INFLUENCE_ROLL);
+
     roll = {
-      formula: result.formula,
-      total: result.total,
-      dice: dieValues,
+      formula: `${actingRoll.formula} vs ${opposingRoll.formula}`,
+      total: actingRoll.total,
+      dice: actingRoll.parts.flatMap((part) => part.rolls ?? []),
+      opposingTotal: opposingRoll.total,
+      opposingDice: opposingRoll.parts.flatMap((part) => part.rolls ?? []),
     };
-    actingTotal = acting.value + result.total;
+    actingTotal = acting.value + actingRoll.total;
+    opposingTotal = opposition.value + opposingRoll.total;
   }
 
-  const mechanicalBand = bandForTotal(actingTotal, opposition.value);
+  const mechanicalBand = bandForTotal(actingTotal, opposingTotal);
 
   return {
     ok: true,
@@ -105,7 +114,7 @@ export function resolveInfluence(
       // turn's history.
       actingLabel: acting.label,
       actingValue: acting.value,
-      opposingValue: opposition.value,
+      opposingValue: opposingTotal,
       oppositionSource: opposition.source,
       oppositionDetail: opposition.detail,
       modifiers: [],

@@ -150,11 +150,12 @@ const noAi = {
 function makeStore(
   vault: ReturnType<typeof fakeVault>,
   calendar = fakeCalendar("entity"),
+  aiService: typeof noAi = noAi,
 ) {
   const store = new FactionTurnStore({
     vault: vault as never,
     calendarStore: calendar as never,
-    aiService: noAi as never,
+    aiService: aiService as never,
   });
   store.settings = {
     ...DEFAULT_FACTION_TURN_SETTINGS,
@@ -165,6 +166,51 @@ function makeStore(
   return store;
 }
 
+describe("AI participant lore", () => {
+  it("adds rich participant context only after the GM opts in", async () => {
+    const vault = fakeVault();
+    vault.entities["faction-a"] = entity({
+      ...factionEntity(),
+      aliases: ["The Eagles"],
+      lore: "Former rulers of the northern lakes.",
+      connections: [{ target: "loc-mub", type: "rival", strength: 7 }],
+    });
+    vault.entities["loc-mub"] = entity({
+      ...targetEntity,
+      lore: "A contested march.",
+    });
+    const generate = vi.fn(async () => ({
+      band: null,
+      reason: null,
+      narrative: null,
+      aiUsed: false,
+    }));
+    const store = makeStore(vault, fakeCalendar("entity"), { generate });
+    store.settings = {
+      ...store.settings,
+      aiNarration: true,
+      includeParticipantLore: true,
+    };
+
+    await store.propose(
+      vault.entities["faction-a"]!,
+      vault.entities["loc-mub"]!,
+    );
+
+    expect(generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        participantLore: expect.objectContaining({
+          faction: expect.objectContaining({
+            aliases: ["The Eagles"],
+            lore: "Former rulers of the northern lakes.",
+            connections: [{ entityTitle: "Mub", type: "rival", strength: 7 }],
+          }),
+        }),
+      }),
+    );
+  });
+});
+
 describe("opted-out factions are indistinguishable (FR-002, SC-008)", () => {
   it("reports the layer as off for an entity with no factionTurn block", () => {
     const store = makeStore(fakeVault());
@@ -174,6 +220,34 @@ describe("opted-out factions are indistinguishable (FR-002, SC-008)", () => {
   it("exposes no history for an entity that never opted in", () => {
     const store = makeStore(fakeVault());
     expect(store.history(entity())).toEqual([]);
+  });
+
+  it("maps the built-in Faction Turns stats automatically when enabling a faction", async () => {
+    const vault = fakeVault();
+    const faction = entity({
+      ...factionEntity(),
+      statSheet: {
+        templateId: "builtin-faction-turn",
+        fields: [
+          { id: "power", label: "Power", type: "number", value: 3 },
+          { id: "influence", label: "Influence", type: "number", value: 6 },
+          { id: "resources", label: "Resources", type: "number", value: 4 },
+          { id: "stability", label: "Stability", type: "number", value: 5 },
+        ],
+      },
+      factionTurn: undefined,
+    });
+    vault.entities[faction.id] = faction;
+    const store = makeStore(vault);
+
+    await store.setEnabled(faction, true);
+
+    expect(vault.entities[faction.id]?.factionTurn?.statRoles).toEqual({
+      power: "power",
+      influence: "influence",
+      resources: "resources",
+      stability: "stability",
+    });
   });
 });
 
@@ -345,13 +419,70 @@ describe("settings", () => {
   it("falls back to defaults when nothing is stored", async () => {
     const store = makeStore(fakeVault());
     await store.loadSettings();
-    expect(store.settings.turnIntervalUnit).toBe("year");
+    expect(store.settings.turnIntervalUnit).toBe("month");
+    expect(store.settings.turnIntervalAmount).toBe(1);
   });
 
-  it("persists and reloads a change", async () => {
+  it("persists and reloads the quarterly cadence", async () => {
     const store = makeStore(fakeVault());
-    await store.saveSettings({ turnIntervalAmount: 3 });
+    await store.saveSettings({
+      turnIntervalUnit: "month",
+      turnIntervalAmount: 3,
+    });
     await store.loadSettings();
+    expect(store.settings.turnIntervalUnit).toBe("month");
     expect(store.settings.turnIntervalAmount).toBe(3);
+  });
+});
+
+/**
+ * T080 — the feature's headline promise, asserted across every operation it
+ * offers rather than just the one where it is easiest to check.
+ *
+ * FR-006 and SC-003 say the campaign's world clock is read and never written.
+ * A regression here would be invisible until a GM noticed their campaign date
+ * had drifted, by which point the wrong dates are already in their history.
+ */
+describe("the world clock is never written (FR-006, SC-003)", () => {
+  it("survives propose, commit, undo and promote untouched", async () => {
+    const calendar = fakeCalendar("entity");
+    const before = JSON.stringify(calendar);
+    const vault = fakeVault();
+    const store = makeStore(vault, calendar);
+
+    const proposal = await store.propose(factionEntity(), targetEntity);
+    expect(proposal).not.toBe(null);
+    expect(JSON.stringify(calendar)).toBe(before);
+
+    await store.commit(proposal!);
+    expect(JSON.stringify(calendar)).toBe(before);
+
+    const faction = vault.entities["faction-a"];
+    const record = faction.factionTurn!.history[0];
+
+    await store.promote(faction, record);
+    expect(JSON.stringify(calendar)).toBe(before);
+
+    await store.undo(vault.entities["faction-a"], record);
+    expect(JSON.stringify(calendar)).toBe(before);
+  });
+
+  it("survives a discarded preview untouched", async () => {
+    const calendar = fakeCalendar("entity");
+    const before = JSON.stringify(calendar);
+    const store = makeStore(fakeVault(), calendar);
+
+    await store.propose(factionEntity(), targetEntity);
+    store.discard();
+    expect(JSON.stringify(calendar)).toBe(before);
+  });
+
+  it("survives a refused turn untouched", async () => {
+    const calendar = fakeCalendar("realWorld");
+    const before = JSON.stringify(calendar);
+    const store = makeStore(fakeVault(), calendar);
+
+    await store.propose(factionEntity(), targetEntity);
+    expect(JSON.stringify(calendar)).toBe(before);
   });
 });

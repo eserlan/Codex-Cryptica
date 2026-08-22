@@ -125,12 +125,16 @@ describe("accepted world-date tiers", () => {
 
 describe("pacing (FR-010 - FR-014)", () => {
   const last = toWorldDateStamp(resolved("entity", 640, 3, 12), 1);
+  const yearlySettings = {
+    ...DEFAULT_FACTION_TURN_SETTINGS,
+    turnIntervalUnit: "year" as const,
+  };
 
   it("is always eligible when the faction has never acted (FR-011)", () => {
     const result = evaluateEligibility(
       state(),
       resolved("entity", 1, 1, 1),
-      DEFAULT_FACTION_TURN_SETTINGS,
+      yearlySettings,
       CAL,
     );
     expect(result.state).toBe("never-acted");
@@ -141,7 +145,7 @@ describe("pacing (FR-010 - FR-014)", () => {
     const result = evaluateEligibility(
       state({ lastTurnDate: last }),
       resolved("entity", 640, 6, 1),
-      DEFAULT_FACTION_TURN_SETTINGS,
+      yearlySettings,
       CAL,
     );
     expect(result.state).toBe("too-soon");
@@ -153,7 +157,7 @@ describe("pacing (FR-010 - FR-014)", () => {
     const result = evaluateEligibility(
       state({ lastTurnDate: last }),
       resolved("entity", 640, 6, 1),
-      DEFAULT_FACTION_TURN_SETTINGS,
+      yearlySettings,
       CAL,
     );
     expect(result.lastTurnDate).toEqual(last);
@@ -192,6 +196,19 @@ describe("pacing (FR-010 - FR-014)", () => {
       CAL,
     );
     expect(ready.state).toBe("eligible");
+  });
+
+  it("names the full last and next dates when a monthly turn is still too soon", () => {
+    const result = evaluateEligibility(
+      state({ lastTurnDate: last }),
+      resolved("entity", 640, 3, 20),
+      DEFAULT_FACTION_TURN_SETTINGS,
+      CAL,
+    );
+
+    expect(result.reason).toBe(
+      "This faction acted in 640, month 3, day 12 and can act again in 640, month 4, day 12.",
+    );
   });
 
   it("rolls a month interval over the year boundary", () => {

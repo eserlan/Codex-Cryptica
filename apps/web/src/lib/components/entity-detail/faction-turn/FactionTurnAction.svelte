@@ -3,6 +3,7 @@
   import type { EligibilityResult } from "@codex/faction-engine";
   import { factionTurn } from "$lib/stores/faction-turn.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { canTargetWithFactionTurn } from "./targeting";
 
   let {
     entity,
@@ -12,11 +13,11 @@
   let query = $state("");
   let targetId = $state("");
 
-  /** Any entity but the acting faction itself (FR-016). */
+  /** World entities a faction can meaningfully influence (FR-016). */
   const candidates = $derived.by(() => {
     const term = query.trim().toLowerCase();
     return vault.allEntities
-      .filter((e) => e.id !== entity.id)
+      .filter((candidate) => canTargetWithFactionTurn(entity.id, candidate))
       .filter((e) => !term || e.title.toLowerCase().includes(term))
       .slice(0, 50);
   });

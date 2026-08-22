@@ -134,6 +134,51 @@ describe("switches (FR-021f, Constitution V)", () => {
     expect(result.band).toBe(null);
     expect(result.narrative).toBe("Prose.");
   });
+
+  it("includes expanded participant lore only when the caller opts in", async () => {
+    const generateContent = vi.fn(async () => ({
+      response: { text: () => JSON.stringify({ narrative: "Prose." }) },
+    }));
+    const getModel = vi.fn(async () => ({ generateContent }));
+    const service = new FactionTurnGenerationService({ client: { getModel } });
+
+    await service.generate(
+      request({
+        participantLore: {
+          faction: {
+            aliases: ["The Eagles"],
+            lore: "They once ruled the northern lakes.",
+            connections: [
+              { entityTitle: "Lakeguard", type: "ally", strength: 8 },
+            ],
+          },
+          target: {
+            aliases: [],
+            lore: "A bitterly contested march.",
+            connections: [],
+          },
+        },
+      }),
+    );
+
+    const input = generateContent.mock.calls[0]?.[0] as {
+      contents: { parts: { text: string }[] }[];
+    };
+    expect(input.contents[0]?.parts[0]?.text).toContain("The Eagles");
+    expect(input.contents[0]?.parts[0]?.text).toContain(
+      "They once ruled the northern lakes.",
+    );
+    expect(input.contents[0]?.parts[0]?.text).toContain("Lakeguard");
+
+    generateContent.mockClear();
+    await service.generate(request());
+    const defaultInput = generateContent.mock.calls[0]?.[0] as {
+      contents: { parts: { text: string }[] }[];
+    };
+    expect(defaultInput.contents[0]?.parts[0]?.text).not.toContain(
+      "The Eagles",
+    );
+  });
 });
 
 describe("response handling", () => {

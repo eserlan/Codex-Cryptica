@@ -204,19 +204,19 @@ Monorepo per plan.md: `packages/*` for libraries, `apps/web/src/lib` for the thi
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T080 Write a cross-cutting test asserting `calendarStore.config` is unchanged before and after **every** operation the feature offers — propose, commit, discard, undo and promote (FR-006, SC-003). This is the feature's headline promise and its only other coverage is the manual step T091
+- [x] T080 Write a cross-cutting test asserting `calendarStore.config` is unchanged before and after **every** operation the feature offers — propose, commit, discard, undo and promote (FR-006, SC-003). This is the feature's headline promise and its only other coverage is the manual step T091
 - [x] T081 [P] Write the help article as `apps/web/src/lib/content/help/faction-turns.md` — markdown with frontmatter `id / title / description / icon / rank / tags`, glob-loaded by `loadHelpArticles()` (`apps/web/src/lib/content/loader.ts:94`); follow `help/entity-timeline.md` as the model. **Required by Constitution Principle VII**, not optional. It MUST cover: opting a faction in, mapping stats to roles, why a faction may not be eligible yet, reading the outcome breakdown, and undo. It MUST also disclose in plain language (Principle IX) that when AI is enabled the faction's and target's names and short descriptions are sent to the configured AI provider, and that both AI switches can be turned off with no loss of function — a contract file is not user disclosure (Principle V)
 - [x] T082 [P] Add a `FEATURE_HELP_ARTICLES` key in `apps/web/src/lib/config/help-content.ts` pointing at `"faction-turns"`, and link it from the Faction Turn tab so the article is reachable from the feature itself
 - [x] T083 [P] Add a `FeatureHint` in `FEATURE_HINTS` (`help-content.ts:177`) plus a `HINT_KEYS` entry, covering the opt-in flow and the eligibility gate
-- [ ] T084 Write the marketing blog post as `apps/web/src/lib/content/blog/faction-turns.md` — frontmatter `id / slug / title / description / keywords / publishedAt / image / imageAlt`, following `blog/vtt-introduction.md` as the model. Lead with the problem (a world that stays frozen between sessions), not the mechanics. Cover the dice-decide/AI-narrates split, why the world clock stays under GM control, and preview-then-commit. Capture screenshots, upload to R2 under `assets.codexcryptica.com/images/blog/faction-turns/`, and follow the repo's blog workflow (draft on the `blog` branch, merge to `main`, `deploy-blog-content`). **Publish only after the feature ships** — `publishedAt` goes live on the marketing site
-- [ ] T085 [P] Verify `@codex/faction-engine` meets the 70% coverage bar for new packages (Principle X) via `bun run --filter @codex/faction-engine test:coverage`
-- [ ] T086 [P] Confirm no function in `packages/faction-engine` touches storage, network or DOM (Principle I) — grep for `fetch`, `idb`, `document`, `window` — and that its import graph contains no `.svelte.ts` module, so no Svelte rune is ever pulled into a package compiled and tested without the Svelte compiler
-- [ ] T087 [P] Tune per-band magnitudes against a real vault (plan.md open item 1)
-- [ ] T088 [P] Tune the baseline opposition default (plan.md open item 2)
-- [ ] T089 Add a Playwright end-to-end spec covering opt-in → map roles → take turn → commit → undo
-- [ ] T090 Run `bun run lint` and `bun run test` across the workspace; fix all findings
+- [x] T084 Write the marketing blog post as `apps/web/src/lib/content/blog/faction-turns.md` — frontmatter `id / slug / title / description / keywords / publishedAt / image / imageAlt`, following `blog/vtt-introduction.md` as the model. Lead with the problem (a world that stays frozen between sessions), not the mechanics. Cover the dice-decide/AI-narrates split, why the world clock stays under GM control, and preview-then-commit. Capture screenshots, upload to R2 under `assets.codexcryptica.com/images/blog/faction-turns/`, and follow the repo's blog workflow (draft on the `blog` branch, merge to `main`, `deploy-blog-content`). **Publish only after the feature ships** — `publishedAt` goes live on the marketing site
+- [x] T085 [P] Verify `@codex/faction-engine` meets the 70% coverage bar for new packages (Principle X) via `bun run --filter @codex/faction-engine test:coverage`
+- [x] T086 [P] Confirm no function in `packages/faction-engine` touches storage, network or DOM (Principle I) — grep for `fetch`, `idb`, `document`, `window` — and that its import graph contains no `.svelte.ts` module, so no Svelte rune is ever pulled into a package compiled and tested without the Svelte compiler
+- [x] T087 [P] Tune per-band magnitudes against a real vault (plan.md open item 1)
+- [x] T088 [P] Tune the baseline opposition default (plan.md open item 2)
+- [x] T089 Add a Playwright end-to-end spec covering opt-in → map roles → take turn → commit → undo
+- [x] T090 Run `bun run lint` and `bun run test` across the workspace; fix all findings
 - [ ] T091 **Manual verification in the running app** — opt a faction in, map roles, take a turn with AI on, take one with AI off, commit, undo, promote to an event, and confirm the world clock never moved. Green unit tests are **not** sufficient evidence for this feature
-- [ ] T092 Add a user-facing changelog entry to `apps/web/src/lib/content/changelog/releases.json` — feature-level only, no implementation detail
+- [x] T092 Add a user-facing changelog entry to `apps/web/src/lib/content/changelog/releases.json` — feature-level only, no implementation detail
 
 ---
 
