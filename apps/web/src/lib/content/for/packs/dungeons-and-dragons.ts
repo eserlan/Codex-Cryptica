@@ -8,74 +8,74 @@ export const dungeonsAndDragons: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for D&D 5e Campaign Management",
     description:
-      "Organise your D&D 5e campaign with connected characters, factions, locations, quests, maps, session notes, and worldbuilding tools.",
+      "A campaign manager for D&D Dungeon Masters. Keep NPCs, factions, locations, quests, maps, and session notes connected between sessions.",
   },
   hero: {
-    eyebrow: "5e Campaign & World Management",
+    eyebrow: "Campaign Management for Dungeon Masters",
     title: "Codex Cryptica for Dungeons & Dragons 5e",
     tagline:
-      "Keep characters, factions, locations, quests, and campaign lore connected in one place.",
+      "Keep every NPC, faction, location, and quest in your campaign connected — and findable when the party goes off-book.",
     problemStatement:
-      "D&D campaigns quickly grow into a web of character backstories, quests, factions, locations, and NPCs. When the party follows a forgotten rumour to a distant stronghold, you shouldn't have to dig through scattered notes to remember who controls the region — or why it matters.",
+      "Every session adds another NPC, another rumour, and another faction the party has annoyed. Three months in, you are the one who has to remember why the local warden owes them a favour — usually mid-session, while five players wait for you to find the note.",
   },
   useCases: [
     {
-      title: "Adventuring Parties & Factions",
+      title: "The Party, Their Allies & Their Enemies",
       description:
-        "Map player characters, party patrons, rival adventuring guilds, and villainous factions with a visual relationship graph.",
+        "Track player characters, the NPCs from their backstories, the patrons who send them work, and the factions they have made enemies of — all on one relationship graph.",
       icon: "icon-[lucide--users]",
     },
     {
       title: "Dungeons, Settlements & Regions",
       description:
-        "Connect dungeons, towns, strongholds, wilderness regions, and planar locations to the characters and factions that inhabit them.",
+        "Connect dungeons, towns, strongholds, wilderness regions, and other planes to the people and factions who hold them.",
       icon: "icon-[lucide--castle]",
     },
     {
       title: "Quests, Clues & Session Notes",
       description:
-        "Keep active quests, rumours, clues, session notes, and campaign milestones connected to the people and places they involve.",
+        "Keep active quests, the hooks your party ignored, the clues they have found, and last session's notes tied to the people and places involved.",
       icon: "icon-[lucide--scroll]",
     },
     {
-      title: "Magic Items & Pantheons",
+      title: "Magic Items, Gods & Lore",
       description:
-        "Connect legendary items to their creators, owners, histories, gods, temples, and the adventures surrounding them.",
+        "Link a legendary item to who forged it, who lost it, which temple wants it back, and the adventure that put it in the party's hands.",
       icon: "icon-[lucide--sparkles]",
     },
   ],
   exampleGraph: {
-    title: "Sample D&D 5e Campaign Web",
+    title: "Sample D&D Campaign Web",
     description:
-      "See how adventuring parties, patron guilds, villainous cults, and adventure sites connect in a campaign graph.",
+      "See how a party, its patron, the villains hunting it, and the site of the next adventure connect in one campaign graph.",
     steps: [
       {
         label: "The Ashen Company",
-        sublabel: "Adventuring Party",
+        sublabel: "The Party",
         category: "faction",
       },
       {
         label: "Lord Caspian Vane",
         sublabel: "Patron • High Warden",
-        relation: "Sponsored by",
+        relation: "Backed by",
         category: "character",
       },
       {
         label: "Cult of the Black Flame",
-        sublabel: "Villainous Faction",
-        relation: "Opposes",
+        sublabel: "Enemy Cult",
+        relation: "Hunted by",
         category: "faction",
       },
       {
-        label: "Sunken Citadel of Ash",
-        sublabel: "Ancient Citadel",
-        relation: "Explores",
+        label: "The Drowned Hold",
+        sublabel: "Ruined Dwarven Stronghold",
+        relation: "Delving into",
         category: "location",
       },
       {
         label: "Eye of the Sun God",
-        sublabel: "Artifact of Power",
-        relation: "Seeks",
+        sublabel: "Lost Artifact",
+        relation: "Searching for",
         category: "item",
       },
     ],
@@ -84,28 +84,28 @@ export const dungeonsAndDragons: LandingPageConfig = {
     {
       title: "D&D NPC Generator",
       description:
-        "Create NPCs with distinct motives, personalities, backgrounds, and roles in your campaign.",
+        "Create an NPC with a name, a motive, and a reason to care about the party — during prep or mid-session.",
       href: "/tools/dnd-npc-generator",
       badge: "Generator",
     },
     {
       title: "Dungeon Generator",
       description:
-        "Generate dungeons, dangerous locations, encounters, and adventure-ready details.",
+        "Generate a dungeon with rooms, hazards, and inhabitants for the session you did not prepare.",
       href: "/generators/dungeon-generator",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Create quest hooks, patron requests, mysteries, and complications for your campaign.",
+        "Create hooks, patron requests, rumours, and complications to drop in when the party finishes early.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
     {
       title: "Magic Item Generator",
       description:
-        "Create distinctive magic items, artefacts, histories, and adventure hooks.",
+        "Create magic items that come with a history, a previous owner, and a hook attached.",
       href: "/generators/magic-item",
       badge: "Generator",
     },
@@ -113,7 +113,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
   cta: {
     title: "Organise Your D&D Campaign",
     description:
-      "Keep your D&D campaign connected with relationship graphs, interactive maps, and local-first storage.",
+      "Keep your campaign's people, places, and plots connected between sessions, with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },
