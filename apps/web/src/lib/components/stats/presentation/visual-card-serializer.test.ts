@@ -12,7 +12,10 @@ describe("syncSourceFromVisualCards", () => {
         columns: 2,
         tableHeaders: ["STR", "DEX"],
         rows: [
-          [{ kind: "field", fieldId: "str" }, { kind: "field", fieldId: "dex" }]
+          [
+            { kind: "field", fieldId: "str" },
+            { kind: "field", fieldId: "dex" },
+          ],
         ],
       },
     ];
@@ -33,7 +36,10 @@ describe("syncSourceFromVisualCards", () => {
         mode: "grid",
         columns: 2,
         rows: [
-          [{ kind: "field", fieldId: "hp" }, { kind: "field", fieldId: "mp" }]
+          [
+            { kind: "field", fieldId: "hp" },
+            { kind: "field", fieldId: "mp" },
+          ],
         ],
       },
     ];
@@ -48,27 +54,61 @@ describe("syncSourceFromVisualCards", () => {
   });
 
   it("applies field display overrides correctly", () => {
-     const cards: VisualCard[] = [
+    const cards: VisualCard[] = [
       {
         id: "3",
         title: "Health",
         mode: "grid",
         columns: 1,
-        rows: [
-          [{ kind: "field", fieldId: "hp" }]
-        ],
+        rows: [[{ kind: "field", fieldId: "hp" }]],
       },
     ];
 
-    const schemaFields = [
-      { id: "hp", type: "number", label: "HP" }
-    ];
+    const schemaFields = [{ id: "hp", type: "number", label: "HP" }];
 
     const overrides = {
-      hp: { displayMode: "progress", hideLabel: true }
+      hp: { displayMode: "progress", hideLabel: true },
     };
 
-    const source = syncSourceFromVisualCards(cards, schemaFields as any, overrides);
+    const source = syncSourceFromVisualCards(
+      cards,
+      schemaFields as any,
+      overrides,
+    );
     expect(source).toContain('{{stat.hp display="progress" hide-label}}');
+  });
+
+  it("omits markdown heading line when table card title is blank or whitespace", () => {
+    const cards: VisualCard[] = [
+      {
+        id: "4",
+        title: "",
+        mode: "table",
+        columns: 2,
+        tableHeaders: ["Item", "Notes"],
+        rows: [[{ kind: "field", fieldId: "hp" }]],
+      },
+    ];
+
+    const source = syncSourceFromVisualCards(cards, [], {});
+    expect(source).not.toContain("###");
+    expect(source).toContain("| Item | Notes |");
+    expect(source).toContain("| [hp] | - |");
+  });
+
+  it("omits markdown heading line when grid card title is blank or whitespace", () => {
+    const cards: VisualCard[] = [
+      {
+        id: "5",
+        title: "   ",
+        mode: "grid",
+        columns: 2,
+        rows: [[{ kind: "field", fieldId: "hp" }]],
+      },
+    ];
+
+    const source = syncSourceFromVisualCards(cards, [], {});
+    expect(source).not.toContain("###");
+    expect(source).toContain(":::card");
   });
 });

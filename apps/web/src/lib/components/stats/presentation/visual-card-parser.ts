@@ -49,18 +49,25 @@ export function parseCardsFromSource(
     return fieldIds;
   }
 
+  function extractTextFromNodes(nodes: any[]): string {
+    return (nodes ?? [])
+      .map((n) => {
+        if (n.type === "text") return n.text;
+        if (n.children) return extractTextFromNodes(n.children);
+        return "";
+      })
+      .join("");
+  }
+
   function processBlockNode(node: any, currentHeadingTitle: string): string {
     let activeTitle = currentHeadingTitle;
     if (node.type === "heading") {
-      const textNode = node.children?.find((c: any) => c.type === "text");
-      if (textNode && "text" in textNode) {
-        activeTitle = textNode.text;
-      }
+      activeTitle = extractTextFromNodes(node.children);
     } else if (node.type === "table") {
       const rows: VisualCell[][] = [];
       const headers = (node.header ?? []).map((cellNodes: any[]) => {
-        const t = cellNodes.find((c: any) => c.type === "text");
-        return t && "text" in t ? t.text : "Col";
+        const t = extractTextFromNodes(cellNodes);
+        return t || "Col";
       });
       for (const rowCells of node.rows ?? []) {
         const row: VisualCell[] = [];
@@ -82,7 +89,7 @@ export function parseCardsFromSource(
       }
       cards.push({
         id: Math.random().toString(36).slice(2, 9),
-        title: activeTitle || `Table ${cards.length + 1}`,
+        title: activeTitle,
         columns: headers.length || 2,
         mode: "table",
         tableHeaders: headers.length > 0 ? headers : ["Field", "Value"],
@@ -99,7 +106,7 @@ export function parseCardsFromSource(
       }
       cards.push({
         id: Math.random().toString(36).slice(2, 9),
-        title: activeTitle || `Card ${cards.length + 1}`,
+        title: activeTitle,
         columns: 2,
         mode: "grid",
         rows: rows.length > 0 ? rows : [[]],
@@ -118,7 +125,7 @@ export function parseCardsFromSource(
           }
           cards.push({
             id: Math.random().toString(36).slice(2, 9),
-            title: activeTitle || `Card ${cards.length + 1}`,
+            title: activeTitle,
             columns: cols,
             mode: "grid",
             rows: rows.length > 0 ? rows : [[]],
@@ -129,7 +136,7 @@ export function parseCardsFromSource(
           if (fIds.length > 0) {
             cards.push({
               id: Math.random().toString(36).slice(2, 9),
-              title: activeTitle || `Group ${cards.length + 1}`,
+              title: activeTitle,
               columns: cols,
               mode: "grid",
               rows: [fIds.map((fieldId) => ({ kind: "field", fieldId }))],
@@ -138,14 +145,23 @@ export function parseCardsFromSource(
           }
         }
       }
+    } else if (node.type === "paragraph") {
+      const fIds = extractFieldIdsFromNode(node);
+      if (fIds.length > 0) {
+        cards.push({
+          id: Math.random().toString(36).slice(2, 9),
+          title: activeTitle,
+          columns: 2,
+          mode: "grid",
+          rows: [fIds.map((fieldId) => ({ kind: "field", fieldId }))],
+        });
+        activeTitle = "";
+      }
     } else if (node.type === "section" || node.type === "row") {
       if (node.type === "section") {
         activeTitle =
           node.title ||
-          node.heading?.children
-            ?.filter((child: any) => child.type === "text")
-            .map((child: any) => child.text)
-            .join("") ||
+          (node.heading ? extractTextFromNodes(node.heading.children) : "") ||
           activeTitle;
       }
       for (const child of node.children ?? []) {
@@ -160,7 +176,7 @@ export function parseCardsFromSource(
     titleState = processBlockNode(node, titleState);
   }
 
-  if (cards.length === 0 && schemaFields.length > 0) {
+  if (cards.length === 0 && schemaFields.length > 0 && !src.trim()) {
     let currentCard: VisualCard = {
       id: "c1",
       title: "Overview",
