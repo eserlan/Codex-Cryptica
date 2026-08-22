@@ -21,7 +21,6 @@ import { factionConfig } from "./public-faction-constants";
 export const creatureConfig = {
   genres: factionConfig.themes,
   categories: [
-    "Random",
     "Natural Beast",
     "Magical Beast / Chimera",
     "Aberration / Eldritch Horror",
@@ -34,7 +33,6 @@ export const creatureConfig = {
     "Colossal / Kaiju-Scale Titan",
   ],
   threatLevels: [
-    "Random",
     "Harmless / Ambient",
     "Minor Nuisance / Scavenger",
     "Dangerous / Predator",
@@ -43,7 +41,6 @@ export const creatureConfig = {
     "Legendary / Cataclysmic",
   ],
   sizes: [
-    "Random",
     "Tiny / Diminutive",
     "Small",
     "Medium / Human-sized",
@@ -52,7 +49,6 @@ export const creatureConfig = {
     "Gargantuan / Titanic",
   ],
   temperaments: [
-    "Random",
     "Instinctual / Animal",
     "Cunning / Pack Mind",
     "Semi-Sapient / Tool-User",
@@ -60,7 +56,6 @@ export const creatureConfig = {
     "Alien / Incomprehensible Mind",
   ],
   habitats: [
-    "Random",
     "Subterranean / Caverns",
     "Dense Forest / Deep Jungle",
     "Mountain Peaks / Cliffs",
@@ -149,7 +144,6 @@ export const creatureConfig = {
     ],
   } as Record<string, string[]>,
   ecologicalRoles: [
-    "Random",
     "Apex Predator",
     "Ambush Hunter",
     "Herbivore / Migratory Grazer",
