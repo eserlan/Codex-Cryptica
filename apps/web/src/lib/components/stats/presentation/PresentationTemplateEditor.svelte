@@ -10,6 +10,7 @@
     getUnusedFields,
     parseCardsFromSource,
   } from "./visual-card-parser";
+  import { syncSourceFromVisualCards } from "./visual-card-serializer";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
@@ -86,98 +87,10 @@
     parseCardsFromSource(source, schema?.fields),
   );
 
-  function syncSourceFromVisualCards(cards: VisualCard[]) {
-    let out = "";
-    const fields = schema?.fields ?? [];
-    for (const card of cards) {
-      if (card.title) {
-        out += `### ${card.title}\n`;
-      }
-      if (card.mode === "table") {
-        const headers =
-          card.tableHeaders && card.tableHeaders.length > 0
-            ? card.tableHeaders
-            : ["Field", "Value"];
-        const markdownHeaders = headers.map((header) =>
-          header.replace(/\r?\n/g, " ").replace(/\|/g, "\\|"),
-        );
-        out += `| ${markdownHeaders.join(" | ")} |\n`;
-        out += `| ${headers.map(() => "---").join(" | ")} |\n`;
-        for (const row of card.rows) {
-          if (row.length === 0) continue;
-          const cells = row.map((cell) => {
-            if (cell.kind === "value") {
-              return cell.value.replace(/\r?\n/g, " ").replace(/\|/g, "\\|");
-            }
-            const fid = cell.fieldId;
-            const f = fields.find((x) => x.id === fid);
-            const override = fieldDisplayOverrides[fid];
-            const mode =
-              override?.displayMode ??
-              (f?.type === "counter" ? "current-max" : undefined);
-            const hideLabel = override?.hideLabel;
-            if (
-              hideLabel ||
-              (override?.displayMode &&
-                override.displayMode !== "plain" &&
-                override.displayMode !==
-                  (f?.type === "counter" ? "current-max" : undefined))
-            ) {
-              let attrs = [];
-              if (mode) attrs.push(`display="${mode}"`);
-              if (hideLabel) attrs.push("hide-label");
-              return `{{stat.${fid}${attrs.length > 0 ? " " + attrs.join(" ") : ""}}}`;
-            }
-            if (mode && mode !== "plain") return `[${fid}:${mode}]`;
-            return `[${fid}]`;
-          });
-          while (cells.length < headers.length) {
-            cells.push("-");
-          }
-          out += `| ${cells.join(" | ")} |\n`;
-        }
-        out += `\n`;
-      } else {
-        out += `:::card\n`;
-        for (const row of card.rows) {
-          if (row.length === 0) continue;
-          out += `:::stat-group columns=${card.columns}\n`;
-          for (const cell of row) {
-            if (cell.kind !== "field") continue;
-            const fid = cell.fieldId;
-            const f = fields.find((x) => x.id === fid);
-            if (f) {
-              const override = fieldDisplayOverrides[fid];
-              const mode =
-                override?.displayMode ??
-                (f.type === "counter" ? "current-max" : undefined);
-              const hideLabel = override?.hideLabel;
-              if (
-                hideLabel ||
-                (override?.displayMode &&
-                  override.displayMode !== "plain" &&
-                  override.displayMode !==
-                    (f.type === "counter" ? "current-max" : undefined))
-              ) {
-                let attrs = [];
-                if (mode) attrs.push(`display="${mode}"`);
-                if (hideLabel) attrs.push("hide-label");
-                out += `{{stat.${fid}${attrs.length > 0 ? " " + attrs.join(" ") : ""}}}\n`;
-              } else if (mode && mode !== "plain") {
-                out += `[${fid}:${mode}]\n`;
-              } else {
-                out += `[${fid}]\n`;
-              }
-            } else {
-              out += `[${fid}]\n`;
-            }
-          }
-          out += `:::\n`;
-        }
-        out += `:::\n\n`;
-      }
-    }
-    source = out.trim();
+
+
+  function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
+    source = syncSourceFromVisualCards(cards, schema?.fields ?? [], fieldDisplayOverrides);
   }
 
   function addVisualCard(mode: "grid" | "table" = "grid") {
@@ -193,7 +106,7 @@
         mode === "table" ? ["Stat / Item", "Value / Dice"] : undefined,
       rows: [[]],
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function updateCardColumns(cardId: string, value: number) {
@@ -213,7 +126,7 @@
         rows: card.rows.map((row) => row.slice(0, columns)),
       };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function updateTableHeader(
@@ -227,19 +140,19 @@
       headers[headerIndex] = value;
       return { ...card, tableHeaders: headers };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeVisualCard(cardId: string) {
     visualCards = visualCards.filter((c) => c.id !== cardId);
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addRowToCard(cardId: string) {
     visualCards = visualCards.map((c) =>
       c.id === cardId ? { ...c, rows: [...c.rows, []] } : c,
     );
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeRowFromCard(cardId: string, rowIndex: number) {
@@ -248,7 +161,7 @@
       const nextRows = c.rows.filter((_, idx) => idx !== rowIndex);
       return { ...c, rows: nextRows.length > 0 ? nextRows : [[]] };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addFieldToCardRow(
@@ -265,7 +178,7 @@
       );
       return { ...c, rows: nextRows };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addValueToTableRow(cardId: string, rowIndex: number) {
@@ -280,7 +193,7 @@
         ),
       };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function updateValueInTableRow(
@@ -304,7 +217,7 @@
         ),
       };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeValueFromTableRow(
@@ -323,7 +236,7 @@
         ),
       };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeFieldFromCardRow(
@@ -342,7 +255,7 @@
       );
       return { ...c, rows: nextRows };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function moveCard(index: number, direction: -1 | 1) {
@@ -353,7 +266,7 @@
     copy[index] = copy[target];
     copy[target] = temp;
     visualCards = copy;
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   let draggedCardIndex = $state<number | null>(null);
@@ -369,7 +282,7 @@
     copy.splice(index, 0, item);
     draggedCardIndex = index;
     visualCards = copy;
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
   function handleCardDragEnd() {
     draggedCardIndex = null;
@@ -435,7 +348,7 @@
       }
       return { ...c, rows: nextRows };
     });
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
   let isSaving = $state(false);
   let saveError = $state("");
@@ -446,7 +359,7 @@
 
   // Reconstructs per-field overrides (hide-label, non-default display mode)
   // from the raw saved source so reopening the visual editor doesn't start
-  // from a blank slate — syncSourceFromVisualCards() regenerates the whole
+  // from a blank slate — handleSyncSourceFromVisualCards() regenerates the whole
   // template from this map, so a stale/empty seed silently drops previously
   // saved overrides on the next visual edit.
   function deriveFieldDisplayOverrides(
@@ -528,7 +441,7 @@
       ...fieldDisplayOverrides[fieldId],
       displayMode,
     };
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
     closeChipContextMenu();
   }
 
@@ -538,7 +451,7 @@
       ...fieldDisplayOverrides[fieldId],
       hideLabel: !current,
     };
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
     closeChipContextMenu();
   }
 
@@ -1045,7 +958,7 @@
                             : "Card Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
-                            syncSourceFromVisualCards(visualCards);
+                            handleSyncSourceFromVisualCards(visualCards);
                           }}
                         />
                       </div>
