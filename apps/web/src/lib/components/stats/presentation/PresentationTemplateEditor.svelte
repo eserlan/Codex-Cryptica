@@ -87,10 +87,12 @@
     parseCardsFromSource(source, schema?.fields),
   );
 
-
-
   function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
-    source = syncSourceFromVisualCards(cards, schema?.fields ?? [], fieldDisplayOverrides);
+    source = syncSourceFromVisualCards(
+      cards,
+      schema?.fields ?? [],
+      fieldDisplayOverrides,
+    );
   }
 
   function addVisualCard(mode: "grid" | "table" = "grid") {
@@ -954,8 +956,11 @@
                           class="rounded border border-theme-border bg-theme-bg px-2 py-0.5 text-xs font-bold text-theme-text"
                           value={card.title}
                           placeholder={card.mode === "table"
+                            ? "Table Title (optional)"
+                            : "Section Title (optional)"}
+                          aria-label={card.mode === "table"
                             ? "Table Title"
-                            : "Card Title"}
+                            : "Section Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
                             handleSyncSourceFromVisualCards(visualCards);
