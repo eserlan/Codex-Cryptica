@@ -4,16 +4,16 @@
 /// <reference lib="webworker" />
 
 import { build, files, prerendered, version } from "$service-worker";
-import { activateBuild, precacheBuild } from "$lib/service-worker/lifecycle";
+import {
+  activateBuild,
+  getPrecacheAssets,
+  precacheBuild,
+} from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "502";
+const CACHE_VERSION = "559";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
-const ASSETS = [
-  ...build, // the app itself
-  ...files, // everything in `static`
-  ...prerendered, // prerendered routes, including "/" (the app shell)
-];
+const ASSETS = getPrecacheAssets({ build, files, prerendered });
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 

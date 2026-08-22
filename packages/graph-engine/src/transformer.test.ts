@@ -8,6 +8,34 @@ import {
 import type { Entity } from "schema";
 
 describe("GraphTransformer", () => {
+  it("caps rendered edges while retaining all provided nodes", () => {
+    const entities = Array.from({ length: 4 }, (_, source) => ({
+      id: `node-${source}`,
+      type: "npc",
+      title: `Node ${source}`,
+      tags: [],
+      labels: [],
+      content: "",
+      connections: Array.from({ length: 4 }, (_, target) => ({
+        target: `node-${target}`,
+        type: "knows",
+      })),
+    })) as Entity[];
+
+    const elements = GraphTransformer.entitiesToElements(
+      entities,
+      undefined,
+      3,
+    );
+
+    expect(
+      elements.filter((element) => element.group === "nodes"),
+    ).toHaveLength(4);
+    expect(
+      elements.filter((element) => element.group === "edges"),
+    ).toHaveLength(3);
+  });
+
   it("should transform entities to nodes and edges", () => {
     const entities: Entity[] = [
       {
@@ -263,13 +291,13 @@ describe("GraphTransformer", () => {
     expect(livingNode?.data.isPast).toBeUndefined();
   });
 
-  it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
+  it("should mark nodes as revealed if labels (or legacy tags) contain 'revealed' or 'visible'", () => {
     const entities: any[] = [
       {
         id: "n1",
         type: "npc",
         title: "Node 1",
-        tags: ["REVEALED"],
+        labels: ["REVEALED"],
         connections: [],
         content: "",
       },
@@ -285,7 +313,15 @@ describe("GraphTransformer", () => {
         id: "n3",
         type: "npc",
         title: "Node 3",
-        tags: ["hidden"],
+        labels: ["hidden"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n4",
+        type: "npc",
+        title: "Node 4",
+        tags: ["revealed"],
         connections: [],
         content: "",
       },
@@ -303,13 +339,19 @@ describe("GraphTransformer", () => {
       (e): e is GraphNode => e.group === "nodes" && e.data.id === "n3",
     );
 
+    const node4 = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n4",
+    );
+
     expect(node1).toBeDefined();
     expect(node2).toBeDefined();
     expect(node3).toBeDefined();
+    expect(node4).toBeDefined();
 
     expect((node1?.data as any).isRevealed).toBe(true);
     expect((node2?.data as any).isRevealed).toBe(true);
     expect((node3?.data as any).isRevealed).toBeUndefined();
+    expect((node4?.data as any).isRevealed).toBe(true);
   });
 
   it("should format dates correctly", () => {

@@ -31,120 +31,9 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
-
-export const councilVoteConfig = {
-  bodyTypes: [
-    "Town Council",
-    "Noble Court",
-    "Senate",
-    "Clan Moot",
-    "War Council",
-    "Corporate Board",
-    "Revolutionary Committee",
-    "Interstellar Assembly",
-    "Criminal Syndicate",
-    "Religious Conclave",
-  ],
-  // Which governing bodies feel native to each world theme/genre — mirrors
-  // public-quest.ts's per-genre location/threat pools. Falls back to the
-  // full bodyTypes list above for any theme not listed here.
-  bodyTypesByTheme: {
-    "Classic Fantasy": [
-      "Town Council",
-      "Noble Court",
-      "Senate",
-      "Religious Conclave",
-    ],
-    Pirate: ["Clan Moot", "Criminal Syndicate", "War Council", "Noble Court"],
-    "Cyberpunk / Corporate": [
-      "Corporate Board",
-      "Revolutionary Committee",
-      "Criminal Syndicate",
-      "Senate",
-    ],
-    "Vampire / Gothic Noir": [
-      "Noble Court",
-      "Religious Conclave",
-      "Criminal Syndicate",
-      "Clan Moot",
-    ],
-    "Cosmic Horror": [
-      "Religious Conclave",
-      "Senate",
-      "Town Council",
-      "Noble Court",
-    ],
-    "Sci-Fi / Space Opera": [
-      "Interstellar Assembly",
-      "Senate",
-      "Corporate Board",
-      "War Council",
-    ],
-    "Modern Conspiracy": [
-      "Senate",
-      "Corporate Board",
-      "Revolutionary Committee",
-      "Criminal Syndicate",
-    ],
-    "Post-Apocalyptic": [
-      "War Council",
-      "Clan Moot",
-      "Criminal Syndicate",
-      "Town Council",
-    ],
-    "Western / Frontier": [
-      "Town Council",
-      "War Council",
-      "Criminal Syndicate",
-      "Noble Court",
-    ],
-    Steampunk: [
-      "Corporate Board",
-      "Senate",
-      "Noble Court",
-      "Revolutionary Committee",
-    ],
-    Lancer: [
-      "Interstellar Assembly",
-      "War Council",
-      "Corporate Board",
-      "Senate",
-    ],
-    "Space Opera Resistance": [
-      "Revolutionary Committee",
-      "War Council",
-      "Interstellar Assembly",
-      "Clan Moot",
-    ],
-    "Optimistic Exploration Sci-Fi": [
-      "Interstellar Assembly",
-      "Senate",
-      "Corporate Board",
-      "Town Council",
-    ],
-  } as Record<string, string[]>,
-  sizes: ["3", "5", "7", "9"],
-  votingRules: [
-    "Simple Majority",
-    "Supermajority (Two-Thirds)",
-    "Unanimous",
-    "Veto Power",
-    "Secret Ballot",
-  ],
-  scopes: ["Single Location", "Distributed Across Settlements/Regions"],
-  tones: ["Political", "Tense", "Desperate", "Farcical", "Somber", "Hopeful"],
-  antagonistInfluences: ["None", "Subtle", "Entrenched", "Dominant"],
-  archetypes: [
-    "Beleaguered Ally",
-    "Villain's Toady",
-    "Greedy Broker",
-    "Loyal Shadow",
-    "Traditionalist",
-    "Idealist",
-    "Wildcard",
-  ],
-  stances: ["Support", "Oppose", "Leaning", "Unknown"],
-};
+import { formatCampaignContextBlock } from "./campaign-context";
+import { councilVoteConfig } from "./public-council-vote-constants";
+export { councilVoteConfig };
 
 export interface CouncilVoteGeneratorOptions {
   genre?: string;
@@ -302,7 +191,7 @@ Options:
 - Scope: ${resolved.scope}
 - Tone: ${resolved.tone}
 - Antagonist Influence: ${resolved.antagonistInfluence}
-${resolved.campaignContext ? `- Campaign Context: ${resolved.campaignContext}` : ""}
+${formatCampaignContextBlock(resolved.campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly:
 {
@@ -486,10 +375,12 @@ export function generateCouncilVoteLocal(
   const resolved = resolveCouncilVote(options, rng);
 
   const memberLines = resolved.members
-    .map(
-      (m) =>
-        `- **${m.name}** (${m.archetype}) — Initial stance: ${m.stance}. Persuadable through the right blend of evidence, favours, or leverage — exactly which is for the table to discover.`,
-    )
+    .map((m) => {
+      const hint =
+        councilVoteConfig.persuasionHints[m.archetype] ??
+        "persuadable through the right blend of evidence, favours, or leverage: exactly which is for the table to discover";
+      return `- **${m.name}** (${m.archetype}) — Initial stance: ${m.stance}. ${hint[0].toUpperCase()}${hint.slice(1)}.`;
+    })
     .join("\n");
 
   const content = `### The Proposal

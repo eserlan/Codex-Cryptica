@@ -89,14 +89,19 @@
 
 **Learning:** Found that custom icon-only buttons often had `aria-label` attributes on the button element but were missing `aria-hidden="true"` on the inner icon element, causing screen readers to potentially announce the icon element redundantly or confusingly.
 **Action:** When creating buttons with an `aria-label` or visible text, explicitly add `aria-hidden="true"` to any inner decorative icon elements (e.g., `<span class="icon-[...]">`) to prevent screen readers from announcing redundant or confusing elements.
+
 ## 2025-07-14 - Add type button to toolbar buttons
+
 **Learning:** Interactive toolbar components, especially within editors, should explicitly define type="button" to avoid inadvertently submitting surrounding forms.
 **Action:** When adding new toolbar components or buttons to existing toolbars, always include type="button" to ensure correct component behavior regardless of its surrounding context.
 
 ## 2026-07-16 - Add aria-busy to async buttons
+
 **Learning:** Found multiple buttons with loading states (animate-spin) that correctly disabled interactions but were missing aria-busy attributes, making the loading state opaque to screen readers.
 **Action:** Always add aria-busy={isLoading} to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
+
 ## 2026-07-19 - Add aria-busy to async buttons
+
 **Learning:** Buttons handling asynchronous actions (like saving or generating) need to correctly communicate their loading state to screen readers, even if they're visually disabled or show a loading spinner.
 **Action:** Always add `aria-busy={isLoading}` to buttons executing async operations to ensure screen readers are aware of the busy state.
 
@@ -114,3 +119,23 @@
 
 **Learning:** Found multiple icon-only contextual action buttons in chat transcripts (like `startEditMessage` and `deleteHostTranscript`) that lacked both explicit `aria-label` attributes (relying solely on `title` which is insufficient for screen readers) and `aria-hidden="true"` on their inner decorative icons.
 **Action:** Always add explicit `aria-label`s to icon-only action buttons (even if they have `title` tooltips) and add `aria-hidden="true"` to inner icon elements, especially inside complex, repetitive lists like chat transcripts.
+
+## 2026-08-13 - StatSheetTemplateSettings Loading Spinner Indicator
+
+**Learning:** Found the Save copy button in `StatSheetTemplateSettings.svelte` lacked a visual loading spinner during asynchronous saving operations, relying solely on text change while preserving `aria-busy={isSavingVaultCopy}`.
+**Action:** Swapped the static icon for standard animated spinner (`icon-[lucide--loader-2] animate-spin`) during active save states while maintaining `aria-busy` and disabled states on the parent button.
+
+## 2026-08-14 - Dropdown Button Types in Autocomplete
+
+**Learning:** Svelte dropdown items acting as options (like those in Autocomplete) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads.
+**Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere.
+
+## 2025-02-18 - Decorative Icons in Modals
+
+**Learning:** Decorative icons (using the `icon-[lucide--...]` pattern) nested inside functional `<button>` or `<a>` elements within global modals like `SettingsModal.svelte` frequently lack `aria-hidden="true"`, causing screen readers to mistakenly announce structural visual hints rather than relying solely on the text label.
+**Action:** Always scan for unhidden `icon-[...]` spans inside interactive elements and apply `aria-hidden="true"` to them to declutter the accessibility tree.
+
+## 2025-02-18 - Missing Type and ARIA in Dice Components
+
+**Learning:** Decorative icons inside interactive elements like `RollLog.svelte` and `DiceVault.svelte` frequently lack `aria-hidden="true"`, causing screen reader verbosity. Additionally, dynamic buttons (like generated dice buttons and expand/collapse logs) often miss `type="button"`, risking accidental form submissions if wrapped in a parent form.
+**Action:** When creating or reviewing components with dynamically generated buttons or internal decorative spans (especially those derived from helpers like `getDiceIcon`), enforce `type="button"`, `aria-label`, and `aria-hidden="true"` as standard practice.

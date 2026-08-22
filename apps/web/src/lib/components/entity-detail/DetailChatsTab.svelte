@@ -10,6 +10,7 @@
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { systemClock } from "$lib/utils/runtime-deps";
+  import { characterChatExportService } from "$lib/services/character-chat-export";
   import CharacterChat from "./CharacterChat.svelte";
   import GuestChatSettings from "./GuestChatSettings.svelte";
 
@@ -30,6 +31,9 @@
   // Host state
   let transcripts = $state<GuestChatTranscript[]>([]);
   let isLoadingTranscripts = $state(false);
+  // Local self-chat sessions (guest_chat_transcripts IDB store) where this
+  // entity was the human's speaker character rather than the AI-voiced one.
+  let speakerLocalSessions = $state<GuestChatTranscript[]>([]);
 
   // Editing state for synced guest transcript logs.
   let editingMessageId = $state<string | null>(null);
@@ -40,16 +44,41 @@
   let chatContainer = $state<HTMLElement | null>(null);
   let isSending = $state(false);
 
+  // Transcripts where this entity is the AI-voiced character (full CRUD,
+  // rendered in "Guest Conversation Logs" below).
+  const primaryTranscripts = $derived(
+    transcripts.filter((t) => t.characterId === entity.id),
+  );
+  // Transcripts synced from a guest where this entity was instead the
+  // human's speaker character — a shared conversation cross-listed here
+  // read-only, per #2302.
+  const speakerSyncedSessions = $derived(
+    transcripts.filter((t) => t.characterId !== entity.id),
+  );
+  const speakerSessions = $derived(
+    [...speakerSyncedSessions, ...speakerLocalSessions].sort(
+      (a, b) => b.lastUpdated - a.lastUpdated,
+    ),
+  );
+
   // Load Host transcripts
   const loadHostTranscripts = async () => {
     if (vault.isGuest || entity.type !== "character") return;
+    const requestedId = entity.id;
     isLoadingTranscripts = true;
     try {
-      transcripts = await vault.loadTranscriptsForCharacter(entity.id);
+      const [synced, asSpeaker] = await Promise.all([
+        vault.loadTranscriptsForCharacter(entity.id),
+        guestChatStore.listSessionsAsSpeaker(entity.id),
+      ]);
+      // Guard against a stale response landing after the entity changed.
+      if (entity.id !== requestedId) return;
+      transcripts = synced;
+      speakerLocalSessions = asSpeaker;
     } catch (err) {
       console.error("[DetailChatsTab] Failed to load transcripts:", err);
     } finally {
-      isLoadingTranscripts = false;
+      if (entity.id === requestedId) isLoadingTranscripts = false;
     }
   };
 
@@ -59,6 +88,10 @@
       void loadHostTranscripts();
     }
   });
+
+  function viewConversation(transcript: GuestChatTranscript) {
+    vault.selectedEntityId = transcript.characterId;
+  }
 
   let guestTranscript = $derived(
     vault.isGuest ? guestChatStore.transcripts[entity.id] || null : null,
@@ -145,7 +178,7 @@
         `Delete the entire conversation session with ${transcript.guestName}?`,
       )
     ) {
-      await vault.deleteTranscript(transcript.guestId, entity.id);
+      await vault.deleteTranscript(transcript.guestId, transcript.characterId);
       await loadHostTranscripts();
     }
   }
@@ -166,6 +199,48 @@
       )
     ) {
       await guestChatStore.deleteMessage(entity.id, messageId);
+    }
+  }
+
+  let isCopying = $state(false);
+  let isSavingJournal = $state(false);
+
+  async function copyHostTranscript(transcript: GuestChatTranscript) {
+    if (isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(transcript, {
+        speakerName: transcript.guestName,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
+
+  async function sendHostTranscriptToJournal(transcript: GuestChatTranscript) {
+    if (isSavingJournal) return;
+    isSavingJournal = true;
+    try {
+      await characterChatExportService.sendConversationToJournal(transcript, {
+        speakerName: transcript.guestName,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isSavingJournal = false;
+    }
+  }
+
+  async function copyGuestTranscript() {
+    if (!guestTranscript || isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(guestTranscript, {
+        speakerName: guestTranscript.guestName || "You",
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
     }
   }
 </script>
@@ -217,7 +292,7 @@
           Guest Conversation Logs
         </h4>
         <span class="text-xs text-theme-muted"
-          >{transcripts.length} Session(s)</span
+          >{primaryTranscripts.length} Session(s)</span
         >
       </div>
 
@@ -228,7 +303,7 @@
           <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
           Loading transcripts...
         </div>
-      {:else if transcripts.length === 0}
+      {:else if primaryTranscripts.length === 0}
         <p class="text-xs text-theme-muted italic py-4">
           No synced guest transcripts found for this character yet.
         </p>
@@ -236,7 +311,7 @@
         <div
           class="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-2"
         >
-          {#each transcripts as transcript (transcript.id || transcript.guestId)}
+          {#each primaryTranscripts as transcript (transcript.id || transcript.guestId)}
             <div
               class="border border-theme-border/60 rounded-xl p-3 bg-theme-bg/25 space-y-3 relative group/session"
             >
@@ -254,18 +329,47 @@
                     >({transcript.guestId.slice(0, 6)})</span
                   >
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <span class="text-[10px] text-theme-muted">
                     {new Date(transcript.lastUpdated).toLocaleString()}
                   </span>
                   <button
                     type="button"
+                    onclick={() => copyHostTranscript(transcript)}
+                    disabled={isCopying}
+                    class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer disabled:opacity-50"
+                    title="Copy conversation"
+                    aria-label="Copy conversation"
+                  >
+                    <span
+                      class="icon-[lucide--copy] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick={() => sendHostTranscriptToJournal(transcript)}
+                    disabled={isSavingJournal}
+                    class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer disabled:opacity-50"
+                    title="Send to Journal"
+                    aria-label="Send to Journal"
+                  >
+                    <span
+                      class="icon-[lucide--book-marked] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    type="button"
                     onclick={() => deleteHostTranscript(transcript)}
-                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100"
+                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer"
                     title="Delete entire session logs"
                     aria-label="Delete entire session logs"
                   >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
+                    <span
+                      class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
                   </button>
                 </div>
               </div>
@@ -296,7 +400,10 @@
                             title="Edit message"
                             aria-label="Edit message"
                           >
-                            <span class="icon-[lucide--pencil] w-3 h-3" aria-hidden="true"></span>
+                            <span
+                              class="icon-[lucide--pencil] w-3 h-3"
+                              aria-hidden="true"
+                            ></span>
                           </button>
                           <button
                             type="button"
@@ -306,7 +413,10 @@
                             title="Delete message"
                             aria-label="Delete message"
                           >
-                            <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
+                            <span
+                              class="icon-[lucide--trash-2] w-3 h-3"
+                              aria-hidden="true"
+                            ></span>
                           </button>
                         {/if}
                         {#if msg.role === "assistant"}
@@ -317,7 +427,9 @@
                             class="text-[9px] font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
                             title="Promote this response to a rumor draft"
                           >
-                            <span class="icon-[lucide--sparkles] w-3 h-3" aria-hidden="true"
+                            <span
+                              class="icon-[lucide--sparkles] w-3 h-3"
+                              aria-hidden="true"
                             ></span>
                             Promote
                           </button>
@@ -366,6 +478,54 @@
           {/each}
         </div>
       {/if}
+
+      {#if speakerSessions.length > 0}
+        <div
+          class="flex items-center justify-between border-b border-theme-border pb-2 mt-6"
+        >
+          <h4
+            class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+          >
+            <span class="icon-[lucide--user-round] w-4 h-4 text-theme-primary"
+            ></span>
+            Conversations as {entity.title}
+          </h4>
+          <span class="text-xs text-theme-muted"
+            >{speakerSessions.length} Session(s)</span
+          >
+        </div>
+        <p class="text-xs text-theme-muted italic">
+          Conversations where someone chatted using {entity.title} as their voice.
+          View and manage them from the other character's Chat tab.
+        </p>
+        <div class="space-y-2">
+          {#each speakerSessions as session (session.id || `${session.guestId}_${session.characterId}`)}
+            <button
+              type="button"
+              onclick={() => viewConversation(session)}
+              class="w-full flex items-center justify-between gap-2 rounded-lg border border-theme-border/60 bg-theme-bg/25 px-3 py-2.5 text-left transition hover:border-theme-primary cursor-pointer"
+            >
+              <span class="min-w-0">
+                <span class="block text-xs font-bold text-theme-text">
+                  With {session.characterTitle}
+                </span>
+                <span class="block text-[10px] text-theme-muted">
+                  {session.messages.length} message{session.messages.length ===
+                  1
+                    ? ""
+                    : "s"} · {new Date(
+                    session.lastUpdated,
+                  ).toLocaleDateString()}
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--chevron-right] w-4 h-4 shrink-0 text-theme-muted"
+              ></span>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
   {:else}
     <!-- GUEST VIEW: Active Chat Panel -->
@@ -409,6 +569,26 @@
         </div>
       {:else}
         <!-- Active Chat Window -->
+        <div class="flex justify-between items-center px-1 text-xs">
+          <span
+            class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+          >
+            Conversation
+          </span>
+          {#if guestTranscript?.messages?.length}
+            <button
+              type="button"
+              onclick={copyGuestTranscript}
+              class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+              title="Copy conversation"
+              aria-label="Copy conversation"
+            >
+              <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"
+              ></span>
+              Copy
+            </button>
+          {/if}
+        </div>
         <div
           bind:this={chatContainer}
           class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 sm:min-h-0 sm:max-h-none sm:flex-1"
@@ -435,7 +615,10 @@
                       title="Edit message"
                       aria-label="Edit message"
                     >
-                      <span class="icon-[lucide--pencil] w-3 h-3" aria-hidden="true"></span>
+                      <span
+                        class="icon-[lucide--pencil] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                     </button>
                     <button
                       type="button"
@@ -444,7 +627,10 @@
                       title="Delete message"
                       aria-label="Delete message"
                     >
-                      <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
+                      <span
+                        class="icon-[lucide--trash-2] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                     </button>
                   </div>
                 {/if}

@@ -41,7 +41,7 @@
 
 <header
   bind:this={headerEl}
-  class="px-4 md:px-6 py-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
+  class="px-4 md:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
 >
   {#if isStaging}
     <div
@@ -173,6 +173,17 @@
           }}
         >
           Exit Guest Mode
+        </button>
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
+          onclick={() => modalUIStore.openSettings("help")}
+          title="Help and legal information"
+          aria-label="Open Help and legal information"
+          data-testid="guest-settings-button"
+        >
+          <span class="icon-[lucide--circle-help] h-5 w-5" aria-hidden="true"
+          ></span>
         </button>
       {:else}
         <button

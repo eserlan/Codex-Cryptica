@@ -20,8 +20,57 @@ export function splitMarkdownForCopy(
   const normalized = markdown.trim();
   if (!normalized) return [];
 
-  const matches = Array.from(normalized.matchAll(/^###\s+(.+)$/gm));
-  if (matches.length === 0) {
+  // ⚡ Bolt Optimization: Replace Array.from(matchAll).map() with an imperative iterator loop
+  const iterator = normalized.matchAll(/^###\s+(.+)$/gm);
+  const sections: MarkdownSectionForCopy[] = [];
+  let prevMatch: RegExpExecArray | null = null;
+  let index = 0;
+
+  for (const match of iterator) {
+    if (!prevMatch) {
+      const preamble = normalized.slice(0, match.index ?? 0).trim();
+      if (preamble) {
+        sections.push({
+          id: "section-preamble",
+          heading: "",
+          body: preamble,
+          markdown: preamble,
+        });
+      }
+    } else {
+      const heading = prevMatch[1]?.trim() ?? "";
+      const start = prevMatch.index ?? 0;
+      const headingEnd = start + prevMatch[0].length;
+      const end = match.index ?? normalized.length;
+      const body = normalized.slice(headingEnd, end).trim();
+      const fallback = `section-${sections.length + 1}`;
+
+      sections.push({
+        id: `${slugify(heading, fallback)}-${index - 1}`,
+        heading,
+        body,
+        markdown: normalized.slice(start, end).trim(),
+      });
+    }
+    prevMatch = match;
+    index++;
+  }
+
+  if (prevMatch) {
+    const heading = prevMatch[1]?.trim() ?? "";
+    const start = prevMatch.index ?? 0;
+    const headingEnd = start + prevMatch[0].length;
+    const body = normalized.slice(headingEnd).trim();
+    const fallback = `section-${sections.length + 1}`;
+
+    sections.push({
+      id: `${slugify(heading, fallback)}-${index - 1}`,
+      heading,
+      body,
+      markdown: normalized.slice(start).trim(),
+    });
+  } else {
+    // No matches at all
     return [
       {
         id: "section-1",
@@ -30,37 +79,6 @@ export function splitMarkdownForCopy(
         markdown: normalized,
       },
     ];
-  }
-
-  const sections: MarkdownSectionForCopy[] = [];
-  const preamble = normalized.slice(0, matches[0].index ?? 0).trim();
-
-  if (preamble) {
-    sections.push({
-      id: "section-preamble",
-      heading: "",
-      body: preamble,
-      markdown: preamble,
-    });
-  }
-
-  for (const [index, match] of matches.entries()) {
-    const heading = match[1]?.trim() ?? "";
-    const start = match.index ?? 0;
-    const headingEnd = start + match[0].length;
-    const end =
-      index + 1 < matches.length
-        ? (matches[index + 1].index ?? normalized.length)
-        : normalized.length;
-    const body = normalized.slice(headingEnd, end).trim();
-    const fallback = `section-${sections.length + 1}`;
-
-    sections.push({
-      id: `${slugify(heading, fallback)}-${index}`,
-      heading,
-      body,
-      markdown: normalized.slice(start, end).trim(),
-    });
   }
 
   return sections;

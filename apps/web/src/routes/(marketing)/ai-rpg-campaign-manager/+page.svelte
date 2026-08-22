@@ -60,7 +60,7 @@
       {
         question: "Do I need an AI subscription to use this?",
         answer:
-          "No. You can use the shared system proxy for free, or bring your own Gemini or OpenAI API key for unlimited usage. Codex never charges for AI usage.",
+          "No. You can use the shared system proxy for free, or bring your own OpenAI/Luna API key for unlimited usage. Codex never charges for AI usage.",
       },
       {
         question: "Can the AI see all my campaign notes?",

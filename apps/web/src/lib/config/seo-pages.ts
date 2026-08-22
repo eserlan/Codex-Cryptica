@@ -1,33 +1,5 @@
-export interface SEOPageData {
-  slug: string;
-  title: string;
-  description: string;
-  h1: string;
-  subheading: string;
-  introText: string;
-  faq: Array<{
-    question: string;
-    answer: string;
-  }>;
-  ctaText: string;
-  keywords: string[];
-  features: Array<{
-    title: string;
-    description: string;
-    icon: string;
-  }>;
-  /** Hero badge text. Defaults to "100% Local-First Campaign Wiki". */
-  eyebrow?: string;
-  /** Large emotional tagline rendered between h1 and subheading. Use \n to split lines. */
-  tagline?: string;
-  /** Optional second button in the hero. */
-  secondaryCtaText?: string;
-  secondaryCtaHref?: string;
-  /** Links shown in a "Related pages" section above the FAQ. */
-  relatedLinks?: Array<{ href: string; label: string }>;
-  /** Show the Responsible AI trust banner before the FAQ section. */
-  aiTrustSection?: boolean;
-}
+import type { SEOPageData } from "./seo-types";
+export type { SEOPageData };
 
 export const solutions: Record<string, SEOPageData> = {
   "campaign-manager": {
@@ -187,7 +159,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Do I need a paid AI subscription?",
         answer:
-          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own Gemini API key for unlimited usage.",
+          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own API key for unlimited usage.",
       },
       {
         question: "Is my campaign prompt context secure?",
@@ -303,7 +275,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Bring Your Own API Key",
         description:
-          "Connect your Gemini or OpenAI key for full AI generation — no subscription or data sent to Codex servers.",
+          "Connect your OpenAI/Luna key for full AI generation — no subscription or data sent to Codex servers.",
         icon: "icon-[lucide--key]",
       },
     ],
@@ -316,7 +288,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Does the AI DM assistant require a subscription?",
         answer:
-          "No. You bring your own API key (Gemini or OpenAI). Codex never charges for AI usage — you pay only your API provider's standard rates.",
+          "No. You bring your own API key (OpenAI/Luna). Codex never charges for AI usage — you pay only your API provider's standard rates.",
       },
       {
         question: "Does the AI see my campaign notes?",
@@ -585,13 +557,7 @@ export const solutions: Record<string, SEOPageData> = {
 };
 
 export { featuresConfig } from "./seo-features";
-
-export interface SEOImportPageData extends SEOPageData {
-  competitorName: string;
-  /** Optional outbound link to the source tool, shown as a small credit line in the hero (e.g. a companion generator, not a competitor). */
-  toolUrl?: string;
-  toolLabel?: string;
-}
+export type { SEOImportPageData } from "./seo-types";
 
 export { importsConfig } from "./seo-imports";
 

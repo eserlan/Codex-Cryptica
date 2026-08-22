@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   const origin = "https://codexcryptica.com";
 
@@ -94,6 +95,20 @@
           icon: "icon-[lucide--scroll-text]",
         },
         {
+          href: "/generators/plot-twist-generator",
+          label: "Plot Twist & Complication Generator",
+          summary:
+            "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+          icon: "icon-[lucide--shuffle]",
+        },
+        {
+          href: "/generators/bbeg-generator",
+          label: "BBEG / Campaign Villain Generator",
+          summary:
+            "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+          icon: "icon-[lucide--skull]",
+        },
+        {
           href: "/generators/council-vote",
           label: "Council Vote Generator",
           summary:
@@ -101,11 +116,39 @@
           icon: "icon-[lucide--gavel]",
         },
         {
+          href: "/generators/secret-society",
+          label: "Secret Society Generator",
+          summary:
+            "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+          icon: "icon-[lucide--eye]",
+        },
+        {
           href: "/generators/settlement",
           label: "Settlement Generator",
           summary:
             "Draft towns and villages with economy, government, notable locations, and factions.",
           icon: "icon-[lucide--landmark]",
+        },
+        {
+          href: "/generators/star-system",
+          label: "Star System Generator",
+          summary:
+            "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+          icon: "icon-[lucide--orbit]",
+        },
+        {
+          href: "/generators/alien-race",
+          label: "Alien Race Generator",
+          summary:
+            "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+          icon: "icon-[lucide--dna]",
+        },
+        {
+          href: "/generators/creature",
+          label: "Creature Generator",
+          summary:
+            "Generate memorable monsters, beasts, alien fauna, and undead with ecology, sensory signs, combat tactics, and adventure hooks.",
+          icon: "icon-[lucide--paw-print]",
         },
         {
           href: "/generators/dungeon-generator",
@@ -127,6 +170,20 @@
           summary:
             "Generate items with rarity, properties, history, and GM-facing lore.",
           icon: "icon-[lucide--sparkles]",
+        },
+        {
+          href: "/generators/minor-magic-item",
+          label: "Minor Magic Item & Trinket Generator",
+          summary:
+            "Create low-impact, consumable charms, potions, talismans, and disposable tools with quirks and limited charges.",
+          icon: "icon-[lucide--sparkles]",
+        },
+        {
+          href: "/generators/artifact-generator",
+          label: "Artifact & Relic Generator",
+          summary:
+            "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+          icon: "icon-[lucide--gem]",
         },
         {
           href: "/generators/tavern",
@@ -307,38 +364,29 @@
   });
 </script>
 
-<svelte:head>
-  <title
-    >RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica</title
-  >
-  <meta
-    name="description"
-    content="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
-  />
-  <link rel="canonical" href="https://codexcryptica.com/generators" />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${itemListJsonLd}</scr` +
-    `ipt>`}
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
-    `ipt>`}
-</svelte:head>
+<SeoHead
+  title="RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica"
+  description="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
+  canonicalUrl="https://codexcryptica.com/generators"
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="Codex Cryptica RPG generator tools overview"
+  keywords={[
+    "rpg generators",
+    "tabletop generators",
+    "npc generator",
+    "faction generator",
+    "dungeon generator",
+    "quest hook generator",
+  ]}
+  jsonLd={[itemListJsonLd, breadcrumbJsonLd]}
+/>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{base}/?ref=generators"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        Codex Cryptica
-      </a>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -346,7 +394,7 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>
@@ -359,11 +407,11 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-12">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-12">
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+        class="font-header text-sm font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -377,7 +425,7 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
@@ -394,7 +442,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+          class="font-header text-sm font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -408,7 +456,7 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>
@@ -422,4 +470,4 @@
       </section>
     {/each}
   </div>
-</main>
+</div>

@@ -7,6 +7,8 @@ import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.s
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
+import { shelf } from "$lib/features/shelf";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
@@ -17,6 +19,7 @@ export interface GraphContextMenuDependencies {
   modalUIStore: typeof modalUIStoreType;
   connectionModeStore: typeof connectionModeStoreType;
   notificationStore: typeof notificationStoreType;
+  clock?: Clock;
 }
 
 export class GraphContextMenuController {
@@ -47,9 +50,12 @@ export class GraphContextMenuController {
   categoryPickerAnchor = $state<HTMLButtonElement>();
   imagePickerAnchor = $state<HTMLButtonElement>();
 
+  private clock: Clock;
+
   constructor(getCy: () => Core, deps: GraphContextMenuDependencies) {
     this.getCy = getCy;
     this.deps = deps;
+    this.clock = deps.clock ?? systemClock;
   }
 
   hasImage = $derived.by(() => {
@@ -74,7 +80,30 @@ export class GraphContextMenuController {
   });
 
   setupEvents = () => {
+    const recordCxtTap = () => {
+      this.getCy().scratch?.("_lastCxtTap", this.clock.now());
+    };
+
+    const recordContextGesture = (evt: EventObject) => {
+      recordCxtTap();
+      if (evt.type === "taphold") {
+        this.getCy().scratch?.("_tapHoldActive", true);
+      }
+    };
+
+    const recordTapHoldRelease = () => {
+      if (this.getCy().scratch?.("_tapHoldActive") !== true) return;
+
+      this.getCy().scratch?.("_tapHoldActive", false);
+      recordCxtTap();
+    };
+
+    const resetTapHold = () => {
+      this.getCy().scratch?.("_tapHoldActive", false);
+    };
+
     const openHandler = (evt: EventObject) => {
+      recordContextGesture(evt);
       const node = evt.target;
       this.targetId = node.id();
       this.targetEdge = null;
@@ -91,6 +120,7 @@ export class GraphContextMenuController {
     };
 
     const edgeContextMenuHandler = (evt: EventObject) => {
+      recordContextGesture(evt);
       const edge = evt.target;
       const data = edge.data();
       this.targetId = null;
@@ -106,6 +136,7 @@ export class GraphContextMenuController {
 
     const backgroundContextMenuHandler = (evt: EventObject) => {
       if (evt.target === this.getCy()) {
+        recordContextGesture(evt);
         this.targetId = null;
         this.selectedNodes = [];
         this.targetEdge = null;
@@ -115,6 +146,12 @@ export class GraphContextMenuController {
     };
 
     const closeHandler = () => {
+      const lastCxtTap =
+        (this.getCy().scratch?.("_lastCxtTap") as number | undefined) ?? 0;
+      if (this.clock.now() - lastCxtTap < 400) {
+        return;
+      }
+
       this.clearPickerTimeout();
       this.contextMenuOpen = false;
       this.canvasPickerOpen = false;
@@ -123,16 +160,20 @@ export class GraphContextMenuController {
       this.targetEdge = null;
     };
 
-    this.getCy().on("cxttap", "node", openHandler);
-    this.getCy().on("cxttap", "edge", edgeContextMenuHandler);
-    this.getCy().on("cxttap", backgroundContextMenuHandler);
+    this.getCy().on("cxttap taphold", "node", openHandler);
+    this.getCy().on("cxttap taphold", "edge", edgeContextMenuHandler);
+    this.getCy().on("cxttap taphold", backgroundContextMenuHandler);
+    this.getCy().on("tapstart", resetTapHold);
+    this.getCy().on("tapend", recordTapHoldRelease);
     this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
-      this.getCy().off("cxttap", "node", openHandler);
-      this.getCy().off("cxttap", "edge", edgeContextMenuHandler);
-      this.getCy().off("cxttap", backgroundContextMenuHandler);
+      this.getCy().off("cxttap taphold", "node", openHandler);
+      this.getCy().off("cxttap taphold", "edge", edgeContextMenuHandler);
+      this.getCy().off("cxttap taphold", backgroundContextMenuHandler);
+      this.getCy().off("tapstart", resetTapHold);
+      this.getCy().off("tapend", recordTapHoldRelease);
       this.getCy().off("tap", closeHandler);
     };
   };
@@ -179,6 +220,13 @@ export class GraphContextMenuController {
     }
   };
 
+  handleOpenZenMode = () => {
+    if (this.selectedNodes.length !== 1) return;
+
+    this.deps.modalUIStore.openZenMode(this.selectedNodes[0]);
+    this.contextMenuOpen = false;
+  };
+
   handleMerge = () => {
     if (this.selectedNodes.length > 1) {
       this.deps.modalUIStore.openMergeDialog(this.selectedNodes);
@@ -191,6 +239,17 @@ export class GraphContextMenuController {
       this.deps.connectionModeStore.startSelectionConnection();
       this.contextMenuOpen = false;
     }
+  };
+
+  /**
+   * Copies the selection onto the Shelf, to be brought into another vault.
+   * Reads this vault only — nothing here is modified.
+   */
+  handleSendToShelf = () => {
+    if (this.selectedNodes.length === 0) return;
+    const ids = $state.snapshot(this.selectedNodes);
+    void shelf.shelve(ids, this.deps.vault.vaultName ?? "This vault");
+    this.contextMenuOpen = false;
   };
 
   handleBulkLabel = () => {

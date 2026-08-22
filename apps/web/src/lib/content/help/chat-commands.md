@@ -16,6 +16,8 @@ The Lore Oracle supports several interactive commands to help you manage your wo
 - `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
 - `/connect`: The primary tool for building relationships.
 - `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
+- `/table [name]`: Roll one of your own roll tables, with the result inline in the transcript. No AI involved.
+- `/deck [name] [count]`: Draw from one of your own card decks, remembering what has already been drawn. No AI involved.
 
 ## Efficient Linking with /connect
 

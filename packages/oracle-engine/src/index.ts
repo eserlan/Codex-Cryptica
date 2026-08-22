@@ -12,3 +12,4 @@ export * from "./revision-context";
 export * from "./sound-bite-generator";
 export * from "./image-defaults";
 export * from "./lore-delta";
+export * from "./quick-oracle";

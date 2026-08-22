@@ -6,34 +6,55 @@
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
 import type { LanguageProfileV1 } from "schema";
+import type { StarSystemBody } from "./public-star-system";
 
 export type GeneratorId =
   | "npc"
   | "faction"
   | "settlement"
   | "magic-item"
+  | "minor-magic-item"
+  | "artifact"
   | "event"
   | "ship"
   | "language"
   | "news-sheet"
   | "dungeon"
   | "adventure"
+  | "quest"
+  | "plot-twist"
+  | "villain"
   | "world"
-  | "council-vote";
+  | "council-vote"
+  | "secret-society"
+  | "star-system"
+  | "alien-race"
+  | "creature"
+  | "random-table";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
   "faction",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact",
   "event",
   "ship",
   "language",
   "news-sheet",
   "dungeon",
   "adventure",
+  "quest",
+  "plot-twist",
+  "villain",
   "world",
   "council-vote",
+  "secret-society",
+  "star-system",
+  "alien-race",
+  "creature",
+  "random-table",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -83,6 +104,13 @@ export interface GeneratorOutput {
   /** Canonical rules for language generators; markdown fields are derived. */
   languageProfile?: LanguageProfileV1;
   languageProfileVersion?: 1;
+  /**
+   * Structured major-body data for the star-system generator, driving its
+   * orbital diagram. Absent for every other generator.
+   */
+  bodies?: StarSystemBody[];
+  /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
+  starType?: string;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -187,6 +215,15 @@ export interface GeneratedDraft {
   languageProfileVersion?: 1;
   primaryLanguageId?: string;
   primaryLanguageTitle?: string;
+  /** Carried through from {@link GeneratorOutput.bodies} for the star-system generator's orbital diagram. */
+  bodies?: StarSystemBody[];
+  /** Carried through from {@link GeneratorOutput.starType}. */
+  starType?: string;
+  /**
+   * Source and direct neighbor entity references supplied from the vault context
+   * that grounded this generation.
+   */
+  contextProvenance?: Array<{ id: string; title: string }>;
 }
 
 /** The user's explicit decision to save a reviewed draft. */
@@ -314,4 +351,59 @@ export class UnsupportedGeneratorError extends Error {
     super(`That generator ("${generatorId}") is not available.`);
     this.name = "UnsupportedGeneratorError";
   }
+}
+
+/**
+ * Context provided to the random table generator.
+ */
+export interface RandomTableGenerationContext {
+  /** The theme or topic of the table (e.g. "Docklands Encounters", "Smuggler Rumors") */
+  topic: string;
+  /** Number of entries to generate (2-50, defaults to standard dice sizes like 6, 8, 10, 12, 20) */
+  count?: number;
+  /** Freeform user instructions or campaign notes taking highest priority */
+  campaignContext?: string;
+  /** Names of existing tables and decks available for sub-table reference emission */
+  availableTables?: string[];
+  /** Relevant entities retrieved from the active vault for lore grounding */
+  worldEntities?: Array<{
+    title: string;
+    category?: string;
+    summary?: string;
+  }>;
+  /** The active visual/genre theme for stylistic tone matching */
+  theme?: string;
+}
+
+/**
+ * A generated candidate entry awaiting user review.
+ */
+export interface CandidateTableEntry {
+  /** Unique transient client ID for UI selection & editing tracking */
+  id: string;
+  /** Generated entry text (may contain {table_name} nested references) */
+  text: string;
+  /** Inferred default weight (usually 1) */
+  weight: number;
+  /** Discovered entity names referenced in the text */
+  matchedEntities?: string[];
+  /** Discovered sub-table names referenced in the text */
+  matchedSubTables?: string[];
+  /** Selection status in the review preview (defaults to true) */
+  selected: boolean;
+}
+
+/**
+ * Structured output schema from the AI model.
+ */
+export interface GeneratedTableOutput {
+  /** Suggested table title based on the topic */
+  title: string;
+  /** Suggested short description */
+  description?: string;
+  /** List of generated row texts */
+  entries: Array<{
+    text: string;
+    weight?: number;
+  }>;
 }

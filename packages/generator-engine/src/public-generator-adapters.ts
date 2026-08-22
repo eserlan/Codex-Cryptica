@@ -18,6 +18,7 @@ import type {
   GeneratorRunRequest,
 } from "./campaign-generator-types";
 import type { LanguageProfileV1 } from "schema";
+import type { StarSystemBody } from "./public-star-system";
 
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
@@ -41,6 +42,17 @@ export interface PublicGeneratorOutput {
   aiFallback?: boolean;
   languageProfile?: LanguageProfileV1;
   languageProfileVersion?: 1;
+  /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
+  bodies?: StarSystemBody[];
+  /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
+  starType?: string;
+  /**
+   * Short label for the dominant conflict domain driving a BBEG villain's
+   * plan (e.g. "Political Corruption", "Cult Ritual"). Used to track domain
+   * variety across a session so repeated generations don't default to the
+   * same domain (#2325 follow-up).
+   */
+  conflictDomain?: string;
 }
 
 /** First non-blank value, or the last one if all are blank. */

@@ -8,6 +8,7 @@
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+  import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
 
   let {
     entity,
@@ -94,6 +95,14 @@
     persistFields(
       fields.map((f: StatSheetField) =>
         f.id === fieldId ? { ...f, value } : f,
+      ),
+    );
+  }
+
+  function updateField(fieldId: string, updates: Partial<StatSheetField>) {
+    persistFields(
+      fields.map((field: StatSheetField) =>
+        field.id === fieldId ? { ...field, ...updates } : field,
       ),
     );
   }
@@ -282,44 +291,110 @@
             </div>
           </div>
         {:else if field.type === "number"}
-          <label
+          <div
             class="flex items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
           >
             <span class="text-xs text-theme-text">{field.label}</span>
-            <input
-              type="number"
-              class="w-20 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
-              value={typeof field.value === "number" ? field.value : ""}
-              disabled={readOnly}
-              oninput={(e) =>
-                updateFieldValue(
-                  field.id,
-                  Number((e.target as HTMLInputElement).value) || 0,
-                )}
-            />
-          </label>
+            <div class="flex items-center gap-2">
+              {#if !readOnly}
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => toggleFavorite(field)}
+                  aria-label={field.favorite
+                    ? `Unpin ${field.label} from token quick stats`
+                    : `Pin ${field.label} to token quick stats`}
+                  aria-pressed={!!field.favorite}
+                  data-testid="stat-sheet-favorite-toggle"
+                >
+                  <span
+                    class="icon-[lucide--star] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.favorite}
+                    aria-hidden="true"
+                  ></span>
+                </button>
+              {/if}
+              <input
+                type="number"
+                class="w-20 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
+                value={typeof field.value === "number" ? field.value : ""}
+                disabled={readOnly}
+                oninput={(e) =>
+                  updateFieldValue(
+                    field.id,
+                    Number((e.target as HTMLInputElement).value) || 0,
+                  )}
+              />
+            </div>
+          </div>
         {:else if field.type === "text"}
-          <label
+          <div
             class="flex items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
           >
             <span class="text-xs text-theme-text">{field.label}</span>
-            <input
-              type="text"
-              class="w-40 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
-              value={typeof field.value === "string" ? field.value : ""}
-              disabled={readOnly}
-              oninput={(e) =>
-                updateFieldValue(
-                  field.id,
-                  (e.target as HTMLInputElement).value,
-                )}
-            />
-          </label>
+            <div class="flex items-center gap-2">
+              {#if !readOnly}
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => toggleFavorite(field)}
+                  aria-label={field.favorite
+                    ? `Unpin ${field.label} from token quick stats`
+                    : `Pin ${field.label} to token quick stats`}
+                  aria-pressed={!!field.favorite}
+                  data-testid="stat-sheet-favorite-toggle"
+                >
+                  <span
+                    class="icon-[lucide--star] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.favorite}
+                    aria-hidden="true"
+                  ></span>
+                </button>
+              {/if}
+              <input
+                type="text"
+                class="w-40 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
+                value={typeof field.value === "string" ? field.value : ""}
+                disabled={readOnly}
+                oninput={(e) =>
+                  updateFieldValue(
+                    field.id,
+                    (e.target as HTMLInputElement).value,
+                  )}
+              />
+            </div>
+          </div>
         {:else if field.type === "longtext"}
           <div
             class="flex flex-col gap-1 rounded border border-theme-border px-2 py-1.5"
           >
-            <span class="text-xs text-theme-text">{field.label}</span>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-theme-text">{field.label}</span>
+              {#if !readOnly}
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => toggleFavorite(field)}
+                  aria-label={field.favorite
+                    ? `Unpin ${field.label} from token quick stats`
+                    : `Pin ${field.label} to token quick stats`}
+                  aria-pressed={!!field.favorite}
+                  data-testid="stat-sheet-favorite-toggle"
+                >
+                  <span
+                    class="icon-[lucide--star] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.favorite}
+                    aria-hidden="true"
+                  ></span>
+                </button>
+              {/if}
+            </div>
             <textarea
               class="w-full resize-y rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-xs text-theme-text disabled:opacity-40"
               rows="3"
@@ -395,6 +470,21 @@
               </div>
             </div>
           </div>
+        {:else if field.type === "item-table"}
+          <ItemTableNode
+            {field}
+            context={{
+              fields,
+              readOnly,
+              mode: "view",
+              sectionKeys: new Map(),
+              isSectionCollapsed: () => false,
+              onToggleSection: () => {},
+              onUpdateFieldValue: (fId, val) => updateFieldValue(fId, val),
+              onUpdateField: (fId, updates) => updateField(fId, updates),
+              onAdjustCounter: () => {},
+            }}
+          />
         {/if}
       {/if}
     {/each}

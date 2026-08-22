@@ -1,89 +1,124 @@
 ---
 id: custom-stat-sheet-templates
 slug: custom-stat-sheet-templates
-title: "Build Stat Sheets That Keep Your Table Moving"
-description: "Learn how to design, reuse, and manage custom Stat Sheet templates for characters, NPCs, creatures, vehicles, and every other entity in your campaign."
+title: "The Complete Guide to Custom Character Sheets in Codex Cryptica"
+description: "Build a reusable RPG character sheet template, fill it in per entity, present it your way, and share it — the full Stat Sheet workflow in one guide."
 keywords:
-  - "RPG Stat Sheet Templates"
-  - "Custom Character Sheets"
-  - "VTT Stat Sheets"
-  - "RPG Campaign Management"
-  - "Codex Cryptica"
+  [
+    "custom RPG character sheet",
+    "reusable character sheet template",
+    "RPG stat sheet",
+    "character sheet builder",
+    "custom stat block",
+    "character sheet layout",
+    "RPG character sheet template",
+    "import RPG character sheet template",
+    "share RPG character sheet template",
+  ]
 publishedAt: 2026-07-31T14:00:00Z
+updatedAt: 2026-08-21T10:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/character-sheet-presentation.png"
+imageAlt: "A D&D-style character sheet presentation showing Vital Stats, Ability Scores, Combat, and Skills cards built from the same underlying data"
 ---
 
-At the table, the best character sheet is the one you can read in a glance and update without breaking the flow of play.
+Most VTT character sheets make you pick: lock into a rules system you didn't choose, or hand-build a new sheet for every NPC, vehicle, and creature in your campaign.
 
-That is the idea behind **Stat Sheets** in Codex Cryptica. They give any entity a small, practical surface for the numbers, notes, and actions you reach for during a session — without forcing your campaign into one particular rules system.
+Codex Cryptica splits the problem into three pieces that stay independent of each other: a **Stat Template** defines what fields a sheet has, **Entity Stats** hold the actual values for one character, and a **Presentation** decides how those values are arranged on screen. Build the structure once, reuse it for the whole party, then change how it looks without touching a single number.
 
-The same layout can then be saved as a reusable template, so the next NPC, vehicle, creature, or important location starts with the structure it actually needs.
+![A D&D-style character sheet presentation showing Vital Stats, Ability Scores, Combat, and Skills cards built from the same underlying data](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/character-sheet-presentation.png)
 
-![Stat Sheet Templates manager showing vault availability and default templates by category](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png)
+## The three layers, in plain terms
 
-The **Stat Sheet Templates** manager gives you one place to decide which templates are available in the vault and which template new entities should receive by default.
+- **Stat Template (schema)** — the shape of the sheet: which fields exist, their types, dice formulas, counter bounds. No values.
+- **Entity Stats** — the numbers and notes for one specific character, NPC, or object. Stored with that entity, not the template.
+- **Presentation** — how those same values are arranged and displayed: a full sheet, a compact stat block, a mobile view.
 
-## Start with the decisions you make at the table
+Because these are separate, switching an entity to a different presentation never touches its data, and applying the same template to three party members never makes their Hit Points or ammunition identical.
 
-Open an entity and switch to its **Stats** tab. Choose **Edit Layout** to shape the sheet around the way you play.
+## Creating a Stat Template
 
-The available fields are deliberately simple:
+Open an entity, switch to its **Stats** tab, and choose **Edit Layout**. Available field types:
 
-- **Counters** are useful for values that change often, such as Hit Points, spell slots, ammunition, stress, or supplies. Set a minimum, maximum, and step when those boundaries matter.
-- **Numbers** work well for Armor Class, initiative, movement, difficulty, or any value you want to edit directly.
-- **Text** keeps short details such as conditions, speed, or a character's current stance close at hand.
-- **Long Text** gives abilities, traits, reminders, and other multiline notes room to breathe.
-- **Headings** divide a busy sheet into collapsible sections.
-- **Dice** turns an expression such as `1d20+5` into a one-tap roll.
+- **Counter** — values that change often (HP, spell slots, ammo, stress). Set a min, max, and step when boundaries matter.
+- **Number** — Armor Class, initiative, difficulty — anything you edit directly.
+- **Text** — short details like conditions or current stance.
+- **Long Text** — abilities, traits, multiline notes.
+- **Heading** — a collapsible section divider.
+- **Dice** — an expression such as `1d20+5` with a one-tap roll button.
+- **Repeatable Table** — rows of structured data: an inventory, a spell list, a set of attacks.
 
-There is no hidden modifier system waiting to reinterpret your fields. A Stat Sheet is a flexible tool for your table's rules, not a replacement for them.
+Each table column has its own type — text, number, dice, counter, or checkbox — and, as of a recent update, dice columns carry their own roll formula and counter columns their own min/max/step, so a weapon table's damage column and a conditions table's stress counter no longer fall back to the same hardcoded defaults. Rows can also link directly to an existing vault item or weapon entity instead of being typed by hand.
 
-## Design for the few seconds between turns
+There is no hidden modifier system reinterpreting your fields. A Stat Sheet is a surface for your table's rules, not a replacement for them.
 
-A good sheet is organized by frequency of use, not by the order in which a rulebook introduces a concept.
+## Reusing templates and setting defaults
 
-Put the values you check every round near the top: current Hit Points, defense, initiative, movement, and the attacks or actions players reach for most. Put situational abilities, inventory notes, and lore reminders below them. Use headings to separate combat, resources, abilities, and reference material so a long sheet stays scannable.
+When a layout feels right, open **Templates** and use **Save current layout as...**. The template becomes available to every entity in the vault, and it saves only structure — labels, field types, dice formulas, counter bounds, table columns — never the values currently filled in. A new entity starts clean.
 
-For a VTT session, favor short labels and compact fields. A heading such as **Combat** or **Resources** is more useful in play than a paragraph explaining what the section contains. If a value changes repeatedly, make it a counter. If it only needs to be read or rolled occasionally, a number, text, or dice field may be enough.
+Applying a template to an entity that already has stats asks whether to **append** the new fields or **replace** the layout entirely, so templates work equally well for fresh setup and for standardizing an in-progress campaign.
 
-The goal is not to record every possible fact about an entity. It is to keep the facts that matter now within reach.
+To set what new entities get automatically, go to **Settings → Templates** and use **Default Template by Category**:
 
-## Save a layout once, reuse it everywhere
+![Settings screen showing Default Template by Category with a dropdown per entity category](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/default-template-by-category.png)
 
-When the layout feels right, open **Templates** and use **Save current layout as...** to give it a name. The saved template becomes available to every entity in the current vault.
-
-Templates save the structure of a sheet — labels, field types, dice expressions, and counter bounds — but not the values currently filled in. That means a new entity gets a clean starting point instead of inheriting the previous character's Hit Points or ammunition.
-
-When applying a template to an entity that already has a Stat Sheet, Codex Cryptica lets you choose whether to append the new fields or replace the existing layout. That makes templates useful both for new campaign setup and for gradually standardizing an active world.
-
-For the exact field-by-field walkthrough, see the [Stat Sheets help article](/help#help/stat-sheets).
-
-## Set a default for each kind of entity
-
-If every new NPC should start with the same combat layout, you do not need to apply the template manually each time.
-
-Go to **Settings → Schema → Stat Sheet Templates** and use **Default Template by Category** to associate a template with a category. For example:
-
-![Schema settings showing built-in and vault Stat Sheet templates](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/schema-template-library.png)
-
-- **Character** → a player-facing character sheet
+- **Character** → a player-facing sheet
 - **NPC** → a compact combat sheet
-- **Item** → an equipment or artifact sheet
-- **Location** → a settlement, ship, or site overview
+- **Item** → an equipment sheet
+- **Location** → a settlement or site overview
 
-Built-in templates are available as starting points for several common systems, and saved templates can be assigned in the same way. Leave a category set to **None** when you want new entities to remain free of Stat Sheet fields.
+Built-in templates cover several common systems as starting points; leave a category on **None** to keep new entities free of Stat Sheet fields.
 
-## Keep the data with the entity
+## Filling in a character sheet
 
-Stat Sheet data is stored in the entity's `statSheet` frontmatter, while reusable templates belong to the campaign vault. The sheet therefore travels with the entity, and the template remains available to the rest of the campaign.
+Stats live with the entity, not the template. Create or open an entity, apply a template from **Templates** (or start from **Edit Layout** directly), and enter values. Every entity — even ones sharing the same template — keeps its own independent HP, ammo, and notes. Rolling a Dice field fires it through Codex Cryptica's dice engine, and if you're in an active VTT session, the result also lands in the shared session log automatically.
 
-This separation is useful in practice: a template defines the shape of a sheet, while the entity owns the values that change during play.
+## Presentation Templates
 
-## A community library is the next step
+Presentations don't redefine your data — they decide how the same Stats are arranged: a full sheet, a dense combat stat block for an NPC, a mobile-friendly reference, or a dashboard grouping resources into cards. Open an entity's **Stats** tab and use the presentation picker to switch layouts; options are limited to templates matching that Stat Sheet's schema, so a vehicle layout can't land on an NPC sheet with different fields. Switching never copies, resets, or recalculates a value — increase a counter in one view and it's updated in every other view too.
 
-Custom templates are currently local to your campaign vault. A future marketplace could make it easier to discover and import templates shared by other GMs — a Mythras creature sheet, a faction-reputation tracker, or a ship-crew dashboard, for example.
+## Editing a Presentation
 
-Until then, the best template is the one that reflects your actual session rhythm. Start with the values you touch most, keep the layout readable, and let the sheet grow only when play shows you what is missing.
+Open **Presentations** from the Stats tab to manage layouts for the current schema. Built-in templates are read-only — **Duplicate** one or start **New Template** to get an editable copy.
 
-### [Open Stat Sheets in Codex Cryptica →](/)
+The editor opens on a **Visual Builder** by default: you assemble the layout from cards — a **Section** card groups related fields in a grid, a **Table** card lays out repeatable data — and each field within a card gets its own display mode (plain inline value, a prominent badge, a current/max counter, an interactive stepper, a progress bar, a tag list, a notes area, and more). No code required for most layouts.
 
-_Want the practical walkthrough? Read the full [Stat Sheets help guide](/help#help/stat-sheets)._ 
+![The Presentation Template Visual Builder, showing draggable field cards on the left and a live preview on the right](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/presentation-visual-builder.png)
+
+A **Markdown Code** tab sits alongside it for anyone who wants to write the underlying source directly — field references like `{{stat.hp display="current-max"}}` plus layout blocks (`:::stat-group`, `:::section`, `:::card`, `:::row`). The two tabs stay in sync: edit visually and the source updates underneath; edit the source and it reflects back into cards. It doesn't run HTML, CSS, JavaScript, or expressions — imported layouts stay predictable.
+
+If a template references a field that's since been renamed or removed, the affected spot is marked instead of breaking the sheet, and if a selected presentation becomes unavailable entirely, Codex Cryptica falls back to the standard Stat Sheet view. Your entity data is never at risk.
+
+A default presentation can be set per schema, so every NPC gets the same compact stat block by default, while a recurring boss can get its own dashboard without a duplicate Stat Sheet underneath.
+
+## Import, export, and portability
+
+**Reuse** means using something already available in your own vault — applying a saved template to a new entity, or picking a saved presentation from the picker. **Import/export** means moving a reusable definition between otherwise separate campaigns or vaults.
+
+- **Stat Templates**: there's no standalone import/export file today — the transfer path is the community directory described below. Importing from the directory always creates a new local template; it never overwrites or merges into an existing one.
+- **Presentation Templates**: export and import work directly from the Presentation manager. The exported package contains the template's name, description, target schema, and source — never entity values, vault identifiers, or local asset references. Importing into a vault with a different (but compatible-enough) schema is allowed; Codex Cryptica reports any field references that don't map to the destination schema instead of blocking the import outright.
+
+Either way, what moves is the reusable definition, never the character sitting on top of it.
+
+## Sharing and the Community Template Directory
+
+Stat Templates can be published to Codex Cryptica's **Community Template Directory** from **Settings → Templates**, where **Vault Templates** lets you browse the directory or publish templates you've saved, and **Presentation Layout Templates** below it holds the per-schema import/export controls:
+
+![Settings screen showing Vault Templates with Browse Community Templates and Publish Selected, and Presentation Layout Templates with Import and per-template Export/Duplicate](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/vault-and-presentation-templates.png)
+
+Before publishing, you choose which saved templates to share; the app shows every field and public detail for each one and confirms how many will become visible. Entity values, notes, names, vault identifiers, and local asset paths never leave your vault — only the structure does.
+
+Publishing gives you a management key for updating or unpublishing that listing later. It's stored locally and shown once during publication — save it somewhere safe, since losing both copies means you'll need the recovery flow to reclaim the listing. Unpublishing removes it from new search results; it doesn't touch anyone's local copy.
+
+Importing a community template creates an independent local copy in your vault. It never updates automatically when the publisher changes theirs, and it never sends your campaign data anywhere. Name conflicts and invalid packages are rejected before anything saves.
+
+Presentation Templates don't currently have a community directory of their own — sharing one means exporting the file and handing it to whoever needs it, the way you would a Stat Template package before this directory existed.
+
+## A worked example
+
+Build a fantasy PC template with Counters for HP and spell slots, a Dice field for initiative, and a Repeatable Table for inventory with a configured damage-dice column. Save it, then apply it to three party members — each keeps independent values from the first session. Duplicate the built-in D&D Character Sheet presentation into your own card layout for combat, and set it as the schema default so every character gets it automatically, with each player still free to switch back to the full sheet between fights. When the template's solid, publish it to the Community Template Directory so the rest of your table — or another GM entirely — can pull it into their own vault without touching your data.
+
+## Where to go next
+
+- [Open Codex Cryptica →](/)
+- [Stat Sheets help guide](/help#help/stat-sheets) for the field-by-field reference
+- Browse the Community Template Directory from **Settings → Templates** to see what other GMs have shared

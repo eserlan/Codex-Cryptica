@@ -25,6 +25,17 @@ interface ZarazLike {
   track: (eventName: string, properties?: Record<string, unknown>) => void;
 }
 
+export type PublicGeneratorAction = "save_to_codex" | "copy" | "open_codex";
+
+/** Tracks a public-generator action without coupling UI code to Zaraz. */
+export function trackPublicGeneratorAction(
+  action: PublicGeneratorAction,
+  properties: Record<string, unknown> = {},
+  win: any = typeof window !== "undefined" ? window : undefined,
+): void {
+  trackEvent("public_generator_action_clicked", { ...properties, action }, win);
+}
+
 function getZaraz(win: any): ZarazLike | undefined {
   return win?.zaraz;
 }

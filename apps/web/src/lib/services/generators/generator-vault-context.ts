@@ -48,6 +48,41 @@ export function latestTemporalYear(
 }
 
 /**
+ * Returns the sole quest-generator entry in memory, when there is exactly
+ * one. Quest drafts carry these labels so ordinary event entities are not
+ * accidentally treated as quest hooks.
+ */
+export function findSingleQuestHook(
+  entities: Record<string, Entity>,
+): Entity | undefined {
+  // ⚡ Bolt Optimization: Replace Object.values().filter() and Set mapping with
+  // an imperative loop and early return to reduce GC pressure and O(N) allocations.
+  let questHook: Entity | undefined;
+  for (const id in entities) {
+    if (!Object.hasOwn(entities, id)) continue;
+
+    const entity = entities[id];
+    if (!entity.labels) continue;
+
+    let isHook = false;
+    for (const label of entity.labels) {
+      const lower = label.toLocaleLowerCase();
+      if (lower === "quest-generator" || lower === "rpg-quest") {
+        isHook = true;
+        break;
+      }
+    }
+
+    if (isHook) {
+      if (questHook !== undefined) return undefined; // Multiple found, abort early
+      questHook = entity;
+    }
+  }
+
+  return questHook;
+}
+
+/**
  * Flatten markdown into a single clean line: drop heading markers (so a source
  * entity's "## Summary" can't collide with the generator template's headings)
  * and collapse newlines/whitespace (so each entity stays on one context line).
@@ -60,9 +95,37 @@ function flatten(text: string | undefined): string {
     .trim();
 }
 
+/**
+ * Truncates at the last complete sentence boundary within `max` chars, so an
+ * excerpt handed to the model never stops mid-sentence (which reads as a
+ * broken/garbled fact rather than an intentionally-trimmed excerpt). Falls
+ * back to a word boundary — and only as a last resort a hard character cut —
+ * when the text has no usable sentence break within the limit (e.g. one long
+ * run-on sentence, or no punctuation at all).
+ */
+/** Below this, a "sentence boundary" is more likely a false positive (an abbreviation like "Dr.") than a real one, so it isn't worth trusting over a plain word-boundary cut. */
+const MIN_SENTENCE_EXCERPT_CHARS = 20;
+
 function clampFlat(text: string | undefined, max: number): string {
   const flattened = flatten(text);
-  return flattened.length > max ? flattened.slice(0, max) + "…" : flattened;
+  if (flattened.length <= max) return flattened;
+  const truncated = flattened.slice(0, max);
+  const lastSentenceEnd = Math.max(
+    truncated.lastIndexOf(". "),
+    truncated.lastIndexOf("! "),
+    truncated.lastIndexOf("? "),
+  );
+  // Prefer the sentence boundary whenever one exists in range, however early
+  // — a short-but-complete excerpt beats a longer one truncated mid-sentence.
+  // The only reason not to trust it is a near-zero-length result, which is
+  // more likely a false positive (an abbreviation like "Dr.") than a real,
+  // useful sentence break.
+  if (lastSentenceEnd > MIN_SENTENCE_EXCERPT_CHARS) {
+    return truncated.slice(0, lastSentenceEnd + 1);
+  }
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeCut = lastSpace > max * 0.6 ? lastSpace : truncated.length;
+  return truncated.slice(0, safeCut).trimEnd() + "…";
 }
 
 function excerpt(text: string | undefined): string {
@@ -226,14 +289,17 @@ export function buildVaultContext(
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
-  let neighbors: VaultContextEntityExcerpt[] = [];
+  const neighbors: VaultContextEntityExcerpt[] = [];
   if (sourceEntity) {
     if (connectedIds && connectedIds.size > 0) {
-      neighbors = [...connectedIds]
-        .map((id) => allEntities[id])
-        .filter((e): e is Entity => !!e)
-        .slice(0, MAX_NEIGHBORS)
-        .map((e) => entityToExcerpt(e));
+      // ⚡ Bolt Optimization: Replace chained .map().filter().slice().map() with an imperative loop
+      for (const id of connectedIds) {
+        if (neighbors.length >= MAX_NEIGHBORS) break;
+        const e = allEntities[id];
+        if (e) {
+          neighbors.push(entityToExcerpt(e));
+        }
+      }
     } else {
       // ⚡ Bolt Optimization: Replace inline Object.values().filter().slice().map()
       // with imperative loop and early exit

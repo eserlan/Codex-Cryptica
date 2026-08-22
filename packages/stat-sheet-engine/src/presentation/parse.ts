@@ -49,10 +49,10 @@ interface FieldRefToken extends Tokens.Generic {
 
 function parseAttrs(raw: string): Record<string, string> {
   const attrs: Record<string, string> = {};
-  const re = /([a-zA-Z][\w-]*)=(?:"([^"]*)"|(\S+))/g;
+  const re = /([a-zA-Z][\w-]*)(?:=(?:"([^"]*)"|(\S+)))?/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(raw))) {
-    attrs[m[1]] = m[2] ?? m[3] ?? "";
+    attrs[m[1]] = m[2] ?? m[3] ?? "true";
   }
   return attrs;
 }
@@ -114,23 +114,46 @@ const fieldRefExtension = {
   name: "fieldRef",
   level: "inline" as const,
   start(src: string): number | undefined {
-    const idx = src.indexOf("{{stat.");
-    return idx === -1 ? undefined : idx;
+    const idx1 = src.indexOf("{{stat.");
+    const idx2 = src.indexOf("[");
+    if (idx1 === -1) return idx2 === -1 ? undefined : idx2;
+    if (idx2 === -1) return idx1;
+    return Math.min(idx1, idx2);
   },
   tokenizer(src: string) {
-    const match =
-      /^\{\{stat\.([a-zA-Z0-9_-]+)((?:\s+[a-zA-Z]+="[^"]*")*)\s*\}\}/.exec(src);
-    if (!match) return undefined;
-    const [raw, fieldId, attrsRaw] = match;
-    const attrs = parseAttrs(attrsRaw);
-    const token: FieldRefToken = {
-      type: "fieldRef",
-      raw,
-      fieldId,
-      displayMode: attrs.display,
-      label: attrs.label,
-    };
-    return token;
+    const mustacheMatch =
+      /^\{\{stat\.([a-zA-Z0-9_-]+)((?:\s+[a-zA-Z0-9_-]+(?:="[^"]*"|=\S+)?)*)\s*\}\}/.exec(
+        src,
+      );
+    if (mustacheMatch) {
+      const [raw, fieldId, attrsRaw] = mustacheMatch;
+      const attrs = parseAttrs(attrsRaw);
+      const token: FieldRefToken = {
+        type: "fieldRef",
+        raw,
+        fieldId,
+        displayMode: attrs.display,
+        label: attrs.label,
+        hideLabel:
+          attrs["hide-label"] === "true" ||
+          attrs["hidelabel"] === "true" ||
+          attrs["hide_label"] === "true",
+      };
+      return token;
+    }
+    const bracketMatch =
+      /^\[([a-zA-Z0-9_-]+)(?::([a-zA-Z0-9_-]+))?\](?!\s*\(.*\))/.exec(src);
+    if (bracketMatch) {
+      const [raw, fieldId, displayMode] = bracketMatch;
+      const token: FieldRefToken = {
+        type: "fieldRef",
+        raw,
+        fieldId,
+        displayMode,
+      };
+      return token;
+    }
+    return undefined;
   },
 };
 
@@ -186,6 +209,7 @@ function walkInline(tokens: Token[] | undefined): InlineNode[] {
           fieldId: ref.fieldId,
         };
         if (ref.label) node.label = ref.label;
+        if (ref.hideLabel) node.hideLabel = true;
         if (ref.displayMode && isPresentationDisplayMode(ref.displayMode)) {
           node.displayMode = ref.displayMode;
         } else if (ref.displayMode) {
@@ -246,6 +270,40 @@ function directiveNode(tok: DirectiveToken): BlockNode {
       return node;
     }
   }
+}
+
+/**
+ * Markdown headings already act as visual section headers in presentation
+ * templates. Promote them to the same section node used by `:::section` so
+ * existing and visual-builder-authored layouts gain the viewer-only collapse
+ * control without requiring a source migration.
+ */
+function groupHeadingSections(nodes: BlockNode[]): BlockNode[] {
+  const grouped: BlockNode[] = [];
+
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
+    if (node.type !== "heading") {
+      grouped.push(node);
+      continue;
+    }
+
+    const children: BlockNode[] = [];
+    while (index + 1 < nodes.length) {
+      const next = nodes[index + 1];
+      if (next.type === "heading" && next.level <= node.level) break;
+      children.push(next);
+      index++;
+    }
+
+    grouped.push({
+      type: "section",
+      heading: node,
+      children: groupHeadingSections(children),
+    });
+  }
+
+  return grouped;
 }
 
 function walkBlock(tokens: Token[]): BlockNode[] {
@@ -314,7 +372,7 @@ function walkBlock(tokens: Token[]): BlockNode[] {
         break;
     }
   }
-  return out;
+  return groupHeadingSections(out);
 }
 
 const SCRIPT_BLOCK_REGEXP = /<script[^>]*>[\s\S]*?<\/script\s*>/gi;
@@ -324,7 +382,7 @@ const HANDLEBARS_REGEXP = /\{\{[^}]*\}\}/g;
 // Mirrors fieldRefExtension's tokenizer regexp above, anchored full-match:
 // the only `{{...}}` form this contract allows through (directive-syntax.md).
 const VALID_FIELD_REF_REGEXP =
-  /^\{\{stat\.[a-zA-Z0-9_-]+(?:\s+[a-zA-Z]+="[^"]*")*\s*\}\}$/;
+  /^\{\{stat\.[a-zA-Z0-9_-]+((?:\s+[a-zA-Z0-9_-]+(?:="[^"]*"|=\S+)?)*)\s*\}\}$/;
 
 export interface SanitizeResult {
   source: string;

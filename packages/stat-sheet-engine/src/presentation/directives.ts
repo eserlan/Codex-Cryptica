@@ -26,6 +26,7 @@ export const PRESENTATION_DISPLAY_MODES = [
   "tag-list",
   "table",
   "notes",
+  "name-target",
 ] as const;
 
 export type PresentationDisplayMode =
@@ -66,7 +67,11 @@ export const DISPLAY_MODES_BY_FIELD_TYPE: Record<
   },
   dice: {
     default: "plain",
-    allowed: ["plain", "prominent"],
+    allowed: ["plain", "prominent", "name-target"],
+  },
+  "item-table": {
+    default: "table",
+    allowed: ["table", "plain"],
   },
 };
 

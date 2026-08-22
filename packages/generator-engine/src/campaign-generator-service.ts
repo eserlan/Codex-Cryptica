@@ -28,6 +28,7 @@ import {
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { StarSystemBody } from "./public-star-system";
 import {
   parseLanguageResponse,
   type LanguageGeneratorOptions,
@@ -773,10 +774,16 @@ export class CampaignGeneratorService {
           );
           const raw = completeText(result);
           const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+          const requiresCompleteSocietyDossier =
+            mergedRequest.generatorId === "secret-society";
           if (
             typeof parsed.title === "string" &&
             typeof parsed.summary === "string" &&
-            typeof parsed.lore === "string"
+            typeof parsed.lore === "string" &&
+            (!requiresCompleteSocietyDossier ||
+              (parsed.lore.trim().length > 0 &&
+                typeof parsed.content === "string" &&
+                parsed.content.trim().length > 0))
           ) {
             if (isTitleBanned(parsed.title, bannedNames)) continue;
             const output: GeneratorOutput = {
@@ -787,6 +794,19 @@ export class CampaignGeneratorService {
                 typeof parsed.content === "string" ? parsed.content : undefined,
               labels: Array.isArray(parsed.labels) ? parsed.labels : [],
               connections: parseConnections(parsed.connections),
+              // Only the star-system generator's schema asks for these; every
+              // other generator's response simply won't include them.
+              bodies: Array.isArray(parsed.bodies)
+                ? parsed.bodies.filter(
+                    (b): b is StarSystemBody =>
+                      typeof (b as { name?: unknown })?.name === "string" &&
+                      typeof (b as { type?: unknown })?.type === "string",
+                  )
+                : undefined,
+              starType:
+                typeof parsed.starType === "string"
+                  ? parsed.starType
+                  : undefined,
             };
             if (typeof result !== "string" && result.usedInteraction) {
               this.onInteractionResult?.(result);

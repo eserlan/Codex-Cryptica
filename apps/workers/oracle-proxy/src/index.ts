@@ -30,6 +30,20 @@ import {
 import { handleGetPublishedNotice, handlePutPublishedNotice } from "./notice";
 import { handleCopyrightReport } from "./reports";
 import {
+  forwardToGemini,
+  forwardInteractionToGemini,
+} from "./llm/adaptors/gemini-adaptor";
+import {
+  forwardInteractionToOpenAi,
+  extractOpenAiResponseText,
+} from "./llm/adaptors/openai-adaptor";
+import { getModel } from "./llm/registry";
+import {
+  isLlmOperationRequest,
+  handleLlmOperationRequest,
+} from "./llm/handle-operation-request";
+import { handleSessionRequest, enforceLlmSession } from "./session-guard";
+import {
   handleCreateTemplateListing,
   handleDeleteTemplateListing,
   handleGetTemplateListing,
@@ -42,6 +56,7 @@ import {
 
 interface Env {
   GEMINI_API_KEY: string;
+  OPENAI_API_KEY?: string;
   ALLOWED_ORIGINS?: string;
   ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
   AI?: any;
@@ -53,14 +68,37 @@ interface Env {
   PUBLISH_WRITE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
+  /** HMAC signing secret for LLM session capability tokens. */
+  SESSION_TOKEN_SECRET?: string;
+  LLM_BURST_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  LLM_GENERATION_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
   TEMPLATE_ADMIN_TOKEN?: string;
 }
 
-// Allowed origins for CORS
+/**
+ * Allowed origins for CORS — the single source of truth.
+ *
+ * One `oracle-proxy` Worker serves every environment (no `--env`, no
+ * `[env.*]` in wrangler.toml), so this list must cover them all. Setting
+ * `ALLOWED_ORIGINS` per deploy is what broke staging on 2026-08-11: the
+ * variable is authoritative when present, so a deploy carrying only the
+ * production origins cut staging off until the next deploy. Keeping the list
+ * here means every deploy is identical no matter who runs it or which
+ * environment they thought they were deploying.
+ *
+ * `ALLOWED_ORIGINS` still overrides this if set, as an escape hatch for
+ * locking the Worker down without a code change — it just isn't set normally.
+ *
+ * Only origins actually served belong here: an entry for a domain nobody owns
+ * would hand CORS access to whoever registers it next.
+ */
 const DEFAULT_ALLOWED_ORIGINS = [
-  "https://codex-cryptica.com",
   "https://codexcryptica.com",
-  "https://staging.codex-cryptica.com",
+  "https://www.codexcryptica.com",
   "https://staging.codexcryptica.com",
   "https://codex-cryptica.pages.dev",
   "http://localhost",
@@ -153,6 +191,21 @@ export default {
         );
       }
       return withCors(new Response("Not found", { status: 404 }));
+    }
+
+    if (pathname === "/api/session") {
+      const sessionOrigin = request.headers.get("Origin") || "";
+      if (!isOriginAllowed(sessionOrigin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+      return handleSessionRequest(
+        request,
+        env,
+        getCorsHeaders(request.headers, env),
+      );
     }
 
     if (pathname.startsWith("/api/template-directory/")) {
@@ -549,9 +602,36 @@ export default {
       }
     }
 
+    // Capability-token guard for the text LLM endpoints. Covers all three
+    // paths below (operation pipeline, interactions, legacy passthrough),
+    // which together are every text generation request the app makes.
+    //
+    // Image generation (`/v1/images/generations`, handled above) keeps its own
+    // per-IP daily limiter and is deliberately not guarded here: it is served
+    // by a different client that does not carry a capability token, so
+    // enforcing one would break image generation outright.
+    const sessionResponse = await enforceLlmSession(
+      request,
+      env,
+      getCorsHeaders(request.headers, env),
+    );
+    if (sessionResponse) return sessionResponse;
+
     try {
       // Parse the incoming request body
       const body = (await request.json()) as any;
+
+      // Provider-neutral operation pipeline: selected when the client sends
+      // a recognized `operation` field. Requests without it fall through to
+      // the two legacy branches below completely unchanged (FR-007,
+      // research.md R1).
+      if (isLlmOperationRequest(body)) {
+        return await handleLlmOperationRequest(
+          body,
+          getCorsHeaders(request.headers, env),
+          env,
+        );
+      }
 
       // Interactions API path: server-side conversation state. Selected when the
       // client sends an `input` field (instead of full `contents`). Keeps the
@@ -578,118 +658,10 @@ export default {
         );
       }
 
-      // 1. Determine Model
-      const targetModel = body.model || "gemini-3.5-flash-lite";
+      const { status, data, parseError } = await forwardToGemini(body, env);
 
-      // 2. Map and clean up configuration for Google REST API (which expects snake_case)
-      const rawConfig = {
-        ...(body.generation_config || body.generationConfig || {}),
-      } as any;
-      const generation_config: any = {};
-
-      const safety_settings = body.safety_settings || body.safetySettings;
-      let system_instruction =
-        body.system_instruction || body.systemInstruction;
-
-      // Map supported fields explicitly to prevent prototype pollution and ensure snake_case
-      const mapping: Record<string, string> = {
-        stopSequences: "stop_sequences",
-        stop_sequences: "stop_sequences",
-        maxOutputTokens: "max_output_tokens",
-        max_output_tokens: "max_output_tokens",
-        responseMimeType: "response_mime_type",
-        response_mime_type: "response_mime_type",
-        responseModalities: "response_modalities",
-        response_modalities: "response_modalities",
-        candidateCount: "candidate_count",
-        candidate_count: "candidate_count",
-        temperature: "temperature",
-        topP: "top_p",
-        top_p: "top_p",
-        topK: "top_k",
-        top_k: "top_k",
-      };
-
-      for (const [inputKey, snakeKey] of Object.entries(mapping)) {
-        if (rawConfig[inputKey] !== undefined) {
-          generation_config[snakeKey] = rawConfig[inputKey];
-        }
-      }
-
-      // Map speechConfig → speech_config (required for TTS voice selection)
-      // The Google REST API uses deeply-nested snake_case names that differ from
-      // the camelCase SDK, so we have to translate each level explicitly.
-      // Only written to generation_config when a valid voice_name is present —
-      // sending an empty speech_config object causes a 400 from Google.
-      const rawSpeechConfig = rawConfig.speechConfig ?? rawConfig.speech_config;
-      if (rawSpeechConfig) {
-        const rawVoiceConfig =
-          rawSpeechConfig.voiceConfig ?? rawSpeechConfig.voice_config;
-        if (rawVoiceConfig) {
-          const rawPrebuilt =
-            rawVoiceConfig.prebuiltVoiceConfig ??
-            rawVoiceConfig.prebuilt_voice_config;
-          const voiceName = rawPrebuilt?.voiceName ?? rawPrebuilt?.voice_name;
-          if (voiceName) {
-            // Only assign when we have a concrete voice name — an empty or
-            // absent name would cause a 400 INVALID_ARGUMENT from Google.
-            generation_config.speech_config = {
-              voice_config: {
-                prebuilt_voice_config: { voice_name: voiceName },
-              },
-            };
-          }
-        }
-      }
-
-      // CRITICAL: Google REST API throws 400 if system_instruction is found inside generation_config
-      const systemKeys = [
-        "systemInstruction",
-        "system_instruction",
-        "system-instruction",
-      ];
-      for (const key of systemKeys) {
-        if (rawConfig[key]) {
-          system_instruction = system_instruction || rawConfig[key];
-        }
-      }
-
-      // Format system_instruction if it's a simple string
-      const formattedSystemInstruction =
-        typeof system_instruction === "string"
-          ? { parts: [{ text: system_instruction }] }
-          : system_instruction;
-
-      const outgoingPayload = {
-        contents: body.contents,
-        generation_config,
-        system_instruction: formattedSystemInstruction,
-        safety_settings,
-      };
-
-      console.log(`[Oracle Proxy] Forwarding to Google model: ${targetModel}`);
-
-      // Forward to Google Gemini API
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${env.GEMINI_API_KEY}`;
-
-      const geminiResponse = await fetch(geminiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(outgoingPayload),
-      });
-
-      // Read the response from Google
-      const responseText = await geminiResponse.text();
-      let responseData;
-      try {
-        responseData = responseText ? JSON.parse(responseText) : {};
-      } catch {
-        console.error(
-          "[Oracle Proxy] Non-JSON from Gemini. Status:",
-          geminiResponse.status,
-        );
+      if (parseError) {
+        console.error("[Oracle Proxy] Non-JSON from Gemini. Status:", status);
         return new Response(
           JSON.stringify({
             error: {
@@ -708,8 +680,8 @@ export default {
       }
 
       // Return the response to the client
-      return new Response(JSON.stringify(responseData), {
-        status: geminiResponse.status,
+      return new Response(JSON.stringify(data), {
+        status,
         headers: {
           ...getCorsHeaders(request.headers, env),
           "Content-Type": "application/json",
@@ -740,11 +712,17 @@ export default {
 };
 
 /**
- * Handle a Gemini Interactions API request (server-side conversation state).
+ * Handle an Interactions-style request (server-side conversation state).
  *
- * Forwards to `/v1beta/interactions` with the system key, threading
- * `previous_interaction_id` so the model retains prior turns server-side. The
- * client therefore sends only the new `input` (query + new/changed lore).
+ * `body.model` is looked up against the model registry first: an OpenAI
+ * registry key (e.g. "luna-fast") routes to OpenAI's Responses API,
+ * threading `previous_response_id`; anything else (including raw Gemini
+ * model ids not in the registry, for back-compat) forwards to Gemini's
+ * `/v1beta/interactions`, threading `previous_interaction_id`. Either way the
+ * client only ever sends/receives the provider-neutral `previous_interaction_id`
+ * / `{ id, text }` shape — callers (chat/revision/generator sessions) don't
+ * need to know which provider is serving a given model key.
+ *
  * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
  * 409 so the client can reset and replay full history.
  */
@@ -760,56 +738,34 @@ async function handleInteraction(
       headers: { ...cors, "Content-Type": "application/json" },
     });
 
-  // Align with the stateless :generateContent default so a follow-up that omits
-  // `model` cannot silently switch models mid-conversation.
-  const targetModel = body.model || "gemini-3.5-flash-lite";
+  const rawModel = typeof body?.model === "string" ? body.model : undefined;
+  const registryModel = rawModel ? getModel(rawModel) : undefined;
+  const useOpenAi = registryModel?.provider === "openai";
 
-  // Interactions API expects system_instruction as a plain string, not the
-  // { parts: [...] } object format used by generateContent.
-  const systemInstruction: string | undefined =
-    typeof body.system_instruction === "string"
-      ? body.system_instruction
-      : typeof body.systemInstruction === "string"
-        ? body.systemInstruction
-        : body.system_instruction?.parts?.[0]?.text;
-
-  const payload: Record<string, unknown> = {
-    model: targetModel,
-    input: body.input,
-    store: body.store ?? true,
+  const outgoingBody = {
+    ...body,
+    model: rawModel,
   };
-  if (body.previous_interaction_id) {
-    payload.previous_interaction_id = body.previous_interaction_id;
-  }
-  if (systemInstruction) {
-    payload.system_instruction = systemInstruction;
-  }
-  if (body.generation_config || body.generationConfig) {
-    payload.generation_config = body.generation_config || body.generationConfig;
+
+  if (registryModel && registryModel.provider === "gemini") {
+    outgoingBody.model = registryModel.modelId;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${env.GEMINI_API_KEY}`;
+  const result = useOpenAi
+    ? await forwardInteractionToOpenAi(
+        outgoingBody,
+        registryModel!.modelId,
+        env,
+      )
+    : await forwardInteractionToGemini(outgoingBody, env);
 
-  let upstream: Response;
-  try {
-    upstream = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch (err) {
-    console.error("[Oracle Proxy] Interactions fetch error:", err);
+  if (result.transportError) {
     return json(
       { error: { message: "Failed to reach Interactions API" } },
       502,
     );
   }
-
-  const text = await upstream.text();
-  let data: any;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
+  if (result.parseError) {
     return json(
       {
         error: {
@@ -821,29 +777,37 @@ async function handleInteraction(
     );
   }
 
-  if (!upstream.ok) {
+  const data = result.data as any;
+
+  if (!result.ok) {
     const message: string =
       data?.error?.message || "Interaction request failed";
-    // An expired or unknown previous_interaction_id (retention window elapsed)
-    // is recoverable: the client should drop the id and replay full history.
+    // An expired or unknown previous id (retention window elapsed, or an
+    // OpenAI previous_response_id that's aged out) is recoverable: the
+    // client should drop the id and replay full history.
     const isStaleId =
       body.previous_interaction_id &&
-      (upstream.status === 404 ||
-        upstream.status === 400 ||
-        /previous_interaction_id|interaction.*not found/i.test(message));
+      (result.status === 404 ||
+        result.status === 400 ||
+        /previous_interaction_id|previous_response_id|interaction.*not found|response.*not found/i.test(
+          message,
+        ));
     if (isStaleId) {
       return json({ error: { message, code: "INTERACTION_NOT_FOUND" } }, 409);
     }
-    return json({ error: { message } }, upstream.status);
+    return json({ error: { message } }, result.status);
   }
 
-  // Output text lives at steps[].content[].text (model_output steps).
-  const steps: any[] = Array.isArray(data.steps) ? data.steps : [];
-  const extractedText = steps
-    .flatMap((s) => (Array.isArray(s?.content) ? s.content : []))
-    .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
-    .filter(Boolean)
-    .join("");
+  // Gemini's Interactions API: output text lives at steps[].content[].text
+  // (model_output steps). OpenAI's Responses API: output text lives at
+  // output[].content[].text (message items, output_text blocks).
+  const extractedText = useOpenAi
+    ? extractOpenAiResponseText(data)
+    : (Array.isArray(data.steps) ? data.steps : [])
+        .flatMap((s: any) => (Array.isArray(s?.content) ? s.content : []))
+        .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
+        .filter(Boolean)
+        .join("");
 
   return json({ id: data.id, text: extractedText }, 200);
 }

@@ -6,18 +6,18 @@ This feature reuses `packages/importer`'s existing `CCImportPackage`/`ImportEngi
 
 A single file the user dragged in or chose via the file upload dialog, before any interpretation. Input to the new mechanical converter.
 
-| Field          | Description                                                                 |
-| -------------- | ---------------------------------------------------------------------------- |
+| Field          | Description                                                                                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `relativePath` | Path relative to the drop root: the bare filename for a loose file, or the folder-relative path (`webkitRelativePath` / walked `FileSystemDirectoryEntry` path) when part of a dropped folder. |
-| `file`         | The underlying `File`/`Blob` content.                                        |
+| `file`         | The underlying `File`/`Blob` content.                                                                                                                                                          |
 
 ## SourceSelection
 
 The full set of items the user provided in one drop/selection.
 
-| Field        | Description                                                                          |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `items`      | The `DroppedItem`s gathered from drag-and-drop and/or the file upload dialog.           |
+| Field        | Description                                                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `items`      | The `DroppedItem`s gathered from drag-and-drop and/or the file upload dialog.                                                 |
 | `unreadable` | Items that could not be read (e.g. permission denied, I/O error); excluded from the resulting `CCImportPackage` and reported. |
 
 ## Mapping DroppedItem → CCImportPackage (new mechanical converter output)
@@ -33,10 +33,10 @@ The converter (new, in `packages/importer/src/vault-files/convert.ts`) walks `So
 
 An image path an `EntityDraft` references that had no matching `DroppedItem` — new to this feature. This is a **separate list returned alongside `CCImportPackage`**, not an extension of `PreviewAsset`: `PreviewAsset` (`engine.ts:148-162`) is only ever built from `pkg.assetDrafts` that already exist, so a reference with no matching dropped item never enters `session.assets` under the existing engine at all. The missing-image review step (T014/T015) renders this list directly, independent of the reused `PreviewAsset` UI.
 
-| Field          | Description                                                                 |
-| -------------- | ---------------------------------------------------------------------------- |
-| `path`         | The referenced image's relative path, as written in the entity's frontmatter. |
-| `referencedBy` | The `EntityDraft.sourcePath`(s) that reference it.                            |
+| Field          | Description                                                                                                                                                                                                                            |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`         | The referenced image's relative path, as written in the entity's frontmatter.                                                                                                                                                          |
+| `referencedBy` | The `EntityDraft.sourcePath`(s) that reference it.                                                                                                                                                                                     |
 | `resolution`   | `unresolved` \| `added-directly` (user supplied the file, becomes a new `AssetDraft`) \| `resolved-from-folder` (found via granted folder access, becomes a new `AssetDraft`) \| `still-missing` (not found even after folder access). |
 
 ## Review & write (existing types, used as-is)

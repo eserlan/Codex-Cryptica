@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,
   mapShipGenreToTheme,
+  mapStarSystemGenreToTheme,
+  mapAlienRaceGenreToTheme,
   mapWorldGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
@@ -30,6 +32,8 @@ describe("shouldSyncGeneratorTheme", () => {
     expect(shouldSyncGeneratorTheme("language-generator")).toBe(true);
     expect(shouldSyncGeneratorTheme("world")).toBe(true);
     expect(shouldSyncGeneratorTheme("council-vote")).toBe(true);
+    expect(shouldSyncGeneratorTheme("secret-society")).toBe(true);
+    expect(shouldSyncGeneratorTheme("plot-twist-generator")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {
@@ -78,5 +82,43 @@ describe("mapWorldGenreToTheme", () => {
       "Optimistic Exploration Sci-Fi",
     );
     expect(mapWorldGenreToTheme("Lancer")).toBe("Lancer");
+  });
+});
+
+describe("mapStarSystemGenreToTheme", () => {
+  it("uses the dedicated Star Wars skin for Space Opera", () => {
+    expect(mapStarSystemGenreToTheme("Space Opera")).toBe("Star Wars");
+  });
+
+  it("maps every star system genre to a real theme skin", () => {
+    expect(mapStarSystemGenreToTheme("Hard Sci-Fi")).toBe(
+      "Sci-Fi / Space Opera",
+    );
+    expect(mapStarSystemGenreToTheme("Cyberpunk")).toBe(
+      "Cyberpunk / Corporate",
+    );
+    expect(mapStarSystemGenreToTheme("Post-Apocalyptic")).toBe(
+      "Post-Apocalyptic",
+    );
+  });
+});
+
+describe("mapAlienRaceGenreToTheme", () => {
+  it("maps every alien race genre to a real theme skin", () => {
+    expect(mapAlienRaceGenreToTheme("Hard Sci-Fi")).toBe(
+      "Sci-Fi / Space Opera",
+    );
+    expect(mapAlienRaceGenreToTheme("Space Opera")).toBe(
+      "Sci-Fi / Space Opera",
+    );
+    expect(mapAlienRaceGenreToTheme("Cyberpunk")).toBe("Cyberpunk / Corporate");
+    expect(mapAlienRaceGenreToTheme("Cosmic Horror")).toBe("Cosmic Horror");
+    expect(mapAlienRaceGenreToTheme("Post-Apocalyptic")).toBe(
+      "Post-Apocalyptic",
+    );
+  });
+
+  it("falls back to the general sci-fi skin for a custom genre", () => {
+    expect(mapAlienRaceGenreToTheme("Biopunk")).toBe("Sci-Fi / Space Opera");
   });
 });

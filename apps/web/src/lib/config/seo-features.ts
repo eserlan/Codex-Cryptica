@@ -171,7 +171,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
       {
         question: "Do I need a paid AI subscription?",
         answer:
-          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own Gemini API key for unlimited usage.",
+          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own API key for unlimited usage.",
       },
       {
         question: "Is my campaign prompt context secure?",

@@ -46,6 +46,7 @@
     onSaveHubToCodex,
     onBuildDelveCanvas,
     onBuildAdventureCanvas,
+    onGeneratePlotTwist,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -69,6 +70,7 @@
     onSaveHubToCodex: (entities: SessionEntity[]) => void;
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
     onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
+    onGeneratePlotTwist?: (data: GeneratorOutput) => void;
   } = $props();
 
   import { getThemeLoadingMessages } from "generator-engine";
@@ -123,7 +125,7 @@
   {#if isBusy}
     <div
       in:fade={{ duration: 150 }}
-      class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
+      class="absolute inset-0 z-10 flex flex-col items-center justify-start pt-12 sm:pt-16 gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
       role="status"
       aria-live="polite"
     >
@@ -214,6 +216,21 @@
                 <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
                 ></span>
                 Open Adventure Canvas
+              </button>
+            {/if}
+            {#if onGeneratePlotTwist}
+              <button
+                type="button"
+                onclick={() => onGeneratePlotTwist(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
+                id="generate-plot-twist-btn"
+                title="Generate a Plot Twist from this quest hook"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--shuffle] mr-1.5 inline-block h-3.5 w-3.5 align-[-0.15em]"
+                ></span>
+                Generate Plot Twist
               </button>
             {/if}
             <button
@@ -336,6 +353,14 @@
     font-size: 1rem;
     margin: 1rem 0 0.5rem;
     color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
+  }
+  /* Nested body/planet subheading inside a section (e.g. Major Bodies), one level under h3 */
+  .seo-md :global(h4) {
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin: 0.85rem 0 0.35rem;
+    color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
   }
   .seo-md :global(ul) {
     list-style: disc;

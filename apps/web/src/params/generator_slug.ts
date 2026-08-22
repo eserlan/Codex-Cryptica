@@ -4,6 +4,8 @@ const validSlugs = new Set([
   "npc",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "faction",
   "quest",
   "item",
@@ -24,8 +26,14 @@ const validSlugs = new Set([
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "plot-twist-generator",
+  "bbeg-generator",
   "world",
   "council-vote",
+  "secret-society",
+  "star-system",
+  "alien-race",
+  "creature",
   "random",
 ]);
 

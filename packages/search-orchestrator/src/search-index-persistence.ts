@@ -1,4 +1,5 @@
-import type { SearchEngine } from "@codex/search-engine";
+import { SEARCH_INDEX_COMPRESSION_FORMAT } from "@codex/search-engine";
+import type { CompressedSearchIndex, SearchEngine } from "@codex/search-engine";
 import type * as Comlink from "comlink";
 
 type DebugLogger = {
@@ -8,8 +9,15 @@ type DebugLogger = {
 };
 import type { SearchProgressCoordinator } from "./search-progress-coordinator";
 import { systemClock } from "./runtime";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 
-type PersistenceApi = Pick<SearchEngine, "exportIndex" | "importIndex">;
+type PersistenceApi = Pick<SearchEngine, "exportIndex" | "importIndex"> & {
+  exportIndexCompressed?: () => Promise<CompressedSearchIndex>;
+  importIndexCompressed?: (payload: CompressedSearchIndex) => Promise<void>;
+};
 
 function decodePersistedSegment(value: unknown): string {
   if (typeof value === "string") return value;
@@ -68,6 +76,7 @@ export interface SearchIndexPersistenceDeps {
   debug?: DebugLogger;
   coordinator: SearchProgressCoordinator;
   getApi: () => Promise<Comlink.Remote<PersistenceApi> | PersistenceApi>;
+  performanceRecorder?: PerformanceRecorder;
 }
 
 export class SearchIndexPersistence {
@@ -77,12 +86,23 @@ export class SearchIndexPersistence {
   private getApi: () => Promise<
     Comlink.Remote<PersistenceApi> | PersistenceApi
   >;
+  private performanceRecorder: PerformanceRecorder;
+  private saveGenerations = new Map<string, number>();
+  private idleCallbacks = new Map<
+    string,
+    { handle: number; resolve: () => void }
+  >();
 
   constructor(deps: SearchIndexPersistenceDeps) {
     this.db = deps.db;
     this.debug = deps.debug ?? (globalThis as any).__debugStore__ ?? console;
     this.coordinator = deps.coordinator;
     this.getApi = deps.getApi;
+    this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+  }
+
+  setPerformanceRecorder(performance: PerformanceRecorder): void {
+    this.performanceRecorder = performance;
   }
 
   async loadIndex(vaultId: string): Promise<boolean> {
@@ -91,6 +111,45 @@ export class SearchIndexPersistence {
     try {
       const record = await this.getDb().searchIndex.get(vaultId);
       if (record && record.data) {
+        const compressedApi = api as PersistenceApi;
+        if (
+          record.format === SEARCH_INDEX_COMPRESSION_FORMAT &&
+          typeof compressedApi.importIndexCompressed === "function"
+        ) {
+          const runId = this.coordinator.createRunId(vaultId);
+          this.coordinator.emitProgress({
+            status: "restoring",
+            vaultId,
+            runId,
+            indexedCount: 0,
+            totalCount: null,
+            isPartial: true,
+            canRetry: false,
+            message: "Search is restoring.",
+            error: null,
+          });
+          await compressedApi.importIndexCompressed({
+            format: record.format,
+            data:
+              record.data instanceof Uint8Array
+                ? record.data
+                : new Uint8Array(record.data),
+            keyCount: record.keyCount ?? 0,
+          });
+          this.coordinator.isDirty = false;
+          this.coordinator.emitProgress({
+            status: "ready",
+            vaultId,
+            runId,
+            indexedCount: 0,
+            totalCount: null,
+            isPartial: false,
+            canRetry: false,
+            message: "Search is ready.",
+            error: null,
+          });
+          return true;
+        }
         let indexData = record.data;
 
         // Check if data is stored as a compressed Blob (or mock stream object in test environment)
@@ -189,6 +248,41 @@ export class SearchIndexPersistence {
   }
 
   async saveIndex(vaultId: string): Promise<void> {
+    const generation = (this.saveGenerations.get(vaultId) ?? 0) + 1;
+    this.saveGenerations.set(vaultId, generation);
+
+    const previousIdle = this.idleCallbacks.get(vaultId);
+    if (previousIdle !== undefined) {
+      if (typeof globalThis.cancelIdleCallback === "function") {
+        globalThis.cancelIdleCallback(previousIdle.handle);
+      }
+      previousIdle.resolve();
+      this.idleCallbacks.delete(vaultId);
+    }
+
+    return new Promise<void>((resolve) => {
+      const run = () => {
+        this.idleCallbacks.delete(vaultId);
+        if (this.saveGenerations.get(vaultId) !== generation) {
+          resolve();
+          return;
+        }
+        void this.persistIndex(vaultId, generation).finally(resolve);
+      };
+
+      if (typeof globalThis.requestIdleCallback === "function") {
+        const handle = globalThis.requestIdleCallback(run, { timeout: 1500 });
+        this.idleCallbacks.set(vaultId, { handle, resolve });
+      } else {
+        run();
+      }
+    });
+  }
+
+  private async persistIndex(
+    vaultId: string,
+    generation: number,
+  ): Promise<void> {
     const api = await this.getApi();
     const p = this.coordinator.getIndexProgress();
     if (p.vaultId === vaultId && p.isPartial) {
@@ -197,12 +291,55 @@ export class SearchIndexPersistence {
       );
       return;
     }
+    const saveSpan = this.performanceRecorder.start("search_index_persist");
     try {
       this.debug.log(
         `[SearchIndexPersistence] Save started: Exporting index for ${vaultId}...`,
       );
       const start = performance.now();
+
+      const compressedApi = api as PersistenceApi;
+      if (typeof compressedApi.exportIndexCompressed === "function") {
+        try {
+          const payload = await compressedApi.exportIndexCompressed();
+          if (this.saveGenerations.get(vaultId) !== generation) {
+            saveSpan.stale(() => ({ indexedInputCount: 0 }));
+            return;
+          }
+          if (!payload?.data || payload.keyCount <= 1) {
+            saveSpan.complete(() => ({
+              indexedInputCount: payload?.keyCount ?? 0,
+            }));
+            return;
+          }
+          await this.getDb().searchIndex.put({
+            vaultId,
+            data: payload.data,
+            format: payload.format,
+            keyCount: payload.keyCount,
+            updatedAt: systemClock.now(),
+          });
+          if (this.saveGenerations.get(vaultId) === generation) {
+            this.coordinator.isDirty = false;
+          }
+          saveSpan.complete(() => ({ indexedInputCount: payload.keyCount }));
+          this.debug.log(
+            `[SearchIndexPersistence] Save finished: Persisted worker-compressed index for ${vaultId} (${payload.keyCount} keys) in ${(performance.now() - start).toFixed(2)}ms`,
+          );
+          return;
+        } catch (compressionError) {
+          this.debug.warn(
+            "[SearchIndexPersistence] Worker compression failed; falling back to legacy persistence.",
+            compressionError,
+          );
+        }
+      }
+
       const rawData = await api.exportIndex();
+      if (this.saveGenerations.get(vaultId) !== generation) {
+        saveSpan.stale(() => ({ indexedInputCount: 0 }));
+        return;
+      }
 
       const explicitKeyCount =
         typeof rawData?.keyCount === "number" ? rawData.keyCount : undefined;
@@ -234,7 +371,19 @@ export class SearchIndexPersistence {
         encodedKeyCount ??
         Object.keys(rawData || {}).length;
 
-      if (rawData && keyCount > 1) {
+      if (!rawData) {
+        saveSpan.fail("unexpected");
+        this.debug.warn(
+          `[SearchIndexPersistence] Save skipped: Export did not return index data.`,
+        );
+      } else if (keyCount <= 1) {
+        saveSpan.complete(() => ({
+          indexedInputCount: keyCount,
+        }));
+        this.debug.log(
+          `[SearchIndexPersistence] Save skipped: Index is empty.`,
+        );
+      } else {
         let persistedData: any = rawData;
 
         // Convert ArrayBuffer segments to strings so that rawData is JSON-serializable
@@ -288,21 +437,25 @@ export class SearchIndexPersistence {
           }
         }
 
+        if (this.saveGenerations.get(vaultId) !== generation) {
+          saveSpan.stale(() => ({ indexedInputCount: keyCount }));
+          return;
+        }
         await this.getDb().searchIndex.put({
           vaultId,
           data: persistedData,
           updatedAt: systemClock.now(),
         });
         this.coordinator.isDirty = false;
+        saveSpan.complete(() => ({
+          indexedInputCount: keyCount,
+        }));
         this.debug.log(
           `[SearchIndexPersistence] Save finished: Persisted index for ${vaultId} (${keyCount} keys) in ${(performance.now() - start).toFixed(2)}ms`,
         );
-      } else {
-        this.debug.log(
-          `[SearchIndexPersistence] Save skipped: Index is empty or export failed.`,
-        );
       }
     } catch (err: any) {
+      saveSpan.fail("unexpected");
       this.debug.warn(
         `[SearchIndexPersistence] Failed to save index for ${vaultId}: ${err?.message || "Unknown error"}`,
         err,

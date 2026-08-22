@@ -1,0 +1,309 @@
+import { describe, it, expect, vi, afterEach } from "vitest";
+import worker from "../index";
+import { getModel, getOperationDefaults } from "./registry";
+import { respondPerProvider } from "./test-helpers";
+
+const env = {
+  GEMINI_API_KEY: "test-gemini-key",
+  OPENAI_API_KEY: "test-openai-key",
+};
+const originalFetch = globalThis.fetch;
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
+
+const post = (body: Record<string, unknown>) =>
+  new Request("https://oracle-proxy.espen-erlandsen.workers.dev/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "https://codexcryptica.com",
+    },
+    body: JSON.stringify(body),
+  });
+
+describe("LLM operation pipeline: end-to-end", () => {
+  it("Scenario 1 — only selects a model whose registry entry declares structuredOutput for structured-generation", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (String(url).includes("chat/completions")) {
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"ok":true}' } }],
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }],
+        }),
+        { status: 200 },
+      );
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "structured-generation",
+        messages: [{ role: "user", content: "hi" }],
+        schema: { type: "object" },
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    // Assert the capability, not a specific model key: this scenario tests
+    // that structured-generation only ever selects a structuredOutput-capable
+    // model, and both current registry entries qualify — hardcoding one key
+    // here would make the test brittle to a future default change while
+    // silently stopping to exercise the thing it's actually meant to check.
+    expect(getModel(body.modelKey)?.capabilities.structuredOutput).toBe(true);
+    expect(body.structuredOutputValid).toBe(true);
+  });
+
+  it("Scenario 2 — selects the configured default when no override is given", async () => {
+    globalThis.fetch = respondPerProvider() as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    const body = await response.json();
+    // Read from the registry rather than naming a model: this test is about
+    // the default being honoured, not about which model is currently default.
+    expect(body.modelKey).toBe(
+      getOperationDefaults("freeform-generation", "public")!.defaultModelKey,
+    );
+  });
+
+  it("Scenario 3 — identical normalized response shape across a Gemini-served and an OpenAI/Luna-served request", async () => {
+    const openAiFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "from luna" } }] }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = openAiFetch as typeof fetch;
+    const lunaResponse = await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+        // Both sides are pinned explicitly: this scenario is about the
+        // normalized shape matching across providers, not about defaults.
+        modelKeyOverride: "luna-fast",
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+    const lunaBody = await lunaResponse.json();
+
+    const geminiFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "from gemini" }] } }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = geminiFetch as typeof fetch;
+    const geminiResponse = await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+        modelKeyOverride: "gemini-flash-lite",
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+    const geminiBody = await geminiResponse.json();
+
+    expect(Object.keys(geminiBody).sort()).toEqual(
+      Object.keys(lunaBody).sort(),
+    );
+    expect(geminiBody.modelKey).toBe("gemini-flash-lite");
+    expect(lunaBody.modelKey).toBe("luna-fast");
+    expect(geminiBody.content).toBe("from gemini");
+    expect(lunaBody.content).toBe("from luna");
+  });
+
+  it("Scenario 4 — rejects a body containing a disallowed provider/credential field before touching a provider", async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+        apiKey: "sk-should-not-be-accepted",
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe("LLM_DISALLOWED_FIELD");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'improve' pass)", () => {
+  it("makes exactly one upstream call for a normal successful request", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "ok" }] } }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("never makes more than three upstream calls (primary + retry + fallback), even across the retry-then-fallback path", async () => {
+    let calls = 0;
+    const fetchMock = vi.fn(async (url: string) => {
+      calls++;
+      // The configured primary always returns invalid JSON, so it is retried
+      // once and then the pipeline falls back. Which provider is which comes
+      // from the registry, so this survives a routing change.
+      const isOpenAiCall = String(url).includes("chat/completions");
+      const primaryIsOpenAi =
+        getModel(
+          getOperationDefaults("structured-generation", "public")!
+            .defaultModelKey,
+        )!.provider === "openai";
+      const isPrimary = isOpenAiCall === primaryIsOpenAi;
+      const payload = isPrimary ? "not valid json" : '{"ok":true}';
+      return new Response(
+        JSON.stringify(
+          isOpenAiCall
+            ? { choices: [{ message: { content: payload } }] }
+            : { candidates: [{ content: { parts: [{ text: payload }] } }] },
+        ),
+        { status: 200 },
+      );
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "structured-generation",
+        messages: [{ role: "user", content: "hi" }],
+        schema: { type: "object" },
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.modelKey).toBe(
+      getOperationDefaults("structured-generation", "public")!.fallbackModelKey,
+    );
+    // 2 calls to the failing primary (initial + retry) + 1 to the fallback = 3.
+    expect(calls).toBe(3);
+    // Never a 4th call — no silent "improve the result" pass after a model
+    // already returned a usable response.
+    expect(calls).toBeLessThanOrEqual(3);
+  });
+});
+
+describe("Story 3 — GPT-5.6 Luna available through the shared pipeline", () => {
+  it("Scenario 1 — classification (Luna's primary default) returns valid structured output produced by Luna", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"label":"lore"}' } }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "classification",
+        messages: [{ role: "user", content: "classify this" }],
+        schema: { type: "object" },
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.modelKey).toBe("luna-fast");
+    expect(body.structuredOutputValid).toBe(true);
+    expect(String(fetchMock.mock.calls[0][0])).toContain("chat/completions");
+  });
+
+  it("Scenario 2 — disabling luna-fast excludes it from selection even as the configured default, falling back correctly", async () => {
+    const registry = await import("./registry");
+    const lunaEntry = registry.MODEL_REGISTRY.find(
+      (m) => m.key === "luna-fast",
+    );
+    expect(lunaEntry).toBeDefined();
+    const originalEnabled = lunaEntry!.enabled;
+    lunaEntry!.enabled = false;
+
+    try {
+      const fetchMock = vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              candidates: [
+                { content: { parts: [{ text: '{"label":"lore"}' }] } },
+              ],
+            }),
+            { status: 200 },
+          ),
+      );
+      globalThis.fetch = fetchMock as typeof fetch;
+
+      const response = await worker.fetch(
+        post({
+          operation: "classification",
+          messages: [{ role: "user", content: "classify this" }],
+          schema: { type: "object" },
+        }),
+        env,
+        {} as ExecutionContext,
+      );
+
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      // Falls back to classification's configured fallback, gemini-flash-lite,
+      // instead of ever selecting the disabled Luna entry.
+      expect(body.modelKey).toBe("gemini-flash-lite");
+      expect(String(fetchMock.mock.calls[0][0])).toContain(
+        "generativelanguage",
+      );
+    } finally {
+      lunaEntry!.enabled = originalEnabled;
+    }
+  });
+});

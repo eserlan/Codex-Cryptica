@@ -8,6 +8,7 @@
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import SidepanelRevisionButton from "$lib/components/entity/SidepanelRevisionButton.svelte";
+  import { shelf } from "$lib/features/shelf";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -71,6 +72,19 @@
       defaultVisibility: vault.defaultVisibility,
     });
   });
+
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
 
   const handleFindInGraph = () => {
     const nodeId = vault.selectedEntityId;
@@ -207,6 +221,27 @@
         ></span>
       </button>
     {/if}
+    {#if !vault.isGuest}
+      <button
+        type="button"
+        onclick={handleSendToShelf}
+        class="transition flex items-center justify-center p-1 {shelvedJustNow
+          ? 'text-theme-primary'
+          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
+        aria-label="Send to Shelf"
+        title={shelvedJustNow
+          ? "On the Shelf"
+          : "Send to Shelf — to bring into another vault"}
+        data-testid="send-to-shelf-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{shelvedJustNow
+            ? 'icon-[lucide--check]'
+            : 'icon-[lucide--library]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
     {#if isGraphView}
       <button
         type="button"
@@ -312,9 +347,11 @@
     </div>
   </div>
 
-  <div class="md:flex md:justify-between md:items-center mb-2">
+  <div
+    class="mb-2 min-w-0 md:flex md:flex-wrap md:items-center md:justify-between"
+  >
     <div
-      class="flex items-start md:items-center gap-3 md:gap-4 md:flex-1 min-w-0 w-full"
+      class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
@@ -331,12 +368,12 @@
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal break-words overflow-visible w-full md:truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} w-full break-words whitespace-normal font-bold"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                >*</sup
-              >{/if}
+                aria-hidden="true">*</sup
+              ><span class="sr-only"> (past)</span>{/if}
           </h2>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
@@ -368,8 +405,8 @@
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
                 {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    >*</sup
-                  >{/if}
+                    aria-hidden="true">*</sup
+                  ><span class="sr-only"> (past)</span>{/if}
               </button>
             </div>
           {/if}
@@ -378,7 +415,7 @@
     </div>
 
     <div
-      class="hidden md:flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4"
+      class="ml-2 hidden shrink-0 items-center gap-1.5 md:ml-auto md:flex md:gap-2"
     >
       {@render headerActions()}
 

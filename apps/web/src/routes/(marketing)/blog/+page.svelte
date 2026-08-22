@@ -1,25 +1,56 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { SITE_AUTHOR } from "$lib/config";
+  import {
+    RA_SERIES,
+    RA_SERIES_SLUGS,
+  } from "$lib/content/responsible-ai-series";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
+
   let { data } = $props();
+
+  // The seven responsible-AI posts went out on one day, two hours apart. Listed
+  // as seven standalone promotions they read as a batch, which is what they
+  // are; presented as the series they are, they read as one deliberate piece of
+  // writing. Their dates are untouched, only how the index frames them.
+  // Ordered by the series' own sequence, not by date. The index sorts newest
+  // first, which would number the final part 01.
+  const seriesOrder = RA_SERIES.map((a) => a.slug);
+  const seriesArticles = $derived(
+    data.articles
+      .filter((a: { slug: string }) => RA_SERIES_SLUGS.has(a.slug))
+      .sort(
+        (a: { slug: string }, b: { slug: string }) =>
+          seriesOrder.indexOf(a.slug) - seriesOrder.indexOf(b.slug),
+      ),
+  );
+  const standaloneArticles = $derived(
+    data.articles.filter((a: { slug: string }) => !RA_SERIES_SLUGS.has(a.slug)),
+  );
 </script>
 
-<svelte:head>
-  <title>The Archive | Codex Cryptica Blog</title>
-  <meta
-    name="description"
-    content="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
-  />
-  <link rel="canonical" href={data.canonicalUrl} />
-</svelte:head>
+<SeoHead
+  title="The Archive | Codex Cryptica Blog"
+  description="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
+  canonicalUrl={data.canonicalUrl}
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="A Codex Cryptica campaign vault showing an entity graph beside an open character record"
+  keywords={[
+    "rpg blog",
+    "worldbuilding blog",
+    "local-first rpg",
+    "ttrpg campaign manager",
+  ]}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"
 >
-  <div class="max-w-4xl mx-auto px-6 py-20 md:py-32">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
     <header class="mb-16 md:mb-24">
       <h1
-        class="text-4xl md:text-6xl font-header font-bold uppercase tracking-[0.2em] mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
+        class="text-4xl md:text-6xl font-header font-bold mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
       >
         The Archive
       </h1>
@@ -34,7 +65,7 @@
       >
         <div class="space-y-1">
           <h2
-            class="text-xs font-mono font-bold uppercase tracking-widest text-theme-primary flex items-center gap-2"
+            class="text-xs font-mono font-bold text-theme-primary flex items-center gap-2"
           >
             <span class="icon-[lucide--shield-alert] h-4 w-4"></span>
             Responsible AI Positioning
@@ -47,7 +78,7 @@
         </div>
         <a
           href="{base}/responsible-ai-worldbuilding"
-          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header uppercase tracking-widest bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
+          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
         >
           Read the Pillar
           <span class="icon-[lucide--arrow-right] h-3.5 w-3.5"></span>
@@ -56,7 +87,7 @@
     </header>
 
     <div class="grid gap-12 md:gap-20">
-      {#each data.articles as article (article.slug)}
+      {#each standaloneArticles as article (article.slug)}
         <article class="group relative flex flex-col gap-4">
           <div
             class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-2"
@@ -69,7 +100,11 @@
                 timeZone: "UTC",
               })}
             </time>
-            <span class="w-8 h-px bg-theme-border"></span>
+            <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
+            <span data-testid="blog-index-byline"
+              >By {article.author?.trim() || SITE_AUTHOR.name}</span
+            >
+            <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
             <span>{themeStore.resolveJargon("blog_entry")}</span>
           </div>
 
@@ -96,13 +131,61 @@
           </div>
         </article>
       {/each}
+
+      {#if seriesArticles.length > 0}
+        <section
+          class="rounded-2xl border border-theme-border/60 bg-theme-surface/25 p-6 md:p-8"
+          aria-labelledby="ra-series-heading"
+          data-testid="blog-series-collection"
+        >
+          <div
+            class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-3"
+          >
+            <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
+            ></span>
+            <span>{seriesArticles.length}-part series</span>
+          </div>
+
+          <h2
+            id="ra-series-heading"
+            class="text-2xl md:text-3xl font-header font-bold mb-3"
+          >
+            <a
+              href="{base}/responsible-ai-worldbuilding"
+              class="hover:text-theme-primary transition-colors"
+            >
+              Responsible AI worldbuilding
+            </a>
+          </h2>
+          <p class="text-theme-text/70 text-lg leading-relaxed mb-5">
+            One argument across seven posts: what an AI worldbuilding tool owes
+            the person using it, and where the author's control has to stay.
+          </p>
+
+          <ol class="space-y-2">
+            {#each seriesArticles as article, i (article.slug)}
+              <li class="flex gap-3 text-sm">
+                <span class="font-mono text-theme-muted shrink-0"
+                  >{String(i + 1).padStart(2, "0")}</span
+                >
+                <a
+                  href="{base}/blog/{article.slug}"
+                  class="text-theme-text hover:text-theme-primary transition-colors"
+                >
+                  {article.title}
+                </a>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
     </div>
 
     {#if data.articles.length === 0}
       <div
         class="py-20 text-center border border-dashed border-theme-border rounded-lg bg-theme-surface/5"
       >
-        <p class="text-theme-muted font-mono uppercase tracking-widest">
+        <p class="text-theme-muted font-mono">
           No transmissions found in the archive.
         </p>
       </div>

@@ -1,10 +1,12 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { graph } from "$lib/stores/graph.svelte";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -45,6 +47,11 @@ describe("/table page", () => {
     mutableVault.activeVaultId = "v1";
     mutableVault.isInitialized = true;
     mutableVault.allEntities = [];
+    // typeFilters/labelFilters now read from these module-level singletons
+    // (shared with the Graph view), not private component state, so they
+    // must be reset between tests to avoid cross-test leakage.
+    graph.clearCategoryFilters();
+    explorerUIStore.clearLabelFilters();
     vi.clearAllMocks();
   });
 
@@ -78,5 +85,52 @@ describe("/table page", () => {
     expect(
       screen.getByTestId("entity-table-connections-e1").textContent?.trim(),
     ).toBe("0");
+  });
+
+  it("toggles the mobile filter panel and shows active filter badge", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const toggleBtn = screen.getByTestId("entity-table-mobile-filters-toggle");
+    expect(toggleBtn.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("entity-table-active-filter-badge")).toBeNull();
+
+    // Toggle open
+    await fireEvent.click(toggleBtn);
+    expect(toggleBtn.getAttribute("aria-expanded")).toBe("true");
+
+    // Click a type filter
+    const typeFilters = screen.getAllByTestId("entity-table-type-filter");
+    await fireEvent.click(typeFilters[0]);
+
+    // Active filter badge appears with count 1
+    const badge = screen.getByTestId("entity-table-active-filter-badge");
+    expect(badge.textContent?.trim()).toBe("1");
+
+    // Clear filters
+    const clearBtn = screen.getByTestId("entity-table-clear-filters");
+    await fireEvent.click(clearBtn);
+    expect(screen.queryByTestId("entity-table-active-filter-badge")).toBeNull();
+  });
+
+  it("keeps type/label filter state isolated from graph view", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const toggleBtn = screen.getByTestId("entity-table-mobile-filters-toggle");
+    await fireEvent.click(toggleBtn);
+    await fireEvent.click(screen.getAllByTestId("entity-table-type-filter")[0]);
+
+    // Table view filters are isolated and do not mutate the shared graph store
+    expect(graph.activeCategories.size).toBe(0);
+
+    const graphLink = screen.getByTestId("table-browse-as-graph");
+    expect(graphLink.getAttribute("href")).toBe("/");
   });
 });

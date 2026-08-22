@@ -83,7 +83,7 @@ describe("EntityList Filtering", () => {
     expect(screen.getByText("Merchant")).not.toBeNull();
 
     // Find and click "MerchantLabel" label pill
-    const merchantPill = screen.getByText("MerchantLabel");
+    const merchantPill = screen.getByText(/MerchantLabel/i);
     await fireEvent.click(merchantPill);
     await waitFor(() => {
       // Should only show Merchant
@@ -97,7 +97,7 @@ describe("EntityList Filtering", () => {
     render(EntityList);
 
     // Click "Guard" pill
-    const guardPill = screen.getAllByText("Guard")[0];
+    const guardPill = screen.getAllByText("GUARD")[0];
     await fireEvent.click(guardPill);
     await waitFor(() => {
       // Shows both guards
@@ -179,13 +179,13 @@ describe("EntityList Filtering", () => {
     render(EntityList);
 
     // Apply filter
-    await fireEvent.click(screen.getByText("MerchantLabel"));
+    await fireEvent.click(screen.getByText(/MerchantLabel/i));
     await waitFor(() => {
       expect(screen.queryByText("City Guard")).toBeNull();
     });
 
     // Find removal button (X) for the active filter pill
-    const clearButton = screen.getByLabelText("Remove MerchantLabel filter");
+    const clearButton = screen.getByLabelText(/Remove MerchantLabel filter/i);
     await fireEvent.click(clearButton);
     await waitFor(() => {
       // All should be back
@@ -198,7 +198,7 @@ describe("EntityList Filtering", () => {
   it("renders label pills container with responsive styling classes for better mobile experience", () => {
     render(EntityList);
 
-    const merchantPill = screen.getByText("MerchantLabel");
+    const merchantPill = screen.getByText(/MerchantLabel/i);
     const container = merchantPill.parentElement;
     expect(container).not.toBeNull();
 

@@ -8,6 +8,10 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
 
 export const worldConfig = {
   worldTypes: [
@@ -471,6 +475,8 @@ export interface WorldGeneratorOptions {
   lancerWorldFrame?: string;
   campaignPressure?: string;
   dominantFeature?: string;
+  /** Free-text world/campaign background from the form's context field. */
+  campaignContext?: string;
   /** Existing titles to avoid when making a local fallback. */
   avoidNames?: string[];
 }
@@ -716,15 +722,21 @@ export function buildWorldPrompt(
   const genre = options.genre?.trim() || "sci-fi";
   const dominantFeature =
     options.dominantFeature?.trim() || "an evocative dominant feature";
-  const extraAvoidedNames = options.avoidNames
-    ?.map((name) => name.trim())
+  // The campaign-context block above tells the model that names the user
+  // introduced are established and must be kept. Listing those same names
+  // under "do not use" here would contradict it, so drop them first.
+  const extraAvoidedNames = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  )
+    .map((name) => name.trim())
     .filter(Boolean);
   const extraAvoidedNumbers = extraAvoidedNames
-    ?.flatMap((name) => name.match(/\b\d+\b/g) ?? [])
+    .flatMap((name) => name.match(/\b\d+\b/g) ?? [])
     .filter((number, index, numbers) => numbers.indexOf(number) === index);
-  const nameRestrictions = extraAvoidedNames?.length
+  const nameRestrictions = extraAvoidedNames.length
     ? ` Also do not use these campaign-specific names: ${extraAvoidedNames.join(", ")}.${
-        extraAvoidedNumbers?.length
+        extraAvoidedNumbers.length
           ? ` Avoid reusing these numeric designations too: ${extraAvoidedNumbers.join(", ")}.`
           : ""
       }`
@@ -770,7 +782,7 @@ Make this pressure materially shape survival, settlement design, culture, econom
     systemInstruction:
       "You are a science-fiction worldbuilder creating evocative, coherent, immediately gameable material for a GM. Prioritise a few memorable connected ideas, understandable conflicts, useful locations, and playable hooks while keeping the setting internally consistent. Return only one valid JSON object.",
     userMessage: `Create a ${genre} ${worldType} with ${habitability} conditions, ${civilisation}, and ${normalizedGenre === "lancer" ? "a civilian social model derived from the selected Lancer world frame" : `a primary societal model of ${societalModel}`}. ${normalizedGenre === "lancer" ? "For Lancer, derive the civilian social model from the selected world frame, world type, and tags; do not let the civilisation level determine it by itself." : "Treat the societal model as an independent variable: do not infer or replace it from the civilisation level."} Its dominant feature is: ${dominantFeature}. Its two Stars Without Number world tags are: ${worldTagOne} and ${worldTagTwo}.${lancerParameters}
-
+${formatCampaignContextBlock(options.campaignContext)}
 Star-system context may be provided before this brief. When it is, develop this world as part of that system: respect its parent star, orbit, neighbouring bodies, existing factions, and active conflicts. Do not regenerate or contradict the supplied system.
 
 Return JSON with "title", "summary", "labels", "connections", and a markdown "lore" field. Labels must match the actual generated content: include only factual tags supported by the world, its world type, civilisation, societal model, and genre. Do not add attractive-sounding labels for features the lore does not contain. The lore must use these exact sections:

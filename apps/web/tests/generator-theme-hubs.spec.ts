@@ -34,39 +34,39 @@ test.describe("Generator Theme Hubs", () => {
     });
   }
 
-  test("fantasy hub has 12 cards including tavern and surprise me", async ({
+  test("fantasy hub has 23 cards including tavern and surprise me", async ({
     page,
   }) => {
     await page.goto("/generators/fantasy");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(12);
+    expect(await cards.count()).toBe(23);
     await expect(
       page.getByRole("link", { name: "Tavern Generator" }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Surprise Me" })).toBeVisible();
   });
 
-  test("non-fantasy hub has 8 cards including social hub and surprise me", async ({
+  test("non-fantasy hub has 22 cards including social hub and surprise me", async ({
     page,
   }) => {
     await page.goto("/generators/cyberpunk");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(8);
+    expect(await cards.count()).toBe(22);
     await expect(
       page.getByRole("link", { name: "Social Hub Generator" }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Surprise Me" })).toBeVisible();
   });
 
-  test("vampire hub has 9 cards including clan generator and surprise me", async ({
+  test("vampire hub has 18 cards including clan generator and surprise me", async ({
     page,
   }) => {
     await page.goto("/generators/vampire");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(9);
+    expect(await cards.count()).toBe(18);
     await expect(
       page.getByRole("link", { name: "Vampire Clan Generator" }),
     ).toBeVisible();
@@ -124,7 +124,9 @@ test.describe("Generator Theme Hubs", () => {
   });
 
   test("unknown theme returns 404", async ({ page }) => {
-    const res = await page.goto("/generators/steampunk");
+    // steampunk became a real theme hub after this test was written; use a
+    // slug that will never be one instead of pinning to that history.
+    const res = await page.goto("/generators/not-a-real-theme");
     expect(res?.status()).toBe(404);
   });
 

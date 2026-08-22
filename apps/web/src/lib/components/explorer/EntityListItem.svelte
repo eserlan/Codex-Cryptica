@@ -49,6 +49,12 @@
   const labelFilters = $derived(explorerUIStore.labelFilters);
   const focusedEntityId = $derived(layoutUIStore.focusedEntityId);
   const cat = $derived(categories.getCategory(entity.type));
+  // Type accent: a colored left border + tinted icon so entity types stay
+  // scannable at a glance in dense/nested trees, per issue #2329. Virtual
+  // "folder" grouping nodes have no real category, so they stay neutral.
+  const typeColor = $derived(
+    (entity as any).isVirtual ? null : (cat?.color ?? null),
+  );
 </script>
 
 <div
@@ -66,6 +72,8 @@
     : ''} {isDragging ? 'dragging-active' : ''} {isDragSource
     ? 'dragging-source'
     : ''}"
+  style:border-left-width={typeColor ? "3px" : null}
+  style:border-left-color={typeColor}
   role="listitem"
   data-testid="entity-list-item"
   data-entity-id={entity.id}
@@ -163,15 +171,18 @@
         ? 'icon-[lucide--folder]'
         : getIconClass(
             cat?.icon,
-          )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
+          )} h-3.5 w-3.5 shrink-0 transition-colors {typeColor
+        ? ''
+        : 'text-theme-muted group-hover:text-theme-primary'}"
+      style:color={typeColor}
     ></span>
     <div class="flex-1 min-w-0 flex flex-col gap-0.5">
       <div
         class="truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text transition-colors group-hover:text-theme-primary"
       >
         {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-            >*</sup
-          >{/if}
+            aria-hidden="true">*</sup
+          ><span class="sr-only"> (past)</span>{/if}
       </div>
       {#if entity.aliases && entity.aliases.length > 0}
         <div class="truncate text-[9px] text-theme-muted/70 font-mono italic">
@@ -188,7 +199,7 @@
 
   {#if entity.labels && entity.labels.length > 0}
     <div
-      class="w-full md:w-auto order-last md:order-none pl-9 pr-2 md:px-2 pb-2 md:pb-0 flex gap-1 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
+      class="w-full md:w-auto order-last md:order-none pl-9 pr-2 md:px-2 pb-2 md:pb-0 flex gap-1.5 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
     >
       {#each entity.labels.slice(0, 2) as label, index (`${entity.id}-label-${index}`)}
         <button
@@ -198,19 +209,21 @@
             explorerUIStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
           }}
           onmousedown={(e) => e.stopPropagation()}
-          class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
+          class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider truncate max-w-[90px] transition-all border {labelFilters.has(
             label,
           )
-            ? 'bg-theme-primary text-theme-bg border-theme-primary'
-            : label === 'chatty'
-              ? 'bg-theme-secondary/15 text-theme-secondary border-transparent hover:border-theme-secondary/50 hover:bg-theme-secondary/25'
-              : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
+            ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
+            : label.toLowerCase() === 'chatty'
+              ? 'bg-theme-secondary/20 text-theme-secondary border-theme-secondary/35 hover:border-theme-secondary/60 hover:bg-theme-secondary/30'
+              : 'bg-theme-primary/20 text-theme-primary border-theme-primary/35 hover:border-theme-primary/60 hover:bg-theme-primary/30'}"
         >
-          {label}
+          {label.toUpperCase()}
         </button>
       {/each}
       {#if entity.labels.length > 2}
-        <div class="text-[7px] text-theme-muted font-mono flex items-center">
+        <div
+          class="text-[9px] text-theme-muted font-header font-bold flex items-center"
+        >
           +{entity.labels.length - 2}
         </div>
       {/if}

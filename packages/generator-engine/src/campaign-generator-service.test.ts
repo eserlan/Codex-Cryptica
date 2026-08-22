@@ -1104,14 +1104,16 @@ describe("AI policy (US2)", () => {
           input: expect.stringContaining("Return ONLY a JSON object"),
           previousInteractionId: "interaction-1",
           replayPrompt: expect.stringContaining(
-            "Do NOT use any of these names",
+            "do NOT title it any of these names",
           ),
         }),
       }),
     );
     const interaction = complete.mock.calls[0][2]?.interaction;
     expect(interaction?.input).toContain("delta context plus request");
-    expect(interaction?.input).not.toContain("Do NOT use any of these names");
+    expect(interaction?.input).not.toContain(
+      "do NOT title it any of these names",
+    );
   });
 
   it("reports prompt metrics for stateless and interaction-backed AI generations", async () => {
@@ -1651,5 +1653,29 @@ describe("AI policy (US2)", () => {
     expect(complete).toHaveBeenCalledTimes(3);
     expect(d.title.toLowerCase()).not.toContain("vane");
     expect(d.sourceGeneratorId).toBe("npc");
+  });
+
+  it("falls back to a complete local dossier when secret-society AI output is only a title and summary", async () => {
+    const complete = vi.fn(async () =>
+      JSON.stringify({
+        title: "The Sterling Remorse Corporation",
+        summary: "A thin corporate society result.",
+        lore: "",
+        labels: ["secret-society"],
+      }),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("secret-society", { useAI: true }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(generated.sourceGeneratorId).toBe("secret-society");
+    expect(generated.content).toContain("### What they believe");
+    expect(generated.lore).toContain("**Leader**");
   });
 });

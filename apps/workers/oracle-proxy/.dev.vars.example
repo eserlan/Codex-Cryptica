@@ -1,0 +1,15 @@
+# Local wrangler dev secrets. Copy this file to .dev.vars (gitignored) and
+# fill in real values. `wrangler dev` loads .dev.vars automatically.
+
+# Required for any actual LLM generation to succeed.
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+
+# Leave TURNSTILE_SECRET_KEY and SESSION_TOKEN_SECRET UNSET for local dev.
+# Both guards fail open when their secret is missing (see wrangler.toml's
+# [vars] comment and session-guard.ts), so generation works locally without
+# needing a real Turnstile challenge or a session capability token — no need
+# to add localhost to the Turnstile widget's domain list, which has its own
+# known issues persisting "localhost" as an allowed hostname.
+# TURNSTILE_SECRET_KEY=
+# SESSION_TOKEN_SECRET=

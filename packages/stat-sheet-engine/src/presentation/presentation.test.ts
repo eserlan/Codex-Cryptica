@@ -3,7 +3,9 @@ import type { PresentationTemplate, StatSheetTemplate } from "schema";
 import { parseTemplate, sanitizeSource } from "./parse";
 import { isTemplateUsable, validateAst } from "./validate";
 import { resolvePresentationTemplate } from "./resolve";
+import { getBuiltInPresentationTemplates } from "./built-ins";
 import {
+  analyzePresentationCompatibility,
   exportPresentationTemplate,
   importPresentationTemplatePackage,
 } from "./package";
@@ -13,9 +15,11 @@ import type {
   HeadingNode,
   MissingFieldNode,
   ParagraphNode,
+  SectionNode,
   TableNode,
   UnknownDirectiveNode,
 } from "./ast";
+import { computeSectionKeys } from "./ast";
 
 function mkTemplate(id: string): PresentationTemplate {
   return {
@@ -38,20 +42,85 @@ const schema: StatSheetTemplate = {
     { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 10 },
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "name_field", label: "Name", type: "text" },
+    { id: "attack", label: "Attack", type: "dice", formula: "1d100" },
   ],
 };
+
+describe("getBuiltInPresentationTemplates", () => {
+  it("keeps Mythras attributes, combat styles, and professional skills in the character sheet", () => {
+    const mythrasTemplate = getBuiltInPresentationTemplates(
+      "builtin-mythras-character",
+    ).find((template) => template.name === "Mythras Character Sheet");
+
+    expect(mythrasTemplate?.source).toContain("{{stat.combat_styles");
+    expect(mythrasTemplate?.source).toContain("{{stat.professional_skills");
+    expect(mythrasTemplate?.source).toContain(
+      "| STR | CON | SIZ | DEX | INT | POW | CHA | Luck |",
+    );
+    expect(mythrasTemplate?.source).toContain("{{stat.str hide-label}}");
+  });
+
+  it("exposes collapsible sections in every titled built-in layout", () => {
+    const titles = [
+      "Standard Form",
+      "D&D Character Sheet",
+      "Mythras Character Sheet",
+    ];
+
+    for (const template of getBuiltInPresentationTemplates("builtin-test")) {
+      if (!titles.includes(template.name)) continue;
+      const parsed = parseTemplate(template.source, template.formatVersion);
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) continue;
+      expect(computeSectionKeys(parsed.ast).size).toBeGreaterThan(0);
+    }
+  });
+});
 
 describe("parseTemplate", () => {
   it("parses standard Markdown headings/paragraphs", () => {
     const result = parseTemplate("# Title\n\nSome text.", 1);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.ast[0]).toMatchObject({ type: "heading", level: 1 });
-    expect((result.ast[0] as HeadingNode).children[0]).toEqual({
+    const section = result.ast[0] as SectionNode;
+    expect(section).toMatchObject({ type: "section" });
+    expect(section.heading).toMatchObject({ type: "heading", level: 1 });
+    expect(section.heading?.children[0]).toEqual({
       type: "text",
       text: "Title",
     });
-    expect(result.ast[1]).toMatchObject({ type: "paragraph" });
+    expect(section.children[0]).toMatchObject({ type: "paragraph" });
+  });
+
+  it("promotes a Markdown heading and its table into a collapsible section", () => {
+    const result = parseTemplate(
+      "### Characteristics\n\n| STR | DEX |\n| --- | --- |\n| {{stat.hp}} | {{stat.ac}} |",
+      1,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const section = result.ast[0] as SectionNode;
+    expect(section.heading?.children).toEqual([
+      { type: "text", text: "Characteristics" },
+    ]);
+    expect(section.children[0]).toMatchObject({ type: "table" });
+    expect(computeSectionKeys(result.ast).get(section)).toBe("section-0");
+  });
+
+  it("keeps nested Markdown heading sections independently collapsible", () => {
+    const result = parseTemplate(
+      "## Abilities\n\n### Strength\n\n{{stat.hp}}",
+      1,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const abilities = result.ast[0] as SectionNode;
+    const strength = abilities.children[0] as SectionNode;
+    expect(strength).toMatchObject({ type: "section" });
+    expect(computeSectionKeys(result.ast).get(abilities)).toBe("section-0");
+    expect(computeSectionKeys(result.ast).get(strength)).toBe("section-1");
   });
 
   it("parses {{stat.field}} inline tokens", () => {
@@ -59,11 +128,57 @@ describe("parseTemplate", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const para = result.ast[0] as ParagraphNode;
-    const ref = para.children[0] as FieldReferenceNode;
-    expect(ref.type).toBe("field-reference");
-    expect(ref.fieldId).toBe("hp");
-    expect(ref.displayMode).toBe("counter");
-    expect(ref.label).toBe("HP");
+    expect(para.children[0]).toMatchObject({
+      type: "field-reference",
+      fieldId: "hp",
+      displayMode: "counter",
+      label: "HP",
+    });
+  });
+
+  it("parses hide-label boolean and attribute forms on mustache tokens", () => {
+    const res1 = parseTemplate("{{stat.dex hide-label}}", 1);
+    expect(res1.ok).toBe(true);
+    if (res1.ok) {
+      expect((res1.ast[0] as ParagraphNode).children[0]).toMatchObject({
+        type: "field-reference",
+        fieldId: "dex",
+        hideLabel: true,
+      });
+    }
+
+    const res2 = parseTemplate('{{stat.dex hide-label="true"}}', 1);
+    expect(res2.ok).toBe(true);
+    if (res2.ok) {
+      expect((res2.ast[0] as ParagraphNode).children[0]).toMatchObject({
+        type: "field-reference",
+        fieldId: "dex",
+        hideLabel: true,
+      });
+    }
+  });
+
+  it("parses bracket field reference tokens [field] and [field:mode] without breaking standard Markdown links", () => {
+    const result = parseTemplate(
+      "[hp] and [ac:prominent] and [Google](https://google.com)",
+      1,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const para = result.ast[0] as ParagraphNode;
+    expect(para.children[0]).toEqual({
+      type: "field-reference",
+      fieldId: "hp",
+    });
+    expect(para.children[2]).toEqual({
+      type: "field-reference",
+      fieldId: "ac",
+      displayMode: "prominent",
+    });
+    expect(para.children[4]).toMatchObject({
+      type: "link",
+      href: "https://google.com",
+    });
   });
 
   it("parses :::stat-group columns=N ... ::: fenced tokens", () => {
@@ -163,6 +278,37 @@ describe("validateAst / isTemplateUsable", () => {
     const ref = para.children[0] as FieldReferenceNode;
     expect(ref.displayMode).toBe("counter");
     expect(ref.requestedDisplayMode).toBeUndefined();
+  });
+
+  it("accepts the compact name-target display mode for dice fields", () => {
+    const parsed = parseTemplate('{{stat.attack display="name-target"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("name-target");
+    expect(ref.requestedDisplayMode).toBeUndefined();
+  });
+
+  it("uses the compact name-target mode by default for a 1d100 dice field", () => {
+    const parsed = parseTemplate("{{stat.attack}}", 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("name-target");
+  });
+
+  it("allows an explicit dice display mode to override the 1d100 default", () => {
+    const parsed = parseTemplate('{{stat.attack display="plain"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("plain");
   });
 
   it("isTemplateUsable is false when schema is undefined", () => {
@@ -275,9 +421,13 @@ describe("sanitizeSource", () => {
   });
 
   it("returns no removed fragments for plain valid source", () => {
-    const result = sanitizeSource('# Title\n\n{{stat.hp display="plain"}}');
+    const result = sanitizeSource(
+      '# Title\n\n{{stat.hp display="plain"}}\n{{stat.str hide-label}}',
+    );
     expect(result.removed).toEqual([]);
-    expect(result.source).toBe('# Title\n\n{{stat.hp display="plain"}}');
+    expect(result.source).toBe(
+      '# Title\n\n{{stat.hp display="plain"}}\n{{stat.str hide-label}}',
+    );
   });
 });
 
@@ -352,5 +502,112 @@ describe("exportPresentationTemplate / importPresentationTemplatePackage", () =>
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reason).toBe("invalid-package");
+  });
+
+  it("retargets imported package to targetSchema and identifies unmapped fields", () => {
+    const pkg = {
+      formatVersion: 1,
+      name: "Imported from Another Character",
+      description: null,
+      schemaTemplateId: "entity-local-stat-sheet:char-1",
+      source: "{{stat.hp}}\n\n{{stat.ac}}\n\n{{stat.mana}}",
+    };
+
+    const targetSchema: StatSheetTemplate = {
+      id: "entity-local-stat-sheet:char-2",
+      name: "Character 2",
+      isBuiltIn: false,
+      fields: [
+        { id: "hp", label: "Hit Points", type: "counter" },
+        { id: "ac", label: "Armor Class", type: "number" },
+      ],
+    };
+
+    const result = importPresentationTemplatePackage(pkg, [], targetSchema);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.package.schemaTemplateId).toBe(
+      "entity-local-stat-sheet:char-2",
+    );
+    expect(result.unmappedFields).toEqual(["mana"]);
+  });
+});
+
+describe("analyzePresentationCompatibility", () => {
+  it("detects fully compatible presentation when all fields exist", () => {
+    const targetSchema: StatSheetTemplate = {
+      id: "schema-test",
+      name: "Test",
+      isBuiltIn: false,
+      fields: [
+        { id: "hp", label: "HP", type: "counter" },
+        { id: "str", label: "STR", type: "number" },
+      ],
+    };
+
+    const analysis = analyzePresentationCompatibility(
+      "{{stat.hp}}\n\n[str]",
+      1,
+      targetSchema,
+    );
+    expect(analysis.compatible).toBe(true);
+    expect(analysis.matchedFields).toContain("hp");
+    expect(analysis.matchedFields).toContain("str");
+    expect(analysis.unmappedFields).toEqual([]);
+  });
+
+  it("identifies missing field references in unmappedFields", () => {
+    const targetSchema: StatSheetTemplate = {
+      id: "schema-test",
+      name: "Test",
+      isBuiltIn: false,
+      fields: [{ id: "hp", label: "HP", type: "counter" }],
+    };
+
+    const analysis = analyzePresentationCompatibility(
+      "{{stat.hp}}\n\n{{stat.mana}}\n\n[spell_slots]",
+      1,
+      targetSchema,
+    );
+    expect(analysis.compatible).toBe(false);
+    expect(analysis.matchedFields).toEqual(["hp"]);
+    expect(analysis.unmappedFields).toContain("mana");
+    expect(analysis.unmappedFields).toContain("spell_slots");
+  });
+});
+
+describe("computeSectionKeys", () => {
+  it("assigns keys to sections in document order, including nested sections", () => {
+    const first: SectionNode = { type: "section", title: "A", children: [] };
+    const second: SectionNode = {
+      type: "section",
+      title: "B",
+      children: [{ type: "section", title: "C", children: [] }],
+    };
+    const keys = computeSectionKeys([first, second]);
+
+    expect(keys.get(first)).toBe("section-0");
+    expect(keys.get(second)).toBe("section-1");
+    expect(keys.get(second.children[0] as SectionNode)).toBe("section-2");
+  });
+
+  it("ignores non-section nodes and sections nested in groups/cards/rows", () => {
+    const nested: SectionNode = {
+      type: "section",
+      title: "Nested",
+      children: [],
+    };
+    const ast = [
+      { type: "heading", level: 1, children: [] } as HeadingNode,
+      {
+        type: "group",
+        children: [{ type: "card", children: [nested] }],
+      } as unknown as GroupNode,
+    ];
+
+    const keys = computeSectionKeys(ast);
+
+    expect(keys.size).toBe(1);
+    expect(keys.get(nested)).toBe("section-0");
   });
 });

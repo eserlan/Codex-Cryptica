@@ -11,7 +11,11 @@
   // Exact-match only (Clarifications): a presentation is offered here iff
   // it declares this entity's schema as its target.
   const available = $derived(
-    presentationTemplates.availableTemplatesForSchema(schema.id),
+    presentationTemplates.availableTemplatesForSchema(
+      schema.id,
+      schema.fields,
+      entity.type,
+    ),
   );
   const currentOverrideId = $derived(
     entity.statSheet?.presentationTemplateId ?? null,

@@ -31,6 +31,7 @@ export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
+  cue?: string;
   type?: "text" | "image" | "wizard" | "roll";
   imageUrl?: string;
   imageBlob?: Blob;
@@ -65,6 +66,8 @@ export type OracleIntentType =
   | "help"
   | "clear"
   | "draw"
+  | "roll-table"
+  | "draw-deck"
   | "error";
 
 /**
@@ -73,6 +76,7 @@ export type OracleIntentType =
 export interface OracleIntent {
   type: OracleIntentType;
   query?: string;
+  cue?: string;
   data?: any;
   entityId?: string;
   entityName?: string;
@@ -84,6 +88,14 @@ export interface OracleIntent {
   formula?: string;
   sourceName?: string;
   targetName?: string;
+  /** Number of cards to draw for a `draw-deck` intent. Defaults to 1. */
+  drawCount?: number;
+  /**
+   * `sourceName` with a trailing number stripped, when one was present. The
+   * executor prefers whichever of the two actually names a deck, so a deck
+   * genuinely called "Deck 52" still resolves.
+   */
+  countedName?: string;
   label?: string;
   message?: string;
   instructions?: string;
@@ -182,6 +194,8 @@ export interface OracleExecutionContext {
   diceParser?: any;
   diceEngine?: any;
   diceHistory?: any;
+  /** Random table and deck access for the /table and /deck commands (#2247). */
+  randomSources?: any;
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;

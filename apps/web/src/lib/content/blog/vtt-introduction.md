@@ -15,6 +15,8 @@ keywords:
     "Fog of War",
   ]
 publishedAt: 2026-04-14T10:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/vtt-introduction/vtt-hero.png"
+imageAlt: "Data-Native Virtual Tabletop Interface in Codex Cryptica"
 ---
 
 ![VTT Interface](https://assets.codexcryptica.com/images/blog/vtt-introduction/vtt-hero.png)

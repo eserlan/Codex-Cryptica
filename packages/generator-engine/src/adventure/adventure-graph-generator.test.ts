@@ -1,9 +1,15 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { generateAdventureGraphTopology } from "./adventure-graph-generator";
 import { validateAdventureGraph } from "./adventure-graph-validator";
 import type { PublicGeneratorOutput } from "../public-generator-adapters";
 
 const MOCK_ADVENTURE_OUTPUT: PublicGeneratorOutput = {
+  // The fixture had drifted from the type: it predates `type`, `lore` and
+  // `labels` becoming required, and nothing noticed because the file imported
+  // `bun:test` and never ran.
+  type: "adventure",
+  lore: "",
+  labels: [],
   title: "The Salt-Toll Affidavit",
   summary:
     "An exiled magistrate's missing confession must be seized before the audit.",
@@ -61,9 +67,15 @@ Locate the missing salt-toll affidavit before midnight.
 
 describe("generateAdventureGraphTopology", () => {
   it("generates an AdventureCanvasDocument with expected node types", () => {
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT);
+    const fakeClock = { now: () => 1234567890 };
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
 
-    expect(doc.id).toContain("adv-canvas-");
+    expect(doc.id).toBe("adv-canvas-1234567890");
+    expect(doc.createdAt).toBe("1970-01-15T06:56:07.890Z");
+    expect(doc.updatedAt).toBe("1970-01-15T06:56:07.890Z");
     expect(doc.title).toBe("The Salt-Toll Affidavit");
     expect(doc.nodes.length).toBeGreaterThan(0);
     expect(doc.edges.length).toBeGreaterThan(0);
@@ -78,7 +90,11 @@ describe("generateAdventureGraphTopology", () => {
   });
 
   it("assigns spatial coordinates without overlapping origins", () => {
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT);
+    const fakeClock = { now: () => 1234567890 };
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
     const locNodes = doc.nodes.filter((n) => n.type === "location");
 
     expect(locNodes.length).toBe(2);
@@ -90,14 +106,22 @@ describe("generateAdventureGraphTopology", () => {
 
 describe("validateAdventureGraph", () => {
   it("returns no warnings for a fully connected document", () => {
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT);
+    const fakeClock = { now: () => 1234567890 };
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
     const warnings = validateAdventureGraph(doc);
 
     expect(warnings.filter((w) => w.severity === "warning")).toHaveLength(0);
   });
 
   it("detects orphan nodes", () => {
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT);
+    const fakeClock = { now: () => 1234567890 };
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
     doc.nodes.push({
       id: "node-orphan-1",
       type: "clue",

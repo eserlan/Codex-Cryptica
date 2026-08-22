@@ -1,7 +1,11 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
+  import {
+    FOCUS_DETAIL_STEP,
+    FOCUS_EDGE_CAP,
+    graph,
+  } from "$lib/stores/graph.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import type { Entity } from "schema";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
@@ -29,6 +33,11 @@
   const focusViewActive = $derived(graph.focusViewActive);
   const focusViewMessage = $derived(
     `Focus view: showing ${graph.stats.nodeCount} of ${graph.fullGraphSize.nodeCount} entities (detail level ${graph.focusDepth}).`,
+  );
+  const focusDetailHint = $derived(
+    graph.canIncreaseFocusDetail
+      ? `Zoom in or choose Show more detail to reveal up to ${FOCUS_DETAIL_STEP} more entities. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view.`
+      : `This is the maximum focus detail. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view; use Show full graph for all visible entities.`,
   );
   const fullGraphMessage = $derived(
     `Full graph performance mode: ${graph.fullGraphSize.nodeCount} entities and ${graph.fullGraphSize.edgeCount} connections.`,
@@ -303,9 +312,18 @@
   <span>{focusViewActive ? focusViewMessage : fullGraphMessage}</span>
   <span class="block text-theme-muted">
     {focusViewActive
-      ? "Large vault — zoom in to reveal more, out for the overview."
+      ? focusDetailHint
       : "Labels, images, and edge detail are simplified for speed."}
   </span>
+  {#if focusViewActive && graph.canIncreaseFocusDetail}
+    <button
+      type="button"
+      class="mt-1 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
+      onclick={() => graph.increaseFocusDetail()}
+    >
+      Show more detail
+    </button>
+  {/if}
   <button
     type="button"
     class="mt-1 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"

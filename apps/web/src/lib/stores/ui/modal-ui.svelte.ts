@@ -21,6 +21,20 @@ export class ModalUIStore {
   pendingCanvasEntities = $state<string[]>([]);
   isImporting = $state(false);
   showDiceModal = $state(false);
+  activePresentationManagerSchema = $state<
+    import("schema").StatSheetTemplate | null
+  >(null);
+  presentationEditorState = $state<{
+    open: boolean;
+    schema: import("schema").StatSheetTemplate | null;
+    template: import("schema").PresentationTemplate | null;
+    duplicate: boolean;
+  }>({
+    open: false,
+    schema: null,
+    template: null,
+    duplicate: false,
+  });
 
   // Set to signal that the entity-creation form should open. A latching flag
   // (not a counter) because on mobile VaultControls mounts only after the
@@ -40,7 +54,13 @@ export class ModalUIStore {
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
   zenModeActiveTab = $state<
-    "overview" | "map" | "chats" | "family" | "timeline" | "stats"
+    | "overview"
+    | "connections"
+    | "map"
+    | "chats"
+    | "family"
+    | "timeline"
+    | "stats"
   >("overview");
 
   mergeDialog = $state<{
@@ -302,6 +322,17 @@ export class ModalUIStore {
   // avoid stacking the "initial-onboarding" tour on top of it.
   showQuickStartModal = $state(false);
 
+  /**
+   * Quick Start's in-progress choices, kept here rather than in the component
+   * so closing the dialog to check something doesn't silently reset them.
+   * Store state, not module state: this stays per-tab, cannot leak across a
+   * server render, and resets cleanly between tests.
+   */
+  quickStartDraft = $state<{ themeId: string | null; premise: string }>({
+    themeId: null,
+    premise: "",
+  });
+
   openQuickStartModal() {
     this.showQuickStartModal = true;
   }
@@ -412,6 +443,7 @@ export class ModalUIStore {
     entityId: string,
     tab:
       | "overview"
+      | "connections"
       | "map"
       | "chats"
       | "family"

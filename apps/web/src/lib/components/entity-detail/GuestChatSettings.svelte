@@ -332,6 +332,24 @@
             >
           </div>
         </div>
+        {#if !hasPersonalitySection && !entity.guestChatConfig.extraInstructions?.trim()}
+          <div
+            class="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-400"
+            role="alert"
+          >
+            <span
+              class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <span>
+              <strong>Missing Voice Guidance:</strong> Add a
+              <code
+                class="rounded bg-black/30 px-1 py-0.5 font-mono text-[11px]"
+                >## Personality & Voice</code
+              > section in character lore or edit this character to generate one.
+            </span>
+          </div>
+        {/if}
       {:else}
         <p class="text-xs text-theme-muted italic">
           Guest Character Chat is disabled. Use the toggle above to let invited

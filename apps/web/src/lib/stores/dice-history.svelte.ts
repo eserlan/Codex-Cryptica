@@ -2,10 +2,29 @@ import { getDB } from "../utils/idb";
 import type { RollResult } from "dice-engine";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
+/**
+ * A roll or draw sourced from a random table or card deck (#2247).
+ *
+ * Additive: `dice_history` is keyed by id with no index over this field, so
+ * carrying it needs no IndexedDB version bump.
+ */
+export interface RandomSourceRollPayload {
+  sourceId: string;
+  sourceName: string;
+  kind: "table" | "deck";
+  finalText: string;
+  /** Which sub-table produced which fragment, for the resolution chain view. */
+  chain?: unknown[];
+  drawnCards?: Array<{ cardId: string; title: string; reversed: boolean }>;
+  spreadPositions?: Array<{ label: string; cardId: string }>;
+}
+
 export interface ContextualRollResult extends RollResult {
   id: string;
-  context: "chat" | "modal";
+  context: "chat" | "modal" | "table";
   label?: string;
+  /** Present when the entry came from a table roll or deck draw. */
+  source?: RandomSourceRollPayload;
 }
 
 export class DiceHistoryStore {
@@ -43,8 +62,8 @@ export class DiceHistoryStore {
 
   async addResult(
     result: RollResult,
-    context: "chat" | "modal",
-    metadata?: { label?: string },
+    context: "chat" | "modal" | "table",
+    metadata?: { label?: string; source?: RandomSourceRollPayload },
   ) {
     const id = this.idGenerator.uuid();
     const contextual: ContextualRollResult = {
@@ -70,19 +89,31 @@ export class DiceHistoryStore {
   }
 
   chatHistory = $derived(this.history.filter((r) => r.context === "chat"));
-  modalHistory = $derived(this.history.filter((r) => r.context === "modal"));
+  /**
+   * The die roller's log, which carries table rolls and deck draws alongside
+   * ordinary rolls: the roller is where a GM looks for what they just got, and
+   * splitting the two would hide half the answer (#2247, FR-018).
+   */
+  modalHistory = $derived(
+    this.history.filter((r) => r.context === "modal" || r.context === "table"),
+  );
 
-  async clearHistory(context?: "chat" | "modal") {
+  /** Clears one context, several, or — with no argument — the whole history. */
+  async clearHistory(
+    context?:
+      ContextualRollResult["context"] | ContextualRollResult["context"][],
+  ) {
     const db = await getDB();
     if (!context) {
       this.history = [];
       await db.clear("dice_history");
     } else {
+      const contexts = new Set(Array.isArray(context) ? context : [context]);
       const toRemove: ContextualRollResult[] = [];
       const newHistory: ContextualRollResult[] = [];
 
       for (const r of this.history) {
-        if (r.context === context) {
+        if (contexts.has(r.context)) {
           toRemove.push(r);
         } else {
           newHistory.push(r);

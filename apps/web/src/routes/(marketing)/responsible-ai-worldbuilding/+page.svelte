@@ -1,8 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  const cleanBase = base === "/" ? "" : base;
   import type { PageData } from "./$types";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   let { data }: { data: PageData } = $props();
   const articles = $derived(data.articles);
@@ -128,6 +126,37 @@
       icon: "icon-[lucide--pencil]",
     },
   ];
+
+  const faqs = [
+    {
+      q: "What does responsible AI mean for RPG worldbuilding?",
+      a: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
+    },
+    {
+      q: "Can AI help with campaign prep without taking over?",
+      a: `Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="${base}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.`,
+    },
+    {
+      q: "How does Codex keep AI drafts out of canon?",
+      a: `Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="${base}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.`,
+    },
+    {
+      q: "Can I use Codex Cryptica without AI?",
+      a: `Completely. The lore library, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="${base}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.`,
+    },
+    {
+      q: "What does vault-aware AI mean?",
+      a: "Vault-aware AI means the Oracle is grounded in the selected context from your vault rather than starting from a blank prompt alone. The active entity, linked notes, and any campaign-level context you have selected all shape the response.",
+    },
+    {
+      q: "What is the difference between context and memory?",
+      a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.`,
+    },
+    {
+      q: "Can the Lore Oracle read my whole vault?",
+      a: "No. The Lore Oracle does not receive your entire vault by default. When you invoke it on an entity, it receives the active prompt, the current entity content and metadata, any linked entities you have included, and any campaign-level notes you have selected for that action. That context is used for a single request. Unselected notes stay local.",
+    },
+  ];
 </script>
 
 <svelte:head>
@@ -171,55 +200,8 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/?utm_source=ra-pillar-logo&utm_medium=nav&utm_campaign=seo-funnel"
-        class="flex items-center gap-2 group min-w-0"
-        id="logo-link"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
-      >
-        <a
-          href="{cleanBase}/features"
-          class="hover:text-theme-primary transition-colors">Features</a
-        >
-        <a
-          href="{cleanBase}/blog"
-          class="hover:text-theme-primary transition-colors">Devlog</a
-        >
-        <a
-          href="{cleanBase}/tools/dnd-npc-generator"
-          class="hover:text-theme-primary transition-colors">Generators</a
-        >
-      </nav>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?utm_source=ra-pillar-nav&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-          id="nav-cta-btn"
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
-
   <!-- Hero Section -->
-  <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center">
+  <section class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
     <div
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-8 uppercase tracking-wider"
     >
@@ -228,7 +210,7 @@
       Responsible AI
     </div>
     <h1
-      class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide uppercase"
+      class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide"
       id="hero-h1"
     >
       Responsible AI for <span class="text-theme-primary"
@@ -248,9 +230,7 @@
     >
       <div class="flex items-center gap-3 mb-6">
         <span class="icon-[lucide--info] text-theme-primary w-6 h-6"></span>
-        <h2 class="font-header font-bold text-lg uppercase tracking-wider">
-          AI Principles at a Glance
-        </h2>
+        <h2 class="font-header font-bold text-lg">AI Principles at a Glance</h2>
       </div>
       <ul class="space-y-3 text-sm text-theme-text/85">
         <li class="flex items-start gap-3">
@@ -325,9 +305,7 @@
     >
       <div class="flex items-center gap-3 mb-4">
         <span class="icon-[lucide--lock] text-theme-primary w-6 h-6"></span>
-        <h2 class="font-header font-bold text-lg uppercase tracking-wider">
-          Local-First Sovereignty
-        </h2>
+        <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
       </div>
       <p class="text-sm text-theme-text/75 leading-relaxed">
         True trust in digital worldbuilding requires full data ownership. Codex
@@ -346,9 +324,7 @@
     >
       <div class="flex items-center gap-3 mb-6">
         <span class="icon-[lucide--eye] text-theme-primary w-6 h-6"></span>
-        <h2 class="font-header font-bold text-lg uppercase tracking-wider">
-          What the Oracle Can See
-        </h2>
+        <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
       </div>
       <p class="text-sm text-theme-muted mb-6 leading-relaxed">
         Codex does not upload your entire vault. When you choose to query the
@@ -412,10 +388,8 @@
   <section
     class="border-t border-theme-border/30 bg-theme-surface/10 py-16 flex-grow"
   >
-    <div class="max-w-5xl mx-auto px-6">
-      <h2
-        class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
-      >
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
         The 7 Pillars of Responsible AI
       </h2>
       <p
@@ -456,7 +430,7 @@
             >
               <a
                 href="{base}/blog/{principle.slug}"
-                class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary hover:text-theme-text transition-colors group font-header"
+                class="inline-flex items-center gap-1.5 text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors group font-header"
               >
                 Read Article
                 <span
@@ -472,10 +446,8 @@
 
   <!-- FAQ Section -->
   <section class="border-t border-theme-border/30 py-16">
-    <div class="max-w-3xl mx-auto px-6">
-      <h2
-        class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
-      >
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
         Frequently Asked Questions
       </h2>
       <p
@@ -486,7 +458,7 @@
       </p>
 
       <div class="space-y-3">
-        {#each [{ q: "What does responsible AI mean for RPG worldbuilding?", a: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database." }, { q: "Can AI help with campaign prep without taking over?", a: `Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="${base}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.` }, { q: "How does Codex keep AI drafts out of canon?", a: `Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="${base}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.` }, { q: "Can I use Codex Cryptica without AI?", a: `Completely. The lore library, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="${base}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.` }, { q: "What does vault-aware AI mean?", a: "Vault-aware AI means the Oracle is grounded in the selected context from your vault rather than starting from a blank prompt alone. The active entity, linked notes, and any campaign-level context you have selected all shape the response." }, { q: "What is the difference between context and memory?", a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.` }, { q: "Can the Lore Oracle read my whole vault?", a: "No. The Lore Oracle does not receive your entire vault by default. When you invoke it on an entity, it receives the active prompt, the current entity content and metadata, any linked entities you have included, and any campaign-level notes you have selected for that action. That context is used for a single request. Unselected notes stay local." }] as faq}
+        {#each faqs as faq}
           <details
             class="group border border-theme-border/60 rounded-xl bg-theme-surface/30 backdrop-blur-sm overflow-hidden"
           >
@@ -514,10 +486,8 @@
   <section
     class="border-t border-theme-border/30 bg-gradient-to-b from-theme-bg to-theme-surface/30 py-16 text-center"
   >
-    <div class="max-w-2xl mx-auto px-6 font-header">
-      <h2 class="text-3xl font-extrabold mb-4 uppercase tracking-wider">
-        Ready to Build Your World?
-      </h2>
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 font-header">
+      <h2 class="text-3xl font-extrabold mb-4">Ready to Build Your World?</h2>
       <p class="text-theme-muted text-sm leading-relaxed mb-8 max-w-md mx-auto">
         No email sign-up required to start. Build a private, local-first
         campaign vault and use AI only when you choose.
@@ -525,22 +495,20 @@
       <div class="flex flex-wrap justify-center gap-4">
         <a
           href="{base}/?utm_source=ra-pillar-footer&utm_medium=footer-cta&utm_campaign=seo-funnel"
-          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
+          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >
           Launch Codex Cryptica
         </a>
         <a
           href="{base}/blog"
-          class="px-8 py-3.5 border border-theme-border hover:border-theme-primary/60 text-theme-text font-bold uppercase tracking-widest text-xs rounded-xl transition-all"
+          class="px-8 py-3.5 border border-theme-border hover:border-theme-primary/60 text-theme-text font-bold text-xs rounded-xl transition-all"
         >
           Explore All Devlogs
         </a>
       </div>
     </div>
   </section>
-
-  <MarketingFooter />
 </div>
 
 <style>

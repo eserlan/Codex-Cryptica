@@ -6,6 +6,7 @@ import {
 import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
+import { getAllLandingPageSlugs } from "$lib/content/for/registry";
 
 export const prerender = true;
 
@@ -25,6 +26,7 @@ export async function GET() {
   const staticRoutes = [
     { path: "/", changefreq: "weekly", priority: "1.0" },
     { path: "/blog", changefreq: "weekly", priority: "0.9" },
+    { path: "/for", changefreq: "weekly", priority: "0.9" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
     { path: "/migrations", changefreq: "weekly", priority: "0.9" },
@@ -93,6 +95,8 @@ export async function GET() {
     "npc",
     "settlement",
     "magic-item",
+    "minor-magic-item",
+    "artifact-generator",
     "faction",
     "tavern",
     "social-hub",
@@ -101,6 +105,7 @@ export async function GET() {
     "quest",
     "item",
     "vampire-clan",
+    "nomad-clan",
     "names",
     "fantasy-names",
     "dnd-npc",
@@ -111,6 +116,15 @@ export async function GET() {
     "news-sheet-generator",
     "dungeon-generator",
     "adventure-generator",
+    "adventure-idea-generator",
+    "plot-twist-generator",
+    "bbeg-generator",
+    "world",
+    "council-vote",
+    "secret-society",
+    "star-system",
+    "alien-race",
+    "creature",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,
@@ -132,6 +146,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Landing pages (/for/[slug])
+  const landingPageRoutes = getAllLandingPageSlugs().map((slug) => ({
+    path: `/for/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
@@ -140,6 +161,7 @@ export async function GET() {
     ...generatorRoutes,
     ...themeHubRoutes,
     ...importRoutes,
+    ...landingPageRoutes,
   ];
 
   const staticUrls = allStatic

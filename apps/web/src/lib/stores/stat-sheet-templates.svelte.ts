@@ -1,5 +1,9 @@
 import { getDB } from "../utils/idb";
-import type { StatSheetTemplate, StatSheetField } from "schema";
+import {
+  DEFAULT_ITEM_TABLE_COLUMNS,
+  type StatSheetTemplate,
+  type StatSheetField,
+} from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import { importTemplatePackage } from "@codex/stat-sheet-engine";
@@ -307,7 +311,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "lp", label: "Luck Points", type: "counter", min: 0, max: 10 },
       { id: "mp", label: "Magic Points", type: "counter", min: 0, max: 30 },
       { id: "hp", label: "Total Hit Points", type: "counter", min: 0, max: 50 },
-      { id: "damage_mod", label: "Damage Modifier", type: "text" },
+      { id: "damage_mod", label: "Damage Modifier", type: "number" },
       { id: "initiative", label: "Initiative Bonus", type: "number" },
       { id: "move", label: "Movement (m)", type: "number" },
       { id: "healing_rate", label: "Healing Rate", type: "number" },
@@ -379,33 +383,33 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "d100_check", label: "d100 Check", type: "dice", formula: "1d100" },
       {
         id: "athletics",
-        label: "Athletics (d100)",
+        label: "Athletics",
         type: "dice",
         formula: "1d100",
       },
-      { id: "brawn", label: "Brawn (d100)", type: "dice", formula: "1d100" },
-      { id: "evade", label: "Evade (d100)", type: "dice", formula: "1d100" },
+      { id: "brawn", label: "Brawn", type: "dice", formula: "1d100" },
+      { id: "evade", label: "Evade", type: "dice", formula: "1d100" },
       {
         id: "insight",
-        label: "Insight (d100)",
+        label: "Insight",
         type: "dice",
         formula: "1d100",
       },
       {
         id: "perception",
-        label: "Perception (d100)",
+        label: "Perception",
         type: "dice",
         formula: "1d100",
       },
       {
         id: "stealth",
-        label: "Stealth (d100)",
+        label: "Stealth",
         type: "dice",
         formula: "1d100",
       },
       {
         id: "willpower",
-        label: "Willpower (d100)",
+        label: "Willpower",
         type: "dice",
         formula: "1d100",
       },
@@ -416,6 +420,13 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
         type: "longtext",
       },
       { id: "passions_cults", label: "Passions & Cults", type: "longtext" },
+      {
+        id: "weapons_table",
+        label: "Weapons & Equipment",
+        type: "item-table",
+        columns: DEFAULT_ITEM_TABLE_COLUMNS,
+        rows: [],
+      },
     ],
   },
   {
@@ -429,7 +440,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "ap", label: "Action Points", type: "counter", min: 0, max: 5 },
       { id: "mp", label: "Magic Points", type: "counter", min: 0, max: 30 },
       { id: "hp", label: "Total Hit Points", type: "counter", min: 0, max: 50 },
-      { id: "damage_mod", label: "Damage Modifier", type: "text" },
+      { id: "damage_mod", label: "Damage Modifier", type: "number" },
       { id: "initiative", label: "Initiative Bonus", type: "number" },
       { id: "move", label: "Movement (m)", type: "number" },
       { id: "sec_characteristics", label: "Characteristics", type: "heading" },
@@ -513,10 +524,10 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       },
       { id: "sec_combat", label: "Attacks & Creature Traits", type: "heading" },
       { id: "d100_check", label: "d100 Check", type: "dice", formula: "1d100" },
-      { id: "evade", label: "Evade (d100)", type: "dice", formula: "1d100" },
+      { id: "evade", label: "Evade", type: "dice", formula: "1d100" },
       {
         id: "perception",
-        label: "Perception (d100)",
+        label: "Perception",
         type: "dice",
         formula: "1d100",
       },
@@ -610,6 +621,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     category: "item",
     isBuiltIn: true,
     fields: [
+      { id: "item_name", label: "Item Name", type: "text" },
       { id: "enc", label: "ENC", type: "number" },
       { id: "ap", label: "Armor Points (AP)", type: "number" },
       { id: "item_hp", label: "Item HP", type: "counter", min: 0, max: 30 },
@@ -845,6 +857,24 @@ export class StatSheetTemplateStore {
       console.error("[StatSheetTemplateStore] Failed to import template:", e);
       return null;
     }
+  }
+
+  /**
+   * Writes a template exactly as given, id and all.
+   *
+   * Distinct from `saveTemplate`, which is the authoring path and mints its
+   * own id: an imported template has to land under the identifier the import
+   * planned for, because that is what its rollback journal names (156-entity-shelf).
+   */
+  async putTemplateRecord(template: StatSheetTemplate): Promise<void> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+    const db = await getDB();
+    await db.put("stat_sheet_templates", { ...template, vaultId });
+    this.templates = [
+      ...this.templates.filter((t) => t.id !== template.id),
+      template,
+    ];
   }
 
   async deleteTemplate(id: string): Promise<boolean> {

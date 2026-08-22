@@ -7,6 +7,7 @@ This file is the Codex-facing instruction layer for this repository.
 - The Speckit command definitions in [`.gemini/commands`](./.gemini/commands) are the canonical command source for this repo.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
 - Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md) and [`.codex/skills/codex-review/SKILL.md`](./.codex/skills/codex-review/SKILL.md); the extended canonical review patterns remain in [`.agent/skills/codex-review`](./.agent/skills/codex-review).
+- Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
@@ -54,11 +55,20 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/152-stat-sheet-templates/plan.md).
+shell commands, and other important information, read the [current plan](./specs/2306-adventure-phase-2-play-tools/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `@codex/oracle-engine`, `@codex/vault-engine`, `dice-engine`, `schema`/Zod, `idb`/Dexie, and `@codex/events`; no new third-party dependency (160-solo-adventure-mode)
+- One versioned JSON document per session at `.codex/adventures/<session-id>.json`; transient cross-tab lease in existing IndexedDB `appSettings`; vault records remain canonical Markdown/metadata (160-solo-adventure-mode)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
+- N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
+
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `fflate` archive parsing, `@codex/vault-engine`, Svelte 5, existing notification confirmation UI (1826-vault-file-import)
 - Browser-local OPFS vault directories and IndexedDB-backed vault registry; no new persistence format (1826-vault-file-import)

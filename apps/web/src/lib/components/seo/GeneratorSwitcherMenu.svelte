@@ -44,6 +44,9 @@
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
         { label: "Settlement Generator", path: "/generators/settlement" },
+        { label: "Star System Generator", path: "/generators/star-system" },
+        { label: "Alien Race Generator", path: "/generators/alien-race" },
+        { label: "Creature Generator", path: "/generators/creature" },
         { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",
@@ -67,8 +70,28 @@
           path: "/generators/adventure-generator",
         },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        {
+          label: "Plot Twist & Complication Generator",
+          path: "/generators/plot-twist-generator",
+        },
+        {
+          label: "BBEG / Campaign Villain Generator",
+          path: "/generators/bbeg-generator",
+        },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
+        {
+          label: "Secret Society Generator",
+          path: "/generators/secret-society",
+        },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
+        {
+          label: "Minor Magic Item & Trinket Generator",
+          path: "/generators/minor-magic-item",
+        },
+        {
+          label: "Artifact & Relic Generator",
+          path: "/generators/artifact-generator",
+        },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
         {

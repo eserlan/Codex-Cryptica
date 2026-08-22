@@ -1,9 +1,72 @@
 import { getDB } from "../utils/idb";
-import type { PresentationTemplate } from "schema";
+import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
-import { getBuiltInPresentationTemplates } from "@codex/stat-sheet-engine";
+import {
+  getBuiltInPresentationTemplates,
+  exportPresentationTemplate,
+} from "@codex/stat-sheet-engine";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
+
+const ENTITY_LOCAL_SCHEMA_PREFIX = "entity-local-stat-sheet:";
+
+function entityLocalDefaultPresentation(
+  schemaTemplateId: string,
+  fields: StatSheetTemplateField[],
+  entityType?: string,
+): PresentationTemplate {
+  const references = fields
+    .filter((field) => field.type !== "heading")
+    .map((field) => `{{stat.${field.id}}}`)
+    .join("\n\n");
+  const normalizedEntityType = entityType?.toLowerCase();
+  const isNpcOrMonster = ["npc", "monster", "creature"].includes(
+    normalizedEntityType ?? "",
+  );
+  const isCharacter = normalizedEntityType === "character";
+  const title = isNpcOrMonster
+    ? "NPC / Monster Sheet"
+    : isCharacter
+      ? "Character Sheet"
+      : "Custom Stat Sheet";
+  const columns = isNpcOrMonster ? 4 : 3;
+  return {
+    id: `builtin-presentation-custom-${schemaTemplateId}`,
+    vaultId: null,
+    schemaTemplateId,
+    name: isNpcOrMonster
+      ? "Standard NPC / Monster Sheet"
+      : isCharacter
+        ? "Standard Character Sheet"
+        : "Standard Custom Sheet",
+    description: isNpcOrMonster
+      ? "A simple NPC or monster presentation generated from this sheet's fields."
+      : isCharacter
+        ? "A simple character presentation generated from this sheet's fields."
+        : "A simple presentation generated from this sheet's fields.",
+    source: `:::card
+### ${title}
+:::stat-group columns=${columns}
+${references}
+:::
+:::`,
+    formatVersion: 1,
+    isBuiltIn: true,
+    createdAt: "2026-08-06T00:00:00.000Z",
+    updatedAt: "2026-08-06T00:00:00.000Z",
+  };
+}
+
+function entityLocalNpcPresentation(
+  schemaTemplateId: string,
+  fields: StatSheetTemplateField[],
+): PresentationTemplate {
+  const base = entityLocalDefaultPresentation(schemaTemplateId, fields, "npc");
+  return {
+    ...base,
+    id: `builtin-presentation-custom-npc-${schemaTemplateId}`,
+  };
+}
 
 /**
  * Vault-scoped store for Markdown presentation templates
@@ -50,11 +113,51 @@ export class PresentationTemplateStore {
    * reuse in V1). */
   availableTemplatesForSchema(
     schemaTemplateId: string,
+    fields?: StatSheetTemplateField[],
+    entityType?: string,
   ): PresentationTemplate[] {
+    const vaultTemplates = this.templates.filter(
+      (t) => t.schemaTemplateId === schemaTemplateId,
+    );
+    // A manually assembled stat sheet has an entity-local schema rather
+    // than a reusable Stat Sheet template. Its presentations must stay
+    // local too: generic built-ins would reference fields it does not have.
+    if (schemaTemplateId.startsWith(ENTITY_LOCAL_SCHEMA_PREFIX)) {
+      if (!fields) return vaultTemplates;
+      const builtIns = this.generatedLayoutsForSchema(
+        schemaTemplateId,
+        fields,
+        entityType,
+      );
+      const generalLayouts = getBuiltInPresentationTemplates(
+        schemaTemplateId,
+      ).filter((template) =>
+        ["Standard Form", "Compact Stat Block"].includes(template.name),
+      );
+      return [...builtIns, ...generalLayouts, ...vaultTemplates];
+    }
     return [
       ...getBuiltInPresentationTemplates(schemaTemplateId),
-      ...this.templates.filter((t) => t.schemaTemplateId === schemaTemplateId),
+      ...vaultTemplates,
     ];
+  }
+
+  /** Field-aware built-ins for a schema. They use the schema's real field
+   * ids, so they are safe for both reusable templates and manually assembled
+   * sheets. Character layouts also expose the NPC/monster stat-block option. */
+  generatedLayoutsForSchema(
+    schemaTemplateId: string,
+    fields: StatSheetTemplateField[],
+    entityType = "character",
+  ): PresentationTemplate[] {
+    const primary = entityLocalDefaultPresentation(
+      schemaTemplateId,
+      fields,
+      entityType,
+    );
+    return entityType.toLowerCase() === "character"
+      ? [primary, entityLocalNpcPresentation(schemaTemplateId, fields)]
+      : [primary];
   }
 
   findById(id: string): PresentationTemplate | null {
@@ -140,6 +243,66 @@ export class PresentationTemplateStore {
    * override pointing at it is left as a now-dangling id, which
    * `resolvePresentationTemplate`/`isTemplateUsable` treat as invalid and
    * fall back on next render (no migration needed). */
+  /**
+   * Writes a template exactly as given, id and timestamps included.
+   *
+   * Distinct from `saveTemplate`, which mints ids and stamps `updatedAt`: an
+   * imported template must land under the identifier the import planned for,
+   * since that is what its rollback journal names (156-entity-shelf).
+   */
+  async putTemplateRecord(template: PresentationTemplate): Promise<void> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+    const record = { ...template, vaultId };
+    const db = await getDB();
+    await db.put("stat_sheet_presentation_templates", record);
+    this.templates = [
+      ...this.templates.filter((t) => t.id !== template.id),
+      record,
+    ];
+  }
+
+  /** Returns all presentation templates in this vault across all schemas. */
+  getAllVaultTemplates(): PresentationTemplate[] {
+    return this.templates;
+  }
+
+  /**
+   * Clones a template (built-in or vault-saved) into a destination schema.
+   * Auto-suffixes the name if it collides within the target schema.
+   */
+  async copyTemplateToSchema(
+    sourceTemplate: PresentationTemplate,
+    targetSchemaTemplateId: string,
+    newName?: string,
+  ): Promise<PresentationTemplate | null> {
+    const desiredName = newName || sourceTemplate.name;
+    return this.saveTemplate({
+      schemaTemplateId: targetSchemaTemplateId,
+      name: desiredName,
+      description: sourceTemplate.description,
+      source: sourceTemplate.source,
+      formatVersion: sourceTemplate.formatVersion,
+    });
+  }
+
+  /**
+   * Exports a presentation template as a JSON download in browser environment.
+   */
+  exportTemplate(template: PresentationTemplate): void {
+    if (typeof document === "undefined") return;
+    const pkg = exportPresentationTemplate(template);
+    const blob = new Blob([JSON.stringify(pkg, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${template.name.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.presentation.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   async deleteTemplate(id: string): Promise<boolean> {
     try {
       const db = await getDB();

@@ -192,6 +192,16 @@ describe("ThemeStore", () => {
       }
     });
 
+    it("should resolve horror to horror_light with Archival Dossier tokens in neutral-light", async () => {
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("horror");
+
+      expect(store.activeTheme.id).toBe("horror_light");
+      expect(store.activeTheme.tokens.primary).toBe("#801414");
+      expect(store.activeTheme.tokens.background).toBe("#e4dfd5");
+      expect(store.activeTheme.tokens.accent).toBe("#801414");
+    });
+
     it("keeps cosmic horror separate from the gothic-noir horror theme", async () => {
       store.setAppAppearance("neutral-dark");
       await store.setTheme("cosmic_horror");

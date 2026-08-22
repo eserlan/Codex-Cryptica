@@ -7,6 +7,10 @@ import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
 import { searchService } from "@codex/search-orchestrator";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 import {
   handleVersionSkewReload,
@@ -23,6 +27,8 @@ export function bootSystem(stores: {
   sessionModeStore: any;
 }): boolean {
   debugStore.log("System booting: Initializing core stores...");
+  browserPerformanceCapture.start();
+  searchService.setPerformanceRecorder(browserPerformanceRecorder);
   configureAIEngine({
     searchService,
     templateResolver: resolveTemplateSync,
@@ -84,6 +90,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       message.includes("INTERNET_DISCONNECTED") ||
       message.includes("Failed to fetch") ||
       message.includes("NetworkError") ||
+      message.includes("higher version than the version requested") ||
+      message.includes("VersionError") ||
       message.includes(
         "ResizeObserver loop completed with delivered notifications",
       ) ||
@@ -115,7 +123,9 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       message.includes("Failed to fetch") ||
       message.includes("NetworkError") ||
       message.includes("Load failed") ||
-      message.includes("INTERNET_DISCONNECTED")
+      message.includes("INTERNET_DISCONNECTED") ||
+      message.includes("higher version than the version requested") ||
+      message.includes("VersionError")
     ) {
       return;
     }
@@ -518,7 +528,22 @@ export function registerServiceWorker(deps?: {
     }
     if (isRefreshing) return;
     isRefreshing = true;
-    win.location.reload();
+
+    void notificationStore
+      .confirm({
+        title: "App Update Available",
+        message:
+          "A new version of Codex Cryptica has been installed. Would you like to reload the page now to use the update?",
+        confirmLabel: "Reload Now",
+        cancelLabel: "Not Now",
+      })
+      .then((shouldReload) => {
+        if (shouldReload) {
+          win.location.reload();
+        } else {
+          isRefreshing = false;
+        }
+      });
   });
 
   const cleanup = () => {

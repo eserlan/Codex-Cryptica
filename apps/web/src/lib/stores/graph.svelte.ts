@@ -3,27 +3,28 @@ import { GraphTransformer, isLargeGraphSize } from "graph-engine";
 import { isEntityVisible, type Era, type Entity } from "schema";
 import { getDB } from "../utils/idb";
 import {
-  parsePresets,
-  presetsSettingsKey,
-  type GraphViewPreset,
-  type GraphViewPresetState,
-} from "./graph-presets";
+  viewPresetsStore as defaultViewPresetsStore,
+  type ViewPresetsStore,
+} from "./view-presets.svelte";
+import type { ViewPreset, ViewPresetState } from "./view-presets";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import {
-  systemClock,
-  type IdGenerator,
-  systemIdGenerator,
-} from "$lib/utils/runtime-deps";
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
 
-// Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
-// literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
-// nodes, so the default (level 1) lands around 500 — enough for a real overview,
-// not just the focal + its handful of direct links — and zooming in doubles it.
+// Focus-view detail level. Zoom reveals a bounded fixed-size increment rather
+// than doubling the rendered graph, so one gesture cannot synchronously add an
+// unbounded set of nodes in a large vault.
 export const MIN_FOCUS_DEPTH = 1;
-export const MAX_FOCUS_DEPTH = 6;
+export const MAX_FOCUS_DEPTH = 3;
 export const FOCUS_BASE_COUNT = 500;
+export const FOCUS_DETAIL_STEP = 150;
+/** Avoid a dense focus neighbourhood overwhelming the renderer. */
+export const FOCUS_EDGE_CAP = 2_000;
 
 export class GraphStore {
   // Dependencies
@@ -31,6 +32,7 @@ export class GraphStore {
   private explorerUIStore: typeof explorerUIStore;
   private sessionModeStore: typeof sessionModeStore;
   private connectionModeStore: typeof connectionModeStore;
+  private presetsStore: ViewPresetsStore;
   private idGenerator: IdGenerator;
   private _initPromise: Promise<void> | null = null;
   private _vaultSwitchHandler: (() => void) | null = null;
@@ -45,12 +47,15 @@ export class GraphStore {
     sessionStore: typeof sessionModeStore = sessionModeStore,
     connectionStore: typeof connectionModeStore = connectionModeStore,
     idGenerator: IdGenerator = systemIdGenerator,
+    presetsStore: ViewPresetsStore = defaultViewPresetsStore,
   ) {
     this._vault = vault;
     this.explorerUIStore = explorerStore;
     this.sessionModeStore = sessionStore;
     this.connectionModeStore = connectionStore;
     this.idGenerator = idGenerator;
+    this.presetsStore = presetsStore;
+    browserPerformanceCapture.start();
   }
 
   // Svelte 5 derived state
@@ -71,6 +76,8 @@ export class GraphStore {
   // detail) by the controller; starts with a bounded overview. See
   // MIN/MAX_FOCUS_DEPTH.
   focusDepth = $state(MIN_FOCUS_DEPTH);
+  /** Stable membership root for a large-vault focus view, independent of selection. */
+  focusRootId = $state<string | null>(null);
 
   // Vault scale, measured from the raw entity/connection counts — deliberately
   // independent of `elements` so focus-view culling can't feed back into the
@@ -98,6 +105,9 @@ export class GraphStore {
   }
 
   elements = $derived.by(() => {
+    const focusComputeSpan = browserPerformanceRecorder.start(
+      "graph_focus_compute",
+    );
     const graphVersion = this.graphStructureVersion;
     void graphVersion;
     const allEntities = this.graphSourceEntities;
@@ -128,28 +138,53 @@ export class GraphStore {
     // Built from `renderIds` via the entities record (O(rendered)) rather than
     // an O(N) Map build + O(N) filter, so a content edit in a large vault
     // doesn't re-walk all 1600 entities to produce the same small set.
-    if (this.focusViewActive && visibleEntities.length > 0) {
-      const focal = this.resolveFocalId(visibleEntities, validIds);
-      if (focal) {
-        const renderIds = this.computeFocusRenderIds(
-          focal,
-          this.focusDepth,
-          validIds,
-          visibleEntities,
-        );
-        if (renderIds.size !== validIds.size) {
-          const byId = this.vault.entities;
-          const renderEntities: Entity[] = [];
-          for (const id of renderIds) {
-            const entity = byId[id];
-            if (entity) renderEntities.push(entity);
+    try {
+      if (this.focusViewActive && visibleEntities.length > 0) {
+        const focal = this.resolveFocalId(visibleEntities, validIds);
+        if (focal) {
+          const renderIds = this.computeFocusRenderIds(
+            focal,
+            this.focusDepth,
+            validIds,
+            visibleEntities,
+          );
+          if (renderIds.size !== validIds.size) {
+            const byId = this.vault.entities;
+            const renderEntities: Entity[] = [];
+            for (const id of renderIds) {
+              const entity = byId[id];
+              if (entity) renderEntities.push(entity);
+            }
+            const result = GraphTransformer.entitiesToElements(
+              renderEntities,
+              renderIds,
+              FOCUS_EDGE_CAP,
+            );
+            focusComputeSpan.complete(() => ({
+              entityCount: allEntities.length,
+              renderedNodeCount: renderEntities.length,
+              renderedEdgeCount: result.length - renderEntities.length,
+            }));
+            return result;
           }
-          return GraphTransformer.entitiesToElements(renderEntities, renderIds);
         }
       }
-    }
 
-    return GraphTransformer.entitiesToElements(visibleEntities, validIds);
+      const result = GraphTransformer.entitiesToElements(
+        visibleEntities,
+        validIds,
+        this.focusViewActive ? FOCUS_EDGE_CAP : undefined,
+      );
+      focusComputeSpan.complete(() => ({
+        entityCount: allEntities.length,
+        renderedNodeCount: visibleEntities.length,
+        renderedEdgeCount: result.length - visibleEntities.length,
+      }));
+      return result;
+    } catch (error) {
+      focusComputeSpan.fail("unexpected");
+      throw error;
+    }
   });
 
   fitRequest = $state(0);
@@ -185,8 +220,13 @@ export class GraphStore {
 
   eras = $state<Era[]>([]);
 
-  // Saved view presets for the active vault
-  viewPresets = $state<GraphViewPreset[]>([]);
+  // Saved view presets for the active vault (delegated to viewPresetsStore)
+  get viewPresets(): ViewPreset[] {
+    return this.presetsStore.presets;
+  }
+  set viewPresets(val: ViewPreset[]) {
+    this.presetsStore.presets = val;
+  }
 
   stats = $derived.by(() => {
     // OPTIMIZATION: Use imperative loop instead of multiple .filter() calls
@@ -214,14 +254,18 @@ export class GraphStore {
   }
 
   /**
-   * Picks the focus node for culling: the selected entity when it's visible,
-   * otherwise the highest-degree hub among visible entities so there's always a
-   * sensible default view before the user selects anything.
+   * Picks the focus node for culling. Once established, `focusRootId` remains
+   * stable while selection changes, preventing visible-node selection from
+   * rebuilding the rendered neighbourhood.
    */
   private resolveFocalId(
     visibleEntities: Entity[],
     validIds: Set<string>,
   ): string | null {
+    if (this.focusRootId && validIds.has(this.focusRootId)) {
+      return this.focusRootId;
+    }
+
     const selected = this.vault.selectedEntityId;
     if (selected && validIds.has(selected)) return selected;
 
@@ -245,6 +289,36 @@ export class GraphStore {
     return bestId;
   }
 
+  /** Establishes the initial focus root once the graph view is ready. */
+  ensureFocusRoot(): void {
+    if (!this.focusViewActive) return;
+    const visibleEntities = this.graphSourceEntities.filter(
+      (entity) =>
+        this.sessionModeStore.isGuestMode ||
+        isEntityVisible(entity, {
+          sharedMode: this.sessionModeStore.sharedMode,
+          defaultVisibility: this.vault.defaultVisibility,
+        }),
+    );
+    const validIds = new Set(visibleEntities.map((entity) => entity.id));
+    if (this.focusRootId && validIds.has(this.focusRootId)) return;
+
+    // A deleted or no-longer-visible root must not fall back to the transient
+    // selection: establish a new stable root for the current graph scope.
+    this.focusRootId = this.resolveFocalId(visibleEntities, validIds);
+  }
+
+  /** Explicitly navigate a large focus view to an entity outside its set. */
+  navigateFocusTo(entityId: string): void {
+    if (
+      !this.focusViewActive ||
+      !this.vault.entities[entityId] ||
+      this.focusRootId === entityId
+    )
+      return;
+    this.focusRootId = entityId;
+  }
+
   private get graphSourceEntities(): Entity[] {
     return ((this.vault as any).graphEntities ??
       this.vault.allEntities) as Entity[];
@@ -262,8 +336,21 @@ export class GraphStore {
     );
     return Math.min(
       visibleCount,
-      FOCUS_BASE_COUNT * 2 ** (level - MIN_FOCUS_DEPTH),
+      FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (level - MIN_FOCUS_DEPTH),
     );
+  }
+
+  get canIncreaseFocusDetail() {
+    return (
+      this.focusViewActive &&
+      this.focusDepth < MAX_FOCUS_DEPTH &&
+      this.stats.nodeCount < this.fullGraphSize.nodeCount
+    );
+  }
+
+  /** Explicit detail reveal for users who want more than the zoom overview. */
+  increaseFocusDetail() {
+    if (this.canIncreaseFocusDetail) this.focusDepth++;
   }
 
   /**
@@ -425,6 +512,7 @@ export class GraphStore {
         this.centralNodeId = null;
         this.showFullGraph = false;
         this.focusDepth = MIN_FOCUS_DEPTH;
+        this.focusRootId = null;
         // Keep timelineMode as it's a global preference usually
         void this.loadViewPresets();
       };
@@ -433,42 +521,15 @@ export class GraphStore {
   }
 
   // ── View presets ────────────────────────────────────────────────────────
-
-  private get viewPresetsKey() {
-    return presetsSettingsKey(this.vault.activeVaultId ?? "default");
-  }
-
   async loadViewPresets() {
-    try {
-      const db = await getDB();
-      const raw = await db.get("settings", this.viewPresetsKey);
-      this.viewPresets = parsePresets(raw);
-    } catch (error) {
-      console.error("[GraphStore] Failed to load graph view presets:", error);
-      this.viewPresets = [];
-    }
-  }
-
-  private async persistViewPresets() {
-    try {
-      const db = await getDB();
-      await db.put(
-        "settings",
-        $state.snapshot(this.viewPresets),
-        this.viewPresetsKey,
-      );
-    } catch (error) {
-      console.error(
-        "[GraphStore] Failed to persist graph view presets:",
-        error,
-      );
-    }
+    const vaultId = this.vault.activeVaultId ?? "default";
+    return await this.presetsStore.loadPresets(vaultId);
   }
 
   captureViewState(viewport?: {
     pan: { x: number; y: number };
     zoom: number;
-  }): GraphViewPresetState {
+  }): ViewPresetState {
     return {
       activeLabels: Array.from(this.activeLabels),
       labelFilterMode: this.labelFilterMode,
@@ -489,20 +550,12 @@ export class GraphStore {
   async saveViewPreset(
     name: string,
     viewport?: { pan: { x: number; y: number }; zoom: number },
-  ): Promise<GraphViewPreset | null> {
+  ): Promise<ViewPreset | null> {
     const trimmed = name.trim();
     if (!trimmed) return null;
-    const now = systemClock.now();
-    const preset: GraphViewPreset = {
-      id: this.idGenerator.uuid(),
-      name: trimmed,
-      createdAt: now,
-      updatedAt: now,
-      state: this.captureViewState(viewport),
-    };
-    this.viewPresets = [...this.viewPresets, preset];
-    await this.persistViewPresets();
-    return preset;
+    const vaultId = this.vault.activeVaultId ?? "default";
+    const state = this.captureViewState(viewport);
+    return await this.presetsStore.savePreset(vaultId, trimmed, state);
   }
 
   /**
@@ -516,8 +569,8 @@ export class GraphStore {
    */
   applyViewPreset(
     id: string,
-  ): { preset: GraphViewPreset; modeChanged: boolean } | null {
-    const preset = this.viewPresets.find((p) => p.id === id);
+  ): { preset: ViewPreset; modeChanged: boolean } | null {
+    const preset = this.presetsStore.applyPreset(id);
     if (!preset) return null;
     const s = preset.state;
 
@@ -547,15 +600,18 @@ export class GraphStore {
     this.activeLabels = new Set(labels);
     this.labelFilterMode = s.labelFilterMode;
     this.activeCategories = new Set(categories);
-    this.showLabels = s.showLabels;
-    this.showImages = s.showImages;
-    this.stableLayout = s.stableLayout;
-    this.timelineAxis = s.timelineAxis;
-    this.timelineRange = { ...s.timelineRange };
-    this.timelineScale = s.timelineScale;
-    this.timelineMode = s.timelineMode;
-    this.centralNodeId = centralNodeId;
-    this.orbitMode = s.orbitMode && centralNodeId !== null;
+    this.showLabels = s.showLabels !== false;
+    this.showImages = s.showImages !== false;
+    this.stableLayout = s.stableLayout !== false;
+    this.timelineAxis = s.timelineAxis === "y" ? "y" : "x";
+    this.timelineRange = {
+      start: s.timelineRange?.start ?? null,
+      end: s.timelineRange?.end ?? null,
+    };
+    this.timelineScale = s.timelineScale ?? 100;
+    this.timelineMode = s.timelineMode === true;
+    this.centralNodeId = centralNodeId ?? null;
+    this.orbitMode = s.orbitMode === true && (centralNodeId ?? null) !== null;
 
     const modeChanged =
       wasTimeline !== this.timelineMode || wasOrbit !== this.orbitMode;
@@ -563,17 +619,13 @@ export class GraphStore {
   }
 
   async renameViewPreset(id: string, name: string) {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    this.viewPresets = this.viewPresets.map((p) =>
-      p.id === id ? { ...p, name: trimmed, updatedAt: systemClock.now() } : p,
-    );
-    await this.persistViewPresets();
+    const vaultId = this.vault.activeVaultId ?? "default";
+    await this.presetsStore.renamePreset(vaultId, id, name);
   }
 
   async deleteViewPreset(id: string) {
-    this.viewPresets = this.viewPresets.filter((p) => p.id !== id);
-    await this.persistViewPresets();
+    const vaultId = this.vault.activeVaultId ?? "default";
+    await this.presetsStore.deletePreset(vaultId, id);
   }
 
   resetView() {
@@ -588,6 +640,7 @@ export class GraphStore {
     this.centralNodeId = null;
     this.showFullGraph = false;
     this.focusDepth = MIN_FOCUS_DEPTH;
+    this.focusRootId = null;
   }
 
   async saveEras() {

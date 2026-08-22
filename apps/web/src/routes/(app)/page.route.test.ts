@@ -37,7 +37,13 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
-vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
+vi.mock("$lib/config", () => ({
+  SCHEMA_ORG: {},
+  DISCORD_URL: "https://discord.gg/5UUMCChF2u",
+  REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",
+  GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
+  PATREON_URL: "https://patreon.com/EspenE",
+}));
 
 // Stub out the lazily-imported heavy components so dynamic imports resolve instantly
 vi.mock("../../lib/components/GraphView.svelte", async () => ({
@@ -91,8 +97,18 @@ describe("root +page.svelte — front page overlay keydown", () => {
         name: /private rpg lore vault/i,
       }),
     ).toBeTruthy();
-    expect(screen.getByText("Welcome to Codex Cryptica")).toBeTruthy();
-    expect(screen.getByText(/local-first campaign manager/i)).toBeTruthy();
+    // The "Welcome to Codex Cryptica" eyebrow and the
+    // "RPG Campaign Manager & Worldbuilding Tool" subheading were removed: the
+    // header wordmark already names the product, and those keywords live in
+    // <title> and the meta description rather than needing a third statement
+    // on screen.
+    expect(screen.queryByText("Welcome to Codex Cryptica")).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: /rpg campaign manager & worldbuilding tool/i,
+      }),
+    ).toBeNull();
+    expect(screen.getByText(/private markdown notes/i)).toBeTruthy();
     expect(
       screen.getByRole("heading", { level: 2, name: /living lore graph/i }),
     ).toBeTruthy();
@@ -109,6 +125,39 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByText("Local-first vault")).toBeTruthy();
     expect(screen.getByText("Spatial lore graph")).toBeTruthy();
     expect(screen.getByText("Optional AI")).toBeTruthy();
+
+    expect(screen.getByRole("link", { name: /discord/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /reddit/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /github/i })).toBeTruthy();
+  });
+
+  it("renders complete Open Graph and Twitter Card tags in head", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(document.title).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const description = document.querySelector('meta[name="description"]');
+    expect(description?.getAttribute("content")).toContain(
+      "free, local-first RPG campaign manager",
+    );
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    expect(ogTitle?.getAttribute("content")).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    expect(ogImage?.getAttribute("content")).toBe(
+      "https://assets.codexcryptica.com/screenshots/living-lore-graph.png",
+    );
+
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
   });
 
   it("sizes the app route shell to its parent instead of recomputing viewport height", () => {

@@ -1,9 +1,13 @@
 <script lang="ts">
   import {
     dungeonConfig,
+    factionTypesForTheme,
     forDungeonGenre,
     getGenerator,
     listGenerators,
+    npcRacesForTheme,
+    npcRolesForTheme,
+    settlementTypesForTheme,
     themeIdToLabel,
     worldConfig,
   } from "generator-engine";
@@ -47,16 +51,21 @@
     suggestedLanguageId,
   }: Props = $props();
 
-  function resolveLabel(gen: {
+  function resolveEntityTypeLabel(gen: {
     id: GeneratorId;
-    label: string;
     entityType: string;
   }): string {
     const match = categoryLabels.find((c) => c.id === gen.entityType);
     if (gen.id === "dungeon" && gen.entityType === "location") {
       return getDelveLocationTypeLabel(themeId);
     }
-    return match?.label ?? gen.label;
+    return (
+      match?.label ??
+      gen.entityType
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ")
+    );
   }
 
   const aiAvailable = $derived(
@@ -117,6 +126,30 @@
           ? worldConfig.lancerConflicts
           : worldConfig.campaignPressures;
       return values.map((value) => ({ value, label: value }));
+    }
+    if (selectedId === "npc" && option.id === "race") {
+      return npcRacesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "npc" && option.id === "role") {
+      return npcRolesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "faction" && option.id === "type") {
+      return factionTypesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "settlement" && option.id === "type") {
+      return settlementTypesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
     }
     if (selectedId !== "dungeon") return option.choices ?? [];
     if (option.id === "purpose") {
@@ -231,16 +264,50 @@
       Generator
     </legend>
     {#each generators as gen (gen.id)}
-      <label class="flex cursor-pointer items-center gap-2">
+      {@const entityTypeLabel = resolveEntityTypeLabel(gen)}
+      <label
+        class={[
+          "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors",
+          selectedId === gen.id
+            ? "border-chrome-accent/60 bg-chrome-accent/10"
+            : "border-chrome-border bg-chrome-bg/30 hover:border-chrome-accent/35 hover:bg-chrome-bg/60",
+        ]}
+      >
         <input
           type="radio"
           name="generator"
           value={gen.id}
           bind:group={selectedId}
           {disabled}
-          class="accent-chrome-accent"
+          aria-labelledby="generator-label-{gen.id}"
+          aria-describedby={selectedId === gen.id
+            ? `generator-description-${gen.id}`
+            : undefined}
+          class="mt-1 accent-chrome-accent"
         />
-        <span class="text-sm text-chrome-text">{resolveLabel(gen)}</span>
+        <span class="min-w-0 flex-1">
+          <span
+            id="generator-label-{gen.id}"
+            class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
+          >
+            <span class="text-sm font-semibold text-chrome-text">
+              {gen.label}
+            </span>
+            <span
+              class="text-[10px] uppercase tracking-wider text-chrome-muted"
+            >
+              Creates {entityTypeLabel}
+            </span>
+          </span>
+          {#if selectedId === gen.id}
+            <span
+              id="generator-description-{gen.id}"
+              class="mt-1 block text-xs leading-relaxed text-chrome-muted"
+            >
+              {gen.description}
+            </span>
+          {/if}
+        </span>
       </label>
     {/each}
   </fieldset>

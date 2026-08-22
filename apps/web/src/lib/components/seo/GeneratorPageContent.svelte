@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
+  import { afterNavigate, goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { collectSessionNames, collectSessionTraits } from "generator-engine";
@@ -9,8 +12,11 @@
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
+  import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
+  import MinorMagicItemFormFields from "$lib/components/seo/MinorMagicItemFormFields.svelte";
+  import ArtifactFormFields from "$lib/components/seo/ArtifactFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
@@ -25,16 +31,24 @@
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
+  import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
+  import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
+  import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
+  import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
+  import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
+    minorMagicItemConfig,
+    artifactConfig,
     factionConfig,
     questConfig,
     councilVoteConfig,
+    secretSocietyConfig,
     socialHubConfig,
     kingdomConfig,
     nationConfig,
@@ -47,13 +61,26 @@
     newsSheetConfig,
     dungeonConfig,
     adventureConfig,
+    plotTwistConfig,
+    villainConfig,
     worldConfig,
+    starSystemConfig,
+    alienRaceConfig,
+    creatureConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
-  import { type ValidSlug, slugMeta } from "./generator-page-meta";
+  import {
+    type SlugMetaEntry,
+    type ValidSlug,
+    slugMeta,
+  } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
+  import {
+    buildPlotTwistPremise,
+    resolvePlotTwistPremiseForGeneration,
+  } from "$lib/services/seo/generator-handoffs";
   import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
@@ -63,6 +90,8 @@
     mapHubGenreToShipGenre,
     mapShipGenreToTheme,
     mapWorldGenreToTheme,
+    mapStarSystemGenreToTheme,
+    mapAlienRaceGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -70,10 +99,32 @@
   let {
     slug,
     urlHubTheme = undefined,
-  }: { slug: ValidSlug; urlHubTheme?: string } = $props();
+    metaOverrides = undefined,
+    initialDraftOverride = undefined,
+  }: {
+    slug: ValidSlug;
+    urlHubTheme?: string;
+    /**
+     * Page copy that differs from the slug's own, for routes that present the
+     * same generator under a different URL and pitch.
+     *
+     * The `/tools/*` pages each hand-wired their own state, generate call and
+     * form bindings to say the same thing this component already says for
+     * their slug. They now render this and pass their title, description,
+     * FAQs, related links and canonical here, so the generator wiring exists
+     * once while the pages keep their distinct content and URLs.
+     */
+    metaOverrides?: Partial<SlugMetaEntry>;
+    /**
+     * Replaces the slug's default initial draft (from slugDrafts) when provided.
+     * Used by alternative routes that need a different default draft on first load.
+     */
+    initialDraftOverride?: GeneratorOutput;
+  } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
   // values (backHref, initialHubGenre) compute correctly on first render.
+  const _initialSlug = untrack(() => slug);
   const _initialUrlHubTheme = untrack(() => urlHubTheme);
   if (_initialUrlHubTheme) {
     hubContext.set(_initialUrlHubTheme);
@@ -99,7 +150,7 @@
 
   const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
-  const meta = $derived(slugMeta[slug]);
+  const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
 
   let npc = $state({
     theme: factionConfig.themes[0],
@@ -134,6 +185,27 @@
   let magicItem = $state({
     type: magicItemConfig.typesByTheme["Classic Fantasy"][0],
     rarity: magicItemConfig.rarities[1],
+    campaignContext: "",
+  });
+
+  let minorMagicItem = $state({
+    genre: factionConfig.themes[0],
+    form: "",
+    usageLimit: minorMagicItemConfig.usageLimits[0],
+    utility: minorMagicItemConfig.utilities[0],
+    activation: minorMagicItemConfig.activations[0],
+    quirkSeverity: minorMagicItemConfig.quirkSeverities[0],
+    campaignContext: "",
+  });
+
+  let artifact = $state({
+    genre: factionConfig.themes[0],
+    form: artifactConfig.forms[0],
+    originEra: artifactConfig.originEras[0],
+    powerTier: artifactConfig.powerTiers[0],
+    currentStatus: artifactConfig.currentStatuses[0],
+    curseCost: artifactConfig.curseCosts[0],
+    campaignContext: "",
   });
 
   let faction = $state({
@@ -165,6 +237,15 @@
     scope: councilVoteConfig.scopes[0],
     tone: councilVoteConfig.tones[0],
     antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
+    campaignContext: "",
+  });
+  let secretSociety = $state({
+    theme: factionConfig.themes[0],
+    tone: secretSocietyConfig.tones[0],
+    scale: secretSocietyConfig.scales[0],
+    publicFace: secretSocietyConfig.publicFaces[0],
+    dangerLevel: secretSocietyConfig.dangers[0],
+    truthRelationship: secretSocietyConfig.truths[0],
     campaignContext: "",
   });
 
@@ -317,6 +398,44 @@
     campaignContext: "",
   });
 
+  const initialHandedOffQuestPremise =
+    browser && _initialSlug === "plot-twist-generator"
+      ? (new URLSearchParams(window.location.search).get("questPremise") ?? "")
+      : "";
+  let handedOffQuestPremise = $state(initialHandedOffQuestPremise);
+
+  let plotTwist = $state({
+    genre: factionConfig.themes[0],
+    twistType: plotTwistConfig.twistTypes[0],
+    impact: plotTwistConfig.impacts[1],
+    timing: plotTwistConfig.timings[4],
+    foreshadowing: plotTwistConfig.foreshadowing[0],
+    premise: initialHandedOffQuestPremise,
+    constraints: "",
+    campaignContext: "",
+  });
+
+  // Dynamic generator routes reuse this component during client navigation.
+  // Read the URL only in the browser so static prerendering remains valid.
+  afterNavigate(({ to }) => {
+    const premise =
+      slug === "plot-twist-generator"
+        ? (to?.url.searchParams.get("questPremise") ?? "")
+        : "";
+    handedOffQuestPremise = premise;
+    if (premise) plotTwist.premise = premise;
+  });
+
+  let villain = $state({
+    genre: factionConfig.themes[0],
+    tone: villainConfig.tones[0],
+    threatScale: villainConfig.threatScales[0],
+    archetype: villainConfig.archetypes[0],
+    sympathy: villainConfig.sympathyLevels[0],
+    worldRelation: villainConfig.worldRelations[0],
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -331,10 +450,68 @@
         ? worldConfig.lancerConflicts[0]
         : worldConfig.campaignPressures[0],
     dominantFeature: "",
+    campaignContext: "",
+  });
+
+  let starSystem = $state<{
+    systemType: string;
+    genre: string;
+    civilisationLevel: string;
+    systemCharacter: string;
+    scientificRealism: string;
+    campaignContext: string;
+  }>({
+    systemType: starSystemConfig.systemTypes[0],
+    genre: starSystemConfig.genres[0],
+    civilisationLevel: starSystemConfig.civilisationLevels[0],
+    systemCharacter: starSystemConfig.systemCharacters[0],
+    scientificRealism: starSystemConfig.scientificRealism[0],
+    campaignContext: "",
+  });
+
+  let alienRace = $state<{
+    genre: string;
+    generationMode: string;
+    homeEnvironment: string;
+    bodyPlan: string;
+    psychology: string;
+    socialOrganisation: string;
+    technologyLevel: string;
+    relationToOutsiders: string;
+    campaignContext: string;
+  }>({
+    genre: alienRaceConfig.genres[0],
+    generationMode: alienRaceConfig.generationModes[0],
+    homeEnvironment: alienRaceConfig.homeEnvironments[0],
+    bodyPlan: alienRaceConfig.bodyPlans[0],
+    psychology: alienRaceConfig.psychologies[0],
+    socialOrganisation: alienRaceConfig.socialOrganisations[0],
+    technologyLevel: alienRaceConfig.technologyLevels[0],
+    relationToOutsiders: alienRaceConfig.relationsToOutsiders[0],
+    campaignContext: "",
+  });
+
+  let creature = $state<{
+    genre: string;
+    category: string;
+    threatLevel: string;
+    size: string;
+    temperament: string;
+    habitat: string;
+    ecologicalRole: string;
+    campaignContext: string;
+  }>({
+    genre: factionConfig.themes[0],
+    category: creatureConfig.categories[0],
+    threatLevel: creatureConfig.threatLevels[0],
+    size: creatureConfig.sizes[0],
+    temperament: creatureConfig.temperaments[0],
+    habitat: creatureConfig.habitats[0],
+    ecologicalRole: creatureConfig.ecologicalRoles[0],
+    campaignContext: "",
   });
 
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
-  const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
@@ -366,6 +543,7 @@
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
     else if (slug === "council-vote") councilVote.genre = activeTheme;
+    else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
@@ -381,13 +559,49 @@
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
     else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
+    else if (slug === "star-system")
+      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    else if (slug === "alien-race")
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
     else if (
       slug === "adventure-generator" ||
       slug === "adventure-idea-generator"
     )
       adventure.genre = activeTheme;
+    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
+    else if (slug === "bbeg-generator") villain.genre = activeTheme;
+    else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
+    else if (slug === "artifact-generator") artifact.genre = activeTheme;
+    else if (slug === "creature") creature.genre = activeTheme;
   });
+
+  // Consumes the "Develop this world" handoff from a generated star system
+  // (#1935): a linked major body opens this page with its name, type, and
+  // system context in the query string so the World Generator draft starts
+  // pre-populated instead of blank. Cleans the URL after reading it.
+  function applyPendingDevelopWorld(): void {
+    const params = page.url.searchParams;
+    const systemTitle = params.get("developSystem");
+    const bodyName = params.get("developBody");
+    if (!systemTitle && !bodyName) return;
+    const bodyType = params.get("developBodyType");
+    const context = params.get("developContext");
+    world.dominantFeature = bodyName
+      ? `${bodyName}${bodyType ? ` (${bodyType})` : ""} — ${context || `part of the ${systemTitle} system.`}`
+      : (context ?? "");
+
+    const cleanUrl = new URL(page.url);
+    for (const key of [
+      "developSystem",
+      "developBody",
+      "developBodyType",
+      "developContext",
+    ]) {
+      cleanUrl.searchParams.delete(key);
+    }
+    goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
+  }
 
   onMount(() => {
     if (slug === "nation") {
@@ -468,6 +682,29 @@
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       world.genre = worldGenreForHub(hubGenre);
       activeTheme = mapWorldGenreToTheme(world.genre);
+      applyPendingDevelopWorld();
+      return;
+    }
+    if (slug === "star-system") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (starSystemConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        starSystem.genre = hubGenre;
+      }
+      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+      return;
+    }
+    if (slug === "alien-race") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (alienRaceConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        alienRace.genre = hubGenre;
+      }
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
       return;
     }
     if (slug === "news-sheet-generator") {
@@ -514,11 +751,27 @@
       generatorEngine.generateSettlement({ ...settlement, useAI }),
     "magic-item": (useAI) =>
       generatorEngine.generateMagicItem({ ...magicItem, useAI }),
+    "minor-magic-item": (useAI) =>
+      generatorEngine.generateMinorMagicItem({
+        ...minorMagicItem,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "artifact-generator": (useAI) =>
+      generatorEngine.generateArtifact({
+        ...artifact,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
+    "secret-society": (useAI) =>
+      generatorEngine.generateSecretSociety({ ...secretSociety, useAI }),
     tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
     kingdom: (useAI) => generatorEngine.generateKingdom({ ...kingdom, useAI }),
     nation: (useAI) => generatorEngine.generateNation({ ...nation, useAI }),
@@ -577,11 +830,46 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
+    "plot-twist-generator": (useAI) =>
+      generatorEngine.generatePlotTwist({
+        ...plotTwist,
+        premise: resolvePlotTwistPremiseForGeneration(
+          plotTwist.premise,
+          handedOffQuestPremise,
+        ),
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+      }),
+    "bbeg-generator": (useAI) =>
+      generatorEngine.generateVillain({
+        ...villain,
+        genre: activeTheme,
+        useAI,
+      }),
     world: (useAI) =>
       generatorEngine.generateWorld({
         ...world,
         useAI,
         // Keep world titles and named factions varied within the current session.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "star-system": (useAI) =>
+      generatorEngine.generateStarSystem({
+        ...starSystem,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "alien-race": (useAI) =>
+      generatorEngine.generateAlienRace({
+        ...alienRace,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    creature: (useAI) =>
+      generatorEngine.generateCreature({
+        ...creature,
+        useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
   };
@@ -592,7 +880,18 @@
     return handler(useAI);
   }
 
-  const initialDraft = $derived(slugDrafts[slug] ?? null);
+  function openPlotTwistFromQuest(draft: GeneratorOutput) {
+    const params = new URLSearchParams({
+      questPremise: buildPlotTwistPremise(draft),
+    });
+    void goto(resolve(`/generators/plot-twist-generator?${params}`));
+  }
+
+  const initialDraft = $derived(
+    handedOffQuestPremise && slug === "plot-twist-generator"
+      ? null
+      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
+  );
 </script>
 
 <SEOGeneratorLayout
@@ -602,6 +901,9 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  ogImage={meta.ogImage}
+  ogImageAlt={meta.ogImageAlt}
+  keywords={meta.keywords ?? []}
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
@@ -611,6 +913,7 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
+  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
 >
   {#snippet formFields(trigger)}
     {#if slug === "npc"}
@@ -637,6 +940,29 @@
       <MagicItemFormFields
         bind:type={magicItem.type}
         bind:rarity={magicItem.rarity}
+        bind:campaignContext={magicItem.campaignContext}
+      />
+    {:else if slug === "minor-magic-item"}
+      <MinorMagicItemFormFields
+        bind:theme={activeTheme}
+        bind:form={minorMagicItem.form}
+        bind:usageLimit={minorMagicItem.usageLimit}
+        bind:utility={minorMagicItem.utility}
+        bind:activation={minorMagicItem.activation}
+        bind:quirkSeverity={minorMagicItem.quirkSeverity}
+        bind:campaignContext={minorMagicItem.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "artifact-generator"}
+      <ArtifactFormFields
+        bind:theme={activeTheme}
+        bind:form={artifact.form}
+        bind:originEra={artifact.originEra}
+        bind:powerTier={artifact.powerTier}
+        bind:currentStatus={artifact.currentStatus}
+        bind:curseCost={artifact.curseCost}
+        bind:campaignContext={artifact.campaignContext}
+        onSurprise={trigger}
       />
     {:else if slug === "faction"}
       <FactionFormFields
@@ -671,6 +997,17 @@
         bind:tone={councilVote.tone}
         bind:antagonistInfluence={councilVote.antagonistInfluence}
         bind:campaignContext={councilVote.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "secret-society"}
+      <SecretSocietyFormFields
+        bind:theme={activeTheme}
+        bind:tone={secretSociety.tone}
+        bind:scale={secretSociety.scale}
+        bind:publicFace={secretSociety.publicFace}
+        bind:dangerLevel={secretSociety.dangerLevel}
+        bind:truthRelationship={secretSociety.truthRelationship}
+        bind:campaignContext={secretSociety.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "kingdom"}
@@ -826,6 +1163,29 @@
         bind:campaignContext={adventure.campaignContext}
         onSurprise={trigger}
       />
+    {:else if slug === "plot-twist-generator"}
+      <PlotTwistFormFields
+        bind:theme={activeTheme}
+        bind:twistType={plotTwist.twistType}
+        bind:impact={plotTwist.impact}
+        bind:timing={plotTwist.timing}
+        bind:foreshadowing={plotTwist.foreshadowing}
+        bind:premise={plotTwist.premise}
+        bind:constraints={plotTwist.constraints}
+        bind:campaignContext={plotTwist.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "bbeg-generator"}
+      <VillainFormFields
+        bind:theme={activeTheme}
+        bind:tone={villain.tone}
+        bind:threatScale={villain.threatScale}
+        bind:archetype={villain.archetype}
+        bind:sympathy={villain.sympathy}
+        bind:worldRelation={villain.worldRelation}
+        bind:campaignContext={villain.campaignContext}
+        onSurprise={trigger}
+      />
     {:else if slug === "world"}
       <WorldFormFields
         bind:worldType={world.worldType}
@@ -838,8 +1198,53 @@
         bind:lancerWorldFrame={world.lancerWorldFrame}
         bind:campaignPressure={world.campaignPressure}
         bind:dominantFeature={world.dominantFeature}
+        bind:campaignContext={world.campaignContext}
         onGenreChange={(genre) => {
           activeTheme = mapWorldGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "star-system"}
+      <StarSystemFormFields
+        bind:systemType={starSystem.systemType}
+        bind:genre={starSystem.genre}
+        bind:civilisationLevel={starSystem.civilisationLevel}
+        bind:systemCharacter={starSystem.systemCharacter}
+        bind:scientificRealism={starSystem.scientificRealism}
+        bind:campaignContext={starSystem.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapStarSystemGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "alien-race"}
+      <AlienRaceFormFields
+        bind:genre={alienRace.genre}
+        bind:generationMode={alienRace.generationMode}
+        bind:homeEnvironment={alienRace.homeEnvironment}
+        bind:bodyPlan={alienRace.bodyPlan}
+        bind:psychology={alienRace.psychology}
+        bind:socialOrganisation={alienRace.socialOrganisation}
+        bind:technologyLevel={alienRace.technologyLevel}
+        bind:relationToOutsiders={alienRace.relationToOutsiders}
+        bind:campaignContext={alienRace.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapAlienRaceGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "creature"}
+      <CreatureFormFields
+        bind:genre={creature.genre}
+        bind:category={creature.category}
+        bind:threatLevel={creature.threatLevel}
+        bind:size={creature.size}
+        bind:temperament={creature.temperament}
+        bind:habitat={creature.habitat}
+        bind:ecologicalRole={creature.ecologicalRole}
+        bind:campaignContext={creature.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = genre;
         }}
         onSurprise={trigger}
       />

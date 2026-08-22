@@ -8,7 +8,6 @@ import {
   gdriveAuthService,
   importVaultFromDrive,
   listDriveVaults,
-  parseDriveFolderUrl,
   pullVaultFromDrive,
   pushVaultToDrive,
 } from "../src";
@@ -82,20 +81,6 @@ describe("DriveRestClient (injected fetcher)", () => {
     const url = String(fetcher.mock.calls[0][0]);
     // encoded `name='O\'Reilly'` — the apostrophe is backslash-escaped.
     expect(decodeURIComponent(url)).toContain("name='O\\'Reilly'");
-  });
-
-  it("getFolderMetadataResponse hits the file endpoint via the injected fetcher", async () => {
-    const response = ok({ id: "f", name: "F", trashed: false });
-    const fetcher = vi.fn().mockResolvedValue(response);
-
-    const res = await new DriveRestClient(
-      fetcher as any,
-    ).getFolderMetadataResponse("tok", "folder-1");
-
-    expect(res).toBe(response);
-    const [url, init] = fetcher.mock.calls[0];
-    expect(String(url)).toContain("/files/folder-1?fields=id,name,trashed");
-    expect((init as any).headers.Authorization).toBe("Bearer tok");
   });
 
   it("throws when the folder search request fails", async () => {
@@ -378,25 +363,6 @@ describe("gdrive-sync core operations", () => {
       await expect(
         importVaultFromDrive("drive-folder-id", "New Vault"),
       ).rejects.toThrow("Failed to create local vault");
-    });
-  });
-
-  describe("parseDriveFolderUrl", () => {
-    it("extracts the folder ID from a share URL", () => {
-      expect(
-        parseDriveFolderUrl(
-          "https://drive.google.com/drive/folders/abc123DEF456?usp=sharing",
-        ),
-      ).toBe("abc123DEF456");
-    });
-
-    it("accepts a bare folder ID", () => {
-      const id = "a".repeat(30);
-      expect(parseDriveFolderUrl(id)).toBe(id);
-    });
-
-    it("returns null for unparseable input", () => {
-      expect(parseDriveFolderUrl("not a folder id or url")).toBeNull();
     });
   });
 });

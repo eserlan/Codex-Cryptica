@@ -303,15 +303,33 @@ export const SuspensionMarkerSchema = z
 export type SuspensionMarker = z.infer<typeof SuspensionMarkerSchema>;
 
 const TemplateLabelSchema = z.string().trim().min(1).max(40);
+const TemplateColumnSchema = z
+  .object({
+    id: z.string().trim().min(1).max(120),
+    label: z.string().trim().min(1).max(200),
+    type: z.enum(["text", "number", "dice", "counter", "checkbox"]),
+  })
+  .strict();
 const TemplateFieldSchema = z
   .object({
     id: z.string().trim().min(1).max(120),
     label: z.string().trim().min(1).max(200),
-    type: z.enum(["counter", "number", "text", "longtext", "heading", "dice"]),
+    type: z.enum([
+      "counter",
+      "number",
+      "text",
+      "longtext",
+      "heading",
+      "dice",
+      "item-table",
+    ]),
     formula: z.string().trim().max(120).optional(),
     min: z.number().finite().optional(),
     max: z.number().finite().optional(),
     step: z.number().finite().positive().optional(),
+    columns: z.array(TemplateColumnSchema).max(30).optional(),
+    linkVaultItems: z.boolean().optional(),
+    modifierSource: z.string().trim().max(120).optional(),
   })
   .strict();
 
@@ -336,7 +354,8 @@ export const PublicTemplatePackageSchema = z
             path: ["system"],
           });
         }
-        for (const field of template.fields) {
+        for (let i = 0; i < template.fields.length; i++) {
+          const field = template.fields[i];
           if (
             field.min !== undefined &&
             field.max !== undefined &&
@@ -345,7 +364,7 @@ export const PublicTemplatePackageSchema = z
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Field minimum cannot exceed maximum",
-              path: ["fields"],
+              path: ["fields", i],
             });
           }
         }

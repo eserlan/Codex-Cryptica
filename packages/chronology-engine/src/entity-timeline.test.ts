@@ -11,7 +11,6 @@ function makeEntity(
   overrides: Partial<Entity> & { id: string; type: string; title: string },
 ): Entity {
   return {
-    tags: [],
     labels: [],
     aliases: [],
     connections: [],

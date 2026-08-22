@@ -1,27 +1,27 @@
 <script lang="ts">
-  import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
-  import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
-  import {
-    generatorEngine,
-    vampireConfig,
-  } from "$lib/services/seo/generator-engine";
+  /**
+   * Renders the shared generator page for the `vampire-clan` slug, with this route's
+   * own copy, FAQs and canonical.
+   *
+   * This page used to hand-wire its own state, generate call and form bindings
+   * to produce exactly what GeneratorPageContent already produces for this
+   * slug. The wiring lived in two places and could drift in one; only the
+   * copy and the URL were ever really this page's own.
+   */
+  import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
-  let archetype = $state(vampireConfig.archetypes[0]);
-  let bloodline = $state(vampireConfig.bloodlines[0]);
-  let feedingHabit = $state(vampireConfig.feedingHabits[0]);
-  let weakness = $state(vampireConfig.weaknesses[0]);
-  let campaignContext = $state("");
-
-  async function generate({ useAI }: { useAI: boolean }) {
-    return generatorEngine.generateVampireClan({
-      archetype,
-      bloodline,
-      feedingHabit,
-      weakness,
-      campaignContext,
-      useAI,
-    });
-  }
+  const initialDraftOverride: GeneratorOutput = {
+    type: "faction",
+    title: "House of Thorn",
+    summary:
+      "An aristocratic lineage of gothic vampires controlling the local banking system.",
+    content:
+      "### Heritage\nAristocratic bloodline with feeding habits centered around the upper-class elite.\n\n### Clan Weakness\nExtremely vulnerable to silver and holy ground, causing severe degradation of power.",
+    lore: "",
+    labels: ["rpg-faction", "Vampire", "Aristocratic"],
+    status: "draft",
+  };
 
   const relatedLinks = [
     { href: "/tools/faction-generator", label: "Faction generator" },
@@ -56,44 +56,22 @@
         "Clicking 'Save to Codex' stores the clan draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
-  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-
-  const initialDraft: GeneratorOutput = {
-    type: "faction",
-    title: "House of Thorn",
-    summary:
-      "An aristocratic lineage of gothic vampires controlling the local banking system.",
-    content:
-      "### Heritage\nAristocratic bloodline with feeding habits centered around the upper-class elite.\n\n### Clan Weakness\nExtremely vulnerable to silver and holy ground, causing severe degradation of power.",
-    lore: "",
-    labels: ["rpg-faction", "Vampire", "Aristocratic"],
-    status: "draft",
-  };
 </script>
 
-<SEOGeneratorLayout
-  canonicalPath="/tools/vampire-clan-generator"
-  pageTitle="Vampire Clan Generator | Free RPG Bloodline & Coven Tool | Codex Cryptica"
-  metaDescription="Create detailed vampire clans, bloodlines, occult covens, and secret societies. Generate history, feeding habits, weaknesses, and plot hooks for your campaign."
-  eyebrow="Vampire Clan Generator"
-  introTitle="Vampire Clan Generator"
-  introText="Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault."
-  worldTheme="horror"
-  isThemeCustomizable={true}
-  theme="Vampire / Gothic Noir"
-  {relatedLinks}
-  {faqs}
-  {generate}
-  {initialDraft}
->
-  {#snippet formFields(trigger)}
-    <VampireFormFields
-      bind:archetype
-      bind:bloodline
-      bind:feedingHabit
-      bind:weakness
-      bind:campaignContext
-      onSurprise={trigger}
-    />
-  {/snippet}
-</SEOGeneratorLayout>
+<GeneratorPageContent
+  slug="vampire-clan"
+  {initialDraftOverride}
+  metaOverrides={{
+    canonicalPath: "/tools/vampire-clan-generator",
+    pageTitle:
+      "Vampire Clan Generator | Free RPG Bloodline & Coven Tool | Codex Cryptica",
+    metaDescription:
+      "Create detailed vampire clans, bloodlines, occult covens, and secret societies. Generate history, feeding habits, weaknesses, and plot hooks for your campaign.",
+    eyebrow: "Vampire Clan Generator",
+    introTitle: "Vampire Clan Generator",
+    introText:
+      "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+    relatedLinks,
+    faqs,
+  }}
+/>

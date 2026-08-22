@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildVaultContext,
   detectVaultLanguages,
+  findSingleQuestHook,
   latestTemporalYear,
   suggestPrimaryLanguageId,
 } from "./generator-vault-context";
@@ -43,6 +44,40 @@ describe("latestTemporalYear", () => {
     const a = entity({ id: "a", title: "A", type: "character" });
     expect(latestTemporalYear({ a })).toBeUndefined();
     expect(latestTemporalYear({})).toBeUndefined();
+  });
+});
+
+describe("findSingleQuestHook", () => {
+  it("returns the only quest-generator entry in memory", () => {
+    const hook = entity({
+      id: "quest-1",
+      title: "The Silent Bell",
+      type: "event",
+      labels: ["rpg-quest", "quest-generator"],
+    });
+    expect(findSingleQuestHook({ hook })).toBe(hook);
+  });
+
+  it("returns undefined when there are zero or multiple quest hooks", () => {
+    const first = entity({
+      id: "quest-1",
+      title: "First",
+      type: "event",
+      labels: ["quest-generator"],
+    });
+    const second = entity({
+      id: "quest-2",
+      title: "Second",
+      type: "event",
+      labels: ["rpg-quest"],
+    });
+    expect(findSingleQuestHook({})).toBeUndefined();
+    expect(findSingleQuestHook({ first, second })).toBeUndefined();
+  });
+
+  it("does not classify an ordinary event as a quest hook", () => {
+    const event = entity({ id: "event-1", title: "Festival", type: "event" });
+    expect(findSingleQuestHook({ event })).toBeUndefined();
   });
 });
 
@@ -122,6 +157,62 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     const n = ctx.neighbors.find((e) => e.id === "n1");
     expect(n?.contentExcerpt.length).toBeLessThanOrEqual(304);
+  });
+
+  it("truncates prose at the last complete sentence boundary, not mid-sentence", () => {
+    // Two short sentences, then a long run-on well past the 300-char excerpt
+    // cap — the excerpt must end after "second sentence." (a real sentence
+    // boundary within the limit), never mid-word/mid-sentence into the run-on.
+    const prose =
+      "This is the first sentence. This is the second sentence. " +
+      "This is a very long run-on sentence that goes on and on ".repeat(6) +
+      "and finally ends.";
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const neighbor = entity({
+      id: "n1",
+      title: "Big",
+      type: "character",
+      content: prose,
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, n1: neighbor },
+      connectedIds: new Set(["n1"]),
+    });
+    const excerpt = ctx.neighbors.find((e) => e.id === "n1")?.contentExcerpt;
+    expect(excerpt).toBe(
+      "This is the first sentence. This is the second sentence.",
+    );
+    expect(excerpt?.endsWith("sentence.")).toBe(true);
+    expect(excerpt).not.toContain("…");
+  });
+
+  it("falls back to a word boundary (not a sentence one) for a single long run-on with no earlier break", () => {
+    const words = Array.from({ length: 100 }, (_, i) => `word${i}`).join(" ");
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const neighbor = entity({
+      id: "n1",
+      title: "Big",
+      type: "character",
+      content: words,
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, n1: neighbor },
+      connectedIds: new Set(["n1"]),
+    });
+    const excerpt = ctx.neighbors.find((e) => e.id === "n1")?.contentExcerpt;
+    expect(excerpt?.endsWith("…")).toBe(true);
+    const withoutEllipsis = excerpt!.slice(0, -1);
+    // The cut must land exactly on a word boundary in the source text — the
+    // character immediately after it in the original is a space, proving no
+    // word was sliced mid-token.
+    expect(words.startsWith(withoutEllipsis)).toBe(true);
+    expect(words[withoutEllipsis.length]).toBe(" ");
   });
 
   it("keeps a generous source excerpt but caps extreme length", () => {
@@ -212,6 +303,45 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     expect(ctx.neighbors.map((n) => n.id)).toContain("c1");
     expect(ctx.neighbors.map((n) => n.id)).not.toContain("u1");
+  });
+
+  it("caps neighbors from connectedIds at 5 and skips missing entity IDs", () => {
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const entities: Record<string, Entity> = { src };
+    for (let i = 0; i < 7; i++) {
+      entities[`c${i}`] = entity({
+        id: `c${i}`,
+        title: `Connected ${i}`,
+        type: "character",
+      });
+    }
+    const connectedIds = new Set([
+      "missing-1",
+      "c0",
+      "missing-2",
+      "c1",
+      "c2",
+      "c3",
+      "missing-3",
+      "c4",
+      "c5",
+      "c6",
+    ]);
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: entities,
+      connectedIds,
+    });
+    expect(ctx.neighbors).toHaveLength(5);
+    expect(ctx.neighbors.map((n) => n.id)).toEqual([
+      "c0",
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+    ]);
   });
 
   it("falls back to same-type selection when connectedIds is empty", () => {

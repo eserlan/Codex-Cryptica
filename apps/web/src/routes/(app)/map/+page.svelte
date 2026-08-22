@@ -1,4 +1,5 @@
 <script lang="ts">
+  import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
   import MapHUD from "$lib/components/map/MapHUD.svelte";
   import MapUploadOverlay from "$lib/components/map/MapUploadOverlay.svelte";
   import MapView from "$lib/components/map/MapView.svelte";
@@ -36,6 +37,11 @@
     sessionModeStore.isGuestMode && !!guestVault.publishId,
   );
 
+  const selectedEntity = $derived.by(() => {
+    const id = vault.selectedEntityId;
+    return id ? vault.entities[id] : null;
+  });
+
   function handleEntitySelect(entity: Entity) {
     modalUIStore.openZenMode(entity.id);
   }
@@ -44,6 +50,14 @@
     controller.syncActiveVault(vault.activeVaultId);
   });
 </script>
+
+<svelte:head>
+  <title>Battle Map | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="Interactive battle maps, fog of war, and tactical token management for tabletop RPGs."
+  />
+</svelte:head>
 
 <div
   class="w-full h-full min-h-0 flex-1 flex flex-col bg-theme-bg overflow-hidden relative"
@@ -166,6 +180,13 @@
       onDrop={(event) => controller.onDrop(event)}
       onUpload={() => controller.handleUpload()}
       onCancel={() => controller.cancelUpload()}
+    />
+  {/if}
+
+  {#if selectedEntity}
+    <EntityDetailPanel
+      entity={selectedEntity}
+      onClose={() => (vault.selectedEntityId = null)}
     />
   {/if}
 </div>

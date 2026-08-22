@@ -5,9 +5,13 @@
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { hubContext } from "$lib/stores/hub-context.svelte";
+  import { getLandingPagesForHub } from "$lib/content/for/registry";
   import type { ThemeSlug } from "./+page";
 
   const { data } = $props();
+
+  // System and genre guides that belong to this hub.
+  const landingPages = $derived(getLandingPagesForHub(data.theme));
 
   const origin = "https://codexcryptica.com";
 
@@ -54,11 +58,32 @@
       icon: "icon-[lucide--scroll]",
     },
     {
+      slug: "plot-twist-generator",
+      label: "Plot Twist & Complication Generator",
+      summary:
+        "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+      icon: "icon-[lucide--shuffle]",
+    },
+    {
+      slug: "bbeg-generator",
+      label: "BBEG / Campaign Villain Generator",
+      summary:
+        "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+      icon: "icon-[lucide--skull]",
+    },
+    {
       slug: "council-vote",
       label: "Council Vote Generator",
       summary:
         "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
       icon: "icon-[lucide--gavel]",
+    },
+    {
+      slug: "secret-society",
+      label: "Secret Society Generator",
+      summary:
+        "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+      icon: "icon-[lucide--eye]",
     },
     {
       slug: "names",
@@ -86,6 +111,27 @@
       summary:
         "Generate campaign-ready adventure concepts with initial situation, primary pressure, key locations, threats, and non-linear outcomes.",
       icon: "icon-[lucide--map]",
+    },
+    {
+      slug: "minor-magic-item",
+      label: "Minor Magic Item Generator",
+      summary:
+        "Generate small-scale charms, consumable potions, single-use devices, and curiosities with clear limits and quirks.",
+      icon: "icon-[lucide--sparkles]",
+    },
+    {
+      slug: "creature",
+      label: "Creature Generator",
+      summary:
+        "Generate monsters, beasts, alien fauna, and undead with ecology, signs, combat tactics, and adventure hooks.",
+      icon: "icon-[lucide--paw-print]",
+    },
+    {
+      slug: "artifact-generator",
+      label: "Artifact & Relic Generator",
+      summary:
+        "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+      icon: "icon-[lucide--gem]",
     },
   ];
 
@@ -119,6 +165,22 @@
     summary:
       "Generate a planet, moon, or artificial world shaped by its environment, societies, conflicts, and adventure hooks.",
     icon: "icon-[lucide--earth]",
+  };
+
+  const starSystemCard: GeneratorCard = {
+    slug: "star-system",
+    label: "Star System Generator",
+    summary:
+      "Generate a coherent star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+    icon: "icon-[lucide--orbit]",
+  };
+
+  const alienRaceCard: GeneratorCard = {
+    slug: "alien-race",
+    label: "Alien Race Generator",
+    summary:
+      "Generate a coherent alien species whose biology, homeworld, culture, and technology all follow from each other.",
+    icon: "icon-[lucide--dna]",
   };
 
   const pirateShipCard: GeneratorCard = {
@@ -279,6 +341,8 @@
           "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
         ),
         nomadClanCard,
+        starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -306,6 +370,8 @@
           "Colony Generator",
           "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
         ),
+        starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -339,6 +405,7 @@
           "Wasteland Bulletin Generator",
           "Generate a bunker bulletin — trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -364,6 +431,7 @@
           "Tabloid Generator",
           "Generate a local tabloid — cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -383,6 +451,8 @@
           "Settlement Generator",
           "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
         ),
+        starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -467,6 +537,7 @@
           "Field Report Generator",
           "Generate a field report — missing expeditions, astronomical anomalies, restricted notices, and unsettling leads, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -512,6 +583,8 @@
           "Settlement Generator",
           "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
         ),
+        starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -539,6 +612,8 @@
           "Settlement Generator",
           "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
+        starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -651,19 +726,59 @@
     `ipt>`}
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{cleanBase}/generators"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        All Generators
-      </a>
+      <div class="flex items-center justify-between gap-4 mb-8">
+        <a
+          href="{cleanBase}/generators"
+          class="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
+        >
+          <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
+          All Generators
+        </a>
+
+        <div
+          class="flex items-center gap-1 rounded-lg border border-theme-border/60 bg-theme-surface/50 p-1 shadow-sm"
+          role="group"
+          aria-label="App Appearance"
+        >
+          <button
+            type="button"
+            title="Switch to Light Mode"
+            aria-label="Light mode"
+            aria-pressed={themeStore.resolvedAppAppearanceId ===
+              "neutral-light"}
+            class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+            'neutral-light'
+              ? 'bg-theme-primary text-theme-bg shadow-sm'
+              : 'text-theme-muted hover:text-theme-text'}"
+            onclick={() => themeStore.setAppAppearance("neutral-light")}
+          >
+            <span class="icon-[lucide--sun] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            <span class="hidden sm:inline">Light</span>
+          </button>
+          <button
+            type="button"
+            title="Switch to Dark Mode"
+            aria-label="Dark mode"
+            aria-pressed={themeStore.resolvedAppAppearanceId === "neutral-dark"}
+            class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+            'neutral-dark'
+              ? 'bg-theme-primary text-theme-bg shadow-sm'
+              : 'text-theme-muted hover:text-theme-text'}"
+            onclick={() => themeStore.setAppAppearance("neutral-dark")}
+          >
+            <span class="icon-[lucide--moon] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            <span class="hidden sm:inline">Dark</span>
+          </button>
+        </div>
+      </div>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -671,7 +786,7 @@
           {config.eyebrow}
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           {config.label} RPG Generators
         </h1>
@@ -682,7 +797,7 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16">
     <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {#each config.cards as card (card.slug)}
         <li>
@@ -699,7 +814,7 @@
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
             ></span>
             <span
-              class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
             >
               {card.label}
             </span>
@@ -710,5 +825,41 @@
         </li>
       {/each}
     </ul>
+
+    {#if landingPages.length > 0}
+      <section class="mt-14 border-t border-theme-border/60 pt-10">
+        <h2 class="font-header text-xl font-bold mb-2">
+          Campaign guides for these worlds
+        </h2>
+        <p class="text-sm text-theme-muted leading-relaxed mb-6">
+          How Codex Cryptica handles the systems and genres these generators are
+          built for.
+        </p>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {#each landingPages as page (page.slug)}
+            <li>
+              <a
+                href="{cleanBase}/for/{page.slug}"
+                class="group flex h-full items-start justify-between gap-4 rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
+              >
+                <span>
+                  <span
+                    class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                  >
+                    {page.hero.title}
+                  </span>
+                  <span class="block text-sm text-theme-muted leading-relaxed">
+                    {page.hero.tagline}
+                  </span>
+                </span>
+                <span
+                  class="icon-[lucide--arrow-right] h-4 w-4 shrink-0 mt-0.5 text-theme-primary transition-transform group-hover:translate-x-1"
+                ></span>
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
   </div>
-</main>
+</div>

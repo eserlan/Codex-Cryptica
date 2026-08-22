@@ -17,11 +17,14 @@
   import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
-  import MarketingFooter from "./MarketingFooter.svelte";
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import StarSystemDiagram from "./StarSystemDiagram.svelte";
+  import { blobToDataUrl } from "$lib/utils/svg-export";
   import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
+  import SeoHead from "./SeoHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
   import {
     createPendingDelveTransfer,
@@ -39,11 +42,22 @@
     buildBreadcrumbJsonLd,
     buildResultJsonLd,
   } from "./generator-json-ld";
-  import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
+  import {
+    trackEvent,
+    trackPublicGeneratorAction,
+  } from "$lib/services/analytics/zaraz-analytics";
   import {
     trackSaveToCodex,
     countRelatedEntities,
   } from "$lib/services/analytics/generator-save-tracking";
+  import { registerShellCtaHandler } from "./marketing-shell";
+
+  // Link-preview fallback for generators without a capture of their own. Plain
+  // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
+  const DEFAULT_OG_IMAGE =
+    "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
+  const DEFAULT_OG_IMAGE_ALT =
+    "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
 
   let {
     canonicalPath,
@@ -52,6 +66,9 @@
     eyebrow = "Free RPG Tool",
     introTitle = "RPG Generator",
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
+    ogImage = DEFAULT_OG_IMAGE,
+    ogImageAlt = undefined,
+    keywords = [],
     relatedLinks = [],
     faqs = [],
     theme = $bindable("Classic Fantasy"),
@@ -65,10 +82,14 @@
     inputHint = "Set your inputs — your draft updates to the right",
     backHref = undefined,
     backLabel = undefined,
+    onGeneratePlotTwist = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
     metaDescription?: string;
+    ogImage?: string;
+    ogImageAlt?: string;
+    keywords?: string[];
     eyebrow?: string;
     introTitle?: string;
     introText?: string;
@@ -84,6 +105,7 @@
     generateLabel?: string;
     inputHint?: string;
     onLinkToHub?: () => void;
+    onGeneratePlotTwist?: (data: GeneratorOutput) => void;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -95,6 +117,9 @@
   // Once the user explicitly generates, the in-flight seed draft must not clobber
   // their result if it resolves later.
   let userGenerated = $state(false);
+  // Follow-up actions must only use a result from a completed explicit run,
+  // never the example draft left behind after a failed attempt.
+  let userGenerationSucceeded = $state(false);
   const isBusy = $derived(isGenerating || isAutoDrafting);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
@@ -105,12 +130,15 @@
   });
 
   let outputCard = $state<HTMLElement | null>(null);
+  let starSystemDiagramRef = $state<ReturnType<
+    typeof StarSystemDiagram
+  > | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let copiedSectionId = $state<string | null>(null);
   let useAI = $state(true);
   let showSaveModal = $state(false);
-  let redirectUrl = $state(`${cleanBase}/`);
+  let redirectQuery = $state("");
 
   // Offline awareness (#1494): generator pages still work offline using local
   // tables, but AI Lore Co-Author mode requires the network. Network status
@@ -219,13 +247,29 @@
   }
 
   function confirmSaveRedirect() {
-    window.location.href = redirectUrl;
+    trackPublicGeneratorAction("open_codex", {
+      generator_type: generatorType,
+      source: "save_confirmation",
+    });
+
+    showSaveModal = false;
+  }
+
+  // The shell renders the header CTA now, so this page registers its tracking
+  // rather than binding it to a button it no longer owns.
+  $effect(() => registerShellCtaHandler(handleOpenCodex));
+
+  function handleOpenCodex() {
+    trackPublicGeneratorAction("open_codex", {
+      generator_type: generatorType,
+      source: "header",
+    });
   }
 
   const faqJsonLd = $derived(buildFaqJsonLd(faqs));
 
   const softwareApplicationJsonLd = $derived(
-    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription, faqs }),
+    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription }),
   );
 
   const breadcrumbJsonLd = $derived(
@@ -234,10 +278,15 @@
 
   const resultJsonLd = $derived(buildResultJsonLd(generatedData));
 
+  const resolvedOgImageAlt = $derived(
+    ogImageAlt ??
+      (ogImage === DEFAULT_OG_IMAGE ? DEFAULT_OG_IMAGE_ALT : undefined),
+  );
+
   async function handleGenerate() {
     if (isGenerating) return;
-    isExampleDraft = false;
     userGenerated = true;
+    userGenerationSucceeded = false;
     isGenerating = true;
     errorMessage = null;
     aiFallbackDismissed = false;
@@ -252,6 +301,8 @@
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
       generatedData = await generate({ useAI: useAINow });
+      userGenerationSucceeded = true;
+      isExampleDraft = false;
       // #1796: only on the success path — a caught error below means the
       // generation did not complete, so it must not count as one.
       trackEvent("generator_completed", { generator_type: generatorType });
@@ -304,6 +355,11 @@
 
   function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
     if (entitiesToSave.length === 0) return;
+    trackPublicGeneratorAction("save_to_codex", {
+      generator_type: generatorType,
+      is_hub_batch: true,
+      item_count: entitiesToSave.length,
+    });
     try {
       const draftsToSave = entitiesToSave.map((e) => {
         const prov = sessionHubStore.provenance[e.id];
@@ -344,15 +400,20 @@
           0,
         ),
       });
-      redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
+      redirectQuery = `?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
       errorMessage = "Storage access is blocked. Please copy drafts manually.";
     }
   }
 
-  function handleSaveToCodex() {
+  async function handleSaveToCodex() {
     if (!generatedData) return;
+    trackPublicGeneratorAction("save_to_codex", {
+      generator_type: generatorType,
+      is_hub_batch: false,
+      item_count: 1,
+    });
 
     try {
       const isAdventure =
@@ -373,6 +434,18 @@
             .join("\n\n")
         : documentLayout.lore;
 
+      // Best-effort: a rasterization failure must never block saving the
+      // draft itself, so this is caught separately from the payload write.
+      let mapImageDataUrl: string | undefined;
+      if (starSystemDiagramRef) {
+        try {
+          const blob = await starSystemDiagramRef.exportPng();
+          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
+        } catch (err) {
+          console.error("Failed to rasterize star system diagram:", err);
+        }
+      }
+
       const payload = {
         type: isAdventure ? "note" : generatedData.type,
         kind: generatedData.kind,
@@ -381,6 +454,7 @@
         lore,
         labels: generatedData.labels,
         status: generatedData.status,
+        ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
@@ -393,7 +467,7 @@
         itemCount: 1,
         relatedEntityCount: countRelatedEntities(content, undefined),
       });
-      redirectUrl = `${cleanBase}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
+      redirectQuery = `?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
       errorMessage =
@@ -403,6 +477,10 @@
 
   async function handleCopyMarkdown() {
     if (!generatedData) return;
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "markdown",
+    });
 
     const markdownText = [
       `# ${generatedData.title}`,
@@ -429,6 +507,11 @@
   }
 
   async function handleCopySection(sectionId: string, markdown: string) {
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "section",
+      section_id: sectionId,
+    });
     try {
       await navigator.clipboard.writeText(markdown.trim());
       copiedSectionId = sectionId;
@@ -452,6 +535,10 @@
     if (copyBtn) {
       const textToCopy = copyBtn.getAttribute("data-copy-text");
       if (textToCopy) {
+        trackPublicGeneratorAction("copy", {
+          generator_type: generatorType,
+          copy_target: "inline",
+        });
         navigator.clipboard
           .writeText(textToCopy)
           .then(() => {
@@ -531,52 +618,20 @@
   }
 </script>
 
-<svelte:head>
-  <title>{pageTitle}</title>
-  <meta name="description" content={metaDescription} />
-  <meta name="robots" content="index, follow" />
-  {#if canonicalPath}
-    <link rel="canonical" href="https://codexcryptica.com{canonicalPath}" />
-  {/if}
-  <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Codex Cryptica" />
-  <meta property="og:title" content={pageTitle} />
-  <meta property="og:description" content={metaDescription} />
-  {#if canonicalPath}
-    <meta
-      property="og:url"
-      content="https://codexcryptica.com{canonicalPath}"
-    />
-  {/if}
-  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
-  <meta property="og:image:width" content="1024" />
-  <meta property="og:image:height" content="1024" />
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content={pageTitle} />
-  <meta name="twitter:description" content={metaDescription} />
-  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
-  <link rel="help" href="{cleanBase}/llms.txt" />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${softwareApplicationJsonLd}</scr` +
-    `ipt>`}
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
-    `ipt>`}
-  {#if faqJsonLd}
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html `<scr` + `ipt type="application/ld+json">${faqJsonLd}</scr` + `ipt>`}
-  {/if}
-  {#if resultJsonLd}
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html `<scr` +
-      `ipt type="application/ld+json">${resultJsonLd}</scr` +
-      `ipt>`}
-  {/if}
-</svelte:head>
+<SeoHead
+  title={pageTitle}
+  description={metaDescription}
+  canonicalUrl={canonicalPath ? buildAbsoluteUrl(canonicalPath) : undefined}
+  image={ogImage}
+  imageAlt={resolvedOgImageAlt}
+  {keywords}
+  jsonLd={[
+    softwareApplicationJsonLd,
+    breadcrumbJsonLd,
+    faqJsonLd,
+    resultJsonLd,
+  ]}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
@@ -584,51 +639,6 @@
   data-world-theme={activeThemeId}
 >
   <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/?utm_source=generator-logo&utm_medium=nav&utm_campaign=seo-funnel"
-        class="flex items-center gap-2 group min-w-0"
-        id="logo-link"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
-      >
-        <a
-          href="{cleanBase}/features"
-          class="hover:text-theme-primary transition-colors">Features</a
-        >
-        <a
-          href="{cleanBase}/blog"
-          class="hover:text-theme-primary transition-colors">Devlog</a
-        >
-        <a
-          href="{cleanBase}/generators"
-          class="hover:text-theme-primary transition-colors">Generators</a
-        >
-      </nav>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?utm_source=generator-header-cta&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-          id="nav-cta-btn"
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
 
   <!-- Compact Explainer Strip — no duplicate generate CTA (#1274) -->
   <div class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6">
@@ -646,86 +656,15 @@
   </div>
 
   <div
-    class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
+    class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
-    <!-- Output Card Column: controls first on mobile, middle column on desktop -->
-    <div
-      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
-      bind:this={outputCard}
-    >
-      <GeneratorOutputCard
-        {generatedData}
-        {aiFallbackDismissed}
-        {isBusy}
-        {isExampleDraft}
-        {generatedSingular}
-        {variant}
-        worldTheme={theme || worldTheme}
-        documentContent={documentLayout.content}
-        {documentSections}
-        {copied}
-        {copiedSectionId}
-        contextTrimmed={contextSelection.trimmed}
-        onDismissAiFallback={() => (aiFallbackDismissed = true)}
-        onSaveToCodex={handleSaveToCodex}
-        onCopyMarkdown={handleCopyMarkdown}
-        onCopySection={(sectionId, markdown) =>
-          void handleCopySection(sectionId, markdown)}
-        onContainerClick={handleContainerClick}
-        onContainerKeydown={handleContainerKeydown}
-        onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
-        onSaveHubToCodex={handleSaveHubToCodex}
-        onBuildDelveCanvas={handleBuildDelveCanvas}
-        onBuildAdventureCanvas={handleBuildAdventureCanvas}
-      />
-    </div>
-
-    <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
-    <div class="lg:col-span-3 order-3 lg:order-3">
-      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
-      <p
-        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
-      >
-        GM Reference
-      </p>
-      <div class="sticky top-24 flex flex-col gap-6">
-        <div
-          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
-        >
-          {#if generatedData}
-            <div
-              in:fade={{ duration: 250 }}
-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
-              'names'
-                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
-                : ''}"
-            >
-              {@html renderGeneratorLore(documentLayout.lore, variant)}
-              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
-                <ProvenanceBadge
-                  record={sessionHubStore.provenance[currentEntityId]}
-                  onSelect={(e) => (selectedHubEntity = e)}
-                />
-              {/if}
-            </div>
-          {:else}
-            <div
-              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-            >
-              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
-              <p class="text-[10px] uppercase tracking-widest font-header">
-                At the Table
-              </p>
-              <p class="text-sm mt-2 leading-relaxed">
-                GM utility details appear here after generation.
-              </p>
-            </div>
-          {/if}
-        </div>
-      </div>
-    </div>
-
-    <!-- Parameters Column: rendered last in DOM, positioned on the left on desktop -->
+    <!--
+      DOM order matches visual order (Parameters -> Output -> At the Table)
+      via order-1/2/3 below, so SEO/LLM crawlers that read raw markup instead
+      of applying CSS grid order see the H1 and intro copy before the
+      generator's empty-state placeholders (#2320).
+    -->
+    <!-- Parameters Column: positioned on the left on desktop -->
     <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
@@ -862,6 +801,101 @@
         <!-- Related links moved to bottom discover section -->
       </div>
     </div>
+
+    <!-- Output Card Column: middle column on desktop -->
+    <div
+      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
+      bind:this={outputCard}
+    >
+      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
+        <div class="mb-6">
+          <StarSystemDiagram
+            bind:this={starSystemDiagramRef}
+            bodies={generatedData.bodies}
+            starType={generatedData.starType}
+            title={generatedData.title}
+            onCopy={() =>
+              trackPublicGeneratorAction("copy", {
+                generator_type: generatorType,
+                copy_target: "diagram_image",
+              })}
+          />
+        </div>
+      {/if}
+      <GeneratorOutputCard
+        {generatedData}
+        {aiFallbackDismissed}
+        {isBusy}
+        {isExampleDraft}
+        {generatedSingular}
+        {variant}
+        worldTheme={theme || worldTheme}
+        documentContent={documentLayout.content}
+        {documentSections}
+        {copied}
+        {copiedSectionId}
+        contextTrimmed={contextSelection.trimmed}
+        onDismissAiFallback={() => (aiFallbackDismissed = true)}
+        onSaveToCodex={handleSaveToCodex}
+        onCopyMarkdown={handleCopyMarkdown}
+        onCopySection={(sectionId, markdown) =>
+          void handleCopySection(sectionId, markdown)}
+        onContainerClick={handleContainerClick}
+        onContainerKeydown={handleContainerKeydown}
+        onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
+        onSaveHubToCodex={handleSaveHubToCodex}
+        onBuildDelveCanvas={handleBuildDelveCanvas}
+        onBuildAdventureCanvas={handleBuildAdventureCanvas}
+        onGeneratePlotTwist={userGenerationSucceeded
+          ? onGeneratePlotTwist
+          : undefined}
+      />
+    </div>
+
+    <!-- At the Table Column: positioned on the right on desktop -->
+    <div class="lg:col-span-3 order-3 lg:order-3">
+      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
+      <p
+        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
+      >
+        GM Reference
+      </p>
+      <div class="sticky top-24 flex flex-col gap-6">
+        <div
+          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
+        >
+          {#if generatedData}
+            <div
+              in:fade={{ duration: 250 }}
+              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
+              'names'
+                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
+                : ''}"
+            >
+              {@html renderGeneratorLore(documentLayout.lore, variant)}
+              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
+                <ProvenanceBadge
+                  record={sessionHubStore.provenance[currentEntityId]}
+                  onSelect={(e) => (selectedHubEntity = e)}
+                />
+              {/if}
+            </div>
+          {:else}
+            <div
+              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
+            >
+              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
+              <p class="text-[10px] uppercase tracking-widest font-header">
+                At the Table
+              </p>
+              <p class="text-sm mt-2 leading-relaxed">
+                GM utility details appear here after generation.
+              </p>
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
   </div>
 
   <FaqSection {introTitle} {faqs} />
@@ -870,6 +904,7 @@
 
   <SaveToCodexModal
     open={showSaveModal}
+    {redirectQuery}
     onConfirm={confirmSaveRedirect}
     onCancel={() => (showSaveModal = false)}
   />
@@ -878,8 +913,6 @@
     entity={selectedHubEntity}
     onClose={() => (selectedHubEntity = null)}
   />
-
-  <MarketingFooter />
 </div>
 
 <style>

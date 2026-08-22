@@ -5,6 +5,48 @@ import { describe, expect, it, vi } from "vitest";
 import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
 
 describe("GeneratorConfigForm", () => {
+  it("names generators, identifies their entity types, and describes only the selected one", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [
+          { id: "character", label: "Character" },
+          { id: "note", label: "Note" },
+        ],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const npcRadio = screen.getByRole("radio", {
+      name: "NPC Creates Character",
+    });
+    const plotTwistRadio = screen.getByRole("radio", {
+      name: "Plot Twist & Complication Creates Note",
+    });
+
+    expect(npcRadio.getAttribute("aria-describedby")).toBe(
+      "generator-description-npc",
+    );
+    expect(
+      document.getElementById("generator-description-npc")?.textContent,
+    ).toContain("Generate a non-player character for your campaign.");
+    expect(plotTwistRadio.hasAttribute("aria-describedby")).toBe(false);
+    expect(
+      document.getElementById("generator-description-plot-twist"),
+    ).toBeNull();
+
+    await fireEvent.click(plotTwistRadio);
+
+    expect(npcRadio.hasAttribute("aria-describedby")).toBe(false);
+    expect(document.getElementById("generator-description-npc")).toBeNull();
+    expect(plotTwistRadio.getAttribute("aria-describedby")).toBe(
+      "generator-description-plot-twist",
+    );
+    expect(
+      document.getElementById("generator-description-plot-twist")?.textContent,
+    ).toContain("Reinterpret an established situation");
+  });
+
   it("submits custom option values for select-based generator options", async () => {
     const onsubmit = vi.fn();
 
@@ -65,7 +107,9 @@ describe("GeneratorConfigForm", () => {
     });
 
     expect(
-      screen.getByRole("radio", { name: "Location (Facility)" }),
+      screen.getByRole("radio", {
+        name: "Dungeon / Delve Creates Location (Facility)",
+      }),
     ).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByLabelText("Original Purpose")).toBeTruthy();
@@ -76,6 +120,55 @@ describe("GeneratorConfigForm", () => {
     expect(
       screen.queryByRole("option", { name: "Temple & Shrine" }),
     ).toBeNull();
+  });
+
+  it("only offers theme-appropriate NPC race and role choices", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        themeId: "western",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const raceSelect = screen.getByLabelText("Race");
+    expect(screen.getByRole("option", { name: "Human" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Elf" })).toBeNull();
+
+    const roleSelect = screen.getByLabelText("Role");
+    expect(screen.getByRole("option", { name: "Gunslinger" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Mage" })).toBeNull();
+
+    expect(raceSelect).toBeTruthy();
+    expect(roleSelect).toBeTruthy();
+  });
+
+  it("only offers theme-appropriate faction and settlement type choices", async () => {
+    const { unmount } = render(GeneratorConfigForm, {
+      props: {
+        generatorId: "faction",
+        themeId: "western",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    expect(screen.getByRole("option", { name: "Outlaw Gang" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Arcane Circle" })).toBeNull();
+    unmount();
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "settlement",
+        themeId: "western",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    expect(screen.getByRole("option", { name: "Boom Town" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Fortress" })).toBeNull();
   });
 
   it("requires explicit confirmation before applying a suggested language", async () => {

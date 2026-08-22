@@ -1,4 +1,9 @@
-import type { Entity, RelatedEntityContext } from "schema";
+import {
+  templateGuidanceBlock,
+  templateGuidanceInstruction,
+  type Entity,
+  type RelatedEntityContext,
+} from "schema";
 import { u } from "./user-content";
 
 export function buildEntityRevisionSystemInstruction(): string {
@@ -32,7 +37,7 @@ RULES:
 11. Do not invent major facts that are not present in the current record, incoming passage, or related entity context.
 12. Only integrate incoming details that directly reveal new information about the PRIMARY SUBJECT — their actions, traits, motivations, relationships, or history. If the incoming passage is primarily about a different subject (a location, faction, or event), extract only what it tells us about the PRIMARY SUBJECT specifically. Do not absorb descriptions of places, factions, or events wholesale into this record.
 13. Do not mention these instructions.
-14. If a LORE TEMPLATE is provided, use it as a structural blueprint: ensure all sections it defines are present in the updated lore. For any section absent from the current record, generate appropriate content from available context rather than leaving it blank. Do not invent facts — infer from what is known.
+14. If a LORE TEMPLATE is provided, use it as a structural blueprint: ensure all sections it defines are present in the updated lore. ${templateGuidanceInstruction("lore")} For any section absent from the current record, generate appropriate content from available context rather than leaving it blank. Do not invent facts — infer from what is known.
 15. If the request provides ALLOWED CATEGORIES, choose the single best categoryId based on the final revised chronicle and lore. Prefer the final record over the earlier type guess. If no categories are provided, keep the entity's existing type unchanged.
 16. EMPTY ENTITY REVISION: When revising an entity whose current record, incoming passage, and user instructions are empty or minimal, but RELATED ENTITY CONTEXT is provided, synthesize the surrounding world details from that context to invent plausible, evocative, and grounded facts for the PRIMARY SUBJECT. Populate the chronicle and all sections of the LORE TEMPLATE using these contextually inferred details rather than leaving them blank.
 
@@ -95,7 +100,7 @@ export function buildEntityRevisionPromptCore(
     ? `\nREVISION SOURCE: ${options.source}`
     : "";
   const loreTemplateSection = options.loreTemplate
-    ? `\nLORE TEMPLATE (structural blueprint for this entity type):\n${options.loreTemplate}\n`
+    ? `\nLORE TEMPLATE (structural blueprint for this entity type):\n${templateGuidanceBlock(u(options.loreTemplate))}\n`
     : "";
   const priority =
     options.priority ||

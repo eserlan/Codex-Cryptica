@@ -7,6 +7,8 @@ const validSlugs = new Set([
   "npc",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "faction",
   "quest",
   "item",
@@ -27,8 +29,14 @@ const validSlugs = new Set([
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "plot-twist-generator",
+  "bbeg-generator",
   "world",
   "council-vote",
+  "secret-society",
+  "star-system",
+  "alien-race",
+  "creature",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -40,6 +48,8 @@ export const load: PageLoad = ({ params }) => {
       | "npc"
       | "settlement"
       | "magic-item"
+      | "minor-magic-item"
+      | "artifact-generator"
       | "faction"
       | "quest"
       | "item"
@@ -60,8 +70,14 @@ export const load: PageLoad = ({ params }) => {
       | "dungeon-generator"
       | "adventure-generator"
       | "adventure-idea-generator"
+      | "plot-twist-generator"
+      | "bbeg-generator"
       | "world"
-      | "council-vote",
+      | "council-vote"
+      | "secret-society"
+      | "star-system"
+      | "alien-race"
+      | "creature",
   };
 };
 
@@ -70,6 +86,8 @@ export const entries: EntryGenerator = () => {
     { slug: "npc" },
     { slug: "settlement" },
     { slug: "magic-item" },
+    { slug: "minor-magic-item" },
+    { slug: "artifact-generator" },
     { slug: "faction" },
     { slug: "quest" },
     { slug: "item" },
@@ -90,7 +108,13 @@ export const entries: EntryGenerator = () => {
     { slug: "dungeon-generator" },
     { slug: "adventure-generator" },
     { slug: "adventure-idea-generator" },
+    { slug: "plot-twist-generator" },
+    { slug: "bbeg-generator" },
     { slug: "world" },
     { slug: "council-vote" },
+    { slug: "secret-society" },
+    { slug: "star-system" },
+    { slug: "alien-race" },
+    { slug: "creature" },
   ];
 };

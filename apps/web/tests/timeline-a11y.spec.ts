@@ -112,8 +112,12 @@ test.describe("Timeline Accessibility", () => {
     await expect(horizontalTimeline).toHaveAttribute("tabindex", "0");
 
     // 3. Test entry selection and aria-pressed
-    const e1Button = page.getByRole("button", { name: "Event 1" });
-    const e2Button = page.getByRole("button", { name: "Event 2" });
+    const e1Button = horizontalTimeline.getByRole("button", {
+      name: "Event 1",
+    });
+    const e2Button = horizontalTimeline.getByRole("button", {
+      name: "Event 2",
+    });
 
     // Click Event 1
     await e1Button.click();

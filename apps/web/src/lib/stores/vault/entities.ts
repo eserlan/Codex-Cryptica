@@ -53,7 +53,6 @@ export function createEntity(
   const entity = {
     id,
     title,
-    tags: [],
     labels: [],
     connections: [],
     content: "",
@@ -119,28 +118,7 @@ export async function deleteEntity(
   const entity = entities[id];
   if (!entity) return { entities, deletedEntity: null, modifiedIds: [] };
 
-  const path = entity._path || [`${id}.md`];
-
-  // 1. Delete file from OPFS
-  await deleteOpfsEntry(vaultDir, path, vaultDir.name);
-
-  // 2. Delete images from OPFS
-  if (entity.image) {
-    try {
-      const imagePath = entity.image.split("/");
-      await deleteOpfsEntry(vaultDir, imagePath, vaultDir.name);
-    } catch (e) {
-      console.warn("Failed to delete image", e);
-    }
-  }
-  if (entity.thumbnail) {
-    try {
-      const thumbPath = entity.thumbnail.split("/");
-      await deleteOpfsEntry(vaultDir, thumbPath, vaultDir.name);
-    } catch (e) {
-      console.warn("Failed to delete thumbnail", e);
-    }
-  }
+  await deleteEntityFiles(vaultDir, entity);
 
   // 3. Remove from memory
   const newEntities = { ...entities };
@@ -199,6 +177,97 @@ export async function deleteEntity(
     entities: newEntities,
     deletedEntity: entity,
     modifiedIds,
+  };
+}
+
+export async function deleteEntityFiles(
+  vaultDir: FileSystemDirectoryHandle,
+  entity: LocalEntity,
+): Promise<void> {
+  const path = entity._path || [`${entity.id}.md`];
+  await deleteOpfsEntry(vaultDir, path, vaultDir.name);
+
+  if (entity.image) {
+    try {
+      await deleteOpfsEntry(vaultDir, entity.image.split("/"), vaultDir.name);
+    } catch (e) {
+      console.warn("Failed to delete image", e);
+    }
+  }
+  if (entity.thumbnail) {
+    try {
+      await deleteOpfsEntry(
+        vaultDir,
+        entity.thumbnail.split("/"),
+        vaultDir.name,
+      );
+    } catch (e) {
+      console.warn("Failed to delete thumbnail", e);
+    }
+  }
+}
+
+export function applyBatchDelete(
+  entities: Record<string, LocalEntity>,
+  ids: string[],
+  inboundConnections: Record<
+    string,
+    { sourceId: string; connection: any }[]
+  > = {},
+  parentToChildren: Record<string, string[]> = {},
+): {
+  entities: Record<string, LocalEntity>;
+  deletedIds: string[];
+  modified: Record<string, LocalEntity>;
+} {
+  const deleted = new Set(ids.filter((id) => entities[id]));
+  if (deleted.size === 0) {
+    return { entities, deletedIds: [], modified: {} };
+  }
+
+  const affected = new Set<string>();
+  for (const id of deleted) {
+    for (const inbound of inboundConnections[id] ?? []) {
+      if (!deleted.has(inbound.sourceId)) affected.add(inbound.sourceId);
+    }
+    for (const childId of parentToChildren[id] ?? []) {
+      if (!deleted.has(childId)) affected.add(childId);
+    }
+  }
+
+  const nextEntities = { ...entities };
+  for (const id of deleted) delete nextEntities[id];
+
+  const modified: Record<string, LocalEntity> = {};
+  for (const id of affected) {
+    const entity = nextEntities[id];
+    if (!entity) continue;
+    const nextConnections = entity.connections.filter(
+      (connection) => !deleted.has(connection.target),
+    );
+    const nextParent =
+      entity.parent && deleted.has(entity.parent) ? undefined : entity.parent;
+
+    if (
+      nextConnections.length !== entity.connections.length ||
+      nextParent !== entity.parent
+    ) {
+      const updated = {
+        ...entity,
+        connections: nextConnections,
+        parent: nextParent,
+        updatedAt: systemClock.now(),
+        modifiedAt: systemClock.now(),
+      } as LocalEntity;
+      nextEntities[id] = updated;
+      modified[id] = updated;
+    }
+  }
+
+  return {
+    entities: nextEntities,
+    deletedIds: [...deleted],
+    modified,
   };
 }
 

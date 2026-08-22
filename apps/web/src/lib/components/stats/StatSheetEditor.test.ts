@@ -113,6 +113,30 @@ describe("StatSheetEditor", () => {
     );
   });
 
+  it("preserves a selected presentation while editing a manual stat sheet", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: null,
+        presentationTemplateId: "presentation-custom-sheet",
+        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByDisplayValue("Hit Points"), {
+      target: { value: "HP" },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          presentationTemplateId: "presentation-custom-sheet",
+        }),
+      }),
+    );
+  });
+
   it("reorders fields with move up/down", async () => {
     const entity = buildEntity({
       statSheet: {
@@ -264,6 +288,286 @@ describe("StatSheetEditor", () => {
             expect.objectContaining({ id: "b" }),
             expect.objectContaining({ id: "a" }),
           ],
+        }),
+      }),
+    );
+  });
+
+  it("seeds default columns when switching a field to Repeatable Table", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "gear", label: "Gear", type: "text" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.change(screen.getByLabelText("Field type"), {
+      target: { value: "item-table" },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              type: "item-table",
+              columns: expect.arrayContaining([
+                expect.objectContaining({ id: "name", label: "Weapon Type" }),
+              ]),
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("adds a custom column to a Repeatable Table field", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "skills",
+            label: "Skills",
+            type: "item-table",
+            columns: [{ id: "skill", label: "Skill", type: "text" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(screen.getByText("+ Add Column"));
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [
+                expect.objectContaining({ id: "skill", label: "Skill" }),
+                expect.objectContaining({ label: "New Column", type: "text" }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("edits a column label and type on a Repeatable Table field", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "skills",
+            label: "Skills",
+            type: "item-table",
+            columns: [{ id: "skill", label: "Skill", type: "text" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByDisplayValue("Skill"), {
+      target: { value: "Skill Name" },
+    });
+    await fireEvent.change(screen.getByLabelText("Type for column 1"), {
+      target: { value: "checkbox" },
+    });
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [
+                expect.objectContaining({
+                  label: "Skill Name",
+                  type: "checkbox",
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("edits the dice formula for a Dice Formula column", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "weapons",
+            label: "Weapons",
+            type: "item-table",
+            columns: [{ id: "damage", label: "Damage", type: "dice" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByLabelText("Formula for column 1"), {
+      target: { value: "1d8+2" },
+    });
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [
+                expect.objectContaining({ id: "damage", formula: "1d8+2" }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("edits min/max/step for a Counter column", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "weapons",
+            label: "Weapons",
+            type: "item-table",
+            columns: [{ id: "hp", label: "HP", type: "counter" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByLabelText("Min for column 1"), {
+      target: { value: "0" },
+    });
+    await fireEvent.input(screen.getByLabelText("Max for column 1"), {
+      target: { value: "10" },
+    });
+    await fireEvent.input(screen.getByLabelText("Step for column 1"), {
+      target: { value: "2" },
+    });
+
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [
+                expect.objectContaining({
+                  id: "hp",
+                  min: 0,
+                  max: 10,
+                  step: 2,
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("gives each column's label/type inputs a distinct accessible name", () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "skills",
+            label: "Skills",
+            type: "item-table",
+            columns: [
+              { id: "skill", label: "Skill", type: "text" },
+              { id: "rank", label: "Rank", type: "number" },
+            ],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    expect(
+      (screen.getByLabelText("Label for column 1") as HTMLInputElement).value,
+    ).toBe("Skill");
+    expect(
+      (screen.getByLabelText("Label for column 2") as HTMLInputElement).value,
+    ).toBe("Rank");
+    expect(
+      (screen.getByLabelText("Type for column 1") as HTMLSelectElement).value,
+    ).toBe("text");
+    expect(
+      (screen.getByLabelText("Type for column 2") as HTMLSelectElement).value,
+    ).toBe("number");
+  });
+
+  it("removes a column from a Repeatable Table field", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "skills",
+            label: "Skills",
+            type: "item-table",
+            columns: [
+              { id: "skill", label: "Skill", type: "text" },
+              { id: "rank", label: "Rank", type: "number" },
+            ],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(screen.getByLabelText("Delete column Skill"));
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({
+              columns: [expect.objectContaining({ id: "rank" })],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("toggles vault item linking for a Repeatable Table field", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "skills",
+            label: "Skills",
+            type: "item-table",
+            columns: [{ id: "skill", label: "Skill", type: "text" }],
+          },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(
+      screen.getByLabelText("Allow linking rows to vault items"),
+    );
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ linkVaultItems: false })],
         }),
       }),
     );

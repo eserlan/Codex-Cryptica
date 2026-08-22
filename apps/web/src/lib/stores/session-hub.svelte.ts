@@ -1,5 +1,10 @@
 import { type SessionEntity, type ProvenanceRecord } from "generator-engine";
-import { type IdGenerator, systemIdGenerator, browserSessionStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+  browserSessionStorage,
+  type StorageLike,
+} from "$lib/utils/runtime-deps";
 
 export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
 
@@ -20,7 +25,7 @@ export class SessionHubStore {
 
   constructor(
     idGenerator: IdGenerator = systemIdGenerator,
-    storage: StorageLike = browserSessionStorage
+    storage: StorageLike = browserSessionStorage,
   ) {
     this.idGenerator = idGenerator;
     this.storage = storage;
@@ -74,7 +79,8 @@ export class SessionHubStore {
   }
 
   save() {
-    if (typeof window === "undefined" && this.storage === browserSessionStorage) return;
+    if (typeof window === "undefined" && this.storage === browserSessionStorage)
+      return;
     try {
       const state: SessionHubState = {
         version: 2,

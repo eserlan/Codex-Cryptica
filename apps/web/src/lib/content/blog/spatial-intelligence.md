@@ -14,6 +14,8 @@ keywords:
     "Digital Murder Board",
   ]
 publishedAt: 2026-03-01T10:00:00Z
+image: "https://assets.codexcryptica.com/images/fantasy%20local%20area%20map.png"
+imageAlt: "Codex Cryptica Tactical Map Interface"
 ---
 
 A campaign is more than just a list of names; it’s a web of people, a history of events, and a physical landscape. In **Codex Cryptica**, we’ve moved beyond static notes by linking three different ways to see your world: the **Tactical Map**, the **Relational Graph**, and the **Freeform Canvas**.

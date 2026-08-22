@@ -2,18 +2,12 @@
 id: gdrive-cloud-sync
 slug: gdrive-cloud-sync
 title: "Cloud Sync is Here: Back Up Your Vault to Google Drive"
-description: "Your campaign world can now live on Google Drive — and you can share it with a co-GM in seconds. Here's how Codex Cryptica's new cloud sync works."
+description: "Your campaign world can now live on Google Drive for seamless cross-device backup. Here's how Codex Cryptica's cloud sync works."
 keywords:
-  [
-    "Google Drive",
-    "Cloud Sync",
-    "Vault Backup",
-    "Co-GM",
-    "Shared Vault",
-    "Local-First",
-    "Privacy",
-  ]
+  ["Google Drive", "Cloud Sync", "Vault Backup", "Local-First", "Privacy"]
 publishedAt: 2026-04-30T10:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/gdrive-cloud-sync/gdrive-cloud-sync-hero.png"
+imageAlt: "Codex Cryptica Cloud Sync Settings Panel"
 ---
 
 ![Cloud Sync Settings Panel](https://assets.codexcryptica.com/images/blog/gdrive-cloud-sync/gdrive-cloud-sync-hero.png)
@@ -43,18 +37,6 @@ When you pull from Drive, Codex doesn't re-download everything. It compares what
 ## Import from Drive on any device
 
 Already backed up your vault on another machine? Open Settings, choose the **Vault** tab, scroll to the **Cloud Sync** section, and click **Browse Drive**. Codex will list every vault subfolder it finds in your `CodexCryptica/` folder. One click and the differential pull kicks off — you're back up to speed without copying a single file by hand.
-
-## Share a vault with your co-GM
-
-![Join a Shared Vault](https://assets.codexcryptica.com/images/blog/gdrive-cloud-sync/gdrive-cloud-sync-cogm.png)
-
-This one came up a lot. You're running a campaign, your co-GM needs access to the same notes, and the old answer was "email them a zip file."
-
-The new answer: share the Drive folder, send your co-GM the link, and have them paste it into the **Join a Shared Vault** field in Codex.
-
-Codex fetches the folder metadata, asks Google for just enough access to read it, and pulls the vault locally. After that your co-GM can refresh their copy any time with a single "Load from Drive" click — and they never need direct access to your account.
-
-The first join uses a slightly broader Drive scope so Codex can read a folder it didn't create. Normal push/pull for your own vaults uses the narrower `drive.file` scope that only touches files Codex itself made. Both tokens live in memory only and are never stored on disk.
 
 ## Try it now
 

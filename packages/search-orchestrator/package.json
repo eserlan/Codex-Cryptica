@@ -16,10 +16,11 @@
   },
   "devDependencies": {
     "typescript": "^6.0.3",
-    "eslint": "^10.8.0"
+    "eslint": "^10.8.1"
   },
   "dependencies": {
     "@codex/events": "workspace:*",
+    "@codex/performance-observability": "workspace:*",
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",

@@ -176,3 +176,43 @@
 
 **Learning:** When navigating connections or locating children nodes, invoking `.filter()` on the large `vault.allEntities` array triggers full O(N) traversal and allocates a new intermediate array on every evaluation (such as in `DetailStatusTab` and `ZenContent`). This places pressure on the garbage collector during rendering.
 **Action:** Replace `allEntities.filter(...)` with an imperative `for...of` (or traditional `for`) loop that checks conditions and constructs the necessary subsets or result shapes directly in a single pass.
+
+## 2026-07-02 - [Performance Insight: Replace chained array methods (Array.from().map().filter()) with imperative loops]
+
+**Learning:** In `apps/web/src/lib/services/dungeon-delve-service.ts`, using `Array.from(narrative.matchAll(...)).filter()` allocates multiple intermediate arrays for the regex matches, the mapped strings, and the filtered results. In hot paths or large narratives, this creates unnecessary GC pressure.
+**Action:** Replace chained array generation methods over iterators with imperative `for...of` loops that push valid results directly into the final array.
+
+## 2026-08-08 - [Verify Production Code Before Modifying Test Mocks]
+
+**Learning:** Replacing an expensive `.filter()` operation on `Object.values(entities)` with an imperative loop on `allEntities` is a good performance pattern. However, you must first verify that `allEntities` actually exists on the production object being modified (e.g. `vault`). If it does exist in production, it is correct to update the test mock to include it. If it does not exist, adding it only to the test mock will cause a `TypeError: Cannot read properties of undefined` in production, leading to a crash.
+**Action:** When refactoring to use a pre-calculated property (like `allEntities`), explicitly verify its existence in the real production code (not just the mock) before changing the test. Do not artificially mask errors by adding missing properties to test mocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing inline array .filter().length with imperative counting in Svelte derived states
+
+**Learning:** In Svelte `$derived` blocks, chaining `.filter(...).length` on potentially large arrays creates an entirely new intermediate array in memory just to count its elements. This causes unnecessary garbage collection pressure and CPU overhead on every reactive update.
+**Action:** Replace inline `.filter(...).length` derivations with `$derived.by()` utilizing an imperative `for` loop that iterates over the original array and increments a counter based on the filter logic. This reduces the memory complexity of the count from O(N) to O(1).
+
+## 2026-08-14 - Replacing chained array methods with imperative early-exit loops
+
+**Learning:** When acting as the 'Bolt' persona, do not replace single native array methods like `array.filter()` or `array.every()` with verbose imperative loops, as this is a micro-optimization that degrades readability. Reserve imperative loop optimizations for replacing chained array methods (e.g., `.map().filter().slice()`), eliminating unnecessary allocations (e.g., `[...set].map()`), or introducing early exits to reduce algorithmic complexity (e.g., O(N) to O(K)).
+**Action:** When working with large datasets, replace chains of array mapping and filtering (like `[...set].map().filter().slice()`) with a single imperative `for...of` loop and an early `break` condition to avoid massive intermediate array allocations.
+
+## 2026-08-14 - Limit imperative array optimizations to high-impact bulk paths
+
+**Learning:** While it is beneficial to avoid allocating intermediate arrays in Svelte reactive blocks for truly massive state arrays or bulk processing logic (like in `apps/web/src/lib/stores/vault/bulk-results.ts`), replacing simple, concise 1-line statements like `array.filter(...).length` with verbose 10-line imperative loops inside standard UI components (like `ImportWizard.svelte`) violates the 'never sacrifice code readability for micro-optimizations' rule.
+**Action:** When acting as the 'Bolt' persona, only refactor array pipelines to imperative loops in non-UI modules (e.g. stores, workers, data-processing pipelines) or when specifically querying massive global arrays (e.g. `vault.allEntities`). Do not optimize small, ephemeral arrays inside UI components unless profiling shows they are an active bottleneck.
+
+## 2026-08-18 - Replacing chained array generation methods over iterators with imperative loops
+
+**Learning:** In markdown parsing components (like `generator-document-layout.ts` and `markdown-sections.ts`), using `Array.from(markdown.matchAll(...)).map()` forces the JavaScript engine to eagerly evaluate the entire iterator into an intermediate array of match objects, only to immediately throw it away after mapping it into another array. For large generator documents, this spikes unnecessary garbage collection pressure during formatting.
+**Action:** Replace `Array.from(iterator).map()` with a single imperative `for...of` loop over the iterator. This processes the matches lazily, avoids the intermediate `.map` array allocation, and pushes directly into the final array.

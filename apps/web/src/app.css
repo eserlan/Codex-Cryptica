@@ -266,9 +266,15 @@
     --color-text-muted: #a8a29e;
     --color-text-dim: #78716c;
   }
-  [data-theme="horror"] {
+  [data-theme="horror"][data-app-appearance="neutral-dark"],
+  html[data-app-appearance="neutral-dark"] [data-theme="horror"] {
     --color-text-muted: #9ca3af;
     --color-text-dim: #6b7280;
+  }
+  [data-theme="horror_light"],
+  html[data-app-appearance="neutral-light"] [data-world-theme="horror"] {
+    --color-text-muted: #5c5652;
+    --color-text-dim: #4a4543;
   }
   [data-theme="cosmic_horror"] {
     --color-text-muted: #9adbd2;
@@ -473,10 +479,6 @@
 
   .app-layout {
     overflow: hidden;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
   }
 
   .world-canvas {

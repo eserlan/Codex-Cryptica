@@ -114,6 +114,21 @@
         </button>
       {/if}
     {:else}
+      {#if controller.selectedNodes.length === 1}
+        <button
+          type="button"
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleOpenZenMode}
+          aria-label="Open in Zen Mode"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--maximize-2] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>Open in Zen Mode</span>
+        </button>
+      {/if}
       <button
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition whitespace-nowrap"
@@ -166,6 +181,26 @@
             class="icon-[lucide--star] h-3.5 w-3.5 opacity-70"
           ></span>
           <span>{controller.importantActionLabel}</span>
+        </button>
+
+        <!-- Send to Shelf: copies the selection so it can be brought into
+             another vault. Read-only against this one. -->
+        <button
+          type="button"
+          role="menuitem"
+          class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center gap-3 whitespace-nowrap"
+          data-testid="graph-send-to-shelf"
+          onclick={controller.handleSendToShelf}
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--library] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>
+            Send {controller.selectedNodes.length > 1
+              ? `${controller.selectedNodes.length} `
+              : ""}to Shelf
+          </span>
         </button>
 
         {#if controller.selectedNodes.length === 1}

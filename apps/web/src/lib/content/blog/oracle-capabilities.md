@@ -15,6 +15,8 @@ keywords:
     "D&D AI Tools",
   ]
 publishedAt: 2026-03-22T15:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png"
+imageAlt: "Lore Oracle Interface in Codex Cryptica"
 ---
 
 ![Lore Oracle Interface](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png)
@@ -28,7 +30,7 @@ The Oracle is the AI engine embedded directly in your Codex. It's not a generic 
 ## **The Two States of the Oracle**
 
 - **AI Disabled** — Turns off the AI engine. Natural language chat, `/plot`, and `/draw` are disabled, but deterministic commands like `/roll`, `/create`, and `/connect` still work instantly and offline.
-- **AI-Powered Mode** — Unlocks full natural language reasoning, narrative analysis, and image generation using the Gemini API.
+- **AI-Powered Mode** — Unlocks full natural language reasoning, narrative analysis, and image generation using the OpenAI/Luna API.
 
 ---
 

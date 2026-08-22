@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const controllerState = vi.hoisted(() => ({
@@ -99,6 +99,11 @@ vi.mock("$lib/components/vtt/MapVTTSidebar.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/components/EntityDetailPanel.svelte", async () => ({
+  default: (await import("$lib/components/modals/__tests__/ModalStub.svelte"))
+    .default,
+}));
+
 vi.mock("$lib/components/ShareModal.svelte", async () => ({
   default: (await import("$lib/components/modals/__tests__/ModalStub.svelte"))
     .default,
@@ -121,11 +126,15 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: {
-    activeVaultId: "vault-1",
+const vaultMock = vi.hoisted(() => ({
+  activeVaultId: "vault-1",
+  selectedEntityId: null as string | null,
+  entities: {
+    "entity-1": { id: "entity-1", title: "Map entity" },
   },
 }));
+
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
 
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
@@ -162,6 +171,7 @@ describe("map/+page", () => {
     sessionModeStoreMock.isGuestMode = false;
     guestVaultMock.publishId = null;
     mapSessionMock.showGridSettings = false;
+    vaultMock.selectedEntityId = null;
     gridSettingsMock.mockClear();
   });
 
@@ -204,5 +214,13 @@ describe("map/+page", () => {
 
     expect(screen.getByText("Waiting for host")).not.toBeNull();
     expect(screen.queryByText("No maps published")).toBeNull();
+  });
+
+  it("opens the linked entity detail panel when a map entity is selected", async () => {
+    vaultMock.selectedEntityId = "entity-1";
+
+    render(MapPage);
+
+    await waitFor(() => expect(screen.getByTestId("modal-stub")).toBeTruthy());
   });
 });

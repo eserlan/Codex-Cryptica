@@ -245,6 +245,7 @@
               >
                 <span
                   class="icon-[lucide--folder-input] w-4 h-4 transition-transform group-hover:-translate-y-1"
+                  aria-hidden="true"
                 ></span>
                 Launch Dedicated Importer
               </button>
@@ -289,9 +290,9 @@
                   : ''}"
               >
                 <p class="text-sm text-chrome-text/70 leading-relaxed">
-                  Manage AI integration settings. Codex Cryptica uses Google
-                  Gemini to provide context-aware reasoning, automated tagging,
-                  and image generation.
+                  Manage AI integration settings. Codex Cryptica uses the Oracle
+                  to provide context-aware reasoning, automated tagging, and
+                  image generation.
                 </p>
                 <AISettings />
               </div>
@@ -482,7 +483,10 @@
                   class="w-full p-4 bg-chrome-accent/10 border border-chrome-accent/30 hover:border-chrome-accent text-chrome-accent transition-all rounded group flex items-center justify-between"
                 >
                   <div class="flex items-center gap-3">
-                    <span class="icon-[lucide--sparkles] w-5 h-5"></span>
+                    <span
+                      class="icon-[lucide--sparkles] w-5 h-5"
+                      aria-hidden="true"
+                    ></span>
                     <span
                       class="text-sm font-bold uppercase font-header tracking-widest"
                       >What's New in Codex</span
@@ -490,6 +494,7 @@
                   </div>
                   <span
                     class="icon-[lucide--chevron-right] w-4 h-4 group-hover:translate-x-1 transition-transform"
+                    aria-hidden="true"
                   ></span>
                 </button>
 
@@ -502,6 +507,7 @@
                   <div class="flex items-center gap-3">
                     <span
                       class="icon-[lucide--history] w-5 h-5 text-chrome-muted group-hover:text-chrome-accent transition-colors"
+                      aria-hidden="true"
                     ></span>
                     <span
                       class="text-sm font-bold uppercase font-header tracking-widest text-chrome-muted group-hover:text-chrome-text transition-colors"
@@ -510,6 +516,7 @@
                   </div>
                   <span
                     class="icon-[lucide--external-link] w-4 h-4 text-chrome-muted group-hover:text-chrome-accent group-hover:translate-x-1 transition-all"
+                    aria-hidden="true"
                   ></span>
                 </a>
               </div>
@@ -534,6 +541,7 @@
                   >
                   <span
                     class="icon-[lucide--external-link] w-4 h-4 text-chrome-muted group-hover:text-chrome-accent"
+                    aria-hidden="true"
                   ></span>
                 </a>
                 <a
@@ -548,6 +556,7 @@
                   >
                   <span
                     class="icon-[lucide--external-link] w-4 h-4 text-chrome-muted group-hover:text-chrome-accent"
+                    aria-hidden="true"
                   ></span>
                 </a>
               </div>

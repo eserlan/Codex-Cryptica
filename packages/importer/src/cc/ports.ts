@@ -14,8 +14,8 @@ export interface NewEntityInput {
   title: string;
   content: string;
   lore?: string;
-  tags: string[];
-  labels?: string[];
+  tags?: string[];
+  labels: string[];
   aliases?: string[];
   image?: string;
   thumbnail?: string;

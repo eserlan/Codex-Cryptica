@@ -18,6 +18,6 @@ Sometimes duplicate entities appear, especially after importing content. The **M
 ### Merge Strategies
 
 - **Concatenate**: Simply appends the content of all source nodes into the target node.
-- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.
+- **AI Merge**: Uses the Oracle (OpenAI/Luna) to intelligently rewrite and summarize the combined lore into a cohesive entry.
 
 **Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.

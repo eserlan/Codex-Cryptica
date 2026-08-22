@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Entity } from "schema";
-import { buildEntityTree } from "./entityTree";
+import { buildEntityTree, flattenVisibleEntityTree } from "./entityTree";
 
 describe("entityTree helper", () => {
   const e1: Entity = {
@@ -8,7 +8,6 @@ describe("entityTree helper", () => {
     title: "Root A",
     type: "location",
     status: "active",
-    tags: [],
     labels: [],
     connections: [],
     aliases: [],
@@ -19,7 +18,6 @@ describe("entityTree helper", () => {
     title: "Child B",
     type: "character",
     status: "active",
-    tags: [],
     labels: [],
     connections: [],
     aliases: [],
@@ -31,7 +29,6 @@ describe("entityTree helper", () => {
     title: "Grandchild C",
     type: "item",
     status: "active",
-    tags: [],
     labels: [],
     connections: [],
     aliases: [],
@@ -43,7 +40,6 @@ describe("entityTree helper", () => {
     title: "Root D",
     type: "location",
     status: "active",
-    tags: [],
     labels: [],
     connections: [],
     aliases: [],
@@ -67,6 +63,29 @@ describe("entityTree helper", () => {
     expect(roots[0].children[0].entity.id).toBe("e2");
     expect(roots[0].children[0].children).toHaveLength(1);
     expect(roots[0].children[0].children[0].entity.id).toBe("e3");
+  });
+
+  it("flattens only expanded rows while retaining hierarchy depth", () => {
+    const roots = buildEntityTree(allEntities, allEntities);
+
+    expect(
+      flattenVisibleEntityTree(roots, new Set(["e1"])).map(
+        ({ node, depth }) => [node.entity.id, depth],
+      ),
+    ).toEqual([
+      ["e1", 0],
+      ["e4", 0],
+    ]);
+    expect(
+      flattenVisibleEntityTree(roots, new Set(["e1"]), true).map(
+        ({ node, depth }) => [node.entity.id, depth],
+      ),
+    ).toEqual([
+      ["e1", 0],
+      ["e2", 1],
+      ["e3", 2],
+      ["e4", 0],
+    ]);
   });
 
   it("should include ancestor path even if only descendant matches the filter", () => {
@@ -115,7 +134,6 @@ describe("entityTree helper", () => {
       title: "Bob",
       type: "character",
       status: "active",
-      tags: [],
       labels: [],
       connections: [],
       aliases: [],
@@ -143,7 +161,6 @@ describe("entityTree helper", () => {
       title: "Spellbook",
       type: "item",
       status: "active",
-      tags: [],
       labels: [],
       connections: [],
       aliases: [],
@@ -177,7 +194,6 @@ describe("entityTree helper", () => {
       title: "NPCs Section",
       type: "note",
       status: "active",
-      tags: [],
       labels: [],
       connections: [],
       aliases: [],
@@ -188,7 +204,6 @@ describe("entityTree helper", () => {
       title: "Bob",
       type: "character",
       status: "active",
-      tags: [],
       labels: [],
       connections: [],
       aliases: [],

@@ -24,6 +24,8 @@ describe("Generators SvelteKit Route", () => {
         { slug: "npc" },
         { slug: "settlement" },
         { slug: "magic-item" },
+        { slug: "minor-magic-item" },
+        { slug: "artifact-generator" },
         { slug: "faction" },
         { slug: "quest" },
         { slug: "item" },
@@ -44,8 +46,14 @@ describe("Generators SvelteKit Route", () => {
         { slug: "dungeon-generator" },
         { slug: "adventure-generator" },
         { slug: "adventure-idea-generator" },
+        { slug: "plot-twist-generator" },
+        { slug: "bbeg-generator" },
         { slug: "world" },
         { slug: "council-vote" },
+        { slug: "secret-society" },
+        { slug: "star-system" },
+        { slug: "alien-race" },
+        { slug: "creature" },
       ]);
     });
   });

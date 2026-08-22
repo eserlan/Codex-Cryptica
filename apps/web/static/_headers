@@ -1,4 +1,7 @@
 # Cache-Control headers for LLM discovery files
+/service-worker.js
+  Cache-Control: no-cache, must-revalidate
+
 /llms.txt
   Cache-Control: public, max-age=3600, must-revalidate
 /llms-full.txt

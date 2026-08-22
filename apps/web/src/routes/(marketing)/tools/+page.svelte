@@ -1,6 +1,5 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   type ToolLink = {
     href: string;
@@ -101,6 +100,27 @@
           title: "Adventure & Worldbuilding",
           links: [
             {
+              href: "/generators/star-system",
+              label: "Star System Generator",
+              summary:
+                "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
+              icon: "icon-[lucide--orbit]",
+            },
+            {
+              href: "/generators/alien-race",
+              label: "Alien Race Generator",
+              summary:
+                "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+              icon: "icon-[lucide--dna]",
+            },
+            {
+              href: "/generators/creature",
+              label: "Creature Generator",
+              summary:
+                "Generate memorable monsters, beasts, alien fauna, and undead with ecology, signs, combat tactics, and adventure hooks.",
+              icon: "icon-[lucide--paw-print]",
+            },
+            {
               href: "/generators/world",
               label: "Sci-Fi World Generator",
               summary:
@@ -115,11 +135,32 @@
               icon: "icon-[lucide--scroll-text]",
             },
             {
+              href: "/generators/plot-twist-generator",
+              label: "Plot Twist & Complication Generator",
+              summary:
+                "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+              icon: "icon-[lucide--shuffle]",
+            },
+            {
+              href: "/generators/bbeg-generator",
+              label: "BBEG / Campaign Villain Generator",
+              summary:
+                "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+              icon: "icon-[lucide--skull]",
+            },
+            {
               href: "/generators/council-vote",
               label: "Council Vote Generator",
               summary:
                 "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
               icon: "icon-[lucide--gavel]",
+            },
+            {
+              href: "/generators/secret-society",
+              label: "Secret Society Generator",
+              summary:
+                "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+              icon: "icon-[lucide--eye]",
             },
             {
               href: "/generators/settlement",
@@ -148,6 +189,20 @@
               summary:
                 "Generate item concepts with rarity, properties, history, and GM-facing lore.",
               icon: "icon-[lucide--sparkles]",
+            },
+            {
+              href: "/generators/minor-magic-item",
+              label: "Minor Magic Item & Trinket Generator",
+              summary:
+                "Create low-impact, consumable charms, potions, talismans, and disposable tools with quirks and limited charges.",
+              icon: "icon-[lucide--sparkles]",
+            },
+            {
+              href: "/generators/artifact-generator",
+              label: "Artifact & Relic Generator",
+              summary:
+                "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+              icon: "icon-[lucide--gem]",
             },
             {
               href: "/generators/tavern",
@@ -227,7 +282,7 @@
               href: "/ai-rpg-campaign-manager",
               label: "AI RPG Campaign Manager",
               summary:
-                "Review the AI-assisted campaign workflow built around local notes and BYO Gemini access.",
+                "Review the AI-assisted campaign workflow built around local notes and BYO OpenAI/Luna access.",
               icon: "icon-[lucide--wand-sparkles]",
             },
             {
@@ -392,19 +447,12 @@
   <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{base}/?ref=tools"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        Codex Cryptica
-      </a>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -412,7 +460,7 @@
           Tools Directory
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Tools, Generators, and Comparisons
         </h1>
@@ -424,13 +472,13 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-14">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-14">
     {#each toolSections as section (section.title)}
       <section aria-labelledby={`${section.title}-heading`}>
         <div class="max-w-3xl mb-6">
           <h2
             id={`${section.title}-heading`}
-            class="font-header text-2xl font-bold uppercase tracking-wider text-theme-primary mb-2"
+            class="font-header text-2xl font-bold text-theme-primary mb-2"
           >
             {section.title}
           </h2>
@@ -443,9 +491,7 @@
           {#each section.groups as group, groupIndex (`${section.title}-${groupIndex}`)}
             <div>
               {#if group.title}
-                <h3
-                  class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
-                >
+                <h3 class="font-header text-sm font-bold text-theme-text mb-4">
                   {group.title}
                 </h3>
               {/if}
@@ -461,7 +507,7 @@
                         class="{link.icon} h-5 w-5 text-theme-primary mb-4 block"
                       ></span>
                       <span
-                        class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                        class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                       >
                         {link.label}
                       </span>
@@ -480,6 +526,4 @@
       </section>
     {/each}
   </div>
-
-  <MarketingFooter />
-</main>
+</div>

@@ -40,6 +40,7 @@ describe("GraphContextMenuController", () => {
         openLightbox: vi.fn(),
         openRevisionDialog: vi.fn(),
         openIntentCreateMenu: vi.fn(),
+        openZenMode: vi.fn(),
       },
       connectionModeStore: { startSelectionConnection: vi.fn() },
       notificationStore: {
@@ -59,6 +60,26 @@ describe("GraphContextMenuController", () => {
 
     expect(deps.graph.setCentralNode).toHaveBeenCalledWith("node-1");
     expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should open a single node in Zen Mode and close the menu", () => {
+    controller.selectedNodes = ["node-1"];
+    controller.contextMenuOpen = true;
+
+    controller.handleOpenZenMode();
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not open Zen Mode for multiple selected nodes", () => {
+    controller.selectedNodes = ["node-1", "node-2"];
+    controller.contextMenuOpen = true;
+
+    controller.handleOpenZenMode();
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+    expect(controller.contextMenuOpen).toBe(true);
   });
 
   it("should open merge dialog for multiple nodes", () => {
@@ -200,6 +221,83 @@ describe("GraphContextMenuController", () => {
     expect(controller.imagePickerOpen).toBe(false);
   });
 
+  it("keeps the context menu open when tap releases a long press", () => {
+    let contextHandler: any;
+    let tapStartHandler: any;
+    let tapEndHandler: any;
+    let tapHandler: any;
+    let currentTime = 1_000;
+    deps.clock = { now: () => currentTime };
+    controller = new GraphContextMenuController(() => cy, deps);
+
+    const scratchData: Record<string, any> = {};
+    cy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchData[key] = val;
+      return scratchData[key];
+    });
+
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "cxttap taphold" && args[0] === "node") {
+        contextHandler = args[1];
+      } else if (event === "tapstart" && args.length === 1) {
+        tapStartHandler = args[0];
+      } else if (event === "tapend" && args.length === 1) {
+        tapEndHandler = args[0];
+      } else if (event === "tap" && args.length === 1) {
+        tapHandler = args[0];
+      }
+    });
+
+    controller.setupEvents();
+    expect(contextHandler).toBeDefined();
+    expect(tapStartHandler).toBeDefined();
+    expect(tapEndHandler).toBeDefined();
+    expect(tapHandler).toBeDefined();
+
+    const mockNode = {
+      id: () => "node-1",
+      selected: () => false,
+      renderedPosition: () => ({ x: 50, y: 50 }),
+    };
+
+    currentTime = 1_000;
+    tapStartHandler({});
+    contextHandler({
+      type: "taphold",
+      target: mockNode,
+      renderedPosition: { x: 50, y: 50 },
+    });
+    expect(controller.contextMenuOpen).toBe(true);
+
+    currentTime = 2_000;
+    tapEndHandler({});
+    currentTime = 2_001;
+    tapHandler({});
+
+    expect(controller.contextMenuOpen).toBe(true);
+    expect(scratchData._lastCxtTap).toBe(2_000);
+  });
+
+  it("closes the context menu for an ordinary tap", () => {
+    let tapHandler: any;
+    const scratchData: Record<string, any> = {};
+    cy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchData[key] = val;
+      return scratchData[key];
+    });
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "tap" && args.length === 1) {
+        tapHandler = args[0];
+      }
+    });
+
+    controller.setupEvents();
+    controller.contextMenuOpen = true;
+    tapHandler({});
+
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
   it("should not mark important when no nodes are selected", async () => {
     controller.selectedNodes = [];
 
@@ -253,7 +351,7 @@ describe("GraphContextMenuController", () => {
   it("should open context menu at cursor position when right clicking empty space", () => {
     let bgHandler: any;
     cy.on.mockImplementation((event: string, ...args: any[]) => {
-      if (event === "cxttap" && args.length === 1) {
+      if (event === "cxttap taphold" && args.length === 1) {
         bgHandler = args[0];
       }
     });
@@ -292,7 +390,7 @@ describe("GraphContextMenuController", () => {
   it("should open context menu for edge right-click with connection metadata", () => {
     let edgeHandler: any;
     cy.on.mockImplementation((event: string, ...args: any[]) => {
-      if (event === "cxttap" && args[0] === "edge") {
+      if (event === "cxttap taphold" && args[0] === "edge") {
         edgeHandler = args[1];
       }
     });

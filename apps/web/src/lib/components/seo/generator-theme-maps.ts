@@ -3,12 +3,16 @@
 // across the SEO generator pages.
 
 export const GENERATOR_SLUGS_WITH_THEME = new Set([
+  "alien-race",
   "npc",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "faction",
   "quest",
   "council-vote",
+  "secret-society",
   "item",
   "tavern",
   "social-hub",
@@ -25,9 +29,13 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "language-generator",
   "news-sheet-generator",
   "world",
+  "star-system",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "plot-twist-generator",
+  "bbeg-generator",
+  "creature",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -112,17 +120,24 @@ export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
 };
 
 export const SLUGS_USING_STORED_THEME = new Set([
+  "alien-race",
   "npc",
   "faction",
   "quest",
   "council-vote",
+  "secret-society",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact-generator",
   "item",
   "names",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "plot-twist-generator",
+  "bbeg-generator",
+  "creature",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship
@@ -171,5 +186,20 @@ export function mapWorldGenreToTheme(genre: string): string {
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Hopeful Sci-Fi") return "Optimistic Exploration Sci-Fi";
   if (genre === "Lancer") return "Lancer";
+  return "Sci-Fi / Space Opera";
+}
+
+export function mapStarSystemGenreToTheme(genre: string): string {
+  if (genre === "Space Opera") return "Star Wars";
+  if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
+  if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
+  return "Sci-Fi / Space Opera";
+}
+
+export function mapAlienRaceGenreToTheme(genre: string): string {
+  if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
+  if (genre === "Cosmic Horror") return "Cosmic Horror";
+  if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
+  // Hard Sci-Fi and Space Opera both skin as the general sci-fi theme.
   return "Sci-Fi / Space Opera";
 }

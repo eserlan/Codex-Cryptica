@@ -14,6 +14,8 @@ keywords:
     "Data Sovereignty",
   ]
 publishedAt: 2026-06-25T14:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/getting-started/getting-started-hero.jpg"
+imageAlt: "Getting Started with Codex Cryptica campaign manager"
 ---
 
 ![Getting Started with Codex Cryptica](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/getting-started/getting-started-hero.jpg)
@@ -115,10 +117,10 @@ Codex Cryptica provides multiple ways to visualize and interact with your lore, 
 
 ![The Lore Oracle AI Assistant Chat](/images/oracle-chat-mockup.jpg)
 
-The Lore Oracle is your co-author and worldbuilding assistant, powered by Google Gemini.
+The Lore Oracle is your co-author and worldbuilding assistant, powered by OpenAI/Luna.
 
 - **Context-Aware Chat**: Unlike generic AI chatbots, the Oracle retrieves relevant entities, notes, and local neighbor nodes from your graph to ground its responses in your specific world lore.
-- **Keys**: Configure your private Google Gemini key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
+- **Keys**: Configure your private OpenAI/Luna API key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
   - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.

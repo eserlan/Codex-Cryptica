@@ -5,20 +5,29 @@ import worker, { isOriginAllowed } from "./index";
 describe("Oracle Proxy Worker CORS", () => {
   const emptyEnv = { GEMINI_API_KEY: "test-key" };
 
-  it("allows the production origins", () => {
-    expect(
-      isOriginAllowed("https://codex-cryptica.com", emptyEnv),
-    ).toBeTruthy();
-    expect(isOriginAllowed("https://codexcryptica.com", emptyEnv)).toBeTruthy();
-    expect(
-      isOriginAllowed("https://staging.codex-cryptica.com", emptyEnv),
-    ).toBeTruthy();
-    expect(
-      isOriginAllowed("https://staging.codexcryptica.com", emptyEnv),
-    ).toBeTruthy();
-    expect(
-      isOriginAllowed("https://codex-cryptica.pages.dev", emptyEnv),
-    ).toBeTruthy();
+  it("allows every origin this Worker actually serves, with no env vars set", () => {
+    // One Worker serves all environments, so the defaults have to cover all of
+    // them — setting ALLOWED_ORIGINS per environment is what broke staging on
+    // 2026-08-11.
+    for (const origin of [
+      "https://codexcryptica.com",
+      "https://www.codexcryptica.com",
+      "https://staging.codexcryptica.com",
+      "https://codex-cryptica.pages.dev",
+    ]) {
+      expect(isOriginAllowed(origin, emptyEnv), origin).toBeTruthy();
+    }
+  });
+
+  it("does not allow domains the project no longer serves", () => {
+    // An allowlist entry for an unregistered domain hands CORS access to
+    // whoever registers it next; these two resolve nowhere.
+    for (const origin of [
+      "https://codex-cryptica.com",
+      "https://staging.codex-cryptica.com",
+    ]) {
+      expect(isOriginAllowed(origin, emptyEnv), origin).toBeFalsy();
+    }
   });
 
   it("adds CORS headers to starter deck reads", async () => {
@@ -98,7 +107,7 @@ describe("Oracle Proxy Worker CORS", () => {
       }),
     ).toBeTruthy();
     expect(
-      isOriginAllowed("https://codex-cryptica.com", {
+      isOriginAllowed("https://codexcryptica.com", {
         GEMINI_API_KEY: "test-key",
         ALLOWED_ORIGINS: "https://example.com",
       }),
@@ -154,7 +163,7 @@ describe("Oracle Proxy Worker directory routing", () => {
         {
           method: "POST",
           headers: {
-            Origin: "https://codex-cryptica.com",
+            Origin: "https://codexcryptica.com",
           },
         },
       ),
@@ -172,7 +181,7 @@ describe("Oracle Proxy Worker directory routing", () => {
         {
           method: "PATCH",
           headers: {
-            Origin: "https://codex-cryptica.com",
+            Origin: "https://codexcryptica.com",
           },
         },
       ),
@@ -190,7 +199,7 @@ describe("Oracle Proxy Worker directory routing", () => {
         {
           method: "GET",
           headers: {
-            Origin: "https://codex-cryptica.com",
+            Origin: "https://codexcryptica.com",
           },
         },
       ),
@@ -219,7 +228,7 @@ describe("Oracle Proxy Worker image generation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Origin: "https://codex-cryptica.com",
+          Origin: "https://codexcryptica.com",
         },
         body: JSON.stringify(body),
       },
@@ -456,12 +465,44 @@ describe("Oracle Proxy Worker Interactions API", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: "https://codex-cryptica.com",
+        Origin: "https://codexcryptica.com",
       },
       body: JSON.stringify(body),
     });
 
-  it("forwards an interaction and returns id + extracted text", async () => {
+  it("rewrites model to registry modelId for Gemini entries and ignores non-string model values", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_gemini",
+            steps: [{ content: [{ text: "gemini reply" }] }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const res1 = await worker.fetch(
+      request({ input: "hi", model: "gemini-flash-lite" }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(res1.status).toBe(200);
+    const body1 = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    expect(body1.model).toBe("gemini-3.5-flash-lite");
+
+    const res2 = await worker.fetch(
+      request({ input: "hi", model: { invalid: true } }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(res2.status).toBe(200);
+    const body2 = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
+    expect(body2.model).toBe("gemini-3.5-flash-lite");
+  });
+
+  it("routes an unrecognized operation to legacy generateContent", async () => {
     const fetchMock = vi.fn(
       async () =>
         new Response(
@@ -551,5 +592,238 @@ describe("Oracle Proxy Worker Interactions API", () => {
         error: expect.objectContaining({ code: "INTERACTION_NOT_FOUND" }),
       }),
     );
+  });
+
+  it("routes an OpenAI registry key (luna-fast) to the Responses API and extracts output text", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "resp_abc",
+            output: [
+              {
+                type: "message",
+                role: "assistant",
+                content: [{ type: "output_text", text: "The crone speaks." }],
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({ input: "Tell me about the crone", model: "luna-fast" }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ id: "resp_abc", text: "The crone speaks." }),
+    );
+
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1/responses");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gpt-5.6-luna");
+    expect(sent.input).toBe("Tell me about the crone");
+    expect(sent.store).toBe(true);
+  });
+
+  it("threads previous_interaction_id as previous_response_id for OpenAI models", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_two", output: [] }), {
+          status: 200,
+        }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await worker.fetch(
+      request({
+        input: "and then?",
+        model: "luna-fast",
+        previous_interaction_id: "resp_abc",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.previous_response_id).toBe("resp_abc");
+  });
+
+  it("maps an expired previous_response_id on an OpenAI model to a 409 INTERACTION_NOT_FOUND", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { message: "previous_response_id not found" },
+          }),
+          { status: 404 },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "continue",
+        model: "luna-fast",
+        previous_interaction_id: "expired",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: "INTERACTION_NOT_FOUND" }),
+      }),
+    );
+  });
+});
+
+describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", () => {
+  const env = { GEMINI_API_KEY: "test-key" };
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const post = (body: Record<string, unknown>) =>
+    new Request("https://oracle-proxy.espen-erlandsen.workers.dev/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://codexcryptica.com",
+      },
+      body: JSON.stringify(body),
+    });
+
+  it("routes a body.input request through the legacy Interactions branch unchanged when no operation field is present", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "v1_x", steps: [] }), {
+          status: 200,
+        }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({ input: "hello" }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ id: "v1_x", text: "" }),
+    );
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "/v1beta/interactions",
+    );
+  });
+
+  it("routes a plain contents request through the legacy generateContent branch unchanged when no operation field is present", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({ contents: [{ role: "user", parts: [{ text: "hi" }] }] }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ candidates: [] });
+    expect(String(fetchMock.mock.calls[0][0])).toContain(":generateContent");
+  });
+
+  it("does not route through the new pipeline when operation is an unrecognized value", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "not-a-real-operation",
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(String(fetchMock.mock.calls[0][0])).toContain(":generateContent");
+  });
+
+  it("replays the full pre-existing request-shape matrix with no client-visible change (Story 1 Scenario 2)", async () => {
+    // Interactions shape
+    const interactionsFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_a",
+            steps: [{ content: [{ text: "reply" }] }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = interactionsFetch as typeof fetch;
+    const interactionsResponse = await worker.fetch(
+      post({ input: "hi" }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(interactionsResponse.status).toBe(200);
+    expect(await interactionsResponse.json()).toEqual({
+      id: "v1_a",
+      text: "reply",
+    });
+
+    // generateContent shape
+    const generateFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "ok" }] } }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = generateFetch as typeof fetch;
+    const generateResponse = await worker.fetch(
+      post({ contents: [{ role: "user", parts: [{ text: "hi" }] }] }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(generateResponse.status).toBe(200);
+    expect(await generateResponse.json()).toEqual({
+      candidates: [{ content: { parts: [{ text: "ok" }] } }],
+    });
+
+    // Malformed generateContent shape (missing contents) still 400s exactly as before
+    const invalidResponse = await worker.fetch(
+      post({ notContents: true }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(invalidResponse.status).toBe(400);
   });
 });

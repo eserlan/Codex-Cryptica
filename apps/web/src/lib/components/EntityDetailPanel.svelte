@@ -10,6 +10,7 @@
   import DetailImage from "./entity-detail/DetailImage.svelte";
   import DetailTabs from "./entity-detail/DetailTabs.svelte";
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
+  import DetailConnectionsTab from "./entity-detail/DetailConnectionsTab.svelte";
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
@@ -376,7 +377,7 @@
       />
     {/if}
 
-    <div class="absolute inset-0 flex flex-col min-h-0">
+    <div class="absolute inset-0 flex flex-col min-h-0 min-w-0">
       <DetailHeader
         entity={activeEntity}
         {isEditing}
@@ -394,7 +395,7 @@
           <div
             in:fade={{ duration: 150, delay: 150 }}
             out:fade={{ duration: 150 }}
-            class="col-start-1 row-start-1 flex flex-col w-full min-h-full"
+            class="col-start-1 row-start-1 flex flex-col w-full min-w-0 min-h-full"
           >
             {#if sessionModeStore.isDemoMode}
               <div
@@ -478,6 +479,16 @@
                     bind:editStartDate
                     bind:editEndDate
                   />
+                {/if}
+              </div>
+              <div
+                role="tabpanel"
+                id={panelIds.connections}
+                aria-labelledby={tabIds.connections}
+                hidden={activeTab !== "connections"}
+              >
+                {#if activeTab === "connections"}
+                  <DetailConnectionsTab entity={activeEntity} />
                 {/if}
               </div>
               <div

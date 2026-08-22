@@ -1,6 +1,15 @@
 import FlexSearch from "flexsearch";
 import type { SearchEntry, SearchResult, SearchOptions } from "schema";
 import * as Comlink from "comlink";
+import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
+
+export const SEARCH_INDEX_COMPRESSION_FORMAT = "fflate-json-v1" as const;
+
+export interface CompressedSearchIndex {
+  format: typeof SEARCH_INDEX_COMPRESSION_FORMAT;
+  data: Uint8Array;
+  keyCount: number;
+}
 
 export type SearchIndexStatus =
   | "idle"
@@ -259,10 +268,7 @@ export class SearchEngine {
     // Process results from all fields
     for (const fieldResult of results) {
       const field = fieldResult.field as
-        | "title"
-        | "aliases"
-        | "content"
-        | "keywords";
+        "title" | "aliases" | "content" | "keywords";
       const isTitle = field === "title";
       const isAliases = field === "aliases";
       const isKeywords = field === "keywords";
@@ -423,6 +429,67 @@ export class SearchEngine {
       { isSegmented: true, segments, keyCount: count },
       transferables,
     );
+  }
+
+  /**
+   * Serializes and compresses the index inside the worker. The compressed
+   * bytes are transferred so the main thread only handles the DB write.
+   */
+  async exportIndexCompressed(): Promise<CompressedSearchIndex> {
+    const segmented = await this.exportIndex();
+    const keyCount = segmented.keyCount ?? 0;
+    if (keyCount <= 1) {
+      return {
+        format: SEARCH_INDEX_COMPRESSION_FORMAT,
+        data: new Uint8Array(),
+        keyCount,
+      };
+    }
+
+    const decoder = new TextDecoder();
+    const serializable = {
+      ...segmented,
+      segments: Object.fromEntries(
+        Object.entries(segmented.segments ?? {}).map(([key, value]) => [
+          key,
+          typeof value === "string" ? value : decoder.decode(value as any),
+        ]),
+      ),
+    };
+    const compressed = compressSync(strToU8(JSON.stringify(serializable)));
+    return Comlink.transfer(
+      {
+        format: SEARCH_INDEX_COMPRESSION_FORMAT,
+        data: compressed,
+        keyCount,
+      },
+      [compressed.buffer],
+    );
+  }
+
+  /** Imports a worker-compressed index payload. */
+  async importIndexCompressed(payload: CompressedSearchIndex): Promise<void> {
+    if (
+      !payload ||
+      payload.format !== SEARCH_INDEX_COMPRESSION_FORMAT ||
+      !payload.data
+    ) {
+      throw new Error("Unsupported search index compression format");
+    }
+
+    try {
+      const parsed = JSON.parse(strFromU8(decompressSync(payload.data)));
+      const docIds =
+        parsed?.segments?._docIds === undefined
+          ? null
+          : JSON.parse(String(parsed.segments._docIds));
+      if (!parsed?.isSegmented || !parsed.segments || !Array.isArray(docIds)) {
+        throw new Error("invalid segmented payload");
+      }
+      await this.importIndex(parsed);
+    } catch {
+      throw new Error("Corrupt segmented search index payload");
+    }
   }
 
   /**

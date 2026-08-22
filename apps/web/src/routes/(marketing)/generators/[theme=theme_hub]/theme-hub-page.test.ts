@@ -58,6 +58,17 @@ describe("Generator Theme Hub Page", () => {
     expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
   });
 
+  it("shows the plot twist generator on the shared hub catalogue", () => {
+    render(Page, { props: { data: { theme: "cyberpunk" } } });
+
+    const link = screen.getByRole("link", {
+      name: /plot twist & complication generator/i,
+    });
+    expect(link.getAttribute("href")).toBe(
+      "/generators/cyberpunk/plot-twist-generator",
+    );
+  });
+
   it.each([
     ["sci-fi", "Sci-Fi"],
     ["cyberpunk", "Cyberpunk"],
@@ -83,12 +94,60 @@ describe("Generator Theme Hub Page", () => {
       },
     });
 
-    expect(screen.getByRole("heading").textContent).toContain(
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
       "Cosmic Horror RPG Generators",
     );
     expect(screen.getByText(/impossible environments/i)).toBeTruthy();
     expect(
       screen.queryByRole("link", { name: /vampire clan generator/i }),
     ).toBeNull();
+  });
+
+  it.each([
+    "cyberpunk",
+    "sci-fi",
+    "post-apocalyptic",
+    "modern",
+    "lancer",
+    "cosmic-horror",
+    "space-opera-resistance",
+    "optimistic-exploration-sci-fi",
+  ])("offers the alien race generator on the %s hub", (theme) => {
+    render(Page, { props: { data: { theme: theme as ThemeSlug } } });
+
+    expect(
+      screen.getByRole("link", { name: /alien race generator/i }),
+    ).toBeTruthy();
+  });
+
+  it.each(["fantasy", "pirate", "western", "vampire", "steampunk"])(
+    "leaves the alien race generator off the %s hub",
+    (theme) => {
+      render(Page, { props: { data: { theme: theme as ThemeSlug } } });
+
+      expect(
+        screen.queryByRole("link", { name: /alien race generator/i }),
+      ).toBeNull();
+    },
+  );
+
+  it("links to the landing pages belonging to the hub", () => {
+    render(Page, { props: { data: { theme: "vampire" } } });
+
+    const vtm = screen.getByRole("link", {
+      name: /Vampire: The Masquerade/i,
+    });
+    expect(vtm.getAttribute("href")).toBe("/for/vampire-the-masquerade");
+    expect(
+      screen
+        .getByRole("link", { name: /for Gothic Horror/i })
+        .getAttribute("href"),
+    ).toBe("/for/gothic-horror");
+  });
+
+  it("omits the guides section on a hub with no landing pages", () => {
+    render(Page, { props: { data: { theme: "steampunk" } } });
+
+    expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
   });
 });

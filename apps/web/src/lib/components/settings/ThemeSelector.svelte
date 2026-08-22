@@ -1,5 +1,6 @@
 <script lang="ts">
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import WorldThemePicker from "./WorldThemePicker.svelte";
 </script>
 
@@ -49,6 +50,35 @@
         Dark
       </button>
     </div>
+  </div>
+
+  <!-- Screen & Layout Preferences -->
+  <div class="space-y-2">
+    <h3
+      class="text-xs font-bold tracking-widest uppercase text-chrome-muted/80"
+    >
+      Screen & Display
+    </h3>
+    <label
+      class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border rounded text-xs text-chrome-text hover:border-chrome-accent/50 cursor-pointer transition-colors"
+    >
+      <div class="space-y-0.5">
+        <div class="font-bold">Auto Fullscreen on First Interaction</div>
+        <div class="text-[11px] text-chrome-muted">
+          Automatically request browser fullscreen mode when clicking or
+          pressing keys on load.
+        </div>
+      </div>
+      <input
+        type="checkbox"
+        class="h-4 w-4 rounded border-chrome-border text-chrome-accent focus:ring-chrome-accent bg-chrome-bg"
+        checked={layoutUIStore.autoFullscreen}
+        onchange={(e) =>
+          layoutUIStore.setAutoFullscreen(
+            (e.target as HTMLInputElement).checked,
+          )}
+      />
+    </label>
   </div>
 
   <!-- World Genre Themes Settings -->

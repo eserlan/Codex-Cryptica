@@ -2,12 +2,30 @@
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import TimelineEntryItem from "./TimelineEntryItem.svelte";
+  import { getRenderWindow, sliceRenderWindow } from "./utils/render-window";
   import { fade } from "svelte/transition";
+  import { onMount } from "svelte";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
-  // Group entries by year for better vertical organization
-  const groupedEntries = $derived.by(() => {
-    const groups: Record<number, typeof timelineStore.entries> = {};
-    for (const entry of timelineStore.filteredEntries) {
+  let container = $state<HTMLDivElement>();
+  let scrollTop = $state(0);
+  let viewportHeight = $state(900);
+
+  const renderWindow = $derived(
+    getRenderWindow(
+      timelineStore.filteredEntries.length,
+      scrollTop,
+      viewportHeight,
+      190,
+    ),
+  );
+  const visibleEntries = $derived(
+    sliceRenderWindow(timelineStore.filteredEntries, renderWindow),
+  );
+
+  const visibleGroupedEntries = $derived.by(() => {
+    const groups: Record<number, typeof visibleEntries> = {};
+    for (const entry of visibleEntries) {
       if (!groups[entry.date.year]) groups[entry.date.year] = [];
       groups[entry.date.year].push(entry);
     }
@@ -23,7 +41,16 @@
     return era ? era.name : null;
   };
 
-  let container = $state<HTMLDivElement>();
+  const timelineOpenSpan = browserPerformanceRecorder.start("timeline_open");
+
+  onMount(() => {
+    requestAnimationFrame(() => {
+      timelineOpenSpan.complete(() => ({
+        resultCount: timelineStore.filteredEntries.length,
+        domNodeCount: container?.querySelectorAll("*").length ?? 0,
+      }));
+    });
+  });
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (!container) return;
@@ -35,6 +62,12 @@
       container.scrollBy({ top: -300, behavior: "smooth" });
     }
   };
+
+  const handleScroll = () => {
+    if (!container) return;
+    scrollTop = container.scrollTop;
+    viewportHeight = container.clientHeight || viewportHeight;
+  };
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -45,6 +78,7 @@
   role="region"
   aria-label="Vertical Timeline"
   tabindex="0"
+  onscroll={handleScroll}
   class="h-full overflow-y-auto custom-scrollbar p-6 space-y-12 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none focus-visible:ring-inset"
   transition:fade
 >
@@ -54,7 +88,14 @@
       class="absolute left-4 top-0 bottom-0 w-px bg-green-900/30 md:left-1/2"
     ></div>
 
-    {#each groupedEntries as [year, entries]}
+    {#if renderWindow.topSpacer > 0}
+      <div
+        aria-hidden="true"
+        style:height={`${renderWindow.topSpacer}px`}
+      ></div>
+    {/if}
+
+    {#each visibleGroupedEntries as [year, entries] (year)}
       {@const eraName = getEraLabel(Number(year))}
       <div class="space-y-6">
         <!-- Era Marker -->
@@ -79,7 +120,7 @@
 
         <!-- Entries for this year -->
         <div class="space-y-4">
-          {#each entries as entry, i}
+          {#each entries as entry, i (entry.entityId + entry.title)}
             <div
               class="relative flex items-center {i % 2 === 0
                 ? 'md:flex-row'
@@ -105,6 +146,13 @@
         </div>
       </div>
     {/each}
+
+    {#if renderWindow.bottomSpacer > 0}
+      <div
+        aria-hidden="true"
+        style:height={`${renderWindow.bottomSpacer}px`}
+      ></div>
+    {/if}
   </div>
 </div>
 

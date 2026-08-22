@@ -4,6 +4,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
@@ -52,6 +53,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     openBulkLabelDialog: vi.fn(),
     openCanvasSelection: vi.fn(),
     openLightbox: vi.fn(),
+    openZenMode: vi.fn(),
     openRevisionDialog: vi.fn(),
   },
 }));
@@ -86,9 +88,9 @@ describe("ContextMenu", () => {
         selectorOrHandler: string | (() => void),
         handler?: () => void,
       ) => {
-        if (event === "cxttap" && selectorOrHandler === "node") {
+        if (event === "cxttap taphold" && selectorOrHandler === "node") {
           cxttapHandler = handler as (event: any) => void;
-        } else if (event === "cxttap" && selectorOrHandler === "edge") {
+        } else if (event === "cxttap taphold" && selectorOrHandler === "edge") {
           edgeCxttapHandler = handler as (event: any) => void;
         }
       },
@@ -149,6 +151,21 @@ describe("ContextMenu", () => {
     expect(
       screen.getByRole("menuitem", { name: "Mark Important" }),
     ).toBeTruthy();
+  });
+
+  it("shows Open in Zen Mode for a single node", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openNodeMenu();
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Open in Zen Mode" }),
+    );
+
+    expect(modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+    await waitFor(() =>
+      expect(screen.queryByRole("menu", { name: "Node actions" })).toBeNull(),
+    );
   });
 
   it("hides Mark Important for guest graph sessions", async () => {

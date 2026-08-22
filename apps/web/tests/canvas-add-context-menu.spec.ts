@@ -7,6 +7,9 @@ test.describe("Add to Canvas - Context Menu", () => {
     // Inject global flag BEFORE goto so +layout.svelte sees it immediately
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
+      // Entity creation goes through VaultControls' quick-create form, which
+      // Guided Mode (on by default) replaces with a different flow.
+      localStorage.setItem("codex_guided_mode_active", "false");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),

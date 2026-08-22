@@ -122,6 +122,7 @@ export const GuestChatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
   content: z.string(),
+  cue: z.string().optional(),
   timestamp: z.number(),
 });
 
@@ -171,7 +172,6 @@ export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
   title: z.string().min(1),
-  tags: z.array(z.string()).default([]),
   labels: z.array(z.string()).default([]),
   aliases: z.array(z.string().trim().min(1)).default([]),
   connections: z.array(ConnectionSchema).default([]),

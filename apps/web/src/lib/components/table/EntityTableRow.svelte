@@ -20,15 +20,18 @@
     entity,
     vaultId,
     selected = false,
+    showIncompleteOnly = false,
     onToggleSelect,
     connectionSummary,
     onFilterType,
     onFilterLabel,
+    activeLabels,
     onContextMenu,
   }: {
     entity: Entity;
     vaultId: string;
     selected?: boolean;
+    showIncompleteOnly?: boolean;
     onToggleSelect?: (
       id: string,
       options?: { shift?: boolean; ctrl?: boolean },
@@ -36,10 +39,14 @@
     connectionSummary: ConnectionSummary;
     onFilterType?: (type: string) => void;
     onFilterLabel?: (label: string) => void;
+    activeLabels?: Set<string>;
     onContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
+  // Type accent: colored left border so entity types stay scannable at a
+  // glance in Table view too, matching the List view treatment (#2329).
+  const typeColor = $derived(cat?.color ?? null);
   // In guest mode the entity popout route can't resolve the snapshot, so the
   // title link falls back to the guest page (clicks are intercepted anyway).
   const href = $derived(
@@ -112,9 +119,11 @@
 </script>
 
 <tr
-  class="group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5 {selected
+  class="grid grid-cols-[1fr_auto] items-start gap-x-2 gap-y-1 p-3 md:table-row md:p-0 group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5 {selected
     ? 'bg-theme-primary/10'
     : ''}"
+  style:border-left-width={typeColor ? "3px" : null}
+  style:border-left-color={typeColor}
   data-testid="entity-table-row"
   data-selected={selected}
   onclick={handleRowClick}
@@ -122,7 +131,7 @@
   oncontextmenu={handleContextMenu}
 >
   <!-- Select -->
-  <td class="px-3 py-2 align-top" data-row-select>
+  <td class="hidden md:table-cell px-3 py-2 align-top" data-row-select>
     <input
       type="checkbox"
       checked={selected}
@@ -134,11 +143,11 @@
   </td>
 
   <!-- Name -->
-  <td class="px-3 py-2 align-top">
+  <td class="col-span-1 p-0 md:table-cell md:px-3 md:py-2 align-top min-w-0">
     <a
       {href}
       onclick={handleTitleClick}
-      class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded"
+      class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded block truncate md:inline md:whitespace-normal md:overflow-visible"
       data-testid="entity-table-row-link"
     >
       {entity.title}
@@ -146,7 +155,9 @@
   </td>
 
   <!-- Type -->
-  <td class="px-3 py-2 align-top whitespace-nowrap">
+  <td
+    class="col-span-1 p-0 md:table-cell md:px-3 md:py-2 align-top whitespace-nowrap justify-self-end md:justify-self-auto"
+  >
     {#if onFilterType}
       <button
         type="button"
@@ -180,30 +191,44 @@
 
   <!-- Connections -->
   <td
-    class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+    class="hidden md:table-cell px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
     data-testid="entity-table-connections-{entity.id}"
   >
-    <span class="font-medium text-theme-text">{connectionSummary.total}</span>
     {#if connectionSummary.total > 0}
+      <span class="font-medium text-theme-text">{connectionSummary.total}</span>
       <span class="text-theme-muted">
         {connectionSummary.inbound} in · {connectionSummary.outbound} out
       </span>
+    {:else if showIncompleteOnly}
+      <span
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        >0 connections</span
+      >
+    {:else}
+      <span class="font-medium text-theme-text">0</span>
     {/if}
   </td>
 
   <!-- Summary snippet -->
-  <td class="px-3 py-2 align-top">
+  <td class="col-span-2 p-0 md:table-cell md:px-3 md:py-2 align-top">
     {#if snippet}
       <span class="line-clamp-2 text-xs text-theme-muted/90">{snippet}</span>
+    {:else if showIncompleteOnly}
+      <span
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        aria-label="No summary">Missing summary</span
+      >
     {:else}
-      <span class="text-theme-muted/50" aria-label="No summary">—</span>
+      <span class="text-theme-muted/50 hidden md:inline" aria-label="No summary"
+        >—</span
+      >
     {/if}
   </td>
 
   <!-- Labels -->
-  <td class="px-3 py-2 align-top">
+  <td class="hidden md:table-cell px-3 py-2 align-top">
     {#if chips.length}
-      <span class="flex flex-wrap gap-1">
+      <span class="flex flex-wrap gap-1.5">
         {#each chips as chip (chip)}
           {#if onFilterLabel}
             <button
@@ -211,27 +236,47 @@
               onclick={() => onFilterLabel(chip)}
               title="Filter by {chip}"
               data-testid="entity-table-row-label-filter"
-              class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] text-theme-muted cursor-pointer hover:text-theme-text hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-              >{chip}</button
+              class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider transition-all border cursor-pointer {activeLabels?.has(
+                chip,
+              )
+                ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
+                : chip.toLowerCase() === 'chatty'
+                  ? 'bg-theme-secondary/20 text-theme-secondary border-theme-secondary/35 hover:border-theme-secondary/60 hover:bg-theme-secondary/30'
+                  : 'bg-theme-primary/20 text-theme-primary border-theme-primary/35 hover:border-theme-primary/60 hover:bg-theme-primary/30'} focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-accent/40"
+              >{chip.toUpperCase()}</button
             >
           {:else}
             <span
-              class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] text-theme-muted"
-              >{chip}</span
+              class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider border {activeLabels?.has(
+                chip,
+              )
+                ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
+                : 'border-theme-primary/35 bg-theme-primary/20 text-theme-primary'}"
+              >{chip.toUpperCase()}</span
             >
           {/if}
         {/each}
         {#if extraChips > 0}
-          <span class="text-[10px] text-theme-muted/60">+{extraChips}</span>
+          <span
+            class="text-[9px] text-theme-muted font-header font-bold flex items-center"
+            >+{extraChips}</span
+          >
         {/if}
       </span>
+    {:else if showIncompleteOnly}
+      <span
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        aria-label="No labels">No labels</span
+      >
     {:else}
       <span class="text-theme-muted/50" aria-label="No labels">—</span>
     {/if}
   </td>
 
   <!-- Created -->
-  <td class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90">
+  <td
+    class="hidden md:table-cell px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+  >
     {#if createdAt}
       {formatDate(createdAt)}
     {:else}
@@ -240,7 +285,9 @@
   </td>
 
   <!-- Modified -->
-  <td class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90">
+  <td
+    class="hidden md:table-cell px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+  >
     {#if modifiedAt}
       {formatDate(modifiedAt)}
     {:else}

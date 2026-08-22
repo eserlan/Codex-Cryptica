@@ -10,6 +10,7 @@ import {
   syncGraphElements,
   applyLargeGraphRenderHints,
   isLayoutCollinear,
+  setupGraphEvents,
 } from "graph-engine";
 
 // Mock graph-engine
@@ -62,10 +63,12 @@ vi.mock("graph-engine", () => {
     height: vi.fn().mockReturnValue(100),
     resize: vi.fn(),
     animate: vi.fn().mockResolvedValue(undefined),
+    stop: vi.fn(),
     center: vi.fn(),
     style: vi.fn(),
     destroyed: vi.fn().mockReturnValue(false),
     nodes: vi.fn().mockReturnValue({ length: 0, map: vi.fn(() => []) }),
+    edges: vi.fn().mockReturnValue({ length: 0 }),
   };
 
   function MockLayoutManager() {
@@ -114,6 +117,9 @@ describe("GraphViewController", () => {
         activeLabels: new Set(),
         activeCategories: new Set(),
         labelFilterMode: "OR",
+        focusDepth: 1,
+        focusRootId: null,
+        focusViewActive: false,
       },
       vault: {
         isGuest: false,
@@ -122,6 +128,7 @@ describe("GraphViewController", () => {
         releaseImageUrl: vi.fn(),
         resolveImageUrl: vi.fn(),
         batchUpdate: vi.fn(),
+        graphStructureVersion: 0,
       },
       debugStore: {
         log: vi.fn(),
@@ -129,6 +136,7 @@ describe("GraphViewController", () => {
       },
       layoutUIStore: {
         isMobile: false,
+        setLastSelectedNodePosition: vi.fn(),
       },
       connectionModeStore: {
         isConnecting: false,
@@ -169,6 +177,68 @@ describe("GraphViewController", () => {
     expect(controller.cy).toBeUndefined();
   });
 
+  it("suspends rendering work and resumes the latest graph state", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+    deps.graph.elements = [{ group: "nodes", data: { id: "node-1" } }];
+    controller.syncElements();
+    const staleOptions = vi.mocked(syncGraphElements).mock.calls.at(-1)?.[1];
+
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: true,
+      containerIntersecting: true,
+    });
+
+    expect(controller.isSuspended).toBe(true);
+    expect(controller.cy!.stop).toHaveBeenCalled();
+    expect(controller.layoutManager!.stop).toHaveBeenCalled();
+    vi.mocked(syncGraphElements).mockClear();
+    const layoutSpy = vi.spyOn(controller, "applyCurrentLayout");
+    staleOptions?.onLayoutUpdate?.({
+      reason: "Elements Update",
+      isForced: false,
+    });
+    expect(layoutSpy).not.toHaveBeenCalled();
+    controller.syncElements();
+    expect(syncGraphElements).not.toHaveBeenCalled();
+
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+    controller.syncElements();
+
+    expect(controller.isSuspended).toBe(false);
+    expect(controller.cy!.resize).toHaveBeenCalled();
+    expect(layoutSpy).toHaveBeenCalledWith({
+      reason: "Visibility Resume",
+      viewport: "preserve",
+    });
+    expect(syncGraphElements).toHaveBeenCalled();
+  });
+
+  it("requests reinitialization when the preserved Cytoscape instance is invalid", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+    vi.mocked(controller.cy!.destroyed).mockReturnValueOnce(true);
+
+    controller.setVisibilityInputs({
+      documentVisible: false,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+
+    expect(controller.requiresReinitialization).toBe(true);
+    expect(controller.consumeReinitializationRequest()).toBe(true);
+  });
+
   it("should apply focus when selectedId changes", async () => {
     const container = document.createElement("div");
     await controller.init(container, {});
@@ -177,6 +247,81 @@ describe("GraphViewController", () => {
     controller.applyFocus("node-1");
 
     expect(batchSpy).toHaveBeenCalled();
+  });
+
+  it("opens read-only edge details for guests", async () => {
+    deps.vault.isGuest = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    handlers?.onEdgeTap?.({
+      source: "node-a",
+      target: "node-b",
+      label: "Rivals in the old court",
+      connectionType: "rivals_of",
+    });
+
+    expect(controller.editingEdge).toEqual({
+      source: "node-a",
+      target: "node-b",
+      label: "Rivals in the old court",
+      type: "rivals_of",
+    });
+  });
+
+  it("suppresses mobile tap Zen Mode navigation after a context gesture", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", Date.now());
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+  });
+
+  it("opens Zen Mode on mobile node tap when cxttap did not recently occur", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", 0);
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
   });
 
   it("should reset to idle when vault starts loading", () => {
@@ -237,6 +382,94 @@ describe("GraphViewController", () => {
         expect.anything(),
         expect.objectContaining({ skipRenderedWeightSync: false }),
       );
+    });
+
+    it("uses delta-only reconciliation for a stable-data focus transition", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      vi.mocked(syncGraphElements).mockClear();
+
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ focusMembershipOnly: true }),
+      );
+    });
+
+    it("keeps full reconciliation when graph data changes with focus membership", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      vi.mocked(syncGraphElements).mockClear();
+
+      deps.graph.focusDepth = 2;
+      deps.vault.graphStructureVersion = 1;
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ focusMembershipOnly: false }),
+      );
+    });
+
+    it("ignores a stale sync layout callback after a newer focus transition", () => {
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      const staleOptions = vi.mocked(syncGraphElements).mock.calls[0][1];
+      const layoutSpy = vi.spyOn(controller, "applyCurrentLayout");
+
+      controller.syncElements();
+      staleOptions.onLayoutUpdate?.({
+        reason: "Elements Update",
+        isForced: false,
+        hasNewNodes: true,
+        hasRemovedNodes: false,
+      });
+
+      expect(layoutSpy).not.toHaveBeenCalled();
+    });
+
+    it("preserves active focusDepthSpan when scheduling render-ready measurement and completes it on frame two", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+
+      const rafCallbacks: FrameRequestCallback[] = [];
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+
+      // Trigger focus depth transition measurement
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      const focusSpan = (controller as any).focusDepthSpan;
+      const renderReadySpan = (controller as any).renderReadySpan;
+
+      expect(focusSpan).not.toBeNull();
+      expect(renderReadySpan).not.toBeNull();
+
+      const focusCancelSpy = vi.spyOn(focusSpan, "cancel");
+      const focusCompleteSpy = vi.spyOn(focusSpan, "complete");
+      const renderReadyCompleteSpy = vi.spyOn(renderReadySpan, "complete");
+
+      // Verify clearRenderReadyMeasurement(false) called by scheduleRenderReadyMeasurement
+      // does not cancel the active focusDepthSpan
+      expect(focusCancelSpy).not.toHaveBeenCalled();
+
+      // Advance through the two requestAnimationFrame cycles
+      expect(rafCallbacks.length).toBe(1);
+      rafCallbacks[0](16);
+      expect(rafCallbacks.length).toBe(2);
+      rafCallbacks[1](32);
+
+      expect(renderReadyCompleteSpy).toHaveBeenCalled();
+      expect(focusCompleteSpy).toHaveBeenCalled();
+      expect((controller as any).focusDepthSpan).toBeNull();
+      expect((controller as any).renderReadySpan).toBeNull();
     });
   });
 

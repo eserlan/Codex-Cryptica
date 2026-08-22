@@ -7,6 +7,12 @@ import {
   buildMagicItemPrompt,
   parseMagicItemResponse,
   generateMagicItemLocal,
+  buildMinorMagicItemPrompt,
+  parseMinorMagicItemResponse,
+  generateMinorMagicItemLocal,
+  buildArtifactPrompt,
+  parseArtifactResponse,
+  generateArtifactLocal,
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -25,6 +31,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildVillainPrompt,
+  parseVillainResponse,
+  generateVillainLocal,
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   parseCouncilVoteFoundation,
@@ -33,6 +42,9 @@ import {
   parseCouncilVotePathsResponse,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
+  buildSecretSocietyPrompt,
+  parseSecretSocietyResponse,
+  generateSecretSocietyLocal,
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
@@ -70,19 +82,35 @@ import {
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
   generateAdventureLocal,
+  buildPlotTwistPrompt,
+  parsePlotTwistResponse,
+  generatePlotTwistLocal,
   buildWorldPrompt,
   parseWorldResponse,
   generateWorldLocal,
+  buildStarSystemPrompt,
+  parseStarSystemResponse,
+  generateStarSystemLocal,
+  buildAlienRacePrompt,
+  parseAlienRaceResponse,
+  generateAlienRaceLocal,
+  buildCreaturePrompt,
+  parseCreatureResponse,
+  generateCreatureLocal,
   BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
+  type MinorMagicItemGeneratorOptions,
+  type ArtifactGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
+  type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
   type NationGeneratorOptions,
@@ -93,11 +121,21 @@ import {
   type NewsSheetGeneratorOptions,
   type DungeonGeneratorOptions,
   type AdventureGeneratorOptions,
+  type PlotTwistGeneratorOptions,
   type WorldGeneratorOptions,
+  type StarSystemGeneratorOptions,
+  type AlienRaceGeneratorOptions,
+  type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
+import { villainDomainHistoryStore } from "./villain-domain-history";
+import {
+  generationInputHistoryStore,
+  summarizeResolvedInputs,
+  formatRecentInputsNote,
+} from "./generation-input-history";
 
 export {
   nameTable,
@@ -120,8 +158,12 @@ export {
 export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
+export { minorMagicItemConfig } from "generator-engine";
+export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
+export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
@@ -132,7 +174,11 @@ export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
 export { dungeonConfig, forDungeonGenre } from "generator-engine";
 export { adventureConfig, forAdventureGenre } from "generator-engine";
+export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
+export { starSystemConfig } from "generator-engine";
+export { alienRaceConfig } from "generator-engine";
+export { creatureConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -264,12 +310,17 @@ export class DefaultGeneratorEngine {
     options: NpcGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...npcOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("npc");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
           npcOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "npc",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNpcResponse(text, npcOptions, resolved);
@@ -283,12 +334,17 @@ export class DefaultGeneratorEngine {
     options: FactionGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...factionOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("faction");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildFactionPrompt(
           factionOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "faction",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseFactionResponse(text, resolved);
@@ -302,12 +358,17 @@ export class DefaultGeneratorEngine {
     options: VampireGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...vampireOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("vampire-clan");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildVampirePrompt(
           vampireOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "vampire-clan",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseVampireResponse(text, resolved);
@@ -321,11 +382,19 @@ export class DefaultGeneratorEngine {
     options: NomadClanGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...nomadOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("nomad-clan");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildNomadClanPrompt(nomadOptions, getSessionContext());
+          buildNomadClanPrompt(
+            nomadOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "nomad-clan",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNomadClanResponse(text, resolved);
       },
@@ -338,11 +407,19 @@ export class DefaultGeneratorEngine {
     options: SettlementGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...settlementOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("settlement");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildSettlementPrompt(settlementOptions, getSessionContext());
+          buildSettlementPrompt(
+            settlementOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "settlement",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseSettlementResponse(text, resolved);
       },
@@ -355,11 +432,19 @@ export class DefaultGeneratorEngine {
     options: MagicItemGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...itemOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("magic-item");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildMagicItemPrompt(itemOptions, getSessionContext());
+          buildMagicItemPrompt(
+            itemOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "magic-item",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseMagicItemResponse(text, resolved);
       },
@@ -367,16 +452,70 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  async generateMinorMagicItem(
+    options: MinorMagicItemGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...itemOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("minor-magic-item");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildMinorMagicItemPrompt(
+            itemOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "minor-magic-item",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseMinorMagicItemResponse(text, resolved);
+      },
+      () => generateMinorMagicItemLocal(itemOptions),
+    );
+  }
+
+  async generateArtifact(
+    options: ArtifactGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...artifactOptions } = options;
+    const recentInputs =
+      generationInputHistoryStore.recent("artifact-generator");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildArtifactPrompt(
+            artifactOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "artifact-generator",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseArtifactResponse(text, resolved);
+      },
+      () => generateArtifactLocal(artifactOptions),
+    );
+  }
+
   async generateQuestHook(
     options: QuestGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...questOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("quest");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildQuestPrompt(
           questOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "quest",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseQuestResponse(text, resolved);
@@ -385,10 +524,39 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  async generateVillain(
+    options: VillainGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...villainOptions } = options;
+    const recentDomains = villainDomainHistoryStore.recent();
+    const recentInputs = generationInputHistoryStore.recent("villain");
+    const result = await this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildVillainPrompt(
+          villainOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+          undefined,
+          recentDomains,
+        );
+        generationInputHistoryStore.record(
+          "villain",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseVillainResponse(text, resolved);
+      },
+      () => generateVillainLocal(villainOptions),
+    );
+    villainDomainHistoryStore.record(result.conflictDomain);
+    return result;
+  }
+
   async generateCouncilVote(
     options: CouncilVoteGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...councilVoteOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("council-vote");
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -398,7 +566,11 @@ export class DefaultGeneratorEngine {
           resolved,
         } = buildCouncilVoteFoundationPrompt(
           councilVoteOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "council-vote",
+          summarizeResolvedInputs(resolved),
         );
         const chat = await this.startChat(systemInstruction);
 
@@ -452,6 +624,32 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  async generateSecretSociety(
+    options: SecretSocietyGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...secretSocietyOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("secret-society");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildSecretSocietyPrompt(
+            secretSocietyOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "secret-society",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseSecretSocietyResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateSecretSocietyLocal(secretSocietyOptions),
+    );
+  }
+
   /** Name generation delegates to the generator-engine package (#1351). */
   async generateNames(
     options: NamesGeneratorOptions & { useAI?: boolean } = {},
@@ -460,8 +658,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        // buildNamesPrompt has no sessionContext param, so this is track-only
+        // (no variety feedback into the prompt).
         const { systemInstruction, userMessage, resolved } =
           buildNamesPrompt(nameOptions);
+        generationInputHistoryStore.record(
+          "names",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNamesResponse(text, resolved);
       },
@@ -473,12 +677,18 @@ export class DefaultGeneratorEngine {
     options: SocialHubGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...hubOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("social-hub");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildSocialHubPrompt(
-          hubOptions,
-          getSessionContext(),
+        const { systemInstruction, userMessage, resolved } =
+          buildSocialHubPrompt(
+            hubOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "social-hub",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseSocialHubResponse(text);
@@ -491,12 +701,17 @@ export class DefaultGeneratorEngine {
     options: TavernGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...tavernOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("tavern");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildTavernPrompt(
+        const { systemInstruction, userMessage, resolved } = buildTavernPrompt(
           tavernOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "tavern",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseTavernResponse(text);
@@ -509,12 +724,17 @@ export class DefaultGeneratorEngine {
     options: KingdomGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...kingdomOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("kingdom");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildKingdomPrompt(
+        const { systemInstruction, userMessage, resolved } = buildKingdomPrompt(
           kingdomOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "kingdom",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseKingdomResponse(text);
@@ -528,12 +748,17 @@ export class DefaultGeneratorEngine {
     options: NationGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...nationOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("nation");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildNationPrompt(
+        const { systemInstruction, userMessage, resolved } = buildNationPrompt(
           nationOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "nation",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNationResponse(text);
@@ -547,11 +772,19 @@ export class DefaultGeneratorEngine {
     options: PantheonGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...pantheonOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("pantheon");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
-          buildPantheonPrompt(pantheonOptions, getSessionContext());
+          buildPantheonPrompt(
+            pantheonOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "pantheon",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         return parsePantheonResponse(text, resolved);
       },
@@ -564,12 +797,17 @@ export class DefaultGeneratorEngine {
     options: ShipGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...shipOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("ship");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildShipPrompt(
           shipOptions,
-          getSessionContext(),
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "ship",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseShipResponse(text, resolved);
@@ -592,14 +830,20 @@ export class DefaultGeneratorEngine {
       structure: rest.structure || languageConfig.structures[0],
       context: rest.context || rest.campaignContext || "",
     };
+    const recentInputs = generationInputHistoryStore.recent("language");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
           buildLanguagePrompt(
             langOptions,
-            getSessionContext({ excludeLanguageDrafts: true }),
+            getSessionContext({ excludeLanguageDrafts: true }) +
+              formatRecentInputsNote(recentInputs),
           );
+        generationInputHistoryStore.record(
+          "language",
+          summarizeResolvedInputs(resolved),
+        );
         const expected = {
           genre: resolved.genre,
           tone: resolved.tone,
@@ -711,12 +955,18 @@ export class DefaultGeneratorEngine {
     options: NewsSheetGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...sheetOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("news-sheet");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildNewsSheetPrompt(
-          sheetOptions,
-          getSessionContext(),
+        const { systemInstruction, userMessage, resolved } =
+          buildNewsSheetPrompt(
+            sheetOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "news-sheet",
+          summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNewsSheetResponse(text);
@@ -733,8 +983,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        // buildDungeonPrompt has no sessionContext param, so this is
+        // track-only (no variety feedback into the prompt).
         const { systemInstruction, userMessage, resolved } =
           buildDungeonPrompt(dungeonOptions);
+        generationInputHistoryStore.record(
+          "dungeon",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         const first = parseDungeonResponseDetailed(
           text,
@@ -778,8 +1034,14 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
+        // buildAdventurePrompt has no sessionContext param, so this is
+        // track-only (no variety feedback into the prompt).
         const { systemInstruction, userMessage, resolved } =
           buildAdventurePrompt(adventureOptions);
+        generationInputHistoryStore.record(
+          "adventure",
+          summarizeResolvedInputs(resolved),
+        );
         const text = await this.runModel(systemInstruction, userMessage);
         const first = parseAdventureResponseDetailed(
           text,
@@ -808,11 +1070,37 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  /** Plot twist generation preserves established facts while adding playable choices. */
+  async generatePlotTwist(
+    options: PlotTwistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...plotTwistOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        // buildPlotTwistPrompt has no sessionContext param, so this is
+        // track-only (no variety feedback into the prompt).
+        const { systemInstruction, userMessage, resolved } =
+          buildPlotTwistPrompt(plotTwistOptions);
+        generationInputHistoryStore.record(
+          "plot-twist",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parsePlotTwistResponse(text, plotTwistOptions);
+      },
+      () => generatePlotTwistLocal(plotTwistOptions),
+    );
+  }
+
   /** World generation delegates to the shared offline-first generator package. */
   async generateWorld(
     options: WorldGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...worldOptions } = options;
+    // buildWorldPrompt's WorldPrompt return type has no `resolved` field
+    // (it resolves options inline without exposing them), so it's not
+    // wired into generationInputHistoryStore.
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -828,6 +1116,92 @@ export class DefaultGeneratorEngine {
         generateWorldLocal({
           ...worldOptions,
           avoidNames: [...BANNED_NAMES, ...(worldOptions.avoidNames ?? [])],
+        }),
+    );
+  }
+
+  /** Star system generation delegates to the shared offline-first generator package. */
+  async generateStarSystem(
+    options: StarSystemGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...starSystemOptions } = options;
+    // buildStarSystemPrompt's StarSystemPrompt return type has no `resolved`
+    // field, so it's not wired into generationInputHistoryStore.
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildStarSystemPrompt(starSystemOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseStarSystemResponse(text, [
+          ...BANNED_NAMES,
+          ...(starSystemOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateStarSystemLocal({
+          ...starSystemOptions,
+          avoidNames: [
+            ...BANNED_NAMES,
+            ...(starSystemOptions.avoidNames ?? []),
+          ],
+        }),
+    );
+  }
+
+  /** Alien race generation delegates to the shared offline-first generator package. */
+  async generateAlienRace(
+    options: AlienRaceGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...alienRaceOptions } = options;
+    // buildAlienRacePrompt's AlienRacePrompt return type has no `resolved`
+    // field, so it's not wired into generationInputHistoryStore.
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildAlienRacePrompt(alienRaceOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseAlienRaceResponse(text, [
+          ...BANNED_NAMES,
+          ...(alienRaceOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateAlienRaceLocal({
+          ...alienRaceOptions,
+          avoidNames: [...BANNED_NAMES, ...(alienRaceOptions.avoidNames ?? [])],
+        }),
+    );
+  }
+
+  /** Creature generation delegates to the shared offline-first generator package. */
+  async generateCreature(
+    options: CreatureGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...creatureOptions } = options;
+    const historyNote = formatRecentInputsNote(
+      generationInputHistoryStore.recent("creature"),
+    );
+    const sessionContext = [getSessionContext(), historyNote]
+      .filter(Boolean)
+      .join("\n\n");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildCreaturePrompt(creatureOptions, sessionContext);
+        const text = await this.runModel(systemInstruction, userMessage);
+        generationInputHistoryStore.record(
+          "creature",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseCreatureResponse(text, resolved);
+      },
+      () =>
+        generateCreatureLocal({
+          ...creatureOptions,
+          avoidNames: [...BANNED_NAMES, ...(creatureOptions.avoidNames ?? [])],
         }),
     );
   }

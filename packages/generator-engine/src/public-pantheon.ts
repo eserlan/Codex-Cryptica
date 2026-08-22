@@ -29,6 +29,7 @@ import {
   type PantheonWidth,
   pantheonConfig,
 } from "./public-pantheon-constants";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export {
   type PantheonMode,
@@ -160,7 +161,7 @@ Options:
 - Primary Domain: ${domain}
 - Tone: ${tone}
 - Worshippers: ${worshipperType}
-${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+${formatCampaignContextBlock(campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly, no markdown fences:
 {
@@ -190,7 +191,7 @@ GENERATION OPTIONS
 - Domain Scope: ${domainScope(width, domain)}
 - Worshippers: ${worshipperType}
 - Pantheon Size: ${sizeCfg.min}–${sizeCfg.max} deities
-${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+${formatCampaignContextBlock(campaignContext)}
 
 CREATIVE REQUIREMENTS
 1. The pantheon must be an interconnected divine system, not a list of unrelated gods.

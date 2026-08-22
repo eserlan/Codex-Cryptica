@@ -97,6 +97,7 @@ export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
     validIds?: Set<string>,
+    maxEdges = Number.POSITIVE_INFINITY,
   ): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
     if (!validIds) {
@@ -114,6 +115,9 @@ export class GraphTransformer {
 
     // Precompute rendered degree so node sizing matches the graph after
     // connections to hidden or missing targets have been filtered out.
+    // Keep weight calculation aligned with the edges that are actually
+    // rendered when a caller applies an edge budget.
+    let weightedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
@@ -122,11 +126,13 @@ export class GraphTransformer {
       if (!connections) continue;
 
       for (let j = 0; j < connections.length; j++) {
+        if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
         if (!validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
+        weightedEdgeCount++;
       }
     }
 
@@ -137,6 +143,7 @@ export class GraphTransformer {
     // solves cleanly. This keeps the bad coordinates from flashing on screen
     // during the load before the heal runs.
     const savedPositions: { x: number; y: number }[] = [];
+    let renderedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const c = entities[i]?.metadata?.coordinates;
       if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
@@ -160,11 +167,11 @@ export class GraphTransformer {
 
       // Visibility markers for Admin visual cues
       let isRevealed = false;
-      const tags = entity.tags;
-      if (tags) {
-        for (let j = 0; j < tags.length; j++) {
-          const t = tags[j].toLowerCase();
-          if (t === "revealed" || t === "visible") {
+      const labels = entity.labels;
+      if (labels) {
+        for (let k = 0; k < labels.length; k++) {
+          const l = labels[k].toLowerCase();
+          if (l === "revealed" || l === "visible") {
             isRevealed = true;
             break;
           }
@@ -172,11 +179,11 @@ export class GraphTransformer {
       }
 
       if (!isRevealed) {
-        const labels = entity.labels;
-        if (labels) {
-          for (let k = 0; k < labels.length; k++) {
-            const l = labels[k].toLowerCase();
-            if (l === "revealed" || l === "visible") {
+        const legacyTags = (entity as { tags?: string[] }).tags;
+        if (legacyTags) {
+          for (let j = 0; j < legacyTags.length; j++) {
+            const t = legacyTags[j].toLowerCase();
+            if (t === "revealed" || t === "visible") {
               isRevealed = true;
               break;
             }
@@ -246,6 +253,7 @@ export class GraphTransformer {
       const connections = entity.connections;
       if (connections) {
         for (let l = 0; l < connections.length; l++) {
+          if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
           // Skip edges to non-existent targets
           if (!validIds.has(conn.target)) continue;
@@ -264,6 +272,7 @@ export class GraphTransformer {
               strength: conn.strength,
             },
           });
+          renderedEdgeCount++;
         }
       }
     }
@@ -523,15 +532,20 @@ export const getGraphStyle = (
         // hit this default path, so keep base opacity high enough to read.
         opacity: 0.6,
         label: "data(label)",
-        "text-rotation": "autorotate",
-        "font-size": 8,
+        // Keep relationship labels horizontal. Autorotation turns labels on
+        // steep or reciprocal edges into hard-to-scan text and makes crowded
+        // clusters look denser than they are.
+        "text-rotation": "none",
+        "font-size": 9,
         "min-zoomed-font-size": 8,
         "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         color: tokens.text,
         "text-background-color": tokens.background,
-        "text-background-opacity": 0.8,
-        "text-background-padding": "2px",
-        "text-margin-y": -8,
+        "text-background-opacity": 0.92,
+        "text-background-padding": "3px",
+        "text-margin-y": -10,
+        "text-max-width": 120,
+        "text-wrap": "ellipsis",
         "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
         ...getFantasyEdgeStyle(template),
@@ -564,6 +578,16 @@ export const getGraphStyle = (
         opacity: 0.08,
         "text-opacity": 0.08,
         events: "no",
+      },
+    },
+    {
+      // When an entity is selected, retain labels for its immediate
+      // neighbourhood and remove the dimmed background labels. This avoids
+      // labels competing with the entity-detail panel without trying to route
+      // canvas text around a DOM overlay.
+      selector: "edge.dimmed",
+      style: {
+        label: "",
       },
     },
     {
