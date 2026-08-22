@@ -96,8 +96,9 @@ apps/web/android/app/build/
 apps/web/android/build/
 apps/web/android/captures/
 apps/web/android/local.properties
-apps/web/ios/App/Pods/
-apps/web/ios/App/build/
 apps/web/ios/App/DerivedData/
 apps/web/ios/App/Podfile.lock
 
+# Reddit Automation Session
+.reddit-session/
+.reddit-auth/
