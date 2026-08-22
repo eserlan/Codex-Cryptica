@@ -1,11 +1,6 @@
 import type { Connection, Entity } from "schema";
-// Deep import, never the package barrel: `@codex/oracle-engine`'s index
-// re-exports oracle-settings.svelte, chat-history.svelte and undo-redo.svelte,
-// which would pull Svelte runes into this package. faction-engine is compiled
-// and tested without the Svelte compiler, so that import would break `bun test`
-// and quietly violate the package's rune-free guarantee.
-import { entityContentHash } from "@codex/oracle-engine/src/lore-delta";
 import { bandMagnitude } from "./bands";
+import { factionStateHash } from "./hash";
 import { resolveRole } from "./roles";
 import type { FactionResolution, FactionTurnChange } from "./types";
 
@@ -193,5 +188,5 @@ export function computeStateHash(faction: Entity, target: Entity): string {
       ? String(resolveRole(target, "stability").mapped)
       : "n/a",
   ];
-  return entityContentHash(parts.join("|"));
+  return factionStateHash(parts.join("|"));
 }

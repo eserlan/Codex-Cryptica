@@ -5,10 +5,8 @@
  * runes. Everything here operates on plain data passed in by the caller, which
  * is what keeps the five-band x reversibility test matrix cheap to run.
  *
- * Note for maintainers: `entityContentHash` is deep-imported from
- * `@codex/oracle-engine/src/lore-delta`, never from that package's barrel. The
- * barrel re-exports `*.svelte.ts` modules, which would pull Svelte runes into a
- * package compiled and tested without the Svelte compiler.
+ * State hashing stays local to this package so the engine remains rune-free and
+ * production bundlers never need to resolve an unsupported deep import.
  */
 export * from "./types";
 export * from "./bands";
@@ -19,4 +17,5 @@ export * from "./opposition";
 export * from "./resolution";
 export * from "./patches";
 export * from "./history";
+export * from "./hash";
 export * from "./engine";

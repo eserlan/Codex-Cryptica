@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Entity } from "schema";
 import { BAND_ORDER } from "./bands";
+import { factionStateHash } from "./hash";
 import { buildChanges, computeStateHash, findHold } from "./patches";
 import type {
   FactionResolution,
@@ -352,6 +353,10 @@ describe("buildChanges purity (FR-022)", () => {
 });
 
 describe("computeStateHash (FR-026, SC-007)", () => {
+  it("uses the same deterministic cyrb53 hash as the former shared helper", () => {
+    expect(factionStateHash("Black Eagles|Mub Territory")).toBe("4fsyec9e8f");
+  });
+
   it("is stable for identical inputs", () => {
     expect(computeStateHash(faction(), target)).toBe(
       computeStateHash(faction(), target),

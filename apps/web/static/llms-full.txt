@@ -19,6 +19,9 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Faction Turns
+Let a faction act on your world between sessions. Name its stats whatever suits your setting, then say which one stands for influence. Turns are paced by your campaign's current date — the system reads that date and never changes it — and nothing is saved until you approve it.
+
 ### The Shelf
 Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.
 
@@ -242,7 +245,7 @@ Transform dungeon concepts into interactive spatial canvas maps. Open a generate
 Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.
 
 ### Presentation Templates
-Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Item and equipment table fields keep repeatable rows together: add items, edit their cells, adjust counters, and roll dice from the table. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
+Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types — text, number, dice, counter, or checkbox — so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
 
 
 ## Help Documentation
@@ -1199,6 +1202,95 @@ The **Connections Proposer** works in the background to find hidden links betwee
 
 ---
 
+### FACTION TURNS
+
+Most campaign worlds sit still between sessions. Faction Turns let a faction pursue something on its own — extending its reach over a place, a person, or a rival — so that when your players come back, the map has moved a little without you having to move it by hand.
+
+Nothing happens automatically. You choose when a faction acts, you see the result before anything is saved, and you can undo it afterwards.
+
+## Turning it on
+
+Open a faction and choose the **Turns** tab, then **Turn on faction turns**. Factions you don't turn on are completely unaffected — no new tabs, no new fields, nothing.
+
+## Naming your stats
+
+A faction acts using its own stats, and you name those yourself. A court-intrigue campaign might call them Standing, Coin and Loyalty; a space opera might use Fleet Strength, Political Reach and Morale.
+
+Add them as **number** stats on the faction's Stats tab, then come back to the Turns tab and say which stat plays which part:
+
+- **Influence** — politics, faith, persuasion. This is the one an Influence action uses.
+- **Stability** — cohesion, and how well the faction resists others reaching into _its_ business.
+- **Power** and **Resources** — set them if you like; nothing uses them yet.
+
+Only the parts an action actually needs have to be set, so you can start with just Influence.
+
+Because the mapping remembers the stat itself rather than its name, renaming "Influence" to "Political Reach" later changes nothing about how turns work.
+
+## When a faction can act
+
+Faction turns are paced by your campaign's current date. A faction that acted recently has to wait before acting again — by default, a month of world time. In vault settings, choose either monthly turns or quarterly turns (every three months).
+
+Your campaign's current date comes from whichever of these you have:
+
+1. An event titled **Current date**, **Today**, **Now** or similar, with a date on it.
+2. The **Present Year** setting in vault settings.
+
+If you have neither, the Turns tab will say so and ask you to set one. It will not quietly use today's real-world date — in a campaign set in the year 640, that would make every faction eligible forever and stamp your history with the wrong year.
+
+**The system never changes your campaign's date.** It only reads it. You move time forward when you're ready, and factions become able to act as a result.
+
+If you want a faction to act ahead of schedule anyway, you can — the turn is simply recorded as having been taken early.
+
+## Taking a turn
+
+Pick a target — any entity in your vault — and choose **Extend influence**. You'll get a result immediately, and **nothing is saved yet**.
+
+The result is one of five outcomes: decisive success, success, mixed, failure, or backfire. Choose **Show the working** to see exactly how it got there: which stat was used, what resisted it and why, what was rolled, and what the outcome could have been.
+
+How hard a target is to influence depends on who already holds it. Somewhere nobody has claimed is the easiest thing in your world to move on; a province a rival faction has a firm grip on is considerably harder.
+
+## Approving, or throwing it away
+
+The preview shows what will change: the faction's stat, and how firmly it holds the target. You can rewrite the account in your own words before saving it.
+
+- **Apply this turn** saves everything and adds it to the faction's history.
+- **Throw it away** leaves your vault exactly as it was.
+
+If an outcome suggests the relationship itself has changed character — a neutral arrangement becoming friendly, say — you'll be offered that as a tickbox. It never happens on its own, because a relationship you wrote deliberately shouldn't be overwritten by a dice roll.
+
+Leaving the tab with an unsaved result will ask you to confirm, and reloading the page discards it. Results are never saved half-finished.
+
+## Undoing
+
+The most recent turn can be undone from the history list, which puts the stat and the relationship back exactly as they were. Undone turns stay visible in the history, marked as undone, rather than disappearing.
+
+Only the most recent turn can be reversed. Undoing an older one would mean guessing how to reconcile everything that happened since, and a wrong guess there would quietly damage a world you wrote by hand.
+
+## History, and your timeline
+
+Every turn is kept, permanently and in full, so you can still see the reasoning behind a turn taken years of campaign time ago.
+
+Turns do **not** appear on your campaign timeline unless you put them there. A faction's routine manoeuvring would swamp the events you actually care about. When something _does_ matter, choose **Add to timeline** and it becomes a proper event alongside your hand-written history.
+
+## Using AI, or not
+
+Two separate settings in vault settings, both on by default:
+
+- **Let AI write the account** — describes the outcome in prose rather than a stock sentence.
+- **Let AI adjust the outcome** — lets AI shift an outcome one step better or worse when the situation warrants it, and it has to say why. The dice still decide the starting point.
+
+When either is on, **the faction's and the target's names and short descriptions are sent to your AI provider.** Turn them off and nothing leaves your device: outcomes are described locally instead, and everything else works exactly the same.
+
+There is also an off-by-default **Include participant lore with AI** setting. Turn it on only when you want a richer account: for that turn, the AI also receives each participant's aliases, up to 1,200 characters of their text and lore, and up to five of their named outgoing connections. It does not send unrelated entities or your whole vault.
+
+Faction turns never wait on AI. If your provider is slow, unreachable, or you have none set up, the dice result stands and the turn is described locally.
+
+## If you want no randomness at all
+
+Turn off **Roll dice for outcomes** and results are decided by comparing stats directly. With that off and AI adjustment off too, the same situation always produces the same outcome.
+
+---
+
 ### MULTIPLE VAULTS
 
 Codex Cryptica lets you manage multiple "Vaults" (folders). Each vault is completely separate, so your sci-fi notes won't mix with your fantasy ones.
@@ -1642,12 +1734,11 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 
 ## Presentation Templates
 
-Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or create a Markdown-based view with a live preview. Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
+Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
 
 ## Related reading
 
-- [Build Stat Sheets That Keep Your Table Moving](/blog/custom-stat-sheet-templates) — Design reusable layouts around the information you need during play.
-- [Present Your Stat Sheets Your Way](/blog/presentation-templates) — Build, preview, and share Markdown-based Presentation Templates.
+- [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.
 
 ---
 
