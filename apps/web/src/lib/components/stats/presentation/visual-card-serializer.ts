@@ -4,12 +4,15 @@ import type { VisualCard } from "./visual-card-parser";
 export function syncSourceFromVisualCards(
   cards: VisualCard[],
   schemaFields: StatSheetField[],
-  fieldDisplayOverrides: Record<string, { displayMode?: string; hideLabel?: boolean }>
+  fieldDisplayOverrides: Record<
+    string,
+    { displayMode?: string; hideLabel?: boolean }
+  >,
 ) {
   let out = "";
   for (const card of cards) {
-    if (card.title) {
-      out += `### ${card.title}\n`;
+    if (card.title && card.title.trim()) {
+      out += `### ${card.title.trim()}\n`;
     }
     if (card.mode === "table") {
       const headers =
