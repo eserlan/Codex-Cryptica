@@ -7,7 +7,6 @@ const completeProposal = {
   narration: "A lantern flickers at the road's end.",
   visiblePatch: {
     situation: {
-      id: "situation",
       text: "A lantern flickers",
       source: "provisional" as const,
     },

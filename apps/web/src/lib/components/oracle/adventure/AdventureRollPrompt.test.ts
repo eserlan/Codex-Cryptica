@@ -47,6 +47,45 @@ describe("AdventureRollPrompt", () => {
     });
   });
 
+  it("renders the roll outcome bands as an in-app hover tooltip", () => {
+    render(AdventureRollPrompt, {
+      props: {
+        manager: manager({
+          session: {
+            pendingRoll: {
+              uncertainty: "Can the bridge hold?",
+              stakes: "A fall means the crossing is lost.",
+              suppliedOutcome: undefined,
+              dice: {
+                expression: "1d20",
+                bands: [
+                  { minimum: 1, maximum: 7, label: "Setback" },
+                  { minimum: 8, maximum: 20, label: "Success" },
+                ],
+              },
+            },
+          },
+        }),
+      },
+    });
+
+    const trigger = screen.getByRole("button", { name: "Roll outcome bands" });
+    expect(trigger.getAttribute("title")).toBeNull();
+    expect(trigger.getAttribute("aria-describedby")).toBe(
+      "adventure-roll-outcome-bands",
+    );
+    expect(trigger.className).not.toContain("border");
+    expect(trigger.className).toContain("focus-visible:outline-2");
+    const tooltip = screen.getByTestId("adventure-roll-outcome-bands");
+    expect(tooltip.getAttribute("role")).toBe("tooltip");
+    expect(tooltip.className).toContain("group-hover:opacity-100");
+    expect(tooltip.className).toContain("group-focus-within:opacity-100");
+    expect(screen.getByRole("list")).toBeTruthy();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByRole("list").textContent).toContain("1–7 Setback");
+    expect(screen.getByRole("list").textContent).toContain("8–20 Success");
+  });
+
   it("keeps a just-clicked outcome button in the DOM once the outcome is recorded", async () => {
     const m = manager();
     const { rerender } = render(AdventureRollPrompt, {

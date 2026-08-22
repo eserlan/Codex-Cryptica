@@ -104,6 +104,47 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
+  it("follows newly generated adventure events to the bottom", async () => {
+    const scrollTo = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+      configurable: true,
+      value: scrollTo,
+    });
+    const initial = manager();
+    const { rerender } = render(AdventureFocusPlay, {
+      props: props({ manager: initial }),
+    });
+    await waitFor(() => expect(scrollTo).toHaveBeenCalled());
+    scrollTo.mockClear();
+
+    await rerender({
+      ...props({
+        manager: {
+          ...initial,
+          phase: "generating",
+          transcript: {
+            sessionId: "adventure-1",
+            title: "The Drowned March",
+            turns: [
+              {
+                sequence: 0,
+                playerAction: "Cross the causeway",
+                narration: "The water rises.",
+                committedAt: "2026-08-22T00:00:00.000Z",
+              },
+            ],
+          },
+        },
+      }),
+    });
+
+    await waitFor(() =>
+      expect(scrollTo).toHaveBeenLastCalledWith(
+        expect.objectContaining({ behavior: "smooth" }),
+      ),
+    );
+  });
+
   it("can end the adventure from the management menu", async () => {
     const m = manager();
     render(AdventureFocusPlay, { props: props({ manager: m }) });
