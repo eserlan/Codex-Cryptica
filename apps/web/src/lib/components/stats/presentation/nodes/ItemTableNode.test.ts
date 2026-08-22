@@ -579,4 +579,215 @@ describe("ItemTableNode", () => {
     });
     expect(context.onUpdateField).not.toHaveBeenCalled();
   });
+
+  it("supports continuous upward reordering and focus relocation across repeated Ctrl+ArrowUp presses", async () => {
+    let currentRows = [
+      { name: "Sword" },
+      { name: "Shield" },
+      { name: "Bow" },
+      { name: "Staff" },
+    ];
+    const updateFieldMock = vi.fn((_id: string, updates: { rows?: any[] }) => {
+      if (updates.rows) {
+        currentRows = updates.rows;
+      }
+    });
+
+    const field: StatSheetField = {
+      ...itemTableField,
+      get rows() {
+        return currentRows;
+      },
+    };
+
+    const context: PresentationRenderContext = {
+      ...makeContext([field]),
+      onUpdateField: updateFieldMock,
+    };
+
+    const { rerender } = render(ItemTableNode, {
+      props: { field, context },
+    });
+
+    // Focus on item 4 (Staff) at index 3
+    const staffInput = screen.getByRole("textbox", {
+      name: "Weapon for item 4",
+    });
+    staffInput.focus();
+    expect(document.activeElement).toBe(staffInput);
+
+    // 1st press: Move Staff from index 3 -> index 2
+    await fireEvent.keyDown(staffInput, {
+      key: "ArrowUp",
+      ctrlKey: true,
+    });
+
+    expect(updateFieldMock).toHaveBeenLastCalledWith("weapons_table", {
+      rows: [
+        { name: "Sword" },
+        { name: "Shield" },
+        { name: "Staff" },
+        { name: "Bow" },
+      ],
+    });
+
+    // Simulate reactive update to component
+    await rerender({ field: { ...field, rows: currentRows }, context });
+
+    // Focus should now be relocated to the Staff input at index 2 (item 3)
+    const staffInputAt2 = screen.getByRole("textbox", {
+      name: "Weapon for item 3",
+    });
+    expect(document.activeElement).toBe(staffInputAt2);
+
+    // 2nd press: Move Staff from index 2 -> index 1
+    await fireEvent.keyDown(staffInputAt2, {
+      key: "ArrowUp",
+      ctrlKey: true,
+    });
+
+    expect(updateFieldMock).toHaveBeenLastCalledWith("weapons_table", {
+      rows: [
+        { name: "Sword" },
+        { name: "Staff" },
+        { name: "Shield" },
+        { name: "Bow" },
+      ],
+    });
+
+    await rerender({ field: { ...field, rows: currentRows }, context });
+
+    // Focus should now be relocated to the Staff input at index 1 (item 2)
+    const staffInputAt1 = screen.getByRole("textbox", {
+      name: "Weapon for item 2",
+    });
+    expect(document.activeElement).toBe(staffInputAt1);
+
+    // 3rd press: Move Staff from index 1 -> index 0
+    await fireEvent.keyDown(staffInputAt1, {
+      key: "ArrowUp",
+      ctrlKey: true,
+    });
+
+    expect(updateFieldMock).toHaveBeenLastCalledWith("weapons_table", {
+      rows: [
+        { name: "Staff" },
+        { name: "Sword" },
+        { name: "Shield" },
+        { name: "Bow" },
+      ],
+    });
+
+    await rerender({ field: { ...field, rows: currentRows }, context });
+
+    // Focus should now be relocated to the Staff input at index 0 (item 1)
+    const staffInputAt0 = screen.getByRole("textbox", {
+      name: "Weapon for item 1",
+    });
+    expect(document.activeElement).toBe(staffInputAt0);
+
+    // 4th press: Boundary at index 0 -> no-op
+    await fireEvent.keyDown(staffInputAt0, {
+      key: "ArrowUp",
+      ctrlKey: true,
+    });
+    expect(updateFieldMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("supports continuous downward reordering across repeated Ctrl+ArrowDown presses", async () => {
+    let currentRows = [{ name: "Sword" }, { name: "Shield" }, { name: "Bow" }];
+    const updateFieldMock = vi.fn((_id: string, updates: { rows?: any[] }) => {
+      if (updates.rows) {
+        currentRows = updates.rows;
+      }
+    });
+
+    const field: StatSheetField = {
+      ...itemTableField,
+      get rows() {
+        return currentRows;
+      },
+    };
+
+    const context: PresentationRenderContext = {
+      ...makeContext([field]),
+      onUpdateField: updateFieldMock,
+    };
+
+    const { rerender } = render(ItemTableNode, {
+      props: { field, context },
+    });
+
+    // Focus on Sword at index 0
+    const swordInput = screen.getByRole("textbox", {
+      name: "Weapon for item 1",
+    });
+    swordInput.focus();
+
+    // 1st press: Move Sword 0 -> 1
+    await fireEvent.keyDown(swordInput, {
+      key: "ArrowDown",
+      ctrlKey: true,
+    });
+
+    expect(updateFieldMock).toHaveBeenLastCalledWith("weapons_table", {
+      rows: [{ name: "Shield" }, { name: "Sword" }, { name: "Bow" }],
+    });
+
+    await rerender({ field: { ...field, rows: currentRows }, context });
+
+    // Focus should now be relocated to Sword at index 1
+    const swordInputAt1 = screen.getByRole("textbox", {
+      name: "Weapon for item 2",
+    });
+    expect(document.activeElement).toBe(swordInputAt1);
+
+    // 2nd press: Move Sword 1 -> 2
+    await fireEvent.keyDown(swordInputAt1, {
+      key: "ArrowDown",
+      ctrlKey: true,
+    });
+
+    expect(updateFieldMock).toHaveBeenLastCalledWith("weapons_table", {
+      rows: [{ name: "Shield" }, { name: "Bow" }, { name: "Sword" }],
+    });
+
+    await rerender({ field: { ...field, rows: currentRows }, context });
+
+    // Focus should now be relocated to Sword at index 2
+    const swordInputAt2 = screen.getByRole("textbox", {
+      name: "Weapon for item 3",
+    });
+    expect(document.activeElement).toBe(swordInputAt2);
+
+    // 3rd press: Boundary at index 2 -> no-op
+    await fireEvent.keyDown(swordInputAt2, {
+      key: "ArrowDown",
+      ctrlKey: true,
+    });
+    expect(updateFieldMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("supports Alt and Meta key modifiers for row reordering", async () => {
+    const multiRowField: StatSheetField = {
+      ...itemTableField,
+      rows: [{ name: "A" }, { name: "B" }],
+    };
+    const context = makeContext([multiRowField]);
+    render(ItemTableNode, { props: { field: multiRowField, context } });
+
+    const bInput = screen.getByRole("textbox", {
+      name: "Weapon for item 2",
+    });
+
+    // Alt+ArrowUp on item 2
+    await fireEvent.keyDown(bInput, {
+      key: "ArrowUp",
+      altKey: true,
+    });
+
+    expect(context.onUpdateField).toHaveBeenCalledWith("weapons_table", {
+      rows: [{ name: "B" }, { name: "A" }],
+    });
+  });
 });
