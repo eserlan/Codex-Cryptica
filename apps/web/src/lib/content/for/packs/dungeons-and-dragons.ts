@@ -22,13 +22,13 @@ export const dungeonsAndDragons: LandingPageConfig = {
     {
       title: "The Party, Their Allies & Their Enemies",
       description:
-        "Track player characters, the NPCs from their backstories, the patrons who send them work, and the factions they have made enemies of — all on one relationship graph.",
+        "Track the party, the NPCs from their backstories, the patrons who send them on quests, and the factions they have made enemies of — all on one relationship graph.",
       icon: "icon-[lucide--users]",
     },
     {
       title: "Dungeons, Settlements & Regions",
       description:
-        "Connect dungeons, towns, strongholds, wilderness regions, and other planes to the people and factions who hold them.",
+        "Connect dungeons, towns, strongholds, wilderness regions, and other planes to the people and factions who fight over them.",
       icon: "icon-[lucide--castle]",
     },
     {
@@ -47,7 +47,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
   exampleGraph: {
     title: "Sample D&D Campaign Web",
     description:
-      "See how a party, its patron, the villains hunting it, and the site of the next adventure connect in one campaign graph.",
+      "See how a party, its patron, the villains hunting it, and the place they are heading next connect in one campaign graph.",
     steps: [
       {
         label: "The Ashen Company",
@@ -105,13 +105,13 @@ export const dungeonsAndDragons: LandingPageConfig = {
     {
       title: "Magic Item Generator",
       description:
-        "Create magic items that come with a history, a previous owner, and a hook attached.",
+        "Create magic items that come with a history, a former wielder, and a hook attached.",
       href: "/generators/magic-item",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Organise Your D&D Campaign",
+    title: "Keep Your Campaign Straight When the Party Doesn't",
     description:
       "Keep your campaign's people, places, and plots connected between sessions, with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
