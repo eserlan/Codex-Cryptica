@@ -171,6 +171,7 @@
 
                     {#if hiddenCount > 0}
                       <button
+                        type="button"
                         onclick={() => toggleExpand(roll.id)}
                         class="text-[10px] font-bold text-theme-muted hover:text-theme-primary transition-colors px-2 py-1 bg-theme-bg border border-theme-border rounded"
                       >
@@ -178,6 +179,7 @@
                       </button>
                     {:else if shouldCollapse(part.rolls) && isExpanded}
                       <button
+                        type="button"
                         onclick={() => toggleExpand(roll.id)}
                         class="text-[10px] font-bold text-theme-muted hover:text-theme-primary transition-colors px-2 py-1 bg-theme-bg border border-theme-border rounded"
                       >
