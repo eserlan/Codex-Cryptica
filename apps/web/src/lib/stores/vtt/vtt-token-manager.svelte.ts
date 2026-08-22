@@ -145,6 +145,12 @@ export class VTTTokenManager {
     return this.updateToken(tokenId, { visibleTo: next });
   }
 
+  setVisionSource(tokenId: string, isVisionSource: boolean) {
+    const token = this.tokens[tokenId];
+    if (!token) return;
+    return this.updateToken(tokenId, { isVisionSource });
+  }
+
   isTokenVisible(
     tokenId: string,
     peerId: string | null,
@@ -177,6 +183,7 @@ export class VTTTokenManager {
       color: input.color || hashToColor(input.name),
       imageUrl: input.imageUrl ?? null,
       statusEffects: [],
+      isVisionSource: input.isVisionSource === true,
     };
   }
 
@@ -290,6 +297,7 @@ export class VTTTokenManager {
       updates.ownerGuestName !== undefined ||
       updates.visibleTo !== undefined;
     const statusChanged = updates.statusEffects !== undefined;
+    const visionSourceChanged = updates.isVisionSource !== undefined;
     const shouldDebounceBroadcast = posChanged || sizeChanged;
 
     const snapped =
@@ -369,7 +377,7 @@ export class VTTTokenManager {
       // Ownership/visibility and status changes are sensitive to client-side
       // drift. Follow the delta with a canonical snapshot so guests heal from
       // any stale local state immediately.
-      if (permissionChanged || statusChanged) {
+      if (permissionChanged || statusChanged || visionSourceChanged) {
         this.deps.broadcastSessionSnapshotNow();
       }
     } else {

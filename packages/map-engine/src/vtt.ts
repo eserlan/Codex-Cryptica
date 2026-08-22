@@ -31,6 +31,7 @@ export interface Token {
   color: string;
   imageUrl: string | null;
   statusEffects: string[];
+  isVisionSource?: boolean;
 }
 
 export interface MeasurementState {
@@ -104,6 +105,7 @@ export function normalizeToken(
     baseShape: token.baseShape === "square" ? "square" : "circle",
     facingIndicator: token.facingIndicator === true,
     statusEffects: [...(token.statusEffects ?? [])],
+    isVisionSource: token.isVisionSource === true,
   };
 }
 
