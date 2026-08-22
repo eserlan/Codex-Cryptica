@@ -49,7 +49,13 @@ describe("nav items", () => {
         .filter((i) => i.placement === "overflow")
         .map((i) => i.id);
 
-      expect(overflow).toEqual(["random", "shelf", "quicknote", "guest-chat"]);
+      expect(overflow).toEqual([
+        "adventure",
+        "random",
+        "shelf",
+        "quicknote",
+        "guest-chat",
+      ]);
     });
 
     it("keeps the primary views in the bar", () => {
@@ -87,6 +93,13 @@ describe("nav items", () => {
     it("lights the graph at the root but nowhere else", () => {
       expect(isViewActive(byId("graph")!, "/")).toBe(true);
       expect(isViewActive(byId("graph")!, "/map")).toBe(false);
+    });
+
+    it("lights Play only for the dedicated adventure workspace", () => {
+      const adventure = byId("adventure")!;
+
+      expect(isViewActive(adventure, "/adventure")).toBe(true);
+      expect(isViewActive(adventure, "/oracle")).toBe(false);
     });
 
     it("never lights a tool by path", () => {

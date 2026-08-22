@@ -91,7 +91,6 @@ describe("adventure engine", () => {
         visiblePatch: {
           ...emptyPatch,
           situation: {
-            id: "situation",
             text: "A dark road waits",
             source: "provisional",
           },
@@ -111,6 +110,88 @@ describe("adventure engine", () => {
     expect(result.ok).toBe(true);
     expect(current.turns).toHaveLength(0);
     expect(result.ok && result.value.turns).toHaveLength(1);
+  });
+
+  it("assigns durable IDs to newly generated state instead of trusting model IDs", () => {
+    const result = applyCompletedTurn(
+      session(),
+      {
+        kind: "complete",
+        narration: "A scout reaches the road.",
+        visiblePatch: {
+          ...emptyPatch,
+          knownFacts: {
+            add: [
+              {
+                text: "A scout watches from the ridge.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+        hiddenPatch: emptyHiddenPatch,
+        revealSecretIds: [],
+        provisionalFacts: [
+          {
+            kind: "person",
+            name: "Ridge scout",
+            summary: "A wary observer above the road.",
+            visibility: "player-visible",
+          },
+        ],
+        sourceRecordIds: [],
+      },
+      { turnId: "turn-1", inputId: "input-1", now },
+      now,
+      (() => {
+        const ids = ["fact-allocated", "provisional-allocated"];
+        return () => ids.shift() ?? "unused";
+      })(),
+    );
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.value.visibleState.knownFacts[0]?.id).toBe(
+      "fact-allocated",
+    );
+    expect(result.ok && result.value.provisionalFacts[0]?.id).toBe(
+      "provisional-allocated",
+    );
+    expect(result.ok && result.value.turns[0]?.provisionalFactIds).toEqual([
+      "provisional-allocated",
+    ]);
+  });
+
+  it("rejects a generated turn when its ID factory cannot produce a unique ID", () => {
+    const result = applyCompletedTurn(
+      session(),
+      {
+        kind: "complete",
+        narration: "A scout reaches the road.",
+        visiblePatch: {
+          ...emptyPatch,
+          knownFacts: {
+            add: [
+              {
+                text: "A scout watches from the ridge.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+        hiddenPatch: emptyHiddenPatch,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      },
+      { turnId: "turn-1", inputId: "input-1", now },
+      now,
+      () => "session-1",
+    );
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.errors[0]?.code).toBe("id-allocation-failed");
   });
 
   it("rejects hidden canaries before commit", () => {

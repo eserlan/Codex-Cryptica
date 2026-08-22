@@ -8,6 +8,8 @@ Dexie, OPFS, the Gemini/OpenAI SDKs, or vault stores.
 ```ts
 export function parseAdventureSession(input: unknown): AdventureSession;
 
+export function migrateAdventureSession(input: unknown): unknown;
+
 export function parseTurnProposal(input: unknown): AdventureTurnProposal;
 
 export function prepareTurn(input: PrepareTurnInput): PreparedAdventureTurn;
@@ -50,6 +52,9 @@ export function detectHiddenLeakage(
 ## Behavioral Guarantees
 
 - Inputs are never mutated.
+- Persisted sessions are migrated through ordered, pure version steps before
+  validation. Unknown future versions are rejected without rewriting the source
+  document.
 - A failure returns no candidate session.
 - A completed proposal creates exactly one committed turn and increments the
   revision exactly once.

@@ -50,6 +50,18 @@ const completeResponse = JSON.stringify({
   sourceRecordIds: [],
 });
 
+if (typeof navigator === "undefined") {
+  Object.defineProperty(globalThis, "navigator", {
+    value: { onLine: true },
+    writable: true,
+  });
+} else {
+  Object.defineProperty(navigator, "onLine", {
+    value: true,
+    writable: true,
+  });
+}
+
 describe("AdventureTurnGenerationService", () => {
   it("forwards a stateless structured-generation request and parses the response", async () => {
     let request: any;
@@ -102,7 +114,11 @@ describe("AdventureTurnGenerationService", () => {
     expect(
       request.generationConfig.responseSchema.oneOf[0].properties.visiblePatch
         .properties.activeCharacters.properties.add.items.required,
-    ).toEqual(expect.arrayContaining(["id", "text", "source"]));
+    ).toEqual(expect.arrayContaining(["text", "source"]));
+    expect(
+      request.generationConfig.responseSchema.oneOf[0].properties.visiblePatch
+        .properties.activeCharacters.properties.add.items.required,
+    ).not.toContain("id");
     const userMessage = request.contents[0].parts[0].text;
     const serializedPrompt = JSON.parse(userMessage);
     expect(serializedPrompt.input.adventure.premise).toBe("Find the road");

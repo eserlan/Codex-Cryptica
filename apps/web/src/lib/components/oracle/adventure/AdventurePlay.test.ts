@@ -26,7 +26,7 @@ describe("AdventurePlay", () => {
     render(AdventurePlay, { props: { manager: manager("generating") } });
 
     expect(screen.getByRole("status").textContent).toContain(
-      "Oracle is responding to your action…",
+      "The Oracle traces the threads of consequence…",
     );
     // The field stays mounted (just hidden) rather than being torn out —
     // removing a focused element from the DOM mid-interaction silently
