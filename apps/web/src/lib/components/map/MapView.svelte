@@ -6,7 +6,7 @@
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
   import { TokenVisionRevealer } from "./token-vision-revealer";
-  import { resolveVisionSourceTokens } from "./vtt-vision";
+  import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
@@ -157,13 +157,12 @@
       .map((token) => `${token.id}:${token.x}:${token.y}`)
       .join("|"),
   );
-  // Vision range is authored in grid units (e.g. feet), not pixels — convert
-  // using the map's grid scale so 60' vision on a map where each square is
-  // 5' spans 60/5 = 12 grid squares, regardless of gridSize in pixels.
   const visionRadiusPx = $derived(
-    mapSession.gridDistance > 0
-      ? (mapStore.visionRange / mapSession.gridDistance) * mapStore.gridSize
-      : mapStore.visionRange,
+    visionRangeToPixels(
+      mapStore.visionRange,
+      mapSession.gridDistance,
+      mapStore.gridSize,
+    ),
   );
 
   const vttTokens = $derived.by(() => {
