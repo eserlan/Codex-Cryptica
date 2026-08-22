@@ -17,6 +17,7 @@ const faction: Entity = {
   aliases: [],
   connections: [],
   content: "",
+  status: "active",
   statSheet: {
     fields: [
       { id: "influence", label: "Influence", type: "number", value: 6 },

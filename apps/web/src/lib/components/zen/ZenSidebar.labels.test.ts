@@ -6,7 +6,7 @@ import { vault } from "$lib/stores/vault.svelte";
 
 if (!Element.prototype.animate) {
   Element.prototype.animate = () =>
-    ({ finished: Promise.resolve(), cancel: () => {} }) as Animation;
+    ({ finished: Promise.resolve(), cancel: () => {} }) as unknown as Animation;
 }
 
 // Mock stores
