@@ -3,6 +3,7 @@ import {
   buildPuzzlePrompt,
   generatePuzzleLocal,
   parsePuzzleResponse,
+  resolvePuzzle,
 } from "./public-puzzle";
 
 describe("Puzzle generator", () => {
@@ -39,5 +40,10 @@ describe("Puzzle generator", () => {
     expect(() =>
       parsePuzzleResponse('{"title":"Missing sections","content":"Nope"}'),
     ).toThrow("missing required");
+  });
+
+  it("defaults to system-neutral unless the user selects tailoring", () => {
+    expect(resolvePuzzle({}).system).toBe("System-neutral");
+    expect(resolvePuzzle({ system: "D&D 5e" }).system).toBe("D&D 5e");
   });
 });

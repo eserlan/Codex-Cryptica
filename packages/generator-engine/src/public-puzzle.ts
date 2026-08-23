@@ -63,6 +63,9 @@ export const puzzleConfig = {
   ],
 } as const;
 
+/** Automated generation starts system-neutral; only a user may tailor it. */
+export const DEFAULT_PUZZLE_SYSTEM = "System-neutral";
+
 export interface PuzzleGeneratorOptions {
   genre?: string;
   purpose?: string;
@@ -117,7 +120,9 @@ export function resolvePuzzle(
     capabilities: text(options.capabilities),
     spotlight: pickOption(options.spotlight, puzzleConfig.spotlights),
     failureStyle: pickOption(options.failureStyle, puzzleConfig.failureStyles),
-    system: pickOption(options.system, puzzleConfig.systems),
+    system: puzzleConfig.systems.includes(options.system as never)
+      ? options.system!
+      : DEFAULT_PUZZLE_SYSTEM,
     downstreamConsequence: text(options.downstreamConsequence),
     campaignContext: text(options.campaignContext),
   };
