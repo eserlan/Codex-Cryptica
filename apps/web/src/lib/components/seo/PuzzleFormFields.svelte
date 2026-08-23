@@ -16,6 +16,7 @@
     downstreamConsequence = $bindable(""),
     campaignContext = $bindable(""),
     onSurprise = undefined,
+    onGenreChange = undefined,
   }: {
     genre: string;
     purpose: string;
@@ -30,6 +31,7 @@
     downstreamConsequence: string;
     campaignContext: string;
     onSurprise?: () => void;
+    onGenreChange?: (genre: string) => void;
   } = $props();
 
   const selectClass =
@@ -49,6 +51,7 @@
   {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre"
+  onvaluechange={onGenreChange}
 />
 <SelectWithCustomOption
   id="puzzle-purpose"

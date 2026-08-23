@@ -1017,6 +1017,13 @@
         bind:system={puzzle.system}
         bind:downstreamConsequence={puzzle.downstreamConsequence}
         bind:campaignContext={puzzle.campaignContext}
+        onGenreChange={(genre) => {
+          // Custom genre text still flavors the output, but only established
+          // CC themes can select a visual skin.
+          if ((puzzleConfig.genres as readonly string[]).includes(genre)) {
+            activeTheme = genre;
+          }
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "council-vote"}

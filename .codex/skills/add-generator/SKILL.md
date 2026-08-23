@@ -75,11 +75,18 @@ Implement this alongside the in-app generator unless the user explicitly exclude
 Use the canonical theme vocabulary already defined by comparable generators. If public output is genre-sensitive:
 
 1. Add `genre?: string` from the start, with an established default.
-2. Synchronize the form theme only when the generator uses it.
-3. Add the slug to both `GENERATOR_SLUGS_WITH_THEME` and `SLUGS_USING_STORED_THEME` in `generator-theme-maps.ts`.
-4. Update the real theme map, not the orphaned `generator-theme.ts`; verify imports before changing lookalike files.
-5. Use per-theme option pools only for options that genuinely vary by genre. Preserve custom user values when changing theme.
-6. Make the AI prompt explicitly require theme fidelity: respect the selected genre's era, technology, institutions, and vocabulary. Prohibit modern terminology, institutions, or technology unless the selected theme supports them, and add a prompt regression test for that rule.
+2. Synchronize the form's genre/theme selection with the page's visual theme.
+   A manual selection of a canonical CC theme must update `activeTheme`, so
+   `SEOGeneratorLayout` re-skins immediately; use a mapping when the
+   generator has a different genre vocabulary. Preserve custom free-text
+   genres for generation without assigning an unknown visual skin.
+3. Surprise Me must not change the genre or visual theme. Only the genre
+   selector's own change callback may update `activeTheme`; cover manual
+   selection and Surprise Me in the component test.
+4. Add the slug to both `GENERATOR_SLUGS_WITH_THEME` and `SLUGS_USING_STORED_THEME` in `generator-theme-maps.ts`.
+5. Update the real theme map, not the orphaned `generator-theme.ts`; verify imports before changing lookalike files.
+6. Use per-theme option pools only for options that genuinely vary by genre. Preserve custom user values when changing theme.
+7. Make the AI prompt explicitly require theme fidelity: respect the selected genre's era, technology, institutions, and vocabulary. Prohibit modern terminology, institutions, or technology unless the selected theme supports them, and add a prompt regression test for that rule.
 
 ## Structured visuals and saved entities
 

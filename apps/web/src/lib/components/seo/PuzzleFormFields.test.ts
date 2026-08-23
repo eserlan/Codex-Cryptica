@@ -6,7 +6,7 @@ import PuzzleFormFields from "./PuzzleFormFields.svelte";
 
 vi.mock("$lib/services/seo/generator-engine", () => ({
   puzzleConfig: {
-    genres: ["Fantasy"],
+    genres: ["Fantasy", "Lancer"],
     purposes: ["Sealed door", "Disable device"],
     complexities: ["Simple", "Elaborate"],
     styles: ["Environmental", "Magical"],
@@ -50,5 +50,18 @@ describe("PuzzleFormFields", () => {
     expect(
       (screen.getByLabelText("System tailoring") as HTMLSelectElement).value,
     ).toBe("D&D 5e");
+  });
+
+  it("reports a genre change only when the user chooses one", async () => {
+    const onGenreChange = vi.fn();
+    render(PuzzleFormFields, { props: { ...props, onGenreChange } });
+
+    await fireEvent.change(screen.getByLabelText("Genre"), {
+      target: { value: "Lancer" },
+    });
+    expect(onGenreChange).toHaveBeenCalledWith("Lancer");
+
+    await fireEvent.click(screen.getByRole("button", { name: "Surprise Me" }));
+    expect(onGenreChange).toHaveBeenCalledTimes(1);
   });
 });
