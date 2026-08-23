@@ -55,6 +55,7 @@ describe("registry lookup", () => {
       "dungeon",
       "adventure",
       "quest",
+      "puzzle",
       "plot-twist",
       "villain",
       "world",
@@ -172,6 +173,33 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "event",
       sourceGeneratorId: "quest",
+    });
+  });
+
+  it("builds a non-gated puzzle and maps it to a note draft", () => {
+    const generator = getGenerator("puzzle");
+    const request = run("puzzle", {
+      options: {
+        purpose: "Destroy relic or organ",
+        style: "Magical",
+        capabilities: "Earth elemental sorcerer",
+        downstreamConsequence: "The boss loses its shield.",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.puzzle).toBe("note");
+    expect(generator.buildPrompt(request)).toContain(
+      "Never make progress depend",
+    );
+    expect(generator.buildPrompt(request)).toContain(
+      "Earth elemental sorcerer",
+    );
+    const output = generator.generate(request);
+    expect(output.content).toContain("## Alternate Solutions");
+    expect(output.content).toContain("## Downstream Consequences");
+    expect(generator.mapOutputToDraft(output, request)).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "puzzle",
     });
   });
 
@@ -1363,6 +1391,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       dungeon: "location",
       adventure: "note",
       quest: "event",
+      puzzle: "note",
       "plot-twist": "note",
       villain: "character",
       world: "location",

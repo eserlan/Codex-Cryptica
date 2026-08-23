@@ -50,6 +50,12 @@ import {
   type QuestGeneratorOptions,
 } from "./public-quest";
 import {
+  buildPuzzlePrompt,
+  generatePuzzleLocal,
+  puzzleConfig,
+  type PuzzleGeneratorOptions,
+} from "./public-puzzle";
+import {
   buildMinorMagicItemPrompt,
   generateMinorMagicItemLocal,
   minorMagicItemConfig,
@@ -121,6 +127,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   quest: "event",
+  puzzle: "note",
   villain: "character",
   world: "location",
   "council-vote": "note",
@@ -954,6 +961,46 @@ function generateQuest(request: GeneratorRunRequest): GeneratorOutput {
 
 function questPrompt(request: GeneratorRunRequest): string {
   const prompt = buildQuestPrompt(questOptions(request), contextChain(request));
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function puzzleOptions(request: GeneratorRunRequest): PuzzleGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Fantasy",
+    ),
+    purpose: optionString(request, "purpose", ""),
+    difficulty: optionString(request, "difficulty", ""),
+    style: optionString(request, "style", ""),
+    partyLevel: optionString(request, "partyLevel", ""),
+    playerCount: optionString(request, "playerCount", ""),
+    capabilities: optionString(request, "capabilities", ""),
+    spotlight: optionString(request, "spotlight", ""),
+    failureStyle: optionString(request, "failureStyle", ""),
+    system: optionString(request, "system", ""),
+    downstreamConsequence: optionString(request, "downstreamConsequence", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generatePuzzle(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generatePuzzleLocal(puzzleOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function puzzlePrompt(request: GeneratorRunRequest): string {
+  const prompt = buildPuzzlePrompt(
+    puzzleOptions(request),
+    contextChain(request),
+  );
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
@@ -2118,6 +2165,102 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateQuest,
     mapOutputToDraft: mapOutputToDraft("quest"),
     buildPrompt: questPrompt,
+  },
+  puzzle: {
+    id: "puzzle",
+    label: "Puzzle",
+    description:
+      "Generate a flexible, table-ready encounter puzzle with layered clues and multiple viable solutions.",
+    entityType: GENERATOR_ENTITY_TYPE.puzzle,
+    defaultInstruction:
+      "A thematic encounter puzzle with clear player-facing setup, GM-only solution details, layered clues, alternate approaches, and fail-forward consequences.",
+    icon: "lucide:puzzle",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: puzzleConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "purpose",
+        label: "Puzzle Purpose",
+        control: "select",
+        choices: puzzleConfig.purposes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "difficulty",
+        label: "Difficulty",
+        control: "select",
+        choices: puzzleConfig.difficulties.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "style",
+        label: "Puzzle Style",
+        control: "select",
+        choices: puzzleConfig.styles.map((value) => ({ value, label: value })),
+      },
+      { id: "partyLevel", label: "Party Level or Competence", control: "text" },
+      { id: "playerCount", label: "Number of Players", control: "number" },
+      {
+        id: "capabilities",
+        label: "PC Capabilities to Make Matter",
+        description:
+          "Add character concepts, abilities, spells, or skills. They create opportunities, never requirements.",
+        control: "textarea",
+      },
+      {
+        id: "spotlight",
+        label: "Desired Spotlight",
+        control: "select",
+        choices: puzzleConfig.spotlights.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "failureStyle",
+        label: "Failure Style",
+        control: "select",
+        choices: puzzleConfig.failureStyles.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "system",
+        label: "System Tailoring",
+        control: "select",
+        choices: puzzleConfig.systems.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "downstreamConsequence",
+        label: "Optional Downstream Consequence",
+        control: "textarea",
+      },
+    ],
+    defaults: {
+      genre: "",
+      purpose: "",
+      difficulty: "",
+      style: "",
+      partyLevel: "",
+      playerCount: "",
+      capabilities: "",
+      spotlight: "",
+      failureStyle: "",
+      system: "",
+      downstreamConsequence: "",
+    },
+    generate: generatePuzzle,
+    mapOutputToDraft: mapOutputToDraft("puzzle"),
+    buildPrompt: puzzlePrompt,
   },
   "plot-twist": {
     id: "plot-twist",

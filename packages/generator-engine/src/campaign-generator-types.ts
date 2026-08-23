@@ -22,6 +22,7 @@ export type GeneratorId =
   | "dungeon"
   | "adventure"
   | "quest"
+  | "puzzle"
   | "plot-twist"
   | "villain"
   | "world"
@@ -46,6 +47,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "dungeon",
   "adventure",
   "quest",
+  "puzzle",
   "plot-twist",
   "villain",
   "world",
