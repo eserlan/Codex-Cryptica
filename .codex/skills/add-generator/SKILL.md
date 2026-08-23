@@ -1,11 +1,11 @@
 ---
 name: add-generator
-description: Add or expose a Codex Cryptica content generator. Use when asked to add, create, implement, wire, or publish a generator; make a new generator type; or expose a generator in the in-app campaign workflow, public /generators pages, theme hubs, or /tools.
+description: Add a Codex Cryptica content generator across both the in-app campaign workflow and public /generators surface. Use when asked to add, create, implement, wire, or publish a generator; make a new generator type; or expose a generator in the in-app campaign workflow, public /generators pages, theme hubs, or /tools.
 ---
 
 # Add a Generator
 
-Codex Cryptica has two separate generator surfaces. Decide which is requested before editing. Ask only if the request does not make the target clear.
+Codex Cryptica has two separate generator surfaces. A new generator MUST be implemented on both surfaces by default. They have independent registration and UI wiring; completing one never exposes it on the other.
 
 | Surface     | In-app campaign generator                                      | Public generator pages                                           |
 | ----------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
@@ -14,7 +14,7 @@ Codex Cryptica has two separate generator surfaces. Decide which is requested be
 | Core        | `packages/generator-engine/src/campaign-generator-registry.ts` | `packages/generator-engine/src/public-<name>.ts` plus web wiring |
 | Output      | `GeneratorOutput`                                              | `PublicGeneratorOutput`                                          |
 
-Implement both only when requested. Shared content design does not make either surface discover the other automatically.
+Implement both surfaces for every new generator. An explicit user request to limit work to one surface is the only exception; confirm that scope in the handoff. Shared content design does not make either surface discover the other automatically.
 
 ## Before editing
 
@@ -24,7 +24,7 @@ Implement both only when requested. Shared content design does not make either s
 4. Decide whether generated `content` belongs in the main document and `lore` in the reference rail. Inspect `apps/web/src/lib/components/seo/generator-document-layout.ts` before adding a layout rule.
 5. Keep the change library-first: prompt construction and local fallbacks belong in `packages/generator-engine`, not Svelte components.
 
-## In-app campaign generator
+## In-app campaign generator (required)
 
 1. Pick the matching implementation tier.
    - Use an inline registry prompt and fallback for simple NPC/faction/event-shaped generators.
@@ -42,9 +42,9 @@ Implement both only when requested. Shared content design does not make either s
 
 The generic campaign modal and form consume `listGenerators()`; do not add special-case UI wiring unless the generator genuinely requires it.
 
-## Public `/generators` surface
+## Public `/generators` surface (required)
 
-Only do this when the no-login public tool is requested.
+Implement this alongside the in-app generator unless the user explicitly excludes the public surface.
 
 1. Create `packages/generator-engine/src/public-<name>.ts`, following a comparable current generator:
    - config option pools and typed options;
@@ -95,5 +95,6 @@ Only add this path when a generator explicitly produces a diagram, map, or other
 2. Run focused generator-engine tests and the affected web tests.
 3. Run `bun --filter generator-engine lint`, `bun --filter web check`, and `bun run lint`; report any unrelated baseline failures precisely.
 4. For public pages, verify the route entries and a representative rendered generator page.
+5. Verify both surfaces are discoverable: `listGenerators()` includes the in-app generator and the public catalogue, theme hubs, switcher, and `/tools` include the public generator.
 
 Follow the repository’s constructor-DI, privacy, Svelte 5, semantic-token, Iconify, and plain-language rules throughout.

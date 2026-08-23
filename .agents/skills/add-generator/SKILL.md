@@ -1,11 +1,11 @@
 ---
 name: add-generator
-description: Add a new content generator (npc/faction/quest/council-vote-style) to Codex Cryptica — wires the in-app campaign generator workflow and/or the public no-login /generators + /tools SEO pages. Use when asked to "add a generator", "make a new generator type", "create a [thing] generator", or to expose an existing generator on /generators, theme hubs, or /tools.
+description: Add a new Codex Cryptica content generator across the in-app campaign workflow and public no-login /generators + /tools SEO pages. Use when asked to "add a generator", "make a new generator type", "create a [thing] generator", or to expose an existing generator on /generators, theme hubs, or /tools.
 ---
 
 # Add a Generator
 
-There are **two separate, non-interoperating generator systems** in this repo. Confusing them is the single biggest source of missed wiring. Always figure out which one(s) the user wants before touching files.
+There are **two separate, non-interoperating generator systems** in this repo. Confusing them is the single biggest source of missed wiring. A new generator MUST be implemented in both systems by default.
 
 |              | In-app campaign generator                                                                      | Public `/generators` SEO surface                                              |
 | ------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -16,11 +16,11 @@ There are **two separate, non-interoperating generator systems** in this repo. C
 
 They always share _content design_ (pools of options, per-councillor/per-NPC structure). Code sharing is tier-dependent: **simple**-tier in-app generators have their own inline prompt builder and local fallback, no shared code; **rich**-tier in-app generators (see Part A step 1) deliberately import `generateXLocal`/`buildXPrompt` from the matching `public-x.ts` file. Either way, building one does not expose the generator anywhere the other system reads from — that wiring is separate (Part A vs Part B below).
 
-**Ask the user which surface(s) they want** if it's not obvious from the request ("add it to /generators too" after an in-app-only generator means build Part B on top of Part A).
+Complete both Part A and Part B for every new generator. An explicit user request to limit work to one surface is the only exception; record that scope in the handoff.
 
 ---
 
-## Part A — In-app campaign generator
+## Part A — In-app campaign generator (required)
 
 1. **Pick a complexity tier**, matching an existing generator of similar shape:
    - **Simple** (npc/faction/event-tier): local fallback + prompt builder live as small inline functions directly in `campaign-generator-registry.ts`, using inline `const FOO_OPTIONS = [...]` arrays. No separate file.
@@ -46,9 +46,9 @@ They always share _content design_ (pools of options, per-councillor/per-NPC str
 
 ---
 
-## Part B — Public `/generators` + theme hubs + `/tools`
+## Part B — Public `/generators` + theme hubs + `/tools` (required)
 
-Only needed if the user wants the no-login web tool too. This is genuinely ~13 files; budget for it.
+Implement alongside Part A unless the user explicitly excludes the no-login web tool. This is genuinely ~13 files; budget for it.
 
 1. **`packages/generator-engine/src/public-<name>.ts`** — new file, mirror `public-quest.ts`'s shape exactly:
    - `<name>Config` object (option pools).
