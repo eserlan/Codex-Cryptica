@@ -87,15 +87,15 @@ Implement alongside Part A unless the user explicitly excludes the no-login web 
 
 9. **`apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/[slug=generator_slug]/+page.ts`** — same `validSlugs` addition, for the theme+slug combo route. Easy to miss since it's a sibling directory, not the same file as #8.
 
-10. **`apps/web/src/routes/(marketing)/generators/+page.svelte`** — add `{href, label, summary, icon}` to the right group in the `generators` array.
+10. **`apps/web/src/routes/(marketing)/generators/+page.svelte`** — add `{href, label, summary, icon}` to the right group in the `generators` array. This is required for every public generator.
 
-11. **`apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/+page.svelte`** — add a card to `sharedCards()` (the pool shared by every theme hub's `...sharedCards(...)` spread) if the generator is genre-agnostic and should show on every hub. Adding it once here propagates to all ~13 hub pages.
+11. **`apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/+page.svelte`** — add a card to `sharedCards()` (the pool shared by every theme hub's `...sharedCards(...)` spread) so every generator appears on every shared theme hub. Adding it once here propagates to all ~13 hub pages.
 
 12. **`apps/web/src/lib/components/seo/GeneratorSwitcherMenu.svelte`** — add `{label, path}` to the matching `GENERATOR_GROUPS` entry (cross-nav while viewing another generator page).
 
 13. **`apps/web/src/lib/services/seo/random-idea.ts`** — if the generator makes sense as a "Surprise Me" pick, add its `key` to `RandomIdeaCategory["key"]` and a `{ key, label, generate }` entry to `randomIdeaCategories`. Update `random-idea.test.ts`'s exact-match `.sort()` array and the `dispatches each category` test's mock engine (it calls **every** category's `generate()`, so a missing mock method throws).
 
-14. **`apps/web/src/routes/(marketing)/tools/+page.svelte`** (optional) — most entries here just link to `/generators/<slug>` rather than getting a dedicated `/tools/<slug>-generator` page (only npc/faction/quest-tier generators have standalone `/tools/*` pages with hardcoded example drafts). Add a listing entry pointing at the `/generators/<slug>` page unless the user specifically wants a dedicated keyword-targeted tools page.
+14. **`apps/web/src/routes/(marketing)/tools/+page.svelte`** — add a required listing entry pointing at `/generators/<slug>`. A dedicated `/tools/<slug>-generator` page remains optional and requires an explicit user request.
 
 15. **`apps/web/src/routes/(marketing)/generators/[slug=generator_slug]/generators.test.ts`** — has a hardcoded exact-match `entries()` array; add the new slug.
 

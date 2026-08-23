@@ -66,8 +66,9 @@ Implement this alongside the in-app generator unless the user explicitly exclude
 8. Add a `/tools` listing link when appropriate. Do not create a dedicated `/tools` page unless explicitly requested.
 9. Verify the public catalogue is consistent: the generator slug and label must
    appear in the generator index, every shared theme-hub card list, the
-   generator switcher dropdown pill/menu, and `/tools` when the surface is
-   intended to be discoverable there. Add or update focused catalogue tests.
+   generator switcher dropdown pill/menu, and the `/tools` listing. Add or
+   update focused catalogue tests. These links are required for every public
+   generator; do not treat any of them as optional discoverability work.
 
 ## Theme-aware generators
 
@@ -95,6 +96,6 @@ Only add this path when a generator explicitly produces a diagram, map, or other
 2. Run focused generator-engine tests and the affected web tests.
 3. Run `bun --filter generator-engine lint`, `bun --filter web check`, and `bun run lint`; report any unrelated baseline failures precisely.
 4. For public pages, verify the route entries and a representative rendered generator page.
-5. Verify both surfaces are discoverable: `listGenerators()` includes the in-app generator and the public catalogue, theme hubs, switcher, and `/tools` include the public generator.
+5. Verify both surfaces are discoverable: `listGenerators()` includes the in-app generator; the public generator appears in `/generators`, every shared theme hub, the switcher, and `/tools`.
 
 Follow the repository’s constructor-DI, privacy, Svelte 5, semantic-token, Iconify, and plain-language rules throughout.
