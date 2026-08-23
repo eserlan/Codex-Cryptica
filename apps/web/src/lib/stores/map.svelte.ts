@@ -26,7 +26,9 @@ type PersistedMapSettings = {
   gridColor: string | null;
   showLabels: boolean;
   visionMode: TokenVisionMode;
-  visionRadius: number;
+  /** Vision distance in grid units (e.g. feet), not pixels — converted to
+   * pixels using the map's gridSize/gridDistance at reveal time. */
+  visionRange: number;
 };
 
 type PersistedMapPageState = {
@@ -44,7 +46,7 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   gridColor: null,
   showLabels: true,
   visionMode: "party",
-  visionRadius: 300,
+  visionRange: 60,
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -72,7 +74,7 @@ export class MapStore {
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
   visionMode = $state<TokenVisionMode>("party");
-  visionRadius = $state(300);
+  visionRange = $state(60);
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
@@ -124,7 +126,7 @@ export class MapStore {
             this.gridColor,
             this.showLabels,
             this.visionMode,
-            this.visionRadius,
+            this.visionRange,
           ];
           void tracked;
           this.schedulePersistSettings();
@@ -224,10 +226,10 @@ export class MapStore {
           parsed.visionMode === "party" || parsed.visionMode === "selected"
             ? parsed.visionMode
             : DEFAULT_MAP_SETTINGS.visionMode,
-        visionRadius:
-          typeof parsed.visionRadius === "number"
-            ? parsed.visionRadius
-            : DEFAULT_MAP_SETTINGS.visionRadius,
+        visionRange:
+          typeof parsed.visionRange === "number"
+            ? parsed.visionRange
+            : DEFAULT_MAP_SETTINGS.visionRange,
       };
     } catch {
       return null;
@@ -261,7 +263,7 @@ export class MapStore {
       gridColor: this.gridColor,
       showLabels: this.showLabels,
       visionMode: this.visionMode,
-      visionRadius: this.visionRadius,
+      visionRange: this.visionRange,
     };
 
     try {
@@ -382,7 +384,7 @@ export class MapStore {
       this.gridColor = next.gridColor;
       this.showLabels = next.showLabels;
       this.visionMode = next.visionMode;
-      this.visionRadius = next.visionRadius;
+      this.visionRange = next.visionRange;
     } finally {
       this.isRestoringSettings = false;
     }

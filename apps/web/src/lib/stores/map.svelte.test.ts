@@ -115,7 +115,7 @@ describe("MapStore settings persistence", () => {
         gridColor: "#fbbf24",
         showLabels: true,
         visionMode: "party",
-        visionRadius: 300,
+        visionRange: 60,
       });
     });
   });

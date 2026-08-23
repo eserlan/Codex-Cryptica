@@ -110,24 +110,23 @@
           VISION: {mapStore.visionMode === "selected" ? "SELECTED" : "PARTY"}
         </button>
 
-        {#if mapStore.visionMode === "selected"}
-          <div class="flex items-center gap-2 px-2">
-            <span
-              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
-              >Vision Radius</span
-            >
-            <input
-              type="range"
-              min="50"
-              max="800"
-              bind:value={mapStore.visionRadius}
-              class="w-24 accent-theme-primary h-1"
-            />
-            <span class="text-[9px] text-theme-primary font-mono w-6"
-              >{mapStore.visionRadius}px</span
-            >
-          </div>
-        {/if}
+        <div class="flex items-center gap-2 px-2">
+          <span
+            class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+            >Vision Range</span
+          >
+          <input
+            type="range"
+            min="5"
+            max="300"
+            step="5"
+            bind:value={mapStore.visionRange}
+            class="w-24 accent-theme-primary h-1"
+          />
+          <span class="text-[9px] text-theme-primary font-mono w-8"
+            >{mapStore.visionRange}{mapSession.gridUnit}</span
+          >
+        </div>
 
         <button
           type="button"
