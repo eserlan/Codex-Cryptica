@@ -69,6 +69,16 @@ Implement this alongside the in-app generator unless the user explicitly exclude
    generator switcher dropdown pill/menu, and the `/tools` listing. Add or
    update focused catalogue tests. These links are required for every public
    generator; do not treat any of them as optional discoverability work.
+10. Create a dedicated SEO image for the new public generator. Capture the
+    rendered `/generators/<slug>` page in a real browser at a social-card
+    viewport; do not use generated artwork, mock UI, or another generator's
+    screenshot. Upload it to remote R2 as
+    `codex-cryptica-statics/screenshots/generator-<slug>.png` with
+    `image/png`, verify the public
+    `https://assets.codexcryptica.com/screenshots/generator-<slug>.png` URL,
+    and set that exact URL plus accurate alt text in `generator-page-meta.ts`.
+    If R2 access is unavailable, report it rather than silently pointing at a
+    reused image.
 
 ## Theme-aware generators
 
@@ -104,5 +114,7 @@ Only add this path when a generator explicitly produces a diagram, map, or other
 3. Run `bun --filter generator-engine lint`, `bun --filter web check`, and `bun run lint`; report any unrelated baseline failures precisely.
 4. For public pages, verify the route entries and a representative rendered generator page.
 5. Verify both surfaces are discoverable: `listGenerators()` includes the in-app generator; the public generator appears in `/generators`, every shared theme hub, the switcher, and `/tools`.
+6. Verify the dedicated public SEO screenshot resolves from R2 and is the same
+   URL referenced by the generator's `ogImage` metadata.
 
 Follow the repository’s constructor-DI, privacy, Svelte 5, semantic-token, Iconify, and plain-language rules throughout.

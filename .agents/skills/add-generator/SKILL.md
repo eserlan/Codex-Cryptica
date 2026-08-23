@@ -99,6 +99,18 @@ Implement alongside Part A unless the user explicitly excludes the no-login web 
 
 15. **`apps/web/src/routes/(marketing)/generators/[slug=generator_slug]/generators.test.ts`** — has a hardcoded exact-match `entries()` array; add the new slug.
 
+16. **Dedicated social image (required):** capture the rendered public
+    `/generators/<slug>` page in a real browser at a social-card viewport.
+    This must be an actual generator screenshot, not generated artwork, a
+    mockup, or another generator's screenshot. Upload it with Wrangler to
+    remote R2 as `codex-cryptica-statics/screenshots/generator-<slug>.png`
+    using `--content-type image/png --remote`; verify the resulting
+    `https://assets.codexcryptica.com/screenshots/generator-<slug>.png` URL
+    returns the image, then use that exact URL and accurate alt text for
+    `ogImage` in `generator-page-meta.ts`. If authenticated R2 upload is not
+    available, stop and report that blocker rather than retaining a reused
+    image.
+
 ### Known trap: two lookalike theme files
 
 - `apps/web/src/lib/components/seo/generator-theme-maps.ts` — **the real one**, imported by `GeneratorPageContent.svelte`. Has `GENERATOR_SLUGS_WITH_THEME` (→ `shouldSyncGeneratorTheme`, gates `isThemeCustomizable`) and `SLUGS_USING_STORED_THEME` (localStorage persistence).
