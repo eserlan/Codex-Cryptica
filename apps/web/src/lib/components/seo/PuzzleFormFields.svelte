@@ -5,13 +5,13 @@
   let {
     genre = $bindable(puzzleConfig.genres[0]),
     purpose = $bindable(puzzleConfig.purposes[0]),
-    difficulty = $bindable(puzzleConfig.difficulties[0]),
+    complexity = $bindable(puzzleConfig.complexities[0]),
     style = $bindable(puzzleConfig.styles[0]),
     partyLevel = $bindable(""),
     playerCount = $bindable(""),
     capabilities = $bindable(""),
-    spotlight = $bindable(puzzleConfig.spotlights[0]),
-    failureStyle = $bindable(puzzleConfig.failureStyles[0]),
+    participationStyle = $bindable(puzzleConfig.participationStyles[0]),
+    failurePressure = $bindable(puzzleConfig.failurePressures[0]),
     system = $bindable(puzzleConfig.systems[0]),
     downstreamConsequence = $bindable(""),
     campaignContext = $bindable(""),
@@ -19,13 +19,13 @@
   }: {
     genre: string;
     purpose: string;
-    difficulty: string;
+    complexity: string;
     style: string;
     partyLevel: string;
     playerCount: string;
     capabilities: string;
-    spotlight: string;
-    failureStyle: string;
+    participationStyle: string;
+    failurePressure: string;
     system: string;
     downstreamConsequence: string;
     campaignContext: string;
@@ -61,14 +61,14 @@
   customPlaceholder="Enter a custom purpose"
 />
 <SelectWithCustomOption
-  id="puzzle-difficulty"
-  label="Difficulty"
-  bind:value={difficulty}
-  choices={choices(puzzleConfig.difficulties)}
+  id="puzzle-complexity"
+  label="Complexity"
+  bind:value={complexity}
+  choices={choices(puzzleConfig.complexities)}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
-  customPlaceholder="Enter a custom difficulty"
+  customPlaceholder="Enter a custom complexity"
 />
 <SelectWithCustomOption
   id="puzzle-style"
@@ -81,24 +81,24 @@
   customPlaceholder="Enter a custom style"
 />
 <SelectWithCustomOption
-  id="puzzle-spotlight"
-  label="Desired spotlight"
-  bind:value={spotlight}
-  choices={choices(puzzleConfig.spotlights)}
+  id="puzzle-participation"
+  label="Participation style"
+  bind:value={participationStyle}
+  choices={choices(puzzleConfig.participationStyles)}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
-  customPlaceholder="Enter a custom spotlight"
+  customPlaceholder="Enter a custom participation style"
 />
 <SelectWithCustomOption
   id="puzzle-failure"
-  label="Failure style"
-  bind:value={failureStyle}
-  choices={choices(puzzleConfig.failureStyles)}
+  label="Failure pressure"
+  bind:value={failurePressure}
+  choices={choices(puzzleConfig.failurePressures)}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
-  customPlaceholder="Enter a custom failure style"
+  customPlaceholder="Enter a custom failure pressure"
 />
 <SelectWithCustomOption
   id="puzzle-system"
@@ -111,28 +111,43 @@
   customPlaceholder="Enter a custom system"
 />
 
-<div class="grid gap-3 sm:grid-cols-2">
-  <div class="flex flex-col gap-1.5">
-    <label for="puzzle-party-level" class={labelClass}
-      >Party level or competence</label
-    ><input
-      id="puzzle-party-level"
-      name="party_level"
-      bind:value={partyLevel}
-      class={selectClass}
-    />
-  </div>
-  <div class="flex flex-col gap-1.5">
-    <label for="puzzle-player-count" class={labelClass}>Number of players</label
-    ><input
-      id="puzzle-player-count"
-      name="player_count"
-      bind:value={playerCount}
-      inputmode="numeric"
-      class={selectClass}
-    />
-  </div>
-</div>
+{#if system !== "System-neutral"}
+  <details
+    class="rounded-lg border border-theme-border/60 bg-theme-surface/30 p-3"
+  >
+    <summary
+      class="cursor-pointer text-[11px] font-bold uppercase tracking-wider text-theme-text/80"
+      >Advanced system-specific details</summary
+    >
+    <p class="mt-1 text-[10px] leading-relaxed text-theme-muted">
+      Optional mechanical context for the selected system. These never make a
+      class, spell, or ability mandatory.
+    </p>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="puzzle-party-level" class={labelClass}
+          >Party level or competence</label
+        ><input
+          id="puzzle-party-level"
+          name="party_level"
+          bind:value={partyLevel}
+          class={selectClass}
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label for="puzzle-player-count" class={labelClass}
+          >Number of players</label
+        ><input
+          id="puzzle-player-count"
+          name="player_count"
+          bind:value={playerCount}
+          inputmode="numeric"
+          class={selectClass}
+        />
+      </div>
+    </div>
+  </details>
+{/if}
 
 <div class="flex flex-col gap-1.5">
   <label for="puzzle-capabilities" class={labelClass}
@@ -198,10 +213,10 @@
     type="button"
     onclick={() => {
       purpose = pickFrom(puzzleConfig.purposes);
-      difficulty = pickFrom(puzzleConfig.difficulties);
+      complexity = pickFrom(puzzleConfig.complexities);
       style = pickFrom(puzzleConfig.styles);
-      spotlight = pickFrom(puzzleConfig.spotlights);
-      failureStyle = pickFrom(puzzleConfig.failureStyles);
+      participationStyle = pickFrom(puzzleConfig.participationStyles);
+      failurePressure = pickFrom(puzzleConfig.failurePressures);
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"

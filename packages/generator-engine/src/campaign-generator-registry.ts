@@ -51,6 +51,7 @@ import {
 } from "./public-quest";
 import {
   buildPuzzlePrompt,
+  DEFAULT_PUZZLE_SYSTEM,
   generatePuzzleLocal,
   puzzleConfig,
   type PuzzleGeneratorOptions,
@@ -972,13 +973,13 @@ function puzzleOptions(request: GeneratorRunRequest): PuzzleGeneratorOptions {
       themeIdToLabel[request.themeId] ?? "Fantasy",
     ),
     purpose: optionString(request, "purpose", ""),
-    difficulty: optionString(request, "difficulty", ""),
+    complexity: optionString(request, "complexity", ""),
     style: optionString(request, "style", ""),
     partyLevel: optionString(request, "partyLevel", ""),
     playerCount: optionString(request, "playerCount", ""),
     capabilities: optionString(request, "capabilities", ""),
-    spotlight: optionString(request, "spotlight", ""),
-    failureStyle: optionString(request, "failureStyle", ""),
+    participationStyle: optionString(request, "participationStyle", ""),
+    failurePressure: optionString(request, "failurePressure", ""),
     system: optionString(request, "system", ""),
     downstreamConsequence: optionString(request, "downstreamConsequence", ""),
     campaignContext: request.instructions?.trim() || undefined,
@@ -2192,10 +2193,10 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         })),
       },
       {
-        id: "difficulty",
-        label: "Difficulty",
+        id: "complexity",
+        label: "Complexity",
         control: "select",
-        choices: puzzleConfig.difficulties.map((value) => ({
+        choices: puzzleConfig.complexities.map((value) => ({
           value,
           label: value,
         })),
@@ -2206,8 +2207,18 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "select",
         choices: puzzleConfig.styles.map((value) => ({ value, label: value })),
       },
-      { id: "partyLevel", label: "Party Level or Competence", control: "text" },
-      { id: "playerCount", label: "Number of Players", control: "number" },
+      {
+        id: "partyLevel",
+        label: "Advanced: Party Level or Competence",
+        control: "text",
+        visibleWhen: { optionId: "system", notValues: [DEFAULT_PUZZLE_SYSTEM] },
+      },
+      {
+        id: "playerCount",
+        label: "Advanced: Exact Player Count",
+        control: "number",
+        visibleWhen: { optionId: "system", notValues: [DEFAULT_PUZZLE_SYSTEM] },
+      },
       {
         id: "capabilities",
         label: "PC Capabilities to Make Matter",
@@ -2216,19 +2227,19 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "textarea",
       },
       {
-        id: "spotlight",
-        label: "Desired Spotlight",
+        id: "participationStyle",
+        label: "Participation Style",
         control: "select",
-        choices: puzzleConfig.spotlights.map((value) => ({
+        choices: puzzleConfig.participationStyles.map((value) => ({
           value,
           label: value,
         })),
       },
       {
-        id: "failureStyle",
-        label: "Failure Style",
+        id: "failurePressure",
+        label: "Failure Pressure",
         control: "select",
-        choices: puzzleConfig.failureStyles.map((value) => ({
+        choices: puzzleConfig.failurePressures.map((value) => ({
           value,
           label: value,
         })),
@@ -2248,14 +2259,14 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     defaults: {
       genre: "",
       purpose: "",
-      difficulty: "",
+      complexity: "",
       style: "",
       partyLevel: "",
       playerCount: "",
       capabilities: "",
-      spotlight: "",
-      failureStyle: "",
-      system: "",
+      participationStyle: "",
+      failurePressure: "",
+      system: DEFAULT_PUZZLE_SYSTEM,
       downstreamConsequence: "",
     },
     generate: generatePuzzle,

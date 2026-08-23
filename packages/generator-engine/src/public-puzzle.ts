@@ -24,13 +24,7 @@ export const puzzleConfig = {
     "Complete ritual",
     "Survive trap",
   ],
-  difficulties: [
-    "Trivial",
-    "Straightforward",
-    "Challenging",
-    "Hard",
-    "Fiendish",
-  ],
+  complexities: ["Simple", "Moderate", "Elaborate"],
   styles: [
     "Environmental",
     "Magical",
@@ -42,18 +36,19 @@ export const puzzleConfig = {
     "Sensory",
     "Combat-puzzle",
   ],
-  spotlights: [
-    "Whole-party collaboration",
-    "Several PCs sequentially",
-    "One PC",
+  participationStyles: [
+    "Any character can contribute",
+    "Spotlight one character",
+    "Spotlight 2–3 characters",
+    "Whole-party cooperation",
+    "Sequential individual challenges",
   ],
-  failureStyles: [
-    "Fail forward",
+  failurePressures: [
+    "None",
     "Complication",
     "Time pressure",
-    "Enemy activation",
-    "Resource loss",
-    "Damage",
+    "Danger",
+    "Combat",
   ],
   systems: [
     "System-neutral",
@@ -69,13 +64,13 @@ export const DEFAULT_PUZZLE_SYSTEM = "System-neutral";
 export interface PuzzleGeneratorOptions {
   genre?: string;
   purpose?: string;
-  difficulty?: string;
+  complexity?: string;
   style?: string;
   partyLevel?: string;
   playerCount?: string;
   capabilities?: string;
-  spotlight?: string;
-  failureStyle?: string;
+  participationStyle?: string;
+  failurePressure?: string;
   system?: string;
   downstreamConsequence?: string;
   campaignContext?: string;
@@ -84,13 +79,13 @@ export interface PuzzleGeneratorOptions {
 export interface ResolvedPuzzleOptions {
   genre: string;
   purpose: string;
-  difficulty: string;
+  complexity: string;
   style: string;
   partyLevel: string;
   playerCount: string;
   capabilities: string;
-  spotlight: string;
-  failureStyle: string;
+  participationStyle: string;
+  failurePressure: string;
   system: string;
   downstreamConsequence: string;
   campaignContext: string;
@@ -113,13 +108,19 @@ export function resolvePuzzle(
   return {
     genre: text(options.genre) || puzzleConfig.genres[0],
     purpose: pickOption(options.purpose, puzzleConfig.purposes),
-    difficulty: pickOption(options.difficulty, puzzleConfig.difficulties),
+    complexity: pickOption(options.complexity, puzzleConfig.complexities),
     style: pickOption(options.style, puzzleConfig.styles),
-    partyLevel: text(options.partyLevel) || "Not specified",
-    playerCount: text(options.playerCount) || "Not specified",
+    partyLevel: text(options.partyLevel),
+    playerCount: text(options.playerCount),
     capabilities: text(options.capabilities),
-    spotlight: pickOption(options.spotlight, puzzleConfig.spotlights),
-    failureStyle: pickOption(options.failureStyle, puzzleConfig.failureStyles),
+    participationStyle: pickOption(
+      options.participationStyle,
+      puzzleConfig.participationStyles,
+    ),
+    failurePressure: pickOption(
+      options.failurePressure,
+      puzzleConfig.failurePressures,
+    ),
     system: puzzleConfig.systems.includes(options.system as never)
       ? options.system!
       : DEFAULT_PUZZLE_SYSTEM,
@@ -138,11 +139,11 @@ function render(
     type: "note",
     kind: "puzzle",
     title,
-    summary: `${resolved.difficulty} ${resolved.style.toLowerCase()} puzzle for ${resolved.purpose.toLowerCase()}.`,
+    summary: `${resolved.complexity} ${resolved.style.toLowerCase()} puzzle for ${resolved.purpose.toLowerCase()}.`,
     content,
     lore:
       lore ||
-      `### At a Glance\n- **Genre:** ${resolved.genre}\n- **Difficulty:** ${resolved.difficulty}\n- **System:** ${resolved.system}\n- **Spotlight:** ${resolved.spotlight}`,
+      `### At a Glance\n- **Genre:** ${resolved.genre}\n- **Complexity:** ${resolved.complexity}\n- **System:** ${resolved.system}\n- **Participation:** ${resolved.participationStyle}`,
     labels: [
       "puzzle",
       "puzzle-generator",
@@ -186,7 +187,9 @@ export function generatePuzzleLocal(
     "- Use an improvised resource or an original interpretation of the fiction to create a new route forward.",
     "",
     "## Failure & Escalation",
-    `On a failed attempt, apply ${resolved.failureStyle.toLowerCase()} rather than a dead end: reveal new information, change the situation, and let the party choose how to proceed.`,
+    resolved.failurePressure === "None"
+      ? "Failed attempts provide clear feedback without adding pressure, so the puzzle remains a safe point for experimentation."
+      : `On a failed attempt, apply ${resolved.failurePressure.toLowerCase()} rather than a dead end: reveal new information, change the situation, and let the party choose how to proceed.`,
     "",
     "## Escalating Hints",
     "1. Repeat the obvious clue in a new sensory form.",
@@ -197,7 +200,7 @@ export function generatePuzzleLocal(
     "Describe the visible parts and the first clue freely. Let checks add context or reduce risk, never hide the only path behind a roll. Ask what each player does before offering a hint, then reward experiments with concrete feedback.",
     "",
     "## Scaling",
-    `Simplify by making two actions sufficient or offering the emergency clue earlier. Increase difficulty by adding a clock, a second interacting component, or a consequence that changes the next encounter.`,
+    `Simplify by making two actions sufficient or offering the emergency clue earlier. Increase complexity by adding a clock, a second interacting component, or a consequence that changes the next encounter.`,
     resolved.downstreamConsequence
       ? `\n## Downstream Consequences\n${resolved.downstreamConsequence}`
       : "",
@@ -220,14 +223,18 @@ export function buildPuzzlePrompt(
   const details = [
     `Genre: ${resolved.genre}`,
     `Purpose: ${resolved.purpose}`,
-    `Difficulty: ${resolved.difficulty}`,
+    `Complexity: ${resolved.complexity}`,
     `Puzzle style: ${resolved.style}`,
-    `Party level / competence: ${resolved.partyLevel}`,
-    `Players: ${resolved.playerCount}`,
-    `Desired spotlight: ${resolved.spotlight}`,
+    `Participation style: ${resolved.participationStyle}`,
     `Capabilities to make useful without gating: ${resolved.capabilities || "None supplied"}`,
-    `Failure style: ${resolved.failureStyle}`,
+    `Failure pressure: ${resolved.failurePressure}`,
     `System tailoring: ${resolved.system}`,
+    resolved.system !== DEFAULT_PUZZLE_SYSTEM && resolved.partyLevel
+      ? `Party level / competence (system-specific only): ${resolved.partyLevel}`
+      : "",
+    resolved.system !== DEFAULT_PUZZLE_SYSTEM && resolved.playerCount
+      ? `Player count (system-specific only): ${resolved.playerCount}`
+      : "",
     resolved.downstreamConsequence &&
       `Downstream consequence: ${resolved.downstreamConsequence}`,
     resolved.campaignContext && `Campaign context: ${resolved.campaignContext}`,

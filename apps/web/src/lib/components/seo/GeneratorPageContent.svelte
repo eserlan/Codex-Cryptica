@@ -231,13 +231,13 @@
   let puzzle = $state({
     genre: puzzleConfig.genres[0],
     purpose: puzzleConfig.purposes[0],
-    difficulty: puzzleConfig.difficulties[0],
+    complexity: puzzleConfig.complexities[0],
     style: puzzleConfig.styles[0],
     partyLevel: "",
     playerCount: "",
     capabilities: "",
-    spotlight: puzzleConfig.spotlights[0],
-    failureStyle: puzzleConfig.failureStyles[0],
+    participationStyle: puzzleConfig.participationStyles[0],
+    failurePressure: puzzleConfig.failurePressures[0],
     system: puzzleConfig.systems[0],
     downstreamConsequence: "",
     campaignContext: "",
@@ -1007,13 +1007,13 @@
       <PuzzleFormFields
         bind:genre={puzzle.genre}
         bind:purpose={puzzle.purpose}
-        bind:difficulty={puzzle.difficulty}
+        bind:complexity={puzzle.complexity}
         bind:style={puzzle.style}
         bind:partyLevel={puzzle.partyLevel}
         bind:playerCount={puzzle.playerCount}
         bind:capabilities={puzzle.capabilities}
-        bind:spotlight={puzzle.spotlight}
-        bind:failureStyle={puzzle.failureStyle}
+        bind:participationStyle={puzzle.participationStyle}
+        bind:failurePressure={puzzle.failurePressure}
         bind:system={puzzle.system}
         bind:downstreamConsequence={puzzle.downstreamConsequence}
         bind:campaignContext={puzzle.campaignContext}

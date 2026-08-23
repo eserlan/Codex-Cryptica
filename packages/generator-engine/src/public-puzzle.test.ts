@@ -46,4 +46,17 @@ describe("Puzzle generator", () => {
     expect(resolvePuzzle({}).system).toBe("System-neutral");
     expect(resolvePuzzle({ system: "D&D 5e" }).system).toBe("D&D 5e");
   });
+
+  it("only sends level and player count for system-specific tailoring", () => {
+    const neutral = buildPuzzlePrompt({ partyLevel: "5", playerCount: "4" });
+    const tailored = buildPuzzlePrompt({
+      system: "D&D 5e",
+      partyLevel: "5",
+      playerCount: "4",
+    });
+    expect(neutral.userMessage).not.toContain("Party level / competence");
+    expect(neutral.userMessage).not.toContain("Player count");
+    expect(tailored.userMessage).toContain("Party level / competence");
+    expect(tailored.userMessage).toContain("Player count");
+  });
 });
