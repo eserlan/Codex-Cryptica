@@ -195,10 +195,13 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     const scan = createIncrementalJsonScanner();
     let buffer = "";
 
-    for await (const event of modelWithStream.generateContentStream({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig,
-    })) {
+    for await (const event of modelWithStream.generateContentStream(
+      {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig,
+      },
+      options?.signal,
+    )) {
       if (event.type === "delta") {
         buffer += event.text;
         for (const field of scan(buffer)) {

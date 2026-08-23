@@ -895,6 +895,7 @@ export class CampaignGeneratorService {
    */
   async *generateDraftStream(
     request: GeneratorRunRequest,
+    signal?: AbortSignal,
   ): AsyncGenerator<
     GenerationEvent | { type: "draft"; draft: GeneratedDraft }
   > {
@@ -964,7 +965,7 @@ export class CampaignGeneratorService {
         for await (const event of this.aiGateway.completeStream(
           fullPrompt,
           SYSTEM_INSTRUCTION,
-          { interaction },
+          { interaction, signal },
         )) {
           if (event.type === "complete") {
             raw = event.text;
@@ -974,9 +975,11 @@ export class CampaignGeneratorService {
           yield event;
         }
       } catch {
+        if (signal?.aborted) return; // User cancelled — no fallback draft.
         break; // Network/stream failure — fall through to local.
       }
 
+      if (signal?.aborted) return; // User cancelled — no fallback draft.
       if (!sawComplete) break; // Adaptor reported an `error` event — fall through to local.
 
       const output = parseGenericGeneratorOutput(

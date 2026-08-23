@@ -350,6 +350,13 @@ export interface AIGeneratorCompleteOptions {
     maxOutputTokens?: number;
     responseMimeType?: string;
   };
+  /**
+   * Cancels an in-flight `completeStream()` call (#2423) — a user closing
+   * the generator modal or clicking Cancel mid-generation. Only meaningful
+   * for `completeStream`; `complete()` implementations may ignore it, since
+   * a buffered call has no partial UI state worth tearing down early.
+   */
+  signal?: AbortSignal;
 }
 
 export interface AIGeneratorCompleteResult {
