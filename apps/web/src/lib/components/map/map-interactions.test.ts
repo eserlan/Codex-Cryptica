@@ -227,6 +227,65 @@ describe("MapInteractionManager", () => {
     expect(mapStore.updateViewport).toHaveBeenCalled();
   });
 
+  it("shift+scroll during a grid-fit drag cycles the span instead of zooming", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).gridFitMode = true;
+
+    manager.onPointerDown(
+      new MouseEvent("mousedown", {
+        clientX: 10,
+        clientY: 10,
+        button: 0,
+      }) as unknown as PointerEvent,
+    );
+    expect(manager.gridFitStart).toEqual({ x: 10, y: 10 });
+    expect(manager.gridFitSpan).toBe(3);
+
+    const event = new WheelEvent("wheel", {
+      clientX: 10,
+      clientY: 10,
+      deltaY: -100,
+      shiftKey: true,
+    });
+    manager.onWheel(event);
+
+    expect(manager.gridFitSpan).toBe(5);
+    expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+    (mapSession as any).gridFitMode = false;
+  });
+
+  it("blocks plain (non-shift) scroll-zoom during a grid-fit drag, since it would corrupt the in-progress rectangle", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).gridFitMode = true;
+
+    manager.onPointerDown(
+      new MouseEvent("mousedown", {
+        clientX: 10,
+        clientY: 10,
+        button: 0,
+      }) as unknown as PointerEvent,
+    );
+    expect(manager.gridFitStart).toEqual({ x: 10, y: 10 });
+
+    const event = new WheelEvent("wheel", {
+      clientX: 10,
+      clientY: 10,
+      deltaY: -100,
+      shiftKey: false,
+    });
+    vi.spyOn(event, "preventDefault");
+    manager.onWheel(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(mapStore.updateViewport).not.toHaveBeenCalled();
+    expect(manager.gridFitSpan).toBe(3); // unchanged — no span cycling either
+
+    (mapSession as any).gridFitMode = false;
+  });
+
   it("should clear selection on Escape", async () => {
     const { mapSession } = await import("../../stores/map-session.svelte");
     mapSession.selectedTokens.add("token-1");

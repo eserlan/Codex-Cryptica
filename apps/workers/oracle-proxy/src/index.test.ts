@@ -34,7 +34,7 @@ describe("Oracle Proxy Worker CORS", () => {
     const response = await worker.fetch(
       new Request(
         "https://oracle-proxy.espen-erlandsen.workers.dev/api/starter-tile-decks/kenney-scribble-dungeons",
-        { headers: { Origin: "https://codex-cryptica.com" } },
+        { headers: { Origin: "https://codexcryptica.com" } },
       ),
       {
         ...emptyEnv,
@@ -50,7 +50,7 @@ describe("Oracle Proxy Worker CORS", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      "https://codex-cryptica.com",
+      "https://codexcryptica.com",
     );
   });
 

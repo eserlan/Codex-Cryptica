@@ -30,6 +30,8 @@ describe("UIPersistence", () => {
       "codex_recent_connection_labels",
       "codex_right_sidebar_width",
       "codex_skip_landing",
+      "codex_tile_deck_catalog_collapsed",
+      "codex_tile_deck_grid_expanded",
       "codex_vtt_entity_list_collapsed",
       "codex_vtt_sidebar_collapsed",
       "codex_world_page_dismissed_at",

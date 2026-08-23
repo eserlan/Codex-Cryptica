@@ -496,7 +496,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vtt-tile-decks",
     title: "VTT Tile Decks",
     content:
-      "Use Tile Decks in the VTT sidebar to add the Scribble Dungeons starter deck or import your own PNG images. Filter the tile palette by category, choose a specific tile or draw one at random, then click the map to place it. Starter tiles are downloaded once into the current vault, so drawing remains available offline.",
+      'Use Tile Decks in the VTT sidebar to add a starter pack (Scribble Dungeons, Geomorphs 2013, Geomorph Collection) or import your own PNG images. Filter the tile palette by category, choose a specific tile, draw one at random from a deck, or use "Draw from all decks" to pull from every installed deck at once. New tiles snap edge-to-edge against tiles already on the map. Starter tiles are downloaded once into the current vault, so drawing remains available offline.',
     icon: "icon-[lucide--layers-3]",
   },
   "voice-chat": {

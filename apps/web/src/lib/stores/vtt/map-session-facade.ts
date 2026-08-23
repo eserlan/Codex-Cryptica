@@ -182,14 +182,50 @@ export abstract class MapSessionFacade {
     name: string,
     tiles: Array<{ name: string; imagePath: string; category?: string }>,
     starterDeckId?: string,
+    license?: string,
+    sourceUrl?: string,
   ) {
-    return this.tileDeckManager.createDeck(name, tiles, starterDeckId);
+    return this.tileDeckManager.createDeck(
+      name,
+      tiles,
+      starterDeckId,
+      license,
+      sourceUrl,
+    );
+  }
+  beginStarterTileDeck(
+    name: string,
+    starterDeckId?: string,
+    license?: string,
+    sourceUrl?: string,
+  ) {
+    return this.tileDeckManager.beginDeck(
+      name,
+      starterDeckId,
+      license,
+      sourceUrl,
+    );
+  }
+  addTileToDeck(
+    deckId: string,
+    tile: { name: string; imagePath: string; category?: string },
+  ) {
+    this.tileDeckManager.addTile(deckId, tile);
+  }
+  persistTileDecks() {
+    this.tileDeckManager.persist();
+  }
+  removeTileDeck(deckId: string) {
+    return this.tileDeckManager.removeDeck(deckId);
   }
   setTileDeckHardEdges(deckId: string, hardEdges: boolean) {
     this.tileDeckManager.setHardEdges(deckId, hardEdges);
   }
   drawTile(deckId: string, size = 150) {
     return this.tileDeckManager.draw(deckId, size);
+  }
+  drawAnyTile(size = 150) {
+    return this.tileDeckManager.drawAny(size);
   }
   selectTile(deckId: string, tileId: string, size = 150) {
     return this.tileDeckManager.select(deckId, tileId, size);

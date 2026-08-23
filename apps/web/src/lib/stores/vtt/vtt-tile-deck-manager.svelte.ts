@@ -8,6 +8,7 @@ import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
 import {
   canPlaceSpatialImage,
   nextSpatialImageZIndex,
+  snapToNeighborTiles,
 } from "@codex/spatial-engine";
 
 export interface VTTTileDeckManagerDependencies {
@@ -47,6 +48,8 @@ export class VTTTileDeckManager {
     name: string,
     tiles: Array<Omit<TileDeckEntry, "id">>,
     starterDeckId?: string,
+    license?: string,
+    sourceUrl?: string,
   ) {
     const trimmedName = name.trim();
     if (!trimmedName || tiles.length === 0) return null;
@@ -55,12 +58,64 @@ export class VTTTileDeckManager {
       id: this.idGenerator.uuid(),
       name: trimmedName,
       starterDeckId,
+      license,
+      sourceUrl,
       hardEdges: false,
       tiles: tiles.map((tile) => ({ ...tile, id: this.idGenerator.uuid() })),
     };
     this.decks = [...this.decks, deck];
     this.deps.persistDraft();
     return deck;
+  }
+
+  /** Creates a deck with no tiles yet, meant to be filled via addTile as a starter pack streams in. */
+  beginDeck(
+    name: string,
+    starterDeckId?: string,
+    license?: string,
+    sourceUrl?: string,
+  ) {
+    const trimmedName = name.trim();
+    if (!trimmedName) return null;
+
+    const deck: TileDeck = {
+      id: this.idGenerator.uuid(),
+      name: trimmedName,
+      starterDeckId,
+      license,
+      sourceUrl,
+      hardEdges: false,
+      tiles: [],
+    };
+    this.decks = [...this.decks, deck];
+    return deck;
+  }
+
+  /** Appends a single tile to a deck's reactive state without persisting — call persist() to flush. */
+  addTile(deckId: string, tile: Omit<TileDeckEntry, "id">) {
+    this.decks = this.decks.map((deck) =>
+      deck.id === deckId
+        ? {
+            ...deck,
+            tiles: [...deck.tiles, { ...tile, id: this.idGenerator.uuid() }],
+          }
+        : deck,
+    );
+  }
+
+  persist() {
+    this.deps.persistDraft();
+  }
+
+  removeDeck(deckId: string) {
+    const existed = this.decks.some((deck) => deck.id === deckId);
+    if (!existed) return false;
+    this.decks = this.decks.filter((deck) => deck.id !== deckId);
+    if (this.pendingPlacement?.deckId === deckId) {
+      this.pendingPlacement = null;
+    }
+    this.deps.persistDraft();
+    return true;
   }
 
   setHardEdges(deckId: string, hardEdges: boolean) {
@@ -74,6 +129,16 @@ export class VTTTileDeckManager {
     const deck = this.decks.find((candidate) => candidate.id === deckId);
     if (!deck || deck.tiles.length === 0) return null;
     const tile = deck.tiles[Math.floor(Math.random() * deck.tiles.length)];
+    return this.beginPlacement(deckId, tile, size);
+  }
+
+  /** Draws a random tile from across every deck, each tile weighted equally. */
+  drawAny(size = 150) {
+    const pool = this.decks.flatMap((deck) =>
+      deck.tiles.map((tile) => ({ deckId: deck.id, tile })),
+    );
+    if (pool.length === 0) return null;
+    const { deckId, tile } = pool[Math.floor(Math.random() * pool.length)];
     return this.beginPlacement(deckId, tile, size);
   }
 
@@ -96,14 +161,24 @@ export class VTTTileDeckManager {
       { x, y },
       { width: pending.size, height: pending.size },
     ) ?? { x, y, width: pending.size, height: pending.size };
+
+    // Magnetically align to nearby placed tiles' edges so a room/geomorph
+    // pack can be assembled edge-to-edge without pixel-perfect dragging.
+    const snapThreshold = Math.max(12, normalized.width * 0.12);
+    const snapped = snapToNeighborTiles(
+      normalized,
+      this.existingTiles(),
+      snapThreshold,
+    );
+
     this.pendingPlacement = {
       ...pending,
-      x: normalized.x,
-      y: normalized.y,
+      x: snapped.x,
+      y: snapped.y,
       size: normalized.width,
       valid: this.canPlace(pending.deckId, {
-        x: normalized.x,
-        y: normalized.y,
+        x: snapped.x,
+        y: snapped.y,
         width: normalized.width,
         height: normalized.height,
       }),

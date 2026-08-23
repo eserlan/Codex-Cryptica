@@ -268,4 +268,44 @@ describe("MapViewAssetLoader", () => {
       );
     });
   });
+
+  it("skips image resolution entirely for a blank map with no assetPath", () => {
+    const onClear = vi.fn();
+    const onImageLoaded = vi.fn();
+    const onMaskLoaded = vi.fn();
+    const onDimensionsLoaded = vi.fn();
+    const onError = vi.fn();
+    const resolveImageUrl = vi.fn();
+    const loadMask = vi.fn();
+    const createImage = vi.fn();
+
+    const loader = new MapViewAssetLoader({
+      vault: { resolveImageUrl, releaseImageUrl: vi.fn() },
+      mapStore: { loadMask },
+      createImage,
+      onClear,
+      onImageLoaded,
+      onMaskLoaded,
+      onDimensionsLoaded,
+      onError,
+    });
+
+    const cleanup = loader.sync({
+      id: "map-1",
+      name: "Blank Map",
+      assetPath: "",
+      dimensions: { width: 4000, height: 4000 },
+      pins: [],
+      fogOfWar: { maskPath: "maps/map-1_mask.png" },
+    });
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(resolveImageUrl).not.toHaveBeenCalled();
+    expect(createImage).not.toHaveBeenCalled();
+    expect(loadMask).not.toHaveBeenCalled();
+    expect(onImageLoaded).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+
+    cleanup();
+  });
 });

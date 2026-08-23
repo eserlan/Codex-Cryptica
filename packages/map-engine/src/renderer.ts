@@ -45,6 +45,8 @@ export interface RenderToken {
   color: string;
   label: string;
   image?: HTMLImageElement | null;
+  /** Which part of the image to keep in view when cropped to fit the token's shape. Defaults to centered. */
+  imageFocus?: "center" | "top" | "bottom" | "left" | "right";
   selected?: boolean;
   primarySelected?: boolean;
   active?: boolean;
@@ -310,7 +312,11 @@ export function renderMap(options: RenderOptions) {
   // Clear canvas
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-  if (!image || image.width === 0 || image.height === 0) return;
+  const hasImage = Boolean(image && image.width > 0 && image.height > 0);
+  // The image's on-canvas bounds, also used to size the fog overlay (step 6)
+  // even when there's no image — the mask canvas is always sized to the
+  // map's intended dimensions (see MapView.svelte's mask-loading effect).
+  const boundsSize = hasImage && image ? image : maskCanvas;
 
   const center = imageToViewport(
     originPt,
@@ -320,21 +326,18 @@ export function renderMap(options: RenderOptions) {
   );
 
   // 1. Draw background image
-  ctx.save();
-  ctx.translate(center.x, center.y);
-  ctx.scale(transform.zoom, transform.zoom);
-  ctx.drawImage(
-    image,
-    -image.width / 2,
-    -image.height / 2,
-    image.width,
-    image.height,
-  );
-  ctx.restore();
-
-  // 3. Draw Grid
-  if (grid && grid.type !== "none") {
-    drawGrid(ctx, transform, canvasSize, grid, cache);
+  if (hasImage && image) {
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.scale(transform.zoom, transform.zoom);
+    ctx.drawImage(
+      image,
+      -image.width / 2,
+      -image.height / 2,
+      image.width,
+      image.height,
+    );
+    ctx.restore();
   }
 
   // 4. Draw pins
@@ -419,13 +422,29 @@ export function renderMap(options: RenderOptions) {
       const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;
       const drawHeight = imageAspect > 1 ? diameter : diameter / imageAspect;
 
-      ctx.drawImage(
-        token.image,
-        -drawWidth / 2,
-        -drawHeight / 2,
-        drawWidth,
-        drawHeight,
-      );
+      // Cover-fit crops whichever axis overflows the token's diameter. By
+      // default that crop is centered (equal amounts trimmed off both
+      // sides) — imageFocus instead pins one edge of the image to the
+      // token's edge, so e.g. a portrait whose subject sits near the top
+      // doesn't get its head cropped off by a symmetric center-crop.
+      let offsetX = -drawWidth / 2;
+      let offsetY = -drawHeight / 2;
+      switch (token.imageFocus) {
+        case "left":
+          offsetX = -diameter / 2;
+          break;
+        case "right":
+          offsetX = diameter / 2 - drawWidth;
+          break;
+        case "top":
+          offsetY = -diameter / 2;
+          break;
+        case "bottom":
+          offsetY = diameter / 2 - drawHeight;
+          break;
+      }
+
+      ctx.drawImage(token.image, offsetX, offsetY, drawWidth, drawHeight);
     } else if (token.image) {
       ctx.fillStyle = token.color || "#f59e0b";
       ctx.fill();
@@ -441,7 +460,15 @@ export function renderMap(options: RenderOptions) {
       const accent = token.active
         ? options.accentColor || "#d97706"
         : "#3b82f6";
-      const borderWidth = token.active ? 8 : 5;
+      // Scale the selection ring relative to the token's own size instead of
+      // a fixed pixel width — a border sized for a typical ~100px token
+      // would visually swallow a much smaller one (e.g. a token sized to a
+      // grid fit to a tile's fine native pixel grid), making an otherwise
+      // correctly-sized token look like it oversteps its cell.
+      const baseBorderWidth = token.active ? 8 : 5;
+      const borderWidth = Math.min(baseBorderWidth, Math.max(2, radius * 0.25));
+      const highlightWidth = Math.min(2, Math.max(1, radius * 0.08));
+      const blurScale = Math.min(1, radius / 25);
 
       ctx.save();
       ctx.translate(center.x, center.y);
@@ -452,7 +479,7 @@ export function renderMap(options: RenderOptions) {
       ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       ctx.lineWidth = borderWidth + 4;
       ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-      ctx.shadowBlur = token.active ? 20 : 12;
+      ctx.shadowBlur = (token.active ? 20 : 12) * blurScale;
       ctx.stroke();
 
       // Main thick border
@@ -460,15 +487,15 @@ export function renderMap(options: RenderOptions) {
       ctx.strokeStyle = accent;
       ctx.lineWidth = borderWidth;
       ctx.shadowColor = accent;
-      ctx.shadowBlur = token.active ? 16 : 10;
+      ctx.shadowBlur = (token.active ? 16 : 10) * blurScale;
       ctx.stroke();
 
       // Thin bright highlight on top
       traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = highlightWidth;
       ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-      ctx.shadowBlur = 4;
+      ctx.shadowBlur = 4 * blurScale;
       ctx.stroke();
 
       ctx.restore();
@@ -688,11 +715,19 @@ export function renderMap(options: RenderOptions) {
     }
   }
 
+  // 5b. Draw Grid above tiles/tokens (translucent) so it stays visible over
+  // large tile art (e.g. geomorph packs) instead of being hidden beneath it —
+  // also makes grid-fit-by-drag usable when dragging over a placed tile.
+  if (grid && grid.type !== "none") {
+    drawGrid(ctx, transform, canvasSize, grid, cache);
+  }
+
   // 6. Draw Fog of War above pins and tokens so the reveal state masks them.
   // Applying destination-out directly on the main canvas would erase the map
   // image itself, not just the fog layer on top of it.
   if (
     showFog &&
+    boundsSize &&
     maskCanvas &&
     maskCanvas.width > 0 &&
     maskCanvas.height > 0 &&
@@ -712,20 +747,20 @@ export function renderMap(options: RenderOptions) {
       fogCtx.translate(center.x, center.y);
       fogCtx.scale(transform.zoom, transform.zoom);
       fogCtx.fillRect(
-        -image.width / 2,
-        -image.height / 2,
-        image.width,
-        image.height,
+        -boundsSize.width / 2,
+        -boundsSize.height / 2,
+        boundsSize.width,
+        boundsSize.height,
       );
 
       // 3. Punch holes where map is revealed (white = revealed in mask)
       fogCtx.globalCompositeOperation = "destination-out";
       fogCtx.drawImage(
         maskCanvas,
-        -image.width / 2,
-        -image.height / 2,
-        image.width,
-        image.height,
+        -boundsSize.width / 2,
+        -boundsSize.height / 2,
+        boundsSize.width,
+        boundsSize.height,
       );
       fogCtx.restore();
       fogCtx.globalCompositeOperation = "source-over";

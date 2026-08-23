@@ -45,6 +45,9 @@ export class MapInteractionManager {
   get gridFitEnd() {
     return this.gridInteractions.gridFitEnd;
   }
+  get gridFitSpan() {
+    return this.gridInteractions.gridFitSpan;
+  }
   get boxSelectStart() {
     return this.boxSelection.start;
   }
@@ -291,7 +294,7 @@ export class MapInteractionManager {
       return;
     }
 
-    if (mapSession.vttEnabled && this.cachedRect) {
+    if (mapSession.vttEnabled && this.cachedRect && !mapSession.gridFitMode) {
       const hitToken = this.tokenDrag.begin(this.lastMousePos);
 
       if (hitToken) {
@@ -610,6 +613,19 @@ export class MapInteractionManager {
   };
 
   onWheel = (e: WheelEvent) => {
+    if (this.gridFitStart) {
+      // Zooming mid-drag would re-scale the viewport out from under the
+      // rectangle's already-captured screen coordinates — commitGridFit()
+      // unprojects them with whatever transform is current at commit time,
+      // so a zoom here would silently corrupt the fit. Shift+scroll cycles
+      // the span instead; any other scroll while fitting is a no-op.
+      e.preventDefault();
+      if (e.shiftKey) {
+        this.gridInteractions.cycleGridFitSpan(e.deltaY);
+      }
+      return;
+    }
+
     const canResize =
       mapSession.vttEnabled &&
       mapStore.isGMMode &&

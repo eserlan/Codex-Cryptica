@@ -59,6 +59,85 @@ describe("VTTTileDeckManager", () => {
     );
   });
 
+  it("streams tiles into a deck started empty, persisting only on explicit calls", () => {
+    const { manager, persistDraft } = createManager();
+    const deck = manager.beginDeck(
+      "Geomorphs",
+      "majcher-geomorphs-2013",
+      "CC BY 4.0",
+      "https://majcher.itch.io/geomorphs-2013",
+    );
+
+    expect(deck).toMatchObject({
+      name: "Geomorphs",
+      starterDeckId: "majcher-geomorphs-2013",
+      license: "CC BY 4.0",
+      sourceUrl: "https://majcher.itch.io/geomorphs-2013",
+      tiles: [],
+    });
+    expect(persistDraft).not.toHaveBeenCalled();
+
+    manager.addTile(deck!.id, {
+      name: "Geomorph 1",
+      imagePath: "full_0001.png",
+    });
+    manager.addTile(deck!.id, {
+      name: "Geomorph 2",
+      imagePath: "full_0002.png",
+    });
+
+    expect(manager.decks[0].tiles).toHaveLength(2);
+    expect(persistDraft).not.toHaveBeenCalled();
+
+    manager.persist();
+    expect(persistDraft).toHaveBeenCalledOnce();
+  });
+
+  it("draws from any deck, weighting every tile equally", () => {
+    const { manager } = createManager();
+    manager.createDeck("Small", [{ name: "Only tile", imagePath: "only.png" }]);
+    manager.createDeck("Big", [
+      { name: "A", imagePath: "a.png" },
+      { name: "B", imagePath: "b.png" },
+      { name: "C", imagePath: "c.png" },
+    ])!;
+
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i++) {
+      const tile = manager.drawAny();
+      manager.cancelPendingPlacement();
+      seen.add(tile!.name);
+    }
+
+    // With 200 draws across 4 equally-weighted tiles, every tile should
+    // have come up at least once — flags a bug where drawAny always picks
+    // the same deck (which would starve the single-tile "Small" deck).
+    expect(seen).toEqual(new Set(["Only tile", "A", "B", "C"]));
+  });
+
+  it("returns null from drawAny when no deck has tiles", () => {
+    const { manager } = createManager();
+    manager.beginDeck("Empty");
+    expect(manager.drawAny()).toBeNull();
+  });
+
+  it("removes a deck and cancels any pending placement from it", () => {
+    const { manager, persistDraft } = createManager();
+    const deck = manager.createDeck("Rooms", [
+      { name: "Crypt", imagePath: "files/crypt.png" },
+    ]);
+    manager.draw(deck!.id);
+    expect(manager.pendingPlacement).not.toBeNull();
+    persistDraft.mockClear();
+
+    expect(manager.removeDeck(deck!.id)).toBe(true);
+    expect(manager.decks).toHaveLength(0);
+    expect(manager.pendingPlacement).toBeNull();
+    expect(persistDraft).toHaveBeenCalledOnce();
+
+    expect(manager.removeDeck(deck!.id)).toBe(false);
+  });
+
   it("refuses empty decks and hard-edge placements that overlap an existing tile", () => {
     const { manager, tokens, addToken } = createManager();
     expect(
@@ -99,6 +178,27 @@ describe("VTTTileDeckManager", () => {
     expect(manager.select(deck!.id, deck!.tiles[0].id)).toEqual(deck!.tiles[0]);
     expect(manager.pendingPlacement?.tile.category).toBe("Rooms & walls");
     expect(manager.select(deck!.id, "missing")).toBeNull();
+  });
+
+  it("snaps a new tile's edge to a nearby placed tile", () => {
+    const { manager, tokens } = createManager();
+    const deck = manager.createDeck("Rooms", [
+      { name: "Room", imagePath: "room.png" },
+    ])!;
+    tokens.existing = {
+      id: "existing",
+      kind: "tile",
+      x: 0,
+      y: 0,
+      width: 150,
+      height: 150,
+    };
+
+    manager.draw(deck.id, 150);
+    // Dropped a few pixels right of and level with the existing tile.
+    manager.updatePendingPlacement(158, 4);
+
+    expect(manager.pendingPlacement).toMatchObject({ x: 150, y: 0 });
   });
 
   it("checks hard edges at the final snapped placement", () => {

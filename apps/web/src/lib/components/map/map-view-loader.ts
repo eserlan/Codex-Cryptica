@@ -35,10 +35,16 @@ export class MapViewAssetLoader {
     }
 
     const loadId = ++this.currentLoadId;
-    const requestedAssetPath = activeMap.assetPath;
-    this.currentAssetPath = requestedAssetPath;
     this.deps.onClear();
 
+    if (!activeMap.assetPath) {
+      // Blank map: no background image to load. Its fog mask (if any) is
+      // loaded independently, keyed off the map's fixed dimensions.
+      return () => this.cancelCurrent();
+    }
+
+    const requestedAssetPath = activeMap.assetPath;
+    this.currentAssetPath = requestedAssetPath;
     const image = this.deps.createImage();
 
     this.deps.vault

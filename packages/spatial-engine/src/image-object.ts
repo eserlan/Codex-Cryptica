@@ -66,6 +66,78 @@ export function canPlaceSpatialImage(
   return true;
 }
 
+function rangesNear(
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+  threshold: number,
+) {
+  return aStart - threshold <= bEnd && bStart - threshold <= aEnd;
+}
+
+/**
+ * Snaps a candidate placement to align edge-to-edge with nearby occupied
+ * rects, independently per axis. X snapping is only considered against a
+ * rect whose vertical range is near the candidate's (i.e. plausibly the same
+ * "row"), and Y snapping only against a rect whose horizontal range is near
+ * (plausibly the same "column") — this keeps tiles from magnetically
+ * snapping to a distant, unrelated tile's edge.
+ */
+export function snapToNeighborTiles(
+  candidate: SpatialImagePlacement,
+  occupied: Iterable<SpatialImagePlacement>,
+  threshold: number,
+): { x: number; y: number } {
+  const cLeft = candidate.x;
+  const cRight = candidate.x + candidate.width;
+  const cTop = candidate.y;
+  const cBottom = candidate.y + candidate.height;
+
+  let bestX: { value: number; dist: number } | null = null;
+  let bestY: { value: number; dist: number } | null = null;
+
+  for (const tile of occupied) {
+    const tLeft = tile.x;
+    const tRight = tile.x + tile.width;
+    const tTop = tile.y;
+    const tBottom = tile.y + tile.height;
+
+    if (rangesNear(cTop, cBottom, tTop, tBottom, threshold)) {
+      for (const x of [
+        tLeft - candidate.width, // candidate's right edge touches tile's left edge
+        tRight, // candidate's left edge touches tile's right edge
+        tLeft, // left-aligned
+        tRight - candidate.width, // right-aligned
+      ]) {
+        const dist = Math.abs(x - candidate.x);
+        if (dist <= threshold && (!bestX || dist < bestX.dist)) {
+          bestX = { value: x, dist };
+        }
+      }
+    }
+
+    if (rangesNear(cLeft, cRight, tLeft, tRight, threshold)) {
+      for (const y of [
+        tTop - candidate.height, // candidate's bottom edge touches tile's top edge
+        tBottom, // candidate's top edge touches tile's bottom edge
+        tTop, // top-aligned
+        tBottom - candidate.height, // bottom-aligned
+      ]) {
+        const dist = Math.abs(y - candidate.y);
+        if (dist <= threshold && (!bestY || dist < bestY.dist)) {
+          bestY = { value: y, dist };
+        }
+      }
+    }
+  }
+
+  return {
+    x: bestX ? bestX.value : candidate.x,
+    y: bestY ? bestY.value : candidate.y,
+  };
+}
+
 export function nextSpatialImageZIndex(
   items: Iterable<Pick<SpatialImageTransform, "zIndex">>,
 ) {

@@ -82,6 +82,7 @@ function createController(overrides: Record<string, unknown> = {}) {
     activeMap: { id: "map-1" },
     unproject: vi.fn((point) => ({ x: point.x + 1, y: point.y + 2 })),
     uploadMap: vi.fn().mockResolvedValue("map-2"),
+    createBlankMap: vi.fn().mockResolvedValue("map-3"),
     addPin: vi.fn(),
   };
   const mapSession = {
@@ -256,6 +257,39 @@ describe("MapPageController", () => {
     expect(controller.showUpload).toBe(false);
     expect(controller.mapName).toBe("");
     expect(controller.files).toBeNull();
+  });
+
+  it("creates a blank map and clears upload state", async () => {
+    const { controller, mapStore } = createController();
+    controller.mapName = "Battle Grid";
+    controller.showUpload = true;
+
+    await controller.handleCreateBlank();
+
+    expect(mapStore.createBlankMap).toHaveBeenCalledWith("Battle Grid");
+    expect(controller.showUpload).toBe(false);
+    expect(controller.mapName).toBe("");
+  });
+
+  it("notifies on failure to create a blank map", async () => {
+    const { controller, notificationStore } = createController({
+      mapStore: {
+        activeMap: { id: "map-1" },
+        unproject: vi.fn(),
+        uploadMap: vi.fn(),
+        createBlankMap: vi.fn().mockResolvedValue(undefined),
+        addPin: vi.fn(),
+      },
+    });
+    controller.showUpload = true;
+
+    await controller.handleCreateBlank();
+
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to create map"),
+      "error",
+    );
+    expect(controller.showUpload).toBe(true);
   });
 
   it("cancels pending upload state when the active vault changes", () => {

@@ -5,6 +5,8 @@ export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
 export type LegacyTokenVisibility = TokenVisibility | "owner-only";
 export type TokenBaseShape = "circle" | "square";
+/** Which part of the source image to keep in view when its aspect ratio doesn't match the token's shape. */
+export type TokenImageFocus = "center" | "top" | "bottom" | "left" | "right";
 
 export interface PingState {
   x: number;
@@ -31,6 +33,7 @@ export interface Token {
   visibleTo: TokenVisibility;
   color: string;
   imageUrl: string | null;
+  imageFocus?: TokenImageFocus;
   statusEffects: string[];
   locked?: boolean;
   /** Marks an image token placed from a procedural tile deck. */
@@ -58,6 +61,10 @@ export interface TileDeck {
   name: string;
   /** Identifies a catalog deck that was prefetched into this local vault. */
   starterDeckId?: string;
+  /** License label for a starter deck, e.g. "CC BY 4.0". Unset for user-created decks. */
+  license?: string;
+  /** Upstream source URL for a starter deck's license/attribution. */
+  sourceUrl?: string;
   tiles: TileDeckEntry[];
   hardEdges: boolean;
 }
@@ -117,6 +124,22 @@ export function normalizeTokenVisibility(
   return visibility === "gm-only" ? "gm-only" : "all";
 }
 
+const TOKEN_IMAGE_FOCUS_VALUES: readonly TokenImageFocus[] = [
+  "center",
+  "top",
+  "bottom",
+  "left",
+  "right",
+];
+
+export function normalizeTokenImageFocus(
+  value: unknown,
+): TokenImageFocus | undefined {
+  return TOKEN_IMAGE_FOCUS_VALUES.includes(value as TokenImageFocus)
+    ? (value as TokenImageFocus)
+    : undefined;
+}
+
 export function normalizeToken(
   token:
     | Token
@@ -135,6 +158,7 @@ export function normalizeToken(
     visibleTo: normalizeTokenVisibility(token.visibleTo),
     baseShape: token.baseShape === "square" ? "square" : "circle",
     facingIndicator: token.facingIndicator === true,
+    imageFocus: normalizeTokenImageFocus(token.imageFocus),
     statusEffects: [...(token.statusEffects ?? [])],
     locked: token.locked === true,
     kind: token.kind === "tile" ? "tile" : "token",
@@ -205,6 +229,8 @@ export function normalizeEncounterSession(
       id: deck.id,
       name: deck.name,
       starterDeckId: deck.starterDeckId,
+      license: deck.license,
+      sourceUrl: deck.sourceUrl,
       hardEdges: deck.hardEdges === true,
       tiles: (deck.tiles ?? []).map((tile) => ({ ...tile })),
     })),

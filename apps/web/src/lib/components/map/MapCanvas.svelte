@@ -207,8 +207,12 @@
             size,
             size,
           );
+        } else {
+          // No image decoded yet — show the valid/invalid tint as a
+          // placeholder. Once the image is available, let it show through
+          // clearly rather than tinting over it.
+          ctx.fillRect(topLeft.x, topLeft.y, size, size);
         }
-        ctx.fillRect(topLeft.x, topLeft.y, size, size);
         ctx.strokeRect(topLeft.x, topLeft.y, size, size);
         ctx.setLineDash([]);
         ctx.fillStyle = ctx.strokeStyle;
@@ -373,6 +377,7 @@
     void remoteMeasurement;
     void vttPings;
     void vttDragPreview;
+    void tilePlacementPreview;
     void fogColor;
     void gridColor;
     void interactions.isAltPressed;

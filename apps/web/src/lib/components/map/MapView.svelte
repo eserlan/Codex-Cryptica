@@ -147,7 +147,8 @@
       if (mapSession.canViewToken(token.id, peerId, isHost)) {
         result.push({
           ...token,
-          label: token.name,
+          // Tiles are terrain/room pieces, not combatants — no name label.
+          label: token.kind === "tile" ? "" : token.name,
           image: tokenImageCache[token.id] ?? null,
           selected: mapSession.selection === token.id || selected.has(token.id),
           primarySelected: mapSession.selection === token.id,
@@ -188,8 +189,23 @@
   const tilePlacementPreview = $derived(
     mapSession.tileDeckManager.pendingPlacement,
   );
+  // A separate primitive-valued derived: pendingPlacement is replaced with a
+  // new object on every mousemove during placement (x/y/valid churn), but
+  // this string only actually changes when the tile itself changes — so the
+  // image-loading effect below (keyed off this) doesn't get its in-flight
+  // load cancelled by every mousemove tick.
+  const pendingPlacementImagePath = $derived(
+    tilePlacementPreview?.tile.imagePath ?? null,
+  );
   let tilePlacementImage = $state<HTMLImageElement | null>(null);
-  let tilePlacementImagePath = $state<string | null>(null);
+  // Plain (non-reactive) on purpose: the loading effect below both reads and
+  // writes this to track "have we already started loading this path", and if
+  // it were $state, that write would make the effect depend on its own
+  // output — Svelte schedules a self-triggered re-run to settle, whose
+  // cleanup cancels the in-flight load before it can ever resolve. Nothing
+  // needs to *react* to this changing, both read sites just need the current
+  // value at the time some other trigger reruns them.
+  let tilePlacementImagePath: string | null = null;
   const enrichedTilePlacementPreview = $derived.by(() =>
     tilePlacementPreview
       ? { ...tilePlacementPreview, image: tilePlacementImage }
@@ -213,6 +229,19 @@
         continue;
       }
 
+      // A tile just placed from the pending-placement preview already has
+      // its image decoded — reuse it instead of re-fetching/re-decoding,
+      // which otherwise causes a visible blank flash on the new tile.
+      if (
+        token.kind === "tile" &&
+        source === tilePlacementImagePath &&
+        tilePlacementImage
+      ) {
+        tokenImageSourceCache[token.id] = source;
+        tokenImageCache[token.id] = tilePlacementImage;
+        continue;
+      }
+
       tokenImageSourceCache[token.id] = source;
       void vault
         .resolveImageUrl(source)
@@ -233,7 +262,7 @@
   });
 
   $effect(() => {
-    const path = tilePlacementPreview?.tile.imagePath;
+    const path = pendingPlacementImagePath;
     if (!path || path === tilePlacementImagePath) return;
     tilePlacementImagePath = path;
     tilePlacementImage = null;
@@ -269,9 +298,8 @@
   $effect(() => {
     const activeMap = mapStore.activeMap;
     const fogMaskPath = activeMap?.fogOfWar?.maskPath ?? null;
-    const image = mapImage;
 
-    if (!activeMap || !fogMaskPath || !image) {
+    if (!activeMap || !fogMaskPath) {
       loadedMaskPath = null;
       return;
     }
@@ -281,16 +309,20 @@
     }
 
     let cancelled = false;
-    void mapStore.loadMask(image.width, image.height).then((mask) => {
-      if (cancelled) return;
-      maskCanvas = mask;
-      loadedMaskPath = fogMaskPath;
-    });
+    void mapStore
+      .loadMask(activeMap.dimensions.width, activeMap.dimensions.height)
+      .then((mask) => {
+        if (cancelled) return;
+        maskCanvas = mask;
+        loadedMaskPath = fogMaskPath;
+      });
 
     return () => {
       cancelled = true;
     };
   });
+
+  const hasBackgroundImage = $derived(Boolean(mapStore.activeMap?.assetPath));
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -331,7 +363,7 @@
     {interactions}
   />
 
-  {#if !mapImage}
+  {#if hasBackgroundImage && !mapImage}
     <div
       class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50 pointer-events-none"
       transition:fade

@@ -16,8 +16,63 @@ const manifest = {
   ],
 };
 
+/** Simulates VTTTileDeckManager's beginDeck/addTile/persist against an in-memory list. */
+function createFakeDeckStore() {
+  const decks: Array<{
+    id: string;
+    name: string;
+    starterDeckId?: string;
+    license?: string;
+    sourceUrl?: string;
+    tiles: Array<{
+      id: string;
+      name: string;
+      imagePath: string;
+      category?: string;
+    }>;
+    hardEdges: boolean;
+  }> = [];
+  let nextDeckId = 0;
+  let nextTileId = 0;
+
+  return {
+    decks,
+    getDecks: () => decks,
+    beginDeck: vi.fn(
+      (
+        name: string,
+        starterDeckId?: string,
+        license?: string,
+        sourceUrl?: string,
+      ) => {
+        const deck = {
+          id: `deck-${nextDeckId++}`,
+          name,
+          starterDeckId,
+          license,
+          sourceUrl,
+          tiles: [],
+          hardEdges: false,
+        };
+        decks.push(deck);
+        return deck;
+      },
+    ),
+    addTile: vi.fn(
+      (
+        deckId: string,
+        tile: { name: string; imagePath: string; category?: string },
+      ) => {
+        const deck = decks.find((d) => d.id === deckId);
+        deck?.tiles.push({ ...tile, id: `tile-${nextTileId++}` });
+      },
+    ),
+    persist: vi.fn(),
+  };
+}
+
 describe("StarterTileDeckService", () => {
-  it("prefetches R2 tiles into the vault before creating a local deck", async () => {
+  it("streams R2 tiles into a deck created up front, reporting progress", async () => {
     const importFile = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, file: { path: "files/room.png" } })
@@ -25,13 +80,7 @@ describe("StarterTileDeckService", () => {
         ok: true,
         file: { path: "files/corridor.png" },
       });
-    const createDeck = vi.fn().mockReturnValue({
-      id: "deck-1",
-      name: manifest.name,
-      starterDeckId: manifest.id,
-      tiles: [],
-      hardEdges: false,
-    });
+    const store = createFakeDeckStore();
     const fetch = vi.fn(async (url: string) => {
       if (url.endsWith("kenney-scribble-dungeons")) {
         return new Response(JSON.stringify(manifest));
@@ -41,31 +90,73 @@ describe("StarterTileDeckService", () => {
     const service = new StarterTileDeckService({
       fetch: fetch as typeof globalThis.fetch,
       baseUrl: "https://assets.example",
+      concurrency: 1,
       importFile,
-      getDecks: () => [],
-      createDeck,
+      ...store,
     });
 
-    await expect(service.install(manifest.id)).resolves.toMatchObject({
-      starterDeckId: manifest.id,
-    });
-    expect(importFile).toHaveBeenCalledTimes(2);
-    expect(createDeck).toHaveBeenCalledWith(
+    const onProgress = vi.fn();
+    const deck = await service.install(manifest.id, onProgress);
+
+    expect(deck.starterDeckId).toBe(manifest.id);
+    expect(store.beginDeck).toHaveBeenCalledWith(
       manifest.name,
-      [
+      manifest.id,
+      manifest.license,
+      manifest.sourceUrl,
+    );
+    expect(importFile).toHaveBeenCalledTimes(2);
+    expect(store.decks[0].tiles).toEqual([
+      expect.objectContaining({
+        name: "Room",
+        imagePath: "files/room.png",
+        category: "Rooms & walls",
+      }),
+      expect.objectContaining({
+        name: "Corridor",
+        imagePath: "files/corridor.png",
+        category: "Corridors",
+      }),
+    ]);
+    expect(onProgress).toHaveBeenCalledWith(0, 2);
+    expect(onProgress).toHaveBeenCalledWith(1, 2);
+    expect(onProgress).toHaveBeenCalledWith(2, 2);
+    expect(store.persist).toHaveBeenCalled();
+  });
+
+  it("prefers a manifest-provided tile category over the derived one", async () => {
+    const withCategory = {
+      ...manifest,
+      tiles: [
         {
-          name: "Room",
-          imagePath: "files/room.png",
-          category: "Rooms & walls",
-        },
-        {
-          name: "Corridor",
-          imagePath: "files/corridor.png",
-          category: "Corridors",
+          id: "square",
+          name: "5x5 square",
+          assetPath: "square.png",
+          category: "5x5",
         },
       ],
-      manifest.id,
-    );
+    };
+    const importFile = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, file: { path: "files/square.png" } });
+    const store = createFakeDeckStore();
+    const fetch = vi.fn(async () => new Response(JSON.stringify(withCategory)));
+    const service = new StarterTileDeckService({
+      fetch: fetch as typeof globalThis.fetch,
+      baseUrl: "https://assets.example",
+      importFile,
+      ...store,
+    });
+
+    await service.install(withCategory.id);
+
+    expect(store.decks[0].tiles).toEqual([
+      expect.objectContaining({
+        name: "5x5 square",
+        imagePath: "files/square.png",
+        category: "5x5",
+      }),
+    ]);
   });
 
   it("does not fetch or duplicate an installed starter deck", async () => {
@@ -81,7 +172,9 @@ describe("StarterTileDeckService", () => {
       fetch,
       importFile: vi.fn(),
       getDecks: () => [deck],
-      createDeck: vi.fn(),
+      beginDeck: vi.fn(),
+      addTile: vi.fn(),
+      persist: vi.fn(),
     });
 
     await expect(service.install(manifest.id)).resolves.toBe(deck);
@@ -100,12 +193,44 @@ describe("StarterTileDeckService", () => {
       ),
       importFile: vi.fn(),
       getDecks: () => [],
-      createDeck: vi.fn(),
+      beginDeck: vi.fn(),
+      addTile: vi.fn(),
+      persist: vi.fn(),
     });
 
     await expect(service.install(manifest.id)).rejects.toThrow(
       "catalog is invalid",
     );
+  });
+
+  it("keeps already-downloaded tiles and persists when a later tile fails", async () => {
+    const importFile = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, file: { path: "files/room.png" } });
+    const store = createFakeDeckStore();
+    const fetch = vi.fn(async (url: string) => {
+      if (url.endsWith("kenney-scribble-dungeons")) {
+        return new Response(JSON.stringify(manifest));
+      }
+      if (url.includes("corridor")) {
+        return new Response("nope", { status: 500 });
+      }
+      return new Response(new Blob(["png"], { type: "image/png" }));
+    });
+    const service = new StarterTileDeckService({
+      fetch: fetch as typeof globalThis.fetch,
+      baseUrl: "https://assets.example",
+      concurrency: 1,
+      importFile,
+      ...store,
+    });
+
+    await expect(service.install(manifest.id)).rejects.toThrow(
+      "Could not prefetch Corridor.",
+    );
+    expect(store.decks[0].tiles).toHaveLength(1);
+    expect(store.decks[0].tiles[0]).toMatchObject({ name: "Room" });
+    expect(store.persist).toHaveBeenCalled();
   });
 
   it("derives the starter deck category from the source path", () => {

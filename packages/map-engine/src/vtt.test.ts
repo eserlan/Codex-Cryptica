@@ -43,6 +43,16 @@ describe("VTT domain normalization", () => {
     expect(invalid.facingIndicator).toBe(false);
   });
 
+  it("normalizes imageFocus, rejecting unknown values", () => {
+    expect(normalizeToken({ ...token, imageFocus: "top" }).imageFocus).toBe(
+      "top",
+    );
+    expect(normalizeToken(token).imageFocus).toBeUndefined();
+    expect(
+      normalizeToken({ ...token, imageFocus: "diagonal" as any }).imageFocus,
+    ).toBeUndefined();
+  });
+
   it("clones a session and repairs invalid selection and turn state", () => {
     const session = {
       id: "session-1",

@@ -126,7 +126,11 @@
         {:else if mapSession.gridFitMode}
           <div class="space-y-3">
             <p class="text-[10px] text-theme-muted text-center">
-              Draw a square around a map grid cell
+              Drag across a few grid squares rather than just one — it's much
+              easier to land accurately on, say, 3 squares than exactly 1. While
+              dragging, hold <span class="font-bold">Shift</span> and scroll to change
+              how many squares the drag spans (1, 2, 3, 5, or 10) to match the tile
+              you're fitting.
             </p>
             <button
               type="button"
@@ -152,7 +156,8 @@
             Fit Grid from Map
           </button>
           <p class="text-[9px] text-theme-muted mt-1 text-center italic">
-            Draw a square around a grid cell to auto-detect size
+            Drag across a span of grid squares (default 3×3) to auto-detect cell
+            size — Shift+Scroll while dragging changes the span
           </p>
 
           {#if mapStore.gridSize > 0}

@@ -5,6 +5,7 @@ import type {
   SessionMode,
   Token,
   TokenBaseShape,
+  TokenImageFocus,
 } from "map-engine";
 
 export type {
@@ -16,6 +17,7 @@ export type {
   SessionMode,
   Token,
   TokenBaseShape,
+  TokenImageFocus,
   TileDeck,
   TileDeckEntry,
   TileDetails,
@@ -71,6 +73,26 @@ export interface TokenCreationInput {
   locked?: boolean;
 }
 
+export const IMAGE_FOCUS_OPTIONS: Array<{
+  value: TokenImageFocus;
+  label: string;
+  icon: string;
+}> = [
+  { value: "center", label: "Center", icon: "icon-[lucide--focus]" },
+  { value: "top", label: "Top", icon: "icon-[lucide--arrow-up-to-line]" },
+  {
+    value: "bottom",
+    label: "Bottom",
+    icon: "icon-[lucide--arrow-down-to-line]",
+  },
+  { value: "left", label: "Left", icon: "icon-[lucide--arrow-left-to-line]" },
+  {
+    value: "right",
+    label: "Right",
+    icon: "icon-[lucide--arrow-right-to-line]",
+  },
+];
+
 export const TOKEN_STATUS_EFFECTS = [
   { id: "dead", label: "Dead", icon: "icon-[lucide--skull]", color: "#6b7280" },
   {
@@ -118,6 +140,7 @@ export interface TokenStateUpdateInput {
   ownerPeerId?: string | null;
   ownerGuestName?: string | null;
   imageUrl?: string | null;
+  imageFocus?: TokenImageFocus;
   statusEffects?: string[];
   locked?: boolean;
   zIndex?: number;
