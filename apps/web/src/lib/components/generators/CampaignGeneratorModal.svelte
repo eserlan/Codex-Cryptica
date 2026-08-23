@@ -107,6 +107,11 @@
   // the model's response streams in, discarded once the fully validated
   // draft replaces it — this is never itself offered for Save.
   let streamedFields = $state<Record<string, string>>({});
+  // Multi-pass generators (council-vote, and later dungeon/language — #2423
+  // multi-pass follow-up) emit a `phase` event before each pass/turn. Shown
+  // in place of the decorative rotating loading message when set; null for
+  // every generic single-call generator, which never emits `phase`.
+  let currentPhase = $state<string | null>(null);
   let generationAbortController = $state<AbortController | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
     typeof StarSystemDiagram
@@ -199,12 +204,14 @@
     draft = null;
     errorMsg = null;
     streamedFields = {};
+    currentPhase = null;
   }
 
   function cancelGeneration() {
     generationAbortController?.abort();
     generationAbortController = null;
     streamedFields = {};
+    currentPhase = null;
     stage = "configure";
     errorMsg = null;
   }
@@ -219,6 +226,7 @@
     stage = "generating";
     errorMsg = null;
     streamedFields = {};
+    currentPhase = null;
     const abortController = new AbortController();
     generationAbortController = abortController;
     try {
@@ -348,7 +356,13 @@
         abortController.signal,
       )) {
         if (abortController.signal.aborted) break;
-        if (event.type === "field" && typeof event.value === "string") {
+        if (event.type === "phase") {
+          // A new pass/turn is starting — the previous pass's preview may
+          // never make it into the final draft, so discard it rather than
+          // let stale content from a discarded pass linger on screen.
+          streamedFields = {};
+          currentPhase = event.label;
+        } else if (event.type === "field" && typeof event.value === "string") {
           streamedFields = { ...streamedFields, [event.key]: event.value };
         } else if (event.type === "draft") {
           // A `draft` event is always the terminal outcome of
@@ -593,7 +607,9 @@
           <span
             class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
           ></span>
-          {activeLoadingMessages[loadingIndex] ?? "Generating your content…"}
+          {currentPhase ??
+            activeLoadingMessages[loadingIndex] ??
+            "Generating your content…"}
         </div>
         {#if streamedFields.title || streamedFields.summary || streamedFields.lore}
           <div

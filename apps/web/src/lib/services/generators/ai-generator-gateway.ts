@@ -234,6 +234,12 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       systemInstruction,
     );
     const chat = model.startChat({ history: [] });
+    const chatWithSignal = chat as unknown as {
+      sendMessageStream(
+        query: string,
+        signal?: AbortSignal,
+      ): Promise<{ stream: AsyncGenerator<{ text: () => string }> }>;
+    };
     return {
       async send(userMessage: string): Promise<string> {
         const result = await chat.sendMessageStream(userMessage);
@@ -242,6 +248,44 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
           text += chunk.text();
         }
         return extractJsonObject(text.trim());
+      },
+
+      /**
+       * Streaming counterpart to `send()` (#2423 multi-pass follow-up). A
+       * fresh incremental-JSON scanner per call — each turn is its own JSON
+       * object, unlike `completeStream()`'s single generation-wide scan.
+       * Chat sessions never use the Interactions API (confirmed: `startChat`
+       * always routes through the operation pipeline), so there's no
+       * interaction-degrade branch to handle here, unlike `completeStream`.
+       */
+      async *sendStream(
+        userMessage: string,
+        signal?: AbortSignal,
+      ): AsyncGenerator<GenerationEvent> {
+        yield { type: "started" };
+        const scan = createIncrementalJsonScanner();
+        let buffer = "";
+        try {
+          const result = await chatWithSignal.sendMessageStream(
+            userMessage,
+            signal,
+          );
+          for await (const chunk of result.stream) {
+            const text = chunk.text();
+            buffer += text;
+            for (const field of scan(buffer)) {
+              yield { type: "field", key: field.key, value: field.value };
+            }
+            yield { type: "delta", text };
+          }
+        } catch (err) {
+          yield {
+            type: "error",
+            error: err instanceof Error ? err.message : String(err),
+          };
+          return;
+        }
+        yield { type: "complete", text: extractJsonObject(buffer) };
       },
     };
   }

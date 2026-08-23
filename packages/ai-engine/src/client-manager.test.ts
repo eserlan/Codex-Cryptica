@@ -585,14 +585,13 @@ describe("DefaultAIClientManager", () => {
 
   describe("startChat", () => {
     it("should include history in proxy sendMessageStream", async () => {
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-          content: "Coherent response",
-        }),
-      };
-
-      (fetch as any).mockResolvedValue(mockResponse as any);
+      (fetch as any).mockResolvedValue(
+        sseResponse([
+          { type: "started" },
+          { type: "delta", text: "Coherent response" },
+          { type: "complete", text: "Coherent response" },
+        ]) as any,
+      );
 
       const model = await manager.getModel("", "gemini-1.5-pro");
       const history = [
@@ -603,9 +602,17 @@ describe("DefaultAIClientManager", () => {
       const chat = (model as any).startChat({ history });
       const result = await chat.sendMessageStream("What is my name?");
 
+      // fetch is lazy — it fires on first iteration of the stream, same as
+      // generateContentStream() itself (an async generator's body doesn't
+      // run until first .next()) — so drain before asserting on the call.
+      const chunks: string[] = [];
+      for await (const chunk of result.stream) chunks.push(chunk.text());
+      expect(chunks).toEqual(["Coherent response"]);
+
       const callArgs = (fetch as any).mock.calls[0][1] as RequestInit;
       const body = JSON.parse(callArgs.body as string);
 
+      expect(body.stream).toBe(true);
       expect(body.messages).toHaveLength(3);
       expect(body.messages[0]).toEqual({ role: "user", content: "Hello" });
       expect(body.messages[1]).toEqual({
@@ -616,24 +623,29 @@ describe("DefaultAIClientManager", () => {
         role: "user",
         content: "What is my name?",
       });
-
-      const streamResult = await result.stream.next();
-      expect(streamResult.value.text()).toBe("Coherent response");
     });
 
     it("should accumulate prior turns across multiple sendMessageStream calls on the same session", async () => {
       const responses = ["First reply", "Second reply"];
       let call = 0;
-      (fetch as any).mockImplementation(async () => ({
-        ok: true,
-        json: vi.fn().mockResolvedValue({ content: responses[call++] }),
-      }));
+      (fetch as any).mockImplementation(async () =>
+        sseResponse([
+          { type: "delta", text: responses[call++] },
+          { type: "complete", text: responses[call - 1] },
+        ]),
+      );
 
       const model = await manager.getModel("", "gemini-1.5-pro");
       const chat = (model as any).startChat({ history: [] });
 
-      await chat.sendMessageStream("First message");
-      await chat.sendMessageStream("Second message");
+      const first = await chat.sendMessageStream("First message");
+      for await (const _ of first.stream) {
+        // drain — history is only appended once the stream completes.
+      }
+      const second = await chat.sendMessageStream("Second message");
+      for await (const _ of second.stream) {
+        // drain
+      }
 
       const secondCallBody = JSON.parse(
         ((fetch as any).mock.calls[1][1] as RequestInit).body as string,
@@ -654,6 +666,39 @@ describe("DefaultAIClientManager", () => {
         role: "user",
         content: "Second message",
       });
+    });
+
+    it("throws instead of updating history when the underlying stream reports an error", async () => {
+      (fetch as any).mockResolvedValue(
+        sseResponse([{ type: "error", error: "upstream-status-500" }]) as any,
+      );
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const chat = (model as any).startChat({ history: [] });
+
+      const result = await chat.sendMessageStream("hi");
+      await expect(async () => {
+        for await (const _ of result.stream) {
+          // drain until the trailing throw
+        }
+      }).rejects.toThrow("upstream-status-500");
+
+      // A failed turn must not corrupt history for the next attempt.
+      (fetch as any).mockResolvedValue(
+        sseResponse([
+          { type: "delta", text: "ok" },
+          { type: "complete", text: "ok" },
+        ]) as any,
+      );
+      const retry = await chat.sendMessageStream("retry");
+      for await (const _ of retry.stream) {
+        // drain
+      }
+      const retryBody = JSON.parse(
+        ((fetch as any).mock.calls[1][1] as RequestInit).body as string,
+      );
+      expect(retryBody.messages).toHaveLength(1);
+      expect(retryBody.messages[0]).toEqual({ role: "user", content: "retry" });
     });
   });
 });

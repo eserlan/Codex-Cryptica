@@ -643,29 +643,52 @@ export class DefaultAIClientManager {
         const model = this.createProxyModel(modelName, systemInstruction);
 
         return {
-          sendMessageStream: async (query: string) => {
+          /**
+           * Real streaming (#2423 follow-up) — was previously a fake that
+           * `await`ed a full buffered `generateContent()` and wrapped the one
+           * complete response as a single-chunk generator, purely to match
+           * the real SDK's `{stream}` return shape. Now drives the real
+           * `generateContentStream()` (SSE-backed) and re-yields each delta
+           * as it arrives. `history` is only appended to once the stream
+           * completes successfully — a failed turn leaves history untouched,
+           * same as the buffered path already did (an exception from
+           * `generateContent` never reached the `history.push` below it).
+           */
+          sendMessageStream: async (query: string, signal?: AbortSignal) => {
             const contents = [
               ...history,
               { role: "user", parts: [{ text: query }] },
             ];
 
-            const result = await (model as any).generateContent({
-              contents,
-            });
+            async function* stream() {
+              let fullText = "";
+              let streamError: string | undefined;
 
-            const responseText = result.response.text();
-            history.push(
-              { role: "user", parts: [{ text: query }] },
-              { role: "model", parts: [{ text: responseText }] },
-            );
+              for await (const event of (model as any).generateContentStream(
+                { contents },
+                signal,
+              )) {
+                if (event.type === "delta") {
+                  fullText += event.text;
+                  yield { text: () => event.text };
+                } else if (event.type === "error") {
+                  streamError = event.error;
+                }
+              }
 
-            return {
-              stream: (async function* () {
-                yield {
-                  text: () => responseText,
-                };
-              })(),
-            };
+              if (streamError) {
+                throw new Error(
+                  `[OracleProxy] Streaming chat message failed: ${streamError}`,
+                );
+              }
+
+              history.push(
+                { role: "user", parts: [{ text: query }] },
+                { role: "model", parts: [{ text: fullText }] },
+              );
+            }
+
+            return { stream: stream() };
           },
         };
       },
