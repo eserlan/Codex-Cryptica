@@ -202,8 +202,11 @@ describe("registry lookup", () => {
       factionConfig.themes,
     );
     const output = generator.generate(request);
-    expect(output.lore).toContain("### Alternate Solutions");
-    expect(output.lore).toContain("### Downstream Consequences");
+    expect(output.content).toContain("## Alternate Solutions");
+    expect(output.content).toContain("## Downstream Consequences");
+    // Main document material stays out of the compact GM reference rail.
+    expect(output.lore).not.toContain("Alternate Solutions");
+    expect(output.lore).not.toContain("Downstream Consequences");
     expect(generator.mapOutputToDraft(output, request)).toMatchObject({
       entityType: "note",
       sourceGeneratorId: "puzzle",
