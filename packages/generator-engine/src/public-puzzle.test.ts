@@ -37,7 +37,8 @@ describe("Puzzle generator", () => {
     expect(output.lore).toContain("### Escalating Hints");
     expect(output.lore).not.toContain("### Alternate Solutions");
     expect(output.lore).toContain("no class, spell, skill");
-    expect(output.summary.length).toBeGreaterThan(100);
+    expect(output.summary).toContain("locked mechanism");
+    expect(output.summary).toContain("disable device");
   });
 
   it("includes capability safety and genre fidelity in the prompt", () => {
@@ -48,6 +49,7 @@ describe("Puzzle generator", () => {
     });
     expect(userMessage).toContain("Earth elemental sorcerer");
     expect(userMessage).toContain("### Escalating Hints");
+    expect(userMessage).toContain("actual setting or obstacle");
     expect(systemInstruction).toContain("Never make progress depend");
     expect(systemInstruction).toContain("Respect the genre");
   });
@@ -56,6 +58,22 @@ describe("Puzzle generator", () => {
     expect(() =>
       parsePuzzleResponse('{"title":"Missing sections","content":"Nope"}'),
     ).toThrow("missing required");
+  });
+
+  it("keeps an AI-written puzzle summary instead of replacing it with boilerplate", () => {
+    const output = parsePuzzleResponse(
+      JSON.stringify({
+        title: "The Five Spurs of Saint Mercy",
+        summary:
+          "Five iron rails converge on a buried saint's heart beneath a desert chapel. The party must shift their spurs before the bell tolls and stops an entire town's hearts.",
+        content:
+          "## Player-Facing Setup\nA chapel floor groans.\n\n## Clues\nA spur bears a sun.\n\n## Character Spotlight Opportunities\nAnyone can study the rails.\n\n## Alternate Solutions\nBreak a spur.\n\n## Failure & Escalation\nThe bell rings.\n\n## Running the Puzzle\nDescribe each movement.\n\n## Scaling\nUse three rails.",
+        lore: "### At a Glance\n- **Style:** Spatial\n\n### GM-Only Solution\nMove the river spur first.\n\n### Escalating Hints\n1. Follow the mosaic.",
+      }),
+    );
+
+    expect(output.summary).toContain("Five iron rails converge");
+    expect(output.summary).not.toContain("fail-forward play");
   });
 
   it("rejects AI output that leaves GM-only sections out of the rail", () => {

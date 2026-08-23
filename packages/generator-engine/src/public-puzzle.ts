@@ -127,12 +127,13 @@ function render(
   title: string,
   content: string,
   lore = "",
+  summary = `A ${resolved.complexity.toLowerCase()} ${resolved.style.toLowerCase()} encounter for ${resolved.purpose.toLowerCase()}, with visible clues for players and practical GM guidance for flexible, fail-forward play.`,
 ): PublicGeneratorOutput {
   return {
     type: "note",
     kind: "puzzle",
     title,
-    summary: `A ${resolved.complexity.toLowerCase()} ${resolved.style.toLowerCase()} encounter for ${resolved.purpose.toLowerCase()}, with visible clues for players and practical GM guidance for flexible, fail-forward play.`,
+    summary,
     content,
     lore:
       lore ||
@@ -212,6 +213,7 @@ export function generatePuzzleLocal(
     `${resolved.style} Trial: ${resolved.purpose}`,
     content,
     lore,
+    `A ${focus} blocks the party's attempt to ${resolved.purpose.toLowerCase()}. Visible ${resolved.genre} details reveal how to manipulate it, while a wrong approach changes the situation instead of ending the encounter.`,
   );
 }
 
@@ -240,7 +242,7 @@ export function buildPuzzlePrompt(
       `Downstream consequence: ${resolved.downstreamConsequence}`,
     resolved.campaignContext && `Campaign context: ${resolved.campaignContext}`,
     sessionContext && `Session context: ${sessionContext}`,
-    "Return JSON with title, summary, content, lore, and labels. Content is the main table-useful document and must use exactly these headings: ## Player-Facing Setup, ## Clues, ## Character Spotlight Opportunities, ## Alternate Solutions, ## Failure & Escalation, ## Running the Puzzle, and ## Scaling. Include ## Downstream Consequences in content when requested. Lore is the compact reference rail and must use exactly these headings: ### At a Glance, ### GM-Only Solution, and ### Escalating Hints. Keep the intended answer and progressive hints out of content; put the action-oriented guidance in content.",
+    "Return JSON with title, summary, content, lore, and labels. Summary must be one or two vivid standalone sentences that name the actual setting or obstacle, the concrete mechanism or interaction, and the immediate stakes. Never describe the generator, complexity, document structure, player-facing material, GM guidance, or fail-forward play in the summary. Content is the main table-useful document and must use exactly these headings: ## Player-Facing Setup, ## Clues, ## Character Spotlight Opportunities, ## Alternate Solutions, ## Failure & Escalation, ## Running the Puzzle, and ## Scaling. Include ## Downstream Consequences in content when requested. Lore is the compact reference rail and must use exactly these headings: ### At a Glance, ### GM-Only Solution, and ### Escalating Hints. Keep the intended answer and progressive hints out of content; put the action-oriented guidance in content.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -282,5 +284,6 @@ export function parsePuzzleResponse(
     text(parsed.title) || `${resolved.style} Trial: ${resolved.purpose}`,
     content,
     lore,
+    text(parsed.summary) || undefined,
   );
 }
