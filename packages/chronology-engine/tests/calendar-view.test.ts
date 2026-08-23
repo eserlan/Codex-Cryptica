@@ -281,6 +281,23 @@ describe("resolveCalendarCurrentDate", () => {
     expect(result.date.year).toBe(900);
   });
 
+  it("accepts decorative punctuation around a supported current-date title", () => {
+    const entities = [
+      {
+        id: "entity-visible-current-date",
+        title: "*** CURRENT Date ***",
+        exactDate: { year: 900, month: 1, day: 1 },
+        dateKind: "exact",
+        createdAt: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const result = resolveCalendarCurrentDate(entities, { currentYear: null });
+
+    expect(result.source).toBe("entity");
+    expect(result.entityId).toBe("entity-visible-current-date");
+  });
+
   it("falls through to vaultSetting when no matching entity exists", () => {
     const result = resolveCalendarCurrentDate([], { currentYear: 1350 });
     expect(result.source).toBe("vaultSetting");

@@ -79,10 +79,47 @@ describe("StatSheetTemplateStore", () => {
         "builtin-mythras-character",
         "builtin-ship",
         "builtin-settlement",
+        "builtin-faction-turn",
         "builtin-item-generic",
         "builtin-item-dnd-magic",
         "builtin-item-cyberpunk-gear",
         "builtin-item-mythras-gear",
+      ]),
+    );
+  });
+
+  it("provides every numeric role required by faction turns", () => {
+    const factionTurn = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (template) => template.id === "builtin-faction-turn",
+    );
+
+    expect(factionTurn).toMatchObject({
+      name: "Faction Turns",
+      category: "faction",
+      isBuiltIn: true,
+    });
+    expect(factionTurn?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "influence",
+          label: "Influence",
+          type: "number",
+        }),
+        expect.objectContaining({
+          id: "stability",
+          label: "Stability",
+          type: "number",
+        }),
+        expect.objectContaining({
+          id: "power",
+          label: "Power",
+          type: "number",
+        }),
+        expect.objectContaining({
+          id: "resources",
+          label: "Resources",
+          type: "number",
+        }),
       ]),
     );
   });

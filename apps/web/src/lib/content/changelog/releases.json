@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.32.0",
+    "title": "The Living World Update",
+    "date": "2026-08-21",
+    "type": "minor",
+    "highlights": [
+      "Faction Turns: Let a faction act on your world between sessions. It extends its influence over a place, a person, or a rival, and you see exactly what happened and why before anything is saved.",
+      "Your Stats, Your Names: Factions act using stats you write yourself — Political Reach, Fleet Strength, Standing, whatever suits your setting. Rename them whenever you like and nothing breaks.",
+      "Dice Decide, AI Describes: Outcomes come from an opposed roll you can inspect down to the individual dice, then AI writes the account. Switch AI off entirely and everything still works, with nothing leaving your device.",
+      "Nothing Happens Without You: Every turn is previewed before it is applied, can be rewritten in your own words, and can be undone afterwards. Your campaign's date is only ever read, never changed.",
+      "Turn History: Every turn a faction takes is kept permanently with the full reasoning behind it, and any turn worth remembering can be promoted onto your campaign timeline."
+    ]
+  },
+  {
     "version": "0.31.0",
     "title": "The Guided Worldbuilding Update",
     "date": "2026-07-30",

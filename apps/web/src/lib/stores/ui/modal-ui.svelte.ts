@@ -61,6 +61,7 @@ export class ModalUIStore {
     | "family"
     | "timeline"
     | "stats"
+    | "faction"
   >("overview");
 
   mergeDialog = $state<{
@@ -448,7 +449,8 @@ export class ModalUIStore {
       | "chats"
       | "family"
       | "timeline"
-      | "stats" = "overview",
+      | "stats"
+      | "faction" = "overview",
   ) {
     this.zenModeEntityId = entityId;
     this.zenModeActiveTab = tab;
