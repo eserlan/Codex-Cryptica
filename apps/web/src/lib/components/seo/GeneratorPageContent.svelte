@@ -11,6 +11,7 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
@@ -47,6 +48,7 @@
     artifactConfig,
     factionConfig,
     questConfig,
+    puzzleConfig,
     councilVoteConfig,
     secretSocietyConfig,
     socialHubConfig,
@@ -224,6 +226,20 @@
     threat: questConfig.threats[0],
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+  let puzzle = $state({
+    genre: puzzleConfig.genres[0],
+    purpose: puzzleConfig.purposes[0],
+    difficulty: puzzleConfig.difficulties[0],
+    style: puzzleConfig.styles[0],
+    partyLevel: "",
+    playerCount: "",
+    capabilities: "",
+    spotlight: puzzleConfig.spotlights[0],
+    failureStyle: puzzleConfig.failureStyles[0],
+    system: puzzleConfig.systems[0],
+    downstreamConsequence: "",
     campaignContext: "",
   });
 
@@ -768,6 +784,8 @@
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
+    puzzle: (useAI) =>
+      generatorEngine.generatePuzzle({ ...puzzle, genre: activeTheme, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
     "secret-society": (useAI) =>
@@ -983,6 +1001,22 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "puzzle"}
+      <PuzzleFormFields
+        bind:genre={puzzle.genre}
+        bind:purpose={puzzle.purpose}
+        bind:difficulty={puzzle.difficulty}
+        bind:style={puzzle.style}
+        bind:partyLevel={puzzle.partyLevel}
+        bind:playerCount={puzzle.playerCount}
+        bind:capabilities={puzzle.capabilities}
+        bind:spotlight={puzzle.spotlight}
+        bind:failureStyle={puzzle.failureStyle}
+        bind:system={puzzle.system}
+        bind:downstreamConsequence={puzzle.downstreamConsequence}
+        bind:campaignContext={puzzle.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "council-vote"}

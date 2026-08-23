@@ -277,6 +277,50 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
     ],
   },
+  puzzle: {
+    pageTitle:
+      "RPG Puzzle Generator | Table-Ready Encounter Puzzles | Codex Cryptica",
+    metaDescription:
+      "Create adaptable RPG encounter puzzles with layered clues, multiple solutions, character spotlight opportunities, and fail-forward consequences.",
+    introTitle: "RPG Puzzle Generator",
+    eyebrow: "RPG Puzzle Generator",
+    introText:
+      "Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.",
+    canonicalPath: "/generators/puzzle",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-quest.jpg",
+    ogImageAlt:
+      "Codex Cryptica RPG puzzle generator showing player-facing setup, GM-only solution details, and layered clues",
+    keywords: [
+      "rpg puzzle generator",
+      "dnd puzzle generator",
+      "tabletop encounter puzzle",
+      "gm puzzle builder",
+    ],
+    faqs: [
+      {
+        question: "Does this puzzle generator require a specific RPG system?",
+        answer:
+          "No. It is system-neutral by default, with optional D&D, Pathfinder 2e, and Tales of the Valiant tailoring.",
+      },
+      {
+        question: "Will a puzzle require one spell or character class?",
+        answer:
+          "No. Every puzzle is designed with multiple viable approaches, so capabilities create useful opportunities without becoming mandatory gates.",
+      },
+      {
+        question: "What happens when players fail?",
+        answer:
+          "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      {
+        href: "/generators/dungeon-generator",
+        label: "Dungeon & Delve Generator",
+      },
+    ],
+  },
   quest: {
     pageTitle:
       "RPG Quest Hook Generator | Free Fantasy & Cyberpunk Adventure Tool | Codex Cryptica",

@@ -43,6 +43,10 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set(["Core Fields", "Key NPC"]),
   },
   {
+    label: "puzzle-generator",
+    railSections: new Set(["At a Glance"]),
+  },
+  {
     label: "rpg-item",
     railSections: new Set(["GM Reference Information", "Magical Properties"]),
   },

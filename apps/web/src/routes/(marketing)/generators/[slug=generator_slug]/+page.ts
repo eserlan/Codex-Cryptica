@@ -11,6 +11,7 @@ const validSlugs = new Set([
   "artifact-generator",
   "faction",
   "quest",
+  "puzzle",
   "item",
   "tavern",
   "social-hub",
@@ -52,6 +53,7 @@ export const load: PageLoad = ({ params }) => {
       | "artifact-generator"
       | "faction"
       | "quest"
+      | "puzzle"
       | "item"
       | "tavern"
       | "social-hub"
@@ -90,6 +92,7 @@ export const entries: EntryGenerator = () => {
     { slug: "artifact-generator" },
     { slug: "faction" },
     { slug: "quest" },
+    { slug: "puzzle" },
     { slug: "item" },
     { slug: "tavern" },
     { slug: "social-hub" },
