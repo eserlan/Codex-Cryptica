@@ -1679,3 +1679,159 @@ describe("AI policy (US2)", () => {
     expect(generated.lore).toContain("**Leader**");
   });
 });
+
+describe("generateDraftStream", () => {
+  /**
+   * Fake `completeStream` that delivers `json` as a handful of deltas plus a
+   * `field` event for `title` — mirroring what the real gateway (which owns
+   * the incremental JSON scanner, see ai-generator-gateway.ts) would emit.
+   * `generateDraftStream` only re-emits whatever its gateway produces; it
+   * doesn't scan JSON itself, so this fake must supply the `field` event
+   * for the pass-through assertion below to mean anything.
+   */
+  function fakeCompleteStream(json: string, title: string) {
+    return vi.fn(async function* () {
+      yield { type: "started" as const };
+      const mid = Math.floor(json.length / 2);
+      yield { type: "delta" as const, text: json.slice(0, mid) };
+      yield { type: "field" as const, key: "title", value: title };
+      yield { type: "delta" as const, text: json.slice(mid) };
+      yield { type: "complete" as const, text: json };
+    });
+  }
+
+  async function collect(
+    gen: AsyncGenerator<{ type: string; [k: string]: unknown }>,
+  ) {
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    for await (const event of gen) events.push(event);
+    return events;
+  }
+
+  it("streams delta/field events and yields one final draft event matching generateDraft's output", async () => {
+    const json = aiJson("Aric Dawnward");
+    const completeStream = fakeCompleteStream(json, "Aric Dawnward");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("npc", { useAI: true })),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.some((e) => e.type === "delta")).toBe(true);
+    expect(events.some((e) => e.type === "field" && e.key === "title")).toBe(
+      true,
+    );
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.title).toBe("Aric Dawnward");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("npc");
+  });
+
+  it("retries on a banned title, then accepts a clean one, without falling back to local generation", async () => {
+    const completeStream = vi
+      .fn()
+      .mockImplementationOnce(async function* () {
+        yield { type: "complete" as const, text: aiJson("Vane-Smithe") };
+      })
+      .mockImplementationOnce(async function* () {
+        yield { type: "complete" as const, text: aiJson("Aric Dawnward") };
+      });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(
+        run("npc", { useAI: true, vaultContext: ctx(["Vane"]) }),
+      ),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(2);
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.draft.title).toBe("Aric Dawnward");
+  });
+
+  it("falls back to local generation when the stream yields invalid JSON", async () => {
+    const completeStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: "not valid json at all" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("faction", { useAI: true })),
+    );
+
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("faction");
+  });
+
+  it("falls back to generateDraft's own buffered complete() call, still yielding started/draft, when completeStream is absent", async () => {
+    const complete = vi.fn(async () => aiJson("Buffered Fallback"));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("npc", { useAI: true })),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    const finalEvent = events.at(-1) as {
+      type: string;
+      draft: GeneratedDraft;
+    };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.title).toBe("Buffered Fallback");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("npc");
+  });
+
+  it("falls back to generateDraft's own dungeon path for a multi-pass generator, not the generic stream branch", async () => {
+    const completeStream = vi.fn();
+    const complete = vi.fn(async () =>
+      JSON.stringify({
+        title: "The Bellfound Depths",
+        summary: "s",
+        throughline: "t",
+        history: "h",
+        currentState: "c",
+        signatureFeature: "f",
+        sectors: [],
+        factionSituation: "fs",
+        factions: [],
+        secret: "sec",
+        hazards: [],
+        treasures: [],
+        hooks: [],
+      }),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    await collect(svc.generateDraftStream(run("dungeon", { useAI: true })));
+
+    expect(completeStream).not.toHaveBeenCalled();
+  });
+});

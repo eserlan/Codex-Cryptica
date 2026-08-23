@@ -370,3 +370,7 @@ export {
   type CreaturePrompt,
   type ResolvedCreature,
 } from "./public-creature";
+export {
+  createIncrementalJsonScanner,
+  type IncrementalJsonField,
+} from "./streaming/incremental-json";

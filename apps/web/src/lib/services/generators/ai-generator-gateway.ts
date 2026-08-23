@@ -2,7 +2,9 @@ import type {
   AIGeneratorChatSession,
   AIGeneratorCompleteOptions,
   AIGeneratorGateway,
+  GenerationEvent,
 } from "generator-engine";
+import { createIncrementalJsonScanner } from "generator-engine";
 import {
   aiClientManager,
   InteractionExpiredError,
@@ -119,6 +121,103 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     // known degenerate-repetition failure mode) — JSON mode isn't reliably
     // enforced through the proxy.
     return extractJsonObject(response.response.text());
+  }
+
+  /**
+   * Streaming counterpart to `complete()` (#2423). Only the non-interaction
+   * (operation-pipeline) path actually streams — an interaction-backed
+   * request degrades to a single `started`→`complete` pair built from the
+   * existing buffered `sendInteraction()` flow, since the Interactions API's
+   * own streaming support isn't built in this slice (see `types.ts`'s
+   * `completeStream?` doc comment for why that's an acceptable degrade).
+   */
+  async *completeStream(
+    prompt: string,
+    systemInstruction: string,
+    options?: AIGeneratorCompleteOptions,
+  ): AsyncGenerator<GenerationEvent> {
+    if (options?.interaction) {
+      yield { type: "started" };
+      try {
+        const result = await this.complete(prompt, systemInstruction, options);
+        const text = typeof result === "string" ? result : result.text;
+        const interactionId =
+          typeof result === "string" ? undefined : result.interactionId;
+        yield { type: "complete", text, interactionId };
+      } catch (err) {
+        yield {
+          type: "error",
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+      return;
+    }
+
+    const generationConfig = {
+      ...GENERATOR_GENERATION_CONFIG,
+      ...options?.generationConfig,
+    };
+    const model = await this.clientManager.getModel(
+      "",
+      GENERATOR_MODEL,
+      systemInstruction,
+    );
+    const modelWithStream = model as unknown as {
+      generateContentStream(
+        request: unknown,
+        signal?: AbortSignal,
+      ): AsyncGenerator<GenerationEvent>;
+    };
+
+    if (typeof modelWithStream.generateContentStream !== "function") {
+      // Direct-key (Custom Key) mode uses the real Google SDK model, which
+      // has no streaming method wired here — degrade the same way the
+      // interaction branch above does.
+      yield { type: "started" };
+      try {
+        const response = await model.generateContent({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig,
+        });
+        yield {
+          type: "complete",
+          text: extractJsonObject(response.response.text()),
+        };
+      } catch (err) {
+        yield {
+          type: "error",
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+      return;
+    }
+
+    const scan = createIncrementalJsonScanner();
+    let buffer = "";
+
+    for await (const event of modelWithStream.generateContentStream({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig,
+    })) {
+      if (event.type === "delta") {
+        buffer += event.text;
+        for (const field of scan(buffer)) {
+          yield { type: "field", key: field.key, value: field.value };
+        }
+        yield event;
+      } else if (event.type === "complete") {
+        // Re-derive from the accumulated buffer, not `event.text`: the
+        // buffer is what every `delta`/`field` event above was scanned
+        // from, so the final parse must match what the UI already saw.
+        yield {
+          type: "complete",
+          text: extractJsonObject(buffer || event.text),
+          usage: event.usage,
+        };
+      } else {
+        yield event;
+      }
+    }
   }
 
   async startChat(systemInstruction: string): Promise<AIGeneratorChatSession> {

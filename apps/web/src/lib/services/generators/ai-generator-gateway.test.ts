@@ -162,6 +162,95 @@ describe("ProxyAIGeneratorGateway", () => {
     ).resolves.toBe('{"title":"Stable"}');
   });
 
+  describe("completeStream", () => {
+    async function collect(
+      gen: AsyncGenerator<import("generator-engine").GenerationEvent>,
+    ) {
+      const events: import("generator-engine").GenerationEvent[] = [];
+      for await (const event of gen) events.push(event);
+      return events;
+    }
+
+    it("re-emits delta events, interleaves field events as JSON completes, and parses the final buffer on complete", async () => {
+      const chunks = [
+        '{"name": "Ma',
+        'w of the Uncounted", "summary": "A wagon-sized aberration"}',
+      ];
+      const generateContentStream = async function* () {
+        for (const text of chunks) {
+          yield { type: "delta", text };
+        }
+        yield { type: "complete", text: "" };
+      };
+      const client = {
+        getModel: async () => ({ generateContentStream }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+
+      const events = await collect(gateway.completeStream("prompt", "system"));
+
+      expect(events).toEqual([
+        { type: "delta", text: chunks[0] },
+        {
+          type: "field",
+          key: "name",
+          value: "Maw of the Uncounted",
+        },
+        {
+          type: "field",
+          key: "summary",
+          value: "A wagon-sized aberration",
+        },
+        { type: "delta", text: chunks[1] },
+        {
+          type: "complete",
+          text: chunks.join(""),
+          usage: undefined,
+        },
+      ]);
+    });
+
+    it("degrades to a single started/complete pair for an interaction-backed request", async () => {
+      const client = {
+        sendInteraction: async () => ({
+          id: "interaction-1",
+          text: '{"title":"A"} trailing',
+        }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+
+      const events = await collect(
+        gateway.completeStream("prompt", "system", {
+          interaction: { input: "delta request" },
+        }),
+      );
+
+      expect(events).toEqual([
+        { type: "started" },
+        {
+          type: "complete",
+          text: '{"title":"A"}',
+          interactionId: "interaction-1",
+        },
+      ]);
+    });
+
+    it("yields an error event when the underlying stream call rejects", async () => {
+      // eslint-disable-next-line require-yield
+      const generateContentStream = async function* () {
+        throw new Error("network down");
+      };
+      const client = {
+        getModel: async () => ({ generateContentStream }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+
+      await expect(
+        collect(gateway.completeStream("prompt", "system")),
+      ).rejects.toThrow("network down");
+    });
+  });
+
   describe("startChat", () => {
     it("opens one session and lets multiple turns share it, extracting JSON from each reply", async () => {
       const responses = [
