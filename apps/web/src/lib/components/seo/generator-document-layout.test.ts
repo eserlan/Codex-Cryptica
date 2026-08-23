@@ -150,7 +150,7 @@ The chapel reliquary, and leverage over the patron.`,
     expect(layout.lore).not.toContain("### Reward");
   });
 
-  it("keeps puzzle player-facing material in the main document and GM guidance in the rail", () => {
+  it("keeps only compact puzzle reference in the rail", () => {
     const layout = getGeneratorDocumentLayout({
       type: "note",
       title: "The Ember Choir",
@@ -163,10 +163,15 @@ The chapel reliquary, and leverage over the patron.`,
 
     expect(layout.content).toContain("## Player-Facing Setup");
     expect(layout.content).toContain("## Clues");
-    expect(layout.content).not.toContain("GM-Only Solution");
+    expect(layout.content).toContain("### Character Spotlight Opportunities");
+    expect(layout.content).toContain("### Alternate Solutions");
+    expect(layout.content).toContain("### Failure & Escalation");
+    expect(layout.content).toContain("### Running the Puzzle");
+    expect(layout.content).toContain("### Scaling");
     expect(layout.lore).toContain("### GM-Only Solution");
-    expect(layout.lore).toContain("### Alternate Solutions");
-    expect(layout.lore).toContain("### Scaling");
+    expect(layout.lore).toContain("### Escalating Hints");
+    expect(layout.lore).not.toContain("### Alternate Solutions");
+    expect(layout.lore).not.toContain("### Scaling");
     expect(layout.lore).not.toContain("## Player-Facing Setup");
   });
 

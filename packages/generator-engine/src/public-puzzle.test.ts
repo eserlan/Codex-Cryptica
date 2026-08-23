@@ -27,10 +27,15 @@ describe("Puzzle generator", () => {
     );
     expect(output.content).toContain("## Player-Facing Setup");
     expect(output.content).toContain("## Clues");
-    expect(output.content).not.toContain("GM-Only Solution");
+    expect(output.content).toContain("## Character Spotlight Opportunities");
+    expect(output.content).toContain("## Alternate Solutions");
+    expect(output.content).toContain("## Failure & Escalation");
+    expect(output.content).toContain("## Running the Puzzle");
+    expect(output.content).toContain("## Scaling");
+    expect(output.content).toContain("## Downstream Consequences");
     expect(output.lore).toContain("### GM-Only Solution");
-    expect(output.lore).toContain("### Alternate Solutions");
-    expect(output.lore).toContain("### Downstream Consequences");
+    expect(output.lore).toContain("### Escalating Hints");
+    expect(output.lore).not.toContain("### Alternate Solutions");
     expect(output.lore).toContain("no class, spell, skill");
     expect(output.summary.length).toBeGreaterThan(100);
   });

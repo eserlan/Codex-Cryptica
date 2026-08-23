@@ -47,13 +47,7 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set([
       "At a Glance",
       "GM-Only Solution",
-      "Character Spotlight Opportunities",
-      "Alternate Solutions",
-      "Failure & Escalation",
       "Escalating Hints",
-      "Running the Puzzle",
-      "Scaling",
-      "Downstream Consequences",
     ]),
   },
   {
