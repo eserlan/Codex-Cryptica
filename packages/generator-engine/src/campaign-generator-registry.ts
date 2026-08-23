@@ -970,7 +970,7 @@ function puzzleOptions(request: GeneratorRunRequest): PuzzleGeneratorOptions {
     genre: optionString(
       request,
       "genre",
-      themeIdToLabel[request.themeId] ?? "Fantasy",
+      themeIdToLabel[request.themeId] ?? puzzleConfig.genres[0],
     ),
     purpose: optionString(request, "purpose", ""),
     complexity: optionString(request, "complexity", ""),

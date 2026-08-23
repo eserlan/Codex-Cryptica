@@ -1,18 +1,11 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
+import { factionConfig } from "./public-faction-constants";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 
 export const puzzleConfig = {
-  genres: [
-    "Fantasy",
-    "Dark Fantasy",
-    "Sci-Fi",
-    "Cyberpunk",
-    "Horror",
-    "Steampunk",
-    "Western",
-    "Modern",
-  ],
+  // Keep Puzzle aligned with the canonical theme vocabulary used across CC.
+  genres: factionConfig.themes,
   purposes: [
     "Sealed door",
     "Retrieve object",

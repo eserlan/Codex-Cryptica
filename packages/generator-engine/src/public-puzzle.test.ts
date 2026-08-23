@@ -3,10 +3,18 @@ import {
   buildPuzzlePrompt,
   generatePuzzleLocal,
   parsePuzzleResponse,
+  puzzleConfig,
   resolvePuzzle,
 } from "./public-puzzle";
+import { factionConfig } from "./public-faction-constants";
 
 describe("Puzzle generator", () => {
+  it("uses CC's complete canonical theme vocabulary", () => {
+    expect(puzzleConfig.genres).toEqual(factionConfig.themes);
+    expect(puzzleConfig.genres).toContain("Lancer");
+    expect(puzzleConfig.genres).toContain("Optimistic Exploration Sci-Fi");
+  });
+
   it("creates a table-ready, non-gated local puzzle", () => {
     const output = generatePuzzleLocal(
       {

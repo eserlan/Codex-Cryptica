@@ -19,6 +19,7 @@ import {
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { factionConfig } from "./public-faction-constants";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -180,6 +181,7 @@ describe("registry lookup", () => {
     const generator = getGenerator("puzzle");
     const request = run("puzzle", {
       options: {
+        genre: "Lancer",
         purpose: "Destroy relic or organ",
         style: "Magical",
         capabilities: "Earth elemental sorcerer",
@@ -193,6 +195,11 @@ describe("registry lookup", () => {
     );
     expect(generator.buildPrompt(request)).toContain(
       "Earth elemental sorcerer",
+    );
+    expect(generator.buildPrompt(request)).toContain("Lancer");
+    const genreOption = generator.options.find(({ id }) => id === "genre");
+    expect(genreOption?.choices?.map(({ value }) => value)).toEqual(
+      factionConfig.themes,
     );
     const output = generator.generate(request);
     expect(output.lore).toContain("### Alternate Solutions");

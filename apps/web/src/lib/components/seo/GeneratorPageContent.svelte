@@ -558,6 +558,7 @@
     else if (slug === "faction") faction.theme = activeTheme;
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
+    else if (slug === "puzzle") puzzle.genre = activeTheme;
     else if (slug === "council-vote") councilVote.genre = activeTheme;
     else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
@@ -784,8 +785,7 @@
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
-    puzzle: (useAI) =>
-      generatorEngine.generatePuzzle({ ...puzzle, genre: activeTheme, useAI }),
+    puzzle: (useAI) => generatorEngine.generatePuzzle({ ...puzzle, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
     "secret-society": (useAI) =>
