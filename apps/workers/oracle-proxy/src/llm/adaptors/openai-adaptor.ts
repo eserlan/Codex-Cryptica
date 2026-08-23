@@ -5,9 +5,11 @@
  */
 
 import type {
+  GenerationEvent,
   LlmAdaptorResult,
   LlmModelDefinition,
   LlmRequest,
+  LlmUsage,
 } from "../types";
 import {
   validateAgainstSchema,
@@ -52,16 +54,16 @@ interface OpenAiEnv {
  * 15-second provider-call timeout itself (FR-005) — the resolver never
  * calls `fetch`/a provider directly.
  */
-export async function callOpenAi(
+/**
+ * Builds the `chat/completions` request body shared by `callOpenAi` and its
+ * streaming counterpart `streamOpenAi` — every field below (except `stream`
+ * itself) must apply identically to both, or the two calls would silently
+ * diverge in generated content, not just in how it's delivered.
+ */
+function buildChatCompletionsBody(
   request: LlmRequest,
   model: LlmModelDefinition,
-  env: OpenAiEnv,
-  fetcher: typeof fetch = fetch,
-): Promise<LlmAdaptorResult> {
-  if (!env.OPENAI_API_KEY) {
-    return { ok: false, reason: "missing-openai-api-key" };
-  }
-
+): Record<string, unknown> {
   const messages = request.messages.map((m) => ({
     role: m.role,
     content: m.content,
@@ -121,6 +123,21 @@ export async function callOpenAi(
       ensureJsonInstruction(messages);
     }
   }
+
+  return body;
+}
+
+export async function callOpenAi(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<LlmAdaptorResult> {
+  if (!env.OPENAI_API_KEY) {
+    return { ok: false, reason: "missing-openai-api-key" };
+  }
+
+  const body = buildChatCompletionsBody(request, model);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
@@ -196,6 +213,115 @@ export async function callOpenAi(
   }
 
   return { ok: true, response: { content: text, modelKey: model.key, usage } };
+}
+
+/**
+ * Streaming counterpart to `callOpenAi` (#2423). Same request body via
+ * `buildChatCompletionsBody`, plus `stream: true`, reading the
+ * `chat/completions` SSE stream and re-emitting normalized
+ * `GenerationEvent`s. No retry/fallback/structured-output-validation of its
+ * own — see the `GenerationEvent` doc comment in `types.ts`. A caller that
+ * requested structured output must accumulate `delta` text and parse/
+ * validate the buffer itself once `complete` fires.
+ */
+export async function* streamOpenAi(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+  signal?: AbortSignal,
+): AsyncGenerator<GenerationEvent> {
+  if (!env.OPENAI_API_KEY) {
+    yield { type: "error", error: "missing-openai-api-key" };
+    return;
+  }
+
+  const body = {
+    ...buildChatCompletionsBody(request, model),
+    stream: true,
+    // Only OpenAI's streaming mode supports requesting token usage on the
+    // final chunk — worth taking since usage is otherwise unavailable here.
+    stream_options: { include_usage: true },
+  };
+
+  let response: Response;
+  try {
+    response = await fetcher(OPENAI_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "transport-error" };
+    return;
+  }
+
+  if (!response.ok || !response.body) {
+    yield { type: "error", error: `upstream-status-${response.status}` };
+    return;
+  }
+
+  yield { type: "started" };
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let fullText = "";
+  let usage: LlmUsage | undefined;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let sepIndex: number;
+      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
+        const rawEvent = buffer.slice(0, sepIndex);
+        buffer = buffer.slice(sepIndex + 2);
+
+        for (const line of rawEvent.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const dataStr = trimmed.slice(5).trim();
+          if (!dataStr) continue;
+          if (dataStr === "[DONE]") continue;
+
+          let chunk: any;
+          try {
+            chunk = JSON.parse(dataStr);
+          } catch {
+            continue;
+          }
+
+          const deltaText: string = chunk?.choices?.[0]?.delta?.content ?? "";
+          if (deltaText) {
+            fullText += deltaText;
+            yield { type: "delta", text: deltaText };
+          }
+          if (chunk?.usage) {
+            usage = {
+              promptTokens: chunk.usage.prompt_tokens ?? 0,
+              completionTokens: chunk.usage.completion_tokens ?? 0,
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+    return;
+  }
+
+  yield { type: "complete", text: fullText, usage };
 }
 
 export interface OpenAiInteractionResult {

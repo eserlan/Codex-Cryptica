@@ -16,9 +16,11 @@
  */
 
 import type {
+  GenerationEvent,
   LlmAdaptorResult,
   LlmModelDefinition,
   LlmRequest,
+  LlmUsage,
 } from "../types";
 import {
   validateAgainstSchema,
@@ -348,4 +350,136 @@ export async function callGemini(
     ok: true,
     response: { content: text, modelKey: model.key, usage },
   };
+}
+
+/**
+ * Streaming counterpart to `callGemini` (#2423). Calls Gemini's real
+ * `:streamGenerateContent` REST endpoint with `alt=sse` and re-emits each
+ * upstream chunk as a normalized `GenerationEvent`. Deliberately has no
+ * retry/fallback/structured-output-validation logic of its own — see the
+ * `GenerationEvent` doc comment in `types.ts` for why. Callers that need
+ * structured JSON must accumulate `delta` text themselves and parse/validate
+ * the buffer once `complete` fires.
+ */
+export async function* streamGemini(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: GeminiEnv,
+  fetcher: typeof fetch = fetch,
+  signal?: AbortSignal,
+): AsyncGenerator<GenerationEvent> {
+  const systemMessages = request.messages.filter((m) => m.role === "system");
+  const conversational = request.messages.filter((m) => m.role !== "system");
+
+  const contents = conversational.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+
+  const generation_config: Record<string, unknown> = {};
+  const temperature =
+    request.temperature ?? model.defaultParameters?.temperature;
+  if (temperature !== undefined) generation_config.temperature = temperature;
+  const maxOutputTokens =
+    request.maxOutputTokens ?? model.defaultParameters?.maxOutputTokens;
+  if (maxOutputTokens !== undefined) {
+    generation_config.max_output_tokens = maxOutputTokens;
+  }
+  if (request.topP !== undefined) generation_config.top_p = request.topP;
+  if (wantsStructuredOutput(request)) {
+    generation_config.response_mime_type = "application/json";
+  }
+
+  const payload = {
+    contents,
+    generation_config,
+    system_instruction: systemMessages.length
+      ? { parts: [{ text: systemMessages.map((m) => m.content).join("\n\n") }] }
+      : undefined,
+  };
+
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model.modelId}:streamGenerateContent?alt=sse&key=${env.GEMINI_API_KEY}`;
+
+  let response: Response;
+  try {
+    response = await fetcher(geminiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal,
+    });
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "transport-error" };
+    return;
+  }
+
+  if (!response.ok || !response.body) {
+    yield { type: "error", error: `upstream-status-${response.status}` };
+    return;
+  }
+
+  yield { type: "started" };
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let usage: LlmUsage | undefined;
+  let fullText = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE events are separated by a blank line.
+      let sepIndex: number;
+      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
+        const rawEvent = buffer.slice(0, sepIndex);
+        buffer = buffer.slice(sepIndex + 2);
+
+        for (const line of rawEvent.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const dataStr = trimmed.slice(5).trim();
+          if (!dataStr || dataStr === "[DONE]") continue;
+
+          let chunk: any;
+          try {
+            chunk = JSON.parse(dataStr);
+          } catch {
+            // Skip a malformed chunk rather than aborting the whole stream —
+            // Gemini has not been observed to send these, but a partial
+            // network read landing on a chunk boundary shouldn't be fatal.
+            continue;
+          }
+
+          const candidate = chunk?.candidates?.[0];
+          const deltaText: string =
+            candidate?.content?.parts
+              ?.map((p: any) => p?.text ?? "")
+              .join("") ?? "";
+          if (deltaText) {
+            fullText += deltaText;
+            yield { type: "delta", text: deltaText };
+          }
+          if (chunk?.usageMetadata) {
+            usage = {
+              promptTokens: chunk.usageMetadata.promptTokenCount ?? 0,
+              completionTokens: chunk.usageMetadata.candidatesTokenCount ?? 0,
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+    return;
+  }
+
+  yield { type: "complete", text: fullText, usage };
 }

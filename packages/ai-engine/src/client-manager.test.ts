@@ -640,3 +640,112 @@ describe("DefaultAIClientManager", () => {
     });
   });
 });
+
+/** Builds a `Response` whose body streams the given SSE `data:` events. */
+function sseResponse(events: unknown[], status = 200): Response {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const encoder = new TextEncoder();
+      for (const event of events) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+        );
+      }
+      controller.close();
+    },
+  });
+  return new Response(stream, { status });
+}
+
+async function collect(gen: AsyncGenerator<unknown>): Promise<unknown[]> {
+  const events: unknown[] = [];
+  for await (const event of gen) events.push(event);
+  return events;
+}
+
+describe("DefaultAIClientManager streaming (generateContentStream)", () => {
+  let manager: DefaultAIClientManager;
+
+  beforeEach(() => {
+    manager = new DefaultAIClientManager();
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("yields started, delta, then complete events for a plain-text request", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      sseResponse([
+        { type: "started" },
+        { type: "delta", text: "Hello" },
+        { type: "delta", text: ", world" },
+        { type: "complete", text: "Hello, world" },
+      ]) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+      { type: "complete", text: "Hello, world" },
+    ]);
+  });
+
+  it("sends stream:true on the operation-pipeline request body", async () => {
+    vi.mocked(fetch).mockResolvedValue(sseResponse([]) as any);
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    await collect((model as any).generateContentStream("hi"));
+
+    const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    expect(body.stream).toBe(true);
+    expect(body.operation).toBe("freeform-generation");
+  });
+
+  it("yields a single error event for a non-text (legacy passthrough) request, without calling fetch", async () => {
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const request: any = {
+      contents: [{ role: "user", parts: [{ text: "draw a cat" }] }],
+      generationConfig: { response_modalities: ["IMAGE"] },
+    };
+
+    const events = await collect((model as any).generateContentStream(request));
+
+    expect(events).toEqual([
+      {
+        type: "error",
+        error: "streaming-not-supported-for-non-text-request",
+      },
+    ]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("yields an error event when the upstream response is not ok", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "no model" } }), {
+        status: 503,
+      }) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([{ type: "error", error: "no model" }]);
+  });
+
+  it("yields an error event without throwing on a transport failure", async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error("network down"));
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([{ type: "error", error: "transport-error" }]);
+  });
+});
