@@ -287,9 +287,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.",
     canonicalPath: "/generators/puzzle",
-    ogImage: "https://assets.codexcryptica.com/screenshots/generator-quest.jpg",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
     ogImageAlt:
-      "Codex Cryptica RPG puzzle generator showing player-facing setup, GM-only solution details, and layered clues",
+      "Codex Cryptica RPG Puzzle Generator showing the input form, generated puzzle draft, and GM reference rail",
     keywords: [
       "rpg puzzle generator",
       "dnd puzzle generator",
