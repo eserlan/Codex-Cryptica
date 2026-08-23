@@ -24,8 +24,10 @@ import type {
 } from "../types";
 import {
   validateAgainstSchema,
+  validateStructuredStreamText,
   wantsStructuredOutput,
 } from "../schema-validation";
+import { readSseData } from "../sse";
 
 const PROVIDER_TIMEOUT_MS = 60_000;
 
@@ -423,61 +425,48 @@ export async function* streamGemini(
   yield { type: "started" };
 
   const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let usage: LlmUsage | undefined;
   let fullText = "";
 
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+    for await (const dataStr of readSseData(reader)) {
+      if (dataStr === "[DONE]") continue;
 
-      // SSE events are separated by a blank line.
-      let sepIndex: number;
-      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
-        const rawEvent = buffer.slice(0, sepIndex);
-        buffer = buffer.slice(sepIndex + 2);
+      let chunk: any;
+      try {
+        chunk = JSON.parse(dataStr);
+      } catch {
+        // Skip a malformed chunk rather than aborting the whole stream —
+        // Gemini has not been observed to send these, but a partial
+        // network read landing on a chunk boundary shouldn't be fatal.
+        continue;
+      }
 
-        for (const line of rawEvent.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:")) continue;
-          const dataStr = trimmed.slice(5).trim();
-          if (!dataStr || dataStr === "[DONE]") continue;
-
-          let chunk: any;
-          try {
-            chunk = JSON.parse(dataStr);
-          } catch {
-            // Skip a malformed chunk rather than aborting the whole stream —
-            // Gemini has not been observed to send these, but a partial
-            // network read landing on a chunk boundary shouldn't be fatal.
-            continue;
-          }
-
-          const candidate = chunk?.candidates?.[0];
-          const deltaText: string =
-            candidate?.content?.parts
-              ?.map((p: any) => p?.text ?? "")
-              .join("") ?? "";
-          if (deltaText) {
-            fullText += deltaText;
-            yield { type: "delta", text: deltaText };
-          }
-          if (chunk?.usageMetadata) {
-            usage = {
-              promptTokens: chunk.usageMetadata.promptTokenCount ?? 0,
-              completionTokens: chunk.usageMetadata.candidatesTokenCount ?? 0,
-            };
-          }
-        }
+      const candidate = chunk?.candidates?.[0];
+      const deltaText: string =
+        candidate?.content?.parts?.map((p: any) => p?.text ?? "").join("") ??
+        "";
+      if (deltaText) {
+        fullText += deltaText;
+        yield { type: "delta", text: deltaText };
+      }
+      if (chunk?.usageMetadata) {
+        usage = {
+          promptTokens: chunk.usageMetadata.promptTokenCount ?? 0,
+          completionTokens: chunk.usageMetadata.candidatesTokenCount ?? 0,
+        };
       }
     }
   } catch (err) {
     const isAbort =
       (err as { name?: string } | undefined)?.name === "AbortError";
     yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+    return;
+  }
+
+  const validation = validateStructuredStreamText(request, fullText);
+  if (!validation.ok) {
+    yield { type: "error", error: validation.reason };
     return;
   }
 

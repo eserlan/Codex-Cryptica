@@ -121,6 +121,23 @@ describe("DefaultAIClientManager", () => {
         "[OracleProxy] Interaction failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
       );
     });
+
+    it("forwards an AbortSignal to the underlying fetch (#2423 cancel support)", async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ id: "i1", text: "ok" }),
+      } as any);
+      const controller = new AbortController();
+
+      await manager.sendInteraction({
+        model: "m",
+        input: "hi",
+        signal: controller.signal,
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      expect(callArgs.signal).toBe(controller.signal);
+    });
   });
 
   describe("createProxyModel", () => {
@@ -738,6 +755,62 @@ describe("DefaultAIClientManager streaming (generateContentStream)", () => {
     const events = await collect((model as any).generateContentStream("hi"));
 
     expect(events).toEqual([{ type: "error", error: "no model" }]);
+  });
+
+  it("preserves the machine-readable error code on a non-ok response (#2423 session-expiry classification)", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+        { status: 401 },
+      ) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([
+      {
+        type: "error",
+        error:
+          "A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      },
+    ]);
+  });
+
+  it("flushes a trailing SSE event that arrives without a final blank-line separator", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "started" })}\n\n`),
+        );
+        // No trailing "\n\n" after this final event — the connection just
+        // closes, as a provider ending its response right after the last
+        // chunk would.
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "complete", text: "done" })}`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(stream, { status: 200 }) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "complete", text: "done" },
+    ]);
   });
 
   it("yields an error event without throwing on a transport failure", async () => {

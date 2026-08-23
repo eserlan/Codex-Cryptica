@@ -283,6 +283,15 @@ export type GenerationEvent =
       text: string;
       interactionId?: string;
       usage?: { promptTokens: number; completionTokens: number };
+      /**
+       * True when this result came from replaying the full prompt after the
+       * server-side interaction id expired (see `AIGeneratorCompleteResult`).
+       * Another generator-engine-only addition on top of the wire contract,
+       * same rationale as `field` above — the interaction-degrade branch of
+       * `completeStream` needs to report this so callers (e.g.
+       * `generateDraftStream`) don't have to assume `false`.
+       */
+      replayed?: boolean;
     }
   | { type: "error"; error: string };
 

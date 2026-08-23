@@ -352,7 +352,13 @@ async function* sendViaOperationPipelineStream(params: {
     let message = `upstream-status-${response.status}`;
     try {
       const errorBody = await response.json();
-      if (errorBody?.error?.message) message = errorBody.error.message;
+      if (errorBody?.error?.message) {
+        // Match the buffered path's message shape (`formatErrorCode`) — a
+        // caller-side classifier (classifyApiError) pattern-matches the
+        // trailing "(code: X)" to detect e.g. session-token expiry, and
+        // needs to see it here too, not just on the non-streaming request.
+        message = `${errorBody.error.message}${formatErrorCode(errorBody.error?.code)}`;
+      }
     } catch {
       // Body wasn't JSON (or the stream never opened) — keep the status-based message.
     }
@@ -364,6 +370,22 @@ async function* sendViaOperationPipelineStream(params: {
   const decoder = new TextDecoder();
   let buffer = "";
 
+  // Parses the `data:` lines out of one raw SSE event and yields each as a
+  // GenerationEvent, skipping (not throwing on) a malformed payload.
+  function* parseSseEvent(rawEvent: string): Generator<GenerationEvent> {
+    for (const line of rawEvent.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const dataStr = trimmed.slice(5).trim();
+      if (!dataStr) continue;
+      try {
+        yield JSON.parse(dataStr) as GenerationEvent;
+      } catch {
+        // Skip a malformed SSE payload rather than aborting the stream.
+      }
+    }
+  }
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -374,21 +396,15 @@ async function* sendViaOperationPipelineStream(params: {
       while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
         const rawEvent = buffer.slice(0, sepIndex);
         buffer = buffer.slice(sepIndex + 2);
-
-        for (const line of rawEvent.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:")) continue;
-          const dataStr = trimmed.slice(5).trim();
-          if (!dataStr) continue;
-
-          try {
-            yield JSON.parse(dataStr) as GenerationEvent;
-          } catch {
-            // Skip a malformed SSE payload rather than aborting the stream.
-          }
-        }
+        yield* parseSseEvent(rawEvent);
       }
     }
+
+    // Flush any trailing partial event still buffered when the stream ends
+    // without a final blank-line separator — a provider closing the
+    // connection right after its last chunk shouldn't silently drop it.
+    buffer += decoder.decode();
+    if (buffer.trim()) yield* parseSseEvent(buffer);
   } catch (err) {
     const isAbort =
       (err as { name?: string } | undefined)?.name === "AbortError";
@@ -510,6 +526,9 @@ export class DefaultAIClientManager {
     previousInteractionId?: string | null;
     storeConversation?: boolean;
     generationConfig?: Record<string, unknown>;
+    /** Cancels the in-flight request (#2423) — e.g. a user cancelling a
+     * streaming generation whose interaction-degrade path routes here. */
+    signal?: AbortSignal;
   }): Promise<{ id: string; text: string }> {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       throw new Error("You appear to be offline. Generation is unavailable.");
@@ -534,6 +553,7 @@ export class DefaultAIClientManager {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: params.signal,
     });
 
     const data = await response.json().catch(() => ({}) as any);

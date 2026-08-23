@@ -1834,4 +1834,46 @@ describe("generateDraftStream", () => {
 
     expect(completeStream).not.toHaveBeenCalled();
   });
+
+  it("reports the real replayed flag from the stream's complete event, not a hardcoded false (#2423)", async () => {
+    const completeStream = vi.fn(async function* () {
+      yield {
+        type: "complete" as const,
+        text: aiJson("Aric Dawnward"),
+        interactionId: "interaction-2",
+        replayed: true,
+      };
+    });
+    const onInteractionResult = vi.fn();
+    const onPromptMetrics = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+      onInteractionResult,
+      onPromptMetrics,
+    });
+
+    await collect(
+      svc.generateDraftStream(
+        run("npc", {
+          useAI: true,
+          interaction: {
+            input: "delta request",
+            previousInteractionId: "stale",
+            replayPrompt: "full replay",
+          },
+        }),
+      ),
+    );
+
+    expect(onInteractionResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interactionId: "interaction-2",
+        replayed: true,
+      }),
+    );
+    expect(onPromptMetrics).toHaveBeenCalledWith(
+      expect.objectContaining({ replayed: true }),
+    );
+  });
 });

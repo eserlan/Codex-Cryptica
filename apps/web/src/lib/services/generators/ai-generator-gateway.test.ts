@@ -235,6 +235,62 @@ describe("ProxyAIGeneratorGateway", () => {
       ]);
     });
 
+    it("forwards replayed:true when the interaction id had expired and was replayed (#2423)", async () => {
+      const calls: unknown[] = [];
+      const client = {
+        sendInteraction: async (params: unknown) => {
+          calls.push(params);
+          if (calls.length === 1) throw new InteractionExpiredError("expired");
+          return { id: "fresh", text: '{"title":"Replay"}' };
+        },
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+
+      const events = await collect(
+        gateway.completeStream("prompt", "system", {
+          interaction: {
+            input: "delta request",
+            previousInteractionId: "stale",
+            replayPrompt: "full replay",
+          },
+        }),
+      );
+
+      expect(calls).toHaveLength(2);
+      expect(events).toEqual([
+        { type: "started" },
+        {
+          type: "complete",
+          text: '{"title":"Replay"}',
+          interactionId: "fresh",
+          replayed: true,
+        },
+      ]);
+    });
+
+    it("forwards options.signal into the interaction-backed sendInteraction call (#2423 cancel support)", async () => {
+      const calls: unknown[] = [];
+      const client = {
+        sendInteraction: async (params: unknown) => {
+          calls.push(params);
+          return { id: "interaction-1", text: "{}" };
+        },
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+      const controller = new AbortController();
+
+      await collect(
+        gateway.completeStream("prompt", "system", {
+          interaction: { input: "delta request" },
+          signal: controller.signal,
+        }),
+      );
+
+      expect(calls).toEqual([
+        expect.objectContaining({ signal: controller.signal }),
+      ]);
+    });
+
     it("yields an error event when the underlying stream call rejects", async () => {
       // eslint-disable-next-line require-yield
       const generateContentStream = async function* () {

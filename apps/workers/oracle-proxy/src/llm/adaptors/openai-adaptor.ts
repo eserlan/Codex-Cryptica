@@ -13,8 +13,10 @@ import type {
 } from "../types";
 import {
   validateAgainstSchema,
+  validateStructuredStreamText,
   wantsStructuredOutput,
 } from "../schema-validation";
+import { readSseData } from "../sse";
 
 const PROVIDER_TIMEOUT_MS = 60_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
@@ -270,54 +272,42 @@ export async function* streamOpenAi(
   yield { type: "started" };
 
   const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let fullText = "";
   let usage: LlmUsage | undefined;
 
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+    for await (const dataStr of readSseData(reader)) {
+      if (dataStr === "[DONE]") continue;
 
-      let sepIndex: number;
-      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
-        const rawEvent = buffer.slice(0, sepIndex);
-        buffer = buffer.slice(sepIndex + 2);
+      let chunk: any;
+      try {
+        chunk = JSON.parse(dataStr);
+      } catch {
+        continue;
+      }
 
-        for (const line of rawEvent.split("\n")) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith("data:")) continue;
-          const dataStr = trimmed.slice(5).trim();
-          if (!dataStr) continue;
-          if (dataStr === "[DONE]") continue;
-
-          let chunk: any;
-          try {
-            chunk = JSON.parse(dataStr);
-          } catch {
-            continue;
-          }
-
-          const deltaText: string = chunk?.choices?.[0]?.delta?.content ?? "";
-          if (deltaText) {
-            fullText += deltaText;
-            yield { type: "delta", text: deltaText };
-          }
-          if (chunk?.usage) {
-            usage = {
-              promptTokens: chunk.usage.prompt_tokens ?? 0,
-              completionTokens: chunk.usage.completion_tokens ?? 0,
-            };
-          }
-        }
+      const deltaText: string = chunk?.choices?.[0]?.delta?.content ?? "";
+      if (deltaText) {
+        fullText += deltaText;
+        yield { type: "delta", text: deltaText };
+      }
+      if (chunk?.usage) {
+        usage = {
+          promptTokens: chunk.usage.prompt_tokens ?? 0,
+          completionTokens: chunk.usage.completion_tokens ?? 0,
+        };
       }
     }
   } catch (err) {
     const isAbort =
       (err as { name?: string } | undefined)?.name === "AbortError";
     yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+    return;
+  }
+
+  const validation = validateStructuredStreamText(request, fullText);
+  if (!validation.ok) {
+    yield { type: "error", error: validation.reason };
     return;
   }
 

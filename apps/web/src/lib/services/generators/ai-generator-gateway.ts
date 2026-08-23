@@ -79,6 +79,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
           previousInteractionId: interaction.previousInteractionId,
           storeConversation: interaction.store ?? true,
           generationConfig,
+          signal: options?.signal,
         });
         return {
           text: extractJsonObject(result.text),
@@ -94,6 +95,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
           previousInteractionId: null,
           storeConversation: interaction.store ?? true,
           generationConfig,
+          signal: options?.signal,
         });
         return {
           text: extractJsonObject(result.text),
@@ -143,7 +145,9 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
         const text = typeof result === "string" ? result : result.text;
         const interactionId =
           typeof result === "string" ? undefined : result.interactionId;
-        yield { type: "complete", text, interactionId };
+        const replayed =
+          typeof result === "string" ? undefined : result.replayed;
+        yield { type: "complete", text, interactionId, replayed };
       } catch (err) {
         yield {
           type: "error",

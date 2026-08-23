@@ -209,6 +209,38 @@ function parseGenericGeneratorOutput(
 }
 
 /**
+ * Builds the full prompt and (when the request carries one) the delta-lore
+ * interaction turn for a generic single-call generator — shared by
+ * `generateDraft`'s generic branch and `generateDraftStream` so the two
+ * can't silently diverge on what prompt/interaction shape actually gets
+ * sent to the model, same rationale as `parseGenericGeneratorOutput` above.
+ */
+function buildGenericGeneratorPrompt(
+  generator: CampaignGeneratorDefinition,
+  mergedRequest: GeneratorRunRequest,
+): {
+  fullPrompt: string;
+  interaction: GeneratorRunRequest["interaction"];
+} {
+  const fullPrompt = generator.buildPrompt({
+    ...mergedRequest,
+    interaction: undefined,
+  });
+  const prompt = mergedRequest.interaction
+    ? generator.buildPrompt(mergedRequest)
+    : fullPrompt;
+  const interaction = mergedRequest.interaction
+    ? {
+        ...mergedRequest.interaction,
+        input: withGeneratorRequest(mergedRequest.interaction.input, prompt),
+        replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
+      }
+    : undefined;
+
+  return { fullPrompt, interaction };
+}
+
+/**
  * Vault persistence boundary injected by the web app. The package never imports
  * vault stores directly; the host wires real implementations and tests pass
  * mocks. Mirrors the existing `vault.createEntity` / `vault.addConnection`.
@@ -795,23 +827,10 @@ export class CampaignGeneratorService {
       mergedRequest.generatorId !== "language" &&
       mergedRequest.generatorId !== "council-vote"
     ) {
-      const fullPrompt = generator.buildPrompt({
-        ...mergedRequest,
-        interaction: undefined,
-      });
-      const prompt = mergedRequest.interaction
-        ? generator.buildPrompt(mergedRequest)
-        : fullPrompt;
-      const interaction = mergedRequest.interaction
-        ? {
-            ...mergedRequest.interaction,
-            input: withGeneratorRequest(
-              mergedRequest.interaction.input,
-              prompt,
-            ),
-            replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
-          }
-        : undefined;
+      const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+        generator,
+        mergedRequest,
+      );
       // Retry a few times if the model returns a banned name (including
       // derivatives like "Vane-Smithe"); fall through to local generation if it
       // keeps doing so.
@@ -938,20 +957,10 @@ export class CampaignGeneratorService {
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
-    const fullPrompt = generator.buildPrompt({
-      ...mergedRequest,
-      interaction: undefined,
-    });
-    const prompt = mergedRequest.interaction
-      ? generator.buildPrompt(mergedRequest)
-      : fullPrompt;
-    const interaction = mergedRequest.interaction
-      ? {
-          ...mergedRequest.interaction,
-          input: withGeneratorRequest(mergedRequest.interaction.input, prompt),
-          replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
-        }
-      : undefined;
+    const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+      generator,
+      mergedRequest,
+    );
 
     // Same retry-on-banned-name policy as generateDraft's generic branch —
     // each attempt is a fresh stream, since a name-ban rejection can only be
@@ -959,6 +968,7 @@ export class CampaignGeneratorService {
     for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
       let raw = "";
       let interactionId: string | undefined;
+      let replayed = false;
       let sawComplete = false;
 
       try {
@@ -970,6 +980,7 @@ export class CampaignGeneratorService {
           if (event.type === "complete") {
             raw = event.text;
             interactionId = event.interactionId;
+            replayed = !!event.replayed;
             sawComplete = true;
           }
           yield event;
@@ -994,15 +1005,18 @@ export class CampaignGeneratorService {
           text: raw,
           interactionId,
           usedInteraction: true,
+          replayed,
         });
       }
       this.onPromptMetrics?.(
         promptMetrics({
           request: mergedRequest,
           fullPrompt,
-          sentPrompt: interaction?.input ?? fullPrompt,
+          sentPrompt: replayed
+            ? (interaction?.replayPrompt ?? fullPrompt)
+            : (interaction?.input ?? fullPrompt),
           usedInteraction: !!interaction,
-          replayed: false,
+          replayed,
         }),
       );
       yield {

@@ -351,12 +351,20 @@
         if (event.type === "field" && typeof event.value === "string") {
           streamedFields = { ...streamedFields, [event.key]: event.value };
         } else if (event.type === "draft") {
+          // A `draft` event is always the terminal outcome of
+          // generateDraftStream() — including after an `error` event, which
+          // it falls back from to local generation — so it always
+          // supersedes any earlier error state, and there's never a
+          // trailing `error` event after this without a `draft` following.
           draft = event.draft;
+          errorMsg = null;
           stage = "review";
-        } else if (event.type === "error") {
-          errorMsg = event.error;
-          stage = "error";
         }
+        // `error` events are non-terminal here: generateDraftStream() always
+        // falls through to a local-generation `draft` event after one, so
+        // there's nothing to surface to the user — the spinner just keeps
+        // showing until that draft arrives. A truly fatal failure surfaces
+        // as a thrown exception, caught below.
       }
     } catch (err) {
       if (abortController.signal.aborted) return;

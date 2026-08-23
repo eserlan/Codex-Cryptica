@@ -707,4 +707,89 @@ describe("streamOpenAi", () => {
       { type: "complete", text: "ok", usage: undefined },
     ]);
   });
+
+  it("flushes a trailing event that arrives without a final blank-line separator", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: "Hello" } }] })}\n\n`,
+          ),
+        );
+        // No trailing "\n\n" — the connection just closes after this chunk.
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: ", world" } }] })}`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    const fetcher = vi.fn(async () => new Response(stream, { status: 200 }));
+
+    const events = await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+      { type: "complete", text: "Hello, world", usage: undefined },
+    ]);
+  });
+
+  it("yields an error instead of complete when a structured-generation stream produces invalid JSON", async () => {
+    const structuredRequest: LlmRequest = {
+      operation: "structured-generation",
+      messages: [{ role: "user", content: "hello" }],
+    };
+    const fetcher = vi.fn(async () =>
+      sseResponse([{ choices: [{ delta: { content: "not valid json" } }] }]),
+    );
+
+    const events = await collect(
+      streamOpenAi(
+        structuredRequest,
+        model,
+        env,
+        fetcher as unknown as typeof fetch,
+      ),
+    );
+
+    expect(events.at(-1)).toEqual({
+      type: "error",
+      error: "structured-output-invalid",
+    });
+  });
+
+  it("yields an error instead of complete when structured output fails schema validation", async () => {
+    const structuredRequest: LlmRequest = {
+      operation: "structured-generation",
+      messages: [{ role: "user", content: "hello" }],
+      schema: {
+        type: "object",
+        required: ["title"],
+        properties: { title: { type: "string" } },
+      },
+    };
+    const fetcher = vi.fn(async () =>
+      sseResponse([{ choices: [{ delta: { content: '{"wrong":"shape"}' } }] }]),
+    );
+
+    const events = await collect(
+      streamOpenAi(
+        structuredRequest,
+        model,
+        env,
+        fetcher as unknown as typeof fetch,
+      ),
+    );
+
+    expect(events.at(-1)).toEqual({
+      type: "error",
+      error: "structured-output-schema-mismatch",
+    });
+  });
 });
