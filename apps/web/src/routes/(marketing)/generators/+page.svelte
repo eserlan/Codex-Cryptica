@@ -95,6 +95,13 @@
           icon: "icon-[lucide--scroll-text]",
         },
         {
+          href: "/generators/puzzle",
+          label: "Puzzle Generator",
+          summary:
+            "Create encounter puzzles with layered clues, multiple approaches, and consequences that keep the adventure moving.",
+          icon: "icon-[lucide--puzzle]",
+        },
+        {
           href: "/generators/plot-twist-generator",
           label: "Plot Twist & Complication Generator",
           summary:

@@ -126,6 +126,14 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  buildPuzzlePrompt,
+  parsePuzzleResponse,
+  generatePuzzleLocal,
+  puzzleConfig,
+  type PuzzleGeneratorOptions,
+  type PuzzlePrompt,
+} from "./public-puzzle";
+export {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,

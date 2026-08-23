@@ -19,6 +19,7 @@ import {
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { factionConfig } from "./public-faction-constants";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -55,6 +56,7 @@ describe("registry lookup", () => {
       "dungeon",
       "adventure",
       "quest",
+      "puzzle",
       "plot-twist",
       "villain",
       "world",
@@ -172,6 +174,42 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "event",
       sourceGeneratorId: "quest",
+    });
+  });
+
+  it("builds a non-gated puzzle and maps it to a note draft", () => {
+    const generator = getGenerator("puzzle");
+    const request = run("puzzle", {
+      options: {
+        genre: "Lancer",
+        purpose: "Destroy relic or organ",
+        style: "Magical",
+        capabilities: "Earth elemental sorcerer",
+        downstreamConsequence: "The boss loses its shield.",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.puzzle).toBe("note");
+    expect(generator.buildPrompt(request)).toContain(
+      "Never make progress depend",
+    );
+    expect(generator.buildPrompt(request)).toContain(
+      "Earth elemental sorcerer",
+    );
+    expect(generator.buildPrompt(request)).toContain("Lancer");
+    const genreOption = generator.options.find(({ id }) => id === "genre");
+    expect(genreOption?.choices?.map(({ value }) => value)).toEqual(
+      factionConfig.themes,
+    );
+    const output = generator.generate(request);
+    expect(output.content).toContain("## Alternate Solutions");
+    expect(output.content).toContain("## Downstream Consequences");
+    // Main document material stays out of the compact GM reference rail.
+    expect(output.lore).not.toContain("Alternate Solutions");
+    expect(output.lore).not.toContain("Downstream Consequences");
+    expect(generator.mapOutputToDraft(output, request)).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "puzzle",
     });
   });
 
@@ -1363,6 +1401,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       dungeon: "location",
       adventure: "note",
       quest: "event",
+      puzzle: "note",
       "plot-twist": "note",
       villain: "character",
       world: "location",
