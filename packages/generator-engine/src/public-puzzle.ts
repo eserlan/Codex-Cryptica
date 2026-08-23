@@ -54,6 +54,18 @@ export const puzzleConfig = {
 /** Automated generation starts system-neutral; only a user may tailor it. */
 export const DEFAULT_PUZZLE_SYSTEM = "System-neutral";
 
+const purposeActions: Record<(typeof puzzleConfig.purposes)[number], string> = {
+  "Sealed door": "open the sealed door",
+  "Retrieve object": "retrieve the object",
+  "Disable device": "disable the device",
+  "Destroy relic or organ": "destroy the relic or organ",
+  Escape: "escape the danger",
+  "Cross obstacle": "cross the obstacle",
+  "Reveal secret": "reveal the secret",
+  "Complete ritual": "complete the ritual",
+  "Survive trap": "survive the trap",
+};
+
 export interface PuzzleGeneratorOptions {
   genre?: string;
   purpose?: string;
@@ -154,15 +166,18 @@ export function generatePuzzleLocal(
 ): PublicGeneratorOutput {
   const resolved = resolvePuzzle(options);
   const focus = pickFrom(
-    ["a locked mechanism", "a fading ward", "a shifting chamber"],
+    ["locked mechanism", "fading ward", "shifting chamber"],
     rng,
   );
+  const purposeAction =
+    purposeActions[resolved.purpose as keyof typeof purposeActions] ??
+    resolved.purpose.toLowerCase();
   const capabilityNote =
     resolved.capabilities ||
     "investigation, physical action, social insight, and creative magic or equipment";
   const content = [
     "## Player-Facing Setup",
-    `The party finds ${focus} blocking their attempt to ${resolved.purpose.toLowerCase()}. Its details make the ${resolved.genre} fiction clear: it was built to test intent, not merely punish failure.`,
+    `The party finds a ${focus} blocking their attempt to ${purposeAction}. Its details make the ${resolved.genre} fiction clear: it was built to test intent, not merely punish failure.`,
     "",
     "## Clues",
     "- **Obvious clue:** Put one sensory detail in plain view that points to the pattern.",
@@ -213,7 +228,7 @@ export function generatePuzzleLocal(
     `${resolved.style} Trial: ${resolved.purpose}`,
     content,
     lore,
-    `A ${focus} blocks the party's attempt to ${resolved.purpose.toLowerCase()}. Visible ${resolved.genre} details reveal how to manipulate it, while a wrong approach changes the situation instead of ending the encounter.`,
+    `A ${focus} blocks the party's attempt to ${purposeAction}. Visible ${resolved.genre} details reveal how to manipulate it, while a wrong approach changes the situation instead of ending the encounter.`,
   );
 }
 

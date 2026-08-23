@@ -37,8 +37,29 @@ describe("Puzzle generator", () => {
     expect(output.lore).toContain("### Escalating Hints");
     expect(output.lore).not.toContain("### Alternate Solutions");
     expect(output.lore).toContain("no class, spell, skill");
-    expect(output.summary).toContain("locked mechanism");
-    expect(output.summary).toContain("disable device");
+    expect(output.summary).toContain("A locked mechanism");
+    expect(output.summary).toContain("disable the device");
+    expect(output.content).toContain("attempt to disable the device");
+  });
+
+  it("uses grammatical action text for every puzzle purpose", () => {
+    const expectedActions = {
+      "Sealed door": "open the sealed door",
+      "Retrieve object": "retrieve the object",
+      "Disable device": "disable the device",
+      "Destroy relic or organ": "destroy the relic or organ",
+      Escape: "escape the danger",
+      "Cross obstacle": "cross the obstacle",
+      "Reveal secret": "reveal the secret",
+      "Complete ritual": "complete the ritual",
+      "Survive trap": "survive the trap",
+    };
+
+    for (const [purpose, action] of Object.entries(expectedActions)) {
+      const output = generatePuzzleLocal({ purpose }, () => 0);
+      expect(output.summary).toContain(`attempt to ${action}`);
+      expect(output.content).toContain(`attempt to ${action}`);
+    }
   });
 
   it("includes capability safety and genre fidelity in the prompt", () => {
