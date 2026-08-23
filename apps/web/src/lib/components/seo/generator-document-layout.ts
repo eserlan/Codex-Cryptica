@@ -44,7 +44,17 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "puzzle-generator",
-    railSections: new Set(["At a Glance"]),
+    railSections: new Set([
+      "At a Glance",
+      "GM-Only Solution",
+      "Character Spotlight Opportunities",
+      "Alternate Solutions",
+      "Failure & Escalation",
+      "Escalating Hints",
+      "Running the Puzzle",
+      "Scaling",
+      "Downstream Consequences",
+    ]),
   },
   {
     label: "rpg-item",

@@ -18,10 +18,13 @@ describe("Puzzle generator", () => {
       () => 0,
     );
     expect(output.content).toContain("## Player-Facing Setup");
-    expect(output.content).toContain("## GM-Only Solution");
-    expect(output.content).toContain("## Alternate Solutions");
-    expect(output.content).toContain("## Downstream Consequences");
-    expect(output.content).toContain("no class, spell, skill");
+    expect(output.content).toContain("## Clues");
+    expect(output.content).not.toContain("GM-Only Solution");
+    expect(output.lore).toContain("### GM-Only Solution");
+    expect(output.lore).toContain("### Alternate Solutions");
+    expect(output.lore).toContain("### Downstream Consequences");
+    expect(output.lore).toContain("no class, spell, skill");
+    expect(output.summary.length).toBeGreaterThan(100);
   });
 
   it("includes capability safety and genre fidelity in the prompt", () => {
@@ -31,7 +34,7 @@ describe("Puzzle generator", () => {
       capabilities: "Earth elemental sorcerer",
     });
     expect(userMessage).toContain("Earth elemental sorcerer");
-    expect(userMessage).toContain("## Escalating Hints");
+    expect(userMessage).toContain("### Escalating Hints");
     expect(systemInstruction).toContain("Never make progress depend");
     expect(systemInstruction).toContain("Respect the genre");
   });
@@ -39,6 +42,14 @@ describe("Puzzle generator", () => {
   it("rejects malformed AI output so the web seam can fall back", () => {
     expect(() =>
       parsePuzzleResponse('{"title":"Missing sections","content":"Nope"}'),
+    ).toThrow("missing required");
+  });
+
+  it("rejects AI output that leaves GM-only sections out of the rail", () => {
+    expect(() =>
+      parsePuzzleResponse(
+        '{"content":"## Player-Facing Setup\\nx\\n## Clues\\ny","lore":"### At a Glance\\nx"}',
+      ),
     ).toThrow("missing required");
   });
 

@@ -139,7 +139,7 @@ function render(
     type: "note",
     kind: "puzzle",
     title,
-    summary: `${resolved.complexity} ${resolved.style.toLowerCase()} puzzle for ${resolved.purpose.toLowerCase()}.`,
+    summary: `A ${resolved.complexity.toLowerCase()} ${resolved.style.toLowerCase()} encounter for ${resolved.purpose.toLowerCase()}, with visible clues for players and practical GM guidance for flexible, fail-forward play.`,
     content,
     lore:
       lore ||
@@ -170,39 +170,46 @@ export function generatePuzzleLocal(
     "## Player-Facing Setup",
     `The party finds ${focus} blocking their attempt to ${resolved.purpose.toLowerCase()}. Its details make the ${resolved.genre} fiction clear: it was built to test intent, not merely punish failure.`,
     "",
-    "## GM-Only Solution",
-    `The ${resolved.style.toLowerCase()} challenge responds to a pattern of three linked actions. Any credible approach that identifies, alters, bypasses, or reinterprets the pattern advances the puzzle; no class, spell, skill, or single answer is required.`,
-    "",
     "## Clues",
     "- **Obvious clue:** Put one sensory detail in plain view that points to the pattern.",
     "- **Discoverable clue:** Interaction, conversation, or an appropriate check reveals why the mechanism was built.",
     "- **Emergency clue:** After meaningful effort, show the next safe action through a visible change in the room.",
+  ].join("\n");
+  const lore = [
+    "### At a Glance",
+    `- **Genre:** ${resolved.genre}`,
+    `- **Complexity:** ${resolved.complexity}`,
+    `- **System:** ${resolved.system}`,
+    `- **Participation:** ${resolved.participationStyle}`,
     "",
-    "## Character Spotlight Opportunities",
+    "### GM-Only Solution",
+    `The ${resolved.style.toLowerCase()} challenge responds to a pattern of three linked actions. Any credible approach that identifies, alters, bypasses, or reinterprets the pattern advances the puzzle; no class, spell, skill, or single answer is required.`,
+    "",
+    "### Character Spotlight Opportunities",
     `Invite contributions from ${capabilityNote}. Frame each as a useful angle, not a requirement: a careful observer reads the pattern, a forceful character changes its physical state at a cost, and a magical or technical character can test its energy or controls.`,
     "",
-    "## Alternate Solutions",
+    "### Alternate Solutions",
     "- Bypass one component while accepting a minor complication.",
     "- Negotiate with, trick, or repurpose the guardian mechanism.",
     "- Use an improvised resource or an original interpretation of the fiction to create a new route forward.",
     "",
-    "## Failure & Escalation",
+    "### Failure & Escalation",
     resolved.failurePressure === "None"
       ? "Failed attempts provide clear feedback without adding pressure, so the puzzle remains a safe point for experimentation."
       : `On a failed attempt, apply ${resolved.failurePressure.toLowerCase()} rather than a dead end: reveal new information, change the situation, and let the party choose how to proceed.`,
     "",
-    "## Escalating Hints",
+    "### Escalating Hints",
     "1. Repeat the obvious clue in a new sensory form.",
     "2. Point out the component that changed after the party's last action.",
     "3. State the puzzle's immediate fictional goal without naming a solution.",
     "",
-    "## Running the Puzzle",
+    "### Running the Puzzle",
     "Describe the visible parts and the first clue freely. Let checks add context or reduce risk, never hide the only path behind a roll. Ask what each player does before offering a hint, then reward experiments with concrete feedback.",
     "",
-    "## Scaling",
+    "### Scaling",
     `Simplify by making two actions sufficient or offering the emergency clue earlier. Increase complexity by adding a clock, a second interacting component, or a consequence that changes the next encounter.`,
     resolved.downstreamConsequence
-      ? `\n## Downstream Consequences\n${resolved.downstreamConsequence}`
+      ? `\n### Downstream Consequences\n${resolved.downstreamConsequence}`
       : "",
   ]
     .filter(Boolean)
@@ -211,6 +218,7 @@ export function generatePuzzleLocal(
     resolved,
     `${resolved.style} Trial: ${resolved.purpose}`,
     content,
+    lore,
   );
 }
 
@@ -239,7 +247,7 @@ export function buildPuzzlePrompt(
       `Downstream consequence: ${resolved.downstreamConsequence}`,
     resolved.campaignContext && `Campaign context: ${resolved.campaignContext}`,
     sessionContext && `Session context: ${sessionContext}`,
-    "Return JSON with title, summary, content, lore, and labels. Content must use these exact headings: ## Player-Facing Setup, ## GM-Only Solution, ## Clues, ## Character Spotlight Opportunities, ## Alternate Solutions, ## Failure & Escalation, ## Escalating Hints, ## Running the Puzzle, ## Scaling. Include three clue layers and three escalating hints. Include ## Downstream Consequences when requested.",
+    "Return JSON with title, summary, content, lore, and labels. Content is the main player-facing document and must use exactly these headings: ## Player-Facing Setup and ## Clues. Put the GM-facing material in lore with these exact headings: ### At a Glance, ### GM-Only Solution, ### Character Spotlight Opportunities, ### Alternate Solutions, ### Failure & Escalation, ### Escalating Hints, ### Running the Puzzle, and ### Scaling. Include ### Downstream Consequences in lore when requested. Keep GM-only solution details, alternate approaches, hints, escalation, and scaling out of content.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -252,18 +260,24 @@ export function parsePuzzleResponse(
 ): PublicGeneratorOutput {
   const parsed = parseFencedJson<Record<string, unknown>>(rawText);
   const content = text(parsed.content);
-  const headings = [
-    "## Player-Facing Setup",
-    "## GM-Only Solution",
-    "## Clues",
-    "## Character Spotlight Opportunities",
-    "## Alternate Solutions",
-    "## Failure & Escalation",
-    "## Escalating Hints",
-    "## Running the Puzzle",
-    "## Scaling",
+  const contentHeadings = ["## Player-Facing Setup", "## Clues"];
+  const lore = text(parsed.lore);
+  const loreHeadings = [
+    "### At a Glance",
+    "### GM-Only Solution",
+    "### Character Spotlight Opportunities",
+    "### Alternate Solutions",
+    "### Failure & Escalation",
+    "### Escalating Hints",
+    "### Running the Puzzle",
+    "### Scaling",
   ];
-  if (!content || !headings.every((heading) => content.includes(heading)))
+  if (
+    !content ||
+    !lore ||
+    !contentHeadings.every((heading) => content.includes(heading)) ||
+    !loreHeadings.every((heading) => lore.includes(heading))
+  )
     throw new Error(
       "Puzzle response is missing required table-ready sections.",
     );
@@ -271,6 +285,6 @@ export function parsePuzzleResponse(
     resolved,
     text(parsed.title) || `${resolved.style} Trial: ${resolved.purpose}`,
     content,
-    text(parsed.lore),
+    lore,
   );
 }

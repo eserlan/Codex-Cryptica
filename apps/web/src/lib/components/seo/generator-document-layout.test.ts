@@ -150,6 +150,26 @@ The chapel reliquary, and leverage over the patron.`,
     expect(layout.lore).not.toContain("### Reward");
   });
 
+  it("keeps puzzle player-facing material in the main document and GM guidance in the rail", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "note",
+      title: "The Ember Choir",
+      content:
+        "## Player-Facing Setup\nThree braziers block the vault.\n\n## Clues\n- The frescoes show the colours in order.",
+      lore: "### At a Glance\n- **Complexity:** Moderate\n\n### GM-Only Solution\nThe sequence opens the vault.\n\n### Character Spotlight Opportunities\nObservation and force both help.\n\n### Alternate Solutions\nBreak a brazier at a cost.\n\n### Failure & Escalation\nThe guardian wakes.\n\n### Escalating Hints\n1. Follow the mural.\n\n### Running the Puzzle\nDescribe every brazier freely.\n\n### Scaling\nUse two braziers for a simpler version.",
+      labels: ["puzzle-generator"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## Player-Facing Setup");
+    expect(layout.content).toContain("## Clues");
+    expect(layout.content).not.toContain("GM-Only Solution");
+    expect(layout.lore).toContain("### GM-Only Solution");
+    expect(layout.lore).toContain("### Alternate Solutions");
+    expect(layout.lore).toContain("### Scaling");
+    expect(layout.lore).not.toContain("## Player-Facing Setup");
+  });
+
   it("moves magic item lore & history into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "item",

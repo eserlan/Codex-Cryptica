@@ -195,8 +195,8 @@ describe("registry lookup", () => {
       "Earth elemental sorcerer",
     );
     const output = generator.generate(request);
-    expect(output.content).toContain("## Alternate Solutions");
-    expect(output.content).toContain("## Downstream Consequences");
+    expect(output.lore).toContain("### Alternate Solutions");
+    expect(output.lore).toContain("### Downstream Consequences");
     expect(generator.mapOutputToDraft(output, request)).toMatchObject({
       entityType: "note",
       sourceGeneratorId: "puzzle",
