@@ -23,6 +23,7 @@ import {
   type DraftSaveResult,
   type GeneratedDraft,
   type GenerationEvent,
+  type GeneratorInteractionRequest,
   type GeneratorPromptMetrics,
   type GeneratorOutput,
   type GeneratorRunRequest,
@@ -239,6 +240,45 @@ function buildGenericGeneratorPrompt(
     : undefined;
 
   return { fullPrompt, interaction };
+}
+
+/**
+ * Streams one `completeStream()` pass, preceded by a `phase` event, for a
+ * multi-pass generator (dungeon, language — #2423 multi-pass follow-up).
+ * Re-yields every event from the pass and returns the accumulated result
+ * once it completes, so a caller does `const result = yield*
+ * streamGenerationPass(...)` to get both the live events (delegated to
+ * whatever is consuming the outer generator) and the final text/interaction
+ * bookkeeping in one call, without duplicating the delta-accumulation loop
+ * at every call site.
+ */
+async function* streamGenerationPass(
+  aiGateway: AIGeneratorGateway,
+  label: string,
+  message: string,
+  systemInstruction: string,
+  options?: { interaction?: GeneratorInteractionRequest; signal?: AbortSignal },
+): AsyncGenerator<
+  GenerationEvent,
+  { raw: string; interactionId?: string; replayed?: boolean }
+> {
+  yield { type: "phase", label };
+  let raw = "";
+  let interactionId: string | undefined;
+  let replayed: boolean | undefined;
+  for await (const event of aiGateway.completeStream!(
+    message,
+    systemInstruction,
+    { interaction: options?.interaction, signal: options?.signal },
+  )) {
+    if (event.type === "complete") {
+      raw = event.text;
+      interactionId = event.interactionId;
+      replayed = event.replayed;
+    }
+    yield event;
+  }
+  return { raw, interactionId, replayed };
 }
 
 type CouncilVoteFoundation = Partial<GeneratorOutput> & {
@@ -596,6 +636,157 @@ export class CampaignGeneratorService {
     }
   }
 
+  /**
+   * Streaming counterpart to `generateLanguageWithAI` (#2423 multi-pass
+   * follow-up). Same fixed-budget shape (1 initial pass + up to 2 repair
+   * passes, always stateless — never carries `interaction`, see the
+   * buffered method's #1910 comment) and the same `assessLanguageResponse`
+   * classifier, just streamed pass by pass via `streamGenerationPass`. A
+   * repair pass that fails to produce any text (adaptor `error` event)
+   * keeps the last parseable candidate and continues, matching the buffered
+   * method's `catch` — `streamGenerationPass` never throws on an adaptor
+   * error, so that's detected here by an empty `raw` instead. `onPromptMetrics`
+   * is only called on the fast-accept path, matching the buffered method
+   * exactly (repair-loop outcomes were never metered there either).
+   */
+  private async *generateLanguageWithAIStream(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    const generator = getGenerator(request.generatorId);
+    const themeDefaults = getThemeDefaults(
+      request.themeId,
+      request.generatorId,
+    );
+    const mergedRequest: GeneratorRunRequest = {
+      ...request,
+      options: { ...themeDefaults, ...request.options },
+    };
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      !!this.aiGateway?.completeStream;
+    mergedRequest.useAI = canUseAI;
+
+    if (!canUseAI) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    const bannedNames = new Set([
+      ...(mergedRequest.vaultContext?.bannedNames ?? []),
+      ...(mergedRequest.vaultContext?.existingTitles ?? []),
+    ]);
+
+    const fullPrompt = generator.buildPrompt({
+      ...mergedRequest,
+      interaction: undefined,
+    });
+
+    try {
+      const initial = yield* streamGenerationPass(
+        this.aiGateway!,
+        "Drafting the language…",
+        fullPrompt,
+        SYSTEM_INSTRUCTION,
+        { signal },
+      );
+      if (signal?.aborted) return;
+
+      const first = this.assessLanguageResponse(
+        initial.raw,
+        mergedRequest,
+        bannedNames,
+      );
+      if (first.output && first.issues.length === 0) {
+        this.onPromptMetrics?.(
+          promptMetrics({
+            request: mergedRequest,
+            fullPrompt,
+            sentPrompt: fullPrompt,
+            usedInteraction: false,
+            replayed: false,
+          }),
+        );
+        yield {
+          type: "draft",
+          draft: generator.mapOutputToDraft(first.output, mergedRequest),
+        };
+        return;
+      }
+
+      let candidateRaw = initial.raw;
+      let candidate = first;
+      let lastAcceptableOutput =
+        first.output && first.blockingIssues.length === 0
+          ? first.output
+          : undefined;
+      const repairBudget = first.blockingIssues.length ? 2 : 1;
+
+      for (
+        let repairAttempt = 0;
+        repairAttempt < repairBudget;
+        repairAttempt += 1
+      ) {
+        try {
+          const repair = yield* streamGenerationPass(
+            this.aiGateway!,
+            "Refining the language…",
+            buildLanguageRepairPrompt(
+              candidateRaw,
+              candidate.issues,
+              fullPrompt,
+            ),
+            SYSTEM_INSTRUCTION,
+            { signal },
+          );
+          if (signal?.aborted) return;
+          if (!repair.raw) continue; // Adaptor error — keep the last parseable candidate.
+          candidateRaw = repair.raw;
+          candidate = this.assessLanguageResponse(
+            candidateRaw,
+            mergedRequest,
+            bannedNames,
+          );
+          if (candidate.output && candidate.issues.length === 0) {
+            yield {
+              type: "draft",
+              draft: generator.mapOutputToDraft(
+                candidate.output,
+                mergedRequest,
+              ),
+            };
+            return;
+          }
+          if (candidate.output && candidate.blockingIssues.length === 0) {
+            lastAcceptableOutput = candidate.output;
+            break;
+          }
+        } catch {
+          // Preserve the last parseable candidate for the remaining repair.
+        }
+      }
+      if (lastAcceptableOutput) {
+        yield {
+          type: "draft",
+          draft: generator.mapOutputToDraft(
+            lastAcceptableOutput,
+            mergedRequest,
+          ),
+        };
+        return;
+      }
+      yield { type: "draft", draft: await this.generateDraft(request) };
+    } catch {
+      if (signal?.aborted) return;
+      yield { type: "draft", draft: await this.generateDraft(request) };
+    }
+  }
+
   private async generateDungeonWithAI(
     generator: CampaignGeneratorDefinition,
     request: GeneratorRunRequest,
@@ -703,6 +894,157 @@ export class CampaignGeneratorService {
       );
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Streaming counterpart to `generateDungeonWithAI` (#2423 multi-pass
+   * follow-up). Same at-most-2-call shape (initial pass, then at most one of
+   * a stateless structural retry or a stateless coherence repair — the two
+   * are mutually exclusive), same `parseDungeonResponseDetailed` validation,
+   * just streamed pass by pass via `streamGenerationPass`. Only the initial
+   * pass can carry `interaction` (matching the buffered method); the
+   * retry/repair pass never does, so it always streams for real even when
+   * the first pass degraded to a single started/complete pair. Falls back to
+   * buffered `generateDraft()` whenever streaming isn't available or the
+   * whole attempt throws — same single try/catch as the buffered method.
+   */
+  private async *generateDungeonWithAIStream(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    const generator = getGenerator(request.generatorId);
+    const themeDefaults = getThemeDefaults(
+      request.themeId,
+      request.generatorId,
+    );
+    const mergedRequest: GeneratorRunRequest = {
+      ...request,
+      options: { ...themeDefaults, ...request.options },
+    };
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      !!this.aiGateway?.completeStream;
+    mergedRequest.useAI = canUseAI;
+
+    if (!canUseAI) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    const prompt = buildCampaignDungeonPrompt(mergedRequest);
+    const interaction = mergedRequest.interaction
+      ? {
+          ...mergedRequest.interaction,
+          input: withGeneratorRequest(
+            mergedRequest.interaction.input,
+            prompt.userMessage,
+          ),
+          replayPrompt:
+            mergedRequest.interaction.replayPrompt ?? prompt.userMessage,
+        }
+      : undefined;
+
+    try {
+      const first = yield* streamGenerationPass(
+        this.aiGateway!,
+        "Drafting the dungeon…",
+        prompt.userMessage,
+        prompt.systemInstruction,
+        { interaction, signal },
+      );
+      if (signal?.aborted) return;
+
+      const firstParsed = parseDungeonResponseDetailed(
+        first.raw,
+        prompt.options,
+        undefined,
+        prompt.resolved,
+      );
+      let output = firstParsed.output;
+      let acceptedInteractionResult: AIGeneratorCompleteResult | undefined =
+        interaction
+          ? {
+              text: first.raw,
+              interactionId: first.interactionId,
+              usedInteraction: true,
+              replayed: first.replayed,
+            }
+          : undefined;
+
+      if (firstParsed.rejected) {
+        const retry = yield* streamGenerationPass(
+          this.aiGateway!,
+          "Fixing structural issues…",
+          buildDungeonRetryMessage(prompt.userMessage, firstParsed.problems),
+          prompt.systemInstruction,
+          { signal },
+        );
+        if (signal?.aborted) return;
+        const second = parseDungeonResponseDetailed(
+          retry.raw,
+          prompt.options,
+          undefined,
+          prompt.resolved,
+        );
+        if (second.problems.length === 0 || !second.rejected) {
+          output = second.output;
+          acceptedInteractionResult = undefined;
+        }
+      } else if (firstParsed.structured) {
+        const coherence = buildDungeonCoherencePrompt(
+          firstParsed.structured,
+          prompt.resolved,
+        );
+        const repair = yield* streamGenerationPass(
+          this.aiGateway!,
+          "Polishing coherence…",
+          coherence.userMessage,
+          coherence.systemInstruction,
+          { signal },
+        );
+        if (signal?.aborted) return;
+        const repaired = parseDungeonResponseDetailed(
+          repair.raw,
+          prompt.options,
+          undefined,
+          prompt.resolved,
+        );
+        if (!repaired.rejected) {
+          output = repaired.output;
+          acceptedInteractionResult = undefined;
+        }
+      }
+
+      if (acceptedInteractionResult) {
+        this.onInteractionResult?.(acceptedInteractionResult);
+      }
+      this.onPromptMetrics?.(
+        promptMetrics({
+          request: mergedRequest,
+          fullPrompt: prompt.userMessage,
+          sentPrompt: first.replayed
+            ? (interaction?.replayPrompt ?? prompt.userMessage)
+            : (interaction?.input ?? prompt.userMessage),
+          usedInteraction: !!interaction,
+          replayed: !!first.replayed,
+        }),
+      );
+      yield {
+        type: "draft",
+        draft: generator.mapOutputToDraft(
+          normalizeDungeonOutput(output),
+          mergedRequest,
+        ),
+      };
+    } catch {
+      if (signal?.aborted) return;
+      yield { type: "draft", draft: await this.generateDraft(request) };
     }
   }
 
@@ -1044,15 +1386,16 @@ export class CampaignGeneratorService {
   }
 
   /**
-   * Streaming counterpart to `generateDraft` (#2423). Dispatches council-vote
-   * to `generateCouncilVoteWithAIStream` (its own multi-turn chat-session
-   * streaming, #2423 multi-pass follow-up); dungeon and language still fall
-   * back to buffered `generateDraft` (their multi-pass streaming isn't built
-   * yet); every other (generic, single-call) generator streams via the
-   * branch below. Yields `GenerationEvent`s (`started`/`delta`/`field`/
-   * `phase`/`complete`/`error`) as they arrive so the UI can render
-   * progressively, then exactly one final `{ type: "draft" }` event carrying
-   * the fully validated `GeneratedDraft` — mirroring `generateDraft`'s exact
+   * Streaming counterpart to `generateDraft` (#2423). Dispatches each
+   * multi-pass generator to its own streaming method — council-vote to
+   * `generateCouncilVoteWithAIStream` (multi-turn chat session), dungeon to
+   * `generateDungeonWithAIStream`, language to `generateLanguageWithAIStream`
+   * (both multi-pass `completeStream()` calls, #2423 multi-pass follow-up) —
+   * every other (generic, single-call) generator streams via the branch
+   * below. Yields `GenerationEvent`s (`started`/`delta`/`field`/`phase`/
+   * `complete`/`error`) as they arrive so the UI can render progressively,
+   * then exactly one final `{ type: "draft" }` event carrying the fully
+   * validated `GeneratedDraft` — mirroring `generateDraft`'s exact
    * validation/retry/local-fallback behavior, just reached incrementally
    * instead of after one full await. Falls back to calling `generateDraft`
    * itself (yielding only `started` then `draft`) whenever streaming isn't
@@ -1070,11 +1413,16 @@ export class CampaignGeneratorService {
       yield* this.generateCouncilVoteWithAIStream(request, signal);
       return;
     }
+    if (request.generatorId === "dungeon") {
+      yield* this.generateDungeonWithAIStream(request, signal);
+      return;
+    }
+    if (request.generatorId === "language") {
+      yield* this.generateLanguageWithAIStream(request, signal);
+      return;
+    }
 
-    const isStreamableGenericGenerator =
-      request.generatorId !== "dungeon" && request.generatorId !== "language";
-
-    if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
+    if (!this.aiGateway?.completeStream) {
       yield { type: "started" };
       yield { type: "draft", draft: await this.generateDraft(request) };
       return;

@@ -1806,33 +1806,53 @@ describe("generateDraftStream", () => {
     expect(finalEvent.draft.sourceGeneratorId).toBe("npc");
   });
 
-  it("falls back to generateDraft's own dungeon path for a multi-pass generator, not the generic stream branch", async () => {
-    const completeStream = vi.fn();
-    const complete = vi.fn(async () =>
-      JSON.stringify({
-        title: "The Bellfound Depths",
-        summary: "s",
-        throughline: "t",
-        history: "h",
-        currentState: "c",
-        signatureFeature: "f",
-        sectors: [],
-        factionSituation: "fs",
-        factions: [],
-        secret: "sec",
-        hazards: [],
-        treasures: [],
-        hooks: [],
-      }),
-    );
+  it("streams dungeon through its own dedicated multi-pass method (a phase event), not the generic single-call branch", async () => {
+    // The generic branch never emits `phase` events — only the dedicated
+    // generateDungeonWithAIStream does, so seeing one here confirms dungeon
+    // is dispatched to its own streaming method rather than accidentally
+    // falling through to the (unrelated) generic single-call streaming path.
+    const dungeonJson = JSON.stringify({
+      title: "The Bellfound Depths",
+      summary: "s",
+      throughline: "t",
+      history: "h",
+      currentState: "c",
+      signatureFeature: "f",
+      sectors: [
+        {
+          id: "sector-1",
+          name: "A",
+          description: "d",
+          stockType: "Lore",
+          stockDetail: "x",
+        },
+      ],
+      factionSituation: "fs",
+      factions: [],
+      secret: "sec",
+      hazards: [],
+      treasures: [],
+      hooks: [],
+    });
+    const completeStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: dungeonJson };
+    });
     const svc = new CampaignGeneratorService({
       aiPolicy: { isEnabled: true, isAvailable: true },
-      aiGateway: { complete, completeStream },
+      aiGateway: { complete: vi.fn(), completeStream },
     });
 
-    await collect(svc.generateDraftStream(run("dungeon", { useAI: true })));
+    const events = await collect(
+      svc.generateDraftStream(run("dungeon", { useAI: true })),
+    );
 
-    expect(completeStream).not.toHaveBeenCalled();
+    expect(events[0]).toEqual({
+      type: "phase",
+      label: "Drafting the dungeon…",
+    });
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("dungeon");
   });
 
   it("reports the real replayed flag from the stream's complete event, not a hardcoded false (#2423)", async () => {
@@ -2058,6 +2078,337 @@ describe("generateCouncilVoteWithAIStream (via generateDraftStream)", () => {
     const events = await collect(
       svc.generateDraftStream(
         run("council-vote", { useAI: true }),
+        controller.signal,
+      ),
+    );
+
+    expect(events.some((e) => e.type === "draft")).toBe(false);
+  });
+});
+
+describe("generateDungeonWithAIStream (via generateDraftStream)", () => {
+  async function collect(
+    gen: AsyncGenerator<{ type: string; [k: string]: unknown }>,
+  ) {
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    for await (const event of gen) events.push(event);
+    return events;
+  }
+
+  /** Fake `completeStream` that delivers `json` as a delta+complete pair. */
+  function fakeCompleteStream(json: string) {
+    return async function* () {
+      yield { type: "delta" as const, text: json };
+      yield { type: "complete" as const, text: json };
+    };
+  }
+
+  it("streams a stateless retry pass after a rejected first pass, without committing the replaced interaction", async () => {
+    const corrected = JSON.stringify({
+      title: "The Corrected Depths",
+      summary: "A corrected two-sector delve.",
+      throughline:
+        "A sealed forge failed and two rivals now contest its heart.",
+      history: "The forge was sealed after its central bell cracked.",
+      currentState: "Two rival crews occupy separate galleries.",
+      signatureFeature: "A cracked bell vibrates above every doorway.",
+      factionSituation: "Each crew needs the mechanism held by the other.",
+      factions: [
+        {
+          name: "The Rivet Oath",
+          virtue: "Patient",
+          vice: "Possessive",
+          goal: "Recovery",
+          obstacle: "the flooded floor",
+        },
+        {
+          name: "The Siltbound",
+          virtue: "Resourceful",
+          vice: "Vindictive",
+          goal: "Escape",
+          obstacle: "their broken engine",
+        },
+      ],
+      sectors: [
+        {
+          name: "The Riveted Mouth",
+          description: "Cracked doors guard the upper works.",
+          stockType: "Lore",
+          stockDetail: "Maker marks reveal the original lock sequence.",
+        },
+        {
+          name: "The Drowned Belfry",
+          description: "Black water fills the lower casting hall.",
+          stockType: "Trap",
+          stockDetail: "Loud speech releases a suspended clapper.",
+        },
+      ],
+      secret: "The central bell restrains the river below.",
+      hazards: ["Floodgate releases", "Falling bronze moulds"],
+      treasures: ["The bell-key", "Rebel maker marks"],
+      hooks: ["Recover the bell-key.", "Prevent the final flood."],
+    });
+    const completeStream = vi
+      .fn()
+      .mockImplementationOnce(
+        fakeCompleteStream(JSON.stringify({ title: "Rejected Fragment" })),
+      )
+      .mockImplementationOnce(fakeCompleteStream(corrected));
+    const onInteractionResult = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+      onInteractionResult,
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(
+        run("dungeon", {
+          useAI: true,
+          themeId: "fantasy",
+          options: { scale: "Small Lair (2 Sectors)" },
+        }),
+      ),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(2);
+    const phases = events.filter((e) => e.type === "phase").map((e) => e.label);
+    expect(phases).toEqual([
+      "Drafting the dungeon…",
+      "Fixing structural issues…",
+    ]);
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.draft.title).toBe("The Corrected Depths");
+    expect(onInteractionResult).not.toHaveBeenCalled();
+  });
+
+  it("streams a coherence repair pass for a structurally accepted response with content gaps", async () => {
+    const sectors = [
+      {
+        name: "The Riveted Mouth",
+        description: "Flood doors shudder around a gallery of cracked bells.",
+        stockType: "Lore",
+        stockDetail: "Strike marks identify which bell opened each floodgate.",
+      },
+      {
+        name: "The Drowned Belfry",
+        description: "A tilted casting hall descends beneath black water.",
+        stockType: "Trap",
+        stockDetail: "Speaking above a whisper releases a suspended clapper.",
+      },
+    ];
+    const sparseFactions = [
+      {
+        name: "The Rivet Oath",
+        virtue: "Patient",
+        vice: "Possessive",
+        goal: "Recover the drowned bell-forge.",
+        drive: "Recovery",
+        obstacle: "the flooded casting floor",
+      },
+      {
+        name: "The Siltbound",
+        virtue: "Resourceful",
+        vice: "Vindictive",
+        goal: "Escape before the tide rises again.",
+        drive: "Escape",
+        obstacle: "their broken diving engine",
+      },
+    ];
+    const base = {
+      title: "The Bellfound Depths",
+      summary: "A drowned signal foundry contested by rival salvagers.",
+      throughline: "Rebel smiths built it; a flood ruined it.",
+      history: "Rebel smiths cast warning bells here.",
+      currentState: "Rival crews occupy separate galleries.",
+      signatureFeature: "A suspended bronze bell rings when anyone lies.",
+      sectors,
+      factionSituation: "Each crew needs what the other holds.",
+      secret: "The bells keep the river beneath the foundry asleep.",
+      hazards: ["Sudden floodgate releases"],
+      treasures: ["The bell-key"],
+      hooks: ["Recover a bell that rings with a missing heir's voice."],
+    };
+    const completeStream = vi
+      .fn()
+      .mockImplementationOnce(
+        fakeCompleteStream(
+          JSON.stringify({ ...base, factions: sparseFactions }),
+        ),
+      )
+      .mockImplementationOnce(
+        fakeCompleteStream(
+          JSON.stringify({
+            ...base,
+            factions: sparseFactions.map((f, i) => ({
+              ...f,
+              identity: "A crew of rival salvagers.",
+              origin: "Salvagers drawn in after the flood.",
+              belief: "They believe the other crew is stalling.",
+              territorySectorIds: [`sector-${i + 1}`],
+              strength: "Detailed knowledge of the flooded lower works.",
+              leader: { name: "Hask Rivet", description: "the last smith" },
+              notable: { name: "Ilsa Dray", description: "the engineer" },
+              relationship: "Watching the other crew for a sign.",
+            })),
+          }),
+        ),
+      );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(
+        run("dungeon", {
+          useAI: true,
+          themeId: "fantasy",
+          options: { scale: "Small Lair (2 Sectors)" },
+        }),
+      ),
+    );
+
+    const phases = events.filter((e) => e.type === "phase").map((e) => e.label);
+    expect(phases).toEqual(["Drafting the dungeon…", "Polishing coherence…"]);
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.draft.content).toContain("Hask Rivet");
+  });
+
+  it("falls back to local generation, yielding only started/draft, when completeStream is absent", async () => {
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(async () => aiJson("Should not be used")) },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("dungeon", { useAI: true })),
+    );
+
+    expect(events[0]).toEqual({ type: "started" });
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("dungeon");
+  });
+
+  it("stops without a fallback draft when the signal is already aborted after the first pass", async () => {
+    const controller = new AbortController();
+    const completeStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: aiJson("x") };
+      controller.abort();
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(
+        run("dungeon", { useAI: true }),
+        controller.signal,
+      ),
+    );
+
+    expect(events.some((e) => e.type === "draft")).toBe(false);
+  });
+});
+
+describe("generateLanguageWithAIStream (via generateDraftStream)", () => {
+  async function collect(
+    gen: AsyncGenerator<{ type: string; [k: string]: unknown }>,
+  ) {
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    for await (const event of gen) events.push(event);
+    return events;
+  }
+
+  function fakeCompleteStream(json: string) {
+    return async function* () {
+      yield { type: "delta" as const, text: json };
+      yield { type: "complete" as const, text: json };
+    };
+  }
+
+  it("accepts a structurally valid response on the first streamed pass, without a repair phase", async () => {
+    const completeStream = vi.fn(fakeCompleteStream(languageAiJson()));
+    const onPromptMetrics = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+      onPromptMetrics,
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("language", { useAI: true })),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    const phases = events.filter((e) => e.type === "phase").map((e) => e.label);
+    expect(phases).toEqual(["Drafting the language…"]);
+    expect(onPromptMetrics).toHaveBeenCalledWith(
+      expect.objectContaining({ usedInteraction: false, replayed: false }),
+    );
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.draft.languageProfileVersion).toBe(1);
+  });
+
+  it("streams a repair pass after a quality failure and accepts the repaired result", async () => {
+    const badJson = languageAiJson((v) => {
+      v.profile.lexicon = v.profile.lexicon.slice(0, 1);
+    });
+    const completeStream = vi
+      .fn()
+      .mockImplementationOnce(fakeCompleteStream(badJson))
+      .mockImplementationOnce(fakeCompleteStream(languageAiJson()));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("language", { useAI: true })),
+    );
+
+    expect(completeStream).toHaveBeenCalledTimes(2);
+    const phases = events.filter((e) => e.type === "phase").map((e) => e.label);
+    expect(phases).toEqual([
+      "Drafting the language…",
+      "Refining the language…",
+    ]);
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.draft.languageProfileVersion).toBe(1);
+  });
+
+  it("falls back to local generation, yielding only started/draft, when completeStream is absent", async () => {
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(async () => languageAiJson()) },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("language", { useAI: true })),
+    );
+
+    expect(events[0]).toEqual({ type: "started" });
+    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
+    expect(finalEvent.type).toBe("draft");
+    expect(finalEvent.draft.sourceGeneratorId).toBe("language");
+  });
+
+  it("stops without a fallback draft when the signal is already aborted after the first pass", async () => {
+    const controller = new AbortController();
+    const completeStream = vi.fn(async function* () {
+      yield { type: "complete" as const, text: '{"bad":true}' };
+      controller.abort();
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(
+        run("language", { useAI: true }),
         controller.signal,
       ),
     );
