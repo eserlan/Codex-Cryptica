@@ -135,6 +135,13 @@
               icon: "icon-[lucide--scroll-text]",
             },
             {
+              href: "/generators/puzzle",
+              label: "Puzzle Generator",
+              summary:
+                "Create table-ready encounter puzzles with clues, alternatives, and fail-forward outcomes.",
+              icon: "icon-[lucide--puzzle]",
+            },
+            {
               href: "/generators/plot-twist-generator",
               label: "Plot Twist & Complication Generator",
               summary:

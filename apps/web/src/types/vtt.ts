@@ -71,6 +71,7 @@ export interface TokenCreationInput {
   tileDeckId?: string | null;
   tileDetails?: import("map-engine").TileDetails;
   locked?: boolean;
+  isVisionSource?: boolean;
 }
 
 export const IMAGE_FOCUS_OPTIONS: Array<{
@@ -145,6 +146,7 @@ export interface TokenStateUpdateInput {
   locked?: boolean;
   zIndex?: number;
   tileDetails?: import("map-engine").TileDetails;
+  isVisionSource?: boolean;
 }
 
 export interface SessionSnapshotPayload {

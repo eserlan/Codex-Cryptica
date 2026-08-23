@@ -31,6 +31,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildPuzzlePrompt,
+  parsePuzzleResponse,
+  generatePuzzleLocal,
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
@@ -108,6 +111,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type SecretSocietyGeneratorOptions,
@@ -161,6 +165,7 @@ export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
@@ -521,6 +526,31 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generatePuzzle(
+    options: PuzzleGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...puzzleOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("puzzle");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildPuzzlePrompt(
+          puzzleOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "puzzle",
+          summarizeResolvedInputs(resolved),
+        );
+        return parsePuzzleResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generatePuzzleLocal(puzzleOptions),
     );
   }
 

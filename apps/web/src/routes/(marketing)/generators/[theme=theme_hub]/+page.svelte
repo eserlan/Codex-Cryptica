@@ -58,6 +58,13 @@
       icon: "icon-[lucide--scroll]",
     },
     {
+      slug: "puzzle",
+      label: "Puzzle Generator",
+      summary:
+        "Create flexible encounter puzzles with layered clues, alternate solutions, and fail-forward consequences.",
+      icon: "icon-[lucide--puzzle]",
+    },
+    {
       slug: "plot-twist-generator",
       label: "Plot Twist & Complication Generator",
       summary:

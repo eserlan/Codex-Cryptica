@@ -11,7 +11,7 @@ The single authoritative durable document.
 
 | Field                                    | Type                       | Rules                                                                                                                                        |
 | ---------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schemaVersion`                          | `1`                        | Reject newer versions without rewriting.                                                                                                     |
+| `schemaVersion`                          | `2`                        | Read older versions through ordered, pure migrations; reject newer versions without rewriting.                                               |
 | `id`                                     | UUID/string                | Immutable; also used as filename.                                                                                                            |
 | `vaultId`                                | string                     | Must match the open vault.                                                                                                                   |
 | `title`                                  | string                     | Non-empty, plain text.                                                                                                                       |

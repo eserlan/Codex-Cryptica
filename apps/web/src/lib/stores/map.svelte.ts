@@ -17,6 +17,8 @@ export const BLANK_MAP_SIZE = 4000;
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
+export type TokenVisionMode = "party" | "selected";
+
 type PersistedMapSettings = {
   showFog: boolean;
   showGrid: boolean;
@@ -26,6 +28,10 @@ type PersistedMapSettings = {
   gridOffsetY: number;
   gridColor: string | null;
   showLabels: boolean;
+  visionMode: TokenVisionMode;
+  /** Vision distance in grid units (e.g. feet), not pixels — converted to
+   * pixels using the map's gridSize/gridDistance at reveal time. */
+  visionRange: number;
 };
 
 type PersistedMapPageState = {
@@ -42,6 +48,8 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   gridOffsetY: 0,
   gridColor: null,
   showLabels: true,
+  visionMode: "party",
+  visionRange: 60,
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -68,6 +76,8 @@ export class MapStore {
   gridOffsetX = $state(0);
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
+  visionMode = $state<TokenVisionMode>("party");
+  visionRange = $state(60);
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
@@ -118,6 +128,8 @@ export class MapStore {
             this.gridOffsetY,
             this.gridColor,
             this.showLabels,
+            this.visionMode,
+            this.visionRange,
           ];
           void tracked;
           this.schedulePersistSettings();
@@ -213,6 +225,14 @@ export class MapStore {
           typeof parsed.showLabels === "boolean"
             ? parsed.showLabels
             : DEFAULT_MAP_SETTINGS.showLabels,
+        visionMode:
+          parsed.visionMode === "party" || parsed.visionMode === "selected"
+            ? parsed.visionMode
+            : DEFAULT_MAP_SETTINGS.visionMode,
+        visionRange:
+          typeof parsed.visionRange === "number"
+            ? parsed.visionRange
+            : DEFAULT_MAP_SETTINGS.visionRange,
       };
     } catch {
       return null;
@@ -245,6 +265,8 @@ export class MapStore {
       gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
       showLabels: this.showLabels,
+      visionMode: this.visionMode,
+      visionRange: this.visionRange,
     };
 
     try {
@@ -364,6 +386,8 @@ export class MapStore {
       this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
       this.showLabels = next.showLabels;
+      this.visionMode = next.visionMode;
+      this.visionRange = next.visionRange;
     } finally {
       this.isRestoringSettings = false;
     }

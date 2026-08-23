@@ -9,6 +9,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "artifact-generator",
   "faction",
   "quest",
+  "puzzle",
   "item",
   "tavern",
   "social-hub",
@@ -38,6 +39,13 @@ const allExpectedSlugs: ValidSlug[] = [
 ];
 
 describe("generator-page-meta completeness and social preview tags", () => {
+  it("uses Puzzle's own rendered social screenshot", () => {
+    expect(slugMeta.puzzle.ogImage).toBe(
+      "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
+    );
+    expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
+  });
+
   it("has metadata entries for all 30 valid generator slugs", () => {
     const keys = Object.keys(slugMeta);
     expect(keys.length).toBe(allExpectedSlugs.length);

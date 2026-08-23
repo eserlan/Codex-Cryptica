@@ -51,6 +51,7 @@ export interface RenderToken {
   primarySelected?: boolean;
   active?: boolean;
   visible?: boolean;
+  visionActive?: boolean;
   statusEffects?: string[];
   healthBar?: { value: number; max: number } | null;
 }
@@ -498,6 +499,19 @@ export function renderMap(options: RenderOptions) {
       ctx.shadowBlur = 4 * blurScale;
       ctx.stroke();
 
+      ctx.restore();
+    }
+
+    if (token.visionActive) {
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
+      traceTokenShape(ctx, shape, width + 10, height + 10);
+      ctx.strokeStyle = "#22d3ee";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#22d3ee";
+      ctx.shadowBlur = 10;
+      ctx.stroke();
       ctx.restore();
     }
 

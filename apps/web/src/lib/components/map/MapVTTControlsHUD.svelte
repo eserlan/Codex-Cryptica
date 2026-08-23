@@ -101,6 +101,35 @@
 
         <button
           type="button"
+          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
+          onclick={() =>
+            (mapStore.visionMode =
+              mapStore.visionMode === "party" ? "selected" : "party")}
+          title="Party Vision combines all PC tokens' vision. Selected Token Vision shows only the currently selected PC's viewpoint."
+        >
+          VISION: {mapStore.visionMode === "selected" ? "SELECTED" : "PARTY"}
+        </button>
+
+        <div class="flex items-center gap-2 px-2">
+          <span
+            class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+            >Vision Range</span
+          >
+          <input
+            type="range"
+            min="5"
+            max="300"
+            step="5"
+            bind:value={mapStore.visionRange}
+            class="w-24 accent-theme-primary h-1"
+          />
+          <span class="text-[9px] text-theme-primary font-mono w-8"
+            >{mapStore.visionRange}{mapSession.gridUnit}</span
+          >
+        </div>
+
+        <button
+          type="button"
           class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
           onclick={() => (mapStore.showLabels = !mapStore.showLabels)}
           title="Toggle Pin Labels"

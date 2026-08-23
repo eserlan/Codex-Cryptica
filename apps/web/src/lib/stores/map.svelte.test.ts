@@ -115,6 +115,8 @@ describe("MapStore settings persistence", () => {
         gridOffsetY: -8,
         gridColor: "#fbbf24",
         showLabels: true,
+        visionMode: "party",
+        visionRange: 60,
       });
     });
   });

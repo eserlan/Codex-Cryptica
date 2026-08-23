@@ -12,6 +12,7 @@ const validSlugs = new Set([
   "artifact-generator",
   "faction",
   "quest",
+  "puzzle",
   "item",
   "tavern",
   "social-hub",

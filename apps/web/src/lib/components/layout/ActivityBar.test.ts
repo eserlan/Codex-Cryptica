@@ -105,7 +105,7 @@ describe("ActivityBar", () => {
 
     // The row does not wrap and every item costs viewport width, so the
     // demoted ones are hidden below `md` and reached from the menu drawer.
-    it.each(["random", "shelf", "quicknote", "guest-chat"])(
+    it.each(["adventure", "random", "shelf", "quicknote", "guest-chat"])(
       "hides %s from the bar on a phone",
       (id) => {
         render(ActivityBar);
@@ -171,6 +171,7 @@ describe("ActivityBar", () => {
 
   it("still renders the core sidebar shortcuts", () => {
     render(ActivityBar);
+    expect(screen.getByTestId("activity-bar-adventure")).toBeDefined();
     expect(screen.getByTestId("activity-bar-oracle")).toBeDefined();
     expect(screen.getByTestId("activity-bar-explorer")).toBeDefined();
     expect(screen.getByTestId("activity-bar-quicknote")).toBeDefined();

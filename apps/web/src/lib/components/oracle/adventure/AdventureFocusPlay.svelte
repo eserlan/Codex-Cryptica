@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
   import type { AdventureSessionRepository } from "$lib/services/adventure/adventure-session-repository";
   import type { ProvisionalFact } from "@codex/adventure-engine";
@@ -40,7 +41,28 @@
   let focusElement = $state<HTMLElement>();
   let fullscreenElement = $state<Element | null>(null);
   let fullscreenTransitioning = $state(false);
+  let playViewport = $state<HTMLElement>();
   const isFullscreen = $derived(fullscreenElement === focusElement);
+  const transcriptLength = $derived(manager.transcript?.turns.length ?? 0);
+  const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
+  const visibleEventVersion = $derived(
+    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}`,
+  );
+
+  $effect.pre(() => {
+    // These are the player-visible events that can add content below the
+    // current viewport: a new turn, generation state, or a pending roll.
+    const _event = visibleEventVersion;
+    if (!playViewport) return;
+    void tick().then(() => {
+      if (!playViewport) return;
+      const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+        .matches
+        ? "auto"
+        : "smooth";
+      playViewport.scrollTo({ top: playViewport.scrollHeight, behavior });
+    });
+  });
 
   function closeTools(): void {
     utilitiesOpen = false;
@@ -151,7 +173,11 @@
   </header>
 
   <div class="flex min-h-0 flex-1 flex-col">
-    <main class="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
+    <main
+      bind:this={playViewport}
+      class="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6"
+      data-testid="adventure-play-viewport"
+    >
       <div class="mx-auto max-w-3xl space-y-4">
         <AdventureStateSummary {manager} />
         <AdventurePlay {manager} />

@@ -371,6 +371,10 @@ export abstract class MapSessionFacade {
     return this.tokenManager.toggleTokenVisibility(tokenId);
   }
 
+  setVisionSource(tokenId: string, isVisionSource: boolean) {
+    return this.tokenManager.setVisionSource(tokenId, isVisionSource);
+  }
+
   isTokenVisible(
     tokenId: string,
     peerId: string | null,

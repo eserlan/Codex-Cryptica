@@ -22,6 +22,7 @@
     primarySelected: boolean;
     active: boolean;
     visible: boolean;
+    visionActive: boolean;
   }
 
   interface EnrichedMeasurement {

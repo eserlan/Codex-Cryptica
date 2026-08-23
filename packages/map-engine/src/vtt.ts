@@ -36,6 +36,7 @@ export interface Token {
   imageFocus?: TokenImageFocus;
   statusEffects: string[];
   locked?: boolean;
+  isVisionSource?: boolean;
   /** Marks an image token placed from a procedural tile deck. */
   kind?: "token" | "tile";
   tileDeckId?: string | null;
@@ -161,6 +162,7 @@ export function normalizeToken(
     imageFocus: normalizeTokenImageFocus(token.imageFocus),
     statusEffects: [...(token.statusEffects ?? [])],
     locked: token.locked === true,
+    isVisionSource: token.isVisionSource === true,
     kind: token.kind === "tile" ? "tile" : "token",
     tileDeckId: token.tileDeckId ?? null,
     tileDetails: token.tileDetails
