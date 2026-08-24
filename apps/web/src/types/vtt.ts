@@ -9,6 +9,7 @@ import type {
 } from "map-engine";
 
 export type {
+  ChatCardPayload,
   ChatMessagePayload,
   EncounterSession,
   LegacyTokenVisibility,
