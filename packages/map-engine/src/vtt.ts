@@ -1,6 +1,7 @@
 import type { ImageFocus, Point } from "schema";
 import { normalizeImageFocus } from "schema";
 import { normalizeSpatialImageTransform } from "@codex/spatial-engine";
+import { normalizeMapLayer, type MapLayer } from "./layers";
 
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
@@ -42,6 +43,10 @@ export interface Token {
   kind?: "token" | "tile";
   tileDeckId?: string | null;
   tileDetails?: TileDetails;
+  /** Which map layer this element belongs to; governs render order,
+   * visibility, and lock. Independent of `kind` — a tile-deck tile can live
+   * on the object layer, not just terrain. */
+  layer?: MapLayer;
 }
 
 export interface TileDetails {
@@ -151,6 +156,7 @@ export function normalizeToken(
     locked: token.locked === true,
     isVisionSource: token.isVisionSource === true,
     kind: token.kind === "tile" ? "tile" : "token",
+    layer: normalizeMapLayer(token.layer, token.kind),
     tileDeckId: token.tileDeckId ?? null,
     tileDetails: token.tileDetails
       ? {

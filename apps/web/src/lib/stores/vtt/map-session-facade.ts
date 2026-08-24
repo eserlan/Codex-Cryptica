@@ -5,6 +5,7 @@ import type { VTTChatManager } from "./vtt-chat-manager.svelte";
 import type { VTTEncounterManager } from "./vtt-encounter-manager.svelte";
 import type { VTTGridManager } from "./vtt-grid-manager.svelte";
 import type { VTTInitiativeManager } from "./vtt-initiative-manager.svelte";
+import type { VTTLayerManager } from "./vtt-layer-manager.svelte";
 import type { VTTMeasurementManager } from "./vtt-measurement-manager.svelte";
 import type { VTTMediaManager } from "./vtt-media-manager.svelte";
 import type { VTTNetworkManager } from "./vtt-network-manager.svelte";
@@ -37,6 +38,7 @@ export abstract class MapSessionFacade {
   initiativeManager!: VTTInitiativeManager;
   tokenManager!: VTTTokenManager;
   gridManager!: VTTGridManager;
+  layerManager!: VTTLayerManager;
   measurementManager!: VTTMeasurementManager;
   persistenceManager!: VTTPersistenceManager;
   networkManager!: VTTNetworkManager;
@@ -170,6 +172,12 @@ export abstract class MapSessionFacade {
   }
   set gridMoveMode(value) {
     this.gridManager.gridMoveMode = value;
+  }
+  get activeLayer() {
+    return this.layerManager.activeLayer;
+  }
+  set activeLayer(value) {
+    this.layerManager.activeLayer = value;
   }
 
   get allTokens() {

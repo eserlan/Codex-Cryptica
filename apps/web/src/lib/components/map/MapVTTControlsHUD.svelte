@@ -1,5 +1,6 @@
 <script lang="ts">
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
+  import LayerPanel from "$lib/components/map/LayerPanel.svelte";
   import {
     getMeasurementToolButtonClass,
     getPrimaryButtonStateClass,
@@ -14,12 +15,28 @@
     chatSidebarOffset: string;
   } = $props();
 
+  let showLayerPanel = $state(false);
+  let layerPanelContainer = $state<HTMLDivElement>();
+
+  function handleWindowClick(event: MouseEvent) {
+    if (!showLayerPanel) return;
+    if (
+      event.target instanceof Node &&
+      layerPanelContainer?.contains(event.target)
+    ) {
+      return;
+    }
+    showLayerPanel = false;
+  }
+
   function openGridSettings(event: MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
     mapSession.showGridSettings = true;
   }
 </script>
+
+<svelte:window onclick={handleWindowClick} />
 
 {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
   <div
@@ -146,6 +163,26 @@
         >
           GRID: {mapStore.showGrid ? "ON" : "OFF"}
         </button>
+
+        <div class="relative" bind:this={layerPanelContainer}>
+          <button
+            type="button"
+            class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(showLayerPanel)}`}
+            onclick={(e) => {
+              e.stopPropagation();
+              showLayerPanel = !showLayerPanel;
+            }}
+            aria-pressed={showLayerPanel}
+            title="Choose which layer you're editing, and toggle layer visibility/lock"
+          >
+            LAYERS
+          </button>
+          {#if showLayerPanel}
+            <div class="absolute bottom-full left-0 mb-2">
+              <LayerPanel onClose={() => (showLayerPanel = false)} />
+            </div>
+          {/if}
+        </div>
 
         <VTTModeToggle />
 

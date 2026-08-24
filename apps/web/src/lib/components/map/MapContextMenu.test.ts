@@ -35,6 +35,7 @@ const mapSessionMock = vi.hoisted(() => ({
   removeToken: vi.fn(),
   cloneToken: vi.fn(),
   toggleTokenVisibility: vi.fn(),
+  bringTokenToFront: vi.fn(),
 }));
 
 const sessionModeStoreMock = vi.hoisted(() => ({
@@ -137,5 +138,30 @@ describe("MapContextMenu appearance controls", () => {
     await fireEvent.click(screen.getByRole("menuitem", { name: "Appearance" }));
 
     expect(screen.queryByRole("menuitemradio", { name: /Top/ })).toBeNull();
+  });
+
+  it("moves a token to a different layer and brings it to the front of it", async () => {
+    renderMenu();
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Move to Layer" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("menuitemradio", { name: /Furniture/ }),
+    );
+
+    expect(mapSessionMock.updateToken).toHaveBeenCalledWith("token-1", {
+      layer: "object",
+    });
+    expect(mapSessionMock.bringTokenToFront).toHaveBeenCalledWith("token-1");
+  });
+
+  it("does not expose Move to Layer to guests", () => {
+    sessionModeStoreMock.isGuestMode = true;
+    renderMenu();
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Move to Layer" }),
+    ).toBeNull();
   });
 });

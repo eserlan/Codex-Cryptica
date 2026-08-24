@@ -13,9 +13,28 @@ import type { TokenDragDependencies } from "./token-drag-handler";
 import type { TokenRotationDependencies } from "./token-rotation-handler";
 import type { TokenSelectionDependencies } from "./token-selection-manager";
 
+/**
+ * `mapSession.allTokens` is the raw, unfiltered token record — using it
+ * directly for hit-testing would let a guest select/drag a token they can't
+ * even see (`canViewToken` gate), or a token on a layer the GM has hidden or
+ * locked from editing. `MapView.svelte`'s render list already applies both
+ * checks; this is the same filter for interaction (click/drag) purposes.
+ */
+function hitTestableTokens() {
+  const peerId = mapSession.myPeerId;
+  const isHost = mapStore.isGMMode;
+  return mapSession.allTokens.filter((token) => {
+    const layer = token.layer ?? "token";
+    return (
+      mapSession.canViewToken(token.id, peerId, isHost) &&
+      mapStore.layerVisibility[layer] !== false
+    );
+  });
+}
+
 export function createTokenSelectionDependencies(): TokenSelectionDependencies {
   return {
-    getTokens: () => mapSession.allTokens,
+    getTokens: hitTestableTokens,
     project: (point) => mapStore.project(point),
     getSelectedTokens: () => mapSession.selectedTokens,
     setSelection: (tokenId) => mapSession.setSelection(tokenId),
@@ -27,7 +46,7 @@ export function createTokenSelectionDependencies(): TokenSelectionDependencies {
 
 export function createTokenDragDependencies(): TokenDragDependencies {
   return {
-    getTokens: () => mapSession.allTokens,
+    getTokens: hitTestableTokens,
     project: (point) => mapStore.project(point),
     unproject: (point) => mapStore.unproject(point),
     isHostMode: () => mapStore.isGMMode,

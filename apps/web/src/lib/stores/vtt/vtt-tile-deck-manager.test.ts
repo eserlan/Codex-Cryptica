@@ -8,8 +8,10 @@ function createManager(options?: {
     width: number;
     height: number;
   };
+  getActiveLayer?: () => string;
+  tokens?: Record<string, any>;
 }) {
-  const tokens: Record<string, any> = {};
+  const tokens: Record<string, any> = options?.tokens ?? {};
   const addToken = vi.fn((input) => {
     const token = { id: `tile-${Object.keys(tokens).length}`, ...input };
     tokens[token.id] = token;
@@ -25,6 +27,7 @@ function createManager(options?: {
       normalizePlacement: options?.normalizePlacement
         ? (point) => options.normalizePlacement!(point)
         : undefined,
+      getActiveLayer: (options?.getActiveLayer as any) ?? (() => "terrain"),
     },
     { uuid: () => `id-${nextId++}` },
   );
@@ -220,5 +223,27 @@ describe("VTTTileDeckManager", () => {
     manager.draw(deck.id);
     manager.updatePendingPlacement(149, 0);
     expect(manager.pendingPlacement?.valid).toBe(false);
+  });
+
+  it("scopes a newly placed tile's zIndex to the active layer, ignoring other layers", () => {
+    const { manager, addToken } = createManager({
+      getActiveLayer: () => "terrain",
+      tokens: {
+        "high-token": { id: "high-token", layer: "token", zIndex: 100 },
+        "terrain-tile": { id: "terrain-tile", layer: "terrain", zIndex: 2 },
+      },
+    });
+    const deck = manager.createDeck("Rooms", [
+      { name: "Crypt", imagePath: "files/crypt.png" },
+    ])!;
+
+    manager.draw(deck.id, 150);
+    manager.updatePendingPlacement(0, 0);
+    manager.placePending();
+
+    expect(addToken).toHaveBeenCalledWith(
+      expect.objectContaining({ zIndex: 3 }),
+      false,
+    );
   });
 });

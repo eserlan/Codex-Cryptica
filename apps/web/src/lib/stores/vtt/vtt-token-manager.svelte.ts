@@ -11,6 +11,8 @@ import {
   normalizeToken,
   normalizeTokenRotation,
   normalizeTokenVisibility,
+  nextZIndexInLayer,
+  type MapLayer,
 } from "map-engine";
 import {
   snapToGrid,
@@ -45,6 +47,8 @@ export interface VTTTokenManagerDependencies {
   removeTokenFromInitiativeState?: (tokenId: string) => void;
   cloneInitiativeState?: (sourceId: string, cloneId: string) => void;
   isInitiativeOrdered?: (tokenId: string) => boolean;
+  getActiveLayer: () => MapLayer;
+  isLayerLocked: (layer: MapLayer) => boolean;
 }
 
 export class VTTTokenManager {
@@ -196,6 +200,7 @@ export class VTTTokenManager {
       kind: input.kind ?? "token",
       tileDeckId: input.tileDeckId ?? null,
       tileDetails: input.tileDetails,
+      layer: input.layer ?? this.deps.getActiveLayer(),
     };
   }
 
@@ -437,16 +442,22 @@ export class VTTTokenManager {
   bringTokenToFront(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    const zIndex =
-      Math.max(...Object.values(this.tokens).map((item) => item.zIndex), 0) + 1;
-    return this.updateToken(tokenId, { zIndex });
+    // Scoped to the token's own layer — "front" means top of its layer, not
+    // top of the whole map (a token layer piece always renders above
+    // terrain/objects regardless of raw zIndex).
+    const sameLayer = Object.values(this.tokens).filter(
+      (item) => item.layer === token.layer,
+    );
+    return this.updateToken(tokenId, { zIndex: nextZIndexInLayer(sameLayer) });
   }
 
   sendTokenToBack(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    const zIndex =
-      Math.min(...Object.values(this.tokens).map((item) => item.zIndex), 0) - 1;
+    const sameLayer = Object.values(this.tokens).filter(
+      (item) => item.layer === token.layer,
+    );
+    const zIndex = Math.min(...sameLayer.map((item) => item.zIndex), 0) - 1;
     return this.updateToken(tokenId, { zIndex });
   }
 
@@ -572,14 +583,9 @@ export class VTTTokenManager {
 
     const mapStore = this.deps.getMapStore();
     const offset = mapStore.gridSize || 50;
-    // ⚡ Bolt Optimization: Use imperative loop instead of ...allTokens.map to find max zIndex
-    // to avoid intermediate array allocation and spread operator overhead.
-    let maxZ = source.zIndex;
-    for (const token of this.allTokens) {
-      if (token.zIndex > maxZ) {
-        maxZ = token.zIndex;
-      }
-    }
+    const sameLayer = this.allTokens.filter(
+      (token) => token.layer === source.layer,
+    );
 
     const clone: Token = {
       ...source,
@@ -587,7 +593,7 @@ export class VTTTokenManager {
       name: this.getClonedTokenName(source.name),
       x: source.x + offset,
       y: source.y + offset,
-      zIndex: maxZ + 1,
+      zIndex: nextZIndexInLayer(sameLayer),
     };
 
     this.tokens = {
@@ -677,6 +683,7 @@ export class VTTTokenManager {
     const token = this.tokens[tokenId];
     if (!token) return false;
     if (token.locked) return false;
+    if (token.layer && this.deps.isLayerLocked(token.layer)) return false;
     if (isHost) return true;
     return token.ownerPeerId !== null && token.ownerPeerId === peerId;
   }
