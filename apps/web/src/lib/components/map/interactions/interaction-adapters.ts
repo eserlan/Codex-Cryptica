@@ -19,6 +19,15 @@ import type { TokenSelectionDependencies } from "./token-selection-manager";
  * even see (`canViewToken` gate), or a token on a layer the GM has hidden or
  * locked from editing. `MapView.svelte`'s render list already applies both
  * checks; this is the same filter for interaction (click/drag) purposes.
+ *
+ * For the host only, hit-testing is additionally exclusive to the active
+ * layer — like a paint program's layer panel, only the layer you're
+ * currently working on is reachable by click/drag, so e.g. selecting the
+ * Furniture layer means terrain tiles and combatant tokens underneath it
+ * simply can't be clicked or nudged by accident. This does NOT apply to
+ * guests: `activeLayer` is a GM-local editing-mode concept (never synced),
+ * and a player must always be able to select/move their own token
+ * regardless of whatever the GM's map-building focus happens to be.
  */
 function hitTestableTokens() {
   const peerId = mapSession.myPeerId;
@@ -27,7 +36,8 @@ function hitTestableTokens() {
     const layer = token.layer ?? "token";
     return (
       mapSession.canViewToken(token.id, peerId, isHost) &&
-      mapStore.layerVisibility[layer] !== false
+      mapStore.layerVisibility[layer] !== false &&
+      (!isHost || layer === mapSession.activeLayer)
     );
   });
 }

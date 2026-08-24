@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const mapSessionMock = vi.hoisted(() => ({
   allTokens: [] as any[],
   myPeerId: null as string | null,
+  activeLayer: "terrain" as string,
   canViewToken: (tokenId: string, _peerId: string | null, isHost: boolean) => {
     const token = mapSessionMock.allTokens.find((t) => t.id === tokenId);
     return isHost || token?.visibleTo !== "gm-only";
@@ -49,8 +50,9 @@ describe("hit-testable token filtering (selection + drag)", () => {
   it("excludes a token on a hidden layer from both selection and drag", () => {
     mapSessionMock.allTokens = [
       token({ id: "hidden-terrain", layer: "terrain" }),
-      token({ id: "visible-token", layer: "token" }),
+      token({ id: "other-hidden-terrain", layer: "terrain" }),
     ];
+    mapSessionMock.activeLayer = "terrain";
     mapStoreMock.layerVisibility = {
       terrain: false,
       object: true,
@@ -60,8 +62,8 @@ describe("hit-testable token filtering (selection + drag)", () => {
     const selectionTokens = createTokenSelectionDependencies().getTokens();
     const dragTokens = createTokenDragDependencies().getTokens();
 
-    expect(selectionTokens.map((t) => t.id)).toEqual(["visible-token"]);
-    expect(dragTokens.map((t) => t.id)).toEqual(["visible-token"]);
+    expect(selectionTokens).toEqual([]);
+    expect(dragTokens).toEqual([]);
   });
 
   it("excludes a guest-hidden token from both selection and drag", () => {
@@ -69,6 +71,7 @@ describe("hit-testable token filtering (selection + drag)", () => {
       token({ id: "gm-only", visibleTo: "gm-only" }),
       token({ id: "everyone" }),
     ];
+    mapSessionMock.activeLayer = "terrain";
     mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
     mapStoreMock.isGMMode = false;
 
@@ -82,10 +85,48 @@ describe("hit-testable token filtering (selection + drag)", () => {
     mapSessionMock.allTokens = [
       token({ id: "locked-layer", layer: "terrain" }),
     ];
+    mapSessionMock.activeLayer = "terrain";
     mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
 
     const selectionTokens = createTokenSelectionDependencies().getTokens();
 
     expect(selectionTokens.map((t) => t.id)).toEqual(["locked-layer"]);
+  });
+
+  it("for the host, restricts selection/drag to only the active layer", () => {
+    mapSessionMock.allTokens = [
+      token({ id: "terrain-tile", layer: "terrain" }),
+      token({ id: "furniture-prop", layer: "object" }),
+      token({ id: "hero-token", layer: "token" }),
+    ];
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapStoreMock.isGMMode = true;
+    mapSessionMock.activeLayer = "object";
+
+    const selectionTokens = createTokenSelectionDependencies().getTokens();
+    const dragTokens = createTokenDragDependencies().getTokens();
+
+    expect(selectionTokens.map((t) => t.id)).toEqual(["furniture-prop"]);
+    expect(dragTokens.map((t) => t.id)).toEqual(["furniture-prop"]);
+  });
+
+  it("does not restrict a guest to the GM's local active layer", () => {
+    mapSessionMock.allTokens = [
+      token({ id: "terrain-tile", layer: "terrain" }),
+      token({ id: "hero-token", layer: "token" }),
+    ];
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapStoreMock.isGMMode = false;
+    // A guest's local activeLayer is whatever VTTLayerManager happens to
+    // default to — irrelevant, since guests aren't gated by it at all.
+    mapSessionMock.activeLayer = "terrain";
+
+    const selectionTokens = createTokenSelectionDependencies().getTokens();
+
+    expect(selectionTokens.map((t) => t.id).sort()).toEqual([
+      "hero-token",
+      "terrain-tile",
+    ]);
+    mapStoreMock.isGMMode = true;
   });
 });

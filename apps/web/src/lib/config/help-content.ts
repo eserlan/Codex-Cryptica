@@ -503,7 +503,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vtt-layers",
     title: "Map Layers",
     content:
-      "Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on, hide a layer to declutter your view, or lock one to stop accidental edits while you work on another (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it.",
+      "Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.",
     icon: "icon-[lucide--layers]",
   },
   "voice-chat": {

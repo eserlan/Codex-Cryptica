@@ -26,6 +26,7 @@ vi.mock("../../stores/map-session.svelte", () => ({
     tokens: {},
     allTokens: [],
     myPeerId: null,
+    activeLayer: "token",
     canViewToken: vi.fn(() => true),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
