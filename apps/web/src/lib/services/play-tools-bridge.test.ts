@@ -76,4 +76,38 @@ describe("PlayToolsBridge", () => {
     cleanup();
     bridge.destroy();
   });
+
+  it("ignores messages originating from the same window (matching senderId)", () => {
+    const mockSession = {
+      sendChatMessage: vi.fn(),
+      sendResolvedRollMessage: vi.fn(),
+      vttEnabled: false,
+    };
+
+    const listeners: ((e: any) => void)[] = [];
+    const mockChannel = {
+      postMessage: vi.fn(),
+      addEventListener: vi.fn((_type, fn) => listeners.push(fn)),
+      removeEventListener: vi.fn(),
+      close: vi.fn(),
+    } as any;
+
+    const bridge = new PlayToolsBridge(mockChannel, "test-window-123");
+    const cleanup = bridge.initReceiver(mockSession as any);
+
+    listeners.forEach((l) =>
+      l({
+        data: {
+          type: "VTT_CHAT_MESSAGE",
+          content: "Echo test",
+          senderId: "test-window-123",
+        },
+      }),
+    );
+
+    expect(mockSession.sendChatMessage).not.toHaveBeenCalled();
+
+    cleanup();
+    bridge.destroy();
+  });
 });

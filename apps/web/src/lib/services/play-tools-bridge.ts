@@ -1,19 +1,29 @@
 import type { RollResult } from "dice-engine";
 import { mapSession } from "$lib/stores/map-session.svelte";
-import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
 
 export type PlayToolsBridgeMessage =
-  | { type: "VTT_CHAT_MESSAGE"; content: string }
-  | { type: "VTT_ROLL_MESSAGE"; formula: string; result: RollResult }
-  | { type: "CHAT_INPUT_DRAFT"; text: string };
+  | { type: "VTT_CHAT_MESSAGE"; content: string; senderId: string }
+  | {
+      type: "VTT_ROLL_MESSAGE";
+      formula: string;
+      result: RollResult;
+      senderId: string;
+    };
 
 const CHANNEL_NAME = "codex_play_tools_bridge";
 
 export class PlayToolsBridge {
   private channel: BroadcastChannel | null = null;
   private isListening = false;
+  readonly windowId: string;
 
-  constructor(channel?: BroadcastChannel | null) {
+  constructor(channel?: BroadcastChannel | null, windowId?: string) {
+    this.windowId =
+      windowId ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `win_${Date.now()}_${Math.random()}`);
+
     if (channel !== undefined) {
       this.channel = channel;
     } else if (
@@ -28,9 +38,16 @@ export class PlayToolsBridge {
     }
   }
 
-  post(message: PlayToolsBridgeMessage) {
+  post(
+    message:
+      | { type: "VTT_CHAT_MESSAGE"; content: string }
+      | { type: "VTT_ROLL_MESSAGE"; formula: string; result: RollResult },
+  ) {
     try {
-      this.channel?.postMessage(message);
+      this.channel?.postMessage({
+        ...message,
+        senderId: this.windowId,
+      });
     } catch (e) {
       console.warn("[PlayToolsBridge] Post failed:", e);
     }
@@ -42,7 +59,7 @@ export class PlayToolsBridge {
 
     const handler = (event: MessageEvent<PlayToolsBridgeMessage>) => {
       const data = event.data;
-      if (!data || !data.type) return;
+      if (!data || !data.type || data.senderId === this.windowId) return;
 
       if (data.type === "VTT_CHAT_MESSAGE") {
         session.sendChatMessage(data.content);
@@ -52,8 +69,6 @@ export class PlayToolsBridge {
         } else {
           session.sendChatMessage(`/roll ${data.formula}`);
         }
-      } else if (data.type === "CHAT_INPUT_DRAFT") {
-        addToOracleChatInput(data.text, false);
       }
     };
 

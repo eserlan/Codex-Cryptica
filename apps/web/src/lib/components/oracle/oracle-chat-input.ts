@@ -1,5 +1,3 @@
-import { playToolsBridge } from "$lib/services/play-tools-bridge";
-
 export const ORACLE_CHAT_INPUT_EVENT = "oracle-chat-input";
 
 let pendingDraft = "";
@@ -16,7 +14,7 @@ export function clearOracleChatDraft(): void {
   pendingDraft = "";
 }
 
-export function addToOracleChatInput(text: string, broadcast = true): boolean {
+export function addToOracleChatInput(text: string): boolean {
   if (typeof window === "undefined" || !text.trim()) return false;
 
   const trimmed = text.trim();
@@ -27,10 +25,5 @@ export function addToOracleChatInput(text: string, broadcast = true): boolean {
     cancelable: true,
   });
   window.dispatchEvent(event);
-
-  if (broadcast) {
-    playToolsBridge.post({ type: "CHAT_INPUT_DRAFT", text: trimmed });
-  }
-
   return true;
 }
