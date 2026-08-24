@@ -19,6 +19,7 @@
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
+  import { playToolsBridge } from "$lib/services/play-tools-bridge";
 
   /**
    * Drawing from a deck, with the discard pile in plain sight (#2247, FR-024).
@@ -37,6 +38,7 @@
     session = mapSession,
     addToChat = async (text) => {
       session.sendChatMessage(text);
+      playToolsBridge.post({ type: "VTT_CHAT_MESSAGE", content: text });
       addToOracleChatInput(text);
     },
     copyText = async (text) => {

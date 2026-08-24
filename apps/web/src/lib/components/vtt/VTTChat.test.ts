@@ -2,6 +2,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
+import { tick } from "svelte";
 
 vi.mock("./VTTChatMessage.svelte", () => ({
   default: function VTTChatMessageMock() {
@@ -52,5 +53,23 @@ describe("VTTChat", () => {
     );
 
     expect(modalUIStore.showDiceModal).toBe(true);
+  });
+
+  it("populates input when ORACLE_CHAT_INPUT_EVENT is dispatched", async () => {
+    render(VTTChat);
+
+    const input = screen.getByPlaceholderText(
+      "Type a message...",
+    ) as HTMLTextAreaElement;
+    expect(input.value).toBe("");
+
+    window.dispatchEvent(
+      new CustomEvent("oracle-chat-input", {
+        detail: "Tavern Encounters: A brawl breaks out",
+      }),
+    );
+    await tick();
+
+    expect(input.value).toBe("Tavern Encounters: A brawl breaks out");
   });
 });

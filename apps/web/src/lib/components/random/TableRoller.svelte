@@ -13,6 +13,7 @@
   import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
+  import { playToolsBridge } from "$lib/services/play-tools-bridge";
 
   /**
    * Rolls one table and shows the result, the die value behind it, and a way to
@@ -28,6 +29,7 @@
     session = mapSession,
     addToChat = async (text) => {
       session.sendChatMessage(text);
+      playToolsBridge.post({ type: "VTT_CHAT_MESSAGE", content: text });
       addToOracleChatInput(text);
     },
     copyText = async (text) => {

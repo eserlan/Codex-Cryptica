@@ -5,6 +5,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { playToolsBridge } from "$lib/services/play-tools-bridge";
 
   let {
     rolls = [],
@@ -46,6 +47,7 @@
     if (roll.source) {
       const text = `${roll.source.sourceName}: ${roll.source.finalText}`;
       session.sendChatMessage(text);
+      playToolsBridge.post({ type: "VTT_CHAT_MESSAGE", content: text });
       addToOracleChatInput(text);
     } else {
       if (session.vttEnabled) {
@@ -53,6 +55,11 @@
       } else {
         session.sendChatMessage(`/roll ${roll.formula}`);
       }
+      playToolsBridge.post({
+        type: "VTT_ROLL_MESSAGE",
+        formula: roll.formula,
+        result: roll,
+      });
       addToOracleChatInput(`/roll ${roll.formula}`);
     }
     notificationStore.notify("Result sent to chat.", "success");

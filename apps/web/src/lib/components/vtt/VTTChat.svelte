@@ -5,6 +5,11 @@
   import { tick } from "svelte";
   import VTTChatMessage from "./VTTChatMessage.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import {
+    ORACLE_CHAT_INPUT_EVENT,
+    getOracleChatDraft,
+    clearOracleChatDraft,
+  } from "$lib/components/oracle/oracle-chat-input";
 
   let input = $state("");
   let scrollContainer = $state<HTMLDivElement>();
@@ -56,6 +61,30 @@
     } else {
       showCommandMenu = false;
     }
+  });
+
+  $effect(() => {
+    const draft = getOracleChatDraft();
+    if (draft && !input) {
+      input = draft;
+      clearOracleChatDraft();
+    }
+
+    const handleAddResultToVtt = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      const text = customEvent.detail || "";
+      if (!text.trim()) return;
+
+      input = input.trim() ? `${input}\n${text}` : text;
+      tick().then(() => {
+        inputEl?.focus();
+      });
+    };
+
+    window.addEventListener(ORACLE_CHAT_INPUT_EVENT, handleAddResultToVtt);
+    return () => {
+      window.removeEventListener(ORACLE_CHAT_INPUT_EVENT, handleAddResultToVtt);
+    };
   });
 </script>
 
