@@ -261,19 +261,19 @@
 </script>
 
 <div
-  class="space-y-3"
+  class="flex h-full min-h-0 flex-col gap-3"
   data-testid="connections-tab"
   bind:clientWidth={measuredWidth}
 >
-  <p class="text-xs text-theme-muted">
+  <p class="shrink-0 text-xs text-theme-muted">
     Direct connections only — entities linked straight to {entity.title}.
   </p>
 
   <div
     bind:this={graphElement}
-    class="relative w-full shrink-0 overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40 {isWide
-      ? 'aspect-[16/10] max-h-[28rem]'
-      : 'aspect-square max-h-[22rem]'} {isZoomed ? 'cursor-grab' : ''}"
+    class="relative w-full flex-1 overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40 {isWide
+      ? 'min-h-[24rem] max-h-[48rem]'
+      : 'min-h-[20rem] max-h-[32rem]'} {isZoomed ? 'cursor-grab' : ''}"
     style:touch-action={isZoomed ? "none" : "pan-y"}
     data-testid="connections-graph"
     role="group"
