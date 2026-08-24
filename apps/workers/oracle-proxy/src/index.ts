@@ -41,6 +41,8 @@ import { getModel } from "./llm/registry";
 import {
   isLlmOperationRequest,
   handleLlmOperationRequest,
+  isLlmOperationStreamRequest,
+  handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
 import {
@@ -625,6 +627,15 @@ export default {
       // a recognized `operation` field. Requests without it fall through to
       // the two legacy branches below completely unchanged (FR-007,
       // research.md R1).
+      if (isLlmOperationStreamRequest(body)) {
+        return await handleLlmOperationStreamRequest(
+          body,
+          getCorsHeaders(request.headers, env),
+          env,
+          request.signal,
+        );
+      }
+
       if (isLlmOperationRequest(body)) {
         return await handleLlmOperationRequest(
           body,

@@ -378,3 +378,8 @@ export {
   type CreaturePrompt,
   type ResolvedCreature,
 } from "./public-creature";
+export {
+  createIncrementalJsonScanner,
+  extractPartialJsonStringFields,
+  type IncrementalJsonField,
+} from "./streaming/incremental-json";

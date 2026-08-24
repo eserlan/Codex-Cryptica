@@ -28,6 +28,69 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateNPC", () => {
+    it("streams model deltas while returning the parsed final NPC draft", async () => {
+      const chunks = [
+        '{"title":"Tomasa",',
+        '"summary":"A frontier guide","content":"Bio","lore":"Secrets","labels":["npc"]}',
+      ];
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          for (const text of chunks) yield { type: "delta", text };
+          yield { type: "complete", text: chunks.join("") };
+        },
+      });
+
+      const previews: string[] = [];
+      const output = await engine.generateWithPreview(
+        () => engine.generateNPC({ useAI: true }),
+        (text) => previews.push(text),
+      );
+
+      expect(previews).toEqual([chunks[0], chunks.join("")]);
+      expect(output).toMatchObject({
+        title: "Tomasa",
+        content: "Bio",
+        lore: "Secrets",
+      });
+    });
+
+    it("keeps accumulated deltas when the terminal frame is only whitespace", async () => {
+      const text = '{"title":"Tomasa","content":"Bio","lore":"Secrets"}';
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          yield { type: "delta", text };
+          yield { type: "complete", text: " " };
+        },
+      });
+
+      const output = await engine.generateWithPreview(
+        () => engine.generateNPC({ useAI: true }),
+        () => {},
+      );
+
+      expect(output).toMatchObject({ title: "Tomasa", content: "Bio" });
+    });
+
+    it("falls back to a local NPC draft when streaming reports an error", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          yield { type: "error", error: "network down" };
+        },
+      });
+
+      const output = await engine.generateWithPreview(
+        () =>
+          engine.generateNPC({
+            race: "Dwarf",
+            role: "Guard",
+            useAI: true,
+          }),
+        () => {},
+      );
+
+      expect(output).toMatchObject({ aiFallback: true });
+    });
+
     it("should generate NPC details using local fallback when useAI is false", async () => {
       const res = await engine.generateNPC({
         race: "Elf",

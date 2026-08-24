@@ -113,7 +113,7 @@ export function openImportWindow() {
   if (newWin) newWin.opener = null;
 }
 
-export function openDiceWindow() {
+export function openDiceWindow(tab?: "dice" | "decks" | "tables") {
   if (typeof window === "undefined") return;
 
   const width = 450;
@@ -130,6 +130,9 @@ export function openDiceWindow() {
   );
   if (activeTheme) {
     params.set("theme", activeTheme);
+  }
+  if (tab && tab !== "dice") {
+    params.set("tab", tab);
   }
 
   const query = params.toString();

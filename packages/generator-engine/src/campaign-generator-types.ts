@@ -266,6 +266,38 @@ export interface CampaignGeneratorDefinition {
 }
 
 /**
+ * Provider-neutral streaming event contract (#2423), mirrored by hand from
+ * oracle-proxy's `GenerationEvent` (apps/workers/oracle-proxy/src/llm/types.ts)
+ * and ai-engine's copy (packages/ai-engine/src/client-manager.ts) — no shared
+ * package crosses the Worker/client/generator-engine boundary, so this stays
+ * a structural match kept in sync by hand, same as every other type on this
+ * wire contract (`AIGeneratorCompleteOptions` mirrors oracle-proxy's request
+ * shape the same way). `field` is generator-engine's own addition on top of
+ * the wire contract: a caller-side incremental-JSON-scanner result, not
+ * something the Worker or ai-engine ever produce themselves.
+ */
+export type GenerationEvent =
+  | { type: "started" }
+  | { type: "delta"; text: string }
+  | { type: "field"; key: string; value: unknown }
+  | {
+      type: "complete";
+      text: string;
+      interactionId?: string;
+      usage?: { promptTokens: number; completionTokens: number };
+      /**
+       * True when this result came from replaying the full prompt after the
+       * server-side interaction id expired (see `AIGeneratorCompleteResult`).
+       * Another generator-engine-only addition on top of the wire contract,
+       * same rationale as `field` above — the interaction-degrade branch of
+       * `completeStream` needs to report this so callers (e.g.
+       * `generateDraftStream`) don't have to assume `false`.
+       */
+      replayed?: boolean;
+    }
+  | { type: "error"; error: string };
+
+/**
  * AI generation boundary injected by the web app. The package sends a prompt
  * string and receives a raw JSON string; all AI client details stay in the app.
  */
@@ -289,6 +321,20 @@ export interface AIGeneratorGateway {
    * `aiGateway` being unset (AI path unavailable, fall back to local tables).
    */
   startChat?(systemInstruction: string): Promise<AIGeneratorChatSession>;
+  /**
+   * Streaming counterpart to `complete()` (#2423): re-emits provider text as
+   * it arrives instead of resolving once at the end. Optional — same
+   * fallback contract as `startChat?` above; a caller should treat its
+   * absence as "streaming unavailable, use `complete()`" rather than an
+   * error. Implementations degrade to a single `started`→`complete` pair
+   * (no real `delta`s) for any request they can't actually stream (e.g. an
+   * interaction-backed request in this v1) rather than omitting the method.
+   */
+  completeStream?(
+    prompt: string,
+    systemInstruction: string,
+    options?: AIGeneratorCompleteOptions,
+  ): AsyncGenerator<GenerationEvent>;
 }
 
 export interface AIGeneratorChatSession {
@@ -315,6 +361,13 @@ export interface AIGeneratorCompleteOptions {
     maxOutputTokens?: number;
     responseMimeType?: string;
   };
+  /**
+   * Cancels an in-flight `completeStream()` call (#2423) — a user closing
+   * the generator modal or clicking Cancel mid-generation. Only meaningful
+   * for `completeStream`; `complete()` implementations may ignore it, since
+   * a buffered call has no partial UI state worth tearing down early.
+   */
+  signal?: AbortSignal;
 }
 
 export interface AIGeneratorCompleteResult {

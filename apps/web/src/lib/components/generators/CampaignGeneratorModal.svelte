@@ -18,6 +18,7 @@
     getDefaultInstruction,
     isSupportedGenerator,
     resolveEntityType,
+    extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
     type GeneratorRunRequest,
@@ -103,6 +104,12 @@
 
   let stage = $state<Stage>("configure");
   let draft = $state<GeneratedDraft | null>(null);
+  // Progressive preview while streaming (#2423): populated field-by-field as
+  // the model's response streams in, discarded once the fully validated
+  // draft replaces it — this is never itself offered for Save.
+  let streamedFields = $state<Record<string, string>>({});
+  let streamedJson = $state("");
+  let generationAbortController = $state<AbortController | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
     typeof StarSystemDiagram
   > | null>(null);
@@ -186,10 +193,23 @@
   }
 
   function close(options: { preserveSession?: boolean } = {}) {
+    generationAbortController?.abort();
+    generationAbortController = null;
     modalUIStore.closeGeneratorWorkflow();
     if (!options.preserveSession) generatorSessionManager.reset();
     stage = "configure";
     draft = null;
+    errorMsg = null;
+    streamedFields = {};
+    streamedJson = "";
+  }
+
+  function cancelGeneration() {
+    generationAbortController?.abort();
+    generationAbortController = null;
+    streamedFields = {};
+    streamedJson = "";
+    stage = "configure";
     errorMsg = null;
   }
 
@@ -202,6 +222,10 @@
     if (stage === "generating" || stage === "saving") return;
     stage = "generating";
     errorMsg = null;
+    streamedFields = {};
+    streamedJson = "";
+    const abortController = new AbortController();
+    generationAbortController = abortController;
     try {
       const sourceEntityId = workflow.sourceEntityId;
       const sourceEntity = sourceEntityId
@@ -310,7 +334,7 @@
               vaultContext,
             })
           : null;
-      const result = await svc.generateDraft({
+      const runRequest: GeneratorRunRequest = {
         ...req,
         instructions,
         themeId: themeStore.worldThemeId ?? "workspace",
@@ -322,12 +346,68 @@
               store: true,
             }
           : undefined,
-      });
-      draft = result;
-      stage = "review";
+      };
+
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] modal generation started", {
+          generatorId: req.generatorId,
+          useAI: runRequest.useAI,
+          usesInteraction: !!runRequest.interaction,
+        });
+      }
+
+      for await (const event of svc.generateDraftStream(
+        runRequest,
+        abortController.signal,
+      )) {
+        if (abortController.signal.aborted) break;
+        if (event.type === "delta") {
+          streamedJson += event.text;
+          streamedFields = extractPartialJsonStringFields(streamedJson);
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal preview updated", {
+              deltaLength: event.text.length,
+              totalLength: streamedJson.length,
+              fields: Object.keys(streamedFields),
+            });
+          }
+        } else if (event.type === "field" && typeof event.value === "string") {
+          streamedFields = { ...streamedFields, [event.key]: event.value };
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal field completed", {
+              key: event.key,
+              valueLength: event.value.length,
+            });
+          }
+        } else if (event.type === "draft") {
+          // A `draft` event is always the terminal outcome of
+          // generateDraftStream() — including after an `error` event, which
+          // it falls back from to local generation — so it always
+          // supersedes any earlier error state, and there's never a
+          // trailing `error` event after this without a `draft` following.
+          draft = event.draft;
+          errorMsg = null;
+          stage = "review";
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal received final draft");
+          }
+        } else if (import.meta.env.DEV) {
+          console.debug("[Generator stream] modal event", { type: event.type });
+        }
+        // `error` events are non-terminal here: generateDraftStream() always
+        // falls through to a local-generation `draft` event after one, so
+        // there's nothing to surface to the user — the spinner just keeps
+        // showing until that draft arrives. A truly fatal failure surfaces
+        // as a thrown exception, caught below.
+      }
     } catch (err) {
+      if (abortController.signal.aborted) return;
       errorMsg = err instanceof Error ? err.message : String(err);
       stage = "error";
+    } finally {
+      if (generationAbortController === abortController) {
+        generationAbortController = null;
+      }
     }
   }
 
@@ -542,11 +622,44 @@
         {suggestedLanguageId}
       />
     {:else if stage === "generating"}
-      <div class="flex items-center gap-3 py-6 text-sm text-chrome-muted">
-        <span
-          class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
-        ></span>
-        {activeLoadingMessages[loadingIndex] ?? "Generating your content…"}
+      <div class="py-4">
+        <div class="flex items-center gap-3 text-sm text-chrome-muted">
+          <span
+            class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
+          ></span>
+          {activeLoadingMessages[loadingIndex] ?? "Generating your content…"}
+        </div>
+        {#if streamedFields.title || streamedFields.summary || streamedFields.lore}
+          <div
+            class="mt-4 space-y-2 rounded-lg border border-chrome-border bg-chrome-bg/40 p-3"
+            data-testid="generator-stream-preview"
+          >
+            {#if streamedFields.title}
+              <p class="text-sm font-bold text-chrome-text">
+                {streamedFields.title}
+              </p>
+            {/if}
+            {#if streamedFields.summary}
+              <p class="text-xs italic text-chrome-muted">
+                {streamedFields.summary}
+              </p>
+            {/if}
+            {#if streamedFields.lore}
+              <p
+                class="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-chrome-muted"
+              >
+                {streamedFields.lore}
+              </p>
+            {/if}
+          </div>
+        {/if}
+        <button
+          type="button"
+          class="mt-4 px-3 py-1.5 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors"
+          onclick={cancelGeneration}
+        >
+          Cancel
+        </button>
       </div>
     {:else if (stage === "review" || stage === "saving") && draft}
       {#if errorMsg}

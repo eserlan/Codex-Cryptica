@@ -21,6 +21,7 @@ import {
   type DraftSaveRequest,
   type DraftSaveResult,
   type GeneratedDraft,
+  type GenerationEvent,
   type GeneratorPromptMetrics,
   type GeneratorOutput,
   type GeneratorRunRequest,
@@ -154,6 +155,89 @@ function parseConnections(value: unknown): SuggestedConnection[] | undefined {
           : "related",
     }));
   return out.length ? out : undefined;
+}
+
+/**
+ * Parses and validates a generic (non-dungeon/language/council-vote)
+ * generator's raw AI response into a `GeneratorOutput`, shared by
+ * `generateDraft`'s buffered generic branch and `generateDraftStream`'s
+ * streaming counterpart so the two never silently diverge on what counts as
+ * a valid response. Returns `null` for invalid JSON or a response missing
+ * required fields — the caller decides what "invalid" means next (retry,
+ * fall through to local generation, etc.), this function only classifies.
+ */
+function parseGenericGeneratorOutput(
+  raw: string,
+  generatorId: string,
+): GeneratorOutput | null {
+  let parsed: Partial<GeneratorOutput>;
+  try {
+    parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+  } catch {
+    return null;
+  }
+
+  const requiresCompleteSocietyDossier = generatorId === "secret-society";
+  const isValidShape =
+    typeof parsed.title === "string" &&
+    typeof parsed.summary === "string" &&
+    typeof parsed.lore === "string" &&
+    (!requiresCompleteSocietyDossier ||
+      (parsed.lore.trim().length > 0 &&
+        typeof parsed.content === "string" &&
+        parsed.content.trim().length > 0));
+  if (!isValidShape) return null;
+
+  return {
+    title: parsed.title as string,
+    summary: parsed.summary as string,
+    lore: parsed.lore as string,
+    content: typeof parsed.content === "string" ? parsed.content : undefined,
+    labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+    connections: parseConnections(parsed.connections),
+    // Only the star-system generator's schema asks for these; every other
+    // generator's response simply won't include them.
+    bodies: Array.isArray(parsed.bodies)
+      ? parsed.bodies.filter(
+          (b): b is StarSystemBody =>
+            typeof (b as { name?: unknown })?.name === "string" &&
+            typeof (b as { type?: unknown })?.type === "string",
+        )
+      : undefined,
+    starType: typeof parsed.starType === "string" ? parsed.starType : undefined,
+  };
+}
+
+/**
+ * Builds the full prompt and (when the request carries one) the delta-lore
+ * interaction turn for a generic single-call generator — shared by
+ * `generateDraft`'s generic branch and `generateDraftStream` so the two
+ * can't silently diverge on what prompt/interaction shape actually gets
+ * sent to the model, same rationale as `parseGenericGeneratorOutput` above.
+ */
+function buildGenericGeneratorPrompt(
+  generator: CampaignGeneratorDefinition,
+  mergedRequest: GeneratorRunRequest,
+): {
+  fullPrompt: string;
+  interaction: GeneratorRunRequest["interaction"];
+} {
+  const fullPrompt = generator.buildPrompt({
+    ...mergedRequest,
+    interaction: undefined,
+  });
+  const prompt = mergedRequest.interaction
+    ? generator.buildPrompt(mergedRequest)
+    : fullPrompt;
+  const interaction = mergedRequest.interaction
+    ? {
+        ...mergedRequest.interaction,
+        input: withGeneratorRequest(mergedRequest.interaction.input, prompt),
+        replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
+      }
+    : undefined;
+
+  return { fullPrompt, interaction };
 }
 
 /**
@@ -743,23 +827,10 @@ export class CampaignGeneratorService {
       mergedRequest.generatorId !== "language" &&
       mergedRequest.generatorId !== "council-vote"
     ) {
-      const fullPrompt = generator.buildPrompt({
-        ...mergedRequest,
-        interaction: undefined,
-      });
-      const prompt = mergedRequest.interaction
-        ? generator.buildPrompt(mergedRequest)
-        : fullPrompt;
-      const interaction = mergedRequest.interaction
-        ? {
-            ...mergedRequest.interaction,
-            input: withGeneratorRequest(
-              mergedRequest.interaction.input,
-              prompt,
-            ),
-            replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
-          }
-        : undefined;
+      const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+        generator,
+        mergedRequest,
+      );
       // Retry a few times if the model returns a banned name (including
       // derivatives like "Vane-Smithe"); fall through to local generation if it
       // keeps doing so.
@@ -773,41 +844,12 @@ export class CampaignGeneratorService {
             },
           );
           const raw = completeText(result);
-          const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
-          const requiresCompleteSocietyDossier =
-            mergedRequest.generatorId === "secret-society";
-          if (
-            typeof parsed.title === "string" &&
-            typeof parsed.summary === "string" &&
-            typeof parsed.lore === "string" &&
-            (!requiresCompleteSocietyDossier ||
-              (parsed.lore.trim().length > 0 &&
-                typeof parsed.content === "string" &&
-                parsed.content.trim().length > 0))
-          ) {
-            if (isTitleBanned(parsed.title, bannedNames)) continue;
-            const output: GeneratorOutput = {
-              title: parsed.title,
-              summary: parsed.summary,
-              lore: parsed.lore,
-              content:
-                typeof parsed.content === "string" ? parsed.content : undefined,
-              labels: Array.isArray(parsed.labels) ? parsed.labels : [],
-              connections: parseConnections(parsed.connections),
-              // Only the star-system generator's schema asks for these; every
-              // other generator's response simply won't include them.
-              bodies: Array.isArray(parsed.bodies)
-                ? parsed.bodies.filter(
-                    (b): b is StarSystemBody =>
-                      typeof (b as { name?: unknown })?.name === "string" &&
-                      typeof (b as { type?: unknown })?.type === "string",
-                  )
-                : undefined,
-              starType:
-                typeof parsed.starType === "string"
-                  ? parsed.starType
-                  : undefined,
-            };
+          const output = parseGenericGeneratorOutput(
+            raw,
+            mergedRequest.generatorId,
+          );
+          if (output) {
+            if (isTitleBanned(output.title, bannedNames)) continue;
             if (typeof result !== "string" && result.usedInteraction) {
               this.onInteractionResult?.(result);
             }
@@ -853,6 +895,138 @@ export class CampaignGeneratorService {
       output = generator.generate(mergedRequest);
     }
     return generator.mapOutputToDraft(output, mergedRequest);
+  }
+
+  /**
+   * Streaming counterpart to `generateDraft` (#2423), for the *generic*
+   * single-call generator branch only (every generator except dungeon,
+   * language, and council-vote, which use multi-pass repair loops or a chat
+   * session that this v1 doesn't stream). Yields `GenerationEvent`s
+   * (`started`/`delta`/`field`/`complete`/`error`) as they arrive so the UI
+   * can render progressively, then exactly one final `{ type: "draft" }`
+   * event carrying the fully validated `GeneratedDraft` — mirroring
+   * `generateDraft`'s exact validation/retry/local-fallback behavior, just
+   * reached incrementally instead of after one full await. Falls back to
+   * calling `generateDraft` itself (yielding only `started` then `draft`)
+   * whenever streaming isn't actually available or applicable, so a caller
+   * can always use this method uniformly rather than branching on generator
+   * type or gateway capability itself.
+   */
+  async *generateDraftStream(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    const isStreamableGenericGenerator =
+      request.generatorId !== "dungeon" &&
+      request.generatorId !== "language" &&
+      request.generatorId !== "council-vote";
+
+    if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    const generator = getGenerator(request.generatorId);
+    const themeDefaults = getThemeDefaults(
+      request.themeId,
+      request.generatorId,
+    );
+    const mergedRequest: GeneratorRunRequest = {
+      ...request,
+      options: { ...themeDefaults, ...request.options },
+    };
+
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      !!this.aiGateway;
+    mergedRequest.useAI = canUseAI;
+
+    if (!canUseAI) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    const bannedNames = new Set([
+      ...(mergedRequest.vaultContext?.bannedNames ?? []),
+      ...(mergedRequest.vaultContext?.existingTitles ?? []),
+    ]);
+
+    const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+      generator,
+      mergedRequest,
+    );
+
+    // Same retry-on-banned-name policy as generateDraft's generic branch —
+    // each attempt is a fresh stream, since a name-ban rejection can only be
+    // known after the model's response is fully parsed.
+    for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
+      let raw = "";
+      let interactionId: string | undefined;
+      let replayed = false;
+      let sawComplete = false;
+
+      try {
+        for await (const event of this.aiGateway.completeStream(
+          fullPrompt,
+          SYSTEM_INSTRUCTION,
+          { interaction, signal },
+        )) {
+          if (event.type === "complete") {
+            raw = event.text;
+            interactionId = event.interactionId;
+            replayed = !!event.replayed;
+            sawComplete = true;
+          }
+          yield event;
+        }
+      } catch {
+        if (signal?.aborted) return; // User cancelled — no fallback draft.
+        break; // Network/stream failure — fall through to local.
+      }
+
+      if (signal?.aborted) return; // User cancelled — no fallback draft.
+      if (!sawComplete) break; // Adaptor reported an `error` event — fall through to local.
+
+      const output = parseGenericGeneratorOutput(
+        raw,
+        mergedRequest.generatorId,
+      );
+      if (!output) break; // Valid stream, wrong shape — fall through to local.
+      if (isTitleBanned(output.title, bannedNames)) continue;
+
+      if (interaction && interactionId) {
+        this.onInteractionResult?.({
+          text: raw,
+          interactionId,
+          usedInteraction: true,
+          replayed,
+        });
+      }
+      this.onPromptMetrics?.(
+        promptMetrics({
+          request: mergedRequest,
+          fullPrompt,
+          sentPrompt: replayed
+            ? (interaction?.replayPrompt ?? fullPrompt)
+            : (interaction?.input ?? fullPrompt),
+          usedInteraction: !!interaction,
+          replayed,
+        }),
+      );
+      yield {
+        type: "draft",
+        draft: generator.mapOutputToDraft(output, mergedRequest),
+      };
+      return;
+    }
+
+    yield { type: "draft", draft: await this.generateDraft(request) };
   }
 
   /**

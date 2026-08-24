@@ -78,6 +78,15 @@ export interface MeasurementState {
   locked?: boolean;
 }
 
+export interface ChatCardPayload {
+  deckName?: string;
+  title: string;
+  body?: string;
+  imagePath?: string;
+  reversed?: boolean;
+  position?: string;
+}
+
 export interface ChatMessagePayload {
   type: "CHAT_MESSAGE";
   sender: string;
@@ -95,6 +104,7 @@ export interface ChatMessagePayload {
       dropped?: number[];
     }>;
   };
+  cards?: ChatCardPayload[];
 }
 
 export interface EncounterSession {

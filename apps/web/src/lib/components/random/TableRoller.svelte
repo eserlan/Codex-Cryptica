@@ -94,7 +94,6 @@
     isAddingToChat = true;
     try {
       await addToChat(resultText);
-      notificationStore.notify("Result added to chat input.", "success");
     } catch (error) {
       console.error("[RandomSources] Could not add result to chat", error);
       notificationStore.notify(

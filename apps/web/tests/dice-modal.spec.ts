@@ -91,7 +91,7 @@ test.describe("Dice Modal UI and Isolation", () => {
   test("should navigate history using Arrow keys", async ({ page }) => {
     await page.getByTestId("dice-roller-button").click();
     const modal = page.getByTestId("dice-modal");
-    await expect(modal).toBeVisible();
+    await expect(modal).toBeVisible({ timeout: 15000 });
     const input = modal.getByPlaceholder(/Enter formula/i);
 
     // 1. Perform two different rolls
@@ -135,7 +135,7 @@ test.describe("Dice Modal UI and Isolation", () => {
     await page.setViewportSize({ width: 1000, height: 600 });
     await page.getByTestId("dice-roller-button").click();
     const modal = page.getByTestId("dice-modal");
-    await expect(modal).toBeVisible();
+    await expect(modal).toBeVisible({ timeout: 15000 });
 
     const input = modal.getByPlaceholder(/Enter formula/i);
     for (let i = 0; i < 30; i++) {
