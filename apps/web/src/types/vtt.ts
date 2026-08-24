@@ -74,26 +74,6 @@ export interface TokenCreationInput {
   isVisionSource?: boolean;
 }
 
-export const IMAGE_FOCUS_OPTIONS: Array<{
-  value: TokenImageFocus;
-  label: string;
-  icon: string;
-}> = [
-  { value: "center", label: "Center", icon: "icon-[lucide--focus]" },
-  { value: "top", label: "Top", icon: "icon-[lucide--arrow-up-to-line]" },
-  {
-    value: "bottom",
-    label: "Bottom",
-    icon: "icon-[lucide--arrow-down-to-line]",
-  },
-  { value: "left", label: "Left", icon: "icon-[lucide--arrow-left-to-line]" },
-  {
-    value: "right",
-    label: "Right",
-    icon: "icon-[lucide--arrow-right-to-line]",
-  },
-];
-
 export const TOKEN_STATUS_EFFECTS = [
   { id: "dead", label: "Dead", icon: "icon-[lucide--skull]", color: "#6b7280" },
   {

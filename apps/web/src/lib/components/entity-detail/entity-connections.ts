@@ -1,4 +1,4 @@
-import type { Connection, Entity } from "schema";
+import type { Connection, Entity, ImageFocus } from "schema";
 import { isEntityVisible } from "schema";
 
 /**
@@ -31,6 +31,7 @@ export type ConnectionNeighbor = {
   type: string;
   image?: string;
   thumbnail?: string;
+  imageFocus?: ImageFocus;
   hasPastLabel: boolean;
   /** Every relationship between the centre entity and this neighbour. */
   relations: ConnectionRelation[];
@@ -129,6 +130,7 @@ export function buildConnectionNeighbors(
       type: target.type,
       image: target.image,
       thumbnail: target.thumbnail,
+      imageFocus: target.imageFocus,
       hasPastLabel: hasPast(target),
       relations: [relation],
     });
