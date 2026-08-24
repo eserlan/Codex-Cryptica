@@ -73,6 +73,7 @@
     faqs = [],
     theme = $bindable("Classic Fantasy"),
     isThemeCustomizable = false,
+    supportsStreaming = false,
     generate,
     formFields,
     worldTheme = "workspace",
@@ -97,6 +98,7 @@
     faqs?: { question: string; answer: string }[];
     theme?: string;
     isThemeCustomizable?: boolean;
+    supportsStreaming?: boolean;
     generate: (opts: {
       useAI: boolean;
       onPreview?: (preview: GeneratorOutput) => void;
@@ -308,14 +310,15 @@
     const useAINow =
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
-      generatedData = await generate({
-        useAI: useAINow,
-        onPreview: (preview) => {
-          generatedData = preview;
-          isExampleDraft = false;
-          hasStreamedPreview = true;
-        },
-      });
+      const onPreview = (preview: GeneratorOutput) => {
+        generatedData = preview;
+        isExampleDraft = false;
+        hasStreamedPreview = true;
+      };
+      generatedData =
+        useAINow && supportsStreaming
+          ? await generate({ useAI: useAINow, onPreview })
+          : await generate({ useAI: useAINow });
       userGenerationSucceeded = true;
       isExampleDraft = false;
       // #1796: only on the success path — a caught error below means the

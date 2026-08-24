@@ -6,7 +6,11 @@
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import { collectSessionNames, collectSessionTraits } from "generator-engine";
+  import {
+    collectSessionNames,
+    collectSessionTraits,
+    extractPartialJsonStringFields,
+  } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -899,20 +903,32 @@
     useAI: boolean;
     onPreview?: (preview: GeneratorOutput) => void;
   }) {
-    if (slug === "npc" && useAI && onPreview) {
-      let output: GeneratorOutput | null = null;
-      for await (const event of generatorEngine.generateNPCStream({
-        ...npc,
-        useAI,
-      })) {
-        if (event.type === "delta") onPreview(event.preview);
-        else output = event.output;
-      }
-      if (output) return output;
-      throw new Error("NPC generation ended without a final draft");
-    }
     const handler = GENERATE_HANDLERS[slug];
     if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
+    const streamable = ![
+      "council-vote",
+      "dungeon-generator",
+      "adventure-generator",
+      "adventure-idea-generator",
+      "language-generator",
+    ].includes(slug);
+    if (useAI && onPreview && streamable) {
+      return generatorEngine.generateWithPreview(
+        () => handler(useAI),
+        (raw) => {
+          const fields = extractPartialJsonStringFields(raw);
+          onPreview({
+            type: "note",
+            title: fields.title || "Generating…",
+            summary: fields.summary || "",
+            content: fields.content || "",
+            lore: fields.lore || "",
+            labels: [],
+            status: "draft",
+          });
+        },
+      );
+    }
     return handler(useAI);
   }
 
@@ -944,6 +960,13 @@
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
+  supportsStreaming={![
+    "council-vote",
+    "dungeon-generator",
+    "adventure-generator",
+    "adventure-idea-generator",
+    "language-generator",
+  ].includes(slug)}
   {generate}
   {initialDraft}
   {backHref}
