@@ -18,6 +18,7 @@
     getDefaultInstruction,
     isSupportedGenerator,
     resolveEntityType,
+    extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
     type GeneratorRunRequest,
@@ -107,6 +108,7 @@
   // the model's response streams in, discarded once the fully validated
   // draft replaces it — this is never itself offered for Save.
   let streamedFields = $state<Record<string, string>>({});
+  let streamedJson = $state("");
   let generationAbortController = $state<AbortController | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
     typeof StarSystemDiagram
@@ -199,12 +201,14 @@
     draft = null;
     errorMsg = null;
     streamedFields = {};
+    streamedJson = "";
   }
 
   function cancelGeneration() {
     generationAbortController?.abort();
     generationAbortController = null;
     streamedFields = {};
+    streamedJson = "";
     stage = "configure";
     errorMsg = null;
   }
@@ -219,6 +223,7 @@
     stage = "generating";
     errorMsg = null;
     streamedFields = {};
+    streamedJson = "";
     const abortController = new AbortController();
     generationAbortController = abortController;
     try {
@@ -348,7 +353,10 @@
         abortController.signal,
       )) {
         if (abortController.signal.aborted) break;
-        if (event.type === "field" && typeof event.value === "string") {
+        if (event.type === "delta") {
+          streamedJson += event.text;
+          streamedFields = extractPartialJsonStringFields(streamedJson);
+        } else if (event.type === "field" && typeof event.value === "string") {
           streamedFields = { ...streamedFields, [event.key]: event.value };
         } else if (event.type === "draft") {
           // A `draft` event is always the terminal outcome of

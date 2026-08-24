@@ -380,5 +380,6 @@ export {
 } from "./public-creature";
 export {
   createIncrementalJsonScanner,
+  extractPartialJsonStringFields,
   type IncrementalJsonField,
 } from "./streaming/incremental-json";
