@@ -12,6 +12,9 @@ import {
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
 
+/** Fixed canvas size for a blank map, which has no image to derive size from. */
+export const BLANK_MAP_SIZE = 4000;
+
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
 export type TokenVisionMode = "party" | "selected";
@@ -485,6 +488,34 @@ export class MapStore {
       name,
       assetPath: `maps/${storageName}`,
       dimensions: { width: 0, height: 0 }, // Will be updated on first load
+      pins: [],
+      fogOfWar: {
+        maskPath: `maps/${id}_mask.png`,
+      },
+    };
+
+    vault.maps[id] = map;
+    await vault.saveMaps();
+    this.selectMap(id);
+    return id;
+  }
+
+  /**
+   * Creates a map with no background image — a fixed-size blank canvas meant
+   * to be built up entirely from placed tile-deck tiles.
+   */
+  async createBlankMap(name: string): Promise<string | undefined> {
+    const vaultDir = await vault.getActiveVaultHandle();
+    if (!vaultDir) {
+      return undefined;
+    }
+
+    const id = this.idGenerator.uuid();
+    const map: Map = {
+      id,
+      name,
+      assetPath: "",
+      dimensions: { width: BLANK_MAP_SIZE, height: BLANK_MAP_SIZE },
       pins: [],
       fogOfWar: {
         maskPath: `maps/${id}_mask.png`,

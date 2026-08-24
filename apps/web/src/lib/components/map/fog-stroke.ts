@@ -2,7 +2,7 @@ import type { Point } from "schema";
 
 export function drawFogStroke(
   ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
+  size: { width: number; height: number },
   radius: number,
   from: Point,
   to: Point,
@@ -18,10 +18,10 @@ export function drawFogStroke(
     ctx.globalCompositeOperation = "source-over";
   }
 
-  const centerX = to.x + image.width / 2;
-  const centerY = to.y + image.height / 2;
-  const prevX = from.x + image.width / 2;
-  const prevY = from.y + image.height / 2;
+  const centerX = to.x + size.width / 2;
+  const centerY = to.y + size.height / 2;
+  const prevX = from.x + size.width / 2;
+  const prevY = from.y + size.height / 2;
 
   ctx.beginPath();
   ctx.lineCap = "round";
