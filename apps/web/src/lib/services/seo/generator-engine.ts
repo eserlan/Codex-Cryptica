@@ -206,7 +206,22 @@ const LANGUAGE_GENERATION_CONFIG = {
 };
 
 export class DefaultGeneratorEngine {
+  private streamPreview: ((text: string) => void) | undefined;
+
   constructor(private clientManager = aiClientManager) {}
+
+  async generateWithPreview<T>(
+    generate: () => Promise<T>,
+    onPreview: (text: string) => void,
+  ): Promise<T> {
+    if (this.streamPreview) return generate();
+    this.streamPreview = onPreview;
+    try {
+      return await generate();
+    } finally {
+      this.streamPreview = undefined;
+    }
+  }
 
   /**
    * Shared AI-with-local-fallback flow for every generator (#1494). When AI is
@@ -261,14 +276,37 @@ export class DefaultGeneratorEngine {
       GENERATOR_MODEL_ID,
       systemInstruction,
     );
-    const response = await model.generateContent(
-      generationConfig
-        ? {
-            contents: [{ role: "user", parts: [{ text: userMessage }] }],
-            generationConfig,
-          }
-        : userMessage,
-    );
+    const request = generationConfig
+      ? {
+          contents: [{ role: "user", parts: [{ text: userMessage }] }],
+          generationConfig,
+        }
+      : userMessage;
+    const streamingModel = model as unknown as {
+      generateContentStream?(
+        request: unknown,
+      ): AsyncGenerator<
+        | { type: "delta"; text: string }
+        | { type: "complete"; text: string }
+        | { type: "error"; error: string }
+        | { type: "started" }
+      >;
+    };
+    if (this.streamPreview && streamingModel.generateContentStream) {
+      let text = "";
+      for await (const event of streamingModel.generateContentStream(request)) {
+        if (event.type === "delta") {
+          text += event.text;
+          this.streamPreview(text);
+        } else if (event.type === "complete") {
+          text = event.text || text;
+        } else if (event.type === "error") {
+          throw new Error(event.error);
+        }
+      }
+      return text.trim();
+    }
+    const response = await model.generateContent(request);
     return response.response.text().trim();
   }
 
