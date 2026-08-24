@@ -10,6 +10,7 @@ import { VTTPersistenceManager } from "./vtt-persistence-manager.svelte";
 import { VTTSessionLifecycleManager } from "./vtt-session-lifecycle-manager.svelte";
 import { VTTSessionSnapshotManager } from "./vtt-session-snapshot-manager";
 import { VTTTokenManager } from "./vtt-token-manager.svelte";
+import { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
 import type { VTTSessionService } from "$lib/services/vtt-session";
 import type { EncounterSession } from "../../../types/vtt";
 
@@ -144,6 +145,14 @@ export function initializeMapSessionComposition(
     cloneInitiativeState: (sourceId, cloneId) =>
       store.initiativeManager.cloneInitiativeState(sourceId, cloneId),
     isInitiativeOrdered: (tokenId) => store.initiativeOrder.includes(tokenId),
+  });
+
+  store.tileDeckManager = new VTTTileDeckManager({
+    getTokens: () => store.tokenManager.tokens,
+    addToken: (input, silent) => store.tokenManager.addToken(input, silent),
+    persistDraft: () => store.persistenceManager.persistDraft(),
+    normalizePlacement: (point, size) =>
+      store.tokenManager.clampAndSnapPosition(point, size),
   });
 
   store.encounterManager = new VTTEncounterManager({
@@ -301,6 +310,9 @@ export function initializeMapSessionComposition(
     setGridDistance: (value) => {
       store.gridManager.gridDistance = value;
     },
+    getTileDecks: () => store.tileDeckManager.decks,
+    setTileDeckSnapshotData: (decks) =>
+      store.tileDeckManager.setSnapshotData(decks),
     getActiveMapId: () => store.deps.mapStore.activeMapId,
     clearPendingSessionSnapshotBroadcast: () =>
       store.persistenceManager.clearPendingSessionSnapshotBroadcast(),

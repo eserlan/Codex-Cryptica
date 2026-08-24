@@ -131,4 +131,27 @@ describe("MapFogPainter", () => {
     await expect(painter.finish()).resolves.toBe(false);
     expect(pushUndoAction).not.toHaveBeenCalled();
   });
+
+  it("paints on a blank map with no background image, sized off the mask canvas", async () => {
+    const blankPainter = new MapFogPainter({
+      mapStore: {
+        activeMapId: "map-1",
+        brushRadius: 12,
+        unproject: vi.fn((point) => ({ x: point.x / 2, y: point.y / 2 })),
+        saveMask,
+      },
+      oracle: { pushUndoAction },
+      getMaskCanvas: () => currentMask.canvas,
+      getMapImage: () => null,
+      createCanvas: () => createCanvasMock().canvas,
+    });
+
+    const started = blankPainter.begin({ x: 20, y: 30 }, false);
+    expect(started).toBe(true);
+    expect(mask.ctx.stroke).toHaveBeenCalled();
+
+    const finished = await blankPainter.finish();
+    expect(finished).toBe(true);
+    expect(saveMask).toHaveBeenCalledWith(mask.canvas);
+  });
 });

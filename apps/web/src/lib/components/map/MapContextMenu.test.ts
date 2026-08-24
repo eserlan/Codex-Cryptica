@@ -41,6 +41,10 @@ const sessionModeStoreMock = vi.hoisted(() => ({
   isGuestMode: false,
 }));
 
+const vaultMock = vi.hoisted(() => ({
+  entities: {} as Record<string, { image?: string | null }>,
+}));
+
 vi.mock("$lib/stores/map.svelte", () => ({ mapStore: mapStoreMock }));
 vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
@@ -51,6 +55,7 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { openZenMode: vi.fn() },
 }));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
 
 import MapContextMenu from "./MapContextMenu.svelte";
 
@@ -68,6 +73,9 @@ describe("MapContextMenu appearance controls", () => {
     sessionModeStoreMock.isGuestMode = false;
     token.baseShape = "circle";
     token.facingIndicator = true;
+    (token as any).entityId = null;
+    (token as any).imageUrl = null;
+    vaultMock.entities = {};
   });
 
   function renderMenu() {
@@ -107,5 +115,27 @@ describe("MapContextMenu appearance controls", () => {
     renderMenu();
 
     expect(screen.queryByRole("menuitem", { name: "Appearance" })).toBeNull();
+  });
+
+  it("shows Image focus options when the linked entity has a portrait, even with no token-level imageUrl", async () => {
+    (token as any).entityId = "kratian";
+    (token as any).imageUrl = null;
+    vaultMock.entities = { kratian: { image: "images/kratian.webp" } };
+    renderMenu();
+
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Appearance" }));
+
+    await fireEvent.click(screen.getByRole("menuitemradio", { name: /Top/ }));
+    expect(mapSessionMock.updateToken).toHaveBeenCalledWith("token-1", {
+      imageFocus: "top",
+    });
+  });
+
+  it("hides Image focus options when the token has no image at all", async () => {
+    renderMenu();
+
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Appearance" }));
+
+    expect(screen.queryByRole("menuitemradio", { name: /Top/ })).toBeNull();
   });
 });

@@ -51,6 +51,7 @@
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/search-orchestrator": "workspace:*",
+    "@codex/spatial-engine": "workspace:*",
     "@codex/stat-sheet-engine": "workspace:*",
     "@codex/sync-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",

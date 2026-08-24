@@ -112,6 +112,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "fog-of-war",
       "guest-entity-links",
       "vtt-entity-list",
+      "vtt-tile-decks",
       "dice-rolling",
       "random-tables-and-decks",
       "voice-chat",

@@ -30,6 +30,30 @@ describe("Oracle Proxy Worker CORS", () => {
     }
   });
 
+  it("adds CORS headers to starter deck reads", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/starter-tile-decks/kenney-scribble-dungeons",
+        { headers: { Origin: "https://codexcryptica.com" } },
+      ),
+      {
+        ...emptyEnv,
+        BUCKET: {
+          get: async () => ({
+            body: new Blob(["{}"], { type: "application/json" }).stream(),
+            etag: "starter-deck-manifest",
+          }),
+        },
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://codexcryptica.com",
+    );
+  });
+
   it("allows Cloudflare Pages preview subdomains for this project", () => {
     expect(
       isOriginAllowed(

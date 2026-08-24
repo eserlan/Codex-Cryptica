@@ -160,6 +160,7 @@
 
 **Learning:** When refactoring a package (e.g. `random-source-engine`) to inject an ambient dependency like `Clock` or `Date.now()`, the package might not have `@codex/runtime` installed. Adding an external dependency purely for a testability seam creates unnecessary coupling.
 **Action:** Instead of importing `Clock` and `systemClock`, use a simple, native functional parameter (e.g., `private now: () => number = Date.now`) in the constructor. This creates a perfect test seam (allowing `() => mockTime` in tests) while preserving the natural production default seamlessly without new dependencies.
+
 ## 2026-08-21 - Injected Clock dependency into Oracle adapter
 
 **Learning:** Extracted the hardcoded `Date.now()` dependency in `oracle-adapter.svelte.ts` by injecting `Clock` from `@codex/runtime` via the `/utils/runtime-deps` module. It is critical to note that the `Clock` interface returns a numeric timestamp (`number`), mirroring `Date.now()`, rather than a `Date` object. Always verify the signature of ambient runtime dependencies before injecting them.

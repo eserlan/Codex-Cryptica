@@ -48,10 +48,9 @@ export class MapFogPainter {
 
   begin(point: Point, isHiding: boolean): boolean {
     const maskCanvas = this.deps.getMaskCanvas();
-    const image = this.deps.getMapImage();
     const activeMapId = this.deps.mapStore.activeMapId;
 
-    if (!maskCanvas || !image || !activeMapId) {
+    if (!maskCanvas || !activeMapId) {
       return false;
     }
 
@@ -77,15 +76,9 @@ export class MapFogPainter {
     }
 
     const maskCanvas = this.deps.getMaskCanvas();
-    const image = this.deps.getMapImage();
     const currentMapId = this.deps.mapStore.activeMapId;
 
-    if (
-      !maskCanvas ||
-      !image ||
-      !currentMapId ||
-      currentMapId !== this.activeMapId
-    ) {
+    if (!maskCanvas || !currentMapId || currentMapId !== this.activeMapId) {
       this.reset();
       return false;
     }
@@ -133,8 +126,7 @@ export class MapFogPainter {
 
   private paintAt(point: Point, isHiding: boolean) {
     const maskCanvas = this.deps.getMaskCanvas();
-    const image = this.deps.getMapImage();
-    if (!maskCanvas || !image || !this.painting) return;
+    if (!maskCanvas || !this.painting) return;
 
     const currentCoords = this.deps.mapStore.unproject(point);
     const previousCoords = this.lastPaintImgCoords || currentCoords;
@@ -143,7 +135,7 @@ export class MapFogPainter {
 
     drawFogStroke(
       ctx,
-      image,
+      maskCanvas,
       this.deps.mapStore.brushRadius,
       previousCoords,
       currentCoords,

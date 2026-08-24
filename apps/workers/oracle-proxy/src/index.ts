@@ -20,6 +20,7 @@ import {
   handleDeleteVault,
   handleDeleteAsset,
 } from "./publish";
+import { handleGetStarterTileDeck } from "./starter-tile-decks";
 import {
   handleDeletePublicListing,
   handleGetPublicListing,
@@ -163,6 +164,34 @@ export default {
 
     const url = new URL(request.url);
     const pathname = url.pathname;
+
+    if (pathname.startsWith("/api/starter-tile-decks/")) {
+      const withCors = (response: Response) => {
+        const headers = getCorsHeaders(request.headers, env);
+        for (const [name, value] of Object.entries(headers)) {
+          response.headers.set(name, value);
+        }
+        response.headers.append("Vary", "Origin");
+        return response;
+      };
+      if (request.method !== "GET")
+        return withCors(new Response("Method not allowed", { status: 405 }));
+      const parts = pathname.split("/");
+      const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
+      if (!deckId) return withCors(new Response("Not found", { status: 404 }));
+      if (parts.length === 4)
+        return withCors(await handleGetStarterTileDeck(env, deckId));
+      if (parts.length === 6 && parts[4] === "assets") {
+        return withCors(
+          await handleGetStarterTileDeck(
+            env,
+            deckId,
+            decodeURIComponent(parts[5]),
+          ),
+        );
+      }
+      return withCors(new Response("Not found", { status: 404 }));
+    }
 
     if (pathname === "/api/session") {
       const sessionOrigin = request.headers.get("Origin") || "";

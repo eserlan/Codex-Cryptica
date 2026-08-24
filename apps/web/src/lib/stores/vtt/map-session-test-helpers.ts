@@ -5,6 +5,7 @@ import type {
   MeasurementState,
   SessionMode,
   Token,
+  TileDeck,
   VTTMessage,
 } from "../../../types/vtt";
 import { createFullEncounterSessionFixture } from "./map-session-test-fixtures";
@@ -38,6 +39,7 @@ export function createSnapshotManagerHarness() {
     gridDistance: 5,
     activeMapId: "map-1" as string | null,
     emitted: [] as VTTMessage[],
+    tileDecks: [] as TileDeck[],
   };
 
   const deps: VTTSessionSnapshotManagerDependencies = {
@@ -111,6 +113,10 @@ export function createSnapshotManagerHarness() {
       state.gridDistance = value;
     },
     getActiveMapId: () => state.activeMapId,
+    getTileDecks: () => state.tileDecks,
+    setTileDeckSnapshotData: (decks) => {
+      state.tileDecks = decks;
+    },
     clearPendingSessionSnapshotBroadcast: vi.fn(),
     emit: (message) => {
       state.emitted.push(message);
