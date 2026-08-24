@@ -12,6 +12,9 @@ import {
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
 
+/** Fixed canvas size for a blank map, which has no image to derive size from. */
+export const BLANK_MAP_SIZE = 4000;
+
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
 export type TokenVisionMode = "party" | "selected";
@@ -26,7 +29,9 @@ type PersistedMapSettings = {
   gridColor: string | null;
   showLabels: boolean;
   visionMode: TokenVisionMode;
-  visionRadius: number;
+  /** Vision distance in grid units (e.g. feet), not pixels — converted to
+   * pixels using the map's gridSize/gridDistance at reveal time. */
+  visionRange: number;
 };
 
 type PersistedMapPageState = {
@@ -44,7 +49,7 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   gridColor: null,
   showLabels: true,
   visionMode: "party",
-  visionRadius: 300,
+  visionRange: 60,
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -72,7 +77,7 @@ export class MapStore {
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
   visionMode = $state<TokenVisionMode>("party");
-  visionRadius = $state(300);
+  visionRange = $state(60);
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
@@ -124,7 +129,7 @@ export class MapStore {
             this.gridColor,
             this.showLabels,
             this.visionMode,
-            this.visionRadius,
+            this.visionRange,
           ];
           void tracked;
           this.schedulePersistSettings();
@@ -224,10 +229,10 @@ export class MapStore {
           parsed.visionMode === "party" || parsed.visionMode === "selected"
             ? parsed.visionMode
             : DEFAULT_MAP_SETTINGS.visionMode,
-        visionRadius:
-          typeof parsed.visionRadius === "number"
-            ? parsed.visionRadius
-            : DEFAULT_MAP_SETTINGS.visionRadius,
+        visionRange:
+          typeof parsed.visionRange === "number"
+            ? parsed.visionRange
+            : DEFAULT_MAP_SETTINGS.visionRange,
       };
     } catch {
       return null;
@@ -261,7 +266,7 @@ export class MapStore {
       gridColor: this.gridColor,
       showLabels: this.showLabels,
       visionMode: this.visionMode,
-      visionRadius: this.visionRadius,
+      visionRange: this.visionRange,
     };
 
     try {
@@ -382,7 +387,7 @@ export class MapStore {
       this.gridColor = next.gridColor;
       this.showLabels = next.showLabels;
       this.visionMode = next.visionMode;
-      this.visionRadius = next.visionRadius;
+      this.visionRange = next.visionRange;
     } finally {
       this.isRestoringSettings = false;
     }
@@ -483,6 +488,34 @@ export class MapStore {
       name,
       assetPath: `maps/${storageName}`,
       dimensions: { width: 0, height: 0 }, // Will be updated on first load
+      pins: [],
+      fogOfWar: {
+        maskPath: `maps/${id}_mask.png`,
+      },
+    };
+
+    vault.maps[id] = map;
+    await vault.saveMaps();
+    this.selectMap(id);
+    return id;
+  }
+
+  /**
+   * Creates a map with no background image — a fixed-size blank canvas meant
+   * to be built up entirely from placed tile-deck tiles.
+   */
+  async createBlankMap(name: string): Promise<string | undefined> {
+    const vaultDir = await vault.getActiveVaultHandle();
+    if (!vaultDir) {
+      return undefined;
+    }
+
+    const id = this.idGenerator.uuid();
+    const map: Map = {
+      id,
+      name,
+      assetPath: "",
+      dimensions: { width: BLANK_MAP_SIZE, height: BLANK_MAP_SIZE },
       pins: [],
       fogOfWar: {
         maskPath: `maps/${id}_mask.png`,

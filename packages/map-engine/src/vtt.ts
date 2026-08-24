@@ -1,9 +1,13 @@
-import type { Point } from "schema";
+import type { ImageFocus, Point } from "schema";
+import { normalizeImageFocus } from "schema";
+import { normalizeSpatialImageTransform } from "@codex/spatial-engine";
 
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
 export type LegacyTokenVisibility = TokenVisibility | "owner-only";
 export type TokenBaseShape = "circle" | "square";
+/** Which part of the source image to keep in view when its aspect ratio doesn't match the token's shape — shared with an entity's own `imageFocus` (schema). */
+export type TokenImageFocus = ImageFocus;
 
 export interface PingState {
   x: number;
@@ -30,8 +34,41 @@ export interface Token {
   visibleTo: TokenVisibility;
   color: string;
   imageUrl: string | null;
+  imageFocus?: TokenImageFocus;
   statusEffects: string[];
+  locked?: boolean;
   isVisionSource?: boolean;
+  /** Marks an image token placed from a procedural tile deck. */
+  kind?: "token" | "tile";
+  tileDeckId?: string | null;
+  tileDetails?: TileDetails;
+}
+
+export interface TileDetails {
+  description: string;
+  encounter: string;
+  notes: string;
+  contents: string;
+}
+
+export interface TileDeckEntry {
+  id: string;
+  name: string;
+  imagePath: string;
+  category?: string;
+}
+
+export interface TileDeck {
+  id: string;
+  name: string;
+  /** Identifies a catalog deck that was prefetched into this local vault. */
+  starterDeckId?: string;
+  /** License label for a starter deck, e.g. "CC BY 4.0". Unset for user-created decks. */
+  license?: string;
+  /** Upstream source URL for a starter deck's license/attribution. */
+  sourceUrl?: string;
+  tiles: TileDeckEntry[];
+  hardEdges: boolean;
 }
 
 export interface MeasurementState {
@@ -39,6 +76,15 @@ export interface MeasurementState {
   start: Point | null;
   end: Point | null;
   locked?: boolean;
+}
+
+export interface ChatCardPayload {
+  deckName?: string;
+  title: string;
+  body?: string;
+  imagePath?: string;
+  reversed?: boolean;
+  position?: string;
 }
 
 export interface ChatMessagePayload {
@@ -58,6 +104,7 @@ export interface ChatMessagePayload {
       dropped?: number[];
     }>;
   };
+  cards?: ChatCardPayload[];
 }
 
 export interface EncounterSession {
@@ -80,6 +127,7 @@ export interface EncounterSession {
   gridSize?: number;
   gridUnit?: string;
   gridDistance?: number;
+  tileDecks?: TileDeck[];
 }
 
 export function normalizeTokenVisibility(
@@ -87,6 +135,8 @@ export function normalizeTokenVisibility(
 ): TokenVisibility {
   return visibility === "gm-only" ? "gm-only" : "all";
 }
+
+export const normalizeTokenImageFocus = normalizeImageFocus;
 
 export function normalizeToken(
   token:
@@ -97,15 +147,29 @@ export function normalizeToken(
         facingIndicator?: boolean;
       }),
 ): Token {
+  const transform = normalizeSpatialImageTransform(token);
   return {
     ...token,
+    ...transform,
     ownerPeerId: token.ownerPeerId ?? null,
     ownerGuestName: token.ownerGuestName ?? null,
     visibleTo: normalizeTokenVisibility(token.visibleTo),
     baseShape: token.baseShape === "square" ? "square" : "circle",
     facingIndicator: token.facingIndicator === true,
+    imageFocus: normalizeTokenImageFocus(token.imageFocus),
     statusEffects: [...(token.statusEffects ?? [])],
+    locked: token.locked === true,
     isVisionSource: token.isVisionSource === true,
+    kind: token.kind === "tile" ? "tile" : "token",
+    tileDeckId: token.tileDeckId ?? null,
+    tileDetails: token.tileDetails
+      ? {
+          description: token.tileDetails.description ?? "",
+          encounter: token.tileDetails.encounter ?? "",
+          notes: token.tileDetails.notes ?? "",
+          contents: token.tileDetails.contents ?? "",
+        }
+      : undefined,
   };
 }
 
@@ -159,6 +223,15 @@ export function normalizeEncounterSession(
             },
           }
         : {}),
+    })),
+    tileDecks: (session.tileDecks ?? []).map((deck) => ({
+      id: deck.id,
+      name: deck.name,
+      starterDeckId: deck.starterDeckId,
+      license: deck.license,
+      sourceUrl: deck.sourceUrl,
+      hardEdges: deck.hardEdges === true,
+      tiles: (deck.tiles ?? []).map((tile) => ({ ...tile })),
     })),
   };
 }

@@ -333,6 +333,10 @@ async function* sendViaOperationPipelineStream(params: {
     stream: true,
   };
 
+  if (import.meta.env.DEV) {
+    console.debug("[Generator stream] opening SSE request");
+  }
+
   let response: Response;
   try {
     response = await doFetch(proxyUrl, {
@@ -366,6 +370,12 @@ async function* sendViaOperationPipelineStream(params: {
     return;
   }
 
+  if (import.meta.env.DEV) {
+    console.debug("[Generator stream] SSE response opened", {
+      contentType: response.headers.get("content-type"),
+    });
+  }
+
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -379,7 +389,14 @@ async function* sendViaOperationPipelineStream(params: {
       const dataStr = trimmed.slice(5).trim();
       if (!dataStr) continue;
       try {
-        yield JSON.parse(dataStr) as GenerationEvent;
+        const event = JSON.parse(dataStr) as GenerationEvent;
+        if (import.meta.env.DEV) {
+          console.debug("[Generator stream] SSE event received", {
+            type: event.type,
+            textLength: event.type === "delta" ? event.text.length : undefined,
+          });
+        }
+        yield event;
       } catch {
         // Skip a malformed SSE payload rather than aborting the stream.
       }
@@ -390,6 +407,11 @@ async function* sendViaOperationPipelineStream(params: {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] SSE network chunk received", {
+          byteLength: value.byteLength,
+        });
+      }
       buffer += decoder.decode(value, { stream: true });
 
       let sepIndex: number;
@@ -643,52 +665,29 @@ export class DefaultAIClientManager {
         const model = this.createProxyModel(modelName, systemInstruction);
 
         return {
-          /**
-           * Real streaming (#2423 follow-up) — was previously a fake that
-           * `await`ed a full buffered `generateContent()` and wrapped the one
-           * complete response as a single-chunk generator, purely to match
-           * the real SDK's `{stream}` return shape. Now drives the real
-           * `generateContentStream()` (SSE-backed) and re-yields each delta
-           * as it arrives. `history` is only appended to once the stream
-           * completes successfully — a failed turn leaves history untouched,
-           * same as the buffered path already did (an exception from
-           * `generateContent` never reached the `history.push` below it).
-           */
-          sendMessageStream: async (query: string, signal?: AbortSignal) => {
+          sendMessageStream: async (query: string) => {
             const contents = [
               ...history,
               { role: "user", parts: [{ text: query }] },
             ];
 
-            async function* stream() {
-              let fullText = "";
-              let streamError: string | undefined;
+            const result = await (model as any).generateContent({
+              contents,
+            });
 
-              for await (const event of (model as any).generateContentStream(
-                { contents },
-                signal,
-              )) {
-                if (event.type === "delta") {
-                  fullText += event.text;
-                  yield { text: () => event.text };
-                } else if (event.type === "error") {
-                  streamError = event.error;
-                }
-              }
+            const responseText = result.response.text();
+            history.push(
+              { role: "user", parts: [{ text: query }] },
+              { role: "model", parts: [{ text: responseText }] },
+            );
 
-              if (streamError) {
-                throw new Error(
-                  `[OracleProxy] Streaming chat message failed: ${streamError}`,
-                );
-              }
-
-              history.push(
-                { role: "user", parts: [{ text: query }] },
-                { role: "model", parts: [{ text: fullText }] },
-              );
-            }
-
-            return { stream: stream() };
+            return {
+              stream: (async function* () {
+                yield {
+                  text: () => responseText,
+                };
+              })(),
+            };
           },
         };
       },

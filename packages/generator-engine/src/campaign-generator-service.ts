@@ -14,8 +14,8 @@ import {
   parseDungeonResponseDetailed,
 } from "./public-dungeon";
 import {
-  type AIGeneratorChatSession,
   type AIGeneratorGateway,
+  type AIGeneratorChatSession,
   type AIGeneratorCompleteResult,
   type AIPolicy,
   type CampaignGeneratorDefinition,
@@ -246,16 +246,8 @@ type CouncilVoteFoundation = Partial<GeneratorOutput> & {
   summary: string;
   lore: string;
 };
-
 type CouncilVotePaths = { possiblePaths?: unknown; followUpHooks?: unknown };
 
-/**
- * Council-vote validation/assembly helpers, shared by
- * `generateCouncilVoteWithAI` (buffered) and `generateCouncilVoteWithAIStream`
- * so the two can't silently diverge on what counts as a usable foundation/
- * paths reply or how the final lore gets assembled — same rationale as
- * `parseGenericGeneratorOutput`/`buildGenericGeneratorPrompt` above.
- */
 function isUsableCouncilVoteFoundation(
   value: Partial<GeneratorOutput>,
 ): value is CouncilVoteFoundation {
@@ -277,18 +269,12 @@ function buildCouncilVoteOutput(
   foundation: CouncilVoteFoundation,
   paths: CouncilVotePaths,
 ): GeneratorOutput {
-  const lore = [
-    foundation.lore,
-    typeof paths.possiblePaths === "string" ? paths.possiblePaths : "",
-    typeof paths.followUpHooks === "string" ? paths.followUpHooks : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-
   return {
     title: foundation.title,
     summary: foundation.summary,
-    lore,
+    lore: [foundation.lore, paths.possiblePaths, paths.followUpHooks]
+      .filter((value): value is string => typeof value === "string" && !!value)
+      .join("\n\n"),
     content:
       typeof foundation.content === "string" ? foundation.content : undefined,
     labels: Array.isArray(foundation.labels) ? foundation.labels : [],
@@ -731,13 +717,24 @@ export class CampaignGeneratorService {
     try {
       const chat = await this.aiGateway.startChat(SYSTEM_INSTRUCTION);
 
+      const isUsableFoundation = (
+        value: Partial<GeneratorOutput>,
+      ): value is Partial<GeneratorOutput> & {
+        title: string;
+        summary: string;
+        lore: string;
+      } =>
+        typeof value.title === "string" &&
+        typeof value.summary === "string" &&
+        typeof value.lore === "string";
+
       const foundationRaw = await chat.send(
         councilVoteFoundationPrompt(request),
       );
       const foundationParsed = JSON.parse(
         foundationRaw,
       ) as Partial<GeneratorOutput>;
-      if (!isUsableCouncilVoteFoundation(foundationParsed)) return null;
+      if (!isUsableFoundation(foundationParsed)) return null;
       let foundation = foundationParsed;
 
       // Proofread/repair before the paths pass ever sees the foundation —
@@ -749,13 +746,18 @@ export class CampaignGeneratorService {
           councilVoteFoundationRepairPrompt(),
         );
         const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
-        if (isUsableCouncilVoteFoundation(repaired)) foundation = repaired;
+        if (isUsableFoundation(repaired)) foundation = repaired;
       } catch {
         // Keep the unrepaired foundation.
       }
 
+      type ParsedPaths = { possiblePaths?: unknown; followUpHooks?: unknown };
+      const isUsablePaths = (value: ParsedPaths): boolean =>
+        typeof value.possiblePaths === "string" &&
+        typeof value.followUpHooks === "string";
+
       const pathsRaw = await chat.send(councilVotePathsPrompt());
-      let paths = JSON.parse(pathsRaw) as CouncilVotePaths;
+      let paths = JSON.parse(pathsRaw) as ParsedPaths;
 
       // Same rationale as the foundation repair above, one pass later: fix
       // the paths before they're used, and keep the unrepaired paths if the
@@ -764,32 +766,37 @@ export class CampaignGeneratorService {
         const pathsRepairedRaw = await chat.send(
           councilVotePathsRepairPrompt(),
         );
-        const pathsRepaired = JSON.parse(pathsRepairedRaw) as CouncilVotePaths;
-        if (isUsableCouncilVotePaths(pathsRepaired)) paths = pathsRepaired;
+        const pathsRepaired = JSON.parse(pathsRepairedRaw) as ParsedPaths;
+        if (isUsablePaths(pathsRepaired)) paths = pathsRepaired;
       } catch {
         // Keep the unrepaired paths.
       }
 
-      const output = buildCouncilVoteOutput(foundation, paths);
+      const lore = [
+        foundation.lore,
+        typeof paths.possiblePaths === "string" ? paths.possiblePaths : "",
+        typeof paths.followUpHooks === "string" ? paths.followUpHooks : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const output: GeneratorOutput = {
+        title: foundation.title,
+        summary: foundation.summary,
+        lore,
+        content:
+          typeof foundation.content === "string"
+            ? foundation.content
+            : undefined,
+        labels: Array.isArray(foundation.labels) ? foundation.labels : [],
+        connections: parseConnections(foundation.connections),
+      };
       return generator.mapOutputToDraft(output, request);
     } catch {
       return null;
     }
   }
 
-  /**
-   * Streaming counterpart to `generateCouncilVoteWithAI` (#2423 multi-pass
-   * follow-up). Same 4-turn shape, same chat session, same validation via
-   * the shared `isUsableCouncilVoteFoundation`/`isUsableCouncilVotePaths`/
-   * `buildCouncilVoteOutput` helpers — only the transport differs, turn by
-   * turn, via `chat.sendStream()`. A `phase` event precedes each turn so the
-   * UI can discard the previous turn's preview (it's a different JSON
-   * object each time) and label what's happening. Falls back to the
-   * buffered `generateDraft()` (which itself calls `generateCouncilVoteWithAI`
-   * or local generation) whenever streaming isn't available/applicable or
-   * a mandatory (non-repair) turn fails — repair-turn failures keep the
-   * unrepaired value and continue, exactly like the buffered method.
-   */
   private async *generateCouncilVoteWithAIStream(
     request: GeneratorRunRequest,
     signal?: AbortSignal,
@@ -797,20 +804,18 @@ export class CampaignGeneratorService {
     GenerationEvent | { type: "draft"; draft: GeneratedDraft }
   > {
     const generator = getGenerator(request.generatorId);
-    const themeDefaults = getThemeDefaults(
-      request.themeId,
-      request.generatorId,
-    );
     const mergedRequest: GeneratorRunRequest = {
       ...request,
-      options: { ...themeDefaults, ...request.options },
+      options: {
+        ...getThemeDefaults(request.themeId, request.generatorId),
+        ...request.options,
+      },
     };
     const canUseAI =
       request.useAI &&
       this.aiPolicy.isEnabled &&
       this.aiPolicy.isAvailable &&
       !!this.aiGateway?.startChat;
-    mergedRequest.useAI = canUseAI;
 
     if (!canUseAI) {
       yield { type: "started" };
@@ -824,37 +829,36 @@ export class CampaignGeneratorService {
       message: string,
     ): AsyncGenerator<GenerationEvent, string> {
       yield { type: "phase", label };
-      if (typeof chat.sendStream !== "function") {
+      if (!chat.sendStream) {
         yield { type: "started" };
         const text = await chat.send(message);
         yield { type: "complete", text };
         return text;
       }
-      let raw = "";
+      let text = "";
       for await (const event of chat.sendStream(message, signal)) {
-        if (event.type === "complete") raw = event.text;
+        if (event.type === "complete") text = event.text;
         yield event;
       }
-      return raw;
+      return text;
     }
 
     try {
       const chat = await this.aiGateway!.startChat!(SYSTEM_INSTRUCTION);
-
       const foundationRaw = yield* sendTurn(
         chat,
         "Drafting the council's founding stance…",
         councilVoteFoundationPrompt(mergedRequest),
       );
       if (signal?.aborted) return;
-      const foundationParsed = JSON.parse(
+      const parsedFoundation = JSON.parse(
         foundationRaw,
       ) as Partial<GeneratorOutput>;
-      if (!isUsableCouncilVoteFoundation(foundationParsed)) {
+      if (!isUsableCouncilVoteFoundation(parsedFoundation)) {
         yield { type: "draft", draft: await this.generateDraft(request) };
         return;
       }
-      let foundation = foundationParsed;
+      let foundation = parsedFoundation;
 
       try {
         const repairedRaw = yield* sendTurn(
@@ -866,7 +870,7 @@ export class CampaignGeneratorService {
         const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
         if (isUsableCouncilVoteFoundation(repaired)) foundation = repaired;
       } catch {
-        // Keep the unrepaired foundation.
+        // A repair failure retains the usable foundation from the prior turn.
       }
 
       const pathsRaw = yield* sendTurn(
@@ -876,28 +880,30 @@ export class CampaignGeneratorService {
       );
       if (signal?.aborted) return;
       let paths = JSON.parse(pathsRaw) as CouncilVotePaths;
-
       try {
-        const pathsRepairedRaw = yield* sendTurn(
+        const repairedRaw = yield* sendTurn(
           chat,
           "Refining the possible paths…",
           councilVotePathsRepairPrompt(),
         );
         if (signal?.aborted) return;
-        const pathsRepaired = JSON.parse(pathsRepairedRaw) as CouncilVotePaths;
-        if (isUsableCouncilVotePaths(pathsRepaired)) paths = pathsRepaired;
+        const repaired = JSON.parse(repairedRaw) as CouncilVotePaths;
+        if (isUsableCouncilVotePaths(repaired)) paths = repaired;
       } catch {
-        // Keep the unrepaired paths.
+        // A repair failure retains the usable paths from the prior turn.
       }
 
-      const output = buildCouncilVoteOutput(foundation, paths);
       yield {
         type: "draft",
-        draft: generator.mapOutputToDraft(output, mergedRequest),
+        draft: generator.mapOutputToDraft(
+          buildCouncilVoteOutput(foundation, paths),
+          mergedRequest,
+        ),
       };
     } catch {
-      if (signal?.aborted) return;
-      yield { type: "draft", draft: await this.generateDraft(request) };
+      if (!signal?.aborted) {
+        yield { type: "draft", draft: await this.generateDraft(request) };
+      }
     }
   }
 
@@ -1044,21 +1050,19 @@ export class CampaignGeneratorService {
   }
 
   /**
-   * Streaming counterpart to `generateDraft` (#2423). Dispatches council-vote
-   * to `generateCouncilVoteWithAIStream` (its own multi-turn chat-session
-   * streaming, #2423 multi-pass follow-up); dungeon and language still fall
-   * back to buffered `generateDraft` (their multi-pass streaming isn't built
-   * yet); every other (generic, single-call) generator streams via the
-   * branch below. Yields `GenerationEvent`s (`started`/`delta`/`field`/
-   * `phase`/`complete`/`error`) as they arrive so the UI can render
-   * progressively, then exactly one final `{ type: "draft" }` event carrying
-   * the fully validated `GeneratedDraft` — mirroring `generateDraft`'s exact
-   * validation/retry/local-fallback behavior, just reached incrementally
-   * instead of after one full await. Falls back to calling `generateDraft`
-   * itself (yielding only `started` then `draft`) whenever streaming isn't
-   * actually available or applicable, so a caller can always use this method
-   * uniformly rather than branching on generator type or gateway capability
-   * itself.
+   * Streaming counterpart to `generateDraft` (#2423), for the *generic*
+   * single-call generator branch only (every generator except dungeon,
+   * language, and council-vote, which use multi-pass repair loops or a chat
+   * session that this v1 doesn't stream). Yields `GenerationEvent`s
+   * (`started`/`delta`/`field`/`complete`/`error`) as they arrive so the UI
+   * can render progressively, then exactly one final `{ type: "draft" }`
+   * event carrying the fully validated `GeneratedDraft` — mirroring
+   * `generateDraft`'s exact validation/retry/local-fallback behavior, just
+   * reached incrementally instead of after one full await. Falls back to
+   * calling `generateDraft` itself (yielding only `started` then `draft`)
+   * whenever streaming isn't actually available or applicable, so a caller
+   * can always use this method uniformly rather than branching on generator
+   * type or gateway capability itself.
    */
   async *generateDraftStream(
     request: GeneratorRunRequest,

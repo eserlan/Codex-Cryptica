@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { createIncrementalJsonScanner } from "./incremental-json";
+import {
+  createIncrementalJsonScanner,
+  extractPartialJsonStringFields,
+} from "./incremental-json";
 
 describe("createIncrementalJsonScanner", () => {
   it("emits nothing until the first key/value pair is complete", () => {
@@ -127,5 +130,30 @@ describe("createIncrementalJsonScanner", () => {
       { key: "summary", value: "A wagon-sized desert aberration" },
       { key: "lore", value: "Once a caravan beast, twisted by old magic." },
     ]);
+  });
+});
+
+describe("extractPartialJsonStringFields", () => {
+  it("returns a growing string value before its JSON field is complete", () => {
+    expect(
+      extractPartialJsonStringFields(
+        '{"title":"The Glass Gate","lore":"The gate hums as',
+      ),
+    ).toEqual({
+      title: "The Glass Gate",
+      lore: "The gate hums as",
+    });
+  });
+
+  it("decodes complete escapes but withholds an incomplete escape sequence", () => {
+    const partialValue = '{"lore":"A bell\\nanswers ' + "\\";
+    expect(extractPartialJsonStringFields(partialValue)).toEqual({
+      lore: "A bell\nanswers ",
+    });
+  });
+
+  it("does not preview a value before its key and opening quote are complete", () => {
+    expect(extractPartialJsonStringFields('{"lo')).toEqual({});
+    expect(extractPartialJsonStringFields('{"lore": ')).toEqual({});
   });
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
   import DiceRollResult from "$lib/components/dice/DiceRollResult.svelte";
+  import VTTChatCard from "$lib/components/vtt/VTTChatCard.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import type { ChatMessagePayload } from "../../../types/vtt";
 
@@ -31,6 +32,8 @@
   >
     {#if message.roll}
       <DiceRollResult result={message.roll} />
+    {:else if message.cards && message.cards.length > 0}
+      <VTTChatCard cards={message.cards} />
     {:else}
       <p class="leading-relaxed whitespace-pre-wrap font-body break-words">
         {message.content}

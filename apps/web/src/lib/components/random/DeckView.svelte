@@ -17,6 +17,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import type { ChatCardPayload } from "../../../types/vtt";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
 
@@ -35,10 +36,7 @@
     history = diceHistory,
     idGenerator = systemIdGenerator,
     session = mapSession,
-    addToChat = async (text) => {
-      session.sendChatMessage(text);
-      addToOracleChatInput(text);
-    },
+    addToChat,
     copyText = async (text) => {
       const copied = await copyTextToClipboard(text, navigator.clipboard);
       if (!copied) throw new Error("Clipboard copy is unavailable.");
@@ -180,8 +178,22 @@
     if (!resultText || isAddingToChat) return;
     isAddingToChat = true;
     try {
-      await addToChat(resultText);
-      notificationStore.notify("Result added to chat input.", "success");
+      if (addToChat) {
+        await addToChat(resultText);
+      } else {
+        const cardsPayload: ChatCardPayload[] = (outcome?.cards ?? []).map(
+          (drawn, index) => ({
+            deckName: deck.name,
+            title: drawn.card.title,
+            body: drawn.resolved.finalText || undefined,
+            imagePath: drawn.card.imagePath || undefined,
+            reversed: drawn.reversed || undefined,
+            position: outcome?.positions?.[index] || undefined,
+          }),
+        );
+        session.sendCardDrawMessage(deck.name, cardsPayload);
+        addToOracleChatInput(`${deck.name}:\n${resultText}`);
+      }
     } catch (error) {
       console.error("[RandomSources] Could not add result to chat", error);
       notificationStore.notify(
@@ -228,6 +240,8 @@
             cardId: c.card.id,
             title: c.card.title,
             reversed: c.reversed,
+            imagePath: c.card.imagePath || undefined,
+            body: c.resolved.finalText || undefined,
           })),
           spreadPositions: result.positions?.map((label, i) => ({
             label,

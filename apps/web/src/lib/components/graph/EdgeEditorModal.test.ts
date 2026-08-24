@@ -65,7 +65,7 @@ describe("EdgeEditorModal Dismissal", () => {
       editingEdge: mockEditingEdge,
     });
 
-    const backdrop = container.querySelector(".fixed.inset-0");
+    const backdrop = screen.getByRole("button", { name: "Close dialog" });
     expect(backdrop).toBeTruthy();
 
     await fireEvent.click(backdrop!);

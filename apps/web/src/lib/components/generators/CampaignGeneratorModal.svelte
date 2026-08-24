@@ -18,6 +18,7 @@
     getDefaultInstruction,
     isSupportedGenerator,
     resolveEntityType,
+    extractPartialJsonStringFields,
     type GeneratedDraft,
     type GeneratorId,
     type GeneratorRunRequest,
@@ -107,10 +108,7 @@
   // the model's response streams in, discarded once the fully validated
   // draft replaces it — this is never itself offered for Save.
   let streamedFields = $state<Record<string, string>>({});
-  // Multi-pass generators (council-vote, and later dungeon/language — #2423
-  // multi-pass follow-up) emit a `phase` event before each pass/turn. Shown
-  // in place of the decorative rotating loading message when set; null for
-  // every generic single-call generator, which never emits `phase`.
+  let streamedJson = $state("");
   let currentPhase = $state<string | null>(null);
   let generationAbortController = $state<AbortController | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
@@ -204,6 +202,7 @@
     draft = null;
     errorMsg = null;
     streamedFields = {};
+    streamedJson = "";
     currentPhase = null;
   }
 
@@ -211,6 +210,7 @@
     generationAbortController?.abort();
     generationAbortController = null;
     streamedFields = {};
+    streamedJson = "";
     currentPhase = null;
     stage = "configure";
     errorMsg = null;
@@ -226,6 +226,7 @@
     stage = "generating";
     errorMsg = null;
     streamedFields = {};
+    streamedJson = "";
     currentPhase = null;
     const abortController = new AbortController();
     generationAbortController = abortController;
@@ -351,19 +352,41 @@
           : undefined,
       };
 
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] modal generation started", {
+          generatorId: req.generatorId,
+          useAI: runRequest.useAI,
+          usesInteraction: !!runRequest.interaction,
+        });
+      }
+
       for await (const event of svc.generateDraftStream(
         runRequest,
         abortController.signal,
       )) {
         if (abortController.signal.aborted) break;
         if (event.type === "phase") {
-          // A new pass/turn is starting — the previous pass's preview may
-          // never make it into the final draft, so discard it rather than
-          // let stale content from a discarded pass linger on screen.
           streamedFields = {};
+          streamedJson = "";
           currentPhase = event.label;
+        } else if (event.type === "delta") {
+          streamedJson += event.text;
+          streamedFields = extractPartialJsonStringFields(streamedJson);
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal preview updated", {
+              deltaLength: event.text.length,
+              totalLength: streamedJson.length,
+              fields: Object.keys(streamedFields),
+            });
+          }
         } else if (event.type === "field" && typeof event.value === "string") {
           streamedFields = { ...streamedFields, [event.key]: event.value };
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal field completed", {
+              key: event.key,
+              valueLength: event.value.length,
+            });
+          }
         } else if (event.type === "draft") {
           // A `draft` event is always the terminal outcome of
           // generateDraftStream() — including after an `error` event, which
@@ -373,6 +396,11 @@
           draft = event.draft;
           errorMsg = null;
           stage = "review";
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal received final draft");
+          }
+        } else if (import.meta.env.DEV) {
+          console.debug("[Generator stream] modal event", { type: event.type });
         }
         // `error` events are non-terminal here: generateDraftStream() always
         // falls through to a local-generation `draft` event after one, so

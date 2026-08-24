@@ -6,11 +6,16 @@
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import { collectSessionNames, collectSessionTraits } from "generator-engine";
+  import {
+    collectSessionNames,
+    collectSessionTraits,
+    extractPartialJsonStringFields,
+  } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
@@ -47,6 +52,7 @@
     artifactConfig,
     factionConfig,
     questConfig,
+    puzzleConfig,
     councilVoteConfig,
     secretSocietyConfig,
     socialHubConfig,
@@ -224,6 +230,20 @@
     threat: questConfig.threats[0],
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+  let puzzle = $state({
+    genre: puzzleConfig.genres[0],
+    purpose: puzzleConfig.purposes[0],
+    complexity: puzzleConfig.complexities[0],
+    style: puzzleConfig.styles[0],
+    partyLevel: "",
+    playerCount: "",
+    capabilities: "",
+    participationStyle: puzzleConfig.participationStyles[0],
+    failurePressure: puzzleConfig.failurePressures[0],
+    system: puzzleConfig.systems[0],
+    downstreamConsequence: "",
     campaignContext: "",
   });
 
@@ -542,6 +562,7 @@
     else if (slug === "faction") faction.theme = activeTheme;
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
+    else if (slug === "puzzle") puzzle.genre = activeTheme;
     else if (slug === "council-vote") councilVote.genre = activeTheme;
     else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
@@ -768,6 +789,7 @@
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
+    puzzle: (useAI) => generatorEngine.generatePuzzle({ ...puzzle, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
     "secret-society": (useAI) =>
@@ -874,9 +896,39 @@
       }),
   };
 
-  async function generate({ useAI }: { useAI: boolean }) {
+  async function generate({
+    useAI,
+    onPreview,
+  }: {
+    useAI: boolean;
+    onPreview?: (preview: GeneratorOutput) => void;
+  }) {
     const handler = GENERATE_HANDLERS[slug];
     if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
+    const streamable = ![
+      "council-vote",
+      "dungeon-generator",
+      "adventure-generator",
+      "adventure-idea-generator",
+      "language-generator",
+    ].includes(slug);
+    if (useAI && onPreview && streamable) {
+      return generatorEngine.generateWithPreview(
+        () => handler(useAI),
+        (raw) => {
+          const fields = extractPartialJsonStringFields(raw);
+          onPreview({
+            type: "note",
+            title: fields.title || "Generating…",
+            summary: fields.summary || "",
+            content: fields.content || "",
+            lore: fields.lore || "",
+            labels: [],
+            status: "draft",
+          });
+        },
+      );
+    }
     return handler(useAI);
   }
 
@@ -908,6 +960,13 @@
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
+  supportsStreaming={![
+    "council-vote",
+    "dungeon-generator",
+    "adventure-generator",
+    "adventure-idea-generator",
+    "language-generator",
+  ].includes(slug)}
   {generate}
   {initialDraft}
   {backHref}
@@ -983,6 +1042,29 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "puzzle"}
+      <PuzzleFormFields
+        bind:genre={puzzle.genre}
+        bind:purpose={puzzle.purpose}
+        bind:complexity={puzzle.complexity}
+        bind:style={puzzle.style}
+        bind:partyLevel={puzzle.partyLevel}
+        bind:playerCount={puzzle.playerCount}
+        bind:capabilities={puzzle.capabilities}
+        bind:participationStyle={puzzle.participationStyle}
+        bind:failurePressure={puzzle.failurePressure}
+        bind:system={puzzle.system}
+        bind:downstreamConsequence={puzzle.downstreamConsequence}
+        bind:campaignContext={puzzle.campaignContext}
+        onGenreChange={(genre) => {
+          // Custom genre text still flavors the output, but only established
+          // CC themes can select a visual skin.
+          if ((puzzleConfig.genres as readonly string[]).includes(genre)) {
+            activeTheme = genre;
+          }
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "council-vote"}

@@ -16,6 +16,7 @@ type MapPageMapStore = {
   activeMap: unknown;
   unproject(point: Point): Point;
   uploadMap(file: File, name: string): Promise<string | undefined>;
+  createBlankMap(name: string): Promise<string | undefined>;
   addPin(entityId: string | undefined, coordinates: Point): unknown;
 };
 
@@ -226,6 +227,28 @@ export class MapPageController {
       console.error("[MapPageController] Error during handleUpload:", err);
       this.notificationStore.notify(
         "An unexpected error occurred during upload.",
+        "error",
+      );
+    }
+  }
+
+  async handleCreateBlank() {
+    try {
+      const result = await this.mapStore.createBlankMap(
+        this.mapName || "New Map",
+      );
+      if (result === undefined) {
+        this.notificationStore.notify(
+          "Failed to create map. Please ensure your vault is active.",
+          "error",
+        );
+        return;
+      }
+      this.cancelUpload();
+    } catch (err) {
+      console.error("[MapPageController] Error during handleCreateBlank:", err);
+      this.notificationStore.notify(
+        "An unexpected error occurred while creating the map.",
         "error",
       );
     }

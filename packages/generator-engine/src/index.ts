@@ -126,6 +126,14 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  buildPuzzlePrompt,
+  parsePuzzleResponse,
+  generatePuzzleLocal,
+  puzzleConfig,
+  type PuzzleGeneratorOptions,
+  type PuzzlePrompt,
+} from "./public-puzzle";
+export {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
@@ -372,5 +380,6 @@ export {
 } from "./public-creature";
 export {
   createIncrementalJsonScanner,
+  extractPartialJsonStringFields,
   type IncrementalJsonField,
 } from "./streaming/incremental-json";

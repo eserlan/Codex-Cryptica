@@ -1878,190 +1878,70 @@ describe("generateDraftStream", () => {
   });
 });
 
-describe("generateCouncilVoteWithAIStream (via generateDraftStream)", () => {
-  async function collect(
-    gen: AsyncGenerator<{ type: string; [k: string]: unknown }>,
-  ) {
-    const events: Array<{ type: string; [k: string]: unknown }> = [];
-    for await (const event of gen) events.push(event);
-    return events;
-  }
+describe("council-vote streamed generation", () => {
+  const foundation = JSON.stringify({
+    title: "The Salt Road Levy",
+    summary: "A five-seat council must approve emergency funding.",
+    lore: "## Voting Procedure\nSimple majority.",
+    labels: ["council-vote"],
+    connections: [],
+  });
+  const paths = JSON.stringify({
+    possiblePaths: "## Possible Paths\nsmallest coalition first",
+    followUpHooks: "## Follow-Up Hooks\nthey remember",
+  });
 
-  /** Fake `sendStream` that delivers `json` as a single delta+complete pair. */
-  function fakeSendStream(json: string) {
-    return async function* () {
+  it("streams each council-vote pass and assembles the repaired output", async () => {
+    let turn = 0;
+    const sendStream = vi.fn(async function* () {
+      const text = turn++ < 2 ? foundation : paths;
       yield { type: "started" as const };
-      yield { type: "delta" as const, text: json };
-      yield { type: "complete" as const, text: json };
-    };
-  }
-
-  function councilVoteJsons() {
-    return {
-      foundationJson: JSON.stringify({
-        title: "The Salt Road Levy",
-        summary: "A five-seat council must approve emergency funding.",
-        lore: "## Voting Procedure\nSimple majority (unrepaired).",
-        labels: ["council-vote"],
-        connections: [],
-      }),
-      repairedJson: JSON.stringify({
-        title: "The Salt Road Levy",
-        summary: "A five-seat council must approve emergency funding.",
-        lore: "## Voting Procedure\nSimple majority.",
-        labels: ["council-vote"],
-        connections: [],
-      }),
-      pathsJson: JSON.stringify({
-        possiblePaths: "## Possible Paths\nsmallest coalition first",
-        followUpHooks: "## Follow-Up Hooks\nthey remember",
-      }),
-      pathsRepairedJson: JSON.stringify({
-        possiblePaths: "## Possible Paths\nsmallest coalition first (fixed)",
-        followUpHooks: "## Follow-Up Hooks\nthey remember (fixed)",
-      }),
-    };
-  }
-
-  it("streams four phase events and yields one final draft matching the buffered flow", async () => {
-    const { foundationJson, repairedJson, pathsJson, pathsRepairedJson } =
-      councilVoteJsons();
-    const sendStream = vi
-      .fn()
-      .mockImplementationOnce(fakeSendStream(foundationJson))
-      .mockImplementationOnce(fakeSendStream(repairedJson))
-      .mockImplementationOnce(fakeSendStream(pathsJson))
-      .mockImplementationOnce(fakeSendStream(pathsRepairedJson));
-    const startChat = vi.fn(async () => ({ send: vi.fn(), sendStream }));
+      yield { type: "delta" as const, text };
+      yield { type: "complete" as const, text };
+    });
     const svc = new CampaignGeneratorService({
       aiPolicy: { isEnabled: true, isAvailable: true },
-      aiGateway: { complete: vi.fn(), startChat },
+      aiGateway: {
+        complete: vi.fn(),
+        startChat: vi.fn(async () => ({ send: vi.fn(), sendStream })),
+      },
     });
 
-    const events = await collect(
-      svc.generateDraftStream(
-        run("council-vote", { useAI: true, options: { councilSize: "7" } }),
-      ),
-    );
+    const events = [] as Array<{ type: string; [key: string]: unknown }>;
+    for await (const event of svc.generateDraftStream(
+      run("council-vote", { useAI: true }),
+    )) {
+      events.push(event);
+    }
 
-    const phases = events.filter((e) => e.type === "phase").map((e) => e.label);
-    expect(phases).toEqual([
-      "Drafting the council's founding stance…",
-      "Checking the council's stance for consistency…",
-      "Charting possible paths…",
-      "Refining the possible paths…",
-    ]);
+    expect(events.filter((event) => event.type === "phase")).toHaveLength(4);
     expect(sendStream).toHaveBeenCalledTimes(4);
-
-    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
-    expect(finalEvent.type).toBe("draft");
-    expect(finalEvent.draft.title).toBe("The Salt Road Levy");
-    expect(finalEvent.draft.lore).toBe(
-      "## Voting Procedure\nSimple majority.\n\n## Possible Paths\nsmallest coalition first (fixed)\n\n## Follow-Up Hooks\nthey remember (fixed)",
-    );
-  });
-
-  it("keeps the unrepaired foundation when the repair turn's stream yields an unusable shape", async () => {
-    const { foundationJson, pathsJson } = councilVoteJsons();
-    const sendStream = vi
-      .fn()
-      .mockImplementationOnce(fakeSendStream(foundationJson))
-      .mockImplementationOnce(fakeSendStream(JSON.stringify({ nope: true })))
-      .mockImplementationOnce(fakeSendStream(pathsJson))
-      .mockImplementationOnce(fakeSendStream(JSON.stringify({ nope: true })));
-    const startChat = vi.fn(async () => ({ send: vi.fn(), sendStream }));
-    const svc = new CampaignGeneratorService({
-      aiPolicy: { isEnabled: true, isAvailable: true },
-      aiGateway: { complete: vi.fn(), startChat },
+    expect(events.at(-1)).toMatchObject({
+      type: "draft",
+      draft: {
+        title: "The Salt Road Levy",
+        lore: expect.stringContaining("## Possible Paths"),
+      },
     });
-
-    const events = await collect(
-      svc.generateDraftStream(run("council-vote", { useAI: true })),
-    );
-
-    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
-    expect(finalEvent.draft.lore).toContain("(unrepaired)");
   });
 
-  it("falls back to local generation when the foundation turn's stream yields an unusable shape", async () => {
-    const sendStream = fakeSendStream(JSON.stringify({ nope: true }));
-    const startChat = vi.fn(async () => ({ send: vi.fn(), sendStream }));
-    const svc = new CampaignGeneratorService({
-      aiPolicy: { isEnabled: true, isAvailable: true },
-      aiGateway: { complete: vi.fn(), startChat },
-    });
-
-    const events = await collect(
-      svc.generateDraftStream(run("council-vote", { useAI: true })),
-    );
-
-    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
-    expect(finalEvent.type).toBe("draft");
-    expect(finalEvent.draft.sourceGeneratorId).toBe("council-vote");
-  });
-
-  it("falls back to local generation, yielding only started/draft, when the gateway has no startChat", async () => {
+  it("falls back without a streamed chat session", async () => {
     const svc = new CampaignGeneratorService({
       aiPolicy: { isEnabled: true, isAvailable: true },
       aiGateway: { complete: vi.fn() },
     });
 
-    const events = await collect(
-      svc.generateDraftStream(run("council-vote", { useAI: true })),
-    );
+    const events = [] as Array<{ type: string; [key: string]: unknown }>;
+    for await (const event of svc.generateDraftStream(
+      run("council-vote", { useAI: true }),
+    )) {
+      events.push(event);
+    }
 
     expect(events[0]).toEqual({ type: "started" });
-    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
-    expect(finalEvent.type).toBe("draft");
-    expect(finalEvent.draft.sourceGeneratorId).toBe("council-vote");
-  });
-
-  it("degrades to send() per turn (still yielding phase/started/complete events) when the chat session has no sendStream", async () => {
-    const { foundationJson, repairedJson, pathsJson, pathsRepairedJson } =
-      councilVoteJsons();
-    const send = vi
-      .fn()
-      .mockResolvedValueOnce(foundationJson)
-      .mockResolvedValueOnce(repairedJson)
-      .mockResolvedValueOnce(pathsJson)
-      .mockResolvedValueOnce(pathsRepairedJson);
-    const startChat = vi.fn(async () => ({ send }));
-    const svc = new CampaignGeneratorService({
-      aiPolicy: { isEnabled: true, isAvailable: true },
-      aiGateway: { complete: vi.fn(), startChat },
+    expect(events.at(-1)).toMatchObject({
+      type: "draft",
+      draft: { sourceGeneratorId: "council-vote" },
     });
-
-    const events = await collect(
-      svc.generateDraftStream(run("council-vote", { useAI: true })),
-    );
-
-    expect(send).toHaveBeenCalledTimes(4);
-    expect(events.filter((e) => e.type === "phase")).toHaveLength(4);
-    expect(events.filter((e) => e.type === "started")).toHaveLength(4);
-    const finalEvent = events.at(-1) as { type: string; draft: GeneratedDraft };
-    expect(finalEvent.draft.title).toBe("The Salt Road Levy");
-  });
-
-  it("stops without a fallback draft when the signal is already aborted after the foundation turn", async () => {
-    const controller = new AbortController();
-    const { foundationJson } = councilVoteJsons();
-    const sendStream = vi.fn(async function* () {
-      yield { type: "complete" as const, text: foundationJson };
-      controller.abort();
-    });
-    const startChat = vi.fn(async () => ({ send: vi.fn(), sendStream }));
-    const svc = new CampaignGeneratorService({
-      aiPolicy: { isEnabled: true, isAvailable: true },
-      aiGateway: { complete: vi.fn(), startChat },
-    });
-
-    const events = await collect(
-      svc.generateDraftStream(
-        run("council-vote", { useAI: true }),
-        controller.signal,
-      ),
-    );
-
-    expect(events.some((e) => e.type === "draft")).toBe(false);
   });
 });

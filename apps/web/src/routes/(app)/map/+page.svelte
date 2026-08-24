@@ -179,6 +179,7 @@
       onDragLeave={(event) => controller.onDragLeave(event)}
       onDrop={(event) => controller.onDrop(event)}
       onUpload={() => controller.handleUpload()}
+      onCreateBlank={() => controller.handleCreateBlank()}
       onCancel={() => controller.cancelUpload()}
     />
   {/if}

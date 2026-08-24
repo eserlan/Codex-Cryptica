@@ -169,10 +169,11 @@ describe("DeckView result actions", () => {
 
   it("dispatches to both VTT chat and Oracle chat by default on add to chat", async () => {
     clearOracleChatDraft();
-    const sendChatMessage = vi.fn();
+    const sendCardDrawMessage = vi.fn();
     const session = {
       vttEnabled: false,
-      sendChatMessage,
+      sendCardDrawMessage,
+      sendChatMessage: vi.fn(),
     };
     const service = {
       draw: vi.fn(async () => ({
@@ -208,9 +209,21 @@ describe("DeckView result actions", () => {
     await screen.findByTestId("add-draw-result-to-chat");
     await fireEvent.click(screen.getByTestId("add-draw-result-to-chat"));
 
-    const text = "Present: Card 0: The journey begins";
-    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(text));
-    expect(getOracleChatDraft()).toBe(text);
+    await waitFor(() =>
+      expect(sendCardDrawMessage).toHaveBeenCalledWith("Complications", [
+        {
+          deckName: "Complications",
+          title: "Card 0",
+          body: "The journey begins",
+          imagePath: undefined,
+          reversed: undefined,
+          position: "Present",
+        },
+      ]),
+    );
+    expect(getOracleChatDraft()).toBe(
+      "Complications:\nPresent: Card 0: The journey begins",
+    );
   });
 });
 
@@ -282,5 +295,36 @@ describe("DeckView card art", () => {
     await screen.findAllByTestId("drawn-card");
 
     expect(openLightbox).not.toHaveBeenCalled();
+  });
+
+  it("sends structured card draw payload to VTT chat when Add to chat is clicked", async () => {
+    clearOracleChatDraft();
+    const sendCardDrawMessage = vi.fn();
+    const session = {
+      sendCardDrawMessage,
+      sendChatMessage: vi.fn(),
+    };
+    const { deck, service } = serviceDrawing(1, "images/card-0.webp");
+    render(DeckView, {
+      props: { deck, service, session, ...stores() } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    await screen.findAllByTestId("drawn-card");
+
+    const addBtn = screen.getByTestId("add-draw-result-to-chat");
+    await fireEvent.click(addBtn);
+
+    expect(sendCardDrawMessage).toHaveBeenCalledWith("Complications", [
+      {
+        deckName: "Complications",
+        title: "Card 0",
+        body: "Body 0",
+        imagePath: "images/card-0.webp",
+        reversed: undefined,
+        position: undefined,
+      },
+    ]);
+    expect(getOracleChatDraft()).toContain("Complications:\nCard 0: Body 0");
   });
 });

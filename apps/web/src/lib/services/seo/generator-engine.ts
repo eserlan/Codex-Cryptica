@@ -31,6 +31,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildPuzzlePrompt,
+  parsePuzzleResponse,
+  generatePuzzleLocal,
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
@@ -108,6 +111,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type SecretSocietyGeneratorOptions,
@@ -161,6 +165,7 @@ export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
@@ -201,7 +206,22 @@ const LANGUAGE_GENERATION_CONFIG = {
 };
 
 export class DefaultGeneratorEngine {
+  private streamPreview: ((text: string) => void) | undefined;
+
   constructor(private clientManager = aiClientManager) {}
+
+  async generateWithPreview<T>(
+    generate: () => Promise<T>,
+    onPreview: (text: string) => void,
+  ): Promise<T> {
+    if (this.streamPreview) return generate();
+    this.streamPreview = onPreview;
+    try {
+      return await generate();
+    } finally {
+      this.streamPreview = undefined;
+    }
+  }
 
   /**
    * Shared AI-with-local-fallback flow for every generator (#1494). When AI is
@@ -256,14 +276,42 @@ export class DefaultGeneratorEngine {
       GENERATOR_MODEL_ID,
       systemInstruction,
     );
-    const response = await model.generateContent(
-      generationConfig
-        ? {
-            contents: [{ role: "user", parts: [{ text: userMessage }] }],
-            generationConfig,
+    const request = generationConfig
+      ? {
+          contents: [{ role: "user", parts: [{ text: userMessage }] }],
+          generationConfig,
+        }
+      : userMessage;
+    const streamingModel = model as unknown as {
+      generateContentStream?(
+        request: unknown,
+      ): AsyncGenerator<
+        | { type: "delta"; text: string }
+        | { type: "complete"; text: string }
+        | { type: "error"; error: string }
+        | { type: "started" }
+      >;
+    };
+    if (this.streamPreview && streamingModel.generateContentStream) {
+      let text = "";
+      for await (const event of streamingModel.generateContentStream(request)) {
+        if (event.type === "delta") {
+          text += event.text;
+          this.streamPreview(text);
+        } else if (event.type === "complete") {
+          // Provider terminal frames occasionally carry only whitespace or a
+          // short trailing fragment. The accumulated deltas are the source of
+          // truth unless this frame contains a strictly more complete body.
+          if (event.text.trim().length > text.trim().length) {
+            text = event.text;
           }
-        : userMessage,
-    );
+        } else if (event.type === "error") {
+          throw new Error(event.error);
+        }
+      }
+      return text.trim();
+    }
+    const response = await model.generateContent(request);
     return response.response.text().trim();
   }
 
@@ -521,6 +569,31 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generatePuzzle(
+    options: PuzzleGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...puzzleOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("puzzle");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildPuzzlePrompt(
+          puzzleOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "puzzle",
+          summarizeResolvedInputs(resolved),
+        );
+        return parsePuzzleResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generatePuzzleLocal(puzzleOptions),
     );
   }
 

@@ -139,6 +139,11 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     options?: AIGeneratorCompleteOptions,
   ): AsyncGenerator<GenerationEvent> {
     if (options?.interaction) {
+      if (import.meta.env.DEV) {
+        console.debug(
+          "[Generator stream] interaction session selected; streaming falls back to one final response",
+        );
+      }
       yield { type: "started" };
       try {
         const result = await this.complete(prompt, systemInstruction, options);
@@ -174,6 +179,11 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     };
 
     if (typeof modelWithStream.generateContentStream !== "function") {
+      if (import.meta.env.DEV) {
+        console.debug(
+          "[Generator stream] current AI client has no stream method; falling back to one final response",
+        );
+      }
       // Direct-key (Custom Key) mode uses the real Google SDK model, which
       // has no streaming method wired here — degrade the same way the
       // interaction branch above does.
@@ -206,6 +216,12 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       },
       options?.signal,
     )) {
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] gateway event", {
+          type: event.type,
+          textLength: event.type === "delta" ? event.text.length : undefined,
+        });
+      }
       if (event.type === "delta") {
         buffer += event.text;
         for (const field of scan(buffer)) {
@@ -249,15 +265,6 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
         }
         return extractJsonObject(text.trim());
       },
-
-      /**
-       * Streaming counterpart to `send()` (#2423 multi-pass follow-up). A
-       * fresh incremental-JSON scanner per call — each turn is its own JSON
-       * object, unlike `completeStream()`'s single generation-wide scan.
-       * Chat sessions never use the Interactions API (confirmed: `startChat`
-       * always routes through the operation pipeline), so there's no
-       * interaction-degrade branch to handle here, unlike `completeStream`.
-       */
       async *sendStream(
         userMessage: string,
         signal?: AbortSignal,

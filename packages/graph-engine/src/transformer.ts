@@ -3,7 +3,9 @@ import type {
   TemporalMetadata,
   Category,
   StylingTemplate,
+  ImageFocus,
 } from "schema";
+import { imageFocusBackgroundPosition } from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
 
@@ -17,6 +19,7 @@ export interface GraphNode {
     status?: "active" | "draft";
     image?: string;
     thumbnail?: string;
+    imageFocus?: ImageFocus;
     labels?: string[];
     isImportant?: boolean;
     isPast?: boolean;
@@ -212,6 +215,7 @@ export class GraphTransformer {
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
       if ((entity as any).guestChatConfig?.isEnabled)
         nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -499,6 +503,10 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
         "background-opacity": 1,
         "border-color": tokens.primary,
       },
@@ -673,7 +681,10 @@ export const getGraphStyle = (
         "background-image": "data(resolvedImage)",
         "background-clip": "node",
         "background-fit": "cover",
-        "background-position-y": "50%",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
         "border-width": isFantasy
           ? graph.nodeBorderWidth + 2
           : graph.nodeBorderWidth + 10,

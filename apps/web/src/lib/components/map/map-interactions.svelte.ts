@@ -45,6 +45,9 @@ export class MapInteractionManager {
   get gridFitEnd() {
     return this.gridInteractions.gridFitEnd;
   }
+  get gridFitSpan() {
+    return this.gridInteractions.gridFitSpan;
+  }
   get boxSelectStart() {
     return this.boxSelection.start;
   }
@@ -132,6 +135,11 @@ export class MapInteractionManager {
       return;
     }
     if (event.key === "Escape") {
+      if (mapSession.tileDeckManager.pendingPlacement) {
+        mapSession.cancelPendingTilePlacement();
+        this.mapAnnouncement = "Tile placement cancelled";
+        return;
+      }
       if (this.gridInteractions.cancelGridMove()) {
         return;
       }
@@ -257,6 +265,18 @@ export class MapInteractionManager {
     this.mouseDownPos = { x: e.clientX, y: e.clientY };
     this.isAltPressed = e.altKey;
 
+    if (e.button === 0 && mapSession.tileDeckManager.pendingPlacement) {
+      const point = mapStore.unproject(this.lastMousePos);
+      mapSession.updatePendingTilePlacement(point.x, point.y);
+      const placed = mapSession.placePendingTile();
+      this.mapAnnouncement = placed
+        ? `Placed ${placed.name}`
+        : "Tile cannot overlap another tile";
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
+
     if (
       e.button === 0 &&
       mapSession.vttEnabled &&
@@ -274,7 +294,7 @@ export class MapInteractionManager {
       return;
     }
 
-    if (mapSession.vttEnabled && this.cachedRect) {
+    if (mapSession.vttEnabled && this.cachedRect && !mapSession.gridFitMode) {
       const hitToken = this.tokenDrag.begin(this.lastMousePos);
 
       if (hitToken) {
@@ -348,6 +368,13 @@ export class MapInteractionManager {
     const mouseX = e.clientX - this.cachedRect.left;
     const mouseY = e.clientY - this.cachedRect.top;
     this.isAltPressed = e.altKey;
+
+    if (mapSession.tileDeckManager.pendingPlacement) {
+      const point = mapStore.unproject({ x: mouseX, y: mouseY });
+      mapSession.updatePendingTilePlacement(point.x, point.y);
+      this.lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
 
     if (this.boxSelectStart) {
       this.boxSelection.update({ x: mouseX, y: mouseY });
@@ -586,6 +613,19 @@ export class MapInteractionManager {
   };
 
   onWheel = (e: WheelEvent) => {
+    if (this.gridFitStart) {
+      // Zooming mid-drag would re-scale the viewport out from under the
+      // rectangle's already-captured screen coordinates — commitGridFit()
+      // unprojects them with whatever transform is current at commit time,
+      // so a zoom here would silently corrupt the fit. Shift+scroll cycles
+      // the span instead; any other scroll while fitting is a no-op.
+      e.preventDefault();
+      if (e.shiftKey) {
+        this.gridInteractions.cycleGridFitSpan(e.deltaY);
+      }
+      return;
+    }
+
     const canResize =
       mapSession.vttEnabled &&
       mapStore.isGMMode &&

@@ -60,9 +60,58 @@ describe("TokenResizeHandler", () => {
     expect(updateToken).not.toHaveBeenCalled();
   });
 
+  it("does not resize a locked token", () => {
+    tokens = [token({ id: "token-a", x: 10, y: 10, locked: true })];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(false);
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
   it("does not update when the token is already at the minimum scale", () => {
     expect(handler.resizeAt({ x: 20, y: 20 }, 100)).toBe(true);
 
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
+  it("caps a regular token's grow at 4x grid (Gargantuan)", () => {
+    tokens = [token({ id: "token-a", x: 10, y: 10, width: 200, height: 200 })];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
+  it("allows a placed tile to grow well past the 4x character-token cap", () => {
+    tokens = [
+      token({
+        id: "tile-a",
+        x: 10,
+        y: 10,
+        width: 200,
+        height: 200,
+        kind: "tile",
+      }),
+    ];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
+    expect(updateToken).toHaveBeenCalledWith("tile-a", {
+      width: 250,
+      height: 250,
+    });
+  });
+
+  it("caps a tile's grow at 20x grid", () => {
+    tokens = [
+      token({
+        id: "tile-a",
+        x: 10,
+        y: 10,
+        width: 1000,
+        height: 1000,
+        kind: "tile",
+      }),
+    ];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
     expect(updateToken).not.toHaveBeenCalled();
   });
 });

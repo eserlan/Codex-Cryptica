@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.31.96",
+  "version": "0.31.101",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -51,6 +51,7 @@
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/search-orchestrator": "workspace:*",
+    "@codex/spatial-engine": "workspace:*",
     "@codex/stat-sheet-engine": "workspace:*",
     "@codex/sync-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",

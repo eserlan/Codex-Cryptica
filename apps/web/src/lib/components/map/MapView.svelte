@@ -6,7 +6,7 @@
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
   import { TokenVisionRevealer } from "./token-vision-revealer";
-  import { resolveVisionSourceTokens } from "./vtt-vision";
+  import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
@@ -157,6 +157,13 @@
       .map((token) => `${token.id}:${token.x}:${token.y}`)
       .join("|"),
   );
+  const visionRadiusPx = $derived(
+    visionRangeToPixels(
+      mapStore.visionRange,
+      mapSession.gridDistance,
+      mapStore.gridSize,
+    ),
+  );
 
   const vttTokens = $derived.by(() => {
     const isHost = mapStore.isGMMode;
@@ -175,7 +182,8 @@
       if (mapSession.canViewToken(token.id, peerId, isHost)) {
         result.push({
           ...token,
-          label: token.name,
+          // Tiles are terrain/room pieces, not combatants — no name label.
+          label: token.kind === "tile" ? "" : token.name,
           image: tokenImageCache[token.id] ?? null,
           selected: mapSession.selection === token.id || selected.has(token.id),
           primarySelected: mapSession.selection === token.id,
@@ -190,7 +198,7 @@
         });
       }
     }
-    return result;
+    return result.sort((first, second) => first.zIndex - second.zIndex);
   });
   const vttDragPreview = $derived.by(() => {
     const preview = mapSession.dragPreview;
@@ -214,6 +222,31 @@
       valid,
     };
   });
+  const tilePlacementPreview = $derived(
+    mapSession.tileDeckManager.pendingPlacement,
+  );
+  // A separate primitive-valued derived: pendingPlacement is replaced with a
+  // new object on every mousemove during placement (x/y/valid churn), but
+  // this string only actually changes when the tile itself changes — so the
+  // image-loading effect below (keyed off this) doesn't get its in-flight
+  // load cancelled by every mousemove tick.
+  const pendingPlacementImagePath = $derived(
+    tilePlacementPreview?.tile.imagePath ?? null,
+  );
+  let tilePlacementImage = $state<HTMLImageElement | null>(null);
+  // Plain (non-reactive) on purpose: the loading effect below both reads and
+  // writes this to track "have we already started loading this path", and if
+  // it were $state, that write would make the effect depend on its own
+  // output — Svelte schedules a self-triggered re-run to settle, whose
+  // cleanup cancels the in-flight load before it can ever resolve. Nothing
+  // needs to *react* to this changing, both read sites just need the current
+  // value at the time some other trigger reruns them.
+  let tilePlacementImagePath: string | null = null;
+  const enrichedTilePlacementPreview = $derived.by(() =>
+    tilePlacementPreview
+      ? { ...tilePlacementPreview, image: tilePlacementImage }
+      : null,
+  );
 
   $effect(() => {
     const currentTokens = mapSession.allTokens;
@@ -229,6 +262,19 @@
         tokenImageSourceCache[token.id] === source &&
         tokenImageCache[token.id]
       ) {
+        continue;
+      }
+
+      // A tile just placed from the pending-placement preview already has
+      // its image decoded — reuse it instead of re-fetching/re-decoding,
+      // which otherwise causes a visible blank flash on the new tile.
+      if (
+        token.kind === "tile" &&
+        source === tilePlacementImagePath &&
+        tilePlacementImage
+      ) {
+        tokenImageSourceCache[token.id] = source;
+        tokenImageCache[token.id] = tilePlacementImage;
         continue;
       }
 
@@ -252,6 +298,32 @@
   });
 
   $effect(() => {
+    const path = pendingPlacementImagePath;
+    if (!path || path === tilePlacementImagePath) return;
+    tilePlacementImagePath = path;
+    tilePlacementImage = null;
+    let cancelled = false;
+    void vault
+      .resolveImageUrl(path)
+      .then((source) => {
+        const image = new Image();
+        image.onload = () => {
+          if (!cancelled) tilePlacementImage = image;
+        };
+        image.onerror = () => {
+          if (!cancelled) tilePlacementImage = null;
+        };
+        image.src = source;
+      })
+      .catch(() => {
+        if (!cancelled) tilePlacementImage = null;
+      });
+    return () => {
+      cancelled = true;
+    };
+  });
+
+  $effect(() => {
     if (activeMapSignature === lastMapSignature) {
       return;
     }
@@ -262,9 +334,8 @@
   $effect(() => {
     const activeMap = mapStore.activeMap;
     const fogMaskPath = activeMap?.fogOfWar?.maskPath ?? null;
-    const image = mapImage;
 
-    if (!activeMap || !fogMaskPath || !image) {
+    if (!activeMap || !fogMaskPath) {
       loadedMaskPath = null;
       return;
     }
@@ -274,20 +345,24 @@
     }
 
     let cancelled = false;
-    void mapStore.loadMask(image.width, image.height).then((mask) => {
-      if (cancelled) return;
-      maskCanvas = mask;
-      loadedMaskPath = fogMaskPath;
-    });
+    void mapStore
+      .loadMask(activeMap.dimensions.width, activeMap.dimensions.height)
+      .then((mask) => {
+        if (cancelled) return;
+        maskCanvas = mask;
+        loadedMaskPath = fogMaskPath;
+      });
 
     return () => {
       cancelled = true;
     };
   });
 
+  const hasBackgroundImage = $derived(Boolean(mapStore.activeMap?.assetPath));
+
   $effect(() => {
     const signature = visionSourceSignature;
-    const radius = mapStore.visionRadius;
+    const radius = visionRadiusPx;
     const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
     if (!canAutoReveal || !signature) return;
 
@@ -333,10 +408,11 @@
     {remoteMeasurement}
     {vttPings}
     {vttDragPreview}
+    tilePlacementPreview={enrichedTilePlacementPreview}
     {interactions}
   />
 
-  {#if !mapImage}
+  {#if hasBackgroundImage && !mapImage}
     <div
       class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50 pointer-events-none"
       transition:fade

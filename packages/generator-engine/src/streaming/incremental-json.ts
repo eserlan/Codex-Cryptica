@@ -20,6 +20,114 @@ export interface IncrementalJsonField {
 }
 
 /**
+ * Returns top-level string values that are available so far in a JSON stream.
+ *
+ * Unlike `createIncrementalJsonScanner`, this intentionally includes the
+ * currently open string value. It is for an ephemeral, text-only preview;
+ * callers must still validate the completed JSON before using it as data.
+ */
+export function extractPartialJsonStringFields(
+  buffer: string,
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+  const objectStart = buffer.indexOf("{");
+  if (objectStart === -1) return fields;
+
+  const length = buffer.length;
+  let index = objectStart + 1;
+
+  const skipWhitespace = () => {
+    while (index < length && /\s/.test(buffer[index]!)) index++;
+  };
+
+  const decodeStringPrefix = (raw: string) => {
+    let decoded = "";
+    for (let rawIndex = 0; rawIndex < raw.length; rawIndex++) {
+      const character = raw[rawIndex]!;
+      if (character !== "\\") {
+        decoded += character;
+        continue;
+      }
+
+      const escape = raw[++rawIndex];
+      if (!escape) break;
+      const simpleEscapes: Record<string, string> = {
+        '"': '"',
+        "\\": "\\",
+        "/": "/",
+        b: "\b",
+        f: "\f",
+        n: "\n",
+        r: "\r",
+        t: "\t",
+      };
+      if (escape === "u") {
+        const hex = raw.slice(rawIndex + 1, rawIndex + 5);
+        if (!/^[0-9a-fA-F]{4}$/.test(hex)) break;
+        decoded += String.fromCharCode(Number.parseInt(hex, 16));
+        rawIndex += 4;
+      } else if (escape in simpleEscapes) {
+        decoded += simpleEscapes[escape]!;
+      } else {
+        // An invalid escape means the final JSON will fail validation. Avoid
+        // showing an invented value in the transient preview.
+        break;
+      }
+    }
+    return decoded;
+  };
+
+  while (index < length) {
+    skipWhitespace();
+    if (index >= length || buffer[index] === "}") return fields;
+    if (buffer[index] === ",") {
+      index++;
+      continue;
+    }
+    if (buffer[index] !== '"') return fields;
+
+    const keyStart = index++;
+    while (index < length) {
+      if (buffer[index] === "\\") {
+        index += 2;
+      } else if (buffer[index++] === '"') {
+        break;
+      }
+    }
+    if (index > length || buffer[index - 1] !== '"') return fields;
+
+    let key: string;
+    try {
+      key = JSON.parse(buffer.slice(keyStart, index));
+    } catch {
+      return fields;
+    }
+
+    skipWhitespace();
+    if (buffer[index++] !== ":") return fields;
+    skipWhitespace();
+    if (buffer[index] !== '"') return fields;
+
+    const valueStart = ++index;
+    let closed = false;
+    while (index < length) {
+      if (buffer[index] === "\\") {
+        index += 2;
+      } else if (buffer[index++] === '"') {
+        closed = true;
+        break;
+      }
+    }
+
+    const valueEnd = closed ? index - 1 : length;
+    fields[key] = decodeStringPrefix(buffer.slice(valueStart, valueEnd));
+    if (!closed) return fields;
+  }
+
+  return fields;
+}
+
+/**
  * Creates a scanner bound to one generation's growing buffer. Call `scan()`
  * with the *entire* buffer so far each time more text arrives; it returns
  * only the fields that became complete since the last call (already-emitted

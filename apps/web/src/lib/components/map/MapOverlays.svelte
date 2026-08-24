@@ -112,6 +112,14 @@
       style:width={`${Math.abs(interactions.gridFitEnd.x - interactions.gridFitStart.x)}px`}
       style:height={`${Math.abs(interactions.gridFitEnd.y - interactions.gridFitStart.y)}px`}
     ></div>
+    <div
+      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-[11px] font-bold text-theme-primary shadow"
+      style:left={`${Math.min(interactions.gridFitStart.x, interactions.gridFitEnd.x)}px`}
+      style:top={`${Math.min(interactions.gridFitStart.y, interactions.gridFitEnd.y) - 28}px`}
+    >
+      {interactions.gridFitSpan}×{interactions.gridFitSpan} squares · Shift+Scroll
+      to change
+    </div>
   </div>
 {/if}
 

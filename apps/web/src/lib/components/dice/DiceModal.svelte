@@ -1,8 +1,25 @@
 <script lang="ts">
   import { fly, fade } from "svelte/transition";
-  import DiceVault from "./DiceVault.svelte";
+  import PlayToolsVault, { type PlayToolsTab } from "./PlayToolsVault.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openDiceWindow } from "$lib/stores/ui/navigation";
+
+  let activeTab = $state<PlayToolsTab>("dice");
+
+  const headerInfo = $derived.by(() => {
+    switch (activeTab) {
+      case "decks":
+        return { title: "Decks & Cards", icon: "icon-[lucide--layers]" };
+      case "tables":
+        return {
+          title: "Random Tables",
+          icon: "icon-[lucide--table-properties]",
+        };
+      case "dice":
+      default:
+        return { title: "Play Tools", icon: "icon-[lucide--dices]" };
+    }
+  });
 </script>
 
 {#if modalUIStore.showDiceModal}
@@ -22,7 +39,7 @@
   >
     <!-- Modal Container -->
     <div
-      class="bg-theme-surface border border-theme-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
+      class="bg-theme-surface border border-theme-border rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
       onclick={(e) => e.stopPropagation()}
       role="none"
       transition:fly={{ y: 20, duration: 300 }}
@@ -33,11 +50,11 @@
         class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg/50"
       >
         <div class="flex items-center gap-2">
-          <span class="icon-[lucide--dices] w-5 h-5 text-theme-primary"></span>
+          <span class="{headerInfo.icon} w-5 h-5 text-theme-primary"></span>
           <h2
             class="text-sm font-bold font-header tracking-widest text-theme-text uppercase"
           >
-            Die Roller
+            {headerInfo.title}
           </h2>
         </div>
         <div class="flex items-center gap-1">
@@ -45,7 +62,7 @@
           <button
             type="button"
             class="p-1.5 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
-            onclick={() => openDiceWindow()}
+            onclick={() => openDiceWindow(activeTab)}
             title="Pop out into new window"
             aria-label="Pop out into new window"
           >
@@ -67,9 +84,9 @@
         </div>
       </div>
 
-      <!-- Main Dice Content -->
-      <div class="flex-1 overflow-hidden">
-        <DiceVault />
+      <!-- Main Play Tools Content -->
+      <div class="flex-1 min-h-0 overflow-hidden">
+        <PlayToolsVault bind:activeTab />
       </div>
     </div>
   </div>
