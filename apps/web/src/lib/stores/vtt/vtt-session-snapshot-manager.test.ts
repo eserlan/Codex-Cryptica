@@ -101,4 +101,24 @@ describe("VTTSessionSnapshotManager", () => {
 
     expect(clearPendingSessionSnapshotBroadcast).toHaveBeenCalled();
   });
+
+  it("persists tile decks and restores them from a snapshot", () => {
+    const harness = createSnapshotManagerHarness();
+    harness.state.tileDecks = [
+      {
+        id: "deck-1",
+        name: "Rooms",
+        hardEdges: true,
+        tiles: [{ id: "tile-1", name: "Crypt", imagePath: "crypt.png" }],
+      },
+    ];
+    const manager = new VTTSessionSnapshotManager(harness.deps);
+    const snapshot = manager.createSnapshot();
+    expect(snapshot.tileDecks).toEqual(harness.state.tileDecks);
+    expect(snapshot.tileDecks).not.toBe(harness.state.tileDecks);
+
+    harness.state.tileDecks = [];
+    manager.applySnapshot(snapshot);
+    expect(harness.state.tileDecks).toEqual(snapshot.tileDecks);
+  });
 });

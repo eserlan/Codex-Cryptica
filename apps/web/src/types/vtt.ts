@@ -5,6 +5,7 @@ import type {
   SessionMode,
   Token,
   TokenBaseShape,
+  TokenImageFocus,
 } from "map-engine";
 
 export type {
@@ -16,6 +17,10 @@ export type {
   SessionMode,
   Token,
   TokenBaseShape,
+  TokenImageFocus,
+  TileDeck,
+  TileDeckEntry,
+  TileDetails,
   TokenVisibility,
 } from "map-engine";
 
@@ -62,6 +67,10 @@ export interface TokenCreationInput {
   visibleTo?: LegacyTokenVisibility;
   color?: string;
   imageUrl?: string | null;
+  kind?: "token" | "tile";
+  tileDeckId?: string | null;
+  tileDetails?: import("map-engine").TileDetails;
+  locked?: boolean;
   isVisionSource?: boolean;
 }
 
@@ -112,7 +121,11 @@ export interface TokenStateUpdateInput {
   ownerPeerId?: string | null;
   ownerGuestName?: string | null;
   imageUrl?: string | null;
+  imageFocus?: TokenImageFocus;
   statusEffects?: string[];
+  locked?: boolean;
+  zIndex?: number;
+  tileDetails?: import("map-engine").TileDetails;
   isVisionSource?: boolean;
 }
 

@@ -5,6 +5,9 @@
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "../../stores/vault.svelte";
+  import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
 
   let {
     x,
@@ -54,6 +57,36 @@
 
     <!-- View Entity (host always; guest only if token is not gm-only) -->
     {@const _ctxToken = mapSession.tokens[tokenId]}
+    {@const _ctxTokenHasImage = Boolean(
+      _ctxToken?.imageUrl ||
+      (_ctxToken?.entityId && vault.entities[_ctxToken.entityId]?.image),
+    )}
+    {#if _ctxToken?.kind === "tile" && mapStore.isGMMode && !sessionModeStore.isGuestMode}
+      <div class="h-px bg-theme-border my-1 mx-2"></div>
+      <SpatialImageControls
+        locked={_ctxToken.locked === true}
+        onToggleLock={() => {
+          mapSession.toggleTokenLock(tokenId);
+          onClose();
+        }}
+        onBringToFront={() => {
+          mapSession.bringTokenToFront(tokenId);
+          onClose();
+        }}
+        onSendToBack={() => {
+          mapSession.sendTokenToBack(tokenId);
+          onClose();
+        }}
+        onDuplicate={() => {
+          mapSession.cloneToken(tokenId);
+          onClose();
+        }}
+        onDelete={() => {
+          mapSession.removeToken(tokenId);
+          onClose();
+        }}
+      />
+    {/if}
     {#if _ctxToken?.entityId && mapSession.canViewToken(tokenId, mapSession.myPeerId, mapStore.isGMMode)}
       <div class="h-px bg-theme-border my-1 mx-2"></div>
       <button
@@ -75,7 +108,7 @@
     {/if}
 
     <!-- Multi-select actions (GM only) -->
-    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode && _ctxToken?.kind !== "tile"}
       {#if mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(tokenId)}
         <div class="h-px bg-theme-border my-1 mx-2"></div>
         <div
@@ -137,7 +170,7 @@
     <div class="h-px bg-theme-border my-1 mx-2"></div>
 
     <!-- Removal -->
-    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode && _ctxToken?.kind !== "tile"}
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
         role="menuitem"
@@ -277,6 +310,22 @@
                 {/if}
               </button>
             {/each}
+
+            {#if _ctxTokenHasImage}
+              <div class="h-px bg-theme-border my-1 mx-2"></div>
+              <div
+                class="px-4 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+              >
+                Image focus
+              </div>
+              <ImageFocusMenu
+                value={_ctxToken?.imageFocus}
+                onSelect={(focus) => {
+                  mapSession.updateToken(tokenId, { imageFocus: focus });
+                  onClose();
+                }}
+              />
+            {/if}
           </div>
         {/if}
       </div>

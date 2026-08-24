@@ -492,6 +492,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.",
     icon: "icon-[lucide--panel-right]",
   },
+  "vtt-tile-decks": {
+    id: "vtt-tile-decks",
+    title: "VTT Tile Decks",
+    content:
+      'Use Tile Decks in the VTT sidebar to add a starter pack (Scribble Dungeons, Geomorphs 2013, Geomorph Collection) or import your own PNG images. Filter the tile palette by category, choose a specific tile, draw one at random from a deck, or use "Draw from all decks" to pull from every installed deck at once. New tiles snap edge-to-edge against tiles already on the map. Starter tiles are downloaded once into the current vault, so drawing remains available offline.',
+    icon: "icon-[lucide--layers-3]",
+  },
   "voice-chat": {
     id: "voice-chat",
     title: "Session Voice Chat",

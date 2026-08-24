@@ -17,10 +17,13 @@ import {
   clampPointToBounds,
   hashToColor,
 } from "$lib/utils/vtt-helpers";
+import { snapToNeighborTiles } from "@codex/spatial-engine";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 const TOKEN_COORD_PRECISION = 2;
+/** Smallest a freshly-placed character token defaults to, regardless of how fine the map's grid is. */
+const MIN_DEFAULT_TOKEN_SIZE = 30;
 
 function roundTokenCoordinate(value: number) {
   const factor = 10 ** TOKEN_COORD_PRECISION;
@@ -164,7 +167,12 @@ export class VTTTokenManager {
 
   getTokenDefaults(input: TokenCreationInput): Token {
     const mapStore = this.deps.getMapStore();
-    const mapGrid = mapStore.gridSize || 50;
+    // gridSize can legitimately be very small — it's fit to a tile's native
+    // pixel grid (e.g. ~15px for some geomorph packs), which is correct for
+    // alignment/snapping but useless as a default character-token size: a
+    // 15px circle is effectively invisible. Floor the default independently
+    // of how fine the underlying grid happens to be.
+    const mapGrid = Math.max(MIN_DEFAULT_TOKEN_SIZE, mapStore.gridSize || 50);
     return {
       id: this.idGenerator.uuid(),
       entityId: input.entityId ?? null,
@@ -183,7 +191,11 @@ export class VTTTokenManager {
       color: input.color || hashToColor(input.name),
       imageUrl: input.imageUrl ?? null,
       statusEffects: [],
+      locked: input.locked === true,
       isVisionSource: input.isVisionSource === true,
+      kind: input.kind ?? "token",
+      tileDeckId: input.tileDeckId ?? null,
+      tileDetails: input.tileDetails,
     };
   }
 
@@ -257,7 +269,12 @@ export class VTTTokenManager {
       ...this.tokens,
       [positioned.id]: positioned,
     };
-    this.deps.addTokenToInitiativeState?.(positioned.id);
+    // Tiles are terrain/room pieces, not combatants — keep them out of the
+    // initiative tracker so the first one placed doesn't inherit the
+    // "active turn" accent border from landing at initiativeOrder[0].
+    if (positioned.kind !== "tile") {
+      this.deps.addTokenToInitiativeState?.(positioned.id);
+    }
     if (!silent) {
       this.deps.emit({ type: "TOKEN_ADDED", token: positioned });
     } else {
@@ -324,6 +341,23 @@ export class VTTTokenManager {
             width: current.width,
             height: current.height,
           };
+
+    // Repositioning a placed tile magnetically aligns it to nearby tiles'
+    // edges too, same as initial placement — otherwise dragging a tile to
+    // nudge it into alignment with its neighbors would only grid-snap.
+    if (current.kind === "tile" && (posChanged || sizeChanged)) {
+      const neighbors = Object.values(this.tokens).filter(
+        (token) => token.kind === "tile" && token.id !== tokenId,
+      );
+      const snapThreshold = Math.max(12, snapped.width * 0.12);
+      const tileSnapped = snapToNeighborTiles(
+        snapped,
+        neighbors,
+        snapThreshold,
+      );
+      snapped.x = tileSnapped.x;
+      snapped.y = tileSnapped.y;
+    }
 
     const next = {
       ...current,
@@ -393,6 +427,27 @@ export class VTTTokenManager {
 
   rotateToken(tokenId: string, rotation: number, silent = false) {
     return this.updateToken(tokenId, { rotation }, silent);
+  }
+
+  toggleTokenLock(tokenId: string) {
+    const token = this.tokens[tokenId];
+    return token ? this.updateToken(tokenId, { locked: !token.locked }) : null;
+  }
+
+  bringTokenToFront(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token) return null;
+    const zIndex =
+      Math.max(...Object.values(this.tokens).map((item) => item.zIndex), 0) + 1;
+    return this.updateToken(tokenId, { zIndex });
+  }
+
+  sendTokenToBack(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token) return null;
+    const zIndex =
+      Math.min(...Object.values(this.tokens).map((item) => item.zIndex), 0) - 1;
+    return this.updateToken(tokenId, { zIndex });
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -621,6 +676,7 @@ export class VTTTokenManager {
   canMoveToken(tokenId: string, peerId: string | null, isHost = false) {
     const token = this.tokens[tokenId];
     if (!token) return false;
+    if (token.locked) return false;
     if (isHost) return true;
     return token.ownerPeerId !== null && token.ownerPeerId === peerId;
   }

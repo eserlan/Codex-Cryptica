@@ -1,5 +1,6 @@
 import type { ElementDefinition } from "cytoscape";
 import type { Entity, ThemeTokens } from "schema";
+import { imageFocusBackgroundPosition } from "schema";
 import type { ConnectionNeighbor } from "./entity-connections";
 
 /**
@@ -34,6 +35,7 @@ export function buildConnectionsElements(
         type: entity.type,
         image: entity.image,
         thumbnail: entity.thumbnail,
+        imageFocus: entity.imageFocus,
         isPast: hasPast(entity),
         isCentre: true,
       },
@@ -46,6 +48,7 @@ export function buildConnectionsElements(
         type: neighbor.type,
         image: neighbor.image,
         thumbnail: neighbor.thumbnail,
+        imageFocus: neighbor.imageFocus,
         isPast: neighbor.hasPastLabel,
         isCentre: false,
       },
@@ -163,6 +166,10 @@ export function buildConnectionsStyle(options: ConnectionsStyleOptions): any[] {
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-fit": "cover",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
       },
     },
     {

@@ -5,6 +5,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import TokenQuickStats from "./TokenQuickStats.svelte";
+  import SpatialImageDetails from "$lib/components/spatial/SpatialImageDetails.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -84,6 +85,17 @@
       >
         Freeform marker
       </div>
+    {/if}
+
+    {#if selectedToken.kind === "tile" && selectedToken.tileDetails}
+      <SpatialImageDetails
+        details={selectedToken.tileDetails}
+        disabled={!canManageToken}
+        onChange={(updates) =>
+          mapSession.updateToken(selectedToken.id, {
+            tileDetails: { ...selectedToken.tileDetails!, ...updates },
+          })}
+      />
     {/if}
 
     {#if canManageToken}

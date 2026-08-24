@@ -532,7 +532,7 @@
           class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
-          <div class="max-w-4xl mx-auto">
+          <div class="max-w-4xl mx-auto h-full">
             <DetailConnectionsTab {entity} onNavigate={navigateTo} />
           </div>
         </div>
