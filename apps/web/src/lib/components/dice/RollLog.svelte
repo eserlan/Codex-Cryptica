@@ -79,7 +79,7 @@
     >
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-2">
-          {#if roll.label}
+          {#if roll.label && !roll.source}
             <span
               class="text-theme-text text-xs font-bold font-header tracking-wide"
               data-testid="roll-label"

@@ -34,6 +34,27 @@ describe("RollLog", () => {
     expect(screen.queryByTestId("roll-label")).toBeNull();
   });
 
+  it("does not render duplicate header label for deck/table source rolls", () => {
+    render(RollLog, {
+      rolls: [
+        roll({
+          label: "Fantasy deck",
+          source: {
+            sourceId: "deck-1",
+            sourceName: "Fantasy deck",
+            kind: "deck",
+            finalText: "MarketSquare",
+          },
+        }),
+      ],
+    });
+
+    expect(screen.queryByTestId("roll-label")).toBeNull();
+    expect(screen.getByTestId("roll-source-name").textContent).toBe(
+      "Fantasy deck",
+    );
+  });
+
   it("sends standard dice rolls to VTT chat and Oracle input when Add to chat is clicked", async () => {
     clearOracleChatDraft();
     const sendResolvedRollMessage = vi.fn();
