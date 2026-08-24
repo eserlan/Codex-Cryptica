@@ -14,6 +14,7 @@ import type { VTTSessionSnapshotManager } from "./vtt-session-snapshot-manager";
 import type { VTTTokenManager } from "./vtt-token-manager.svelte";
 import type { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
 import type {
+  ChatCardPayload,
   ChatMessagePayload,
   DragPreview,
   EncounterSession,
@@ -298,6 +299,10 @@ export abstract class MapSessionFacade {
     result: Pick<RollResult, "total" | "parts">,
   ) {
     this.chatManager.sendResolvedRollMessage(formula, result, this.vttEnabled);
+  }
+
+  sendCardDrawMessage(deckName: string, cards: ChatCardPayload[]) {
+    this.chatManager.sendCardDrawMessage(deckName, cards, this.vttEnabled);
   }
 
   clearChatMessages() {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ContextualRollResult } from "$lib/stores/dice-history.svelte";
+  import type { ChatCardPayload } from "../../../types/vtt";
   import { slide } from "svelte/transition";
   import { getDiceIcon } from "$lib/utils/dice-icons";
   import { mapSession } from "$lib/stores/map-session.svelte";
@@ -44,9 +45,35 @@
 
   function sendRollToChat(roll: ContextualRollResult) {
     if (roll.source) {
-      const text = `${roll.source.sourceName}: ${roll.source.finalText}`;
-      session.sendChatMessage(text);
-      addToOracleChatInput(text);
+      if (
+        roll.source.kind === "deck" &&
+        roll.source.drawnCards &&
+        roll.source.drawnCards.length > 0
+      ) {
+        const cards: ChatCardPayload[] = roll.source.drawnCards.map((c, i) => {
+          const position =
+            roll.source?.spreadPositions?.find((p) => p.cardId === c.cardId)
+              ?.label ?? roll.source?.spreadPositions?.[i]?.label;
+          return {
+            deckName: roll.source?.sourceName ?? "Deck",
+            title: c.title,
+            body:
+              c.body ??
+              (roll.source?.drawnCards && roll.source.drawnCards.length === 1
+                ? roll.source.finalText
+                : undefined),
+            imagePath: c.imagePath,
+            reversed: c.reversed,
+            position,
+          };
+        });
+        session.sendCardDrawMessage(roll.source.sourceName, cards);
+      } else {
+        const text = `${roll.source.sourceName}: ${roll.source.finalText}`;
+        session.sendChatMessage(text);
+      }
+      const oracleText = `${roll.source.sourceName}: ${roll.source.finalText}`;
+      addToOracleChatInput(oracleText);
     } else {
       const displayFormula = roll.label
         ? `${roll.label} (${roll.formula})`

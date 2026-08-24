@@ -78,13 +78,14 @@ describe("RollLog", () => {
     expect(getOracleChatDraft()).toBe("2d6+3 ➔ 11");
   });
 
-  it("sends source results (deck/table) to VTT chat and Oracle input when Add to chat is clicked", async () => {
+  it("sends deck source results with cards payload when Add to chat is clicked", async () => {
     clearOracleChatDraft();
-    const sendChatMessage = vi.fn();
+    const sendCardDrawMessage = vi.fn();
     const session = {
       vttEnabled: true,
       sendResolvedRollMessage: vi.fn(),
-      sendChatMessage,
+      sendChatMessage: vi.fn(),
+      sendCardDrawMessage,
     };
 
     const sourceRoll = roll({
@@ -94,7 +95,15 @@ describe("RollLog", () => {
         sourceId: "deck-1",
         sourceName: "Fate Deck",
         kind: "deck",
-        finalText: "The High Priestess: Wisdom revealed",
+        finalText: "Wisdom revealed",
+        drawnCards: [
+          {
+            cardId: "card-1",
+            title: "The High Priestess",
+            reversed: false,
+            body: "Wisdom revealed",
+          },
+        ],
       },
     });
 
@@ -106,11 +115,49 @@ describe("RollLog", () => {
     const addBtn = screen.getByTestId("roll-log-add-to-chat");
     await fireEvent.click(addBtn);
 
-    expect(sendChatMessage).toHaveBeenCalledWith(
-      "Fate Deck: The High Priestess: Wisdom revealed",
-    );
-    expect(getOracleChatDraft()).toBe(
-      "Fate Deck: The High Priestess: Wisdom revealed",
-    );
+    expect(sendCardDrawMessage).toHaveBeenCalledWith("Fate Deck", [
+      {
+        deckName: "Fate Deck",
+        title: "The High Priestess",
+        body: "Wisdom revealed",
+        imagePath: undefined,
+        reversed: false,
+        position: undefined,
+      },
+    ]);
+    expect(getOracleChatDraft()).toBe("Fate Deck: Wisdom revealed");
+  });
+
+  it("sends table source results to VTT chat and Oracle input when Add to chat is clicked", async () => {
+    clearOracleChatDraft();
+    const sendChatMessage = vi.fn();
+    const session = {
+      vttEnabled: true,
+      sendResolvedRollMessage: vi.fn(),
+      sendChatMessage,
+      sendCardDrawMessage: vi.fn(),
+    };
+
+    const tableRoll = roll({
+      formula: "1d20",
+      total: 15,
+      source: {
+        sourceId: "table-1",
+        sourceName: "Weather Table",
+        kind: "table",
+        finalText: "Heavy Rain",
+      },
+    });
+
+    render(RollLog, {
+      rolls: [tableRoll],
+      session: session as never,
+    });
+
+    const addBtn = screen.getByTestId("roll-log-add-to-chat");
+    await fireEvent.click(addBtn);
+
+    expect(sendChatMessage).toHaveBeenCalledWith("Weather Table: Heavy Rain");
+    expect(getOracleChatDraft()).toBe("Weather Table: Heavy Rain");
   });
 });
