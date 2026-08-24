@@ -1,4 +1,5 @@
 import type {
+  MapLayer,
   TileDeck,
   TileDeckEntry,
   Token,
@@ -7,9 +8,9 @@ import type {
 import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
 import {
   canPlaceSpatialImage,
-  nextSpatialImageZIndex,
   snapToNeighborTiles,
 } from "@codex/spatial-engine";
+import { nextZIndexInLayer } from "map-engine";
 
 export interface VTTTileDeckManagerDependencies {
   getTokens: () => Record<string, Token>;
@@ -19,6 +20,7 @@ export interface VTTTileDeckManagerDependencies {
     point: { x: number; y: number },
     size: { width: number; height: number },
   ) => { x: number; y: number; width: number; height: number };
+  getActiveLayer: () => MapLayer;
 }
 
 export class VTTTileDeckManager {
@@ -231,6 +233,11 @@ export class VTTTileDeckManager {
     const deck = this.decks.find((candidate) => candidate.id === deckId);
     if (!deck) return null;
 
+    const targetLayer = this.deps.getActiveLayer();
+    const sameLayerTokens = Object.values(this.deps.getTokens()).filter(
+      (token) => token.layer === targetLayer,
+    );
+
     const placed = this.deps.addToken(
       {
         name: tile.name,
@@ -242,7 +249,7 @@ export class VTTTileDeckManager {
         facingIndicator: false,
         imageUrl: tile.imagePath,
         color: "#64748b",
-        zIndex: nextSpatialImageZIndex(Object.values(this.deps.getTokens())),
+        zIndex: nextZIndexInLayer(sameLayerTokens),
         kind: "tile",
         tileDeckId: deck.id,
         tileDetails: {

@@ -13,6 +13,7 @@ vi.mock("../../stores/map.svelte", () => ({
     unproject: vi.fn((p) => p),
     pins: [{ id: "pin-a", coordinates: { x: 100, y: 100 }, visuals: {} }],
     updatePinCoordinatesInMemory: vi.fn(),
+    layerVisibility: { terrain: true, object: true, token: true },
   },
 }));
 
@@ -24,6 +25,9 @@ vi.mock("../../stores/map-session.svelte", () => ({
     selectedTokens: new Set(),
     tokens: {},
     allTokens: [],
+    myPeerId: null,
+    activeLayer: "token",
+    canViewToken: vi.fn(() => true),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
     cancelPendingTilePlacement: vi.fn(),

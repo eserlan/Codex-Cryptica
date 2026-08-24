@@ -13,6 +13,8 @@ function createManager(overrides: Partial<any> = {}) {
     queueSessionSnapshotBroadcast: vi.fn(),
     broadcastSessionSnapshotNow: vi.fn(),
     addTokenToInitiativeState,
+    getActiveLayer: () => "token",
+    isLayerLocked: () => false,
     ...overrides,
   });
   return { manager, addTokenToInitiativeState };
@@ -125,5 +127,70 @@ describe("VTTTokenManager.addToken", () => {
     );
 
     expect(token).toMatchObject({ width: 10, height: 10 });
+  });
+
+  it("places a new token on whichever layer is currently active", () => {
+    const { manager } = createManager({ getActiveLayer: () => "object" });
+
+    const token = manager.addToken({ name: "Chest", x: 0, y: 0 }, true);
+
+    expect(token.layer).toBe("object");
+  });
+
+  it("respects an explicitly-requested layer over the active one", () => {
+    const { manager } = createManager({ getActiveLayer: () => "object" });
+
+    const token = manager.addToken(
+      { name: "Hero", x: 0, y: 0, layer: "token" },
+      true,
+    );
+
+    expect(token.layer).toBe("token");
+  });
+
+  it("scopes bring-to-front / send-to-back / clone to the token's own layer", () => {
+    const { manager } = createManager({ getActiveLayer: () => "terrain" });
+    const terrainTile = manager.addToken(
+      { name: "Floor", x: 0, y: 0, kind: "tile", layer: "terrain" },
+      true,
+    );
+    const otherTerrainTile = manager.addToken(
+      { name: "Floor 2", x: 50, y: 0, kind: "tile", layer: "terrain" },
+      true,
+    );
+    const highToken = manager.addToken(
+      { name: "Hero", x: 0, y: 0, layer: "token", zIndex: 100 },
+      true,
+    );
+    void highToken;
+
+    const broughtForward = manager.bringTokenToFront(terrainTile.id);
+    expect(broughtForward?.zIndex).toBe(otherTerrainTile.zIndex + 1);
+    expect(broughtForward?.zIndex).toBeLessThan(100);
+
+    const sentBack = manager.sendTokenToBack(otherTerrainTile.id);
+    expect(sentBack?.zIndex).toBeLessThan(terrainTile.zIndex);
+
+    const cloned = manager.cloneToken(terrainTile.id, true);
+    expect(cloned?.layer).toBe("terrain");
+    expect(cloned?.zIndex).toBeGreaterThan(otherTerrainTile.zIndex);
+    expect(cloned?.zIndex).toBeLessThan(100);
+  });
+
+  it("blocks moving a token whose layer is locked, even for the host", () => {
+    const { manager } = createManager({
+      isLayerLocked: (layer: string) => layer === "terrain",
+    });
+    const tile = manager.addToken(
+      { name: "Floor", x: 0, y: 0, kind: "tile", layer: "terrain" },
+      true,
+    );
+    const token = manager.addToken(
+      { name: "Hero", x: 0, y: 0, layer: "token" },
+      true,
+    );
+
+    expect(manager.canMoveToken(tile.id, null, true)).toBe(false);
+    expect(manager.canMoveToken(token.id, null, true)).toBe(true);
   });
 });

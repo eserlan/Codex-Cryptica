@@ -2,6 +2,7 @@ import type {
   ChatMessagePayload,
   EncounterSession,
   LegacyTokenVisibility,
+  MapLayer,
   SessionMode,
   Token,
   TokenBaseShape,
@@ -13,6 +14,7 @@ export type {
   ChatMessagePayload,
   EncounterSession,
   LegacyTokenVisibility,
+  MapLayer,
   MeasurementState,
   PingState,
   SessionMode,
@@ -73,6 +75,7 @@ export interface TokenCreationInput {
   tileDetails?: import("map-engine").TileDetails;
   locked?: boolean;
   isVisionSource?: boolean;
+  layer?: MapLayer;
 }
 
 export const TOKEN_STATUS_EFFECTS = [
@@ -128,6 +131,7 @@ export interface TokenStateUpdateInput {
   zIndex?: number;
   tileDetails?: import("map-engine").TileDetails;
   isVisionSource?: boolean;
+  layer?: MapLayer;
 }
 
 export interface SessionSnapshotPayload {

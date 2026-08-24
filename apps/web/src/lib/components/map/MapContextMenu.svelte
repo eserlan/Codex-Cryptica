@@ -8,6 +8,7 @@
   import { vault } from "../../stores/vault.svelte";
   import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
   import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
+  import LayerMenu from "$lib/components/ui/LayerMenu.svelte";
 
   let {
     x,
@@ -28,6 +29,7 @@
   let showResizeSubmenu = $state(false);
   let showStatusSubmenu = $state(false);
   let showAppearanceSubmenu = $state(false);
+  let showLayerSubmenu = $state(false);
 </script>
 
 <div
@@ -87,6 +89,69 @@
         }}
       />
     {/if}
+
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
+      <!-- Move to Layer (Host only) — works for both tiles and tokens, so it
+           lives outside the kind-gated blocks above/below. -->
+      <div
+        class="relative group"
+        role="presentation"
+        onmouseenter={() => {
+          showLayerSubmenu = true;
+        }}
+        onmouseleave={() => {
+          showLayerSubmenu = false;
+        }}
+      >
+        <button
+          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+          role="menuitem"
+          aria-haspopup="menu"
+          aria-expanded={showLayerSubmenu}
+          onclick={(e) => {
+            e.stopPropagation();
+            showLayerSubmenu = !showLayerSubmenu;
+          }}
+          onkeydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              showLayerSubmenu = !showLayerSubmenu;
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <span class="icon-[lucide--layers] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
+            <span>Move to Layer</span>
+          </div>
+          <span
+            class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+            aria-hidden="true"
+          ></span>
+        </button>
+
+        {#if showLayerSubmenu}
+          <div
+            class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[150px]"
+            role="menu"
+            aria-label="Move token to layer"
+          >
+            <LayerMenu
+              value={_ctxToken?.layer}
+              onSelect={(layer) => {
+                mapSession.updateToken(tokenId, { layer });
+                // Land on top of wherever it just moved, not stacked
+                // underneath whatever was already on that layer.
+                mapSession.bringTokenToFront(tokenId);
+                onClose();
+              }}
+            />
+          </div>
+        {/if}
+      </div>
+    {/if}
+
     {#if _ctxToken?.entityId && mapSession.canViewToken(tokenId, mapSession.myPeerId, mapStore.isGMMode)}
       <div class="h-px bg-theme-border my-1 mx-2"></div>
       <button
