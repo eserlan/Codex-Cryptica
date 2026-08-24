@@ -4,7 +4,6 @@ import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
-import { playToolsBridge } from "$lib/services/play-tools-bridge";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
 import { searchService } from "@codex/search-orchestrator";
@@ -55,7 +54,6 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   // Initialize Oracle action listeners
   const unsubOracle: () => void = initOracleEventListeners();
-  const unsubPlayToolsBridge: () => void = playToolsBridge.initReceiver();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
@@ -167,7 +165,6 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   return () => {
     unsubOracle();
-    unsubPlayToolsBridge();
     window.removeEventListener("error", handleGlobalError);
     window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener("vault-switched", handleVaultSwitched);

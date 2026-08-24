@@ -4,7 +4,6 @@
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { playToolsBridge } from "$lib/services/play-tools-bridge";
   import { diceEngine, diceParser } from "dice-engine";
   import { slide } from "svelte/transition";
   import RollLog from "./RollLog.svelte";
@@ -40,11 +39,6 @@
       if (session.vttEnabled) {
         session.sendResolvedRollMessage(f, result);
       }
-      playToolsBridge.post({
-        type: "VTT_ROLL_MESSAGE",
-        formula: f,
-        result,
-      });
       // Reset history navigation
       historyIndex = -1;
       // Scroll to top to see new result
