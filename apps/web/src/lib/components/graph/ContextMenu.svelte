@@ -12,6 +12,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { GraphContextMenuController } from "./graph-context-menu-controller.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
@@ -358,6 +359,18 @@
           <span class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"></span>
           Revise Content
         </button>
+      {/if}
+      {#if controller.hasImage}
+        <div class="h-px bg-theme-border my-1 mx-1"></div>
+        <div
+          class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+        >
+          Image focus
+        </div>
+        <ImageFocusMenu
+          value={controller.currentImageFocus}
+          onSelect={controller.handleSetImageFocus}
+        />
       {/if}
     </div>
   {/if}

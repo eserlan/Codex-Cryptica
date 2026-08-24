@@ -1,12 +1,13 @@
-import type { Point } from "schema";
+import type { ImageFocus, Point } from "schema";
+import { normalizeImageFocus } from "schema";
 import { normalizeSpatialImageTransform } from "@codex/spatial-engine";
 
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
 export type LegacyTokenVisibility = TokenVisibility | "owner-only";
 export type TokenBaseShape = "circle" | "square";
-/** Which part of the source image to keep in view when its aspect ratio doesn't match the token's shape. */
-export type TokenImageFocus = "center" | "top" | "bottom" | "left" | "right";
+/** Which part of the source image to keep in view when its aspect ratio doesn't match the token's shape — shared with an entity's own `imageFocus` (schema). */
+export type TokenImageFocus = ImageFocus;
 
 export interface PingState {
   x: number;
@@ -125,21 +126,7 @@ export function normalizeTokenVisibility(
   return visibility === "gm-only" ? "gm-only" : "all";
 }
 
-const TOKEN_IMAGE_FOCUS_VALUES: readonly TokenImageFocus[] = [
-  "center",
-  "top",
-  "bottom",
-  "left",
-  "right",
-];
-
-export function normalizeTokenImageFocus(
-  value: unknown,
-): TokenImageFocus | undefined {
-  return TOKEN_IMAGE_FOCUS_VALUES.includes(value as TokenImageFocus)
-    ? (value as TokenImageFocus)
-    : undefined;
-}
+export const normalizeTokenImageFocus = normalizeImageFocus;
 
 export function normalizeToken(
   token:
