@@ -39,7 +39,7 @@ describe("RollLog", () => {
     const sendResolvedRollMessage = vi.fn();
     const sendChatMessage = vi.fn();
     const session = {
-      vttEnabled: true,
+      vttEnabled: false,
       sendResolvedRollMessage,
       sendChatMessage,
     };
@@ -54,7 +54,7 @@ describe("RollLog", () => {
     await fireEvent.click(addBtn);
 
     expect(sendResolvedRollMessage).toHaveBeenCalledWith("2d6+3", targetRoll);
-    expect(getOracleChatDraft()).toBe("/roll 2d6+3");
+    expect(getOracleChatDraft()).toBe("2d6+3 ➔ 11");
   });
 
   it("sends source results (deck/table) to VTT chat and Oracle input when Add to chat is clicked", async () => {

@@ -48,12 +48,12 @@
       session.sendChatMessage(text);
       addToOracleChatInput(text);
     } else {
-      if (session.vttEnabled) {
-        session.sendResolvedRollMessage(roll.formula, roll);
-      } else {
-        session.sendChatMessage(`/roll ${roll.formula}`);
-      }
-      addToOracleChatInput(`/roll ${roll.formula}`);
+      const displayFormula = roll.label
+        ? `${roll.label} (${roll.formula})`
+        : roll.formula;
+      session.sendResolvedRollMessage(displayFormula, roll);
+      const oracleText = `${displayFormula} ➔ ${roll.total}`;
+      addToOracleChatInput(oracleText);
     }
     notificationStore.notify("Result sent to chat.", "success");
   }
