@@ -437,16 +437,30 @@ export class VTTTokenManager {
   bringTokenToFront(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    const zIndex =
-      Math.max(...Object.values(this.tokens).map((item) => item.zIndex), 0) + 1;
+
+    // ⚡ Bolt Optimization: Use imperative loop over allTokens to avoid intermediate array allocations
+    let maxZ = 0;
+    for (const t of this.allTokens) {
+      if (t.zIndex > maxZ) {
+        maxZ = t.zIndex;
+      }
+    }
+    const zIndex = maxZ + 1;
     return this.updateToken(tokenId, { zIndex });
   }
 
   sendTokenToBack(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    const zIndex =
-      Math.min(...Object.values(this.tokens).map((item) => item.zIndex), 0) - 1;
+
+    // ⚡ Bolt Optimization: Use imperative loop over allTokens to avoid intermediate array allocations
+    let minZ = 0;
+    for (const t of this.allTokens) {
+      if (t.zIndex < minZ) {
+        minZ = t.zIndex;
+      }
+    }
+    const zIndex = minZ - 1;
     return this.updateToken(tokenId, { zIndex });
   }
 
