@@ -129,8 +129,8 @@
           type="button"
           class="flex flex-col items-center justify-center w-12 h-14 rounded-lg border border-theme-border bg-theme-bg hover:border-theme-primary hover:text-theme-primary transition-all active:scale-90 group relative"
           onclick={() => quickAdd(die.sides)}
-          title="Add {die.sides}-sided die to formula"
-          aria-label="Add {die.sides}-sided die to formula"
+          title="Add {die.sides}-sided die (d{die.sides}) to formula"
+          aria-label="Add {die.sides}-sided die (d{die.sides}) to formula"
         >
           <span
             class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
