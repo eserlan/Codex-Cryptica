@@ -1,16 +1,7 @@
-<script module lang="ts">
-  import type { MapLayer } from "map-engine";
-
-  const LAYER_META: Array<{ value: MapLayer; label: string; icon: string }> = [
-    { value: "terrain", label: "Terrain", icon: "icon-[lucide--mountain]" },
-    { value: "object", label: "Furniture", icon: "icon-[lucide--armchair]" },
-    { value: "token", label: "Tokens", icon: "icon-[lucide--swords]" },
-  ];
-</script>
-
 <script lang="ts">
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
+  import { LAYER_OPTIONS as LAYER_META } from "$lib/components/ui/LayerMenu.svelte";
 
   let { onClose }: { onClose: () => void } = $props();
 </script>

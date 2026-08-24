@@ -1,6 +1,7 @@
 <script lang="ts">
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
   import LayerPanel from "$lib/components/map/LayerPanel.svelte";
+  import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
   import {
     getMeasurementToolButtonClass,
     getPrimaryButtonStateClass,
@@ -17,6 +18,10 @@
 
   let showLayerPanel = $state(false);
   let layerPanelContainer = $state<HTMLDivElement>();
+  const activeLayerOption = $derived(
+    LAYER_OPTIONS.find((option) => option.value === mapSession.activeLayer) ??
+      LAYER_OPTIONS[0],
+  );
 
   function handleWindowClick(event: MouseEvent) {
     if (!showLayerPanel) return;
@@ -167,15 +172,19 @@
         <div class="relative" bind:this={layerPanelContainer}>
           <button
             type="button"
-            class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(showLayerPanel)}`}
+            class={`px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}
             onclick={(e) => {
               e.stopPropagation();
               showLayerPanel = !showLayerPanel;
             }}
             aria-pressed={showLayerPanel}
-            title="Choose which layer you're editing, and toggle layer visibility/lock"
+            aria-label="Layer: {activeLayerOption.label}"
+            title="Layer: {activeLayerOption.label} — choose which layer you're editing, and toggle layer visibility/lock"
           >
-            LAYERS
+            <span
+              class="{activeLayerOption.icon} w-3.5 h-3.5"
+              aria-hidden="true"
+            ></span>
           </button>
           {#if showLayerPanel}
             <div class="absolute bottom-full left-0 mb-2">

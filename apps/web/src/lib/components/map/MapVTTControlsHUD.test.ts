@@ -130,14 +130,17 @@ describe("MapVTTControlsHUD", () => {
     expect(mapSessionMock.setMeasurementActive).toHaveBeenCalledWith(true);
   });
 
-  it("opens the layer panel and switches the active layer", async () => {
+  it("shows the active layer in the button label and switches it", async () => {
     render(MapVTTControlsHUD, {
       props: {
         chatSidebarOffset: "20rem",
       },
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: "LAYERS" }));
+    const layerButton = screen.getByRole("button", {
+      name: "Layer: Terrain",
+    });
+    await fireEvent.click(layerButton);
     expect(screen.getByRole("menu", { name: "Map layers" })).not.toBeNull();
 
     await fireEvent.click(
