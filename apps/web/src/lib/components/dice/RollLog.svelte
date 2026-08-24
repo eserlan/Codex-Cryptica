@@ -5,7 +5,6 @@
   import { getDiceIcon } from "$lib/utils/dice-icons";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     rolls = [],
@@ -82,7 +81,6 @@
       const oracleText = `${displayFormula} ➔ ${roll.total}`;
       addToOracleChatInput(oracleText);
     }
-    notificationStore.notify("Result sent to chat.", "success");
   }
 </script>
 
