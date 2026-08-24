@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ConnectionSchema } from "./connection";
 import { LanguageProfileV1Schema } from "./language-profile";
 import { StatSheetSchema } from "./stat-sheet";
+import { IMAGE_FOCUS_VALUES } from "./image-focus";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -181,6 +182,9 @@ export const EntitySchema = z.object({
   artDirection: z.string().optional(),
   image: z.string().optional(),
   thumbnail: z.string().optional(),
+  /** Which part of `image` to keep in view when it's cropped to a shape
+   * (graph node, VTT token) that doesn't match its aspect ratio. */
+  imageFocus: z.enum(IMAGE_FOCUS_VALUES).optional(),
   /**
    * Art Direction inputs and composed prompts for the current image, kept so a
    * generation can be reproduced or explained. Absent on images generated

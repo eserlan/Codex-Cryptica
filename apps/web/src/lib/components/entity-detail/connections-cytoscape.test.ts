@@ -120,6 +120,18 @@ describe("buildConnectionsElements", () => {
     expect(ghost.data.thumbnail).toBe("ghost-thumb.png");
     expect(ghost.data.isPast).toBe(true);
   });
+
+  it("carries imageFocus through for both the centre and a neighbour", () => {
+    const elements = buildConnectionsElements(
+      entity({ id: "king", imageFocus: "top" }),
+      [neighbor({ id: "ghost", imageFocus: "left" })],
+    );
+
+    const king = elements.find((el) => el.data.id === "king")!;
+    const ghost = elements.find((el) => el.data.id === "ghost")!;
+    expect(king.data.imageFocus).toBe("top");
+    expect(ghost.data.imageFocus).toBe("left");
+  });
 });
 
 describe("buildConnectionsStyle", () => {
@@ -170,6 +182,20 @@ describe("buildConnectionsStyle", () => {
     const fakeNode = { data: (key: string) => ({ type: "unregistered" })[key] };
 
     expect(nodeRule.style["background-color"](fakeNode)).toBe(FALLBACK_COLOR);
+  });
+
+  it("crops the portrait to a node's own imageFocus, defaulting to centered", () => {
+    const style = buildConnectionsStyle(styleOptions);
+    const nodeRule = style.find(
+      (rule) => "selector" in rule && rule.selector === "node",
+    ) as any;
+    const focused = { data: (key: string) => ({ imageFocus: "bottom" })[key] };
+    const unset = { data: (key: string) => ({ imageFocus: undefined })[key] };
+
+    expect(nodeRule.style["background-position-x"](focused)).toBe("50%");
+    expect(nodeRule.style["background-position-y"](focused)).toBe("100%");
+    expect(nodeRule.style["background-position-x"](unset)).toBe("50%");
+    expect(nodeRule.style["background-position-y"](unset)).toBe("50%");
   });
 });
 

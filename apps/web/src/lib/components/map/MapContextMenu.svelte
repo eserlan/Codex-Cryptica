@@ -2,14 +2,12 @@
   import { fade } from "svelte/transition";
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
-  import {
-    IMAGE_FOCUS_OPTIONS,
-    TOKEN_STATUS_EFFECTS,
-  } from "../../../types/vtt";
+  import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { vault } from "../../stores/vault.svelte";
   import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
 
   let {
     x,
@@ -320,28 +318,13 @@
               >
                 Image focus
               </div>
-              {#each IMAGE_FOCUS_OPTIONS as option (option.value)}
-                <button
-                  type="button"
-                  class="w-full text-left px-4 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2"
-                  role="menuitemradio"
-                  aria-checked={(_ctxToken?.imageFocus ?? "center") ===
-                    option.value}
-                  onclick={() => {
-                    mapSession.updateToken(tokenId, {
-                      imageFocus: option.value,
-                    });
-                    onClose();
-                  }}
-                >
-                  <span class="{option.icon} w-3.5 h-3.5" aria-hidden="true"
-                  ></span>
-                  <span class="flex-1">{option.label}</span>
-                  {#if (_ctxToken?.imageFocus ?? "center") === option.value}
-                    <span aria-hidden="true">✓</span>
-                  {/if}
-                </button>
-              {/each}
+              <ImageFocusMenu
+                value={_ctxToken?.imageFocus}
+                onSelect={(focus) => {
+                  mapSession.updateToken(tokenId, { imageFocus: focus });
+                  onClose();
+                }}
+              />
             {/if}
           </div>
         {/if}
