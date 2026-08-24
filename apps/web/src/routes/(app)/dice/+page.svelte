@@ -13,6 +13,19 @@
     }
   });
 
+  $effect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("tab") !== activeTab) {
+      if (activeTab === "dice") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", activeTab);
+      }
+      window.history.replaceState(window.history.state, "", url.toString());
+    }
+  });
+
   const headerInfo = $derived.by(() => {
     switch (activeTab) {
       case "decks":

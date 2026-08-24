@@ -94,6 +94,8 @@
       <button
         type="button"
         role="tab"
+        id="play-tools-tab-{tab.id}"
+        aria-controls="play-tools-panel-{tab.id}"
         aria-selected={isActive}
         class="flex items-center gap-1.5 px-3 py-2 text-xs font-header font-bold tracking-wider uppercase rounded-t-lg border-t border-x transition-all {isActive
           ? 'bg-theme-surface border-theme-border text-theme-primary shadow-sm -mb-px relative z-10'
@@ -130,6 +132,8 @@
       <div
         class="flex-1 min-h-0 overflow-hidden"
         role="tabpanel"
+        id="play-tools-panel-dice"
+        aria-labelledby="play-tools-tab-dice"
         aria-label="Dice Roller"
       >
         <DiceVault {isStandalone} />
@@ -138,6 +142,8 @@
       <div
         class="flex-1 min-h-0 flex flex-col overflow-hidden"
         role="tabpanel"
+        id="play-tools-panel-decks"
+        aria-labelledby="play-tools-tab-decks"
         aria-label="Decks"
       >
         {#if decks.length === 0}
@@ -204,6 +210,8 @@
       <div
         class="flex-1 min-h-0 flex flex-col overflow-hidden"
         role="tabpanel"
+        id="play-tools-panel-tables"
+        aria-labelledby="play-tools-tab-tables"
         aria-label="Tables"
       >
         {#if tables.length === 0}
