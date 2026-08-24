@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.31.86",
+      "version": "0.31.98",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -64,6 +64,7 @@
         "@codex/runtime": "workspace:*",
         "@codex/search-engine": "workspace:*",
         "@codex/search-orchestrator": "workspace:*",
+        "@codex/spatial-engine": "workspace:*",
         "@codex/stat-sheet-engine": "workspace:*",
         "@codex/sync-engine": "workspace:*",
         "@codex/vault-engine": "workspace:*",
@@ -389,6 +390,7 @@
       "name": "map-engine",
       "version": "0.0.0",
       "dependencies": {
+        "@codex/spatial-engine": "workspace:*",
         "schema": "workspace:*",
       },
       "devDependencies": {
@@ -509,6 +511,14 @@
       },
       "peerDependencies": {
         "svelte": "^5.0.0",
+      },
+    },
+    "packages/spatial-engine": {
+      "name": "@codex/spatial-engine",
+      "version": "0.0.0",
+      "devDependencies": {
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
       },
     },
     "packages/stat-sheet-engine": {
@@ -656,6 +666,8 @@
     "@codex/search-engine": ["@codex/search-engine@workspace:packages/search-engine"],
 
     "@codex/search-orchestrator": ["@codex/search-orchestrator@workspace:packages/search-orchestrator"],
+
+    "@codex/spatial-engine": ["@codex/spatial-engine@workspace:packages/spatial-engine"],
 
     "@codex/stat-sheet-engine": ["@codex/stat-sheet-engine@workspace:packages/stat-sheet-engine"],
 

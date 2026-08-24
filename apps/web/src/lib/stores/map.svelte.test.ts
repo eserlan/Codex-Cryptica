@@ -9,6 +9,7 @@ const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
   maps: {},
   saveMaps: vi.fn(),
+  getActiveVaultHandle: vi.fn(),
 }));
 
 function makeMap(id: string, isWorldMap = false) {
@@ -115,7 +116,7 @@ describe("MapStore settings persistence", () => {
         gridColor: "#fbbf24",
         showLabels: true,
         visionMode: "party",
-        visionRadius: 300,
+        visionRange: 60,
       });
     });
   });
@@ -296,5 +297,45 @@ describe("MapStore settings persistence", () => {
     expect(mask).toBeTruthy();
     expect(fetch).toHaveBeenCalledWith("blob:mask-url");
     expect(drawImage).toHaveBeenCalled();
+  });
+});
+
+describe("MapStore.createBlankMap", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vaultMock.activeVaultId = "vault-a";
+    vaultMock.maps = {};
+    vaultMock.getActiveVaultHandle.mockReset();
+  });
+
+  it("creates a map with no background image at the fixed blank-map size", async () => {
+    vaultMock.getActiveVaultHandle.mockResolvedValue({ name: "vault-a" });
+    const store = new MapStore(undefined, { uuid: () => "blank-map-id" });
+
+    const id = await store.createBlankMap("New Map");
+
+    expect(id).toBe("blank-map-id");
+    expect(
+      (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
+    ).toMatchObject({
+      name: "New Map",
+      assetPath: "",
+      dimensions: { width: 4000, height: 4000 },
+      fogOfWar: { maskPath: "maps/blank-map-id_mask.png" },
+    });
+    expect(vaultMock.saveMaps).toHaveBeenCalled();
+    expect(store.activeMapId).toBe("blank-map-id");
+  });
+
+  it("fails gracefully with no active vault", async () => {
+    vaultMock.getActiveVaultHandle.mockResolvedValue(undefined);
+    const store = new MapStore(undefined, { uuid: () => "blank-map-id" });
+
+    const id = await store.createBlankMap("New Map");
+
+    expect(id).toBeUndefined();
+    expect(
+      (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
+    ).toBeUndefined();
   });
 });

@@ -1,4 +1,5 @@
 import type { Connection, Edge, Node } from "@xyflow/svelte";
+import { normalizeSpatialImageTransform } from "@codex/spatial-engine";
 import {
   CanvasFileSchema,
   type Canvas,
@@ -48,15 +49,15 @@ export function accumulateRotationDegrees(
 }
 
 export function canvasNodeRotation(node: Node | undefined) {
-  const rotation = node?.data?.rotation;
-  return typeof rotation === "number" && Number.isFinite(rotation)
-    ? rotation
-    : 0;
+  return normalizeSpatialImageTransform({
+    rotation: node?.data?.rotation as number,
+  }).rotation;
 }
 
 export function canvasNodeZIndex(node: Node | undefined) {
-  const zIndex = node?.data?.zIndex;
-  return typeof zIndex === "number" && Number.isFinite(zIndex) ? zIndex : 0;
+  return normalizeSpatialImageTransform({
+    zIndex: node?.data?.zIndex as number,
+  }).zIndex;
 }
 
 export function canvasNodeStyle(node: Node) {

@@ -43,6 +43,16 @@ describe("VTT domain normalization", () => {
     expect(invalid.facingIndicator).toBe(false);
   });
 
+  it("normalizes imageFocus, rejecting unknown values", () => {
+    expect(normalizeToken({ ...token, imageFocus: "top" }).imageFocus).toBe(
+      "top",
+    );
+    expect(normalizeToken(token).imageFocus).toBeUndefined();
+    expect(
+      normalizeToken({ ...token, imageFocus: "diagonal" as any }).imageFocus,
+    ).toBeUndefined();
+  });
+
   it("clones a session and repairs invalid selection and turn state", () => {
     const session = {
       id: "session-1",
@@ -88,6 +98,49 @@ describe("VTT domain normalization", () => {
     );
     expect(normalized.chatMessages[0].roll?.parts[0].rolls).not.toBe(
       session.chatMessages[0].roll?.parts[0].rolls,
+    );
+  });
+
+  it("normalizes optional tile decks without mutating their entries", () => {
+    const session = {
+      id: "session-tiles",
+      name: "Tiles",
+      mapId: "map-1",
+      mode: "exploration" as const,
+      tokens: {},
+      initiativeOrder: [],
+      initiativeValues: {},
+      round: 1,
+      turnIndex: 0,
+      selection: null,
+      sessionFogMask: null,
+      lastPing: null,
+      measurement: { active: false, start: null, end: null },
+      createdAt: 1,
+      savedAt: null,
+      chatMessages: [],
+      tileDecks: [
+        {
+          id: "deck-1",
+          name: "Rooms",
+          starterDeckId: "kenney-scribble-dungeons",
+          hardEdges: true,
+          tiles: [
+            {
+              id: "tile-1",
+              name: "Crypt",
+              imagePath: "crypt.png",
+              category: "Rooms & walls",
+            },
+          ],
+        },
+      ],
+    };
+    const normalized = normalizeEncounterSession(session);
+    expect(normalized.tileDecks).toEqual(session.tileDecks);
+    expect(normalized.tileDecks?.[0]).not.toBe(session.tileDecks[0]);
+    expect(normalized.tileDecks?.[0].tiles[0]).not.toBe(
+      session.tileDecks[0].tiles[0],
     );
   });
 });

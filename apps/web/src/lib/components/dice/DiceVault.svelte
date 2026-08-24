@@ -136,7 +136,8 @@
             class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
             aria-hidden="true">d{die.sides}</span
           >
-          <span class="{getDiceIcon(die.sides)} w-5 h-5" aria-hidden="true"></span>
+          <span class="{getDiceIcon(die.sides)} w-5 h-5" aria-hidden="true"
+          ></span>
         </button>
       {/each}
     </div>

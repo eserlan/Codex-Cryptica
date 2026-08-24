@@ -7,6 +7,7 @@ import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.s
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
+import type { ImageFocus } from "schema";
 import { shelf } from "$lib/features/shelf";
 import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
@@ -65,6 +66,11 @@ export class GraphContextMenuController {
 
   imageActionLabel = $derived.by(() => {
     return this.hasImage ? "Regen Image" : "Gen Image";
+  });
+
+  currentImageFocus = $derived.by((): ImageFocus | undefined => {
+    if (this.selectedNodes.length !== 1) return undefined;
+    return this.deps.vault.entities[this.selectedNodes[0]]?.imageFocus;
   });
 
   isImportant = $derived.by(() => {
@@ -433,6 +439,35 @@ export class GraphContextMenuController {
       console.error("Failed to update category", err);
       this.deps.notificationStore.notify(
         `Failed to update category: ${err.message}`,
+        "error",
+      );
+    }
+  };
+
+  handleSetImageFocus = async (focus: ImageFocus) => {
+    const nodesToUpdate = $state.snapshot(this.selectedNodes);
+    if (nodesToUpdate.length !== 1) return;
+    this.imagePickerOpen = false;
+    this.contextMenuOpen = false;
+
+    try {
+      await this.deps.vault.updateEntity(nodesToUpdate[0], {
+        imageFocus: focus,
+      });
+      // The crop is a plain-function style mapper (`background-position-*`
+      // reading `data("imageFocus")`), not cytoscape's own `data(field)`
+      // mapper syntax — cytoscape only tracks dependencies for the latter, so
+      // a plain data write alone doesn't invalidate/redraw it. Patch the live
+      // node directly rather than waiting on the reactive vault->elements
+      // sync (whose timing isn't guaranteed relative to this handler), then
+      // force the style recompute the crop needs to actually repaint.
+      const node = this.getCy().getElementById(nodesToUpdate[0]);
+      if (node.length) node.data("imageFocus", focus);
+      this.getCy().style().update();
+    } catch (err: any) {
+      console.error("Failed to update image focus", err);
+      this.deps.notificationStore.notify(
+        `Failed to update image focus: ${err.message}`,
         "error",
       );
     }

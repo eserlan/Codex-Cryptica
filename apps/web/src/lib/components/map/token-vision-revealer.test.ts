@@ -82,7 +82,8 @@ describe("TokenVisionRevealer", () => {
     const revealed = await revealer.reveal(tokens, 40);
 
     expect(revealed).toBe(true);
-    expect(mask.ctx.globalCompositeOperation).toBe("destination-out");
+    expect(mask.ctx.globalCompositeOperation).toBe("source-over");
+    expect(mask.ctx.fillStyle).toBe("white");
     expect(mask.ctx.arc).toHaveBeenCalledTimes(2);
     expect(saveMask).toHaveBeenCalledWith(mask.canvas);
   });

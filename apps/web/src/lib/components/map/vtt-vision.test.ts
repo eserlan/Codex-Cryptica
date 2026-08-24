@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveVisionSourceTokens } from "./vtt-vision";
+import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
 import type { Token } from "../../../types/vtt";
 
 function createToken(overrides: Partial<Token> = {}): Token {
@@ -68,5 +68,22 @@ describe("resolveVisionSourceTokens", () => {
     expect(
       resolveVisionSourceTokens(tokens, "selected", "missing-token"),
     ).toEqual([pcA, pcB]);
+  });
+});
+
+describe("visionRangeToPixels", () => {
+  it("converts 60' vision on a 5'-per-square grid to 12 grid squares in pixels", () => {
+    expect(visionRangeToPixels(60, 5, 50)).toBe(600);
+  });
+
+  it("scales with grid square size in pixels, not just distance", () => {
+    // Same 60' vision, but each square renders at 100px instead of 50px —
+    // pixel radius should double even though the in-world distance is the same.
+    expect(visionRangeToPixels(60, 5, 100)).toBe(1200);
+  });
+
+  it("falls back to treating the range as already-pixels when gridDistance is not positive", () => {
+    expect(visionRangeToPixels(300, 0, 50)).toBe(300);
+    expect(visionRangeToPixels(300, -1, 50)).toBe(300);
   });
 });

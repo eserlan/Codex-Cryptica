@@ -483,7 +483,10 @@
                   class="w-full p-4 bg-chrome-accent/10 border border-chrome-accent/30 hover:border-chrome-accent text-chrome-accent transition-all rounded group flex items-center justify-between"
                 >
                   <div class="flex items-center gap-3">
-                    <span class="icon-[lucide--sparkles] w-5 h-5" aria-hidden="true"></span>
+                    <span
+                      class="icon-[lucide--sparkles] w-5 h-5"
+                      aria-hidden="true"
+                    ></span>
                     <span
                       class="text-sm font-bold uppercase font-header tracking-widest"
                       >What's New in Codex</span
