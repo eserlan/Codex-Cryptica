@@ -2,11 +2,19 @@
   import type { ContextualRollResult } from "$lib/stores/dice-history.svelte";
   import { slide } from "svelte/transition";
   import { getDiceIcon } from "$lib/utils/dice-icons";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-  let { rolls = [], onReroll } = $props<{
+  let {
+    rolls = [],
+    onReroll,
+    session = mapSession,
+  }: {
     rolls: ContextualRollResult[];
     onReroll?: (formula: string) => void;
-  }>();
+    session?: typeof mapSession;
+  } = $props();
 
   let scrollContainer = $state<HTMLDivElement>();
 
@@ -33,6 +41,22 @@
       scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
+
+  function sendRollToChat(roll: ContextualRollResult) {
+    if (roll.source) {
+      const text = `${roll.source.sourceName}: ${roll.source.finalText}`;
+      session.sendChatMessage(text);
+      addToOracleChatInput(text);
+    } else {
+      if (session.vttEnabled) {
+        session.sendResolvedRollMessage(roll.formula, roll);
+      } else {
+        session.sendChatMessage(`/roll ${roll.formula}`);
+      }
+      addToOracleChatInput(`/roll ${roll.formula}`);
+    }
+    notificationStore.notify("Result sent to chat.", "success");
+  }
 </script>
 
 <div
@@ -222,22 +246,40 @@
         </div>
       {/if}
 
-      <!-- Reroll button. A table roll is re-rolled from its own table, not by
-           replaying a die formula, so it has none here. -->
-      {#if !roll.source}
+      <!-- Action buttons: Add to chat & Reroll -->
+      <div
+        class="absolute right-3 bottom-3 flex items-center gap-1.5 transition-opacity group-hover/item:opacity-100"
+        class:opacity-0={_i !== 0}
+        class:opacity-100={_i === 0}
+      >
         <button
-          class="absolute right-3 bottom-3 p-2 rounded-lg bg-theme-primary/10 border border-theme-primary/20 text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-lg group-hover/item:opacity-100"
-          class:opacity-0={_i !== 0}
-          class:opacity-100={_i === 0}
+          class="p-2 rounded-lg bg-theme-primary/10 border border-theme-primary/20 text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-lg"
           type="button"
-          onclick={() => onReroll?.(roll.formula)}
-          title="Reroll this formula"
-          aria-label="Reroll this formula"
+          onclick={() => sendRollToChat(roll)}
+          title="Send to chat"
+          aria-label="Send to chat"
+          data-testid="roll-log-add-to-chat"
         >
-          <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-4 h-4"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--message-square-plus] w-4 h-4"
           ></span>
         </button>
-      {/if}
+
+        {#if !roll.source}
+          <button
+            class="p-2 rounded-lg bg-theme-primary/10 border border-theme-primary/20 text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-lg"
+            type="button"
+            onclick={() => onReroll?.(roll.formula)}
+            title="Reroll this formula"
+            aria-label="Reroll this formula"
+            data-testid="roll-log-reroll"
+          >
+            <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+      </div>
     </div>
   {/each}
 </div>

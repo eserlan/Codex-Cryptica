@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { diceHistory } from "$lib/stores/dice-history.svelte";
+  import {
+    diceHistory,
+    type DiceHistoryStore,
+  } from "$lib/stores/dice-history.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { diceEngine, diceParser } from "dice-engine";
   import { slide } from "svelte/transition";
@@ -7,7 +10,15 @@
   import { tick } from "svelte";
   import { getDiceIcon } from "$lib/utils/dice-icons";
 
-  let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
+  let {
+    isStandalone = false,
+    history = diceHistory,
+    session = mapSession,
+  }: {
+    isStandalone?: boolean;
+    history?: DiceHistoryStore;
+    session?: typeof mapSession;
+  } = $props();
 
   let formula = $state("");
   let error = $state("");
@@ -24,9 +35,9 @@
       error = "";
       const command = diceParser.parse(f);
       const result = diceEngine.execute(command);
-      await diceHistory.addResult(result, "modal");
-      if (mapSession.vttEnabled) {
-        mapSession.sendResolvedRollMessage(f, result);
+      await history.addResult(result, "modal");
+      if (session.vttEnabled) {
+        session.sendResolvedRollMessage(f, result);
       }
       // Reset history navigation
       historyIndex = -1;
@@ -217,15 +228,16 @@
       <button
         type="button"
         class="text-[11px] font-bold text-theme-muted hover:text-red-500 uppercase transition-colors"
-        onclick={() => diceHistory.clearHistory(["modal", "table"])}
+        onclick={() => history.clearHistory(["modal", "table"])}
       >
         Clear
       </button>
     </div>
     <RollLog
       bind:this={rollLogComponent}
-      rolls={diceHistory.modalHistory}
+      rolls={history.modalHistory}
       onReroll={reroll}
+      {session}
     />
   </div>
 </div>

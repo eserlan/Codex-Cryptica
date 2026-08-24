@@ -136,7 +136,7 @@
         aria-labelledby="play-tools-tab-dice"
         aria-label="Dice Roller"
       >
-        <DiceVault {isStandalone} />
+        <DiceVault {isStandalone} {history} {session} />
       </div>
     {:else if activeTab === "decks"}
       <div
