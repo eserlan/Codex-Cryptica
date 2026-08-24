@@ -333,6 +333,10 @@ async function* sendViaOperationPipelineStream(params: {
     stream: true,
   };
 
+  if (import.meta.env.DEV) {
+    console.debug("[Generator stream] opening SSE request");
+  }
+
   let response: Response;
   try {
     response = await doFetch(proxyUrl, {
@@ -366,6 +370,12 @@ async function* sendViaOperationPipelineStream(params: {
     return;
   }
 
+  if (import.meta.env.DEV) {
+    console.debug("[Generator stream] SSE response opened", {
+      contentType: response.headers.get("content-type"),
+    });
+  }
+
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -379,7 +389,14 @@ async function* sendViaOperationPipelineStream(params: {
       const dataStr = trimmed.slice(5).trim();
       if (!dataStr) continue;
       try {
-        yield JSON.parse(dataStr) as GenerationEvent;
+        const event = JSON.parse(dataStr) as GenerationEvent;
+        if (import.meta.env.DEV) {
+          console.debug("[Generator stream] SSE event received", {
+            type: event.type,
+            textLength: event.type === "delta" ? event.text.length : undefined,
+          });
+        }
+        yield event;
       } catch {
         // Skip a malformed SSE payload rather than aborting the stream.
       }
@@ -390,6 +407,11 @@ async function* sendViaOperationPipelineStream(params: {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] SSE network chunk received", {
+          byteLength: value.byteLength,
+        });
+      }
       buffer += decoder.decode(value, { stream: true });
 
       let sepIndex: number;

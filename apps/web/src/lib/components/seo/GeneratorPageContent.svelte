@@ -892,7 +892,25 @@
       }),
   };
 
-  async function generate({ useAI }: { useAI: boolean }) {
+  async function generate({
+    useAI,
+    onPreview,
+  }: {
+    useAI: boolean;
+    onPreview?: (preview: GeneratorOutput) => void;
+  }) {
+    if (slug === "npc" && useAI && onPreview) {
+      let output: GeneratorOutput | null = null;
+      for await (const event of generatorEngine.generateNPCStream({
+        ...npc,
+        useAI,
+      })) {
+        if (event.type === "delta") onPreview(event.preview);
+        else output = event.output;
+      }
+      if (output) return output;
+      throw new Error("NPC generation ended without a final draft");
+    }
     const handler = GENERATE_HANDLERS[slug];
     if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
     return handler(useAI);

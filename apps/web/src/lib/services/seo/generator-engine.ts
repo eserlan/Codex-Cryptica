@@ -101,6 +101,7 @@ import {
   parseCreatureResponse,
   generateCreatureLocal,
   BANNED_NAMES,
+  extractPartialJsonStringFields,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type MinorMagicItemGeneratorOptions,
@@ -187,6 +188,10 @@ export { creatureConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
+
+export type PublicGeneratorStreamEvent =
+  | { type: "delta"; preview: GeneratorOutput }
+  | { type: "complete"; output: GeneratorOutput };
 
 /**
  * Bridge the package's {@link PublicGeneratorOutput} (whose `type` is a plain
@@ -332,6 +337,95 @@ export class DefaultGeneratorEngine {
       },
       () => generateNpcLocal(npcOptions),
     );
+  }
+
+  /**
+   * Streams the public NPC generator's safe text preview while preserving the
+   * normal parser and local fallback for the final output. Other public
+   * generators still use their buffered and, in some cases, multi-pass flows.
+   */
+  async *generateNPCStream(
+    options: NpcGeneratorOptions & { useAI?: boolean } = {},
+  ): AsyncGenerator<PublicGeneratorStreamEvent> {
+    const { useAI, ...npcOptions } = options;
+    if (useAI === false) {
+      yield { type: "complete", output: await this.generateNPC(options) };
+      return;
+    }
+
+    const recentInputs = generationInputHistoryStore.recent("npc");
+    const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
+      npcOptions,
+      getSessionContext() + formatRecentInputsNote(recentInputs),
+    );
+    generationInputHistoryStore.record(
+      "npc",
+      summarizeResolvedInputs(resolved),
+    );
+
+    try {
+      const model = await this.clientManager.getModel(
+        "",
+        GENERATOR_MODEL_ID,
+        systemInstruction,
+      );
+      const streamingModel = model as unknown as {
+        generateContentStream(
+          request: unknown,
+        ): AsyncGenerator<
+          | { type: "delta"; text: string }
+          | { type: "complete"; text: string }
+          | { type: "error"; error: string }
+          | { type: "started" }
+        >;
+      };
+      if (typeof streamingModel.generateContentStream !== "function") {
+        throw new Error("Streaming is unavailable for the selected AI client");
+      }
+
+      let raw = "";
+      for await (const event of streamingModel.generateContentStream(
+        userMessage,
+      )) {
+        if (event.type === "delta") {
+          raw += event.text;
+          const fields = extractPartialJsonStringFields(raw);
+          yield {
+            type: "delta",
+            preview: {
+              type: "character",
+              title: fields.title || resolved.name,
+              summary: fields.summary || "",
+              content: fields.content || "",
+              lore: fields.lore || "",
+              labels: [],
+              status: "draft",
+            },
+          };
+        } else if (event.type === "complete") {
+          raw = event.text || raw;
+        } else if (event.type === "error") {
+          throw new Error(event.error);
+        }
+      }
+
+      yield {
+        type: "complete",
+        output: toSeoOutput(parseNpcResponse(raw, npcOptions, resolved)),
+      };
+    } catch (err) {
+      const { type } = classifyApiError(err);
+      console.warn(
+        `AI NPC streaming unavailable (${type}), falling back to local tables.`,
+      );
+      yield {
+        type: "complete",
+        output: toSeoOutput({
+          ...generateNpcLocal(npcOptions),
+          aiFallback: true,
+        }),
+      };
+    }
   }
 
   /** Faction generation delegates to the generator-engine package (#1351). */

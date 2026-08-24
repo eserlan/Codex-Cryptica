@@ -28,6 +28,58 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateNPC", () => {
+    it("streams NPC previews before returning the parsed final draft", async () => {
+      const chunks = [
+        '{"title":"Tomasa",',
+        '"summary":"A frontier guide","content":"Bio","lore":"Secrets","labels":["npc"]}',
+      ];
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          for (const text of chunks) yield { type: "delta", text };
+          yield { type: "complete", text: chunks.join("") };
+        },
+      });
+
+      const events = [];
+      for await (const event of engine.generateNPCStream({ useAI: true })) {
+        events.push(event);
+      }
+
+      expect(events).toHaveLength(3);
+      expect(events[0]).toMatchObject({
+        type: "delta",
+        preview: { title: "Tomasa" },
+      });
+      expect(events[2]).toMatchObject({
+        type: "complete",
+        output: { title: "Tomasa", content: "Bio", lore: "Secrets" },
+      });
+    });
+
+    it("falls back to a local final NPC draft when streaming reports an error", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          yield { type: "error", error: "network down" };
+        },
+      });
+
+      const events = [];
+      for await (const event of engine.generateNPCStream({
+        race: "Dwarf",
+        role: "Guard",
+        useAI: true,
+      })) {
+        events.push(event);
+      }
+
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: "complete",
+          output: expect.objectContaining({ aiFallback: true }),
+        }),
+      ]);
+    });
+
     it("should generate NPC details using local fallback when useAI is false", async () => {
       const res = await engine.generateNPC({
         race: "Elf",

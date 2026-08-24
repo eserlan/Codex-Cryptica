@@ -97,7 +97,10 @@
     faqs?: { question: string; answer: string }[];
     theme?: string;
     isThemeCustomizable?: boolean;
-    generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
+    generate: (opts: {
+      useAI: boolean;
+      onPreview?: (preview: GeneratorOutput) => void;
+    }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
@@ -121,6 +124,10 @@
   // never the example draft left behind after a failed attempt.
   let userGenerationSucceeded = $state(false);
   const isBusy = $derived(isGenerating || isAutoDrafting);
+  // Streaming generators can show a usable draft before their final validation
+  // finishes. Keep the loading overlay only until that first preview arrives.
+  let hasStreamedPreview = $state(false);
+  const showOutputLoading = $derived(isBusy && !hasStreamedPreview);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
 
@@ -290,6 +297,7 @@
     isGenerating = true;
     errorMessage = null;
     aiFallbackDismissed = false;
+    hasStreamedPreview = false;
     // #1796: only ever fires for an explicit user Generate click, never the
     // silent handleGenerateOnMount() seed draft (that path never sets
     // userGenerated / calls handleGenerate at all).
@@ -300,7 +308,14 @@
     const useAINow =
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
-      generatedData = await generate({ useAI: useAINow });
+      generatedData = await generate({
+        useAI: useAINow,
+        onPreview: (preview) => {
+          generatedData = preview;
+          isExampleDraft = false;
+          hasStreamedPreview = true;
+        },
+      });
       userGenerationSucceeded = true;
       isExampleDraft = false;
       // #1796: only on the success path — a caught error below means the
@@ -825,7 +840,7 @@
       <GeneratorOutputCard
         {generatedData}
         {aiFallbackDismissed}
-        {isBusy}
+        isBusy={showOutputLoading}
         {isExampleDraft}
         {generatedSingular}
         {variant}

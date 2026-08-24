@@ -348,6 +348,14 @@
           : undefined,
       };
 
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] modal generation started", {
+          generatorId: req.generatorId,
+          useAI: runRequest.useAI,
+          usesInteraction: !!runRequest.interaction,
+        });
+      }
+
       for await (const event of svc.generateDraftStream(
         runRequest,
         abortController.signal,
@@ -356,8 +364,21 @@
         if (event.type === "delta") {
           streamedJson += event.text;
           streamedFields = extractPartialJsonStringFields(streamedJson);
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal preview updated", {
+              deltaLength: event.text.length,
+              totalLength: streamedJson.length,
+              fields: Object.keys(streamedFields),
+            });
+          }
         } else if (event.type === "field" && typeof event.value === "string") {
           streamedFields = { ...streamedFields, [event.key]: event.value };
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal field completed", {
+              key: event.key,
+              valueLength: event.value.length,
+            });
+          }
         } else if (event.type === "draft") {
           // A `draft` event is always the terminal outcome of
           // generateDraftStream() — including after an `error` event, which
@@ -367,6 +388,11 @@
           draft = event.draft;
           errorMsg = null;
           stage = "review";
+          if (import.meta.env.DEV) {
+            console.debug("[Generator stream] modal received final draft");
+          }
+        } else if (import.meta.env.DEV) {
+          console.debug("[Generator stream] modal event", { type: event.type });
         }
         // `error` events are non-terminal here: generateDraftStream() always
         // falls through to a local-generation `draft` event after one, so
