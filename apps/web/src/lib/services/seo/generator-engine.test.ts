@@ -54,6 +54,23 @@ describe("DefaultGeneratorEngine", () => {
       });
     });
 
+    it("keeps accumulated deltas when the terminal frame is only whitespace", async () => {
+      const text = '{"title":"Tomasa","content":"Bio","lore":"Secrets"}';
+      mockClientManager.getModel.mockResolvedValue({
+        generateContentStream: async function* () {
+          yield { type: "delta", text };
+          yield { type: "complete", text: " " };
+        },
+      });
+
+      const output = await engine.generateWithPreview(
+        () => engine.generateNPC({ useAI: true }),
+        () => {},
+      );
+
+      expect(output).toMatchObject({ title: "Tomasa", content: "Bio" });
+    });
+
     it("falls back to a local NPC draft when streaming reports an error", async () => {
       mockClientManager.getModel.mockResolvedValue({
         generateContentStream: async function* () {

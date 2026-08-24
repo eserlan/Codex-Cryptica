@@ -299,7 +299,12 @@ export class DefaultGeneratorEngine {
           text += event.text;
           this.streamPreview(text);
         } else if (event.type === "complete") {
-          text = event.text || text;
+          // Provider terminal frames occasionally carry only whitespace or a
+          // short trailing fragment. The accumulated deltas are the source of
+          // truth unless this frame contains a strictly more complete body.
+          if (event.text.trim().length > text.trim().length) {
+            text = event.text;
+          }
         } else if (event.type === "error") {
           throw new Error(event.error);
         }
