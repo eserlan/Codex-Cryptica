@@ -1,6 +1,11 @@
 import { vault } from "./vault.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
-import { imageToViewport, viewportToImage } from "map-engine";
+import {
+  imageToViewport,
+  viewportToImage,
+  MAP_LAYER_ORDER,
+  type MapLayer,
+} from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -32,7 +37,17 @@ type PersistedMapSettings = {
   /** Vision distance in grid units (e.g. feet), not pixels — converted to
    * pixels using the map's gridSize/gridDistance at reveal time. */
   visionRange: number;
+  /** Per-layer view toggle and edit-lock. GM-local, not synced to guests —
+   * same tier as showFog/showGrid. */
+  layerVisibility: Record<MapLayer, boolean>;
+  layerLocked: Record<MapLayer, boolean>;
 };
+
+function layerRecord<T>(value: T): Record<MapLayer, T> {
+  return Object.fromEntries(
+    MAP_LAYER_ORDER.map((layer) => [layer, value]),
+  ) as Record<MapLayer, T>;
+}
 
 type PersistedMapPageState = {
   activeMapId: string | null;
@@ -50,6 +65,8 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showLabels: true,
   visionMode: "party",
   visionRange: 60,
+  layerVisibility: layerRecord(true),
+  layerLocked: layerRecord(false),
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -78,6 +95,8 @@ export class MapStore {
   gridColor = $state<string | null>(null); // null means use theme primary
   visionMode = $state<TokenVisionMode>("party");
   visionRange = $state(60);
+  layerVisibility = $state<Record<MapLayer, boolean>>(layerRecord(true));
+  layerLocked = $state<Record<MapLayer, boolean>>(layerRecord(false));
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
@@ -130,6 +149,12 @@ export class MapStore {
             this.showLabels,
             this.visionMode,
             this.visionRange,
+            // Individual properties, not the object references — Svelte's
+            // $state proxy only tracks reads at property-access granularity,
+            // so reading the Record itself wouldn't re-run this effect when
+            // a single layer's flag toggles.
+            ...MAP_LAYER_ORDER.map((layer) => this.layerVisibility[layer]),
+            ...MAP_LAYER_ORDER.map((layer) => this.layerLocked[layer]),
           ];
           void tracked;
           this.schedulePersistSettings();
@@ -233,6 +258,20 @@ export class MapStore {
           typeof parsed.visionRange === "number"
             ? parsed.visionRange
             : DEFAULT_MAP_SETTINGS.visionRange,
+        // Spread-merged over defaults (not a bare typeof check) so an old
+        // persisted blob missing a since-added layer doesn't produce
+        // `undefined` for it.
+        layerVisibility:
+          parsed.layerVisibility && typeof parsed.layerVisibility === "object"
+            ? {
+                ...DEFAULT_MAP_SETTINGS.layerVisibility,
+                ...parsed.layerVisibility,
+              }
+            : DEFAULT_MAP_SETTINGS.layerVisibility,
+        layerLocked:
+          parsed.layerLocked && typeof parsed.layerLocked === "object"
+            ? { ...DEFAULT_MAP_SETTINGS.layerLocked, ...parsed.layerLocked }
+            : DEFAULT_MAP_SETTINGS.layerLocked,
       };
     } catch {
       return null;
@@ -267,6 +306,8 @@ export class MapStore {
       showLabels: this.showLabels,
       visionMode: this.visionMode,
       visionRange: this.visionRange,
+      layerVisibility: this.layerVisibility,
+      layerLocked: this.layerLocked,
     };
 
     try {
@@ -388,6 +429,8 @@ export class MapStore {
       this.showLabels = next.showLabels;
       this.visionMode = next.visionMode;
       this.visionRange = next.visionRange;
+      this.layerVisibility = next.layerVisibility;
+      this.layerLocked = next.layerLocked;
     } finally {
       this.isRestoringSettings = false;
     }

@@ -117,6 +117,8 @@ describe("MapStore settings persistence", () => {
         showLabels: true,
         visionMode: "party",
         visionRange: 60,
+        layerVisibility: { terrain: true, object: true, token: true },
+        layerLocked: { terrain: false, object: false, token: false },
       });
     });
   });
@@ -154,6 +156,18 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(64);
     expect(store.gridColor).toBe("#3b82f6");
     expect(store.showLabels).toBe(true);
+    // Blobs saved before layers existed have neither key — falls back to
+    // "everything visible, nothing locked" rather than undefined.
+    expect(store.layerVisibility).toEqual({
+      terrain: true,
+      object: true,
+      token: true,
+    });
+    expect(store.layerLocked).toEqual({
+      terrain: false,
+      object: false,
+      token: false,
+    });
 
     store.selectMap("map-b");
     expect(store.showFog).toBe(true);
@@ -162,6 +176,55 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(80);
     expect(store.gridColor).toBe(null);
     expect(store.showLabels).toBe(false);
+  });
+
+  it("persists a layer visibility/lock toggle and restores it later", async () => {
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.layerVisibility.terrain = false;
+    store.layerLocked.object = true;
+
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-a");
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.layerVisibility).toEqual({
+        terrain: false,
+        object: true,
+        token: true,
+      });
+      expect(parsed.layerLocked).toEqual({
+        terrain: false,
+        object: true,
+        token: false,
+      });
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-a");
+    expect(restored.layerVisibility.terrain).toBe(false);
+    expect(restored.layerLocked.object).toBe(true);
+  });
+
+  it("merges a persisted blob missing a since-added layer over the defaults", async () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-a",
+      JSON.stringify({
+        showFog: false,
+        showGrid: false,
+        layerVisibility: { terrain: false },
+      }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    expect(store.layerVisibility).toEqual({
+      terrain: false,
+      object: true,
+      token: true,
+    });
   });
 
   it("restores the last selected map and viewport on reload", async () => {

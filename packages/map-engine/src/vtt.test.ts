@@ -53,6 +53,12 @@ describe("VTT domain normalization", () => {
     ).toBeUndefined();
   });
 
+  it("defaults legacy tokens' layer from kind, and passes through a valid layer", () => {
+    expect(normalizeToken(token).layer).toBe("token");
+    expect(normalizeToken({ ...token, kind: "tile" }).layer).toBe("terrain");
+    expect(normalizeToken({ ...token, layer: "object" }).layer).toBe("object");
+  });
+
   it("clones a session and repairs invalid selection and turn state", () => {
     const session = {
       id: "session-1",
