@@ -64,7 +64,6 @@
       tabindex="-1"
       class="relative bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
       transition:fly={{ y: 20, duration: 300 }}
-      onclick={(e) => e.stopPropagation()}
     >
       <h2
         class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"
