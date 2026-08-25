@@ -1,17 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Help Center System", () => {
   test.beforeEach(async ({ page }) => {
-    // Disable onboarding to access main UI
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+    await setupVaultPage(page);
   });
 
   test("should open help center and display articles list", async ({
@@ -31,7 +23,9 @@ test.describe("Help Center System", () => {
 
     // 4. Verify list of articles from markdown files
     // Check for specific titles we know exist from migration
-    await expect(page.getByText("Getting Started")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Getting Started/i }).first(),
+    ).toBeVisible();
     await expect(page.getByText("Connections Proposer")).toBeVisible();
     await expect(page.getByText("Knowledge Graph")).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
@@ -53,7 +47,9 @@ test.describe("Help Center System", () => {
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
 
     await searchInput.fill("Sovereignty");
-    await expect(page.getByText("Getting Started")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Getting Started/i }).first(),
+    ).toBeVisible();
     await expect(page.getByText("Connections Proposer")).not.toBeVisible();
   });
 
@@ -64,12 +60,15 @@ test.describe("Help Center System", () => {
     await page.click('[role="tab"]:has-text("Help")');
 
     // 2. Click "Getting Started"
-    await page.click('text="Getting Started"');
+    await page
+      .getByRole("button", { name: /Getting Started/i })
+      .first()
+      .click();
 
     // 3. Verify content renders (Markdown to HTML)
     // Check for h2 header in content
     await expect(
-      page.locator('.prose h2:has-text("Welcome to the Archive")'),
+      page.locator('.prose h2:has-text("Welcome to Codex Cryptica")'),
     ).toBeVisible();
 
     // Check for bold text
@@ -83,6 +82,7 @@ test.describe("Help Center System", () => {
   }) => {
     // 1. Navigate to standalone route
     await page.goto("/help");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
     // 2. Verify standalone header
     await expect(
@@ -90,7 +90,9 @@ test.describe("Help Center System", () => {
     ).toBeVisible();
 
     // 3. Verify help articles are loaded
-    await expect(page.getByText("Getting Started")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Getting Started/i }).first(),
+    ).toBeVisible();
 
     // 4. Verify Pop-out button is HIDDEN (isStandalone = true)
     await expect(page.locator('button:has-text("Pop-out")')).not.toBeVisible();
