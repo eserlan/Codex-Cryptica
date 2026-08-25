@@ -386,7 +386,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       eyebrow: "Self-hosted or local-first?",
       title: "Kanka can be self-hosted. So why Codex?",
       description:
-        "Self-hosting and local-first both put you in control, but they ask different things of you. Kanka's free edition can be self-hosted by operating its application services. Codex stores the working campaign on your device, so there is no campaign server to deploy, secure, update, or back up.",
+        "Self-hosting and local-first both put you in control, but they ask different things of you. Kanka's free edition can be self-hosted by operating its application services. Codex stores the working campaign on your device, so there is no campaign server to deploy, secure, patch, or keep online. You should still back up your local vault, just as you would any important files.",
       columns: ["Hosted Kanka", "Self-hosted Kanka", "Codex Cryptica"],
       rows: [
         {
@@ -425,22 +425,22 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     },
     features: [
       {
-        title: "No Campaign Server",
+        title: "Relationship Graph",
         description:
-          "Get local control without deploying Docker services, maintaining a database, applying server updates, or managing uptime.",
-        icon: "icon-[lucide--server-off]",
+          "See how characters, factions, locations, and events connect in an interactive graph built from your campaign entities.",
+        icon: "icon-[lucide--network]",
       },
       {
-        title: "Local and Offline-First",
+        title: "Maps & Timelines",
         description:
-          "Your core vault stays on your device and remains available without a connection at the game table.",
-        icon: "icon-[lucide--wifi-off]",
+          "Organize locations on maps and track events across custom calendars, so geography and campaign history stay connected to your lore.",
+        icon: "icon-[lucide--map]",
       },
       {
-        title: "Portable Working Files",
+        title: "Campaign Tools & Generators",
         description:
-          "Your campaign can live as standard Markdown files you can edit elsewhere, copy to your own backups, and keep without an account.",
-        icon: "icon-[lucide--file-text]",
+          "Create NPCs, factions, quests, dungeons, and other table-ready material, then use built-in dice, encounter, and session tools when play begins.",
+        icon: "icon-[lucide--sparkles]",
       },
     ],
     productProof: {

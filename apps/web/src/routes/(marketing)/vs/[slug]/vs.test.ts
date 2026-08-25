@@ -68,8 +68,22 @@ describe("Kanka self-hosted comparison config", () => {
     expect(kanka.hostingComparison?.rows.length).toBeGreaterThan(0);
     expect(kanka.productProof?.imageSrc).toBeTruthy();
     expect(kanka.decisionGuidance).toHaveLength(2);
+    expect(kanka.features.map((feature) => feature.title)).toEqual([
+      "Relationship Graph",
+      "Maps & Timelines",
+      "Campaign Tools & Generators",
+    ]);
     expect(`${kanka.introText} ${kanka.secondaryCtaText}`).toMatch(
       /copy of your campaign|Kanka copy/i,
+    );
+    expect(kanka.hostingComparison?.description).toMatch(
+      /deploy, secure, patch, or keep online/i,
+    );
+    expect(kanka.hostingComparison?.description).toMatch(
+      /should still back up your local vault/i,
+    );
+    expect(kanka.hostingComparison?.description).not.toMatch(
+      /no campaign server[^.]*back up/i,
     );
   });
 
