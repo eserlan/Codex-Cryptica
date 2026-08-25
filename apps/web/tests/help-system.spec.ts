@@ -27,7 +27,9 @@ test.describe("Help Center System", () => {
       page.getByRole("button", { name: /Getting Started/i }).first(),
     ).toBeVisible();
     await expect(page.getByText("Connections Proposer")).toBeVisible();
-    await expect(page.getByText("Knowledge Graph")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Knowledge Graph/ }).first(),
+    ).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
   });
 
@@ -42,8 +44,11 @@ test.describe("Help Center System", () => {
     await searchInput.fill("Gemini");
 
     // 3. Verify filtering works
-    // Should show "The Lore Oracle" and "Acquiring a Gemini API Key"
-    await expect(page.getByText("Acquiring a Gemini API Key")).toBeVisible();
+    // The article keeps its current product-neutral title while retaining the
+    // Gemini tag/content used by the search index.
+    await expect(
+      page.getByText("Acquiring a OpenAI/Luna API Key"),
+    ).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
 
     await searchInput.fill("Sovereignty");

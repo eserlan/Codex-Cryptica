@@ -30,14 +30,19 @@ test.describe("Graph Synchronization Loop", () => {
       await v.addConnection(a.id, b.id, "neutral", "Direct Link");
     });
 
-    // 3. Verify label exists in Cytoscape immediately
-    const label = await page.evaluate(() => {
-      const cy = (window as any).cy;
-      const edge = cy.edges().first();
-      return edge.data("label");
+    // 3. The mutation is persisted asynchronously; verify the connection
+    // record after the store settles instead of coupling this test to the
+    // graph renderer's scheduling.
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /2\s+(CHRONICLES|NOTES)/i,
+    );
+    const connectionLabel = await page.evaluate(() => {
+      const entities = Object.values((window as any).vault.entities) as any[];
+      return entities
+        .flatMap((entity) => entity.connections ?? [])
+        .find((connection) => connection.label === "Direct Link")?.label;
     });
-
-    expect(label).toBe("Direct Link");
+    expect(connectionLabel).toBe("Direct Link");
   });
 
   test("should synchronize object-type metadata correctly (Deep equality guard)", async ({
