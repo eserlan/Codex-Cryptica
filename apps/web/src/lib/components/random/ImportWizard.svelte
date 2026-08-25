@@ -333,9 +333,14 @@
 
   const unmatchedImages = $derived.by(() => {
     const used = new Set(assignments.filter(Boolean).map((a) => a.fileIndex));
-    return images
-      .map((file, index) => ({ file, index }))
-      .filter(({ index }) => !used.has(index));
+    // ⚡ Bolt Optimization: Replace .map().filter() with a single imperative loop
+    const result = [];
+    for (let index = 0; index < images.length; index++) {
+      if (!used.has(index)) {
+        result.push({ file: images[index], index });
+      }
+    }
+    return result;
   });
 
   const cardsWithoutImage = $derived(
