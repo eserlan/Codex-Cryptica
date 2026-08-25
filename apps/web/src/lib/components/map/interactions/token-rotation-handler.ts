@@ -8,6 +8,7 @@ import {
   TOKEN_FACING_INDICATOR_HIT_TOLERANCE,
   TOKEN_ROTATION_STEP,
   normalizeTokenRotation,
+  snapTokenRotation,
 } from "map-engine";
 
 export interface TokenRotationDependencies {
@@ -82,15 +83,16 @@ export class TokenRotationHandler {
     return true;
   }
 
-  move(viewportPoint: Point) {
+  move(viewportPoint: Point, freeRotate = false) {
     if (!this.rotationState) return false;
     const token = this.deps.getSelectedToken();
     if (!token || token.id !== this.rotationState.tokenId) return false;
 
-    const rotation = rotationFromPoint(
+    const rawRotation = rotationFromPoint(
       getTokenCenter(token),
       this.deps.unproject(viewportPoint),
     );
+    const rotation = freeRotate ? rawRotation : snapTokenRotation(rawRotation);
     if (this.deps.isHostMode()) {
       this.deps.rotateToken(token.id, rotation);
     } else {
