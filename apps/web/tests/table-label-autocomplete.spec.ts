@@ -64,9 +64,10 @@ test.describe("Table View Label Autocomplete", () => {
     await page.goto("/table");
 
     const rows = page.getByTestId("entity-table-row");
-    await expect(rows).toHaveCount(2);
+    await expect(rows).toHaveCount(2, { timeout: 10000 });
 
     const searchInput = page.getByTestId("entity-table-search");
+    await expect(searchInput).toBeVisible();
     await searchInput.click();
     await searchInput.pressSequentially("#");
 

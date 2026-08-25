@@ -1,103 +1,23 @@
 import { test, expect, type Page } from "@playwright/test";
+import { setupVaultPage, seedEntity } from "./test-helpers";
 
-/**
- * Programmatic node click for high reliability in E2E tests.
- * Standard mouse clicks on Canvas elements are often flaky due to
- * DPI scaling, scroll positions, or animation timing.
- */
-const clickNodeProgrammatically = async (page: Page, label: string) => {
-  await page.waitForFunction(
-    (label: string) => {
-      const cy = (window as any).cy;
-      if (!cy) return false;
-      const node = cy.nodes().filter((n: any) => n.data("label") === label);
-      return node.length > 0;
-    },
-    label,
-    { timeout: 15000 },
-  );
-
-  await page.evaluate((label) => {
-    const cy = (window as any).cy;
-    const node = cy
-      .nodes()
-      .filter((n: any) => n.data("label") === label)
-      .first();
-    // Programmatically trigger selection and click events
-    cy.nodes().unselect();
-    node.select();
-    node.trigger("tap");
-    node.trigger("click");
-  }, label);
-
-  // Check if detail panel appeared
-  await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
-    timeout: 10000,
-  });
+const openEntityForTest = async (page: Page, id = "test-event") => {
+  await page.evaluate((entityId) => {
+    const vault = (window as any).vault;
+    if (vault) vault.selectedEntityId = entityId;
+  }, id);
 };
 
 test.describe("Campaign Date Picker E2E", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      // The date picker is opened from entity controls that live behind
-      // Guided Mode, which is on by default.
-      localStorage.setItem("codex_guided_mode_active", "false");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).DISABLE_ERROR_OVERLAY = true;
-      (window as any).showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: async function* () {},
-        entries: async function* () {},
-        getDirectoryHandle: async () => ({
-          kind: "directory",
-          entries: async function* () {},
-          getFileHandle: async () => ({
-            kind: "file",
-            createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
-            }),
-          }),
-        }),
-      });
-    });
+    await setupVaultPage(page);
 
-    await page.goto("/");
-
-    // Wait for core system to be ready
-    await page.waitForFunction(
-      () =>
-        (window as any).uiStore !== undefined &&
-        (window as any).vault !== undefined &&
-        (window as any).vault.status === "idle",
-      { timeout: 15000 },
-    );
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
-
-    // Setup: Create a test entity
-    await page.evaluate(() =>
-      (window as any).modalUIStore.requestCreateEntity(),
-    );
-    await page.getByPlaceholder(/Title\.\.\./).fill("Test Event");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Ensure node is in graph
-    await page.waitForFunction(() => {
-      const cy = (window as any).cy;
-      return cy && cy.nodes().length >= 1;
+    // Setup: Create a test entity reliably
+    await seedEntity(page, {
+      id: "test-event",
+      title: "Test Event",
+      type: "event",
+      select: true,
     });
   });
 
@@ -125,7 +45,7 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Zen Mode for the entity
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
@@ -178,7 +98,7 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Zen Mode and Date Picker
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
@@ -219,7 +139,7 @@ test.describe("Campaign Date Picker E2E", () => {
   test("should allow selecting years via scroll wheel listbox", async ({
     page,
   }) => {
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
@@ -254,7 +174,7 @@ test.describe("Campaign Date Picker E2E", () => {
   test("should allow manual year entry via keyboard toggle", async ({
     page,
   }) => {
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")

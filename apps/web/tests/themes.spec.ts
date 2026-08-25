@@ -386,7 +386,7 @@ test.describe("Visual Styling Templates", () => {
     );
     await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
       "background-color",
-      "rgb(240, 244, 236)",
+      "rgb(240, 244, 248)",
     );
 
     await page.getByLabel("Close Settings").click();

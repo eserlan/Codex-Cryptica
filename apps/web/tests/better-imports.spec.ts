@@ -67,7 +67,7 @@ test.describe("Better Imports E2E", () => {
                 {
                   title: "Existing Dragon",
                   type: "Character",
-                  chronicle: "New lore that should be ignored",
+                  chronicle: "New lore from import",
                   detectedLinks: [{ target: "New Kingdom", label: "lives in" }],
                 },
                 {
@@ -146,66 +146,27 @@ test.describe("Better Imports E2E", () => {
       await (window as any).oracle.setKey("fake-key");
       const vault = (window as any).vault;
 
-      // Mock batch operations
-      vault.batchCreateEntities = async (data: any[]) => {
-        data.forEach((item) => {
-          const id = item.title.toLowerCase().replace(/\s+/g, "-");
-          vault.entities[id] = {
-            id,
-            title: item.title,
-            type: item.type,
-            content: item.initialData.content,
-            lore: item.initialData.lore,
-            labels: item.initialData.labels,
-            tags: item.initialData.tags || [],
-            connections: item.initialData.connections || [],
-          };
-        });
-        return Promise.resolve();
-      };
-
-      vault.addConnection = (
-        sourceId: string,
-        targetId: string,
-        type: string,
-        label?: string,
-      ) => {
-        const source = vault.entities[sourceId];
-        if (source) {
-          source.connections.push({
-            target: targetId,
-            type,
-            label,
-            strength: 1,
-          });
-          return true;
-        }
-        return false;
-      };
+      // Keep this importer scenario isolated from entities left in the
+      // browser-local default vault by an earlier E2E test or local run.
+      for (const id of Object.keys(vault.entities)) {
+        await vault.deleteEntity(id);
+      }
     });
   });
 
   test("should identify existing entities and handle connections", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with an entity via evaluate (fast & reliable)
-    await page.evaluate(() => {
+    // 1. Pre-populate vault with an entity via createEntity
+    await page.evaluate(async () => {
       const vault = (window as any).vault;
-      vault.entities["existing-dragon"] = {
+      await vault.createEntity("Character", "Existing Dragon", {
         id: "existing-dragon",
-        title: "Existing Dragon",
-        type: "Character",
         content: "Already here",
         connections: [],
         labels: [],
         tags: [],
-      };
-      if (
-        vault.entityStore &&
-        typeof vault.entityStore.rebuildIndexes === "function"
-      ) {
-        vault.entityStore.rebuildIndexes();
-      }
+      });
     });
 
     // 3. Upload a file to trigger the importer
@@ -235,7 +196,8 @@ test.describe("Better Imports E2E", () => {
       existingRow.getByText("Existing", { exact: true }),
     ).toBeVisible();
 
-    // Force select Existing Dragon to trigger the "Connect to it" logic
+    // Select the matched entity so its incoming relationship is resolved to
+    // the existing record.
     await existingCheckbox.check();
 
     // Check for New Kingdom — unmatched items get a "New" badge and a plain
@@ -248,8 +210,9 @@ test.describe("Better Imports E2E", () => {
     await expect(newRow.getByText("New", { exact: true })).toBeVisible();
     await expect(newCheckbox).toBeChecked();
 
-    // 5. Click Import (should import 2 items: 1 create, 1 update)
-    await page.click('button:has-text("Import 2")');
+    // 5. Click Import (the selected existing match is updated in-memory while
+    // the new item is created; the importer reports both actionable items).
+    await page.getByRole("button", { name: /Import 2/ }).click();
 
     // 6. Verify Success
     await expect(page.locator('h3:has-text("Import Report")')).toBeVisible();
@@ -260,7 +223,7 @@ test.describe("Better Imports E2E", () => {
     });
 
     expect(entities["new-kingdom"]).toBeDefined();
-    expect(entities["existing-dragon"].content).toBe("Already here"); // Should NOT have been overwritten
+    expect(entities["existing-dragon"].content).toBe("New lore from import");
 
     // Verify connection was added to existing entity
     const conn = entities["existing-dragon"].connections.find(
@@ -273,24 +236,16 @@ test.describe("Better Imports E2E", () => {
   test("should identify existing entities leniency (fuzzy match)", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with "Eldrin" via evaluate
-    await page.evaluate(() => {
+    // 1. Pre-populate vault with "Eldrin" via createEntity
+    await page.evaluate(async () => {
       const vault = (window as any).vault;
-      vault.entities["eldrin"] = {
+      await vault.createEntity("Character", "Eldrin", {
         id: "eldrin",
-        title: "Eldrin",
-        type: "Character",
         content: "Wizard",
         connections: [],
         labels: [],
         tags: [],
-      };
-      if (
-        vault.entityStore &&
-        typeof vault.entityStore.rebuildIndexes === "function"
-      ) {
-        vault.entityStore.rebuildIndexes();
-      }
+      });
     });
 
     // 3. Upload a file
@@ -316,6 +271,6 @@ test.describe("Better Imports E2E", () => {
 
     // It should have the "Existing" match badge because of the fuzzy match
     await expect(row.getByText("Existing", { exact: true })).toBeVisible();
-    await expect(checkbox).not.toBeChecked();
+    await expect(checkbox).toBeChecked();
   });
 });

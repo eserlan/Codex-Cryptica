@@ -100,4 +100,24 @@ describe("TokenRotationHandler", () => {
     handler.end();
     expect(deps.confirmTokenRotation).toHaveBeenCalledWith("token-1");
   });
+
+  it("snaps drag rotation to the nearest 45-degree step by default", () => {
+    const handle = getTokenRotationHandlePosition(token);
+    expect(handler.begin(handle)).toBe(true);
+
+    // ~20 degrees from the center, relative to token center (125, 125)
+    expect(handler.move({ x: 159.2, y: 31 })).toBe(true);
+    expect(deps.rotateToken).toHaveBeenCalledWith("token-1", 0);
+  });
+
+  it("allows free rotation while a modifier key is held", () => {
+    const handle = getTokenRotationHandlePosition(token);
+    expect(handler.begin(handle)).toBe(true);
+
+    handler.move({ x: 159.2, y: 31 }, true);
+    expect(deps.rotateToken).toHaveBeenCalledWith(
+      "token-1",
+      expect.closeTo(20, 0),
+    );
+  });
 });

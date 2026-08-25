@@ -1,22 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Spatial Canvas", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject global flag BEFORE goto so +layout.svelte sees it immediately
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
+    await setupVaultPage(page);
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
 
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
     await expect(page.locator(".svelte-flow")).toBeVisible({
       timeout: 15000,
     });

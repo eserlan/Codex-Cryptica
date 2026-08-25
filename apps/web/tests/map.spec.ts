@@ -18,23 +18,23 @@ test.describe("Map Mode", () => {
     // Start with a clean demo
     await page.goto("/?demo=fantasy");
 
-    // Wait for vault initialization
+    // Wait for both vault initialization and asynchronous demo loading.
     await page.waitForFunction(
-      () => (window as any).vault?.isInitialized === true,
-      { timeout: 20000 },
+      () => {
+        const vault = (window as any).vault;
+        return (
+          vault?.isInitialized === true &&
+          (vault.demoVaultName === "Fantasy Demo" ||
+            (vault.allEntities?.length ?? 0) > 0)
+        );
+      },
+      { timeout: 30000 },
     );
 
-    // Navigate to Map Mode via client-side routing to preserve the OPFS in-memory state
-    await page.evaluate(() => {
-      // Find any link to /map and click it to trigger SvelteKit's router
-      const mapLink = document.querySelector('a[href$="/map"]') as HTMLElement;
-      if (mapLink) {
-        mapLink.click();
-      }
-    });
-    // Wait for the URL to change
-    await page.waitForTimeout(500); // Give router a moment
-    await page.waitForURL("**/map", { timeout: 10000 });
+    // Enter Map Mode directly after the demo has populated the local vault.
+    // This avoids depending on the front-page overlay's activity-bar state.
+    await page.goto("/map");
+    await expect(page).toHaveURL(/\/map$/);
   });
 
   test("should allow uploading a map image and rendering it", async ({
@@ -120,18 +120,10 @@ test.describe("Map Mode", () => {
     await expect(page.getByText("WORLD MAP")).toBeVisible();
     await expect(page.locator("select")).toContainText("★ Fallback Map");
 
-    // 4. Reload page and navigate back to /map (use evaluated router click to keep demo state)
-    await page.evaluate(() => {
-      const homeLink = document.querySelector('a[href="/"]') as HTMLElement;
-      if (homeLink) homeLink.click();
-    });
-    await page.waitForURL("**/", { timeout: 10000 });
-
-    await page.evaluate(() => {
-      const mapLink = document.querySelector('a[href$="/map"]') as HTMLElement;
-      if (mapLink) mapLink.click();
-    });
-    await page.waitForURL("**/map", { timeout: 10000 });
+    // 4. Reload the map route directly; the front-page overlay does not
+    // render the activity bar while the demo is booting.
+    await page.goto("/map");
+    await expect(page).toHaveURL(/\/map$/);
 
     // 5. Verify it auto-loaded the tagged map
     await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
@@ -187,15 +179,30 @@ test.describe("Map Mode", () => {
     await page.waitForFunction(
       () =>
         (window as any).vault?.status === "idle" &&
+        !!(window as any).vault?.activeVaultId &&
         typeof (window as any).uiStore?.openZenMode === "function",
       { timeout: 20000 },
     );
+    // Let the initial vault/index reconciliation settle before mutating the
+    // freshly loaded default vault; otherwise the late load can overwrite the
+    // just-created entity.
+    await page.waitForTimeout(1000);
 
     // Create an entity and open Zen Mode directly on its map tab
     const entityId = await page.evaluate(
       async () =>
         await (window as any).vault.createEntity("character", "Map Hero", {}),
     );
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            (id) => !!(window as any).vault.entities?.[id],
+            entityId,
+          ),
+        { timeout: 15000 },
+      )
+      .toBe(true);
     await page.evaluate(
       (id) => (window as any).uiStore.openZenMode(id, "map"),
       entityId,
@@ -206,6 +213,17 @@ test.describe("Map Mode", () => {
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible({
       timeout: 15000,
     });
+
+    // Opening Zen Mode can initially render its default tab while the
+    // requested tab state propagates through the modal store.
+    await expect(
+      page.getByRole("tablist", { name: "Entity Sections" }),
+    ).toBeVisible({
+      timeout: 15000,
+    });
+    const mapTab = page.getByRole("tab", { name: /^MAP$/i });
+    await expect(mapTab).toBeVisible({ timeout: 10000 });
+    await mapTab.click();
 
     const uploadLabel = page.getByText("No map attached");
     await expect(uploadLabel).toBeVisible({ timeout: 15000 });
@@ -397,6 +415,13 @@ test.describe("Map Mode", () => {
 
 async function ensureTestMap(page: Page) {
   const noMapText = page.getByText("No active map");
+  const canvas = page.locator("canvas");
+
+  // The map route renders asynchronously after the fresh navigation. Wait
+  // until either its empty state or an existing map surface is available
+  // before deciding whether setup needs to upload a fallback map.
+  await expect(canvas.or(noMapText)).toBeVisible({ timeout: 20000 });
+
   if (await noMapText.isVisible()) {
     const testImagePath = path.join(process.cwd(), "static/favicon.png");
     await page.click('button:has-text("Upload World Image")');
@@ -406,8 +431,9 @@ async function ensureTestMap(page: Page) {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(testImagePath);
     await page.getByRole("button", { name: "Upload", exact: true }).click();
+    await expect(noMapText).not.toBeVisible({ timeout: 20000 });
   }
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  await expect(canvas).toBeVisible({ timeout: 20000 });
   await expect(page.getByTestId("shared-mode-toggle")).toBeVisible({
     timeout: 10000,
   });

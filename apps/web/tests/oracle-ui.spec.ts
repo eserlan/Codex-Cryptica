@@ -1,34 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle } from "./test-helpers";
 
 test.describe("Oracle UI - Elastic Input", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-    });
-    await page.goto("/");
-
-    // Ensure Oracle is initialized
-    await page.waitForFunction(
-      () => {
-        const oracle = (window as any).oracle;
-        return oracle && oracle.isInitialized;
-      },
-      { timeout: 15000 },
-    );
+    await setupVaultPage(page);
   });
 
   test("should expand textarea when typing multi-line text and reset on submit", async ({
     page,
   }) => {
     // Open Oracle Window
-    const toggleBtn = page.getByTestId("activity-bar-oracle");
-    await expect(toggleBtn).toBeVisible();
-    await toggleBtn.click();
+    await openOracle(page);
 
     const sidebar = page.getByTestId("oracle-sidebar-panel");
     await expect(sidebar).toBeVisible({ timeout: 15000 });

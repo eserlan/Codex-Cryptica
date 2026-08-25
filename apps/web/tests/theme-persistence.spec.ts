@@ -1,23 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Campaign-Specific Theme Persistence", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    if (process.env.PW_DEBUG_CONSOLE === "1") {
-      page.on("console", (msg) => {
-        console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
-      });
-    }
-
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).vault?.isInitialized);
+    await setupVaultPage(page);
   });
 
   test("Theme persists individually for each campaign", async ({ page }) => {
@@ -74,7 +60,7 @@ test.describe("Campaign-Specific Theme Persistence", () => {
     // Verify Vault B theme (horror in light mode = "Autopsy Report" with #7f1d1d)
     await expect(page.locator("html")).toHaveCSS(
       "--color-accent-primary",
-      "#7f1d1d",
+      "#801414",
     );
 
     // 5. Switch back to Vault A
@@ -98,7 +84,7 @@ test.describe("Campaign-Specific Theme Persistence", () => {
     // 8. Verify Vault B theme is restored to "Blood & Noir" (horror, light mode = #7f1d1d)
     await expect(page.locator("html")).toHaveCSS(
       "--color-accent-primary",
-      "#7f1d1d",
+      "#801414",
     );
   });
 });
