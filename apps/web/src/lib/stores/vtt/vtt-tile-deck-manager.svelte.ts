@@ -21,6 +21,17 @@ export interface VTTTileDeckManagerDependencies {
     size: { width: number; height: number },
   ) => { x: number; y: number; width: number; height: number };
   getActiveLayer: () => MapLayer;
+  setActiveLayer: (layer: MapLayer) => void;
+}
+
+/**
+ * Geomorphs and full room/wall tiles are always map terrain, never furniture
+ * or a token — so placing one switches the active layer instead of dropping
+ * it wherever the user last had selected.
+ */
+function isTerrainTileCategory(category?: string): boolean {
+  if (!category) return false;
+  return category === "Rooms & walls" || category.startsWith("Geomorphs");
 }
 
 export class VTTTileDeckManager {
@@ -233,7 +244,13 @@ export class VTTTileDeckManager {
     const deck = this.decks.find((candidate) => candidate.id === deckId);
     if (!deck) return null;
 
-    const targetLayer = this.deps.getActiveLayer();
+    const activeLayer = this.deps.getActiveLayer();
+    const targetLayer = isTerrainTileCategory(tile.category)
+      ? "terrain"
+      : activeLayer;
+    if (targetLayer !== activeLayer) {
+      this.deps.setActiveLayer(targetLayer);
+    }
     const sameLayerTokens = Object.values(this.deps.getTokens()).filter(
       (token) => token.layer === targetLayer,
     );
@@ -251,6 +268,7 @@ export class VTTTileDeckManager {
         color: "#64748b",
         zIndex: nextZIndexInLayer(sameLayerTokens),
         kind: "tile",
+        layer: targetLayer,
         tileDeckId: deck.id,
         tileDetails: {
           description: "",

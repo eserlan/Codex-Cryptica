@@ -60,7 +60,7 @@ binding = "AI"
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "codex-cryptica-statics"
-preview_bucket_name = "codex-cryptica-statics-local"
+remote = true
 
 [[ratelimits]]
 name = "PUBLISH_CREATE_RATE_LIMITER"
