@@ -236,7 +236,9 @@
   });
   let encounter = $state({
     genre: factionConfig.themes[0],
-    encounterType: encounterConfig.encounterTypes[0],
+    encounterType:
+      encounterConfig.encounterTypes.find((t) => t !== "Random") ??
+      encounterConfig.encounterTypes[0],
     environment: encounterConfig.environments[0],
     threat: encounterConfig.threats[0],
     tone: encounterConfig.tones[0],

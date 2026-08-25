@@ -215,7 +215,7 @@ export function buildEncounterPrompt(
 ): EncounterPrompt {
   const resolved = resolveEncounter(options, rng);
 
-  const userMessage = `Generate a playable RPG encounter in JSON format. The result should feel like a small playable situation the players can interact with -- not just a list of enemies to fight. Results are not limited to combat: include meaningful alternatives such as negotiation, stealth, trickery, retreat, or investigation where appropriate for the encounter type.
+  const userMessage = `Generate a playable RPG encounter in JSON format. The result should feel like a small playable situation the players can interact with -- not just a list of enemies to fight. Results are not limited to combat: include meaningful alternatives such as negotiation, stealth, trickery, retreat, or investigation where appropriate for the encounter type. Be economical: state each fact (the situation, a motive, a stake) once, in the section it belongs to, and do not restate it elsewhere.
 Options:
 - Genre: ${resolved.genre}
 - Encounter Type: ${resolved.encounterType}
@@ -228,13 +228,19 @@ ${formatCampaignContextBlock(resolved.campaignContext)}
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative encounter name (3-6 words)",
-  "content": "A player-facing description (markdown formatted) under the heading '### What the Players See' -- concise prose suitable for reading or paraphrasing at the table describing the immediate situation as the players would perceive it.",
-  "lore": "GM-only details (markdown formatted) with these sections in this order: '### At a Glance' (a bullet list with '**Encounter Type**', '**Location**', '**Threat**', '**Participants**' (one line summarizing who/what is involved), and '**Immediate Situation**', each a single vivid sentence), '### What Is Happening' (the underlying situation, motives, and context the players don't yet see), '### Goals & Stakes' (what each side wants and what happens if nobody intervenes), '### Participants' (a bullet list of the NPCs, creatures, factions, or other actors involved, each with a motivation and behavior), '### Environment' (terrain, hazards, cover, obstacles, or unusual features that can materially affect play), '### Possible Approaches' (a bullet list of at least three distinct viable approaches -- e.g. negotiation, stealth, trickery, retreat, investigation, intervention, or combat -- illustrating affordances rather than prescribing a solution), '### Complication / Twist' (something that changes or deepens the encounter), '### Outcomes & Consequences' (a bullet list covering likely developments from success, failure, avoidance, and escalation), '### Rewards / Discoveries' (loot, clues, information, relationships, or follow-up hooks).",
+  "summary": "One vivid standalone sentence naming the encounter type, environment, threat, and tone (e.g. 'A dangerous social encounter unfolds in a market town, carrying a tense atmosphere.') -- do not describe the generator or document structure.",
+  "content": "A strictly player-facing description (markdown formatted) under the heading '### What the Players See' -- 2-4 sentences of prose suitable for reading aloud at the table. Include only what the players can directly observe or already know at first glance: sights, sounds, and the immediate situation. Never reveal hidden identities, private motives, underlying causes, game mechanics, or the twist -- those belong only in the GM-only lore below.",
+  "glance": {
+    "participants": "A short noun phrase (under 8 words) naming who/what is involved -- e.g. 'Two rival vault wardens' -- not a sentence and not the full motive from the Participants section.",
+    "immediateSituation": "One short, vivid sentence stating what is happening right now, for a scannable sidebar -- terser than, and not a copy of, the player-facing content.",
+    "hazardOrStakes": "A short phrase (under 8 words) naming the single most important hazard or thing at stake -- e.g. 'Vault reseals if unresolved'."
+  },
+  "lore": "GM-only details (markdown formatted). Do not include an '### At a Glance' section -- that is generated separately from the glance fields above and must not be duplicated. Use exactly these sections, in this order, each kept as short as possible without losing the one or two specifics that make this encounter distinct: '### Situation & Stakes' (2-3 sentences: what is actually happening beneath the surface, why, and what happens if nobody intervenes -- do not restate the player-facing description), '### Participants' (a bullet list of the NPCs, creatures, factions, or other actors involved, each a single line naming who they are and what they want), '### Environment' (1 sentence on terrain, hazards, cover, or features that materially affect play, beyond just naming the location), '### Possible Approaches' (a bullet list of at least three distinct exploitable opportunities this specific encounter offers -- e.g. a weak point, a divided loyalty, an overlooked exit, a bribable contact -- each named as WHAT can be exploited, not a step-by-step method, exact plan, or puzzle solution for exploiting it), '### Complication / Twist' (1 sentence: something that changes or deepens the encounter once the party commits to a course of action), '### Outcomes & Consequences' (a bullet list covering success, failure, avoidance, and escalation; the success bullet must fold in a concrete, proportionate reward or discovery tied to what the participants were protecting or pursuing, so no separate rewards section is needed).",
   "labels": ["encounter", "encounter-generator", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
 ${sessionContext}
-Before returning, run a consistency pass: the threat level must match the collective danger actually described among the listed participants; the complication must genuinely complicate the stated goals/stakes rather than being cosmetic; each possible approach must be a viable, specific response to the actual participants and complication (not generic filler that would fit any encounter); the outcomes must correspond to the approaches actually described (success, failure, avoidance, and escalation); and the rewards must fit the objective and participants.
+Before returning, run a consistency pass: the threat level must match the collective danger actually described among the listed participants; the complication must genuinely complicate the stated stakes rather than being cosmetic; each possible approach must be a specific, exploitable feature of this encounter, described as an opportunity rather than a solved puzzle (not generic filler that would fit any encounter); the outcomes must correspond to the approaches actually described; the player-facing content must contain zero information that is only revealed in the lore; the glance fields must be short and scannable, not prose duplicates of the lore sections; and no fact may be repeated across two sections.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   return {
@@ -245,25 +251,110 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+interface EncounterGlance {
+  participants?: string;
+  immediateSituation?: string;
+  hazardOrStakes?: string;
+}
+
+function buildAtAGlance(
+  encounter: ResolvedEncounter,
+  glance: EncounterGlance = {},
+): string {
+  const lines = [
+    `- **Type:** ${encounter.encounterType}`,
+    `- **Threat:** ${encounter.threat}`,
+    `- **Location:** ${encounter.environment}`,
+    `- **Tone:** ${encounter.tone}`,
+  ];
+  if (glance.participants)
+    lines.push(`- **Participants:** ${glance.participants}`);
+  if (glance.immediateSituation)
+    lines.push(`- **Immediate Situation:** ${glance.immediateSituation}`);
+  if (glance.hazardOrStakes)
+    lines.push(`- **Key Stakes:** ${glance.hazardOrStakes}`);
+  return `### At a Glance\n${lines.join("\n")}`;
+}
+
 export function parseEncounterResponse(
   text: string,
   resolved: ResolvedEncounter,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  const rawGlance =
+    data.glance && typeof data.glance === "object"
+      ? (data.glance as Record<string, unknown>)
+      : {};
+  const glance: EncounterGlance = {
+    participants:
+      typeof rawGlance.participants === "string"
+        ? rawGlance.participants
+        : undefined,
+    immediateSituation:
+      typeof rawGlance.immediateSituation === "string"
+        ? rawGlance.immediateSituation
+        : undefined,
+    hazardOrStakes:
+      typeof rawGlance.hazardOrStakes === "string"
+        ? rawGlance.hazardOrStakes
+        : undefined,
+  };
+  const lore = data.lore
+    ? `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`
+    : "";
   return {
     type: "event",
     title: data.title || resolved.encounterName,
-    summary: data.summary || "",
+    summary: data.summary || encounterSummary(resolved),
     content: data.content || "",
-    lore: data.lore || "",
-    labels: Array.isArray(data.labels)
-      ? data.labels
-      : ["encounter", "encounter-generator", "imported-draft"],
+    lore,
+    labels: encounterLabels(
+      resolved,
+      Array.isArray(data.labels)
+        ? data.labels
+        : ["encounter", "encounter-generator", "imported-draft"],
+    ),
     status: "active",
   };
 }
 
-const PARTICIPANTS_BY_TYPE: Record<string, string[]> = {
+// Observable-only phrasing, safe for the strictly player-facing "What the
+// Players See" content -- no hidden motives, causes, or twists.
+const PARTICIPANT_VISUALS: Record<string, string[]> = {
+  Combat: [
+    "a coordinated band of armed figures with one clearly in charge",
+    "a lone, dangerous creature flanked by smaller pack members",
+    "an armed patrol moving with practiced discipline",
+  ],
+  Social: [
+    "a small group of locals, visibly tense with one another",
+    "a single well-dressed figure flanked by wary attendants",
+    "two groups of representatives eyeing each other warily",
+  ],
+  Exploration: [
+    "fresh signs that someone passed through here recently",
+    "a lone figure who seems to know the area well",
+    "territorial creatures watching from a distance",
+  ],
+  Environmental: [
+    "no one in sight -- just the hazard itself",
+    "a handful of locals already struggling against the hazard",
+    "displaced creatures behaving strangely aggressive",
+  ],
+  Mixed: [
+    "a visibly hostile group, tense but not yet violent",
+    "a patrol that seems unaware of something else nearby",
+    "a group that starts hostile but hesitates when challenged",
+  ],
+  Random: [
+    "a small band whose intentions aren't yet clear",
+    "a single notable figure with several followers",
+    "a group whose behavior doesn't fully add up",
+  ],
+};
+
+// GM-only framing, used in the lore's Participants section.
+const PARTICIPANT_MOTIVES: Record<string, string[]> = {
   Combat: [
     "a coordinated band of hostile creatures led by a clearly more capable leader",
     "a lone, dangerous predator supported by smaller pack members",
@@ -296,80 +387,113 @@ const PARTICIPANTS_BY_TYPE: Record<string, string[]> = {
   ],
 };
 
+const PARTICIPANT_GOALS: Record<string, string> = {
+  Combat: "hold this ground or eliminate the threat blocking their objective",
+  Social: "come out ahead in whatever is being negotiated here",
+  Exploration: "control the flow of information about what lies ahead",
+  Environmental: "survive or exploit what the hazard has already caused",
+  Mixed: "further a goal the surface conflict is only masking",
+  Random: "get what they came for before anyone stops them",
+};
+
+const STAKES_BY_TYPE: Record<string, string> = {
+  Combat: "Losing costs ground or lives",
+  Social: "Losing costs leverage or trust",
+  Exploration: "Delay costs the safer path",
+  Environmental: "The hazard worsens if ignored",
+  Mixed: "The hidden goal advances unchecked",
+  Random: "Inaction lets the situation worsen",
+};
+
+const APPROACHES_BY_TYPE: Record<string, string[]> = {
+  Combat: [
+    "the terrain, which offers cover or a chokepoint to whoever claims it first",
+    "an opening for a truce or fighting withdrawal before violence escalates further",
+    "a weaker or isolated target among the group, if the party can identify one",
+  ],
+  Social: [
+    "something each side actually wants, which could be traded for cooperation",
+    "a discrepancy in what's being said, worth investigating quietly before committing",
+    "the option to simply walk away and let the situation resolve on its own",
+  ],
+  Exploration: [
+    "a safer vantage point to observe from before engaging directly",
+    "signs pointing to a way around the danger rather than through it",
+    "the option to retreat and return once the stakes are clearer",
+  ],
+  Environmental: [
+    "a route around the hazard that costs time rather than risk",
+    "trapped or struggling locals whose rescue could pay off later",
+    "a way to brave the hazard directly, at real risk, to reach what lies beyond",
+  ],
+  Mixed: [
+    "the most visible threat, which may not be the real problem",
+    "a goal beneath the surface conflict that neither side has stated outright",
+    "the friction between the separate threats, which could be turned to the party's advantage",
+  ],
+  Random: [
+    "a direct confrontation, if the party is willing to accept the risk",
+    "unresolved questions worth investigating before acting",
+    "the option to withdraw and address this on the party's own terms",
+  ],
+};
+
 function article(word: string): string {
   return /^[aeiou]/i.test(word) ? "an" : "a";
+}
+
+function slugify(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function encounterSummary(encounter: ResolvedEncounter): string {
+  return `${article(encounter.threat)} ${encounter.threat.toLowerCase()} ${encounter.encounterType.toLowerCase()} encounter unfolds in ${article(encounter.environment)} ${encounter.environment.toLowerCase()}, carrying a ${encounter.tone.toLowerCase()} atmosphere.`.replace(
+    /^./,
+    (c) => c.toUpperCase(),
+  );
+}
+
+function encounterLabels(
+  encounter: ResolvedEncounter,
+  base: string[] = ["encounter", "encounter-generator", "imported-draft"],
+): string[] {
+  const labels = [...base];
+  const derived = [slugify(encounter.encounterType), slugify(encounter.genre)];
+  for (const label of derived) if (!labels.includes(label)) labels.push(label);
+  return labels;
 }
 
 function renderResolvedEncounter(
   encounter: ResolvedEncounter,
   rng: Rng,
 ): PublicGeneratorOutput {
-  const typeKey = PARTICIPANTS_BY_TYPE[encounter.encounterType]
+  const typeKey = PARTICIPANT_MOTIVES[encounter.encounterType]
     ? encounter.encounterType
     : "Random";
-  const participants = pickFrom(PARTICIPANTS_BY_TYPE[typeKey], rng);
-  const situation =
-    `${article(encounter.threat)} ${encounter.threat.toLowerCase()} ${encounter.encounterType.toLowerCase()} encounter unfolds in ${article(encounter.environment)} ${encounter.environment.toLowerCase()}, carrying a ${encounter.tone.toLowerCase()} atmosphere.`.replace(
-      /^./,
-      (c) => c.toUpperCase(),
-    );
-
-  const approachesByType: Record<string, string[]> = {
-    Combat: [
-      "Fight directly, accepting the risk the threat level implies.",
-      "Negotiate a withdrawal or truce before violence becomes unavoidable.",
-      "Use the environment to gain an advantage or avoid a fair fight entirely.",
-    ],
-    Social: [
-      "Negotiate openly, offering something each side actually wants.",
-      "Investigate quietly first to learn who is lying before committing to a side.",
-      "Walk away and let the situation resolve without the party's involvement.",
-    ],
-    Exploration: [
-      "Press forward and investigate directly, accepting the risk of discovery.",
-      "Observe from a distance before deciding whether to engage at all.",
-      "Retreat and return better prepared once the stakes are clearer.",
-    ],
-    Environmental: [
-      "Brave the hazard directly to reach what lies beyond it.",
-      "Find or improvise a way around it that costs time instead of danger.",
-      "Help those already caught by it, at the cost of the party's own safety margin.",
-    ],
-    Mixed: [
-      "Engage the most visible threat head-on.",
-      "Look for the actual goal beneath the surface conflict and address that instead.",
-      "Play the separate threats against each other rather than facing either alone.",
-    ],
-    Random: [
-      "Confront the situation directly.",
-      "Investigate before committing to any action.",
-      "Withdraw and address it on the party's own terms later.",
-    ],
-  };
-  const approaches = approachesByType[typeKey];
+  const visualParticipants = pickFrom(PARTICIPANT_VISUALS[typeKey], rng);
+  const motiveParticipants = pickFrom(PARTICIPANT_MOTIVES[typeKey], rng);
+  const situation = encounterSummary(encounter);
+  const approaches = APPROACHES_BY_TYPE[typeKey];
 
   const content = `### What the Players See
 ${situation} ${
     typeKey === "Environmental"
       ? "The danger here is the place itself, not any single opponent."
-      : `Those present are ${participants}.`
+      : `Those present are ${visualParticipants}.`
   }`;
 
-  const lore = `### At a Glance
-- **Encounter Type**: ${encounter.encounterType}
-- **Location**: ${encounter.environment}
-- **Threat**: ${encounter.threat}
-- **Participants**: ${participants.charAt(0).toUpperCase() + participants.slice(1)}
-- **Immediate Situation**: ${situation}
+  const lore = `${buildAtAGlance(encounter, {
+    participants:
+      visualParticipants.charAt(0).toUpperCase() + visualParticipants.slice(1),
+    immediateSituation: situation,
+    hazardOrStakes: STAKES_BY_TYPE[typeKey],
+  })}
 
-### What Is Happening
-${situation} Beneath the surface, ${participants} act from a motive the players have not yet been given a reason to trust or distrust.${encounter.campaignContext ? ` This ties into ${encounter.campaignContext} -- the participants' motives and stakes should reflect existing tensions or unresolved threads.` : ""}
-
-### Goals & Stakes
-Whoever or whatever is present here wants the situation to resolve on their own terms; left uninterrupted, it will escalate in a direction that costs someone in the scene something they cannot easily recover.
+### Situation & Stakes
+${situation} Left unaddressed, it will escalate in a way that costs someone here something they cannot easily recover.${encounter.campaignContext ? ` This ties into ${encounter.campaignContext}.` : ""}
 
 ### Participants
-- ${participants.charAt(0).toUpperCase() + participants.slice(1)}, acting on a motive tied to the ${encounter.environment.toLowerCase()} and the encounter's underlying cause.
+- ${motiveParticipants.charAt(0).toUpperCase() + motiveParticipants.slice(1)}, trying to ${PARTICIPANT_GOALS[typeKey]}.
 
 ### Environment
 The ${encounter.environment.toLowerCase()} shapes what is possible here -- offering cover, obstacles, or hazards that a careful party can turn to its advantage, and that a careless one will suffer for ignoring.
@@ -378,24 +502,21 @@ The ${encounter.environment.toLowerCase()} shapes what is possible here -- offer
 ${approaches.map((a) => `- ${a}`).join("\n")}
 
 ### Complication / Twist
-Something about this situation is not what it first appears -- the true cause, a hidden participant, or a consequence the party has not yet considered will surface once they commit to a course of action.
+Something about this situation is not what it first appears -- the true cause, a hidden participant, or an overlooked consequence surfaces once the party commits to a course of action.
 
 ### Outcomes & Consequences
-- **Success**: The immediate danger is resolved and the party gains standing or information they can use later.
+- **Success**: The immediate danger is resolved, and the party gains a proportionate reward -- information, an item, standing, or a favor -- tied to what the participants were protecting or pursuing.
 - **Failure**: The situation escalates, and whatever the participants wanted proceeds unopposed.
-- **Avoidance**: The encounter resolves without the party, for better or worse, and its consequences unfold off-screen.
-- **Escalation**: Delay or a poorly chosen approach draws in further complications tied to the encounter's underlying cause.
-
-### Rewards / Discoveries
-A tangible gain -- information, an item, a favor, or a relationship -- proportionate to the threat level and directly tied to what the participants were protecting, pursuing, or hiding.`;
+- **Avoidance**: The encounter resolves without the party, for better or worse, off-screen.
+- **Escalation**: A poorly chosen approach or delay draws in further complications tied to the encounter's underlying cause.`;
 
   return {
     type: "event",
     title: encounter.encounterName,
-    summary: "",
+    summary: situation,
     content,
     lore,
-    labels: ["encounter", "encounter-generator", "imported-draft"],
+    labels: encounterLabels(encounter),
     status: "active",
   };
 }

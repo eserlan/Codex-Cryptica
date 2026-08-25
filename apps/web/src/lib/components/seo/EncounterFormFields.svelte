@@ -6,9 +6,13 @@
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
+  const encounterTypeChoices = encounterConfig.encounterTypes.filter(
+    (t) => t !== "Random",
+  );
+
   let {
     theme = $bindable(factionConfig.themes[0]),
-    encounterType = $bindable(encounterConfig.encounterTypes[0]),
+    encounterType = $bindable(encounterTypeChoices[0]),
     environment = $bindable(encounterConfig.environments[0]),
     threat = $bindable(encounterConfig.threats[0]),
     tone = $bindable(encounterConfig.tones[0]),
@@ -58,7 +62,7 @@
   id="encounter-type-select"
   label="Encounter Type"
   bind:value={encounterType}
-  choices={encounterConfig.encounterTypes.map((t: string) => ({
+  choices={encounterTypeChoices.map((t: string) => ({
     value: t,
     label: t,
   }))}
@@ -108,7 +112,7 @@
   <button
     type="button"
     onclick={() => {
-      encounterType = pickFrom(encounterConfig.encounterTypes);
+      encounterType = pickFrom(encounterTypeChoices);
       environment = pickFrom(activeEnvironments);
       threat = pickFrom(encounterConfig.threats);
       tone = pickFrom(encounterConfig.tones);
