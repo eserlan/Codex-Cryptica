@@ -1,34 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle } from "./test-helpers";
 
 test.describe("Oracle Chat Commands", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-    await page.goto("/");
-
-    // Wait for vault to be idle
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
-
-    // Open Oracle Window
-    const toggleBtn = page.getByTestId("activity-bar-oracle");
-    await expect(toggleBtn).toBeVisible();
-    await toggleBtn.click();
-
-    // Wait for the app to initialize
-    await page.waitForFunction(
-      () => {
-        const oracle = (window as any).oracle;
-        return oracle && oracle.isInitialized;
-      },
-      { timeout: 15000 },
-    );
+    await setupVaultPage(page);
+    await openOracle(page);
   });
 
   test("Slash Command Menu discovery", async ({ page }) => {
