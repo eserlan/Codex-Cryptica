@@ -1,4 +1,9 @@
-import { parseWaExport, type ParsedEntity } from "./wa-parser";
+import {
+  parseWaExport,
+  type ParsedAsset,
+  type ParsedEntity,
+  type ParsedRelationship,
+} from "./wa-parser";
 import {
   convertThreadWeaverJsonToCif,
   parseKankaExportZip,
@@ -12,6 +17,8 @@ const KNOWN_ENTITY_TYPES: ParsedEntity["type"][] = [
   "item",
   "event",
   "faction",
+  "quest",
+  "species",
   "note",
 ];
 
@@ -20,6 +27,16 @@ function toKnownType(value: string | undefined): ParsedEntity["type"] {
   return (KNOWN_ENTITY_TYPES as string[]).includes(lower)
     ? (lower as ParsedEntity["type"])
     : "note";
+}
+
+function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, offset + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return `data:${mimeType};base64,${btoa(binary)}`;
 }
 
 // Parses Obsidian vault files (.md)
@@ -102,17 +119,46 @@ export async function parseJsonExport(
         draft.title,
       ]),
     );
-    const referencesByRef = new Map<string, string[]>();
+    const relationshipsByRef = new Map<string, ParsedRelationship[]>();
     for (const relationship of pkg.relationshipDrafts) {
       const targetTitle = titlesByRef.get(relationship.toRef);
       if (!targetTitle) continue;
-      const references = referencesByRef.get(relationship.fromRef) ?? [];
-      references.push(targetTitle);
-      referencesByRef.set(relationship.fromRef, references);
+      const relationships = relationshipsByRef.get(relationship.fromRef) ?? [];
+      relationships.push({
+        title: targetTitle,
+        type: relationship.type,
+        ...(relationship.label ? { label: relationship.label } : {}),
+      });
+      relationshipsByRef.set(relationship.fromRef, relationships);
     }
+
+    const assetsByRef = new Map<string, ParsedAsset[]>();
+    for (const asset of pkg.assetDrafts) {
+      if (!asset.bytes) continue;
+      const bytes =
+        asset.bytes instanceof Blob
+          ? new Uint8Array(await asset.bytes.arrayBuffer())
+          : asset.bytes;
+      const dataUrl = bytesToDataUrl(bytes, asset.mimeType);
+      const assets = assetsByRef.get(asset.placementRef) ?? [];
+      assets.push({
+        originalName: asset.originalName,
+        mimeType: asset.mimeType,
+        dataUrl,
+      });
+      assetsByRef.set(asset.placementRef, assets);
+    }
+
     const parsed = pkg.entityDrafts.map((draft) => {
       const discoverySource = `kanka:${draft.sourceType ?? "note"}:${draft.sourceId}`;
-      const references = referencesByRef.get(discoverySource);
+      const relationships = relationshipsByRef.get(discoverySource);
+      const references = relationships?.map(
+        (relationship) => relationship.title,
+      );
+      const parentReference = draft.parentRef
+        ? titlesByRef.get(draft.parentRef)
+        : undefined;
+      const assets = assetsByRef.get(discoverySource);
       return {
         type: toKnownType(draft.sourceType),
         title: draft.title,
@@ -123,6 +169,9 @@ export async function parseJsonExport(
         ...(references && references.length > 0
           ? { references: [...new Set(references)] }
           : {}),
+        ...(relationships && relationships.length > 0 ? { relationships } : {}),
+        ...(parentReference ? { parentReference } : {}),
+        ...(assets && assets.length > 0 ? { assets } : {}),
       };
     });
     if (parsed.length === 0) {

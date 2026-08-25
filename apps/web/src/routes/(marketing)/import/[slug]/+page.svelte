@@ -31,6 +31,17 @@
       content: string;
       labels: string[];
       references?: string[];
+      relationships?: Array<{
+        title: string;
+        type?: string;
+        label?: string;
+      }>;
+      parentReference?: string;
+      assets?: Array<{
+        originalName: string;
+        mimeType: string;
+        dataUrl: string;
+      }>;
       discoverySource?: string;
       metadata?: Record<string, unknown>;
     }>

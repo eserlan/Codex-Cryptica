@@ -32,6 +32,8 @@ describe("SeoImportService", () => {
       init: vi.fn().mockResolvedValue(undefined),
       switchVault: vi.fn().mockResolvedValue(undefined),
       createEntity: vi.fn().mockResolvedValue("e1"),
+      updateEntity: vi.fn().mockResolvedValue(undefined),
+      saveImageToVault: vi.fn().mockResolvedValue("images/imported.png"),
       selectedEntityId: null,
     };
 
@@ -447,6 +449,62 @@ describe("SeoImportService", () => {
       "id-king",
       "references",
       "Goblin King",
+    );
+  });
+
+  it("should preserve typed relationships, hierarchy, and imported assets", async () => {
+    mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+    mockVaultStore.createEntity = vi
+      .fn()
+      .mockResolvedValueOnce("id-parent")
+      .mockResolvedValueOnce("id-quest");
+
+    const drafts = [
+      {
+        type: "location",
+        title: "Greyharbor",
+        content: "A port city.",
+      },
+      {
+        type: "quest",
+        title: "Protect the Harbor",
+        content: "Keep the gates closed.",
+        parentReference: "Greyharbor",
+        relationships: [
+          { title: "Greyharbor", type: "related_to", label: "Protects" },
+        ],
+        assets: [
+          {
+            originalName: "harbor.png",
+            mimeType: "image/png",
+            dataUrl: "data:image/png;base64,iVBORw==",
+          },
+        ],
+      },
+    ];
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+
+    await service.checkAndHandlePendingImport();
+
+    expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
+      2,
+      "quest",
+      "Protect the Harbor",
+      expect.objectContaining({ content: "Keep the gates closed." }),
+    );
+    expect(mockVaultStore.updateEntity).toHaveBeenCalledWith("id-quest", {
+      parent: "id-parent",
+    });
+    expect(mockVaultStore.addConnection).toHaveBeenCalledWith(
+      "id-quest",
+      "id-parent",
+      "related_to",
+      "Protects",
+    );
+    expect(mockVaultStore.saveImageToVault).toHaveBeenCalledWith(
+      expect.any(File),
+      "id-quest",
+      "harbor.png",
     );
   });
 });
