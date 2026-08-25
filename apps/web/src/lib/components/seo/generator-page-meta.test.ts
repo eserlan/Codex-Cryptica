@@ -36,6 +36,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "star-system",
   "alien-race",
   "creature",
+  "encounter",
 ];
 
 describe("generator-page-meta completeness and social preview tags", () => {

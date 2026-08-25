@@ -31,7 +31,8 @@ export type GeneratorId =
   | "star-system"
   | "alien-race"
   | "creature"
-  | "random-table";
+  | "random-table"
+  | "encounter";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -57,6 +58,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "alien-race",
   "creature",
   "random-table",
+  "encounter",
 ] as const;
 
 /** A user-configurable field for a generator. */

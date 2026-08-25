@@ -191,6 +191,15 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Antagonist Influence",
     ]),
   },
+  {
+    label: "encounter-generator",
+    // Every other lore section (What Is Happening, Goals & Stakes,
+    // Participants, Environment, Possible Approaches, Complication/Twist,
+    // Outcomes & Consequences, Rewards/Discoveries) is per-entry narrative
+    // payoff, mirroring council-vote/bbeg-generator's exclusions — only the
+    // genuine quick-lookup summary stays in the rail.
+    railSections: new Set(["At a Glance"]),
+  },
 ];
 
 interface MarkdownSection {
