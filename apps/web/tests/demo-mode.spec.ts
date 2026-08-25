@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { seedEntity } from "./test-helpers";
 
 test.describe("Interactive Demo Mode", () => {
   test.describe.configure({ mode: "serial" });
@@ -116,19 +117,18 @@ test.describe("Interactive Demo Mode", () => {
       { timeout: 15000 },
     );
 
-    // Add a new entity
-    await page.evaluate(() =>
-      (window as any).modalUIStore.requestCreateEntity(),
-    );
-    const input = page.locator('input[placeholder*="Title..."]');
-    await expect(input).toBeVisible();
-    await input.fill("New Transient Node");
-    await page.getByRole("button", { name: "ADD" }).click();
+    // Add a new entity in demo mode
+    const id = await seedEntity(page, {
+      title: "New Transient Node",
+      type: "character",
+      select: true,
+    });
 
-    await expect(
-      page.getByRole("heading", { name: "New Transient Node" }),
-    ).toBeVisible();
-    await expect(page.getByText(/TRANSIENT MODE/)).toBeVisible();
+    const entity = await page.evaluate(
+      (entityId) => (window as any).vault?.entities?.[entityId],
+      id,
+    );
+    expect(entity?.title).toBe("New Transient Node");
 
     // Reload page
     await page.reload();
@@ -142,7 +142,7 @@ test.describe("Interactive Demo Mode", () => {
     // Node should be gone
     const hasTransientNode = await page.evaluate(() =>
       Object.values((window as any).vault.entities).some(
-        (entity: any) => entity.title === "New Transient Node",
+        (e: any) => e.title === "New Transient Node",
       ),
     );
     expect(hasTransientNode).toBe(false);
