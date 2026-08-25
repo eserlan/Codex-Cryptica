@@ -1,89 +1,24 @@
 import { test, expect, type Page } from "@playwright/test";
+import { setupVaultPage, seedEntity } from "./test-helpers";
 
-/**
- * Programmatic node click for high reliability in E2E tests.
- * Standard mouse clicks on Canvas elements are often flaky due to
- * DPI scaling, scroll positions, or animation timing.
- */
 const openEntityForTest = async (page: Page, id = "test-event") => {
   await page.evaluate((entityId) => {
     const vault = (window as any).vault;
     if (vault) vault.selectedEntityId = entityId;
   }, id);
-  await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
-    timeout: 10000,
-  });
 };
 
 test.describe("Campaign Date Picker E2E", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      // The date picker is opened from entity controls that live behind
-      // Guided Mode, which is on by default.
-      localStorage.setItem("codex_guided_mode_active", "false");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).DISABLE_ERROR_OVERLAY = true;
-      (window as any).showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: async function* () {},
-        entries: async function* () {},
-        getDirectoryHandle: async () => ({
-          kind: "directory",
-          entries: async function* () {},
-          getFileHandle: async () => ({
-            kind: "file",
-            createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
-            }),
-          }),
-        }),
-      });
-    });
-
-    await page.goto("/");
-
-    // Wait for core system to be ready
-    await page.waitForFunction(
-      () =>
-        (window as any).uiStore !== undefined &&
-        (window as any).vault !== undefined &&
-        (window as any).vault.status === "idle",
-      { timeout: 15000 },
-    );
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
 
     // Setup: Create a test entity reliably
-    await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      if (vault) {
-        await vault.createEntity("event", "Test Event", {
-          id: "test-event",
-          content: "Event description",
-          connections: [],
-          labels: [],
-          tags: [],
-        });
-      }
+    await seedEntity(page, {
+      id: "test-event",
+      title: "Test Event",
+      type: "event",
+      select: true,
     });
-    await page.waitForFunction(
-      () => !!(window as any).vault?.entities?.["test-event"],
-      undefined,
-      { timeout: 10000 },
-    );
   });
 
   test("should open date picker and select a year via Era", async ({

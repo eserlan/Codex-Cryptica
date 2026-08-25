@@ -1,27 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle, seedEntity } from "./test-helpers";
 
 test.describe("AI Disabled", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      // The Activity Bar (including the Oracle tool this test drives) is
-      // hidden in Guided Mode, which is on by default.
-      localStorage.setItem("codex_guided_mode_active", "false");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-    });
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
   });
 
   test("Toggle AI Disabled ON removes AI entry points and silences network", async ({
@@ -49,15 +31,11 @@ test.describe("AI Disabled", () => {
     await page.getByLabel("Close Settings").click();
 
     // 4. Create an entity and verify "Draw" button is hidden
-    await page.evaluate(async () => {
-      await (window as any).vault.createEntity("character", "AIDisabledHero", {
-        content: "Just a hero.",
-      });
-    });
-
-    // Select the entity to open detail panel
-    await page.evaluate(() => {
-      (window as any).vault.selectedEntityId = "aidisabledhero";
+    await seedEntity(page, {
+      title: "AIDisabledHero",
+      content: "Just a hero.",
+      type: "character",
+      select: true,
     });
 
     // Verify "Draw" button is NOT visible
@@ -69,7 +47,7 @@ test.describe("AI Disabled", () => {
     await expect(suggestionsHeader).not.toBeVisible();
 
     // 5. Interact with Oracle and verify network silence
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     const oracleInput = page.getByTestId("oracle-input");
     await oracleInput.fill("Hello AI");
     await page.keyboard.press("Enter");
@@ -95,7 +73,7 @@ test.describe("AI Disabled", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Oracle
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     await expect(
       page.locator('[data-testid="oracle-sidebar-panel"]'),
     ).toBeVisible();
@@ -111,7 +89,7 @@ test.describe("AI Disabled", () => {
 
   test("Oracle supports /help command in AI mode", async ({ page }) => {
     // 1. Open Oracle
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     await expect(
       page.locator('[data-testid="oracle-sidebar-panel"]'),
     ).toBeVisible();
