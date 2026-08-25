@@ -233,14 +233,14 @@ You must return a valid JSON object matching the following structure exactly:
   "glance": {
     "participants": "A short noun phrase (under 8 words) naming who/what is involved -- e.g. 'Two rival vault wardens' -- not a sentence and not the full motive from the Participants section.",
     "immediateSituation": "One short, vivid sentence stating what is happening right now, for a scannable sidebar -- terser than, and not a copy of, the player-facing content.",
-    "hazardOrStakes": "A short phrase (under 8 words) naming the single most important hazard or thing at stake -- e.g. 'Vault reseals if unresolved'."
+    "stakes": "A short phrase (under 12 words) capturing the full dramatic stakes -- what's genuinely at risk AND what could be gained, not just the worst-case hazard -- e.g. 'The ward's trust, the relic, and a chance at an ally' rather than just 'Vault reseals if unresolved'."
   },
-  "lore": "GM-only details (markdown formatted). Do not include an '### At a Glance' section -- that is generated separately from the glance fields above and must not be duplicated. Use exactly these sections, in this order, each kept as short as possible without losing the one or two specifics that make this encounter distinct: '### Situation & Stakes' (2-3 sentences: what is actually happening beneath the surface, why, and what happens if nobody intervenes -- do not restate the player-facing description), '### Participants' (a bullet list of the NPCs, creatures, factions, or other actors involved, each a single line naming who they are and what they want), '### Environment' (1 sentence on terrain, hazards, cover, or features that materially affect play, beyond just naming the location), '### Possible Approaches' (a bullet list of at least three distinct exploitable opportunities this specific encounter offers -- e.g. a weak point, a divided loyalty, an overlooked exit, a bribable contact -- each named as WHAT can be exploited, not a step-by-step method, exact plan, or puzzle solution for exploiting it), '### Complication / Twist' (1 sentence: something that changes or deepens the encounter once the party commits to a course of action), '### Outcomes & Consequences' (a bullet list covering success, failure, avoidance, and escalation; the success bullet must fold in a concrete, proportionate reward or discovery tied to what the participants were protecting or pursuing, so no separate rewards section is needed).",
+  "lore": "GM-only details (markdown formatted). Do not include an '### At a Glance' section -- that is generated separately from the glance fields above and must not be duplicated. Use exactly these sections, in this order, each kept as short as possible without losing the one or two specifics that make this encounter distinct: '### Situation & Stakes' (2-3 sentences: what is actually happening beneath the surface, why, and what happens if nobody intervenes -- do not restate the player-facing description), '### Participants' (a bullet list of the NPCs, creatures, factions, or other actors involved, each a single line naming who they are and what they want), '### Environment' (1 sentence on terrain, hazards, cover, or features that materially affect play, beyond just naming the location), '### Possible Approaches' (a bullet list of 3-5 exploitable opportunities or leverage points drawn specifically from THIS encounter's participants, environment, and complication -- not a generic checklist assembled from stock categories like 'a weak point' or 'a divided loyalty'; vary both the count and the kind of opportunity between encounters; each named as WHAT can be exploited, not a step-by-step method, exact plan, or puzzle solution for exploiting it), '### Complication / Twist' (1 sentence: something that changes or deepens the encounter once the party commits to a course of action), '### Outcomes & Consequences' (a bullet list covering success, failure, avoidance, and escalation, scaled to the selected Threat level -- a Severe/Deadly encounter's failure and escalation should feel as consequential as its type allows, whether that's physical danger, a ruined reputation, a lost opportunity, or a relationship destroyed, not just raised stakes for Combat; the success bullet must be a genuine trade-off or partial win, not a clean resolution -- fold in a concrete, proportionate reward or discovery tied to what the participants were protecting or pursuing, but have the party pay for it in cost, leverage, or something left unresolved, so no separate rewards section is needed).",
   "labels": ["encounter", "encounter-generator", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
 ${sessionContext}
-Before returning, run a consistency pass: the threat level must match the collective danger actually described among the listed participants; the complication must genuinely complicate the stated stakes rather than being cosmetic; each possible approach must be a specific, exploitable feature of this encounter, described as an opportunity rather than a solved puzzle (not generic filler that would fit any encounter); the outcomes must correspond to the approaches actually described; the player-facing content must contain zero information that is only revealed in the lore; the glance fields must be short and scannable, not prose duplicates of the lore sections; and no fact may be repeated across two sections.
+Before returning, run a consistency pass: the threat level must match the collective danger actually described among the listed participants, and must also scale the severity of the Outcomes & Consequences for every encounter type -- not just how dangerous Combat is, but how costly a Social, Exploration, Environmental, or Mixed failure/escalation becomes; the complication must genuinely complicate the stated stakes rather than being cosmetic; each possible approach must be a specific, exploitable feature of this encounter, described as an opportunity rather than a solved puzzle, drawn from this encounter's actual details rather than a repeated formula (not generic filler that would fit any encounter); the success outcome must not resolve every objective cleanly -- it needs a real cost or loose end; the outcomes must correspond to the approaches actually described; the player-facing content must contain zero information that is only revealed in the lore; the glance fields must be short and scannable, not prose duplicates of the lore sections; and no fact may be repeated across two sections.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   return {
@@ -254,7 +254,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 interface EncounterGlance {
   participants?: string;
   immediateSituation?: string;
-  hazardOrStakes?: string;
+  stakes?: string;
 }
 
 function buildAtAGlance(
@@ -271,8 +271,7 @@ function buildAtAGlance(
     lines.push(`- **Participants:** ${glance.participants}`);
   if (glance.immediateSituation)
     lines.push(`- **Immediate Situation:** ${glance.immediateSituation}`);
-  if (glance.hazardOrStakes)
-    lines.push(`- **Key Stakes:** ${glance.hazardOrStakes}`);
+  if (glance.stakes) lines.push(`- **Key Stakes:** ${glance.stakes}`);
   return `### At a Glance\n${lines.join("\n")}`;
 }
 
@@ -294,10 +293,7 @@ export function parseEncounterResponse(
       typeof rawGlance.immediateSituation === "string"
         ? rawGlance.immediateSituation
         : undefined,
-    hazardOrStakes:
-      typeof rawGlance.hazardOrStakes === "string"
-        ? rawGlance.hazardOrStakes
-        : undefined,
+    stakes: typeof rawGlance.stakes === "string" ? rawGlance.stakes : undefined,
   };
   const lore = data.lore
     ? `${buildAtAGlance(resolved, glance)}\n\n${data.lore}`
@@ -397,12 +393,13 @@ const PARTICIPANT_GOALS: Record<string, string> = {
 };
 
 const STAKES_BY_TYPE: Record<string, string> = {
-  Combat: "Losing costs ground or lives",
-  Social: "Losing costs leverage or trust",
-  Exploration: "Delay costs the safer path",
-  Environmental: "The hazard worsens if ignored",
-  Mixed: "The hidden goal advances unchecked",
-  Random: "Inaction lets the situation worsen",
+  Combat: "Lives, ground, and the party's next move are all in play",
+  Social: "Trust, leverage, and everyone's standing are on the line",
+  Exploration:
+    "The safer path, vital information, and time itself are at stake",
+  Environmental: "Survival, nearby lives, and the way forward all hang on this",
+  Mixed: "Competing agendas collide, and no side gets everything it wants",
+  Random: "More is riding on this than first appears",
 };
 
 const APPROACHES_BY_TYPE: Record<string, string[]> = {
@@ -410,33 +407,70 @@ const APPROACHES_BY_TYPE: Record<string, string[]> = {
     "the terrain, which offers cover or a chokepoint to whoever claims it first",
     "an opening for a truce or fighting withdrawal before violence escalates further",
     "a weaker or isolated target among the group, if the party can identify one",
+    "a stash of supplies or weapons within reach, if the party can get to it first",
+    "a signal or ally who could be summoned, if someone can reach them in time",
   ],
   Social: [
     "something each side actually wants, which could be traded for cooperation",
     "a discrepancy in what's being said, worth investigating quietly before committing",
     "the option to simply walk away and let the situation resolve on its own",
+    "an old debt or favor someone here still owes",
+    "a piece of information one side doesn't know the other already has",
   ],
   Exploration: [
     "a safer vantage point to observe from before engaging directly",
     "signs pointing to a way around the danger rather than through it",
     "the option to retreat and return once the stakes are clearer",
+    "an object or marking that hints at what lies further ahead",
+    "a shortcut only visible from an unusual vantage point",
   ],
   Environmental: [
     "a route around the hazard that costs time rather than risk",
     "trapped or struggling locals whose rescue could pay off later",
     "a way to brave the hazard directly, at real risk, to reach what lies beyond",
+    "a support or mechanism already failing, which could be hastened or shored up",
+    "a source of light, warmth, or air the party could control or deny",
   ],
   Mixed: [
     "the most visible threat, which may not be the real problem",
     "a goal beneath the surface conflict that neither side has stated outright",
     "the friction between the separate threats, which could be turned to the party's advantage",
+    "a resource both sides need, which the party could claim first",
+    "a moment of confusion the party could use before either side reacts",
   ],
   Random: [
     "a direct confrontation, if the party is willing to accept the risk",
     "unresolved questions worth investigating before acting",
     "the option to withdraw and address this on the party's own terms",
+    "a resource or ally that could tip things, if reached in time",
+    "a detail that doesn't add up yet, worth a closer look",
   ],
 };
+
+// Consequence severity, scaled by the selected threat -- applies to every
+// encounter type, not just Combat, so a Severe/Deadly Social encounter reads
+// as consequential as a Severe/Deadly fight.
+const THREAT_SEVERITY: Record<string, { failure: string; escalation: string }> =
+  {
+    "Trivial / Low": {
+      failure: "a small, easily-recovered setback",
+      escalation: "a minor complication nobody will remember for long",
+    },
+    Moderate: {
+      failure: "a real setback that costs time or standing to fix",
+      escalation: "a complication serious enough to change the party's plans",
+    },
+    Dangerous: {
+      failure: "a costly setback with consequences that outlast the encounter",
+      escalation:
+        "a complication that puts something the party values at real risk",
+    },
+    "Severe / Deadly": {
+      failure: "a devastating, possibly permanent loss",
+      escalation:
+        "a complication that threatens to spiral out of anyone's control",
+    },
+  };
 
 function article(word: string): string {
   return /^[aeiou]/i.test(word) ? "an" : "a";
@@ -451,6 +485,19 @@ function encounterSummary(encounter: ResolvedEncounter): string {
     /^./,
     (c) => c.toUpperCase(),
   );
+}
+
+// Picks `count` distinct items in randomized order, so repeated local
+// generations of the same encounter type don't always show the same
+// approaches in the same order.
+function pickMany<T>(items: T[], count: number, rng: Rng): T[] {
+  const pool = [...items];
+  const result: T[] = [];
+  while (result.length < count && pool.length > 0) {
+    const index = Math.floor(rng() * pool.length);
+    result.push(pool.splice(index, 1)[0]);
+  }
+  return result;
 }
 
 function encounterLabels(
@@ -473,7 +520,15 @@ function renderResolvedEncounter(
   const visualParticipants = pickFrom(PARTICIPANT_VISUALS[typeKey], rng);
   const motiveParticipants = pickFrom(PARTICIPANT_MOTIVES[typeKey], rng);
   const situation = encounterSummary(encounter);
-  const approaches = APPROACHES_BY_TYPE[typeKey];
+  // Vary the count (3-4 of the available 5) and order so identical inputs
+  // don't always render the same fixed approach list.
+  const approaches = pickMany(
+    APPROACHES_BY_TYPE[typeKey],
+    3 + Math.floor(rng() * 2),
+    rng,
+  );
+  const severity =
+    THREAT_SEVERITY[encounter.threat] ?? THREAT_SEVERITY.Moderate;
 
   const content = `### What the Players See
 ${situation} ${
@@ -486,7 +541,7 @@ ${situation} ${
     participants:
       visualParticipants.charAt(0).toUpperCase() + visualParticipants.slice(1),
     immediateSituation: situation,
-    hazardOrStakes: STAKES_BY_TYPE[typeKey],
+    stakes: STAKES_BY_TYPE[typeKey],
   })}
 
 ### Situation & Stakes
@@ -505,10 +560,10 @@ ${approaches.map((a) => `- ${a}`).join("\n")}
 Something about this situation is not what it first appears -- the true cause, a hidden participant, or an overlooked consequence surfaces once the party commits to a course of action.
 
 ### Outcomes & Consequences
-- **Success**: The immediate danger is resolved, and the party gains a proportionate reward -- information, an item, standing, or a favor -- tied to what the participants were protecting or pursuing.
-- **Failure**: The situation escalates, and whatever the participants wanted proceeds unopposed.
+- **Success**: The immediate threat is contained, not erased -- the party gains a proportionate reward, information, an item, standing, or a favor tied to what the participants were protecting or pursuing, but pays for it in cost, leverage, or a relationship left strained.
+- **Failure**: The situation escalates into ${severity.failure}, and whatever the participants wanted proceeds unopposed.
 - **Avoidance**: The encounter resolves without the party, for better or worse, off-screen.
-- **Escalation**: A poorly chosen approach or delay draws in further complications tied to the encounter's underlying cause.`;
+- **Escalation**: A poorly chosen approach or delay invites ${severity.escalation}, tied to the encounter's underlying cause.`;
 
   return {
     type: "event",
