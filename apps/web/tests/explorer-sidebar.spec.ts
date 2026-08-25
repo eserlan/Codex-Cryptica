@@ -51,12 +51,6 @@ test.describe("Entity Explorer Sidebar", () => {
   });
 
   test("should focus entity and show embedded view", async ({ page }) => {
-    // 1. Open Explorer
-    await page.getByTestId("activity-bar-explorer").click();
-
-    // Ensure explorer is loaded
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
-
     await seedEntity(page, {
       id: "test-entry",
       title: "Test Entry",
@@ -67,6 +61,12 @@ test.describe("Entity Explorer Sidebar", () => {
         labels: ["test"],
       },
     });
+
+    // 1. Open Explorer
+    await page.getByTestId("activity-bar-explorer").click();
+
+    // Ensure explorer is loaded
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
 
     // 2. Click the seeded entity
     const entityRow = page.getByTestId("entity-list-item").first();

@@ -44,10 +44,10 @@ test.describe("AI Entity Regeneration", () => {
 
     // 2. Open the entity
     await openEntitySidepanel(page, heroId);
-    await expect(page.getByText("Initial chronicle")).toBeVisible();
+    const sidePanel = page.getByRole("complementary");
+    await expect(sidePanel.getByText("Initial chronicle")).toBeVisible();
 
     // 3. Verify AI Regen button exists
-    const sidePanel = page.getByRole("complementary");
     const regenButton = sidePanel.getByLabel("AI Revise Description").last();
     await expect(regenButton).toBeVisible();
 
