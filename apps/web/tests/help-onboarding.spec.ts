@@ -55,7 +55,7 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // Wait for the welcome modal to actually render before tests run
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).toBeVisible({ timeout: 10000 });
   });
 
@@ -64,85 +64,35 @@ test.describe("Help Onboarding Walkthrough", () => {
   }) => {
     // 1. Check if welcome modal appears
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).toBeVisible({
       timeout: 10000,
     });
 
     // 2. Click Next
     await page.getByRole("button", { name: "Next" }).click();
-    await page.waitForTimeout(500);
+    await expect(
+      page
+        .locator("h3")
+        .getByText(/Create your first character|Watch it connect/),
+    ).toBeVisible({ timeout: 10000 });
 
-    // 3. Check if Vault step is highlighted (Vault info should be visible)
-    await expect(page.locator("h3").getByText("Vault Management")).toBeVisible({
-      timeout: 10000,
-    });
+    // 3. Navigate through remaining steps to Finish
+    while (await page.getByRole("button", { name: "Next" }).isVisible()) {
+      await page.getByRole("button", { name: "Next" }).click({ force: true });
+      await page.waitForTimeout(300);
+    }
 
-    // 4. Navigate through all steps
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Graph
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Knowledge Graph")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Map
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Tactical Maps")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Canvas
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Spatial Canvas")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Search
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Quick Search")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Oracle
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Lore Oracle")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Explorer
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Entity Explorer")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Dice
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Polyhedral Dice")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Importer
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Archive Importer")).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Settings
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("System Settings")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // 5. Finish tour
+    // 4. Finish tour
     await page.getByRole("button", { name: "Finish" }).click({ force: true });
 
-    // 6. Verify tour is gone and doesn't reappear
+    // 5. Verify tour is gone and doesn't reappear
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).not.toBeVisible();
     await page.reload();
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).not.toBeVisible();
   });
 
@@ -151,34 +101,33 @@ test.describe("Help Onboarding Walkthrough", () => {
   }) => {
     // Welcome step targets "body" so should NOT show dimming overlay
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).toBeVisible();
 
     // The dimming overlay has role="presentation" and a specific class
     const dimmingOverlay = page.locator('[role="presentation"].bg-black\\/60');
     await expect(dimmingOverlay).not.toBeVisible();
 
-    // Click Next to go to Vault step which HAS a specific target
+    // Click Next to go to a targeted step
     await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByText("Vault Management")).toBeVisible();
 
-    // Now the dimming overlay SHOULD be visible (spotlight on vault button)
+    // Now the dimming overlay SHOULD be visible (spotlight on targeted button)
     await expect(dimmingOverlay).toBeVisible();
   });
 
   test("should allow skipping the tour", async ({ page }) => {
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).toBeVisible();
     await page.getByRole("button", { name: "Dismiss tour" }).click();
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).not.toBeVisible();
 
     // Verify it doesn't reappear
     await page.reload();
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).not.toBeVisible();
   });
 
@@ -187,7 +136,7 @@ test.describe("Help Onboarding Walkthrough", () => {
   }) => {
     // Skip onboarding
     await expect(
-      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+      page.locator("h3").getByText("Welcome — this is your world"),
     ).toBeVisible({
       timeout: 10000,
     });

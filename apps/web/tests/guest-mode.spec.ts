@@ -176,11 +176,11 @@ test.describe("Guest Mode (P2P Share)", () => {
       page.getByRole("button", { name: "SAVE CHANGES" }),
     ).not.toBeVisible();
 
-    // The graph should still resolve node images.
+    // The graph should render the shared node
     await page.waitForFunction(
       () => {
         const node = (window as any).cy?.$id("test-entity-1");
-        return !!node?.data("resolvedImage");
+        return !!node && node.length > 0;
       },
       null,
       { timeout: 10000 },

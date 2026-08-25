@@ -1,31 +1,19 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntities } from "./test-helpers";
 
 test.describe("Graph Focus Mode", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
+    await setupVaultPage(page);
 
-    await page.goto("/");
-
-    // Wait for vault initialization (OPFS auto-load)
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
+    await seedEntities(page, [
+      { id: "node-1", title: "Node 1", type: "character" },
+      { id: "node-2", title: "Node 2", type: "character" },
+      { id: "node-3", title: "Node 3", type: "character" },
+      { id: "island", title: "island", type: "character" },
+    ]);
 
     await page.evaluate(async () => {
       const vault = (window as any).vault;
-      await vault.createEntity("character", "Node 1");
-      await vault.createEntity("character", "Node 2");
-      await vault.createEntity("character", "Node 3");
-      await vault.createEntity("character", "island");
       await vault.addConnection("node-1", "node-2", "related");
     });
 
