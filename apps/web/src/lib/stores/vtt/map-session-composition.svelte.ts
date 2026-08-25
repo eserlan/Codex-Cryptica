@@ -2,6 +2,7 @@ import type { MapSessionStore } from "../map-session.svelte";
 import { VTTChatManager } from "./vtt-chat-manager.svelte";
 import { VTTEncounterManager } from "./vtt-encounter-manager.svelte";
 import { VTTGridManager } from "./vtt-grid-manager.svelte";
+import { VTTLayerManager } from "./vtt-layer-manager.svelte";
 import { VTTInitiativeManager } from "./vtt-initiative-manager.svelte";
 import { VTTMeasurementManager } from "./vtt-measurement-manager.svelte";
 import { VTTMediaManager } from "./vtt-media-manager.svelte";
@@ -127,6 +128,8 @@ export function initializeMapSessionComposition(
     getVault: () => store.deps.vault,
   });
 
+  store.layerManager = new VTTLayerManager();
+
   store.tokenManager = new VTTTokenManager({
     emit: (message) => store.networkManager.emit(message),
     getMapStore: () => store.deps.mapStore,
@@ -145,6 +148,8 @@ export function initializeMapSessionComposition(
     cloneInitiativeState: (sourceId, cloneId) =>
       store.initiativeManager.cloneInitiativeState(sourceId, cloneId),
     isInitiativeOrdered: (tokenId) => store.initiativeOrder.includes(tokenId),
+    getActiveLayer: () => store.layerManager.activeLayer,
+    isLayerLocked: (layer) => store.deps.mapStore.layerLocked[layer],
   });
 
   store.tileDeckManager = new VTTTileDeckManager({
@@ -153,6 +158,7 @@ export function initializeMapSessionComposition(
     persistDraft: () => store.persistenceManager.persistDraft(),
     normalizePlacement: (point, size) =>
       store.tokenManager.clampAndSnapPosition(point, size),
+    getActiveLayer: () => store.layerManager.activeLayer,
   });
 
   store.encounterManager = new VTTEncounterManager({

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type Snippet } from "svelte";
   import { fade } from "svelte/transition";
+  import { mapLayerRank } from "map-engine";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { oracle } from "../../stores/oracle.svelte";
@@ -179,7 +180,11 @@
 
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      if (mapSession.canViewToken(token.id, peerId, isHost)) {
+      const layer = token.layer ?? "token";
+      if (
+        mapSession.canViewToken(token.id, peerId, isHost) &&
+        mapStore.layerVisibility[layer] !== false
+      ) {
         result.push({
           ...token,
           // Tiles are terrain/room pieces, not combatants — no name label.
@@ -198,7 +203,11 @@
         });
       }
     }
-    return result.sort((first, second) => first.zIndex - second.zIndex);
+    return result.sort(
+      (first, second) =>
+        mapLayerRank(first.layer ?? "token") -
+          mapLayerRank(second.layer ?? "token") || first.zIndex - second.zIndex,
+    );
   });
   const vttDragPreview = $derived.by(() => {
     const preview = mapSession.dragPreview;

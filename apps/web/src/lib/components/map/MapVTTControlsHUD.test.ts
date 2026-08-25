@@ -14,11 +14,14 @@ const mapStoreMock = vi.hoisted(() => ({
   showGrid: false,
   brushRadius: 50,
   showLabels: true,
+  layerVisibility: { terrain: true, object: true, token: true },
+  layerLocked: { terrain: false, object: false, token: false },
 }));
 
 const mapSessionMock = vi.hoisted(() => ({
   vttEnabled: true,
   showGridSettings: false,
+  activeLayer: "terrain",
   measurement: {
     active: false,
   },
@@ -64,6 +67,9 @@ describe("MapVTTControlsHUD", () => {
     mapSessionMock.vttEnabled = true;
     mapSessionMock.showGridSettings = false;
     mapSessionMock.measurement.active = false;
+    mapSessionMock.activeLayer = "terrain";
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapStoreMock.layerLocked = { terrain: false, object: false, token: false };
   });
 
   it("renders GM controls and toggles fog", async () => {
@@ -122,6 +128,26 @@ describe("MapVTTControlsHUD", () => {
     );
 
     expect(mapSessionMock.setMeasurementActive).toHaveBeenCalledWith(true);
+  });
+
+  it("shows the active layer in the button label and switches it", async () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const layerButton = screen.getByRole("button", {
+      name: "Layer: Terrain",
+    });
+    await fireEvent.click(layerButton);
+    expect(screen.getByRole("menu", { name: "Map layers" })).not.toBeNull();
+
+    await fireEvent.click(
+      screen.getByRole("menuitemradio", { name: /Furniture/ }),
+    );
+
+    expect(mapSessionMock.activeLayer).toBe("object");
   });
 
   it("hides controls for guests", () => {

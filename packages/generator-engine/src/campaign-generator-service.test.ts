@@ -1877,3 +1877,71 @@ describe("generateDraftStream", () => {
     );
   });
 });
+
+describe("council-vote streamed generation", () => {
+  const foundation = JSON.stringify({
+    title: "The Salt Road Levy",
+    summary: "A five-seat council must approve emergency funding.",
+    lore: "## Voting Procedure\nSimple majority.",
+    labels: ["council-vote"],
+    connections: [],
+  });
+  const paths = JSON.stringify({
+    possiblePaths: "## Possible Paths\nsmallest coalition first",
+    followUpHooks: "## Follow-Up Hooks\nthey remember",
+  });
+
+  it("streams each council-vote pass and assembles the repaired output", async () => {
+    let turn = 0;
+    const sendStream = vi.fn(async function* () {
+      const text = turn++ < 2 ? foundation : paths;
+      yield { type: "started" as const };
+      yield { type: "delta" as const, text };
+      yield { type: "complete" as const, text };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: {
+        complete: vi.fn(),
+        startChat: vi.fn(async () => ({ send: vi.fn(), sendStream })),
+      },
+    });
+
+    const events = [] as Array<{ type: string; [key: string]: unknown }>;
+    for await (const event of svc.generateDraftStream(
+      run("council-vote", { useAI: true }),
+    )) {
+      events.push(event);
+    }
+
+    expect(events.filter((event) => event.type === "phase")).toHaveLength(4);
+    expect(sendStream).toHaveBeenCalledTimes(4);
+    expect(events.at(-1)).toMatchObject({
+      type: "draft",
+      draft: {
+        title: "The Salt Road Levy",
+        lore: expect.stringContaining("## Possible Paths"),
+      },
+    });
+  });
+
+  it("falls back without a streamed chat session", async () => {
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn() },
+    });
+
+    const events = [] as Array<{ type: string; [key: string]: unknown }>;
+    for await (const event of svc.generateDraftStream(
+      run("council-vote", { useAI: true }),
+    )) {
+      events.push(event);
+    }
+
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.at(-1)).toMatchObject({
+      type: "draft",
+      draft: { sourceGeneratorId: "council-vote" },
+    });
+  });
+});

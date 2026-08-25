@@ -499,6 +499,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       'Use Tile Decks in the VTT sidebar to add a starter pack (Scribble Dungeons, Geomorphs 2013, Geomorph Collection) or import your own PNG images. Filter the tile palette by category, choose a specific tile, draw one at random from a deck, or use "Draw from all decks" to pull from every installed deck at once. New tiles snap edge-to-edge against tiles already on the map. Starter tiles are downloaded once into the current vault, so drawing remains available offline.',
     icon: "icon-[lucide--layers-3]",
   },
+  "vtt-layers": {
+    id: "vtt-layers",
+    title: "Map Layers",
+    content:
+      "Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.",
+    icon: "icon-[lucide--layers]",
+  },
   "voice-chat": {
     id: "voice-chat",
     title: "Session Voice Chat",

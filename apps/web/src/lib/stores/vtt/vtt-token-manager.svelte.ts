@@ -11,6 +11,8 @@ import {
   normalizeToken,
   normalizeTokenRotation,
   normalizeTokenVisibility,
+  nextZIndexInLayer,
+  type MapLayer,
 } from "map-engine";
 import {
   snapToGrid,
@@ -45,6 +47,8 @@ export interface VTTTokenManagerDependencies {
   removeTokenFromInitiativeState?: (tokenId: string) => void;
   cloneInitiativeState?: (sourceId: string, cloneId: string) => void;
   isInitiativeOrdered?: (tokenId: string) => boolean;
+  getActiveLayer: () => MapLayer;
+  isLayerLocked: (layer: MapLayer) => boolean;
 }
 
 export class VTTTokenManager {
@@ -196,6 +200,7 @@ export class VTTTokenManager {
       kind: input.kind ?? "token",
       tileDeckId: input.tileDeckId ?? null,
       tileDetails: input.tileDetails,
+      layer: input.layer ?? this.deps.getActiveLayer(),
     };
   }
 
@@ -437,31 +442,27 @@ export class VTTTokenManager {
   bringTokenToFront(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-
-    // ⚡ Bolt Optimization: Use imperative loop over allTokens to avoid intermediate array allocations
-    let maxZ = 0;
-    for (const t of this.allTokens) {
-      if (t.zIndex > maxZ) {
-        maxZ = t.zIndex;
+    // "Front" is scoped to the token's own layer. Scan directly so this hot
+    // interaction does not allocate a filtered array on every invocation.
+    let maxZ = -1;
+    for (const item of Object.values(this.tokens)) {
+      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
+        maxZ = Math.max(maxZ, item.zIndex);
       }
     }
-    const zIndex = maxZ + 1;
-    return this.updateToken(tokenId, { zIndex });
+    return this.updateToken(tokenId, { zIndex: maxZ + 1 });
   }
 
   sendTokenToBack(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-
-    // ⚡ Bolt Optimization: Use imperative loop over allTokens to avoid intermediate array allocations
     let minZ = 0;
-    for (const t of this.allTokens) {
-      if (t.zIndex < minZ) {
-        minZ = t.zIndex;
+    for (const item of Object.values(this.tokens)) {
+      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
+        minZ = Math.min(minZ, item.zIndex);
       }
     }
-    const zIndex = minZ - 1;
-    return this.updateToken(tokenId, { zIndex });
+    return this.updateToken(tokenId, { zIndex: minZ - 1 });
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -586,14 +587,9 @@ export class VTTTokenManager {
 
     const mapStore = this.deps.getMapStore();
     const offset = mapStore.gridSize || 50;
-    // ⚡ Bolt Optimization: Use imperative loop instead of ...allTokens.map to find max zIndex
-    // to avoid intermediate array allocation and spread operator overhead.
-    let maxZ = source.zIndex;
-    for (const token of this.allTokens) {
-      if (token.zIndex > maxZ) {
-        maxZ = token.zIndex;
-      }
-    }
+    const sameLayer = this.allTokens.filter(
+      (token) => token.layer === source.layer,
+    );
 
     const clone: Token = {
       ...source,
@@ -601,7 +597,7 @@ export class VTTTokenManager {
       name: this.getClonedTokenName(source.name),
       x: source.x + offset,
       y: source.y + offset,
-      zIndex: maxZ + 1,
+      zIndex: nextZIndexInLayer(sameLayer),
     };
 
     this.tokens = {
@@ -691,6 +687,7 @@ export class VTTTokenManager {
     const token = this.tokens[tokenId];
     if (!token) return false;
     if (token.locked) return false;
+    if (token.layer && this.deps.isLayerLocked(token.layer)) return false;
     if (isHost) return true;
     return token.ownerPeerId !== null && token.ownerPeerId === peerId;
   }
