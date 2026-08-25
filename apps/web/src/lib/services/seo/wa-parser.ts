@@ -1,5 +1,25 @@
 export type EntityType =
-  "character" | "creature" | "location" | "item" | "event" | "faction" | "note";
+  | "character"
+  | "creature"
+  | "location"
+  | "item"
+  | "event"
+  | "faction"
+  | "quest"
+  | "species"
+  | "note";
+
+export interface ParsedRelationship {
+  title: string;
+  type?: string;
+  label?: string;
+}
+
+export interface ParsedAsset {
+  originalName: string;
+  mimeType: string;
+  dataUrl: string;
+}
 
 export interface ParsedEntity {
   type: EntityType;
@@ -7,6 +27,9 @@ export interface ParsedEntity {
   content: string;
   labels: string[];
   references?: string[];
+  relationships?: ParsedRelationship[];
+  parentReference?: string;
+  assets?: ParsedAsset[];
   discoverySource?: string;
   metadata?: Record<string, unknown>;
 }

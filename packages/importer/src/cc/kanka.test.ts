@@ -136,6 +136,77 @@ describe("parseKankaExportZip", () => {
     );
   });
 
+  it("maps the relationship collections used by official Kanka exports", async () => {
+    const zip = realisticKankaZip({
+      "characters/aria_10.json": json({
+        id: 10,
+        name: "Aria Voss",
+        entity: {
+          id: 100,
+          entry: "Captain of the Dawn Gull.",
+        },
+        character_families: [{ family_id: 40 }],
+        character_races: [{ race_id: 30 }],
+        organisation_memberships: [{ organisation_id: 50, role: "Captain" }],
+      }),
+      "families/house_40.json": json({
+        id: 40,
+        name: "House Voss",
+        entity: { id: 400, entry: "A noble house." },
+      }),
+      "organisations/crew_50.json": json({
+        id: 50,
+        name: "Dawn Gull Crew",
+        entity: { id: 500, entry: "A ship's crew." },
+        members: [{ character_id: 10 }],
+      }),
+      "events/voyage_60.json": json({
+        id: 60,
+        name: "The Voyage",
+        entity: { id: 600, entry: "A long journey." },
+        entityLocations: [{ location_id: 20 }],
+      }),
+      "items/compass_70.json": json({
+        id: 70,
+        name: "Star Compass",
+        entity: { id: 700, entry: "A brass compass." },
+        itemCreators: [{ creator_id: 100 }],
+      }),
+    });
+
+    const pkg = await parseKankaExportZip(zip);
+
+    expect(pkg.relationshipDrafts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromRef: "kanka:character:100",
+          toRef: "kanka:faction:400",
+          label: "family",
+        }),
+        expect.objectContaining({
+          fromRef: "kanka:character:100",
+          toRef: "kanka:species:300",
+          label: "race",
+        }),
+        expect.objectContaining({
+          fromRef: "kanka:character:100",
+          toRef: "kanka:faction:500",
+          label: "Captain",
+        }),
+        expect.objectContaining({
+          fromRef: "kanka:event:600",
+          toRef: "kanka:location:200",
+          label: "located in",
+        }),
+        expect.objectContaining({
+          fromRef: "kanka:item:700",
+          toRef: "kanka:character:100",
+          label: "created by",
+        }),
+      ]),
+    );
+  });
+
   it("accepts current exports that use info.json", async () => {
     const zip = realisticKankaZip({
       "info.md": new Uint8Array(),

@@ -20,7 +20,9 @@ import {
 interface ParsedKankaEntity {
   draft: EntityDraft;
   entityId: string;
+  modelId: string;
   sourceRef: string;
+  rawModel: JsonRecord;
   rawEntity: JsonRecord;
 }
 
@@ -131,6 +133,43 @@ function basename(path: string): string {
   return path.split("/").pop() ?? path;
 }
 
+function resolveKankaReference(
+  value: unknown,
+  byEntityId: Map<string, ParsedKankaEntity>,
+  byModelId: Map<string, ParsedKankaEntity>,
+): ParsedKankaEntity | undefined {
+  if (isRecord(value)) {
+    const nestedEntity = isRecord(value.entity) ? value.entity : undefined;
+    if (nestedEntity) {
+      const nested = resolveKankaReference(nestedEntity, byEntityId, byModelId);
+      if (nested) return nested;
+    }
+    for (const key of ["entity_id", "id"]) {
+      const candidate = asString(value[key]);
+      if (!candidate) continue;
+      const resolved = byEntityId.get(candidate) ?? byModelId.get(candidate);
+      if (resolved) return resolved;
+    }
+    return undefined;
+  }
+
+  const candidate = asString(value);
+  return candidate
+    ? (byEntityId.get(candidate) ?? byModelId.get(candidate))
+    : undefined;
+}
+
+function relationLabel(
+  value: JsonRecord,
+  fallback: string,
+): string | undefined {
+  for (const key of ["relation", "label", "role"]) {
+    const label = asString(value[key])?.trim();
+    if (label) return label;
+  }
+  return fallback;
+}
+
 /**
  * Converts an official Kanka JSON campaign export ZIP into the generic import
  * package. This adapter is deliberately mechanical: it performs no AI calls
@@ -188,6 +227,7 @@ export async function parseKankaExportZip(
 
   const parsedEntities: ParsedKankaEntity[] = [];
   const byEntityId = new Map<string, ParsedKankaEntity>();
+  const byModelId = new Map<string, ParsedKankaEntity>();
   for (const [path, bytes] of files) {
     const match = path.match(/^([^/]+)\/[^/]+\.json$/i);
     if (!match) continue;
@@ -197,11 +237,12 @@ export async function parseKankaExportZip(
     const model = parseJson(bytes, path);
     const entity = asRecord(model.entity);
     const entityId = asString(entity.id);
+    const modelId = asString(model.id);
     const title = asString(model.name)?.trim() || asString(entity.name)?.trim();
-    if (!entityId || !title) {
+    if (!entityId || !modelId || !title) {
       warnings.push({
         code: "KANKA_ENTITY_SKIPPED",
-        message: `Skipped "${path}" because it has no entity ID or name.`,
+        message: `Skipped "${path}" because it has no model ID, entity ID, or name.`,
         ref: path,
       });
       continue;
@@ -261,12 +302,47 @@ export async function parseKankaExportZip(
         ...(Object.keys(fields).length > 0 ? { fields } : {}),
       },
     };
-    const parsed = { draft, entityId, sourceRef, rawEntity: entity };
+    const parsed = {
+      draft,
+      entityId,
+      modelId,
+      sourceRef,
+      rawModel: model,
+      rawEntity: entity,
+    };
     parsedEntities.push(parsed);
     byEntityId.set(entityId, parsed);
+    byModelId.set(modelId, parsed);
   }
 
   const relationshipDrafts: RelationshipDraft[] = [];
+  const emittedRelationships = new Set<string>();
+  const emitRelationship = (
+    source: ParsedKankaEntity,
+    target: ParsedKankaEntity | undefined,
+    label: string | undefined,
+    ref: string | undefined,
+    description: string,
+  ) => {
+    if (!target) {
+      warnings.push({
+        code: "KANKA_UNRESOLVED_RELATIONSHIP",
+        message: `Could not resolve ${description} from "${source.draft.title}".`,
+        ref,
+      });
+      return;
+    }
+    const key = `${source.sourceRef}|${target.sourceRef}|${label ?? ""}`;
+    if (emittedRelationships.has(key)) return;
+    emittedRelationships.add(key);
+    relationshipDrafts.push({
+      fromRef: source.sourceRef,
+      toRef: target.sourceRef,
+      type: "related_to",
+      ...(label ? { label } : {}),
+    });
+  };
+
   for (const parsed of parsedEntities) {
     const parentId = asString(parsed.rawEntity.parent_id);
     if (parentId) {
@@ -282,25 +358,105 @@ export async function parseKankaExportZip(
     }
 
     const relationships = parsed.rawEntity.relationships;
-    if (!Array.isArray(relationships)) continue;
-    for (const rawRelationship of relationships) {
-      if (!isRecord(rawRelationship)) continue;
-      const targetId = asString(rawRelationship.target_id);
-      const target = targetId ? byEntityId.get(targetId) : undefined;
-      if (!targetId || !target) {
-        warnings.push({
-          code: "KANKA_UNRESOLVED_RELATIONSHIP",
-          message: `Could not resolve a relationship from "${parsed.draft.title}" to Kanka entity ${targetId ?? "unknown"}.`,
-          ref: targetId,
-        });
-        continue;
+    if (Array.isArray(relationships)) {
+      for (const rawRelationship of relationships) {
+        if (!isRecord(rawRelationship)) continue;
+        const targetValue = rawRelationship.target ?? rawRelationship.target_id;
+        emitRelationship(
+          parsed,
+          resolveKankaReference(targetValue, byEntityId, byModelId),
+          relationLabel(rawRelationship, "related"),
+          asString(targetValue),
+          "a relationship",
+        );
       }
-      relationshipDrafts.push({
-        fromRef: parsed.sourceRef,
-        toRef: target.sourceRef,
-        type: "related_to",
-        label: asString(rawRelationship.relation)?.trim() || undefined,
-      });
+    }
+
+    const relationshipCollections: Array<{
+      keys: string[];
+      fallback: string;
+      description: string;
+    }> = [
+      {
+        keys: ["family_id", "family"],
+        fallback: "family",
+        description: "a family relationship",
+      },
+      {
+        keys: ["race_id", "race"],
+        fallback: "race",
+        description: "a race relationship",
+      },
+      {
+        keys: [
+          "organisation_id",
+          "organization_id",
+          "organisation",
+          "organization",
+        ],
+        fallback: "member of",
+        description: "an organisation membership",
+      },
+      {
+        keys: ["character_id", "character"],
+        fallback: "member",
+        description: "a character membership",
+      },
+      {
+        keys: ["creator_id", "creator"],
+        fallback: "created by",
+        description: "an item creator relationship",
+      },
+      {
+        keys: ["location_id", "location"],
+        fallback: "located in",
+        description: "an entity location relationship",
+      },
+    ];
+
+    for (const collection of [
+      "character_families",
+      "characterFamilies",
+      "character_races",
+      "characterRaces",
+      "organisation_memberships",
+      "organisationMemberships",
+      "members",
+      "pivotMembers",
+      "itemCreators",
+      "entityLocations",
+    ]) {
+      const entries =
+        parsed.rawModel[collection] ?? parsed.rawEntity[collection];
+      if (!Array.isArray(entries)) continue;
+      const descriptor =
+        collection === "character_families" ||
+        collection === "characterFamilies"
+          ? relationshipCollections[0]
+          : collection === "character_races" || collection === "characterRaces"
+            ? relationshipCollections[1]
+            : collection === "organisation_memberships" ||
+                collection === "organisationMemberships"
+              ? relationshipCollections[2]
+              : collection === "members" || collection === "pivotMembers"
+                ? relationshipCollections[3]
+                : collection === "itemCreators"
+                  ? relationshipCollections[4]
+                  : relationshipCollections[5];
+
+      for (const rawEntry of entries) {
+        if (!isRecord(rawEntry)) continue;
+        const targetValue = descriptor.keys
+          .map((key) => rawEntry[key])
+          .find((value) => value !== undefined && value !== null);
+        emitRelationship(
+          parsed,
+          resolveKankaReference(targetValue, byEntityId, byModelId),
+          relationLabel(rawEntry, descriptor.fallback),
+          asString(targetValue),
+          descriptor.description,
+        );
+      }
     }
   }
 

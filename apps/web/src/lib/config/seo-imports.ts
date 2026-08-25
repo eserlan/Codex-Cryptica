@@ -143,7 +143,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         title: "Metadata Restoration",
         description:
-          "Preserves Kanka tags, attributes, source types, and stable source IDs for repeat imports.",
+          "Preserves Kanka labels, attributes, source types, and stable source IDs for repeat imports.",
         icon: "icon-[lucide--tags]",
       },
     ],

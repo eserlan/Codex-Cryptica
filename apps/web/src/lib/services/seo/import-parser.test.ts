@@ -114,6 +114,7 @@ describe("import-parser", () => {
           entity: {
             id: 101,
             entry: "<p>Campaign prose</p>",
+            image_path: "characters/hero.png",
             relationships: [{ target_id: 202, relation: "Protects" }],
           },
         }),
@@ -125,6 +126,7 @@ describe("import-parser", () => {
           entity: { id: 202, entry: "A safe place." },
         }),
       ),
+      "characters/hero.png": new Uint8Array([137, 80, 78, 71]),
     });
     const file = new File([bytes], "campaign.zip", {
       type: "application/zip",
@@ -140,6 +142,16 @@ describe("import-parser", () => {
       labels: [],
       discoverySource: "kanka:character:101",
       references: ["Haven"],
+      relationships: [
+        { title: "Haven", type: "related_to", label: "Protects" },
+      ],
+      assets: [
+        {
+          originalName: "hero.png",
+          mimeType: "image/png",
+          dataUrl: "data:image/png;base64,iVBORw==",
+        },
+      ],
       metadata: {
         kankaType: "character",
         kankaEntityId: 101,
