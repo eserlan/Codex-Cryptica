@@ -171,13 +171,19 @@ export interface ResolvedEncounter {
   encounterName: string;
 }
 
+const ROLLABLE_ENCOUNTER_TYPES = encounterConfig.encounterTypes.filter(
+  (t) => t !== "Random",
+);
+
 function resolveEncounter(
   options: EncounterGeneratorOptions,
   rng: Rng,
 ): ResolvedEncounter {
   const genre = options.genre || "Classic Fantasy";
   const encounterType =
-    options.encounterType || pickFrom(encounterConfig.encounterTypes, rng);
+    options.encounterType && options.encounterType !== "Random"
+      ? options.encounterType
+      : pickFrom(ROLLABLE_ENCOUNTER_TYPES, rng);
   const environmentPool =
     encounterConfig.environmentsByTheme[genre] ?? encounterConfig.environments;
 
@@ -212,7 +218,7 @@ export function buildEncounterPrompt(
   const userMessage = `Generate a playable RPG encounter in JSON format. The result should feel like a small playable situation the players can interact with -- not just a list of enemies to fight. Results are not limited to combat: include meaningful alternatives such as negotiation, stealth, trickery, retreat, or investigation where appropriate for the encounter type.
 Options:
 - Genre: ${resolved.genre}
-- Encounter Type: ${resolved.encounterType}${resolved.encounterType === "Random" ? " (pick whichever of Combat/Social/Exploration/Environmental/Mixed best fits the other options)" : ""}
+- Encounter Type: ${resolved.encounterType}
 - Environment: ${resolved.environment}
 - Threat: ${resolved.threat} (describe fictional danger only -- do not reference any specific RPG ruleset's stats, dice, or mechanics)
 - Tone: ${resolved.tone}
@@ -290,6 +296,10 @@ const PARTICIPANTS_BY_TYPE: Record<string, string[]> = {
   ],
 };
 
+function article(word: string): string {
+  return /^[aeiou]/i.test(word) ? "an" : "a";
+}
+
 function renderResolvedEncounter(
   encounter: ResolvedEncounter,
   rng: Rng,
@@ -298,7 +308,11 @@ function renderResolvedEncounter(
     ? encounter.encounterType
     : "Random";
   const participants = pickFrom(PARTICIPANTS_BY_TYPE[typeKey], rng);
-  const situation = `A ${encounter.threat.toLowerCase()} ${encounter.encounterType.toLowerCase()} encounter unfolds in a ${encounter.environment.toLowerCase()}, carrying a ${encounter.tone.toLowerCase()} atmosphere.`;
+  const situation =
+    `${article(encounter.threat)} ${encounter.threat.toLowerCase()} ${encounter.encounterType.toLowerCase()} encounter unfolds in ${article(encounter.environment)} ${encounter.environment.toLowerCase()}, carrying a ${encounter.tone.toLowerCase()} atmosphere.`.replace(
+      /^./,
+      (c) => c.toUpperCase(),
+    );
 
   const approachesByType: Record<string, string[]> = {
     Combat: [

@@ -61,6 +61,24 @@ describe("generateEncounterLocal", () => {
       ),
     ).toBe(true);
   });
+
+  it("rolls a concrete type instead of leaving the default Random literal", () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const out = generateEncounterLocal(
+        { encounterType: "Random" },
+        seededRng(seed),
+      );
+      expect(out.lore).not.toContain("**Encounter Type**: Random");
+    }
+  });
+
+  it("never emits a grammatically wrong article before a vowel-initial value", () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const out = generateEncounterLocal({}, seededRng(seed));
+      expect(out.content).not.toMatch(/\ba (?=[aeiou])/i);
+      expect(out.lore).not.toMatch(/\ba (?=[aeiou])/i);
+    }
+  });
 });
 
 describe("buildEncounterPrompt", () => {
