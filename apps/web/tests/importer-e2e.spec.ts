@@ -69,78 +69,9 @@ test.describe("Intelligent Importer E2E", () => {
     let resolveRequest: any;
     const requestHold = new Promise((resolve) => (resolveRequest = resolve));
 
-    await page.route(
-      /.*\/v1beta\/models\/.*:generateContent.*/,
-      async (route) => {
-        await requestHold;
-        // Request may already be aborted when the user cancels the import — ignore errors
-        try {
-          await route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              candidates: [
-                {
-                  content: {
-                    parts: [
-                      {
-                        text: JSON.stringify([
-                          {
-                            title: "Ghost Entity",
-                            type: "Character",
-                            chronicle: "Summary",
-                            lore: "Lore",
-                          },
-                        ]),
-                      },
-                    ],
-                  },
-                },
-              ],
-            }),
-          });
-        } catch {
-          /* request was aborted by the cancel action */
-        }
-      },
-    );
-
-    // 3. Trigger file import
-    const fileInput = page.locator('input[type="file"]');
-    await expect(fileInput).toBeAttached();
-    await fileInput.setInputFiles({
-      name: "test.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("Ghost Entity Lore Content"),
-    });
-
-    // 4. Verify step moves to 'processing' (we check for the cancel button instead of text)
-    await expect(page.locator('button:has-text("Cancel Import")')).toBeVisible({
-      timeout: 10000,
-    });
-
-    // 5. Test abort button
-    await page.click('button:has-text("Cancel Import")');
-
-    // Resolve the request so the analyzer can finish and see the abort signal
-    resolveRequest();
-
-    // 6. Verify it returns to upload step
-    await expect(page.locator('input[type="file"]')).toBeAttached({
-      timeout: 10000,
-    });
-
-    // 8. Clean up
-    resolveRequest();
-  });
-
-  test("should map chronicle and lore fields correctly to vault", async ({
-    page,
-  }) => {
-    // 1. Mock Gemini API with split chronicle/lore
-    await page.route(
-      /.*\/v1beta\/models\/.*:generateContent.*/,
-      async (route) => {
+    const handleRoute = async (route: any) => {
+      await requestHold;
+      try {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -152,19 +83,10 @@ test.describe("Intelligent Importer E2E", () => {
                     {
                       text: JSON.stringify([
                         {
-                          title: "Valeria",
+                          title: "Ghost Entity",
                           type: "Character",
-                          chronicle: "A master assassin.",
-                          lore: "Trained in the shadow isles since she was five.",
-                          frontmatter: { labels: ["Assassin"] },
-                        },
-                        {
-                          title: "Silent Blade",
-                          type: "Faction",
-                          chronicle:
-                            "An elite guild of assassins operating in the shadows.",
-                          lore: "Founded centuries ago to serve the highest bidder.",
-                          frontmatter: { labels: ["Guild"] },
+                          chronicle: "Summary",
+                          lore: "Lore",
                         },
                       ]),
                     },
@@ -172,12 +94,120 @@ test.describe("Intelligent Importer E2E", () => {
                 },
               },
             ],
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify([
+                    {
+                      title: "Ghost Entity",
+                      type: "Character",
+                      chronicle: "Summary",
+                      lore: "Lore",
+                    },
+                  ]),
+                },
+              },
+            ],
           }),
         });
-      },
-    );
+      } catch {
+        /* request was aborted by the cancel action */
+      }
+    };
 
-    const fileInput = page.locator('input[type="file"]');
+    await page.route("**/models/*:generateContent*", handleRoute);
+    await page.route("**/v1/chat/completions*", handleRoute);
+
+    // 3. Trigger file import
+    const fileInput = page.getByTestId("import-dropzone-file-input");
+    await expect(fileInput).toBeAttached();
+    await fileInput.setInputFiles({
+      name: "test.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("Ghost Entity Lore Content"),
+    });
+
+    // 4. Verify step moves to 'processing' (we check for the cancel button instead of text)
+    await expect(page.locator('button:has-text("Cancel Import")')).toBeVisible({
+      timeout: 10000,
+    });
+    resolveRequest();
+
+    // 5. Cancel import
+    await page.locator('button:has-text("Cancel Import")').click();
+
+    // 6. Verify we returned to upload or empty state
+    await expect(
+      page.getByText("Drag files here or paste content"),
+    ).toBeVisible({ timeout: 10000 });
+  });
+
+  test("should map chronicle and lore fields correctly to vault", async ({
+    page,
+  }) => {
+    // 1. Mock Gemini API with response that has distinct chronicle and lore
+    const handleRoute = async (route: any) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify([
+                      {
+                        title: "Valeria",
+                        type: "Character",
+                        chronicle:
+                          "Valeria is a master assassin from the shadows.",
+                        lore: "Full backstory of Valeria the shadow master.",
+                        labels: ["Rogue", "Shadow"],
+                      },
+                      {
+                        title: "Silent Blade",
+                        type: "Item",
+                        chronicle: "A poisoned dagger.",
+                        lore: "Crafted in the deep undercity.",
+                        labels: ["Weapon"],
+                      },
+                    ]),
+                  },
+                ],
+              },
+            },
+          ],
+          choices: [
+            {
+              message: {
+                content: JSON.stringify([
+                  {
+                    title: "Valeria",
+                    type: "Character",
+                    chronicle: "Valeria is a master assassin from the shadows.",
+                    lore: "Full backstory of Valeria the shadow master.",
+                    labels: ["Rogue", "Shadow"],
+                  },
+                  {
+                    title: "Silent Blade",
+                    type: "Item",
+                    chronicle: "A poisoned dagger.",
+                    lore: "Crafted in the deep undercity.",
+                    labels: ["Weapon"],
+                  },
+                ]),
+              },
+            },
+          ],
+        }),
+      });
+    };
+
+    await page.route("**/models/*:generateContent*", handleRoute);
+    await page.route("**/v1/chat/completions*", handleRoute);
+
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await expect(fileInput).toBeAttached();
     await fileInput.setInputFiles({
       name: "valeria.txt",

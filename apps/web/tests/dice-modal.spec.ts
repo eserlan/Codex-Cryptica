@@ -1,18 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Dice Modal UI and Isolation", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      // The die roller button is hidden in Guided Mode, which is on by default.
-      localStorage.setItem("codex_guided_mode_active", "false");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
+    await setupVaultPage(page);
 
     // Clear dice history directly from IndexedDB
     await page.evaluate(async () => {
@@ -34,16 +25,6 @@ test.describe("Dice Modal UI and Isolation", () => {
         };
         request.onerror = () => resolve();
       });
-    });
-
-    // Wait for auto-init
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
     });
 
     // Wait for actual UI to be ready
