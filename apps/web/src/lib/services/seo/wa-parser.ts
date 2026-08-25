@@ -1,14 +1,17 @@
 export type EntityType =
-  "character" | "creature" | "location" | "item" | "event" | "faction" | "note";
+  | "character"
+  | "creature"
+  | "location"
+  | "item"
+  | "event"
+  | "faction"
+  | "note";
 
 export interface ParsedEntity {
   type: EntityType;
   title: string;
   content: string;
   labels: string[];
-  references?: string[];
-  discoverySource?: string;
-  metadata?: Record<string, unknown>;
 }
 
 /** Convert World Anvil BBCode-style internal links to [[wiki links]]. */

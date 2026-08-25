@@ -20,13 +20,13 @@ describe("ImportSourcePicker", () => {
     onPackSelect: vi.fn(),
   };
 
-  it("shows deterministic Kanka, Scabard, and Chronica guidance before file selection", () => {
+  it("shows deterministic Scabard and Chronica import guidance before file selection", () => {
     render(ImportSourcePicker, baseProps);
 
-    expect(screen.getByText("Kanka, Scabard, and Chronica")).toBeTruthy();
+    expect(screen.getByText("Scabard and Chronica")).toBeTruthy();
     expect(
       screen.getByText(
-        /Structured exports use a deterministic review and import flow/,
+        /JSON exports use a deterministic review and import flow/,
       ),
     ).toBeTruthy();
     expect(screen.getByText("Documents and notes")).toBeTruthy();

@@ -25,15 +25,7 @@
   ] as const;
 
   let filesParsed = $state<
-    Array<{
-      type: string;
-      title: string;
-      content: string;
-      labels: string[];
-      references?: string[];
-      discoverySource?: string;
-      metadata?: Record<string, unknown>;
-    }>
+    Array<{ type: string; title: string; content: string; labels: string[] }>
   >([]);
   // ⚡ Bolt Optimization: Calculate stats in a single pass to avoid multiple .filter() array allocations.
   let parseStats = $derived.by(() => {
@@ -85,19 +77,16 @@
       if (pageData.slug === "obsidian-vault") {
         filesParsed = await parseObsidianFiles(list);
       } else {
-        const requiredExtension =
-          pageData.slug === "kanka-json" ? ".zip" : ".json";
-        const exportFile = list.find((file) =>
-          file.name.toLowerCase().endsWith(requiredExtension),
-        );
-        if (!exportFile) {
+        // JSON based imports (World Anvil, Kanka, LegendKeeper)
+        const jsonFile = list.find((f) => f.name.endsWith(".json"));
+        if (!jsonFile) {
           throw new Error(
-            `Please upload a valid ${requiredExtension.toUpperCase()} file for ` +
+            "Please upload a valid JSON file for " +
               pageData.competitorName +
               " export.",
           );
         }
-        filesParsed = await parseJsonExport(exportFile, pageData.slug);
+        filesParsed = await parseJsonExport(jsonFile, pageData.slug);
       }
     } catch (err: any) {
       errorMessage = err.message || "Failed to parse files.";
@@ -315,9 +304,7 @@
         <h3 class="font-header font-bold text-sm mb-2">
           Drag & Drop {pageData.slug === "obsidian-vault"
             ? "markdown files or vault folders"
-            : pageData.slug === "kanka-json"
-              ? "your Kanka export ZIP"
-              : "your export JSON"} here
+            : "your export JSON"} here
         </h3>
         <p
           class="text-[11px] text-theme-muted leading-relaxed max-w-md mx-auto"
@@ -339,11 +326,7 @@
           id="file-upload"
           class="hidden"
           multiple={pageData.slug === "obsidian-vault"}
-          accept={pageData.slug === "obsidian-vault"
-            ? ".md"
-            : pageData.slug === "kanka-json"
-              ? ".zip"
-              : ".json"}
+          accept={pageData.slug === "obsidian-vault" ? ".md" : ".json"}
           onchange={(e) =>
             e.target && handleFiles((e.target as HTMLInputElement).files || [])}
         />
