@@ -338,5 +338,110 @@ describe("ProxyAIGeneratorGateway", () => {
       expect(JSON.parse(first)).toEqual({ title: "Foundation" });
       expect(JSON.parse(second)).toEqual({ possiblePaths: "paths" });
     });
+
+    describe("sendStream", () => {
+      async function collect(
+        gen: AsyncGenerator<import("generator-engine").GenerationEvent>,
+      ) {
+        const events: import("generator-engine").GenerationEvent[] = [];
+        for await (const event of gen) events.push(event);
+        return events;
+      }
+
+      it("re-emits delta events, interleaves field events, and yields one complete event per turn", async () => {
+        const chunks = ['{"title": "Fo', 'undation"}'];
+        const sendMessageStream = async () => ({
+          stream: (async function* () {
+            for (const text of chunks) yield { text: () => text };
+          })(),
+        });
+        const client = {
+          getModel: async () => ({ startChat: () => ({ sendMessageStream }) }),
+        };
+        const gateway = new ProxyAIGeneratorGateway(client as never);
+
+        const chat = await gateway.startChat("system instruction");
+        const events = await collect(chat.sendStream!("turn one"));
+
+        expect(events).toEqual([
+          { type: "started" },
+          { type: "delta", text: chunks[0] },
+          { type: "field", key: "title", value: "Foundation" },
+          { type: "delta", text: chunks[1] },
+          { type: "complete", text: chunks.join("") },
+        ]);
+      });
+
+      it("scopes the field scanner to one turn — a second turn re-emits the same key", async () => {
+        let call = 0;
+        const replies = ['{"title": "A"}', '{"title": "B"}'];
+        const sendMessageStream = async () => {
+          const text = replies[call++];
+          return {
+            stream: (async function* () {
+              yield { text: () => text };
+            })(),
+          };
+        };
+        const client = {
+          getModel: async () => ({ startChat: () => ({ sendMessageStream }) }),
+        };
+        const gateway = new ProxyAIGeneratorGateway(client as never);
+
+        const chat = await gateway.startChat("system instruction");
+        const firstEvents = await collect(chat.sendStream!("turn one"));
+        const secondEvents = await collect(chat.sendStream!("turn two"));
+
+        expect(firstEvents).toContainEqual({
+          type: "field",
+          key: "title",
+          value: "A",
+        });
+        expect(secondEvents).toContainEqual({
+          type: "field",
+          key: "title",
+          value: "B",
+        });
+      });
+
+      it("yields an error event without throwing when the underlying stream call rejects", async () => {
+        const sendMessageStream = async () => {
+          throw new Error("network down");
+        };
+        const client = {
+          getModel: async () => ({ startChat: () => ({ sendMessageStream }) }),
+        };
+        const gateway = new ProxyAIGeneratorGateway(client as never);
+
+        const chat = await gateway.startChat("system instruction");
+        const events = await collect(chat.sendStream!("turn one"));
+
+        expect(events).toEqual([
+          { type: "started" },
+          { type: "error", error: "network down" },
+        ]);
+      });
+
+      it("forwards an AbortSignal into the underlying sendMessageStream call", async () => {
+        const calls: unknown[] = [];
+        const sendMessageStream = async (
+          _query: string,
+          signal?: AbortSignal,
+        ) => {
+          calls.push(signal);
+          return { stream: (async function* () {})() };
+        };
+        const client = {
+          getModel: async () => ({ startChat: () => ({ sendMessageStream }) }),
+        };
+        const gateway = new ProxyAIGeneratorGateway(client as never);
+        const controller = new AbortController();
+
+        const chat = await gateway.startChat("system instruction");
+        await collect(chat.sendStream!("turn one", controller.signal));
+
+        expect(calls).toEqual([controller.signal]);
+      });
+    });
   });
 });

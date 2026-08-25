@@ -109,6 +109,7 @@
   // draft replaces it — this is never itself offered for Save.
   let streamedFields = $state<Record<string, string>>({});
   let streamedJson = $state("");
+  let currentPhase = $state<string | null>(null);
   let generationAbortController = $state<AbortController | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
     typeof StarSystemDiagram
@@ -202,6 +203,7 @@
     errorMsg = null;
     streamedFields = {};
     streamedJson = "";
+    currentPhase = null;
   }
 
   function cancelGeneration() {
@@ -209,6 +211,7 @@
     generationAbortController = null;
     streamedFields = {};
     streamedJson = "";
+    currentPhase = null;
     stage = "configure";
     errorMsg = null;
   }
@@ -224,6 +227,7 @@
     errorMsg = null;
     streamedFields = {};
     streamedJson = "";
+    currentPhase = null;
     const abortController = new AbortController();
     generationAbortController = abortController;
     try {
@@ -361,7 +365,11 @@
         abortController.signal,
       )) {
         if (abortController.signal.aborted) break;
-        if (event.type === "delta") {
+        if (event.type === "phase") {
+          streamedFields = {};
+          streamedJson = "";
+          currentPhase = event.label;
+        } else if (event.type === "delta") {
           streamedJson += event.text;
           streamedFields = extractPartialJsonStringFields(streamedJson);
           if (import.meta.env.DEV) {
@@ -627,7 +635,9 @@
           <span
             class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
           ></span>
-          {activeLoadingMessages[loadingIndex] ?? "Generating your content…"}
+          {currentPhase ??
+            activeLoadingMessages[loadingIndex] ??
+            "Generating your content…"}
         </div>
         {#if streamedFields.title || streamedFields.summary || streamedFields.lore}
           <div
