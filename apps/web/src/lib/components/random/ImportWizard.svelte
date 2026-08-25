@@ -332,9 +332,14 @@
   );
 
   const unmatchedImages = $derived.by(() => {
-    const used = new Set(assignments.filter(Boolean).map((a) => a.fileIndex));
-    // ⚡ Bolt Optimization: Replace .map().filter() with a single imperative loop
-    const result = [];
+    const used = new Set<number>();
+    for (const assignment of assignments) {
+      if (assignment) {
+        used.add(assignment.fileIndex);
+      }
+    }
+
+    const result: { file: File; index: number }[] = [];
     for (let index = 0; index < images.length; index++) {
       if (!used.has(index)) {
         result.push({ file: images[index], index });
