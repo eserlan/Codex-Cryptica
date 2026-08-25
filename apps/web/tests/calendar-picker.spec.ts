@@ -5,32 +5,11 @@ import { test, expect, type Page } from "@playwright/test";
  * Standard mouse clicks on Canvas elements are often flaky due to
  * DPI scaling, scroll positions, or animation timing.
  */
-const clickNodeProgrammatically = async (page: Page, label: string) => {
-  await page.waitForFunction(
-    (label: string) => {
-      const cy = (window as any).cy;
-      if (!cy) return false;
-      const node = cy.nodes().filter((n: any) => n.data("label") === label);
-      return node.length > 0;
-    },
-    label,
-    { timeout: 15000 },
-  );
-
-  await page.evaluate((label) => {
-    const cy = (window as any).cy;
-    const node = cy
-      .nodes()
-      .filter((n: any) => n.data("label") === label)
-      .first();
-    // Programmatically trigger selection and click events
-    cy.nodes().unselect();
-    node.select();
-    node.trigger("tap");
-    node.trigger("click");
-  }, label);
-
-  // Check if detail panel appeared
+const openEntityForTest = async (page: Page, id = "test-event") => {
+  await page.evaluate((entityId) => {
+    const vault = (window as any).vault;
+    if (vault) vault.selectedEntityId = entityId;
+  }, id);
   await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
     timeout: 10000,
   });
@@ -87,18 +66,24 @@ test.describe("Campaign Date Picker E2E", () => {
       }
     });
 
-    // Setup: Create a test entity
-    await page.evaluate(() =>
-      (window as any).modalUIStore.requestCreateEntity(),
-    );
-    await page.getByPlaceholder(/Title\.\.\./).fill("Test Event");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Ensure node is in graph
-    await page.waitForFunction(() => {
-      const cy = (window as any).cy;
-      return cy && cy.nodes().length >= 1;
+    // Setup: Create a test entity reliably
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      if (vault) {
+        await vault.createEntity("event", "Test Event", {
+          id: "test-event",
+          content: "Event description",
+          connections: [],
+          labels: [],
+          tags: [],
+        });
+      }
     });
+    await page.waitForFunction(
+      () => !!(window as any).vault?.entities?.["test-event"],
+      undefined,
+      { timeout: 10000 },
+    );
   });
 
   test("should open date picker and select a year via Era", async ({
@@ -125,7 +110,7 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Zen Mode for the entity
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
@@ -178,7 +163,7 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Zen Mode and Date Picker
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
@@ -219,7 +204,7 @@ test.describe("Campaign Date Picker E2E", () => {
   test("should allow selecting years via scroll wheel listbox", async ({
     page,
   }) => {
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
@@ -254,7 +239,7 @@ test.describe("Campaign Date Picker E2E", () => {
   test("should allow manual year entry via keyboard toggle", async ({
     page,
   }) => {
-    await clickNodeProgrammatically(page, "Test Event");
+    await openEntityForTest(page, "test-event");
     await page
       .locator(".hidden.md\\:flex")
       .getByTestId("enter-zen-mode-button")
