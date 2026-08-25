@@ -36,11 +36,17 @@
   const activeEnvironments = $derived(
     encounterConfig.environmentsByTheme[theme] ?? encounterConfig.environments,
   );
-  const builtInEnvironments = encounterConfig.environments;
+  // Every known template value across all themes, plus the theme-less
+  // fallback list -- used to tell a stale value left over from switching
+  // themes apart from text the user actually typed into "Own option".
+  const knownEnvironments = new Set([
+    ...encounterConfig.environments,
+    ...Object.values(encounterConfig.environmentsByTheme).flat(),
+  ]);
 
   $effect(() => {
     if (
-      builtInEnvironments.includes(environment) &&
+      knownEnvironments.has(environment) &&
       !activeEnvironments.includes(environment)
     )
       environment = activeEnvironments[0];
