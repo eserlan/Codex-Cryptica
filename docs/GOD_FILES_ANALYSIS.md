@@ -1,6 +1,6 @@
 # God File Analysis Report: Codex-Cryptica
 
-_(Last updated: July 4, 2026)_
+_(Last updated: August 25, 2026)_
 
 This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
 
@@ -79,6 +79,7 @@ The **SoundBiteGenerator Decomposition** refactor remains resolved (`sound-bite-
 
 ## Historical Successes (Previously Fixed & Maintained)
 
+- **Kanka importer adapter (`kanka.ts`)**: **RESOLVED BEFORE MERGE**. The initial 523-line implementation was split into a 387-line deterministic converter and a 155-line bounded ZIP/version reader (`kanka-archive.ts`), keeping archive security separate from campaign mapping (#1539).
 - **`SearchService` (`search.svelte.ts`)**: **RESOLVED**. Reduced from 923 to 287 lines by extracting core indexing into `packages/search-engine` (499 lines) and decomposing orchestration into four focused collaborators — `SearchIndexPipeline` (370 lines), `SearchIndexLifecycle` (143 lines), `SearchIndexPersistence` (141 lines), and `SearchProgressCoordinator` (144 lines) (Spec 962).
 - **`MapInteractionManager` (`map-interactions.svelte.ts`)**: **RESOLVED**. Reduced from 626 to 407 lines by decomposing 11 interaction concerns into focused handler modules under `components/map/interactions/` — `TokenDragHandler`, `TokenResizeHandler`, `TokenSelectionManager`, `GridInteractionHandler`, `FogInteractionHandler`, `MeasurementInteractionHandler`, `PinInteractionHandler`, `BoxSelectionHandler`, `ContextMenuInteractionHandler`, `CreationInteractionHandler`, and `MapInteractionHandlerFactory` — each backed by its own test file (Spec 965).
 - **`GraphView.svelte` & `ContextMenu.svelte`**: **RESOLVED**. Reduced from ~700 lines each to ~340 and ~290 lines respectively by extracting orchestration and action logic into `GraphViewController` and `GraphContextMenuController` (Spec 825/826).

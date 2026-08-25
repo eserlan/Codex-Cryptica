@@ -1,6 +1,7 @@
-import { parseWaExport, cleanHtml, type ParsedEntity } from "./wa-parser";
+import { parseWaExport, type ParsedEntity } from "./wa-parser";
 import {
   convertThreadWeaverJsonToCif,
+  parseKankaExportZip,
   parseScabardExport,
 } from "@codex/importer";
 
@@ -93,37 +94,49 @@ export async function parseJsonExport(
   file: File,
   slug: string,
 ): Promise<ParsedEntity[]> {
+  if (slug === "kanka-json") {
+    const pkg = await parseKankaExportZip(file);
+    const titlesByRef = new Map(
+      pkg.entityDrafts.map((draft) => [
+        `kanka:${draft.sourceType ?? "note"}:${draft.sourceId}`,
+        draft.title,
+      ]),
+    );
+    const referencesByRef = new Map<string, string[]>();
+    for (const relationship of pkg.relationshipDrafts) {
+      const targetTitle = titlesByRef.get(relationship.toRef);
+      if (!targetTitle) continue;
+      const references = referencesByRef.get(relationship.fromRef) ?? [];
+      references.push(targetTitle);
+      referencesByRef.set(relationship.fromRef, references);
+    }
+    const parsed = pkg.entityDrafts.map((draft) => {
+      const discoverySource = `kanka:${draft.sourceType ?? "note"}:${draft.sourceId}`;
+      const references = referencesByRef.get(discoverySource);
+      return {
+        type: toKnownType(draft.sourceType),
+        title: draft.title,
+        content: draft.content || draft.lore || "",
+        labels: draft.labels ?? [],
+        discoverySource,
+        metadata: draft.metadata,
+        ...(references && references.length > 0
+          ? { references: [...new Set(references)] }
+          : {}),
+      };
+    });
+    if (parsed.length === 0) {
+      throw new Error("No importable entries found in the Kanka export ZIP.");
+    }
+    return parsed;
+  }
+
   const text = await file.text();
   const data = JSON.parse(text);
   const parsed: ParsedEntity[] = [];
 
   if (slug === "world-anvil-export") {
     parsed.push(...parseWaExport(data));
-  } else if (slug === "kanka-json") {
-    // Kanka campaign exports
-    const entities =
-      data.entities || (Array.isArray(data) ? data : Object.values(data));
-    for (const item of entities) {
-      if (!item || typeof item !== "object") continue;
-      const title = item.name || "Untitled Entity";
-      const body = cleanHtml(
-        item.entry || item.entry_parsed || item.history || "",
-      );
-      let type: ParsedEntity["type"] = "note";
-      const kankaType = String(item.type || "").toLowerCase();
-      if (kankaType === "character") type = "character";
-      else if (kankaType === "location") type = "location";
-      else if (kankaType === "item") type = "item";
-      else if (kankaType === "organisation" || kankaType === "faction")
-        type = "faction";
-
-      parsed.push({
-        type,
-        title,
-        content: body,
-        labels: ["kanka-import", kankaType].filter(Boolean),
-      });
-    }
   } else if (slug === "legendkeeper-json") {
     // LegendKeeper JSON schema
     const pages =

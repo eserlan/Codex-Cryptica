@@ -61,6 +61,8 @@ describe("SeoImportService", () => {
       content: "A brave elven warrior.",
       lore: "Strength: 18",
       labels: ["custom-label"],
+      discoverySource: "kanka:character:101",
+      metadata: { kankaEntityId: 101 },
     };
     localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
 
@@ -75,6 +77,8 @@ describe("SeoImportService", () => {
         lore: "Strength: 18",
         labels: ["custom-label"],
         status: "active",
+        discoverySource: "kanka:character:101",
+        metadata: { kankaEntityId: 101 },
       },
     );
     expect(mockVaultStore.selectedEntityId).toBe("e1");
