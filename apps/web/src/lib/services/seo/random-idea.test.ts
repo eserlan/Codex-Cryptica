@@ -19,6 +19,7 @@ describe("randomIdeaCategories", () => {
       "council-vote",
       "creature",
       "deity",
+      "encounter",
       "faction",
       "minor-magic-item",
       "nation",
@@ -54,6 +55,7 @@ describe("randomIdeaCategories", () => {
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
       generateCreature: vi.fn().mockResolvedValue("creature-result"),
+      generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -116,6 +118,10 @@ describe("randomIdeaCategories", () => {
       mode: "single",
     });
     expect(engine.generateCreature).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateEncounter).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
     });

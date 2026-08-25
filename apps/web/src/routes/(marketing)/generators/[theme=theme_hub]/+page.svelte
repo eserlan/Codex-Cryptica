@@ -58,6 +58,13 @@
       icon: "icon-[lucide--scroll]",
     },
     {
+      slug: "encounter",
+      label: "Encounter Generator",
+      summary:
+        "Generate a playable combat, social, exploration, environmental, or mixed encounter with participants, environment, a complication, and outcomes.",
+      icon: "icon-[lucide--swords]",
+    },
+    {
       slug: "puzzle",
       label: "Puzzle Generator",
       summary:

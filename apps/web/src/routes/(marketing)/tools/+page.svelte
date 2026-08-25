@@ -135,6 +135,13 @@
               icon: "icon-[lucide--scroll-text]",
             },
             {
+              href: "/generators/encounter",
+              label: "Encounter Generator",
+              summary:
+                "Generate a playable combat, social, exploration, environmental, or mixed encounter with participants, environment, and a complication.",
+              icon: "icon-[lucide--swords]",
+            },
+            {
               href: "/generators/puzzle",
               label: "Puzzle Generator",
               summary:

@@ -15,6 +15,7 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import EncounterFormFields from "$lib/components/seo/EncounterFormFields.svelte";
   import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
@@ -52,6 +53,7 @@
     artifactConfig,
     factionConfig,
     questConfig,
+    encounterConfig,
     puzzleConfig,
     councilVoteConfig,
     secretSocietyConfig,
@@ -231,6 +233,16 @@
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
     campaignContext: "",
+  });
+  let encounter = $state({
+    genre: factionConfig.themes[0],
+    encounterType:
+      encounterConfig.encounterTypes.find((t) => t !== "Random") ??
+      encounterConfig.encounterTypes[0],
+    environment: encounterConfig.environments[0],
+    threat: encounterConfig.threats[0],
+    tone: encounterConfig.tones[0],
+    context: "",
   });
   let puzzle = $state({
     genre: puzzleConfig.genres[0],
@@ -563,6 +575,7 @@
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
     else if (slug === "puzzle") puzzle.genre = activeTheme;
+    else if (slug === "encounter") encounter.genre = activeTheme;
     else if (slug === "council-vote") councilVote.genre = activeTheme;
     else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
@@ -789,6 +802,8 @@
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
+    encounter: (useAI) =>
+      generatorEngine.generateEncounter({ ...encounter, useAI }),
     puzzle: (useAI) => generatorEngine.generatePuzzle({ ...puzzle, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
@@ -1042,6 +1057,16 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "encounter"}
+      <EncounterFormFields
+        bind:theme={activeTheme}
+        bind:encounterType={encounter.encounterType}
+        bind:environment={encounter.environment}
+        bind:threat={encounter.threat}
+        bind:tone={encounter.tone}
+        bind:context={encounter.context}
         onSurprise={trigger}
       />
     {:else if slug === "puzzle"}

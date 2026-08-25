@@ -35,6 +35,7 @@ const validSlugs = new Set([
   "star-system",
   "alien-race",
   "creature",
+  "encounter",
   "random",
 ]);
 

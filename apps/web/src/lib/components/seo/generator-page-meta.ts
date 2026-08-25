@@ -343,6 +343,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "ttrpg plot hooks",
     ],
   },
+  encounter: {
+    pageTitle:
+      "RPG Encounter Generator | Free Combat, Social & Exploration Tool | Codex Cryptica",
+    metaDescription:
+      "Generate playable RPG encounters -- combat, social, exploration, environmental, or mixed -- with participants, environment, a complication, and outcomes. System-neutral threat levels.",
+    introTitle: "RPG Encounter Generator",
+    eyebrow: "Encounter Generator",
+    introText:
+      "Create playable encounters your players can actually interact with, not just a monster list. Set the encounter type, environment, and threat, then import into your local vault.",
+    canonicalPath: "/generators/encounter",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-encounter.jpg",
+    ogImageAlt:
+      "Codex Cryptica encounter generator showing participants, environment, and possible approaches for a playable RPG encounter",
+    keywords: [
+      "rpg encounter generator",
+      "random encounter generator",
+      "fantasy encounter generator",
+      "dnd encounter generator",
+      "travel encounter generator",
+    ],
+  },
   item: {
     pageTitle:
       "RPG Loot & Magic Item Generator | Free Fantasy Equipment Tool | Codex Cryptica",

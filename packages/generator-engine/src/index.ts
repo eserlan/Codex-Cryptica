@@ -126,6 +126,14 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  buildEncounterPrompt,
+  parseEncounterResponse,
+  generateEncounterLocal,
+  encounterConfig,
+  type EncounterGeneratorOptions,
+  type EncounterPrompt,
+} from "./public-encounter";
+export {
   buildPuzzlePrompt,
   parsePuzzleResponse,
   generatePuzzleLocal,

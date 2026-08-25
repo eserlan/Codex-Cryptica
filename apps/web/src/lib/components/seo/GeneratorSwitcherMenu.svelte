@@ -70,6 +70,7 @@
           path: "/generators/adventure-generator",
         },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Encounter Generator", path: "/generators/encounter" },
         { label: "Puzzle Generator", path: "/generators/puzzle" },
         {
           label: "Plot Twist & Complication Generator",

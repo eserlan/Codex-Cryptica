@@ -66,6 +66,7 @@ describe("registry lookup", () => {
       "alien-race",
       "creature",
       "random-table",
+      "encounter",
     ]);
   });
 
@@ -240,6 +241,38 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "character",
       sourceGeneratorId: "villain",
+    });
+  });
+
+  it("builds and generates an encounter as a note draft", () => {
+    const generator = getGenerator("encounter");
+    const request = run("encounter", {
+      themeId: "fantasy",
+      options: {
+        encounterType: "Social",
+        environment: "Market Town",
+        threat: "Dangerous",
+        tone: "Tense",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.encounter).toBe("note");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("- Encounter Type: Social");
+    expect(prompt).toContain("- Environment: Market Town");
+    expect(prompt).toContain("- Threat: Dangerous");
+    expect(prompt).toContain("consistency pass");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["encounter", "encounter-generator"]),
+    );
+    expect(output.lore).toContain("### At a Glance");
+    expect(draft).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "encounter",
     });
   });
 
@@ -1411,6 +1444,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "alien-race": "creature",
       creature: "creature",
       "random-table": "table",
+      encounter: "note",
     });
   });
 
