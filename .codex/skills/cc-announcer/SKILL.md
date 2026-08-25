@@ -87,14 +87,14 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 ## Core Style Rules
 
 - **Espen's Authentic Voice (Solo Dev Framing).** Write as a solo developer showing off a tool built for their own table (**"I wanted something that felt more like..."**, **"I built a..."**, **"I'd love to know whether..."**). Keep prose loose, natural, and low-adjective.
-- **Banned Product-Copy Rhythms (Hard Rule).** Avoid marketing phrases like:
+- **Formulaic Product-Copy Rhythms.** Challenge marketing phrases like:
   - _"Instead of a bare astronomical inventory..."_
   - _"system-wide stakes making the system worth visiting"_
   - _"It supports several genres, from..."_
   - _"integrates into the in-app Campaign Generator to pull context directly..."_
     Instead, state what it does plainly (_"It generates the system itself..."_, _"It can generate..."_, _"There are several genre options..."_, _"It is also available inside Codex Cryptica..."_).
 - **Human List Rhythms.** Keep feature lists loose and unadorned without heavy adjective pairing on every bullet point. Use simple bullet points under clear introductory headers (`It can generate:`).
-- **No Emojis or Em Dashes (Hard Rule).** NEVER use emojis (e.g. ✨, 🪐, 🚀) or em dashes (`—`). They look artificial and overly polished/AI-generated. Use plain punctuation (hyphens `-`, colons `:`, or parentheticals) instead.
+- **Plain Punctuation and No Emojis.** Do not use emojis in drafts. Prefer commas, colons, parentheses, or ordinary hyphens to em dashes, especially when a sentence uses a polished contrast construction.
 - **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
 - **Scannable but clean formatting.** Short paragraphs and light bullet points. Add a heading only when it genuinely improves scanning; a short announcement usually does not need one.
 - **Visuals and Image Support.** Include image placeholders or embedded screenshots where relevant (e.g. `![Character Chat Mobile View](...)` or `[Image: Cosmic Horror Hub Theme preview]`). Show direct interface/visual proof of changes.
@@ -103,14 +103,33 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 - **Always link to the feature.** If you are announcing a new tool, generator, or page on the live site, include a direct link to it so people can easily find it.
 - **Links: one or two in the post body, max.** Everything else goes in the first comment (or direct link with `👉` omitted; use plain text/links like `Explore the Cosmic Horror Hub: codexcryptica.com/...`).
 
+### LLM tells are heuristics, not proof
+
+"LLM tells" are recurring writing habits that can make copy feel generated or interchangeable with generic SaaS marketing. They are warning signs to review, not proof of AI authorship and not a mechanical blacklist. A word can be useful when it carries concrete information; rewrite it when it is doing nothing but adding polish or hype.
+
+Common tells include:
+
+- Generic contrast formulas such as "X isn't just Y, it's Z," "not just ... but ...," and "It's more than just ..."
+- Broad audience openers such as "Whether you're a beginner or an expert..."
+- Filler openings such as "At its core..." and "In today's fast-paced world..."
+- Empty transitions such as "Here's where X comes in"
+- Unsupported adjectives and adverbs such as _seamlessly, effortlessly, powerful,_ and _robust_
+- Marketing verbs and labels such as _unlock, supercharge, elevate, revolutionise,_ and _game-changer_
+- Repeated em-dash contrast constructions
+- Tidy three-part hype lists when a direct sentence or looser list would be clearer
+- Paragraphs with nearly identical length, rhythm, or sentence shape
+- Over-polished transitions that add no information and conclusions that merely restate the post
+
+When one appears, check whether the sentence makes a specific, verifiable claim. Prefer concrete product language, direct phrasing, and varied sentence structure. Delete transitions that do not move the idea forward. Keep an unusual phrase when it is accurate and sounds natural in context.
+
 ### Phrases and formatting to avoid
 
-- **Banned punctuation/formatting:** Emojis (✨, 🪐, 👉, 🚀, etc.) and em-dashes (`—`).
-- **Banned buzzwords:** _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
+- **House style:** No emojis (✨, 🪐, 👉, 🚀, etc.). Prefer plain punctuation over em dashes.
+- **Marketing filler to challenge:** _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
 
 ### Cadence to avoid
 
-LLM-generated posts often share a recognizable rhythm: paragraphs of similar length, every section opening with a transition word, a closing paragraph that restates the post. Break the cadence — vary paragraph lengths, let some sentences run short, and don't write a conclusion that summarizes what was just said.
+LLM-generated posts often share a recognizable rhythm: paragraphs of similar length, every section opening with a transition word, and a closing paragraph that restates the post. Break the cadence. Vary paragraph lengths, let some sentences run short, and don't write a conclusion that summarizes what was just said.
 
 ---
 
@@ -154,7 +173,7 @@ When preparing screenshots and visual assets for announcements, devlogs, or disc
 Avoid default launch-style titles:
 
 - ❌ `[Update] v0.21.0 is LIVE!`
-- ❌ `Codex Cryptica — The Ultimate Worldbuilding Tool`
+- ❌ `Codex Cryptica: The Ultimate Worldbuilding Tool`
 
 Prefer titles that sound native to Reddit. Mix patterns rather than defaulting to one:
 
@@ -166,7 +185,7 @@ Prefer titles that sound native to Reddit. Mix patterns rather than defaulting t
 **Problem-first (often stronger):**
 
 - `My graph view kept feeling cluttered until I removed the auto-layout`
-- `OPFS persistence broke every time I refactored — here's what finally worked`
+- `OPFS persistence broke every time I refactored. Here's what finally worked`
 
 **Devlog framing (good for r/codexcryptica and r/SvelteJS):**
 
@@ -290,7 +309,7 @@ Before returning a draft, verify:
 - Would the post still be useful if the reader never clicked a link?
 - Are all technical claims grounded in provided changelogs, specs, code, or repo material?
 - Has the post been adapted to the target subreddit, not just dropped into a generic template?
-- Have any banned phrases, emojis, em dashes (`—`), or LLM-cadence patterns slipped in?
+- Have any formulaic phrases, empty transitions, emojis, repetitive em-dash constructions, or overly regular cadence patterns slipped in?
 - Are image/screenshot placeholders included right after the opening summary?
 
 If any answer is "no" or "unsure," revise before returning.
