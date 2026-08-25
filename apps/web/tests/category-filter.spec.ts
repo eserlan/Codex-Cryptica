@@ -114,6 +114,8 @@ test.describe("Category Filter", () => {
       null,
       { timeout: 10000 },
     );
+    // Applying a filter collapses the toolbar after the graph updates.
+    await domClick(page, "category-filter-toggle");
     await expect(locationBtn).toHaveAttribute("aria-pressed", "true");
 
     // Click All to clear
