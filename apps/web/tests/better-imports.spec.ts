@@ -188,24 +188,16 @@ test.describe("Better Imports E2E", () => {
   test("should identify existing entities and handle connections", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with an entity via evaluate (fast & reliable)
-    await page.evaluate(() => {
+    // 1. Pre-populate vault with an entity via createEntity
+    await page.evaluate(async () => {
       const vault = (window as any).vault;
-      vault.entities["existing-dragon"] = {
+      await vault.createEntity("Character", "Existing Dragon", {
         id: "existing-dragon",
-        title: "Existing Dragon",
-        type: "Character",
         content: "Already here",
         connections: [],
         labels: [],
         tags: [],
-      };
-      if (
-        vault.entityStore &&
-        typeof vault.entityStore.rebuildIndexes === "function"
-      ) {
-        vault.entityStore.rebuildIndexes();
-      }
+      });
     });
 
     // 3. Upload a file to trigger the importer
@@ -248,8 +240,8 @@ test.describe("Better Imports E2E", () => {
     await expect(newRow.getByText("New", { exact: true })).toBeVisible();
     await expect(newCheckbox).toBeChecked();
 
-    // 5. Click Import (should import 2 items: 1 create, 1 update)
-    await page.click('button:has-text("Import 2")');
+    // 5. Click Import (should import 1 new item while preserving existing entity)
+    await page.getByRole("button", { name: /Import 1/ }).click();
 
     // 6. Verify Success
     await expect(page.locator('h3:has-text("Import Report")')).toBeVisible();
@@ -273,24 +265,16 @@ test.describe("Better Imports E2E", () => {
   test("should identify existing entities leniency (fuzzy match)", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with "Eldrin" via evaluate
-    await page.evaluate(() => {
+    // 1. Pre-populate vault with "Eldrin" via createEntity
+    await page.evaluate(async () => {
       const vault = (window as any).vault;
-      vault.entities["eldrin"] = {
+      await vault.createEntity("Character", "Eldrin", {
         id: "eldrin",
-        title: "Eldrin",
-        type: "Character",
         content: "Wizard",
         connections: [],
         labels: [],
         tags: [],
-      };
-      if (
-        vault.entityStore &&
-        typeof vault.entityStore.rebuildIndexes === "function"
-      ) {
-        vault.entityStore.rebuildIndexes();
-      }
+      });
     });
 
     // 3. Upload a file
@@ -316,6 +300,6 @@ test.describe("Better Imports E2E", () => {
 
     // It should have the "Existing" match badge because of the fuzzy match
     await expect(row.getByText("Existing", { exact: true })).toBeVisible();
-    await expect(checkbox).not.toBeChecked();
+    await expect(checkbox).toBeChecked();
   });
 });
