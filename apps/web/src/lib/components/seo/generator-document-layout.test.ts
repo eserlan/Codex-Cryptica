@@ -85,7 +85,7 @@ The clan needs a relic recovered before dawn.`,
       type: "faction",
       title: "The Argent Loom",
       content: "### What they control\nThe canal gates.",
-      lore: `### At the Table
+      lore: `### At a Glance
 - **Base**: The old mint
 - **Resource**: Canal tolls
 - **Secret**: The founding charter is forged.
@@ -108,7 +108,7 @@ The dockside cells want to stop paying tribute to the founding families, and the
     expect(layout.content).toContain("### Secrets & Hooks");
     expect(layout.content).toContain("**Secret**: The founding charter");
     expect(layout.content).toContain("**Immediate Hook**: A loom has started");
-    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).toContain("**Base**");
     expect(layout.lore).toContain("### Notable NPCs");
     expect(layout.lore).toContain("### Rival Faction");
@@ -204,7 +204,7 @@ Forged for a king who trusted no counsel, it outlived four dynasties.`,
       type: "faction",
       title: "The Argent Loom",
       content: "### What they control\nThe canal gates.",
-      lore: `### At the Table
+      lore: `### At a Glance
 - **Base**: The old mint
 
 ### Whispered Origins
@@ -214,7 +214,7 @@ They say the first loom was strung with hair from a drowned saint.`,
     });
 
     expect(layout.content).toContain("### Whispered Origins");
-    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).not.toContain("### Whispered Origins");
   });
 
@@ -225,14 +225,14 @@ They say the first loom was strung with hair from a drowned saint.`,
       content: "### What they control\nThe canal gates.",
       lore: `A guild older than the city charter.
 
-### At the Table
+### At a Glance
 - **Base**: The old mint`,
       labels: ["rpg-faction", "faction-generator", "imported-draft"],
       status: "active",
     });
 
     expect(layout.content).toContain("A guild older than the city charter.");
-    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).not.toContain("A guild older than the city charter.");
   });
 

@@ -32,7 +32,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "faction-generator",
-    railSections: new Set(["At the Table", "Notable NPCs", "Rival Faction"]),
+    railSections: new Set(["At a Glance", "Notable NPCs", "Rival Faction"]),
     documentBullets: {
       labels: new Set(["Secret", "Immediate Hook"]),
       heading: "Secrets & Hooks",

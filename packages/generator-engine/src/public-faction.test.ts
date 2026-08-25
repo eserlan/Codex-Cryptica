@@ -24,7 +24,7 @@ describe("generateFactionLocal", () => {
     expect(out.type).toBe("faction");
     expect(out.content).toContain("### What they control");
     expect(out.content).toContain("### Why they are dangerous");
-    expect(out.lore).toContain("### At the Table");
+    expect(out.lore).toContain("### At a Glance");
     expect(out.lore).toContain("### Rival Faction");
     expect(out.labels).toContain("faction-generator");
   });
