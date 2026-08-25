@@ -295,7 +295,9 @@ export type GenerationEvent =
        */
       replayed?: boolean;
     }
-  | { type: "error"; error: string };
+  | { type: "error"; error: string }
+  /** A new pass is starting in a multi-pass generator workflow. */
+  | { type: "phase"; label: string };
 
 /**
  * AI generation boundary injected by the web app. The package sends a prompt
@@ -340,6 +342,11 @@ export interface AIGeneratorGateway {
 export interface AIGeneratorChatSession {
   /** Sends one turn and returns its text, awaiting the full response. */
   send(userMessage: string): Promise<string>;
+  /** Streams one chat turn when the backing provider supports it. */
+  sendStream?(
+    userMessage: string,
+    signal?: AbortSignal,
+  ): AsyncGenerator<GenerationEvent>;
 }
 
 export interface GeneratorInteractionRequest {

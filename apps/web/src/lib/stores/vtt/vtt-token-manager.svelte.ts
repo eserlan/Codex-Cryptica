@@ -442,23 +442,27 @@ export class VTTTokenManager {
   bringTokenToFront(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    // Scoped to the token's own layer — "front" means top of its layer, not
-    // top of the whole map (a token layer piece always renders above
-    // terrain/objects regardless of raw zIndex).
-    const sameLayer = Object.values(this.tokens).filter(
-      (item) => item.layer === token.layer,
-    );
-    return this.updateToken(tokenId, { zIndex: nextZIndexInLayer(sameLayer) });
+    // "Front" is scoped to the token's own layer. Scan directly so this hot
+    // interaction does not allocate a filtered array on every invocation.
+    let maxZ = -1;
+    for (const item of Object.values(this.tokens)) {
+      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
+        maxZ = Math.max(maxZ, item.zIndex);
+      }
+    }
+    return this.updateToken(tokenId, { zIndex: maxZ + 1 });
   }
 
   sendTokenToBack(tokenId: string) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    const sameLayer = Object.values(this.tokens).filter(
-      (item) => item.layer === token.layer,
-    );
-    const zIndex = Math.min(...sameLayer.map((item) => item.zIndex), 0) - 1;
-    return this.updateToken(tokenId, { zIndex });
+    let minZ = 0;
+    for (const item of Object.values(this.tokens)) {
+      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
+        minZ = Math.min(minZ, item.zIndex);
+      }
+    }
+    return this.updateToken(tokenId, { zIndex: minZ - 1 });
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {

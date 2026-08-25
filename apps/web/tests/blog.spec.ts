@@ -98,6 +98,43 @@ test.describe("Blog", () => {
     );
   });
 
+  test("should navigate to and render the introducing the canvas article", async ({
+    page,
+  }) => {
+    await page.goto("/blog");
+
+    const articleLink = page.getByRole("link", {
+      name: "Introducing the Canvas: Visual Brainstorming Meets Structured Lore",
+    });
+    await articleLink.click();
+
+    // Wait for navigation
+    await expect(page).toHaveURL(/\/blog\/introducing-the-canvas/);
+
+    // Check title and metadata
+    await expect(page).toHaveTitle(
+      /Introducing the Canvas: Visual Brainstorming Meets Structured Lore/,
+    );
+
+    // Check article content
+    const articleContent = page.locator(".blog-content");
+    await expect(articleContent).toBeVisible();
+    await expect(articleContent).toContainText("What is the Canvas?");
+    await expect(articleContent).toContainText(
+      "Five Practical Canvas Workflows",
+    );
+    await expect(articleContent).toContainText(
+      "Building an Investigation Board",
+    );
+
+    // Check CTA button
+    const ctaButton = page.getByRole("link", {
+      name: /Launch Codex Cryptica and Open Canvas/,
+      exact: false,
+    });
+    await expect(ctaButton).toBeVisible();
+  });
+
   test("should show 404 for non-existent article", async ({ page }) => {
     const response = await page.goto("/blog/non-existent-transmission");
     expect(response?.status()).toBeGreaterThanOrEqual(400);

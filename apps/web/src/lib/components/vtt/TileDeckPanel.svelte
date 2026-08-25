@@ -247,12 +247,12 @@
           placeholder="Rooms"
         />
         <label class="block text-xs text-theme-text" for="tile-deck-files"
-          >PNG tile images</label
+          >Tile images (PNG or JPG)</label
         >
         <input
           id="tile-deck-files"
           type="file"
-          accept="image/png"
+          accept="image/png,image/jpeg"
           multiple
           onchange={selectFiles}
           class="block w-full text-xs text-theme-muted file:mr-2 file:rounded file:border-0 file:bg-theme-primary/10 file:px-2 file:py-1 file:text-theme-primary"
