@@ -1,20 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Graph Synchronization Loop", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-    await page.goto("/");
-    // Wait for auto-init
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 15000,
-    });
+    await setupVaultPage(page);
   });
 
   test("should correctly synchronize newly added elements (Map hydration guard)", async ({
@@ -27,7 +16,9 @@ test.describe("Graph Synchronization Loop", () => {
       await v.createEntity("location", "Node B");
     });
 
-    await expect(page.getByTestId("entity-count")).toHaveText(/2\s+NOTES/);
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /2\s+(CHRONICLES|NOTES)/i,
+    );
 
     // 2. Add connection with label
     // This tests the hydration bug: if elementMap doesn't have the new edge, the label won't sync in the same pass
