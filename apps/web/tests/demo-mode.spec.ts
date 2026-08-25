@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { seedEntity } from "./test-helpers";
 
 test.describe("Interactive Demo Mode", () => {
   test.describe.configure({ mode: "serial" });
@@ -117,18 +116,19 @@ test.describe("Interactive Demo Mode", () => {
       { timeout: 15000 },
     );
 
-    // Add a new entity in demo mode
-    const id = await seedEntity(page, {
-      title: "New Transient Node",
-      type: "character",
-      select: true,
-    });
-
-    const entity = await page.evaluate(
-      (entityId) => (window as any).vault?.entities?.[entityId],
-      id,
+    // Add a new entity through the same user-facing flow as a player.
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
     );
-    expect(entity?.title).toBe("New Transient Node");
+    const input = page.locator('input[placeholder*="Title..."]');
+    await expect(input).toBeVisible();
+    await input.fill("New Transient Node");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "New Transient Node" }),
+    ).toBeVisible();
+    await expect(page.getByText(/TRANSIENT MODE/)).toBeVisible();
 
     // Reload page
     await page.reload();
