@@ -1,14 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("P2P Image Sync", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-
       // Mock Peer
       (window as any).Peer = class MockPeer {
         id = "mock-peer";
@@ -46,26 +41,13 @@ test.describe("P2P Image Sync", () => {
         destroy() {}
       };
     });
+
+    await setupVaultPage(page);
   });
 
   test("Guest: should convert FILE_RESPONSE to Blob", async ({ page }) => {
-    await page.goto("/");
-
     const result = await page.evaluate(async () => {
-      const guestService = await new Promise<any | null>((resolve) => {
-        const check = setInterval(() => {
-          const s = (window as any).p2pGuestService;
-          if (s) {
-            clearInterval(check);
-            resolve(s);
-          }
-        }, 100);
-        setTimeout(() => {
-          clearInterval(check);
-          resolve(null);
-        }, 5000);
-      });
-
+      const guestService = (window as any).p2pGuestService;
       if (!guestService) {
         return null;
       }
@@ -119,23 +101,10 @@ test.describe("P2P Image Sync", () => {
   });
 
   test("Host: should serve file from OPFS", async ({ page }) => {
-    await page.goto("/");
-
     await page.evaluate(async () => {
-      // Wait for vault to be ready
-      const vault = await new Promise<any>((resolve) => {
-        const check = setInterval(() => {
-          const v = (window as any).vault;
-          if (v) {
-            clearInterval(check);
-            resolve(v);
-          }
-        }, 100);
-      });
+      const vault = (window as any).vault;
+      if (!vault) throw new Error("No vault");
 
-      await vault.init();
-
-      // Create file
       const handle = await vault.getActiveVaultHandle();
       if (!handle) throw new Error("No vault handle");
 
