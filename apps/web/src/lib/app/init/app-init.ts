@@ -495,6 +495,15 @@ export function setupWindowGlobals(context: {
 }
 
 /**
+ * Shortest gap between service worker update checks triggered by the tab
+ * regaining focus. Unthrottled, alt-tabbing re-fetches the worker script on
+ * every single focus. Production promotes land roughly daily, so noticing one
+ * a few minutes late costs nothing — and a client left stale by a promote
+ * still self-heals through the version-skew reload in `hooks.client.ts`.
+ */
+const SERVICE_WORKER_UPDATE_INTERVAL_MS = 15 * 60 * 1000;
+
+/**
  * Registers the service worker if in production.
  */
 export function registerServiceWorker(deps?: {
@@ -502,11 +511,13 @@ export function registerServiceWorker(deps?: {
   navigator?: Navigator;
   window?: Window;
   isDev?: boolean;
+  now?: () => number;
 }) {
   const doc = deps?.document ?? document;
   const nav = deps?.navigator ?? navigator;
   const win = deps?.window ?? window;
   const isDev = deps?.isDev ?? import.meta.env.DEV;
+  const now = deps?.now ?? Date.now;
 
   if (!browser || !("serviceWorker" in nav) || isDev) {
     return;
@@ -571,12 +582,22 @@ export function registerServiceWorker(deps?: {
     nav.serviceWorker.register(`${base}/service-worker.js`).then(
       (registration) => {
         if (registration && typeof registration.update === "function") {
+          // The check on registration is unconditional, so a client that was
+          // offline through a promote still discovers it on next launch.
+          let lastUpdateCheck = now();
           void registration.update().catch(() => {});
 
           doc.addEventListener("visibilitychange", () => {
-            if (doc.visibilityState === "visible") {
-              void registration.update().catch(() => {});
+            if (doc.visibilityState !== "visible") return;
+            const checkedAt = now();
+            if (
+              checkedAt - lastUpdateCheck <
+              SERVICE_WORKER_UPDATE_INTERVAL_MS
+            ) {
+              return;
             }
+            lastUpdateCheck = checkedAt;
+            void registration.update().catch(() => {});
           });
         }
       },
