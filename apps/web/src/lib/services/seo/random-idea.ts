@@ -18,7 +18,8 @@ export interface RandomIdeaCategory {
     | "social-hub"
     | "pantheon"
     | "deity"
-    | "creature";
+    | "creature"
+    | "encounter";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -141,6 +142,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Creature",
     generate: (engine, useAI, theme) =>
       engine.generateCreature({ genre: theme, useAI }),
+  },
+  {
+    key: "encounter",
+    label: "Encounter",
+    generate: (engine, useAI, theme) =>
+      engine.generateEncounter({ genre: theme, useAI }),
   },
 ];
 

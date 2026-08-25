@@ -237,7 +237,7 @@ describe("DefaultGeneratorEngine", () => {
         "a canal city split by old guild rivalries",
       );
       expect(res.lore).toContain("Internal Conflict");
-      expect(res.lore).toContain("At the Table");
+      expect(res.lore).toContain("At a Glance");
       expect(res.lore).toContain("- **📍 Base**");
       expect(res.lore).toContain("- **👤");
       expect(res.lore).toContain("- **👥");
@@ -319,7 +319,7 @@ describe("DefaultGeneratorEngine", () => {
       });
       expect(fallbackRes.content).toContain("criminal syndicate");
       expect(fallbackRes.content).toContain("What they control");
-      expect(fallbackRes.lore).toContain("At the Table");
+      expect(fallbackRes.lore).toContain("At a Glance");
     });
   });
 
@@ -751,7 +751,7 @@ describe("DefaultGeneratorEngine", () => {
                 title: "The Glass Choir",
                 summary: "A choir that hears a signal beneath the city.",
                 content: "### What they believe\\nThe signal is mercy.",
-                lore: "### At the Table\\n- **Leader**: Orra Venn.",
+                lore: "### At a Glance\\n- **Leader**: Orra Venn.",
                 labels: ["cosmic-horror"],
               }),
           },

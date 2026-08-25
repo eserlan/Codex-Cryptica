@@ -216,3 +216,7 @@
 
 **Learning:** In markdown parsing components (like `generator-document-layout.ts` and `markdown-sections.ts`), using `Array.from(markdown.matchAll(...)).map()` forces the JavaScript engine to eagerly evaluate the entire iterator into an intermediate array of match objects, only to immediately throw it away after mapping it into another array. For large generator documents, this spikes unnecessary garbage collection pressure during formatting.
 **Action:** Replace `Array.from(iterator).map()` with a single imperative `for...of` loop over the iterator. This processes the matches lazily, avoids the intermediate `.map` array allocation, and pushes directly into the final array.
+## 2025-02-24 - Avoid allocating unused objects by replacing map().filter() with a loop
+
+**Learning:** When chained array methods like `.map().filter()` create new objects in the `.map()` phase (e.g., `images.map(f => ({ file: f, index })).filter(...)`), they instantiate objects that are immediately thrown away by the subsequent filter. This creates unnecessary garbage collection pressure beyond just the intermediate array allocation.
+**Action:** Replace `.map(x => ({...})).filter(...)` chains with a single imperative loop. Only instantiate the new object if the condition passes, pushing it directly into the result array.

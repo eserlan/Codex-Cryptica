@@ -32,7 +32,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "faction-generator",
-    railSections: new Set(["At the Table", "Notable NPCs", "Rival Faction"]),
+    railSections: new Set(["At a Glance", "Notable NPCs", "Rival Faction"]),
     documentBullets: {
       labels: new Set(["Secret", "Immediate Hook"]),
       heading: "Secrets & Hooks",
@@ -190,6 +190,15 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Current Vote Estimate",
       "Antagonist Influence",
     ]),
+  },
+  {
+    label: "encounter-generator",
+    // Every other lore section (What Is Happening, Goals & Stakes,
+    // Participants, Environment, Possible Approaches, Complication/Twist,
+    // Outcomes & Consequences, Rewards/Discoveries) is per-entry narrative
+    // payoff, mirroring council-vote/bbeg-generator's exclusions — only the
+    // genuine quick-lookup summary stays in the rail.
+    railSections: new Set(["At a Glance"]),
   },
 ];
 

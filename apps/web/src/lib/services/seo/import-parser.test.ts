@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { strToU8, zipSync } from "fflate";
 import {
   parseObsidianFiles,
   parseJsonExport,
@@ -100,6 +101,63 @@ describe("import-parser", () => {
     expect(parsed).toHaveLength(1);
     expect(parsed[0].title).toBe("Hero");
     expect(parsed[0].type).toBe("character");
+  });
+
+  it("routes a raw Kanka JSON export ZIP through the shared adapter", async () => {
+    const bytes = zipSync({
+      "info.md": strToU8("kanka_version: 3.10"),
+      "campaign.json": strToU8(JSON.stringify({ name: "Test Campaign" })),
+      "characters/hero_1.json": strToU8(
+        JSON.stringify({
+          id: 1,
+          name: "Hero",
+          entity: {
+            id: 101,
+            entry: "<p>Campaign prose</p>",
+            image_path: "characters/hero.png",
+            relationships: [{ target_id: 202, relation: "Protects" }],
+          },
+        }),
+      ),
+      "locations/haven_2.json": strToU8(
+        JSON.stringify({
+          id: 2,
+          name: "Haven",
+          entity: { id: 202, entry: "A safe place." },
+        }),
+      ),
+      "characters/hero.png": new Uint8Array([137, 80, 78, 71]),
+    });
+    const file = new File([bytes], "campaign.zip", {
+      type: "application/zip",
+    });
+
+    const parsed = await parseJsonExport(file, "kanka-json");
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toMatchObject({
+      type: "character",
+      title: "Hero",
+      content: "Campaign prose",
+      labels: [],
+      discoverySource: "kanka:character:101",
+      references: ["Haven"],
+      relationships: [
+        { title: "Haven", type: "related_to", label: "Protects" },
+      ],
+      assets: [
+        {
+          originalName: "hero.png",
+          mimeType: "image/png",
+          dataUrl: "data:image/png;base64,iVBORw==",
+        },
+      ],
+      metadata: {
+        kankaType: "character",
+        kankaEntityId: 101,
+        kankaModelId: 1,
+      },
+    });
   });
 });
 

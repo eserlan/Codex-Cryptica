@@ -167,6 +167,7 @@ export interface StarterDeckCatalogEntry {
   id: string;
   name: string;
   license: string;
+  description: string;
 }
 
 /**
@@ -179,16 +180,22 @@ export const STARTER_DECK_CATALOG: StarterDeckCatalogEntry[] = [
     id: "kenney-scribble-dungeons",
     name: "Scribble Dungeons",
     license: "CC0-1.0",
+    description:
+      "Hand-drawn dungeon set: rooms, corridors, doors, furniture, items, and character tokens.",
   },
   {
     id: "majcher-geomorphs-2013",
     name: "Geomorphs 2013",
     license: "CC BY 4.0",
+    description:
+      "400 pre-built 600×600 dungeon sections — drag straight onto the map as terrain.",
   },
   {
     id: "imsobad-geomorph-collection",
     name: "Geomorph Collection",
     license: "CC BY-SA 4.0",
+    description:
+      "60 geomorph modules in three sizes (5×5, 10×5, 10×10) for assembling dungeons.",
   },
 ];
 

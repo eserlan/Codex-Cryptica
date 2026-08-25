@@ -102,7 +102,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
   "title": "Faction name (follow the naming directive in the user message)",
   "summary": "One sentence: what this faction is and what makes them interesting (e.g. 'A sanitation cult-technocracy that controls clean water in a poisoned city.').",
   "content": "Markdown. Use exactly these four section headers in order: '### What they control', '### What they want', '### Why they are dangerous', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At the Table\\n- **📍 Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **👤 Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **📍 Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **👤 Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry",
   "labels": ["2-5 lowercase tags for the faction's theme and activities, plus 'rpg-faction', 'faction-generator', 'imported-draft'"]
 }
 
@@ -210,7 +210,7 @@ ${conflict} ${pickFrom(factionDangerClosers, rng)}
 ### How to use them at the table
 ${pickFrom(factionHowToUse, rng)(name)}`;
 
-  const lore = `### At the Table
+  const lore = `### At a Glance
 - **Theme / Genre**: ${theme}
 - **📍 Base**: ${factionBase(factionType, rng)}
 - **Resource**: ${factionResource(factionType, rng)}

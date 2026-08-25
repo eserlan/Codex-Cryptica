@@ -681,6 +681,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.",
     icon: "icon-[lucide--scroll-text]",
   },
+  "encounter-generator": {
+    id: "encounter-generator",
+    title: "Encounter Generator",
+    content:
+      "Generate a playable combat, social, exploration, environmental, or mixed encounter -- not just a monster list. Each output includes an at-a-glance summary, a player-facing description, participants and their motives, environment, non-combat approaches, a complication, and outcomes/rewards. Threat is described in fictional terms so it works with any RPG system.",
+    icon: "icon-[lucide--swords]",
+  },
   "plot-twist-generator": {
     id: "plot-twist-generator",
     title: "Plot Twist & Complication Generator",

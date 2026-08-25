@@ -10,6 +10,34 @@ export interface SEOComparisonPageData extends SEOPageData {
   verdict: string;
   /** Optional migration path strip shown below the hero CTAs. */
   migrationStrip?: Array<{ icon: string; label: string }>;
+  /** Optional operating-model comparison for hosted, self-hosted, and local-first workflows. */
+  hostingComparison?: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    columns: [string, string, string];
+    rows: Array<{
+      factor: string;
+      values: [string, string, string];
+    }>;
+  };
+  /** Optional product screenshot and supporting copy. */
+  productProof?: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    imageSrc: string;
+    imageAlt: string;
+    imageWidth: number;
+    imageHeight: number;
+    caption: string;
+  };
+  /** Optional fair-fit guidance for choosing between the compared products. */
+  decisionGuidance?: Array<{
+    title: string;
+    description: string;
+    items: string[];
+  }>;
 }
 
 export const comparisons: Record<string, SEOComparisonPageData> = {
@@ -327,82 +355,169 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
   "kanka-alternative": {
     slug: "kanka-alternative",
     competitorName: "Kanka",
-    title: "Codex Cryptica vs Kanka: Local vs Cloud Campaign Manager",
+    title: "Self-Hosted Kanka Alternative: No Server | Codex Cryptica",
     description:
-      "Compare Codex Cryptica and Kanka for TTRPG campaign management. See how a local-first private vault stacks up against Kanka's cloud-hosted shared wiki.",
-    h1: "Codex Cryptica vs Kanka",
+      "Looking for a self-hosted Kanka alternative? Codex keeps your campaign local and offline—no account or campaign server to run. Import a copy and compare.",
+    eyebrow: "Looking for a self-hosted Kanka alternative?",
+    h1: "Keep the control. Skip the server.",
     subheading:
-      "Private local vaults vs cloud-hosted campaign wikis — which fits your table?",
+      "Codex Cryptica keeps your campaign on your own device — no account, hosted campaign service, or server administration required.",
     introText:
-      "Kanka is a popular cloud-hosted campaign management platform with strong sharing features, but it stores all your world data on remote servers and restricts some features behind paid tiers. Codex Cryptica offers the same rich wiki and relationship graph as a fully local, free, offline-first alternative.",
-    ctaText: "Try Free Local Vault",
-    secondaryCtaText: "Import Kanka Export",
+      "Kanka self-hosting gives you control by running your own server. Codex gives you control by not needing one. Kanka also offers a capable hosted service with unlimited campaigns and entries on its free plan; Codex takes a different route by keeping the core campaign workflow local-first.\n\nKeep your Kanka campaign exactly where it is. Import a copy into Codex and see whether a local, offline Kanka alternative works better for you.",
+    ctaText: "Open Codex — No Account Required",
+    secondaryCtaText: "Import a Kanka Copy",
     secondaryCtaHref: "/import/kanka-json",
     keywords: [
       "codex cryptica vs kanka",
       "kanka alternative",
-      "kanka rpg campaign manager",
-      "free kanka alternative",
+      "kanka self hosted",
+      "self hosted kanka alternative",
+      "kanka alternative self hosted",
+      "local kanka alternative",
+      "offline kanka alternative",
+      "kanka alternative no server",
     ],
     migrationStrip: [
-      { icon: "icon-[lucide--cloud-download]", label: "Kanka JSON Export" },
-      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--copy]", label: "A Copy of Your Kanka Export" },
+      { icon: "icon-[lucide--file-text]", label: "Local Markdown Vault" },
       { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
+    hostingComparison: {
+      eyebrow: "Self-hosted or local-first?",
+      title: "Kanka can be self-hosted. So why Codex?",
+      description:
+        "Self-hosting and local-first both put you in control, but they ask different things of you. Kanka's free edition can be self-hosted by operating its application services. Codex stores the working campaign on your device, so there is no campaign server to deploy, secure, patch, or keep online. You should still back up your local vault, just as you would any important files.",
+      columns: ["Hosted Kanka", "Self-hosted Kanka", "Codex Cryptica"],
+      rows: [
+        {
+          factor: "Who runs the campaign server?",
+          values: ["Kanka", "You", "No campaign server"],
+        },
+        {
+          factor: "You maintain infrastructure",
+          values: ["No", "Yes", "No"],
+        },
+        {
+          factor: "Campaign data under your control",
+          values: ["Hosted, with export", "Yes", "Yes, stored locally"],
+        },
+        {
+          factor: "Offline-first core workflow",
+          values: ["No", "Depends on your deployment", "Yes"],
+        },
+        {
+          factor: "Account model",
+          values: [
+            "Kanka account",
+            "Self-managed account",
+            "No account required",
+          ],
+        },
+        {
+          factor: "Working data",
+          values: [
+            "Application database, with export",
+            "Self-hosted application database",
+            "Local vault and portable Markdown",
+          ],
+        },
+      ],
+    },
     features: [
       {
-        title: "No Monthly Tier Limits",
+        title: "Relationship Graph",
         description:
-          "All Codex features — graph, AI, timelines, maps — are free with no entity count caps or paywalled modules.",
-        icon: "icon-[lucide--circle-dollar-sign]",
+          "See how characters, factions, locations, and events connect in an interactive graph built from your campaign entities.",
+        icon: "icon-[lucide--network]",
       },
       {
-        title: "Works Without Internet",
+        title: "Maps & Timelines",
         description:
-          "Every note, map, and relationship loads from your local device. No server dependency at the game table.",
-        icon: "icon-[lucide--wifi-off]",
+          "Organize locations on maps and track events across custom calendars, so geography and campaign history stay connected to your lore.",
+        icon: "icon-[lucide--map]",
       },
       {
-        title: "Standard Portable Files",
+        title: "Campaign Tools & Generators",
         description:
-          "Your campaign is plain Markdown. Move it to any editor, back it up anywhere, or share specific files directly.",
-        icon: "icon-[lucide--file-text]",
+          "Create NPCs, factions, quests, dungeons, and other table-ready material, then use built-in dice, encounter, and session tools when play begins.",
+        icon: "icon-[lucide--sparkles]",
       },
     ],
+    productProof: {
+      eyebrow: "See the local vault in action",
+      title: "A real campaign workspace, not just a file viewer",
+      description:
+        "Codex turns your local campaign entities into an explorable relationship graph. Follow connections between characters, factions, places, and events while the underlying vault remains under your control.",
+      imageSrc: "/images/living-lore-graph.png",
+      imageAlt:
+        "Codex Cryptica relationship graph connecting campaign characters, locations, and factions",
+      imageWidth: 1996,
+      imageHeight: 1089,
+      caption:
+        "The relationship graph is built from the same local vault data you write and organize in Codex Cryptica.",
+    },
     comparisonTable: [
       {
-        feature: "Offline Support",
-        competitorHas: "No (Cloud only)",
-        codexHas: "Yes",
+        feature: "Deployment model",
+        competitorHas: "Hosted service; free edition can be self-hosted",
+        codexHas: "Local-first app; no campaign server to operate",
       },
       {
-        feature: "Local File Storage",
-        competitorHas: "No (Remote database)",
-        codexHas: "Yes (OPFS / Folder Sync)",
+        feature: "Core free-plan capacity",
+        competitorHas: "Unlimited campaigns and entries",
+        codexHas: "No local campaign or entity limit",
       },
       {
-        feature: "Free Entity Limit",
-        competitorHas: "Limited on free tier",
-        codexHas: "Unlimited",
+        feature: "Offline core workflow",
+        competitorHas:
+          "Hosted Kanka requires its service; self-hosting depends on deployment",
+        codexHas: "Yes — the core vault is local-first",
       },
       {
-        feature: "AI Writing Assistant",
-        competitorHas: "No",
-        codexHas: "Yes (BYO API key)",
+        feature: "Account for the core workflow",
+        competitorHas: "Kanka account or a self-managed account",
+        codexHas: "No account required",
       },
       {
-        feature: "Interactive Graph",
-        competitorHas: "Limited",
-        codexHas: "Yes (Full relation graph)",
+        feature: "Working data and portability",
+        competitorHas:
+          "Application-managed data with JSON and Markdown exports",
+        codexHas: "Browser-local vault with Markdown folder sync",
       },
       {
-        feature: "Open File Format",
-        competitorHas: "No (Proprietary)",
-        codexHas: "Yes (Standard Markdown)",
+        feature: "Multi-user collaboration",
+        competitorHas:
+          "Mature hosted roles, permissions, and multi-device access",
+        codexHas: "Local-first workflow with selected-content guest sessions",
       },
     ],
     verdict:
-      "Kanka excels at team-shared cloud wikis, but if you value offline access, data privacy, and no subscription fees, Codex Cryptica delivers a richer local experience with the same wiki depth and no monthly cost.",
+      "Neither approach is universally better. Kanka is the stronger fit when a mature hosted campaign wiki and easy multi-user access matter most.\n\nCodex Cryptica is the stronger fit when you want local working data, offline access, portable Markdown, and control without operating a self-hosted web application.",
+    decisionGuidance: [
+      {
+        title: "Choose Kanka if…",
+        description:
+          "You want collaboration and hosted access handled for you.",
+        items: [
+          "A hosted service is your preferred workflow",
+          "Easy multi-user collaboration is the priority",
+          "You want campaign access across devices through a hosted platform",
+          "You prefer a mature hosted campaign wiki experience",
+        ],
+      },
+      {
+        title: "Choose Codex Cryptica if…",
+        description:
+          "You want local control without becoming a server administrator.",
+        items: [
+          "You want campaign data stored locally",
+          "Offline access matters at your table",
+          "You prefer portable local files and Markdown",
+          "You do not want to operate a self-hosted web application",
+          "You want no account dependency for the core workflow",
+        ],
+      },
+    ],
     relatedLinks: [
       { href: "/import/kanka-json", label: "Import Kanka export" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
@@ -414,14 +529,35 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     ],
     faq: [
       {
-        question: "Can I import my Kanka campaign into Codex?",
+        question: "Is Codex Cryptica a self-hosted alternative to Kanka?",
         answer:
-          "Kanka supports JSON export. You can use the Codex importer or manually convert the JSON to Markdown files and open them as a vault.",
+          "Codex is an alternative to self-hosting rather than a traditional self-hosted server. Its local-first core stores your campaign on your own device, so you get local control and offline access without deploying a campaign server.",
+      },
+      {
+        question: "Can Kanka be self-hosted?",
+        answer:
+          "Yes. Kanka documents that its free edition can be self-hosted. That route involves running its application services yourself, and Kanka notes that premium features and official self-hosting support are not included.",
+      },
+      {
+        question: "Do I need to run a server for Codex Cryptica?",
+        answer:
+          "No. Codex Cryptica's core campaign workflow runs in your browser and stores the vault locally. You do not need to deploy, secure, update, or maintain a campaign server.",
+      },
+      {
+        question:
+          "Can I try Codex without deleting or moving my Kanka campaign?",
+        answer:
+          "Yes. Export your Kanka campaign and import a copy into Codex. Your original Kanka campaign stays where it is while you evaluate the local-first workflow.",
+      },
+      {
+        question: "What happens to my Kanka export in Codex?",
+        answer:
+          "Codex processes the copied export into a local vault so you can preview and explore the imported campaign. Nothing is removed from your Kanka campaign, and you decide whether to keep using the Codex copy.",
       },
       {
         question: "Does Codex support shared campaigns like Kanka does?",
         answer:
-          "Yes. Codex supports P2P guest sessions where you share selected pages with invited players without uploading data to a server.",
+          "Kanka is the more mature choice for ongoing hosted, multi-user editing. Codex focuses on a local-first GM workflow and can share selected content through guest sessions.",
       },
     ],
   },

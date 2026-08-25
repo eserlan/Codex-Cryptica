@@ -224,7 +224,10 @@
                   : `Add ${pack.name} starter deck`}</button
             >
             <p class="mt-1 text-[11px] text-theme-muted">
-              {pack.name} · {pack.license} · downloaded once to this vault.
+              {pack.description}
+            </p>
+            <p class="mt-0.5 text-[10px] text-theme-muted/70">
+              {pack.license} · downloaded once to this vault.
             </p>
           </li>
         {/each}

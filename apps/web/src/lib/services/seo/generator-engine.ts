@@ -31,6 +31,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildEncounterPrompt,
+  parseEncounterResponse,
+  generateEncounterLocal,
   buildPuzzlePrompt,
   parsePuzzleResponse,
   generatePuzzleLocal,
@@ -111,6 +114,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
@@ -165,6 +169,7 @@ export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
@@ -569,6 +574,30 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generateEncounter(
+    options: EncounterGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...encounterOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("encounter");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildEncounterPrompt(
+            encounterOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "encounter",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseEncounterResponse(text, resolved);
+      },
+      () => generateEncounterLocal(encounterOptions),
     );
   }
 

@@ -38,6 +38,12 @@ import {
   type AdventureGeneratorOptions,
 } from "./public-adventure";
 import {
+  buildEncounterPrompt,
+  generateEncounterLocal,
+  encounterConfig,
+  type EncounterGeneratorOptions,
+} from "./public-encounter";
+import {
   buildPlotTwistPrompt,
   generatePlotTwistLocal,
   plotTwistConfig,
@@ -139,6 +145,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   creature: "creature",
   "plot-twist": "note",
   "random-table": "table",
+  encounter: "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -930,6 +937,50 @@ ${prompt.userMessage}`,
 
 function adventurePrompt(request: GeneratorRunRequest): string {
   return buildCampaignAdventurePrompt(request).userMessage;
+}
+
+// ---------------------------------------------------------------------------
+// Encounter generator helpers
+// ---------------------------------------------------------------------------
+
+function encounterOptions(
+  request: GeneratorRunRequest,
+): EncounterGeneratorOptions {
+  return {
+    genre: themeIdToLabel[request.themeId || "fantasy"] || "Classic Fantasy",
+    encounterType: optionString(request, "encounterType", ""),
+    environment: optionString(request, "environment", ""),
+    threat: optionString(request, "threat", ""),
+    tone: optionString(request, "tone", ""),
+    context: optionString(request, "context", ""),
+  };
+}
+
+function generateEncounter(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateEncounterLocal(encounterOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary || "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+export function buildCampaignEncounterPrompt(request: GeneratorRunRequest) {
+  const options = encounterOptions(request);
+  const prompt = buildEncounterPrompt(options);
+  return {
+    ...prompt,
+    options,
+    userMessage: `${contextChain(request)}
+
+${prompt.userMessage}`,
+  };
+}
+
+function encounterPrompt(request: GeneratorRunRequest): string {
+  return buildCampaignEncounterPrompt(request).userMessage;
 }
 
 function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {
@@ -2097,6 +2148,65 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateAdventure,
     mapOutputToDraft: mapOutputToDraft("adventure"),
     buildPrompt: adventurePrompt,
+  },
+  encounter: {
+    id: "encounter",
+    label: "Encounter",
+    description:
+      "Generate a playable encounter — combat, social, exploration, environmental, or mixed — with participants, environment, goals, a complication, and outcomes.",
+    entityType: GENERATOR_ENTITY_TYPE.encounter,
+    defaultInstruction:
+      "A playable encounter situation complete with an at-a-glance summary, participants and their motives, environment, non-combat approaches, a complication, and outcomes/rewards.",
+    icon: "lucide:swords",
+    options: [
+      {
+        id: "encounterType",
+        label: "Encounter Type",
+        control: "select",
+        choices: encounterConfig.encounterTypes.map((t) => ({
+          value: t,
+          label: t,
+        })),
+      },
+      {
+        id: "environment",
+        label: "Environment",
+        control: "select",
+        choices: encounterConfig.environments.map((e) => ({
+          value: e,
+          label: e,
+        })),
+      },
+      {
+        id: "threat",
+        label: "Threat",
+        control: "select",
+        choices: encounterConfig.threats.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: encounterConfig.tones.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "context",
+        label: "Additional Context",
+        description:
+          "Optional: describe an existing situation, location, or NPC to anchor the encounter.",
+        control: "textarea",
+      },
+    ],
+    defaults: {
+      encounterType: "Random",
+      environment: "",
+      threat: "Moderate",
+      tone: "",
+      context: "",
+    },
+    generate: generateEncounter,
+    mapOutputToDraft: mapOutputToDraft("encounter"),
+    buildPrompt: encounterPrompt,
   },
   quest: {
     id: "quest",

@@ -38,6 +38,7 @@ const validSlugs = new Set([
   "star-system",
   "alien-race",
   "creature",
+  "encounter",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -79,7 +80,8 @@ export const load: PageLoad = ({ params }) => {
       | "secret-society"
       | "star-system"
       | "alien-race"
-      | "creature",
+      | "creature"
+      | "encounter",
   };
 };
 
@@ -119,5 +121,6 @@ export const entries: EntryGenerator = () => {
     { slug: "star-system" },
     { slug: "alien-race" },
     { slug: "creature" },
+    { slug: "encounter" },
   ];
 };
