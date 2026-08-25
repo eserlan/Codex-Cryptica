@@ -159,6 +159,7 @@ export function initializeMapSessionComposition(
     normalizePlacement: (point, size) =>
       store.tokenManager.clampAndSnapPosition(point, size),
     getActiveLayer: () => store.layerManager.activeLayer,
+    setActiveLayer: (layer) => store.layerManager.setActiveLayer(layer),
   });
 
   store.encounterManager = new VTTEncounterManager({

@@ -19,6 +19,13 @@ function createManager(options?: {
   });
   const persistDraft = vi.fn();
   let nextId = 0;
+  let activeLayer = "terrain";
+  const getActiveLayer = options?.getActiveLayer
+    ? (options.getActiveLayer as any)
+    : () => activeLayer;
+  const setActiveLayer = vi.fn((layer: any) => {
+    activeLayer = layer;
+  });
   const manager = new VTTTileDeckManager(
     {
       getTokens: () => tokens,
@@ -27,11 +34,12 @@ function createManager(options?: {
       normalizePlacement: options?.normalizePlacement
         ? (point) => options.normalizePlacement!(point)
         : undefined,
-      getActiveLayer: (options?.getActiveLayer as any) ?? (() => "terrain"),
+      getActiveLayer,
+      setActiveLayer,
     },
     { uuid: () => `id-${nextId++}` },
   );
-  return { manager, tokens, addToken, persistDraft };
+  return { manager, tokens, addToken, persistDraft, setActiveLayer };
 }
 
 describe("VTTTileDeckManager", () => {
@@ -245,5 +253,43 @@ describe("VTTTileDeckManager", () => {
       expect.objectContaining({ zIndex: 3 }),
       false,
     );
+  });
+
+  it("places a geomorph tile on the terrain layer regardless of the active layer", () => {
+    const { manager, addToken, setActiveLayer } = createManager({
+      getActiveLayer: () => "token",
+    });
+    const deck = manager.createDeck("Geomorphs 2013", [
+      { name: "Geomorph 1", imagePath: "full_0001.png", category: "Geomorphs" },
+    ])!;
+
+    manager.draw(deck.id, 150);
+    manager.updatePendingPlacement(0, 0);
+    manager.placePending();
+
+    expect(addToken).toHaveBeenCalledWith(
+      expect.objectContaining({ layer: "terrain" }),
+      false,
+    );
+    expect(setActiveLayer).toHaveBeenCalledWith("terrain");
+  });
+
+  it("leaves non-terrain tiles on the active layer", () => {
+    const { manager, addToken, setActiveLayer } = createManager({
+      getActiveLayer: () => "object",
+    });
+    const deck = manager.createDeck("Scribble Dungeons", [
+      { name: "Chest", imagePath: "chest.png", category: "Props & overlays" },
+    ])!;
+
+    manager.draw(deck.id, 150);
+    manager.updatePendingPlacement(0, 0);
+    manager.placePending();
+
+    expect(addToken).toHaveBeenCalledWith(
+      expect.objectContaining({ layer: "object" }),
+      false,
+    );
+    expect(setActiveLayer).not.toHaveBeenCalled();
   });
 });
