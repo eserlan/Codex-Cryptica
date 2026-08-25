@@ -18,23 +18,23 @@ test.describe("Map Mode", () => {
     // Start with a clean demo
     await page.goto("/?demo=fantasy");
 
-    // Wait for vault initialization
+    // Wait for both vault initialization and asynchronous demo loading.
     await page.waitForFunction(
-      () => (window as any).vault?.isInitialized === true,
-      { timeout: 20000 },
+      () => {
+        const vault = (window as any).vault;
+        return (
+          vault?.isInitialized === true &&
+          (vault.demoVaultName === "Fantasy Demo" ||
+            (vault.allEntities?.length ?? 0) > 0)
+        );
+      },
+      { timeout: 30000 },
     );
 
-    // Navigate to Map Mode via client-side routing to preserve the OPFS in-memory state
-    await page.evaluate(() => {
-      // Find any link to /map and click it to trigger SvelteKit's router
-      const mapLink = document.querySelector('a[href$="/map"]') as HTMLElement;
-      if (mapLink) {
-        mapLink.click();
-      }
-    });
-    // Wait for the URL to change
-    await page.waitForTimeout(500); // Give router a moment
-    await page.waitForURL("**/map", { timeout: 10000 });
+    // Enter Map Mode directly after the demo has populated the local vault.
+    // This avoids depending on the front-page overlay's activity-bar state.
+    await page.goto("/map");
+    await expect(page).toHaveURL(/\/map$/);
   });
 
   test("should allow uploading a map image and rendering it", async ({
@@ -121,17 +121,10 @@ test.describe("Map Mode", () => {
     await expect(page.locator("select")).toContainText("★ Fallback Map");
 
     // 4. Reload page and navigate back to /map (use evaluated router click to keep demo state)
-    await page.evaluate(() => {
-      const homeLink = document.querySelector('a[href="/"]') as HTMLElement;
-      if (homeLink) homeLink.click();
-    });
-    await page.waitForURL("**/", { timeout: 10000 });
-
-    await page.evaluate(() => {
-      const mapLink = document.querySelector('a[href$="/map"]') as HTMLElement;
-      if (mapLink) mapLink.click();
-    });
-    await page.waitForURL("**/map", { timeout: 10000 });
+    await page.getByTestId("activity-bar-graph").click();
+    await expect(page).toHaveURL(/\/$/);
+    await page.getByTestId("activity-bar-map").click();
+    await expect(page).toHaveURL(/\/map$/);
 
     // 5. Verify it auto-loaded the tagged map
     await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
