@@ -389,7 +389,10 @@ export class MapInteractionManager {
     }
 
     if (this.tokenRotation.rotationState) {
-      this.tokenRotation.move({ x: mouseX, y: mouseY });
+      this.tokenRotation.move(
+        { x: mouseX, y: mouseY },
+        e.shiftKey || e.ctrlKey || e.metaKey,
+      );
       this.lastMousePos = { x: mouseX, y: mouseY };
       return;
     }
