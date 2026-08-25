@@ -200,9 +200,12 @@ test("records repeatable large-vault operations in a production preview", async 
     ]);
 
     const explorerStart = (await getSamples()).length;
-    await page
-      .getByRole("switch", { name: "Switch to Full Toolbox mode" })
-      .click();
+    const guidedModeToggle = page.getByTestId("guided-mode-toggle");
+    await expect(guidedModeToggle).toBeVisible({ timeout: 30_000 });
+    if ((await guidedModeToggle.getAttribute("aria-checked")) === "true") {
+      await guidedModeToggle.click();
+    }
+    await expect(guidedModeToggle).toHaveAttribute("aria-checked", "false");
     const explorerSearch = page.getByPlaceholder("Search entities...");
     for (let cycle = 0; cycle < 5; cycle += 1) {
       await page.evaluate(() =>
