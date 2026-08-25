@@ -14,11 +14,11 @@ keywords:
     "Local-First Worldbuilding",
   ]
 publishedAt: 2026-08-25T10:00:00Z
-image: "https://assets.codexcryptica.com/images/blog/assets/canvas-announcement.png"
+image: "https://codexcryptica.com/blog/assets/canvas-announcement.png"
 imageAlt: "Codex Cryptica Spatial Canvas Workspace"
 ---
 
-![Codex Cryptica Spatial Canvas Interface](https://assets.codexcryptica.com/images/blog/assets/canvas-announcement.png)
+![Codex Cryptica Spatial Canvas Interface](https://codexcryptica.com/blog/assets/canvas-announcement.png)
 
 Worldbuilding rarely starts as a clean, alphabetical list.
 
