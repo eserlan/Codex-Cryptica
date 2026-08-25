@@ -119,19 +119,19 @@ export const importsConfig: Record<string, SEOImportPageData> = {
     competitorName: "Kanka",
     title: "Import Kanka JSON to Codex Cryptica | TTRPG Campaign Migration",
     description:
-      "Convert your Kanka campaign JSON export into offline Markdown files. Preview characters, locations, and factions instantly.",
-    h1: "Kanka Campaign JSON Importer",
+      "Import your Kanka campaign JSON export ZIP into offline Markdown files. Preview characters, locations, and factions instantly.",
+    h1: "Kanka Campaign ZIP Importer",
     subheading:
-      "Convert your Kanka campaign JSON export into a local-first offline wiki.",
+      "Import your Kanka campaign JSON export ZIP into a local-first offline wiki.",
     introText:
-      "Migrate from Kanka to a local-first RPG wiki. Upload your campaign JSON file to parse nested articles, extract tags, and build a local vault.",
+      "Keep your Kanka campaign where it is. Export it, import a copy into Codex, and see whether local-first works better for you.",
     ctaText: "Start Kanka Migration",
     keywords: ["import kanka json", "kanka campaign export", "kanka migration"],
     features: [
       {
         title: "Relations Extraction",
         description:
-          "Maintains character connections, organization hierarchies, and family trees.",
+          "Preserves explicit character connections and organization hierarchies included in the export.",
         icon: "icon-[lucide--network]",
       },
       {
@@ -143,7 +143,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         title: "Metadata Restoration",
         description:
-          "Imports tags, attributes, and private GM notes into corresponding Markdown frontmatter keys.",
+          "Preserves Kanka tags, attributes, source types, and stable source IDs for repeat imports.",
         icon: "icon-[lucide--tags]",
       },
     ],
@@ -151,12 +151,12 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         question: "Where do I find Kanka export options?",
         answer:
-          "Navigate to your Kanka campaign's settings page under utilities, and execute a backup download of the entire campaign in JSON format.",
+          "Open your Kanka campaign settings, request a JSON export, then download the generated ZIP without unpacking it.",
       },
       {
         question: "Are Kanka maps imported?",
         answer:
-          "The importer extracts map coordinates and pin descriptions, letting you map locations inside Codex's spatial canvases.",
+          "Map entries are preserved safely as notes in this first version. Kanka map layouts and family-tree structures are not included as interactive Codex canvases.",
       },
     ],
     relatedLinks: [

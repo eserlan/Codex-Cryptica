@@ -30,6 +30,16 @@ For uninterrupted world-building, clicking **IMPORT** in the top menu or the Ent
 
 - **Seamless Sync**: Any entities you import or review in this popup are instantly saved and synchronized back to your main graph in real-time. No manual refresh required!
 
+## Import a Kanka Campaign
+
+Kanka's structured campaign export works without an AI key:
+
+1. In Kanka, request a **JSON campaign export** and download the generated ZIP.
+2. Drop the ZIP directly into Codex's importer. Do not unpack or convert it first.
+3. Review the entities, labels, attributes, explicit relations, and linked images before committing them to the current vault.
+
+Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
+
 ## Resilient Imports
 
 Large documents can take time to process. The system automatically tracks your progress:

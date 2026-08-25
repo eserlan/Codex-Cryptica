@@ -26,6 +26,8 @@ export const ImportDraftSchema = z.object({
   labels: z.array(z.string()).default(["imported-draft"]),
   status: z.enum(["active", "draft"]).default("active"),
   references: z.array(z.string()).optional(),
+  discoverySource: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   /**
    * A rasterized diagram (e.g. the star-system generator's orbital diagram)
    * as a `data:image/png` URL, linked to the created entity's Map tab on
@@ -140,6 +142,10 @@ export class SeoImportService {
               labels: draft.labels,
               status: draft.status,
               ...(draft.kind ? { kind: draft.kind } : {}),
+              ...(draft.discoverySource
+                ? { discoverySource: draft.discoverySource }
+                : {}),
+              ...(draft.metadata ? { metadata: draft.metadata } : {}),
             },
           );
 

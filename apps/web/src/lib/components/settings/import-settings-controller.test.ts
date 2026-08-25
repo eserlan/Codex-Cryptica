@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getPack } from "@codex/content-packs";
+import { strToU8, zipSync } from "fflate";
 import {
   ImportSettingsController,
   type ImportSettingsControllerDeps,
@@ -127,6 +128,62 @@ describe("import-settings-controller helpers", () => {
     expect(controller.ccSession?.sourceSystem).toBe("scabard");
     expect(controller.ccSession?.items.length).toBeGreaterThan(0);
     expect(controller.ccSession?.relationships.length).toBeGreaterThan(0);
+  });
+
+  it("prepares a raw Kanka ZIP as a deterministic review without AI", async () => {
+    const bytes = zipSync({
+      "info.json": strToU8(JSON.stringify({ kanka_version: "3.14" })),
+      "campaign.json": strToU8(JSON.stringify({ name: "Test Campaign" })),
+      "races/human_1.json": strToU8(
+        JSON.stringify({
+          id: 1,
+          name: "Human",
+          entity: { id: 101, entry: "Adaptable folk." },
+        }),
+      ),
+    });
+    const controller = new ImportSettingsController(
+      baseDeps({
+        oracle: { isEnabled: false, effectiveApiKey: null } as any,
+        aiClientManager: {
+          getModel: () => {
+            throw new Error("Kanka import must not request an AI model");
+          },
+        } as any,
+      }),
+    );
+
+    await controller.handleFiles([
+      new File([bytes], "campaign.zip", { type: "application/zip" }),
+    ]);
+
+    expect(controller.step).toBe("review");
+    expect(controller.importMode).toBe("cc");
+    expect(controller.ccSession?.sourceSystem).toBe("kanka");
+    expect(controller.ccSession?.items[0]).toMatchObject({
+      resolvedType: "species",
+      typeFallback: false,
+      sourceRef: "kanka:species:101",
+    });
+  });
+
+  it("returns an unsupported Kanka ZIP to upload with a clear diagnostic", async () => {
+    const bytes = zipSync({
+      "campaign.json": strToU8(JSON.stringify({ name: "No Version" })),
+    });
+    const controller = new ImportSettingsController(baseDeps());
+
+    await controller.handleFiles([
+      new File([bytes], "campaign.zip", { type: "application/zip" }),
+    ]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.importMode).toBeNull();
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles[0]).toMatchObject({
+      name: "campaign.zip",
+      reason: expect.stringMatching(/info\.md.*info\.json.*kanka_version/i),
+    });
   });
 
   it("surfaces a clear rejected-file reason when Oracle analysis fails, instead of silently importing nothing", async () => {
