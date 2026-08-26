@@ -6,6 +6,21 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-08-26 — Encounter Generator (ad hoc)
+
+- **Text:** Rolling a random encounter gave me a monster and a number. I still had to invent why it was there.
+
+  So I built the Encounter Generator in Codex Cryptica. The read-aloud text sits up top, the twist stays in the GM notes.
+
+  codexcryptica.com/generators/encounter
+
+  #TTRPG #Worldbuilding
+
+- **Image:** cropped 1600x800 detail from the announcement capture of the live generator page (middle column plus the At a Glance rail)
+- **Alt:** The Codex Cryptica Encounter Generator showing an example encounter titled The Aelrin Reckoning, with a read-aloud What the Players See paragraph beside an At a Glance panel listing type, threat, location, tone, participants, and key stakes
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mty6pioqpu2h
+- **Note:** Posted ad hoc at the user's request, not from the #2086 backlog. Image shows the local-fallback EXAMPLE draft rather than real AI output, and carries a visible EXAMPLE chip with the summary sentence repeated in the read-aloud block. Turnstile rejects automated browsers (headless and headed alike), so no real AI sample could be captured; posted anyway as the image was judged non-critical. Worth replacing with a genuine generation if this feature is shown again.
+
 ### 2026-08-16 — Vaults (ad hoc)
 
 - **Text:** I run a few campaigns, and I never want an NPC from one bleeding into another.
