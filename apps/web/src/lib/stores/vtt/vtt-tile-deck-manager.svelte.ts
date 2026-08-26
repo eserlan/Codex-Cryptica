@@ -251,9 +251,18 @@ export class VTTTileDeckManager {
     if (targetLayer !== activeLayer) {
       this.deps.setActiveLayer(targetLayer);
     }
-    const sameLayerTokens = Object.values(this.deps.getTokens()).filter(
-      (token) => token.layer === targetLayer,
-    );
+
+    // ⚡ Bolt Optimization: Avoid intermediate array allocations for tile snapping hot path
+    const tokens = this.deps.getTokens();
+    const sameLayerTokens: Token[] = [];
+    for (const key in tokens) {
+      if (Object.prototype.hasOwnProperty.call(tokens, key)) {
+        const token = tokens[key];
+        if (token.layer === targetLayer) {
+          sameLayerTokens.push(token);
+        }
+      }
+    }
 
     const placed = this.deps.addToken(
       {
@@ -301,8 +310,17 @@ export class VTTTileDeckManager {
   }
 
   private existingTiles() {
-    return Object.values(this.deps.getTokens()).filter(
-      (token) => token.kind === "tile",
-    );
+    // ⚡ Bolt Optimization: Avoid intermediate array allocations for tile validation hot path
+    const tokens = this.deps.getTokens();
+    const tiles: Token[] = [];
+    for (const key in tokens) {
+      if (Object.prototype.hasOwnProperty.call(tokens, key)) {
+        const token = tokens[key];
+        if (token.kind === "tile") {
+          tiles.push(token);
+        }
+      }
+    }
+    return tiles;
   }
 }
