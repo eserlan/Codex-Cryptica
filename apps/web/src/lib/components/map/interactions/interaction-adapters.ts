@@ -35,16 +35,24 @@ import type { TokenSelectionDependencies } from "./token-selection-manager";
  * readable above the terrain it annotates. Without the exemption a note
  * pinned while editing Terrain (the layer the session opens on) could never
  * be selected or moved again.
+ *
+ * Notes are likewise the only thing still reachable with VTT mode off. A VTT
+ * map is an ordinary map toggled into play, and turning play off puts the
+ * combat pieces out of reach — but a note annotates the map itself, so it
+ * stays clickable and draggable either way.
  */
 function hitTestableTokens() {
   const peerId = mapSession.myPeerId;
   const isHost = mapStore.isGMMode;
+  const inPlay = mapSession.vttEnabled;
   return mapSession.allTokens.filter((token) => {
     const layer = token.layer ?? "token";
+    const isNote = token.kind === "note";
     return (
+      (inPlay || isNote) &&
       mapSession.canViewToken(token.id, peerId, isHost) &&
       mapStore.layerVisibility[layer] !== false &&
-      (!isHost || layer === mapSession.activeLayer || token.kind === "note")
+      (!isHost || layer === mapSession.activeLayer || isNote)
     );
   });
 }

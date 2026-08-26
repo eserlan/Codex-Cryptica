@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mapSessionMock = vi.hoisted(() => ({
   allTokens: [] as any[],
   myPeerId: null as string | null,
   activeLayer: "terrain" as string,
+  vttEnabled: true,
   canViewToken: (tokenId: string, _peerId: string | null, isHost: boolean) => {
     const token = mapSessionMock.allTokens.find((t) => t.id === tokenId);
     return isHost || token?.visibleTo !== "gm-only";
@@ -47,6 +48,11 @@ function token(overrides: Partial<any> & { id: string }) {
 }
 
 describe("hit-testable token filtering (selection + drag)", () => {
+  beforeEach(() => {
+    mapSessionMock.vttEnabled = true;
+    mapStoreMock.isGMMode = true;
+  });
+
   it("excludes a token on a hidden layer from both selection and drag", () => {
     mapSessionMock.allTokens = [
       token({ id: "hidden-terrain", layer: "terrain" }),
@@ -160,5 +166,33 @@ describe("hit-testable token filtering (selection + drag)", () => {
       "terrain-tile",
     ]);
     mapStoreMock.isGMMode = true;
+  });
+
+  it("leaves only notes reachable once play is switched off", () => {
+    mapSessionMock.allTokens = [
+      token({ id: "hero-token", layer: "token" }),
+      token({ id: "terrain-tile", layer: "terrain" }),
+      token({ id: "note", layer: "token", kind: "note" }),
+    ];
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapSessionMock.activeLayer = "terrain";
+    mapSessionMock.vttEnabled = false;
+
+    const selectionTokens = createTokenSelectionDependencies().getTokens();
+    const dragTokens = createTokenDragDependencies().getTokens();
+
+    expect(selectionTokens.map((t) => t.id)).toEqual(["note"]);
+    expect(dragTokens.map((t) => t.id)).toEqual(["note"]);
+  });
+
+  it("still hides a guest-only-invisible note once play is switched off", () => {
+    mapSessionMock.allTokens = [
+      token({ id: "note", layer: "token", kind: "note", visibleTo: "gm-only" }),
+    ];
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapSessionMock.vttEnabled = false;
+    mapStoreMock.isGMMode = false;
+
+    expect(createTokenSelectionDependencies().getTokens()).toEqual([]);
   });
 });

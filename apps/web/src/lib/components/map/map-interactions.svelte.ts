@@ -295,7 +295,7 @@ export class MapInteractionManager {
 
     if (
       e.button === 0 &&
-      mapSession.vttEnabled &&
+      (mapSession.vttEnabled || mapSession.selectedToken?.kind === "note") &&
       this.cachedRect &&
       this.tokenRotation.begin(this.lastMousePos)
     ) {
@@ -310,7 +310,9 @@ export class MapInteractionManager {
       return;
     }
 
-    if (mapSession.vttEnabled && this.cachedRect && !mapSession.gridFitMode) {
+    // No vttEnabled gate: hitTestableTokens narrows to notes on its own when
+    // play is off, so this drags a note on a plain map and nothing else.
+    if (this.cachedRect && !mapSession.gridFitMode) {
       const hitToken = this.tokenDrag.begin(this.lastMousePos);
 
       if (hitToken) {
@@ -559,28 +561,26 @@ export class MapInteractionManager {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    const hitToken = this.tokenSelection.hitTest({ x, y });
+
+    if (hitToken) {
+      this.tokenSelection.selectToken(hitToken.id);
+      this.selectedPinId = null;
+      return;
+    }
+
     if (mapSession.vttEnabled) {
-      const hitToken = this.tokenSelection.hitTest({ x, y });
-
-      if (hitToken) {
-        this.tokenSelection.selectToken(hitToken.id);
-        this.selectedPinId = null;
-        return;
-      }
-
       this.tokenSelection.clearSelection();
       this.healthBarPopoverTokenId = null;
       this.measurementInteractions.handleClick({ x, y });
       return;
     }
 
+    // With play off the only token that could have been hit is a note, so a
+    // miss falls through to the map's own pins.
+    this.tokenSelection.clearSelection();
     const clickedPin = this.pinInteractions.selectAt({ x, y });
-
-    if (clickedPin) {
-      this.selectedPinId = clickedPin.id;
-    } else {
-      this.selectedPinId = null;
-    }
+    this.selectedPinId = clickedPin ? clickedPin.id : null;
   };
 
   onDoubleClick = (e: MouseEvent) => {
@@ -602,13 +602,15 @@ export class MapInteractionManager {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (mapSession.vttEnabled) {
-      const hitToken = this.tokenSelection.hitTest({ x, y });
-      if (hitToken) {
+    const hitToken = this.tokenSelection.hitTest({ x, y });
+    if (hitToken) {
+      // A note has no health bar, but the double-click still belongs to it:
+      // falling through would drop a pin underneath the note.
+      if (mapSession.vttEnabled && hitToken.kind !== "note") {
         this.healthBarPopoverTokenId =
           this.healthBarPopoverTokenId === hitToken.id ? null : hitToken.id;
-        return;
       }
+      return;
     }
 
     this.creationInteractions.handleDoubleClick({ x, y });
@@ -621,14 +623,22 @@ export class MapInteractionManager {
     }
 
     const el = this.getContainer();
-    if (!mapSession.vttEnabled || !el) return;
-    e.preventDefault();
+    if (!el) return;
 
     const rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    this.contextMenuInteractions.open({ x: e.clientX, y: e.clientY }, { x, y });
+    // Only swallow the browser's own menu when ours actually opens — with
+    // play off that is a right-click on a note, and nothing else.
+    if (
+      this.contextMenuInteractions.open(
+        { x: e.clientX, y: e.clientY },
+        { x, y },
+      )
+    ) {
+      e.preventDefault();
+    }
   };
 
   onWheel = (e: WheelEvent) => {
