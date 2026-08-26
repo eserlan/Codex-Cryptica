@@ -69,12 +69,6 @@ export const npcConfig = {
     "Guard",
     "Noble",
     "Innkeeper",
-    "Dungeon Mastermind",
-    "Bound Vault Guardian",
-    "Lair Boss",
-    "Outlaw Chief",
-    "Captive VIP",
-    "Cursed Caretaker",
   ],
   alignments: [
     "Lawful Good",
