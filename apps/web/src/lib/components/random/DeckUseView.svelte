@@ -27,6 +27,7 @@
     history = diceHistory,
     session = mapSession,
     addToChat,
+    revealArt = true,
     copyText,
   }: {
     source: RandomSource;
@@ -35,6 +36,8 @@
     history?: DiceHistoryStore;
     session?: typeof mapSession;
     addToChat?: (text: string) => Promise<void>;
+    /** Passed through to `DeckView`: off where a full-screen reveal intrudes. */
+    revealArt?: boolean;
     copyText?: (text: string) => Promise<void>;
   } = $props();
 </script>
@@ -48,6 +51,7 @@
     {sources}
     {history}
     {session}
+    {revealArt}
     {...addToChat ? { addToChat } : {}}
     {...copyText ? { copyText } : {}}
   />
