@@ -28,6 +28,13 @@ import type { TokenSelectionDependencies } from "./token-selection-manager";
  * guests: `activeLayer` is a GM-local editing-mode concept (never synced),
  * and a player must always be able to select/move their own token
  * regardless of whatever the GM's map-building focus happens to be.
+ *
+ * Notes are exempt from that active-layer exclusivity. A note is an
+ * annotation dropped on top of whatever the GM is building, not a piece of
+ * the map being built, and it always rides the token layer so it stays
+ * readable above the terrain it annotates. Without the exemption a note
+ * pinned while editing Terrain (the layer the session opens on) could never
+ * be selected or moved again.
  */
 function hitTestableTokens() {
   const peerId = mapSession.myPeerId;
@@ -37,7 +44,7 @@ function hitTestableTokens() {
     return (
       mapSession.canViewToken(token.id, peerId, isHost) &&
       mapStore.layerVisibility[layer] !== false &&
-      (!isHost || layer === mapSession.activeLayer)
+      (!isHost || layer === mapSession.activeLayer || token.kind === "note")
     );
   });
 }

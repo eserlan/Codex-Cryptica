@@ -93,6 +93,38 @@ describe("hit-testable token filtering (selection + drag)", () => {
     expect(selectionTokens.map((t) => t.id)).toEqual(["locked-layer"]);
   });
 
+  it("keeps a note reachable for the host whichever layer is being edited", () => {
+    mapSessionMock.allTokens = [
+      token({ id: "terrain-tile", layer: "terrain" }),
+      token({ id: "hero-token", layer: "token" }),
+      token({ id: "note", layer: "token", kind: "note" }),
+    ];
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapStoreMock.isGMMode = true;
+    mapSessionMock.activeLayer = "terrain";
+
+    const selectionTokens = createTokenSelectionDependencies().getTokens();
+    const dragTokens = createTokenDragDependencies().getTokens();
+
+    expect(selectionTokens.map((t) => t.id)).toEqual(["terrain-tile", "note"]);
+    expect(dragTokens.map((t) => t.id)).toEqual(["terrain-tile", "note"]);
+  });
+
+  it("still hides a note whose layer the host has hidden", () => {
+    mapSessionMock.allTokens = [
+      token({ id: "note", layer: "token", kind: "note" }),
+    ];
+    mapStoreMock.layerVisibility = {
+      terrain: true,
+      object: true,
+      token: false,
+    };
+    mapStoreMock.isGMMode = true;
+    mapSessionMock.activeLayer = "terrain";
+
+    expect(createTokenSelectionDependencies().getTokens()).toEqual([]);
+  });
+
   it("for the host, restricts selection/drag to only the active layer", () => {
     mapSessionMock.allTokens = [
       token({ id: "terrain-tile", layer: "terrain" }),

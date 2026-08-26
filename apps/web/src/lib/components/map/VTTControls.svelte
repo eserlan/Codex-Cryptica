@@ -19,12 +19,16 @@
     };
   }
 
-  function openNoteDialog() {
+  function toggleNotePlacement() {
     if (!canManageVtt) return;
     if (!mapStore.activeMap) return;
-    // Notes land where the GM is currently looking rather than at the map
-    // origin, which is usually scrolled off screen mid-session.
-    mapSession.pendingNoteCoords = mapSession.viewportCenterPoint();
+    // Arming lets the GM click the spot the note belongs to. Pressing the
+    // button again backs out without placing anything.
+    if (mapSession.notePlacementArmed) {
+      mapSession.cancelNotePlacement();
+      return;
+    }
+    mapSession.armNotePlacement();
   }
 </script>
 
@@ -76,14 +80,15 @@
       </button>
 
       <button
-        class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)} disabled:opacity-50 disabled:cursor-not-allowed`}
-        onclick={openNoteDialog}
+        class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(mapSession.notePlacementArmed)} disabled:opacity-50 disabled:cursor-not-allowed`}
+        onclick={toggleNotePlacement}
         disabled={!mapStore.activeMap}
         type="button"
         aria-label="Pin Note"
-        title="Pin Note"
-        aria-haspopup="dialog"
-        aria-expanded={!!mapSession.pendingNoteCoords}
+        title={mapSession.notePlacementArmed
+          ? "Click the map to place the note, or press Escape"
+          : "Pin Note"}
+        aria-pressed={mapSession.notePlacementArmed}
         data-testid="vtt-add-note"
       >
         <span class="icon-[lucide--sticky-note] h-4 w-4" aria-hidden="true"
