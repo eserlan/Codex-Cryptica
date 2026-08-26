@@ -179,21 +179,24 @@ describe("Landing Page Registry", () => {
       const coc = getLandingPage("call-of-cthulhu")!;
       const copy = JSON.stringify(coc);
 
-      // Avoid generic fantasy or irrelevant framing
+      // Avoid generic fantasy, stock horror over-use, or irrelevant framing
       expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
       expect(copy).not.toMatch(/\bparty of heroes\b/i);
       expect(copy).not.toMatch(/\bloot tables?\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/Miskatonic University/i);
 
       // Verify authentic terminology presence
       expect(coc.hero.eyebrow).toContain("Keeper");
       expect(copy).toContain("Keeper");
-      expect(copy).toContain("investigators");
+      expect(copy).toContain("Investigators");
       expect(copy).toContain("handouts");
       expect(copy).toContain("clues");
       expect(copy).toContain("scenarios");
       expect(copy).toContain("tomes");
-      expect(copy).toContain("cabals");
+      expect(copy).toContain("cults");
       expect(copy).toContain("Dr Evelyn Mercer");
+      expect(copy).toContain("local-first");
       expect(coc.cta.buttonText).toContain("Investigation");
     });
 
@@ -213,6 +216,17 @@ describe("Landing Page Registry", () => {
         expect(spoke.relation).toBeTruthy();
         expect(spoke.category).toBeDefined();
       }
+
+      expect(
+        graph.steps.find((s) => s.label === "Cryptic Telegram")?.sublabel,
+      ).toBe("Handout • Telegram");
+      expect(
+        graph.steps.find((s) => s.label === "St Bartholomew's Archive")
+          ?.relation,
+      ).toBe("Researches at");
+      expect(
+        graph.steps.find((s) => s.label === "The Orne Society")?.sublabel,
+      ).toBe("Cult");
 
       const categories = new Set(graph.steps.map((s) => s.category));
       expect(categories).toContain("character");

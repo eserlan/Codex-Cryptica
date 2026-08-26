@@ -9,46 +9,46 @@ export const callOfCthulhu: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Call of Cthulhu Keeper Notes & Scenarios",
     description:
-      "Organise your Call of Cthulhu scenarios and campaigns with connected investigators, clues, handouts, cult conspiracies, occult tomes, and timeline notes.",
+      "Organise your Call of Cthulhu scenarios and campaigns with connected Investigators, clues, handouts, cults, occult tomes, and Keeper notes in one local-first workspace.",
   },
   hero: {
     eyebrow: "Investigation & Keeper Notes Management",
     title: "Codex Cryptica for Call of Cthulhu",
     tagline:
-      "Keep investigators, contacts, handouts, clues, cult conspiracies, and forbidden tomes connected in one private workspace.",
+      "Keep Investigators, contacts, handouts, clues, cults, and tomes connected in one local-first workspace.",
     problemStatement:
-      "Call of Cthulhu scenarios quickly become intricate webs of leads, handouts, witness testimonies, eccentric contacts, and occult conspiracies. When your investigators pursue a cold lead to a forgotten archive or question a terrified coroner three sessions later, you shouldn't have to scramble through loose notes to remember which clue brought them there — or what secrets remain hidden.",
+      "Call of Cthulhu scenarios quickly develop into webs of open leads, witness testimonies, physical handouts, and occult conspiracies across multiple sessions. When your Investigators follow a trail back to an archive or re-interview a local coroner weeks later, you shouldn't have to scramble through scattered notes to recall which clue led them there, what they uncovered, or which leads remain unresolved.",
   },
   useCases: [
     {
       title: "Clue Webs & Evidence Tracking",
       description:
-        "Map how crime scenes, witness testimonies, discovered leads, and physical handouts connect visually so you always know where an investigation can lead next.",
+        "Map how crime scenes, witness testimonies, discovered leads, and physical handouts connect visually so you can track the full web of evidence across your scenario.",
       icon: "icon-[lucide--search]",
     },
     {
       title: "Cults, Informants & Suspects",
       description:
-        "Track secretive cabals, Miskatonic University academics, police contacts, coroners, and cult leaders alongside the locations and dark rites they control.",
+        "Track cultists, police contacts, witnesses, medical examiners, and academic specialists alongside the organisations and locations they are tied to.",
       icon: "icon-[lucide--users]",
     },
     {
       title: "Occult Tomes, Handouts & Lore",
       description:
-        "Link newspaper clippings, telegrams, translated manuscripts, and ancient artefacts directly to the locations, rituals, and mysteries they unravel.",
+        "Link newspaper clippings, letters, translated manuscripts, and occult relics directly to the people, locations, and clues they reveal.",
       icon: "icon-[lucide--book-open]",
     },
     {
-      title: "Timelines & Case Milestones",
+      title: "Events, Timelines & Keeper Notes",
       description:
-        "Keep chronological events, impending cult rituals, active investigator leads, and Keeper session notes connected across every stage of your campaign.",
+        "Track chronological events, escalating scenario countdowns, active Investigator leads, and Keeper session notes in one connected workspace.",
       icon: "icon-[lucide--scroll]",
     },
   ],
   exampleGraph: {
     title: "Scenario Investigation Web",
     description:
-      "One investigator, her contacts, discovered handouts, the occult cabal she pursues, and the forbidden tome she seeks to decipher.",
+      "One Investigator, her contacts, discovered handouts, the cult she investigates, and the occult ledger she seeks to decipher.",
     badgeLabel: "Investigation Web",
     palette: "oxblood",
     surface: "dark",
@@ -61,26 +61,26 @@ export const callOfCthulhu: LandingPageConfig = {
       },
       {
         label: "Inspector Thomas Vance",
-        sublabel: "Contact • Arkham Police",
+        sublabel: "Contact • Police Inspector",
         relation: "Consults with",
         category: "character",
       },
       {
-        label: "Telegram from Arkham",
-        sublabel: "Handout • Wire",
+        label: "Cryptic Telegram",
+        sublabel: "Handout • Telegram",
         relation: "Received",
         category: "item",
       },
       {
         label: "The Orne Society",
-        sublabel: "Cult • Secret Cabal",
+        sublabel: "Cult",
         relation: "Investigates",
         category: "faction",
       },
       {
         label: "St Bartholomew's Archive",
         sublabel: "Location • Private Library",
-        relation: "Searches",
+        relation: "Researches at",
         category: "location",
       },
       {
@@ -95,28 +95,28 @@ export const callOfCthulhu: LandingPageConfig = {
     {
       title: "NPC & Contact Generator",
       description:
-        "Create investigators, informants, academics, and cultists with distinct motives, secrets, and backgrounds.",
+        "Create informants, academics, police detectives, and cultists with distinct motives, secrets, and backgrounds for your scenarios.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Secret Society Generator",
       description:
-        "Design esoteric brotherhoods, occult cabals, doomsday cults, and secret investigator alliances.",
+        "Design secretive brotherhoods, occult orders, and cult networks operating behind the scenes.",
       href: "/generators/secret-society",
       badge: "Generator",
     },
     {
       title: "News Sheet & Handout Generator",
       description:
-        "Generate in-world period newspaper articles, police blotters, strange notices, and classifieds to hand directly to your players.",
+        "Create in-world period newspaper clippings, police blotters, and classified notices as physical or digital handouts for your Investigators.",
       href: "/generators/news-sheet-generator",
       badge: "Generator",
     },
     {
-      title: "Town & Settlement Generator",
+      title: "Settlement & District Generator",
       description:
-        "Build coastal fishing villages, university districts, isolated manors, and asylum locations.",
+        "Generate towns, coastal ports, and urban districts to anchor your scenario locations and investigation scenes.",
       href: "/generators/settlement",
       badge: "Generator",
     },
@@ -124,7 +124,7 @@ export const callOfCthulhu: LandingPageConfig = {
   cta: {
     title: "Organise Your Investigation",
     description:
-      "Map clue networks, track handouts and suspects, and run your Call of Cthulhu scenarios with complete local privacy.",
+      "Map clue networks, track handouts and suspects, and run your Call of Cthulhu scenarios in a local-first workspace.",
     buttonText: "Start Your Investigation Free",
     buttonHref: "/app",
   },
