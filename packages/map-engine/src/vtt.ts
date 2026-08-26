@@ -7,6 +7,10 @@ export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
 export type LegacyTokenVisibility = TokenVisibility | "owner-only";
 export type TokenBaseShape = "circle" | "square";
+/** What a map element *is*: a combatant, a piece of terrain art, or a GM note
+ * pinned to a spot on the map. Governs defaults and how it renders, not which
+ * layer it sits on (see `MapLayer`). */
+export type TokenKind = "token" | "tile" | "note";
 /** Which part of the source image to keep in view when its aspect ratio doesn't match the token's shape — shared with an entity's own `imageFocus` (schema). */
 export type TokenImageFocus = ImageFocus;
 
@@ -39,10 +43,12 @@ export interface Token {
   statusEffects: string[];
   locked?: boolean;
   isVisionSource?: boolean;
-  /** Marks an image token placed from a procedural tile deck. */
-  kind?: "token" | "tile";
+  /** Marks an image token placed from a procedural tile deck, or a pinned note. */
+  kind?: TokenKind;
   tileDeckId?: string | null;
   tileDetails?: TileDetails;
+  /** Freeform body text for `kind: "note"`. Undefined on every other kind. */
+  noteBody?: string;
   /** Which map layer this element belongs to; governs render order,
    * visibility, and lock. Independent of `kind` — a tile-deck tile can live
    * on the object layer, not just terrain. */
@@ -135,6 +141,10 @@ export interface EncounterSession {
   tileDecks?: TileDeck[];
 }
 
+export function normalizeTokenKind(kind: unknown): TokenKind {
+  return kind === "tile" || kind === "note" ? kind : "token";
+}
+
 export function normalizeTokenVisibility(
   visibility: LegacyTokenVisibility | undefined | null,
 ): TokenVisibility {
@@ -165,9 +175,10 @@ export function normalizeToken(
     statusEffects: [...(token.statusEffects ?? [])],
     locked: token.locked === true,
     isVisionSource: token.isVisionSource === true,
-    kind: token.kind === "tile" ? "tile" : "token",
+    kind: normalizeTokenKind(token.kind),
     layer: normalizeMapLayer(token.layer, token.kind),
     tileDeckId: token.tileDeckId ?? null,
+    noteBody: token.kind === "note" ? (token.noteBody ?? "") : undefined,
     tileDetails: token.tileDetails
       ? {
           description: token.tileDetails.description ?? "",
@@ -177,6 +188,22 @@ export function normalizeToken(
         }
       : undefined,
   };
+}
+
+/**
+ * Strips the body of a GM-only note.
+ *
+ * Token visibility is enforced where tokens are drawn, not where they are
+ * sent — a hidden token still reaches every guest, because all a player could
+ * learn from it is that something is there. A note is different: its body *is*
+ * the secret, so a player could read the encounter behind the door straight
+ * out of their own session state. Bodies therefore leave the host only once
+ * the note is visible to players.
+ */
+export function redactGmOnlyNote<T extends Token>(token: T): T {
+  if (token.kind !== "note" || token.visibleTo !== "gm-only") return token;
+  if (!token.noteBody) return token;
+  return { ...token, noteBody: "" };
 }
 
 export function cloneMeasurement(

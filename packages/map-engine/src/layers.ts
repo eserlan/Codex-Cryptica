@@ -11,11 +11,12 @@ export function mapLayerRank(layer: MapLayer): number {
 /**
  * Legacy tokens (saved before layers existed) have no `layer` field. Default
  * them from `kind` so existing maps keep rendering exactly as before: tile-
- * deck art becomes terrain, everything else becomes a token.
+ * deck art becomes terrain, everything else becomes a token. Notes ride the
+ * token layer so they stay readable above the terrain they annotate.
  */
 export function normalizeMapLayer(
   value: unknown,
-  fallbackKind?: "token" | "tile",
+  fallbackKind?: "token" | "tile" | "note",
 ): MapLayer {
   if ((MAP_LAYER_ORDER as readonly string[]).includes(value as string)) {
     return value as MapLayer;

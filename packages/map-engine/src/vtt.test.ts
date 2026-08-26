@@ -107,6 +107,36 @@ describe("VTT domain normalization", () => {
     );
   });
 
+  it("keeps a note's kind and body through normalization", () => {
+    const note = normalizeToken({
+      ...token,
+      kind: "note",
+      noteBody: "2 goblins arguing over a map",
+    });
+
+    expect(note.kind).toBe("note");
+    expect(note.noteBody).toBe("2 goblins arguing over a map");
+    // Notes annotate the terrain below them, so they ride the token layer.
+    expect(note.layer).toBe("token");
+  });
+
+  it("gives a note without a body an empty one", () => {
+    expect(normalizeToken({ ...token, kind: "note" }).noteBody).toBe("");
+  });
+
+  it("does not attach a note body to other kinds", () => {
+    expect(
+      normalizeToken({ ...token, kind: "token" }).noteBody,
+    ).toBeUndefined();
+    expect(normalizeToken({ ...token, kind: "tile" }).noteBody).toBeUndefined();
+  });
+
+  it("falls back to a plain token for an unrecognized kind", () => {
+    expect(normalizeToken({ ...token, kind: "sticker" as never }).kind).toBe(
+      "token",
+    );
+  });
+
   it("normalizes optional tile decks without mutating their entries", () => {
     const session = {
       id: "session-tiles",

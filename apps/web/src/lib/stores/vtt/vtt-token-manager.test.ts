@@ -40,6 +40,103 @@ describe("VTTTokenManager.addToken", () => {
     expect(addTokenToInitiativeState).not.toHaveBeenCalled();
   });
 
+  it("places a note hidden from players and out of the initiative tracker", () => {
+    const { manager, addTokenToInitiativeState } = createManager();
+
+    const note = manager.addToken(
+      { name: "Guard post", x: 0, y: 0, kind: "note", noteBody: "2 goblins" },
+      true,
+    );
+
+    expect(note.kind).toBe("note");
+    expect(note.noteBody).toBe("2 goblins");
+    expect(note.visibleTo).toBe("gm-only");
+    expect(note.baseShape).toBe("square");
+    expect(note.facingIndicator).toBe(false);
+    expect(addTokenToInitiativeState).not.toHaveBeenCalled();
+  });
+
+  it("lets a note be placed visible to players when asked for explicitly", () => {
+    const { manager } = createManager();
+
+    const note = manager.addToken(
+      { name: "Landmark", x: 0, y: 0, kind: "note", visibleTo: "all" },
+      true,
+    );
+
+    expect(note.visibleTo).toBe("all");
+  });
+
+  it("gives a note an empty body rather than leaving it undefined", () => {
+    const { manager } = createManager();
+
+    const note = manager.addToken(
+      { name: "Blank", x: 0, y: 0, kind: "note" },
+      true,
+    );
+
+    expect(note.noteBody).toBe("");
+  });
+
+  it("leaves noteBody off tokens that are not notes", () => {
+    const { manager } = createManager();
+
+    const token = manager.addToken({ name: "Goblin", x: 0, y: 0 }, true);
+
+    expect(token.noteBody).toBeUndefined();
+  });
+
+  it("drops a note at the middle of the current view when given no position", () => {
+    const { manager } = createManager({
+      getMapStore: () => ({
+        activeMap: null,
+        gridSize: 50,
+        canvasSize: { width: 800, height: 600 },
+        unproject: (point: { x: number; y: number }) => ({
+          x: point.x * 2,
+          y: point.y * 2,
+        }),
+      }),
+    });
+
+    expect(manager.viewportCenterPoint()).toEqual({ x: 800, y: 600 });
+  });
+
+  it("falls back to the map origin before the canvas has been measured", () => {
+    const { manager } = createManager({
+      getMapStore: () => ({
+        activeMap: null,
+        gridSize: 50,
+        canvasSize: { width: 0, height: 0 },
+        unproject: () => ({ x: 999, y: 999 }),
+      }),
+    });
+
+    expect(manager.viewportCenterPoint()).toEqual({ x: 0, y: 0 });
+  });
+
+  it("carries a note's body along with the update that reveals it", () => {
+    const emit = vi.fn();
+    const { manager } = createManager({ emit });
+    const note = manager.addToken(
+      { name: "Guard post", x: 0, y: 0, kind: "note", noteBody: "2 goblins" },
+      true,
+    );
+    emit.mockClear();
+
+    manager.toggleTokenVisibility(note.id);
+
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TOKEN_STATE_UPDATE",
+        delta: expect.objectContaining({
+          visibleTo: "all",
+          noteBody: "2 goblins",
+        }),
+      }),
+    );
+  });
+
   it("snaps a dragged tile to align with a neighboring tile's edge", () => {
     const { manager } = createManager();
     manager.addToken(

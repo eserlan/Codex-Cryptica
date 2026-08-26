@@ -140,6 +140,35 @@ describe("TableRoller result actions", () => {
     );
   });
 
+  it("pins a rolled result to the map as a note titled after the table", async () => {
+    const addNote = vi.fn(() => ({ id: "token-1" }));
+    const session = { mapId: "map-1", vttEnabled: true, addNote };
+    renderRoller({ session });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+    await fireEvent.click(screen.getByTestId("pin-roll-result-to-map"));
+
+    await waitFor(() =>
+      expect(addNote).toHaveBeenCalledWith({
+        name: "Complications",
+        body: "The bridge collapses",
+      }),
+    );
+  });
+
+  it("disables pinning while no map is open", async () => {
+    const session = { mapId: null, vttEnabled: false, addNote: vi.fn() };
+    renderRoller({ session });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    const pinButton = screen.getByTestId(
+      "pin-roll-result-to-map",
+    ) as HTMLButtonElement;
+    expect(pinButton.disabled).toBe(true);
+    expect(session.addNote).not.toHaveBeenCalled();
+  });
+
   it("does not record roll history when table has no entries", async () => {
     const addResult = vi.fn(async () => {});
     const emptySource: RandomSource = {
