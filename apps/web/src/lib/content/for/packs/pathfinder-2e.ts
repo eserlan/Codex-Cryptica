@@ -48,9 +48,6 @@ export const pathfinder2e: LandingPageConfig = {
     title: "Sample Pathfinder 2e Campaign Web",
     description:
       "See how a party, their patron at the sun temple, the society that has infiltrated their ranks, and the relic they are chasing connect in one campaign graph.",
-    // Hub and spoke, not a chain: every `relation` below describes an edge
-    // from the first step (the party) to that node, so each one has to read
-    // as "The Ninth Lantern <relation> X" on its own.
     steps: [
       {
         label: "The Ninth Lantern",
