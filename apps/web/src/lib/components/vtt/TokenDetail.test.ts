@@ -157,6 +157,45 @@ describe("TokenDetail", () => {
     );
   });
 
+  it("folds a note away from the detail panel and back again", async () => {
+    mapStore.isGMMode = true;
+    sessionModeStore.isGuestMode = false;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "2 goblins";
+    mapSession.tokens["token-1"].width = 90;
+    mapSession.tokens["token-1"].height = 90;
+
+    render(TokenDetail);
+
+    const button = await screen.findByTestId("token-note-collapse");
+    expect(button.textContent).toContain("Collapse");
+
+    await fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(mapSession.tokens["token-1"].noteCollapsedFrom).toEqual({
+        width: 90,
+        height: 90,
+      }),
+    );
+    expect(screen.getByTestId("token-note-collapse").textContent).toContain(
+      "Expand",
+    );
+    // The body is still editable while folded away.
+    expect(screen.getByTestId("token-note-body")).not.toBeNull();
+  });
+
+  it("gives guests no way to fold a note away", async () => {
+    sessionModeStore.isGuestMode = true;
+    mapStore.isGMMode = false;
+    mapSession.tokens["token-1"].kind = "note";
+
+    render(TokenDetail);
+
+    await screen.findByTestId("token-note-body");
+    expect(screen.queryByTestId("token-note-collapse")).toBeNull();
+  });
+
   it("leaves the note editor read-only for guests", async () => {
     sessionModeStore.isGuestMode = true;
     mapStore.isGMMode = false;

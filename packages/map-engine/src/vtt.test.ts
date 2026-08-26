@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizeEncounterSession, normalizeToken } from "./vtt";
+import {
+  isNoteCollapsed,
+  normalizeEncounterSession,
+  normalizeToken,
+} from "./vtt";
 
 const token = {
   id: "token-1",
@@ -135,6 +139,54 @@ describe("VTT domain normalization", () => {
     expect(normalizeToken({ ...token, kind: "sticker" as never }).kind).toBe(
       "token",
     );
+  });
+
+  it("treats a stored fallback size as the note's collapsed state", () => {
+    const collapsed = normalizeToken({
+      ...token,
+      kind: "note",
+      noteCollapsedFrom: { width: 120, height: 120 },
+    });
+
+    expect(isNoteCollapsed(collapsed)).toBe(true);
+    expect(collapsed.noteCollapsedFrom).toEqual({ width: 120, height: 120 });
+    // Cloned, so a normalized token never shares the caller's object.
+    expect(collapsed.noteCollapsedFrom).not.toBe(token.noteCollapsedFrom);
+  });
+
+  it("treats a note with no fallback size as expanded", () => {
+    expect(isNoteCollapsed(normalizeToken({ ...token, kind: "note" }))).toBe(
+      false,
+    );
+  });
+
+  it("rejects a malformed or non-positive fallback size", () => {
+    for (const bad of [
+      { width: 0, height: 10 },
+      { width: 10, height: -5 },
+      { width: "80", height: 80 },
+      {},
+      null,
+    ]) {
+      const result = normalizeToken({
+        ...token,
+        kind: "note",
+        noteCollapsedFrom: bad as never,
+      });
+      expect(result.noteCollapsedFrom).toBeUndefined();
+      expect(isNoteCollapsed(result)).toBe(false);
+    }
+  });
+
+  it("never collapses a kind that is not a note", () => {
+    const tile = normalizeToken({
+      ...token,
+      kind: "tile",
+      noteCollapsedFrom: { width: 120, height: 120 },
+    });
+
+    expect(tile.noteCollapsedFrom).toBeUndefined();
+    expect(isNoteCollapsed(tile)).toBe(false);
   });
 
   it("normalizes optional tile decks without mutating their entries", () => {

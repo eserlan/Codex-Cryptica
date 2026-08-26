@@ -286,6 +286,22 @@ describe("renderMap", () => {
     expect(texts).toEqual([]);
   });
 
+  it("draws a collapsed note as a marker with no body text", () => {
+    const texts = noteTextFor(
+      baseToken({
+        kind: "note",
+        baseShape: "square",
+        width: 150,
+        height: 150,
+        noteCollapsed: true,
+        noteBody: "Two goblins arguing over a map",
+      }),
+    );
+
+    // Big enough that an expanded note would have shown its body.
+    expect(texts).toEqual([]);
+  });
+
   it("does not try to draw an image for a note", () => {
     const image = { width: 100, height: 100 } as HTMLImageElement;
     const ctx = createCtxMock();

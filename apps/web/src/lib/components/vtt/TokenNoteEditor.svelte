@@ -6,12 +6,16 @@
    */
   let {
     body,
+    collapsed = false,
     disabled = false,
     onChange,
+    onToggleCollapsed,
   }: {
     body: string;
+    collapsed?: boolean;
     disabled?: boolean;
     onChange: (body: string) => void;
+    onToggleCollapsed?: () => void;
   } = $props();
 </script>
 
@@ -20,12 +24,31 @@
   aria-labelledby="token-note-heading"
   data-testid="token-note-editor"
 >
-  <h4
-    id="token-note-heading"
-    class="text-[10px] font-bold uppercase tracking-widest text-theme-primary"
-  >
-    Note
-  </h4>
+  <div class="flex items-center justify-between gap-2">
+    <h4
+      id="token-note-heading"
+      class="text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+    >
+      Note
+    </h4>
+    {#if onToggleCollapsed && !disabled}
+      <button
+        type="button"
+        class="flex items-center gap-1 rounded border border-theme-border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        onclick={onToggleCollapsed}
+        data-testid="token-note-collapse"
+        title={collapsed
+          ? "Show the note at full size on the map"
+          : "Fold the note down to a marker on the map"}
+      >
+        <span
+          aria-hidden="true"
+          class={`${collapsed ? "icon-[lucide--maximize-2]" : "icon-[lucide--minimize-2]"} h-3 w-3`}
+        ></span>
+        {collapsed ? "Expand" : "Collapse"}
+      </button>
+    {/if}
+  </div>
   <textarea
     value={body}
     {disabled}
