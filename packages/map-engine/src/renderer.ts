@@ -44,6 +44,10 @@ export interface RenderToken {
   facingIndicator?: boolean;
   color: string;
   label: string;
+  /** "note" renders as a dog-eared sticky instead of a portrait/art token. */
+  kind?: "token" | "tile" | "note";
+  /** Body text previewed on the face of a `kind: "note"` element. */
+  noteBody?: string;
   image?: HTMLImageElement | null;
   /** Which part of the image to keep in view when cropped to fit the token's shape. Defaults to centered. */
   imageFocus?: "center" | "top" | "bottom" | "left" | "right";
@@ -115,6 +119,13 @@ const scratchStart = { x: 0, y: 0 };
 const scratchEnd = { x: 0, y: 0 };
 const originPt = { x: 0, y: 0 };
 
+/**
+ * Token labels are a small, stable set, but a note's body is measured a line
+ * fragment at a time and changes on every keystroke — without a ceiling the
+ * cache would grow for as long as the canvas lives.
+ */
+const TEXT_MEASUREMENT_CACHE_LIMIT = 500;
+
 function measureTextCached(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -129,6 +140,9 @@ function measureTextCached(
   if (!result) {
     const metrics = ctx.measureText(text);
     result = { width: metrics.width };
+    if (cache.textMeasurementCache.size >= TEXT_MEASUREMENT_CACHE_LIMIT) {
+      cache.textMeasurementCache.clear();
+    }
     cache.textMeasurementCache.set(key, result);
   }
   return result;
@@ -149,6 +163,101 @@ function drawRoundedRectPath(
   }
 
   ctx.rect(x, y, width, height);
+}
+
+/** How much of the note's corner is turned down, as a share of its short side. */
+const NOTE_FOLD_RATIO = 0.22;
+const NOTE_TEXT_COLOR = "rgba(28, 25, 23, 0.85)";
+/** Below this on-screen size the body text is illegible, so only the paper is drawn. */
+const NOTE_MIN_TEXT_SIZE = 44;
+
+/**
+ * Draws a sticky note centred on the current origin. Expects the caller to
+ * have already translated, rotated and clipped to the token's shape — the
+ * dog-eared corner is deliberately left unfilled so the map shows through it.
+ */
+function drawNoteFace(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  color: string,
+  body: string,
+  cache: CanvasCache,
+) {
+  const left = -width / 2;
+  const top = -height / 2;
+  const fold = Math.min(width, height) * NOTE_FOLD_RATIO;
+
+  ctx.beginPath();
+  ctx.moveTo(left, top);
+  ctx.lineTo(left + width - fold, top);
+  ctx.lineTo(left + width, top + fold);
+  ctx.lineTo(left + width, top + height);
+  ctx.lineTo(left, top + height);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // The turned-down corner, shaded so the fold reads as a fold.
+  ctx.beginPath();
+  ctx.moveTo(left + width - fold, top);
+  ctx.lineTo(left + width, top + fold);
+  ctx.lineTo(left + width - fold, top + fold);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+  ctx.fill();
+
+  const text = body.trim();
+  if (!text || Math.min(width, height) < NOTE_MIN_TEXT_SIZE) return;
+
+  const fontSize = Math.max(8, Math.min(15, height * 0.13));
+  const lineHeight = fontSize * 1.25;
+  const padding = Math.max(4, width * 0.08);
+  const maxWidth = width - padding * 2;
+  // The first line clears the fold; the rest use the note's full width.
+  const maxLines = Math.max(1, Math.floor((height - padding * 2) / lineHeight));
+  const font = `${Math.round(fontSize)}px ui-sans-serif, system-ui, sans-serif`;
+
+  ctx.font = font;
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  let consumed = 0;
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    // A single word wider than the note still has to go somewhere, so the
+    // first word of a line is taken unconditionally.
+    if (
+      !current ||
+      measureTextCached(ctx, candidate, font, cache).width <= maxWidth
+    ) {
+      current = candidate;
+      consumed++;
+      continue;
+    }
+    lines.push(current);
+    if (lines.length >= maxLines) {
+      current = "";
+      break;
+    }
+    current = word;
+    consumed++;
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+
+  // Anything that did not fit is signalled rather than silently dropped, so
+  // the GM knows to open the note for the rest.
+  if (consumed < words.length && lines.length > 0) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] = `${last.slice(0, Math.max(1, last.length - 1))}…`;
+  }
+
+  ctx.fillStyle = NOTE_TEXT_COLOR;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], left + padding, top + padding + i * lineHeight);
+  }
 }
 
 function traceTokenShape(
@@ -418,7 +527,16 @@ export function renderMap(options: RenderOptions) {
     traceTokenShape(ctx, shape, width, height);
     ctx.clip();
 
-    if (token.image && token.image.width > 0 && token.image.height > 0) {
+    if (token.kind === "note") {
+      drawNoteFace(
+        ctx,
+        width,
+        height,
+        token.color || "#f5b942",
+        token.noteBody ?? "",
+        cache,
+      );
+    } else if (token.image && token.image.width > 0 && token.image.height > 0) {
       const imageAspect = token.image.width / token.image.height;
       const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;
       const drawHeight = imageAspect > 1 ? diameter : diameter / imageAspect;

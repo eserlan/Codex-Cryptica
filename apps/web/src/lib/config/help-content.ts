@@ -506,6 +506,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.",
     icon: "icon-[lucide--layers]",
   },
+  "vtt-notes": {
+    id: "vtt-notes",
+    title: "Map Notes",
+    content:
+      'Pin a note anywhere on the map to remember what happens there. Press the note button in the VTT toolbar, give it a title and whatever you want to remember, and it lands where you are looking. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it like any token. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to.',
+    icon: "icon-[lucide--sticky-note]",
+  },
   "voice-chat": {
     id: "voice-chat",
     title: "Session Voice Chat",

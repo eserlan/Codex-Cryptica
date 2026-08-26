@@ -26,6 +26,11 @@ import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 const TOKEN_COORD_PRECISION = 2;
 /** Smallest a freshly-placed character token defaults to, regardless of how fine the map's grid is. */
 const MIN_DEFAULT_TOKEN_SIZE = 30;
+/** Sticky-note amber. Notes are GM furniture, so they get one recognisable
+ * colour rather than a name-hashed one. */
+export const NOTE_DEFAULT_COLOR = "#f5b942";
+/** Notes hold prose, not a portrait — give them more room than a token. */
+const NOTE_SIZE_MULTIPLIER = 1.5;
 
 function roundTokenCoordinate(value: number) {
   const factor = 10 ** TOKEN_COORD_PRECISION;
@@ -56,6 +61,7 @@ export class VTTTokenManager {
   selection = $state<string | null>(null);
   selectedTokens = $state<Set<string>>(new Set());
   pendingTokenCoords = $state<Point | null>(null);
+  pendingNoteCoords = $state<Point | null>(null);
   draggingTokenId = $state<string | null>(null);
   dragPreview = $state<DragPreview | null>(null);
 
@@ -84,6 +90,7 @@ export class VTTTokenManager {
     this.selection = null;
     this.selectedTokens = new Set();
     this.pendingTokenCoords = null;
+    this.pendingNoteCoords = null;
     this.draggingTokenId = null;
     this.dragPreview = null;
     for (const pending of this.pendingTokenMoves.values()) {
@@ -149,6 +156,14 @@ export class VTTTokenManager {
     const token = this.tokens[tokenId];
     if (!token) return;
     const next = token.visibleTo === "all" ? "gm-only" : "all";
+    // Guests were sent an empty body while the note was GM-only (see
+    // redactGmOnlyNote), so revealing it has to carry the text along.
+    if (next === "all" && token.kind === "note") {
+      return this.updateToken(tokenId, {
+        visibleTo: next,
+        noteBody: token.noteBody ?? "",
+      });
+    }
     return this.updateToken(tokenId, { visibleTo: next });
   }
 
@@ -171,35 +186,46 @@ export class VTTTokenManager {
 
   getTokenDefaults(input: TokenCreationInput): Token {
     const mapStore = this.deps.getMapStore();
+    const kind = input.kind ?? "token";
+    const isNote = kind === "note";
     // gridSize can legitimately be very small — it's fit to a tile's native
     // pixel grid (e.g. ~15px for some geomorph packs), which is correct for
     // alignment/snapping but useless as a default character-token size: a
     // 15px circle is effectively invisible. Floor the default independently
     // of how fine the underlying grid happens to be.
     const mapGrid = Math.max(MIN_DEFAULT_TOKEN_SIZE, mapStore.gridSize || 50);
+    const defaultSize = isNote
+      ? Math.round(mapGrid * NOTE_SIZE_MULTIPLIER)
+      : mapGrid;
     return {
       id: this.idGenerator.uuid(),
       entityId: input.entityId ?? null,
       name: input.name.trim(),
       x: input.x,
       y: input.y,
-      width: input.width ?? mapGrid,
-      height: input.height ?? mapGrid,
+      width: input.width ?? defaultSize,
+      height: input.height ?? defaultSize,
       rotation: input.rotation ?? 0,
-      baseShape: input.baseShape ?? "circle",
-      facingIndicator: input.facingIndicator ?? true,
+      baseShape: input.baseShape ?? (isNote ? "square" : "circle"),
+      facingIndicator: input.facingIndicator ?? !isNote,
       zIndex: input.zIndex ?? Object.keys(this.tokens).length,
       ownerPeerId: input.ownerPeerId ?? null,
       ownerGuestName: input.ownerGuestName ?? null,
-      visibleTo: normalizeTokenVisibility(input.visibleTo),
-      color: input.color || hashToColor(input.name),
+      // A note is the GM's own annotation: it stays hidden until they
+      // deliberately reveal it, where a character token defaults to visible.
+      visibleTo: normalizeTokenVisibility(
+        input.visibleTo ?? (isNote ? "gm-only" : "all"),
+      ),
+      color:
+        input.color || (isNote ? NOTE_DEFAULT_COLOR : hashToColor(input.name)),
       imageUrl: input.imageUrl ?? null,
       statusEffects: [],
       locked: input.locked === true,
       isVisionSource: input.isVisionSource === true,
-      kind: input.kind ?? "token",
+      kind,
       tileDeckId: input.tileDeckId ?? null,
       tileDetails: input.tileDetails,
+      noteBody: isNote ? (input.noteBody ?? "") : undefined,
       layer: input.layer ?? this.deps.getActiveLayer(),
     };
   }
@@ -257,6 +283,26 @@ export class VTTTokenManager {
     };
   }
 
+  /**
+   * Map coordinates at the middle of what is currently on screen. Notes
+   * created from outside the map (a table roll, a toolbar button) have no
+   * click position to land on, and the map origin is often scrolled out of
+   * view — dropping them where the GM is already looking keeps them findable.
+   */
+  viewportCenterPoint(): Point {
+    const mapStore = this.deps.getMapStore();
+    const canvasSize = mapStore.canvasSize;
+    if (!canvasSize?.width || !canvasSize?.height) return { x: 0, y: 0 };
+    const point = mapStore.unproject({
+      x: canvasSize.width / 2,
+      y: canvasSize.height / 2,
+    });
+    return {
+      x: roundTokenCoordinate(point.x),
+      y: roundTokenCoordinate(point.y),
+    };
+  }
+
   addToken(input: TokenCreationInput, silent = false) {
     const token = this.getTokenDefaults(input);
     const snapped = this.clampAndSnapPosition(
@@ -274,10 +320,11 @@ export class VTTTokenManager {
       ...this.tokens,
       [positioned.id]: positioned,
     };
-    // Tiles are terrain/room pieces, not combatants — keep them out of the
-    // initiative tracker so the first one placed doesn't inherit the
-    // "active turn" accent border from landing at initiativeOrder[0].
-    if (positioned.kind !== "tile") {
+    // Tiles are terrain/room pieces and notes are GM annotations — neither is
+    // a combatant, so keep them out of the initiative tracker so the first one
+    // placed doesn't inherit the "active turn" accent border from landing at
+    // initiativeOrder[0].
+    if (positioned.kind !== "tile" && positioned.kind !== "note") {
       this.deps.addTokenToInitiativeState?.(positioned.id);
     }
     if (!silent) {

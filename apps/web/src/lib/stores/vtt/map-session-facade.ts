@@ -102,6 +102,12 @@ export abstract class MapSessionFacade {
   set pendingTokenCoords(value) {
     this.tokenManager.pendingTokenCoords = value;
   }
+  get pendingNoteCoords() {
+    return this.tokenManager.pendingNoteCoords;
+  }
+  set pendingNoteCoords(value) {
+    this.tokenManager.pendingNoteCoords = value;
+  }
   get draggingTokenId() {
     return this.tokenManager.draggingTokenId;
   }
@@ -424,6 +430,41 @@ export abstract class MapSessionFacade {
   addToken(input: TokenCreationInput, silent = false) {
     if (!this.mapId) return null;
     return this.tokenManager.addToken(input, silent);
+  }
+
+  /** Map coordinates at the middle of the current view. */
+  viewportCenterPoint() {
+    return this.tokenManager.viewportCenterPoint();
+  }
+
+  /**
+   * Drops a note on the map at `point`, or at the middle of the current view
+   * when no position is given (a table roll has no click position of its own).
+   * Returns null when no map is bound, which callers surface as "open a map
+   * first" rather than failing silently.
+   */
+  addNote(
+    input: { name: string; body?: string; x?: number; y?: number },
+    silent = false,
+  ) {
+    if (!this.mapId) return null;
+    const position =
+      input.x !== undefined && input.y !== undefined
+        ? { x: input.x, y: input.y }
+        : this.tokenManager.viewportCenterPoint();
+    return this.tokenManager.addToken(
+      {
+        name: input.name.trim() || "Note",
+        x: position.x,
+        y: position.y,
+        kind: "note",
+        noteBody: input.body ?? "",
+        // Always the token layer, whatever the GM has active — a note pinned
+        // onto the terrain layer would render underneath the tiles it annotates.
+        layer: "token",
+      },
+      silent,
+    );
   }
 
   requestTokenAdd(input: TokenCreationInput) {

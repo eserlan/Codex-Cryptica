@@ -7,6 +7,7 @@
   import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
   import VTTGridSettings from "$lib/components/map/VTTGridSettings.svelte";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
+  import NoteAddDialog from "$lib/components/vtt/NoteAddDialog.svelte";
   import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
   import {
     MapPageController,
@@ -90,6 +91,7 @@
       />
       <MapVTTControlsHUD chatSidebarOffset={controller.chatSidebarOffset} />
       <TokenAddDialog />
+      <NoteAddDialog />
     </MapView>
 
     <VTTGridColorMenu />

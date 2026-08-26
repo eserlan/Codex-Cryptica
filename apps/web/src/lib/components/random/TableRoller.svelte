@@ -34,6 +34,10 @@
       const copied = await copyTextToClipboard(text, navigator.clipboard);
       if (!copied) throw new Error("Clipboard copy is unavailable.");
     },
+    pinToMap = async (text) => {
+      const created = session.addNote({ name: source.name, body: text });
+      if (!created) throw new Error("No map is open.");
+    },
     clock = systemClock,
   }: {
     source: RandomSource;
@@ -42,12 +46,17 @@
     session?: typeof mapSession;
     addToChat?: (text: string) => Promise<void>;
     copyText?: (text: string) => Promise<void>;
+    pinToMap?: (text: string) => Promise<void>;
     clock?: Clock;
   } = $props();
 
   let outcome = $state<RollOutcome | undefined>();
   let isAddingToChat = $state(false);
+  let isPinning = $state(false);
   let copied = $state(false);
+
+  /** A result can only be pinned once there is a map to pin it to. */
+  const canPinToMap = $derived(Boolean(session.mapId));
 
   const dieValue = $derived(outcome?.chain[0]?.dieValue);
 
@@ -102,6 +111,28 @@
       );
     } finally {
       isAddingToChat = false;
+    }
+  }
+
+  /**
+   * Drops the result on the map as a GM-only note (issue: pin table results
+   * to the map). Rolling "2 goblins arguing over a map" is only half the
+   * job — the other half is remembering which room it belongs to.
+   */
+  async function pinResultToMap() {
+    if (!resultText || isPinning || !canPinToMap) return;
+    isPinning = true;
+    try {
+      await pinToMap(resultText);
+      notificationStore.notify("Pinned to the map.", "success");
+    } catch (error) {
+      console.error("[RandomSources] Could not pin result to map", error);
+      notificationStore.notify(
+        "That result could not be pinned to the map.",
+        "error",
+      );
+    } finally {
+      isPinning = false;
     }
   }
 
@@ -210,6 +241,21 @@
           class="icon-[lucide--message-square-plus] h-3.5 w-3.5"
         ></span>
         {isAddingToChat ? "Adding…" : "Add to chat"}
+      </button>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        onclick={pinResultToMap}
+        disabled={isPinning || !canPinToMap}
+        aria-busy={isPinning}
+        title={canPinToMap
+          ? "Pin this result to the map as a GM-only note"
+          : "Open a map to pin this result"}
+        data-testid="pin-roll-result-to-map"
+      >
+        <span aria-hidden="true" class="icon-[lucide--map-pin] h-3.5 w-3.5"
+        ></span>
+        {isPinning ? "Pinning…" : "Pin to map"}
       </button>
       <button
         type="button"
