@@ -18,6 +18,14 @@
       y: 0,
     };
   }
+
+  function openNoteDialog() {
+    if (!canManageVtt) return;
+    if (!mapStore.activeMap) return;
+    // Notes land where the GM is currently looking rather than at the map
+    // origin, which is usually scrolled off screen mid-session.
+    mapSession.pendingNoteCoords = mapSession.viewportCenterPoint();
+  }
 </script>
 
 <div class="flex flex-col gap-2 pointer-events-auto">
@@ -64,6 +72,21 @@
         aria-expanded={!!mapSession.pendingTokenCoords}
       >
         <span class="icon-[lucide--user-plus] h-4 w-4" aria-hidden="true"
+        ></span>
+      </button>
+
+      <button
+        class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)} disabled:opacity-50 disabled:cursor-not-allowed`}
+        onclick={openNoteDialog}
+        disabled={!mapStore.activeMap}
+        type="button"
+        aria-label="Pin Note"
+        title="Pin Note"
+        aria-haspopup="dialog"
+        aria-expanded={!!mapSession.pendingNoteCoords}
+        data-testid="vtt-add-note"
+      >
+        <span class="icon-[lucide--sticky-note] h-4 w-4" aria-hidden="true"
         ></span>
       </button>
 

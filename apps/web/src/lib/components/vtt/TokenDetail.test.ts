@@ -132,6 +132,45 @@ describe("TokenDetail", () => {
     expect(revealSpy).toHaveBeenCalledWith("token-1");
   });
 
+  it("edits a note's body in place and hides the freeform-marker fallback", async () => {
+    mapStore.isGMMode = true;
+    sessionModeStore.isGuestMode = false;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "2 goblins";
+
+    render(TokenDetail);
+
+    const textarea = (await screen.findByTestId(
+      "token-note-body",
+    )) as HTMLTextAreaElement;
+    expect(textarea.value).toBe("2 goblins");
+    expect(screen.queryByText("Freeform marker")).toBeNull();
+
+    await fireEvent.input(textarea, {
+      target: { value: "2 goblins, one asleep" },
+    });
+
+    await waitFor(() =>
+      expect(mapSession.tokens["token-1"].noteBody).toBe(
+        "2 goblins, one asleep",
+      ),
+    );
+  });
+
+  it("leaves the note editor read-only for guests", async () => {
+    sessionModeStore.isGuestMode = true;
+    mapStore.isGMMode = false;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "2 goblins";
+
+    render(TokenDetail);
+
+    const textarea = (await screen.findByTestId(
+      "token-note-body",
+    )) as HTMLTextAreaElement;
+    expect(textarea.disabled).toBe(true);
+  });
+
   it("hides add to initiative when the token is already in initiative", async () => {
     mapStore.isGMMode = true;
     sessionModeStore.isGuestMode = false;

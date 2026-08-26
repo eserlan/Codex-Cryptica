@@ -217,6 +217,94 @@ describe("renderMap", () => {
     return calls[0]; // [image, dx, dy, dw, dh]
   }
 
+  function noteTextFor(token: any, charWidth = 6) {
+    const ctx = createCtxMock();
+    const texts: string[] = [];
+    (ctx.fillText as any).mockImplementation((text: string) =>
+      texts.push(text),
+    );
+    (ctx.measureText as any).mockImplementation((text: string) => ({
+      width: text.length * charWidth,
+    }));
+    const canvas = createCanvasMock(ctx);
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      tokens: [token],
+    });
+
+    return texts;
+  }
+
+  it("previews a note's body on its face, wrapped across lines", () => {
+    const texts = noteTextFor(
+      baseToken({
+        kind: "note",
+        baseShape: "square",
+        width: 150,
+        height: 150,
+        noteBody: "Two goblins arguing over a map",
+      }),
+    );
+
+    expect(texts.length).toBeGreaterThan(1);
+    expect(texts.join(" ")).toContain("Two goblins");
+  });
+
+  it("marks a note body that does not fit rather than dropping it silently", () => {
+    const texts = noteTextFor(
+      baseToken({
+        kind: "note",
+        baseShape: "square",
+        width: 60,
+        height: 60,
+        noteBody:
+          "A very long note that cannot possibly fit inside this small square",
+      }),
+    );
+
+    expect(texts.at(-1)).toContain("…");
+  });
+
+  it("draws no body text on a note too small to read", () => {
+    const texts = noteTextFor(
+      baseToken({
+        kind: "note",
+        baseShape: "square",
+        width: 20,
+        height: 20,
+        noteBody: "Hidden",
+      }),
+    );
+
+    expect(texts).toEqual([]);
+  });
+
+  it("does not try to draw an image for a note", () => {
+    const image = { width: 100, height: 100 } as HTMLImageElement;
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      tokens: [baseToken({ kind: "note", image, noteBody: "" })],
+    });
+
+    expect(ctx.drawImage).not.toHaveBeenCalled();
+  });
+
   it("center-crops a portrait image by default (equal overflow trimmed on both sides)", () => {
     const image = { width: 100, height: 200 } as HTMLImageElement; // aspect 0.5, taller than wide
     const [, dx, dy, dw, dh] = drawImageArgsFor(

@@ -7,6 +7,7 @@ import type {
   Token,
   TokenBaseShape,
   TokenImageFocus,
+  TokenKind,
 } from "map-engine";
 
 export type {
@@ -24,6 +25,7 @@ export type {
   TileDeck,
   TileDeckEntry,
   TileDetails,
+  TokenKind,
   TokenVisibility,
 } from "map-engine";
 
@@ -70,9 +72,10 @@ export interface TokenCreationInput {
   visibleTo?: LegacyTokenVisibility;
   color?: string;
   imageUrl?: string | null;
-  kind?: "token" | "tile";
+  kind?: TokenKind;
   tileDeckId?: string | null;
   tileDetails?: import("map-engine").TileDetails;
+  noteBody?: string;
   locked?: boolean;
   isVisionSource?: boolean;
   layer?: MapLayer;
@@ -130,6 +133,7 @@ export interface TokenStateUpdateInput {
   locked?: boolean;
   zIndex?: number;
   tileDetails?: import("map-engine").TileDetails;
+  noteBody?: string;
   isVisionSource?: boolean;
   layer?: MapLayer;
 }
