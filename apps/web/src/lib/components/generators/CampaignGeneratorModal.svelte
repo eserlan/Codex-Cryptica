@@ -39,6 +39,8 @@
   import {
     buildPlotTwistPremise,
     isQuestHookDraft,
+    buildDelveBossContext,
+    isDelveDraft,
   } from "$lib/services/seo/generator-handoffs";
 
   let loadingIndex = $state(0);
@@ -190,7 +192,20 @@
     stage = "configure";
     draft = null;
     errorMsg = null;
+    streamedFields = {};
+    streamedJson = "";
     modalUIStore.openIntentGeneratorWorkflow("plot-twist", null, premise);
+  }
+
+  function openBossFromDraft() {
+    if (!draft) return;
+    const context = buildDelveBossContext(draft);
+    stage = "configure";
+    draft = null;
+    errorMsg = null;
+    streamedFields = {};
+    streamedJson = "";
+    modalUIStore.openIntentGeneratorWorkflow("npc", null, context);
   }
 
   function close(options: { preserveSession?: boolean } = {}) {
@@ -712,6 +727,10 @@
         onGeneratePlotTwist={draft.sourceGeneratorId === "quest" &&
         isQuestHookDraft(draft.labels)
           ? openPlotTwistFromDraft
+          : undefined}
+        onGenerateBoss={draft.sourceGeneratorId === "dungeon" ||
+        isDelveDraft(draft.labels)
+          ? openBossFromDraft
           : undefined}
       />
     {:else if stage === "error"}

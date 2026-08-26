@@ -69,6 +69,12 @@ export const npcConfig = {
     "Guard",
     "Noble",
     "Innkeeper",
+    "Dungeon Mastermind",
+    "Bound Vault Guardian",
+    "Lair Boss",
+    "Outlaw Chief",
+    "Captive VIP",
+    "Cursed Caretaker",
   ],
   alignments: [
     "Lawful Good",
@@ -1177,4 +1183,69 @@ export const dndNpcQuickStatsByRole: Record<
   Guard: { archetype: "Guard Veteran / Level 3", tableRating: "CR 1" },
   Noble: { archetype: "Noble / Level 3", tableRating: "CR 1" },
   Innkeeper: { archetype: "Commoner-Expert / Level 2", tableRating: "CR 1/2" },
+  "Dungeon Mastermind": {
+    archetype: "Warlock-Commander / Level 7",
+    tableRating: "CR 5",
+  },
+  "Bound Vault Guardian": {
+    archetype: "Ancient Construct / Heavy Warden",
+    tableRating: "CR 6",
+  },
+  "Lair Boss": { archetype: "Warlord / Level 6", tableRating: "CR 4" },
+  "Outlaw Chief": {
+    archetype: "Brigand Captain / Level 5",
+    tableRating: "CR 3",
+  },
+  "Captive VIP": {
+    archetype: "Noble-Prisoner / Level 2",
+    tableRating: "CR 1/2",
+  },
+  "Cursed Caretaker": {
+    archetype: "Corrupted Sage / Level 4",
+    tableRating: "CR 2",
+  },
 };
+
+// ---------------------------------------------------------------------------
+// Delve & Dungeon Boss contextual pools
+// ---------------------------------------------------------------------------
+
+export const DELVE_ROLES = new Set([
+  "Dungeon Mastermind",
+  "Bound Vault Guardian",
+  "Lair Boss",
+  "Outlaw Chief",
+  "Captive VIP",
+  "Cursed Caretaker",
+]);
+
+export const DELVE_SECTOR_LOCATIONS = [
+  "Inner Sanctum / Deepest Vault",
+  "Central Control Hub / Throne Cavern",
+  "Sealed Detention Block / Lower Oubliette",
+  "Overgrown Ritual Chamber / Precursor Altar",
+  "Perimeter Wards / Guard Outpost",
+  "Sub-level Facility Core / Foundry",
+] as const;
+
+export const DELVE_INHABITANT_RELATIONS = [
+  "Commands the resident garrison through fear, strict authority, and superior leverage.",
+  "Hunts competing scavengers within the delve while exploiting the site traps for cover.",
+  "Held captive or bound by the occupying faction as a dangerous living weapon or bargaining chip.",
+  "A solitary guardian whose violent reputation terrifies every other occupant into keeping clear.",
+  "A compromised caretaker who quietly provides warnings or cipher keys to intruders willing to end the corruption.",
+] as const;
+
+export const DELVE_SECRET_TIES = [
+  "Holds the only passphrase and cipher seal required to breach the site's central vault.",
+  "Is slowly undergoing physical or mental mutation caused by the precursor artifact at the delve core.",
+  "Knows the site was constructed not as a sanctuary or treasure vault, but as a prison to contain an ancient entity.",
+  "Accidentally triggered the site's permanent quarantine lockdown and is trapped until an external override occurs.",
+  "Their life force is magically bound to the delve's structural integrity — destroying them triggers a site collapse.",
+] as const;
+
+export const DELVE_ALERT_STAGES = [
+  "- **Stage 1 (Unaware)**: Overseeing operations or in stasis within their lair chamber.",
+  "- **Stage 2 (Alerted)**: Dispatches internal patrols, seals blast doors or portcullises, and arms corridor traps.",
+  "- **Stage 3 (Lair Defense / Confrontation)**: Uses room hazards as terrain leverage, bargaining with leverage or fighting to the death.",
+] as const;

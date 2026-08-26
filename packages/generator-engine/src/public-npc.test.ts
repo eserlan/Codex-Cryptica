@@ -166,3 +166,75 @@ describe("injectDndNpcQuickStats", () => {
     expect(injectDndNpcQuickStats(once, "Mage")).toBe(once);
   });
 });
+
+describe("Delve Boss / Key NPC contextual generation", () => {
+  it("generates local delve boss output with lair sector, alert response, and secret tie", () => {
+    const out = generateNpcLocal(
+      {
+        role: "Dungeon Mastermind",
+        theme: "Classic Fantasy",
+        delveContext: {
+          delveTitle: "The Sunken Vault",
+          conflict: "Goblins vs Kobold miners",
+          secret: "Houses an active planar core",
+          sectors: ["Guarded Gateway", "Deep Arcana Vault"],
+        },
+      },
+      seededRng(42),
+    );
+
+    expect(out.lore).toContain("- **Delve Sector / Lair**:");
+    expect(out.lore).toContain("- **Relation to Inhabitants**:");
+    expect(out.lore).toContain("- **Tie to Central Secret**:");
+    expect(out.lore).toContain("### Alert & Lair Response");
+    expect(out.lore).toContain("Stage 1 (Unaware)");
+    expect(out.lore).toContain("Stage 2 (Alerted)");
+    expect(out.lore).toContain("Stage 3 (Lair Defense / Confrontation)");
+    expect(out.labels).toContain("delve-boss");
+    expect(out.labels).toContain("dungeon-npc");
+  });
+
+  it("builds an AI prompt with delve instructions and structured delve context block", () => {
+    const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
+      {
+        role: "Bound Vault Guardian",
+        delveContext: {
+          delveTitle: "Submerged Crypt",
+          theme: "Gothic Horror",
+          conflict: "Vampire spawn feasting on trapped ghouls",
+          secret: "A silver sarcophagus contains a star beast",
+          sectors: ["Flooded Nave", "Inner Crypt"],
+        },
+      },
+      "",
+      seededRng(10),
+    );
+
+    expect(resolved.isDelve).toBe(true);
+    expect(systemInstruction).toContain("DELVE / DUNGEON CONTEXT ACTIVE");
+    expect(systemInstruction).toContain("Alert & Lair Response");
+    expect(userMessage).toContain("[Delve Source Context]");
+    expect(userMessage).toContain("- Dungeon Location: Submerged Crypt");
+    expect(userMessage).toContain(
+      "- Central Secret / Mystery: A silver sarcophagus contains a star beast",
+    );
+    expect(userMessage).toContain("- Key Sectors: Flooded Nave, Inner Crypt");
+  });
+
+  it("parses AI response and injects delve-boss and dungeon-npc labels", () => {
+    const { resolved } = buildNpcPrompt(
+      {
+        role: "Dungeon Mastermind",
+        delveContext: "Ancient Necropolis",
+      },
+      "",
+      seededRng(15),
+    );
+
+    const json =
+      '{"title":"Xalvador","summary":"Lair master.","content":"### Who they are\\nXalvador.","lore":"### At a Glance\\n- **Role**: Dungeon Mastermind","labels":["rpg-character"]}';
+    const out = parseNpcResponse(json, {}, resolved);
+    expect(out.labels).toContain("delve-boss");
+    expect(out.labels).toContain("dungeon-npc");
+  });
+});
