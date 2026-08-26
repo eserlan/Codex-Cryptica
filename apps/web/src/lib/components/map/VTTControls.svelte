@@ -5,6 +5,7 @@
   import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import PinNoteButton from "./PinNoteButton.svelte";
 
   let showEncounters = $state(false);
   let canManageVtt = $derived(!sessionModeStore.isGuestMode);
@@ -17,18 +18,6 @@
       x: 0,
       y: 0,
     };
-  }
-
-  function toggleNotePlacement() {
-    if (!canManageVtt) return;
-    if (!mapStore.activeMap) return;
-    // Arming lets the GM click the spot the note belongs to. Pressing the
-    // button again backs out without placing anything.
-    if (mapSession.notePlacementArmed) {
-      mapSession.cancelNotePlacement();
-      return;
-    }
-    mapSession.armNotePlacement();
   }
 </script>
 
@@ -79,21 +68,7 @@
         ></span>
       </button>
 
-      <button
-        class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(mapSession.notePlacementArmed)} disabled:opacity-50 disabled:cursor-not-allowed`}
-        onclick={toggleNotePlacement}
-        disabled={!mapStore.activeMap}
-        type="button"
-        aria-label="Pin Note"
-        title={mapSession.notePlacementArmed
-          ? "Click the map to place the note, or press Escape"
-          : "Pin Note"}
-        aria-pressed={mapSession.notePlacementArmed}
-        data-testid="vtt-add-note"
-      >
-        <span class="icon-[lucide--sticky-note] h-4 w-4" aria-hidden="true"
-        ></span>
-      </button>
+      <PinNoteButton compact />
 
       <button
         class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)}`}

@@ -25,9 +25,11 @@ export class ContextMenuInteractionHandler {
   }
 
   open(eventPoint: Point, viewportPoint: Point) {
-    if (!this.deps.isVttEnabled()) return false;
-
     const hitToken = this.deps.tokenSelection.hitTest(viewportPoint);
+    // With play off the map is an ordinary map again, but a note on it is
+    // still the GM's to reveal, relabel or delete, so its menu stays open.
+    if (!this.deps.isVttEnabled() && hitToken?.kind !== "note") return false;
+
     const imgCoords = this.deps.unproject(viewportPoint);
     this.contextMenu = {
       x: eventPoint.x,

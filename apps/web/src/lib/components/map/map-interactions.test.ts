@@ -32,6 +32,7 @@ vi.mock("../../stores/map-session.svelte", () => ({
     tileDeckManager: { pendingPlacement: null },
     notePlacementArmed: false,
     pendingNoteCoords: null,
+    selectedToken: null,
     cancelNotePlacement: vi.fn(),
     cancelPendingTilePlacement: vi.fn(),
     updatePendingTilePlacement: vi.fn(),
@@ -505,6 +506,38 @@ describe("MapInteractionManager", () => {
 
       expect(mapSession.cancelNotePlacement).toHaveBeenCalled();
       (mapSession as any).notePlacementArmed = false;
+    });
+  });
+
+  describe("notes with play switched off", () => {
+    it("selects a note on click instead of falling through to pins", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).vttEnabled = false;
+      (mapSession as any).allTokens = [
+        {
+          id: "note-a",
+          kind: "note",
+          x: 100,
+          y: 100,
+          width: 60,
+          height: 60,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.handleMapClick(
+        new MouseEvent("click", { clientX: 130, clientY: 130 }),
+      );
+
+      expect(mapSession.setSelection).toHaveBeenCalledWith("note-a");
+      expect(manager.selectedPinId).toBeNull();
+
+      (mapSession as any).vttEnabled = true;
+      (mapSession as any).allTokens = [];
     });
   });
 });
