@@ -62,6 +62,9 @@ export class VTTTokenManager {
   selectedTokens = $state<Set<string>>(new Set());
   pendingTokenCoords = $state<Point | null>(null);
   pendingNoteCoords = $state<Point | null>(null);
+  /** True while the GM has armed the toolbar's note button and is choosing a
+   * spot on the map for it. The next left click places the note there. */
+  notePlacementArmed = $state(false);
   draggingTokenId = $state<string | null>(null);
   dragPreview = $state<DragPreview | null>(null);
 
@@ -91,6 +94,7 @@ export class VTTTokenManager {
     this.selectedTokens = new Set();
     this.pendingTokenCoords = null;
     this.pendingNoteCoords = null;
+    this.notePlacementArmed = false;
     this.draggingTokenId = null;
     this.dragPreview = null;
     for (const pending of this.pendingTokenMoves.values()) {
