@@ -49,6 +49,13 @@ export interface Token {
   tileDetails?: TileDetails;
   /** Freeform body text for `kind: "note"`. Undefined on every other kind. */
   noteBody?: string;
+  /**
+   * The size a collapsed note should spring back to. Its presence *is* the
+   * collapsed state — a note is collapsed exactly when it has a size to
+   * restore, so the two can never disagree. Undefined on every other kind,
+   * and on an expanded note.
+   */
+  noteCollapsedFrom?: { width: number; height: number };
   /** Which map layer this element belongs to; governs render order,
    * visibility, and lock. Independent of `kind` — a tile-deck tile can live
    * on the object layer, not just terrain. */
@@ -141,6 +148,27 @@ export interface EncounterSession {
   tileDecks?: TileDeck[];
 }
 
+/** How much of the grid a collapsed note takes up, so it reads as a marker. */
+export const NOTE_COLLAPSED_SCALE = 0.5;
+
+function isNoteSize(
+  value: unknown,
+): value is { width: number; height: number } {
+  if (!value || typeof value !== "object") return false;
+  const size = value as { width?: unknown; height?: unknown };
+  return (
+    typeof size.width === "number" &&
+    typeof size.height === "number" &&
+    size.width > 0 &&
+    size.height > 0
+  );
+}
+
+/** True when a note is showing as a marker rather than as a page of text. */
+export function isNoteCollapsed(token: Token): boolean {
+  return token.kind === "note" && isNoteSize(token.noteCollapsedFrom);
+}
+
 export function normalizeTokenKind(kind: unknown): TokenKind {
   return kind === "tile" || kind === "note" ? kind : "token";
 }
@@ -179,6 +207,10 @@ export function normalizeToken(
     layer: normalizeMapLayer(token.layer, token.kind),
     tileDeckId: token.tileDeckId ?? null,
     noteBody: token.kind === "note" ? (token.noteBody ?? "") : undefined,
+    noteCollapsedFrom:
+      token.kind === "note" && isNoteSize(token.noteCollapsedFrom)
+        ? { ...token.noteCollapsedFrom }
+        : undefined,
     tileDetails: token.tileDetails
       ? {
           description: token.tileDetails.description ?? "",

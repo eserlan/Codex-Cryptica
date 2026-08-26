@@ -396,6 +396,10 @@ export abstract class MapSessionFacade {
     return this.tokenManager.toggleTokenVisibility(tokenId);
   }
 
+  toggleNoteCollapsed(tokenId: string) {
+    return this.tokenManager.toggleNoteCollapsed(tokenId);
+  }
+
   setVisionSource(tokenId: string, isVisionSource: boolean) {
     return this.tokenManager.setVisionSource(tokenId, isVisionSource);
   }

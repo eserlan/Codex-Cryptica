@@ -48,6 +48,8 @@ export interface RenderToken {
   kind?: "token" | "tile" | "note";
   /** Body text previewed on the face of a `kind: "note"` element. */
   noteBody?: string;
+  /** A note folded down to a marker, showing no body. */
+  noteCollapsed?: boolean;
   image?: HTMLImageElement | null;
   /** Which part of the image to keep in view when cropped to fit the token's shape. Defaults to centered. */
   imageFocus?: "center" | "top" | "bottom" | "left" | "right";
@@ -163,6 +165,40 @@ function drawRoundedRectPath(
   }
 
   ctx.rect(x, y, width, height);
+}
+
+/**
+ * Draws a collapsed note as a marker rather than a shrunken page. It borrows
+ * the map pin's shape deliberately — a folded-away note is doing a pin's job,
+ * so it should read like one — but keeps the note's own colour so the two
+ * stay tellable apart.
+ */
+function drawCollapsedNote(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  color: string,
+) {
+  const radius = Math.max(1, Math.min(width, height) / 2);
+
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, TAU);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.lineWidth = Math.max(1, radius * 0.18);
+  ctx.stroke();
+
+  // A turned-down corner inside the dot, so a collapsed note is not mistaken
+  // for an ordinary pin at a glance.
+  const fold = radius * 0.55;
+  ctx.beginPath();
+  ctx.moveTo(-fold, fold);
+  ctx.lineTo(fold, fold);
+  ctx.lineTo(fold, -fold);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+  ctx.fill();
 }
 
 /** How much of the note's corner is turned down, as a share of its short side. */
@@ -528,14 +564,18 @@ export function renderMap(options: RenderOptions) {
     ctx.clip();
 
     if (token.kind === "note") {
-      drawNoteFace(
-        ctx,
-        width,
-        height,
-        token.color || "#f5b942",
-        token.noteBody ?? "",
-        cache,
-      );
+      if (token.noteCollapsed) {
+        drawCollapsedNote(ctx, width, height, token.color || "#f5b942");
+      } else {
+        drawNoteFace(
+          ctx,
+          width,
+          height,
+          token.color || "#f5b942",
+          token.noteBody ?? "",
+          cache,
+        );
+      }
     } else if (token.image && token.image.width > 0 && token.image.height > 0) {
       const imageAspect = token.image.width / token.image.height;
       const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;

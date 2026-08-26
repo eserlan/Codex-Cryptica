@@ -137,6 +137,77 @@ describe("VTTTokenManager.addToken", () => {
     );
   });
 
+  it("folds a note down to a marker and springs it back to the size it had", () => {
+    const { manager } = createManager();
+    const note = manager.addToken(
+      { name: "Guard post", x: 0, y: 0, width: 90, height: 90, kind: "note" },
+      true,
+    );
+
+    const collapsed = manager.toggleNoteCollapsed(note.id)!;
+    expect(collapsed.width).toBe(25);
+    expect(collapsed.noteCollapsedFrom).toEqual({ width: 90, height: 90 });
+    // The body survives folding: it is only taking up less of the map.
+    expect(collapsed.noteBody).toBe("");
+
+    const expanded = manager.toggleNoteCollapsed(note.id)!;
+    expect(expanded.width).toBe(90);
+    expect(expanded.height).toBe(90);
+    expect(expanded.noteCollapsedFrom).toBeUndefined();
+  });
+
+  it("refuses to collapse anything that is not a note", () => {
+    const { manager } = createManager();
+    const token = manager.addToken({ name: "Goblin", x: 0, y: 0 }, true);
+
+    expect(manager.toggleNoteCollapsed(token.id)).toBeNull();
+    expect(manager.toggleNoteCollapsed("missing")).toBeNull();
+  });
+
+  it("keeps a note off the grid so it can be smaller than one cell", () => {
+    const { manager } = createManager({
+      getMapStore: () => ({
+        activeMap: { dimensions: { width: 1000, height: 1000 } },
+        gridSize: 50,
+        showGrid: true,
+        gridOffsetX: 0,
+        gridOffsetY: 0,
+      }),
+    });
+    const note = manager.addToken(
+      { name: "Note", x: 37, y: 61, width: 75, height: 75, kind: "note" },
+      true,
+    );
+
+    // A token here would have been snapped to a whole cell in both size and
+    // position; the note keeps exactly what it was given.
+    expect(note.width).toBe(75);
+    expect(note.x).toBe(37);
+    expect(note.y).toBe(61);
+
+    const collapsed = manager.toggleNoteCollapsed(note.id)!;
+    expect(collapsed.width).toBe(25);
+  });
+
+  it("still snaps a regular token to the grid", () => {
+    const { manager } = createManager({
+      getMapStore: () => ({
+        activeMap: { dimensions: { width: 1000, height: 1000 } },
+        gridSize: 50,
+        showGrid: true,
+        gridOffsetX: 0,
+        gridOffsetY: 0,
+      }),
+    });
+
+    const token = manager.addToken(
+      { name: "Goblin", x: 37, y: 61, width: 75, height: 75 },
+      true,
+    );
+
+    expect(token.width).toBe(100);
+  });
+
   it("snaps a dragged tile to align with a neighboring tile's edge", () => {
     const { manager } = createManager();
     manager.addToken(

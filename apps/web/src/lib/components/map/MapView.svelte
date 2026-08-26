@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type Snippet } from "svelte";
   import { fade } from "svelte/transition";
-  import { mapLayerRank } from "map-engine";
+  import { isNoteCollapsed, mapLayerRank } from "map-engine";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { oracle } from "../../stores/oracle.svelte";
@@ -189,6 +189,9 @@
           ...token,
           // Tiles are terrain/room pieces, not combatants — no name label.
           label: token.kind === "tile" ? "" : token.name,
+          // A collapsed note keeps its label: the name is all there is to
+          // tell one folded-away note from another.
+          noteCollapsed: isNoteCollapsed(token),
           image: tokenImageCache[token.id] ?? null,
           selected: mapSession.selection === token.id || selected.has(token.id),
           primarySelected: mapSession.selection === token.id,

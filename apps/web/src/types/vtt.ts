@@ -76,6 +76,7 @@ export interface TokenCreationInput {
   tileDeckId?: string | null;
   tileDetails?: import("map-engine").TileDetails;
   noteBody?: string;
+  noteCollapsedFrom?: { width: number; height: number };
   locked?: boolean;
   isVisionSource?: boolean;
   layer?: MapLayer;
@@ -134,6 +135,7 @@ export interface TokenStateUpdateInput {
   zIndex?: number;
   tileDetails?: import("map-engine").TileDetails;
   noteBody?: string;
+  noteCollapsedFrom?: { width: number; height: number } | undefined;
   isVisionSource?: boolean;
   layer?: MapLayer;
 }

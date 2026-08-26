@@ -7,6 +7,7 @@
   import TokenQuickStats from "./TokenQuickStats.svelte";
   import SpatialImageDetails from "$lib/components/spatial/SpatialImageDetails.svelte";
   import TokenNoteEditor from "./TokenNoteEditor.svelte";
+  import { isNoteCollapsed } from "map-engine";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -91,9 +92,12 @@
     {#if selectedToken.kind === "note"}
       <TokenNoteEditor
         body={selectedToken.noteBody ?? ""}
+        collapsed={isNoteCollapsed(selectedToken)}
         disabled={!canManageToken}
         onChange={(body) =>
           mapSession.updateToken(selectedToken.id, { noteBody: body })}
+        onToggleCollapsed={() =>
+          mapSession.toggleNoteCollapsed(selectedToken.id)}
       />
     {/if}
 

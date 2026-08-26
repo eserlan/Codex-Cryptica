@@ -12,6 +12,8 @@ import {
   normalizeTokenRotation,
   normalizeTokenVisibility,
   nextZIndexInLayer,
+  isNoteCollapsed,
+  NOTE_COLLAPSED_SCALE,
   type MapLayer,
 } from "map-engine";
 import {
@@ -31,6 +33,8 @@ const MIN_DEFAULT_TOKEN_SIZE = 30;
 export const NOTE_DEFAULT_COLOR = "#f5b942";
 /** Notes hold prose, not a portrait — give them more room than a token. */
 const NOTE_SIZE_MULTIPLIER = 1.5;
+/** A collapsed note still has to be big enough to click on a fine grid. */
+const MIN_COLLAPSED_NOTE_SIZE = 16;
 
 function roundTokenCoordinate(value: number) {
   const factor = 10 ** TOKEN_COORD_PRECISION;
@@ -171,6 +175,36 @@ export class VTTTokenManager {
     return this.updateToken(tokenId, { visibleTo: next });
   }
 
+  /**
+   * Folds a note down to a marker, or springs it back to the size it had.
+   * A collapsed note keeps its body — it is only taking up less of the map,
+   * the way a pin does, so a stocked dungeon does not bury its own art.
+   */
+  toggleNoteCollapsed(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token || token.kind !== "note") return null;
+
+    if (isNoteCollapsed(token)) {
+      const restored = token.noteCollapsedFrom!;
+      return this.updateToken(tokenId, {
+        width: restored.width,
+        height: restored.height,
+        noteCollapsedFrom: undefined,
+      });
+    }
+
+    const mapStore = this.deps.getMapStore();
+    const collapsed = Math.max(
+      MIN_COLLAPSED_NOTE_SIZE,
+      Math.round((mapStore.gridSize || 50) * NOTE_COLLAPSED_SCALE),
+    );
+    return this.updateToken(tokenId, {
+      width: collapsed,
+      height: collapsed,
+      noteCollapsedFrom: { width: token.width, height: token.height },
+    });
+  }
+
   setVisionSource(tokenId: string, isVisionSource: boolean) {
     const token = this.tokens[tokenId];
     if (!token) return;
@@ -237,6 +271,11 @@ export class VTTTokenManager {
   clampAndSnapPosition(
     point: Point,
     tokenSize: { width: number; height: number },
+    // Notes opt out: grid snapping exists so creatures occupy whole cells,
+    // and a note is an annotation rather than something standing in a cell.
+    // Snapping it would also floor it at one full cell, which a collapsed
+    // note is deliberately smaller than.
+    { snapToTheGrid = true }: { snapToTheGrid?: boolean } = {},
   ) {
     const mapStore = this.deps.getMapStore();
     const activeMap = mapStore.activeMap;
@@ -253,7 +292,7 @@ export class VTTTokenManager {
     let targetWidth = tokenSize.width;
     let targetHeight = tokenSize.height;
 
-    if (mapStore.showGrid) {
+    if (mapStore.showGrid && snapToTheGrid) {
       const gridSize = mapStore.gridSize;
       const offsetX = mapStore.gridOffsetX;
       const offsetY = mapStore.gridOffsetY;
@@ -312,6 +351,7 @@ export class VTTTokenManager {
     const snapped = this.clampAndSnapPosition(
       { x: token.x, y: token.y },
       { width: token.width, height: token.height },
+      { snapToTheGrid: token.kind !== "note" },
     );
     const positioned = {
       ...token,
@@ -390,6 +430,7 @@ export class VTTTokenManager {
               width: updates.width ?? current.width,
               height: updates.height ?? current.height,
             },
+            { snapToTheGrid: current.kind !== "note" },
           )
         : {
             x: current.x,
