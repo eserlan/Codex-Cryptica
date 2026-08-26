@@ -18,6 +18,8 @@
     backLabel?: string;
     /** Open Plot Twist seeded from a quest-hook draft. */
     onGeneratePlotTwist?: () => void;
+    /** Open Boss / Key NPC generator seeded from a delve/dungeon draft (#1827). */
+    onGenerateBoss?: () => void;
   }
 
   let {
@@ -30,6 +32,7 @@
     themeId = "workspace",
     backLabel = "Back",
     onGeneratePlotTwist,
+    onGenerateBoss,
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -262,6 +265,19 @@
           <span aria-hidden="true" class="icon-[lucide--shuffle] h-3.5 w-3.5"
           ></span>
           Generate Plot Twist
+        </button>
+      {/if}
+      {#if onGenerateBoss}
+        <button
+          type="button"
+          onclick={onGenerateBoss}
+          disabled={saving}
+          class="inline-flex items-center gap-2 rounded-lg border border-chrome-accent/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-chrome-accent transition-colors hover:bg-chrome-accent/10 disabled:pointer-events-none disabled:opacity-50"
+          data-testid="generate-boss-from-dungeon"
+        >
+          <span aria-hidden="true" class="icon-[lucide--crown] h-3.5 w-3.5"
+          ></span>
+          Generate Boss / Key NPC
         </button>
       {/if}
       <button

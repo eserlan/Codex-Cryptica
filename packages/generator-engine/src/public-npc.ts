@@ -27,6 +27,11 @@ import {
   dndNpcQuickStatsByRole,
   NPC_THEME_VOICE,
   NPC_NAMING_STYLES,
+  DELVE_ROLES,
+  DELVE_SECTOR_LOCATIONS,
+  DELVE_INHABITANT_RELATIONS,
+  DELVE_SECRET_TIES,
+  DELVE_ALERT_STAGES,
   type MoralityAnchor,
 } from "./public-npc-constants";
 import { formatCampaignContextBlock } from "./campaign-context";
@@ -36,6 +41,11 @@ export {
   NAME_BAN_PROMPT,
   npcConfig,
   npcThemeConfig,
+  DELVE_ROLES,
+  DELVE_SECTOR_LOCATIONS,
+  DELVE_INHABITANT_RELATIONS,
+  DELVE_SECRET_TIES,
+  DELVE_ALERT_STAGES,
 } from "./public-npc-constants";
 
 function getDndNpcQuickStats(role: string) {
@@ -72,14 +82,40 @@ ${lore}`.trim();
 // Public API
 // ---------------------------------------------------------------------------
 
+export interface DelveContextData {
+  delveTitle?: string;
+  theme?: string;
+  sectors?: string[];
+  secret?: string;
+  inhabitants?: string;
+  conflict?: string;
+}
+
 export interface NpcGeneratorOptions {
   race?: string;
   ancestry?: string;
   role?: string;
   alignment?: string;
   campaignContext?: string;
+  delveContext?: DelveContextData | string;
   theme?: string;
   includeDndQuickStats?: boolean;
+}
+
+export function isDelveContext(options: NpcGeneratorOptions): boolean {
+  if (options.delveContext) return true;
+  if (options.role && DELVE_ROLES.has(options.role)) return true;
+  if (
+    options.campaignContext &&
+    (/\[Delve Context\]/i.test(options.campaignContext) ||
+      /\[Dungeon Context\]/i.test(options.campaignContext) ||
+      /\b(?:delve|dungeon|inhabitant factions|central secret|key sectors)\b/i.test(
+        options.campaignContext,
+      ))
+  ) {
+    return true;
+  }
+  return false;
 }
 
 /** Resolved inputs shared by the prompt builder and the local fallback. */
@@ -88,15 +124,22 @@ interface ResolvedNpc {
   role: string;
   alignment: string;
   campaignContext?: string;
+  delveContext?: DelveContextData | string;
   theme?: string;
   name: string;
   moralityAnchor?: MoralityAnchor;
+  isDelve: boolean;
 }
 
 function resolveNpc(options: NpcGeneratorOptions, rng: Rng): ResolvedNpc {
+  const isDelve = isDelveContext(options);
   const race =
     options.ancestry || options.race || pickFrom(npcConfig.races, rng);
-  const role = options.role || pickFrom(npcConfig.roles, rng);
+  const role =
+    options.role ||
+    (isDelve
+      ? pickFrom([...DELVE_ROLES], rng)
+      : pickFrom(npcConfig.roles, rng));
   const alignment = options.alignment || pickFrom(npcConfig.alignments, rng);
   const moralityAnchor = options.theme
     ? npcThemeConfig.moralities[options.theme]?.find((m) => m.id === alignment)
@@ -106,9 +149,11 @@ function resolveNpc(options: NpcGeneratorOptions, rng: Rng): ResolvedNpc {
     role,
     alignment,
     campaignContext: options.campaignContext?.trim() || undefined,
+    delveContext: options.delveContext,
     theme: options.theme,
     name: generateName(rng),
     moralityAnchor,
+    isDelve,
   };
 }
 
@@ -117,6 +162,28 @@ export interface NpcPrompt {
   userMessage: string;
   /** Resolved inputs, so the caller can pass them to {@link parseNpcResponse}. */
   resolved: ResolvedNpc;
+}
+
+export function formatDelveContextBlock(
+  delveContext?: DelveContextData | string,
+): string {
+  if (!delveContext) return "";
+  if (typeof delveContext === "string") {
+    return `\n- Delve/Dungeon Context: ${delveContext.trim()}`;
+  }
+  const lines: string[] = ["\n[Delve Source Context]"];
+  if (delveContext.delveTitle)
+    lines.push(`- Dungeon Location: ${delveContext.delveTitle}`);
+  if (delveContext.theme) lines.push(`- Dungeon Theme: ${delveContext.theme}`);
+  if (delveContext.conflict)
+    lines.push(`- Current Conflict: ${delveContext.conflict}`);
+  if (delveContext.inhabitants)
+    lines.push(`- Inhabitants & Factions: ${delveContext.inhabitants}`);
+  if (delveContext.secret)
+    lines.push(`- Central Secret / Mystery: ${delveContext.secret}`);
+  if (delveContext.sectors?.length)
+    lines.push(`- Key Sectors: ${delveContext.sectors.join(", ")}`);
+  return lines.join("\n");
 }
 
 /**
@@ -129,23 +196,44 @@ export function buildNpcPrompt(
   rng: Rng = defaultRng,
 ): NpcPrompt {
   const resolved = resolveNpc(options, rng);
-  const { race, role, theme, campaignContext, moralityAnchor, alignment } =
-    resolved;
+  const {
+    race,
+    role,
+    theme,
+    campaignContext,
+    delveContext,
+    moralityAnchor,
+    alignment,
+    isDelve,
+  } = resolved;
   const voice = theme
     ? (NPC_THEME_VOICE[theme] ?? "tabletop RPG")
     : "tabletop RPG";
   const chosenNamingStyle = pickFrom(NPC_NAMING_STYLES, rng);
   const varianceSeed = Math.floor(rng() * 99991) + 10;
 
-  const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original NPC drafts for that setting in JSON format.
+  const delvePromptInstruction = isDelve
+    ? `\nDELVE / DUNGEON CONTEXT ACTIVE:
+This character is a Key NPC, Boss, Guardian, or Inhabitant of the specified Dungeon/Delve location.
+- '### Who they are': Establish their role, identity, and specific physical location or chamber inside the delve.
+- '### What they want': Their active objective, struggle, or agenda within the site.
+- '### Why they are useful': Key leverage, threat, or crucial knowledge they possess regarding the delve's sectors and secrets.
+- '### How to use them at the table': Room/encounter dynamics, environmental lair leverage, negotiation terms, and consequences if defeated or rescued.
+- In 'lore': In addition to standard fields:
+  - Under '### At a Glance', include: '- **Delve Sector / Lair**: <specific sector/room>', '- **Relation to Inhabitants**: <how they lead, hunt, or interact with other occupants>', '- **Tie to Central Secret**: <how they guard, exploit, or are cursed by the central mystery>'.
+  - Include a '### Alert & Lair Response' section with 3 escalating stages (Stage 1: Unaware/Routine, Stage 2: Alerted/Patrols & Hazard Arming, Stage 3: Direct Confrontation/Lair Defense).
+`
+    : "";
+
+  const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original NPC drafts for that setting in JSON format.${delvePromptInstruction}
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
   "title": "NPC name (follow the naming directive in the user message)",
   "summary": "One sentence: who this NPC is and what makes them interesting (e.g. 'A disgraced noble archivist who sells secrets to fund a private obsession.').",
   "content": "Markdown. Use exactly these four section headers in order: '### Who they are', '### What they want', '### Why they are useful', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Mannerism / Vocal Tell**: distinctive physical habit, speech cadence, or behavioral quirk\\n- **Moral Stance**: behavioral anchor\\n- **Faction Stance & Biases**: sharp, biased opinion on relevant factions, institutions, or rival groups\\n- **Leverage & Price**: what buys their cooperation vs. what pressure point breaks them\\n- **Secret**: hidden truth that would change everything\\n- **Immediate Hook**: one-sentence GM hook\\n### Personality\\n- two distinct personality traits as bullet points\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
-  "labels": ["2-4 lowercase labels describing their role and traits, plus 'rpg-character', 'npc-generator', 'imported-draft'"]
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Mannerism / Vocal Tell**: distinctive physical habit, speech cadence, or behavioral quirk\\n- **Moral Stance**: behavioral anchor\\n- **Faction Stance & Biases**: sharp, biased opinion on relevant factions, institutions, or rival groups\\n- **Leverage & Price**: what buys their cooperation vs. what pressure point breaks them\\n- **Secret**: hidden truth that would change everything\\n- **Immediate Hook**: one-sentence GM hook${isDelve ? "\\n### Alert & Lair Response\\n- **Stage 1 (Unaware)**: routine in lair\\n- **Stage 2 (Alerted)**: defensive response\\n- **Stage 3 (Lair Defense / Confrontation)**: combat or negotiation leverage" : ""}\\n### Personality\\n- two distinct personality traits as bullet points\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
+  "labels": [${isDelve ? '"delve-boss", "dungeon-npc", ' : ""}"2-4 lowercase labels describing their role and traits, plus 'rpg-character', 'npc-generator', 'imported-draft'"]
 }
 
 QUALITY RULES:
@@ -164,7 +252,7 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
 - Ancestry/Race: ${race}
 - Role: ${role}
 - Moral Stance: ${moralityLabel}
-- Behavioral Directive: ${behavioralDirective}${formatCampaignContextBlock(campaignContext)}
+- Behavioral Directive: ${behavioralDirective}${formatCampaignContextBlock(campaignContext)}${formatDelveContextBlock(delveContext)}
 - Naming Directive: ${chosenNamingStyle}`;
 
   return { systemInstruction, userMessage, resolved };
@@ -181,7 +269,16 @@ export function parseNpcResponse(
   resolved: ResolvedNpc,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
-  const { race, role, name, moralityAnchor, alignment } = resolved;
+  const { race, role, name, moralityAnchor, alignment, isDelve } = resolved;
+
+  const labels = Array.isArray(data.labels)
+    ? [...data.labels]
+    : ["rpg-character", "npc-generator", "imported-draft"];
+
+  if (isDelve) {
+    if (!labels.includes("delve-boss")) labels.unshift("delve-boss");
+    if (!labels.includes("dungeon-npc")) labels.unshift("dungeon-npc");
+  }
 
   return {
     type: "character",
@@ -193,9 +290,7 @@ export function parseNpcResponse(
     lore: options.includeDndQuickStats
       ? injectDndNpcQuickStats(data.lore || "", role)
       : data.lore || "",
-    labels: Array.isArray(data.labels)
-      ? data.labels
-      : ["rpg-character", "npc-generator", "imported-draft"],
+    labels,
     status: "active",
   };
 }
@@ -298,6 +393,7 @@ export function generateNpcLocal(
     campaignContext,
     moralityAnchor,
     alignment,
+    isDelve,
   } = resolved;
 
   const fallbackTheme = "Classic Fantasy";
@@ -323,10 +419,28 @@ export function generateNpcLocal(
   const leverage = pickFrom(LOCAL_LEVERAGE_PRICES, rng);
   const moralityLabel = moralityAnchor?.label ?? alignment;
 
-  const whoIntro = pickFrom(WHO_THEY_ARE_INTROS, rng)(name, race, role);
+  const delveSector = isDelve
+    ? pickFrom(DELVE_SECTOR_LOCATIONS, rng)
+    : undefined;
+  const delveRelation = isDelve
+    ? pickFrom(DELVE_INHABITANT_RELATIONS, rng)
+    : undefined;
+  const delveSecretTie = isDelve ? pickFrom(DELVE_SECRET_TIES, rng) : undefined;
+
+  const whoIntro = isDelve
+    ? `${name} is a ${race} ${role} located in the ${delveSector}. Their presence within the site is unmistakable, exerting direct influence over the surrounding sectors.`
+    : pickFrom(WHO_THEY_ARE_INTROS, rng)(name, race, role);
+
   const wantCloser = pickFrom(WHAT_THEY_WANT_CLOSERS, rng);
-  const usefulIntro = pickFrom(WHY_USEFUL_INTROS, rng)(role, faction);
-  const howIntro = pickFrom(HOW_TO_USE_INTROS, rng)(name);
+
+  const usefulIntro = isDelve
+    ? `${delveRelation} Anyone delving into the site will eventually have to navigate their presence, whether through stealth, negotiation, or force.`
+    : pickFrom(WHY_USEFUL_INTROS, rng)(role, faction);
+
+  const howIntro = isDelve
+    ? `Use ${name} as the key encounter or pivotal obstacle in the ${delveSector}. ${delveSecretTie}`
+    : pickFrom(HOW_TO_USE_INTROS, rng)(name);
+
   const howCloser = pickFrom(HOW_TO_USE_CLOSERS, rng);
 
   const content = `### Who they are
@@ -341,16 +455,24 @@ ${usefulIntro}
 ### How to use them at the table
 ${howIntro} ${howCloser}`;
 
+  const glanceDelveFields = isDelve
+    ? `\n- **Delve Sector / Lair**: ${delveSector}\n- **Relation to Inhabitants**: ${delveRelation}\n- **Tie to Central Secret**: ${delveSecretTie}`
+    : "";
+
+  const alertSection = isDelve
+    ? `\n\n### Alert & Lair Response\n${DELVE_ALERT_STAGES.join("\n")}`
+    : "";
+
   const lore = `### At a Glance
 - **Theme / Genre**: ${theme}
 - **Ancestry**: ${race}
-- **Role**: ${role}
+- **Role**: ${role}${glanceDelveFields}
 - **Mannerism / Vocal Tell**: ${mannerism}
 - **Moral Stance**: ${moralityLabel}
 - **Faction Stance & Biases**: ${factionStance}
 - **Leverage & Price**: ${leverage}
 - **Secret**: ${secret}
-- **Immediate Hook**: ${plotHook}
+- **Immediate Hook**: ${plotHook}${alertSection}
 
 ### Personality
 - ${traits[0]}
@@ -358,6 +480,18 @@ ${howIntro} ${howCloser}`;
 
 ### Faction Connection
 ${faction}`;
+
+  const roleLabel = role.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const labels = isDelve
+    ? [
+        "delve-boss",
+        "dungeon-npc",
+        roleLabel,
+        "rpg-character",
+        "npc-generator",
+        "imported-draft",
+      ]
+    : [roleLabel, "rpg-character", "npc-generator", "imported-draft"];
 
   return {
     type: "character",
@@ -367,7 +501,7 @@ ${faction}`;
     lore: options.includeDndQuickStats
       ? injectDndNpcQuickStats(lore, role)
       : lore,
-    labels: ["rpg-character", "npc-generator", "imported-draft"],
+    labels,
     status: "active",
   };
 }

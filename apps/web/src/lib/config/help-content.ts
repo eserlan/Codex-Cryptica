@@ -664,7 +664,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "dungeon-generator",
     title: "Dungeon & Delve Generator",
     content:
-      "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
+      "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks. After generating a delve, choose Generate Boss / Key NPC to create a site-anchored Character draft complete with lair sector, alert escalation, and inhabitant relationships.",
     icon: "icon-[lucide--castle]",
   },
   "adventure-generator": {

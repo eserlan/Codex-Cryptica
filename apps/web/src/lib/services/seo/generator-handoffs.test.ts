@@ -3,6 +3,8 @@ import {
   buildPlotTwistPremise,
   isQuestHookDraft,
   resolvePlotTwistPremiseForGeneration,
+  isDelveDraft,
+  buildDelveBossContext,
 } from "./generator-handoffs";
 
 describe("buildPlotTwistPremise", () => {
@@ -34,6 +36,28 @@ describe("buildPlotTwistPremise", () => {
     expect(isQuestHookDraft(["rpg-quest", "Retrieval"])).toBe(true);
     expect(isQuestHookDraft(["event", "political"])).toBe(false);
     expect(isQuestHookDraft(undefined)).toBe(false);
+  });
+
+  it("recognizes delve and dungeon labels", () => {
+    expect(isDelveDraft(["dungeon", "location"])).toBe(true);
+    expect(isDelveDraft(["delve", "fantasy"])).toBe(true);
+    expect(isDelveDraft(["dungeon-generator"])).toBe(true);
+    expect(isDelveDraft(["character", "npc"])).toBe(false);
+    expect(isDelveDraft(undefined)).toBe(false);
+  });
+
+  it("builds a bounded delve context for boss generation", () => {
+    const context = buildDelveBossContext({
+      title: "The Iron Sanctum",
+      summary: "A fortified underground dwarven bastion.",
+      lore: "### Inhabitants\nDuergar raiders led by a warlord.\n### Central Secret\nAn ancient fire elemental is bound below.",
+    });
+
+    expect(context).toContain("[Delve Context]");
+    expect(context).toContain("Dungeon Location: The Iron Sanctum");
+    expect(context).toContain("A fortified underground dwarven bastion.");
+    expect(context).toContain("Duergar raiders led by a warlord.");
+    expect(context).toContain("An ancient fire elemental is bound below.");
   });
 });
 
