@@ -135,6 +135,11 @@ export class MapInteractionManager {
       return;
     }
     if (event.key === "Escape") {
+      if (mapSession.notePlacementArmed) {
+        mapSession.cancelNotePlacement();
+        this.mapAnnouncement = "Note placement cancelled";
+        return;
+      }
       if (mapSession.tileDeckManager.pendingPlacement) {
         mapSession.cancelPendingTilePlacement();
         this.mapAnnouncement = "Tile placement cancelled";
@@ -264,6 +269,17 @@ export class MapInteractionManager {
     }
     this.mouseDownPos = { x: e.clientX, y: e.clientY };
     this.isAltPressed = e.altKey;
+
+    // Placing a note takes priority over selection and panning: while armed,
+    // the click is the GM saying where the note goes, not what to select.
+    if (e.button === 0 && mapSession.notePlacementArmed) {
+      mapSession.pendingNoteCoords = mapStore.unproject(this.lastMousePos);
+      mapSession.cancelNotePlacement();
+      this.mapAnnouncement = "Note position chosen";
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
 
     if (e.button === 0 && mapSession.tileDeckManager.pendingPlacement) {
       const point = mapStore.unproject(this.lastMousePos);

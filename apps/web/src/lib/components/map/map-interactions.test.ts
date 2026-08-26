@@ -30,6 +30,9 @@ vi.mock("../../stores/map-session.svelte", () => ({
     canViewToken: vi.fn(() => true),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
+    notePlacementArmed: false,
+    pendingNoteCoords: null,
+    cancelNotePlacement: vi.fn(),
     cancelPendingTilePlacement: vi.fn(),
     updatePendingTilePlacement: vi.fn(),
     placePendingTile: vi.fn(),
@@ -461,5 +464,47 @@ describe("MapInteractionManager", () => {
     manager.onDoubleClick(event);
 
     expect(handleDoubleClickSpy).not.toHaveBeenCalled();
+  });
+
+  describe("note placement", () => {
+    it("uses a left click to choose where an armed note goes, without panning", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).notePlacementArmed = true;
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 320, clientY: 240, button: 0 }),
+      );
+
+      expect((mapSession as any).pendingNoteCoords).toEqual({
+        x: 320,
+        y: 240,
+      });
+      expect(mapSession.cancelNotePlacement).toHaveBeenCalled();
+      expect(manager.isPanning).toBe(false);
+
+      (mapSession as any).notePlacementArmed = false;
+      (mapSession as any).pendingNoteCoords = null;
+    });
+
+    it("pans as usual when note placement is not armed", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 320, clientY: 240, button: 0 }),
+      );
+
+      expect((mapSession as any).pendingNoteCoords).toBeNull();
+      expect(manager.isPanning).toBe(true);
+    });
+
+    it("backs out of armed note placement on Escape", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).notePlacementArmed = true;
+
+      manager.onGlobalKeyDown(new KeyboardEvent("keydown", { key: "Escape" }));
+
+      expect(mapSession.cancelNotePlacement).toHaveBeenCalled();
+      (mapSession as any).notePlacementArmed = false;
+    });
   });
 });

@@ -108,6 +108,12 @@ export abstract class MapSessionFacade {
   set pendingNoteCoords(value) {
     this.tokenManager.pendingNoteCoords = value;
   }
+  get notePlacementArmed() {
+    return this.tokenManager.notePlacementArmed;
+  }
+  set notePlacementArmed(value) {
+    this.tokenManager.notePlacementArmed = value;
+  }
   get draggingTokenId() {
     return this.tokenManager.draggingTokenId;
   }
@@ -430,6 +436,20 @@ export abstract class MapSessionFacade {
   addToken(input: TokenCreationInput, silent = false) {
     if (!this.mapId) return null;
     return this.tokenManager.addToken(input, silent);
+  }
+
+  /**
+   * Arms note placement, so the next click on the map chooses where the note
+   * goes. Returns false when there is no map to place one on.
+   */
+  armNotePlacement() {
+    if (!this.mapId) return false;
+    this.tokenManager.notePlacementArmed = true;
+    return true;
+  }
+
+  cancelNotePlacement() {
+    this.tokenManager.notePlacementArmed = false;
   }
 
   /** Map coordinates at the middle of the current view. */
