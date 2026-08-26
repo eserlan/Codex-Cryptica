@@ -286,6 +286,19 @@ describe("DeckView card art", () => {
     );
   });
 
+  it("does not auto-open the lightbox when the reveal is switched off", async () => {
+    openLightbox.mockClear();
+    const { deck, service } = serviceDrawing(1, "images/card-0.webp");
+    render(DeckView, {
+      props: { deck, service, revealArt: false, ...stores() } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    await screen.findAllByTestId("drawn-card");
+
+    expect(openLightbox).not.toHaveBeenCalled();
+  });
+
   it("does not auto-open the lightbox for a multi-card draw", async () => {
     openLightbox.mockClear();
     const { deck, service } = serviceDrawing(2, "images/card-0.webp");

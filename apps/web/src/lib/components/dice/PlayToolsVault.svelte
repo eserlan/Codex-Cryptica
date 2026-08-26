@@ -201,6 +201,7 @@
                 {sources}
                 {history}
                 {session}
+                revealArt={false}
               />
             </div>
           {/if}

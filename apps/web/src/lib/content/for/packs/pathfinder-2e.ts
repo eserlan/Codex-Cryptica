@@ -8,74 +8,77 @@ export const pathfinder2e: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Pathfinder 2e Campaign Management",
     description:
-      "Organise your Pathfinder 2e campaign with connected nations, secret societies, deities, adventure paths, session recaps, and worldbuilding tools.",
+      "Organise your Pathfinder 2e campaign with connected nations, secret societies, deities, Adventure Paths, session recaps, and worldbuilding tools.",
   },
   hero: {
-    eyebrow: "Pathfinder 2e Campaign & World Management",
+    eyebrow: "Campaign Management for Pathfinder 2e GMs",
     title: "Codex Cryptica for Pathfinder 2e",
     tagline:
-      "Keep characters, factions, nations, deities, adventure paths, and campaign lore connected in one place.",
+      "Keep every NPC, faction, nation, and deity in your Adventure Path connected — and still findable three books later.",
     problemStatement:
-      "Pathfinder 2e campaigns quickly grow into a web of characters, factions, nations, deities, locations, and long-running adventure arcs. When the party crosses regions or uncovers a hidden faction, you shouldn't have to dig through scattered notes to remember who is connected — or why it matters.",
+      "An Adventure Path runs for months. By book three the party has crossed two nations, sworn an oath to one deity, and made an enemy of a society you invented as background colour. You are the one who has to remember which — usually mid-session, while four players wait.",
   },
   useCases: [
     {
-      title: "Deities, Pantheons & Holy Orders",
+      title: "Deities, Edicts & Holy Orders",
       description:
-        "Map divine domains, religious orders, sacred relics, and planar heralds with a visual relationship graph.",
+        "Track a deity's domains, edicts, and anathema alongside the temples that serve them — and the cleric quietly testing where the line is.",
       icon: "icon-[lucide--sun]",
     },
     {
       title: "Nations, Settlements & Factions",
       description:
-        "Connect regional realms, settlements, secret societies, and noble houses to the characters who guide or oppose them.",
+        "Connect nations, city-states, and the societies working quietly inside them to the NPCs who run each one — or are working to bring it down.",
       icon: "icon-[lucide--crown]",
     },
     {
       title: "Adventure Paths & Session Notes",
       description:
-        "Keep multi-part adventure arcs, mystery clues, session recaps, and campaign milestones connected to the people and places they involve.",
+        "Keep each book of an Adventure Path — its clues, its recaps, and the threads you are quietly seeding for book five — tied to the people and places involved.",
       icon: "icon-[lucide--scroll]",
     },
     {
-      title: "Ancestries, Cultures & History",
+      title: "Ancestries, Heritages & History",
       description:
-        "Connect ancestries and cultures to regions, historical events, factions, notable characters, and the places they call home.",
+        "Connect an ancestry and its heritages to the regions it settled, the events that scattered it, and the NPCs still carrying that history.",
       icon: "icon-[lucide--book-open]",
     },
   ],
   exampleGraph: {
     title: "Sample Pathfinder 2e Campaign Web",
     description:
-      "See how religious orders, realm champions, secret cabals, and ancient relics connect in a campaign graph.",
+      "See how a party, their patron at the sun temple, the society that has infiltrated their ranks, and the relic they are chasing connect in one campaign graph.",
     steps: [
       {
-        label: "Sanctuary of the Golden Dawn",
-        sublabel: "Sun Temple",
-        category: "location",
+        label: "The Ninth Lantern",
+        sublabel: "The Party",
+        category: "faction",
       },
       {
         label: "Champion Vaelis",
-        sublabel: "Realm Defender",
-        relation: "Defended by",
+        sublabel: "Patron • Sun Temple",
+        relation: "Sworn to",
         category: "character",
       },
       {
-        label: "The Ashen Veil",
-        sublabel: "Secret Necromantic Society",
-        relation: "Threatened by",
+        label: "The Cinderveil",
+        sublabel: "Necromantic Society",
+        relation: "Infiltrated by",
         category: "faction",
       },
       {
         label: "Blackstone Keep",
         sublabel: "Ancient Fortress",
-        relation: "Allied with",
+        relation: "Bound for",
         category: "location",
       },
       {
+        // "Artifact" is deliberate American spelling: it is an official PF2e
+        // item category, so it takes the official-terminology exception to
+        // this page's British English rather than becoming "artefact".
         label: "The Ember Reliquary",
-        sublabel: "Artifact of Power",
-        relation: "Houses",
+        sublabel: "Sealed Artifact",
+        relation: "Chasing",
         category: "item",
       },
     ],
@@ -84,36 +87,36 @@ export const pathfinder2e: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design secret societies, religious orders, noble houses, and rival factions for your world.",
+        "Create a society with a hierarchy, a purpose, and a reason to be standing in the party's way.",
       href: "/generators/faction",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Create NPCs with distinct motives, personalities, backgrounds, and campaign roles.",
+        "Create an NPC with a motive, a manner, and a stake in whatever the party just walked into.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Pantheon Generator",
       description:
-        "Design divine portfolios, sacred domains, clerical tenets, and religious orders.",
+        "Create deities with domains, rituals, and taboos — the raw material for edicts and anathema.",
       href: "/generators/pantheon-generator",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Generate adventure hooks, patron requests, mysteries, and campaign complications.",
+        "Generate hooks, patron requests, and complications for the side quest your party invented themselves.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Organise Your Pathfinder Campaign",
+    title: "Keep Book One Connected to Book Six",
     description:
-      "Keep your Pathfinder 2e campaign connected with relationship graphs, interactive maps, and local-first storage.",
+      "Keep your Pathfinder 2e campaign connected between sessions, with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },

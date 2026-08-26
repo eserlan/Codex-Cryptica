@@ -37,6 +37,7 @@
     idGenerator = systemIdGenerator,
     session = mapSession,
     addToChat,
+    revealArt = true,
     copyText = async (text) => {
       const copied = await copyTextToClipboard(text, navigator.clipboard);
       if (!copied) throw new Error("Clipboard copy is unavailable.");
@@ -51,6 +52,15 @@
     idGenerator?: IdGenerator;
     session?: typeof mapSession;
     addToChat?: (text: string) => Promise<void>;
+    /**
+     * Whether a single-card draw throws its art up full screen by itself.
+     *
+     * On the deck page that reveal is the point. In the play tools panel it is
+     * not: the panel is a corner of the screen the GM keeps beside whatever
+     * else they are doing, and covering the whole app with a lightbox nobody
+     * asked for reads as the app locking up (#2440).
+     */
+    revealArt?: boolean;
     copyText?: (text: string) => Promise<void>;
   } = $props();
 
@@ -351,7 +361,7 @@
       in:fade={{ duration: 150 }}
       data-testid={outcome.positions ? "spread-layout" : "draw-results"}
     >
-      {#each outcome.cards as drawn, index}
+      {#each outcome.cards as drawn, index (`${drawn.card.id}:${index}`)}
         <li
           class="rounded border border-theme-border bg-theme-bg p-3 {single
             ? 'w-full max-w-sm'
@@ -375,7 +385,7 @@
               alt="Picture on {drawn.card.title}"
               title={drawn.card.title}
               zoomable
-              autoZoom={single}
+              autoZoom={revealArt && single}
               className="aspect-[5/7] w-full rounded-lg border border-theme-border/60 object-cover shadow-md {drawn.reversed
                 ? 'rotate-180'
                 : ''}"

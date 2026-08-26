@@ -59,7 +59,7 @@ When you prep a tabletop campaign or write a complex setting, your brain relies 
 
 ## 3. Five Practical Canvas Workflows
 
-The Canvas isn't just a generic whiteboard—it is built specifically for tabletop GMs, worldbuilders, and storytellers. Here are five ways GMs use it every day:
+Canvas is built for tabletop GMs, worldbuilders, and storytellers, with tools shaped around campaign prep rather than general-purpose diagramming. These five workflows show it in practice:
 
 ![Custom Strategy Board](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/fantasy%20canvas.png)
 

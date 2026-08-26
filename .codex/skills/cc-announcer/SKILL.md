@@ -87,14 +87,14 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 ## Core Style Rules
 
 - **Espen's Authentic Voice (Solo Dev Framing).** Write as a solo developer showing off a tool built for their own table (**"I wanted something that felt more like..."**, **"I built a..."**, **"I'd love to know whether..."**). Keep prose loose, natural, and low-adjective.
-- **Banned Product-Copy Rhythms (Hard Rule).** Avoid marketing phrases like:
+- **Formulaic Product-Copy Rhythms.** Challenge marketing phrases like:
   - _"Instead of a bare astronomical inventory..."_
   - _"system-wide stakes making the system worth visiting"_
   - _"It supports several genres, from..."_
   - _"integrates into the in-app Campaign Generator to pull context directly..."_
     Instead, state what it does plainly (_"It generates the system itself..."_, _"It can generate..."_, _"There are several genre options..."_, _"It is also available inside Codex Cryptica..."_).
 - **Human List Rhythms.** Keep feature lists loose and unadorned without heavy adjective pairing on every bullet point. Use simple bullet points under clear introductory headers (`It can generate:`).
-- **No Emojis or Em Dashes (Hard Rule).** NEVER use emojis (e.g. ✨, 🪐, 🚀) or em dashes (`—`). They look artificial and overly polished/AI-generated. Use plain punctuation (hyphens `-`, colons `:`, or parentheticals) instead.
+- **Plain Punctuation and No Emojis.** Do not use emojis in drafts. Prefer commas, colons, parentheses, or ordinary hyphens to em dashes, especially when a sentence uses a polished contrast construction.
 - **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
 - **Scannable but clean formatting.** Short paragraphs and light bullet points. Add a heading only when it genuinely improves scanning; a short announcement usually does not need one.
 - **Visuals and Image Support.** Include image placeholders or embedded screenshots where relevant (e.g. `![Character Chat Mobile View](...)` or `[Image: Cosmic Horror Hub Theme preview]`). Show direct interface/visual proof of changes.
@@ -103,14 +103,43 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 - **Always link to the feature.** If you are announcing a new tool, generator, or page on the live site, include a direct link to it so people can easily find it.
 - **Links: one or two in the post body, max.** Everything else goes in the first comment (or direct link with `👉` omitted; use plain text/links like `Explore the Cosmic Horror Hub: codexcryptica.com/...`).
 
+### Better language, not safer language
+
+There are two failure modes here, not one. Prose that reads as machine-produced fails, and so does prose that has been sanded down until it says nothing. Cutting every adjective and hedging every claim is not a fix, it is the same problem wearing a different coat. The target is writing with more specificity and an actual point of view, minus the habits that give generated copy away.
+
+"LLM tells" are recurring writing habits that make copy feel generated or interchangeable with generic SaaS marketing. Treat them as disqualifying in a finished draft. They are listed as heuristics rather than a word blacklist because the same word can be earned or empty depending on what it is doing in the sentence: keep it when it carries a concrete claim, rewrite it when it is only adding polish or hype. That is a license to write better, not a license to let tells through.
+
+Common tells include:
+
+- Generic contrast formulas such as "X isn't just Y, it's Z," "not just ... but ...," and "It's more than just ..."
+- Broad audience openers such as "Whether you're a beginner or an expert..."
+- Filler openings such as "At its core..." and "In today's fast-paced world..."
+- Empty transitions such as "Here's where X comes in"
+- Unsupported adjectives and adverbs such as _seamlessly, effortlessly, powerful,_ and _robust_
+- Marketing verbs and labels such as _unlock, supercharge, elevate, revolutionise,_ and _game-changer_
+- Repeated em-dash contrast constructions
+- Tidy three-part hype lists when a direct sentence or looser list would be clearer
+- Paragraphs with nearly identical length, rhythm, or sentence shape
+- Over-polished transitions that add no information and conclusions that merely restate the post
+
+What better language actually looks like here:
+
+- Concrete nouns, real numbers, and named specifics instead of category words
+- One surprising detail that happens to be true, rather than three adjectives
+- Sentence lengths that vary because the ideas vary, not for decoration
+- A stated opinion, tradeoff, or open uncertainty, since generated copy rarely commits to one
+- Plain verbs carrying the sentence, so no adverb has to prop them up
+
+When a tell appears, do not just delete it. Ask what that sentence was supposed to claim and write that instead. Removing a transition should leave the paragraph stronger; if it leaves a hole, the hole was the missing content all along. Keep an unusual phrase when it is accurate and sounds natural in context.
+
 ### Phrases and formatting to avoid
 
-- **Banned punctuation/formatting:** Emojis (✨, 🪐, 👉, 🚀, etc.) and em-dashes (`—`).
-- **Banned buzzwords:** _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
+- **House style:** No emojis (✨, 🪐, 👉, 🚀, etc.). Prefer plain punctuation over em dashes.
+- **Marketing filler to challenge:** _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
 
 ### Cadence to avoid
 
-LLM-generated posts often share a recognizable rhythm: paragraphs of similar length, every section opening with a transition word, a closing paragraph that restates the post. Break the cadence — vary paragraph lengths, let some sentences run short, and don't write a conclusion that summarizes what was just said.
+LLM-generated posts often share a recognizable rhythm: paragraphs of similar length, every section opening with a transition word, and a closing paragraph that restates the post. Break the cadence. Vary paragraph lengths, let some sentences run short, and don't write a conclusion that summarizes what was just said.
 
 ---
 
@@ -134,9 +163,11 @@ When preparing screenshots and visual assets for announcements, devlogs, or disc
 
 1. **Bucket Name**: `codex-cryptica-statics`
 2. **Public CDN Domain / Path**: `https://assets.codexcryptica.com/<key>`. Use `announcements/<feature-name>-<version>.png` for announcement images. See `docs/deployment/assets.md` for the current asset policy.
-3. **Capture via Chrome DevTools MCP or Playwright**:
-   - Drive the browser using Chrome DevTools MCP tools (`navigate_page`, `resize_page`, `take_screenshot`) or Playwright E2E automation (`--reporter=list`).
+3. **Capture via Playwright or Chrome DevTools MCP**:
+   - Playwright is the reliable path. Run a short script from the repo root so `node` resolves `playwright` out of the root `node_modules`, launch chromium, and use `deviceScaleFactor: 2` for a crisp capture.
+   - Chrome DevTools MCP often fails here: port 9222 is regularly held by an existing Chrome whose `/json/version` returns 404, so the MCP server cannot attach. Try it if you like, but fall back to Playwright rather than debugging the port.
    - Capture a clean, high-resolution desktop viewport of the live feature or local dev server (`http://localhost:5173`) first. Capture mobile only when the announcement is specifically about mobile behavior.
+   - **Headless cannot produce AI output.** Cloudflare Turnstile rejects automated browsers (`Error: 600010`), the `oracle-proxy` handshake 401s, and the page falls back to local tables while logging "AI generation unavailable (verification), falling back to local tables." Screenshots are fine, but never quote captured text as an example of AI generation, and never present fallback template text as representative output. Ask the user to paste a real sample instead.
 4. **Upload via Wrangler to Cloudflare R2**:
    - Use `bunx wrangler r2 object put` to upload captured image assets directly to the R2 bucket:
      ```bash
@@ -146,6 +177,22 @@ When preparing screenshots and visual assets for announcements, devlogs, or disc
 5. **Reference in Drafts**:
    - Insert direct markdown image links pointing to the R2 CDN or relative repo assets:
      `![Feature Title](https://assets.codexcryptica.com/announcements/<feature-name>-v1.png)`
+6. **Verify the URL actually resolves** before putting it in a draft:
+   `curl -sI https://assets.codexcryptica.com/<key> | head -1`
+   If you checked the URL before uploading, Cloudflare caches that 404 for a while. Re-check with a cache buster (`?v=$(date +%s)`) to confirm the object is really there.
+
+### Also check the page's OG image
+
+Announcing a generator or public page is the moment to confirm its social preview image exists. These are declared in `apps/web/src/lib/components/seo/generator-page-meta.ts` as `ogImage`, and nothing in CI verifies the file behind the URL is present, so a declared path can point at nothing for months. The Encounter Generator shipped that way: correct `ogImage` and `ogImageAlt`, 404 on the asset.
+
+- Check it: `curl -so /dev/null -w '%{http_code}' https://assets.codexcryptica.com/screenshots/generator-<slug>.jpg`
+- If it 404s, derive one from the announcement screenshot you already captured. The convention is **1600x1000 JPEG** at roughly 150 to 200KB, matching siblings like `generator-npc.jpg`:
+  ```bash
+  magick <capture>.png -resize 1600x1000 -quality 85 -strip generator-<slug>.jpg
+  bunx wrangler r2 object put codex-cryptica-statics/screenshots/generator-<slug>.jpg --file generator-<slug>.jpg --content-type=image/jpeg --remote
+  ```
+- A 1440x900 capture at `deviceScaleFactor: 2` gives 2880x1800, the same 8:5 ratio as 1600x1000, so it downscales with no cropping.
+- Usually no code change is needed. The meta entry generally already declares the path; only the file is missing. Confirm before editing anything.
 
 ---
 
@@ -154,7 +201,7 @@ When preparing screenshots and visual assets for announcements, devlogs, or disc
 Avoid default launch-style titles:
 
 - ❌ `[Update] v0.21.0 is LIVE!`
-- ❌ `Codex Cryptica — The Ultimate Worldbuilding Tool`
+- ❌ `Codex Cryptica: The Ultimate Worldbuilding Tool`
 
 Prefer titles that sound native to Reddit. Mix patterns rather than defaulting to one:
 
@@ -166,7 +213,7 @@ Prefer titles that sound native to Reddit. Mix patterns rather than defaulting t
 **Problem-first (often stronger):**
 
 - `My graph view kept feeling cluttered until I removed the auto-layout`
-- `OPFS persistence broke every time I refactored — here's what finally worked`
+- `OPFS persistence broke every time I refactored. Here's what finally worked`
 
 **Devlog framing (good for r/codexcryptica and r/SvelteJS):**
 
@@ -290,8 +337,10 @@ Before returning a draft, verify:
 - Would the post still be useful if the reader never clicked a link?
 - Are all technical claims grounded in provided changelogs, specs, code, or repo material?
 - Has the post been adapted to the target subreddit, not just dropped into a generic template?
-- Have any banned phrases, emojis, em dashes (`—`), or LLM-cadence patterns slipped in?
+- Have any formulaic phrases, empty transitions, emojis, repetitive em-dash constructions, or overly regular cadence patterns slipped in?
+- Is the writing specific and committed, rather than merely inoffensive? Vague, hedged, adjective-free prose is its own failure, not a safe default.
 - Are image/screenshot placeholders included right after the opening summary?
+- Does every asset URL in the draft return 200, and if a public page is being announced, does its declared `ogImage` resolve?
 
 If any answer is "no" or "unsure," revise before returning.
 
