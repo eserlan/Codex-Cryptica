@@ -7,6 +7,8 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import PinNoteButton from "./PinNoteButton.svelte";
 
   // A published-vault reader browses maps on their own (no host), unlike a
   // live VTT guest who only sees whatever map the host is currently sharing.
@@ -134,6 +136,12 @@
         <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
         DELETE
       </button>
+
+      <!-- In play the note button lives in the VTT toolbar; out of play this
+           is the only place it can be reached from. -->
+      {#if !mapSession.vttEnabled && !sessionModeStore.isGuestMode}
+        <PinNoteButton />
+      {/if}
 
       <button
         type="button"
