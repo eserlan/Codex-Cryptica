@@ -3,6 +3,7 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
+  import { isNoteCollapsed } from "map-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { vault } from "../../stores/vault.svelte";
@@ -63,6 +64,26 @@
       _ctxToken?.imageUrl ||
       (_ctxToken?.entityId && vault.entities[_ctxToken.entityId]?.image),
     )}
+    {#if _ctxToken?.kind === "note" && mapStore.isGMMode && !sessionModeStore.isGuestMode}
+      {@const _ctxNoteCollapsed = isNoteCollapsed(_ctxToken)}
+      <div class="h-px bg-theme-border my-1 mx-2"></div>
+      <button
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={() => {
+          mapSession.toggleNoteCollapsed(tokenId);
+          onClose();
+        }}
+      >
+        <span
+          class={`${_ctxNoteCollapsed ? "icon-[lucide--maximize-2]" : "icon-[lucide--minimize-2]"} w-3.5 h-3.5 text-theme-muted`}
+          aria-hidden="true"
+        ></span>
+        <span>{_ctxNoteCollapsed ? "Expand note" : "Collapse to a marker"}</span
+        >
+      </button>
+    {/if}
+
     {#if _ctxToken?.kind === "tile" && mapStore.isGMMode && !sessionModeStore.isGuestMode}
       <div class="h-px bg-theme-border my-1 mx-2"></div>
       <SpatialImageControls

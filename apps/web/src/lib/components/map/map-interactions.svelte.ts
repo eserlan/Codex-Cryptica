@@ -604,9 +604,11 @@ export class MapInteractionManager {
 
     const hitToken = this.tokenSelection.hitTest({ x, y });
     if (hitToken) {
-      // A note has no health bar, but the double-click still belongs to it:
-      // falling through would drop a pin underneath the note.
-      if (mapSession.vttEnabled && hitToken.kind !== "note") {
+      if (hitToken.kind === "note") {
+        // A note has no health bar; double-click folds it away instead, and
+        // falling through would drop a pin underneath it.
+        mapSession.toggleNoteCollapsed(hitToken.id);
+      } else if (mapSession.vttEnabled) {
         this.healthBarPopoverTokenId =
           this.healthBarPopoverTokenId === hitToken.id ? null : hitToken.id;
       }
@@ -655,10 +657,9 @@ export class MapInteractionManager {
       return;
     }
 
-    const canResize =
-      mapSession.vttEnabled &&
-      mapStore.isGMMode &&
-      !sessionModeStore.isGuestMode;
+    // No vttEnabled gate: out of play hitTestableTokens only yields notes, so
+    // shift+scroll resizes a note on a plain map and nothing else.
+    const canResize = mapStore.isGMMode && !sessionModeStore.isGuestMode;
     const el = this.getContainer();
 
     if (e.shiftKey && canResize) {

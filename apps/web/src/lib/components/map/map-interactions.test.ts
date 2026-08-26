@@ -34,6 +34,7 @@ vi.mock("../../stores/map-session.svelte", () => ({
     pendingNoteCoords: null,
     selectedToken: null,
     cancelNotePlacement: vi.fn(),
+    toggleNoteCollapsed: vi.fn(),
     cancelPendingTilePlacement: vi.fn(),
     updatePendingTilePlacement: vi.fn(),
     placePendingTile: vi.fn(),
@@ -539,5 +540,31 @@ describe("MapInteractionManager", () => {
       (mapSession as any).vttEnabled = true;
       (mapSession as any).allTokens = [];
     });
+  });
+
+  it("folds a note away on double-click instead of dropping a pin under it", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [
+      {
+        id: "note-a",
+        kind: "note",
+        x: 100,
+        y: 100,
+        width: 60,
+        height: 60,
+        rotation: 0,
+        zIndex: 0,
+        baseShape: "square",
+        layer: "token",
+        visibleTo: "all",
+      },
+    ];
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 130, clientY: 130 }),
+    );
+
+    expect(mapSession.toggleNoteCollapsed).toHaveBeenCalledWith("note-a");
+    (mapSession as any).allTokens = [];
   });
 });
