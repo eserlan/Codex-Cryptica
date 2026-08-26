@@ -22,8 +22,8 @@ export function getViewportSize(): ViewportSize {
     return { width: 1024, height: 768 };
   }
   return {
-    width: window.innerWidth || 1024,
-    height: window.innerHeight || 768,
+    width: window.innerWidth ?? 1024,
+    height: window.innerHeight ?? 768,
   };
 }
 

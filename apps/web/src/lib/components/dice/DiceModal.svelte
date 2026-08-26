@@ -16,12 +16,7 @@
 
   let activeTab = $state<PlayToolsTab>("dice");
 
-  let bounds = $state<WindowBounds>({
-    x: 100,
-    y: 100,
-    width: 500,
-    height: 620,
-  });
+  let bounds = $state<WindowBounds>(loadSavedBounds());
 
   let isDragging = $state(false);
   let isResizing = $state(false);
@@ -100,7 +95,9 @@
       } catch {
         // ignore if capture was already released
       }
-      saveBounds(bounds);
+      if (bounds.x !== dragStart.windowX || bounds.y !== dragStart.windowY) {
+        saveBounds(bounds);
+      }
     }
   }
 
@@ -151,7 +148,12 @@
       } catch {
         // ignore if capture was already released
       }
-      saveBounds(bounds);
+      if (
+        bounds.width !== resizeStart.width ||
+        bounds.height !== resizeStart.height
+      ) {
+        saveBounds(bounds);
+      }
     }
   }
 

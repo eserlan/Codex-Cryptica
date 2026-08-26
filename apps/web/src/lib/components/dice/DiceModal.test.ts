@@ -214,4 +214,54 @@ describe("DiceModal", () => {
 
     expect(openDiceWindow).toHaveBeenCalledWith("decks");
   });
+
+  it("does not write to storage on simple header click without movement", async () => {
+    saveBounds(
+      { x: 100, y: 100, width: 400, height: 500 },
+      window.localStorage,
+    );
+
+    modalUIStore.showDiceModal = true;
+    render(DiceModal);
+
+    const setItemSpy = vi.spyOn(window.localStorage, "setItem");
+    setItemSpy.mockClear();
+
+    const header = screen.getByTestId("dice-modal-header");
+    await fireEvent.pointerDown(header, {
+      button: 0,
+      clientX: 150,
+      clientY: 120,
+      pointerId: 1,
+    });
+    await fireEvent.pointerUp(header, { pointerId: 1 });
+
+    expect(setItemSpy).not.toHaveBeenCalled();
+    setItemSpy.mockRestore();
+  });
+
+  it("does not write to storage on resize handle click without movement", async () => {
+    saveBounds(
+      { x: 100, y: 100, width: 400, height: 500 },
+      window.localStorage,
+    );
+
+    modalUIStore.showDiceModal = true;
+    render(DiceModal);
+
+    const setItemSpy = vi.spyOn(window.localStorage, "setItem");
+    setItemSpy.mockClear();
+
+    const resizeHandle = screen.getByTestId("dice-modal-resize-handle");
+    await fireEvent.pointerDown(resizeHandle, {
+      button: 0,
+      clientX: 500,
+      clientY: 600,
+      pointerId: 1,
+    });
+    await fireEvent.pointerUp(resizeHandle, { pointerId: 1 });
+
+    expect(setItemSpy).not.toHaveBeenCalled();
+    setItemSpy.mockRestore();
+  });
 });
