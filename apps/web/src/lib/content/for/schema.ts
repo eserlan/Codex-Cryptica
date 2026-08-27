@@ -117,6 +117,8 @@ export const LandingPageConfigSchema = z.object({
     title: z.string(),
     description: z.string(),
     canonical: z.string().optional(),
+    image: z.string().optional(),
+    imageAlt: z.string().optional(),
   }),
   hero: z.object({
     eyebrow: z.string().optional(),

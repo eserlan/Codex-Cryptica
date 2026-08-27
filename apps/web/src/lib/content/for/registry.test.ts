@@ -348,6 +348,90 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Cosmic Horror Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const cosmic = getLandingPage("cosmic-horror");
+      expect(cosmic).toBeDefined();
+      expect(cosmic?.slug).toBe("cosmic-horror");
+      expect(cosmic?.kind).toBe("genre");
+      expect(cosmic?.theme).toBe("horror");
+      expect(cosmic?.hub).toBe("cosmic-horror");
+      expect(cosmic?.surfaceStyle).toBe("sharp");
+      expect(cosmic?.disclaimer).toBeUndefined();
+      expect(cosmic?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/cosmic-horror.jpg",
+      );
+      expect(cosmic?.seo.imageAlt).toBeDefined();
+      expect(cosmic?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(cosmic?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic cosmic horror worldbuilding language without system lock-in", () => {
+      const cosmic = getLandingPage("cosmic-horror")!;
+      const copy = JSON.stringify(cosmic);
+
+      // Avoid generic fantasy or system-specific rules jargon
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/sanity check|blood bond|primogen/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/across every stage of your campaign/i);
+
+      // Verify authentic cosmic horror worldbuilding concepts
+      expect(cosmic.hero.eyebrow).toContain("Cosmic Horror");
+      expect(copy).toContain("cults");
+      expect(copy).toContain("expedition");
+      expect(copy).toContain("archives");
+      expect(copy).toContain("anomalies");
+      expect(copy).toContain("Revelations");
+      expect(copy).toContain("Manifestations");
+      expect(copy).toContain("The Tethys Institute");
+      expect(copy).toContain("local-first");
+      expect(cosmic.cta.title).toBe("Build the Mystery. Keep the Connections.");
+
+      const toolTitles = cosmic.recommendedTools.map((t) => t.title);
+      expect(toolTitles).toContain("Artifact & Relic Generator");
+    });
+
+    it("maintains a valid hub-and-spoke cosmic anomaly graph with categorized nodes", () => {
+      const cosmic = getLandingPage("cosmic-horror")!;
+      const graph = cosmic.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Tethys Institute");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Dr Corin Ward")?.relation,
+      ).toBe("Employs");
+      expect(
+        graph.steps.find((s) => s.label === "Acoustic Anomaly 7")?.relation,
+      ).toBe("Discovers");
+      expect(
+        graph.steps.find((s) => s.label === "The Drowned Monolith")?.relation,
+      ).toBe("Investigates");
+      expect(
+        graph.steps.find((s) => s.label === "Order of the Black Tide")
+          ?.relation,
+      ).toBe("Hounded by");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+    });
+  });
+
   describe("Example graphs", () => {
     const pagesWithGraphs = getAllLandingPages().filter((p) => p.exampleGraph);
 
@@ -412,6 +496,7 @@ describe("Landing Page Registry", () => {
       expect(getLandingPage("gothic-horror")?.hub).toBe("vampire");
       // Both are theme: "horror", but they belong to different hubs.
       expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
+      expect(getLandingPage("cosmic-horror")?.hub).toBe("cosmic-horror");
     });
 
     it("returns the pages belonging to a hub", () => {
@@ -420,6 +505,10 @@ describe("Landing Page Registry", () => {
       expect(fantasy).toContain("pathfinder-2e");
       expect(fantasy).toContain("fantasy-worldbuilding");
       expect(fantasy).not.toContain("call-of-cthulhu");
+
+      const cosmic = getLandingPagesForHub("cosmic-horror").map((p) => p.slug);
+      expect(cosmic).toContain("call-of-cthulhu");
+      expect(cosmic).toContain("cosmic-horror");
     });
 
     it("returns nothing for a hub with no landing pages", () => {
