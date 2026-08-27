@@ -7,6 +7,7 @@
  */
 export { resolveSmart, validateSchema } from "./resolve";
 export { evaluate, referencedAxes } from "./predicates";
+export { selectSmart, type SelectionResult } from "./select";
 export type {
   SmartAxis,
   SmartGeneratorConfig,

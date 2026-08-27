@@ -16,7 +16,9 @@ import { settlementConfig } from "./public-settlement-constants";
 import {
   AUTHORITY_TRAITS,
   ENVIRONMENT_TRAITS,
+  FACTION_TRAITS,
   FUNCTION_TRAITS,
+  LOCATION_TRAITS,
   SETTLEMENT_AFFINITIES,
   SETTLEMENT_RULES,
   TENSION_TRAITS,
@@ -42,13 +44,11 @@ function traitPredicate(
   return { any: traits.map((trait) => ({ trait })) };
 }
 
-/** Turn a plain option value into a rule-carrying option. */
-function annotate(
+/** Attach the shared rules and affinities to one option's traits. */
+function withRules(
   value: string,
-  traitsFor: Readonly<Record<string, readonly SettlementTrait[]>>,
+  traits: readonly SettlementTrait[],
 ): SmartOption {
-  const traits = traitsFor[value] ?? [];
-
   const requires: SettlementTrait[] = [];
   const excludes: SettlementTrait[] = [];
   for (const rule of SETTLEMENT_RULES) {
@@ -87,6 +87,14 @@ function axisFrom(
   };
 }
 
+/** Turn a plain option value into a rule-carrying option. */
+function annotate(
+  value: string,
+  traitsFor: Readonly<Record<string, readonly SettlementTrait[]>>,
+): SmartOption {
+  return withRules(value, traitsFor[value] ?? []);
+}
+
 /** Scale traits come from position in the genre's own ladder, not the name. */
 const SIZE_LADDER: readonly SettlementTrait[] = [
   "tiny",
@@ -106,10 +114,11 @@ const sizeAxis: SmartAxis = {
   label: "Scale",
   pool: (ctx) => {
     const sizes = forGenre(settlementConfig.sizesByGenre, ctx.genre);
-    return sizes.map((size, index) => ({
-      value: size.name,
-      traits: sizeTraits(index, sizes.length),
-    }));
+    // Scale goes through the same rules and affinities as every other axis, so
+    // a university city can lean large and a hidden refuge can lean small.
+    return sizes.map((size, index) =>
+      withRules(size.name, sizeTraits(index, sizes.length)),
+    );
   },
 };
 
@@ -149,3 +158,21 @@ export function buildSettlementSchema(): SmartGeneratorSchema {
 
 /** Stable instance: the schema reads genre from the resolve context, not a closure. */
 export const settlementSchema = buildSettlementSchema();
+
+/**
+ * Points of interest and controlling factions are drawn as lists rather than
+ * resolved as axes, since nothing else depends on them. They still go through
+ * the same rules and weights via `selectSmart`, so they agree with the axes
+ * instead of contradicting them.
+ */
+export function settlementLocationPool(genre: string): SmartOption[] {
+  return forGenre(settlementConfig.notableLocationsByGenre, genre).map((v) =>
+    annotate(v, LOCATION_TRAITS),
+  );
+}
+
+export function settlementFactionPool(genre: string): SmartOption[] {
+  return forGenre(settlementConfig.factionsByGenre, genre).map((v) =>
+    annotate(v, FACTION_TRAITS),
+  );
+}

@@ -11,16 +11,20 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-import {
-  type Rng,
-  defaultRng,
-  pickFrom,
-  pickRandomItems as getRandomItems,
-} from "./random-utils";
+import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { settlementConfig } from "./public-settlement-constants";
-import { settlementSchema } from "./public-settlement-schema";
-import { resolveSmart, type LockedValue } from "./smart";
+import {
+  settlementFactionPool,
+  settlementLocationPool,
+  settlementSchema,
+} from "./public-settlement-schema";
+import {
+  resolveSmart,
+  selectSmart,
+  type LockedValue,
+  type ResolveContext,
+} from "./smart";
 export { settlementConfig };
 
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
@@ -52,6 +56,8 @@ interface ResolvedSettlement {
   mainTension: string;
   authorityType: string;
   name: string;
+  /** Traits of everything resolved, so derived lists can stay consistent. */
+  traits: readonly string[];
 }
 
 /**
@@ -79,7 +85,11 @@ function resolveSettlement(
   lock("mainTension", options.mainTension);
   lock("size", options.size);
 
-  const { values } = resolveSmart(settlementSchema, { genre, locked }, rng);
+  const { values, traits } = resolveSmart(
+    settlementSchema,
+    { genre, locked },
+    rng,
+  );
 
   const sizes = forGenre(settlementConfig.sizesByGenre, genre);
   // A custom scale the user typed keeps its name and borrows the population and
@@ -103,6 +113,7 @@ function resolveSettlement(
     mainTension: values.mainTension,
     authorityType: values.authorityType,
     name,
+    traits,
   };
 }
 
@@ -292,16 +303,34 @@ export function generateSettlementLocal(
     name,
   } = resolved;
 
-  const locations = getRandomItems(
-    forGenre(settlementConfig.notableLocationsByGenre, genre),
+  // The lists hang off what the axes already decided, so a mountain-pass
+  // settlement stops listing a harbour (#2341).
+  const context: ResolveContext = {
+    genre,
+    values: {
+      environment,
+      primaryFunction,
+      authorityType,
+      tone,
+      mainTension,
+      size,
+    },
+    traits: resolved.traits,
+  };
+  const locations = selectSmart(
+    settlementLocationPool(genre),
     pointsOfInterestCount,
+    context,
+    {},
     rng,
-  );
-  const [faction1, faction2] = getRandomItems(
-    forGenre(settlementConfig.factionsByGenre, genre),
+  ).values;
+  const [faction1, faction2] = selectSmart(
+    settlementFactionPool(genre),
     2,
+    context,
+    {},
     rng,
-  );
+  ).values;
   const firstImpression =
     FIRST_IMPRESSION_BY_GENRE[genre] ?? FIRST_IMPRESSION_BY_GENRE["Fantasy"];
 

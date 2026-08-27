@@ -2,18 +2,22 @@ import { describe, expect, it } from "vitest";
 import { settlementConfig } from "./public-settlement-constants";
 import {
   buildSettlementSchema,
+  settlementFactionPool,
+  settlementLocationPool,
   settlementSchema,
 } from "./public-settlement-schema";
 import {
   AUTHORITY_TRAITS,
   ENVIRONMENT_TRAITS,
+  FACTION_TRAITS,
   FUNCTION_TRAITS,
+  LOCATION_TRAITS,
   SETTLEMENT_TRAIT_VOCABULARY,
   TENSION_TRAITS,
   TONE_TRAITS,
 } from "./public-settlement-traits";
 import { generateSettlementLocal } from "./public-settlement";
-import { resolveSmart, validateSchema } from "./smart";
+import { resolveSmart, selectSmart, validateSchema } from "./smart";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -32,6 +36,8 @@ describe("settlement trait annotations", () => {
     ["tonesByGenre", TONE_TRAITS] as const,
     ["mainTensionsByGenre", TENSION_TRAITS] as const,
     ["authorityTypesByGenre", AUTHORITY_TRAITS] as const,
+    ["notableLocationsByGenre", LOCATION_TRAITS] as const,
+    ["factionsByGenre", FACTION_TRAITS] as const,
   ];
 
   for (const [poolKey, traitMap] of axes) {
@@ -207,5 +213,162 @@ describe("generateSettlementLocal — through the smart resolver", () => {
     expect(out.lore).toContain("**Official Authority**: Tribal elders");
     expect(out.lore).toContain("**Tone**: Grim and weathered");
     expect(out.lore).toContain("Famine or drought");
+  });
+});
+
+describe("settlement derived lists", () => {
+  /** Every environment a genre can produce, paired with its traits. */
+  function environmentsOf(genre: string) {
+    return (settlementConfig.environmentsByGenre[genre] ?? []).map((value) => ({
+      value,
+      traits: ENVIRONMENT_TRAITS[value] ?? [],
+    }));
+  }
+
+  it("keeps waterfront locations out of landlocked settlements", () => {
+    const rng = seededRng(31);
+    const dry = { genre: "Modern", values: {}, traits: ["mountain", "inland"] };
+    for (let i = 0; i < 200; i++) {
+      const { values } = selectSmart(
+        settlementLocationPool("Modern"),
+        4,
+        dry,
+        {},
+        rng,
+      );
+      expect(values).not.toContain("Marina");
+    }
+  });
+
+  it("still offers them on the coast", () => {
+    const rng = seededRng(37);
+    const wet = { genre: "Modern", values: {}, traits: ["coastal"] };
+    let seen = false;
+    for (let i = 0; i < 100 && !seen; i++) {
+      seen = selectSmart(
+        settlementLocationPool("Modern"),
+        4,
+        wet,
+        {},
+        rng,
+      ).values.includes("Marina");
+    }
+    expect(seen).toBe(true);
+  });
+
+  it("fills every requested slot for every genre and environment", () => {
+    const rng = seededRng(41);
+    const shortfalls: string[] = [];
+    for (const genre of GENRES) {
+      const sizes = settlementConfig.sizesByGenre[genre] ?? [];
+      const most = Math.max(...sizes.map((s) => s.pointsOfInterestCount));
+      for (const environment of environmentsOf(genre)) {
+        const ctx = {
+          genre,
+          values: { environment: environment.value },
+          traits: environment.traits,
+        };
+        const locations = selectSmart(
+          settlementLocationPool(genre),
+          most,
+          ctx,
+          {},
+          rng,
+        );
+        const factions = selectSmart(
+          settlementFactionPool(genre),
+          2,
+          ctx,
+          {},
+          rng,
+        );
+        if (
+          locations.values.length < most ||
+          locations.relaxations.length > 0
+        ) {
+          shortfalls.push(`${genre}/${environment.value}/locations`);
+        }
+        if (factions.values.length < 2 || factions.relaxations.length > 0) {
+          shortfalls.push(`${genre}/${environment.value}/factions`);
+        }
+      }
+    }
+    expect(shortfalls).toEqual([]);
+  });
+
+  it("leans towards locations that echo the settlement's purpose", () => {
+    const rng = seededRng(43);
+    const holy = { genre: "Fantasy", values: {}, traits: ["religious"] };
+    const plain = { genre: "Fantasy", values: {}, traits: ["trade"] };
+    let templeWhenHoly = 0;
+    let templeWhenNot = 0;
+    for (let i = 0; i < 300; i++) {
+      if (
+        selectSmart(
+          settlementLocationPool("Fantasy"),
+          2,
+          holy,
+          {},
+          rng,
+        ).values.includes("Temple of the Sun")
+      ) {
+        templeWhenHoly++;
+      }
+      if (
+        selectSmart(
+          settlementLocationPool("Fantasy"),
+          2,
+          plain,
+          {},
+          rng,
+        ).values.includes("Temple of the Sun")
+      ) {
+        templeWhenNot++;
+      }
+    }
+    expect(templeWhenHoly).toBeGreaterThan(templeWhenNot * 1.5);
+  });
+});
+
+describe("settlement scale follows function", () => {
+  it("favours a larger scale for a university city", () => {
+    const rng = seededRng(53);
+    let large = 0;
+    const runs = 400;
+    for (let i = 0; i < runs; i++) {
+      const { values } = resolveSmart(
+        settlementSchema,
+        {
+          genre: "Fantasy",
+          locked: {
+            primaryFunction: { value: "Academic city", source: "manual" },
+          },
+        },
+        rng,
+      );
+      if (values.size === "City") large++;
+    }
+    // Four rungs in the Fantasy ladder, so a flat draw would give 25%.
+    expect(large / runs).toBeGreaterThan(0.35);
+  });
+
+  it("still reaches every rung of the ladder", () => {
+    const rng = seededRng(59);
+    const seen = new Set<string>();
+    for (let i = 0; i < 300; i++) {
+      seen.add(
+        resolveSmart(
+          settlementSchema,
+          {
+            genre: "Fantasy",
+            locked: {
+              primaryFunction: { value: "Academic city", source: "manual" },
+            },
+          },
+          rng,
+        ).values.size,
+      );
+    }
+    expect(seen.size).toBe(settlementConfig.sizesByGenre["Fantasy"].length);
   });
 });

@@ -449,3 +449,33 @@ describe("validateSchema", () => {
     expect(validateSchema(plainSchema)).toEqual([]);
   });
 });
+
+describe("resolveSmart — resolved traits", () => {
+  it("returns the deduplicated union of every resolved option's traits", () => {
+    const schema: SmartGeneratorSchema = {
+      id: "traits",
+      axes: [
+        {
+          id: "environment",
+          label: "Environment",
+          pool: () => [
+            { value: "Coastal harbour", traits: ["coastal", "maritime"] },
+          ],
+        },
+        {
+          id: "primaryFunction",
+          label: "Primary Function",
+          pool: () => [
+            { value: "Fishing village", traits: ["maritime", "agrarian"] },
+          ],
+        },
+      ],
+    };
+    const result = resolveSmart(schema, {}, seededRng(1));
+    expect([...result.traits].sort()).toEqual([
+      "agrarian",
+      "coastal",
+      "maritime",
+    ]);
+  });
+});
