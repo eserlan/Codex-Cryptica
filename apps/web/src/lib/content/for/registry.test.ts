@@ -236,6 +236,81 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Delta Green Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const dg = getLandingPage("delta-green");
+      expect(dg).toBeDefined();
+      expect(dg?.slug).toBe("delta-green");
+      expect(dg?.kind).toBe("system");
+      expect(dg?.theme).toBe("horror");
+      expect(dg?.surfaceStyle).toBe("sharp");
+      expect(dg?.disclaimer).toContain("Arc Dream Publishing");
+      expect(dg?.disclaimer).toContain("Delta Green Partnership");
+      expect(dg?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(dg?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Delta Green terminology and Handler operations framing", () => {
+      const dg = getLandingPage("delta-green")!;
+      const copy = JSON.stringify(dg);
+
+      // Delta Green has its own vocabulary; borrowing Call of Cthulhu's or
+      // generic fantasy framing is the failure mode worth guarding against.
+      expect(copy).not.toMatch(/Investigators/);
+      expect(copy).not.toMatch(/\bKeeper\b/);
+      expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
+      expect(copy).not.toMatch(/supernatural/i);
+      expect(copy).not.toMatch(/Majestic|Karotechia|A-Cell/i);
+
+      // Verify authentic terminology presence
+      expect(dg.hero.eyebrow).toContain("Handler");
+      expect(copy).toContain("Handler");
+      expect(copy).toContain("Agents");
+      expect(copy).toContain("Bonds");
+      expect(copy).toContain("Green Box");
+      expect(copy).toContain("cover identit");
+      expect(copy).toContain("the unnatural");
+      expect(copy).toContain("cells");
+      expect(copy).toContain("local-first");
+    });
+
+    it("maintains a valid hub-and-spoke operation graph with categorized nodes", () => {
+      const dg = getLandingPage("delta-green")!;
+      const graph = dg.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.sublabel).toContain("Agent");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      // The Bond is what separates a Delta Green web from a generic one.
+      const bond = graph.steps.find((s) => s.relation === "Bonded to");
+      expect(bond?.sublabel).toContain("Bond");
+      expect(
+        graph.steps.find((s) => s.label === "Green Box VT-4")?.relation,
+      ).toBe("Holds the key to");
+      expect(
+        graph.steps.find((s) => s.label === "The Ashgrove Congregation")
+          ?.sublabel,
+      ).toBe("Cult");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+      expect(categories).toContain("event");
+    });
+  });
+
   describe("Gothic Horror Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const gothic = getLandingPage("gothic-horror");
@@ -655,6 +730,7 @@ describe("Landing Page Registry", () => {
       // Both are theme: "horror", but they belong to different hubs.
       expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
       expect(getLandingPage("cosmic-horror")?.hub).toBe("cosmic-horror");
+      expect(getLandingPage("delta-green")?.hub).toBe("cosmic-horror");
     });
 
     it("returns the pages belonging to a hub", () => {
@@ -667,6 +743,7 @@ describe("Landing Page Registry", () => {
       const cosmic = getLandingPagesForHub("cosmic-horror").map((p) => p.slug);
       expect(cosmic).toContain("call-of-cthulhu");
       expect(cosmic).toContain("cosmic-horror");
+      expect(cosmic).toContain("delta-green");
     });
 
     it("returns nothing for a hub with no landing pages", () => {
@@ -749,7 +826,7 @@ describe("Landing Page Registry", () => {
   describe("OpenGraph & Social Share Metadata", () => {
     it("configures a dedicated CDN OpenGraph image and alt description for every landing page", () => {
       const allPages = getAllLandingPages();
-      expect(allPages.length).toBeGreaterThanOrEqual(11);
+      expect(allPages.length).toBeGreaterThanOrEqual(13);
 
       for (const page of allPages) {
         expect(page.seo.image, `${page.slug} missing seo.image`).toBe(
