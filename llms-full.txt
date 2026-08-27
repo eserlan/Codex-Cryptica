@@ -154,6 +154,15 @@ Turn the map into a lightweight tactical board. Add tokens, move them with grid 
 ### VTT Entity List
 Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.
 
+### VTT Tile Decks
+Use Tile Decks in the VTT sidebar to add a starter pack (Scribble Dungeons, Geomorphs 2013, Geomorph Collection) or import your own PNG or JPG images. Filter the tile palette by category, choose a specific tile, draw one at random from a deck, or use "Draw from all decks" to pull from every installed deck at once. New tiles snap edge-to-edge against tiles already on the map. Starter tiles are downloaded once into the current vault, so drawing remains available offline.
+
+### Map Layers
+Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.
+
+### Map Notes
+Pin a note anywhere on the map to remember what happens there. Press the note button, then click the spot it belongs to and write down whatever you want to remember; press Escape to back out without placing one. Notes are not just for VTT mode: the button sits in the VTT toolbar while you are in play and in the map bar when you are not, and a note stays clickable and draggable either way. Shift+scroll over a note to resize it, and double-click it to fold it down to a marker so it stops covering the map; double-click again, or resize it, to bring it back to the size it was. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it to move it, whichever layer you happen to be editing. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to.
+
 ### Session Voice Chat
 Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who is in the channel.
 
@@ -221,13 +230,16 @@ Design structured language profiles (conlangs) with pronunciation guidance, nami
 Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.
 
 ### Dungeon & Delve Generator
-Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.
+Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks. After generating a delve, choose Generate Boss / Key NPC to create a site-anchored Character draft complete with lair sector, alert escalation, and inhabitant relationships.
 
 ### Adventure Idea Generator
 Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.
 
 ### Quest Hook Generator
 Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.
+
+### Encounter Generator
+Generate a playable combat, social, exploration, environmental, or mixed encounter -- not just a monster list. Each output includes an at-a-glance summary, a player-facing description, participants and their motives, environment, non-combat approaches, a complication, and outcomes/rewards. Threat is described in fictional terms so it works with any RPG system.
 
 ### Plot Twist & Complication Generator
 Start with an existing premise, scene, or campaign problem and generate a coherent reversal or complication. The generator preserves established facts, identifies an assumption that can be overturned, adds foreshadowing and consequences, and gives the players new choices. Add campaign context or constraints when you need the twist to fit an existing storyline.
@@ -242,7 +254,7 @@ Transform dungeon concepts into interactive spatial canvas maps. Open a generate
 Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.
 
 ### Presentation Templates
-Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Item and equipment table fields keep repeatable rows together: add items, edit their cells, adjust counters, and roll dice from the table. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
+Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types — text, number, dice, counter, or checkbox — so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
 
 
 ## Help Documentation
@@ -527,6 +539,7 @@ Once a layout is just how you want it, right-click any card (entity, file, or ot
 
 ### Related Blog Posts
 
+- [Introducing the Canvas: Visual Brainstorming Meets Structured Lore](/blog/introducing-the-canvas) — Practical workflows, worked examples, and tips for organizing freeform visual workspaces.
 - [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — How spatial layouts reduce cognitive load and reveal hidden lore connections.
 
 ---
@@ -631,6 +644,11 @@ Don't worry about adding the same entity twice. The system automatically detects
 ### Finding Other Canvases
 
 If the canvas you need isn't in the "Recents" list, select **Choose Canvas...** to open a searchable modal containing every board in your vault.
+
+### Related Blog Posts
+
+- [Introducing the Canvas: Visual Brainstorming Meets Structured Lore](/blog/introducing-the-canvas) — Practical workflows, worked examples, and tips for organizing freeform visual workspaces.
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — How spatial layouts reduce cognitive load and reveal hidden lore connections.
 
 ---
 
@@ -943,6 +961,16 @@ If you already have Codex Cryptica files on your computer — from another vault
 For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window.
 
 - **Seamless Sync**: Any entities you import or review in this popup are instantly saved and synchronized back to your main graph in real-time. No manual refresh required!
+
+## Import a Kanka Campaign
+
+Kanka's structured campaign export works without an AI key:
+
+1. In Kanka, request a **JSON campaign export** and download the generated ZIP.
+2. Drop the ZIP directly into Codex's importer. Do not unpack or convert it first.
+3. Review the entities, labels, attributes, explicit relations, and linked images before committing them to the current vault.
+
+Codex imports a copy and does not change the campaign in Kanka. Kanka permissions, dashboards, family-tree layouts, plugins, themes, and bookmarks are not part of Kanka's standard export and cannot be recreated by this import.
 
 ## Resilient Imports
 
@@ -1642,12 +1670,11 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 
 ## Presentation Templates
 
-Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or create a Markdown-based view with a live preview. Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
+Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
 
 ## Related reading
 
-- [Build Stat Sheets That Keep Your Table Moving](/blog/custom-stat-sheet-templates) — Design reusable layouts around the information you need during play.
-- [Present Your Stat Sheets Your Way](/blog/presentation-templates) — Build, preview, and share Markdown-based Presentation Templates.
+- [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.
 
 ---
 
@@ -1881,3 +1908,74 @@ vault owner. Material invented during play stays provisional and is not added to
 your canonical vault automatically.
 
 ---
+
+## TTRPG System & Genre Campaign Management
+
+Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, and toolsets for major tabletop RPG systems and worldbuilding genres:
+
+### [Codex Cryptica for Call of Cthulhu Keeper Notes & Scenarios](https://codexcryptica.com/for/call-of-cthulhu)
+
+**Summary:** Keep Investigators, contacts, handouts, clues, cults, and tomes connected in one local-first workspace.
+
+**Overview:** Call of Cthulhu scenarios quickly develop into webs of open leads, witness testimonies, physical handouts, and occult conspiracies across multiple sessions. When your Investigators follow a trail back to an archive or re-interview a local coroner weeks later, you shouldn't have to scramble through scattered notes to recall which clue led them there, what they uncovered, or which leads remain unresolved.
+
+### [Codex Cryptica for Cosmic Horror Worldbuilding & Campaigns](https://codexcryptica.com/for/cosmic-horror)
+
+**Summary:** Keep occult orders, research archives, expedition logs, and incomprehensible entities connected in one local-first workspace.
+
+**Overview:** Cosmic horror mysteries rarely reveal themselves in a straight line. A symbol found in session two turns out to belong to the research group mentioned six sessions later; an expedition log contradicts an official report; an NPC who seemed like a footnote is the only living person who has seen the same phenomenon. Codex Cryptica keeps those connections visible as the mystery grows so you always know what has been uncovered — and what is still waiting in the dark.
+
+### [Codex Cryptica for Cyberpunk RED Campaign Management](https://codexcryptica.com/for/cyberpunk-red)
+
+**Summary:** Keep fixers, megacorps, merc squads, street gangs, deal locations, and gig recaps connected in one place.
+
+**Overview:** Cyberpunk RED campaigns quickly grow into a web of corporate handlers, fixer contacts, gang territories, rival mercs, and street-level favours. When your edgerunners take a high-risk gig in a contested zone, you shouldn't have to search through loose notes to remember which megacorp owns the target — or who stands to profit.
+
+### [Codex Cryptica for D&D 5e Campaign Management](https://codexcryptica.com/for/dungeons-and-dragons)
+
+**Summary:** Keep every NPC, faction, location, and quest in your campaign connected — and findable when the party goes off-book.
+
+**Overview:** Every session adds another NPC, another rumour, and another faction the party has annoyed. Three months in, you are the one who has to remember why the local warden owes them a favour — usually mid-session, while five players wait for you to find the note.
+
+### [Codex Cryptica for Dystopian Sci-Fi Worldbuilding](https://codexcryptica.com/for/dystopian-sci-fi)
+
+**Summary:** Keep regimes, corporations, resistance movements, surveillance systems, districts, and campaign lore connected in one place.
+
+**Overview:** Dystopian sci-fi worlds are built from overlapping systems of power: governments, corporations, surveillance networks, resistance movements, controlled districts, and the people caught between them. When the players expose one secret, you should be able to see who benefits, who is threatened, and what changes next.
+
+### [Codex Cryptica for Fantasy Worldbuilding](https://codexcryptica.com/for/fantasy-worldbuilding)
+
+**Summary:** Build a fantasy setting without losing track of how it fits together. Connect realms, dynasties, religions, factions and centuries of history in one place.
+
+**Overview:** When a setting spans multiple provinces, lineages, rival faiths, and historical eras, flat notes and scattered documents break down. Codex Cryptica keeps your geography, factions, characters, and timelines interconnected so your world stays consistent.
+
+### [Codex Cryptica for Gothic Horror Campaigns & Worldbuilding](https://codexcryptica.com/for/gothic-horror)
+
+**Summary:** Keep families, estates, old promises, and buried secrets connected in one local-first workspace.
+
+**Overview:** Gothic horror campaigns turn on the weight of the past: inherited debts, estranged relatives, isolated manors, and buried family transgressions. When your players uncover a sealed portrait or confront the parish vicar, you shouldn't have to scramble through loose notes to recall which ancestor made the original promise — or who stands to lose everything when the truth comes to light.
+
+### [Codex Cryptica for Pathfinder 2e Campaign Management](https://codexcryptica.com/for/pathfinder-2e)
+
+**Summary:** Keep every NPC, faction, nation, and deity in your Adventure Path connected — and still findable three books later.
+
+**Overview:** An Adventure Path runs for months. By book three the party has crossed two nations, sworn an oath to one deity, and made an enemy of a society you invented as background colour. You are the one who has to remember which — usually mid-session, while four players wait.
+
+### [Codex Cryptica for Space Opera Campaigns](https://codexcryptica.com/for/space-opera)
+
+**Summary:** Keep star systems, worlds, governments, factions, crews, and trade routes connected across your galaxy.
+
+**Overview:** Space opera campaigns span dozens of systems, rival governments, criminal syndicates, and a crew's tangled web of contacts and enemies. When your players reach a new sector, you shouldn't have to reconstruct who controls it, who they owe favours to, and what's already gone wrong there.
+
+### [Codex Cryptica for Traveller Campaign Management](https://codexcryptica.com/for/traveller)
+
+**Summary:** Keep subsectors, worlds, patrons, Travellers, trade, and rival powers connected in one place.
+
+**Overview:** A Traveller campaign is a sandbox built from dozens of jump-linked worlds, each with its own government, trade goods, and local trouble. When your Travellers take a patron's job three parsecs out, you shouldn't have to dig through subsector notes to remember who they owe, who's hunting them, what cargo is in the hold, and what waits at the next jump.
+
+### [Codex Cryptica for Vampire: The Masquerade](https://codexcryptica.com/for/vampire-the-masquerade)
+
+**Summary:** Whether you run V5, V20, or classic Revised, a Vampire chronicle quickly becomes a web of Kindred politics, hunting grounds, boons, and lethal secrets. Keep that web connected in one place.
+
+**Overview:** Standard notes break down when every Kindred is tied to three debts, two mortal Touchstones, and a rival faction. When a Primogen shifts allegiance or a Masquerade breach threatens the city, you shouldn’t have to scramble through scattered documents to know who holds leverage over whom.
+
