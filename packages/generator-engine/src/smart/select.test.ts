@@ -121,3 +121,42 @@ describe("selectSmart", () => {
     ).toEqual([]);
   });
 });
+
+describe("selectSmart — relaxation when the strict pool is merely too small", () => {
+  it("relaxes requires when the strict pool is non-empty but smaller than count", () => {
+    // Two of five options require a trait the context lacks, leaving 3 valid
+    // candidates for a request of 4 — narrow() must not stop relaxing just
+    // because the strict pool happens to be non-empty (#2536 regression).
+    const pool = [
+      { value: "A" },
+      { value: "B" },
+      { value: "C" },
+      { value: "D", requires: { trait: "coastal" } },
+      { value: "E", requires: { trait: "coastal" } },
+    ] as const;
+    const inland = { genre: "Fantasy", values: {}, traits: [] };
+    const result = selectSmart(pool, 4, inland, {}, seededRng(23));
+    expect(result.values).toHaveLength(4);
+    // narrow() always tries dropping excludes before requires, even when only
+    // requires mattered here — the same order resolveSmart's own relaxation
+    // tests document.
+    expect(result.relaxations).toEqual([
+      { axisId: "selection", dropped: "excludes" },
+      { axisId: "selection", dropped: "requires" },
+    ]);
+  });
+
+  it("does not relax when the strict pool already meets the count", () => {
+    const pool = [
+      { value: "A" },
+      { value: "B" },
+      { value: "C" },
+      { value: "D", requires: { trait: "coastal" } },
+    ] as const;
+    const inland = { genre: "Fantasy", values: {}, traits: [] };
+    const result = selectSmart(pool, 3, inland, {}, seededRng(29));
+    expect(result.values).toHaveLength(3);
+    expect(result.values).not.toContain("D");
+    expect(result.relaxations).toEqual([]);
+  });
+});

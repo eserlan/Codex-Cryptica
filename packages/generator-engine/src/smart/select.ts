@@ -36,7 +36,7 @@ export function selectSmart(
   const options = expand(pool);
   if (count <= 0 || options.length === 0) return { values: [], relaxations };
 
-  const available = narrow(options, ctx, "selection", relaxations);
+  const available = narrow(options, ctx, "selection", relaxations, count);
   const bias = config.bias ?? {};
   let scored = available.map((option) => ({
     option,
