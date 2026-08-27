@@ -10,6 +10,7 @@ import { dystopianSciFi } from "./dystopian-sci-fi";
 import { spaceOpera } from "./space-opera";
 import { traveller } from "./traveller";
 import { cosmicHorror } from "./cosmic-horror";
+import { conspiracy } from "./conspiracy";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -23,4 +24,5 @@ export const packs: Record<string, LandingPageConfig> = {
   "dystopian-sci-fi": dystopianSciFi,
   "space-opera": spaceOpera,
   traveller,
+  conspiracy,
 };

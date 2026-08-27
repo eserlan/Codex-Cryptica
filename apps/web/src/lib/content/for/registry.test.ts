@@ -426,6 +426,84 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Conspiracy Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const conspiracy = getLandingPage("conspiracy");
+      expect(conspiracy).toBeDefined();
+      expect(conspiracy?.slug).toBe("conspiracy");
+      expect(conspiracy?.kind).toBe("genre");
+      expect(conspiracy?.theme).toBe("modern");
+      expect(conspiracy?.hub).toBe("modern");
+      expect(conspiracy?.surfaceStyle).toBe("sharp");
+      expect(conspiracy?.disclaimer).toBeUndefined();
+      expect(conspiracy?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/conspiracy.jpg",
+      );
+      expect(conspiracy?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(conspiracy?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic conspiracy / intrigue terminology and avoids generic fantasy", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const copy = JSON.stringify(conspiracy);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Verify authentic conspiracy terminology
+      expect(conspiracy.hero.eyebrow).toContain("Conspiracy & Intrigue");
+      expect(copy).toContain("shadow cabals");
+      expect(copy).toContain("puppet masters");
+      expect(copy).toContain("compromised assets");
+      expect(copy).toContain("The Obsidian Syndicate");
+      expect(copy).toContain("Aegis Global BioTech");
+      expect(copy).toContain("Senator Julian Vance");
+      expect(copy).toContain("Operation Black Glass");
+      expect(copy).toContain("Site 44");
+      expect(copy).toContain("local-first");
+      expect(conspiracy.cta.title).toBe("Uncover the Conspiracy");
+    });
+
+    it("maintains a valid hub-and-spoke conspiracy graph with categorized nodes", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const graph = conspiracy.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Obsidian Syndicate");
+      expect(hub.sublabel).toContain("Shadow Cabal");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Aegis Global BioTech")?.relation,
+      ).toBe("Funds via");
+      expect(
+        graph.steps.find((s) => s.label === "Senator Julian Vance")?.relation,
+      ).toBe("Blackmails");
+      expect(
+        graph.steps.find((s) => s.label === "Operation Black Glass")?.relation,
+      ).toBe("Directs");
+      expect(
+        graph.steps.find((s) => s.label === "Intercepted Audio Tape 09")
+          ?.relation,
+      ).toBe("Incriminated by");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
+  });
+
   describe("Cosmic Horror Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const cosmic = getLandingPage("cosmic-horror");
