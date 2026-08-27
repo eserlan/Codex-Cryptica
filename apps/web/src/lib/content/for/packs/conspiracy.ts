@@ -18,19 +18,19 @@ export const conspiracy: LandingPageConfig = {
     eyebrow: "Conspiracy & Intrigue Campaign Management",
     title: "Codex Cryptica for Conspiracy Campaigns",
     tagline:
-      "Keep shadow cabals, puppet masters, compromised assets, and classified evidence connected in one local-first workspace.",
+      "Keep organisations, operatives, fronts, evidence, and hidden relationships connected in one local-first workspace.",
     problemStatement:
-      "Running a conspiracy campaign means tracking what everyone appears to be versus who is actually pulling the strings. When an ally turns out to be an unwitting cut-out, a corporate front launders black budget funds, or a leaked tape implicates a high-ranking official, you shouldn't have to sift through tangled notes to remember who knows what — or who stands behind the curtain.",
+      "Running a conspiracy campaign means tracking what people and organisations appear to be, who they really answer to, and who knows which part of the truth. When an ally turns out to be an intermediary, a company is revealed as a front, or leaked evidence implicates someone higher up, you shouldn't have to dig through scattered notes to reconstruct the chain.",
   },
   useCases: [
     {
-      title: "Shadow Cabals, Shell Orgs & Handlers",
+      title: "Front Organisations & Hidden Networks",
       description:
-        "Map the hidden hierarchy between public front organisations, puppet figures, and the shadow handlers directing them.",
+        "Map public organisations, intermediaries, handlers, and the people or groups pulling the strings behind them.",
       icon: "icon-[lucide--network]",
     },
     {
-      title: "Compromised Assets, Double Agents & Cut-Outs",
+      title: "Contacts, Informants & Compromised Allies",
       description:
         "Track who is compromised, who is an unwitting informant, and what leverage each handler holds over their assets.",
       icon: "icon-[lucide--user-check]",
@@ -38,57 +38,57 @@ export const conspiracy: LandingPageConfig = {
     {
       title: "Dossiers, Wiretaps & Redacted Evidence",
       description:
-        "Connect surveillance logs, leaked transcripts, classified project memos, and physical clues directly to the truths they conceal.",
+        "Connect surveillance logs, transcripts, memos, and physical evidence to the people, places, and operations they reference.",
       icon: "icon-[lucide--file-text]",
     },
     {
-      title: "Black Sites, Safehouses & Operations",
+      title: "Safehouses, Covert Sites & Operations",
       description:
-        "Catalogue covert facilities, encrypted drop sites, black budgets, and escalation countdowns across your campaign.",
+        "Track safehouses, meeting points, covert facilities, and active operations alongside the people and organisations involved.",
       icon: "icon-[lucide--map-pin]",
     },
   ],
   exampleGraph: {
     title: "Sample Conspiracy & Intrigue Network",
     description:
-      "A shadow cabal, its corporate front, a compromised senator, a black-ops program, and the leaked evidence threatening exposure.",
+      "A private policy network, its corporate front, a compromised senator, a covert programme, and the leaked recording threatening exposure.",
     badgeLabel: "Conspiracy Network",
     palette: "default",
     surface: "dark",
     // Hub-and-spoke: every relation reads outward from the first node.
     steps: [
       {
-        label: "The Obsidian Syndicate",
-        sublabel: "Shadow Cabal • Handlers",
+        label: "The Meridian Group",
+        sublabel: "Policy Network • Shadow Leadership",
         category: "faction",
       },
       {
-        label: "Aegis Global BioTech",
+        label: "Calder Biomedical Holdings",
         sublabel: "Corporate Front • Shell Company",
         relation: "Funds via",
         category: "faction",
       },
       {
         label: "Senator Julian Vance",
-        sublabel: "Public Official • Compromised Asset",
+        sublabel: "Public Official • Compromised Contact",
         relation: "Blackmails",
         category: "character",
       },
       {
-        label: "Operation Black Glass",
-        sublabel: "Black Ops Program • Covert Project",
+        label: "Project Glasshouse",
+        sublabel: "Covert Programme • Active Operation",
         relation: "Directs",
         category: "faction",
       },
       {
-        label: "Intercepted Audio Tape 09",
-        sublabel: "Classified Evidence • Leaked Wiretap",
+        label: "Meeting Recording, 14 March",
+        sublabel: "Leaked Audio • Physical Evidence",
         relation: "Incriminated by",
         category: "item",
       },
       {
-        label: "Site 44 Research Outpost",
-        sublabel: "Black Site Facility • Quarantine Lab",
+        label: "Northfield Research Annex",
+        sublabel: "Restricted Facility • Covert Site",
         relation: "Operates",
         category: "location",
       },
@@ -98,36 +98,36 @@ export const conspiracy: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design shadow cabals, corporate fronts, intelligence agencies, and secret societies.",
+        "Create organisations and factions you can adapt into fronts, political groups, and secret networks.",
       href: "/generators/faction",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Create handlers, double agents, whistleblowers, and puppet officials with secret motives.",
+        "Create contacts, officials, operatives, and informants with motives, loyalties, and secrets.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Settlement Generator",
       description:
-        "Build government districts, black site compounds, corporate research facilities, and safehouses.",
+        "Generate districts and settlements you can adapt into government, corporate, or covert locations.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Generate conspiracy leads, blackmail schemes, whistleblowing crises, and cover-up operations.",
+        "Generate conspiracy leads, blackmail schemes, leaks, missing persons, and cover-up operations.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Uncover the Conspiracy",
+    title: "Map the Conspiracy",
     description:
-      "Keep your conspiracy campaigns and political intrigue worlds connected with relationship graphs, classified timelines, and local-first notes.",
+      "Keep people, organisations, evidence, and timelines connected with relationship graphs and local-first notes.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },

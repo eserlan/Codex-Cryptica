@@ -453,16 +453,17 @@ describe("Landing Page Registry", () => {
 
       // Verify authentic conspiracy terminology
       expect(conspiracy.hero.eyebrow).toContain("Conspiracy & Intrigue");
-      expect(copy).toContain("shadow cabals");
-      expect(copy).toContain("puppet masters");
-      expect(copy).toContain("compromised assets");
-      expect(copy).toContain("The Obsidian Syndicate");
-      expect(copy).toContain("Aegis Global BioTech");
+      expect(copy).toContain("operatives");
+      expect(copy).toContain("fronts");
+      expect(copy).toContain("evidence");
+      expect(copy).toContain("hidden relationships");
+      expect(copy).toContain("The Meridian Group");
+      expect(copy).toContain("Calder Biomedical Holdings");
       expect(copy).toContain("Senator Julian Vance");
-      expect(copy).toContain("Operation Black Glass");
-      expect(copy).toContain("Site 44");
+      expect(copy).toContain("Project Glasshouse");
+      expect(copy).toContain("Northfield Research Annex");
       expect(copy).toContain("local-first");
-      expect(conspiracy.cta.title).toBe("Uncover the Conspiracy");
+      expect(conspiracy.cta.title).toBe("Map the Conspiracy");
     });
 
     it("maintains a valid hub-and-spoke conspiracy graph with categorized nodes", () => {
@@ -474,8 +475,8 @@ describe("Landing Page Registry", () => {
       const [hub, ...spokes] = graph.steps;
       expect(hub.relation).toBeUndefined();
       expect(hub.category).toBe("faction");
-      expect(hub.label).toBe("The Obsidian Syndicate");
-      expect(hub.sublabel).toContain("Shadow Cabal");
+      expect(hub.label).toBe("The Meridian Group");
+      expect(hub.sublabel).toContain("Policy Network");
 
       for (const spoke of spokes) {
         expect(spoke.relation).toBeTruthy();
@@ -483,16 +484,17 @@ describe("Landing Page Registry", () => {
       }
 
       expect(
-        graph.steps.find((s) => s.label === "Aegis Global BioTech")?.relation,
+        graph.steps.find((s) => s.label === "Calder Biomedical Holdings")
+          ?.relation,
       ).toBe("Funds via");
       expect(
         graph.steps.find((s) => s.label === "Senator Julian Vance")?.relation,
       ).toBe("Blackmails");
       expect(
-        graph.steps.find((s) => s.label === "Operation Black Glass")?.relation,
+        graph.steps.find((s) => s.label === "Project Glasshouse")?.relation,
       ).toBe("Directs");
       expect(
-        graph.steps.find((s) => s.label === "Intercepted Audio Tape 09")
+        graph.steps.find((s) => s.label === "Meeting Recording, 14 March")
           ?.relation,
       ).toBe("Incriminated by");
 
