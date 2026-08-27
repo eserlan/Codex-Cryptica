@@ -162,6 +162,23 @@ describe("VTTTileDeckManager", () => {
     expect(manager.removeDeck(deck!.id)).toBe(false);
   });
 
+  it("exposes pending placement details for armed tile feedback and cancels placement", () => {
+    const { manager } = createManager();
+    const deck = manager.createDeck("Dungeon", [
+      { name: "Armory", imagePath: "files/armory.png" },
+    ]);
+    const tile = manager.select(deck!.id, deck!.tiles[0].id);
+    expect(tile).not.toBeNull();
+    expect(manager.pendingPlacement).toMatchObject({
+      deckId: deck!.id,
+      tile: expect.objectContaining({ name: "Armory" }),
+      valid: true,
+    });
+
+    manager.cancelPendingPlacement();
+    expect(manager.pendingPlacement).toBeNull();
+  });
+
   it("refuses empty decks and hard-edge placements that overlap an existing tile", () => {
     const { manager, tokens, addToken } = createManager();
     expect(

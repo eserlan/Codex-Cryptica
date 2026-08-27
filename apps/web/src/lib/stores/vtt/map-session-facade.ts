@@ -264,6 +264,18 @@ export abstract class MapSessionFacade {
   cancelPendingTilePlacement() {
     this.tileDeckManager.cancelPendingPlacement();
   }
+  get armedTile() {
+    const pending = this.tileDeckManager.pendingPlacement;
+    if (!pending) return null;
+    return {
+      deckId: pending.deckId,
+      tileId: pending.tile.id,
+      name: pending.tile.name,
+    };
+  }
+  clearArmedTile() {
+    this.cancelPendingTilePlacement();
+  }
   get selectedToken() {
     return this.tokenManager.selectedToken;
   }
@@ -472,7 +484,13 @@ export abstract class MapSessionFacade {
    * first" rather than failing silently.
    */
   addNote(
-    input: { name: string; body?: string; x?: number; y?: number },
+    input: {
+      name: string;
+      body?: string;
+      x?: number;
+      y?: number;
+      parentTokenId?: string;
+    },
     silent = false,
   ) {
     if (!this.mapId) return null;
@@ -487,12 +505,25 @@ export abstract class MapSessionFacade {
         y: position.y,
         kind: "note",
         noteBody: input.body ?? "",
+        parentTokenId: input.parentTokenId,
         // Always the token layer, whatever the GM has active — a note pinned
         // onto the terrain layer would render underneath the tiles it annotates.
         layer: "token",
       },
       silent,
     );
+  }
+
+  getChildNotes(parentTokenId: string) {
+    return this.tokenManager.getChildNotes(parentTokenId);
+  }
+
+  linkTokens(childTokenId: string, parentTokenId: string) {
+    return this.tokenManager.linkTokens(childTokenId, parentTokenId);
+  }
+
+  unlinkToken(childTokenId: string) {
+    return this.tokenManager.unlinkToken(childTokenId);
   }
 
   requestTokenAdd(input: TokenCreationInput) {

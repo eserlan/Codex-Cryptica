@@ -49,6 +49,8 @@ export interface Token {
   tileDetails?: TileDetails;
   /** Freeform body text for `kind: "note"`. Undefined on every other kind. */
   noteBody?: string;
+  /** If attached to a parent token (e.g. a note attached to a room tile). */
+  parentTokenId?: string;
   /**
    * The size a collapsed note should spring back to. Its presence *is* the
    * collapsed state — a note is collapsed exactly when it has a size to
@@ -74,6 +76,7 @@ export interface TileDeckEntry {
   name: string;
   imagePath: string;
   category?: string;
+  searchTerms?: string[];
 }
 
 /**
@@ -229,6 +232,8 @@ export function normalizeToken(
     kind: normalizeTokenKind(token.kind),
     layer: normalizeMapLayer(token.layer, token.kind),
     tileDeckId: token.tileDeckId ?? null,
+    parentTokenId:
+      typeof token.parentTokenId === "string" ? token.parentTokenId : undefined,
     noteBody: token.kind === "note" ? (token.noteBody ?? "") : undefined,
     noteCollapsedFrom:
       token.kind === "note" && isNoteSize(token.noteCollapsedFrom)

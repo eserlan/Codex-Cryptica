@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from "svelte";
+  import { parseNoteMarkdown } from "map-engine";
 
   /**
    * The body of a note pinned to the map. Notes carry one block of prose
@@ -19,6 +20,7 @@
     generating = false,
     savingToVault = false,
     onChange,
+    onBlur,
     onToggleCollapsed,
     onGenerateEncounter,
     onSaveToVault,
@@ -31,6 +33,7 @@
     /** True while this note is being written into the vault as an entity. */
     savingToVault?: boolean;
     onChange: (body: string) => void;
+    onBlur?: () => void;
     onToggleCollapsed?: () => void;
     /**
      * Fills an empty note with a generated encounter. Passed only when AI
@@ -46,6 +49,8 @@
   } = $props();
 
   let textarea = $state<HTMLTextAreaElement | null>(null);
+  let viewMode = $state<"edit" | "preview">("edit");
+  const parsedBlocks = $derived(parseNoteMarkdown(body));
 
   // An empty note is a note the GM has not written into yet, so offering to
   // fill it costs them nothing. Once there is anything in the body, the offer
@@ -142,12 +147,48 @@
   data-testid="token-note-editor"
 >
   <div class="flex items-center justify-between gap-2">
-    <h4
-      id="token-note-heading"
-      class="text-[10px] font-bold uppercase tracking-widest text-theme-primary"
-    >
-      Note
-    </h4>
+    <div class="flex items-center gap-2">
+      <h4
+        id="token-note-heading"
+        class="text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+      >
+        Note
+      </h4>
+      <div
+        class="flex rounded border border-theme-border bg-theme-bg/60 p-0.5 text-[10px]"
+        role="group"
+        aria-label="Editor view mode"
+      >
+        <button
+          type="button"
+          onclick={() => (viewMode = "edit")}
+          class={[
+            "rounded px-1.5 py-0.5 font-medium transition-colors",
+            viewMode === "edit"
+              ? "bg-theme-surface text-theme-primary font-bold shadow-xs"
+              : "text-theme-muted hover:text-theme-text",
+          ]}
+          aria-pressed={viewMode === "edit"}
+          data-testid="token-note-mode-edit"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          onclick={() => (viewMode = "preview")}
+          class={[
+            "rounded px-1.5 py-0.5 font-medium transition-colors",
+            viewMode === "preview"
+              ? "bg-theme-surface text-theme-primary font-bold shadow-xs"
+              : "text-theme-muted hover:text-theme-text",
+          ]}
+          aria-pressed={viewMode === "preview"}
+          data-testid="token-note-mode-preview"
+        >
+          Preview
+        </button>
+      </div>
+    </div>
     {#if onToggleCollapsed && !disabled}
       <button
         type="button"
@@ -181,40 +222,85 @@
       {generating ? "Generating encounter…" : "Generate an encounter"}
     </button>
   {/if}
-  {#if !disabled}
+  {#if viewMode === "edit"}
+    {#if !disabled}
+      <div
+        class="flex items-center gap-0.5"
+        role="toolbar"
+        aria-label="Note formatting"
+        aria-controls="token-note-body"
+        data-testid="token-note-format-toolbar"
+      >
+        {#each FORMAT_ACTIONS as action (action.id)}
+          <button
+            type="button"
+            class="rounded p-1.5 text-theme-muted transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
+            onclick={action.apply}
+            title={action.label}
+            aria-label={action.label}
+            data-testid={`token-note-format-${action.id}`}
+          >
+            <span aria-hidden="true" class={`${action.icon} h-3.5 w-3.5`}
+            ></span>
+          </button>
+        {/each}
+      </div>
+    {/if}
+    <textarea
+      bind:this={textarea}
+      id="token-note-body"
+      value={body}
+      {disabled}
+      rows="5"
+      aria-label="Note body"
+      data-testid="token-note-body"
+      placeholder="What happens here…"
+      oninput={(event) => onChange(event.currentTarget.value)}
+      onblur={onBlur}
+      class="w-full resize-y rounded-lg border border-theme-border bg-theme-surface px-2.5 py-2 text-sm text-theme-text outline-none focus:border-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+    ></textarea>
+  {:else}
     <div
-      class="flex items-center gap-0.5"
-      role="toolbar"
-      aria-label="Note formatting"
-      aria-controls="token-note-body"
-      data-testid="token-note-format-toolbar"
+      class="w-full min-h-[120px] max-h-64 overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-2.5 text-xs text-theme-text space-y-1.5"
+      data-testid="token-note-preview-content"
     >
-      {#each FORMAT_ACTIONS as action (action.id)}
-        <button
-          type="button"
-          class="rounded p-1.5 text-theme-muted transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
-          onclick={action.apply}
-          title={action.label}
-          aria-label={action.label}
-          data-testid={`token-note-format-${action.id}`}
-        >
-          <span aria-hidden="true" class={`${action.icon} h-3.5 w-3.5`}></span>
-        </button>
-      {/each}
+      {#if parsedBlocks.length === 0}
+        <p class="text-theme-muted italic text-[11px]">Empty note</p>
+      {:else}
+        {#each parsedBlocks as block}
+          {#if block.heading}
+            <h4 class="font-bold text-theme-primary font-header text-xs pt-1">
+              {#each block.runs as run}
+                <span class={[run.bold && "font-bold", run.italic && "italic"]}
+                  >{run.text}</span
+                >
+              {/each}
+            </h4>
+          {:else if block.bullet}
+            <div class="flex items-start gap-1.5 pl-1">
+              <span class="text-theme-primary select-none">•</span>
+              <p class="flex-1 text-[11px] leading-relaxed">
+                {#each block.runs as run}
+                  <span
+                    class={[run.bold && "font-bold", run.italic && "italic"]}
+                    >{run.text}</span
+                  >
+                {/each}
+              </p>
+            </div>
+          {:else}
+            <p class="text-[11px] leading-relaxed">
+              {#each block.runs as run}
+                <span class={[run.bold && "font-bold", run.italic && "italic"]}
+                  >{run.text}</span
+                >
+              {/each}
+            </p>
+          {/if}
+        {/each}
+      {/if}
     </div>
   {/if}
-  <textarea
-    bind:this={textarea}
-    id="token-note-body"
-    value={body}
-    {disabled}
-    rows="5"
-    aria-label="Note body"
-    data-testid="token-note-body"
-    placeholder="What happens here…"
-    oninput={(event) => onChange(event.currentTarget.value)}
-    class="w-full resize-y rounded-lg border border-theme-border bg-theme-surface px-2.5 py-2 text-sm text-theme-text outline-none focus:border-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
-  ></textarea>
   {#if canSaveToVault}
     <button
       type="button"

@@ -10,7 +10,8 @@ import type { SessionMode } from "../../../types/vtt";
 import type { Entity, Point } from "schema";
 
 export const VTT_ENTITY_TYPES = ["character", "creature", "item"];
-const ENTITY_TRANSFER_TYPE = "application/codex-entity";
+export const ENTITY_TRANSFER_TYPE = "application/codex-entity";
+export const TILE_TRANSFER_TYPE = "application/x-codex-tile";
 
 type MapPageMapStore = {
   activeMap: unknown;
@@ -27,6 +28,9 @@ type MapPageSession = {
   dragPreview?: { entityId: string } | null;
   clearDragPreview(): void;
   setDragPreview(preview: { entityId: string; x: number; y: number }): void;
+  selectTile(deckId: string, tileId: string, size?: number): unknown;
+  updatePendingTilePlacement(x: number, y: number): void;
+  placePendingTile(): unknown;
   addToken(input: {
     name: string;
     entityId: string;
@@ -200,6 +204,11 @@ export class MapPageController {
       return;
     }
 
+    if (this.isTileDrag(dataTransfer)) {
+      this.dropTile(event, dataTransfer);
+      return;
+    }
+
     if (dataTransfer.files?.length > 0) {
       this.files = dataTransfer.files;
       this.showUpload = true;
@@ -302,5 +311,30 @@ export class MapPageController {
   private isEntityDrag(dataTransfer: DataTransfer | null) {
     if (!dataTransfer) return false;
     return Array.from(dataTransfer.types).includes(ENTITY_TRANSFER_TYPE);
+  }
+
+  private isTileDrag(dataTransfer: DataTransfer | null) {
+    if (!dataTransfer) return false;
+    return Array.from(dataTransfer.types).includes(TILE_TRANSFER_TYPE);
+  }
+
+  private dropTile(event: DragEvent, dataTransfer: DataTransfer) {
+    if (this.sessionModeStore.isGuestMode) return;
+    const raw = dataTransfer.getData(TILE_TRANSFER_TYPE);
+    if (!raw) return;
+    try {
+      const { deckId, tileId } = JSON.parse(raw) as {
+        deckId?: string;
+        tileId?: string;
+      };
+      if (!deckId || !tileId) return;
+      const mapCoords = this.eventToMapCoords(event);
+      const tile = this.mapSession.selectTile(deckId, tileId);
+      if (!tile) return;
+      this.mapSession.updatePendingTilePlacement(mapCoords.x, mapCoords.y);
+      this.mapSession.placePendingTile();
+    } catch (err) {
+      console.error("[MapPageController] Error dropping tile:", err);
+    }
   }
 }
