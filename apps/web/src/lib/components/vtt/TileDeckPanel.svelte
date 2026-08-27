@@ -8,6 +8,11 @@
     STARTER_DECK_CATALOG,
     StarterTileDeckService,
   } from "$lib/services/vtt/StarterTileDeckService";
+  import {
+    randomSources,
+    ensureRandomSourcesLoaded,
+  } from "$lib/features/random";
+  import type { TileDeckStockingMode } from "../../../types/vtt";
 
   let deckName = $state("");
   let files = $state<File[]>([]);
@@ -18,6 +23,10 @@
     Record<string, { loaded: number; total: number }>
   >({});
   let activeCategory = $state<Record<string, string>>({});
+  /** Tables are only read here, so they are loaded on mount like every other view that lists them. */
+  $effect(() => {
+    void ensureRandomSourcesLoaded();
+  });
   let imageUrls = $state<Record<string, string>>({});
   const resolvingPaths = new Set<string>();
 
@@ -41,6 +50,45 @@
       }),
     );
   });
+
+  function stockingModeFor(deck: (typeof mapSession.tileDecks)[number]) {
+    return deck.stocking?.mode ?? "none";
+  }
+
+  function setStockingMode(
+    deck: (typeof mapSession.tileDecks)[number],
+    mode: TileDeckStockingMode,
+  ) {
+    mapSession.setTileDeckStocking(deck.id, {
+      ...deck.stocking,
+      mode,
+      // Switching to "table" preselects the vault's first table, so the
+      // picker is never sitting on an empty choice that silently rolls nothing.
+      tableId: deck.stocking?.tableId ?? randomSources.tables[0]?.id,
+    });
+  }
+
+  function setStockingTable(
+    deck: (typeof mapSession.tileDecks)[number],
+    tableId: string,
+  ) {
+    mapSession.setTileDeckStocking(deck.id, {
+      ...deck.stocking,
+      mode: "table",
+      tableId,
+    });
+  }
+
+  function setStockingFrequency(
+    deck: (typeof mapSession.tileDecks)[number],
+    frequency: number,
+  ) {
+    mapSession.setTileDeckStocking(deck.id, {
+      mode: stockingModeFor(deck),
+      tableId: deck.stocking?.tableId,
+      frequency,
+    });
+  }
 
   function selectFiles(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -330,6 +378,76 @@
                 aria-hidden="true"
               ></span>Draw</button
             >
+          </div>
+          <div class="mt-2 space-y-1.5 border-t border-theme-border pt-2">
+            <label
+              class="block text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+              for="stocking-mode-{deck.id}">On draw</label
+            >
+            <select
+              id="stocking-mode-{deck.id}"
+              value={stockingModeFor(deck)}
+              onchange={(event) =>
+                setStockingMode(
+                  deck,
+                  event.currentTarget.value as TileDeckStockingMode,
+                )}
+              class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
+            >
+              <option value="none">Place the tile only</option>
+              <option value="table">Roll a table onto a note</option>
+              <option value="encounter">Pin an encounter note</option>
+            </select>
+            {#if stockingModeFor(deck) !== "none"}
+              <label class="sr-only" for="stocking-frequency-{deck.id}"
+                >How often {deck.name} pins a note</label
+              >
+              <select
+                id="stocking-frequency-{deck.id}"
+                value={String(deck.stocking?.frequency ?? 1)}
+                onchange={(event) =>
+                  setStockingFrequency(deck, Number(event.currentTarget.value))}
+                class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
+              >
+                <option value="1">On every drawn tile</option>
+                <option value="2">On 1 drawn tile in 2</option>
+                <option value="3">On 1 drawn tile in 3</option>
+                <option value="4">On 1 drawn tile in 4</option>
+                <option value="6">On 1 drawn tile in 6</option>
+              </select>
+            {/if}
+            {#if stockingModeFor(deck) === "encounter"}
+              <p class="text-[10px] text-theme-muted">
+                An empty note is pinned on the tile, with a button to generate
+                the encounter when you get there.
+              </p>
+            {/if}
+            {#if stockingModeFor(deck) === "table"}
+              {#if randomSources.tables.length > 0}
+                <label class="sr-only" for="stocking-table-{deck.id}"
+                  >Table rolled for {deck.name}</label
+                >
+                <select
+                  id="stocking-table-{deck.id}"
+                  value={deck.stocking?.tableId ?? ""}
+                  onchange={(event) =>
+                    setStockingTable(deck, event.currentTarget.value)}
+                  class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
+                >
+                  <option value="" disabled>Choose a table…</option>
+                  {#each randomSources.tables as table (table.id)}
+                    <option value={table.id}>{table.name}</option>
+                  {/each}
+                </select>
+                <p class="text-[10px] text-theme-muted">
+                  The result is pinned as a note on the tile.
+                </p>
+              {:else}
+                <p class="text-[10px] text-theme-muted">
+                  This vault has no random tables yet.
+                </p>
+              {/if}
+            {/if}
           </div>
           <div class="mt-3 border-t border-theme-border pt-2">
             <button

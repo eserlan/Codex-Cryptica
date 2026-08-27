@@ -10,6 +10,16 @@ function createManager(options?: {
   };
   getActiveLayer?: () => string;
   tokens?: Record<string, any>;
+  rollStockingTable?: (
+    tableId: string,
+  ) => { name: string; text: string } | null;
+  pinTileNote?: (input: {
+    name: string;
+    body: string;
+    x: number;
+    y: number;
+  }) => void;
+  random?: () => number;
 }) {
   const tokens: Record<string, any> = options?.tokens ?? {};
   const addToken = vi.fn((input) => {
@@ -36,6 +46,9 @@ function createManager(options?: {
         : undefined,
       getActiveLayer,
       setActiveLayer,
+      rollStockingTable: options?.rollStockingTable,
+      pinTileNote: options?.pinTileNote,
+      random: options?.random,
     },
     { uuid: () => `id-${nextId++}` },
   );
@@ -291,5 +304,133 @@ describe("VTTTileDeckManager", () => {
       false,
     );
     expect(setActiveLayer).not.toHaveBeenCalled();
+  });
+});
+
+describe("VTTTileDeckManager stocking", () => {
+  function stockedDeck(
+    options: Parameters<typeof createManager>[0] & { stocking: any },
+  ) {
+    const harness = createManager(options);
+    const deck = harness.manager.createDeck("Rooms", [
+      { name: "Crypt", imagePath: "crypt.png" },
+    ])!;
+    harness.manager.setStocking(deck.id, options.stocking);
+    return { ...harness, deck };
+  }
+
+  it("pins the rolled table result as a note centred on the drawn tile", () => {
+    const pinTileNote = vi.fn();
+    const rollStockingTable = vi.fn(() => ({
+      name: "Dungeon dressing",
+      text: "2 goblins arguing over a map",
+    }));
+    const { manager, deck } = stockedDeck({
+      pinTileNote,
+      rollStockingTable,
+      stocking: { mode: "table", tableId: "table-1" },
+    });
+
+    manager.draw(deck.id, 200);
+    // A roll before the tile lands would be a roll the GM could cancel away.
+    expect(rollStockingTable).not.toHaveBeenCalled();
+
+    manager.updatePendingPlacement(100, 300);
+    manager.placePending();
+
+    expect(rollStockingTable).toHaveBeenCalledWith("table-1");
+    expect(pinTileNote).toHaveBeenCalledWith({
+      name: "Dungeon dressing",
+      body: "2 goblins arguing over a map",
+      x: 200,
+      y: 400,
+    });
+  });
+
+  it("pins an empty note for the encounter mode, for the GM to fill from the note", () => {
+    const pinTileNote = vi.fn();
+    const { manager, deck } = stockedDeck({
+      pinTileNote,
+      stocking: { mode: "encounter" },
+    });
+
+    manager.draw(deck.id, 100);
+    manager.updatePendingPlacement(0, 0);
+    manager.placePending();
+
+    expect(pinTileNote).toHaveBeenCalledWith({
+      name: "Encounter",
+      body: "",
+      x: 50,
+      y: 50,
+    });
+  });
+
+  it("pins a note on one drawn tile in three, and rolls no table on the other two", () => {
+    const pinTileNote = vi.fn();
+    const rollStockingTable = vi.fn(() => ({ name: "T", text: "something" }));
+    const rolls = [0.1, 0.5, 0.9];
+    let next = 0;
+    const { manager, deck } = stockedDeck({
+      pinTileNote,
+      rollStockingTable,
+      random: () => rolls[next++],
+      stocking: { mode: "table", tableId: "table-1", frequency: 3 },
+    });
+
+    for (let i = 0; i < 3; i++) {
+      manager.draw(deck.id, 100);
+      manager.updatePendingPlacement(0, 0);
+      manager.placePending();
+    }
+
+    expect(pinTileNote).toHaveBeenCalledOnce();
+    expect(rollStockingTable).toHaveBeenCalledOnce();
+  });
+
+  it("leaves a hand-picked tile unstocked", () => {
+    const pinTileNote = vi.fn();
+    const { manager, deck } = stockedDeck({
+      pinTileNote,
+      rollStockingTable: () => ({ name: "T", text: "something" }),
+      stocking: { mode: "table", tableId: "table-1" },
+    });
+
+    manager.select(deck.id, deck.tiles[0].id);
+    manager.updatePendingPlacement(0, 0);
+    manager.placePending();
+
+    expect(pinTileNote).not.toHaveBeenCalled();
+  });
+
+  it("pins nothing when the table has gone from the vault", () => {
+    const pinTileNote = vi.fn();
+    const { manager, deck } = stockedDeck({
+      pinTileNote,
+      rollStockingTable: () => null,
+      stocking: { mode: "table", tableId: "missing" },
+    });
+
+    manager.draw(deck.id);
+    manager.updatePendingPlacement(0, 0);
+    manager.placePending();
+
+    expect(pinTileNote).not.toHaveBeenCalled();
+  });
+
+  it("clears the setting when stocking is turned back off, and persists both ways", () => {
+    const { manager, persistDraft, deck } = stockedDeck({
+      stocking: { mode: "table", tableId: "table-1" },
+    });
+
+    expect(manager.decks[0].stocking).toEqual({
+      mode: "table",
+      tableId: "table-1",
+    });
+
+    manager.setStocking(deck.id, { mode: "none" });
+    expect(manager.decks[0].stocking).toBeUndefined();
+    // createDeck + both stocking changes.
+    expect(persistDraft).toHaveBeenCalledTimes(3);
   });
 });

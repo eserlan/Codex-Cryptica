@@ -24,6 +24,8 @@ export type {
   TokenImageFocus,
   TileDeck,
   TileDeckEntry,
+  TileDeckStocking,
+  TileDeckStockingMode,
   TileDetails,
   TokenKind,
   TokenVisibility,

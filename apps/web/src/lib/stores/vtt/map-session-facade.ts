@@ -20,6 +20,7 @@ import type {
   DragPreview,
   EncounterSession,
   SessionMode,
+  TileDeckStocking,
   Token,
   TokenCreationInput,
   TokenStateUpdateInput,
@@ -241,6 +242,9 @@ export abstract class MapSessionFacade {
   }
   setTileDeckHardEdges(deckId: string, hardEdges: boolean) {
     this.tileDeckManager.setHardEdges(deckId, hardEdges);
+  }
+  setTileDeckStocking(deckId: string, stocking: TileDeckStocking) {
+    this.tileDeckManager.setStocking(deckId, stocking);
   }
   drawTile(deckId: string, size = 150) {
     return this.tileDeckManager.draw(deckId, size);
