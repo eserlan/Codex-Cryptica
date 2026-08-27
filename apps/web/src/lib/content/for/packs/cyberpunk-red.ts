@@ -18,46 +18,47 @@ export const cyberpunkRed: LandingPageConfig = {
     eyebrow: "Time of the RED Campaign & Crew Management",
     title: "Codex Cryptica for Cyberpunk RED",
     tagline:
-      "Keep fixers, edgerunner crews, megacorp handlers, boostergang turf, and high-risk gigs connected in one local-first workspace.",
+      "Keep Fixers, crews, corps, gangs, and gigs connected in one local-first workspace.",
     problemStatement:
-      "In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, or an old choom from your Lifepath calls in a desperate favour, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.",
+      "In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, or an old choom from your Lifepath calls in a favour, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.",
   },
   useCases: [
     {
       title: "Fixers, Edgerunner Crews & Contacts",
       description:
-        "Map the web between district Fixers, Solos, Netrunners, Techs, Medtechs, and Lawmen alongside trusted chooms, unpaid street debts, and Lifepath rivalries that tie them together.",
+        "Map Fixers, crew members, street contacts, rivals, and debts in one visual relationship graph.",
       icon: "icon-[lucide--users]",
     },
     {
       title: "Megacorps, Boostergangs & Nomad Packs",
       description:
-        "Track corporate executives, boostergang turf, Nomad family convoys, and black-market syndicates across Night City's contested districts.",
+        "Track corporate agents, boostergang turf, Nomad convoys, and rival crews across Night City's contested districts.",
       icon: "icon-[lucide--building-2]",
     },
     {
-      title: "Gigs, Night Markets & Local Data Pools",
+      title: "Gigs, Deals & Night Markets",
       description:
-        "Connect active job briefs, fixer cut percentages, scavenged cargo, encrypted datashards, and debrief notes to the crews and locations involved.",
+        "Connect active job briefs, payment terms, scavenged cargo, datashards, and debrief notes to the people and locations involved.",
       icon: "icon-[lucide--file-text]",
     },
     {
-      title: "Combat Zones, Concourse Towers & Safehouses",
+      title: "Districts, Safehouses & Job Sites",
       description:
-        "Catalogue cube hotels, corporate concourses, abandoned subways, container parks, and fortified bolt-holes with connected maps and district notes.",
+        "Catalogue city districts, corporate towers, container yards, and fortified safehouses alongside your campaign notes.",
       icon: "icon-[lucide--map-pin]",
     },
   ],
   exampleGraph: {
     title: "Night City Gig & Contact Web",
     description:
-      "One district Fixer, his corporate client, the boostergang guarding the drop zone, the target datashard, and the Solo on contract.",
+      "One district Fixer, his corporate client, the boostergang guarding the drop zone, the target datashard, and the Solo on retainer.",
     badgeLabel: "Gig & Contact Web",
     palette: "default",
     surface: "dark",
+    // Hub-and-spoke: every relation reads outward from the first node.
     steps: [
       {
-        label: "Jax 'Chrome' Vance",
+        label: "Jax Vance",
         sublabel: "Fixer • District Broker",
         category: "character",
       },
@@ -70,7 +71,7 @@ export const cyberpunkRed: LandingPageConfig = {
       {
         label: "Iron Sights",
         sublabel: "Boostergang • Turf Rival",
-        relation: "Evades territory of",
+        relation: "Has truce with",
         category: "faction",
       },
       {
@@ -88,7 +89,7 @@ export const cyberpunkRed: LandingPageConfig = {
       {
         label: "Rook",
         sublabel: "Solo • Merc for Hire",
-        relation: "Hires on contract",
+        relation: "Hires",
         category: "character",
       },
     ],
@@ -97,28 +98,28 @@ export const cyberpunkRed: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design megacorp subsidiaries, boostergangs, Nomad packs, and private security syndicates.",
+        "Design corporations, street gangs, Nomad packs, and mercenary outfits.",
       href: "/generators/faction",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Create Fixers, Solos, Netrunners, Exec handlers, and street-level contacts with distinct motivations and cyberware notes.",
+        "Create fixers, solos, corporate contacts, and street figures with distinct motives.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Settlement Generator",
       description:
-        "Build urban blocks, corporate concourses, Combat Zone ruins, Night Markets, and container settlements.",
+        "Build urban districts, corporate sectors, combat zones, and night markets.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Generate gig briefs, corporate extractions, turf wars, and high-risk datashard recovery contracts.",
+        "Generate gig briefs, corporate jobs, street conflicts, and recovery contracts.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
@@ -126,8 +127,8 @@ export const cyberpunkRed: LandingPageConfig = {
   cta: {
     title: "Map the Street. Run the Gig.",
     description:
-      "Keep your Cyberpunk RED campaign connected with relationship graphs, district maps, and local-first notes that stay on your machine.",
-    buttonText: "Start Your Campaign Free",
+      "Keep your Cyberpunk RED campaign connected with relationship graphs, district maps, and local-first notes.",
+    buttonText: "Start Building Free",
     buttonHref: "/app",
   },
   disclaimer:

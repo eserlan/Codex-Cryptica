@@ -352,9 +352,6 @@ describe("Landing Page Registry", () => {
       // Verify authentic Time of the RED terminology
       expect(cp.hero.eyebrow).toContain("Time of the RED");
       expect(copy).toContain("Fixers");
-      expect(copy).toContain("Solos");
-      expect(copy).toContain("Netrunners");
-      expect(copy).toContain("Medtechs");
       expect(copy).toContain("edgerunner");
       expect(copy).toContain("Combat Zone");
       expect(copy).toContain("boostergang");
@@ -363,7 +360,7 @@ describe("Landing Page Registry", () => {
       expect(copy).toContain("Night Markets");
       expect(copy).toContain("Lifepath");
       expect(copy).toContain("choom");
-      expect(copy).toContain("Jax 'Chrome' Vance");
+      expect(copy).toContain("Jax Vance");
       expect(copy).toContain("Zetatech Operations");
       expect(copy).toContain("Iron Sights");
       expect(copy).toContain("local-first");
@@ -379,7 +376,7 @@ describe("Landing Page Registry", () => {
       const [hub, ...spokes] = graph.steps;
       expect(hub.relation).toBeUndefined();
       expect(hub.category).toBe("character");
-      expect(hub.label).toBe("Jax 'Chrome' Vance");
+      expect(hub.label).toBe("Jax Vance");
       expect(hub.sublabel).toContain("Fixer");
 
       for (const spoke of spokes) {
@@ -391,7 +388,7 @@ describe("Landing Page Registry", () => {
         graph.steps.find((s) => s.label === "Zetatech Operations")?.relation,
       ).toBe("Brokers gig for");
       expect(graph.steps.find((s) => s.label === "Iron Sights")?.relation).toBe(
-        "Evades territory of",
+        "Has truce with",
       );
       expect(
         graph.steps.find((s) => s.label === "The Docks Container Yard")
@@ -401,6 +398,9 @@ describe("Landing Page Registry", () => {
         graph.steps.find((s) => s.label === "Encrypted Biometric Shard")
           ?.relation,
       ).toBe("Fences");
+      expect(graph.steps.find((s) => s.label === "Rook")?.relation).toBe(
+        "Hires",
+      );
       expect(graph.steps.find((s) => s.label === "Rook")?.sublabel).toContain(
         "Solo",
       );
