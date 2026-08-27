@@ -89,17 +89,17 @@ describe("TileDeckPanel stocking", () => {
     setUpDeck(undefined);
     render(TileDeckPanel);
 
-    const select = screen.getByLabelText("On draw") as HTMLSelectElement;
-    expect(select.value).toBe("none");
-    expect(screen.queryByLabelText("Table rolled for Rooms")).toBeNull();
+    const noneBtn = screen.getByRole("button", { name: "None" });
+    expect(noneBtn.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByLabelText("Source Table")).toBeNull();
   });
 
   it("preselects the first table when the GM switches to rolling one", async () => {
     setUpDeck(undefined);
     render(TileDeckPanel);
 
-    const select = screen.getByLabelText("On draw") as HTMLSelectElement;
-    await fireEvent.change(select, { target: { value: "table" } });
+    const tableRollBtn = screen.getByRole("button", { name: "Table Roll" });
+    await fireEvent.click(tableRollBtn);
 
     expect(mapSessionMock.setTileDeckStocking).toHaveBeenCalledWith("deck-1", {
       mode: "table",
@@ -111,9 +111,7 @@ describe("TileDeckPanel stocking", () => {
     setUpDeck({ mode: "table", tableId: "table-1" });
     render(TileDeckPanel);
 
-    const picker = screen.getByLabelText(
-      "Table rolled for Rooms",
-    ) as HTMLSelectElement;
+    const picker = screen.getByLabelText("Source Table") as HTMLSelectElement;
     expect(picker.value).toBe("table-1");
 
     await fireEvent.change(picker, { target: { value: "table-2" } });
@@ -128,20 +126,16 @@ describe("TileDeckPanel stocking", () => {
     randomSourcesMock.tables = [];
     render(TileDeckPanel);
 
-    expect(
-      screen.getByText("This vault has no random tables yet."),
-    ).not.toBeNull();
+    expect(screen.getByText(/No random tables found in vault/)).not.toBeNull();
   });
 
   it("hides the table picker for the encounter mode and explains the pinned note", async () => {
     setUpDeck({ mode: "encounter" });
     render(TileDeckPanel);
 
-    expect(screen.queryByLabelText("Table rolled for Rooms")).toBeNull();
+    expect(screen.queryByLabelText("Source Table")).toBeNull();
     expect(
-      screen.getByText(
-        "An empty note is pinned on the tile, with a button to generate the encounter when you get there.",
-      ),
+      screen.getByText(/Pins an empty encounter note on placed tiles/),
     ).not.toBeNull();
   });
 
@@ -149,12 +143,12 @@ describe("TileDeckPanel stocking", () => {
     setUpDeck({ mode: "table", tableId: "table-2", frequency: 1 });
     render(TileDeckPanel);
 
-    const frequency = screen.getByLabelText(
-      "How often Rooms pins a note",
-    ) as HTMLSelectElement;
-    expect(frequency.value).toBe("1");
+    const freqBtn = screen.getByRole("button", {
+      name: "On 1 drawn tile in 3",
+    });
+    expect(freqBtn).not.toBeNull();
 
-    await fireEvent.change(frequency, { target: { value: "3" } });
+    await fireEvent.click(freqBtn);
     expect(mapSessionMock.setTileDeckStocking).toHaveBeenCalledWith("deck-1", {
       mode: "table",
       tableId: "table-2",
@@ -166,6 +160,8 @@ describe("TileDeckPanel stocking", () => {
     setUpDeck(undefined);
     render(TileDeckPanel);
 
-    expect(screen.queryByLabelText("How often Rooms pins a note")).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "Stocking frequency" }),
+    ).toBeNull();
   });
 });
