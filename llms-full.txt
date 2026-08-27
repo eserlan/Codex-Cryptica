@@ -1945,9 +1945,9 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 ### [Codex Cryptica for Dystopian Sci-Fi Worldbuilding](https://codexcryptica.com/for/dystopian-sci-fi)
 
-**Summary:** Keep regimes, corporations, resistance movements, surveillance systems, districts, and campaign lore connected in one place.
+**Summary:** Keep institutions, districts, social groups, surveillance systems, and competing factions connected in one local-first workspace.
 
-**Overview:** Dystopian sci-fi worlds are built from overlapping systems of power: governments, corporations, surveillance networks, resistance movements, controlled districts, and the people caught between them. When the players expose one secret, you should be able to see who benefits, who is threatened, and what changes next.
+**Overview:** Dystopian science fiction turns on interlocking systems of control: governments, corporations, surveillance, scarcity, social hierarchy, and the people trying to survive, exploit, or resist them. When an official defects, resources are cut off, or a surveillance log leaks, you shouldn't have to scramble across scattered notes to see who enforces the rules, who profits from the shortage, and who is caught in the middle.
 
 ### [Codex Cryptica for Fantasy Worldbuilding](https://codexcryptica.com/for/fantasy-worldbuilding)
 

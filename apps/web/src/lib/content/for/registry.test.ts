@@ -414,15 +414,97 @@ describe("Landing Page Registry", () => {
   });
 
   describe("Dystopian Sci-Fi Pack", () => {
-    it("is registered as genre and omits non-affiliation disclaimer", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const dystopia = getLandingPage("dystopian-sci-fi");
       expect(dystopia).toBeDefined();
       expect(dystopia?.slug).toBe("dystopian-sci-fi");
       expect(dystopia?.kind).toBe("genre");
       expect(dystopia?.theme).toBe("cyberpunk");
+      expect(dystopia?.hub).toBe("cyberpunk");
+      expect(dystopia?.surfaceStyle).toBe("sharp");
       expect(dystopia?.disclaimer).toBeUndefined();
+      expect(dystopia?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/dystopian-sci-fi.jpg",
+      );
       expect(dystopia?.useCases.length).toBeGreaterThanOrEqual(4);
-      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThan(0);
+      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic dystopian sci-fi worldbuilding terminology and avoids street-level cyberpunk tropes", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi")!;
+      const copy = JSON.stringify(dystopia);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Avoid street-level Cyberpunk RED specific tropes
+      expect(copy).not.toMatch(/\bedgerunner\b/i);
+      expect(copy).not.toMatch(/\bboostergang\b/i);
+      expect(copy).not.toMatch(/\bchoom\b/i);
+      expect(copy).not.toMatch(/\bcyberdeck\b/i);
+      expect(copy).not.toMatch(/\bnight market\b/i);
+
+      // Verify authentic dystopian sci-fi systemic concepts
+      expect(dystopia.hero.eyebrow).toContain("Dystopian Sci-Fi");
+      expect(copy).toContain("institutions");
+      expect(copy).toContain("surveillance");
+      expect(copy).toContain("scarcity");
+      expect(copy).toContain("social hierarchy");
+      expect(copy).toContain("monopolies");
+      expect(copy).toContain("rationing");
+      expect(copy).toContain("Veyra Civic Authority");
+      expect(copy).toContain("Orison Heavy Industries");
+      expect(copy).toContain("Census Mirror Grid");
+      expect(copy).toContain("Sector 14 Industrial Ward");
+      expect(copy).toContain("The Common Assembly");
+      expect(copy).toContain("Director Sulan Vane");
+      expect(copy).toContain("local-first");
+      expect(dystopia.cta.title).toBe(
+        "Map the System. Follow the Fault Lines.",
+      );
+    });
+
+    it("maintains a valid hub-and-spoke dystopian power graph with categorized nodes", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi")!;
+      const graph = dystopia.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("Veyra Civic Authority");
+      expect(hub.sublabel).toBe("Ruling Authority");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Orison Heavy Industries")
+          ?.relation,
+      ).toBe("Contracts");
+      expect(
+        graph.steps.find((s) => s.label === "Census Mirror Grid")?.relation,
+      ).toBe("Monitors citizens via");
+      expect(
+        graph.steps.find((s) => s.label === "Sector 14 Industrial Ward")
+          ?.relation,
+      ).toBe("Enforces rationing on");
+      expect(
+        graph.steps.find((s) => s.label === "The Common Assembly")?.relation,
+      ).toBe("Suppresses");
+      expect(
+        graph.steps.find((s) => s.label === "Director Sulan Vane")?.relation,
+      ).toBe("Commands");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
     });
   });
 
