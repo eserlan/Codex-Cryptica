@@ -21,12 +21,15 @@ describe("generateSettlementLocal", () => {
     expect(out.type).toBe("location");
     expect(out.content).toContain("## Core Concept");
     expect(out.content).toContain("## First Impression");
+    expect(out.content).toContain("## Inhabitants");
+    expect(out.content).toContain("## Life Here");
     expect(out.content).toContain("## History");
-    expect(out.lore).toContain("### GM Reference Information");
-    expect(out.lore).toContain("### Points of Interest");
-    expect(out.lore).toContain("### Controlling Factions");
     expect(out.lore).toContain("### Current Tension");
+    expect(out.lore).toContain("### Points of Interest");
+    expect(out.lore).toContain("### Notable Inhabitants");
+    expect(out.lore).toContain("### Controlling / Important Factions");
     expect(out.lore).toContain("### Adventure Hooks");
+    expect(out.lore).toContain("### GM Reference Information");
     expect(out.labels).toContain("rpg-location");
   });
 
@@ -34,7 +37,7 @@ describe("generateSettlementLocal", () => {
     const out = generateSettlementLocal({ size: "Hamlet" }, seededRng(2));
     expect(out.lore).toContain("- **Scale**: Hamlet");
     const poiLines = out.lore.split("\n").filter((l) => l.startsWith("- **📍"));
-    expect(poiLines).toHaveLength(1);
+    expect(poiLines).toHaveLength(3);
   });
 
   it("honours explicit primaryFunction", () => {
@@ -135,11 +138,18 @@ describe("buildSettlementPrompt", () => {
     expect(resolved.genre).toBe("Cyberpunk");
   });
 
-  it("includes the three guiding questions", () => {
+  it("includes the four guiding questions", () => {
     const { userMessage } = buildSettlementPrompt({}, "", seededRng(1));
     expect(userMessage).toContain("Why does this place exist");
-    expect(userMessage).toContain("Who really controls it");
-    expect(userMessage).toContain("What is about to go wrong");
+    expect(userMessage).toContain("What is everyday life like here");
+    expect(userMessage).toContain("Who lives here");
+    expect(userMessage).toContain("What is happening here right now");
+  });
+
+  it("includes anti-monoculture guidance against common LLM defaults", () => {
+    const { userMessage } = buildSettlementPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("hidden ledgers");
+    expect(userMessage).toContain("existed before the PCs arrived");
   });
 
   it("defaults to Fantasy genre", () => {
