@@ -17,7 +17,7 @@ export const cosmicHorror: LandingPageConfig = {
     tagline:
       "Keep occult orders, research archives, expedition logs, and incomprehensible entities connected in one local-first workspace.",
     problemStatement:
-      "Cosmic horror settings turn on the fragile boundary between mundane reality and the incomprehensible. When your world spans secret government projects, remote polar digs, esoteric cults, and classified manuscripts, you shouldn't have to search through disconnected notes to trace how an obscure incident in the archives connects to a looming catastrophe.",
+      "Cosmic horror mysteries rarely reveal themselves in a straight line. A symbol found in session two turns out to belong to the research group mentioned six sessions later; an expedition log contradicts an official report; an NPC who seemed like a footnote is the only living person who has seen the same phenomenon. Codex Cryptica keeps those connections visible as the mystery grows so you always know what has been uncovered — and what is still waiting in the dark.",
   },
   useCases: [
     {
@@ -33,15 +33,15 @@ export const cosmicHorror: LandingPageConfig = {
       icon: "icon-[lucide--map-pin]",
     },
     {
-      title: "Classified Archives, Manuscripts & Relics",
+      title: "Clues, Revelations & Forbidden Knowledge",
       description:
-        "Link translated grimoires, strange specimens, sensor logs, and classified dossiers to the entities and phenomena they describe.",
+        "Connect eyewitness accounts, recovered documents, physical evidence, and contradictory theories to the truths they gradually expose.",
       icon: "icon-[lucide--book-open]",
     },
     {
-      title: "Investigation Timelines & Case Notes",
+      title: "Timelines, Manifestations & Incident Logs",
       description:
-        "Track chronological escalations, unfolding anomalies, research milestones, and session records across every stage of your campaign.",
+        "Track contradictory accounts, sudden disappearances, escalating manifestations, and session records as the mystery unfolds.",
       icon: "icon-[lucide--scroll]",
     },
   ],
@@ -114,17 +114,17 @@ export const cosmicHorror: LandingPageConfig = {
       badge: "Generator",
     },
     {
-      title: "Adventure Idea Generator",
+      title: "Artifact & Relic Generator",
       description:
-        "Generate cosmic horror scenario seeds, anomalous incidents, countdown pressures, and setting complications.",
-      href: "/generators/cosmic-horror/adventure-idea-generator",
+        "Create anomalous devices, contaminated specimens, classified relics, and strange technologies.",
+      href: "/generators/artifact-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Chart the Unknown",
+    title: "Build the Mystery. Keep the Connections.",
     description:
-      "Keep your cults, expedition logs, classified dossiers, and session notes connected in a local-first workspace.",
+      "Map the hidden web of cults, anomalies, and classified files. Let your players uncover the rest in a fast, private, local-first workspace.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },

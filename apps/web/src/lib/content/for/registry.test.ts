@@ -370,6 +370,7 @@ describe("Landing Page Registry", () => {
       expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
       expect(copy).not.toMatch(/sanity check|blood bond|primogen/i);
       expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/across every stage of your campaign/i);
 
       // Verify authentic cosmic horror worldbuilding concepts
       expect(cosmic.hero.eyebrow).toContain("Cosmic Horror");
@@ -377,8 +378,14 @@ describe("Landing Page Registry", () => {
       expect(copy).toContain("expedition");
       expect(copy).toContain("archives");
       expect(copy).toContain("anomalies");
+      expect(copy).toContain("Revelations");
+      expect(copy).toContain("Manifestations");
       expect(copy).toContain("The Tethys Institute");
       expect(copy).toContain("local-first");
+      expect(cosmic.cta.title).toBe("Build the Mystery. Keep the Connections.");
+
+      const toolTitles = cosmic.recommendedTools.map((t) => t.title);
+      expect(toolTitles).toContain("Artifact & Relic Generator");
     });
 
     it("maintains a valid hub-and-spoke cosmic anomaly graph with categorized nodes", () => {
