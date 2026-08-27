@@ -71,6 +71,15 @@ export function narrow(
   ctx: ResolveContext,
   axisId: string,
   relaxations: Relaxation[],
+  /**
+   * How many distinct options the caller still needs. Axis resolution always
+   * passes 1: it draws one value and moves on. Multi-pick selection passes the
+   * full count it was asked for, because a strict pool that is merely smaller
+   * than that count is exactly as unusable as an empty one — relaxing only
+   * when the pool hits zero would silently hand back fewer options than asked
+   * for instead of relaxing to make up the difference.
+   */
+  minimum = 1,
 ): SmartOption[] {
   const meetsRequires = (o: SmartOption) =>
     o.requires === undefined || evaluate(o.requires, ctx);
@@ -78,11 +87,11 @@ export function narrow(
     o.excludes === undefined || !evaluate(o.excludes, ctx);
 
   const strict = options.filter((o) => meetsRequires(o) && meetsExcludes(o));
-  if (strict.length > 0) return strict;
+  if (strict.length >= minimum) return strict;
 
   relaxations.push({ axisId, dropped: "excludes" });
   const withoutExcludes = options.filter(meetsRequires);
-  if (withoutExcludes.length > 0) return withoutExcludes;
+  if (withoutExcludes.length >= minimum) return withoutExcludes;
 
   relaxations.push({ axisId, dropped: "requires" });
   return [...options];
