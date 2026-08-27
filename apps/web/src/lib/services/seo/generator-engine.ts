@@ -171,6 +171,7 @@ export {
   presetsFor,
   analyseIntent,
   applyIntent,
+  resolveSmart,
   type InferredChoice,
 } from "generator-engine";
 // Magic item content data now lives in the package (#1351).

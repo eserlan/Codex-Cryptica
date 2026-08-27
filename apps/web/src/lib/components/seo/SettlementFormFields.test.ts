@@ -7,22 +7,39 @@ import SettlementFormFields from "./SettlementFormFields.svelte";
 vi.mock("$lib/services/seo/generator-engine", () => ({
   settlementConfig: {
     sizesByGenre: {
-      Fantasy: [{ name: "Village", range: "100-500" }],
+      Fantasy: [
+        { name: "Village", range: "100-500" },
+        { name: "Hamlet", range: "10-100" },
+      ],
     },
     environmentsByGenre: {
-      Fantasy: ["Forest edge"],
+      Fantasy: ["Forest edge", "River crossing"],
     },
     primaryFunctionsByGenre: {
-      Fantasy: ["Trade hub"],
+      Fantasy: ["Trade hub", "Border checkpoint"],
     },
     tonesByGenre: {
-      Fantasy: ["Cosy and welcoming"],
+      Fantasy: ["Cosy and welcoming", "Mysterious and secretive"],
     },
     mainTensionsByGenre: {
-      Fantasy: ["Succession crisis"],
+      Fantasy: ["Succession crisis", "Trade route cut off"],
     },
   },
   pickFrom: <T>(arr: readonly T[]) => arr[0],
+  // Distinguishable from every prop fixture in this file, so a test can tell
+  // whether Surprise Me actually ran resolveSmart rather than the old flat
+  // pickFrom draws.
+  resolveSmart: () => ({
+    values: {
+      size: "Hamlet",
+      environment: "River crossing",
+      primaryFunction: "Border checkpoint",
+      tone: "Mysterious and secretive",
+      mainTension: "Trade route cut off",
+    },
+    axes: [],
+    relaxations: [],
+  }),
   SETTLEMENT_PRESETS: [
     {
       id: "merchant-port",
@@ -121,6 +138,58 @@ describe("SettlementFormFields", () => {
 
     await fireEvent.click(screen.getByText("Surprise Me"));
     expect(onSurprise).toHaveBeenCalled();
+  });
+
+  it("fills the fields from the smart resolver rather than independent draws (#2525)", async () => {
+    render(SettlementFormFields, {
+      props: {
+        genre: "Fantasy",
+        size: "Village",
+        environment: "Forest edge",
+        primaryFunction: "Trade hub",
+        tone: "Cosy and welcoming",
+        mainTension: "Succession crisis",
+        campaignContext: "",
+      },
+    });
+
+    await fireEvent.click(screen.getByText("Surprise Me"));
+
+    const environment = screen.getByLabelText(
+      "Environment",
+    ) as HTMLSelectElement;
+    const primaryFunction = screen.getByLabelText(
+      "Primary Function",
+    ) as HTMLSelectElement;
+    expect(environment.value).toBe("River crossing");
+    expect(primaryFunction.value).toBe("Border checkpoint");
+  });
+
+  it("clears any preset highlight and inferred chips on Surprise Me", async () => {
+    render(SettlementFormFields, {
+      props: {
+        genre: "Fantasy",
+        size: "",
+        environment: "",
+        primaryFunction: "",
+        tone: "",
+        mainTension: "",
+        campaignContext: "",
+      },
+    });
+
+    const field = screen.getByLabelText(
+      "Describe what you want (optional)",
+    ) as HTMLTextAreaElement;
+    await fireEvent.input(field, {
+      target: { value: "a coastal harbour town" },
+    });
+    await fireEvent.blur(field);
+    expect(screen.getByText("Read from your description")).toBeTruthy();
+
+    await fireEvent.click(screen.getByText("Surprise Me"));
+
+    expect(screen.queryByText("Read from your description")).toBeNull();
   });
 });
 

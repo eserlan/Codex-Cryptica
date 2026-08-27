@@ -1,13 +1,13 @@
 <script lang="ts">
   import {
     settlementConfig,
-    pickFrom,
     SETTLEMENT_PRESETS,
     SETTLEMENT_LEXICON,
     settlementSchema,
     presetsFor,
     analyseIntent,
     applyIntent,
+    resolveSmart,
     type InferredChoice,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
@@ -329,26 +329,16 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
-      const sizes =
-        settlementConfig.sizesByGenre[genre] ??
-        settlementConfig.sizesByGenre["Fantasy"];
-      size = pickFrom(sizes).name;
-      environment = pickFrom(
-        settlementConfig.environmentsByGenre[genre] ??
-          settlementConfig.environmentsByGenre["Fantasy"],
-      );
-      primaryFunction = pickFrom(
-        settlementConfig.primaryFunctionsByGenre[genre] ??
-          settlementConfig.primaryFunctionsByGenre["Fantasy"],
-      );
-      tone = pickFrom(
-        settlementConfig.tonesByGenre[genre] ??
-          settlementConfig.tonesByGenre["Fantasy"],
-      );
-      mainTension = pickFrom(
-        settlementConfig.mainTensionsByGenre[genre] ??
-          settlementConfig.mainTensionsByGenre["Fantasy"],
-      );
+      // Resolved through the same framework as the generator itself (#2525),
+      // so Surprise Me can no longer hand back a settlement the generator
+      // would never produce on its own — a landlocked fishing village, a
+      // hamlet-scale university city.
+      const { values } = resolveSmart(settlementSchema, { genre });
+      size = values.size;
+      environment = values.environment;
+      primaryFunction = values.primaryFunction;
+      tone = values.tone;
+      mainTension = values.mainTension;
       activePresetId = null;
       inferred = [];
       onSurprise?.();

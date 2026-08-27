@@ -367,3 +367,12 @@ useful even if #2338 stalls.
    three highest-traffic ones first with the rest coerced from bare strings?
 3. **Intent field when AI is on.** Plan assumes yes, one behaviour. The
    alternative is showing chips only in the local path.
+
+## Surprise Me follow-up (#2525, filed and merged)
+
+The form's own "Surprise Me" button drew each field independently with the raw
+`pickFrom`, which was the one path left skipping the framework after #2341/#2522
+landed. Fixed for settlement by resolving an empty `SmartGeneratorConfig` through
+`resolveSmart` and writing the result back into the fields. Any future generator
+migrated onto the framework should move its own Surprise Me handler in the same
+PR as its schema, not as an afterthought.
