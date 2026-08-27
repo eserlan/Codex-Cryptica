@@ -220,3 +220,7 @@
 
 **Learning:** When chained array methods like `.map().filter()` create new objects in the `.map()` phase (e.g., `images.map(f => ({ file: f, index })).filter(...)`), they instantiate objects that are immediately thrown away by the subsequent filter. This creates unnecessary garbage collection pressure beyond just the intermediate array allocation.
 **Action:** Replace `.map(x => ({...})).filter(...)` chains with a single imperative loop. Only instantiate the new object if the condition passes, pushing it directly into the result array.
+
+## 2025-02-27 - Object.values + filter optimization
+**Learning:** Calling `Object.values(obj).filter(...)` repeatedly inside reactive/derived blocks creates multiple intermediate arrays and adds heavy garbage collection pressure. This is particularly harmful in hot paths like VTT (Virtual TableTop) tile snapping/placing, which evaluates on every mouse movement.
+**Action:** Replace `Object.values(obj).filter(...)` chains with an imperative `for...in` loop that uses `Object.prototype.hasOwnProperty.call(obj, key)` to safely iterate the object keys and conditionally push to a single result array.
