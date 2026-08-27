@@ -46,7 +46,10 @@ describe("generateSettlementLocal", () => {
       seededRng(3),
     );
     expect(out.lore).toContain("- **Primary Function**: Pilgrimage town");
-    expect(out.content).toContain("pilgrimage town");
+    // The raw primaryFunction is a conceptual role, not mandatory prose, so
+    // the narrative text uses a scale-appropriate phrase for it instead of
+    // repeating the literal option string verbatim (#2536).
+    expect(out.content).toContain("temple town");
   });
 
   it("falls back to economy as primaryFunction for backwards compat", () => {
@@ -152,6 +155,15 @@ describe("buildSettlementPrompt", () => {
     expect(userMessage).toContain("existed before the PCs arrived");
   });
 
+  it("includes scale-honesty, causal-chain, and cross-section reuse guidance", () => {
+    const { userMessage } = buildSettlementPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("conceptual role for the Primary Function");
+    expect(userMessage).toContain("causal chain");
+    expect(userMessage).toContain(
+      "Reuse named people and places across sections",
+    );
+  });
+
   it("defaults to Fantasy genre", () => {
     const { resolved } = buildSettlementPrompt({}, "", seededRng(2));
     expect(resolved.genre).toBe("Fantasy");
@@ -176,5 +188,54 @@ describe("parseSettlementResponse", () => {
 
   it("throws on malformed JSON", () => {
     expect(() => parseSettlementResponse("nope", resolved)).toThrow();
+  });
+});
+
+describe("generateSettlementLocal — scale-aware prose (#2536 refinement)", () => {
+  it("never describes a hamlet with a city-scale word", () => {
+    const rng = seededRng(13);
+    for (let i = 0; i < 60; i++) {
+      const out = generateSettlementLocal(
+        { genre: "Fantasy", size: "Hamlet" },
+        rng,
+      );
+      const prose = out.content.split("## History")[0].toLowerCase();
+      expect(prose).not.toMatch(/\bcity\b/);
+      expect(prose).not.toMatch(/\buniversity district\b/);
+    }
+  });
+
+  it("gives a hamlet-scale academic settlement an institutional-footprint note", () => {
+    const out = generateSettlementLocal(
+      { genre: "Fantasy", size: "Hamlet", primaryFunction: "Academic city" },
+      seededRng(11),
+    );
+    expect(out.content).toContain("At this size, that means");
+  });
+
+  it("names an inhabitant in Current Tension when one exists, and that inhabitant appears in Notable Inhabitants", () => {
+    const rng = seededRng(17);
+    for (let i = 0; i < 30; i++) {
+      const out = generateSettlementLocal({ genre: "Fantasy" }, rng);
+      const tensionParagraph = out.lore.split("### Points of Interest")[0];
+      const notableSection = out.lore.split("### Notable Inhabitants")[1];
+      const nameMatch = tensionParagraph.match(/\b([A-Z][a-z]+),/);
+      if (nameMatch) {
+        expect(notableSection).toContain(`**${nameMatch[1]}**`);
+      }
+    }
+  });
+
+  it("sometimes has Life Here reference an actual point of interest by name", () => {
+    const rng = seededRng(19);
+    let sawReference = false;
+    for (let i = 0; i < 40; i++) {
+      const out = generateSettlementLocal({ genre: "Fantasy" }, rng);
+      if (out.content.includes("Residents gather at")) {
+        sawReference = true;
+        break;
+      }
+    }
+    expect(sawReference).toBe(true);
   });
 });

@@ -1,17 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { settlementConfig } from "./public-settlement-constants";
 import { settlementSchema } from "./public-settlement-schema";
+import { FUNCTION_TRAITS } from "./public-settlement-traits";
 import {
   buildAdventureHooks,
+  buildCurrentTensionParagraph,
   buildInhabitants,
   buildLifeHere,
   buildNotableInhabitants,
+  institutionalNote,
   rungFor,
   scaleFor,
+  scaleFunctionPhrase,
   selectDiverseFactions,
   selectDiversePoi,
   settlementFactionCategoryPool,
   settlementLocationCategoryPool,
+  withArticle,
 } from "./public-settlement-community";
 import { resolveSmart, type ResolveContext } from "./smart";
 
@@ -356,6 +361,121 @@ describe("buildNotableInhabitants — avoids repeating a profession title", () =
       if (professionRoles.length === 2) {
         expect(professionRoles[0]).not.toBe(professionRoles[1]);
       }
+    }
+  });
+});
+
+describe("scaleFunctionPhrase", () => {
+  it("never describes a hamlet-rung settlement as a city", () => {
+    const phrase = scaleFunctionPhrase(["academic"], 0);
+    expect(phrase.toLowerCase()).not.toContain("city");
+    expect(phrase.toLowerCase()).not.toContain("district");
+    expect(phrase.toLowerCase()).not.toContain("university");
+  });
+
+  it("gives the city rung a bigger noun than the hamlet rung", () => {
+    const hamlet = scaleFunctionPhrase(["academic"], 0);
+    const city = scaleFunctionPhrase(["academic"], 3);
+    expect(hamlet).not.toBe(city);
+  });
+
+  it("falls back to a generic scale noun when no trait matches and no raw value is given", () => {
+    const phrase = scaleFunctionPhrase(["nonexistent-trait" as never], 0);
+    expect(phrase.length).toBeGreaterThan(0);
+  });
+
+  it("respects a custom or unrecognised function verbatim instead of dropping it", () => {
+    // A custom axis value, or a legacy value like the deprecated `economy`
+    // option, carries no traits. There is no honest basis to scale-adjust
+    // something unrecognised, so the raw value is kept rather than silently
+    // replaced with a bland "town".
+    const phrase = scaleFunctionPhrase([], 1, "Mining");
+    expect(phrase).toBe("mining");
+  });
+
+  it("is deterministic: same traits and rung always give the same phrase", () => {
+    expect(scaleFunctionPhrase(["trade"], 2)).toBe(
+      scaleFunctionPhrase(["trade"], 2),
+    );
+  });
+
+  it("covers every trait that appears as a primary function anywhere", () => {
+    const traits = new Set(Object.values(FUNCTION_TRAITS).flat());
+    const uncovered: string[] = [];
+    for (const trait of traits) {
+      const phrase = scaleFunctionPhrase([trait], 0);
+      if (!phrase || phrase.length === 0) uncovered.push(trait);
+    }
+    expect(uncovered).toEqual([]);
+  });
+});
+
+describe("withArticle", () => {
+  it("uses 'an' before a vowel sound", () => {
+    expect(withArticle("academic enclave")).toBe("an academic enclave");
+    expect(withArticle("outpost")).toBe("an outpost");
+  });
+
+  it("uses 'a' before a consonant sound", () => {
+    expect(withArticle("trading hamlet")).toBe("a trading hamlet");
+  });
+});
+
+describe("institutionalNote", () => {
+  it("returns a note for the smallest rung", () => {
+    const note = institutionalNote(["academic"], 0);
+    expect(note).toBeTruthy();
+  });
+
+  it("returns nothing for the largest rung, where scale is not a constraint", () => {
+    const note = institutionalNote(["academic"], 3);
+    expect(note).toBeUndefined();
+  });
+});
+
+describe("buildCurrentTensionParagraph", () => {
+  const inhabitants = [
+    {
+      name: "Sable",
+      role: "Guild Representative",
+      note: "x",
+      category: "authority" as const,
+    },
+    {
+      name: "Cass",
+      role: "Caravan Master",
+      note: "y",
+      category: "profession" as const,
+    },
+  ];
+
+  it("names the authority-figure inhabitant when one exists", () => {
+    const rng = seededRng(97);
+    for (let i = 0; i < 20; i++) {
+      const p = buildCurrentTensionParagraph(
+        "Famine or drought",
+        inhabitants,
+        rng,
+      );
+      expect(p).toContain("Sable");
+    }
+  });
+
+  it("still produces a paragraph with no inhabitants at all", () => {
+    expect(() =>
+      buildCurrentTensionParagraph("Famine or drought", [], seededRng(101)),
+    ).not.toThrow();
+  });
+
+  it("always mentions the tension itself", () => {
+    const rng = seededRng(103);
+    for (let i = 0; i < 10; i++) {
+      const p = buildCurrentTensionParagraph(
+        "Famine or drought",
+        inhabitants,
+        rng,
+      );
+      expect(p.toLowerCase()).toContain("famine or drought");
     }
   });
 });
