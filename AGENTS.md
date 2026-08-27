@@ -45,6 +45,11 @@ This file is the Codex-facing instruction layer for this repository.
 - Create regular ready-for-review pull requests by default; never create draft PRs unless the user explicitly asks for a draft.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
+- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. `bun run lint:types` passes with 0 errors.
+  2. `bun run lint` passes with 0 errors.
+  3. The changes pass the `codex-review` specialist review.
 
 ## Maintenance Rule
 
