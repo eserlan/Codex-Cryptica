@@ -391,3 +391,23 @@ export {
   extractPartialJsonStringFields,
   type IncrementalJsonField,
 } from "./streaming/incremental-json";
+export {
+  resolveSmart,
+  validateSchema,
+  evaluate as evaluatePredicate,
+  referencedAxes,
+  type SmartAxis,
+  type SmartGeneratorConfig,
+  type LockedValue,
+  type OptionPool,
+  type SmartPredicate,
+  type Provenance,
+  type Relaxation,
+  type RelaxationKind,
+  type ResolveContext,
+  type ResolvedAxis,
+  type SmartGeneratorSchema,
+  type SmartOption,
+  type SmartResult,
+  type Trait,
+} from "./smart";
