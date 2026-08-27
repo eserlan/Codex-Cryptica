@@ -156,4 +156,3 @@ fs.writeFileSync(rootOutputPath, fullContent);
 console.log(`\n✅ Generated ${outputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
 console.log(`✅ Generated ${rootOutputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
 
-

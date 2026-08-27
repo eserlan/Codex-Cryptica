@@ -426,6 +426,86 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Conspiracy Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const conspiracy = getLandingPage("conspiracy");
+      expect(conspiracy).toBeDefined();
+      expect(conspiracy?.slug).toBe("conspiracy");
+      expect(conspiracy?.kind).toBe("genre");
+      expect(conspiracy?.theme).toBe("modern");
+      expect(conspiracy?.hub).toBe("modern");
+      expect(conspiracy?.surfaceStyle).toBe("sharp");
+      expect(conspiracy?.disclaimer).toBeUndefined();
+      expect(conspiracy?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/conspiracy.jpg",
+      );
+      expect(conspiracy?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(conspiracy?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic conspiracy / intrigue terminology and avoids generic fantasy", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const copy = JSON.stringify(conspiracy);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Verify authentic conspiracy terminology
+      expect(conspiracy.hero.eyebrow).toContain("Conspiracy & Intrigue");
+      expect(copy).toContain("operatives");
+      expect(copy).toContain("fronts");
+      expect(copy).toContain("evidence");
+      expect(copy).toContain("hidden relationships");
+      expect(copy).toContain("The Meridian Group");
+      expect(copy).toContain("Calder Biomedical Holdings");
+      expect(copy).toContain("Senator Julian Vance");
+      expect(copy).toContain("Project Glasshouse");
+      expect(copy).toContain("Northfield Research Annex");
+      expect(copy).toContain("local-first");
+      expect(conspiracy.cta.title).toBe("Map the Conspiracy");
+    });
+
+    it("maintains a valid hub-and-spoke conspiracy graph with categorized nodes", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const graph = conspiracy.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Meridian Group");
+      expect(hub.sublabel).toContain("Policy Network");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Calder Biomedical Holdings")
+          ?.relation,
+      ).toBe("Funds via");
+      expect(
+        graph.steps.find((s) => s.label === "Senator Julian Vance")?.relation,
+      ).toBe("Blackmails");
+      expect(
+        graph.steps.find((s) => s.label === "Project Glasshouse")?.relation,
+      ).toBe("Directs");
+      expect(
+        graph.steps.find((s) => s.label === "Meeting Recording, 14 March")
+          ?.relation,
+      ).toBe("Incriminated by");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
+  });
+
   describe("Cosmic Horror Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const cosmic = getLandingPage("cosmic-horror");

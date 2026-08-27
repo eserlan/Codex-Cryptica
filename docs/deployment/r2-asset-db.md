@@ -13,13 +13,13 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | `directory/listings/`                                   | 4               | ~3 KB   | Public generator directory metadata (JSON)                                           |
 | `discussions/alien-race/`                               | 1               | 0.2 MB  | Alien Race generator discussion image                                                |
 | `images/blog/` + `images/help-blog/` + loose `images/*` | 50              | ~18 MB  | Blog post inline images + old help-doc screenshots                                   |
-| `og/`                                                   | 11              | 9.7 MB  | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages               |
+| `og/`                                                   | 12              | 10.6 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages               |
 | `screenshots/`                                          | 37              | ~6.3 MB | `/generators` + `/tools` page cards, og:image                                        |
 | `vault-samples/images/`                                 | 36              | 58.7 MB | Portrait art for the 9 demo/quick-start vaults                                       |
 | `published/{vault-uuid}/`                               | 531 (11 vaults) | ~52 MB  | **User data**, not ours — assets from real vaults published for guest/player viewing |
 | `starter-tile-decks/kenney-scribble-dungeons/`          | 159             | 0.17 MB | Bundled third-party VTT map tile pack (Kenney)                                       |
 
-Total: 848 objects, 154.5 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 849 objects, 155.4 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -121,7 +121,8 @@ Total: 848 objects, 154.5 MB. The tables below cover everything **except** `publ
 
 | Key                             | Size    | Type       | Modified   | Purpose                                          |
 | ------------------------------- | ------- | ---------- | ---------- | ------------------------------------------------ |
-| `og/call-of-cthulhu.jpg`        | 874 KB  | image/jpeg | 2026-08-27 | Call of Cthulhu system landing page card         |
+| `og/call-of-cthulhu.jpg`        | 789 KB  | image/jpeg | 2026-08-27 | Call of Cthulhu system landing page card         |
+| `og/conspiracy.jpg`             | 852 KB  | image/jpeg | 2026-08-27 | Conspiracy & Intrigue genre landing page card    |
 | `og/cosmic-horror.jpg`          | 820 KB  | image/jpeg | 2026-08-27 | Cosmic Horror genre landing page card            |
 | `og/cyberpunk-red.jpg`          | 995 KB  | image/jpeg | 2026-08-27 | Cyberpunk RED system landing page card           |
 | `og/dungeons-and-dragons.jpg`   | 898 KB  | image/jpeg | 2026-08-27 | D&D 5e system landing page card                  |

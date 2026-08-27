@@ -161,7 +161,7 @@ Use Tile Decks in the VTT sidebar to add a starter pack (Scribble Dungeons, Geom
 Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.
 
 ### Map Notes
-Pin a note anywhere on the map to remember what happens there. Press the note button, then click the spot it belongs to and write down whatever you want to remember; press Escape to back out without placing one. Notes are not just for VTT mode: the button sits in the VTT toolbar while you are in play and in the map bar when you are not, and a note stays clickable and draggable either way. Shift+scroll over a note to resize it, and double-click it to fold it down to a marker so it stops covering the map; double-click again, or resize it, to bring it back to the size it was. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it to move it, whichever layer you happen to be editing. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to.
+Pin a note anywhere on the map to remember what happens there. Press the note button, then click the spot it belongs to and write down whatever you want to remember; press Escape to back out without placing one. Notes are not just for VTT mode: the button sits in the VTT toolbar while you are in play and in the map bar when you are not, and a note stays clickable and draggable either way. A note lands folded down to a marker, no bigger than a lore pin, so a stocked dungeon does not bury the map art underneath it: double-click a marker to open the note, and double-click again to fold it away. Shift+scroll over an open note to resize it. Note text takes basic markdown, and the toolbar above the note body writes it for you: bold, italic, headings, and bullet lists all show through on the note face on the map. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it to move it, whichever layer you happen to be editing. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to. A note lives and dies with the session; for the one that turns out to matter, "Keep in vault" writes it into your vault as a Note entity and links the marker to it.
 
 ### Session Voice Chat
 Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who is in the channel.
@@ -1919,6 +1919,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** Call of Cthulhu scenarios quickly develop into webs of open leads, witness testimonies, physical handouts, and occult conspiracies across multiple sessions. When your Investigators follow a trail back to an archive or re-interview a local coroner weeks later, you shouldn't have to scramble through scattered notes to recall which clue led them there, what they uncovered, or which leads remain unresolved.
 
+### [Codex Cryptica for Conspiracy Campaigns & Intrigue Worldbuilding](https://codexcryptica.com/for/conspiracy)
+
+**Summary:** Keep organisations, operatives, fronts, evidence, and hidden relationships connected in one local-first workspace.
+
+**Overview:** Running a conspiracy campaign means tracking what people and organisations appear to be, who they really answer to, and who knows which part of the truth. When an ally turns out to be an intermediary, a company is revealed as a front, or leaked evidence implicates someone higher up, you shouldn't have to dig through scattered notes to reconstruct the chain.
+
 ### [Codex Cryptica for Cosmic Horror Worldbuilding & Campaigns](https://codexcryptica.com/for/cosmic-horror)
 
 **Summary:** Keep occult orders, research archives, expedition logs, and incomprehensible entities connected in one local-first workspace.
@@ -1927,9 +1933,9 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 ### [Codex Cryptica for Cyberpunk RED Campaign Management](https://codexcryptica.com/for/cyberpunk-red)
 
-**Summary:** Keep fixers, megacorps, merc squads, street gangs, deal locations, and gig recaps connected in one place.
+**Summary:** Keep Fixers, crews, corps, gangs, and gigs connected in one local-first workspace.
 
-**Overview:** Cyberpunk RED campaigns quickly grow into a web of corporate handlers, fixer contacts, gang territories, rival mercs, and street-level favours. When your edgerunners take a high-risk gig in a contested zone, you shouldn't have to search through loose notes to remember which megacorp owns the target — or who stands to profit.
+**Overview:** In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, or an old choom from your Lifepath calls in a favour, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.
 
 ### [Codex Cryptica for D&D 5e Campaign Management](https://codexcryptica.com/for/dungeons-and-dragons)
 

@@ -53,6 +53,7 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Cosmic Horror Worldbuilding](https://codexcryptica.com/for/cosmic-horror): Occult orders, research archives, expeditions, and anomalous manifestations.
 - [Dystopian Sci-Fi Worldbuilding](https://codexcryptica.com/for/dystopian-sci-fi): Megacity regimes, surveillance networks, arcologies, and resistance movements.
 - [Space Opera Worldbuilding](https://codexcryptica.com/for/space-opera): Galactic empires, hyperlanes, fleet telemetry, and alien factions.
+- [Conspiracy & Intrigue Worldbuilding](https://codexcryptica.com/for/conspiracy): Shadow cabals, shell organisations, compromised assets, and classified dossiers.
 
 ## Feature Pages
 
