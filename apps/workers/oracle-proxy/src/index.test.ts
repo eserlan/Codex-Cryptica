@@ -827,3 +827,158 @@ describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", 
     expect(invalidResponse.status).toBe(400);
   });
 });
+
+describe("Oracle Proxy Worker: trusted automation path", () => {
+  const secretKey = "test-session-secret";
+  const automationKey = "test-automation-key-secret";
+  const env = {
+    GEMINI_API_KEY: "test-key",
+    SESSION_TOKEN_SECRET: secretKey,
+    CODEX_AUTOMATION_KEY: automationKey,
+  };
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it("mints an automation session token without requiring an allowed Origin header", async () => {
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Codex-Automation-Key": automationKey,
+        },
+      },
+    );
+
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(sessionRes.status).toBe(200);
+    const body = (await sessionRes.json()) as any;
+    expect(body.scope).toBe("automation");
+    expect(body.token).toBeTruthy();
+  });
+
+  it("rejects public /api/session requests with no allowed Origin header", async () => {
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://unauthorized-domain.com",
+        },
+        body: JSON.stringify({ turnstileToken: "some-token" }),
+      },
+    );
+
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(sessionRes.status).toBe(403);
+  });
+
+  it("allows generation requests using an automation token without an Origin header", async () => {
+    // 1. Mint automation token
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Codex-Automation-Key": automationKey,
+        },
+      },
+    );
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+    const { token } = (await sessionRes.json()) as { token: string };
+
+    // 2. Make generation request with automation token and NO Origin header
+    const generateFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [
+              { content: { parts: [{ text: "automation output" }] } },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = generateFetch as typeof fetch;
+
+    const genReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "generate content" }] }],
+        }),
+      },
+    );
+
+    const genRes = await worker.fetch(genReq, env, {} as ExecutionContext);
+    expect(genRes.status).toBe(200);
+    expect(await genRes.json()).toEqual({
+      candidates: [{ content: { parts: [{ text: "automation output" }] } }],
+    });
+  });
+
+  it("blocks generation requests using a human token when Origin header is missing or unallowed", async () => {
+    // 1. Mint human token
+    const sessionReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://codexcryptica.com",
+        },
+        body: JSON.stringify({ turnstileToken: "dev-turnstile-token" }),
+      },
+    );
+    const sessionRes = await worker.fetch(
+      sessionReq,
+      env,
+      {} as ExecutionContext,
+    );
+    const { token } = (await sessionRes.json()) as { token: string };
+
+    // 2. Make generation request with human token but without allowed Origin header
+    const genReq = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Origin: "https://unauthorized-origin.com",
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "generate content" }] }],
+        }),
+      },
+    );
+
+    const genRes = await worker.fetch(genReq, env, {} as ExecutionContext);
+    expect(genRes.status).toBe(403);
+  });
+});
