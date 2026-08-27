@@ -169,9 +169,70 @@ describe("Landing Page Registry", () => {
       expect(coc?.slug).toBe("call-of-cthulhu");
       expect(coc?.kind).toBe("system");
       expect(coc?.theme).toBe("horror");
+      expect(coc?.surfaceStyle).toBe("sharp");
       expect(coc?.disclaimer).toContain("Chaosium Inc.");
       expect(coc?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(coc?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Call of Cthulhu terminology and Keeper investigation framing", () => {
+      const coc = getLandingPage("call-of-cthulhu")!;
+      const copy = JSON.stringify(coc);
+
+      // Avoid generic fantasy, stock horror over-use, or irrelevant framing
+      expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+      expect(copy).not.toMatch(/\bloot tables?\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/Miskatonic University/i);
+
+      // Verify authentic terminology presence
+      expect(coc.hero.eyebrow).toContain("Keeper");
+      expect(copy).toContain("Keeper");
+      expect(copy).toContain("Investigators");
+      expect(copy).toContain("handouts");
+      expect(copy).toContain("clues");
+      expect(copy).toContain("scenarios");
+      expect(copy).toContain("tomes");
+      expect(copy).toContain("cults");
+      expect(copy).toContain("Dr Evelyn Mercer");
+      expect(copy).toContain("local-first");
+      expect(coc.cta.buttonText).toContain("Investigation");
+    });
+
+    it("maintains a valid hub-and-spoke investigation graph with categorized nodes", () => {
+      const coc = getLandingPage("call-of-cthulhu")!;
+      const graph = coc.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.sublabel).toContain("Investigator");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Cryptic Telegram")?.sublabel,
+      ).toBe("Handout • Telegram");
+      expect(
+        graph.steps.find((s) => s.label === "St Bartholomew's Archive")
+          ?.relation,
+      ).toBe("Researches at");
+      expect(
+        graph.steps.find((s) => s.label === "The Orne Society")?.sublabel,
+      ).toBe("Cult");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
     });
   });
 
