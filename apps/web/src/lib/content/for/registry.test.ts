@@ -323,15 +323,92 @@ describe("Landing Page Registry", () => {
   });
 
   describe("Cyberpunk RED Pack", () => {
-    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+    it("is registered, marked as system, uses sharp styling, and includes non-affiliation disclaimer", () => {
       const cp = getLandingPage("cyberpunk-red");
       expect(cp).toBeDefined();
       expect(cp?.slug).toBe("cyberpunk-red");
       expect(cp?.kind).toBe("system");
       expect(cp?.theme).toBe("cyberpunk");
+      expect(cp?.surfaceStyle).toBe("sharp");
       expect(cp?.disclaimer).toContain("R. Talsorian Games");
       expect(cp?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(cp?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Cyberpunk RED terminology and avoids generic fantasy / automation claims", () => {
+      const cp = getLandingPage("cyberpunk-red")!;
+      const copy = JSON.stringify(cp);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+
+      // Avoid unsupported rules/automation claims
+      expect(copy).not.toMatch(
+        /character builder|rules automation|combat calculator/i,
+      );
+
+      // Verify authentic Time of the RED terminology
+      expect(cp.hero.eyebrow).toContain("Time of the RED");
+      expect(copy).toContain("Fixers");
+      expect(copy).toContain("Solos");
+      expect(copy).toContain("Netrunners");
+      expect(copy).toContain("Medtechs");
+      expect(copy).toContain("edgerunner");
+      expect(copy).toContain("Combat Zone");
+      expect(copy).toContain("boostergang");
+      expect(copy).toContain("Nomad");
+      expect(copy).toContain("datashards");
+      expect(copy).toContain("Night Markets");
+      expect(copy).toContain("Lifepath");
+      expect(copy).toContain("Jax 'Chrome' Vance");
+      expect(copy).toContain("Zetatech Operations");
+      expect(copy).toContain("Iron Sights");
+      expect(copy).toContain("local-first");
+      expect(cp.cta.title).toBe("Map the Street. Run the Gig.");
+    });
+
+    it("maintains a valid hub-and-spoke gig and contact graph with categorized nodes", () => {
+      const cp = getLandingPage("cyberpunk-red")!;
+      const graph = cp.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.label).toBe("Jax 'Chrome' Vance");
+      expect(hub.sublabel).toContain("Fixer");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Zetatech Operations")?.relation,
+      ).toBe("Brokers gig for");
+      expect(graph.steps.find((s) => s.label === "Iron Sights")?.relation).toBe(
+        "Evades territory of",
+      );
+      expect(
+        graph.steps.find((s) => s.label === "The Docks Container Yard")
+          ?.relation,
+      ).toBe("Coordinates drop at");
+      expect(
+        graph.steps.find((s) => s.label === "Encrypted Biometric Shard")
+          ?.relation,
+      ).toBe("Fences");
+      expect(graph.steps.find((s) => s.label === "Rook")?.sublabel).toContain(
+        "Solo",
+      );
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
     });
   });
 

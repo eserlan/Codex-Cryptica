@@ -5,81 +5,91 @@ export const cyberpunkRed: LandingPageConfig = {
   kind: "system",
   theme: "cyberpunk",
   hub: "cyberpunk",
+  surfaceStyle: "sharp",
   seo: {
     title: "Codex Cryptica for Cyberpunk RED Campaign Management",
     description:
-      "Organise your Cyberpunk RED campaign with connected fixers, megacorps, street gangs, merc squads, deal locations, and gig recaps.",
+      "Organise your Cyberpunk RED campaign with connected fixers, megacorps, boostergangs, edgerunner crews, deal locations, and gig recaps.",
     image: "https://assets.codexcryptica.com/og/cyberpunk-red.jpg",
     imageAlt:
       "Edgerunner mercenary workbench with cyberdeck holomap of Night City, datashards, cyberware, and neon skyline view",
   },
   hero: {
-    eyebrow: "Cyberpunk RED Campaign Management",
+    eyebrow: "Time of the RED Campaign & Crew Management",
     title: "Codex Cryptica for Cyberpunk RED",
     tagline:
-      "Keep fixers, megacorps, merc squads, street gangs, deal locations, and gig recaps connected in one place.",
+      "Keep fixers, edgerunner crews, megacorp handlers, boostergang turf, and high-risk gigs connected in one local-first workspace.",
     problemStatement:
-      "Cyberpunk RED campaigns quickly grow into a web of corporate handlers, fixer contacts, gang territories, rival mercs, and street-level favours. When your edgerunners take a high-risk gig in a contested zone, you shouldn't have to search through loose notes to remember which megacorp owns the target — or who stands to profit.",
+      "In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.",
   },
   useCases: [
     {
-      title: "Fixers, Merc Squads & Contacts",
+      title: "Fixers, Edgerunner Crews & Contacts",
       description:
-        "Map fixers, solo mercs, netrunners, and street contacts using a visual relationship graph.",
+        "Map the web between district Fixers, Solos, Netrunners, Techs, Medtechs, and Lawmen alongside the street favours, unpaid debts, and Lifepath rivalries that tie them together.",
       icon: "icon-[lucide--users]",
     },
     {
-      title: "Megacorps, Gangs & Factions",
+      title: "Megacorps, Boostergangs & Nomad Packs",
       description:
-        "Connect corporate executives, street gangs, syndicate bosses, and rival crews to the turf and assets they control.",
+        "Track corporate executives, boostergang turf, Nomad family convoys, and black-market syndicates across Night City's contested districts.",
       icon: "icon-[lucide--building-2]",
     },
     {
-      title: "Gigs, Contracts & Session Recaps",
+      title: "Gigs, Night Markets & Local Data Pools",
       description:
-        "Keep active jobs, corporate contracts, mission debriefs, and campaign milestones connected to the people and places involved.",
+        "Connect active job briefs, fixer cut percentages, scavenged cargo, encrypted datashards, and debrief notes to the crews and locations involved.",
       icon: "icon-[lucide--file-text]",
     },
     {
-      title: "Districts, Safehouses & Hotspots",
+      title: "Combat Zones, Concourse Towers & Safehouses",
       description:
-        "Catalogue city districts, corporate towers, black-market safehouses, and contested zones alongside your campaign entities.",
+        "Catalogue cube hotels, corporate concourses, abandoned subways, container parks, and fortified bolt-holes with connected maps and district notes.",
       icon: "icon-[lucide--map-pin]",
     },
   ],
   exampleGraph: {
-    title: "Sample Cyberpunk RED Campaign Web",
+    title: "Night City Gig & Contact Web",
     description:
-      "See how district fixers, megacorporations, corporate security forces, and encrypted assets connect in a gig web.",
+      "One district Fixer, his corporate client, the boostergang guarding the drop zone, the target datashard, and the Solo on contract.",
+    badgeLabel: "Gig & Contact Web",
+    palette: "default",
+    surface: "dark",
     steps: [
       {
-        label: "Fixer Jax Vance",
-        sublabel: "District Fixer",
+        label: "Jax 'Chrome' Vance",
+        sublabel: "Fixer • District Broker",
         category: "character",
       },
       {
-        label: "Zeta-Tech Systems",
-        sublabel: "Megacorporation",
+        label: "Zetatech Operations",
+        sublabel: "Megacorp • Client",
         relation: "Brokers gig for",
         category: "faction",
       },
       {
-        label: "Arasaka Security Division",
-        sublabel: "Corporate Security",
-        relation: "Evades",
+        label: "Iron Sights",
+        sublabel: "Boostergang • Turf Rival",
+        relation: "Evades territory of",
         category: "faction",
       },
       {
-        label: "Sector 4 Combat Zone",
-        sublabel: "Contested District",
-        relation: "Operates in",
+        label: "The Docks Container Yard",
+        sublabel: "Combat Zone • Drop Point",
+        relation: "Coordinates drop at",
         category: "location",
       },
       {
-        label: "The Blackout Data-Drive",
-        sublabel: "Encrypted Asset",
+        label: "Encrypted Biometric Shard",
+        sublabel: "Datashard • Stolen Intel",
         relation: "Fences",
         category: "item",
+      },
+      {
+        label: "Rook",
+        sublabel: "Solo • Merc for Hire",
+        relation: "Hires on contract",
+        category: "character",
       },
     ],
   },
@@ -87,37 +97,37 @@ export const cyberpunkRed: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design megacorporations, street gangs, mercenary syndicates, and fixer networks.",
+        "Design megacorp subsidiaries, boostergangs, Nomad packs, and private security syndicates.",
       href: "/generators/faction",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Create fixers, solos, netrunners, corporate suits, and street contacts with distinct motives.",
+        "Create Fixers, Solos, Netrunners, Exec handlers, and street-level contacts with distinct motivations and cyberware notes.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Settlement Generator",
       description:
-        "Build urban sectors, corporate arcologies, combat zones, and night market districts.",
+        "Build urban blocks, corporate concourses, Combat Zone ruins, Night Markets, and container settlements.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Generate gig briefs, corporate extractions, street brawls, and Netrunner job leads.",
+        "Generate gig briefs, corporate extractions, turf wars, and high-risk datashard recovery contracts.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Organise Your Cyberpunk Campaign",
+    title: "Map the Street. Run the Gig.",
     description:
-      "Keep your Cyberpunk RED campaign connected with relationship graphs, interactive maps, and local-first storage.",
-    buttonText: "Start Building Free",
+      "Keep your Cyberpunk RED campaign connected with relationship graphs, district maps, and local-first notes that stay on your machine.",
+    buttonText: "Start Your Campaign Free",
     buttonHref: "/app",
   },
   disclaimer:
