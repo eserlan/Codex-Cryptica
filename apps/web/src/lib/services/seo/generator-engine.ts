@@ -166,7 +166,12 @@ export {
 export {
   settlementConfig,
   SETTLEMENT_PRESETS,
+  SETTLEMENT_LEXICON,
+  settlementSchema,
   presetsFor,
+  analyseIntent,
+  applyIntent,
+  type InferredChoice,
 } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";

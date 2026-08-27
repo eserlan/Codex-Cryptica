@@ -657,7 +657,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "generator-presets",
     title: "Presets and Matching Options",
     content:
-      "Above the generator options, Start From offers a few ready-made settings like Merchant Port or Boom Town. Picking one fills in two or three fields and leaves the rest blank, and blank fields are chosen to match what you did pick: a coastal trade hub tends to end up under merchant rule with a market district, while a mountain mining village does not. Everything a preset fills in stays editable, and changing any of it simply clears the highlight.",
+      "Above the generator options, Start From offers a few ready-made settings like Merchant Port or Boom Town. Picking one fills in two or three fields and leaves the rest blank. You can also describe what you want in your own words, and any field still blank is filled in from that description, with a chip showing what was read so you can remove anything you disagree with. Blank fields are then chosen to match what you did pick: a coastal trade hub tends to end up under merchant rule with a market district, while a mountain mining village does not. Everything stays editable, and nothing you set by hand is ever overwritten.",
     icon: "icon-[lucide--sparkles]",
   },
   "language-generator": {
