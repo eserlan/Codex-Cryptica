@@ -5,87 +5,92 @@ export const dystopianSciFi: LandingPageConfig = {
   kind: "genre",
   theme: "cyberpunk",
   hub: "cyberpunk",
+  surfaceStyle: "sharp",
   seo: {
     title: "Codex Cryptica for Dystopian Sci-Fi Worldbuilding",
     description:
-      "Organise dystopian sci-fi campaigns and worldbuilding with connected regimes, corporations, surveillance networks, and resistance movements.",
+      "Organise dystopian sci-fi campaigns and worldbuilding with connected authoritarian regimes, corporate monopolies, surveillance grids, social strata, and resistance cells.",
     image: "https://assets.codexcryptica.com/og/dystopian-sci-fi.jpg",
     imageAlt:
-      "Authoritarian megacity surveillance command center with 3D wireframe arcology displays, citizen census data, and classified dossiers",
+      "Authoritarian regime command center with holographic sector surveillance grids, citizen tier registries, and security enforcement manifests",
   },
   hero: {
-    eyebrow: "Dystopian Sci-Fi Worldbuilding",
+    eyebrow: "Dystopian Sci-Fi Setting & Campaign Management",
     title: "Codex Cryptica for Dystopian Sci-Fi",
     tagline:
-      "Keep regimes, corporations, resistance movements, surveillance systems, districts, and campaign lore connected in one place.",
+      "Keep authoritarian regimes, corporate monopolies, surveillance networks, rationed sectors, and underground resistance cells connected in one local-first workspace.",
     problemStatement:
-      "Dystopian sci-fi worlds are built from overlapping systems of power: governments, corporations, surveillance networks, resistance movements, controlled districts, and the people caught between them. When the players expose one secret, you should be able to see who benefits, who is threatened, and what changes next.",
+      "Dystopian science fiction turns on interlocking systems of control: ruling authorities, security apparatuses, state-backed monopolies, rationed resources, and the resistance cells fighting in the margins. When dissidents sabotage a distribution hub, an official defects, or a surveillance grid flags your party, you shouldn't have to scramble across scattered notes to see who orders the crackdown, who profits from the shortage, and who is quietly backing the rebellion.",
   },
   useCases: [
     {
-      title: "Regimes, Corporations & Resistance",
+      title: "Regimes, Corporations & Security Apparatuses",
       description:
-        "Map corporate boards, state security forces, rebel cells, and syndicate networks with a visual relationship graph.",
+        "Map governing councils, corporate monopolies, internal security forces, and clandestine enforcement agencies in one visual relationship graph.",
       icon: "icon-[lucide--building-2]",
     },
     {
-      title: "Megacities, Enclaves & Undercities",
+      title: "Sectors, Arcologies & Restricted Zones",
       description:
-        "Connect sprawling arcologies, elite high-rises, industrial sectors, and subterranean slums to the factions operating within them.",
+        "Track fortified administrative enclaves, industrial sectors, rationed hab-blocks, and insurgent-held outskirts alongside your campaign lore.",
       icon: "icon-[lucide--map-pin]",
     },
     {
-      title: "Surveillance, Data & Tech Assets",
+      title: "Surveillance Grids, Propaganda & Classified Projects",
       description:
-        "Link surveillance systems, classified projects, stolen research, and restricted technologies to the factions and characters fighting over them.",
+        "Connect automated monitoring networks, state broadcasts, dissident manifestos, classified dossiers, and restricted technology to the factions controlling them.",
       icon: "icon-[lucide--cpu]",
     },
     {
-      title: "Operations, Secrets & Session Notes",
+      title: "Resistance Cells, Informants & Dissidents",
       description:
-        "Keep active operations, intrigue leads, session notes, and campaign milestones connected to the people and places involved.",
-      icon: "icon-[lucide--file-text]",
+        "Track underground networks, compromised bureaucrats, safehouse contacts, and covert operations without losing track of loyalties, leverage, or debts.",
+      icon: "icon-[lucide--users]",
     },
   ],
   exampleGraph: {
-    title: "Sample Dystopian Sci-Fi Campaign Web",
+    title: "Sample Dystopian Power & Resistance Web",
     description:
-      "See how regime councils, corporate contractors, surveillance networks, and resistance movements connect in a world web.",
+      "A ruling civic authority, its corporate contractor, a biometric surveillance grid, a suppressed labour sector, and the underground resistance organising in secret.",
+    badgeLabel: "Dystopian Power Web",
+    palette: "default",
+    surface: "dark",
+    // Hub-and-spoke: every relation reads outward from the first node.
     steps: [
       {
         label: "Veyra Civic Authority",
-        sublabel: "Regime Council",
+        sublabel: "Regime Council • Ruling Authority",
         category: "faction",
       },
       {
-        label: "Orison Systems",
-        sublabel: "Corporate Contractor",
+        label: "Orison Heavy Industries",
+        sublabel: "Corporate Monopoly • State Contractor",
         relation: "Contracts",
         category: "faction",
       },
       {
-        label: "Census Mirror",
-        sublabel: "Surveillance Network",
-        relation: "Deploys",
+        label: "Census Mirror Grid",
+        sublabel: "Surveillance Network • Biometric Database",
+        relation: "Monitors citizens via",
         category: "item",
       },
       {
-        label: "Ward 17",
-        sublabel: "Controlled District",
-        relation: "Subjugates",
+        label: "Sector 14 Hab-Blocks",
+        sublabel: "Restricted District • Labour Zone",
+        relation: "Enforces rationing on",
         category: "location",
       },
       {
         label: "The Common Assembly",
-        sublabel: "Underground Resistance",
+        sublabel: "Dissident Network • Resistance Movement",
         relation: "Suppresses",
         category: "faction",
       },
       {
-        label: "Citizen Access Archive",
-        sublabel: "Classified Data-Vault",
-        relation: "Restricts",
-        category: "item",
+        label: "Director Sulan Vane",
+        sublabel: "Internal Security • Enforcement Chief",
+        relation: "Commands",
+        category: "character",
       },
     ],
   },
@@ -93,36 +98,36 @@ export const dystopianSciFi: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design corporate conglomerates, state security agencies, rebel cells, and crime syndicates.",
+        "Create governing councils, state security directorates, corporate monopolies, and underground resistance cells.",
       href: "/generators/faction",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Create corporate executives, resistance leaders, hackers, enforcers, and informants.",
+        "Create regime bureaucrats, security officers, informants, black-market smugglers, and dissident organisers.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Settlement Generator",
       description:
-        "Build mega-city arcologies, industrial complexes, polluted outposts, and underground havens.",
+        "Build sprawling mega-city arcologies, heavily monitored hab-blocks, industrial refinery zones, and forgotten undercities.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Generate resistance operations, political crises, sabotage attempts, disappearances, and secrets worth uncovering.",
+        "Generate propaganda leaks, sabotage operations, border crackdowns, high-level defections, and ration shortages.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Organise Your Dystopian World",
+    title: "Map the Regime. Fuel the Resistance.",
     description:
-      "Keep your dystopian world connected with relationship graphs, interactive maps, and local-first storage.",
+      "Keep authoritarian systems, dissident networks, restricted sectors, and session notes connected with relationship graphs and local-first storage.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },
