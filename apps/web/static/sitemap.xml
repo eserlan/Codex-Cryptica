@@ -197,6 +197,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/cosmic-horror</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/cyberpunk-red</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
