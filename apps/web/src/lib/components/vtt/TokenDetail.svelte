@@ -8,6 +8,9 @@
   import SpatialImageDetails from "$lib/components/spatial/SpatialImageDetails.svelte";
   import TokenNoteEditor from "./TokenNoteEditor.svelte";
   import { isNoteCollapsed } from "map-engine";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -30,6 +33,48 @@
     if (entityImage) return entityImage;
     return selectedToken.imageUrl;
   });
+  /**
+   * AI generation is offered on a note only when there is an AI to reach:
+   * enabled in settings, and not a guest, who has no key of their own.
+   */
+  const canGenerateEncounter = $derived(oracle.isEnabled && !vault.isGuest);
+  let generatingEncounterFor = $state<string | null>(null);
+
+  async function generateEncounterInto(tokenId: string) {
+    if (generatingEncounterFor) return;
+    generatingEncounterFor = tokenId;
+    try {
+      // Imported on demand: the generator pulls in the whole prompt/table
+      // stack, which no VTT session should pay for until a GM asks for it.
+      const { generateNoteEncounter } =
+        await import("$lib/services/vtt/note-encounter");
+      const { body, aiFallback } = await generateNoteEncounter({
+        themeId: themeStore.worldThemeId,
+        context: mapStore.activeMap?.name,
+      });
+      // The GM may have selected another token, or started typing into this
+      // one, while the model was working — either way the result is no longer
+      // wanted where it was asked for.
+      const note = mapSession.tokens[tokenId];
+      if (!note || note.kind !== "note" || (note.noteBody ?? "").trim()) return;
+      mapSession.updateToken(tokenId, { noteBody: body });
+      if (aiFallback) {
+        notificationStore.notify(
+          "AI was unavailable, so this encounter came from the local tables.",
+          "info",
+        );
+      }
+    } catch (error) {
+      console.error("[VTT] Encounter generation failed", error);
+      notificationStore.notify(
+        "That encounter could not be generated.",
+        "error",
+      );
+    } finally {
+      generatingEncounterFor = null;
+    }
+  }
+
   const isInInitiative = $derived.by(() =>
     selectedToken
       ? mapSession.initiativeOrder.includes(selectedToken.id)
@@ -94,10 +139,14 @@
         body={selectedToken.noteBody ?? ""}
         collapsed={isNoteCollapsed(selectedToken)}
         disabled={!canManageToken}
+        generating={generatingEncounterFor === selectedToken.id}
         onChange={(body) =>
           mapSession.updateToken(selectedToken.id, { noteBody: body })}
         onToggleCollapsed={() =>
           mapSession.toggleNoteCollapsed(selectedToken.id)}
+        onGenerateEncounter={canGenerateEncounter
+          ? () => void generateEncounterInto(selectedToken.id)
+          : undefined}
       />
     {/if}
 

@@ -20,7 +20,31 @@ vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: {
     isGMMode: false,
     activeMapId: "map-1",
+    // Sized, because the note-collapse path clamps against the map bounds.
+    activeMap: {
+      id: "map-1",
+      name: "Crypt of the Sun",
+      dimensions: { width: 2000, height: 2000 },
+    },
   },
+}));
+
+const oracleMock = vi.hoisted(() => ({ isEnabled: true }));
+vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: oracleMock }));
+vi.mock("$lib/stores/theme.svelte", () => ({
+  themeStore: { worldThemeId: "fantasy" },
+}));
+
+const notifyMock = vi.hoisted(() => vi.fn());
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: { notify: notifyMock, confirm: vi.fn() },
+}));
+
+const generateNoteEncounterMock = vi.hoisted(() =>
+  vi.fn(async () => ({ body: "Three cultists mid-ritual", aiFallback: false })),
+);
+vi.mock("$lib/services/vtt/note-encounter", () => ({
+  generateNoteEncounter: generateNoteEncounterMock,
 }));
 
 describe("TokenDetail", () => {
@@ -208,6 +232,78 @@ describe("TokenDetail", () => {
       "token-note-body",
     )) as HTMLTextAreaElement;
     expect(textarea.disabled).toBe(true);
+  });
+
+  it("generates an encounter into an empty note", async () => {
+    mapStore.isGMMode = true;
+    sessionModeStore.isGuestMode = false;
+    oracleMock.isEnabled = true;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "";
+
+    render(TokenDetail);
+
+    const button = await screen.findByTestId("token-note-generate-encounter");
+    await fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(mapSession.tokens["token-1"].noteBody).toBe(
+        "Three cultists mid-ritual",
+      ),
+    );
+    expect(generateNoteEncounterMock).toHaveBeenCalledWith({
+      themeId: "fantasy",
+      context: "Crypt of the Sun",
+    });
+    // The offer is gone once there is something to overwrite.
+    expect(screen.queryByTestId("token-note-generate-encounter")).toBeNull();
+  });
+
+  it("offers no generation on a note the GM has already written in", async () => {
+    mapStore.isGMMode = true;
+    sessionModeStore.isGuestMode = false;
+    oracleMock.isEnabled = true;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "2 goblins";
+
+    render(TokenDetail);
+
+    await screen.findByTestId("token-note-body");
+    expect(screen.queryByTestId("token-note-generate-encounter")).toBeNull();
+  });
+
+  it("offers no generation while AI is switched off", async () => {
+    mapStore.isGMMode = true;
+    sessionModeStore.isGuestMode = false;
+    oracleMock.isEnabled = false;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "";
+
+    render(TokenDetail);
+
+    await screen.findByTestId("token-note-body");
+    expect(screen.queryByTestId("token-note-generate-encounter")).toBeNull();
+  });
+
+  it("keeps a generated encounter out of a note the GM filled in meanwhile", async () => {
+    mapStore.isGMMode = true;
+    sessionModeStore.isGuestMode = false;
+    oracleMock.isEnabled = true;
+    mapSession.tokens["token-1"].kind = "note";
+    mapSession.tokens["token-1"].noteBody = "";
+    generateNoteEncounterMock.mockImplementationOnce(async () => {
+      mapSession.updateToken("token-1", { noteBody: "typed by hand" });
+      return { body: "Three cultists mid-ritual", aiFallback: false };
+    });
+
+    render(TokenDetail);
+    await fireEvent.click(
+      await screen.findByTestId("token-note-generate-encounter"),
+    );
+
+    await waitFor(() =>
+      expect(mapSession.tokens["token-1"].noteBody).toBe("typed by hand"),
+    );
   });
 
   it("hides add to initiative when the token is already in initiative", async () => {

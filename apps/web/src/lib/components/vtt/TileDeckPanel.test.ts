@@ -7,6 +7,11 @@ const mapSessionMock = vi.hoisted(() => ({
   tileDecks: [] as any[],
   createTileDeck: vi.fn(),
   drawAnyTile: vi.fn(),
+  setTileDeckStocking: vi.fn(),
+}));
+
+const randomSourcesMock = vi.hoisted(() => ({
+  tables: [] as any[],
 }));
 
 const vaultMock = vi.hoisted(() => ({
@@ -25,6 +30,10 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
 vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
+vi.mock("$lib/features/random", () => ({
+  randomSources: randomSourcesMock,
+  ensureRandomSourcesLoaded: vi.fn(async () => {}),
+}));
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { notify: vi.fn(), confirm: vi.fn() },
 }));
@@ -55,5 +64,108 @@ describe("TileDeckPanel image import", () => {
     await fireEvent.change(input, { target: { files: [jpeg] } });
 
     expect(screen.getByText("1 image selected")).not.toBeNull();
+  });
+});
+
+describe("TileDeckPanel stocking", () => {
+  function setUpDeck(stocking?: any) {
+    mapSessionMock.setTileDeckStocking.mockClear();
+    mapSessionMock.tileDecks = [
+      {
+        id: "deck-1",
+        name: "Rooms",
+        hardEdges: false,
+        tiles: [{ id: "tile-1", name: "Crypt", imagePath: "crypt.png" }],
+        stocking,
+      },
+    ];
+    randomSourcesMock.tables = [
+      { id: "table-1", name: "Dungeon dressing" },
+      { id: "table-2", name: "Wandering monsters" },
+    ];
+  }
+
+  it("defaults a deck with no setting to placing the tile only", () => {
+    setUpDeck(undefined);
+    render(TileDeckPanel);
+
+    const select = screen.getByLabelText("On draw") as HTMLSelectElement;
+    expect(select.value).toBe("none");
+    expect(screen.queryByLabelText("Table rolled for Rooms")).toBeNull();
+  });
+
+  it("preselects the first table when the GM switches to rolling one", async () => {
+    setUpDeck(undefined);
+    render(TileDeckPanel);
+
+    const select = screen.getByLabelText("On draw") as HTMLSelectElement;
+    await fireEvent.change(select, { target: { value: "table" } });
+
+    expect(mapSessionMock.setTileDeckStocking).toHaveBeenCalledWith("deck-1", {
+      mode: "table",
+      tableId: "table-1",
+    });
+  });
+
+  it("shows the deck's table and changes which one it rolls", async () => {
+    setUpDeck({ mode: "table", tableId: "table-1" });
+    render(TileDeckPanel);
+
+    const picker = screen.getByLabelText(
+      "Table rolled for Rooms",
+    ) as HTMLSelectElement;
+    expect(picker.value).toBe("table-1");
+
+    await fireEvent.change(picker, { target: { value: "table-2" } });
+    expect(mapSessionMock.setTileDeckStocking).toHaveBeenCalledWith("deck-1", {
+      mode: "table",
+      tableId: "table-2",
+    });
+  });
+
+  it("says so when the vault has no tables to roll", () => {
+    setUpDeck({ mode: "table", tableId: "table-1" });
+    randomSourcesMock.tables = [];
+    render(TileDeckPanel);
+
+    expect(
+      screen.getByText("This vault has no random tables yet."),
+    ).not.toBeNull();
+  });
+
+  it("hides the table picker for the encounter mode and explains the pinned note", async () => {
+    setUpDeck({ mode: "encounter" });
+    render(TileDeckPanel);
+
+    expect(screen.queryByLabelText("Table rolled for Rooms")).toBeNull();
+    expect(
+      screen.getByText(
+        "An empty note is pinned on the tile, with a button to generate the encounter when you get there.",
+      ),
+    ).not.toBeNull();
+  });
+
+  it("keeps the chosen table when the frequency changes", async () => {
+    setUpDeck({ mode: "table", tableId: "table-2", frequency: 1 });
+    render(TileDeckPanel);
+
+    const frequency = screen.getByLabelText(
+      "How often Rooms pins a note",
+    ) as HTMLSelectElement;
+    expect(frequency.value).toBe("1");
+
+    await fireEvent.change(frequency, { target: { value: "3" } });
+    expect(mapSessionMock.setTileDeckStocking).toHaveBeenCalledWith("deck-1", {
+      mode: "table",
+      tableId: "table-2",
+      frequency: 3,
+    });
+  });
+
+  it("offers no frequency until a deck stocks something", () => {
+    setUpDeck(undefined);
+    render(TileDeckPanel);
+
+    expect(screen.queryByLabelText("How often Rooms pins a note")).toBeNull();
   });
 });

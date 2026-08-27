@@ -4,6 +4,7 @@ import {
   normalizeEncounterSession,
   normalizeToken,
 } from "./vtt";
+import type { EncounterSession } from "./vtt";
 
 const token = {
   id: "token-1",
@@ -230,5 +231,58 @@ describe("VTT domain normalization", () => {
     expect(normalized.tileDecks?.[0].tiles[0]).not.toBe(
       session.tileDecks[0].tiles[0],
     );
+  });
+
+  it("keeps a deck's table stocking and drops an unrecognised one", () => {
+    const deck = (stocking: unknown) => ({
+      id: "deck-1",
+      name: "Rooms",
+      hardEdges: false,
+      tiles: [],
+      stocking,
+    });
+    const session = (stocking: unknown) =>
+      ({
+        mapId: "map-1",
+        mode: "solo",
+        tokens: {},
+        initiativeOrder: [],
+        initiativeValues: {},
+        turnIndex: 0,
+        selection: null,
+        lastPing: null,
+        measurement: { active: false, start: null, end: null },
+        createdAt: 1,
+        savedAt: null,
+        chatMessages: [],
+        tileDecks: [deck(stocking)],
+      }) as unknown as EncounterSession;
+
+    expect(
+      normalizeEncounterSession(session({ mode: "table", tableId: "t-1" }))
+        .tileDecks?.[0].stocking,
+    ).toEqual({ mode: "table", tableId: "t-1", frequency: 1 });
+    expect(
+      normalizeEncounterSession(session({ mode: "encounter", frequency: 3 }))
+        .tileDecks?.[0].stocking,
+    ).toEqual({ mode: "encounter", frequency: 3 });
+    // A frequency that would stock nothing, or nothing at all, reads as
+    // "every drawn tile" — "none" is how a GM turns stocking off.
+    expect(
+      normalizeEncounterSession(session({ mode: "encounter", frequency: 0 }))
+        .tileDecks?.[0].stocking?.frequency,
+    ).toBe(1);
+    expect(
+      normalizeEncounterSession(session({ mode: "encounter", frequency: 2.6 }))
+        .tileDecks?.[0].stocking?.frequency,
+    ).toBe(3);
+    expect(
+      normalizeEncounterSession(session({ mode: "none" })).tileDecks?.[0]
+        .stocking,
+    ).toBeUndefined();
+    expect(
+      normalizeEncounterSession(session({ mode: "wat" })).tileDecks?.[0]
+        .stocking,
+    ).toBeUndefined();
   });
 });

@@ -76,6 +76,27 @@ export interface TileDeckEntry {
   category?: string;
 }
 
+/**
+ * What a deck pins on a drawn tile as it lands on the map.
+ *
+ * Three states rather than two: most draws — corridors, doors, junctions —
+ * want nothing at all, so "none" has to stay the default and cannot be the
+ * absence of a choice between the other two.
+ */
+export type TileDeckStockingMode = "none" | "table" | "encounter";
+
+export interface TileDeckStocking {
+  mode: TileDeckStockingMode;
+  /** Id of the random table rolled when the mode is "table". */
+  tableId?: string;
+  /**
+   * One drawn tile in `frequency` gets a note; 1 means every one of them.
+   * A dungeon where every room holds something is a dungeon with no pacing,
+   * so this is how a GM says "roughly a third of these rooms".
+   */
+  frequency?: number;
+}
+
 export interface TileDeck {
   id: string;
   name: string;
@@ -87,6 +108,8 @@ export interface TileDeck {
   sourceUrl?: string;
   tiles: TileDeckEntry[];
   hardEdges: boolean;
+  /** Unset on decks saved before stocking existed, which read as "none". */
+  stocking?: TileDeckStocking;
 }
 
 export interface MeasurementState {
@@ -249,6 +272,29 @@ export function cloneMeasurement(
 }
 
 /**
+ * Drops a stocking whose mode is unrecognised or is plainly "none", so a
+ * round-tripped deck carries a setting only when there is one to carry, and a
+ * table mode always keeps the table it rolls.
+ */
+function normalizeTileDeckStocking(
+  stocking: TileDeckStocking | undefined,
+): TileDeckStocking | undefined {
+  const mode = stocking?.mode;
+  if (mode !== "table" && mode !== "encounter") return undefined;
+  return {
+    mode,
+    ...(mode === "table" ? { tableId: stocking?.tableId ?? undefined } : {}),
+    frequency: normalizeStockingFrequency(stocking?.frequency),
+  };
+}
+
+/** A frequency below 1 would stock nothing at all, which is what "none" is for. */
+function normalizeStockingFrequency(frequency: number | undefined): number {
+  if (typeof frequency !== "number" || !Number.isFinite(frequency)) return 1;
+  return Math.max(1, Math.round(frequency));
+}
+
+/**
  * Returns an independent, internally consistent VTT session without mutating the
  * persisted input. Browser state and transport concerns remain outside this API.
  */
@@ -296,6 +342,7 @@ export function normalizeEncounterSession(
       license: deck.license,
       sourceUrl: deck.sourceUrl,
       hardEdges: deck.hardEdges === true,
+      stocking: normalizeTileDeckStocking(deck.stocking),
       tiles: (deck.tiles ?? []).map((tile) => ({ ...tile })),
     })),
   };
