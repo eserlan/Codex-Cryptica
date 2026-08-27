@@ -447,19 +447,22 @@ describe("Landing Page Registry", () => {
 
       // Verify authentic dystopian sci-fi systemic concepts
       expect(dystopia.hero.eyebrow).toContain("Dystopian Sci-Fi");
-      expect(copy).toContain("regimes");
+      expect(copy).toContain("institutions");
       expect(copy).toContain("surveillance");
-      expect(copy).toContain("resistance");
+      expect(copy).toContain("scarcity");
+      expect(copy).toContain("social hierarchy");
       expect(copy).toContain("monopolies");
-      expect(copy).toContain("rationed");
+      expect(copy).toContain("rationing");
       expect(copy).toContain("Veyra Civic Authority");
       expect(copy).toContain("Orison Heavy Industries");
       expect(copy).toContain("Census Mirror Grid");
-      expect(copy).toContain("Sector 14 Hab-Blocks");
+      expect(copy).toContain("Sector 14 Industrial Ward");
       expect(copy).toContain("The Common Assembly");
       expect(copy).toContain("Director Sulan Vane");
       expect(copy).toContain("local-first");
-      expect(dystopia.cta.title).toBe("Map the Regime. Fuel the Resistance.");
+      expect(dystopia.cta.title).toBe(
+        "Map the System. Follow the Fault Lines.",
+      );
     });
 
     it("maintains a valid hub-and-spoke dystopian power graph with categorized nodes", () => {
@@ -472,7 +475,7 @@ describe("Landing Page Registry", () => {
       expect(hub.relation).toBeUndefined();
       expect(hub.category).toBe("faction");
       expect(hub.label).toBe("Veyra Civic Authority");
-      expect(hub.sublabel).toContain("Ruling Authority");
+      expect(hub.sublabel).toBe("Ruling Authority");
 
       for (const spoke of spokes) {
         expect(spoke.relation).toBeTruthy();
@@ -487,7 +490,8 @@ describe("Landing Page Registry", () => {
         graph.steps.find((s) => s.label === "Census Mirror Grid")?.relation,
       ).toBe("Monitors citizens via");
       expect(
-        graph.steps.find((s) => s.label === "Sector 14 Hab-Blocks")?.relation,
+        graph.steps.find((s) => s.label === "Sector 14 Industrial Ward")
+          ?.relation,
       ).toBe("Enforces rationing on");
       expect(
         graph.steps.find((s) => s.label === "The Common Assembly")?.relation,
