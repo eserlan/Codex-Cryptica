@@ -114,8 +114,46 @@ if (helpFiles.length > 0) {
   }
 }
 
+// 3. Add TTRPG System & Genre Landing Pages
+const packsDir = path.join(rootDir, 'apps/web/src/lib/content/for/packs');
+if (fs.existsSync(packsDir)) {
+  console.log('Extracting TTRPG System & Genre Landing Pages...');
+  const packFiles = fs.readdirSync(packsDir).filter(f => f.endsWith('.ts') && f !== 'index.ts');
+  packFiles.sort();
+
+  function extractField(content, fieldName) {
+    const regex = new RegExp(`${fieldName}:\\s*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)'|\`([^\`\\\\]*(?:\\\\.[^\`\\\\]*)*)\`)`, 's');
+    const match = content.match(regex);
+    if (!match) return '';
+    const raw = match[1] ?? match[2] ?? match[3] ?? '';
+    return raw.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\'/g, "'").trim();
+  }
+
+  fullContent += `\n## TTRPG System & Genre Campaign Management\n\n`;
+  fullContent += `Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, and toolsets for major tabletop RPG systems and worldbuilding genres:\n\n`;
+
+  for (const file of packFiles) {
+    const filePath = path.join(packsDir, file);
+    const content = fs.readFileSync(filePath, 'utf8');
+
+    const slug = extractField(content, 'slug');
+    const heroTitleMatch = content.match(/title:\s*["'](Codex Cryptica for [^"']+)["']/);
+    const title = heroTitleMatch ? heroTitleMatch[1] : extractField(content, 'title');
+    const tagline = extractField(content, 'tagline');
+    const problem = extractField(content, 'problemStatement');
+
+    if (slug && title) {
+      fullContent += `### [${title}](https://codexcryptica.com/for/${slug})\n\n`;
+      if (tagline) fullContent += `**Summary:** ${tagline}\n\n`;
+      if (problem) fullContent += `**Overview:** ${problem}\n\n`;
+    }
+  }
+}
+
 fs.writeFileSync(outputPath, fullContent);
 const rootOutputPath = path.join(rootDir, 'llms-full.txt');
 fs.writeFileSync(rootOutputPath, fullContent);
 console.log(`\n✅ Generated ${outputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
 console.log(`✅ Generated ${rootOutputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
+
+
