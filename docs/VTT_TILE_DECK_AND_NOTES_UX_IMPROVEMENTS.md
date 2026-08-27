@@ -107,8 +107,11 @@ This specification diagnoses the current UI/UX bottlenecks and defines concrete,
 
 ### 4.2 Tile Browsing & Search (With Metadata Prerequisite)
 
-- **Metadata Verification Prerequisite**: Before implementing search, verify that starter-pack manifests and custom deck uploads expose semantic names and categories. Where starter assets lack useful names or custom decks use raw filenames (e.g. `tile_0043.jpg`), normalise metadata upon ingestion.
-- Search across available tile metadata: display name, source filename/path, and category.
+- **Metadata Prerequisite & Search Scope**:
+  - Verify the semantic quality of starter-pack manifests before implementing search.
+  - Search currently available `name` and `category`.
+  - If starter-pack asset paths/tags provide useful additional terms, persist them explicitly as optional searchable metadata on `TileDeckEntry` (e.g. `searchTerms?: string[]`).
+  - For custom uploads with non-semantic filenames (e.g. `tile_0043.jpg`), search degrades gracefully to filename/category rather than attempting to infer image contents.
 - Preserve existing category filter chips (`[All]`, `[Rooms]`, `[Corridors]`, etc.).
 - Ensure tile names are discoverable without relying solely on mouse hover (e.g. visible text labels or clear badges).
 
@@ -159,15 +162,15 @@ This specification diagnoses the current UI/UX bottlenecks and defines concrete,
 [ Phase 6: Sidebar Layout Polish ] ◄─── [ Phase 5: Tile-Note Association ] ◄─── [ Phase 4: Note Edit & Vault Sync ]
 ```
 
-| Phase       | Milestone                              | Scope                                                                                                                                                                                       |
-| :---------- | :------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Phase 1** | **Armed Tile Placement Feedback**      | Expose `armedTile` in `mapSession`. Add thumbnail ring highlight, top canvas placement banner, and explicit `Escape` key cancellation.                                                      |
-| **Phase 2** | **Tile Browsing & Search**             | Verify starter/upload metadata quality. Add text search input to `TileDeckPanel` matching name, filename, and category. Retain category chips. Add desktop drag-to-map pointer enhancement. |
-| **Phase 3** | **Stocking Control Redesign**          | Implement accessible segmented mode bar (`None`, `Table Roll`, `Encounter Note`), frequency chips (`Every`, `1/2`, `1/3`, `1/4`, `1/6`), and inline table combobox.                         |
-| **Phase 4** | **Note Editing, Preview & Vault Sync** | Inline note renaming via `updateToken()`. Markdown Edit/Preview toggle using existing engine renderer. Debounced/flushed Vault Note sync with Zen mode action.                              |
-| **Phase 5** | **Tile–Note Association**              | Add `parentTokenId` to token schema. Derive reverse relations. Implement delta movement for attached notes and bi-directional navigation badges.                                            |
-| **Phase 6** | **Sidebar Layout Improvement**         | Structure `MapVTTSidebar.svelte` with fixed VTT controls, sticky Initiative, scrollable middle collapsible sections, and pinned bottom Inspector.                                           |
-| **Phase 7** | **Post-Playtest Evaluation**           | Only evaluate full workspace tabs if the pinned/collapsible structure proves inadequate during live campaign play.                                                                          |
+| Phase       | Milestone                              | Scope                                                                                                                                                                                                      |
+| :---------- | :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 1** | **Armed Tile Placement Feedback**      | Expose `armedTile` in `mapSession`. Add thumbnail ring highlight, top canvas placement banner, and explicit `Escape` key cancellation.                                                                     |
+| **Phase 2** | **Tile Browsing & Search**             | Verify starter metadata quality. Add text search input to `TileDeckPanel` matching name and category (and `searchTerms` if available). Retain category chips. Add desktop drag-to-map pointer enhancement. |
+| **Phase 3** | **Stocking Control Redesign**          | Implement accessible segmented mode bar (`None`, `Table Roll`, `Encounter Note`), frequency chips (`Every`, `1/2`, `1/3`, `1/4`, `1/6`), and inline table combobox.                                        |
+| **Phase 4** | **Note Editing, Preview & Vault Sync** | Inline note renaming via `updateToken()`. Markdown Edit/Preview toggle using existing engine renderer. Debounced/flushed Vault Note sync with Zen mode action.                                             |
+| **Phase 5** | **Tile–Note Association**              | Add `parentTokenId` to token schema. Derive reverse relations. Implement delta movement for attached notes and bi-directional navigation badges.                                                           |
+| **Phase 6** | **Sidebar Layout Improvement**         | Structure `MapVTTSidebar.svelte` with fixed VTT controls, sticky Initiative, scrollable middle collapsible sections, and pinned bottom Inspector.                                                          |
+| **Phase 7** | **Post-Playtest Evaluation**           | Only evaluate full workspace tabs if the pinned/collapsible structure proves inadequate during live campaign play.                                                                                         |
 
 ---
 
