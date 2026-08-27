@@ -120,6 +120,8 @@ export interface TokenMoveInput {
 
 export interface TokenStateUpdateInput {
   tokenId?: string;
+  /** Links this element to a vault entity, or clears the link with null. */
+  entityId?: string | null;
   x?: number;
   y?: number;
   width?: number;

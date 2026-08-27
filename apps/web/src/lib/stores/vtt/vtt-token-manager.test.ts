@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { isNoteCollapsed } from "map-engine";
 import { VTTTokenManager } from "./vtt-token-manager.svelte";
 
 function createManager(overrides: Partial<any> = {}) {
@@ -54,6 +55,44 @@ describe("VTTTokenManager.addToken", () => {
     expect(note.baseShape).toBe("square");
     expect(note.facingIndicator).toBe(false);
     expect(addTokenToInitiativeState).not.toHaveBeenCalled();
+  });
+
+  it("lands a note folded down to a marker, springing back to a full page", () => {
+    const { manager } = createManager();
+
+    const note = manager.addToken(
+      { name: "Guard post", x: 0, y: 0, kind: "note", noteBody: "2 goblins" },
+      true,
+    );
+
+    // Half a 50px grid, so it reads at the same weight as a lore pin.
+    expect(note.width).toBe(25);
+    expect(note.height).toBe(25);
+    expect(isNoteCollapsed(note)).toBe(true);
+
+    const expanded = manager.toggleNoteCollapsed(note.id)!;
+    expect(expanded.width).toBe(75);
+    expect(expanded.noteCollapsedFrom).toBeUndefined();
+  });
+
+  it("lands a note open when the caller asks for a size of its own", () => {
+    const { manager } = createManager();
+
+    const note = manager.addToken(
+      { name: "Guard post", x: 0, y: 0, width: 90, height: 90, kind: "note" },
+      true,
+    );
+
+    expect(note.width).toBe(90);
+    expect(isNoteCollapsed(note)).toBe(false);
+  });
+
+  it("leaves noteCollapsedFrom off tokens that are not notes", () => {
+    const { manager } = createManager();
+
+    const token = manager.addToken({ name: "Goblin", x: 0, y: 0 }, true);
+
+    expect(token.noteCollapsedFrom).toBeUndefined();
   });
 
   it("lets a note be placed visible to players when asked for explicitly", () => {

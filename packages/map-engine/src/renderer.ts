@@ -4,6 +4,11 @@ import {
   TOKEN_ROTATION_HANDLE_DISTANCE,
   TOKEN_ROTATION_HANDLE_RADIUS,
 } from "./token-geometry";
+import {
+  layoutNoteMarkdown,
+  parseNoteMarkdown,
+  type NoteLayoutWord,
+} from "./note-markdown";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const m = hex.replace("#", "").match(/.{2}/g);
@@ -206,6 +211,8 @@ const NOTE_FOLD_RATIO = 0.22;
 const NOTE_TEXT_COLOR = "rgba(28, 25, 23, 0.85)";
 /** Below this on-screen size the body text is illegible, so only the paper is drawn. */
 const NOTE_MIN_TEXT_SIZE = 44;
+/** How much larger a `#` heading line is drawn than the note's body text. */
+const HEADING_SCALE = 1.15;
 
 /**
  * Draws a sticky note centred on the current origin. Expects the caller to
@@ -247,52 +254,64 @@ function drawNoteFace(
   if (!text || Math.min(width, height) < NOTE_MIN_TEXT_SIZE) return;
 
   const fontSize = Math.max(8, Math.min(15, height * 0.13));
-  const lineHeight = fontSize * 1.25;
+  const lineHeight = fontSize * 1.3;
   const padding = Math.max(4, width * 0.08);
   const maxWidth = width - padding * 2;
-  // The first line clears the fold; the rest use the note's full width.
   const maxLines = Math.max(1, Math.floor((height - padding * 2) / lineHeight));
-  const font = `${Math.round(fontSize)}px ui-sans-serif, system-ui, sans-serif`;
+  const bulletIndent = fontSize;
 
-  ctx.font = font;
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let current = "";
-  let consumed = 0;
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    // A single word wider than the note still has to go somewhere, so the
-    // first word of a line is taken unconditionally.
-    if (
-      !current ||
-      measureTextCached(ctx, candidate, font, cache).width <= maxWidth
-    ) {
-      current = candidate;
-      consumed++;
-      continue;
-    }
-    lines.push(current);
-    if (lines.length >= maxLines) {
-      current = "";
-      break;
-    }
-    current = word;
-    consumed++;
-  }
-  if (current && lines.length < maxLines) lines.push(current);
+  const fontFor = (word: NoteLayoutWord) => {
+    const size = Math.round(word.heading ? fontSize * HEADING_SCALE : fontSize);
+    const weight = word.bold || word.heading ? "700" : "400";
+    const slant = word.italic ? "italic " : "";
+    return `${slant}${weight} ${size}px ui-sans-serif, system-ui, sans-serif`;
+  };
+  const widthOf = (value: string, word: NoteLayoutWord) =>
+    measureTextCached(ctx, value, fontFor(word), cache).width;
+
+  const { lines, truncated } = layoutNoteMarkdown(parseNoteMarkdown(body), {
+    maxWidth,
+    maxLines,
+    bulletIndent,
+    measure: widthOf,
+  });
+  if (lines.length === 0) return;
 
   // Anything that did not fit is signalled rather than silently dropped, so
   // the GM knows to open the note for the rest.
-  if (consumed < words.length && lines.length > 0) {
-    const last = lines[lines.length - 1];
-    lines[lines.length - 1] = `${last.slice(0, Math.max(1, last.length - 1))}…`;
+  if (truncated) {
+    const lastLine = lines[lines.length - 1];
+    const lastWord = lastLine.words[lastLine.words.length - 1];
+    if (lastWord) lastWord.text = `${lastWord.text}…`;
   }
 
   ctx.fillStyle = NOTE_TEXT_COLOR;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i], left + padding, top + padding + i * lineHeight);
+    const line = lines[i];
+    const y = top + padding + i * lineHeight;
+    let x = left + padding + (line.bullet || line.indented ? bulletIndent : 0);
+
+    if (line.bullet) {
+      ctx.beginPath();
+      ctx.arc(
+        left + padding + bulletIndent * 0.4,
+        y + fontSize * 0.6,
+        Math.max(1, fontSize * 0.13),
+        0,
+        TAU,
+      );
+      ctx.fill();
+    }
+
+    for (let w = 0; w < line.words.length; w++) {
+      const word = line.words[w];
+      ctx.font = fontFor(word);
+      if (w > 0) x += widthOf(" ", word);
+      ctx.fillText(word.text, x, y);
+      x += widthOf(word.text, word);
+    }
   }
 }
 
