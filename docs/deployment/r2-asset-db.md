@@ -125,6 +125,7 @@ Total: 849 objects, 155.4 MB. The tables below cover everything **except** `publ
 | `og/conspiracy.jpg`             | 852 KB  | image/jpeg | 2026-08-27 | Conspiracy & Intrigue genre landing page card    |
 | `og/cosmic-horror.jpg`          | 820 KB  | image/jpeg | 2026-08-27 | Cosmic Horror genre landing page card            |
 | `og/cyberpunk-red.jpg`          | 995 KB  | image/jpeg | 2026-08-27 | Cyberpunk RED system landing page card           |
+| `og/delta-green.jpg`            | 876 KB  | image/jpeg | 2026-08-27 | Delta Green system landing page card             |
 | `og/dungeons-and-dragons.jpg`   | 898 KB  | image/jpeg | 2026-08-27 | D&D 5e system landing page card                  |
 | `og/dystopian-sci-fi.jpg`       | 926 KB  | image/jpeg | 2026-08-27 | Dystopian Sci-Fi genre landing page card         |
 | `og/fantasy-worldbuilding.jpg`  | 1165 KB | image/jpeg | 2026-08-27 | Fantasy Worldbuilding genre landing page card    |
