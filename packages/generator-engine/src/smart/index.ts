@@ -9,6 +9,22 @@ export { resolveSmart, validateSchema } from "./resolve";
 export { evaluate, referencedAxes } from "./predicates";
 export { selectSmart, type SelectionResult } from "./select";
 export { applyPreset, presetsFor, type SmartPreset } from "./presets";
+export {
+  BASE_LEXICON,
+  mergeLexicons,
+  type Lexicon,
+  type LexiconEntry,
+} from "./lexicon";
+export {
+  analyseIntent,
+  applyIntent,
+  intentBias,
+  defaultAnalyzer,
+  type AppliedIntent,
+  type InferredChoice,
+  type IntentSignal,
+  type TextAnalyzer,
+} from "./semantic";
 export type {
   SmartAxis,
   SmartGeneratorConfig,
