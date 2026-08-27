@@ -13,6 +13,7 @@ Put an image here when it **changes independently of the code**, or when it
 benefits from format negotiation:
 
 - product screenshots (`screenshots/*`)
+- landing page social share cards (`og/*`)
 - blog imagery (`images/blog/*`)
 - demo vault portraits (`vault-samples/images/*`)
 
