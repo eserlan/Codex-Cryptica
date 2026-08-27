@@ -393,6 +393,7 @@ export {
 } from "./streaming/incremental-json";
 export {
   resolveSmart,
+  selectSmart,
   validateSchema,
   evaluate as evaluatePredicate,
   referencedAxes,
@@ -409,5 +410,6 @@ export {
   type SmartGeneratorSchema,
   type SmartOption,
   type SmartResult,
+  type SelectionResult,
   type Trait,
 } from "./smart";

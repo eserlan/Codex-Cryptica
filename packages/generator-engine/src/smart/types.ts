@@ -116,6 +116,8 @@ export interface SmartResult {
   /** Axis id to resolved value, the shape the existing generators consume. */
   values: Record<string, string>;
   axes: ResolvedAxis[];
+  /** Union of every resolved option's traits, for `selectSmart` on derived lists. */
+  traits: Trait[];
   /** Empty when every constraint held, which is the expected case. */
   relaxations: Relaxation[];
 }

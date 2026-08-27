@@ -317,15 +317,15 @@ issue per Tier 1 generator and one per Tier 2 family.
 
 ## PR sequence
 
-| PR  | Issue | Contents                                                                                                     | Gate                                                       |
-| --- | ----- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| 1   | #2337 | `smart/` types, predicates, resolver, tests. No generator migrated. **Merged as #2521.**                     | Seeded-RNG parity test vs `pickFrom`                       |
-| 2a  | #2341 | Settlement schema, traits across 13 genres, rules and affinities, `resolveSettlement` on `resolveSmart`      | Existing settlement tests green, output shape unchanged    |
-| 2b  | #2341 | Conditional derived pools: points of interest and factions filtered by the resolved environment and function | A mountain-pass settlement stops drawing harbour locations |
-| 3   | #2340 | Preset model, settlement presets, preset picker in the form                                                  | Preset values remain editable                              |
-| 4   | #2338 | Lexicon, `analyseIntent`, `applyIntent`, fixture corpus tests                                                | Pure module, not yet wired to UI                           |
-| 5   | #2339 | `GeneratorIntentField`, `InferredChips`, settlement wiring, help content                                     | Empty-description path byte-identical to today             |
-| 6   | #2342 | Audit doc, follow-up issues                                                                                  | -                                                          |
+| PR  | Issue | Contents                                                                                                                      | Gate                                                       |
+| --- | ----- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 1   | #2337 | `smart/` types, predicates, resolver, tests. No generator migrated. **Merged as #2521.**                                      | Seeded-RNG parity test vs `pickFrom`                       |
+| 2a  | #2341 | Settlement schema, traits across 13 genres, rules and affinities, `resolveSettlement` on `resolveSmart`. **Merged as #2522.** | Existing settlement tests green, output shape unchanged    |
+| 2b  | #2341 | Conditional derived pools: points of interest and factions filtered by the resolved environment and function                  | A mountain-pass settlement stops drawing harbour locations |
+| 3   | #2340 | Preset model, settlement presets, preset picker in the form                                                                   | Preset values remain editable                              |
+| 4   | #2338 | Lexicon, `analyseIntent`, `applyIntent`, fixture corpus tests                                                                 | Pure module, not yet wired to UI                           |
+| 5   | #2339 | `GeneratorIntentField`, `InferredChips`, settlement wiring, help content                                                      | Empty-description path byte-identical to today             |
+| 6   | #2342 | Audit doc, follow-up issues                                                                                                   | -                                                          |
 
 PRs 1 to 3 are shippable without any semantic work, which keeps the epic
 useful even if #2338 stalls.

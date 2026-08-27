@@ -623,6 +623,14 @@ export const SETTLEMENT_AFFINITIES: readonly {
   { when: "isolated", favour: "refuge", multiplier: 2 },
   { when: "ruined", favour: "supernatural", multiplier: 2 },
   { when: "urban", favour: "criminal", multiplier: 1.5 },
+  // A place echoes its own setting: derived lists lean on the environment.
+  { when: "coastal", favour: "maritime", multiplier: 2 },
+  { when: "forest", favour: "forest", multiplier: 2 },
+  { when: "mountain", favour: "mountain", multiplier: 2 },
+  { when: "underground", favour: "underground", multiplier: 2 },
+  { when: "urban", favour: "urban", multiplier: 2 },
+  { when: "ruined", favour: "ruined", multiplier: 2 },
+  { when: "orbital", favour: "orbital", multiplier: 2 },
   { when: "mining", favour: "industrial", multiplier: 2 },
   // Who ends up in charge follows what the place is for.
   { when: "trade", favour: "oligarchic", multiplier: 2.5 },
@@ -649,4 +657,234 @@ export const SETTLEMENT_AFFINITIES: readonly {
   { when: "medical", favour: "disease", multiplier: 2.5 },
   { when: "scarcity", favour: "scarcity", multiplier: 1.5 },
   { when: "politics", favour: "politics", multiplier: 2 },
+  // Scale resolves last, so it can follow what the place turned out to be:
+  // a university or an administrative seat implies a crowd, a refuge does not.
+  { when: "academic", favour: "large", multiplier: 2.5 },
+  { when: "urban", favour: "large", multiplier: 2 },
+  { when: "administrative", favour: "large", multiplier: 2 },
+  { when: "isolated", favour: "tiny", multiplier: 2 },
+  { when: "refuge", favour: "small", multiplier: 2 },
+  { when: "mining", favour: "small", multiplier: 1.5 },
 ];
+
+/**
+ * Points of interest, keyed by the exact value in `notableLocationsByGenre`.
+ *
+ * These are drawn as a list rather than resolved as an axis, so they carry
+ * traits only to stay consistent with what the axes already decided: no marina
+ * in a mountain pass, and a temple is likelier where the place is religious.
+ * An empty list is a legitimate annotation for somewhere that fits anywhere.
+ */
+export const LOCATION_TRAITS: TraitMap = {
+  // Fantasy
+  "The Rusty Anchor Tavern": ["entertainment"],
+  "Temple of the Sun": ["religious"],
+  "Grand Archive": ["academic", "research"],
+  "Whispering Woods Gate": ["forest"],
+  "Vault of Secrets": ["mysterious"],
+  "Alchemist's Greenhouse": ["research"],
+  "Market Bazaar": ["trade"],
+  "Ruined Watchtower": ["ruined", "military"],
+  // Pirate
+  "A tide-clock tower with a hidden signal room": ["maritime", "mysterious"],
+  "A ropewalk and shipwright's yard": ["maritime", "industrial"],
+  "A neutral tavern where crews negotiate shares": ["entertainment", "trade"],
+  "A wreck market selling recovered cargo": ["maritime", "trade"],
+  "A sea cave used as a prison and safe berth": ["maritime", "criminal"],
+  "A lighthouse whose keeper records every passing flag": ["maritime"],
+  // Dark Fantasy
+  "The Charnel House": ["grim", "medical"],
+  "Cursed Temple Ruins": ["religious", "ruined", "supernatural"],
+  "Warlord's Palisade": ["military"],
+  "The Black Well": ["supernatural", "mysterious"],
+  "Plague Hospice": ["medical", "disease"],
+  "Forbidden Library": ["academic", "supernatural"],
+  // Cyberpunk
+  "Neon Noodle Bar": ["entertainment", "urban"],
+  "Data Vault": ["technology"],
+  "Black Market Alley": ["criminal", "trade"],
+  "Corporate Security Office": ["bureaucratic", "military"],
+  "Underground Fight Club": ["entertainment", "criminal", "underground"],
+  "Hacker Den": ["technology", "criminal"],
+  "Medtech Clinic": ["medical"],
+  "Abandoned Factory Floor": ["industrial", "ruined"],
+  // Sci-Fi
+  "Docking Bay Alpha": ["transit"],
+  "Research Lab": ["research"],
+  "Life Support Centre": ["technology"],
+  "Quartermaster's Store": ["trade"],
+  "Communications Array": ["technology"],
+  // Deliberately not agrarian: hydroponics is how you farm somewhere you cannot.
+  "Hydroponics Bay": ["research", "technology"],
+  Armoury: ["military"],
+  "Observation Deck": ["orbital"],
+  // Post-Apocalyptic
+  "The Scrap Yard": ["industrial", "trade"],
+  "Water Purification Plant": ["technology", "scarcity"],
+  "Wall Command Post": ["military"],
+  "Underground Cache": ["underground", "refuge"],
+  "Old Hospital": ["medical", "ruined"],
+  "Radio Tower": ["technology"],
+  "Fuel Depot": ["industrial"],
+  "Trade Tent": ["trade"],
+  // Modern
+  "The Local Diner": ["entertainment"],
+  "Town Hall": ["administrative"],
+  "Police Station": ["administrative", "military"],
+  "Community Centre": ["cosy"],
+  "Old Church": ["religious"],
+  "Industrial Warehouse": ["industrial"],
+  Marina: ["maritime"],
+  "Local School": ["academic"],
+  // Horror
+  "The Old Manor House": ["feudal", "eerie"],
+  "Abandoned Church": ["religious", "ruined"],
+  "Locked Cemetery": ["eerie", "supernatural"],
+  "Crooked Inn": ["entertainment"],
+  "Forgotten Archive": ["academic", "mysterious"],
+  "Hidden Catacombs": ["underground", "supernatural"],
+  "Witchwood Gate": ["forest", "supernatural"],
+  "Ruined Mill": ["ruined", "industrial"],
+  // Cosmic Horror
+  "The tidal observatory with its lenses covered at noon": [
+    "maritime",
+    "research",
+  ],
+  "A reading room whose catalogue omits one entire floor": [
+    "academic",
+    "mysterious",
+  ],
+  "The weather station that no longer records wind": ["research", "eerie"],
+  "A boarding house used by every expedition since the first survey": [
+    "research",
+  ],
+  "The sealed pier where unregistered boats arrive at dawn": [
+    "maritime",
+    "criminal",
+  ],
+  "A civic hall built over an excavation nobody discusses": [
+    "administrative",
+    "mysterious",
+  ],
+  // Western
+  "The Saloon": ["entertainment"],
+  "Sheriff's Office": ["administrative", "military"],
+  "General Store": ["trade"],
+  "Livery Stable": ["agrarian", "transit"],
+  Bank: ["trade"],
+  "The Undertaker's": ["grim"],
+  "Railroad Depot": ["transit", "industrial"],
+  Church: ["religious"],
+  // Steampunk
+  "The Gear and Piston Inn": ["entertainment"],
+  "Factory Floor": ["industrial"],
+  "Airship Mooring": ["transit"],
+  "Guild Hall": ["labour", "oligarchic"],
+  "Steam Baths": ["entertainment"],
+  "Automaton Repair Shop": ["technology", "industrial"],
+  "Imperial Tax Office": ["imperial", "bureaucratic"],
+  "Underground Press": ["defiant", "underground"],
+  // Space Opera Resistance
+  "The Cantina": ["entertainment"],
+  "Imperial Garrison Headquarters": ["imperial", "military"],
+  "Smuggler's Docking Bay": ["criminal", "transit"],
+  "Hidden Mystic Shrine": ["religious", "supernatural"],
+  "Jawa-style Scrap Market": ["trade", "industrial"],
+  "Planetary Shield Generator": ["technology", "military"],
+  "Rebel Command Center": ["defiant", "military"],
+  "Bounty Hunter Guildhouse": ["criminal"],
+  // Optimistic Exploration Sci-Fi
+  "The Promenade": ["trade", "entertainment"],
+  "Main Engineering": ["technology"],
+  "Astrophysics Lab": ["research", "academic"],
+  "Diplomatic Quarters": ["administrative", "politics"],
+  "The Arboretum": ["research"],
+  Shuttlebay: ["transit"],
+};
+
+/** Controlling factions, keyed by the exact value in `factionsByGenre`. */
+export const FACTION_TRAITS: TraitMap = {
+  // Fantasy
+  "The Iron Shield Guard": ["military"],
+  "The Shadow Thieves Guild": ["criminal"],
+  "The Whispering Monks": ["religious"],
+  "The Gilded Merchants": ["trade", "oligarchic"],
+  "The Arcane Assembly": ["academic", "supernatural"],
+  // Pirate
+  "A crew-bound pirate council": ["criminal", "maritime"],
+  "A privateer office with disputed letters of marque": [
+    "military",
+    "maritime",
+  ],
+  "A merchant family controlling the warehouses": ["trade", "oligarchic"],
+  "A dockworkers' mutual-aid society": ["labour", "maritime"],
+  "A sea cult guarding an offshore shrine": ["religious", "maritime"],
+  "A naval intelligence cell embedded in the port": ["military", "maritime"],
+  // Dark Fantasy
+  "The Iron Legion": ["military"],
+  "The Carrion Cult": ["religious", "supernatural"],
+  "The Last Survivors' Council": ["refuge", "elected"],
+  "The Dark Patrons": ["supernatural", "oligarchic"],
+  "The Resistance Cell": ["defiant"],
+  // Cyberpunk
+  "The Chrome Wolves": ["criminal"],
+  "Axiom Corporation": ["oligarchic", "trade"],
+  "The Underground Wire": ["technology", "defiant"],
+  "The Street Docs Collective": ["medical"],
+  "Data Liberation Front": ["technology", "defiant"],
+  // Sci-Fi
+  "Colonial Authority": ["administrative", "imperial"],
+  "The Freighter's Union": ["labour", "trade"],
+  "Systems Research Division": ["research"],
+  "The Separatist Cell": ["defiant", "politics"],
+  "Station Security Corps": ["military"],
+  // Post-Apocalyptic
+  "The Ironclad Raiders": ["criminal", "military"],
+  "The Water Keepers": ["scarcity"],
+  "The Old World Faithful": ["religious"],
+  "The Scavenger Collective": ["trade", "industrial"],
+  "The Wall Guard": ["military"],
+  // Modern
+  "The Town Council": ["administrative", "elected"],
+  "Local Crime Family": ["criminal"],
+  "Environmental Activists": ["environmental", "defiant"],
+  "The Business Association": ["trade", "oligarchic"],
+  "Underground Resistance": ["defiant"],
+  // Horror
+  "The Old Bloodline": ["feudal", "supernatural"],
+  "The Hollow Cult": ["religious", "supernatural"],
+  "The Watchmen": ["military"],
+  "The Whispering Circle": ["mysterious", "supernatural"],
+  "The Fallen Church": ["religious", "ruined"],
+  // Cosmic Horror
+  "The Miskatonic field office": ["academic", "research"],
+  "The harbour quarantine committee": ["maritime", "medical"],
+  "A discreet antiquarian society": ["academic", "mysterious"],
+  "The families who financed the first expedition": ["oligarchic", "research"],
+  "The volunteer coast-watch service": ["maritime"],
+  // Western
+  "The Railroad Company": ["trade", "industrial"],
+  "The Cattle Baron's Men": ["agrarian", "oligarchic"],
+  "The Outlaw Gang": ["criminal"],
+  "The Townsfolk's Posse": ["elected"],
+  "The Native Nation": ["tribal"],
+  // Steampunk
+  "The Gearworkers' Union": ["labour", "industrial"],
+  "The Imperial Oversight Bureau": ["imperial", "bureaucratic"],
+  "The Inventor's Guild": ["technology", "research"],
+  "The Smoke Brotherhood": ["criminal"],
+  "The Underground Press": ["defiant"],
+  // Space Opera Resistance
+  "The Imperial Legion": ["imperial", "military"],
+  "The Rebel Alliance Cell": ["defiant", "military"],
+  "The Crimson Syndicate": ["criminal"],
+  "The Mystic Order Vanguard": ["religious", "supernatural"],
+  "The Bounty Hunter Guild": ["criminal"],
+  // Optimistic Exploration Sci-Fi
+  "Starfleet equivalent": ["military", "research"],
+  "Romulan equivalent": ["politics", "military"],
+  "Klingon equivalent": ["military"],
+  "Maquis equivalent": ["defiant"],
+  "Section 31 equivalent": ["mysterious", "military"],
+  "Orion Syndicate equivalent": ["criminal"],
+};
