@@ -48,7 +48,11 @@ export const LandingPageGraphStepSchema = z.object({
 export type LandingPageGraphStep = z.infer<typeof LandingPageGraphStepSchema>;
 
 /** Node/edge colour family used inside the dark graph canvas. */
-export const LandingPageGraphPaletteSchema = z.enum(["default", "oxblood"]);
+export const LandingPageGraphPaletteSchema = z.enum([
+  "default",
+  "oxblood",
+  "eldritch",
+]);
 export type LandingPageGraphPalette = z.infer<
   typeof LandingPageGraphPaletteSchema
 >;

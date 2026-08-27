@@ -3,7 +3,7 @@ import type { LandingPageConfig } from "../schema";
 export const callOfCthulhu: LandingPageConfig = {
   slug: "call-of-cthulhu",
   kind: "system",
-  theme: "horror",
+  theme: "cosmic_horror",
   hub: "cosmic-horror",
   surfaceStyle: "sharp",
   seo: {
@@ -50,7 +50,7 @@ export const callOfCthulhu: LandingPageConfig = {
     description:
       "One Investigator, her contacts, discovered handouts, the cult she investigates, and the occult ledger she seeks to decipher.",
     badgeLabel: "Investigation Web",
-    palette: "oxblood",
+    palette: "eldritch",
     surface: "dark",
     // Hub-and-spoke: every relation reads outward from the first node.
     steps: [

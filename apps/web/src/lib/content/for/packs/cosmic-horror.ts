@@ -3,7 +3,7 @@ import type { LandingPageConfig } from "../schema";
 export const cosmicHorror: LandingPageConfig = {
   slug: "cosmic-horror",
   kind: "genre",
-  theme: "horror",
+  theme: "cosmic_horror",
   hub: "cosmic-horror",
   surfaceStyle: "sharp",
   seo: {
@@ -53,7 +53,7 @@ export const cosmicHorror: LandingPageConfig = {
     description:
       "See how a research institute, an oceanic dig, classified sensor data, and a submerged megalith connect across an unfolding cosmic mystery.",
     badgeLabel: "Anomaly & Investigation Web",
-    palette: "oxblood",
+    palette: "eldritch",
     surface: "dark",
     // Hub-and-spoke: every relation reads outward from the first node.
     steps: [

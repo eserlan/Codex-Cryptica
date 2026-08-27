@@ -168,7 +168,7 @@ describe("Landing Page Registry", () => {
       expect(coc).toBeDefined();
       expect(coc?.slug).toBe("call-of-cthulhu");
       expect(coc?.kind).toBe("system");
-      expect(coc?.theme).toBe("horror");
+      expect(coc?.theme).toBe("cosmic_horror");
       expect(coc?.surfaceStyle).toBe("sharp");
       expect(coc?.disclaimer).toContain("Chaosium Inc.");
       expect(coc?.useCases.length).toBeGreaterThanOrEqual(4);
@@ -204,7 +204,7 @@ describe("Landing Page Registry", () => {
       const coc = getLandingPage("call-of-cthulhu")!;
       const graph = coc.exampleGraph!;
 
-      expect(graph.palette).toBe("oxblood");
+      expect(graph.palette).toBe("eldritch");
       expect(graph.surface).toBe("dark");
 
       const [hub, ...spokes] = graph.steps;
@@ -354,7 +354,7 @@ describe("Landing Page Registry", () => {
       expect(cosmic).toBeDefined();
       expect(cosmic?.slug).toBe("cosmic-horror");
       expect(cosmic?.kind).toBe("genre");
-      expect(cosmic?.theme).toBe("horror");
+      expect(cosmic?.theme).toBe("cosmic_horror");
       expect(cosmic?.hub).toBe("cosmic-horror");
       expect(cosmic?.surfaceStyle).toBe("sharp");
       expect(cosmic?.disclaimer).toBeUndefined();
@@ -396,7 +396,7 @@ describe("Landing Page Registry", () => {
       const cosmic = getLandingPage("cosmic-horror")!;
       const graph = cosmic.exampleGraph!;
 
-      expect(graph.palette).toBe("oxblood");
+      expect(graph.palette).toBe("eldritch");
       expect(graph.surface).toBe("dark");
 
       const [hub, ...spokes] = graph.steps;
@@ -469,10 +469,10 @@ describe("Landing Page Registry", () => {
 
     it("keeps graph badge copy per-page rather than sharing one horror label", () => {
       const horrorBadges = getAllLandingPages()
-        .filter((p) => p.theme === "horror" && p.exampleGraph)
+        .filter((p) => p.theme?.includes("horror") && p.exampleGraph)
         .map((p) => p.exampleGraph!.badgeLabel);
 
-      expect(horrorBadges.length).toBeGreaterThanOrEqual(3);
+      expect(horrorBadges.length).toBeGreaterThanOrEqual(4);
       for (const badge of horrorBadges) {
         expect(badge).toBeTruthy();
         expect(badge).not.toMatch(/underworld/i);

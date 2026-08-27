@@ -107,6 +107,34 @@
       panelHighlight: "#f87171",
       panelPositive: "#f87171",
     },
+    // Eldritch sea-green/abyssal teal on dark navy, for cosmic horror investigations.
+    eldritch: {
+      categories: {
+        character: "#0d9488",
+        creature: "#06b6d4",
+        location: "#0e7490",
+        item: "#a78bfa",
+        event: "#14b8a6",
+        faction: "#0f766e",
+        note: "#818cf8",
+      },
+      accent: "#5eead4",
+      selectedLabel: "#99f6e4",
+      shellBorder: "rgba(15, 118, 110, 0.4)",
+      shellBg: "#07131a",
+      canvasBg: "#08161f",
+      gridDot: "#0f766e",
+      dimEdge: "#164e63",
+      webEdge: "#164e63",
+      badgeFill: "#0a1f29",
+      badgeStroke: "#0f766e",
+      badgeText: "#5eead4",
+      panelBorder: "rgba(15, 118, 110, 0.4)",
+      panelBg: "#0b202c",
+      panelDivider: "#164e63",
+      panelHighlight: "#5eead4",
+      panelPositive: "#2dd4bf",
+    },
   };
 
   let p = $derived(PALETTES[palette] ?? PALETTES.default);
