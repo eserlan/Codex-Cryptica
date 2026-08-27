@@ -7,35 +7,35 @@ export const gothicHorror: LandingPageConfig = {
   hub: "vampire",
   surfaceStyle: "sharp",
   seo: {
-    title: "Codex Cryptica for Gothic Horror Worldbuilding & Campaigns",
+    title: "Codex Cryptica for Gothic Horror Campaigns & Worldbuilding",
     description:
-      "Organise your gothic horror campaigns and worldbuilding with connected ancestral lineages, isolated country estates, family heirlooms, and session notes in one local-first workspace.",
+      "Organise your gothic horror campaigns and worldbuilding with connected families, estates, old promises, heirlooms, and session notes in one local-first workspace.",
   },
   hero: {
     eyebrow: "Gothic Horror Worldbuilding & Campaign Management",
     title: "Codex Cryptica for Gothic Horror",
     tagline:
-      "Keep noble lineages, country estates, ancestral secrets, and family heirlooms connected in one local-first workspace.",
+      "Keep families, estates, old promises, and buried secrets connected in one local-first workspace.",
     problemStatement:
-      "Gothic horror campaigns turn on the weight of the past: inherited debts, estranged relatives, isolated manors, and buried family transgressions. When your players uncover a sealed portrait or confront a secretive parish vicar, you shouldn't have to scramble through loose notes to recall which ancestor made the original promise — or who stands to lose everything when the truth comes to light.",
+      "Gothic horror campaigns turn on the weight of the past: inherited debts, estranged relatives, isolated manors, and buried family transgressions. When your players uncover a sealed portrait or confront the parish vicar, you shouldn't have to scramble through loose notes to recall which ancestor made the original promise — or who stands to lose everything when the truth comes to light.",
   },
   useCases: [
     {
       title: "Ancestral Lineages & Inherited Debts",
       description:
-        "Map noble dynasties, disputed inheritances, family estrangements, and generational pacts with a visual relationship graph.",
+        "Map noble dynasties, disputed wills, family estrangements, and old obligations with a visual relationship graph.",
       icon: "icon-[lucide--crown]",
     },
     {
-      title: "Country Estates & Cloistered Parishes",
+      title: "Estates, Villages & Parishes",
       description:
-        "Connect ancestral manors, family crypts, isolated villages, and locked wings directly to the figures and histories tied to them.",
+        "Connect country seats, parish churches, tenant cottages, and secluded burial grounds to the people and institutions tied to them.",
       icon: "icon-[lucide--castle]",
     },
     {
       title: "Heirlooms, Letters & Family Archives",
       description:
-        "Link sealed correspondence, family journals, locked lockboxes, and inherited relics to the transgressions they conceal.",
+        "Link sealed correspondence, journals, strongboxes, and passed-down relics to the transgressions they conceal.",
       icon: "icon-[lucide--book-open]",
     },
     {
@@ -87,30 +87,30 @@ export const gothicHorror: LandingPageConfig = {
   },
   recommendedTools: [
     {
-      title: "NPC & Lineage Generator",
+      title: "NPC Generator",
       description:
-        "Create noble heirs, family stewards, melancholic scholars, and parish figures with distinct motives and secrets.",
+        "Create landed heirs, governesses, country doctors, parish clergy, and devoted servants with distinct motives and buried pasts.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
-      title: "Settlement & Estate Generator",
+      title: "Settlement Generator",
       description:
-        "Build secluded moorside villages, parish hamlets, coastal towns, and aristocratic country seats.",
+        "Build secluded moorside villages, parish hamlets, fog-bound river ports, and country market towns.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Secret Society Generator",
       description:
-        "Design clandestine brotherhoods, aristocratic dining clubs, fanatical orders, and family cabals.",
+        "Design clandestine brotherhoods, dining clubs, fanatical orders, and family cabals.",
       href: "/generators/secret-society",
       badge: "Generator",
     },
     {
-      title: "Relic & Heirloom Generator",
+      title: "Magic Item Generator",
       description:
-        "Create inherited heirlooms, cursed portraits, locked lockboxes, and relics tied to ancestral histories.",
+        "Create cursed heirlooms, portraits, strongboxes, and relics tied to past transgressions.",
       href: "/generators/magic-item",
       badge: "Generator",
     },
@@ -118,7 +118,7 @@ export const gothicHorror: LandingPageConfig = {
   cta: {
     title: "Chart Your Gothic World",
     description:
-      "Keep noble bloodlines, estate topography, heirlooms, and session notes connected in a local-first workspace.",
+      "Keep families, estates, heirlooms, and session notes connected in a local-first workspace.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },

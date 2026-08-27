@@ -258,17 +258,29 @@ describe("Landing Page Registry", () => {
       expect(copy).not.toMatch(/sanity check|eldritch|tentacles|sanitarium/i);
       expect(copy).not.toMatch(/blood bond|primogen|masquerade/i);
       expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/secretive parish vicar/i);
+      expect(copy).not.toMatch(/generational pacts/i);
+      expect(copy).not.toMatch(/locked lockboxes/i);
+      expect(copy).not.toMatch(/estate topography/i);
 
-      // Verify authentic gothic horror concepts
+      // Verify authentic gothic horror concepts and broadened non-aristocratic roles
       expect(gothic.hero.eyebrow).toContain("Gothic Horror");
-      expect(copy).toContain("lineages");
       expect(copy).toContain("estates");
       expect(copy).toContain("heirlooms");
       expect(copy).toContain("parish");
       expect(copy).toContain("transgressions");
+      expect(copy).toContain("governesses");
+      expect(copy).toContain("clergy");
       expect(copy).toContain("Lady Elspeth Vale");
       expect(copy).toContain("Harrowmere House");
       expect(copy).toContain("local-first");
+
+      // Verify tool titles are not capability-inflated
+      const toolTitles = gothic.recommendedTools.map((t) => t.title);
+      expect(toolTitles).toContain("NPC Generator");
+      expect(toolTitles).toContain("Settlement Generator");
+      expect(toolTitles).toContain("Secret Society Generator");
+      expect(toolTitles).toContain("Magic Item Generator");
     });
 
     it("maintains a valid hub-and-spoke estate and lineage graph with categorized nodes", () => {
