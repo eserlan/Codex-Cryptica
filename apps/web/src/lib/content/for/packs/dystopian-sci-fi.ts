@@ -9,6 +9,9 @@ export const dystopianSciFi: LandingPageConfig = {
     title: "Codex Cryptica for Dystopian Sci-Fi Worldbuilding",
     description:
       "Organise dystopian sci-fi campaigns and worldbuilding with connected regimes, corporations, surveillance networks, and resistance movements.",
+    image: "https://assets.codexcryptica.com/og/dystopian-sci-fi.jpg",
+    imageAlt:
+      "Authoritarian megacity surveillance command center with 3D wireframe arcology displays, citizen census data, and classified dossiers",
   },
   hero: {
     eyebrow: "Dystopian Sci-Fi Worldbuilding",

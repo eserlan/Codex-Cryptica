@@ -10,6 +10,9 @@ export const callOfCthulhu: LandingPageConfig = {
     title: "Codex Cryptica for Call of Cthulhu Keeper Notes & Scenarios",
     description:
       "Organise your Call of Cthulhu scenarios and campaigns with connected Investigators, clues, handouts, cults, occult tomes, and Keeper notes in one local-first workspace.",
+    image: "https://assets.codexcryptica.com/og/call-of-cthulhu.jpg",
+    imageAlt:
+      "1920s detective investigator desk with cryptic telegrams, Boston globe, magnifying glass, police reports, and occult grimoire",
   },
   hero: {
     eyebrow: "Investigation & Keeper Notes Management",

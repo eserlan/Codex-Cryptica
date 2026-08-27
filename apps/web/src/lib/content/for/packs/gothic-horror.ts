@@ -10,6 +10,9 @@ export const gothicHorror: LandingPageConfig = {
     title: "Codex Cryptica for Gothic Horror Campaigns & Worldbuilding",
     description:
       "Organise your gothic horror campaigns and worldbuilding with connected families, estates, old promises, heirlooms, and session notes in one local-first workspace.",
+    image: "https://assets.codexcryptica.com/og/gothic-horror.jpg",
+    imageAlt:
+      "Gothic Victorian manor library overlooking misty moors with family genealogy scrolls, strongbox, and candelabra",
   },
   hero: {
     eyebrow: "Gothic Horror Worldbuilding & Campaign Management",
