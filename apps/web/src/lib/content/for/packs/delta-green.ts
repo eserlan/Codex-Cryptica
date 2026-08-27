@@ -20,7 +20,7 @@ export const deltaGreen: LandingPageConfig = {
     tagline:
       "Keep Agents, Bonds, cells, Green Boxes, and the unnatural connected in one local-first workspace.",
     problemStatement:
-      "A Delta Green campaign accumulates faster than any other kind of horror game. Each operation leaves behind burned cover identities, strained Bonds, evidence that was never logged, and witnesses somebody decided not to deal with. Six operations later an Agent's sister calls at the worst possible moment, or a cache in another state turns out to hold the only surviving copy of a ritual. You should not have to reconstruct that from memory between sessions.",
+      "A Delta Green campaign accumulates loose ends quickly. Each operation leaves behind burned cover identities, strained Bonds, evidence that was never logged, and witnesses somebody decided not to deal with. Six operations later an Agent's sister calls at the worst possible moment, or a cache in another state turns out to hold the only surviving copy of a ritual. You should not have to reconstruct that from memory between sessions.",
   },
   useCases: [
     {
@@ -32,7 +32,7 @@ export const deltaGreen: LandingPageConfig = {
     {
       title: "Cells, Agencies & Conspiracies",
       description:
-        "Map need-to-know cells, federal agencies, corporate fronts, and the cults and rival programmes working the same ground.",
+        "Map cells, federal agencies, and the cults and rival programmes working the same ground.",
       icon: "icon-[lucide--network]",
     },
     {
@@ -71,7 +71,7 @@ export const deltaGreen: LandingPageConfig = {
       {
         label: "Green Box VT-4",
         sublabel: "Cache • Rented Storage Unit",
-        relation: "Holds the key to",
+        relation: "Has access to",
         category: "item",
       },
       {
@@ -98,28 +98,28 @@ export const deltaGreen: LandingPageConfig = {
     {
       title: "NPC & Contact Generator",
       description:
-        "Create field agents, coroners, federal liaisons, informants, and cult members with distinct motives, secrets, and cover stories.",
+        "Generate NPCs with a secret, a faction tie, and a table-ready hook, ready to cast as a field contact, a coroner, or a cult member.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Secret Society Generator",
       description:
-        "Design cults, black-budget programmes, corporate research fronts, and the conspiracies your Agents were never briefed on.",
+        "Generate cults and conspiracies with a belief, a ritual, a public cover, and the secret truth underneath.",
       href: "/generators/secret-society",
       badge: "Generator",
     },
     {
       title: "News Sheet & Handout Generator",
       description:
-        "Generate local press clippings, incident reports, and public notices to hand your Agents as the cover story the world believes.",
+        "Generate an in-world news sheet as a printable handout, with the truth behind the stories kept on the Handler's copy.",
       href: "/generators/cosmic-horror/news-sheet-generator",
       badge: "Generator",
     },
     {
       title: "Settlement & District Generator",
       description:
-        "Generate the mill towns, suburbs, and industrial districts your operations deploy into, ready to populate with witnesses.",
+        "Generate an inhabited place that answers why it exists, who really controls it, and what is about to go wrong, ready to stand in for the town an operation drops into.",
       href: "/generators/settlement",
       badge: "Generator",
     },
@@ -127,7 +127,7 @@ export const deltaGreen: LandingPageConfig = {
   cta: {
     title: "Run the Operation. Keep the Files.",
     description:
-      "Map Agents, Bonds, caches, and the unnatural in a fast, private, local-first workspace built for long-running campaigns.",
+      "Map Agents, Bonds, caches, and the unnatural in a fast, local-first workspace built for long-running campaigns.",
     buttonText: "Open Your Case File Free",
     buttonHref: "/app",
   },

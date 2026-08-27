@@ -296,7 +296,7 @@ describe("Landing Page Registry", () => {
       expect(bond?.sublabel).toContain("Bond");
       expect(
         graph.steps.find((s) => s.label === "Green Box VT-4")?.relation,
-      ).toBe("Holds the key to");
+      ).toBe("Has access to");
       expect(
         graph.steps.find((s) => s.label === "The Ashgrove Congregation")
           ?.sublabel,
