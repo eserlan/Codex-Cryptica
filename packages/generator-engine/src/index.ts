@@ -165,6 +165,7 @@ export {
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
 } from "./public-council-vote";
+export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
 export {
   buildSettlementPrompt,
   parseSettlementResponse,
@@ -392,6 +393,8 @@ export {
   type IncrementalJsonField,
 } from "./streaming/incremental-json";
 export {
+  applyPreset,
+  presetsFor,
   resolveSmart,
   selectSmart,
   validateSchema,
@@ -411,5 +414,6 @@ export {
   type SmartOption,
   type SmartResult,
   type SelectionResult,
+  type SmartPreset,
   type Trait,
 } from "./smart";

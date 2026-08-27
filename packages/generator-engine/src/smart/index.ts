@@ -8,6 +8,7 @@
 export { resolveSmart, validateSchema } from "./resolve";
 export { evaluate, referencedAxes } from "./predicates";
 export { selectSmart, type SelectionResult } from "./select";
+export { applyPreset, presetsFor, type SmartPreset } from "./presets";
 export type {
   SmartAxis,
   SmartGeneratorConfig,

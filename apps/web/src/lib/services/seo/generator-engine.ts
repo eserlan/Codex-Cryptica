@@ -163,7 +163,11 @@ export {
   vampireConfig,
   nomadClanConfig,
 } from "generator-engine";
-export { settlementConfig } from "generator-engine";
+export {
+  settlementConfig,
+  SETTLEMENT_PRESETS,
+  presetsFor,
+} from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
