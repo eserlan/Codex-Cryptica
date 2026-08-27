@@ -36,6 +36,31 @@
   );
 </script>
 
+{#if mapSession.armedTile}
+  <div
+    class="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-theme-primary/40 bg-theme-surface/95 px-4 py-1.5 shadow-xl backdrop-blur select-none"
+    data-testid="map-armed-tile-banner"
+  >
+    <span
+      class="h-2 w-2 rounded-full bg-theme-primary animate-pulse"
+      aria-hidden="true"
+    ></span>
+    <span class="text-xs font-medium text-theme-text">
+      Click map to place <strong>{mapSession.armedTile.name}</strong>
+    </span>
+    <span class="text-[10px] text-theme-muted">· [Esc] to cancel</span>
+    <button
+      type="button"
+      onclick={() => mapSession.clearArmedTile()}
+      class="ml-1 rounded-full p-0.5 text-theme-muted hover:text-theme-text transition-colors"
+      aria-label="Cancel tile placement"
+      title="Cancel tile placement (Esc)"
+    >
+      <span class="icon-[lucide--x] h-3.5 w-3.5" aria-hidden="true"></span>
+    </button>
+  </div>
+{/if}
+
 {#if mapStore.pendingPinCoords}
   <PinLinker
     onSelect={(id) => {

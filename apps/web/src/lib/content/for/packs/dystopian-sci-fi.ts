@@ -5,87 +5,92 @@ export const dystopianSciFi: LandingPageConfig = {
   kind: "genre",
   theme: "cyberpunk",
   hub: "cyberpunk",
+  surfaceStyle: "sharp",
   seo: {
     title: "Codex Cryptica for Dystopian Sci-Fi Worldbuilding",
     description:
-      "Organise dystopian sci-fi campaigns and worldbuilding with connected regimes, corporations, surveillance networks, and resistance movements.",
+      "Organise dystopian sci-fi campaigns and worldbuilding with connected institutions, corporations, surveillance systems, social strata, and competing factions.",
     image: "https://assets.codexcryptica.com/og/dystopian-sci-fi.jpg",
     imageAlt:
-      "Authoritarian megacity surveillance command center with 3D wireframe arcology displays, citizen census data, and classified dossiers",
+      "Authoritarian regime command center with holographic sector surveillance grids, citizen tier registries, and security enforcement manifests",
   },
   hero: {
-    eyebrow: "Dystopian Sci-Fi Worldbuilding",
+    eyebrow: "Dystopian Sci-Fi Setting & Campaign Management",
     title: "Codex Cryptica for Dystopian Sci-Fi",
     tagline:
-      "Keep regimes, corporations, resistance movements, surveillance systems, districts, and campaign lore connected in one place.",
+      "Keep institutions, districts, social groups, surveillance systems, and competing factions connected in one local-first workspace.",
     problemStatement:
-      "Dystopian sci-fi worlds are built from overlapping systems of power: governments, corporations, surveillance networks, resistance movements, controlled districts, and the people caught between them. When the players expose one secret, you should be able to see who benefits, who is threatened, and what changes next.",
+      "Dystopian science fiction turns on interlocking systems of control: governments, corporations, surveillance, scarcity, social hierarchy, and the people trying to survive, exploit, or resist them. When an official defects, resources are cut off, or a surveillance log leaks, you shouldn't have to scramble across scattered notes to see who enforces the rules, who profits from the shortage, and who is caught in the middle.",
   },
   useCases: [
     {
-      title: "Regimes, Corporations & Resistance",
+      title: "Regimes, Corporations & Security Forces",
       description:
-        "Map corporate boards, state security forces, rebel cells, and syndicate networks with a visual relationship graph.",
+        "Map governing bodies, corporate monopolies, internal security forces, and enforcement agencies in one visual relationship graph.",
       icon: "icon-[lucide--building-2]",
     },
     {
-      title: "Megacities, Enclaves & Undercities",
+      title: "Districts, Settlements & Controlled Spaces",
       description:
-        "Connect sprawling arcologies, elite high-rises, industrial sectors, and subterranean slums to the factions operating within them.",
+        "Track industrial sectors, gated enclaves, labour camps, arcologies, and colonies alongside your setting lore.",
       icon: "icon-[lucide--map-pin]",
     },
     {
-      title: "Surveillance, Data & Tech Assets",
+      title: "Surveillance, Media & Restricted Technology",
       description:
-        "Link surveillance systems, classified projects, stolen research, and restricted technologies to the factions and characters fighting over them.",
+        "Connect monitoring networks, state broadcasts, classified programmes, and restricted technologies to the factions controlling them.",
       icon: "icon-[lucide--cpu]",
     },
     {
-      title: "Operations, Secrets & Session Notes",
+      title: "Social Groups, Dissidents & Informants",
       description:
-        "Keep active operations, intrigue leads, session notes, and campaign milestones connected to the people and places involved.",
-      icon: "icon-[lucide--file-text]",
+        "Track elite families, labour organisations, underground dissidents, informants, and collaborators without losing track of loyalties or leverage.",
+      icon: "icon-[lucide--users]",
     },
   ],
   exampleGraph: {
-    title: "Sample Dystopian Sci-Fi Campaign Web",
+    title: "Sample Dystopian Power & Resistance Web",
     description:
-      "See how regime councils, corporate contractors, surveillance networks, and resistance movements connect in a world web.",
+      "A ruling civic authority, its corporate contractor, a biometric surveillance grid, a controlled district, and the underground resistance organising in secret.",
+    badgeLabel: "Dystopian Power Web",
+    palette: "default",
+    surface: "dark",
+    // Hub-and-spoke: every relation reads outward from the first node.
     steps: [
       {
         label: "Veyra Civic Authority",
-        sublabel: "Regime Council",
+        sublabel: "Ruling Authority",
         category: "faction",
       },
       {
-        label: "Orison Systems",
+        label: "Orison Heavy Industries",
         sublabel: "Corporate Contractor",
         relation: "Contracts",
         category: "faction",
       },
       {
-        label: "Census Mirror",
+        label: "Census Mirror Grid",
         sublabel: "Surveillance Network",
-        relation: "Deploys",
+        relation: "Monitors citizens via",
         category: "item",
       },
       {
-        label: "Ward 17",
+        label: "Sector 14 Industrial Ward",
         sublabel: "Controlled District",
-        relation: "Subjugates",
+        relation: "Enforces rationing on",
         category: "location",
       },
       {
         label: "The Common Assembly",
-        sublabel: "Underground Resistance",
+        sublabel: "Dissident Network",
         relation: "Suppresses",
         category: "faction",
       },
       {
-        label: "Citizen Access Archive",
-        sublabel: "Classified Data-Vault",
-        relation: "Restricts",
-        category: "item",
+        label: "Director Sulan Vane",
+        sublabel: "Security Chief",
+        relation: "Commands",
+        category: "character",
       },
     ],
   },
@@ -93,36 +98,36 @@ export const dystopianSciFi: LandingPageConfig = {
     {
       title: "Faction Generator",
       description:
-        "Design corporate conglomerates, state security agencies, rebel cells, and crime syndicates.",
+        "Create factions you can adapt into governments, corporations, security forces, and resistance groups.",
       href: "/generators/faction",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Create corporate executives, resistance leaders, hackers, enforcers, and informants.",
+        "Create characters you can adapt into bureaucrats, security officers, informants, black-market fixers, and community leaders.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Settlement Generator",
       description:
-        "Build mega-city arcologies, industrial complexes, polluted outposts, and underground havens.",
+        "Generate districts and settlements you can adapt into controlled cities, industrial zones, colonies, or restricted areas.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Generate resistance operations, political crises, sabotage attempts, disappearances, and secrets worth uncovering.",
+        "Generate plot hooks you can adapt into propaganda leaks, sabotage attempts, border crackdowns, defections, and supply crises.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Organise Your Dystopian World",
+    title: "Map the System. Follow the Fault Lines.",
     description:
-      "Keep your dystopian world connected with relationship graphs, interactive maps, and local-first storage.",
+      "Keep institutions, social strata, controlled districts, and session notes connected with relationship graphs and local-first storage.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },

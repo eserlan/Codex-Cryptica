@@ -236,6 +236,81 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Delta Green Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const dg = getLandingPage("delta-green");
+      expect(dg).toBeDefined();
+      expect(dg?.slug).toBe("delta-green");
+      expect(dg?.kind).toBe("system");
+      expect(dg?.theme).toBe("horror");
+      expect(dg?.surfaceStyle).toBe("sharp");
+      expect(dg?.disclaimer).toContain("Arc Dream Publishing");
+      expect(dg?.disclaimer).toContain("Delta Green Partnership");
+      expect(dg?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(dg?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Delta Green terminology and Handler operations framing", () => {
+      const dg = getLandingPage("delta-green")!;
+      const copy = JSON.stringify(dg);
+
+      // Delta Green has its own vocabulary; borrowing Call of Cthulhu's or
+      // generic fantasy framing is the failure mode worth guarding against.
+      expect(copy).not.toMatch(/Investigators/);
+      expect(copy).not.toMatch(/\bKeeper\b/);
+      expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
+      expect(copy).not.toMatch(/supernatural/i);
+      expect(copy).not.toMatch(/Majestic|Karotechia|A-Cell/i);
+
+      // Verify authentic terminology presence
+      expect(dg.hero.eyebrow).toContain("Handler");
+      expect(copy).toContain("Handler");
+      expect(copy).toContain("Agents");
+      expect(copy).toContain("Bonds");
+      expect(copy).toContain("Green Box");
+      expect(copy).toContain("cover identit");
+      expect(copy).toContain("the unnatural");
+      expect(copy).toContain("cells");
+      expect(copy).toContain("local-first");
+    });
+
+    it("maintains a valid hub-and-spoke operation graph with categorized nodes", () => {
+      const dg = getLandingPage("delta-green")!;
+      const graph = dg.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.sublabel).toContain("Agent");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      // The Bond is what separates a Delta Green web from a generic one.
+      const bond = graph.steps.find((s) => s.relation === "Bonded to");
+      expect(bond?.sublabel).toContain("Bond");
+      expect(
+        graph.steps.find((s) => s.label === "Green Box VT-4")?.relation,
+      ).toBe("Has access to");
+      expect(
+        graph.steps.find((s) => s.label === "The Ashgrove Congregation")
+          ?.sublabel,
+      ).toBe("Cult");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+      expect(categories).toContain("event");
+    });
+  });
+
   describe("Gothic Horror Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const gothic = getLandingPage("gothic-horror");
@@ -323,28 +398,268 @@ describe("Landing Page Registry", () => {
   });
 
   describe("Cyberpunk RED Pack", () => {
-    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+    it("is registered, marked as system, uses sharp styling, and includes non-affiliation disclaimer", () => {
       const cp = getLandingPage("cyberpunk-red");
       expect(cp).toBeDefined();
       expect(cp?.slug).toBe("cyberpunk-red");
       expect(cp?.kind).toBe("system");
       expect(cp?.theme).toBe("cyberpunk");
+      expect(cp?.surfaceStyle).toBe("sharp");
       expect(cp?.disclaimer).toContain("R. Talsorian Games");
       expect(cp?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(cp?.exampleGraph?.steps.length).toBeGreaterThan(0);
     });
+
+    it("uses authentic Cyberpunk RED terminology and avoids generic fantasy / automation claims", () => {
+      const cp = getLandingPage("cyberpunk-red")!;
+      const copy = JSON.stringify(cp);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+
+      // Avoid unsupported rules/automation claims
+      expect(copy).not.toMatch(
+        /character builder|rules automation|combat calculator/i,
+      );
+
+      // Verify authentic Time of the RED terminology
+      expect(cp.hero.eyebrow).toContain("Time of the RED");
+      expect(copy).toContain("Fixers");
+      expect(copy).toContain("edgerunner");
+      expect(copy).toContain("Combat Zone");
+      expect(copy).toContain("boostergang");
+      expect(copy).toContain("Nomad");
+      expect(copy).toContain("datashards");
+      expect(copy).toContain("Night Markets");
+      expect(copy).toContain("Lifepath");
+      expect(copy).toContain("choom");
+      expect(copy).toContain("Jax Vance");
+      expect(copy).toContain("Zetatech Operations");
+      expect(copy).toContain("Iron Sights");
+      expect(copy).toContain("local-first");
+      expect(cp.cta.title).toBe("Map the Street. Run the Gig.");
+    });
+
+    it("maintains a valid hub-and-spoke gig and contact graph with categorized nodes", () => {
+      const cp = getLandingPage("cyberpunk-red")!;
+      const graph = cp.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.label).toBe("Jax Vance");
+      expect(hub.sublabel).toContain("Fixer");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Zetatech Operations")?.relation,
+      ).toBe("Brokers gig for");
+      expect(graph.steps.find((s) => s.label === "Iron Sights")?.relation).toBe(
+        "Has truce with",
+      );
+      expect(
+        graph.steps.find((s) => s.label === "The Docks Container Yard")
+          ?.relation,
+      ).toBe("Coordinates drop at");
+      expect(
+        graph.steps.find((s) => s.label === "Encrypted Biometric Shard")
+          ?.relation,
+      ).toBe("Fences");
+      expect(graph.steps.find((s) => s.label === "Rook")?.relation).toBe(
+        "Hires",
+      );
+      expect(graph.steps.find((s) => s.label === "Rook")?.sublabel).toContain(
+        "Solo",
+      );
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
   });
 
   describe("Dystopian Sci-Fi Pack", () => {
-    it("is registered as genre and omits non-affiliation disclaimer", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const dystopia = getLandingPage("dystopian-sci-fi");
       expect(dystopia).toBeDefined();
       expect(dystopia?.slug).toBe("dystopian-sci-fi");
       expect(dystopia?.kind).toBe("genre");
       expect(dystopia?.theme).toBe("cyberpunk");
+      expect(dystopia?.hub).toBe("cyberpunk");
+      expect(dystopia?.surfaceStyle).toBe("sharp");
       expect(dystopia?.disclaimer).toBeUndefined();
+      expect(dystopia?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/dystopian-sci-fi.jpg",
+      );
       expect(dystopia?.useCases.length).toBeGreaterThanOrEqual(4);
-      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThan(0);
+      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic dystopian sci-fi worldbuilding terminology and avoids street-level cyberpunk tropes", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi")!;
+      const copy = JSON.stringify(dystopia);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Avoid street-level Cyberpunk RED specific tropes
+      expect(copy).not.toMatch(/\bedgerunner\b/i);
+      expect(copy).not.toMatch(/\bboostergang\b/i);
+      expect(copy).not.toMatch(/\bchoom\b/i);
+      expect(copy).not.toMatch(/\bcyberdeck\b/i);
+      expect(copy).not.toMatch(/\bnight market\b/i);
+
+      // Verify authentic dystopian sci-fi systemic concepts
+      expect(dystopia.hero.eyebrow).toContain("Dystopian Sci-Fi");
+      expect(copy).toContain("institutions");
+      expect(copy).toContain("surveillance");
+      expect(copy).toContain("scarcity");
+      expect(copy).toContain("social hierarchy");
+      expect(copy).toContain("monopolies");
+      expect(copy).toContain("rationing");
+      expect(copy).toContain("Veyra Civic Authority");
+      expect(copy).toContain("Orison Heavy Industries");
+      expect(copy).toContain("Census Mirror Grid");
+      expect(copy).toContain("Sector 14 Industrial Ward");
+      expect(copy).toContain("The Common Assembly");
+      expect(copy).toContain("Director Sulan Vane");
+      expect(copy).toContain("local-first");
+      expect(dystopia.cta.title).toBe(
+        "Map the System. Follow the Fault Lines.",
+      );
+    });
+
+    it("maintains a valid hub-and-spoke dystopian power graph with categorized nodes", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi")!;
+      const graph = dystopia.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("Veyra Civic Authority");
+      expect(hub.sublabel).toBe("Ruling Authority");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Orison Heavy Industries")
+          ?.relation,
+      ).toBe("Contracts");
+      expect(
+        graph.steps.find((s) => s.label === "Census Mirror Grid")?.relation,
+      ).toBe("Monitors citizens via");
+      expect(
+        graph.steps.find((s) => s.label === "Sector 14 Industrial Ward")
+          ?.relation,
+      ).toBe("Enforces rationing on");
+      expect(
+        graph.steps.find((s) => s.label === "The Common Assembly")?.relation,
+      ).toBe("Suppresses");
+      expect(
+        graph.steps.find((s) => s.label === "Director Sulan Vane")?.relation,
+      ).toBe("Commands");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
+    });
+  });
+
+  describe("Conspiracy Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const conspiracy = getLandingPage("conspiracy");
+      expect(conspiracy).toBeDefined();
+      expect(conspiracy?.slug).toBe("conspiracy");
+      expect(conspiracy?.kind).toBe("genre");
+      expect(conspiracy?.theme).toBe("modern");
+      expect(conspiracy?.hub).toBe("modern");
+      expect(conspiracy?.surfaceStyle).toBe("sharp");
+      expect(conspiracy?.disclaimer).toBeUndefined();
+      expect(conspiracy?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/conspiracy.jpg",
+      );
+      expect(conspiracy?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(conspiracy?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic conspiracy / intrigue terminology and avoids generic fantasy", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const copy = JSON.stringify(conspiracy);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Verify authentic conspiracy terminology
+      expect(conspiracy.hero.eyebrow).toContain("Conspiracy & Intrigue");
+      expect(copy).toContain("operatives");
+      expect(copy).toContain("fronts");
+      expect(copy).toContain("evidence");
+      expect(copy).toContain("hidden relationships");
+      expect(copy).toContain("The Meridian Group");
+      expect(copy).toContain("Calder Biomedical Holdings");
+      expect(copy).toContain("Senator Julian Vance");
+      expect(copy).toContain("Project Glasshouse");
+      expect(copy).toContain("Northfield Research Annex");
+      expect(copy).toContain("local-first");
+      expect(conspiracy.cta.title).toBe("Map the Conspiracy");
+    });
+
+    it("maintains a valid hub-and-spoke conspiracy graph with categorized nodes", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const graph = conspiracy.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Meridian Group");
+      expect(hub.sublabel).toContain("Policy Network");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Calder Biomedical Holdings")
+          ?.relation,
+      ).toBe("Funds via");
+      expect(
+        graph.steps.find((s) => s.label === "Senator Julian Vance")?.relation,
+      ).toBe("Blackmails");
+      expect(
+        graph.steps.find((s) => s.label === "Project Glasshouse")?.relation,
+      ).toBe("Directs");
+      expect(
+        graph.steps.find((s) => s.label === "Meeting Recording, 14 March")
+          ?.relation,
+      ).toBe("Incriminated by");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
     });
   });
 
@@ -497,6 +812,7 @@ describe("Landing Page Registry", () => {
       // Both are theme: "horror", but they belong to different hubs.
       expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
       expect(getLandingPage("cosmic-horror")?.hub).toBe("cosmic-horror");
+      expect(getLandingPage("delta-green")?.hub).toBe("cosmic-horror");
     });
 
     it("returns the pages belonging to a hub", () => {
@@ -509,6 +825,7 @@ describe("Landing Page Registry", () => {
       const cosmic = getLandingPagesForHub("cosmic-horror").map((p) => p.slug);
       expect(cosmic).toContain("call-of-cthulhu");
       expect(cosmic).toContain("cosmic-horror");
+      expect(cosmic).toContain("delta-green");
     });
 
     it("returns nothing for a hub with no landing pages", () => {
@@ -591,7 +908,7 @@ describe("Landing Page Registry", () => {
   describe("OpenGraph & Social Share Metadata", () => {
     it("configures a dedicated CDN OpenGraph image and alt description for every landing page", () => {
       const allPages = getAllLandingPages();
-      expect(allPages.length).toBeGreaterThanOrEqual(11);
+      expect(allPages.length).toBeGreaterThanOrEqual(13);
 
       for (const page of allPages) {
         expect(page.seo.image, `${page.slug} missing seo.image`).toBe(

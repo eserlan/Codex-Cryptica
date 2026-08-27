@@ -29,6 +29,9 @@ ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 #   tokens (src/session.ts). Until this is set the session guard fails open
 #   and generation behaves exactly as before, so the worker can be deployed
 #   ahead of the secret without an outage.
+# - CODEX_AUTOMATION_KEY: Private credential (or comma-separated list of keys)
+#   for trusted automation/agent workflows to mint automation session tokens
+#   without solving Turnstile.
 
 # Development configuration
 [dev]
@@ -101,4 +104,14 @@ namespace_id = "1354"
 
   [ratelimits.simple]
   limit = 20
+  period = 60
+
+# Dedicated rate limiter for trusted automation sessions.
+# More generous than the public human limit, but protects against loops/runaways.
+[[ratelimits]]
+name = "LLM_AUTOMATION_RATE_LIMITER"
+namespace_id = "1355"
+
+  [ratelimits.simple]
+  limit = 120
   period = 60

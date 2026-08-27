@@ -78,6 +78,7 @@ export interface TokenCreationInput {
   tileDeckId?: string | null;
   tileDetails?: import("map-engine").TileDetails;
   noteBody?: string;
+  parentTokenId?: string;
   noteCollapsedFrom?: { width: number; height: number };
   locked?: boolean;
   isVisionSource?: boolean;
@@ -120,6 +121,9 @@ export interface TokenMoveInput {
 
 export interface TokenStateUpdateInput {
   tokenId?: string;
+  name?: string;
+  /** Links this element to a vault entity, or clears the link with null. */
+  entityId?: string | null;
   x?: number;
   y?: number;
   width?: number;
@@ -137,6 +141,7 @@ export interface TokenStateUpdateInput {
   zIndex?: number;
   tileDetails?: import("map-engine").TileDetails;
   noteBody?: string;
+  parentTokenId?: string;
   noteCollapsedFrom?: { width: number; height: number } | undefined;
   isVisionSource?: boolean;
   layer?: MapLayer;

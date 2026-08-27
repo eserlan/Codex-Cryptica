@@ -64,6 +64,7 @@ interface Env {
   AI?: any;
   BUCKET?: any; // R2Bucket
   TURNSTILE_SECRET_KEY?: string;
+  CODEX_AUTOMATION_KEY?: string;
   PUBLISH_CREATE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
@@ -76,6 +77,9 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   LLM_GENERATION_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  LLM_AUTOMATION_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
@@ -196,8 +200,11 @@ export default {
     }
 
     if (pathname === "/api/session") {
+      const hasAutomationKey =
+        request.headers.has("X-Codex-Automation-Key") ||
+        request.headers.has("x-codex-automation-key");
       const sessionOrigin = request.headers.get("Origin") || "";
-      if (!isOriginAllowed(sessionOrigin, env)) {
+      if (!hasAutomationKey && !isOriginAllowed(sessionOrigin, env)) {
         return new Response("Forbidden", {
           status: 403,
           headers: getCorsHeaders(request.headers, env),
@@ -414,16 +421,17 @@ export default {
       });
     }
 
-    // Validate origin
     const origin = request.headers.get("Origin") || "";
-    if (!isOriginAllowed(origin, env)) {
-      return new Response("Forbidden", {
-        status: 403,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const isAllowedOrigin = isOriginAllowed(origin, env);
 
     if (url.pathname === "/v1/images/generations") {
+      if (!isAllowedOrigin) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
       const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
       const limitResult = await checkRateLimit(ip);
       if (!limitResult.allowed) {
@@ -616,6 +624,7 @@ export default {
       request,
       env,
       getCorsHeaders(request.headers, env),
+      isAllowedOrigin,
     );
     if (sessionResponse) return sessionResponse;
 
@@ -829,7 +838,7 @@ async function handleInteraction(
 function handleCorsPreflight(request: Request, env: Env): Response {
   const headers = new Headers();
   const allowedHeaders =
-    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename";
+    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename, X-Codex-Automation-Key";
   const allowedMethods = "GET, POST, PUT, DELETE, OPTIONS";
 
   // Set CORS headers

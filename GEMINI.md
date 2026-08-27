@@ -239,6 +239,11 @@ TypeScript: Follow standard conventions
 - **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
 - **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
+- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. `bun run lint:types` passes with 0 errors.
+  2. `bun run lint` passes with 0 errors.
+  3. The changes pass the `codex-review` specialist review.
 
 ## Recent Changes
 

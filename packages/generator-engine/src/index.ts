@@ -165,6 +165,12 @@ export {
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
 } from "./public-council-vote";
+export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
+export { SETTLEMENT_LEXICON } from "./public-settlement-lexicon";
+export {
+  buildSettlementSchema,
+  settlementSchema,
+} from "./public-settlement-schema";
 export {
   buildSettlementPrompt,
   parseSettlementResponse,
@@ -391,3 +397,37 @@ export {
   extractPartialJsonStringFields,
   type IncrementalJsonField,
 } from "./streaming/incremental-json";
+export {
+  analyseIntent,
+  applyIntent,
+  applyPreset,
+  intentBias,
+  presetsFor,
+  BASE_LEXICON,
+  mergeLexicons,
+  resolveSmart,
+  selectSmart,
+  validateSchema,
+  evaluate as evaluatePredicate,
+  referencedAxes,
+  type SmartAxis,
+  type SmartGeneratorConfig,
+  type LockedValue,
+  type OptionPool,
+  type SmartPredicate,
+  type Provenance,
+  type Relaxation,
+  type RelaxationKind,
+  type ResolveContext,
+  type ResolvedAxis,
+  type SmartGeneratorSchema,
+  type SmartOption,
+  type SmartResult,
+  type SelectionResult,
+  type SmartPreset,
+  type AppliedIntent,
+  type InferredChoice,
+  type IntentSignal,
+  type Lexicon,
+  type Trait,
+} from "./smart";

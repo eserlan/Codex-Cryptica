@@ -510,7 +510,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vtt-notes",
     title: "Map Notes",
     content:
-      'Pin a note anywhere on the map to remember what happens there. Press the note button, then click the spot it belongs to and write down whatever you want to remember; press Escape to back out without placing one. Notes are not just for VTT mode: the button sits in the VTT toolbar while you are in play and in the map bar when you are not, and a note stays clickable and draggable either way. Shift+scroll over a note to resize it, and double-click it to fold it down to a marker so it stops covering the map; double-click again, or resize it, to bring it back to the size it was. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it to move it, whichever layer you happen to be editing. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to.',
+      'Pin a note anywhere on the map to remember what happens there. Press the note button, then click the spot it belongs to and write down whatever you want to remember; press Escape to back out without placing one. Notes are not just for VTT mode: the button sits in the VTT toolbar while you are in play and in the map bar when you are not, and a note stays clickable and draggable either way. A note lands folded down to a marker, no bigger than a lore pin, so a stocked dungeon does not bury the map art underneath it: double-click a marker to open the note, and double-click again to fold it away. Shift+scroll over an open note to resize it. Note text takes basic markdown, and the toolbar above the note body writes it for you: bold, italic, headings, and bullet lists all show through on the note face on the map. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it to move it, whichever layer you happen to be editing. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to. A note lives and dies with the session; for the one that turns out to matter, "Keep in vault" writes it into your vault as a Note entity and links the marker to it.',
     icon: "icon-[lucide--sticky-note]",
   },
   "voice-chat": {
@@ -652,6 +652,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
     icon: "icon-[lucide--wifi-off]",
+  },
+  "generator-presets": {
+    id: "generator-presets",
+    title: "Presets and Matching Options",
+    content:
+      "Above the generator options, Start From offers a few ready-made settings like Merchant Port or Boom Town. Picking one fills in two or three fields and leaves the rest blank. You can also describe what you want in your own words, and any field still blank is filled in from that description, with a chip showing what was read so you can remove anything you disagree with. Blank fields are then chosen to match what you did pick: a coastal trade hub tends to end up under merchant rule with a market district, while a mountain mining village does not. Everything stays editable, and nothing you set by hand is ever overwritten.",
+    icon: "icon-[lucide--sparkles]",
   },
   "language-generator": {
     id: "language-generator",

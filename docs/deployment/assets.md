@@ -15,6 +15,7 @@ benefits from format negotiation:
 - product screenshots (`screenshots/*`)
 - landing page social share cards (`og/*`)
 - blog imagery (`images/blog/*`)
+- showcase & announcement visual assets (`announcements/*`)
 - demo vault portraits (`vault-samples/images/*`)
 
 Two reasons, both concrete:

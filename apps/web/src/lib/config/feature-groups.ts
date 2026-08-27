@@ -206,6 +206,9 @@ export const HELP_ONLY_HINT_IDS = [
   "p2p-connection-manager",
   // Says the same thing as "AI Disabled", which carries it in the privacy group.
   "generator-local-mode",
+  // Explains how one generator form works. Worth promoting once matching
+  // options reach the generators generally rather than settlements alone.
+  "generator-presets",
   // Decoration rather than a job. Distinctive, but it belongs in a gallery, not
   // in a list of what the product does for you.
   "themes",

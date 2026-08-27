@@ -40,6 +40,21 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Offline RPG Campaign Manager](https://codexcryptica.com/solutions/offline-rpg-campaign-manager): Fully offline campaign management.
 - [Local-First Worldbuilding Tool](https://codexcryptica.com/solutions/local-first-worldbuilding-tool): Privacy-first worldbuilding with no cloud dependency.
 
+## TTRPG System & Genre Pages
+
+- [D&D 5e Campaign Management](https://codexcryptica.com/for/dungeons-and-dragons): Campaign and session management for D&D 5e Dungeon Masters.
+- [Pathfinder 2e Campaign Management](https://codexcryptica.com/for/pathfinder-2e): Adventure Path, deity, faction, and hex exploration tracker.
+- [Vampire: The Masquerade Chronicle Management](https://codexcryptica.com/for/vampire-the-masquerade): Coteries, clan lineages, hunting grounds, boons, and Touchstones.
+- [Call of Cthulhu Keeper Notes](https://codexcryptica.com/for/call-of-cthulhu): Scenario clue webs, handouts, occult tomes, and cults.
+- [Cyberpunk RED Campaign Management](https://codexcryptica.com/for/cyberpunk-red): Fixers, edgerunner crews, boostergang turf, and gig recaps.
+- [Traveller Campaign Management](https://codexcryptica.com/for/traveller): Subsectors, star systems, speculative trade, jump routes, and patrons.
+- [Fantasy Worldbuilding](https://codexcryptica.com/for/fantasy-worldbuilding): Dynasties, pantheons, realms, and centuries of historical lore.
+- [Gothic Horror Worldbuilding](https://codexcryptica.com/for/gothic-horror): Cursed lineages, decaying estates, buried secrets, and heirlooms.
+- [Cosmic Horror Worldbuilding](https://codexcryptica.com/for/cosmic-horror): Occult orders, research archives, expeditions, and anomalous manifestations.
+- [Dystopian Sci-Fi Worldbuilding](https://codexcryptica.com/for/dystopian-sci-fi): Megacity regimes, surveillance networks, arcologies, and resistance movements.
+- [Space Opera Worldbuilding](https://codexcryptica.com/for/space-opera): Galactic empires, hyperlanes, fleet telemetry, and alien factions.
+- [Conspiracy & Intrigue Worldbuilding](https://codexcryptica.com/for/conspiracy): Shadow cabals, shell organisations, compromised assets, and classified dossiers.
+
 ## Feature Pages
 
 - [Local-First RPG Campaign Manager](https://codexcryptica.com/features/local-first-rpg-campaign-manager): Deep dive into OPFS-based local storage.

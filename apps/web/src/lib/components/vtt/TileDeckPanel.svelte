@@ -3,6 +3,15 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { tileDeckPanelUIStore } from "$lib/stores/ui/tile-deck-panel-ui.svelte";
+
+  const FREQUENCY_OPTIONS = [
+    { label: "Every", value: 1, title: "On every drawn tile" },
+    { label: "1/2", value: 2, title: "On 1 drawn tile in 2" },
+    { label: "1/3", value: 3, title: "On 1 drawn tile in 3" },
+    { label: "1/4", value: 4, title: "On 1 drawn tile in 4" },
+    { label: "1/6", value: 6, title: "On 1 drawn tile in 6" },
+  ];
+
   import {
     getTileCategoryFromName,
     STARTER_DECK_CATALOG,
@@ -23,6 +32,7 @@
     Record<string, { loaded: number; total: number }>
   >({});
   let activeCategory = $state<Record<string, string>>({});
+  let searchQuery = $state<Record<string, string>>({});
   /** Tables are only read here, so they are loaded on mount like every other view that lists them. */
   $effect(() => {
     void ensureRandomSourcesLoaded();
@@ -157,6 +167,19 @@
       : "This tile is no longer available.";
   }
 
+  function handleTileDragStart(
+    event: DragEvent,
+    deckId: string,
+    tileId: string,
+  ) {
+    if (!event.dataTransfer) return;
+    event.dataTransfer.setData(
+      "application/x-codex-tile",
+      JSON.stringify({ deckId, tileId }),
+    );
+    event.dataTransfer.effectAllowed = "copy";
+  }
+
   function categoriesFor(deck: (typeof mapSession.tileDecks)[number]) {
     return [
       "All",
@@ -170,11 +193,24 @@
     return activeCategory[deckId] ?? "All";
   }
 
+  function searchQueryFor(deckId: string) {
+    return searchQuery[deckId]?.trim().toLowerCase() ?? "";
+  }
+
   function visibleTilesFor(deck: (typeof mapSession.tileDecks)[number]) {
     const category = selectedCategoryFor(deck.id);
-    return deck.tiles.filter(
-      (tile) => category === "All" || categoryForTile(tile) === category,
-    );
+    const query = searchQueryFor(deck.id);
+    return deck.tiles.filter((tile) => {
+      const tileCat = categoryForTile(tile);
+      if (category !== "All" && tileCat !== category) return false;
+      if (!query) return true;
+      const nameMatch = tile.name.toLowerCase().includes(query);
+      const catMatch = tileCat.toLowerCase().includes(query);
+      const termsMatch =
+        tile.searchTerms?.some((term) => term.toLowerCase().includes(query)) ??
+        false;
+      return nameMatch || catMatch || termsMatch;
+    });
   }
 
   function categoryForTile(
@@ -321,6 +357,32 @@
     {/if}
   </div>
 
+  {#if mapSession.armedTile}
+    <div
+      class="mx-3 mt-3 flex items-center justify-between rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-xs text-theme-primary"
+      data-testid="tile-deck-armed-banner"
+    >
+      <div class="flex items-center gap-2 truncate">
+        <span
+          class="h-2 w-2 shrink-0 rounded-full bg-theme-primary animate-pulse"
+          aria-hidden="true"
+        ></span>
+        <span class="truncate"
+          >Placing <strong>{mapSession.armedTile.name}</strong></span
+        >
+      </div>
+      <button
+        type="button"
+        onclick={() => mapSession.clearArmedTile()}
+        class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
+        title="Cancel tile placement (Esc)"
+        aria-label="Cancel tile placement"
+      >
+        Cancel
+      </button>
+    </div>
+  {/if}
+
   {#if mapSession.tileDecks.length > 0}
     <div class="space-y-2 border-t border-theme-primary/20 p-3">
       <button
@@ -379,74 +441,137 @@
               ></span>Draw</button
             >
           </div>
-          <div class="mt-2 space-y-1.5 border-t border-theme-border pt-2">
-            <label
-              class="block text-[10px] font-bold uppercase tracking-widest text-theme-muted"
-              for="stocking-mode-{deck.id}">On draw</label
+          <div class="mt-2 space-y-2 border-t border-theme-border pt-2">
+            <div class="flex items-center justify-between">
+              <span
+                class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+              >
+                Stock on draw
+              </span>
+            </div>
+
+            <div
+              class="grid grid-cols-3 gap-1 rounded-lg border border-theme-border bg-theme-bg/60 p-0.5 text-xs"
+              role="group"
+              aria-label="Stocking mode for {deck.name}"
             >
-            <select
-              id="stocking-mode-{deck.id}"
-              value={stockingModeFor(deck)}
-              onchange={(event) =>
-                setStockingMode(
-                  deck,
-                  event.currentTarget.value as TileDeckStockingMode,
-                )}
-              class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
-            >
-              <option value="none">Place the tile only</option>
-              <option value="table">Roll a table onto a note</option>
-              <option value="encounter">Pin an encounter note</option>
-            </select>
+              <button
+                type="button"
+                onclick={() => setStockingMode(deck, "none")}
+                class={[
+                  "rounded py-1 text-center font-medium transition-colors",
+                  stockingModeFor(deck) === "none"
+                    ? "bg-theme-surface border border-theme-border/60 text-theme-primary font-bold shadow-xs"
+                    : "text-theme-muted hover:text-theme-text",
+                ]}
+                aria-pressed={stockingModeFor(deck) === "none"}
+              >
+                None
+              </button>
+              <button
+                type="button"
+                onclick={() => setStockingMode(deck, "table")}
+                class={[
+                  "rounded py-1 text-center font-medium transition-colors",
+                  stockingModeFor(deck) === "table"
+                    ? "bg-theme-surface border border-theme-border/60 text-theme-primary font-bold shadow-xs"
+                    : "text-theme-muted hover:text-theme-text",
+                ]}
+                aria-pressed={stockingModeFor(deck) === "table"}
+              >
+                Table Roll
+              </button>
+              <button
+                type="button"
+                onclick={() => setStockingMode(deck, "encounter")}
+                class={[
+                  "rounded py-1 text-center font-medium transition-colors",
+                  stockingModeFor(deck) === "encounter"
+                    ? "bg-theme-surface border border-theme-border/60 text-theme-primary font-bold shadow-xs"
+                    : "text-theme-muted hover:text-theme-text",
+                ]}
+                aria-pressed={stockingModeFor(deck) === "encounter"}
+              >
+                Encounter
+              </button>
+            </div>
+
             {#if stockingModeFor(deck) !== "none"}
-              <label class="sr-only" for="stocking-frequency-{deck.id}"
-                >How often {deck.name} pins a note</label
-              >
-              <select
-                id="stocking-frequency-{deck.id}"
-                value={String(deck.stocking?.frequency ?? 1)}
-                onchange={(event) =>
-                  setStockingFrequency(deck, Number(event.currentTarget.value))}
-                class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
-              >
-                <option value="1">On every drawn tile</option>
-                <option value="2">On 1 drawn tile in 2</option>
-                <option value="3">On 1 drawn tile in 3</option>
-                <option value="4">On 1 drawn tile in 4</option>
-                <option value="6">On 1 drawn tile in 6</option>
-              </select>
+              <div class="space-y-1.5 pt-1">
+                <div
+                  class="flex items-center justify-between text-[10px] text-theme-muted font-bold uppercase tracking-widest"
+                >
+                  <span>Frequency</span>
+                  <span
+                    class="text-theme-text font-normal normal-case text-[11px]"
+                  >
+                    {(deck.stocking?.frequency ?? 1) === 1
+                      ? "Every tile"
+                      : `1 in ${deck.stocking?.frequency ?? 1} tiles`}
+                  </span>
+                </div>
+                <div
+                  class="flex gap-1"
+                  role="group"
+                  aria-label="Stocking frequency"
+                >
+                  {#each FREQUENCY_OPTIONS as freq}
+                    <button
+                      type="button"
+                      onclick={() => setStockingFrequency(deck, freq.value)}
+                      class={[
+                        "flex-1 rounded border py-1 text-center text-xs font-medium transition-colors",
+                        (deck.stocking?.frequency ?? 1) === freq.value
+                          ? "border-theme-primary bg-theme-primary/15 text-theme-primary font-bold"
+                          : "border-theme-border bg-theme-surface text-theme-muted hover:text-theme-text",
+                      ]}
+                      title={freq.title}
+                      aria-label={freq.title}
+                      aria-pressed={(deck.stocking?.frequency ?? 1) ===
+                        freq.value}
+                    >
+                      {freq.label}
+                    </button>
+                  {/each}
+                </div>
+              </div>
             {/if}
+
             {#if stockingModeFor(deck) === "encounter"}
-              <p class="text-[10px] text-theme-muted">
-                An empty note is pinned on the tile, with a button to generate
-                the encounter when you get there.
+              <p class="text-[10px] text-theme-muted leading-tight">
+                Pins an empty encounter note on placed tiles, ready for GM
+                detailing.
               </p>
             {/if}
+
             {#if stockingModeFor(deck) === "table"}
-              {#if randomSources.tables.length > 0}
-                <label class="sr-only" for="stocking-table-{deck.id}"
-                  >Table rolled for {deck.name}</label
+              <div class="space-y-1 pt-1">
+                <label
+                  class="block text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+                  for="stocking-table-{deck.id}"
                 >
-                <select
-                  id="stocking-table-{deck.id}"
-                  value={deck.stocking?.tableId ?? ""}
-                  onchange={(event) =>
-                    setStockingTable(deck, event.currentTarget.value)}
-                  class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
-                >
-                  <option value="" disabled>Choose a table…</option>
-                  {#each randomSources.tables as table (table.id)}
-                    <option value={table.id}>{table.name}</option>
-                  {/each}
-                </select>
-                <p class="text-[10px] text-theme-muted">
-                  The result is pinned as a note on the tile.
-                </p>
-              {:else}
-                <p class="text-[10px] text-theme-muted">
-                  This vault has no random tables yet.
-                </p>
-              {/if}
+                  Source Table
+                </label>
+                {#if randomSources.tables.length > 0}
+                  <select
+                    id="stocking-table-{deck.id}"
+                    value={deck.stocking?.tableId ?? ""}
+                    onchange={(event) =>
+                      setStockingTable(deck, event.currentTarget.value)}
+                    class="w-full rounded-md border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text focus:border-theme-primary outline-none"
+                  >
+                    <option value="" disabled>Choose a table…</option>
+                    {#each randomSources.tables as table (table.id)}
+                      <option value={table.id}>{table.name}</option>
+                    {/each}
+                  </select>
+                {:else}
+                  <p class="text-[10px] text-theme-muted">
+                    No random tables found in vault. Create a table to roll
+                    automatically on placement.
+                  </p>
+                {/if}
+              </div>
             {/if}
           </div>
           <div class="mt-3 border-t border-theme-border pt-2">
@@ -467,6 +592,38 @@
                 : "Show tiles"}</button
             >
             {#if tileDeckPanelUIStore.isGridExpanded(deck.id)}
+              <div class="relative mt-2">
+                <input
+                  type="text"
+                  placeholder="Search {deck.name} tiles…"
+                  value={searchQuery[deck.id] ?? ""}
+                  oninput={(e) =>
+                    (searchQuery = {
+                      ...searchQuery,
+                      [deck.id]: e.currentTarget.value,
+                    })}
+                  class="w-full rounded-md border border-theme-border bg-theme-bg py-1 pl-7 pr-7 text-xs text-theme-text placeholder:text-theme-muted focus:border-theme-primary outline-none"
+                  aria-label="Search {deck.name} tiles"
+                  data-testid="tile-deck-search-{deck.id}"
+                />
+                <span
+                  class="icon-[lucide--search] absolute left-2 top-2 h-3.5 w-3.5 text-theme-muted pointer-events-none"
+                  aria-hidden="true"
+                ></span>
+                {#if searchQuery[deck.id]}
+                  <button
+                    type="button"
+                    onclick={() =>
+                      (searchQuery = { ...searchQuery, [deck.id]: "" })}
+                    class="absolute right-1.5 top-1.5 rounded p-0.5 text-theme-muted hover:text-theme-text"
+                    aria-label="Clear search"
+                  >
+                    <span class="icon-[lucide--x] h-3 w-3" aria-hidden="true"
+                    ></span>
+                  </button>
+                {/if}
+              </div>
+
               <div
                 class="mt-2 flex flex-wrap gap-1"
                 aria-label="Filter {deck.name} tiles"
@@ -496,16 +653,26 @@
                 {#each visibleTilesFor(deck) as tile (tile.id)}
                   <button
                     type="button"
+                    draggable="true"
+                    ondragstart={(e) =>
+                      handleTileDragStart(e, deck.id, tile.id)}
                     onclick={() => placeTile(deck.id, tile.id, tile.name)}
-                    class="group relative aspect-square overflow-hidden rounded border border-theme-border bg-theme-bg/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-                    title="Place {tile.name}"
+                    class={[
+                      "group relative aspect-square overflow-hidden rounded border bg-theme-bg/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary transition-all cursor-grab active:cursor-grabbing",
+                      mapSession.armedTile?.tileId === tile.id
+                        ? "border-theme-primary ring-2 ring-theme-primary bg-theme-primary/10 shadow-[0_0_12px_rgba(var(--theme-primary-rgb,120,53,15),0.35)]"
+                        : "border-theme-border hover:border-theme-primary/50",
+                    ]}
+                    style="content-visibility: auto"
+                    title="Place {tile.name} (drag or click)"
                     aria-label="Place {tile.name}"
+                    aria-pressed={mapSession.armedTile?.tileId === tile.id}
                   >
                     {#if imageUrls[tile.imagePath]}
                       <img
                         src={imageUrls[tile.imagePath]}
                         alt=""
-                        class="h-full w-full object-contain p-0.5"
+                        class="h-full w-full object-contain p-0.5 pointer-events-none"
                       />
                     {:else}
                       <span

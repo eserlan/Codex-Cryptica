@@ -116,7 +116,25 @@ export class VTTTokenManager {
     selection: string | null,
     selectedTokens: Set<string>,
   ) {
-    this.tokens = tokens;
+    const vault = this.deps.getVault?.();
+    const hydratedTokens: Record<string, Token> = {};
+    for (const id in tokens) {
+      const token = tokens[id];
+      if (token.entityId && vault?.entities?.[token.entityId]) {
+        const entity = vault.entities[token.entityId];
+        hydratedTokens[id] = {
+          ...token,
+          name: entity.title || token.name,
+          noteBody:
+            token.kind === "note" && entity.content !== undefined
+              ? entity.content
+              : token.noteBody,
+        };
+      } else {
+        hydratedTokens[id] = token;
+      }
+    }
+    this.tokens = hydratedTokens;
     this.selection = selection;
     this.selectedTokens = selectedTokens;
   }
@@ -193,16 +211,21 @@ export class VTTTokenManager {
       });
     }
 
-    const mapStore = this.deps.getMapStore();
-    const collapsed = Math.max(
-      MIN_COLLAPSED_NOTE_SIZE,
-      Math.round((mapStore.gridSize || 50) * NOTE_COLLAPSED_SCALE),
-    );
+    const collapsed = this.collapsedNoteSize();
     return this.updateToken(tokenId, {
       width: collapsed,
       height: collapsed,
       noteCollapsedFrom: { width: token.width, height: token.height },
     });
+  }
+
+  /** The side length a note takes when it is folded down to a marker. */
+  private collapsedNoteSize() {
+    const mapStore = this.deps.getMapStore();
+    return Math.max(
+      MIN_COLLAPSED_NOTE_SIZE,
+      Math.round((mapStore.gridSize || 50) * NOTE_COLLAPSED_SCALE),
+    );
   }
 
   setVisionSource(tokenId: string, isVisionSource: boolean) {
@@ -232,17 +255,22 @@ export class VTTTokenManager {
     // 15px circle is effectively invisible. Floor the default independently
     // of how fine the underlying grid happens to be.
     const mapGrid = Math.max(MIN_DEFAULT_TOKEN_SIZE, mapStore.gridSize || 50);
-    const defaultSize = isNote
-      ? Math.round(mapGrid * NOTE_SIZE_MULTIPLIER)
-      : mapGrid;
+    const noteExpandedSize = Math.round(mapGrid * NOTE_SIZE_MULTIPLIER);
+    const defaultSize = isNote ? noteExpandedSize : mapGrid;
+    // A note lands folded down to a marker, so a stocked dungeon reads as a
+    // field of pins rather than a wall of paper laid over the map art. It
+    // springs back to `noteCollapsedFrom` when the GM opens it. A caller that
+    // asks for an explicit size wants the note at that size, so it lands open.
+    const landsCollapsed = isNote && input.width === undefined;
+    const size = landsCollapsed ? this.collapsedNoteSize() : defaultSize;
     return {
       id: this.idGenerator.uuid(),
       entityId: input.entityId ?? null,
       name: input.name.trim(),
       x: input.x,
       y: input.y,
-      width: input.width ?? defaultSize,
-      height: input.height ?? defaultSize,
+      width: input.width ?? size,
+      height: input.height ?? size,
       rotation: input.rotation ?? 0,
       baseShape: input.baseShape ?? (isNote ? "square" : "circle"),
       facingIndicator: input.facingIndicator ?? !isNote,
@@ -264,6 +292,12 @@ export class VTTTokenManager {
       tileDeckId: input.tileDeckId ?? null,
       tileDetails: input.tileDetails,
       noteBody: isNote ? (input.noteBody ?? "") : undefined,
+      noteCollapsedFrom: isNote
+        ? (input.noteCollapsedFrom ??
+          (landsCollapsed
+            ? { width: noteExpandedSize, height: noteExpandedSize }
+            : undefined))
+        : undefined,
       layer: input.layer ?? this.deps.getActiveLayer(),
     };
   }
@@ -487,6 +521,21 @@ export class VTTTokenManager {
       [tokenId]: next,
     };
 
+    if (posChanged && (snapped.x !== current.x || snapped.y !== current.y)) {
+      const dx = snapped.x - current.x;
+      const dy = snapped.y - current.y;
+      for (const childId in this.tokens) {
+        const child = this.tokens[childId];
+        if (child && child.parentTokenId === tokenId) {
+          this.tokens[childId] = {
+            ...child,
+            x: roundTokenCoordinate(child.x + dx),
+            y: roundTokenCoordinate(child.y + dy),
+          };
+        }
+      }
+    }
+
     if (!silent) {
       if (shouldDebounceBroadcast) {
         this.deps.queueSessionSnapshotBroadcast();
@@ -646,6 +695,14 @@ export class VTTTokenManager {
     this.clearPendingMove(tokenId);
     const nextTokens = { ...this.tokens };
     delete nextTokens[tokenId];
+    for (const key in nextTokens) {
+      if (nextTokens[key].parentTokenId === tokenId) {
+        nextTokens[key] = {
+          ...nextTokens[key],
+          parentTokenId: undefined,
+        };
+      }
+    }
     this.tokens = nextTokens;
     this.deps.removeTokenFromInitiativeState?.(tokenId);
     if (this.selection === tokenId) {
@@ -658,6 +715,26 @@ export class VTTTokenManager {
       this.deps.persistDraft();
     }
     return true;
+  }
+
+  getChildNotes(parentTokenId: string): Token[] {
+    const result: Token[] = [];
+    for (const key in this.tokens) {
+      if (this.tokens[key].parentTokenId === parentTokenId) {
+        result.push(this.tokens[key]);
+      }
+    }
+    return result;
+  }
+
+  linkTokens(childTokenId: string, parentTokenId: string) {
+    if (!this.tokens[childTokenId] || !this.tokens[parentTokenId]) return null;
+    return this.updateToken(childTokenId, { parentTokenId });
+  }
+
+  unlinkToken(childTokenId: string) {
+    if (!this.tokens[childTokenId]) return null;
+    return this.updateToken(childTokenId, { parentTokenId: undefined });
   }
 
   private getClonedTokenName(sourceName: string) {
