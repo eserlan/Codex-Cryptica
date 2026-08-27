@@ -13,12 +13,13 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | `directory/listings/`                                   | 4               | ~3 KB   | Public generator directory metadata (JSON)                                           |
 | `discussions/alien-race/`                               | 1               | 0.2 MB  | Alien Race generator discussion image                                                |
 | `images/blog/` + `images/help-blog/` + loose `images/*` | 50              | ~18 MB  | Blog post inline images + old help-doc screenshots                                   |
+| `og/`                                                   | 11              | 9.7 MB  | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages               |
 | `screenshots/`                                          | 37              | ~6.3 MB | `/generators` + `/tools` page cards, og:image                                        |
 | `vault-samples/images/`                                 | 36              | 58.7 MB | Portrait art for the 9 demo/quick-start vaults                                       |
 | `published/{vault-uuid}/`                               | 531 (11 vaults) | ~52 MB  | **User data**, not ours — assets from real vaults published for guest/player viewing |
 | `starter-tile-decks/kenney-scribble-dungeons/`          | 159             | 0.17 MB | Bundled third-party VTT map tile pack (Kenney)                                       |
 
-Total: 837 objects, 144.8 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 848 objects, 154.5 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -115,6 +116,22 @@ Total: 837 objects, 144.8 MB. The tables below cover everything **except** `publ
 | `images/help-blog/sync.png`                                             | 61 KB   | image/png  | 2026-03-02 | Old in-app help/blog screenshot                             |
 | `images/help-blog/welcome.png`                                          | 420 KB  | image/png  | 2026-03-01 | Old in-app help/blog screenshot                             |
 | `images/help-blog/zen-mode.png`                                         | 705 KB  | image/png  | 2026-03-02 | Old in-app help/blog screenshot                             |
+
+## `og/` — `/for` landing page 16:9 OpenGraph cards
+
+| Key                             | Size    | Type       | Modified   | Purpose                                          |
+| ------------------------------- | ------- | ---------- | ---------- | ------------------------------------------------ |
+| `og/call-of-cthulhu.jpg`        | 874 KB  | image/jpeg | 2026-08-27 | Call of Cthulhu system landing page card         |
+| `og/cosmic-horror.jpg`          | 820 KB  | image/jpeg | 2026-08-27 | Cosmic Horror genre landing page card            |
+| `og/cyberpunk-red.jpg`          | 995 KB  | image/jpeg | 2026-08-27 | Cyberpunk RED system landing page card           |
+| `og/dungeons-and-dragons.jpg`   | 898 KB  | image/jpeg | 2026-08-27 | D&D 5e system landing page card                  |
+| `og/dystopian-sci-fi.jpg`       | 926 KB  | image/jpeg | 2026-08-27 | Dystopian Sci-Fi genre landing page card         |
+| `og/fantasy-worldbuilding.jpg`  | 1165 KB | image/jpeg | 2026-08-27 | Fantasy Worldbuilding genre landing page card    |
+| `og/gothic-horror.jpg`          | 804 KB  | image/jpeg | 2026-08-27 | Gothic Horror genre landing page card            |
+| `og/pathfinder-2e.jpg`          | 859 KB  | image/jpeg | 2026-08-27 | Pathfinder 2e system landing page card           |
+| `og/space-opera.jpg`            | 921 KB  | image/jpeg | 2026-08-27 | Space Opera genre landing page card              |
+| `og/traveller.jpg`              | 915 KB  | image/jpeg | 2026-08-27 | Traveller system landing page card               |
+| `og/vampire-the-masquerade.jpg` | 793 KB  | image/jpeg | 2026-08-27 | Vampire: The Masquerade system landing page card |
 
 ## `screenshots/` — `/generators` + `/tools` page cards and og:image
 

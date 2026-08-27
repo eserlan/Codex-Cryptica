@@ -588,6 +588,27 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("OpenGraph & Social Share Metadata", () => {
+    it("configures a dedicated CDN OpenGraph image and alt description for every landing page", () => {
+      const allPages = getAllLandingPages();
+      expect(allPages.length).toBeGreaterThanOrEqual(11);
+
+      for (const page of allPages) {
+        expect(page.seo.image, `${page.slug} missing seo.image`).toBe(
+          `https://assets.codexcryptica.com/og/${page.slug}.jpg`,
+        );
+        expect(
+          page.seo.imageAlt,
+          `${page.slug} missing seo.imageAlt`,
+        ).toBeDefined();
+        expect(
+          page.seo.imageAlt!.length,
+          `${page.slug} has empty seo.imageAlt`,
+        ).toBeGreaterThan(15);
+      }
+    });
+  });
+
   describe("Extensibility (US3)", () => {
     it("allows dynamic page addition and handles optional section collapsing", () => {
       const customConfig: LandingPageConfig = {
