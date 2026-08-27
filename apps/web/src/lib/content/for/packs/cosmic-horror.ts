@@ -10,6 +10,9 @@ export const cosmicHorror: LandingPageConfig = {
     title: "Codex Cryptica for Cosmic Horror Worldbuilding & Campaigns",
     description:
       "Organise cosmic horror campaigns and weird fiction worldbuilding with connected cults, occult archives, expedition sites, and research notes in one local-first workspace.",
+    image: "https://assets.codexcryptica.com/og/cosmic-horror.jpg",
+    imageAlt:
+      "Cosmic horror research desk with deep-sea telemetry charts of a submerged monolith, classified dossiers, and anomalous specimens",
   },
   hero: {
     eyebrow: "Cosmic Horror Worldbuilding & Setting Management",

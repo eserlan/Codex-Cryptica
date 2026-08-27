@@ -358,6 +358,10 @@ describe("Landing Page Registry", () => {
       expect(cosmic?.hub).toBe("cosmic-horror");
       expect(cosmic?.surfaceStyle).toBe("sharp");
       expect(cosmic?.disclaimer).toBeUndefined();
+      expect(cosmic?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/cosmic-horror.jpg",
+      );
+      expect(cosmic?.seo.imageAlt).toBeDefined();
       expect(cosmic?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(cosmic?.exampleGraph?.steps.length).toBeGreaterThan(0);
     });
