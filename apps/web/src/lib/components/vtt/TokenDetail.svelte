@@ -64,18 +64,24 @@
   let pendingVaultSyncTimeout: ReturnType<typeof setTimeout> | null = null;
   let pendingVaultEntityId: string | null = null;
   let pendingVaultContent: string | null = null;
+  let pendingVaultTitle: string | null = null;
 
   function flushPendingVaultSync() {
     if (pendingVaultSyncTimeout) {
       clearTimeout(pendingVaultSyncTimeout);
       pendingVaultSyncTimeout = null;
     }
-    if (pendingVaultEntityId && pendingVaultContent !== null) {
+    if (pendingVaultEntityId) {
       const entityId = pendingVaultEntityId;
-      const content = pendingVaultContent;
+      const updates: { content?: string; title?: string } = {};
+      if (pendingVaultContent !== null) updates.content = pendingVaultContent;
+      if (pendingVaultTitle !== null) updates.title = pendingVaultTitle;
       pendingVaultEntityId = null;
       pendingVaultContent = null;
-      void vault.updateEntity(entityId, { content });
+      pendingVaultTitle = null;
+      if (Object.keys(updates).length > 0) {
+        void vault.updateEntity(entityId, updates);
+      }
     }
   }
 
@@ -96,7 +102,12 @@
     mapSession.updateToken(tokenId, { name: nextTitle });
     const token = mapSession.tokens[tokenId];
     if (token?.entityId && canManageToken && !vault.isGuest) {
-      void vault.updateEntity(token.entityId, { title: nextTitle });
+      pendingVaultEntityId = token.entityId;
+      pendingVaultTitle = nextTitle;
+      if (pendingVaultSyncTimeout) clearTimeout(pendingVaultSyncTimeout);
+      pendingVaultSyncTimeout = setTimeout(() => {
+        flushPendingVaultSync();
+      }, 300);
     }
   }
 
@@ -198,6 +209,7 @@
             value={selectedToken.name}
             oninput={(e) =>
               handleNoteTitleChange(selectedToken.id, e.currentTarget.value)}
+            onblur={flushPendingVaultSync}
             placeholder="Note title…"
             aria-label="Note title"
             data-testid="token-note-title-input"
@@ -306,6 +318,7 @@
           </label>
           <select
             id="link-parent-tile"
+            aria-label="Link note to placed tile"
             class="w-full rounded-md border border-theme-border bg-theme-bg px-2.5 py-1 text-xs text-theme-text focus:border-theme-primary outline-none"
             value=""
             onchange={(e) => {

@@ -162,6 +162,7 @@
         <button
           type="button"
           onclick={() => (viewMode = "edit")}
+          aria-controls="token-note-body"
           class={[
             "rounded px-1.5 py-0.5 font-medium transition-colors",
             viewMode === "edit"
@@ -176,6 +177,7 @@
         <button
           type="button"
           onclick={() => (viewMode = "preview")}
+          aria-controls="token-note-preview-content"
           class={[
             "rounded px-1.5 py-0.5 font-medium transition-colors",
             viewMode === "preview"
@@ -261,6 +263,7 @@
     ></textarea>
   {:else}
     <div
+      id="token-note-preview-content"
       class="w-full min-h-[120px] max-h-64 overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-2.5 text-xs text-theme-text space-y-1.5"
       data-testid="token-note-preview-content"
     >
