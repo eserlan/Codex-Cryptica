@@ -443,9 +443,16 @@ export class VTTTokenManager {
     // edges too, same as initial placement — otherwise dragging a tile to
     // nudge it into alignment with its neighbors would only grid-snap.
     if (current.kind === "tile" && (posChanged || sizeChanged)) {
-      const neighbors = Object.values(this.tokens).filter(
-        (token) => token.kind === "tile" && token.id !== tokenId,
-      );
+      // ⚡ Bolt Optimization: Avoid intermediate array allocations during token movement hot path
+      const neighbors: Token[] = [];
+      for (const key in this.tokens) {
+        if (Object.prototype.hasOwnProperty.call(this.tokens, key)) {
+          const token = this.tokens[key];
+          if (token.kind === "tile" && token.id !== tokenId) {
+            neighbors.push(token);
+          }
+        }
+      }
       const snapThreshold = Math.max(12, snapped.width * 0.12);
       const tileSnapped = snapToNeighborTiles(
         snapped,

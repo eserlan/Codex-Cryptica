@@ -169,22 +169,156 @@ describe("Landing Page Registry", () => {
       expect(coc?.slug).toBe("call-of-cthulhu");
       expect(coc?.kind).toBe("system");
       expect(coc?.theme).toBe("horror");
+      expect(coc?.surfaceStyle).toBe("sharp");
       expect(coc?.disclaimer).toContain("Chaosium Inc.");
       expect(coc?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(coc?.exampleGraph?.steps.length).toBeGreaterThan(0);
     });
+
+    it("uses authentic Call of Cthulhu terminology and Keeper investigation framing", () => {
+      const coc = getLandingPage("call-of-cthulhu")!;
+      const copy = JSON.stringify(coc);
+
+      // Avoid generic fantasy, stock horror over-use, or irrelevant framing
+      expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+      expect(copy).not.toMatch(/\bloot tables?\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/Miskatonic University/i);
+
+      // Verify authentic terminology presence
+      expect(coc.hero.eyebrow).toContain("Keeper");
+      expect(copy).toContain("Keeper");
+      expect(copy).toContain("Investigators");
+      expect(copy).toContain("handouts");
+      expect(copy).toContain("clues");
+      expect(copy).toContain("scenarios");
+      expect(copy).toContain("tomes");
+      expect(copy).toContain("cults");
+      expect(copy).toContain("Dr Evelyn Mercer");
+      expect(copy).toContain("local-first");
+      expect(coc.cta.buttonText).toContain("Investigation");
+    });
+
+    it("maintains a valid hub-and-spoke investigation graph with categorized nodes", () => {
+      const coc = getLandingPage("call-of-cthulhu")!;
+      const graph = coc.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.sublabel).toContain("Investigator");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Cryptic Telegram")?.sublabel,
+      ).toBe("Handout • Telegram");
+      expect(
+        graph.steps.find((s) => s.label === "St Bartholomew's Archive")
+          ?.relation,
+      ).toBe("Researches at");
+      expect(
+        graph.steps.find((s) => s.label === "The Orne Society")?.sublabel,
+      ).toBe("Cult");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
   });
 
   describe("Gothic Horror Pack", () => {
-    it("is registered as genre and omits non-affiliation disclaimer", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const gothic = getLandingPage("gothic-horror");
       expect(gothic).toBeDefined();
       expect(gothic?.slug).toBe("gothic-horror");
       expect(gothic?.kind).toBe("genre");
       expect(gothic?.theme).toBe("horror");
+      expect(gothic?.surfaceStyle).toBe("sharp");
       expect(gothic?.disclaimer).toBeUndefined();
       expect(gothic?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(gothic?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic gothic horror terminology and avoids stock dark fantasy / cosmic horror clichés", () => {
+      const gothic = getLandingPage("gothic-horror")!;
+      const copy = JSON.stringify(gothic);
+
+      // Avoid generic fantasy, cosmic horror, or vampire-specific jargon
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/sanity check|eldritch|tentacles|sanitarium/i);
+      expect(copy).not.toMatch(/blood bond|primogen|masquerade/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/secretive parish vicar/i);
+      expect(copy).not.toMatch(/generational pacts/i);
+      expect(copy).not.toMatch(/locked lockboxes/i);
+      expect(copy).not.toMatch(/estate topography/i);
+
+      // Verify authentic gothic horror concepts and broadened non-aristocratic roles
+      expect(gothic.hero.eyebrow).toContain("Gothic Horror");
+      expect(copy).toContain("estates");
+      expect(copy).toContain("heirlooms");
+      expect(copy).toContain("parish");
+      expect(copy).toContain("transgressions");
+      expect(copy).toContain("governesses");
+      expect(copy).toContain("clergy");
+      expect(copy).toContain("Lady Elspeth Vale");
+      expect(copy).toContain("Harrowmere House");
+      expect(copy).toContain("local-first");
+
+      // Verify tool titles are not capability-inflated
+      const toolTitles = gothic.recommendedTools.map((t) => t.title);
+      expect(toolTitles).toContain("NPC Generator");
+      expect(toolTitles).toContain("Settlement Generator");
+      expect(toolTitles).toContain("Secret Society Generator");
+      expect(toolTitles).toContain("Magic Item Generator");
+    });
+
+    it("maintains a valid hub-and-spoke estate and lineage graph with categorized nodes", () => {
+      const gothic = getLandingPage("gothic-horror")!;
+      const graph = gothic.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.label).toBe("Lady Elspeth Vale");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Harrowmere House")?.relation,
+      ).toBe("Inherits");
+      expect(
+        graph.steps.find((s) => s.label === "The West Wing Journal")?.relation,
+      ).toBe("Uncovers");
+      expect(
+        graph.steps.find((s) => s.label === "The Society of the Hollow Bell")
+          ?.sublabel,
+      ).toBe("Aristocratic Society");
+      expect(
+        graph.steps.find((s) => s.label === "Sir Alaric Vale")?.relation,
+      ).toBe("Descended from");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+      expect(categories).toContain("faction");
     });
   });
 
