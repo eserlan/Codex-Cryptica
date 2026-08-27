@@ -3,7 +3,12 @@
     settlementConfig,
     pickFrom,
     SETTLEMENT_PRESETS,
+    SETTLEMENT_LEXICON,
+    settlementSchema,
     presetsFor,
+    analyseIntent,
+    applyIntent,
+    type InferredChoice,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
@@ -66,6 +71,77 @@
     ) {
       activePresetId = null;
     }
+  });
+
+  /**
+   * Reading the description into settings (#2339).
+   *
+   * The inferred values land in the ordinary fields, and the chips explain
+   * which of them came from the description. Nothing is hidden, so a wrong
+   * reading costs one click to undo rather than a confusing result.
+   */
+  let inferred = $state<InferredChoice[]>([]);
+
+  const FIELD_SETTERS: Record<string, (value: string) => void> = {
+    size: (v) => (size = v),
+    environment: (v) => (environment = v),
+    primaryFunction: (v) => (primaryFunction = v),
+    tone: (v) => (tone = v),
+    mainTension: (v) => (mainTension = v),
+  };
+
+  const currentValues = (): Record<string, string> => ({
+    size,
+    environment,
+    primaryFunction,
+    tone,
+    mainTension,
+  });
+
+  const readDescription = () => {
+    const description = campaignContext.trim();
+    if (!description) {
+      inferred = [];
+      return;
+    }
+
+    // Whatever is already on screen was chosen deliberately, so it is locked
+    // and the description only fills what is still open.
+    const locked = Object.fromEntries(
+      Object.entries(currentValues())
+        .filter(([, value]) => value !== "")
+        .map(([axisId, value]) => [
+          axisId,
+          { value, source: "manual" as const },
+        ]),
+    );
+
+    const signals = analyseIntent(description, SETTLEMENT_LEXICON);
+    const result = applyIntent(
+      settlementSchema,
+      signals,
+      { genre, locked },
+      description,
+    );
+
+    const applied = result.inferred.filter(
+      (choice) => FIELD_SETTERS[choice.axisId],
+    );
+    for (const choice of applied) FIELD_SETTERS[choice.axisId](choice.value);
+    inferred = applied;
+  };
+
+  const clearInference = (choice: InferredChoice) => {
+    FIELD_SETTERS[choice.axisId]("");
+    inferred = inferred.filter((i) => i.axisId !== choice.axisId);
+  };
+
+  // A chip stops claiming credit the moment its field says something else.
+  $effect(() => {
+    if (inferred.length === 0) return;
+    const current = currentValues();
+    const still = inferred.filter((i) => current[i.axisId] === i.value);
+    if (still.length !== inferred.length) inferred = still;
   });
 
   const selectClass =
@@ -191,13 +267,15 @@
 
 <div class="flex flex-col gap-1.5">
   <label for="settlement-context" class={labelClass}
-    >Campaign context (optional)</label
+    >Describe what you want (optional)</label
   >
   <textarea
     id="settlement-context"
     bind:value={campaignContext}
+    onblur={readDescription}
     maxlength="4000"
     rows="4"
+    placeholder="A prosperous but creepy coastal town controlled by merchants"
     aria-describedby="settlement-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
@@ -205,9 +283,44 @@
     id="settlement-context-help"
     class="text-[10px] text-theme-text/60 leading-relaxed"
   >
-    Add a region name, nearby factions, or ongoing conflict to aim the result at
-    your world.
+    Settings above that are still blank get filled in from this. Anything else
+    here, like a region name or a nearby faction, aims the result at your world.
   </p>
+
+  {#if inferred.length > 0}
+    <div class="flex flex-col gap-1.5 pt-1">
+      <span class={labelClass} id="settlement-inferred-label">
+        Read from your description
+      </span>
+      <div
+        class="flex flex-wrap gap-1.5"
+        role="group"
+        aria-labelledby="settlement-inferred-label"
+      >
+        {#each inferred as choice (choice.axisId)}
+          <span
+            class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg border border-theme-primary/50 bg-theme-primary/10 text-[11px] text-theme-text"
+          >
+            <span class="icon-[lucide--wand-sparkles] w-3 h-3 shrink-0"></span>
+            <span class="font-medium">{choice.label}</span>
+            <span class="text-theme-text/80">{choice.value}</span>
+            <button
+              type="button"
+              class="p-1 rounded hover:bg-theme-primary/20 cursor-pointer"
+              aria-label="Remove {choice.label} {choice.value}"
+              onclick={() => clearInference(choice)}
+            >
+              <span class="icon-[lucide--x] w-3 h-3 block"></span>
+            </button>
+          </span>
+        {/each}
+      </div>
+      <p class="text-[10px] text-theme-text/60 leading-relaxed">
+        These are settings, not results. Remove any of them, or change them
+        above, and the generator uses what you leave.
+      </p>
+    </div>
+  {/if}
 </div>
 
 <div class="pt-2 flex justify-end">
@@ -237,6 +350,7 @@
           settlementConfig.mainTensionsByGenre["Fantasy"],
       );
       activePresetId = null;
+      inferred = [];
       onSurprise?.();
     }}
   >

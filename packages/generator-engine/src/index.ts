@@ -168,6 +168,10 @@ export {
 export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
 export { SETTLEMENT_LEXICON } from "./public-settlement-lexicon";
 export {
+  buildSettlementSchema,
+  settlementSchema,
+} from "./public-settlement-schema";
+export {
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,

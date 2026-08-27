@@ -41,6 +41,30 @@ vi.mock("$lib/services/seo/generator-engine", () => ({
   ],
   presetsFor: (presets: { genres?: string[] }[], genre: string): unknown[] =>
     presets.filter((p) => p.genres === undefined || p.genres.includes(genre)),
+  SETTLEMENT_LEXICON: [],
+  settlementSchema: { id: "settlement", axes: [] },
+  // Stand-ins for the engine's matcher, which has its own tests. What matters
+  // here is what the form does with an inference, not how one is reached.
+  analyseIntent: (text: string) => (text.trim() ? [{ trait: "coastal" }] : []),
+  applyIntent: (
+    _schema: unknown,
+    signals: unknown[],
+    config: { locked?: Record<string, unknown> },
+  ) => ({
+    config,
+    inferred:
+      signals.length > 0 && !config.locked?.environment
+        ? [
+            {
+              axisId: "environment",
+              label: "Environment",
+              value: "Forest edge",
+              score: 2,
+              phrases: ["coastal"],
+            },
+          ]
+        : [],
+  }),
 }));
 
 describe("SettlementFormFields", () => {
@@ -75,7 +99,7 @@ describe("SettlementFormFields", () => {
     });
 
     const context = screen.getByLabelText(
-      "Campaign context (optional)",
+      "Describe what you want (optional)",
     ) as HTMLTextAreaElement;
     expect(context.maxLength).toBe(4000);
   });
@@ -154,5 +178,96 @@ describe("SettlementFormFields presets", () => {
     );
     const tone = screen.getByLabelText("Tone") as HTMLSelectElement;
     expect(tone.value).toBe("");
+  });
+});
+
+describe("SettlementFormFields description", () => {
+  const base = {
+    genre: "Fantasy",
+    size: "",
+    environment: "",
+    primaryFunction: "",
+    tone: "",
+    mainTension: "",
+    campaignContext: "",
+  };
+
+  const describeIt = async (text: string) => {
+    const field = screen.getByLabelText(
+      "Describe what you want (optional)",
+    ) as HTMLTextAreaElement;
+    await fireEvent.input(field, { target: { value: text } });
+    await fireEvent.blur(field);
+    return field;
+  };
+
+  it("fills a blank field from the description and says so", async () => {
+    render(SettlementFormFields, { ...base });
+    await describeIt("a coastal harbour town");
+
+    const environment = screen.getByLabelText(
+      "Environment",
+    ) as HTMLSelectElement;
+    expect(environment.value).toBe("Forest edge");
+    expect(screen.getByText("Read from your description")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Remove Environment Forest edge" }),
+    ).toBeTruthy();
+  });
+
+  it("puts a removed inference back to blank", async () => {
+    render(SettlementFormFields, { ...base });
+    await describeIt("a coastal harbour town");
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Remove Environment Forest edge" }),
+    );
+
+    const environment = screen.getByLabelText(
+      "Environment",
+    ) as HTMLSelectElement;
+    expect(environment.value).toBe("");
+    expect(screen.queryByText("Read from your description")).toBeNull();
+  });
+
+  it("leaves a field the user already set alone", async () => {
+    render(SettlementFormFields, { ...base, environment: "Forest edge" });
+    const environment = screen.getByLabelText(
+      "Environment",
+    ) as HTMLSelectElement;
+    expect(environment.value).toBe("Forest edge");
+
+    await describeIt("a coastal harbour town");
+
+    expect(screen.queryByText("Read from your description")).toBeNull();
+  });
+
+  it("stops claiming a field once it is changed by hand", async () => {
+    render(SettlementFormFields, { ...base });
+    await describeIt("a coastal harbour town");
+    expect(screen.getByText("Read from your description")).toBeTruthy();
+
+    const environment = screen.getByLabelText(
+      "Environment",
+    ) as HTMLSelectElement;
+    await fireEvent.change(environment, { target: { value: "" } });
+
+    expect(screen.queryByText("Read from your description")).toBeNull();
+  });
+
+  it("infers nothing from an empty description", async () => {
+    render(SettlementFormFields, { ...base });
+    await describeIt("   ");
+    expect(screen.queryByText("Read from your description")).toBeNull();
+  });
+
+  it("does not read the description until the field is left", async () => {
+    render(SettlementFormFields, { ...base });
+    const field = screen.getByLabelText(
+      "Describe what you want (optional)",
+    ) as HTMLTextAreaElement;
+    await fireEvent.input(field, { target: { value: "a coastal harbour" } });
+
+    expect(screen.queryByText("Read from your description")).toBeNull();
   });
 });
