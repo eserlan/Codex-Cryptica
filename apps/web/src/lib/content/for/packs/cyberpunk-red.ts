@@ -9,6 +9,9 @@ export const cyberpunkRed: LandingPageConfig = {
     title: "Codex Cryptica for Cyberpunk RED Campaign Management",
     description:
       "Organise your Cyberpunk RED campaign with connected fixers, megacorps, street gangs, merc squads, deal locations, and gig recaps.",
+    image: "https://assets.codexcryptica.com/og/cyberpunk-red.jpg",
+    imageAlt:
+      "Edgerunner mercenary workbench with cyberdeck holomap of Night City, datashards, cyberware, and neon skyline view",
   },
   hero: {
     eyebrow: "Cyberpunk RED Campaign Management",

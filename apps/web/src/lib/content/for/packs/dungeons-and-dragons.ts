@@ -9,6 +9,9 @@ export const dungeonsAndDragons: LandingPageConfig = {
     title: "Codex Cryptica for D&D 5e Campaign Management",
     description:
       "A campaign manager for D&D Dungeon Masters. Keep NPCs, factions, locations, quests, maps, and session notes connected between sessions.",
+    image: "https://assets.codexcryptica.com/og/dungeons-and-dragons.jpg",
+    imageAlt:
+      "Adventurer tavern table with parchment dungeon battlemap, glowing d20 dice, quest scrolls, and open spellbook",
   },
   hero: {
     eyebrow: "Campaign Management for Dungeon Masters",

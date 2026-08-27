@@ -9,6 +9,9 @@ export const pathfinder2e: LandingPageConfig = {
     title: "Codex Cryptica for Pathfinder 2e Campaign Management",
     description:
       "Organise your Pathfinder 2e campaign with connected nations, secret societies, deities, Adventure Paths, session recaps, and worldbuilding tools.",
+    image: "https://assets.codexcryptica.com/og/pathfinder-2e.jpg",
+    imageAlt:
+      "Pathfinder grand lodge archives with tactical hex exploration map, wayfinder compass, travel chronicle, and faction banners",
   },
   hero: {
     eyebrow: "Campaign Management for Pathfinder 2e GMs",
