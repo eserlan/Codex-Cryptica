@@ -17,18 +17,23 @@ import { settlementConfig } from "./public-settlement-constants";
 import { settlementSchema } from "./public-settlement-schema";
 import {
   buildAdventureHooks,
+  buildCurrentTensionParagraph,
   buildInhabitants,
   buildLifeHere,
   buildNotableInhabitants,
+  institutionalNote,
   rungFor,
   scaleFor,
+  scaleFunctionPhrase,
   selectDiverseFactions,
   selectDiversePoi,
   settlementFactionCategoryPool,
   settlementLocationCategoryPool,
+  withArticle,
   type FactionCategory,
   type PoiCategory,
 } from "./public-settlement-community";
+import { FUNCTION_TRAITS } from "./public-settlement-traits";
 import { resolveSmart, type LockedValue, type ResolveContext } from "./smart";
 export { settlementConfig };
 
@@ -173,6 +178,10 @@ Guidance that applies to every section below:
 - The settlement should feel like it existed before the PCs arrived and will keep existing after the current tension resolves. Do not make every faction, notable inhabitant, secret, location and hook trace back to the same central concept.
 - Avoid defaulting to hidden ledgers, forged records, missing documents, secret archives, inheritance paperwork, concealed bloodlines, bureaucratic conspiracies, or a merchant organisation secretly controlling all political authority, as the source of intrigue. Avoid defaulting to an ancient secret beneath the settlement, a missing heir, a dying ruler, a hidden cult, a prophecy, or an artefact everyone secretly wants. Use any of these only if the parameters above genuinely call for it.
 - Use believable approximations for population ("~25% military personnel", "many herders and agricultural workers"), never fabricated precision ("exactly 17 blacksmiths").
+- Scale constrains everything, not just the population figure. ${size} is a conceptual role for the Primary Function, not mandatory prose: describe an "Academic city" resolved at Hamlet scale as a scholarly community or academic enclave, never as a city, and give it the institutional footprint a place that size could plausibly support (one lecture hall and a handful of workshops, not a university district). Terminology, physical complexity, institutions, services, faction count and location count should all read as ${size}-scale.
+- Prefer one or two strongly connected reasons the settlement exists over several unrelated ones stacked together (rare minerals AND a trade route AND ancient ruins AND unusual magic, all independently). Choose a causal chain instead — e.g. a mountain pass causes an unusual phenomenon, which causes an observatory, which causes an academic settlement, with trade arising naturally from the pass rather than as a separate special feature. Every major concept you introduce should affect the settlement somewhere else in the output (trade, crafts, faction interests, or daily life); otherwise leave it out.
+- Reuse named people and places across sections instead of inventing new, disconnected ones. If Current Tension, History or a faction names a specific person, that same person (same name, same role) should also appear in Notable Inhabitants. If Life Here, History or Current Tension names a distinctive location — an inn, market, bridge, shrine, workshop, observatory, plaza or dock — that same location should appear in Points of Interest rather than a newly invented, unrelated one.
+- Meet the requested counts for Points of Interest and Notable Inhabitants exactly; do not treat them as a loose suggestion when there is clearly enough material to reach them.
 
 Return a valid JSON object matching this structure exactly:
 {
@@ -236,68 +245,68 @@ const FIRST_IMPRESSION_BY_GENRE: Record<string, string> = {
     "The roar of a shuttle taking off, the chatter of alien tongues, and the ever-present gaze of imperial stormtroopers on patrol.",
 };
 
+/**
+ * `scalePhrase` stands in for the old `size` + `primaryFunction` pairing.
+ * "Academic city" resolved at hamlet scale used to print literally as "a
+ * hamlet built around academic city", contradicting its own scale in the
+ * same sentence; `scaleFunctionPhrase` already picked the honest noun
+ * ("scholarly community"), so these templates just use it directly (#2536).
+ */
 const CORE_CONCEPT_VARIANTS = [
   (
     name: string,
-    size: string,
+    scalePhrase: string,
     environment: string,
-    primaryFunction: string,
     tone: string,
     mainTension: string,
   ) =>
-    `${name} is a ${size.toLowerCase()} built around ${primaryFunction.toLowerCase()} in a ${environment.toLowerCase()} setting. ${tone} in character, it draws people who need what it offers and repels those who threaten it. Beneath the surface, ${mainTension.toLowerCase()} is shaping everything.`,
+    `${name} is ${withArticle(scalePhrase)} in a ${environment.toLowerCase()} setting. ${tone} in character, it draws people who need what it offers and repels those who threaten it. Beneath the surface, ${mainTension.toLowerCase()} is shaping everything.`,
   (
     name: string,
-    size: string,
+    scalePhrase: string,
     environment: string,
-    primaryFunction: string,
     tone: string,
     mainTension: string,
   ) =>
-    `${name} is a ${size.toLowerCase()} ${environment.toLowerCase()} settlement whose entire identity runs through ${primaryFunction.toLowerCase()}. The ${tone.toLowerCase()} atmosphere is partly genuine and partly maintained — and ${mainTension.toLowerCase()} is testing both.`,
+    `${name} is ${withArticle(scalePhrase)} in ${environment.toLowerCase()} country, and its entire identity runs through what that implies. The ${tone.toLowerCase()} atmosphere is partly genuine and partly maintained — and ${mainTension.toLowerCase()} is testing both.`,
   (
     name: string,
-    size: string,
+    scalePhrase: string,
     environment: string,
-    primaryFunction: string,
     tone: string,
     mainTension: string,
   ) =>
-    `A ${size.toLowerCase()} place shaped by ${environment.toLowerCase()} terrain and the demands of ${primaryFunction.toLowerCase()}, ${name} has the ${tone.toLowerCase()} quality of somewhere that knows what it is. What it does not know is how much longer that remains true, given ${mainTension.toLowerCase()}.`,
+    `A place shaped by ${environment.toLowerCase()} terrain, ${name} is ${withArticle(scalePhrase)} with the ${tone.toLowerCase()} quality of somewhere that knows what it is. What it does not know is how much longer that remains true, given ${mainTension.toLowerCase()}.`,
   (
     name: string,
-    size: string,
+    scalePhrase: string,
     environment: string,
-    primaryFunction: string,
     tone: string,
     mainTension: string,
   ) =>
-    `${name} exists because ${primaryFunction.toLowerCase()} required a permanent presence in this ${environment.toLowerCase()} location. It is ${size.toLowerCase()}, ${tone.toLowerCase()}, and quietly under strain: ${mainTension.toLowerCase()} runs through everything here.`,
+    `${name} exists because this ${environment.toLowerCase()} location needed ${withArticle(scalePhrase)}. It is ${tone.toLowerCase()} and quietly under strain: ${mainTension.toLowerCase()} runs through everything here.`,
   (
     name: string,
-    size: string,
+    scalePhrase: string,
     environment: string,
-    primaryFunction: string,
     tone: string,
     mainTension: string,
   ) =>
-    `Everything about ${name} — its ${size.toLowerCase()} scale, its ${environment.toLowerCase()} setting, its ${tone.toLowerCase()} reputation — traces back to ${primaryFunction.toLowerCase()}. And ${mainTension.toLowerCase()} threatens to unravel all of it.`,
+    `Everything about ${name} — its ${environment.toLowerCase()} setting, its ${tone.toLowerCase()} reputation — traces back to being ${withArticle(scalePhrase)}. And ${mainTension.toLowerCase()} threatens to unravel all of it.`,
 ] as const;
 
 const CORE_CONCEPT_TEMPLATE = (
   name: string,
-  size: string,
+  scalePhrase: string,
   environment: string,
-  primaryFunction: string,
   tone: string,
   mainTension: string,
   rng: () => number,
 ) =>
   CORE_CONCEPT_VARIANTS[Math.floor(rng() * CORE_CONCEPT_VARIANTS.length)](
     name,
-    size,
+    scalePhrase,
     environment,
-    primaryFunction,
     tone,
     mainTension,
   );
@@ -380,6 +389,16 @@ export function generateSettlementLocal(
       rng,
     );
 
+  const functionTraits = FUNCTION_TRAITS[primaryFunction] ?? [];
+  // primaryFunction is a conceptual role, not mandatory prose: an "Academic
+  // city" resolved at hamlet scale reads as a scholarly community, not a
+  // city (#2536).
+  const scalePhrase = scaleFunctionPhrase(
+    functionTraits,
+    rung,
+    primaryFunction,
+  );
+
   const inhabitants = buildInhabitants(context.values, scale, rng);
   const notableInhabitants = buildNotableInhabitants(
     context.values,
@@ -388,7 +407,7 @@ export function generateSettlementLocal(
     name,
     rng,
   );
-  const lifeHere = buildLifeHere(context.values, rng);
+  const lifeHere = buildLifeHere(context.values, rng, pois);
   const hooks = buildAdventureHooks(
     {
       environment,
@@ -406,13 +425,14 @@ export function generateSettlementLocal(
     FIRST_IMPRESSION_BY_GENRE[genre] ?? FIRST_IMPRESSION_BY_GENRE["Fantasy"];
 
   const historyVariants = [
-    `${name} was established as a ${primaryFunction.toLowerCase()} and grew to serve that purpose above all else. The ${authorityType.toLowerCase()} has held power long enough for cracks to form. How those cracks spread is the story.`,
-    `The original reason for ${name}'s existence was ${primaryFunction.toLowerCase()}. Everything else — the layout, the social order, the current tensions — grew from that. The ${authorityType.toLowerCase()} that governs it inherited a settlement already shaped by decisions made before them.`,
+    `${name} was established as ${withArticle(scalePhrase)} and grew to serve that purpose above all else. The ${authorityType.toLowerCase()} has held power long enough for cracks to form. How those cracks spread is the story.`,
+    `The original reason for ${name}'s existence was being ${withArticle(scalePhrase)}. Everything else — the layout, the social order, the current tensions — grew from that. The ${authorityType.toLowerCase()} that governs it inherited a settlement already shaped by decisions made before them.`,
     `${name} predates its current ${authorityType.toLowerCase()} by enough time that the original arrangement and the current reality have diverged in ways nobody officially acknowledges.`,
-    `The settlement formed around ${primaryFunction.toLowerCase()} and has never fully outgrown that original purpose. The ${authorityType.toLowerCase()} manages what that purpose attracts — which is both the settlement's strength and its persistent vulnerability.`,
-    `Early records describe ${name} as a temporary installation. It became permanent when ${primaryFunction.toLowerCase()} proved too valuable to abandon. The ${authorityType.toLowerCase()} that solidified over time are a later development, and not everyone accepts their legitimacy equally.`,
+    `The settlement formed around being ${withArticle(scalePhrase)} and has never fully outgrown that original purpose. The ${authorityType.toLowerCase()} manages what that purpose attracts — which is both the settlement's strength and its persistent vulnerability.`,
+    `Early records describe ${name} as a temporary installation. It became permanent when being ${withArticle(scalePhrase)} proved too valuable to abandon. The ${authorityType.toLowerCase()} that solidified over time are a later development, and not everyone accepts their legitimacy equally.`,
   ] as const;
 
+  const note = institutionalNote(functionTraits, rung);
   const inhabitantsSection = [
     `Roughly ${population.toLowerCase()}. ${inhabitants.economicGroups.map((g) => g.charAt(0).toUpperCase() + g.slice(1)).join(". ")}.`,
     inhabitants.transient
@@ -420,12 +440,15 @@ export function generateSettlementLocal(
         inhabitants.transient.slice(1) +
         "."
       : undefined,
+    // Small settlements do not get a large institution's footprint just
+    // because they share its function (#2536).
+    note ? `At this size, that means ${note}.` : undefined,
   ]
     .filter(Boolean)
     .join(" ");
 
   const content = `## Core Concept
-${CORE_CONCEPT_TEMPLATE(name, size, environment, primaryFunction, tone, mainTension, rng)}
+${CORE_CONCEPT_TEMPLATE(name, scalePhrase, environment, tone, mainTension, rng)}
 
 ## First Impression
 ${firstImpression}
@@ -440,7 +463,7 @@ ${lifeHere.map((line) => `- ${line}`).join("\n")}
 ${historyVariants[Math.floor(rng() * historyVariants.length)]}`;
 
   const lore = `### Current Tension
-${mainTension} is one important thing happening here, not the reason for everything about the place. The longer it goes unresolved, the worse the outcome for everyone — including the people in power.
+${buildCurrentTensionParagraph(mainTension, notableInhabitants, rng)}
 
 ### Points of Interest
 ${pois
@@ -476,7 +499,7 @@ ${hooks.map((h) => `- ${h}`).join("\n")}
 - **Official Authority**: ${authorityType}
 - **Tone**: ${tone}`;
 
-  const summary = `A ${tone.toLowerCase()} ${size.toLowerCase()} built around ${primaryFunction.toLowerCase()} in a ${environment.toLowerCase()} setting.`;
+  const summary = `A ${tone.toLowerCase()} ${scalePhrase} in a ${environment.toLowerCase()} setting.`;
 
   return {
     type: "location",

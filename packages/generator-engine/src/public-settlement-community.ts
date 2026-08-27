@@ -596,9 +596,17 @@ const GENERIC_LIFE_LINES: Record<LifeCategory, string> = {
  * templated by trait so the detail differs by what the settlement is for and
  * where it sits, without ever leaning on the current tension for content.
  */
+/**
+ * `pois` is optional so existing callers (and the parity test suite) are
+ * unaffected; when given, the "recreation" line sometimes names one of the
+ * settlement's own points of interest instead of describing a generic
+ * gathering place, so Life Here reads as connected to Points of Interest
+ * rather than assembled as an independent section.
+ */
 export function buildLifeHere(
   values: Readonly<Record<string, string>>,
   rng: Rng,
+  pois: readonly string[] = [],
 ): string[] {
   const functionTraits = FUNCTION_TRAITS[values.primaryFunction] ?? [];
   const environmentTraits = ENVIRONMENT_TRAITS[values.environment] ?? [];
@@ -608,6 +616,9 @@ export function buildLifeHere(
   const chosen = pickRandomItems(categories, 4 + Math.floor(rng() * 2), rng);
 
   return chosen.map((category) => {
+    if (category === "recreation" && pois.length > 0 && rng() < 0.5) {
+      return `Residents gather at ${pickFrom(pois, rng)} more than anywhere else in the settlement.`;
+    }
     const table = LIFE_HERE_BY_CATEGORY[category];
     return firstMatch(traits, table) ?? GENERIC_LIFE_LINES[category];
   });
@@ -840,4 +851,204 @@ export function buildAdventureHooks(ctx: HookContext, rng: Rng): string[] {
     pickFrom(ORDINARY_HOOK_VARIANTS, rng)(ingredients),
     pickFrom(EXPLORATION_HOOK_VARIANTS, rng)(ingredients),
   ];
+}
+
+/**
+ * Scale-appropriate vocabulary for describing what a settlement is (#2536
+ * refinement pass). `primaryFunction` is a conceptual role, not mandatory
+ * prose: an "Academic city" resolved at hamlet scale should read as a
+ * "scholarly community", not a city, or the settlement's own scale collapses
+ * into contradiction the moment prose repeats the raw option string.
+ *
+ * Four phrases per trait, one per rung, smallest to largest. Traits not
+ * covered here fall back to a genre-neutral scale-noun ladder, so nothing is
+ * ever left without a phrase.
+ */
+const SCALE_PHRASE_BY_TRAIT: Partial<
+  Record<SettlementTrait, readonly [string, string, string, string]>
+> = {
+  academic: [
+    "scholarly community",
+    "academic enclave",
+    "college town",
+    "university district",
+  ],
+  research: [
+    "research camp",
+    "research outpost",
+    "research station",
+    "research complex",
+  ],
+  religious: [
+    "shrine settlement",
+    "temple town",
+    "pilgrimage town",
+    "religious capital",
+  ],
+  trade: ["trading hamlet", "market town", "trade hub", "mercantile city"],
+  military: [
+    "garrison outpost",
+    "garrison town",
+    "fortress town",
+    "military stronghold",
+  ],
+  mining: ["mining camp", "mining town", "mining settlement", "mining city"],
+  industrial: [
+    "workshop hamlet",
+    "mill town",
+    "industrial hub",
+    "industrial city",
+  ],
+  administrative: [
+    "outpost",
+    "administrative town",
+    "administrative seat",
+    "administrative capital",
+  ],
+  criminal: [
+    "hideout",
+    "smugglers' town",
+    "criminal enclave",
+    "underworld hub",
+  ],
+  agrarian: [
+    "farming hamlet",
+    "farming village",
+    "farming town",
+    "agricultural hub",
+  ],
+  maritime: ["fishing hamlet", "fishing village", "harbour town", "port city"],
+  entertainment: [
+    "wayside stop",
+    "entertainment town",
+    "entertainment district",
+    "entertainment capital",
+  ],
+  refuge: ["refuge camp", "refuge settlement", "refuge town", "refuge city"],
+  transit: ["waystation", "crossroads town", "transit hub", "transit city"],
+  medical: [
+    "aid post",
+    "clinic town",
+    "medical waystation",
+    "medical district",
+  ],
+};
+
+const GENERIC_SCALE_NOUNS: readonly [string, string, string, string] = [
+  "outpost",
+  "settlement",
+  "town",
+  "city",
+];
+
+/**
+ * A scale-honest noun phrase for what a settlement is, e.g. "academic
+ * enclave" rather than "academic city" at hamlet scale. Traits are checked in
+ * priority order; the first with a scale table wins.
+ *
+ * A custom function the user typed (or an unrecognised legacy value like the
+ * deprecated `economy` option) carries no traits, so there is no honest basis
+ * to scale-adjust it — the raw value is used verbatim instead, the same call
+ * the rest of the framework already makes for a custom axis value.
+ */
+export function scaleFunctionPhrase(
+  traits: readonly SettlementTrait[],
+  rung: number,
+  rawFunction?: string,
+): string {
+  const clamped = Math.min(Math.max(rung, 0), 3);
+  for (const trait of traits) {
+    const phrases = SCALE_PHRASE_BY_TRAIT[trait];
+    if (phrases) return phrases[clamped];
+  }
+  return rawFunction?.trim()
+    ? rawFunction.toLowerCase()
+    : GENERIC_SCALE_NOUNS[clamped];
+}
+
+const VOWEL_SOUND = /^(a|e|i|o|u)/i;
+
+/** "a" or "an", by the phrase's leading sound rather than strict spelling rules. */
+export function withArticle(phrase: string): string {
+  return `${VOWEL_SOUND.test(phrase) ? "an" : "a"} ${phrase}`;
+}
+
+/**
+ * What modest infrastructure actually looks like at hamlet or village scale,
+ * so a small settlement does not imply the institutional footprint of a city
+ * built around the same function. Only meaningful at the bottom of the
+ * ladder — a city-rung settlement earns whatever scale the reader assumes.
+ */
+const INSTITUTIONAL_NOTE_BY_TRAIT: TraitPhrases = {
+  academic: [
+    "one lecture hall, a few workshops, and a single hostel for visiting scholars",
+  ],
+  research: [
+    "a single laboratory shed and a handful of instruments, nothing more",
+  ],
+  religious: ["one shrine hall and a caretaker's lodge, nothing grander"],
+  trade: ["a single market square and a few storerooms"],
+  military: ["a single watch post housing a few dozen"],
+  mining: ["one shaft head and a modest smithy"],
+  industrial: [
+    "a single workshop doing the work a larger settlement would spread across several",
+  ],
+  administrative: ["one clerk's office handling everything official"],
+  medical: ["a single healer's room, not a proper ward"],
+};
+
+export function institutionalNote(
+  traits: readonly string[],
+  rung: number,
+): string | undefined {
+  if (rung > 1) return undefined;
+  return firstMatch(traits, INSTITUTIONAL_NOTE_BY_TRAIT);
+}
+
+/**
+ * Current Tension names people rather than only institutions, and those
+ * people are drawn from the already-built notable inhabitants rather than
+ * invented fresh — the only way to guarantee a named actor in this paragraph
+ * also appears in Notable Inhabitants is to build it from the same list.
+ */
+const TENSION_VARIANTS_WITH_TWO = [
+  (t: string, a: NotableInhabitant, o: NotableInhabitant) =>
+    `${t} is one important thing happening here, not the reason for everything about the place. ${a.name}, the ${a.role.toLowerCase()}, is at the center of the official response, while ${o.name} has a view on it that the official line does not share.`,
+  (t: string, a: NotableInhabitant, o: NotableInhabitant) =>
+    `${t} is the open concern of the moment. ${a.name} is trying to manage it quietly as ${a.role.toLowerCase()}; ${o.name} thinks quiet is exactly the wrong approach.`,
+] as const;
+
+const TENSION_VARIANTS_WITH_ONE = [
+  (t: string, a: NotableInhabitant) =>
+    `${t} is one important thing happening here, not the reason for everything about the place. ${a.name}, the ${a.role.toLowerCase()}, is at the center of the official response, for whatever that is worth.`,
+  (t: string, a: NotableInhabitant) =>
+    `${t} is the open concern of the moment, and ${a.name} carries more of the weight of it than the ${a.role.toLowerCase()} title alone would suggest.`,
+] as const;
+
+const TENSION_VARIANTS_WITH_NONE = [
+  (t: string) =>
+    `${t} is one important thing happening here, not the reason for everything about the place. The longer it goes unresolved, the worse the outcome for everyone — including the people in power.`,
+] as const;
+
+export function buildCurrentTensionParagraph(
+  mainTension: string,
+  inhabitants: readonly NotableInhabitant[],
+  rng: Rng,
+): string {
+  const authority = inhabitants.find((i) => i.category === "authority");
+  const other = inhabitants.find(
+    (i) => i.category !== "authority" && i !== authority,
+  );
+
+  if (authority && other) {
+    return pickFrom(TENSION_VARIANTS_WITH_TWO, rng)(
+      mainTension,
+      authority,
+      other,
+    );
+  }
+  if (authority) {
+    return pickFrom(TENSION_VARIANTS_WITH_ONE, rng)(mainTension, authority);
+  }
+  return pickFrom(TENSION_VARIANTS_WITH_NONE, rng)(mainTension);
 }
