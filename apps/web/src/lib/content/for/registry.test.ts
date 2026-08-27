@@ -362,6 +362,7 @@ describe("Landing Page Registry", () => {
       expect(copy).toContain("datashards");
       expect(copy).toContain("Night Markets");
       expect(copy).toContain("Lifepath");
+      expect(copy).toContain("choom");
       expect(copy).toContain("Jax 'Chrome' Vance");
       expect(copy).toContain("Zetatech Operations");
       expect(copy).toContain("Iron Sights");

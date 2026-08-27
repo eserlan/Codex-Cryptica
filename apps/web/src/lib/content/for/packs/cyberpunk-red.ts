@@ -20,13 +20,13 @@ export const cyberpunkRed: LandingPageConfig = {
     tagline:
       "Keep fixers, edgerunner crews, megacorp handlers, boostergang turf, and high-risk gigs connected in one local-first workspace.",
     problemStatement:
-      "In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.",
+      "In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, or an old choom from your Lifepath calls in a desperate favour, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.",
   },
   useCases: [
     {
       title: "Fixers, Edgerunner Crews & Contacts",
       description:
-        "Map the web between district Fixers, Solos, Netrunners, Techs, Medtechs, and Lawmen alongside the street favours, unpaid debts, and Lifepath rivalries that tie them together.",
+        "Map the web between district Fixers, Solos, Netrunners, Techs, Medtechs, and Lawmen alongside trusted chooms, unpaid street debts, and Lifepath rivalries that tie them together.",
       icon: "icon-[lucide--users]",
     },
     {
