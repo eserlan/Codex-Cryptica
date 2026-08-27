@@ -89,15 +89,20 @@ describe("MapVTTSidebar", () => {
     sessionModeStoreMock.isGuestMode = false;
   });
 
-  it("renders the expanded sidebar and entity count", () => {
+  it("renders the expanded sidebar, middle workspace, and entity count", () => {
     renderSidebar();
 
     expect(screen.getByLabelText("VTT Sidebar")).not.toBeNull();
+    expect(screen.getByTestId("vtt-middle-workspace")).not.toBeNull();
     expect(screen.getByText("Vault Entities")).not.toBeNull();
     expect(screen.getByText("3")).not.toBeNull();
-    expect(
-      screen.getByText("Select a token to view its details."),
-    ).not.toBeNull();
+    expect(screen.queryByTestId("vtt-pinned-inspector")).toBeNull();
+  });
+
+  it("renders the pinned contextual inspector when a token is selected", () => {
+    renderSidebar({ hasSelectedToken: true });
+
+    expect(screen.getByTestId("vtt-pinned-inspector")).not.toBeNull();
   });
 
   it("collapses the right sidebar through the layout store", async () => {

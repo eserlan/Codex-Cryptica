@@ -11,6 +11,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -47,6 +48,74 @@
     canManageToken && !vault.isGuest && !selectedToken?.entityId,
   );
   let savingNoteToVaultFor = $state<string | null>(null);
+
+  const availableTiles = $derived(
+    Object.values(mapSession.tokens).filter((t) => t.kind === "tile"),
+  );
+  const parentTile = $derived(
+    selectedToken?.parentTokenId
+      ? (mapSession.tokens[selectedToken.parentTokenId] ?? null)
+      : null,
+  );
+  const attachedNotes = $derived(
+    selectedToken?.id ? mapSession.getChildNotes(selectedToken.id) : [],
+  );
+
+  let pendingVaultSyncTimeout: ReturnType<typeof setTimeout> | null = null;
+  let pendingVaultEntityId: string | null = null;
+  let pendingVaultContent: string | null = null;
+  let pendingVaultTitle: string | null = null;
+
+  function flushPendingVaultSync() {
+    if (pendingVaultSyncTimeout) {
+      clearTimeout(pendingVaultSyncTimeout);
+      pendingVaultSyncTimeout = null;
+    }
+    if (pendingVaultEntityId) {
+      const entityId = pendingVaultEntityId;
+      const updates: { content?: string; title?: string } = {};
+      if (pendingVaultContent !== null) updates.content = pendingVaultContent;
+      if (pendingVaultTitle !== null) updates.title = pendingVaultTitle;
+      pendingVaultEntityId = null;
+      pendingVaultContent = null;
+      pendingVaultTitle = null;
+      if (Object.keys(updates).length > 0) {
+        void vault.updateEntity(entityId, updates);
+      }
+    }
+  }
+
+  function handleNoteBodyChange(tokenId: string, nextBody: string) {
+    mapSession.updateToken(tokenId, { noteBody: nextBody });
+    const token = mapSession.tokens[tokenId];
+    if (token?.entityId && canManageToken && !vault.isGuest) {
+      pendingVaultEntityId = token.entityId;
+      pendingVaultContent = nextBody;
+      if (pendingVaultSyncTimeout) clearTimeout(pendingVaultSyncTimeout);
+      pendingVaultSyncTimeout = setTimeout(() => {
+        flushPendingVaultSync();
+      }, 300);
+    }
+  }
+
+  function handleNoteTitleChange(tokenId: string, nextTitle: string) {
+    mapSession.updateToken(tokenId, { name: nextTitle });
+    const token = mapSession.tokens[tokenId];
+    if (token?.entityId && canManageToken && !vault.isGuest) {
+      pendingVaultEntityId = token.entityId;
+      pendingVaultTitle = nextTitle;
+      if (pendingVaultSyncTimeout) clearTimeout(pendingVaultSyncTimeout);
+      pendingVaultSyncTimeout = setTimeout(() => {
+        flushPendingVaultSync();
+      }, 300);
+    }
+  }
+
+  $effect(() => {
+    return () => {
+      flushPendingVaultSync();
+    };
+  });
 
   /**
    * Writes a map note into the vault as a Note entity and links the marker to
@@ -99,7 +168,7 @@
       // wanted where it was asked for.
       const note = mapSession.tokens[tokenId];
       if (!note || note.kind !== "note" || (note.noteBody ?? "").trim()) return;
-      mapSession.updateToken(tokenId, { noteBody: body });
+      handleNoteBodyChange(tokenId, body);
       if (aiFallback) {
         notificationStore.notify(
           "AI was unavailable, so this encounter came from the local tables.",
@@ -133,12 +202,26 @@
     onclick={(e) => e.stopPropagation()}
   >
     <div class="flex items-start justify-between gap-3">
-      <div>
-        <h3
-          class="text-sm font-bold uppercase tracking-widest text-theme-text font-header"
-        >
-          {selectedToken.name}
-        </h3>
+      <div class="flex-1 min-w-0">
+        {#if selectedToken.kind === "note" && canManageToken}
+          <input
+            type="text"
+            value={selectedToken.name}
+            oninput={(e) =>
+              handleNoteTitleChange(selectedToken.id, e.currentTarget.value)}
+            onblur={flushPendingVaultSync}
+            placeholder="Note title…"
+            aria-label="Note title"
+            data-testid="token-note-title-input"
+            class="w-full font-bold uppercase tracking-widest text-theme-text font-header text-sm bg-transparent border-b border-theme-border/50 focus:border-theme-primary outline-none py-0.5"
+          />
+        {:else}
+          <h3
+            class="text-sm font-bold uppercase tracking-widest text-theme-text font-header truncate"
+          >
+            {selectedToken.name}
+          </h3>
+        {/if}
         <p class="text-[10px] text-theme-muted mt-1">
           {selectedToken.width} x {selectedToken.height} units
         </p>
@@ -154,16 +237,32 @@
     </div>
 
     {#if linkedEntity}
-      <div class="rounded-lg border border-theme-border bg-theme-bg/50 p-3">
-        <div class="text-[10px] uppercase tracking-widest text-theme-muted">
-          Linked Entity
+      <div
+        class="rounded-lg border border-theme-border bg-theme-bg/50 p-3 flex items-center justify-between gap-2"
+        data-testid="token-linked-entity-card"
+      >
+        <div class="min-w-0 flex-1">
+          <div class="text-[10px] uppercase tracking-widest text-theme-muted">
+            Linked Entity
+          </div>
+          <div class="text-sm font-bold text-theme-text truncate">
+            {linkedEntity.title}
+          </div>
+          <div class="text-[10px] uppercase tracking-widest text-theme-muted">
+            {linkedEntity.type}
+          </div>
         </div>
-        <div class="text-sm font-bold text-theme-text">
-          {linkedEntity.title}
-        </div>
-        <div class="text-[10px] uppercase tracking-widest text-theme-muted">
-          {linkedEntity.type}
-        </div>
+        <button
+          type="button"
+          onclick={() => modalUIStore.openZenMode(linkedEntity.id)}
+          class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors shrink-0"
+          title="Open in Zen Mode"
+          aria-label="Open entity in Zen Mode"
+        >
+          <span class="icon-[lucide--maximize-2] h-3 w-3" aria-hidden="true"
+          ></span>
+          <span>Open</span>
+        </button>
       </div>
       {#if linkedEntity.statSheet?.fields?.length}
         <TokenQuickStats entity={linkedEntity} />
@@ -177,13 +276,72 @@
     {/if}
 
     {#if selectedToken.kind === "note"}
+      {#if parentTile}
+        <div
+          class="flex items-center justify-between rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 text-xs text-theme-primary"
+          data-testid="token-note-parent-badge"
+        >
+          <button
+            type="button"
+            onclick={() =>
+              mapSession.setSelection(selectedToken.parentTokenId!)}
+            class="flex items-center gap-1.5 font-medium hover:underline text-left truncate"
+            title="Select parent tile {parentTile.name}"
+          >
+            <span
+              class="icon-[lucide--layers] h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <span class="truncate"
+              >Attached to <strong>{parentTile.name || "Tile"}</strong></span
+            >
+          </button>
+          {#if canManageToken}
+            <button
+              type="button"
+              onclick={() => mapSession.unlinkToken(selectedToken.id)}
+              class="ml-2 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
+              title="Unlink note from this tile"
+              data-testid="token-note-unlink-btn"
+            >
+              Unlink
+            </button>
+          {/if}
+        </div>
+      {:else if canManageToken && availableTiles.length > 0}
+        <div class="space-y-1" data-testid="token-note-link-section">
+          <label
+            class="block text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+            for="link-parent-tile"
+          >
+            Link to Tile
+          </label>
+          <select
+            id="link-parent-tile"
+            aria-label="Link note to placed tile"
+            class="w-full rounded-md border border-theme-border bg-theme-bg px-2.5 py-1 text-xs text-theme-text focus:border-theme-primary outline-none"
+            value=""
+            onchange={(e) => {
+              if (e.currentTarget.value) {
+                mapSession.linkTokens(selectedToken.id, e.currentTarget.value);
+              }
+            }}
+          >
+            <option value="" disabled>Link to a tile on the map…</option>
+            {#each availableTiles as tile (tile.id)}
+              <option value={tile.id}>{tile.name}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
+
       <TokenNoteEditor
         body={selectedToken.noteBody ?? ""}
         collapsed={isNoteCollapsed(selectedToken)}
         disabled={!canManageToken}
         generating={generatingEncounterFor === selectedToken.id}
-        onChange={(body) =>
-          mapSession.updateToken(selectedToken.id, { noteBody: body })}
+        onChange={(body) => handleNoteBodyChange(selectedToken.id, body)}
+        onBlur={flushPendingVaultSync}
         onToggleCollapsed={() =>
           mapSession.toggleNoteCollapsed(selectedToken.id)}
         onGenerateEncounter={canGenerateEncounter
@@ -196,15 +354,47 @@
       />
     {/if}
 
-    {#if selectedToken.kind === "tile" && selectedToken.tileDetails}
-      <SpatialImageDetails
-        details={selectedToken.tileDetails}
-        disabled={!canManageToken}
-        onChange={(updates) =>
-          mapSession.updateToken(selectedToken.id, {
-            tileDetails: { ...selectedToken.tileDetails!, ...updates },
-          })}
-      />
+    {#if selectedToken.kind === "tile"}
+      {#if attachedNotes.length > 0}
+        <div
+          class="rounded-lg border border-theme-border bg-theme-bg/50 p-3 space-y-2"
+          data-testid="tile-attached-notes"
+        >
+          <div
+            class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+          >
+            Stocked Notes ({attachedNotes.length})
+          </div>
+          <div class="space-y-1">
+            {#each attachedNotes as note (note.id)}
+              <button
+                type="button"
+                onclick={() => mapSession.setSelection(note.id)}
+                class="flex w-full items-center justify-between rounded-md border border-theme-border bg-theme-surface px-2.5 py-1.5 text-xs text-theme-text hover:border-theme-primary hover:text-theme-primary transition-colors text-left"
+              >
+                <span class="truncate font-medium"
+                  >{note.name || "Untitled Note"}</span
+                >
+                <span
+                  class="icon-[lucide--chevron-right] h-3.5 w-3.5 shrink-0 text-theme-muted"
+                  aria-hidden="true"
+                ></span>
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
+      {#if selectedToken.tileDetails}
+        <SpatialImageDetails
+          details={selectedToken.tileDetails}
+          disabled={!canManageToken}
+          onChange={(updates) =>
+            mapSession.updateToken(selectedToken.id, {
+              tileDetails: { ...selectedToken.tileDetails!, ...updates },
+            })}
+        />
+      {/if}
     {/if}
 
     {#if canManageToken}

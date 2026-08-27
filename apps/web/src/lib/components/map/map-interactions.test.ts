@@ -508,6 +508,20 @@ describe("MapInteractionManager", () => {
       expect(mapSession.cancelNotePlacement).toHaveBeenCalled();
       (mapSession as any).notePlacementArmed = false;
     });
+
+    it("backs out of armed tile placement on Escape", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).tileDeckManager.pendingPlacement = {
+        deckId: "deck-1",
+        tile: { id: "tile-1", name: "Corridor" },
+      };
+
+      manager.onGlobalKeyDown(new KeyboardEvent("keydown", { key: "Escape" }));
+
+      expect(mapSession.cancelPendingTilePlacement).toHaveBeenCalled();
+      expect(manager.mapAnnouncement).toBe("Tile placement cancelled");
+      (mapSession as any).tileDeckManager.pendingPlacement = null;
+    });
   });
 
   describe("notes with play switched off", () => {

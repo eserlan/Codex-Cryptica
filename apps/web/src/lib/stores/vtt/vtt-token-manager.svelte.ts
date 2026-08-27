@@ -116,7 +116,25 @@ export class VTTTokenManager {
     selection: string | null,
     selectedTokens: Set<string>,
   ) {
-    this.tokens = tokens;
+    const vault = this.deps.getVault?.();
+    const hydratedTokens: Record<string, Token> = {};
+    for (const id in tokens) {
+      const token = tokens[id];
+      if (token.entityId && vault?.entities?.[token.entityId]) {
+        const entity = vault.entities[token.entityId];
+        hydratedTokens[id] = {
+          ...token,
+          name: entity.title || token.name,
+          noteBody:
+            token.kind === "note" && entity.content !== undefined
+              ? entity.content
+              : token.noteBody,
+        };
+      } else {
+        hydratedTokens[id] = token;
+      }
+    }
+    this.tokens = hydratedTokens;
     this.selection = selection;
     this.selectedTokens = selectedTokens;
   }
@@ -503,6 +521,21 @@ export class VTTTokenManager {
       [tokenId]: next,
     };
 
+    if (posChanged && (snapped.x !== current.x || snapped.y !== current.y)) {
+      const dx = snapped.x - current.x;
+      const dy = snapped.y - current.y;
+      for (const childId in this.tokens) {
+        const child = this.tokens[childId];
+        if (child && child.parentTokenId === tokenId) {
+          this.tokens[childId] = {
+            ...child,
+            x: roundTokenCoordinate(child.x + dx),
+            y: roundTokenCoordinate(child.y + dy),
+          };
+        }
+      }
+    }
+
     if (!silent) {
       if (shouldDebounceBroadcast) {
         this.deps.queueSessionSnapshotBroadcast();
@@ -662,6 +695,14 @@ export class VTTTokenManager {
     this.clearPendingMove(tokenId);
     const nextTokens = { ...this.tokens };
     delete nextTokens[tokenId];
+    for (const key in nextTokens) {
+      if (nextTokens[key].parentTokenId === tokenId) {
+        nextTokens[key] = {
+          ...nextTokens[key],
+          parentTokenId: undefined,
+        };
+      }
+    }
     this.tokens = nextTokens;
     this.deps.removeTokenFromInitiativeState?.(tokenId);
     if (this.selection === tokenId) {
@@ -674,6 +715,26 @@ export class VTTTokenManager {
       this.deps.persistDraft();
     }
     return true;
+  }
+
+  getChildNotes(parentTokenId: string): Token[] {
+    const result: Token[] = [];
+    for (const key in this.tokens) {
+      if (this.tokens[key].parentTokenId === parentTokenId) {
+        result.push(this.tokens[key]);
+      }
+    }
+    return result;
+  }
+
+  linkTokens(childTokenId: string, parentTokenId: string) {
+    if (!this.tokens[childTokenId] || !this.tokens[parentTokenId]) return null;
+    return this.updateToken(childTokenId, { parentTokenId });
+  }
+
+  unlinkToken(childTokenId: string) {
+    if (!this.tokens[childTokenId]) return null;
+    return this.updateToken(childTokenId, { parentTokenId: undefined });
   }
 
   private getClonedTokenName(sourceName: string) {

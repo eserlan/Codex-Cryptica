@@ -92,6 +92,9 @@ function createController(overrides: Record<string, unknown> = {}) {
     dragPreview: null,
     clearDragPreview: vi.fn(),
     setDragPreview: vi.fn(),
+    selectTile: vi.fn().mockReturnValue({ id: "tile-1", name: "Corridor" }),
+    updatePendingTilePlacement: vi.fn(),
+    placePendingTile: vi.fn().mockReturnValue({ id: "token-1" }),
     addToken: vi.fn(),
     requestTokenAdd: vi.fn(),
   };
@@ -221,6 +224,28 @@ describe("MapPageController", () => {
       "Guests cannot add map pins or tokens.",
       "info",
     );
+  });
+
+  it("places a tile when a tile deck item is dropped onto the map", () => {
+    const { controller, mapSession } = createController();
+
+    controller.onDrop(
+      createDragEvent({
+        dataTransfer: {
+          types: ["application/x-codex-tile"],
+          getData: (type: string) =>
+            type === "application/x-codex-tile"
+              ? JSON.stringify({ deckId: "deck-1", tileId: "tile-1" })
+              : "",
+        } as unknown as DataTransfer,
+        clientX: 60,
+        clientY: 90,
+      }),
+    );
+
+    expect(mapSession.selectTile).toHaveBeenCalledWith("deck-1", "tile-1");
+    expect(mapSession.updatePendingTilePlacement).toHaveBeenCalled();
+    expect(mapSession.placePendingTile).toHaveBeenCalled();
   });
 
   it("opens the upload session when files are dropped", () => {
