@@ -19,6 +19,8 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { settlementConfig } from "./public-settlement-constants";
+import { settlementSchema } from "./public-settlement-schema";
+import { resolveSmart, type LockedValue } from "./smart";
 export { settlementConfig };
 
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
@@ -32,6 +34,8 @@ export interface SettlementGeneratorOptions {
   primaryFunction?: string;
   tone?: string;
   mainTension?: string;
+  /** Not exposed by the public form yet; presets and free text will set it (#2340, #2338). */
+  authorityType?: string;
   campaignContext?: string;
   /** @deprecated Use primaryFunction instead. Kept for backwards compatibility. */
   economy?: string;
@@ -50,46 +54,54 @@ interface ResolvedSettlement {
   name: string;
 }
 
+/**
+ * Resolve the settlement's parameters through the smart framework (#2341).
+ *
+ * The axes resolve in the schema's declared order, so what the place is for can
+ * follow where it is, and who runs it can follow both. Anything the caller
+ * supplies is locked and taken verbatim, including a value the user typed that
+ * is not in the pool.
+ */
 function resolveSettlement(
   options: SettlementGeneratorOptions,
   rng: Rng,
 ): ResolvedSettlement {
   const genre = options.genre || "Fantasy";
-  const sizes = forGenre(settlementConfig.sizesByGenre, genre);
-  const sizeConfig =
-    sizes.find((s) => s.name === options.size) || pickFrom(sizes, rng);
-  const environment =
-    options.environment ||
-    pickFrom(forGenre(settlementConfig.environmentsByGenre, genre), rng);
 
-  const primaryFunction =
-    options.primaryFunction ||
-    options.economy ||
-    pickFrom(forGenre(settlementConfig.primaryFunctionsByGenre, genre), rng);
-  const tone =
-    options.tone ||
-    pickFrom(forGenre(settlementConfig.tonesByGenre, genre), rng);
-  const mainTension =
-    options.mainTension ||
-    pickFrom(forGenre(settlementConfig.mainTensionsByGenre, genre), rng);
-  const authorityType = pickFrom(
-    forGenre(settlementConfig.authorityTypesByGenre, genre),
-    rng,
-  );
+  const locked: Record<string, LockedValue> = {};
+  const lock = (axisId: string, value: string | undefined) => {
+    if (value) locked[axisId] = { value, source: "manual" };
+  };
+  lock("environment", options.environment);
+  lock("primaryFunction", options.primaryFunction || options.economy);
+  lock("authorityType", options.authorityType);
+  lock("tone", options.tone);
+  lock("mainTension", options.mainTension);
+  lock("size", options.size);
+
+  const { values } = resolveSmart(settlementSchema, { genre, locked }, rng);
+
+  const sizes = forGenre(settlementConfig.sizesByGenre, genre);
+  // A custom scale the user typed keeps its name and borrows the population and
+  // points-of-interest count of the middle rung of the genre's own ladder.
+  const sizeConfig =
+    sizes.find((s) => s.name === values.size) ??
+    sizes[Math.floor((sizes.length - 1) / 2)];
+
   const prefixes = forGenre(settlementConfig.namePrefixesByGenre, genre);
   const suffixes = forGenre(settlementConfig.nameSuffixesByGenre, genre);
   const name = pickFrom(prefixes, rng) + pickFrom(suffixes, rng);
 
   return {
     genre,
-    size: sizeConfig.name,
+    size: values.size,
     population: sizeConfig.range,
     pointsOfInterestCount: sizeConfig.pointsOfInterestCount,
-    environment,
-    primaryFunction,
-    tone,
-    mainTension,
-    authorityType,
+    environment: values.environment,
+    primaryFunction: values.primaryFunction,
+    tone: values.tone,
+    mainTension: values.mainTension,
+    authorityType: values.authorityType,
     name,
   };
 }
