@@ -653,6 +653,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
     icon: "icon-[lucide--wifi-off]",
   },
+  "generator-presets": {
+    id: "generator-presets",
+    title: "Presets and Matching Options",
+    content:
+      "Above the generator options, Start From offers a few ready-made settings like Merchant Port or Boom Town. Picking one fills in two or three fields and leaves the rest blank, and blank fields are chosen to match what you did pick: a coastal trade hub tends to end up under merchant rule with a market district, while a mountain mining village does not. Everything a preset fills in stays editable, and changing any of it simply clears the highlight.",
+    icon: "icon-[lucide--sparkles]",
+  },
   "language-generator": {
     id: "language-generator",
     title: "Fictional Languages",

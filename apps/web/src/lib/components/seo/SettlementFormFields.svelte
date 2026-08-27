@@ -2,6 +2,8 @@
   import {
     settlementConfig,
     pickFrom,
+    SETTLEMENT_PRESETS,
+    presetsFor,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
@@ -25,11 +27,82 @@
     onSurprise?: () => void;
   } = $props();
 
+  /**
+   * Presets write into the same fields the selects bind to, so nothing a preset
+   * chooses is hidden and everything stays editable afterwards (#2340).
+   */
+  let activePresetId = $state<string | null>(null);
+  const presets = $derived(presetsFor(SETTLEMENT_PRESETS, genre));
+
+  const applyPreset = (preset: (typeof presets)[number]) => {
+    const set = preset.set;
+    if (set.size !== undefined) size = set.size;
+    if (set.environment !== undefined) environment = set.environment;
+    if (set.primaryFunction !== undefined)
+      primaryFunction = set.primaryFunction;
+    if (set.tone !== undefined) tone = set.tone;
+    if (set.mainTension !== undefined) mainTension = set.mainTension;
+    activePresetId = preset.id;
+  };
+
+  // Editing any field the preset set means the user has taken over from it, so
+  // the highlight stops claiming otherwise. Same for switching genre.
+  $effect(() => {
+    if (!activePresetId) return;
+    const active = presets.find((p) => p.id === activePresetId);
+    if (!active) {
+      activePresetId = null;
+      return;
+    }
+    const current: Record<string, string> = {
+      size,
+      environment,
+      primaryFunction,
+      tone,
+      mainTension,
+    };
+    if (
+      Object.entries(active.set).some(([id, value]) => current[id] !== value)
+    ) {
+      activePresetId = null;
+    }
+  });
+
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 </script>
+
+{#if presets.length > 0}
+  <div class="flex flex-col gap-1.5">
+    <span class={labelClass} id="settlement-presets-label">Start from</span>
+    <div
+      class="flex flex-wrap gap-1.5"
+      role="group"
+      aria-labelledby="settlement-presets-label"
+    >
+      {#each presets as preset (preset.id)}
+        <button
+          type="button"
+          aria-pressed={activePresetId === preset.id}
+          title={preset.description}
+          class="px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer {activePresetId ===
+          preset.id
+            ? 'bg-theme-primary text-theme-bg border-theme-primary'
+            : 'bg-theme-surface/60 text-theme-text border-theme-border/60 hover:border-theme-primary/60'}"
+          onclick={() => applyPreset(preset)}
+        >
+          {preset.label}
+        </button>
+      {/each}
+    </div>
+    <p class="text-[10px] text-theme-text/60 leading-relaxed">
+      A preset fills in a few fields below. Change any of them, or leave the
+      rest blank and they will be picked to match.
+    </p>
+  </div>
+{/if}
 
 <SelectWithCustomOption
   id="size-select"
@@ -163,6 +236,7 @@
         settlementConfig.mainTensionsByGenre[genre] ??
           settlementConfig.mainTensionsByGenre["Fantasy"],
       );
+      activePresetId = null;
       onSurprise?.();
     }}
   >
