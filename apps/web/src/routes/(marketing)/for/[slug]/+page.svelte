@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { base } from "$app/paths";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
   // Matches the marketing shell: a bare "/" base would make every link
   // protocol-relative ("//generators/...").
   const cleanBase = base === "/" ? "" : base;
@@ -60,6 +61,18 @@
     config.exampleGraph?.badgeLabel ?? "Interactive Graph View",
   );
 
+  let seoImage = $derived(
+    config.seo.image
+      ? config.seo.image.startsWith("http://") ||
+        config.seo.image.startsWith("https://")
+        ? config.seo.image
+        : buildAbsoluteUrl(config.seo.image)
+      : buildAbsoluteUrl("/og-image.png"),
+  );
+  let seoImageAlt = $derived(
+    config.seo.imageAlt ?? `${config.hero.title} — Codex Cryptica`,
+  );
+
   $effect(() => {
     if (config.theme) {
       themeStore.previewTheme(config.theme);
@@ -82,9 +95,15 @@
   <meta property="og:title" content={config.seo.title} />
   <meta property="og:description" content={config.seo.description} />
   <meta property="og:type" content="website" />
+  <meta property="og:image" content={seoImage} />
+  <meta property="og:image:alt" content={seoImageAlt} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={config.seo.title} />
   <meta name="twitter:description" content={config.seo.description} />
+  <meta name="twitter:image" content={seoImage} />
+  <meta name="twitter:image:alt" content={seoImageAlt} />
   {#if config.seo.canonical}
     <link rel="canonical" href={config.seo.canonical} />
   {/if}
