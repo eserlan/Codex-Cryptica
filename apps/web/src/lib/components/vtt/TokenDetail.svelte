@@ -39,6 +39,48 @@
    */
   const canGenerateEncounter = $derived(oracle.isEnabled && !vault.isGuest);
   let generatingEncounterFor = $state<string | null>(null);
+  /**
+   * A guest has no vault to keep anything in, and a note already linked to an
+   * entity is kept — the panel shows that link above instead.
+   */
+  const canSaveNoteToVault = $derived(
+    canManageToken && !vault.isGuest && !selectedToken?.entityId,
+  );
+  let savingNoteToVaultFor = $state<string | null>(null);
+
+  /**
+   * Writes a map note into the vault as a Note entity and links the marker to
+   * it. A note is session furniture that goes away when the session does;
+   * this is how the GM keeps the one that turned out to matter, without
+   * every rolled room note becoming vault clutter by default.
+   */
+  async function saveNoteToVault(tokenId: string) {
+    if (savingNoteToVaultFor) return;
+    const note = mapSession.tokens[tokenId];
+    if (!note || note.kind !== "note") return;
+
+    savingNoteToVaultFor = tokenId;
+    try {
+      const title = note.name.trim() || "Note";
+      const entityId = await vault.createEntity("note", title, {
+        content: note.noteBody ?? "",
+      });
+      // The GM may have deleted the note while the write was in flight, in
+      // which case the entity stands on its own and there is nothing to link.
+      if (mapSession.tokens[tokenId]) {
+        mapSession.updateToken(tokenId, { entityId });
+      }
+      notificationStore.notify(`"${title}" kept in the vault.`, "success");
+    } catch (error) {
+      console.error("[VTT] Keeping a note in the vault failed", error);
+      notificationStore.notify(
+        "That note could not be kept in the vault.",
+        "error",
+      );
+    } finally {
+      savingNoteToVaultFor = null;
+    }
+  }
 
   async function generateEncounterInto(tokenId: string) {
     if (generatingEncounterFor) return;
@@ -146,6 +188,10 @@
           mapSession.toggleNoteCollapsed(selectedToken.id)}
         onGenerateEncounter={canGenerateEncounter
           ? () => void generateEncounterInto(selectedToken.id)
+          : undefined}
+        savingToVault={savingNoteToVaultFor === selectedToken.id}
+        onSaveToVault={canSaveNoteToVault
+          ? () => void saveNoteToVault(selectedToken.id)
           : undefined}
       />
     {/if}

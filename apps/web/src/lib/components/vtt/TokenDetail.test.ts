@@ -13,6 +13,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     entities: {} as Record<string, any>,
     isGuest: false,
     updateEntity: vi.fn(),
+    createEntity: vi.fn(async () => "entity-new"),
   },
 }));
 
@@ -331,5 +332,83 @@ describe("TokenDetail", () => {
     expect(
       screen.queryByRole("button", { name: "Add to Initiative" }),
     ).toBeNull();
+  });
+
+  describe("keeping a note in the vault", () => {
+    beforeEach(() => {
+      mapStore.isGMMode = true;
+      sessionModeStore.isGuestMode = false;
+      mapSession.tokens["token-1"].kind = "note";
+      mapSession.tokens["token-1"].name = "Guard post";
+      mapSession.tokens["token-1"].noteBody = "2 goblins";
+    });
+
+    it("writes the note into the vault and links the marker to it", async () => {
+      render(TokenDetail);
+
+      await fireEvent.click(
+        await screen.findByTestId("token-note-save-to-vault"),
+      );
+
+      await waitFor(() =>
+        expect(mapSession.tokens["token-1"].entityId).toBe("entity-new"),
+      );
+      expect(vault.createEntity).toHaveBeenCalledWith("note", "Guard post", {
+        content: "2 goblins",
+      });
+    });
+
+    it("leaves the note alone when the vault write fails", async () => {
+      vi.mocked(vault.createEntity).mockRejectedValueOnce(new Error("nope"));
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      render(TokenDetail);
+
+      await fireEvent.click(
+        await screen.findByTestId("token-note-save-to-vault"),
+      );
+
+      await waitFor(() =>
+        expect(notifyMock).toHaveBeenCalledWith(
+          "That note could not be kept in the vault.",
+          "error",
+        ),
+      );
+      expect(mapSession.tokens["token-1"].entityId).toBeNull();
+      consoleError.mockRestore();
+    });
+
+    it("offers nothing to keep on an empty note", async () => {
+      mapSession.tokens["token-1"].noteBody = "";
+
+      render(TokenDetail);
+
+      await screen.findByTestId("token-note-body");
+      expect(screen.queryByTestId("token-note-save-to-vault")).toBeNull();
+    });
+
+    it("offers no second copy of a note already linked to an entity", async () => {
+      mapSession.tokens["token-1"].entityId = "entity-1";
+      (vault as any).entities = {
+        "entity-1": { id: "entity-1", title: "Guard post", type: "note" },
+      };
+
+      render(TokenDetail);
+
+      await screen.findByTestId("token-note-body");
+      expect(screen.queryByTestId("token-note-save-to-vault")).toBeNull();
+    });
+
+    it("gives a guest no way to write into a vault they do not have", async () => {
+      sessionModeStore.isGuestMode = true;
+      mapStore.isGMMode = false;
+
+      render(TokenDetail);
+
+      await screen.findByTestId("token-note-body");
+      expect(screen.queryByTestId("token-note-save-to-vault")).toBeNull();
+    });
   });
 });

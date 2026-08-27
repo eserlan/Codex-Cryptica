@@ -257,6 +257,28 @@ describe("renderMap", () => {
     expect(texts.join(" ")).toContain("Two goblins");
   });
 
+  it("draws a note's markdown without its markers", () => {
+    const texts = noteTextFor(
+      baseToken({
+        kind: "note",
+        baseShape: "square",
+        width: 200,
+        height: 200,
+        noteBody: "## Guard post\n- **2 goblins** arguing\n- *one* is asleep",
+      }),
+      3,
+    );
+
+    const drawn = texts.join(" ");
+    expect(drawn).toContain("Guard post");
+    expect(drawn).toContain("2 goblins");
+    expect(drawn).toContain("asleep");
+    // The markers are formatting instructions, not text to read off the map.
+    expect(drawn).not.toContain("#");
+    expect(drawn).not.toContain("*");
+    expect(drawn).not.toContain("-");
+  });
+
   it("marks a note body that does not fit rather than dropping it silently", () => {
     const texts = noteTextFor(
       baseToken({
