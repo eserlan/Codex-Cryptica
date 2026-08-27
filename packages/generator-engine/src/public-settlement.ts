@@ -14,17 +14,22 @@ import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { settlementConfig } from "./public-settlement-constants";
+import { settlementSchema } from "./public-settlement-schema";
 import {
-  settlementFactionPool,
-  settlementLocationPool,
-  settlementSchema,
-} from "./public-settlement-schema";
-import {
-  resolveSmart,
-  selectSmart,
-  type LockedValue,
-  type ResolveContext,
-} from "./smart";
+  buildAdventureHooks,
+  buildInhabitants,
+  buildLifeHere,
+  buildNotableInhabitants,
+  rungFor,
+  scaleFor,
+  selectDiverseFactions,
+  selectDiversePoi,
+  settlementFactionCategoryPool,
+  settlementLocationCategoryPool,
+  type FactionCategory,
+  type PoiCategory,
+} from "./public-settlement-community";
+import { resolveSmart, type LockedValue, type ResolveContext } from "./smart";
 export { settlementConfig };
 
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
@@ -58,6 +63,8 @@ interface ResolvedSettlement {
   name: string;
   /** Traits of everything resolved, so derived lists can stay consistent. */
   traits: readonly string[];
+  /** Where size falls on the genre's own ladder, driving every other count (#2536). */
+  rung: number;
 }
 
 /**
@@ -97,6 +104,7 @@ function resolveSettlement(
   const sizeConfig =
     sizes.find((s) => s.name === values.size) ??
     sizes[Math.floor((sizes.length - 1) / 2)];
+  const rung = rungFor(sizes, values.size);
 
   const prefixes = forGenre(settlementConfig.namePrefixesByGenre, genre);
   const suffixes = forGenre(settlementConfig.nameSuffixesByGenre, genre);
@@ -114,6 +122,7 @@ function resolveSettlement(
     authorityType: values.authorityType,
     name,
     traits,
+    rung,
   };
 }
 
@@ -140,12 +149,15 @@ export function buildSettlementPrompt(
     tone,
     mainTension,
     authorityType,
+    rung,
   } = resolved;
+  const scale = scaleFor(rung);
 
-  const userMessage = `Generate a campaign-ready inhabited place for a tabletop RPG session. Answer these three questions through the output:
+  const userMessage = `Generate a settlement for a tabletop RPG session that reads as a functioning community, not a location built entirely around one plot or mystery. It should answer four questions:
 1. Why does this place exist? (its function, environment, and origin)
-2. Who really controls it? (official authority vs. hidden power)
-3. What is about to go wrong? (the dominant tension that makes it adventure-ready)
+2. What is everyday life like here? (livelihoods, customs, ordinary concerns)
+3. Who lives here? (a mix of notable residents, not just leaders and combatants)
+4. What is happening here right now? (the dominant tension — one important thing, not the explanation for everything)
 
 Parameters:
 - Name: ${name}
@@ -157,12 +169,17 @@ Parameters:
 - Tone: ${tone}
 - Dominant Tension: ${mainTension}
 
+Guidance that applies to every section below:
+- The settlement should feel like it existed before the PCs arrived and will keep existing after the current tension resolves. Do not make every faction, notable inhabitant, secret, location and hook trace back to the same central concept.
+- Avoid defaulting to hidden ledgers, forged records, missing documents, secret archives, inheritance paperwork, concealed bloodlines, bureaucratic conspiracies, or a merchant organisation secretly controlling all political authority, as the source of intrigue. Avoid defaulting to an ancient secret beneath the settlement, a missing heir, a dying ruler, a hidden cult, a prophecy, or an artefact everyone secretly wants. Use any of these only if the parameters above genuinely call for it.
+- Use believable approximations for population ("~25% military personnel", "many herders and agricultural workers"), never fabricated precision ("exactly 17 blacksmiths").
+
 Return a valid JSON object matching this structure exactly:
 {
   "title": "A single string for the settlement name",
   "summary": "One sentence: what this settlement is and what makes it interesting (e.g. 'A sunbaked salt-mining town built into a dormant volcano, ruled by a cartel of water-merchants.').",
-  "content": "Prose description (markdown). Include these sections:\\n## Core Concept\\n[What makes this place distinct — 2–3 sentences answering why it exists]\\n\\n## First Impression\\n[What visitors notice first — sensory, atmospheric, genre-appropriate]\\n\\n## History\\n[How the settlement came to be and what shaped it — 2–3 sentences]",
-  "lore": "Structured GM reference (markdown). Use EXACTLY this structure:\\n### GM Reference Information\\n- **Scale**: ${size} (${population})\\n- **Genre / Setting**: ${genre}\\n- **Environment**: ${environment}\\n- **Primary Function**: ${primaryFunction}\\n- **Official Authority**: ${authorityType}\\n- **Tone**: ${tone}\\n\\n### Points of Interest\\n- **📍 Location Name**: one-line purpose or detail (exactly ${pointsOfInterestCount} item${pointsOfInterestCount === 1 ? "" : "s"}, genre-appropriate)\\n\\n### Controlling Factions\\n- **👥 Faction Name**: one-line influence summary (2–3 factions)\\n\\n### Current Tension\\n[2–3 sentences on the dominant tension and what makes it escalate. Name real people or groups involved.]\\n\\n### Adventure Hooks\\n- [Hook tied to the tension]\\n- [Hook tied to the power structure or hidden authority]\\n- [Hook tied to the location or function of the settlement]",
+  "content": "Prose description (markdown). Include these sections in order:\\n## Core Concept\\n[What makes this place distinct — 2-3 sentences answering why it exists]\\n\\n## First Impression\\n[What visitors notice first — sensory, atmospheric, genre-appropriate]\\n\\n## Inhabitants\\n[Approximate population and its broad occupational/economic composition, scaled to a ${size} — believable approximations, not a census; mention seasonal or transient population only where it fits; mention species/ancestry/cultural demographics only where the setting and concept make it relevant]\\n\\n## Life Here\\n[4-5 bullet points of concrete everyday-life detail — livelihoods, local custom, recreation, a common complaint, something locals discuss, something outsiders misunderstand — independent of the current tension]\\n\\n## History\\n[How the settlement came to be and what shaped it — 2-3 sentences, not solely in service of the current tension]",
+  "lore": "Structured GM reference (markdown). Use EXACTLY this structure and order:\\n### Current Tension\\n[2-3 sentences on the dominant tension and what makes it escalate. Name real people or groups involved. This is one important thing happening, not the explanation for the rest of the settlement.]\\n\\n### Points of Interest\\n- **📍 Location Name**: one-line purpose or detail (exactly ${pointsOfInterestCount} items, spanning distinct purposes — government/authority, trade/craft/market, social/communal, religious/cultural, an unusual landmark, and a dangerous/forbidden/secret location — not all tied to the current tension)\\n\\n### Notable Inhabitants\\n- **Name** (Role): one concise sentence on personality, relevance, knowledge or a distinctive trait (exactly ${scale.notableInhabitants} people; at most 1-2 are authority or faction figures, the rest are working professions, socially useful roles like an innkeeper or healer, an ordinary resident with a distinctive viewpoint, and optionally one memorable eccentric)\\n\\n### Controlling / Important Factions\\n- **👥 Faction Name**: one-line motivation (${scale.factions} factions, each with an independent purpose — political, economic, or cultural/religious/environmental/historical — not all restatements of the same dispute; each should still make sense if the current tension vanished tomorrow)\\n\\n### Adventure Hooks\\n- [One hook tied to the current tension]\\n- [One hook from ordinary settlement life — trade, work, crime, relationships, a shortage or an accident — independent of the tension]\\n- [One hook involving exploration, the surrounding region, history, or another independent mystery]\\n\\n### GM Reference Information\\n- **Scale**: ${size} (${population})\\n- **Genre / Setting**: ${genre}\\n- **Environment**: ${environment}\\n- **Primary Function**: ${primaryFunction}\\n- **Official Authority**: ${authorityType}\\n- **Tone**: ${tone}",
   "labels": ["rpg-location", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
@@ -172,7 +189,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
   return {
     systemInstruction:
-      "You are an assistant that generates detailed, genre-aware RPG campaign elements in JSON format. Match the genre, tone, and setting precisely — a cyberpunk district must feel nothing like a fantasy town.",
+      "You are an assistant that generates detailed, genre-aware RPG campaign elements in JSON format. Match the genre, tone, and setting precisely — a cyberpunk district must feel nothing like a fantasy town. Build settlements that would keep making sense as places even if their current plot were removed.",
     userMessage,
     resolved,
   };
@@ -285,6 +302,35 @@ const CORE_CONCEPT_TEMPLATE = (
     mainTension,
   );
 
+const POI_BLURB_BY_CATEGORY: Record<PoiCategory, string> = {
+  government: "Where the settlement's official business actually gets done.",
+  trade: "A working hub of the settlement's economy, not a backdrop for it.",
+  social:
+    "Where residents actually gather, and disputes get settled as often as they escalate.",
+  religious: "A site of genuine local devotion, not merely decoration.",
+  unusual: "A landmark locals have their own stories about.",
+  dangerous:
+    "A place most residents give a wide berth, for reasons that make sense once you know them.",
+};
+
+const FACTION_BLURB_BY_CATEGORY: Record<FactionCategory, string> = {
+  political:
+    "Holds real influence over who has a say in how the settlement is run.",
+  economic:
+    "Controls enough of the settlement's trade or resources to matter, whoever is officially in charge.",
+  cultural:
+    "Represents a cultural, religious or historical interest with its own reasons, independent of current politics.",
+};
+
+/**
+ * Every settlement answers four questions: why it exists, what everyday life
+ * is like, who lives there, and what is happening right now (#2536). The
+ * smart schema already answers the first and fourth through its resolved
+ * axes; this function builds the other two from the trait-driven content in
+ * `public-settlement-community.ts`, and diversifies the points of interest,
+ * factions and hooks so the current tension reads as one thing happening
+ * rather than the explanation for everything.
+ */
 export function generateSettlementLocal(
   options: SettlementGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -301,7 +347,9 @@ export function generateSettlementLocal(
     authorityType,
     pointsOfInterestCount,
     name,
+    rung,
   } = resolved;
+  const scale = scaleFor(rung);
 
   // The lists hang off what the axes already decided, so a mountain-pass
   // settlement stops listing a harbour (#2341).
@@ -317,20 +365,43 @@ export function generateSettlementLocal(
     },
     traits: resolved.traits,
   };
-  const locations = selectSmart(
-    settlementLocationPool(genre),
+
+  const { values: pois, categories: poiCategories } = selectDiversePoi(
+    settlementLocationCategoryPool(genre),
     pointsOfInterestCount,
     context,
-    {},
     rng,
-  ).values;
-  const [faction1, faction2] = selectSmart(
-    settlementFactionPool(genre),
-    2,
-    context,
-    {},
+  );
+  const { values: factions, categories: factionCategories } =
+    selectDiverseFactions(
+      settlementFactionCategoryPool(genre),
+      scale.factions,
+      context,
+      rng,
+    );
+
+  const inhabitants = buildInhabitants(context.values, scale, rng);
+  const notableInhabitants = buildNotableInhabitants(
+    context.values,
+    genre,
+    scale.notableInhabitants,
+    name,
     rng,
-  ).values;
+  );
+  const lifeHere = buildLifeHere(context.values, rng);
+  const hooks = buildAdventureHooks(
+    {
+      environment,
+      primaryFunction,
+      authorityType,
+      mainTension,
+      factions,
+      pois,
+      inhabitants: notableInhabitants,
+    },
+    rng,
+  );
+
   const firstImpression =
     FIRST_IMPRESSION_BY_GENRE[genre] ?? FIRST_IMPRESSION_BY_GENRE["Fantasy"];
 
@@ -342,37 +413,68 @@ export function generateSettlementLocal(
     `Early records describe ${name} as a temporary installation. It became permanent when ${primaryFunction.toLowerCase()} proved too valuable to abandon. The ${authorityType.toLowerCase()} that solidified over time are a later development, and not everyone accepts their legitimacy equally.`,
   ] as const;
 
+  const inhabitantsSection = [
+    `Roughly ${population.toLowerCase()}. ${inhabitants.economicGroups.map((g) => g.charAt(0).toUpperCase() + g.slice(1)).join(". ")}.`,
+    inhabitants.transient
+      ? inhabitants.transient.charAt(0).toUpperCase() +
+        inhabitants.transient.slice(1) +
+        "."
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const content = `## Core Concept
 ${CORE_CONCEPT_TEMPLATE(name, size, environment, primaryFunction, tone, mainTension, rng)}
 
 ## First Impression
 ${firstImpression}
 
+## Inhabitants
+${inhabitantsSection}
+
+## Life Here
+${lifeHere.map((line) => `- ${line}`).join("\n")}
+
 ## History
 ${historyVariants[Math.floor(rng() * historyVariants.length)]}`;
 
-  const lore = `### GM Reference Information
+  const lore = `### Current Tension
+${mainTension} is one important thing happening here, not the reason for everything about the place. The longer it goes unresolved, the worse the outcome for everyone — including the people in power.
+
+### Points of Interest
+${pois
+  .map(
+    (poi, i) => `- **📍 ${poi}**: ${POI_BLURB_BY_CATEGORY[poiCategories[i]]}`,
+  )
+  .join("\n")}
+
+### Notable Inhabitants
+${notableInhabitants
+  .map(
+    (n) =>
+      `- **${n.name}** (${n.role}): ${n.note.charAt(0).toUpperCase() + n.note.slice(1)}.`,
+  )
+  .join("\n")}
+
+### Controlling / Important Factions
+${factions
+  .map(
+    (f, i) =>
+      `- **👥 ${f}**: ${FACTION_BLURB_BY_CATEGORY[factionCategories[i]]}`,
+  )
+  .join("\n")}
+
+### Adventure Hooks
+${hooks.map((h) => `- ${h}`).join("\n")}
+
+### GM Reference Information
 - **Scale**: ${size} (${population})
 - **Genre / Setting**: ${genre}
 - **Environment**: ${environment}
 - **Primary Function**: ${primaryFunction}
 - **Official Authority**: ${authorityType}
-- **Tone**: ${tone}
-
-### Points of Interest
-${locations.map((l) => `- **📍 ${l}**: A key location tied to the settlement's primary function.`).join("\n")}
-
-### Controlling Factions
-- **👥 ${faction1}**: Holds influence through proximity to the official authority.
-- **👥 ${faction2}**: Operates in the spaces the authority cannot or will not control.
-
-### Current Tension
-${mainTension} is the open secret nobody is addressing. The longer it goes unresolved, the worse the outcome for everyone — including the people in power.
-
-### Adventure Hooks
-- Someone with information about ${mainTension.toLowerCase()} has gone missing.
-- The ${authorityType.toLowerCase()} wants outside help to deal with ${faction2.toLowerCase()} without showing weakness.
-- Something tied to the settlement's history as a ${primaryFunction.toLowerCase()} has surfaced — and whoever controls it controls the settlement.`;
+- **Tone**: ${tone}`;
 
   const summary = `A ${tone.toLowerCase()} ${size.toLowerCase()} built around ${primaryFunction.toLowerCase()} in a ${environment.toLowerCase()} setting.`;
 

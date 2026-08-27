@@ -537,7 +537,7 @@ describe("DefaultGeneratorEngine", () => {
         expect.stringContaining("- **📍 Location Name**"),
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("### Controlling Factions"),
+        expect.stringContaining("### Controlling / Important Factions"),
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(
         expect.stringContaining("- **👥 Faction Name**"),
