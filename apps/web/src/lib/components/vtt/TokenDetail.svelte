@@ -50,7 +50,8 @@
   let savingNoteToVaultFor = $state<string | null>(null);
 
   const availableTiles = $derived(
-    Object.values(mapSession.tokens).filter((t) => t.kind === "tile"),
+    // ⚡ Bolt Optimization: Use pre-derived allTokens array instead of Object.values()
+    mapSession.allTokens.filter((t) => t.kind === "tile"),
   );
   const parentTile = $derived(
     selectedToken?.parentTokenId
