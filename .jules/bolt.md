@@ -224,3 +224,7 @@
 ## 2025-02-27 - Object.values + filter optimization
 **Learning:** Calling `Object.values(obj).filter(...)` repeatedly inside reactive/derived blocks creates multiple intermediate arrays and adds heavy garbage collection pressure. This is particularly harmful in hot paths like VTT (Virtual TableTop) tile snapping/placing, which evaluates on every mouse movement.
 **Action:** Replace `Object.values(obj).filter(...)` chains with an imperative `for...in` loop that uses `Object.prototype.hasOwnProperty.call(obj, key)` to safely iterate the object keys and conditionally push to a single result array.
+## 2024-05-18 - Replacing Object.fromEntries(array.map(...)) with imperative loops for performance
+
+**Learning:** When building an object/record from an array of keys (such as `entityDetailTabs`), using `Object.fromEntries(array.map(...))` creates two intermediate arrays: one from `.map()` for the `[key, value]` tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure and garbage collection overhead, especially in hot paths.
+**Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop. Initialize an empty Record and assign the properties directly within the loop to avoid intermediate array allocations.
