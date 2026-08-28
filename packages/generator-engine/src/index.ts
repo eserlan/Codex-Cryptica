@@ -44,6 +44,7 @@ export {
   buildNpcPrompt,
   parseNpcResponse,
   generateNpcLocal,
+  resolveNpc,
   injectDndNpcQuickStats,
   npcConfig,
   npcThemeConfig,
@@ -51,7 +52,29 @@ export {
   NAME_BAN_PROMPT,
   type NpcGeneratorOptions,
   type NpcPrompt,
+  type ResolvedNpc,
 } from "./public-npc";
+export {
+  buildNpcSchema,
+  LOCAL_MANNERISMS,
+  LOCAL_FACTION_STANCES,
+  LOCAL_LEVERAGE_PRICES,
+} from "./public-npc-schema";
+export {
+  NPC_TRAIT_VOCABULARY,
+  NPC_ANCESTRY_TRAITS,
+  NPC_ROLE_TRAITS,
+  NPC_ALIGNMENT_TRAITS,
+  NPC_MANNERISM_TRAITS,
+  NPC_MOTIVE_TRAITS,
+  NPC_SECRET_TRAITS,
+  NPC_FACTION_STANCE_TRAITS,
+  NPC_LEVERAGE_TRAITS,
+  NPC_RULES,
+  NPC_AFFINITIES,
+  type NpcTrait,
+} from "./public-npc-traits";
+export { NPC_PRESETS } from "./public-npc-presets";
 export {
   buildMagicItemPrompt,
   parseMagicItemResponse,
