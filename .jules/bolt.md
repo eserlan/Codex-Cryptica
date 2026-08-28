@@ -228,3 +228,7 @@
 
 **Learning:** When building an object/record from an array of keys (such as `entityDetailTabs`), using `Object.fromEntries(array.map(...))` creates two intermediate arrays: one from `.map()` for the `[key, value]` tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure and garbage collection overhead, especially in hot paths.
 **Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop. Initialize an empty Record and assign the properties directly within the loop to avoid intermediate array allocations.
+
+## 2025-02-28 - Optimize derived block collection filters
+**Learning:** Chaining array methods like `Object.values(obj).filter(...)` inside Svelte `$derived` or `$derived.by` blocks creates intermediate arrays that add to garbage collection pressure, particularly in frequently updated components. Using pre-derived arrays (like `allTokens`) and filtering them via imperative loops is more efficient for larger datasets.
+**Action:** When extracting data from objects in reactive blocks, use a single imperative `for...in` loop with `hasOwnProperty` check, or if a flat derived array already exists, use an imperative `for` loop to filter results instead of chaining `.filter()`.
