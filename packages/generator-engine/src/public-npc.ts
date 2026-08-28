@@ -181,9 +181,10 @@ export function resolveNpc(
   const leverage = values.leverage;
   const plotHook = values.plotHook;
 
-  const moralityAnchor = theme
-    ? npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
-    : undefined;
+  const effectiveTheme = theme ?? "Classic Fantasy";
+  const moralityAnchor = npcThemeConfig.moralities[effectiveTheme]?.find(
+    (m) => m.id === alignment,
+  );
 
   return {
     race,
