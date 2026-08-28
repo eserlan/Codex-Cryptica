@@ -2,7 +2,7 @@
   import { onMount, type Snippet } from "svelte";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+  import { browserStorage, systemIdGenerator, type IdGenerator, type StorageLike } from "$lib/utils/runtime-deps";
   import { browser } from "$app/environment";
   import type {
     Diagnostic,
@@ -44,6 +44,7 @@
     editor,
     player,
     storage,
+    idGenerator = systemIdGenerator,
   }: {
     kind: "table" | "deck";
     heading: string;
@@ -53,6 +54,7 @@
     editor: Snippet<[EditorContext]>;
     player: Snippet<[PlayerContext]>;
     storage?: StorageLike;
+    idGenerator?: IdGenerator;
   } = $props();
 
   const noun = $derived(kind === "table" ? "table" : "deck");
@@ -315,11 +317,11 @@
     const copyName = uniqueName(`${source.name} (Copy)`);
     const copy: RandomSource = {
       ...($state.snapshot(source) as RandomSource),
-      id: crypto.randomUUID(),
+      id: idGenerator.uuid(),
       name: copyName,
-      entries: source.entries?.map((e) => ({ ...e, id: crypto.randomUUID() })),
-      cards: source.cards?.map((c) => ({ ...c, id: crypto.randomUUID() })),
-      spreads: source.spreads?.map((s) => ({ ...s, id: crypto.randomUUID() })),
+      entries: source.entries?.map((e) => ({ ...e, id: idGenerator.uuid() })),
+      cards: source.cards?.map((c) => ({ ...c, id: idGenerator.uuid() })),
+      spreads: source.spreads?.map((s) => ({ ...s, id: idGenerator.uuid() })),
     };
     select(copy);
     openBuild();
@@ -411,7 +413,7 @@
     const created = randomSources.create("table", name);
     created.description = tableDescription;
     created.entries = candidates.map((c) => ({
-      id: c.id || crypto.randomUUID(),
+      id: c.id || idGenerator.uuid(),
       text: c.text,
       weight: c.weight ?? 1,
     }));

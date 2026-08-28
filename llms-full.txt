@@ -223,6 +223,9 @@ Open any entity's detail panel and click the Timeline tab to see a chronological
 ### Generators Work Offline
 The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.
 
+### Presets and Matching Options
+Above the generator options, Start From offers a few ready-made settings like Merchant Port or Boom Town. Picking one fills in two or three fields and leaves the rest blank. You can also describe what you want in your own words, and any field still blank is filled in from that description, with a chip showing what was read so you can remove anything you disagree with. Blank fields are then chosen to match what you did pick: a coastal trade hub tends to end up under merchant rule with a market district, while a mountain mining village does not. Everything stays editable, and nothing you set by hand is ever overwritten.
+
 ### Fictional Languages
 Design structured language profiles (conlangs) with pronunciation guidance, naming structures, example names, phrases, and a glossary. When generating an NPC, faction, settlement, or ship, choose one saved Naming language to apply its rules. No language is applied automatically.
 
@@ -1936,6 +1939,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Keep Fixers, crews, corps, gangs, and gigs connected in one local-first workspace.
 
 **Overview:** In the Time of the RED, survival turns on who you know, what you owe, and who you crossed on your last run. When your crew takes a covert gig in the Combat Zone, or an old choom from your Lifepath calls in a favour, you shouldn't have to scramble through scattered notes to recall which fixer brokered the payout, which boostergang claims the alley, or which megacorp exec is quietly funding the hit.
+
+### [Codex Cryptica for Delta Green Handler Notes & Operations](https://codexcryptica.com/for/delta-green)
+
+**Summary:** Keep Agents, Bonds, cells, Green Boxes, and the unnatural connected in one local-first workspace.
+
+**Overview:** A Delta Green campaign accumulates loose ends quickly. Each operation leaves behind burned cover identities, strained Bonds, evidence that was never logged, and witnesses somebody decided not to deal with. Six operations later an Agent's sister calls at the worst possible moment, or a cache in another state turns out to hold the only surviving copy of a ritual. You should not have to reconstruct that from memory between sessions.
 
 ### [Codex Cryptica for D&D 5e Campaign Management](https://codexcryptica.com/for/dungeons-and-dragons)
 
