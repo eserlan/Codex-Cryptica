@@ -178,15 +178,41 @@ export {
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
+  resolveSocialHub,
   buildTavernPrompt,
   parseTavernResponse,
   generateTavernLocal,
+  resolveTavern,
   socialHubConfig,
   type SocialHubGeneratorOptions,
   type SocialHubPrompt,
+  type ResolvedSocialHub,
   type TavernGeneratorOptions,
   type TavernPrompt,
+  type ResolvedTavern,
 } from "./public-social-hub";
+export {
+  buildSocialHubSchema,
+  buildTavernSchema,
+  TAVERN_NAMING_STYLES,
+} from "./public-social-hub-schema";
+export {
+  SOCIAL_HUB_PRESETS,
+  TAVERN_PRESETS,
+} from "./public-social-hub-presets";
+export {
+  SOCIAL_HUB_TRAIT_VOCABULARY,
+  SOCIAL_HUB_EXTRA_TRAITS,
+  VENUE_TYPE_TRAITS,
+  ATMOSPHERE_TRAITS,
+  WEALTH_LEVEL_TRAITS,
+  CLIENTELE_TRAITS,
+  TROUBLE_TRAITS,
+  SETTLEMENT_TYPE_TRAITS,
+  SOCIAL_HUB_RULES,
+  SOCIAL_HUB_AFFINITIES,
+  type SocialHubTrait,
+} from "./public-social-hub-traits";
 export {
   buildQuestPrompt,
   parseQuestResponse,
