@@ -171,3 +171,8 @@
 **Learning:** Svelte 5 components using `$props()` can safely accept dependency injection bounds using optional types and production defaults (e.g., `idGenerator = systemIdGenerator`). The runtime dependencies for this project (like `systemIdGenerator` and `IdGenerator`) are re-exported from `@codex/runtime` via `$lib/utils/runtime-deps.ts`, making them easily accessible without requiring new abstractions. Replacing `crypto.randomUUID()` with `idGenerator.uuid()` inside components creates a clean seam for unit testing, preventing flaky tests dependent on random UUID generation.
 
 **Action:** Continue replacing hardcoded `crypto.randomUUID()` calls within UI components by destructing optional dependency props (with `systemIdGenerator` as the default) from the `$props()` rune to improve testability.
+
+## $(date +%Y-%m-%d) - Injectable clock in AdventureSessionRepository
+
+**Learning:** `new Date().toISOString()` is a hidden, hard-coded time dependency that complicates testing file update tracking logic.
+**Action:** Expose time functions via optional parameters like `now: () => number = () => Date.now()` inside class constructors to allow precise test assertions without global mocking or relying on arbitrary timing tolerances.

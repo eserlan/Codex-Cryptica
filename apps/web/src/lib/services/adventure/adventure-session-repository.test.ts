@@ -89,10 +89,14 @@ describe("AdventureSessionRepository.deleteUnreadable", () => {
   });
 });
 
-function mockWritableRepository(session: unknown) {
-  const repository = new AdventureSessionRepository(async () => {
-    throw new Error("not used");
-  });
+function mockWritableRepository(session: unknown, now?: () => number) {
+  const repository = new AdventureSessionRepository(
+    async () => {
+      throw new Error("not used");
+    },
+    undefined,
+    now,
+  );
   const writes: string[] = [];
   (repository as any).load = vi.fn(async () => ({
     condition: "normal",
@@ -135,7 +139,8 @@ describe("AdventureSessionRepository.rename", () => {
   });
 
   it("saves the new title and bumps revision without touching other fields", async () => {
-    const { repository, writes } = mockWritableRepository(archivedSession);
+    const fixedTime = 1600000000000;
+    const { repository, writes } = mockWritableRepository(archivedSession, () => fixedTime);
 
     const result = await repository.rename(
       "vault-1",
@@ -148,17 +153,21 @@ describe("AdventureSessionRepository.rename", () => {
     expect(result.session.title).toBe("New Title");
     expect(result.session.revision).toBe(4);
     expect(result.session.status).toBe(archivedSession.status);
+    expect(result.session.updatedAt).toBe(new Date(fixedTime).toISOString());
     expect(writes).toHaveLength(1);
+    const written = JSON.parse(writes[0]!);
+    expect(written.updatedAt).toBe(new Date(fixedTime).toISOString());
   });
 });
 
 describe("AdventureSessionRepository.duplicate", () => {
   it("writes an independent copy under a fresh id, defaulted to archived", async () => {
+    const fixedTime = 1600000000000;
     const { repository, writes } = mockWritableRepository({
       ...archivedSession,
       status: "active",
       title: "Original",
-    });
+    }, () => fixedTime);
     (repository as any).generateId = () => "session-copy";
 
     const result = await repository.duplicate("vault-1", "session-1");
@@ -169,6 +178,8 @@ describe("AdventureSessionRepository.duplicate", () => {
     expect(written.status).toBe("archived");
     expect(written.revision).toBe(0);
     expect(written.title).toBe("Original");
+    expect(written.createdAt).toBe(new Date(fixedTime).toISOString());
+    expect(written.updatedAt).toBe(new Date(fixedTime).toISOString());
   });
 
   it("surfaces an unreadable source without writing", async () => {
