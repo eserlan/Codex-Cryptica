@@ -258,6 +258,7 @@ export function setupWindowGlobals(context: {
           [
             "leftSidebarWidth",
             "rightSidebarWidth",
+            "vttSidebarWidth",
             "leftSidebarOpen",
             "activeSidebarTool",
             "mainViewMode",
@@ -272,6 +273,7 @@ export function setupWindowGlobals(context: {
             "closeSidebar",
             "setLeftSidebarWidth",
             "setRightSidebarWidth",
+            "setVttSidebarWidth",
             "toggleVttSidebar",
             "toggleVttChatSidebar",
             "toggleVttEntityList",
@@ -368,6 +370,7 @@ export function setupWindowGlobals(context: {
           [
             "leftSidebarWidth",
             "rightSidebarWidth",
+            "vttSidebarWidth",
             "leftSidebarOpen",
             "activeSidebarTool",
             "mainViewMode",

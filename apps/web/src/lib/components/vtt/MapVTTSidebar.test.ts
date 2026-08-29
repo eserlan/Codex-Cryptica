@@ -6,11 +6,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const layoutUIStoreMock = vi.hoisted(() => ({
   vttSidebarCollapsed: false,
   vttEntityListCollapsed: false,
+  vttSidebarWidth: 352,
+  isMobile: false,
   toggleVttSidebar: vi.fn((collapsed: boolean) => {
     layoutUIStoreMock.vttSidebarCollapsed = collapsed;
   }),
   toggleVttEntityList: vi.fn((collapsed: boolean) => {
     layoutUIStoreMock.vttEntityListCollapsed = collapsed;
+  }),
+  setVttSidebarWidth: vi.fn((width: number) => {
+    layoutUIStoreMock.vttSidebarWidth = width;
   }),
 }));
 
@@ -48,8 +53,16 @@ vi.mock("$lib/components/vtt/VTTChatSidebar.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/components/vtt/TileDeckPanel.svelte", () => ({
+  default: function TileDeckPanelMock() {
+    return {};
+  },
+}));
+
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: layoutUIStoreMock,
+  MIN_VTT_SIDEBAR_WIDTH: 280,
+  MAX_SIDEBAR_VW: 40,
 }));
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
@@ -122,5 +135,26 @@ describe("MapVTTSidebar", () => {
 
     expect(screen.queryByText("Vault Entities")).toBeNull();
     expect(screen.queryByRole("button", { name: "Share Campaign" })).toBeNull();
+  });
+
+  it("renders the horizontal resizer handle when expanded on desktop", () => {
+    layoutUIStoreMock.vttSidebarCollapsed = false;
+    layoutUIStoreMock.isMobile = false;
+
+    renderSidebar();
+
+    expect(screen.getByTestId("resizer-handle-right")).not.toBeNull();
+  });
+
+  it("omits the resizer handle when collapsed or on mobile", () => {
+    layoutUIStoreMock.vttSidebarCollapsed = true;
+    const { unmount } = renderSidebar();
+    expect(screen.queryByTestId("resizer-handle-right")).toBeNull();
+    unmount();
+
+    layoutUIStoreMock.vttSidebarCollapsed = false;
+    layoutUIStoreMock.isMobile = true;
+    renderSidebar();
+    expect(screen.queryByTestId("resizer-handle-right")).toBeNull();
   });
 });

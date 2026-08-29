@@ -6,6 +6,7 @@ import {
 
 export const MIN_LEFT_SIDEBAR_WIDTH = 240;
 export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
+export const MIN_VTT_SIDEBAR_WIDTH = 280;
 export const MAX_SIDEBAR_VW = 40;
 
 export type SidebarTool = "oracle" | "explorer" | "shelf" | "none";
@@ -56,6 +57,7 @@ function browserViewport(): UIViewport | null {
 export class LayoutUIStore {
   private leftSidebarSaveTimeout: number | null = null;
   private rightSidebarSaveTimeout: number | null = null;
+  private vttSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
   private cleanupWideWatch: (() => void) | null = null;
   private cleanupTabletWatch: (() => void) | null = null;
@@ -83,6 +85,7 @@ export class LayoutUIStore {
 
   leftSidebarWidth = $state(280);
   rightSidebarWidth = $state(380);
+  vttSidebarWidth = $state(352);
   mainViewMode = $state<MainViewMode>("visualization");
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
@@ -176,6 +179,11 @@ export class LayoutUIStore {
     this.debounceWrite("right", UI_STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH, width);
   }
 
+  setVttSidebarWidth(width: number) {
+    this.vttSidebarWidth = width;
+    this.debounceWrite("vtt", UI_STORAGE_KEYS.VTT_SIDEBAR_WIDTH, width);
+  }
+
   toggleVttSidebar(collapsed: boolean) {
     this.vttSidebarCollapsed = collapsed;
     this.persistence.write(
@@ -235,6 +243,18 @@ export class LayoutUIStore {
       this.rightSidebarWidth = Math.max(
         MIN_RIGHT_SIDEBAR_WIDTH,
         Math.min(right, maxWidth),
+      );
+    }
+
+    const vtt = this.persistence.read(
+      UI_STORAGE_KEYS.VTT_SIDEBAR_WIDTH,
+      (raw) => Number.parseInt(raw, 10),
+      this.vttSidebarWidth,
+    );
+    if (!Number.isNaN(vtt)) {
+      this.vttSidebarWidth = Math.max(
+        MIN_VTT_SIDEBAR_WIDTH,
+        Math.min(vtt, maxWidth),
       );
     }
 
@@ -339,18 +359,25 @@ export class LayoutUIStore {
     return null;
   }
 
-  private debounceWrite(side: "left" | "right", key: string, width: number) {
+  private debounceWrite(
+    side: "left" | "right" | "vtt",
+    key: string,
+    width: number,
+  ) {
     if (!this.viewport) return;
     const current =
       side === "left"
         ? this.leftSidebarSaveTimeout
-        : this.rightSidebarSaveTimeout;
+        : side === "right"
+          ? this.rightSidebarSaveTimeout
+          : this.vttSidebarSaveTimeout;
     if (current !== null) this.viewport.clearTimeout(current);
     const next = this.viewport.setTimeout(() => {
       this.persistence.write(key, width, String);
     }, 500);
     if (side === "left") this.leftSidebarSaveTimeout = next;
-    else this.rightSidebarSaveTimeout = next;
+    else if (side === "right") this.rightSidebarSaveTimeout = next;
+    else this.vttSidebarSaveTimeout = next;
   }
 }
 
