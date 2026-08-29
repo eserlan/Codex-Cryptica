@@ -156,12 +156,20 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-// Faction + vampire + nomad + settlement content data now live in the package (#1351).
 export {
   factionConfig,
   themeIdToLabel,
   vampireConfig,
   nomadClanConfig,
+  resolveFaction,
+  resolveNomadClan,
+  resolveVampire,
+  factionSchema,
+  nomadClanSchema,
+  vampireSchema,
+  FACTION_PRESETS,
+  NOMAD_CLAN_PRESETS,
+  VAMPIRE_PRESETS,
 } from "generator-engine";
 export {
   settlementConfig,

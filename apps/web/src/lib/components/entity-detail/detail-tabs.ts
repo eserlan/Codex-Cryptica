@@ -17,14 +17,17 @@ export type EntityDetailTabIds = {
 };
 
 export function createEntityDetailTabIds(prefix: string): EntityDetailTabIds {
-  return {
-    tabIds: Object.fromEntries(
-      entityDetailTabs.map((tab) => [tab, `${prefix}-tab-${tab}`]),
-    ) as Record<EntityDetailTab, string>,
-    panelIds: Object.fromEntries(
-      entityDetailTabs.map((tab) => [tab, `${prefix}-panel-${tab}`]),
-    ) as Record<EntityDetailTab, string>,
-  };
+  // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+  // to avoid intermediate array allocations and reduce garbage collection pressure.
+  const tabIds = {} as Record<EntityDetailTab, string>;
+  const panelIds = {} as Record<EntityDetailTab, string>;
+
+  for (const tab of entityDetailTabs) {
+    tabIds[tab] = `${prefix}-tab-${tab}`;
+    panelIds[tab] = `${prefix}-panel-${tab}`;
+  }
+
+  return { tabIds, panelIds };
 }
 
 export function getNextEntityDetailTab(

@@ -27,12 +27,18 @@ import {
   vampireConfig,
   nomadClanConfig,
   FACTION_THEME_VOICE,
-  factionBase,
   FACTION_NAMING_STYLES,
   FACTION_NPC_NAMING_STYLES,
-  factionResource,
 } from "./public-faction-constants";
 import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  factionSchema,
+  nomadClanSchema,
+  vampireSchema,
+  selectSmartFactionBase,
+  selectSmartFactionResource,
+} from "./public-faction-schema";
+import { resolveSmart, type LockedValue } from "./smart";
 
 export { factionConfig, themeIdToLabel, vampireConfig, nomadClanConfig };
 
@@ -44,36 +50,48 @@ export interface FactionGeneratorOptions {
   theme?: string;
 }
 
-interface ResolvedFaction {
+export interface ResolvedFaction {
   theme: string;
   factionType: string;
   scope: string;
   alignment: string;
+  goal: string;
+  conflict: string;
+  hook: string;
   campaignContext?: string;
   name: string;
+  traits: readonly string[];
 }
 
-function resolveFaction(
+export function resolveFaction(
   options: FactionGeneratorOptions,
   rng: Rng,
 ): ResolvedFaction {
   const theme = options.theme || factionConfig.themes[0];
-  const typePool =
-    factionConfig.typesByTheme[theme] ??
-    factionConfig.typesByTheme["Classic Fantasy"];
+  const locked: Record<string, LockedValue> = {};
+  if (options.type)
+    locked.factionType = { value: options.type, source: "manual" };
+  if (options.scope) locked.scope = { value: options.scope, source: "manual" };
+  if (options.alignment)
+    locked.alignment = { value: options.alignment, source: "manual" };
+
+  const { values, traits } = resolveSmart(
+    factionSchema,
+    { genre: theme, locked },
+    rng,
+  );
+
   return {
     theme,
-    factionType: options.type || pickFrom(typePool, rng),
-    scope:
-      options.scope ||
-      pickFrom(
-        factionConfig.scopesByTheme[theme] ??
-          factionConfig.scopesByTheme["Classic Fantasy"],
-        rng,
-      ),
-    alignment: options.alignment || pickFrom(factionConfig.alignments, rng),
+    factionType: values.factionType,
+    scope: values.scope,
+    alignment: values.alignment,
+    goal: values.goal,
+    conflict: values.conflict,
+    hook: values.hook,
     campaignContext: options.campaignContext?.trim() || undefined,
     name: `${generateName(rng)} Compact`,
+    traits,
   };
 }
 
@@ -146,18 +164,23 @@ export function generateFactionLocal(
   options: FactionGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const { theme, factionType, scope, alignment, campaignContext, name } =
-    resolveFaction(options, rng);
-  const goal = pickFrom(
-    factionConfig.goalsByTheme[theme] ??
-      factionConfig.goalsByTheme["Classic Fantasy"],
-    rng,
-  );
-  const conflict = pickFrom(factionConfig.conflicts, rng);
-  const hook = pickFrom(factionConfig.hooks, rng);
+  const {
+    theme,
+    factionType,
+    scope,
+    alignment,
+    goal,
+    conflict,
+    hook,
+    campaignContext,
+    name,
+    traits,
+  } = resolveFaction(options, rng);
   const rival = `${generateName(rng)} Covenant`;
   const leader = generateName(rng);
   const agent = generateName(rng);
+  const base = selectSmartFactionBase(factionType, traits, rng);
+  const resource = selectSmartFactionResource(factionType, traits, rng);
 
   const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
 
@@ -212,8 +235,8 @@ ${pickFrom(factionHowToUse, rng)(name)}`;
 
   const lore = `### At a Glance
 - **Theme / Genre**: ${theme}
-- **📍 Base**: ${factionBase(factionType, rng)}
-- **Resource**: ${factionResource(factionType, rng)}
+- **📍 Base**: ${base}
+- **Resource**: ${resource}
 - **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
 - **Secret**: ${conflict}
 - **Immediate Hook**: ${hook}
@@ -251,13 +274,16 @@ export type NomadClanGeneratorOptions = {
   campaignContext?: string;
 };
 
-interface ResolvedNomadClan {
+export interface ResolvedNomadClan {
   role: string;
   tone: string;
   territory: string;
   conflict: string;
+  goal: string;
+  hook: string;
   campaignContext?: string;
   name: string;
+  traits: readonly string[];
 }
 
 function generateNomadName(rng: Rng = defaultRng): string {
@@ -288,17 +314,34 @@ function generateNomadName(rng: Rng = defaultRng): string {
   return `${pickFrom(prefixes, rng)} ${pickFrom(suffixes, rng)}`;
 }
 
-function resolveNomadClan(
+export function resolveNomadClan(
   options: NomadClanGeneratorOptions,
   rng: Rng,
 ): ResolvedNomadClan {
+  const locked: Record<string, LockedValue> = {};
+  if (options.role) locked.role = { value: options.role, source: "manual" };
+  if (options.territory)
+    locked.territory = { value: options.territory, source: "manual" };
+  if (options.tone) locked.tone = { value: options.tone, source: "manual" };
+  if (options.conflict)
+    locked.conflict = { value: options.conflict, source: "manual" };
+
+  const { values, traits } = resolveSmart(
+    nomadClanSchema,
+    { genre: "Cyberpunk / Corporate", locked },
+    rng,
+  );
+
   return {
-    role: options.role || pickFrom(nomadClanConfig.roles, rng),
-    tone: options.tone || pickFrom(nomadClanConfig.tones, rng),
-    territory: options.territory || pickFrom(nomadClanConfig.territories, rng),
-    conflict: options.conflict || pickFrom(nomadClanConfig.conflicts, rng),
+    role: values.role,
+    tone: values.tone,
+    territory: values.territory,
+    conflict: values.conflict,
+    goal: values.goal,
+    hook: values.hook,
     campaignContext: options.campaignContext?.trim() || undefined,
     name: generateNomadName(rng),
+    traits,
   };
 }
 
@@ -367,10 +410,8 @@ export function generateNomadClanLocal(
   options: NomadClanGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const { role, tone, territory, conflict, campaignContext, name } =
+  const { role, tone, territory, conflict, goal, hook, campaignContext, name } =
     resolveNomadClan(options, rng);
-  const goal = pickFrom(nomadClanConfig.goals, rng);
-  const hook = pickFrom(nomadClanConfig.hooks, rng);
   const rival = generateNomadName(rng);
   const leader = generateName(rng);
   const mechanic = generateName(rng);
@@ -431,18 +472,22 @@ export interface VampireGeneratorOptions {
   campaignContext?: string;
 }
 
-interface ResolvedVampire {
+export interface ResolvedVampire {
   archetype: string;
   bloodline: string;
   feedingHabit: string;
   weakness: string;
   scope: string;
   alignment: string;
+  goal: string;
+  conflict: string;
+  hook: string;
   campaignContext?: string;
   name: string;
+  traits: readonly string[];
 }
 
-function resolveVampire(
+export function resolveVampire(
   options: VampireGeneratorOptions,
   rng: Rng,
 ): ResolvedVampire {
@@ -459,16 +504,39 @@ function resolveVampire(
     "Vargo",
     "Ruthven",
   ];
+
+  const locked: Record<string, LockedValue> = {};
+  if (options.archetype)
+    locked.archetype = { value: options.archetype, source: "manual" };
+  if (options.bloodline)
+    locked.bloodline = { value: options.bloodline, source: "manual" };
+  if (options.scope) locked.scope = { value: options.scope, source: "manual" };
+  if (options.feedingHabit)
+    locked.feedingHabit = { value: options.feedingHabit, source: "manual" };
+  if (options.weakness)
+    locked.weakness = { value: options.weakness, source: "manual" };
+  if (options.alignment)
+    locked.alignment = { value: options.alignment, source: "manual" };
+
+  const { values, traits } = resolveSmart(
+    vampireSchema,
+    { genre: "Vampire / Gothic Noir", locked },
+    rng,
+  );
+
   return {
-    archetype: options.archetype || pickFrom(vampireConfig.archetypes, rng),
-    bloodline: options.bloodline || pickFrom(vampireConfig.bloodlines, rng),
-    feedingHabit:
-      options.feedingHabit || pickFrom(vampireConfig.feedingHabits, rng),
-    weakness: options.weakness || pickFrom(vampireConfig.weaknesses, rng),
-    scope: options.scope || pickFrom(vampireConfig.scopes, rng),
-    alignment: options.alignment || pickFrom(vampireConfig.alignments, rng),
+    archetype: values.archetype,
+    bloodline: values.bloodline,
+    feedingHabit: values.feedingHabit,
+    weakness: values.weakness,
+    scope: values.scope,
+    alignment: values.alignment,
+    goal: values.goal,
+    conflict: values.conflict,
+    hook: values.hook,
     campaignContext: options.campaignContext?.trim() || undefined,
     name: pickFrom(prefixes, rng) + pickFrom(roots, rng),
+    traits,
   };
 }
 
@@ -554,12 +622,12 @@ export function generateVampireLocal(
     weakness,
     scope,
     alignment,
+    goal,
+    conflict,
+    hook,
     campaignContext,
     name,
   } = resolveVampire(options, rng);
-  const goal = pickFrom(vampireConfig.goals, rng);
-  const conflict = pickFrom(vampireConfig.conflicts, rng);
-  const hook = pickFrom(vampireConfig.hooks, rng);
   const rival = `${generateName(rng)} Inquisition`;
   const sire = generateName(rng);
   const thrall = generateName(rng);

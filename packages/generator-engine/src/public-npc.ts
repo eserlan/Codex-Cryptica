@@ -4,11 +4,7 @@
  * theme-keyed content data, the local fallback generator, the AI prompt
  * builder, and response parsing.
  *
- * Per the unification plan (#1351) this package stays framework-free: it does
- * NOT call the AI client or read `sessionStorage`. The web page builds the
- * prompt here, runs it through `aiClientManager`, parses with {@link
- * parseNpcResponse}, and falls back to {@link generateNpcLocal} on failure.
- * Session context (from the Session Hub) is injected as a plain string.
+ * Migrated onto the smart deterministic framework (#2532).
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
@@ -35,6 +31,8 @@ import {
   type MoralityAnchor,
 } from "./public-npc-constants";
 import { formatCampaignContextBlock } from "./campaign-context";
+import { buildNpcSchema } from "./public-npc-schema";
+import { resolveSmart, type LockedValue } from "./smart";
 
 export {
   BANNED_NAMES,
@@ -47,6 +45,13 @@ export {
   DELVE_SECRET_TIES,
   DELVE_ALERT_STAGES,
 } from "./public-npc-constants";
+
+export {
+  buildNpcSchema,
+  LOCAL_MANNERISMS,
+  LOCAL_FACTION_STANCES,
+  LOCAL_LEVERAGE_PRICES,
+} from "./public-npc-schema";
 
 function getDndNpcQuickStats(role: string) {
   return (
@@ -119,41 +124,86 @@ export function isDelveContext(options: NpcGeneratorOptions): boolean {
 }
 
 /** Resolved inputs shared by the prompt builder and the local fallback. */
-interface ResolvedNpc {
+export interface ResolvedNpc {
   race: string;
   role: string;
   alignment: string;
+  motive: string;
+  mannerism: string;
+  secret: string;
+  faction: string;
+  factionStance: string;
+  leverage: string;
+  plotHook: string;
   campaignContext?: string;
   delveContext?: DelveContextData | string;
   theme?: string;
   name: string;
   moralityAnchor?: MoralityAnchor;
   isDelve: boolean;
+  traits: readonly string[];
 }
 
-function resolveNpc(options: NpcGeneratorOptions, rng: Rng): ResolvedNpc {
+export function resolveNpc(
+  options: NpcGeneratorOptions,
+  rng: Rng,
+): ResolvedNpc {
   const isDelve = isDelveContext(options);
-  const race =
-    options.ancestry || options.race || pickFrom(npcConfig.races, rng);
-  const role =
-    options.role ||
-    (isDelve
-      ? pickFrom([...DELVE_ROLES], rng)
-      : pickFrom(npcConfig.roles, rng));
-  const alignment = options.alignment || pickFrom(npcConfig.alignments, rng);
-  const moralityAnchor = options.theme
-    ? npcThemeConfig.moralities[options.theme]?.find((m) => m.id === alignment)
-    : undefined;
+  const theme = options.theme;
+  const locked: Record<string, LockedValue> = {};
+
+  const requestedRace = options.ancestry || options.race;
+  if (requestedRace) {
+    locked.ancestry = { value: requestedRace, source: "manual" };
+  }
+  if (options.role) {
+    locked.role = { value: options.role, source: "manual" };
+  }
+  if (options.alignment) {
+    locked.alignment = { value: options.alignment, source: "manual" };
+  }
+
+  const schema = buildNpcSchema(isDelve);
+  const { values, traits } = resolveSmart(
+    schema,
+    { genre: theme ?? "Classic Fantasy", locked },
+    rng,
+  );
+
+  const race = values.ancestry;
+  const role = values.role;
+  const alignment = values.alignment;
+  const motive = values.motive;
+  const mannerism = values.mannerism;
+  const secret = values.secret;
+  const faction = values.faction;
+  const factionStance = values.factionStance;
+  const leverage = values.leverage;
+  const plotHook = values.plotHook;
+
+  const effectiveTheme = theme ?? "Classic Fantasy";
+  const moralityAnchor = npcThemeConfig.moralities[effectiveTheme]?.find(
+    (m) => m.id === alignment,
+  );
+
   return {
     race,
     role,
     alignment,
+    motive,
+    mannerism,
+    secret,
+    faction,
+    factionStance,
+    leverage,
+    plotHook,
     campaignContext: options.campaignContext?.trim() || undefined,
     delveContext: options.delveContext,
-    theme: options.theme,
+    theme,
     name: generateName(rng),
     moralityAnchor,
     isDelve,
+    traits,
   };
 }
 
@@ -354,31 +404,6 @@ const HOW_TO_USE_CLOSERS = [
   "The more the party relies on them, the more interesting the moment when those loyalties are tested.",
 ] as const;
 
-const LOCAL_MANNERISMS = [
-  "Speaks in a quiet, measured cadence, continuously evaluating the room.",
-  "Fidgets with a worn token or ring whenever answering a direct question.",
-  "Speaks with abrupt efficiency, rarely using polite filler words.",
-  "Maintains intense, unblinking eye contact while listening.",
-  "Speaks in a gravelly whisper, leaning in close as if every word is contraband.",
-  "Chuckles dryly before delivering bad news or complicated terms.",
-] as const;
-
-const LOCAL_FACTION_STANCES = [
-  "Pragmatically cooperative with whoever holds local authority, deeply cynical about idealistic reformists.",
-  "Distrusts large centralized institutions; favors small, decentralized alliances and personal handshakes.",
-  "Publicly obedient to ruling factions while privately hedging bets with independent operators.",
-  "Harbors deep resentment toward bureaucratic oversight; loyal only to those who pay promptly.",
-  "Views competing factions as expendable pawns in a long-term survival game.",
-] as const;
-
-const LOCAL_LEVERAGE_PRICES = [
-  "Can be bought with immunity or hard currency; breaks if their family or sanctuary is threatened.",
-  "Cooperation costs rare technical or arcane favors; folds under public exposure of their past debts.",
-  "Requires guarantees of safe passage; folds under threats to their remaining personal network.",
-  "Demands respect and reciprocal secrets; yields when their hidden patron is named.",
-  "Works for exclusive trade rights or leverage; panics if their operational ledger is seized.",
-] as const;
-
 /** Local, AI-free NPC generator — the fallback when AI is unavailable. */
 export function generateNpcLocal(
   options: NpcGeneratorOptions = {},
@@ -394,29 +419,16 @@ export function generateNpcLocal(
     moralityAnchor,
     alignment,
     isDelve,
+    motive,
+    mannerism,
+    secret,
+    faction,
+    factionStance,
+    leverage,
+    plotHook,
   } = resolved;
 
-  const fallbackTheme = "Classic Fantasy";
   const traits = getRandomItems(npcConfig.traits, 2, rng);
-  const secret = pickFrom(
-    npcConfig.secretsByTheme[theme ?? ""] ??
-      npcConfig.secretsByTheme[fallbackTheme],
-    rng,
-  );
-  const motive = pickFrom(
-    npcConfig.motivesByTheme[theme ?? ""] ??
-      npcConfig.motivesByTheme[fallbackTheme],
-    rng,
-  );
-  const faction = pickFrom(
-    npcConfig.factionsByTheme[theme ?? ""] ??
-      npcConfig.factionsByTheme[fallbackTheme],
-    rng,
-  );
-  const plotHook = pickFrom(npcConfig.plotHooks, rng);
-  const mannerism = pickFrom(LOCAL_MANNERISMS, rng);
-  const factionStance = pickFrom(LOCAL_FACTION_STANCES, rng);
-  const leverage = pickFrom(LOCAL_LEVERAGE_PRICES, rng);
   const moralityLabel = moralityAnchor?.label ?? alignment;
 
   const delveSector = isDelve
@@ -464,8 +476,7 @@ ${howIntro} ${howCloser}`;
     : "";
 
   const lore = `### At a Glance
-- **Theme / Genre**: ${theme}
-- **Ancestry**: ${race}
+${theme ? `- **Theme / Genre**: ${theme}\n` : ""}- **Ancestry**: ${race}
 - **Role**: ${role}${glanceDelveFields}
 - **Mannerism / Vocal Tell**: ${mannerism}
 - **Moral Stance**: ${moralityLabel}

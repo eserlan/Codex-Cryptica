@@ -166,3 +166,8 @@
 **Learning:** Extracted the hardcoded `Date.now()` dependency in `oracle-adapter.svelte.ts` by injecting `Clock` from `@codex/runtime` via the `/utils/runtime-deps` module. It is critical to note that the `Clock` interface returns a numeric timestamp (`number`), mirroring `Date.now()`, rather than a `Date` object. Always verify the signature of ambient runtime dependencies before injecting them.
 
 **Action:** When injecting time seams (e.g. `clock.now()`) to replace `Date.now()`, import `systemClock` and `Clock` from `/utils/runtime-deps` and default the parameter to `systemClock` to preserve production behavior while exposing the seam for tests.
+## 2024-05-18 - Inject IdGenerator into SourceWorkspace.svelte
+
+**Learning:** Svelte 5 components using `$props()` can safely accept dependency injection bounds using optional types and production defaults (e.g., `idGenerator = systemIdGenerator`). The runtime dependencies for this project (like `systemIdGenerator` and `IdGenerator`) are re-exported from `@codex/runtime` via `$lib/utils/runtime-deps.ts`, making them easily accessible without requiring new abstractions. Replacing `crypto.randomUUID()` with `idGenerator.uuid()` inside components creates a clean seam for unit testing, preventing flaky tests dependent on random UUID generation.
+
+**Action:** Continue replacing hardcoded `crypto.randomUUID()` calls within UI components by destructing optional dependency props (with `systemIdGenerator` as the default) from the `$props()` rune to improve testability.
