@@ -1,0 +1,296 @@
+import { describe, it, expect } from "vitest";
+import {
+  getExample,
+  getAllExamples,
+  getAllExampleSlugs,
+  getRelatedExamples,
+  getConnectedExample,
+  examplePath,
+  groupExamplesByKind,
+} from "./registry";
+import { ExampleConfigSchema, type ExampleConfig } from "./schema";
+import { examples } from "./pages";
+import {
+  buildExampleJsonLd,
+  buildExampleBreadcrumbJsonLd,
+  buildExampleIndexJsonLd,
+} from "./json-ld";
+import { match as isGeneratorSlug } from "../../../params/generator_slug";
+import { getAllAnswerSlugs } from "../answers/registry";
+import { getAllLandingPageSlugs } from "../for/registry";
+
+const make = (
+  overrides: Partial<ExampleConfig> & Pick<ExampleConfig, "slug">,
+): ExampleConfig =>
+  ExampleConfigSchema.parse({
+    name: "Test Artefact",
+    title: "Test example: Test Artefact",
+    kind: "settlement",
+    genre: "Fantasy",
+    summary: "A summary long enough to satisfy the schema's minimum length.",
+    provenance: "raw",
+    generator: { name: "Settlement generator", href: "/generators/settlement" },
+    context: [{ label: "Genre", value: "Fantasy" }],
+    output: [{ kind: "prose", paragraphs: ["Some generated prose."] }],
+    annotation: {
+      heading: "Why it works",
+      paragraphs: ["Because of reasons."],
+    },
+    seo: { title: "T", description: "D" },
+    ...overrides,
+  });
+
+describe("example schema", () => {
+  it("rejects a slug that is not kebab-case", () => {
+    expect(() => make({ slug: "Not Kebab" })).toThrow();
+  });
+
+  it("rejects a generator href outside /generators", () => {
+    expect(() =>
+      make({
+        slug: "wrong-generator",
+        generator: { name: "Elsewhere", href: "/tools/faction-generator" },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects an example with no output", () => {
+    expect(() => make({ slug: "empty", output: [] })).toThrow();
+  });
+
+  it("requires a provenance note when the output is not raw", () => {
+    // #2565 forbids presenting edited text as untouched generation.
+    expect(() =>
+      make({ slug: "edited", provenance: "lightly-edited" }),
+    ).toThrow();
+    expect(() =>
+      make({
+        slug: "edited-ok",
+        provenance: "lightly-edited",
+        provenanceNote: "Two sentences were trimmed for length.",
+      }),
+    ).not.toThrow();
+  });
+
+  it("does not demand a note for raw output", () => {
+    expect(() => make({ slug: "raw-ok", provenance: "raw" })).not.toThrow();
+  });
+});
+
+describe("registry lookups", () => {
+  const registry: Record<string, ExampleConfig> = {
+    alpha: make({
+      slug: "alpha",
+      relatedExamples: ["beta", "missing"],
+      connectedTo: {
+        slug: "beta",
+        note: "Rolled inside the same session, so context carried forward.",
+      },
+    }),
+    beta: make({ slug: "beta", kind: "faction" }),
+  };
+
+  it("returns a parsed example by slug", () => {
+    expect(getExample("alpha", registry)?.slug).toBe("alpha");
+    expect(getExample("nope", registry)).toBeUndefined();
+  });
+
+  it("returns every example and slug", () => {
+    expect(getAllExamples(registry)).toHaveLength(2);
+    expect(getAllExampleSlugs(registry)).toEqual(["alpha", "beta"]);
+  });
+
+  it("drops related slugs that no longer exist rather than throwing", () => {
+    const related = getRelatedExamples(registry.alpha, registry);
+    expect(related.map((example) => example.slug)).toEqual(["beta"]);
+  });
+
+  it("resolves a connected example, and nothing when none is declared", () => {
+    expect(getConnectedExample(registry.alpha, registry)?.slug).toBe("beta");
+    expect(getConnectedExample(registry.beta, registry)).toBeUndefined();
+  });
+
+  it("defaults the canonical path and honours an explicit one", () => {
+    expect(examplePath(registry.alpha)).toBe("/examples/alpha");
+    expect(
+      examplePath(
+        make({
+          slug: "custom",
+          seo: { title: "T", description: "D", canonical: "/examples/other" },
+        }),
+      ),
+    ).toBe("/examples/other");
+  });
+
+  it("groups by artefact kind", () => {
+    const groups = groupExamplesByKind(registry);
+    expect(groups.get("settlement")).toHaveLength(1);
+    expect(groups.get("faction")).toHaveLength(1);
+  });
+});
+
+describe("the published examples", () => {
+  const published = getAllExamples();
+
+  it("publishes at least three materially different examples", () => {
+    // #2565's validation bar.
+    expect(published.length).toBeGreaterThanOrEqual(3);
+    expect(
+      new Set(published.map((example) => example.kind)).size,
+    ).toBeGreaterThan(1);
+    expect(
+      new Set(published.map((example) => example.genre)).size,
+    ).toBeGreaterThan(1);
+  });
+
+  it("keys every example by its own slug", () => {
+    for (const [key, example] of Object.entries(examples)) {
+      expect(key).toBe(example.slug);
+    }
+  });
+
+  it("gives every example unique metadata", () => {
+    const titles = published.map((example) => example.seo.title);
+    const descriptions = published.map((example) => example.seo.description);
+    const names = published.map((example) => example.name);
+    expect(new Set(titles).size).toBe(titles.length);
+    expect(new Set(descriptions).size).toBe(descriptions.length);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("renders substantive output, not a caption under an image", () => {
+    // The generated artefact is the value of the page (#2565 guardrails).
+    for (const example of published) {
+      const words = JSON.stringify(example.output).split(/\s+/).length;
+      expect(words, example.slug).toBeGreaterThan(300);
+      expect(example.output.length, example.slug).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it("carries a human annotation on every example", () => {
+    for (const example of published) {
+      expect(
+        example.annotation.paragraphs.length,
+        example.slug,
+      ).toBeGreaterThan(0);
+      const words = example.annotation.paragraphs.join(" ").split(/\s+/).length;
+      expect(words, example.slug).toBeGreaterThan(60);
+    }
+  });
+
+  it("never links to an example that does not exist", () => {
+    const slugs = new Set(getAllExampleSlugs());
+    for (const example of published) {
+      for (const related of example.relatedExamples) {
+        expect(slugs, `${example.slug} → ${related}`).toContain(related);
+      }
+      if (example.connectedTo) {
+        expect(slugs, `${example.slug} connected`).toContain(
+          example.connectedTo.slug,
+        );
+      }
+    }
+  });
+
+  it("never links an example to itself", () => {
+    for (const example of published) {
+      expect(example.relatedExamples).not.toContain(example.slug);
+      expect(example.connectedTo?.slug).not.toBe(example.slug);
+    }
+  });
+
+  it("points every example at a live generator and live internal routes", () => {
+    const answerSlugs = new Set(getAllAnswerSlugs());
+    const forSlugs = new Set(getAllLandingPageSlugs());
+
+    for (const example of published) {
+      const generatorSlug = example.generator.href.replace("/generators/", "");
+      expect(
+        isGeneratorSlug(generatorSlug),
+        `${example.slug} → ${example.generator.href}`,
+      ).toBe(true);
+
+      for (const link of example.relatedGenerators) {
+        expect(
+          isGeneratorSlug(link.href.replace("/generators/", "")),
+          `${example.slug} → ${link.href}`,
+        ).toBe(true);
+      }
+      for (const link of example.relatedAnswers) {
+        expect(answerSlugs, `${example.slug} → ${link.href}`).toContain(
+          link.href.replace("/answers/", ""),
+        );
+      }
+      for (const link of example.relatedForPages) {
+        expect(forSlugs, `${example.slug} → ${link.href}`).toContain(
+          link.href.replace("/for/", ""),
+        );
+      }
+    }
+  });
+
+  it("includes one connected pair demonstrating context reuse", () => {
+    // #2565 asks for this specifically as a validation case.
+    const connected = published.filter((example) => example.connectedTo);
+    expect(connected.length).toBeGreaterThanOrEqual(1);
+    for (const example of connected) {
+      const other = getConnectedExample(example);
+      expect(other, `${example.slug} connects to nothing`).toBeDefined();
+    }
+  });
+
+  it("records where each example was first published", () => {
+    for (const example of published) {
+      expect(example.sourceUrl, example.slug).toMatch(/^https:\/\//);
+    }
+  });
+
+  it("uses British English spellings in the editorial text", () => {
+    // Applies to our annotations only — generator output is reproduced verbatim.
+    const americanisms =
+      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|behavior|rumor|favorite|neighbor|theater|catalog|traveled|canceled)\w*\b/i;
+    for (const example of published) {
+      const editorial = JSON.stringify([
+        example.annotation,
+        example.summary,
+        example.seo,
+      ]);
+      expect(
+        editorial.match(americanisms)?.[0] ?? null,
+        example.slug,
+      ).toBeNull();
+    }
+  });
+});
+
+describe("example structured data", () => {
+  const example = make({ slug: "alpha" });
+
+  it("emits a CreativeWork rather than an Article", () => {
+    const parsed = JSON.parse(buildExampleJsonLd(example));
+    expect(parsed["@type"]).toBe("CreativeWork");
+    expect(parsed.name).toBe(example.name);
+    expect(parsed.isPartOf.url).toMatch(/\/examples$/);
+  });
+
+  it("emits a Home → Examples → artefact breadcrumb", () => {
+    const parsed = JSON.parse(buildExampleBreadcrumbJsonLd(example));
+    expect(parsed.itemListElement.map((i: { name: string }) => i.name)).toEqual(
+      ["Home", "Examples", example.name],
+    );
+  });
+
+  it("emits the index as an ItemList", () => {
+    const parsed = JSON.parse(buildExampleIndexJsonLd(getAllExamples()));
+    expect(parsed["@type"]).toBe("ItemList");
+    expect(parsed.itemListElement).toHaveLength(getAllExampleSlugs().length);
+  });
+
+  it("escapes < so JSON-LD cannot break out of its script element", () => {
+    const risky = make({
+      slug: "risky",
+      summary: "An artefact whose name mentions </script> in passing, safely.",
+    });
+    expect(buildExampleJsonLd(risky)).not.toContain("</script>");
+  });
+});

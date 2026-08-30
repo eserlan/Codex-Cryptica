@@ -10,6 +10,7 @@ import { importsConfig } from "../../config/seo-imports";
 import { comparisons } from "../../config/seo-comparisons";
 import { getAllLandingPageSlugs } from "../for/registry";
 import { getAllAnswerSlugs } from "../answers/registry";
+import { getAllExampleSlugs } from "../examples/registry";
 import { HUB_THEME_SLUGS } from "../hub-themes";
 import { GENERATOR_SLUGS } from "../../../params/generator_slug";
 
@@ -41,6 +42,7 @@ const TOOL_PAGES = [
 const STANDALONE_PATHS = [
   "/for",
   "/answers",
+  "/examples",
   "/tools",
   "/generators",
   "/blog",
@@ -72,6 +74,7 @@ export function listGovernedPaths(): string[] {
     ...GOVERNED_BLOG_PATHS,
     ...getAllLandingPageSlugs().map((slug) => `/for/${slug}`),
     ...getAllAnswerSlugs().map((slug) => `/answers/${slug}`),
+    ...getAllExampleSlugs().map((slug) => `/examples/${slug}`),
     ...Object.keys(solutions).map((slug) => `/solutions/${slug}`),
     ...Object.keys(featuresConfig).map((slug) => `/features/${slug}`),
     ...Object.keys(importsConfig).map((slug) => `/import/${slug}`),

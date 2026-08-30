@@ -110,6 +110,16 @@ Concise, self-contained reference answers to real RPG and worldbuilding question
 - [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion): Write the practice before the doctrine: one rite, one prohibition, who funds it, and what adherents dispute.
 - [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign): Decide the truth in full before session one, then design how it leaks; every conclusion needs three routes.
 
+## Curated Generator Examples
+
+Real, unedited generator output with the settings that produced it and a short editorial note on what makes it usable.
+
+- [Examples Hub](https://codexcryptica.com/examples): Every published example.
+- [Fantasy settlement example: Gull's Roost](https://codexcryptica.com/examples/gulls-roost-coastal-smuggling-town): A coastal smuggling town with a working economy, five points of interest and live adventure hooks.
+- [RPG faction example: The Low-Tide Rust](https://codexcryptica.com/examples/the-low-tide-rust-dock-syndicate): A dock syndicate rolled inside the Gull's Roost session, reusing that town's places and people.
+- [Cyberpunk district example: Arc Hub](https://codexcryptica.com/examples/arc-hub-augmentation-slum): A vertical augmentation slum governed by a malfunctioning municipal AI.
+- [Sci-fi encounter example: The Venting Helix](https://codexcryptica.com/examples/the-venting-helix-derelict-hazard): A derelict-ship hazard with four viable solutions and fail-forward escalation.
+
 ## Technical Documentation
 
 - [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.

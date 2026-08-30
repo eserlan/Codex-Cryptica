@@ -180,7 +180,62 @@ if (fs.existsSync(answersDir)) {
   }
 }
 
-// 4. Add TTRPG System & Genre Landing Pages
+// 4. Add curated generator examples (/examples/[slug])
+const examplesDir = path.join(rootDir, 'apps/web/src/lib/content/examples/pages');
+if (fs.existsSync(examplesDir)) {
+  console.log('Extracting Curated Examples...');
+
+  const indexSource = fs.readFileSync(path.join(examplesDir, 'index.ts'), 'utf8');
+  const slugs = [...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g)]
+    .map(m => m[1] ?? m[2]);
+
+  const readString = (content, field) => {
+    const regex = new RegExp(
+      `\\n[ \\t]*${field}:[ \\t]*\\n?[ \\t]*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)')`,
+    );
+    const match = content.match(regex);
+    if (!match) return '';
+    return (match[1] ?? match[2] ?? '')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
+      .replace(/\\\\/g, '\\')
+      .trim();
+  };
+
+  const entries = [];
+  for (const slug of slugs) {
+    const file = path.join(examplesDir, `${slug}.ts`);
+    if (!fs.existsSync(file)) {
+      throw new Error(`[llms-full] Example module missing for slug: ${slug}`);
+    }
+    const content = fs.readFileSync(file, 'utf8');
+    const title = readString(content, 'title');
+    const summary = readString(content, 'summary');
+    const genre = readString(content, 'genre');
+    if (!title || !summary) {
+      throw new Error(`[llms-full] Could not extract title/summary for example: ${slug}`);
+    }
+    entries.push({ slug, title, summary, genre });
+  }
+
+  if (entries.length !== slugs.length) {
+    throw new Error(
+      `[llms-full] Extracted ${entries.length} examples but the registry imports ${slugs.length}.`,
+    );
+  }
+
+  if (entries.length > 0) {
+    fullContent += `\n## Curated Generator Examples\n\n`;
+    fullContent += `Real, unedited output from the Codex Cryptica generators, indexed at https://codexcryptica.com/examples. Each page shows the full artefact, the settings that produced it, and a short editorial note on what makes it usable at the table.\n\n`;
+    for (const entry of entries) {
+      fullContent += `### [${entry.title}](https://codexcryptica.com/examples/${entry.slug})\n\n`;
+      if (entry.genre) fullContent += `**Genre:** ${entry.genre}\n\n`;
+      fullContent += `**Summary:** ${entry.summary}\n\n`;
+    }
+  }
+}
+
+// 5. Add TTRPG System & Genre Landing Pages
 const packsDir = path.join(rootDir, 'apps/web/src/lib/content/for/packs');
 if (fs.existsSync(packsDir)) {
   console.log('Extracting TTRPG System & Genre Landing Pages...');
