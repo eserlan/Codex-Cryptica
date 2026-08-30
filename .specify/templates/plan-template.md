@@ -33,6 +33,18 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 [Gates determined based on constitution file]
 
+### Discovery Intent Check
+
+_Applies only when the feature adds or materially repositions a public, indexable discovery page (`/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference posts). Mark N/A otherwise._
+
+- [ ] Existing intent ownership checked in `apps/web/src/lib/content/discovery/` before proposing any new URL.
+- [ ] Each new page has a registered canonical path, primary intent, user job and unique-value rationale.
+- [ ] Synonyms and query variants are recorded as aliases, not as new URLs.
+- [ ] Any deliberate overlap with an existing page is justified by a materially different user job and recorded with a reason.
+- [ ] `bun scripts/discovery-audit.mjs` reports no errors.
+
+See Principle XIII and `docs/discovery-intent-registry.md`.
+
 ## Project Structure
 
 ### Documentation (this feature)
