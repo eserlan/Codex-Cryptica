@@ -21,6 +21,7 @@ A vault owner who wants peace of mind against losing their lore (device loss, br
 2. **Given** the consent screen is showing, **When** the user closes it or declines without confirming, **Then** no vault data is sent anywhere and cloud backup remains off.
 3. **Given** the user confirms consent, **When** confirmation completes, **Then** the system performs an initial backup of the vault and the user can see that backup succeeded (status and a last-synced time).
 4. **Given** cloud backup is off, **When** the app runs normally (editing, browsing, generating lore), **Then** no vault data is transmitted to cloud backup infrastructure.
+5. **Given** cloud backup is enabled, **When** the user makes and saves any subsequent change to the vault, **Then** that save also pushes the vault's current state to cloud storage, replacing the prior remote backup — the same directional, "local wins" push-on-save model already used for Google Drive mirror sync, with no background polling between saves.
 
 ---
 
@@ -38,6 +39,7 @@ A user who lost local data (new device, cleared browser storage, corrupted local
 2. **Given** a user does not have the vault's ownership code, **When** they attempt to restore, **Then** the system clearly explains that the code is required and does not restore or expose any backup content.
 3. **Given** a restore is requested while the destination already has unsaved local vault content, **When** the user proceeds, **Then** the system requires explicit confirmation before the restore can overwrite that local content.
 4. **Given** a restore fails partway (e.g., network interruption), **When** the failure occurs, **Then** the user sees a clear error and the local vault is left in a known, uncorrupted state.
+5. **Given** a vault's cloud backup already exists and is newer than the local copy, **When** the user opens or continues using that vault without explicitly requesting a restore, **Then** the system does NOT auto-pull the newer cloud copy — restore only ever happens as a deliberate, explicit action, never silently on open, load, or vault switch.
 
 ---
 
@@ -83,6 +85,9 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - What happens if consent was given, cloud backup is running, and the user later revokes browser-level permissions or clears local storage? (Cloud backup setting itself lives with the vault's own settings; the remote backup should remain until the user explicitly deletes it, and the local UI should reflect "unknown/needs reconnect" rather than assuming success.)
 - What happens if a user loses their vault's ownership code (e.g., clears local storage without having copied it elsewhere first)? They are not left with no recourse: support can perform a targeted metadata lookup (Story 4) if the user can supply an identifying detail such as the vault title. This MUST be disclosed plainly in the consent screen (FR-002) and the Settings view where the code is shown (FR-013), alongside the fact that losing the code AND any identifying detail means the backup becomes permanently unreachable.
 - What happens if two vaults happen to share the same title and a support lookup matches more than one? (The lookup MUST NOT auto-resolve to either one; it MUST require an additional distinguishing detail or fail closed rather than guess.)
+- What happens if the push-on-save to cloud backup fails (e.g., offline) while the user keeps working and saving locally? (The local save MUST still succeed every time; a failed cloud push MUST surface as an error/stale status, not block or roll back the local save, and the next successful save's push MUST simply supersede the missed one — no queue of missed pushes to replay.)
+- What happens if the user is offline for an extended period, making many local saves, then reconnects? (Only the vault's current state at the next successful save is pushed — intermediate history between pushes is never reconstructed or replayed, consistent with the whole-vault-snapshot model.)
+- What happens on a fresh page load after cloud backup was previously enabled for a vault? (The enabled state and ownership code MUST be read back from local persistence automatically — the user should see backup already "on" with its real status, not a fresh consent prompt or an "off" default.)
 
 ## Requirements _(mandatory)_
 
@@ -92,8 +97,8 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **FR-002**: The system MUST show an explicit consent screen before the first cloud backup of a vault occurs, stating what data is stored (entities, labels, notes, media), where it is stored (Codex Cryptica's own cloud storage), that the user can disable and delete it at any time, that losing the vault's ownership code (and any identifying detail such as the vault title) means permanently losing access to that backup, and that Codex Cryptica support staff can look up a vault's metadata (e.g., title, size, last-backup time — never content) to help a specific user recover a lost code.
 - **FR-003**: The system MUST NOT transmit any vault data to cloud backup infrastructure until the user has explicitly confirmed the consent screen for that vault.
 - **FR-004**: The system MUST NOT share, sell, forward, or expose backed-up vault data to any third-party vendor or external AI training pipeline.
-- **FR-005**: Once enabled, the system MUST back up the vault's entities, labels, notes, and media to cloud storage and make the backup available for restore.
-- **FR-006**: Users MUST be able to restore a vault from its cloud backup, reconstructing entities, labels, notes, and media.
+- **FR-005**: Once enabled, the system MUST perform an initial backup of the vault's entities, labels, notes, and media to cloud storage and make the backup available for restore.
+- **FR-006**: Users MUST be able to restore a vault from its cloud backup, reconstructing entities, labels, notes, and media. Restore MUST always be an explicit, user-initiated action — the system MUST NOT automatically pull from cloud storage on vault open, load, or switch, even when the cloud backup is newer than the local copy.
 - **FR-007**: The system MUST warn and require explicit confirmation before a restore overwrites existing local vault content.
 - **FR-008**: Users MUST be able to view the current cloud backup status for a vault (idle, syncing, error) and the time of the last successful backup.
 - **FR-009**: Users MUST be able to disable cloud backup for a vault at any time, which stops further automatic backups without deleting the existing remote copy.
@@ -105,6 +110,9 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **FR-015**: The system MUST provide a support-only lookup that returns a vault backup's metadata (title, size, last-backup time) — never its content — when queried by an identifying detail such as the vault title, and MUST return no result if no single backup matches.
 - **FR-016**: The system MUST NOT provide any way to list, browse, or enumerate vault backups in bulk; only single, targeted lookups by an identifying detail are permitted.
 - **FR-017**: Support MUST be able to re-issue a fresh ownership code for a backup located via lookup, so a user who lost their code can regain self-service access without support ever handling the vault's content.
+- **FR-018**: After the initial backup, every subsequent local save of that vault MUST also push its current state to cloud storage, replacing the prior remote backup (push-on-save), with no background polling or scheduled sync between saves — mirroring the existing Google Drive mirror sync model.
+- **FR-019**: A push-on-save failure (e.g., no connectivity) MUST NOT block, delay, or roll back the local save; the vault's cloud backup status MUST simply reflect that the last push failed or is stale until the next successful save.
+- **FR-020**: The system MUST persist, per vault, whether CC Cloud backup is enabled and its ownership code in local storage that survives page reloads and app restarts, so the user is never re-prompted for consent or re-asked to re-enable it after the first time — matching how the Google Drive folder association is already persisted in IndexedDB.
 
 ### Key Entities
 
@@ -125,6 +133,7 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **SC-006**: At least 90% of users who enable cloud backup can correctly state, when asked, where their data is stored and how to delete it — evidence the consent screen communicates clearly rather than being a legal-formality checkbox.
 - **SC-007**: A user who lost their ownership code but remembers their vault's title can regain self-service access to their vault through support within one support interaction, without support ever viewing that vault's content.
 - **SC-008**: 100% of support lookup attempts that don't resolve to exactly one matching vault return no result — bulk browsing of vault backups is never possible, tested or otherwise.
+- **SC-009**: A change saved locally to a vault with cloud backup enabled is reflected in the cloud backup (visible via status/last-backup time) within the same save operation, with no separate "sync now" step required.
 
 ## Assumptions
 
