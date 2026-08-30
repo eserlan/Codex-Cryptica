@@ -12,6 +12,8 @@ import {
   browserPerformanceRecorder,
 } from "$lib/services/performance/browser-performance-capture";
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
+import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
+import { vault } from "$lib/stores/vault.svelte";
 import {
   handleVersionSkewReload,
   isVersionSkewError,
@@ -163,8 +165,15 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   window.addEventListener("unhandledrejection", handleUnhandledRejection);
   window.addEventListener("vault-switched", handleVaultSwitched);
 
+  // Debounced entity writes are otherwise lost if the app closes inside the
+  // debounce window — see #2584.
+  const unsubFlushSaves = registerFlushSavesOnHide({
+    flushPendingSaves: () => vault.flushPendingSaves(),
+  });
+
   return () => {
     unsubOracle();
+    unsubFlushSaves();
     window.removeEventListener("error", handleGlobalError);
     window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener("vault-switched", handleVaultSwitched);

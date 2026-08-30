@@ -276,4 +276,123 @@ describe("RevisionService", () => {
       "error",
     );
   });
+
+  describe("does not erase existing content (#2584)", () => {
+    /**
+     * `updateEntity` treats an explicit empty string as a real write, so any
+     * empty value reaching it overwrites what the user had. These pin the two
+     * places an empty value could get in.
+     */
+
+    it("keeps existing lore when the AI returns an empty string for it", async () => {
+      (vault as any).entities = {
+        e1: {
+          id: "e1",
+          title: "Keep",
+          content: "user chronicle",
+          lore: "user lore",
+        },
+      };
+      (oracle as any).reviseEntity = vi.fn().mockResolvedValue({
+        content: "new chronicle",
+        lore: "",
+      });
+
+      await revisionService.revise({ entityId: "e1" });
+
+      // `??` would have let the empty string through here.
+      expect(revisionService.pendingDraft?.lore).toBe("user lore");
+    });
+
+    it("keeps existing chronicle when the AI returns an empty string for it", async () => {
+      (vault as any).entities = {
+        e1: {
+          id: "e1",
+          title: "Keep",
+          content: "user chronicle",
+          lore: "user lore",
+        },
+      };
+      (oracle as any).reviseEntity = vi.fn().mockResolvedValue({
+        content: "",
+        lore: "new lore",
+      });
+
+      await revisionService.revise({ entityId: "e1" });
+
+      expect(revisionService.pendingDraft?.chronicle).toBe("user chronicle");
+    });
+
+    it("omits an empty lore from the accepted patch rather than writing it", async () => {
+      (vault as any).entities = {
+        e1: {
+          id: "e1",
+          title: "Keep",
+          content: "user chronicle",
+          lore: "user lore",
+        },
+      };
+      (vault.updateEntity as any).mockClear();
+
+      revisionService.pendingDraft = {
+        entityId: "e1",
+        source: "revise",
+        chronicle: "new chronicle",
+        lore: "",
+        timestamp: 0,
+      } as any;
+
+      await revisionService.acceptDraft();
+
+      const patch = (vault.updateEntity as any).mock.calls[0][1];
+      expect(patch.content).toBe("new chronicle");
+      // Absent, not "" — an empty string would overwrite the user's lore.
+      expect("lore" in patch).toBe(false);
+    });
+
+    it("still writes an empty value when the entity had nothing there", async () => {
+      // Not a wipe: there is nothing to lose, and omitting the field would
+      // leave the entity without it entirely.
+      (vault as any).entities = {
+        e2: { id: "e2", title: "Blank", content: "", lore: "" },
+      };
+      (vault.updateEntity as any).mockClear();
+
+      revisionService.pendingDraft = {
+        entityId: "e2",
+        source: "revise",
+        chronicle: "",
+        lore: "",
+        timestamp: 0,
+      } as any;
+
+      await revisionService.acceptDraft();
+
+      const patch = (vault.updateEntity as any).mock.calls[0][1];
+      expect(patch.lore).toBe("");
+      expect(patch.content).toBe("");
+    });
+
+    it("keeps existing lore when a merge proposal carries none", () => {
+      (vault as any).entities = {
+        target: {
+          id: "target",
+          title: "Target",
+          content: "body",
+          lore: "user lore",
+        },
+      };
+
+      revisionService.proposeMergeDraft(
+        {
+          targetId: "target",
+          suggestedBody: "merged chronicle",
+          suggestedFrontmatter: { lore: "" },
+        } as any,
+        ["target", "source"],
+      );
+
+      expect(revisionService.pendingDraft?.lore).toBe("user lore");
+    });
+  });
 });
