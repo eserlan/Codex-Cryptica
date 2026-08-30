@@ -5,6 +5,8 @@ import {
   diffLoreSections,
   restoreLoreSections,
   formatSectionList,
+  buildLoreMergePlan,
+  composeLore,
 } from "./lore-sections";
 
 /**
@@ -195,5 +197,148 @@ describe("formatSectionList", () => {
 
   it("returns an empty string for no sections", () => {
     expect(formatSectionList([])).toBe("");
+  });
+});
+
+describe("buildLoreMergePlan", () => {
+  const LORE = [
+    "Opening prose.",
+    "",
+    "## Personality & Voice",
+    "",
+    "Gruff, but fair.",
+    "",
+    "## Hooks",
+    "",
+    "- Owes money.",
+  ].join("\n");
+
+  it("classifies every section as unchanged, modified, removed or added", () => {
+    const revised = [
+      "Opening prose.",
+      "",
+      "## Personality & Voice",
+      "",
+      "Warmer than he lets on.",
+      "",
+      "## Secrets",
+      "",
+      "He was there.",
+    ].join("\n");
+
+    const plan = buildLoreMergePlan(LORE, revised);
+    const byHeading = Object.fromEntries(
+      plan.entries.map((e) => [e.heading || "(preamble)", e.status]),
+    );
+    expect(byHeading).toEqual({
+      "(preamble)": "unchanged",
+      "Personality & Voice": "modified",
+      Secrets: "added",
+      Hooks: "removed",
+    });
+    expect(plan.hasChanges).toBe(true);
+    expect(plan.hasRemovals).toBe(true);
+  });
+
+  it("reports no changes for an identical revision", () => {
+    const plan = buildLoreMergePlan(LORE, LORE);
+    expect(plan.hasChanges).toBe(false);
+    expect(plan.hasRemovals).toBe(false);
+  });
+
+  it("defaults a dropped section to being kept", () => {
+    // The safe default: nothing is destroyed without an explicit choice.
+    const plan = buildLoreMergePlan(LORE, "## Personality & Voice\n\nWarmer.");
+    const hooks = plan.entries.find((e) => e.heading === "Hooks");
+    expect(hooks?.defaultChoice).toBe("current");
+  });
+
+  it("defaults a rewritten section to the revision", () => {
+    const plan = buildLoreMergePlan(
+      LORE,
+      LORE.replace("Gruff, but fair.", "Warmer."),
+    );
+    const personality = plan.entries.find(
+      (e) => e.heading === "Personality & Voice",
+    );
+    expect(personality?.defaultChoice).toBe("proposed");
+  });
+
+  it("keeps the revision's ordering and appends dropped sections", () => {
+    const revised = "## Secrets\n\nNew.\n\n## Personality & Voice\n\nWarmer.";
+    const plan = buildLoreMergePlan(LORE, revised);
+    expect(plan.entries.map((e) => e.heading)).toEqual([
+      "", // preamble, removed by the revision
+      "Secrets",
+      "Personality & Voice",
+      "Hooks",
+    ]);
+  });
+
+  it("treats the unheaded preamble as a reviewable entry", () => {
+    const plan = buildLoreMergePlan("Just prose.", "## A\n\nbody");
+    const preamble = plan.entries.find((e) => e.key === "");
+    expect(preamble?.status).toBe("removed");
+    expect(preamble?.defaultChoice).toBe("current");
+  });
+});
+
+describe("composeLore", () => {
+  const LORE = "## A\n\nold a\n\n## B\n\nold b";
+  const REVISED = "## A\n\nnew a";
+
+  it("uses the safe defaults when no choices are supplied", () => {
+    const plan = buildLoreMergePlan(LORE, REVISED);
+    const composed = composeLore(plan);
+    expect(composed).toContain("new a");
+    expect(composed).toContain("## B");
+    expect(composed).toContain("old b");
+  });
+
+  it("honours an explicit choice of the current version", () => {
+    const plan = buildLoreMergePlan(LORE, REVISED);
+    const composed = composeLore(plan, { a: "current", b: "current" });
+    expect(composed).toContain("old a");
+    expect(composed).not.toContain("new a");
+  });
+
+  it("combines both versions when asked", () => {
+    const plan = buildLoreMergePlan(LORE, REVISED);
+    const composed = composeLore(plan, { a: "both" });
+    expect(composed).toContain("new a");
+    expect(composed).toContain("old a");
+    // One heading, both bodies — not two competing sections.
+    expect(composed.match(/## A/g)).toHaveLength(1);
+  });
+
+  it("omits a section the reader dropped", () => {
+    const plan = buildLoreMergePlan(LORE, REVISED);
+    const composed = composeLore(plan, { b: "omit" });
+    expect(composed).not.toContain("## B");
+  });
+
+  it("never emits a duplicate heading", () => {
+    const plan = buildLoreMergePlan(LORE, "## A\n\nnew a\n\n## B\n\nnew b");
+    const composed = composeLore(plan, { a: "both", b: "both" });
+    expect(composed.match(/## A/g)).toHaveLength(1);
+    expect(composed.match(/## B/g)).toHaveLength(1);
+  });
+
+  it("falls back to the available side when the chosen one does not exist", () => {
+    // "current" on an added section has nothing to fall back to but the new text.
+    const plan = buildLoreMergePlan(
+      "## A\n\nold",
+      "## A\n\nnew\n\n## C\n\nfresh",
+    );
+    const composed = composeLore(plan, { c: "current" });
+    expect(composed).toContain("fresh");
+  });
+
+  it("renders the preamble without a heading", () => {
+    const plan = buildLoreMergePlan(
+      "Prose.\n\n## A\n\nbody",
+      "Prose.\n\n## A\n\nbody",
+    );
+    expect(composeLore(plan).startsWith("Prose.")).toBe(true);
   });
 });

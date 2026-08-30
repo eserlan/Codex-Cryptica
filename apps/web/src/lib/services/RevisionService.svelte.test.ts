@@ -39,6 +39,7 @@ import { vault } from "$lib/stores/vault.svelte";
 import { nodeMergeService } from "$lib/services/node-merge.service.svelte";
 import { revisionService, RevisionService } from "./RevisionService.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
 import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 
 describe("RevisionService", () => {
@@ -396,7 +397,7 @@ describe("RevisionService", () => {
     });
   });
 
-  describe("lore section removal is confirmed, not silent (#2588)", () => {
+  describe("lore changes are reviewed section by section (#2588, #2591)", () => {
     const LORE = [
       "## Personality & Voice",
       "",
@@ -423,45 +424,48 @@ describe("RevisionService", () => {
       return (vault.updateEntity as any).mock.calls[0]?.[1];
     };
 
-    it("asks before applying a revision that drops a section", async () => {
-      notificationStore.confirm = vi.fn().mockResolvedValue(false);
+    it("opens the review dialog when a revision drops a section", async () => {
+      loreMergeStore.request = vi.fn().mockResolvedValue("chosen lore");
       await acceptWith("## Personality & Voice\n\nWarmer than he lets on.");
-      expect(notificationStore.confirm).toHaveBeenCalledWith(
-        expect.objectContaining({ message: expect.stringContaining("Hooks") }),
+
+      expect(loreMergeStore.request).toHaveBeenCalledWith(
+        expect.objectContaining({ hasRemovals: true }),
+        "Cass",
       );
     });
 
-    it("restores the dropped section when the user keeps it", async () => {
-      notificationStore.confirm = vi.fn().mockResolvedValue(true);
-      const patch = await acceptWith(
-        "## Personality & Voice\n\nWarmer than he lets on.",
-      );
-      expect(patch.lore).toContain("## Hooks");
-      expect(patch.lore).toContain("- Owes money to the Assize.");
-      expect(patch.lore).toContain("Warmer than he lets on.");
-      // The rewritten section must not appear twice.
-      expect(patch.lore.match(/## Personality & Voice/g)).toHaveLength(1);
+    it("writes exactly what the reader chose", async () => {
+      loreMergeStore.request = vi.fn().mockResolvedValue("chosen lore");
+      const patch = await acceptWith("## Personality & Voice\n\nWarmer.");
+      expect(patch.lore).toBe("chosen lore");
     });
 
-    it("honours a deliberate deletion when the user accepts as written", async () => {
-      notificationStore.confirm = vi.fn().mockResolvedValue(false);
-      const patch = await acceptWith(
-        "## Personality & Voice\n\nWarmer than he lets on.",
-      );
-      expect(patch.lore).not.toContain("## Hooks");
+    it("abandons the apply entirely when the reader cancels", async () => {
+      // Cancelling must not fall through to writing the unreviewed revision.
+      loreMergeStore.request = vi.fn().mockResolvedValue(null);
+      const patch = await acceptWith("## Personality & Voice\n\nWarmer.");
+      expect(patch).toBeUndefined();
+      expect(vault.updateEntity).not.toHaveBeenCalled();
     });
 
-    it("does not ask when every section survives the rewrite", async () => {
-      notificationStore.confirm = vi.fn().mockResolvedValue(true);
-      const patch = await acceptWith(
-        LORE.replace("Gruff, but fair.", "Warmer than he lets on."),
+    it("opens the dialog for a rewrite, so the reader can see what changed", async () => {
+      loreMergeStore.request = vi.fn().mockResolvedValue("chosen lore");
+      await acceptWith(LORE.replace("Gruff, but fair.", "Warmer."));
+      expect(loreMergeStore.request).toHaveBeenCalledWith(
+        expect.objectContaining({ hasChanges: true, hasRemovals: false }),
+        "Cass",
       );
-      expect(notificationStore.confirm).not.toHaveBeenCalled();
-      expect(patch.lore).toContain("## Hooks");
     });
 
-    it("does not ask when the entity had no lore to lose", async () => {
-      notificationStore.confirm = vi.fn().mockResolvedValue(true);
+    it("applies silently when the revision is identical", async () => {
+      loreMergeStore.request = vi.fn();
+      const patch = await acceptWith(LORE);
+      expect(loreMergeStore.request).not.toHaveBeenCalled();
+      expect(patch.lore).toBe(LORE);
+    });
+
+    it("does not prompt when the entity had no lore to lose", async () => {
+      loreMergeStore.request = vi.fn();
       (vault as any).entities = {
         e3: { id: "e3", title: "New", content: "", lore: "" },
       };
@@ -475,7 +479,7 @@ describe("RevisionService", () => {
       } as any;
 
       await revisionService.acceptDraft();
-      expect(notificationStore.confirm).not.toHaveBeenCalled();
+      expect(loreMergeStore.request).not.toHaveBeenCalled();
     });
   });
 });
