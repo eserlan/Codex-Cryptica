@@ -28,6 +28,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { shelf } from "$lib/features/shelf";
 
   let {
     entity,
@@ -62,6 +63,19 @@
   }>();
 
   let linkCopied = $state(false);
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    if (!entity) return;
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
 
   const handleCopyGuestLink = async () => {
     if (!guestVault.publishId || !entity) return;
@@ -265,6 +279,27 @@
             data-testid="zen-find-in-graph-button"
           >
             <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && !vault.isGuest}
+          <button
+            type="button"
+            onclick={handleSendToShelf}
+            class="px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
+              ? 'text-theme-primary'
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title={shelvedJustNow
+              ? "On the Shelf"
+              : "Send to Shelf — to bring into another vault"}
+            aria-label="Send to Shelf"
+            data-testid="zen-send-to-shelf-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{shelvedJustNow
+                ? 'icon-[lucide--check]'
+                : 'icon-[lucide--library]'} w-4 h-4"
             ></span>
           </button>
         {/if}
