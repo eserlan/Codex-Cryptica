@@ -1,0 +1,197 @@
+import type { DiscoveryEntryInput } from "../schema";
+
+/**
+ * `/answers/[slug]` — reference answers to real questions (#2564).
+ *
+ * Every one does the `understand` job, which is what lets them sit alongside a
+ * generator on the same subject: one explains the concept, the other produces
+ * an artefact. Where an answer shares a cluster with a `/for` guide the two are
+ * separated by job — technique versus tooling — and that separation is the
+ * thing to check before adding another answer near an existing guide.
+ */
+export const answerEntries: DiscoveryEntryInput[] = [
+  {
+    id: "answers-index",
+    pageKind: "index",
+    canonicalPath: "/answers",
+    primaryIntent: "rpg and worldbuilding questions answered",
+    userJob: "navigate",
+    uniqueValue:
+      "Index of the answer library, showing each question's direct answer so a reader can pick the right one without opening several.",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-point-crawl",
+    pageKind: "answer",
+    canonicalPath: "/answers/what-is-a-point-crawl",
+    primaryIntent: "what is a point crawl",
+    intentAliases: ["point crawl meaning", "point crawl vs hex crawl"],
+    userJob: "understand",
+    uniqueValue:
+      "Defines the structure, names its parts, works a fen example with real travel costs, and says when not to use one.",
+    parentCluster: "adventure-mapping",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-campaign-notes",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-do-you-organise-rpg-campaign-notes",
+    primaryIntent: "how do you organise rpg campaign notes",
+    intentAliases: [
+      "how to organize dnd campaign notes",
+      "best way to structure gm notes",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "A three-layer structure — entities, session logs, disposable prep — plus the post-session pass that keeps it true. Technique, not product.",
+    parentCluster: "campaign-notes",
+    relatedIntents: ["solution-campaign-manager"],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "solution-campaign-manager",
+        reason:
+          "The answer teaches a note structure that works in any tool; the solution page documents what Codex does. Different jobs — understand versus evaluate — on one subject.",
+      },
+    ],
+  },
+  {
+    id: "answer-fantasy-faction",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-do-you-create-a-fantasy-faction",
+    primaryIntent: "how do you create a fantasy faction",
+    intentAliases: ["how to make an rpg faction", "faction design framework"],
+    userJob: "understand",
+    uniqueValue:
+      "Six ordered questions that make a faction predict its own next move, with a worked guild example and a usability test.",
+    parentCluster: "faction-creation",
+    relatedIntents: ["generator-faction"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-npc-relationships",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-do-you-organise-npc-relationships",
+    primaryIntent: "how do you organise npc relationships",
+    intentAliases: ["track npc relationships rpg", "npc relationship map"],
+    userJob: "understand",
+    uniqueValue:
+      "Argues for directed, named links over ally/enemy lists, says what each link must record, and gives a five-link worked scenario.",
+    parentCluster: "relationship-modelling",
+    relatedIntents: ["solution-rpg-knowledge-graph"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-random-encounter",
+    pageKind: "answer",
+    canonicalPath: "/answers/what-makes-a-good-random-encounter",
+    primaryIntent: "what makes a good random encounter",
+    intentAliases: [
+      "how to write random encounter tables",
+      "random encounter design",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "Four criteria for an encounter entry, a before-and-after rewrite of the same monster, and guidance on when not to roll at all.",
+    parentCluster: "encounter-design",
+    relatedIntents: ["generator-encounter"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-pantheon",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-do-you-create-a-pantheon",
+    primaryIntent: "how do you create a pantheon",
+    intentAliases: ["how to design rpg gods", "fantasy pantheon design"],
+    userJob: "understand",
+    uniqueValue:
+      "Builds entanglements between gods before domains, with five structural moves and a three-god example that yields a legal system.",
+    parentCluster: "gods-and-faith",
+    relatedIntents: [
+      "generator-pantheon-generator",
+      "answer-fictional-religion",
+    ],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "answer-fictional-religion",
+        reason:
+          "Pantheon covers the roster of gods and how they are entangled; religion covers the institution, its rites and its funding. Both pages state the split explicitly and a setting can need either alone.",
+      },
+    ],
+  },
+  {
+    id: "answer-rpg-puzzles",
+    pageKind: "answer",
+    canonicalPath:
+      "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+    primaryIntent: "how do you design rpg puzzles that do not stall the game",
+    intentAliases: ["rpg puzzle design", "stop puzzles stalling the table"],
+    userJob: "understand",
+    uniqueValue:
+      "Names the single cause of stalling, gives four properties that prevent it, redesigns a vault door, and lists safety valves to prepare.",
+    parentCluster: "puzzle-design",
+    relatedIntents: ["generator-puzzle"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-settlement-contents",
+    pageKind: "answer",
+    canonicalPath: "/answers/what-should-an-rpg-settlement-contain",
+    primaryIntent: "what should an rpg settlement contain",
+    intentAliases: ["how to design a fantasy town", "rpg town prep checklist"],
+    userJob: "understand",
+    uniqueValue:
+      "Prep sized to what gets used — a reason to exist, four enterable places, three wants, one unsolved problem — plus what to leave out.",
+    parentCluster: "settlement-creation",
+    relatedIntents: ["generator-settlement"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-fictional-religion",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-do-you-create-a-believable-fictional-religion",
+    primaryIntent: "how do you create a believable fictional religion",
+    intentAliases: [
+      "how to write a fictional religion",
+      "designing religions for worldbuilding",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "Practice before doctrine — one rite, one prohibition, who funds it, what adherents dispute — and why total coherence reads as fake.",
+    parentCluster: "gods-and-faith",
+    relatedIntents: ["answer-pantheon"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "answer-conspiracy-campaign",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-do-you-run-a-conspiracy-campaign",
+    primaryIntent: "how do you run a conspiracy campaign",
+    intentAliases: ["running a mystery campaign", "conspiracy campaign prep"],
+    userJob: "understand",
+    uniqueValue:
+      "Write the truth first, then design the leak: three prep documents, the three-clue redundancy rule, and one fact reached three ways.",
+    parentCluster: "conspiracy-campaigns",
+    relatedIntents: ["for-conspiracy"],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "for-conspiracy",
+        reason:
+          "The answer teaches how to run the campaign; the /for page shows how Codex holds the evidence map. Technique versus tooling, and each is useful without the other.",
+      },
+    ],
+  },
+];
