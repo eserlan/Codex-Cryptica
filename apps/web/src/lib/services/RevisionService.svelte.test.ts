@@ -395,4 +395,87 @@ describe("RevisionService", () => {
       expect(revisionService.pendingDraft?.lore).toBe("user lore");
     });
   });
+
+  describe("lore section removal is confirmed, not silent (#2588)", () => {
+    const LORE = [
+      "## Personality & Voice",
+      "",
+      "Gruff, but fair.",
+      "",
+      "## Hooks",
+      "",
+      "- Owes money to the Assize.",
+    ].join("\n");
+
+    const acceptWith = async (proposedLore: string) => {
+      (vault as any).entities = {
+        e1: { id: "e1", title: "Cass", content: "body", lore: LORE },
+      };
+      (vault.updateEntity as any).mockClear();
+      revisionService.pendingDraft = {
+        entityId: "e1",
+        source: "revise",
+        chronicle: "body",
+        lore: proposedLore,
+        timestamp: 0,
+      } as any;
+      await revisionService.acceptDraft();
+      return (vault.updateEntity as any).mock.calls[0]?.[1];
+    };
+
+    it("asks before applying a revision that drops a section", async () => {
+      notificationStore.confirm = vi.fn().mockResolvedValue(false);
+      await acceptWith("## Personality & Voice\n\nWarmer than he lets on.");
+      expect(notificationStore.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining("Hooks") }),
+      );
+    });
+
+    it("restores the dropped section when the user keeps it", async () => {
+      notificationStore.confirm = vi.fn().mockResolvedValue(true);
+      const patch = await acceptWith(
+        "## Personality & Voice\n\nWarmer than he lets on.",
+      );
+      expect(patch.lore).toContain("## Hooks");
+      expect(patch.lore).toContain("- Owes money to the Assize.");
+      expect(patch.lore).toContain("Warmer than he lets on.");
+      // The rewritten section must not appear twice.
+      expect(patch.lore.match(/## Personality & Voice/g)).toHaveLength(1);
+    });
+
+    it("honours a deliberate deletion when the user accepts as written", async () => {
+      notificationStore.confirm = vi.fn().mockResolvedValue(false);
+      const patch = await acceptWith(
+        "## Personality & Voice\n\nWarmer than he lets on.",
+      );
+      expect(patch.lore).not.toContain("## Hooks");
+    });
+
+    it("does not ask when every section survives the rewrite", async () => {
+      notificationStore.confirm = vi.fn().mockResolvedValue(true);
+      const patch = await acceptWith(
+        LORE.replace("Gruff, but fair.", "Warmer than he lets on."),
+      );
+      expect(notificationStore.confirm).not.toHaveBeenCalled();
+      expect(patch.lore).toContain("## Hooks");
+    });
+
+    it("does not ask when the entity had no lore to lose", async () => {
+      notificationStore.confirm = vi.fn().mockResolvedValue(true);
+      (vault as any).entities = {
+        e3: { id: "e3", title: "New", content: "", lore: "" },
+      };
+      (vault.updateEntity as any).mockClear();
+      revisionService.pendingDraft = {
+        entityId: "e3",
+        source: "revise",
+        chronicle: "c",
+        lore: "## Anything\n\nbody",
+        timestamp: 0,
+      } as any;
+
+      await revisionService.acceptDraft();
+      expect(notificationStore.confirm).not.toHaveBeenCalled();
+    });
+  });
 });
