@@ -168,8 +168,42 @@ and `/features/ai-gm-assistant`; `/solutions/local-first-rpg` and its offline an
 worldbuilding variants. Each is a pre-existing split, visible rather than
 forgotten.
 
+## The coverage report
+
+```bash
+bun scripts/discovery-report.mjs          # human-readable
+bun scripts/discovery-report.mjs --json   # machine-readable
+```
+
+The audit answers _what is wrong?_. The report answers _what is missing?_ — the
+question worth asking when deciding what to build next. It is read-only, always
+exits 0, and is never a gate.
+
+It prints three things:
+
+**A cluster × user-job matrix.** One row per subject, one column per job. Where
+a cell is empty, no page serves that job for that subject.
+
+**Coverage gaps**, ranked by how well-tooled the cluster already is. A subject
+with four generators and no explanation is a stronger candidate than one with a
+single generator. Two complements are checked:
+
+- `create` without `understand` — a tool with nothing explaining the concept,
+  leaving the reader who is not yet ready to generate anything with nowhere to
+  land.
+- `understand` without `create` — a concept explained with no tool to act on it.
+
+**Clusters with no `see-an-example` page**, because that job is currently
+unserved across the whole site.
+
+A gap is a question, not a task. It is a prompt to ask whether a page would do a
+job no existing page does — never a checklist to work through, and never a
+licence to generate pages to fill cells. The matrix having empty cells is fine;
+a page that exists only because a cell was empty is exactly what this registry
+is meant to prevent.
+
 ## Later uses
 
-The model can support internal-link suggestions, sitemap auditing, orphan-page
-detection, unserved-query analysis and `llms-full.txt` section validation. None
-of these are built, and none should block adding an entry.
+The model can also support internal-link suggestions, sitemap auditing,
+orphan-page detection, unserved-query analysis and `llms-full.txt` section
+validation. None of these are built, and none should block adding an entry.
