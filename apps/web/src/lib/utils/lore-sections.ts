@@ -171,3 +171,168 @@ export function formatSectionList(sections: LoreSection[]): string {
   if (names.length <= 1) return names[0] ?? "";
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
+
+/* ------------------------------------------------------------------------ */
+/* Section-by-section merge planning                                         */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * What happened to one section between the current lore and a proposed
+ * revision. `unchanged` means the body is byte-identical, so there is nothing
+ * for the reader to decide.
+ */
+export type LoreSectionStatus = "unchanged" | "modified" | "removed" | "added";
+
+/** Which version of a section to write. */
+export type LoreSectionChoice = "current" | "proposed" | "both" | "omit";
+
+export interface LoreSectionPlanEntry {
+  /** Matching key; the empty string is the unheaded preamble. */
+  key: string;
+  /** Heading to display. Empty for the preamble. */
+  heading: string;
+  status: LoreSectionStatus;
+  /** Body as it exists today, when there is one. */
+  current?: string;
+  /** Body the revision proposes, when there is one. */
+  proposed?: string;
+  /** What to select when the dialog opens. */
+  defaultChoice: LoreSectionChoice;
+}
+
+export interface LoreMergePlan {
+  entries: LoreSectionPlanEntry[];
+  /** True when anything needs a decision — i.e. not every entry is unchanged. */
+  hasChanges: boolean;
+  /** True when a section exists today and the revision drops it. */
+  hasRemovals: boolean;
+}
+
+/**
+ * Builds a per-section comparison of current lore against a proposed revision.
+ *
+ * Ordering follows the proposal, with dropped sections appended in their
+ * original order. That keeps the revision's own structure intact — it may have
+ * reordered deliberately — while making sure nothing disappears off the end of
+ * the list.
+ *
+ * Defaults are chosen to be safe rather than clever: a dropped section defaults
+ * to being kept, and a modified one defaults to the revision, because the
+ * reader asked for a revision. Nothing is destroyed without an explicit choice.
+ */
+export function buildLoreMergePlan(
+  existingLore: string,
+  proposedLore: string,
+): LoreMergePlan {
+  const existing = parseLoreSections(existingLore);
+  const proposed = parseLoreSections(proposedLore);
+
+  const existingByKey = new Map(existing.sections.map((s) => [s.key, s]));
+  const proposedByKey = new Map(proposed.sections.map((s) => [s.key, s]));
+  const entries: LoreSectionPlanEntry[] = [];
+
+  // The preamble is unheaded but is still the author's text; losing it silently
+  // would be the same bug in a different place.
+  if (existing.preamble || proposed.preamble) {
+    const status: LoreSectionStatus = !existing.preamble
+      ? "added"
+      : !proposed.preamble
+        ? "removed"
+        : existing.preamble === proposed.preamble
+          ? "unchanged"
+          : "modified";
+    entries.push({
+      key: "",
+      heading: "",
+      status,
+      current: existing.preamble || undefined,
+      proposed: proposed.preamble || undefined,
+      defaultChoice: status === "removed" ? "current" : "proposed",
+    });
+  }
+
+  for (const section of proposed.sections) {
+    const match = existingByKey.get(section.key);
+    if (!match) {
+      entries.push({
+        key: section.key,
+        heading: section.heading,
+        status: "added",
+        proposed: section.body,
+        defaultChoice: "proposed",
+      });
+      continue;
+    }
+    const unchanged = match.body === section.body;
+    entries.push({
+      key: section.key,
+      heading: section.heading,
+      status: unchanged ? "unchanged" : "modified",
+      current: match.body,
+      proposed: section.body,
+      defaultChoice: "proposed",
+    });
+  }
+
+  for (const section of existing.sections) {
+    if (proposedByKey.has(section.key)) continue;
+    entries.push({
+      key: section.key,
+      heading: section.heading,
+      status: "removed",
+      current: section.body,
+      // Safe default: a section the revision dropped is kept unless the reader
+      // says otherwise.
+      defaultChoice: "current",
+    });
+  }
+
+  return {
+    entries,
+    hasChanges: entries.some((entry) => entry.status !== "unchanged"),
+    hasRemovals: entries.some((entry) => entry.status === "removed"),
+  };
+}
+
+/**
+ * Renders a plan back into a lore string using the reader's choices.
+ *
+ * Unlisted keys fall back to the entry's default, so a partially-answered plan
+ * still produces something sensible rather than throwing.
+ */
+export function composeLore(
+  plan: LoreMergePlan,
+  choices: Record<string, LoreSectionChoice> = {},
+): string {
+  const parts: string[] = [];
+
+  for (const entry of plan.entries) {
+    const choice = choices[entry.key] ?? entry.defaultChoice;
+    if (choice === "omit") continue;
+
+    let body: string | undefined;
+    if (choice === "current") body = entry.current;
+    else if (choice === "proposed") body = entry.proposed;
+    else if (choice === "both") {
+      body = [entry.proposed, entry.current].filter(Boolean).join("\n\n");
+    }
+
+    if (body === undefined) {
+      // The chosen side does not exist (e.g. "current" on an added section).
+      body = entry.proposed ?? entry.current;
+    }
+    if (body === undefined) continue;
+
+    if (entry.key === "") {
+      if (body.trim()) parts.push(body.trim());
+      continue;
+    }
+    parts.push(
+      body.trim()
+        ? `## ${entry.heading}\n\n${body.trim()}`
+        : `## ${entry.heading}`,
+    );
+  }
+
+  return parts.join("\n\n");
+}

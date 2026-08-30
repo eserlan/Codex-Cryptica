@@ -9,6 +9,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import ZenModeModal from "./ZenModeModal.svelte";
+  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -98,6 +99,14 @@
       {#await loadModal(() => import("./MobileCreateEntitySheet.svelte"), "MobileCreateEntitySheet") then MobileCreateEntitySheet}
         {#if MobileCreateEntitySheet}
           <MobileCreateEntitySheet />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if loreMergeStore.dialog.open}
+      {#await loadModal(() => import("./LoreMergeModal.svelte"), "LoreMergeModal") then LoreMergeModal}
+        {#if LoreMergeModal}
+          <LoreMergeModal />
         {/if}
       {/await}
     {/if}
