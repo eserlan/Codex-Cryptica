@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { solutions } from "../apps/web/src/lib/config/seo-pages.ts";
 import { comparisons } from "../apps/web/src/lib/config/seo-comparisons.ts";
 import { getAllLandingPageSlugs } from "../apps/web/src/lib/content/for/registry.ts";
+import { getAllAnswers, answerPath } from "../apps/web/src/lib/content/answers/registry.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -128,12 +129,30 @@ const buildXml = async (entries) => {
     console.warn("[generate-sitemap] Could not read landing page registry:", e);
   }
 
+  // Answer pages (/answers/[slug])
+  const answerRoutes = [
+    { path: "/answers", changefreq: "weekly", priority: "0.8" },
+  ];
+
+  try {
+    for (const answer of getAllAnswers()) {
+      answerRoutes.push({
+        path: answerPath(answer),
+        changefreq: "monthly",
+        priority: "0.8",
+      });
+    }
+  } catch (e) {
+    console.warn("[generate-sitemap] Could not read answer registry:", e);
+  }
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
     ...comparisonRoutes,
     ...generatorRoutes,
     ...landingPageRoutes,
+    ...answerRoutes,
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
