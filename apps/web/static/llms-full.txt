@@ -1957,6 +1957,35 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 **Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
 
 
+## Curated Generator Examples
+
+Real, unedited output from the Codex Cryptica generators, indexed at https://codexcryptica.com/examples. Each page shows the full artefact, the settings that produced it, and a short editorial note on what makes it usable at the table.
+
+### [Fantasy settlement example: Gull's Roost](https://codexcryptica.com/examples/gulls-roost-coastal-smuggling-town)
+
+**Genre:** Fantasy
+
+**Summary:** A salt-caked coastal smuggling town built around a collapsed sea-arch, nominally governed by an elected council of merchants while petty crews run the docks.
+
+### [RPG faction example: The Low-Tide Rust](https://codexcryptica.com/examples/the-low-tide-rust-dock-syndicate)
+
+**Genre:** Fantasy
+
+**Summary:** A corrosion-obsessed dock syndicate that dissolves bulkhead locks and drowns rival crews in the limestone stacks of Gull's Roost.
+
+### [Cyberpunk district example: Arc Hub](https://codexcryptica.com/examples/arc-hub-augmentation-slum)
+
+**Genre:** Cyberpunk
+
+**Summary:** A neon-soaked vertical slum built into the scaffolding of an abandoned corporate transit terminal, operating as the city's premier black-market augmentation bazaar under the watchful eye of a malfunctioning municipal AI.
+
+### [Sci-fi encounter example: The Venting Helix](https://codexcryptica.com/examples/the-venting-helix-derelict-hazard)
+
+**Genre:** Space opera
+
+**Summary:** Deep within the drifting hull of the Astragal-Nine, the crew must halt a runaway atmospheric purge loop before the counter-rotating habitat rings tear themselves apart.
+
+
 ## TTRPG System & Genre Campaign Management
 
 Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, and toolsets for major tabletop RPG systems and worldbuilding genres:

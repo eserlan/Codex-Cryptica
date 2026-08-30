@@ -8,6 +8,7 @@ import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
 import { getAllLandingPageSlugs } from "$lib/content/for/registry";
 import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
+import { getAllExamples, examplePath } from "$lib/content/examples/registry";
 
 export const prerender = true;
 
@@ -29,6 +30,7 @@ export async function GET() {
     { path: "/blog", changefreq: "weekly", priority: "0.9" },
     { path: "/for", changefreq: "weekly", priority: "0.9" },
     { path: "/answers", changefreq: "weekly", priority: "0.8" },
+    { path: "/examples", changefreq: "weekly", priority: "0.8" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
     { path: "/migrations", changefreq: "weekly", priority: "0.9" },
@@ -164,6 +166,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Curated example pages (/examples/[slug]), keyed off the canonical path.
+  const exampleRoutes = getAllExamples().map((example) => ({
+    path: examplePath(example),
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
@@ -174,6 +183,7 @@ export async function GET() {
     ...importRoutes,
     ...landingPageRoutes,
     ...answerRoutes,
+    ...exampleRoutes,
   ];
 
   const staticUrls = allStatic
