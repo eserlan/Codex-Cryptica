@@ -236,3 +236,7 @@
 
 **Learning:** When acting as the 'Bolt' persona, avoid refactoring simple object iterations like `Object.keys(obj).filter(...)` into traditional `for...in` loops unless operating on massive data structures, as it's often rejected in code review as an unmeasurable micro-optimization that harms readability.
 **Action:** Focus instead on chained array methods like `.map().filter()` that explicitly allocate unused intermediate objects or arrays (e.g., mapping strings to trim them before filtering out empty ones), as replacing these with a single imperative loop offers a clearer memory optimization without sacrificing readability.
+## 2024-08-30 - Eliminate chained array allocations in SettlementFormFields
+
+**Learning:** Replacing chained array allocations (`Object.entries().filter().map()`) followed by `Object.fromEntries()` with a single imperative loop over object properties reduces object instantiation overhead and intermediate array generation. This is especially useful for logic run frequently (like reactive declarations and effects).
+**Action:** When extracting data or building objects in frequent/reactive paths, utilize imperative `for...in` or `for...of` loops rather than chaining high-level JS array methods if array allocations become a bottleneck. Ensure the component remains readable.

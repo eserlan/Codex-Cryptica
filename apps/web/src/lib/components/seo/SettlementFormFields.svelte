@@ -107,14 +107,15 @@
 
     // Whatever is already on screen was chosen deliberately, so it is locked
     // and the description only fills what is still open.
-    const locked = Object.fromEntries(
-      Object.entries(currentValues())
-        .filter(([, value]) => value !== "")
-        .map(([axisId, value]) => [
-          axisId,
-          { value, source: "manual" as const },
-        ]),
-    );
+    // ⚡ Bolt Optimization: Replace chained Object.entries().filter().map() with an imperative loop
+    const locked: Record<string, { value: string; source: "manual" }> = {};
+    const current = currentValues();
+    for (const axisId in current) {
+      const value = current[axisId];
+      if (value !== "") {
+        locked[axisId] = { value, source: "manual" as const };
+      }
+    }
 
     const signals = analyseIntent(description, SETTLEMENT_LEXICON);
     const result = applyIntent(
