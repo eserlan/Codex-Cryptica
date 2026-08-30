@@ -58,10 +58,7 @@
       </a>
     </nav>
 
-    <!-- A plain div, not <header>: app.css shields <header> from world themes
-         by forcing the chrome sans stack, which would render the page title in
-         a different family from every heading below it. -->
-    <div class="mb-8">
+    <header class="mb-8">
       <p
         class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
       >
@@ -72,7 +69,7 @@
       >
         {answer.question}
       </h1>
-    </div>
+    </header>
 
     <!-- The direct answer, before anything else on the page. Ruled rather than
          boxed: the grammar reserves cards for parallel, comparable items. -->

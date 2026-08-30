@@ -352,9 +352,18 @@
       color-mix(in srgb, var(--color-theme-primary), transparent 78%);
   }
 
-  /* Shield app chrome from world theme colors and fonts */
-  header,
-  footer,
+  /*
+   * Shield app chrome from world theme colors and fonts.
+   *
+   * Opt-in by class, never by element name. This used to select bare `header`
+   * and `footer`, which caught all 35 such elements in the app when only four
+   * are chrome — page titles, panel headers and card headers inherited the
+   * neutral sans stack and a reset palette they never asked for, and the
+   * `!important` on `--font-header` meant a `font-header` utility on the
+   * element could not win. Components that style themselves with `theme-*`
+   * tokens are asking for the world theme; this must not override them (#2578).
+   */
+  .chrome-shield,
   .bg-chrome-surface,
   .bg-chrome-bg {
     --font-header:

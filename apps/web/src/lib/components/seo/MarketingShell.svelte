@@ -64,8 +64,10 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
+  <!-- chrome-shield: opts this header into the neutral chrome palette so world
+       themes cannot bleed into site navigation. See app.css and #2578. -->
   <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-50"
+    class="chrome-shield w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-50"
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
