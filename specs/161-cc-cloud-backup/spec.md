@@ -56,6 +56,23 @@ A user who has cloud backup on wants to check that it's working, and wants a str
 3. **Given** the user requests deletion of their cloud backup, **When** the deletion completes, **Then** the system confirms the remote copy is gone and it can no longer be restored.
 4. **Given** a backup attempt fails (e.g., no network, storage error), **When** the failure occurs, **Then** the status clearly shows an error state rather than silently appearing up to date.
 
+---
+
+### User Story 4 - Support-assisted recovery for a lost ownership code (Priority: P4)
+
+A user who lost their vault's ownership code contacts Codex Cryptica support. Support looks up that specific vault's backup by an identifying detail the user can supply (e.g., the vault's title) and helps the user regain access — without support ever browsing the full set of vault backups or seeing vault content.
+
+**Why this priority**: Losing the ownership code is an expected consequence of having no account system (see Assumptions), and support-assisted recovery is the intended safety net for that gap. It is lowest priority because it's a fallback path used only when Stories 1–3's self-service tools fail the user, not something exercised on the golden path.
+
+**Independent Test**: Can be fully tested by creating a backup, discarding the ownership code, then confirming that support can locate that one backup using its title and re-issue access to the user — while confirming a lookup with no matching title, or a request to list all backups, is refused.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user has lost their ownership code but remembers their vault's title, **When** support performs a lookup using that title, **Then** the system returns at most the matching backup's metadata (title, size, last-backup time) — never its content, and never other vaults' metadata.
+2. **Given** support has located a user's backup via lookup, **When** support completes identity-appropriate verification with the user, **Then** support can re-issue a fresh ownership code for that backup so the user can restore it themselves.
+3. **Given** support has no identifying detail to search on (the user doesn't remember any identifying detail either), **When** support attempts a lookup, **Then** the system returns no results rather than exposing a list of unrelated vaults to search through.
+4. **Given** an attempt is made to retrieve an unfiltered list of all vault backups, **When** that request is made, **Then** the system refuses it — only targeted, single-match lookups are supported, never open browsing.
+
 ### Edge Cases
 
 - What happens if the user loses network connectivity mid-backup or mid-restore? (Status must show an error/incomplete state, not a false "synced"/"restored" success, and local data must remain intact.)
@@ -64,14 +81,15 @@ A user who has cloud backup on wants to check that it's working, and wants a str
 - What happens if a user requests deletion while a backup or restore is in progress? (The in-flight operation should be stopped and no orphaned remote data should remain.)
 - What happens when a vault exceeds a reasonable size (e.g., very large media libraries)? (User must see a clear message rather than a silent partial or failed backup.)
 - What happens if consent was given, cloud backup is running, and the user later revokes browser-level permissions or clears local storage? (Cloud backup setting itself lives with the vault's own settings; the remote backup should remain until the user explicitly deletes it, and the local UI should reflect "unknown/needs reconnect" rather than assuming success.)
-- What happens if a user loses their vault's ownership code (e.g., clears local storage without having copied it elsewhere first)? Since there is no account system to recover access through, that backup becomes permanently unreachable by the user — this MUST be disclosed plainly in the consent screen (FR-002) and the Settings view where the code is shown (FR-013), not discovered only after the fact.
+- What happens if a user loses their vault's ownership code (e.g., clears local storage without having copied it elsewhere first)? They are not left with no recourse: support can perform a targeted metadata lookup (Story 4) if the user can supply an identifying detail such as the vault title. This MUST be disclosed plainly in the consent screen (FR-002) and the Settings view where the code is shown (FR-013), alongside the fact that losing the code AND any identifying detail means the backup becomes permanently unreachable.
+- What happens if two vaults happen to share the same title and a support lookup matches more than one? (The lookup MUST NOT auto-resolve to either one; it MUST require an additional distinguishing detail or fail closed rather than guess.)
 
 ## Requirements _(mandatory)_
 
 ### Functional Requirements
 
 - **FR-001**: The system MUST keep cloud backup off by default for every vault; it MUST NOT be enabled automatically, silently, or as a side effect of any other action.
-- **FR-002**: The system MUST show an explicit consent screen before the first cloud backup of a vault occurs, stating what data is stored (entities, labels, notes, media), where it is stored (Codex Cryptica's own cloud storage), that the user can disable and delete it at any time, and that losing the vault's ownership code means permanently losing access to that backup (there being no account-based recovery).
+- **FR-002**: The system MUST show an explicit consent screen before the first cloud backup of a vault occurs, stating what data is stored (entities, labels, notes, media), where it is stored (Codex Cryptica's own cloud storage), that the user can disable and delete it at any time, that losing the vault's ownership code (and any identifying detail such as the vault title) means permanently losing access to that backup, and that Codex Cryptica support staff can look up a vault's metadata (e.g., title, size, last-backup time — never content) to help a specific user recover a lost code.
 - **FR-003**: The system MUST NOT transmit any vault data to cloud backup infrastructure until the user has explicitly confirmed the consent screen for that vault.
 - **FR-004**: The system MUST NOT share, sell, forward, or expose backed-up vault data to any third-party vendor or external AI training pipeline.
 - **FR-005**: Once enabled, the system MUST back up the vault's entities, labels, notes, and media to cloud storage and make the backup available for restore.
@@ -84,12 +102,16 @@ A user who has cloud backup on wants to check that it's working, and wants a str
 - **FR-012**: The system MUST scope cloud backup access to the vault's own owner via a per-vault ownership code generated when backup is first enabled; no other vault's code MUST be able to read, restore, or delete that backup.
 - **FR-013**: Users MUST be able to view or copy their vault's ownership code from Settings at any time, so they can bring it to another device to restore.
 - **FR-014**: The system MUST reject any restore, status, or delete request that does not present a valid ownership code for that vault's backup, without revealing whether a backup exists for an invalid code.
+- **FR-015**: The system MUST provide a support-only lookup that returns a vault backup's metadata (title, size, last-backup time) — never its content — when queried by an identifying detail such as the vault title, and MUST return no result if no single backup matches.
+- **FR-016**: The system MUST NOT provide any way to list, browse, or enumerate vault backups in bulk; only single, targeted lookups by an identifying detail are permitted.
+- **FR-017**: Support MUST be able to re-issue a fresh ownership code for a backup located via lookup, so a user who lost their code can regain self-service access without support ever handling the vault's content.
 
 ### Key Entities
 
 - **Cloud Backup**: The remote copy of one vault's data held in Codex Cryptica's own cloud storage. Attributes: owning vault, ownership code (opaque, generated once at first enable, no linked user account), current status (idle/syncing/error), last successful backup time, size.
 - **Consent Record**: The user's explicit opt-in decision for a given vault. Attributes: vault, whether granted, when granted, when (if ever) revoked.
 - **Restore Operation**: A one-time action reconstructing a vault's local data from its Cloud Backup. Attributes: target vault, source backup, outcome (succeeded/failed/cancelled).
+- **Support Lookup**: A single, targeted support query against Cloud Backup metadata by an identifying detail (e.g., vault title). Attributes: search detail used, matched backup (if exactly one), outcome (recovered/no match/ambiguous), whether a fresh ownership code was issued. Never carries vault content.
 
 ## Success Criteria _(mandatory)_
 
@@ -101,6 +123,8 @@ A user who has cloud backup on wants to check that it's working, and wants a str
 - **SC-004**: A user who requests deletion of their cloud backup can no longer restore that vault from the cloud within the same session, and independent verification confirms no vault content remains stored.
 - **SC-005**: Backup and restore failures are correctly surfaced as errors (not false successes) in 100% of tested failure scenarios (network loss, storage error, interrupted operation).
 - **SC-006**: At least 90% of users who enable cloud backup can correctly state, when asked, where their data is stored and how to delete it — evidence the consent screen communicates clearly rather than being a legal-formality checkbox.
+- **SC-007**: A user who lost their ownership code but remembers their vault's title can regain self-service access to their vault through support within one support interaction, without support ever viewing that vault's content.
+- **SC-008**: 100% of support lookup attempts that don't resolve to exactly one matching vault return no result — bulk browsing of vault backups is never possible, tested or otherwise.
 
 ## Assumptions
 
