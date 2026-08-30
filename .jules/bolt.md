@@ -232,3 +232,7 @@
 ## 2025-02-28 - Optimize derived block collection filters
 **Learning:** Chaining array methods like `Object.values(obj).filter(...)` inside Svelte `$derived` or `$derived.by` blocks creates intermediate arrays that add to garbage collection pressure, particularly in frequently updated components. Using pre-derived arrays (like `allTokens`) and filtering them via imperative loops is more efficient for larger datasets.
 **Action:** When extracting data from objects in reactive blocks, use a single imperative `for...in` loop with `hasOwnProperty` check, or if a flat derived array already exists, use an imperative `for` loop to filter results instead of chaining `.filter()`.
+## 2026-08-30 - Focus on eliminating intermediate arrays, avoid pure syntax rewrites
+
+**Learning:** When acting as the 'Bolt' persona, avoid refactoring simple object iterations like `Object.keys(obj).filter(...)` into traditional `for...in` loops unless operating on massive data structures, as it's often rejected in code review as an unmeasurable micro-optimization that harms readability.
+**Action:** Focus instead on chained array methods like `.map().filter()` that explicitly allocate unused intermediate objects or arrays (e.g., mapping strings to trim them before filtering out empty ones), as replacing these with a single imperative loop offers a clearer memory optimization without sacrificing readability.

@@ -30,9 +30,7 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20">
-    <!-- A plain div, not <header>: app.css forces the chrome sans stack inside
-         <header>, which would split the page title from the headings below. -->
-    <div class="mb-12">
+    <header class="mb-12">
       <h1
         class="mb-4 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
       >
@@ -42,7 +40,7 @@
         {DESCRIPTION} Each page answers one question directly, then explains the framework
         behind it with a concrete example.
       </p>
-    </div>
+    </header>
 
     <ul class="flex list-none flex-col">
       {#each answers as answer (answer.slug)}

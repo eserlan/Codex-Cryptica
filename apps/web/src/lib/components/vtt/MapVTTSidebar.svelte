@@ -5,8 +5,13 @@
   import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
   import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
   import TileDeckPanel from "$lib/components/vtt/TileDeckPanel.svelte";
-  import { VTT_ENTITY_TYPES } from "$lib/stores/map/map-page-controller.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import ResizerHandle from "$lib/components/layout/ResizerHandle.svelte";
+  import { VTT_ENTITY_TYPES } from "$lib/components/map/vtt-ui";
+  import {
+    layoutUIStore,
+    MIN_VTT_SIDEBAR_WIDTH,
+    MAX_SIDEBAR_VW,
+  } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { Entity } from "schema";
@@ -40,12 +45,27 @@
 />
 
 <aside
-  class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {layoutUIStore.vttSidebarCollapsed
-    ? 'w-12'
-    : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
+  class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur pointer-events-auto"
+  class:w-12={layoutUIStore.vttSidebarCollapsed}
+  style:width={layoutUIStore.vttSidebarCollapsed
+    ? "3rem"
+    : layoutUIStore.isMobile
+      ? "100%"
+      : `${layoutUIStore.vttSidebarWidth}px`}
+  style:max-width="calc(100vw - 3rem)"
+  data-testid="vtt-sidebar"
   aria-label="VTT Sidebar"
   onwheel={(e) => e.stopPropagation()}
 >
+  {#if !layoutUIStore.vttSidebarCollapsed && !layoutUIStore.isMobile}
+    <ResizerHandle
+      side="right"
+      minWidth={MIN_VTT_SIDEBAR_WIDTH}
+      maxWidthVW={MAX_SIDEBAR_VW}
+      currentWidth={layoutUIStore.vttSidebarWidth}
+      onResize={(w) => layoutUIStore.setVttSidebarWidth(w)}
+    />
+  {/if}
   {#if layoutUIStore.vttSidebarCollapsed}
     <div
       class="flex h-full w-full flex-col items-center justify-between p-2"

@@ -33,7 +33,18 @@ function cleanHeading(value: string): string {
 }
 
 function nonEmpty(values: string[] | undefined): string[] {
-  return (values ?? []).map((value) => value.trim()).filter(Boolean);
+  // ⚡ Bolt Optimization: Replace chained .map().filter() with a single imperative loop
+  // to avoid allocating an unused intermediate array for string trimming.
+  const result: string[] = [];
+  if (values) {
+    for (const value of values) {
+      const trimmed = value.trim();
+      if (trimmed) {
+        result.push(trimmed);
+      }
+    }
+  }
+  return result;
 }
 
 const roleSymbols: Record<DelveRoomNodeData["role"], string> = {
