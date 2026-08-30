@@ -1,13 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.0 -> 1.3.1
-- Modified principles: IV. AI-First Extraction (replaced Gemini with OpenAI/Luna or provider-neutral phrasing)
-- Added sections: None
+- Version change: 1.3.1 -> 1.4.0
+- Modified principles: None
+- Added sections: XIII. Discovery Intent Governance (new principle; minor bump)
 - Removed sections: None
 - Templates requiring updates:
-  - ✅ Verified .specify/templates/plan-template.md; no conflicting guidance.
+  - ✅ Updated .specify/templates/plan-template.md; added a Discovery Intent Check to the Constitution Check gate.
+  - ✅ Updated .specify/templates/tasks-template.md; registry task is now required for discovery-page features.
   - ✅ Verified .specify/templates/spec-template.md; no conflicting guidance.
-  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance.
+  - ✅ Updated .github/pull_request_template.md; added the discovery intent checklist.
+  - ✅ Wired `scripts/discovery-audit.mjs` into `apps/web` prebuild as the deterministic gate.
+  - ✅ Updated AGENTS.md; discovery-page workflow now points at the registry.
 - Follow-up TODOs: None
 -->
 
@@ -78,8 +81,24 @@ To ensure maximum efficiency and minimum disruption, AI agents MUST follow these
 
 To prevent user confusion and maintain conceptual clarity, the project converges entirely on the term "Labels" for all metadata categorization. We do not introduce or expose "Tags" to the user. Any automated categorization attributes (such as marking an entity as historical/deceased via an end date) MUST be stored, managed, and rendered as "Labels".
 
+### XIII. Discovery Intent Governance
+
+Any new or materially repositioned public, **indexable discovery page** MUST use and adhere to the discovery intent registry at `apps/web/src/lib/content/discovery/`.
+
+1. **Register before implementing.** Before a discovery page is built, it MUST have a registered canonical path, primary intent, user job and unique-value rationale. "Targets another phrasing of the keyword" is not a unique value.
+2. **Check existing ownership first.** Existing intent ownership MUST be checked before a new URL is created. Run `bun scripts/discovery-audit.mjs`, or look the phrasing up with `findIntentOwner`.
+3. **Variants are aliases, not URLs.** Obvious synonyms, plurals and word-order variants MUST be recorded as aliases of the existing canonical intent rather than becoming separate pages.
+4. **Overlap requires a different job.** Two pages may cover one subject only where they serve materially different user jobs (explain / create / show an example / adopt a workflow / evaluate / migrate). Deliberate overlap MUST be recorded with its reason.
+5. **Not a keyword-page factory.** The registry exists to constrain the public surface, never to generate it. Pages MUST NOT be produced by enumerating keywords against a template.
+
+This applies to public discovery surfaces — `/for`, `/answers`, `/examples`, generator and tool landing pages, `/solutions`, `/vs`, `/import`, evergreen reference blog posts and future equivalent families. It does NOT apply to ordinary application routes, legal pages or dated devlog posts, which are outside the governed set defined in `governed-routes.ts`.
+
+Deterministic violations (duplicate ids, duplicate canonical paths, unowned intents, governed routes with no entry) are build failures. Judgement calls about semantic adjacency are reported for human review and MUST NOT be enforced by fuzzy matching.
+
+See `docs/discovery-intent-registry.md` for the authoring workflow.
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.3.1 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-08-07
+**Version**: 1.4.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-08-30

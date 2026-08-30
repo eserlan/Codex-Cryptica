@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "prebuild": "node ../../scripts/generate-llms-full.mjs && bun ../../scripts/generate-sitemap.mjs",
+    "prebuild": "bun ../../scripts/discovery-audit.mjs && node ../../scripts/generate-llms-full.mjs && bun ../../scripts/generate-sitemap.mjs",
     "build": "vite build && touch build/.nojekyll && node scripts/check-compiled-runes.js && node scripts/critical-css.mjs && cp build/index.html build/404.html",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
