@@ -125,11 +125,23 @@ if (fs.existsSync(answersDir)) {
   const slugs = [...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g)]
     .map(m => m[1] ?? m[2]);
 
+  // Tolerant of both quote styles and of indentation, because Prettier
+  // reformats these modules after they are written: it rewrites a string
+  // containing a double quote into a single-quoted one, and re-indents a file
+  // whose export name is long enough to wrap. A pattern assuming double quotes
+  // at two spaces silently drops exactly those files.
   const readString = (content, field) => {
-    const regex = new RegExp(`\\n  ${field}:\\s*\\n?\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`);
+    const regex = new RegExp(
+      `\\n[ \\t]*${field}:[ \\t]*\\n?[ \\t]*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)')`,
+    );
     const match = content.match(regex);
     if (!match) return '';
-    return match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim();
+    const raw = match[1] ?? match[2] ?? '';
+    return raw
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
+      .replace(/\\\\/g, '\\')
+      .trim();
   };
 
   const entries = [];
@@ -143,10 +155,19 @@ if (fs.existsSync(answersDir)) {
     const question = readString(content, 'question');
     const shortAnswer = readString(content, 'shortAnswer');
     if (!question || !shortAnswer) {
-      console.warn(`[llms-full] Could not extract question/shortAnswer for: ${slug}`);
-      continue;
+      // Fatal on purpose: a silent skip here removes a page from the
+      // agent-readable index with no visible failure.
+      throw new Error(
+        `[llms-full] Could not extract question/shortAnswer for answer: ${slug}`,
+      );
     }
     entries.push({ slug, question, shortAnswer });
+  }
+
+  if (entries.length !== slugs.length) {
+    throw new Error(
+      `[llms-full] Extracted ${entries.length} answers but the registry imports ${slugs.length}.`,
+    );
   }
 
   if (entries.length > 0) {
