@@ -9,6 +9,11 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 import type { LocalEntity } from "$lib/stores/vault/types";
 import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import {
+  diffLoreSections,
+  restoreLoreSections,
+  formatSectionList,
+} from "$lib/utils/lore-sections";
 
 export type RevisionRequest = {
   entityId: string;
@@ -154,6 +159,53 @@ export class RevisionService {
     vault.selectedEntityId = finalContent.targetId;
   }
 
+  /**
+   * Asks before a revision deletes lore sections the user wrote (#2588).
+   *
+   * An AI revision replaces the whole lore string, and a "focus on X"
+   * instruction can make the model return only the section it was pointed at.
+   * The result is non-empty, so no emptiness guard catches it, and four
+   * sections become one.
+   *
+   * Deliberately a question rather than an automatic merge. Re-adding sections
+   * silently would resurrect ones the user asked to delete, and would leave two
+   * contradictory copies whenever the model reworded a heading. Returns the
+   * lore to write, or null if the user cancelled.
+   */
+  private async resolveLoreRemovals(
+    entityId: string,
+    proposedLore: string,
+  ): Promise<string | null> {
+    const entity = vault.entities[entityId] as LocalEntity | undefined;
+    const existingLore = entity?.lore ?? "";
+    if (!existingLore.trim()) return proposedLore;
+
+    const diff = diffLoreSections(existingLore, proposedLore);
+    if (diff.removed.length === 0 && !diff.uncertain) return proposedLore;
+
+    const removedList = formatSectionList(diff.removed);
+    const keep = await notificationStore.confirm({
+      title: "This revision removes existing lore",
+      message: diff.removed.length
+        ? `The updated lore drops ${removedList}. Keep ${diff.removed.length === 1 ? "it" : "them"}, or accept the revision as written?`
+        : "The updated lore replaces your existing notes and they cannot be compared section by section. Keep the current notes as well, or accept the revision as written?",
+      confirmLabel: "Keep them",
+      cancelLabel: "Accept as written",
+    });
+
+    if (!keep) return proposedLore;
+
+    return diff.removed.length
+      ? restoreLoreSections(proposedLore, diff.removed)
+      : restoreLoreSections(proposedLore, [
+          {
+            heading: "Previous notes",
+            key: "previous notes",
+            body: existingLore,
+          },
+        ]);
+  }
+
   async acceptDraft() {
     if (!this.pendingDraft) return;
 
@@ -175,10 +227,16 @@ export class RevisionService {
           this.pendingDraft.merge.sourceIds,
         );
       } else {
-        await vault.updateEntity(
-          this.pendingDraft.entityId,
-          this.buildAcceptPatch(this.pendingDraft),
-        );
+        const patch = this.buildAcceptPatch(this.pendingDraft);
+        if (patch.lore !== undefined) {
+          const resolved = await this.resolveLoreRemovals(
+            this.pendingDraft.entityId,
+            patch.lore,
+          );
+          if (resolved === null) return;
+          patch.lore = resolved;
+        }
+        await vault.updateEntity(this.pendingDraft.entityId, patch);
       }
       if (acceptedDraft.generatorSessionCommit) {
         const entity = vault.entities[acceptedDraft.entityId] as
