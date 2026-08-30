@@ -5,13 +5,16 @@ import { modalUIStore as defaultModalUIStore } from "$lib/stores/ui/modal-ui.sve
 import { notificationStore as defaultNotificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore as defaultSessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { layoutUIStore as defaultLayoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { shouldShowInitiativePanel } from "$lib/components/map/vtt-ui";
+import {
+  shouldShowInitiativePanel,
+  VTT_ENTITY_TYPES,
+  ENTITY_TRANSFER_TYPE,
+  TILE_TRANSFER_TYPE,
+} from "$lib/components/map/vtt-ui";
 import type { SessionMode } from "../../../types/vtt";
 import type { Entity, Point } from "schema";
 
-export const VTT_ENTITY_TYPES = ["character", "creature", "item"];
-export const ENTITY_TRANSFER_TYPE = "application/codex-entity";
-export const TILE_TRANSFER_TYPE = "application/x-codex-tile";
+export { VTT_ENTITY_TYPES, ENTITY_TRANSFER_TYPE, TILE_TRANSFER_TYPE };
 
 type MapPageMapStore = {
   activeMap: unknown;

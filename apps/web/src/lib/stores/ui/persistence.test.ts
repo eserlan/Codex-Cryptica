@@ -34,6 +34,7 @@ describe("UIPersistence", () => {
       "codex_tile_deck_grid_expanded",
       "codex_vtt_entity_list_collapsed",
       "codex_vtt_sidebar_collapsed",
+      "codex_vtt_sidebar_width",
       "codex_world_page_dismissed_at",
     ]);
   });
