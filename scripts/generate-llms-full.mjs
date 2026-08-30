@@ -114,7 +114,52 @@ if (helpFiles.length > 0) {
   }
 }
 
-// 3. Add TTRPG System & Genre Landing Pages
+// 3. Add Answer Pages (/answers/[slug])
+const answersDir = path.join(rootDir, 'apps/web/src/lib/content/answers/pages');
+if (fs.existsSync(answersDir)) {
+  console.log('Extracting Answer Pages...');
+
+  // Registration order, taken from the registry's imports, so the agent-readable
+  // index matches the order the site publishes them in.
+  const indexSource = fs.readFileSync(path.join(answersDir, 'index.ts'), 'utf8');
+  const slugs = [...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g)]
+    .map(m => m[1] ?? m[2]);
+
+  const readString = (content, field) => {
+    const regex = new RegExp(`\\n  ${field}:\\s*\\n?\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`);
+    const match = content.match(regex);
+    if (!match) return '';
+    return match[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim();
+  };
+
+  const entries = [];
+  for (const slug of slugs) {
+    const file = path.join(answersDir, `${slug}.ts`);
+    if (!fs.existsSync(file)) {
+      console.warn(`[llms-full] Answer module missing for slug: ${slug}`);
+      continue;
+    }
+    const content = fs.readFileSync(file, 'utf8');
+    const question = readString(content, 'question');
+    const shortAnswer = readString(content, 'shortAnswer');
+    if (!question || !shortAnswer) {
+      console.warn(`[llms-full] Could not extract question/shortAnswer for: ${slug}`);
+      continue;
+    }
+    entries.push({ slug, question, shortAnswer });
+  }
+
+  if (entries.length > 0) {
+    fullContent += `\n## Answer Pages\n\n`;
+    fullContent += `Reference answers to real RPG and worldbuilding questions, indexed at https://codexcryptica.com/answers. Each page states the direct answer first, then the framework behind it and a concrete example.\n\n`;
+    for (const entry of entries) {
+      fullContent += `### [${entry.question}](https://codexcryptica.com/answers/${entry.slug})\n\n`;
+      fullContent += `**Direct answer:** ${entry.shortAnswer}\n\n`;
+    }
+  }
+}
+
+// 4. Add TTRPG System & Genre Landing Pages
 const packsDir = path.join(rootDir, 'apps/web/src/lib/content/for/packs');
 if (fs.existsSync(packsDir)) {
   console.log('Extracting TTRPG System & Genre Landing Pages...');

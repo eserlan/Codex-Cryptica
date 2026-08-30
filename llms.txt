@@ -94,6 +94,22 @@ The pages above are informational landing pages; these are the canonical, no-log
 - [Settlement Generator](https://codexcryptica.com/generators/settlement): Generate a town, city, or outpost with population, industry, threats, and points of interest.
 - [Magic Item Generator](https://codexcryptica.com/generators/magic-item): Generate a magic item with properties, history, and drawbacks.
 
+## Answer Pages
+
+Concise, self-contained reference answers to real RPG and worldbuilding questions. Each page answers the question directly before any product material.
+
+- [Answers Hub](https://codexcryptica.com/answers): Index of every published answer page.
+- [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl): Mapping an adventure as named locations joined by explicit routes, rather than a hex grid.
+- [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes): Durable entity pages, dated session logs, and disposable prep — plus the post-session pass that keeps them true.
+- [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction): Six questions — goal, obstacle, recruits, limits, assets, next move — that make a faction act on its own.
+- [How do you organise NPC relationships?](https://codexcryptica.com/answers/how-do-you-organise-npc-relationships): Store relationships as directed, named links with a reason and a visibility, not as ally lists.
+- [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter): A situation already in progress, with a reason to be there and an option that is not combat.
+- [How do you create a pantheon?](https://codexcryptica.com/answers/how-do-you-create-a-pantheon): Build entanglements between gods before assigning domains; five structural moves that generate play.
+- [How do you design RPG puzzles that do not stall the game?](https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game): More than one way through, and failure that costs something other than time.
+- [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain): A reason to exist, three or four enterable places, three people who want things, and one unsolved problem.
+- [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion): Write the practice before the doctrine: one rite, one prohibition, who funds it, and what adherents dispute.
+- [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign): Decide the truth in full before session one, then design how it leaks; every conclusion needs three routes.
+
 ## Technical Documentation
 
 - [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.

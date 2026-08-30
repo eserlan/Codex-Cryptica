@@ -75,6 +75,10 @@
         class="hover:text-theme-primary transition-colors">Tools</a
       >
       <a
+        href="{cleanBase}/answers"
+        class="hover:text-theme-primary transition-colors">Answers</a
+      >
+      <a
         href="{cleanBase}/sitemap.xml"
         class="hover:text-theme-primary transition-colors">Sitemap</a
       >

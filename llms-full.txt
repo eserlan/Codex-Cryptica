@@ -1912,6 +1912,51 @@ your canonical vault automatically.
 
 ---
 
+## Answer Pages
+
+Reference answers to real RPG and worldbuilding questions, indexed at https://codexcryptica.com/answers. Each page states the direct answer first, then the framework behind it and a concrete example.
+
+### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
+
+**Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
+
+### [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes)
+
+**Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world — a person, a place, a faction, an item — and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
+
+### [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction)
+
+**Direct answer:** Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move — "restore the drowned line to the throne" rather than "gain power".
+
+### [How do you organise NPC relationships?](https://codexcryptica.com/answers/how-do-you-organise-npc-relationships)
+
+**Direct answer:** Record relationships as directed, named links between two named people, stored once rather than restated on both pages. "Alder Cass owes a debt to Vess Marrow" is a fact with a direction and a reason; a list headed "Allies" on each character's page is not, and it will drift out of step the first time the relationship changes. Keep the direction, the reason, and whether the party knows about it.
+
+### [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter)
+
+**Direct answer:** A good random encounter presents a situation the party can respond to in more than one way, and it tells them something about where they are. A wandering monster with no context and no options is a dice-rolling interruption; the same creature, given a reason for being there and something it currently wants, becomes a scene. The test is whether "fight it" is one option among several rather than the only one.
+
+### [How do you create a pantheon?](https://codexcryptica.com/answers/how-do-you-create-a-pantheon)
+
+**Direct answer:** Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree — who was betrayed, who was replaced, whose worship displaced whose — and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.
+
+### [How do you design RPG puzzles that do not stall the game?](https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game)
+
+**Direct answer:** Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud — the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.
+
+### [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain)
+
+**Direct answer:** Whatever the party will interact with, plus the one thing that explains why the place exists. In practice that is three or four locations they can enter, two or three people worth talking to, one local problem nobody has solved, and a reason for the settlement to be here rather than a mile downriver. A full civic census is wasted prep; the reason-to-exist is what makes the place feel real in one sentence.
+
+### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
+
+**Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice — the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit — because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
+
+### [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign)
+
+**Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
+
+
 ## TTRPG System & Genre Campaign Management
 
 Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, and toolsets for major tabletop RPG systems and worldbuilding genres:

@@ -232,6 +232,61 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-is-a-point-crawl</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-organise-npc-relationships</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-makes-a-good-random-encounter</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-pantheon</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/introducing-the-canvas</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -364,13 +419,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
