@@ -9,6 +9,7 @@ import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-desi
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
+import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 
 /**
  * The published answer library.
@@ -33,6 +34,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldAnRpgSettlementContain,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouRunAConspiracyCampaign,
+    howMuchPrepDoYouNeedForAnRpgSession,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),
