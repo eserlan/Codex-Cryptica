@@ -12,6 +12,7 @@ import {
 import {
   auditDiscoveryRegistry,
   findUnregisteredPaths,
+  findOrphanedEntries,
   errorsOnly,
   warningsOnly,
 } from "./audit";
@@ -229,6 +230,37 @@ describe("audit — deterministic errors", () => {
     expect(findings.map((f) => f.code)).toContain("weak-unique-value");
   });
 
+  it("rejects a rationale that claims the page targets another phrasing", () => {
+    // The exact justification #2566 rules out. It clears the schema's length
+    // minimum comfortably, so only a content check catches it.
+    for (const excuse of [
+      "Targets another phrasing of the keyword for extra coverage.",
+      "An alternative wording of the same query, for search coverage.",
+      "SEO variant of the canonical page, aimed at a different spelling.",
+    ]) {
+      const findings = auditDiscoveryRegistry([
+        make({ id: "filler", uniqueValue: excuse }),
+      ]);
+      expect(
+        findings.map((f) => f.code),
+        excuse,
+      ).toContain("keyword-variant-rationale");
+    }
+  });
+
+  it("accepts a rationale that names a real differentiator", () => {
+    const findings = auditDiscoveryRegistry([
+      make({
+        id: "genuine",
+        uniqueValue:
+          "Works a concrete fen example with real travel costs, and says when not to use one.",
+      }),
+    ]);
+    expect(findings.map((f) => f.code)).not.toContain(
+      "keyword-variant-rationale",
+    );
+  });
+
   it("reports a live governed route with no registry entry", () => {
     const findings = findUnregisteredPaths(
       ["/answers/known", "/answers/orphan"],
@@ -237,6 +269,60 @@ describe("audit — deterministic errors", () => {
     expect(findings).toHaveLength(1);
     expect(findings[0].code).toBe("unregistered-discovery-page");
     expect(findings[0].message).toContain("/answers/orphan");
+  });
+});
+
+describe("orphaned entries", () => {
+  it("warns when a live entry owns a path that is no longer a governed route", () => {
+    const findings = findOrphanedEntries(
+      ["/answers/still-here"],
+      [
+        make({ id: "still-here", canonicalPath: "/answers/still-here" }),
+        make({ id: "ghost", canonicalPath: "/answers/deleted" }),
+      ],
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("orphaned-registry-entry");
+    expect(findings[0].entries).toEqual(["ghost"]);
+  });
+
+  it("never warns about a planned entry, which has no route yet by design", () => {
+    const findings = findOrphanedEntries(
+      [],
+      [
+        make({
+          id: "future",
+          canonicalPath: "/answers/future",
+          status: "planned",
+        }),
+      ],
+    );
+    expect(findings).toHaveLength(0);
+  });
+
+  it("never warns about a retired or non-indexable entry", () => {
+    const findings = findOrphanedEntries(
+      [],
+      [
+        make({ id: "gone", canonicalPath: "/answers/gone", status: "retired" }),
+        make({ id: "hidden", canonicalPath: "/x", indexable: false }),
+      ],
+    );
+    expect(findings).toHaveLength(0);
+  });
+
+  it("is a warning, never a build failure", () => {
+    const findings = findOrphanedEntries(
+      [],
+      [make({ id: "ghost", canonicalPath: "/answers/deleted" })],
+    );
+    expect(errorsOnly(findings)).toHaveLength(0);
+  });
+
+  it("leaves no orphans in the committed registry", () => {
+    const registry = getDiscoveryEntries();
+    const orphans = findOrphanedEntries(listGovernedPaths(), registry);
+    expect(orphans.map((finding) => finding.message)).toEqual([]);
   });
 });
 

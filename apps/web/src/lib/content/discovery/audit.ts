@@ -195,24 +195,45 @@ function danglingReferences(entries: DiscoveryEntry[]): DiscoveryFinding[] {
 }
 
 /**
- * A rationale that only restates the intent is not a rationale. Caught by
- * containment rather than anything cleverer, which is enough to stop the
- * commonest filler ("page about X" for intent "X") without pretending to judge
- * prose quality.
+ * Rationales that are not rationales.
+ *
+ * Two shapes, both named by #2566. The first is a restatement of the intent.
+ * The second is the exact justification the issue rules out — "targets another
+ * phrasing of the keyword" — which passes the schema's length minimum easily
+ * and is the sentence someone reaches for when there is no real answer.
+ *
+ * Kept to literal phrase matching on purpose. This is not a prose-quality
+ * judge; it catches the two forms of filler that would otherwise sail through.
  */
+const KEYWORD_FILLER =
+  /\b(?:another|alternative|different|other)\s+(?:phrasing|wording|spelling|variant|version)\b|\bphrasing of the (?:keyword|query|intent)\b|\btargets? (?:the |another |a )?keyword\b|\bseo (?:variant|variation)\b/i;
+
 function weakUniqueValue(entries: DiscoveryEntry[]): DiscoveryFinding[] {
-  return entries
-    .filter((entry) => {
-      const value = normaliseIntent(entry.uniqueValue);
-      const intent = normaliseIntent(entry.primaryIntent);
-      return value === intent || value === `page about ${intent}`;
-    })
-    .map((entry) => ({
-      severity: "error" as const,
-      code: "weak-unique-value",
-      message: `${entry.id} restates its intent as its uniqueValue. Record what the page does that no other page does.`,
-      entries: [entry.id],
-    }));
+  const findings: DiscoveryFinding[] = [];
+  for (const entry of entries) {
+    const value = normaliseIntent(entry.uniqueValue);
+    const intent = normaliseIntent(entry.primaryIntent);
+
+    if (value === intent || value === `page about ${intent}`) {
+      findings.push({
+        severity: "error",
+        code: "weak-unique-value",
+        message: `${entry.id} restates its intent as its uniqueValue. Record what the page does that no other page does.`,
+        entries: [entry.id],
+      });
+      continue;
+    }
+
+    if (KEYWORD_FILLER.test(entry.uniqueValue)) {
+      findings.push({
+        severity: "error",
+        code: "keyword-variant-rationale",
+        message: `${entry.id} justifies itself as a phrasing or keyword variant. That is explicitly not a unique value — either give the page a different user job or make the phrasing an alias of the page that owns it.`,
+        entries: [entry.id],
+      });
+    }
+  }
+  return findings;
 }
 
 /**
@@ -389,6 +410,36 @@ export function findUnregisteredPaths(
       code: "unregistered-discovery-page",
       message: `${path} is a live, indexable discovery page with no registry entry. Register its intent, user job and unique value.`,
       entries: [],
+    }));
+}
+
+/**
+ * Registry entries pointing at a path that is no longer a live route.
+ *
+ * The mirror image of `findUnregisteredPaths`, and the more insidious failure:
+ * a deleted page leaves its entry behind, that entry keeps owning the intent,
+ * and a future page that legitimately deserves it is refused by an owner that
+ * no longer exists. A warning rather than an error, because a `planned` entry
+ * is *supposed* to have no route yet — that is the whole point of registering
+ * before building.
+ */
+export function findOrphanedEntries(
+  livePaths: string[],
+  entries: DiscoveryEntry[] = allEntries,
+): DiscoveryFinding[] {
+  const live = new Set(livePaths);
+  return entries
+    .filter(
+      (entry) =>
+        entry.status === "live" &&
+        entry.indexable &&
+        !live.has(entry.canonicalPath),
+    )
+    .map((entry) => ({
+      severity: "warning" as const,
+      code: "orphaned-registry-entry",
+      message: `${entry.id} is marked live and owns ${entry.canonicalPath}, which is not a governed route. Retire the entry, or add the route to the governed set.`,
+      entries: [entry.id],
     }));
 }
 

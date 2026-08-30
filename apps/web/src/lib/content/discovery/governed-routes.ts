@@ -1,10 +1,17 @@
-import { solutions } from "$lib/config/seo-pages";
-import { featuresConfig } from "$lib/config/seo-features";
-import { importsConfig } from "$lib/config/seo-imports";
-import { comparisons } from "$lib/config/seo-comparisons";
-import { getAllLandingPageSlugs } from "$lib/content/for/registry";
-import { getAllAnswerSlugs } from "$lib/content/answers/registry";
-import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
+// Relative rather than `$lib`: this module is loaded by
+// `scripts/discovery-audit.mjs`, which runs in `prebuild` — before Vite, and
+// therefore with no alias resolution beyond whatever tsconfig happens to be on
+// disk. `$lib` only resolves through the generated `.svelte-kit/tsconfig.json`,
+// so an alias here makes the build depend on a file `svelte-kit sync` may not
+// have written yet.
+import { solutions } from "../../config/seo-pages";
+import { featuresConfig } from "../../config/seo-features";
+import { importsConfig } from "../../config/seo-imports";
+import { comparisons } from "../../config/seo-comparisons";
+import { getAllLandingPageSlugs } from "../for/registry";
+import { getAllAnswerSlugs } from "../answers/registry";
+import { HUB_THEME_SLUGS } from "../hub-themes";
+import { GENERATOR_SLUGS } from "../../../params/generator_slug";
 
 /**
  * The public routes the registry governs, derived from the same configuration
@@ -18,46 +25,6 @@ import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
  * and dated devlog posts are deliberately outside it — the governance rule is
  * meant to shape the search-facing surface, not to tax ordinary work.
  */
-
-/** Generator slugs, mirroring the route matcher in `src/params/generator_slug.ts`. */
-const GENERATOR_SLUGS = [
-  "npc",
-  "settlement",
-  "magic-item",
-  "minor-magic-item",
-  "artifact-generator",
-  "faction",
-  "quest",
-  "puzzle",
-  "item",
-  "tavern",
-  "social-hub",
-  "kingdom",
-  "nation",
-  "vampire-clan",
-  "nomad-clan",
-  "names",
-  "fantasy-names",
-  "dnd-npc",
-  "pantheon-generator",
-  "god-generator",
-  "ship-generator",
-  "language-generator",
-  "news-sheet-generator",
-  "dungeon-generator",
-  "adventure-generator",
-  "adventure-idea-generator",
-  "plot-twist-generator",
-  "bbeg-generator",
-  "world",
-  "council-vote",
-  "secret-society",
-  "star-system",
-  "alien-race",
-  "creature",
-  "encounter",
-  "random",
-] as const;
 
 /** `/tools/[page]` landing pages, which are individual route directories. */
 const TOOL_PAGES = [

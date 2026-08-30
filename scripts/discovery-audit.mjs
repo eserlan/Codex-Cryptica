@@ -16,6 +16,7 @@
 import {
   auditDiscoveryRegistry,
   findUnregisteredPaths,
+  findOrphanedEntries,
   errorsOnly,
   warningsOnly,
 } from "../apps/web/src/lib/content/discovery/audit.ts";
@@ -24,9 +25,11 @@ import { listGovernedPaths } from "../apps/web/src/lib/content/discovery/governe
 
 const reportOnly = process.argv.includes("--report");
 
+const governedPaths = listGovernedPaths();
 const findings = [
   ...auditDiscoveryRegistry(entries),
-  ...findUnregisteredPaths(listGovernedPaths(), entries),
+  ...findUnregisteredPaths(governedPaths, entries),
+  ...findOrphanedEntries(governedPaths, entries),
 ];
 
 const errors = errorsOnly(findings);
