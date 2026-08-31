@@ -466,8 +466,11 @@ describe("support lookup", () => {
       post({ vaultTitle: "Nothing Like This" }, ADMIN_TOKEN),
       env,
     );
-    expect(await ambiguous.text()).toBe(await missing.text());
-    expect((await ambiguous.json()) as any).toEqual({ matched: false });
+    // Read each body once: a Response body cannot be consumed twice, so the
+    // text is parsed rather than re-read as JSON.
+    const ambiguousText = await ambiguous.text();
+    expect(ambiguousText).toBe(await missing.text());
+    expect(JSON.parse(ambiguousText)).toEqual({ matched: false });
   });
 
   it("returns nothing for an empty query rather than everything", async () => {
