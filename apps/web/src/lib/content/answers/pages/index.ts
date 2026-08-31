@@ -13,6 +13,7 @@ import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
+import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 
 /**
  * The published answer library.
@@ -41,6 +42,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunASuccessfulSessionZero,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
+    whatShouldILookForInAnRpgCampaignManager,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),

@@ -231,6 +231,35 @@ export const answerEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "answer-campaign-manager-criteria",
+    pageKind: "answer",
+    canonicalPath: "/answers/what-should-i-look-for-in-an-rpg-campaign-manager",
+    primaryIntent:
+      "understand the criteria for evaluating rpg campaign management software",
+    intentAliases: [
+      "what should i look for in an rpg campaign manager",
+      "what makes a good rpg campaign manager",
+      "campaign manager features for gms",
+      "what should a ttrpg campaign manager do",
+      "how to choose rpg campaign software",
+      "rpg campaign manager checklist",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "A tool-agnostic evaluation framework (organisation, relationships, maps, portability, local/cloud trade-offs, customisation, collaboration) prioritised by workflow, before naming any specific product.",
+    parentCluster: "campaign-management",
+    relatedIntents: ["solution-campaign-manager", "answer-campaign-notes"],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "solution-campaign-manager",
+        reason:
+          "The answer teaches tool-agnostic evaluation criteria for any campaign manager; the solution page evaluates Codex specifically against them. Different jobs — understand versus evaluate — on the same subject, and the answer explicitly names workflows Codex fits less well.",
+      },
+    ],
+  },
+  {
     id: "answer-player-engagement",
     pageKind: "answer",
     canonicalPath:
