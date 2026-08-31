@@ -46,7 +46,7 @@ export const fvCoyote: ExampleConfigInput = {
       kind: "prose",
       heading: "Captain, officers & crew",
       paragraphs: [
-        "Captain Vera Sterling commands a licensed bounty hunters with loaded weapons and expired permits. Hides an old military court-martial conviction behind an easy frontier grin and a quick draw.",
+        "Captain Vera Sterling commands a licensed bounty hunters with loaded weapons and expired permits. hides an old military court-martial conviction behind an easy frontier grin and a quick draw",
         "The crew's culture is defined by independent belters and drifters who take turns in the galley and know how to jury-rig any system with scrap metal. Their loyalty is practical rather than ornamental: it survives as long as the chain of command, shared purpose, and next horizon remain worth defending.",
       ],
     },
