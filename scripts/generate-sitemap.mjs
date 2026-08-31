@@ -4,8 +4,14 @@ import { fileURLToPath } from "node:url";
 import { solutions } from "../apps/web/src/lib/config/seo-pages.ts";
 import { comparisons } from "../apps/web/src/lib/config/seo-comparisons.ts";
 import { getAllLandingPageSlugs } from "../apps/web/src/lib/content/for/registry.ts";
-import { getAllAnswers, answerPath } from "../apps/web/src/lib/content/answers/registry.ts";
-import { getAllExamples, examplePath } from "../apps/web/src/lib/content/examples/registry.ts";
+import {
+  getAllAnswers,
+  answerPath,
+} from "../apps/web/src/lib/content/answers/registry.ts";
+import {
+  getAllExamples,
+  examplePath,
+} from "../apps/web/src/lib/content/examples/registry.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -29,20 +35,35 @@ const staticRoutes = [
   { path: "/blog", changefreq: "weekly", priority: "0.9" },
   { path: "/features", changefreq: "monthly", priority: "0.8" },
   { path: "/tools", changefreq: "weekly", priority: "0.9" },
-  { path: "/free-rpg-campaign-manager", changefreq: "monthly", priority: "0.9" },
+  {
+    path: "/free-rpg-campaign-manager",
+    changefreq: "monthly",
+    priority: "0.9",
+  },
   { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
   { path: "/ai-rpg-campaign-manager", changefreq: "monthly", priority: "0.8" },
-  { path: "/tools/dnd-npc-generator", changefreq: "monthly", priority: "0.8" },
-  { path: "/tools/faction-generator", changefreq: "monthly", priority: "0.8" },
-  { path: "/tools/quest-hook-generator", changefreq: "monthly", priority: "0.8" },
-  { path: "/tools/fantasy-name-generator", changefreq: "monthly", priority: "0.8" },
+  // /tools/dnd-npc-generator and /tools/faction-generator are 301 stubs to
+  // /generators/npc and /generators/faction. Static hosting prerenders them as
+  // empty meta-refresh pages, so listing them handed discovery crawlers two
+  // content-free URLs (#2567). The redirects stay; only the sitemap entries go.
+  {
+    path: "/tools/quest-hook-generator",
+    changefreq: "monthly",
+    priority: "0.8",
+  },
+  {
+    path: "/tools/fantasy-name-generator",
+    changefreq: "monthly",
+    priority: "0.8",
+  },
   { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
   { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
   { path: "/terms", changefreq: "yearly", priority: "0.5" },
   { path: "/privacy", changefreq: "yearly", priority: "0.5" },
 ];
 
-const buildUrl = (path) => `${origin}${path.startsWith("/") ? path : `/${path}`}`;
+const buildUrl = (path) =>
+  `${origin}${path.startsWith("/") ? path : `/${path}`}`;
 
 const parseDateFromFrontmatter = (raw) => {
   const match = raw.match(/^---\s*[\r\n]+([\s\S]*?)[\r\n]+---/);
@@ -115,7 +136,9 @@ const buildXml = async (entries) => {
   );
 
   // Landing pages (/for/[slug])
-  let landingPageRoutes = [{ path: "/for", changefreq: "weekly", priority: "0.9" }];
+  let landingPageRoutes = [
+    { path: "/for", changefreq: "weekly", priority: "0.9" },
+  ];
 
   try {
     const slugs = getAllLandingPageSlugs();
