@@ -231,6 +231,33 @@ export const answerEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "answer-player-engagement",
+    pageKind: "answer",
+    canonicalPath:
+      "/answers/how-do-i-get-players-to-engage-with-my-campaign-world",
+    primaryIntent: "how to increase player engagement with an rpg campaign",
+    intentAliases: [
+      "how do i get players to engage with my campaign world",
+      "how to get players to roleplay",
+      "how to make players care about the world",
+      "how to get players invested in the campaign",
+      "passive rpg players",
+      "players ignore my lore",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "Reframes engagement as a mechanism problem, not a content problem — lore becomes interesting once it's a choice, a stake or a callback — and separates roleplaying from in-character performance so quieter players aren't judged as disengaged.",
+    parentCluster: "player-engagement",
+    relatedIntents: [
+      "answer-npc-relationships",
+      "answer-campaign-notes",
+      "answer-fantasy-faction",
+      "answer-session-zero",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "answer-encounter-balance",
     pageKind: "answer",
     canonicalPath:
