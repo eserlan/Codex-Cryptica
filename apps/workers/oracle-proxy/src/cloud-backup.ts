@@ -55,7 +55,7 @@ function cors(request: Request): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   };
 }
 
@@ -172,19 +172,65 @@ function isAdmin(request: Request, env: CloudBackupEnv): boolean {
 interface BackupPayload {
   vaultTitle: string;
   bundle: unknown;
-  assets?: { assetId: string; content: string }[];
+  /** Ids of the assets uploaded for this snapshot. Anything else is pruned. */
+  assetIds?: string[];
 }
 
-function measure(payload: BackupPayload): number {
-  const bundleBytes = new TextEncoder().encode(
-    JSON.stringify(payload.bundle),
-  ).length;
-  const assetBytes = (payload.assets ?? []).reduce(
-    // base64 carries ~4 chars per 3 bytes; close enough to enforce a ceiling.
-    (total, asset) => total + Math.floor((asset.content.length * 3) / 4),
-    0,
+/**
+ * Rejects an oversized body before it is read.
+ *
+ * This has to happen first. Reading the body to measure it is what the size
+ * limit exists to prevent: a vault large enough to matter would exhaust the
+ * Worker's memory during `request.json()`, and the check meant to return a
+ * clean 413 would never be reached.
+ */
+function tooLargeToRead(request: Request, limit: number): Response | null {
+  const declared = Number(request.headers.get("Content-Length"));
+  if (Number.isFinite(declared) && declared > limit) {
+    return json(
+      request,
+      {
+        error: {
+          message: "This request is too large.",
+          limitBytes: limit,
+          actualBytes: declared,
+        },
+      },
+      413,
+    );
+  }
+  return null;
+}
+
+/** Bytes already stored for a backup, so the vault ceiling can be enforced. */
+async function storedBytes(
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<number> {
+  let total = 0;
+  const prefix = getBackupPrefix(backupId);
+  let listed = await env.BUCKET.list({ prefix });
+  for (;;) {
+    for (const object of listed.objects) total += object.size ?? 0;
+    if (!listed.truncated) break;
+    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
+  }
+  return total;
+}
+
+/**
+ * An asset id is a storage key segment, so it must not be able to climb out of
+ * its prefix or collide with the manifest and bundle objects.
+ */
+export function isValidAssetId(assetId: string): boolean {
+  return (
+    !!assetId &&
+    assetId.length <= 255 &&
+    !assetId.includes("/") &&
+    !assetId.includes("\\") &&
+    assetId !== "." &&
+    assetId !== ".."
   );
-  return bundleBytes + assetBytes;
 }
 
 function validatePayload(
@@ -207,77 +253,36 @@ function validatePayload(
       ),
     };
   }
-  if (candidate.assets && !Array.isArray(candidate.assets)) {
-    return {
-      response: json(request, { error: { message: "Invalid assets" } }, 400),
-    };
-  }
-  for (const asset of candidate.assets ?? []) {
+  if (candidate.assetIds !== undefined) {
     if (
-      typeof asset?.assetId !== "string" ||
-      !asset.assetId ||
-      asset.assetId.includes("/") ||
-      typeof asset.content !== "string" ||
-      decodeBase64(asset.content) === null
+      !Array.isArray(candidate.assetIds) ||
+      candidate.assetIds.some(
+        (id) => typeof id !== "string" || !isValidAssetId(id),
+      )
     ) {
-      // Caught here so a malformed asset never reaches the write path, where it
-      // would abort partway and leave the backup half-replaced.
       return {
         response: json(
           request,
-          { error: { message: "An attached file could not be read." } },
+          { error: { message: "Invalid asset list" } },
           400,
         ),
       };
     }
   }
-
-  const payload = candidate as BackupPayload;
-  const actualBytes = measure(payload);
-  // Checked before anything is written, so an oversized vault never leaves a
-  // partial backup behind (SC-010).
-  if (actualBytes > CLOUD_BACKUP_LIMITS.maxVaultBytes) {
-    return {
-      response: json(
-        request,
-        {
-          error: {
-            message: "This vault is too large to back up.",
-            limitBytes: CLOUD_BACKUP_LIMITS.maxVaultBytes,
-            actualBytes,
-          },
-        },
-        413,
-      ),
-    };
-  }
-  return { payload };
-}
-
-/** Returns null for anything `atob` refuses, so a bad asset is a 400 not a 500. */
-function decodeBase64(content: string): Uint8Array | null {
-  try {
-    const binary = atob(content);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    return bytes;
-  } catch {
-    return null;
-  }
+  return { payload: candidate as BackupPayload };
 }
 
 /**
- * Writes a snapshot, then prunes assets the new snapshot no longer contains.
+ * Commits a staged snapshot: bundle, then manifest, then prune.
  *
- * Order matters. Deleting first would mean a failure partway leaves a backup
- * with a bundle and no media — a corrupt remote copy the user has no way to
- * detect. Writing first means the worst case is a few orphaned assets, which
- * the next successful push clears.
- *
- * The manifest is written last for the same reason: until it lands, the backup
- * still describes the previous, complete state.
+ * Order matters. Assets are already uploaded individually by this point, so
+ * the only writes here are small. The manifest lands after the bundle because
+ * until it does the backup still describes the previous, complete state; the
+ * prune runs last because deleting first would leave a bundle whose media is
+ * gone — a corrupt remote copy the user has no way to detect. The worst case
+ * is a few orphaned assets, which the next commit clears.
  */
-async function writeBackupObjects(
+async function commitSnapshot(
   env: CloudBackupEnv,
   backupId: string,
   payload: BackupPayload,
@@ -288,19 +293,15 @@ async function writeBackupObjects(
     httpMetadata: { contentType: "application/json" },
   });
 
-  const keep = new Set<string>();
-  for (const asset of payload.assets ?? []) {
-    const bytes = decodeBase64(asset.content);
-    if (!bytes) continue; // Already rejected in validation; belt and braces.
-    await env.BUCKET.put(getAssetKey(backupId, asset.assetId), bytes);
-    keep.add(getAssetKey(backupId, asset.assetId));
-  }
-  await pruneAssets(env, backupId, keep);
-
   await env.BUCKET.put(getManifestKey(backupId), JSON.stringify(manifest), {
     httpMetadata: { contentType: "application/json" },
     customMetadata: { ownerCodeHash, vaultTitle: manifest.vaultTitle },
   });
+
+  const keep = new Set(
+    (payload.assetIds ?? []).map((id) => getAssetKey(backupId, id)),
+  );
+  await pruneAssets(env, backupId, keep);
 }
 
 /** Removes assets under the backup that the new snapshot does not include. */
@@ -322,7 +323,14 @@ async function pruneAssets(
 
 /* -------------------------------------------------------------- handlers -- */
 
-/** POST /api/cloud-backup/enable — first backup; returns the code once. */
+/**
+ * POST /api/cloud-backup/enable — opens a backup; returns the code once.
+ *
+ * Creates the manifest and nothing else. Content arrives afterwards: assets one
+ * per request, then the bundle with the commit. That keeps every request small
+ * enough to stay well inside the Worker's memory ceiling, which a whole vault
+ * in one body does not.
+ */
 export async function handleEnableCloudBackup(
   request: Request,
   env: CloudBackupEnv,
@@ -331,6 +339,12 @@ export async function handleEnableCloudBackup(
     return json(request, { error: { message: "Storage unavailable" } }, 500);
   }
 
+  const oversized = tooLargeToRead(
+    request,
+    CLOUD_BACKUP_LIMITS.maxJsonBodyBytes,
+  );
+  if (oversized) return oversized;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -338,9 +352,19 @@ export async function handleEnableCloudBackup(
     return json(request, { error: { message: "Invalid JSON" } }, 400);
   }
 
-  const validated = validatePayload(request, body);
-  if ("response" in validated) return validated.response;
-  const { payload } = validated;
+  const candidate = body as { vaultTitle?: unknown } | null;
+  const vaultTitle =
+    typeof candidate?.vaultTitle === "string" ? candidate.vaultTitle : "";
+  if (
+    !vaultTitle.trim() ||
+    vaultTitle.length > CLOUD_BACKUP_LIMITS.maxTitleLength
+  ) {
+    return json(
+      request,
+      { error: { message: "A vault title is required" } },
+      400,
+    );
+  }
 
   const backupId = crypto.randomUUID();
   const ownerCode = generateOwnerCode();
@@ -348,26 +372,109 @@ export async function handleEnableCloudBackup(
   const manifest: CloudBackupManifest = {
     schemaVersion: SCHEMA_VERSION,
     backupId,
-    vaultTitle: payload.vaultTitle,
-    sizeBytes: measure(payload),
+    vaultTitle,
+    // Nothing is stored yet; the commit records the real figure.
+    sizeBytes: 0,
     createdAt: now,
     lastPushedAt: now,
   };
 
-  await writeBackupObjects(
-    env,
-    backupId,
-    payload,
-    manifest,
-    await hashOwnerCode(ownerCode),
-  );
+  await env.BUCKET.put(getManifestKey(backupId), JSON.stringify(manifest), {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: {
+      ownerCodeHash: await hashOwnerCode(ownerCode),
+      vaultTitle,
+    },
+  });
 
   // The only time the raw code is ever transmitted.
   return json(request, { backupId, ownerCode, manifest }, 201);
 }
 
-/** POST /api/cloud-backup/{backupId}/push — whole-vault replace (FR-018). */
-export async function handlePushCloudBackup(
+/**
+ * PUT /api/cloud-backup/{backupId}/assets/{assetId} — one file, raw bytes.
+ *
+ * Raw rather than base64-in-JSON: base64 inflates by a third and forces both
+ * ends to hold the whole vault in memory at once. Streaming one file per
+ * request keeps peak memory bounded by a single asset, and lets a failed
+ * upload be retried on its own instead of restarting the backup.
+ */
+export async function handleCloudBackupAssetUpload(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+  assetId: string,
+): Promise<Response> {
+  if (!env.BUCKET) {
+    return json(request, { error: { message: "Storage unavailable" } }, 500);
+  }
+
+  const auth = await authorize(request, env, backupId);
+  if ("response" in auth) return auth.response;
+
+  if (!isValidAssetId(assetId)) {
+    return json(request, { error: { message: "Invalid asset id" } }, 400);
+  }
+
+  const oversized = tooLargeToRead(request, CLOUD_BACKUP_LIMITS.maxAssetBytes);
+  if (oversized) return oversized;
+
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.byteLength > CLOUD_BACKUP_LIMITS.maxAssetBytes) {
+    // Reached when Content-Length was absent or understated.
+    return json(
+      request,
+      {
+        error: {
+          message: "This file is too large to back up.",
+          limitBytes: CLOUD_BACKUP_LIMITS.maxAssetBytes,
+          actualBytes: bytes.byteLength,
+        },
+      },
+      413,
+    );
+  }
+
+  const key = getAssetKey(backupId, assetId);
+  // Measured against what is already stored, minus whatever this upload
+  // replaces, so a re-uploaded file is not counted twice.
+  const existing = await env.BUCKET.head(key);
+  const projected =
+    (await storedBytes(env, backupId)) -
+    (existing?.size ?? 0) +
+    bytes.byteLength;
+  if (projected > CLOUD_BACKUP_LIMITS.maxVaultBytes) {
+    return json(
+      request,
+      {
+        error: {
+          message: "This vault is too large to back up.",
+          limitBytes: CLOUD_BACKUP_LIMITS.maxVaultBytes,
+          actualBytes: projected,
+        },
+      },
+      413,
+    );
+  }
+
+  await env.BUCKET.put(key, bytes, {
+    httpMetadata: {
+      contentType:
+        request.headers.get("Content-Type") || "application/octet-stream",
+    },
+  });
+
+  return json(request, { assetId, sizeBytes: bytes.byteLength });
+}
+
+/**
+ * POST /api/cloud-backup/{backupId}/commit — publishes the staged snapshot.
+ *
+ * Carries the bundle, which is text only and so stays small, plus the ids of
+ * the assets that belong to this snapshot. Anything else under the backup is
+ * pruned, which is how a deleted image eventually leaves storage.
+ */
+export async function handleCommitCloudBackup(
   request: Request,
   env: CloudBackupEnv,
   backupId: string,
@@ -378,6 +485,12 @@ export async function handlePushCloudBackup(
 
   const auth = await authorize(request, env, backupId);
   if ("response" in auth) return auth.response;
+
+  const oversized = tooLargeToRead(
+    request,
+    CLOUD_BACKUP_LIMITS.maxJsonBodyBytes,
+  );
+  if (oversized) return oversized;
 
   let body: unknown;
   try {
@@ -393,19 +506,15 @@ export async function handlePushCloudBackup(
   const manifest: CloudBackupManifest = {
     ...auth.manifest,
     vaultTitle: payload.vaultTitle,
-    sizeBytes: measure(payload),
+    sizeBytes:
+      (await storedBytes(env, backupId)) +
+      new TextEncoder().encode(JSON.stringify(payload.bundle)).length,
     lastPushedAt: new Date().toISOString(),
   };
 
-  // `authorize` already proved the presented code matches, and a push never
+  // `authorize` already proved the presented code matches, and a commit never
   // changes it — carry the stored hash through rather than re-deriving it.
-  await writeBackupObjects(
-    env,
-    backupId,
-    payload,
-    manifest,
-    auth.ownerCodeHash,
-  );
+  await commitSnapshot(env, backupId, payload, manifest, auth.ownerCodeHash);
 
   return json(request, { manifest });
 }

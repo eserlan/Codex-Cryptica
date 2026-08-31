@@ -7,6 +7,7 @@ import {
   fetchCloudBackupAsset,
   getLocalCloudBackupRecord,
   getCloudBackupOwnershipCode,
+  formatRecoveryKey,
   createMemoryStorage,
   type CloudBackupRuntime,
   type VaultBundlePayload,
@@ -67,8 +68,16 @@ export class CloudBackupStore {
   lastPushedAt = $state<string | null>(null);
   errorMessage = $state<string | null>(null);
   ownerCode = $state<string | null>(null);
+  /** Backup id and code as one copyable value; see `revealRecoveryKey`. */
+  recoveryKey = $state<string | null>(null);
   /** Media the last save could not read. Non-empty means a partial copy. */
   skippedAssets = $state<string[]>([]);
+  /**
+   * Files sent so far in the current save, and how many there are. Media goes
+   * up one request at a time, so a large vault takes long enough that silence
+   * would read as a hang.
+   */
+  uploadProgress = $state<{ uploaded: number; total: number } | null>(null);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
 
@@ -276,6 +285,22 @@ export class CloudBackupStore {
     return this.ownerCode;
   }
 
+  /**
+   * The one value a user needs to restore this vault elsewhere.
+   *
+   * Restoring takes a backup id as well as the code, and the id was never
+   * shown anywhere — so a user who copied only the code could not restore at
+   * all. Both travel together instead.
+   */
+  async revealRecoveryKey(vaultId: string): Promise<string | null> {
+    if (!this.deps) return null;
+    const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
+    const code = await this.revealOwnerCode(vaultId);
+    if (!record?.backupId || !code) return null;
+    this.recoveryKey = formatRecoveryKey(record.backupId, code);
+    return this.recoveryKey;
+  }
+
   /* ------------------------------------------------------------ backing up */
 
   /**
@@ -300,6 +325,9 @@ export class CloudBackupStore {
         this.deps.runtime,
         vaultId,
         payload,
+        (progress) => {
+          this.uploadProgress = progress;
+        },
       );
       if (!result.ok) {
         this.status = "error";
@@ -323,6 +351,7 @@ export class CloudBackupStore {
       return false;
     } finally {
       this.pushing = false;
+      this.uploadProgress = null;
     }
   }
 

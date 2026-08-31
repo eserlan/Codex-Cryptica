@@ -232,7 +232,7 @@ describe("saving is explicit", () => {
     calls.length = 0;
 
     expect(await store.backUpNow()).toBe(true);
-    expect(calls.filter((url) => url.endsWith("/push"))).toHaveLength(1);
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(1);
     expect(store.status).toBe("idle");
   });
 
@@ -296,7 +296,7 @@ describe("saving is explicit", () => {
     const second = store.backUpNow();
     expect(await second).toBe(false);
     await first;
-    expect(calls.filter((url) => url.endsWith("/push"))).toHaveLength(1);
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(1);
   });
 });
 
@@ -452,5 +452,23 @@ describe("disable, delete and restore", () => {
     ]);
     expect(await store.fetchForRestore("b-1", "wrong")).toBeNull();
     expect(store.errorMessage).toBe("Backup not found");
+  });
+});
+
+describe("recovery key", () => {
+  it("reveals a key carrying both halves a restore needs", async () => {
+    // Showing only the code left users unable to restore: the backup id was
+    // never surfaced anywhere, and restore requires it.
+    const { store } = harness([ENABLE]);
+    await store.enable("v-1");
+
+    const key = await store.revealRecoveryKey("v-1");
+    expect(key).toBe("b-1:code-1");
+    expect(store.recoveryKey).toBe("b-1:code-1");
+  });
+
+  it("returns nothing for a vault with no backup", async () => {
+    const { store } = harness();
+    expect(await store.revealRecoveryKey("never-enabled")).toBeNull();
   });
 });

@@ -109,7 +109,9 @@ describe("pushVaultToCloudBackup", () => {
     const { runtime, calls } = await enabled();
     const result = await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
     expect(result.ok).toBe(true);
-    expect(calls[0].url).toBe("https://worker.test/api/cloud-backup/b-1/push");
+    expect(calls[0].url).toBe(
+      "https://worker.test/api/cloud-backup/b-1/commit",
+    );
     expect(calls[0].init.headers.Authorization).toBe("Bearer code-1");
   });
 
@@ -328,5 +330,85 @@ describe("getCloudBackupStatus", () => {
     const result = await getCloudBackupStatus(runtime, "never");
     expect(result.ok).toBe(false);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("chunked upload", () => {
+  const bytes = (n: number) => new Uint8Array(n).fill(7);
+
+  it("sends each asset as its own raw request, then commits", async () => {
+    // The whole point of the split: no vault is ever serialised into one body.
+    const { runtime, calls } = await enabled();
+    await pushVaultToCloudBackup(runtime, "v-1", {
+      ...PAYLOAD,
+      assets: [
+        { assetId: "a.png", bytes: bytes(3), mimeType: "image/png" },
+        { assetId: "b.png", bytes: bytes(4), mimeType: "image/png" },
+      ],
+    });
+
+    expect(calls.map((call) => call.url)).toEqual([
+      "https://worker.test/api/cloud-backup/b-1/assets/a.png",
+      "https://worker.test/api/cloud-backup/b-1/assets/b.png",
+      "https://worker.test/api/cloud-backup/b-1/commit",
+    ]);
+    expect(calls[0].init.method).toBe("PUT");
+    expect(calls[0].init.body).toBeInstanceOf(Uint8Array);
+    expect(calls[0].init.headers["Content-Type"]).toBe("image/png");
+  });
+
+  it("names the uploaded assets in the commit so the rest are pruned", async () => {
+    const { runtime, calls } = await enabled();
+    await pushVaultToCloudBackup(runtime, "v-1", {
+      ...PAYLOAD,
+      assets: [{ assetId: "a.png", bytes: bytes(3), mimeType: "image/png" }],
+    });
+
+    const commit = JSON.parse(calls.at(-1)!.init.body);
+    expect(commit.assetIds).toEqual(["a.png"]);
+    expect(commit.bundle).toEqual(PAYLOAD.bundle);
+  });
+
+  it("stops before committing when an asset fails", async () => {
+    // Committing anyway would publish a snapshot whose media is missing.
+    const { runtime, calls } = await enabled({
+      ok: false,
+      status: 413,
+      body: { error: { message: "This file is too large to back up." } },
+    });
+    const result = await pushVaultToCloudBackup(runtime, "v-1", {
+      ...PAYLOAD,
+      assets: [{ assetId: "a.png", bytes: bytes(3), mimeType: "image/png" }],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.status).toBe(413);
+    expect(calls.some((call) => call.url.endsWith("/commit"))).toBe(false);
+  });
+
+  it("reports progress per asset so a long save is not silent", async () => {
+    const { runtime } = await enabled();
+    const seen: string[] = [];
+    await pushVaultToCloudBackup(
+      runtime,
+      "v-1",
+      {
+        ...PAYLOAD,
+        assets: [
+          { assetId: "a.png", bytes: bytes(1), mimeType: "image/png" },
+          { assetId: "b.png", bytes: bytes(1), mimeType: "image/png" },
+        ],
+      },
+      (progress) => seen.push(`${progress.uploaded}/${progress.total}`),
+    );
+    expect(seen).toEqual(["1/2", "2/2"]);
+  });
+
+  it("sends only the title on enable, never the vault content", async () => {
+    const { runtime, calls } = makeRuntime([enableResponse]);
+    await enableCloudBackup(runtime, "v-9", PAYLOAD);
+    const sent = JSON.parse(calls[0].init.body);
+    expect(sent).toEqual({ vaultTitle: PAYLOAD.vaultTitle });
   });
 });

@@ -24,7 +24,18 @@ import type { CloudBackupRuntime } from "./runtime";
 export interface VaultBundlePayload {
   vaultTitle: string;
   bundle: unknown;
-  assets?: { assetId: string; content: string }[];
+  /**
+   * Media as raw bytes. Uploaded one request each rather than inlined here, so
+   * neither end has to hold a whole vault in memory (and so base64 does not
+   * add a third to every byte on the wire).
+   */
+  assets?: { assetId: string; bytes: Uint8Array; mimeType: string }[];
+}
+
+/** Progress across a snapshot upload, for a caller that wants to show it. */
+export interface UploadProgress {
+  uploaded: number;
+  total: number;
 }
 
 export type CloudBackupOutcome<T> =
@@ -97,12 +108,13 @@ export async function enableCloudBackup(
     return { ok: true, value: resumed };
   }
 
+  // Only the title: the content follows as individual uploads and a commit.
   const response = await runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/enable`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ vaultTitle: payload.vaultTitle }),
     },
   );
 
@@ -150,32 +162,59 @@ export async function enableCloudBackup(
  * no-op for a vault that is not enabled, so a stray call can never send data
  * for a vault that never opted in (FR-019, FR-001).
  */
-export async function pushVaultToCloudBackup(
+/**
+ * Uploads a snapshot: every asset, then the commit that publishes it.
+ *
+ * Assets go first because the commit prunes anything the new snapshot does not
+ * list — committing first would briefly describe media that is not there yet.
+ * A failed asset aborts before the commit, which leaves the previous snapshot
+ * whole rather than half-replaced.
+ */
+async function uploadSnapshot(
   runtime: CloudBackupRuntime,
-  vaultId: string,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
   payload: VaultBundlePayload,
-): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
-  const record = await readRecord(runtime, vaultId);
-  if (!record || !record.enabled) return { ok: true, value: null };
+  onProgress?: (progress: UploadProgress) => void,
+): Promise<CloudBackupOutcome<CloudBackupManifest>> {
+  const assets = payload.assets ?? [];
+  const auth = `Bearer ${record.ownerCode}`;
 
-  await runtime.storage.write(vaultId, { ...record, status: "syncing" });
+  for (const [index, asset] of assets.entries()) {
+    const response = await runtime.fetch(
+      `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": asset.mimeType || "application/octet-stream",
+          Authorization: auth,
+        },
+        body: asset.bytes,
+      },
+    );
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: await errorFrom(response),
+        status: response.status,
+      };
+    }
+    onProgress?.({ uploaded: index + 1, total: assets.length });
+  }
 
   const response = await runtime.fetch(
-    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/push`,
+    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/commit`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${record.ownerCode}`,
-      },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json", Authorization: auth },
+      body: JSON.stringify({
+        vaultTitle: payload.vaultTitle,
+        bundle: payload.bundle,
+        assetIds: assets.map((asset) => asset.assetId),
+      }),
     },
   );
 
   if (!response.ok) {
-    // Visible failure, never a silent stale success (FR-011). The local save
-    // has already happened and is untouched by this.
-    await runtime.storage.write(vaultId, { ...record, status: "error" });
     return {
       ok: false,
       error: await errorFrom(response),
@@ -183,9 +222,7 @@ export async function pushVaultToCloudBackup(
     };
   }
 
-  // A 200 with an unreadable body is still a failure. This runs on the save
-  // path, so it must resolve rather than throw (FR-019) — a malformed response
-  // becomes a visible error state, not an exception into the caller's save.
+  // A 200 with an unreadable body is still a failure, never a silent success.
   let manifest: CloudBackupManifest | undefined;
   try {
     manifest = ((await response.json()) as { manifest?: CloudBackupManifest })
@@ -194,22 +231,41 @@ export async function pushVaultToCloudBackup(
     manifest = undefined;
   }
   if (!manifest?.lastPushedAt) {
-    await runtime.storage.write(vaultId, { ...record, status: "error" });
     return {
       ok: false,
       error: "The backup service returned an unreadable response.",
     };
   }
+  return { ok: true, value: manifest };
+}
+
+export async function pushVaultToCloudBackup(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  payload: VaultBundlePayload,
+  onProgress?: (progress: UploadProgress) => void,
+): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
+  const record = await readRecord(runtime, vaultId);
+  if (!record || !record.enabled) return { ok: true, value: null };
+
+  await runtime.storage.write(vaultId, { ...record, status: "syncing" });
+
+  const result = await uploadSnapshot(runtime, record, payload, onProgress);
+  if (!result.ok) {
+    // Visible failure, never a silent stale success (FR-011). The local save
+    // has already happened and is untouched by this.
+    await runtime.storage.write(vaultId, { ...record, status: "error" });
+    return result;
+  }
 
   await runtime.storage.write(vaultId, {
     ...record,
     status: "idle",
-    lastPushedAt: manifest.lastPushedAt,
+    lastPushedAt: result.value.lastPushedAt,
   });
-  return { ok: true, value: manifest };
+  return { ok: true, value: result.value };
 }
 
-/** Current remote status for the Settings display (FR-008). */
 export async function getCloudBackupStatus(
   runtime: CloudBackupRuntime,
   vaultId: string,

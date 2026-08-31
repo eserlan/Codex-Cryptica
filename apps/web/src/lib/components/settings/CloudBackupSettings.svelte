@@ -8,14 +8,14 @@
    * provider — and how to get rid of it.
    */
   import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
+  import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
 
   let showConsent = $state(false);
   let showRestore = $state(false);
-  let restoreBackupId = $state("");
-  let restoreCode = $state("");
+  let restoreKey = $state("");
   let busy = $state(false);
   let isSaving = $state(false);
   let codeVisible = $state(false);
@@ -30,6 +30,17 @@
     syncing: "Saving…",
     error: "Last save failed",
   };
+
+  const progress = $derived(cloudBackupStore.uploadProgress);
+  /**
+   * Media uploads one file at a time, so a big vault would otherwise sit on
+   * "Saving…" with nothing moving.
+   */
+  const statusText = $derived(
+    progress && progress.total > 0
+      ? `Saving ${progress.uploaded} of ${progress.total} files…`
+      : STATUS_LABEL[status],
+  );
 
   const handleConsentKeydown = (event: KeyboardEvent) => {
     // Escape must dismiss without consenting — the same contract every other
@@ -119,18 +130,30 @@
   }
 
   async function copyCode() {
-    const code = await cloudBackupStore.revealOwnerCode(vaultId);
-    if (!code) return;
+    // The recovery key, not the bare code: restoring needs the backup id too,
+    // and copying only half of what is required is what made restore
+    // impossible from this panel alone.
+    const key = await cloudBackupStore.revealRecoveryKey(vaultId);
+    if (!key) return;
     try {
-      await navigator.clipboard.writeText(code);
-      notificationStore.notify("Ownership code copied.", "success");
+      await navigator.clipboard.writeText(key);
+      notificationStore.notify("Recovery key copied.", "success");
     } catch {
+      // Clipboard refused (permissions, insecure context) — show it instead so
+      // the user can still copy it by hand.
       codeVisible = true;
     }
   }
 
   async function runRestore() {
-    if (!restoreBackupId.trim() || !restoreCode.trim()) return;
+    const parsed = parseRecoveryKey(restoreKey);
+    if (!parsed) {
+      notificationStore.notify(
+        "That does not look like a recovery key. Copy it from the Settings of the device that made the backup.",
+        "error",
+      );
+      return;
+    }
     busy = true;
     // Lands in a new vault, so whatever is open is never silently replaced
     // (FR-006a). Nothing is created until the download has succeeded.
@@ -139,8 +162,8 @@
     >;
     try {
       restored = await cloudBackupStore.restoreIntoNewVault(
-        restoreBackupId.trim(),
-        restoreCode.trim(),
+        parsed.backupId,
+        parsed.ownerCode,
       );
     } finally {
       busy = false;
@@ -149,14 +172,13 @@
     if (!restored) {
       notificationStore.notify(
         cloudBackupStore.errorMessage ??
-          "That backup could not be found. Check the ownership code.",
+          "That backup could not be found. Check the recovery key.",
         "error",
       );
       return;
     }
     showRestore = false;
-    restoreBackupId = "";
-    restoreCode = "";
+    restoreKey = "";
     notificationStore.notify(
       restored.missingAssets > 0
         ? `Restored "${restored.vaultTitle}" into a new vault, but ${restored.missingAssets} image${restored.missingAssets === 1 ? "" : "s"} could not be recovered.`
@@ -192,7 +214,7 @@
           : 'text-theme-primary'}"
         aria-live="polite"
       >
-        {STATUS_LABEL[status]}
+        {statusText}
       </span>
     {/if}
   </div>
@@ -222,9 +244,9 @@
         </p>
       {/if}
 
-      {#if codeVisible && cloudBackupStore.ownerCode}
+      {#if codeVisible && cloudBackupStore.recoveryKey}
         <p class="break-all font-mono text-xs text-theme-text">
-          {cloudBackupStore.ownerCode}
+          {cloudBackupStore.recoveryKey}
         </p>
       {/if}
 
@@ -242,7 +264,7 @@
           onclick={copyCode}
           class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
         >
-          Copy ownership code
+          Copy recovery key
         </button>
         <button
           type="button"
@@ -274,28 +296,22 @@
   {#if showRestore}
     <div class="flex flex-col gap-3 border border-theme-border p-4">
       <p class="text-sm text-theme-muted">
-        Enter the backup's id and its ownership code, both from the Settings of
-        the device that made it. The vault is loaded into a new vault — nothing
-        you have open is replaced.
+        Paste the recovery key from the Settings of the device that made the
+        backup — the "Copy recovery key" button there. The vault is loaded into
+        a new vault, so nothing you have open is replaced.
       </p>
       <label class="flex flex-col gap-1 text-xs text-theme-muted">
-        Backup id
+        Recovery key
         <input
-          bind:value={restoreBackupId}
-          class="border border-theme-border bg-theme-bg px-3 py-2 font-mono text-sm text-theme-text"
-        />
-      </label>
-      <label class="flex flex-col gap-1 text-xs text-theme-muted">
-        Ownership code
-        <input
-          bind:value={restoreCode}
+          bind:value={restoreKey}
+          placeholder="backup-id:ownership-code"
           class="border border-theme-border bg-theme-bg px-3 py-2 font-mono text-sm text-theme-text"
         />
       </label>
       <button
         type="button"
         onclick={runRestore}
-        disabled={busy || !restoreBackupId.trim() || !restoreCode.trim()}
+        disabled={busy || !restoreKey.trim()}
         class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
       >
         Load from cloud
@@ -346,14 +362,15 @@
           else, or used to train AI.
         </p>
         <p>
-          <strong class="text-theme-text">Your ownership code:</strong> turning this
-          on creates a code that is the only key to your backup. There are no accounts
-          and no password reset. Copy it somewhere safe — if you lose it, and cannot
-          tell support your vault's title, the backup is unreachable for good.
+          <strong class="text-theme-text">Your recovery key:</strong> turning this
+          on creates a key that is the only way back to your backup. There are no
+          accounts and no password reset. Copy it somewhere safe — if you lose it,
+          and cannot tell support your vault's title, the backup is unreachable for
+          good.
         </p>
         <p>
           <strong class="text-theme-text">Support access:</strong> if you lose the
-          code, our support staff can look up a vault's title, size and last backup
+          key, our support staff can look up a vault's title, size and last backup
           time to help you recover it. They cannot read your vault's contents.
         </p>
         <p>

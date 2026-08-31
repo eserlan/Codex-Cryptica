@@ -35,8 +35,8 @@ A user who lost local data (new device, cleared browser storage, corrupted local
 
 **Acceptance Scenarios**:
 
-1. **Given** a vault has a cloud backup and the user has its ownership code (from the original device's Settings, or preserved locally), **When** the user enters that code and chooses to restore, **Then** the system retrieves the backup and reconstructs the vault's entities, labels, notes, maps, canvases, and media locally.
-2. **Given** a user does not have the vault's ownership code, **When** they attempt to restore, **Then** the system clearly explains that the code is required and does not restore or expose any backup content.
+1. **Given** a vault has a cloud backup and the user has its recovery key (from the original device's Settings, or preserved locally), **When** the user enters that recovery key and chooses to restore, **Then** the system retrieves the backup and reconstructs the vault's entities, labels, notes, maps, canvases, and media locally.
+2. **Given** a user does not have the vault's recovery key, **When** they attempt to restore, **Then** the system clearly explains that the key is required and does not restore or expose any backup content.
 3. **Given** a restore is requested while the destination already has unsaved local vault content, **When** the user proceeds, **Then** the system requires explicit confirmation before the restore can overwrite that local content.
 4. **Given** a restore fails partway (e.g., network interruption), **When** the failure occurs, **Then** the user sees a clear error and the local vault is left in a known, uncorrupted state.
 5. **Given** a vault's cloud backup already exists and is newer than the local copy, **When** the user opens or continues using that vault without explicitly requesting a restore, **Then** the system does NOT auto-pull the newer cloud copy — restore only ever happens as a deliberate, explicit action, never silently on open, load, or vault switch.
@@ -107,7 +107,7 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **FR-010**: Users MUST be able to request permanent deletion of a vault's remote backup, and the system MUST confirm once the deletion is complete and the data can no longer be restored.
 - **FR-011**: The system MUST treat a failed or interrupted backup or restore as a visible error state, never as a silent success, and MUST leave local vault data uncorrupted after any such failure.
 - **FR-012**: The system MUST scope cloud backup access to the vault's own owner via a per-vault ownership code generated when backup is first enabled; no other vault's code MUST be able to read, restore, or delete that backup.
-- **FR-013**: Users MUST be able to view or copy their vault's ownership code from Settings at any time, so they can bring it to another device to restore.
+- **FR-013**: Users MUST be able to view or copy their vault's credentials from Settings at any time, so they can bring them to another device to restore. What is copied MUST be everything a restore needs — the backup's identifier as well as its ownership code — presented as a single "recovery key" and accepted as a single value by the restore form. Showing only the ownership code makes restore impossible, because the identifier is not surfaced anywhere else.
 - **FR-014**: The system MUST reject any restore, status, or delete request that does not present a valid ownership code for that vault's backup, without revealing whether a backup exists for an invalid code.
 - **FR-015**: The system MUST provide a support-only lookup that returns a vault backup's metadata (title, size, last-backup time) — never its content — when queried by an identifying detail such as the vault title, and MUST return no result if no single backup matches.
 - **FR-016**: The system MUST NOT provide any way to list, browse, or enumerate vault backups in bulk; only single, targeted lookups by an identifying detail are permitted.
@@ -135,7 +135,8 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **SC-006**: At least 90% of users who enable cloud backup can correctly state, when asked, where their data is stored and how to delete it — evidence the consent screen communicates clearly rather than being a legal-formality checkbox.
 - **SC-007**: A user who lost their ownership code but remembers their vault's title can regain self-service access to their vault through support within one support interaction, without support ever viewing that vault's content.
 - **SC-008**: 100% of support lookup attempts that don't resolve to exactly one matching vault return no result — bulk browsing of vault backups is never possible, tested or otherwise.
-- **SC-010**: A vault at or under the published size limit (50 MB total, including media) backs up successfully; one above it is refused with a clear, actionable message before any partial upload occurs.
+- **SC-010**: A vault at or under the published size limit (50 MB total, including media) backs up successfully; one above it is refused with a clear, actionable message naming the limit, and the previous backup is left intact. Individual files are capped at 5 MB.
+- **SC-011**: Backing up a vault at the size limit never exceeds the upload service's memory ceiling: media is sent one file per request rather than in a single combined body, so peak memory is bounded by the largest single file rather than by the vault.
 - **SC-009**: Pressing "Save to cloud" updates the stored copy and the displayed last-saved time, and no upload occurs without that action — verified by watching for network activity across normal editing and saving.
 
 ## Assumptions

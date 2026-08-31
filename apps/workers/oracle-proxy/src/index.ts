@@ -57,7 +57,8 @@ import {
 } from "./template-directory";
 import {
   handleEnableCloudBackup,
-  handlePushCloudBackup,
+  handleCommitCloudBackup,
+  handleCloudBackupAssetUpload,
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
   handleGetCloudBackupAsset,
@@ -303,20 +304,25 @@ export default {
           return handleDeleteCloudBackup(request, env, backupId);
         }
         if (parts.length === 5) {
-          if (parts[4] === "push" && request.method === "POST")
-            return handlePushCloudBackup(request, env, backupId);
+          if (parts[4] === "commit" && request.method === "POST")
+            return handleCommitCloudBackup(request, env, backupId);
           if (parts[4] === "status" && request.method === "GET")
             return handleGetCloudBackupStatus(request, env, backupId);
           if (parts[4] === "bundle" && request.method === "GET")
             return handleGetCloudBackupBundle(request, env, backupId);
         }
         // /api/cloud-backup/{backupId}/assets/{assetId}
-        if (
-          parts.length === 6 &&
-          parts[4] === "assets" &&
-          request.method === "GET"
-        ) {
-          return handleGetCloudBackupAsset(request, env, backupId, parts[5]);
+        if (parts.length === 6 && parts[4] === "assets") {
+          const assetId = parts[5];
+          if (request.method === "GET")
+            return handleGetCloudBackupAsset(request, env, backupId, assetId);
+          if (request.method === "PUT")
+            return handleCloudBackupAssetUpload(
+              request,
+              env,
+              backupId,
+              assetId,
+            );
         }
       }
 

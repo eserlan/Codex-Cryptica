@@ -444,10 +444,22 @@ export type TemplateDirectoryPage = z.infer<typeof TemplateDirectoryPageSchema>;
 
 export const CLOUD_BACKUP_LIMITS = {
   /**
-   * Whole-vault ceiling: bundle plus every asset. Checked before any object is
-   * written, so an oversized vault never leaves a partial backup behind.
+   * Whole-vault ceiling: bundle plus every asset. Enforced per upload against
+   * the running total already stored, so the limit is reached and reported
+   * rather than discovered after the fact.
    */
   maxVaultBytes: 50 * 1024 * 1024,
+  /**
+   * One asset per request, so no single upload can approach the Worker's
+   * memory ceiling. Matches the publish path's per-asset cap.
+   */
+  maxAssetBytes: 5 * 1024 * 1024,
+  /**
+   * Ceiling on a JSON body (enable and commit). The bundle is text only —
+   * entities, maps and canvases — so this is generous for it while keeping any
+   * single request far below what the Worker can hold in memory.
+   */
+  maxJsonBodyBytes: 8 * 1024 * 1024,
   maxTitleLength: 200,
   /**
    * Manifest keys read in one admin-lookup scan. The lookup never paginates

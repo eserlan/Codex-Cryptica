@@ -9,8 +9,8 @@ import type { LocalEntity } from "$lib/stores/vault/types";
  *
  * Asset resolution follows `PublishingService`, including which fields count as
  * asset sources: an entity's `image` and `thumbnail`, and a map's `assetPath`.
- * Local paths are turned into blobs through the vault's own image resolver,
- * then base64-encoded for JSON transport. Remote URLs (`http:`, `data:`,
+ * Local paths are turned into blobs through the vault's own image resolver and
+ * kept as raw bytes for individual upload. Remote URLs (`http:`, `data:`,
  * `blob:`) are left alone — they are references, not vault-owned files.
  *
  * Pure aside from the injected resolver, so the size accounting and the
@@ -32,7 +32,8 @@ export interface CloudBackupPayloadResult {
     canvases: unknown[];
     assetManifest: { assetId: string; path: string; mimeType: string }[];
   };
-  assets: { assetId: string; content: string }[];
+  /** Raw bytes per file. Uploaded one request each, never inlined in JSON. */
+  assets: { assetId: string; bytes: Uint8Array; mimeType: string }[];
   /** Paths that could not be read; surfaced so a partial backup is never silent. */
   skippedAssets: string[];
 }
@@ -77,16 +78,6 @@ export function collectAssetPaths(
   return [...paths];
 }
 
-function toBase64(bytes: Uint8Array): string {
-  let binary = "";
-  // Chunked: a single spread of a multi-megabyte array blows the call stack.
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-}
-
 export async function buildCloudBackupPayload(
   vaultTitle: string,
   // Widened at the boundary: the vault store's entity record is structurally
@@ -99,7 +90,7 @@ export async function buildCloudBackupPayload(
   const maps = content.maps ?? [];
   const canvases = content.canvases ?? [];
   const fetcher = deps.fetch ?? fetch;
-  const assets: { assetId: string; content: string }[] = [];
+  const assets: { assetId: string; bytes: Uint8Array; mimeType: string }[] = [];
   const assetManifest: { assetId: string; path: string; mimeType: string }[] =
     [];
   const skippedAssets: string[] = [];
@@ -114,12 +105,9 @@ export async function buildCloudBackupPayload(
       const bytes = new Uint8Array(await blob.arrayBuffer());
 
       const assetId = assetIdForPath(path);
-      assets.push({ assetId, content: toBase64(bytes) });
-      assetManifest.push({
-        assetId,
-        path,
-        mimeType: blob.type || "application/octet-stream",
-      });
+      const mimeType = blob.type || "application/octet-stream";
+      assets.push({ assetId, bytes, mimeType });
+      assetManifest.push({ assetId, path, mimeType });
     } catch {
       // One unreadable image must not cost the user their whole backup. It is
       // recorded so the caller can say what was left out rather than implying

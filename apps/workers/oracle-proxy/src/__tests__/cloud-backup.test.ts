@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   handleEnableCloudBackup,
-  handlePushCloudBackup,
+  handleCommitCloudBackup,
+  handleCloudBackupAssetUpload,
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
   handleGetCloudBackupAsset,
@@ -58,9 +59,19 @@ class Bucket {
     };
   }
 
+  private sizeOf(key: string): number {
+    const body = this.store.get(key)?.body;
+    if (body === undefined) return 0;
+    return typeof body === "string"
+      ? new TextEncoder().encode(body).length
+      : body.byteLength;
+  }
+
   async head(key: string) {
     const item = this.store.get(key);
-    return item ? { customMetadata: item.customMetadata } : null;
+    return item
+      ? { customMetadata: item.customMetadata, size: this.sizeOf(key) }
+      : null;
   }
 
   async list({ prefix, limit }: { prefix: string; limit?: number }) {
@@ -69,6 +80,7 @@ class Bucket {
     return {
       objects: capped.map((key) => ({
         key,
+        size: this.sizeOf(key),
         customMetadata: this.store.get(key)?.customMetadata,
       })),
       truncated: typeof limit === "number" && keys.length > limit,
@@ -102,22 +114,74 @@ const get = (auth?: string) =>
     headers: auth ? { Authorization: `Bearer ${auth}` } : {},
   });
 
-const payload = (title = "The Saltmere Fens", extra: unknown[] = []) => ({
+/** A commit body: the bundle plus the ids of the assets that belong to it. */
+const commitBody = (
+  title = "The Saltmere Fens",
+  extra: unknown[] = [],
+  assetIds: string[] = ["map.png"],
+) => ({
   vaultTitle: title,
   bundle: {
     schemaVersion: 1,
     entities: [{ id: "e1", title: "Alder Cass" }, ...extra],
   },
-  assets: [{ assetId: "map.png", content: btoa("binary-map-data") }],
+  assetIds,
 });
 
+/** PUT one asset as raw bytes, the way the client uploads them. */
+const putAsset = (auth: string, body: Uint8Array | string, size?: number) =>
+  new Request("https://example.test/api/cloud-backup", {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${auth}`,
+      "Content-Type": "image/png",
+      ...(size === undefined ? {} : { "Content-Length": String(size) }),
+    },
+    body,
+  });
+
+async function uploadAsset(
+  env: CloudBackupEnv,
+  backupId: string,
+  ownerCode: string,
+  assetId = "map.png",
+  bytes = new TextEncoder().encode("binary-map-data"),
+) {
+  return handleCloudBackupAssetUpload(
+    putAsset(ownerCode, bytes),
+    env,
+    backupId,
+    assetId,
+  );
+}
+
+/** Opens a backup and uploads its one asset, without committing. */
 async function enable(env: CloudBackupEnv, title?: string) {
-  const res = await handleEnableCloudBackup(post(payload(title)), env);
-  return (await res.json()) as {
+  const res = await handleEnableCloudBackup(
+    post({ vaultTitle: title ?? "The Saltmere Fens" }),
+    env,
+  );
+  const opened = (await res.json()) as {
     backupId: string;
     ownerCode: string;
     manifest: { sizeBytes: number; lastPushedAt: string };
   };
+  await uploadAsset(env, opened.backupId, opened.ownerCode);
+  return opened;
+}
+
+/** Opens, uploads and commits — a complete backup. */
+async function enableAndCommit(env: CloudBackupEnv, title?: string) {
+  const opened = await enable(env, title);
+  const res = await handleCommitCloudBackup(
+    post(commitBody(title), opened.ownerCode),
+    env,
+    opened.backupId,
+  );
+  const { manifest } = (await res.json()) as {
+    manifest: { sizeBytes: number; lastPushedAt: string };
+  };
+  return { ...opened, manifest };
 }
 
 /* ------------------------------------------------------- foundational -- */
@@ -202,10 +266,20 @@ describe("credentials and key layout", () => {
     ).toBe(404);
     expect(
       (
-        await handlePushCloudBackup(
-          post(payload(), a.ownerCode),
+        await handleCommitCloudBackup(
+          post(commitBody(), a.ownerCode),
           env,
           b.backupId,
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await handleCloudBackupAssetUpload(
+          putAsset(a.ownerCode, new TextEncoder().encode("x")),
+          env,
+          b.backupId,
+          "stolen.png",
         )
       ).status,
     ).toBe(404);
@@ -220,89 +294,139 @@ describe("credentials and key layout", () => {
 
 /* --------------------------------------------------------------- US1 -- */
 
-describe("enable and push", () => {
-  it("creates a backup and returns the code exactly once", async () => {
+describe("enable, upload and commit", () => {
+  it("opens a backup and returns the code exactly once", async () => {
     const env = makeEnv();
-    const res = await handleEnableCloudBackup(post(payload()), env);
+    const res = await handleEnableCloudBackup(
+      post({ vaultTitle: "The Saltmere Fens" }),
+      env,
+    );
     expect(res.status).toBe(201);
     const body = (await res.json()) as any;
     expect(body.backupId).toBeTruthy();
     expect(body.ownerCode).toMatch(/^[a-f0-9]{64}$/);
     expect(body.manifest.vaultTitle).toBe("The Saltmere Fens");
-    expect(env.BUCKET.store.has(getBundleKey(body.backupId))).toBe(true);
-    expect(env.BUCKET.store.has(getAssetKey(body.backupId, "map.png"))).toBe(
-      true,
-    );
+    // Enable writes the manifest and nothing else: content follows.
+    expect(env.BUCKET.store.has(getManifestKey(body.backupId))).toBe(true);
+    expect(env.BUCKET.store.has(getBundleKey(body.backupId))).toBe(false);
   });
 
-  it("rejects a payload with no title or bundle with 400", async () => {
+  it("rejects an enable with no title with 400", async () => {
     const env = makeEnv();
+    expect((await handleEnableCloudBackup(post({}), env)).status).toBe(400);
     expect(
-      (await handleEnableCloudBackup(post({ bundle: {} }), env)).status,
-    ).toBe(400);
-    expect(
-      (await handleEnableCloudBackup(post({ vaultTitle: "x" }), env)).status,
+      (await handleEnableCloudBackup(post({ vaultTitle: "  " }), env)).status,
     ).toBe(400);
   });
 
-  it("rejects an oversized vault with 413 and writes nothing", async () => {
+  it("rejects a commit with no bundle with 400", async () => {
     const env = makeEnv();
-    const huge = {
-      vaultTitle: "Huge",
-      bundle: { blob: "x".repeat(51 * 1024 * 1024) },
-    };
-    const res = await handleEnableCloudBackup(post(huge), env);
-    expect(res.status).toBe(413);
-    const body = (await res.json()) as any;
-    expect(body.error.limitBytes).toBe(50 * 1024 * 1024);
-    expect(body.error.actualBytes).toBeGreaterThan(body.error.limitBytes);
-    // No partial backup left behind (SC-010).
-    expect(env.BUCKET.store.size).toBe(0);
-  });
-
-  it("rejects a malformed base64 asset with 400 and writes nothing", async () => {
-    // Previously atob threw, producing an uncaught 500.
-    const env = makeEnv();
-    const res = await handleEnableCloudBackup(
-      post({
-        vaultTitle: "T",
-        bundle: {},
-        assets: [{ assetId: "a.png", content: "!!!not base64!!!" }],
-      }),
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleCommitCloudBackup(
+      post({ vaultTitle: "x" }, ownerCode),
       env,
+      backupId,
     );
     expect(res.status).toBe(400);
+  });
+
+  it("refuses an oversized body before reading it", async () => {
+    // The point of the header check: measuring by parsing is what would
+    // exhaust the Worker's memory, so the limit has to be enforced first.
+    const env = makeEnv();
+    const request = new Request("https://example.test/api/cloud-backup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": String(64 * 1024 * 1024),
+      },
+      body: JSON.stringify({ vaultTitle: "Huge" }),
+    });
+    const res = await handleEnableCloudBackup(request, env);
+    expect(res.status).toBe(413);
     expect(env.BUCKET.store.size).toBe(0);
+  });
+
+  it("rejects a single asset over the per-file limit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleCloudBackupAssetUpload(
+      putAsset(ownerCode, new Uint8Array(1), 6 * 1024 * 1024),
+      env,
+      backupId,
+      "big.png",
+    );
+    expect(res.status).toBe(413);
+    expect((await res.json()).error.limitBytes).toBe(5 * 1024 * 1024);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "big.png"))).toBe(false);
+  });
+
+  it("rejects an asset that pushes the vault over its ceiling", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    // Eleven 5MB files exceed the 50MB vault limit; the last one is refused.
+    let last: Response | undefined;
+    for (let i = 0; i < 11; i += 1) {
+      last = await handleCloudBackupAssetUpload(
+        putAsset(ownerCode, new Uint8Array(5 * 1024 * 1024)),
+        env,
+        backupId,
+        `a${i}.png`,
+      );
+    }
+    expect(last!.status).toBe(413);
+    expect((await last!.json()).error.limitBytes).toBe(50 * 1024 * 1024);
+  });
+
+  it("does not double-count an asset that replaces itself", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const bytes = new Uint8Array(4 * 1024 * 1024);
+    for (let i = 0; i < 20; i += 1) {
+      const res = await handleCloudBackupAssetUpload(
+        putAsset(ownerCode, bytes),
+        env,
+        backupId,
+        "same.png",
+      );
+      expect(res.status).toBe(200);
+    }
   });
 
   it("rejects an asset id containing a path separator", async () => {
     const env = makeEnv();
-    const res = await handleEnableCloudBackup(
-      post({
-        vaultTitle: "T",
-        bundle: {},
-        assets: [{ assetId: "../escape", content: btoa("x") }],
-      }),
+    const { backupId, ownerCode } = await enable(env);
+    const res = await handleCloudBackupAssetUpload(
+      putAsset(ownerCode, new TextEncoder().encode("x")),
       env,
+      backupId,
+      "../escape",
     );
     expect(res.status).toBe(400);
   });
 
-  it("prunes stale assets after writing the new ones, not before", async () => {
-    // Deleting first would leave a bundle with no media if the write failed.
+  it("refuses an asset upload without the ownership code", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env);
+    const res = await handleCloudBackupAssetUpload(
+      putAsset("wrong-code", new TextEncoder().encode("x")),
+      env,
+      backupId,
+      "a.png",
+    );
+    expect(res.status).toBe(404);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "a.png"))).toBe(false);
+  });
+
+  it("prunes stale assets on commit, after the new ones are already stored", async () => {
+    // Deleting first would leave a bundle whose media is gone.
     const env = makeEnv();
     const { backupId, ownerCode } = await enable(env);
     expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(true);
 
-    await handlePushCloudBackup(
-      post(
-        {
-          vaultTitle: "The Saltmere Fens",
-          bundle: { entities: [] },
-          assets: [{ assetId: "new.png", content: btoa("new") }],
-        },
-        ownerCode,
-      ),
+    await uploadAsset(env, backupId, ownerCode, "new.png");
+    await handleCommitCloudBackup(
+      post(commitBody("The Saltmere Fens", [], ["new.png"]), ownerCode),
       env,
       backupId,
     );
@@ -311,24 +435,24 @@ describe("enable and push", () => {
     expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(false);
   });
 
-  it("keeps the ownership code valid across a push", async () => {
+  it("keeps the ownership code valid across a commit", async () => {
     const env = makeEnv();
-    const { backupId, ownerCode } = await enable(env);
-    await handlePushCloudBackup(post(payload(), ownerCode), env, backupId);
+    const { backupId, ownerCode } = await enableAndCommit(env);
     expect(
       (await handleGetCloudBackupStatus(get(ownerCode), env, backupId)).status,
     ).toBe(200);
   });
 
-  it("replaces the whole snapshot on push and moves lastPushedAt", async () => {
+  it("replaces the whole snapshot on commit and moves lastPushedAt", async () => {
     const env = makeEnv();
-    const { backupId, ownerCode, manifest } = await enable(env);
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
 
-    const res = await handlePushCloudBackup(
+    const res = await handleCommitCloudBackup(
       post(
         {
           vaultTitle: "The Saltmere Fens",
           bundle: { schemaVersion: 1, entities: [{ id: "e2", title: "Nell" }] },
+          assetIds: [],
         },
         ownerCode,
       ),
@@ -342,11 +466,18 @@ describe("enable and push", () => {
     );
     expect(bundle.entities).toHaveLength(1);
     expect(bundle.entities[0].id).toBe("e2");
-    // A push with no assets clears the previous ones, so deletions propagate.
+    // A commit listing no assets clears the previous ones, so deletions
+    // propagate to the backup.
     expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(false);
 
     const after = (await res.json()) as any;
     expect(after.manifest.lastPushedAt >= manifest.lastPushedAt).toBe(true);
+  });
+
+  it("records a size covering the stored assets and the bundle", async () => {
+    const env = makeEnv();
+    const { manifest } = await enableAndCommit(env);
+    expect(manifest.sizeBytes).toBeGreaterThan("binary-map-data".length);
   });
 });
 
@@ -355,7 +486,7 @@ describe("enable and push", () => {
 describe("restore reads", () => {
   it("returns the manifest and bundle without mutating lastPushedAt", async () => {
     const env = makeEnv();
-    const { backupId, ownerCode, manifest } = await enable(env);
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
 
     const res = await handleGetCloudBackupBundle(get(ownerCode), env, backupId);
     expect(res.status).toBe(200);
@@ -394,7 +525,7 @@ describe("restore reads", () => {
 describe("status and deletion", () => {
   it("reports status, last push time and size", async () => {
     const env = makeEnv();
-    const { backupId, ownerCode } = await enable(env);
+    const { backupId, ownerCode } = await enableAndCommit(env);
     const body = (await (
       await handleGetCloudBackupStatus(get(ownerCode), env, backupId)
     ).json()) as any;

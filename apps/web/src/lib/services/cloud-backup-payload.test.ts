@@ -106,7 +106,8 @@ describe("buildCloudBackupPayload", () => {
     expect(result.bundle.entities).toHaveLength(1);
     expect(result.assets).toHaveLength(1);
     expect(result.assets[0].assetId).toBe("assets_map.png");
-    expect(result.assets[0].content).toBe(btoa("\x01\x02\x03"));
+    expect([...result.assets[0].bytes]).toEqual([1, 2, 3]);
+    expect(result.assets[0].mimeType).toBe("image/png");
     expect(result.skippedAssets).toEqual([]);
   });
 
@@ -164,8 +165,9 @@ describe("buildCloudBackupPayload", () => {
     expect(resolveImageUrl).not.toHaveBeenCalled();
   });
 
-  it("encodes a large asset without blowing the call stack", async () => {
-    // A naive String.fromCharCode(...bytes) throws on multi-megabyte files.
+  it("keeps a large asset as raw bytes rather than expanding it", async () => {
+    // Base64 would add a third to every byte and force the whole vault through
+    // one JSON body; the bytes are passed straight through for its own upload.
     const big = new Uint8Array(300_000).fill(65);
     const result = await buildCloudBackupPayload(
       "V",
@@ -178,7 +180,7 @@ describe("buildCloudBackupPayload", () => {
         })) as unknown as typeof fetch,
       },
     );
-    expect(result.assets[0].content.length).toBeGreaterThan(100_000);
+    expect(result.assets[0].bytes.byteLength).toBe(300_000);
     expect(result.skippedAssets).toEqual([]);
   });
 });

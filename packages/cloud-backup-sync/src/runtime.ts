@@ -12,7 +12,8 @@ export type FetchLike = (
   init?: {
     method?: string;
     headers?: Record<string, string>;
-    body?: string;
+    /** JSON text, or the raw bytes of a single asset upload. */
+    body?: string | Uint8Array;
     signal?: AbortSignal;
   },
 ) => Promise<{
