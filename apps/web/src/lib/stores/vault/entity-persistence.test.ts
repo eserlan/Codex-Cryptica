@@ -41,6 +41,9 @@ function makeService(
     isContentLoaded?: (id: string) => boolean;
     loadContent?: (id: string) => Promise<void>;
     markContentLoaded?: (id: string) => void;
+    setStatus?: (s: any) => void;
+    setErrorMessage?: (msg: string | null) => void;
+    onPermanentFailure?: (id: string) => void;
   } = {},
 ) {
   const repository: any = {
@@ -54,10 +57,11 @@ function makeService(
     activeVaultId: options.activeVaultId ?? (() => "v1"),
     isGuest: () => false,
     getSpecificVaultHandle: async () => ({}) as any,
-    setStatus: () => {},
+    setStatus: options.setStatus ?? (() => {}),
     status: () => "idle",
-    setErrorMessage: () => {},
+    setErrorMessage: options.setErrorMessage ?? (() => {}),
     onEntityUpdate: undefined,
+    onPermanentFailure: options.onPermanentFailure,
     isContentLoaded: options.isContentLoaded ?? (() => true),
     loadContent: options.loadContent ?? (async () => {}),
     markContentLoaded: options.markContentLoaded ?? (() => {}),
@@ -323,5 +327,91 @@ describe("EntityPersistenceService coordinate-only saves", () => {
       }),
       false,
     );
+  });
+});
+
+describe("EntityPersistenceService save status and immediate mode", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    cacheSet.mockClear();
+    cacheGetEntityContent.mockClear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("bypasses debounce and persists immediately when immediate: true is passed", async () => {
+    const saveToDisk = vi.fn(async () => {});
+    const entities = {
+      hero: {
+        id: "hero",
+        title: "Hero",
+        content: "Lore content",
+        connections: [],
+      },
+    };
+    const setStatus = vi.fn();
+    const { svc } = makeService(saveToDisk, entities, { setStatus });
+
+    const savePromise = svc.scheduleSave(entities.hero as any, {
+      immediate: true,
+    });
+
+    expect(setStatus).toHaveBeenCalledWith("saving");
+    await vi.advanceTimersByTimeAsync(1);
+    await savePromise;
+
+    expect(saveToDisk).toHaveBeenCalledTimes(1);
+    expect(setStatus).toHaveBeenCalledWith("saved");
+  });
+
+  it("transitions status from saving to saved upon successful save", async () => {
+    const saveToDisk = vi.fn(async () => {});
+    const entities = {
+      hero: { id: "hero", title: "Hero", connections: [] },
+    };
+    const setStatus = vi.fn();
+    const { svc } = makeService(saveToDisk, entities, { setStatus });
+
+    const savePromise = svc.scheduleSave(entities.hero as any);
+    expect(setStatus).toHaveBeenCalledWith("saving");
+
+    await vi.advanceTimersByTimeAsync(450);
+    await savePromise;
+
+    expect(saveToDisk).toHaveBeenCalledTimes(1);
+    expect(setStatus).toHaveBeenCalledWith("saved");
+  });
+
+  it("calls onPermanentFailure and sets error status when maximum requeues are exhausted", async () => {
+    const saveToDisk = vi.fn(async () => {
+      throw new Error("disk full");
+    });
+    const entities = {
+      hero: { id: "hero", title: "Hero", connections: [] },
+    };
+    const setStatus = vi.fn();
+    const setErrorMessage = vi.fn();
+    const onPermanentFailure = vi.fn();
+    const { svc } = makeService(saveToDisk, entities, {
+      setStatus,
+      setErrorMessage,
+      onPermanentFailure,
+    });
+
+    const savePromise = svc.scheduleSave(entities.hero as any, {
+      immediate: true,
+    });
+
+    // Advance enough time for initial save and all 3 requeues (250ms + 500ms + 750ms + buffers)
+    await vi.advanceTimersByTimeAsync(5000);
+    await savePromise;
+
+    expect(setStatus).toHaveBeenCalledWith("error");
+    expect(setErrorMessage).toHaveBeenCalledWith(
+      "Failed to save entity to storage after multiple attempts.",
+    );
+    expect(onPermanentFailure).toHaveBeenCalledWith("hero");
   });
 });

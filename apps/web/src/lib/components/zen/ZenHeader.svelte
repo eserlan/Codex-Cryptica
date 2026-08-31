@@ -29,6 +29,7 @@
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
   import { shelf } from "$lib/features/shelf";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
 
   let {
     entity,
@@ -159,24 +160,30 @@
       {/if}
       {#if editState.isEditing}
         <div class="space-y-2">
-          <input
-            type="text"
-            bind:value={editState.title}
-            aria-label="Entity Title"
-            class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editState.title}
+              aria-label="Entity Title"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editState.aliases} />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5">
-          <h1
-            id="entity-modal-title"
-            data-testid="entity-title"
-            class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
-          >
-            {entity?.title || ""}
-          </h1>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1
+              id="entity-modal-title"
+              data-testid="entity-title"
+              class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
+            >
+              {entity?.title || ""}
+            </h1>
+            <SaveStatusIndicator />
+          </div>
           {#if entity?.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5">
               <span

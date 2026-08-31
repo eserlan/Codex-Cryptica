@@ -116,6 +116,33 @@ restore, because nothing in the app displays a backup id on its own.
 Relay it through the same channel you verified them on, and remind them it is
 the only key to that backup.
 
+## Runbook: Deleting A Stored Vault
+
+A vault owner can always delete their own backup from **Settings → Cloud
+Backup → Delete backup**. That is the normal path and needs no operator: the
+app holds the backup id and code locally and authorises the delete itself.
+
+The operator route exists for the cases the owner path cannot reach — the user
+cleared their browser or lost the device and no longer has the code, a takedown
+request, or an abandoned backup that has to go.
+
+```bash
+curl -X DELETE https://oracle-proxy.espen-erlandsen.workers.dev/api/cloud-backup/admin/$BACKUP_ID \
+  -H "Authorization: Bearer $CLOUD_BACKUP_ADMIN_TOKEN"
+```
+
+```json
+{ "deleted": true, "existed": true }
+```
+
+`existed: false` means the id was already gone — the erase still ran and is
+still safe, you were just handed a stale id. Get `$BACKUP_ID` from the lookup
+in step 2 above; there is deliberately no delete-by-title.
+
+This is irreversible and there is no undo, no retention window and no copy
+elsewhere. Verify identity exactly as you would before re-issuing a code, and
+prefer walking the user through deleting it themselves when they still can.
+
 ## What To Refuse
 
 Any request to list backups, to browse by partial title, or to read a vault's

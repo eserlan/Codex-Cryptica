@@ -9,6 +9,7 @@ import {
   handleDeleteCloudBackup,
   handleCloudBackupAdminLookup,
   handleCloudBackupReissueCode,
+  handleCloudBackupAdminDelete,
   hashOwnerCode,
   getManifestKey,
   getBundleKey,
@@ -677,5 +678,77 @@ describe("support lookup", () => {
       env.BUCKET.store.get(getManifestKey(backupId))!.body as string,
     );
     expect(stored.vaultTitle).toBe("Kept Title");
+  });
+});
+
+describe("operator delete", () => {
+  /** DELETE carries no body; the token rides in the Authorization header. */
+  const del = (token?: string) =>
+    new Request("https://proxy.test/api/cloud-backup/admin/x", {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+  it("erases a backup the operator can no longer reach by owner code", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+
+    const res = await handleCloudBackupAdminDelete(
+      del(ADMIN_TOKEN),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()) as any).toEqual({ deleted: true, existed: true });
+
+    const remaining = [...env.BUCKET.store.keys()].filter((key) =>
+      key.startsWith(`cloud-backup/${backupId}/`),
+    );
+    expect(remaining).toEqual([]);
+    expect(
+      (await handleGetCloudBackupBundle(get(ownerCode), env, backupId)).status,
+    ).toBe(404);
+  });
+
+  it("reports existed:false for an id that is already gone", async () => {
+    const env = makeEnv();
+
+    const body = (await (
+      await handleCloudBackupAdminDelete(del(ADMIN_TOKEN), env, "no-such-id")
+    ).json()) as any;
+
+    expect(body).toEqual({ deleted: true, existed: false });
+  });
+
+  it("answers 404 for a wrong or missing token, never 401", async () => {
+    const env = makeEnv();
+    const { backupId } = await enable(env);
+
+    for (const request of [del("wrong-token"), del(undefined)]) {
+      const res = await handleCloudBackupAdminDelete(request, env, backupId);
+      expect(res.status).toBe(404);
+    }
+
+    // The backup is untouched by a refused attempt.
+    expect(
+      [...env.BUCKET.store.keys()].some((key) =>
+        key.startsWith(`cloud-backup/${backupId}/`),
+      ),
+    ).toBe(true);
+  });
+
+  it("is closed by default when no admin token is configured", async () => {
+    const env = makeEnv();
+    delete (env as any).CLOUD_BACKUP_ADMIN_TOKEN;
+    const { backupId } = await enable(env);
+
+    const res = await handleCloudBackupAdminDelete(del(""), env, backupId);
+
+    expect(res.status).toBe(404);
+    expect(
+      [...env.BUCKET.store.keys()].some((key) =>
+        key.startsWith(`cloud-backup/${backupId}/`),
+      ),
+    ).toBe(true);
   });
 });
