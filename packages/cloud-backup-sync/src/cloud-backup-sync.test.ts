@@ -466,3 +466,45 @@ describe("known backups on this device", () => {
     expect(await listKnownCloudBackups(noList)).toEqual([]);
   });
 });
+
+describe("one backup per vault", () => {
+  it("keeps the same backup across repeated saves", async () => {
+    // Every save must overwrite the vault's one backup. Opening a new one per
+    // save would multiply storage and leave the user with stale copies they
+    // have no key to and no way to delete.
+    const { runtime, calls } = await enabled();
+    const before = await getLocalCloudBackupRecord(runtime, "v-1");
+
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
+
+    const after = await getLocalCloudBackupRecord(runtime, "v-1");
+    expect(after?.backupId).toBe(before?.backupId);
+    expect(calls.every((call) => call.url.includes("/b-1/"))).toBe(true);
+    expect(calls.some((call) => call.url.endsWith("/enable"))).toBe(false);
+  });
+
+  it("resumes the same backup after a disable, rather than opening another", async () => {
+    const { runtime, calls } = await enabled();
+    const before = await getLocalCloudBackupRecord(runtime, "v-1");
+
+    await disableCloudBackup(runtime, "v-1");
+    await enableCloudBackup(runtime, "v-1", PAYLOAD);
+
+    const after = await getLocalCloudBackupRecord(runtime, "v-1");
+    expect(after?.backupId).toBe(before?.backupId);
+    expect(after?.enabled).toBe(true);
+    expect(calls.some((call) => call.url.endsWith("/enable"))).toBe(false);
+  });
+
+  it("tracks a renamed vault so the listing shows its current name", async () => {
+    const { runtime } = await enabled();
+    await pushVaultToCloudBackup(runtime, "v-1", {
+      ...PAYLOAD,
+      vaultTitle: "The Drowned Fens",
+    });
+    const known = await listKnownCloudBackups(runtime);
+    expect(known[0].vaultTitle).toBe("The Drowned Fens");
+    expect(known[0].backupId).toBe("b-1");
+  });
+});

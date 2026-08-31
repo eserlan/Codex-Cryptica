@@ -10,6 +10,7 @@
   import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
 
@@ -47,6 +48,26 @@
     // modal in the app honours.
     if (showConsent && event.key === "Escape") showConsent = false;
   };
+
+  /** The name to list a backup under: the vault's current name wins. */
+  function backupLabel(backup: { vaultId: string; vaultTitle: string | null }) {
+    const live = vaultRegistry.availableVaults.find(
+      (candidate) => candidate.id === backup.vaultId,
+    );
+    return live?.name ?? backup.vaultTitle ?? "Untitled vault";
+  }
+
+  /** Date and time: several saves a day are normal, so a date alone is ambiguous. */
+  function savedAt(iso: string | null) {
+    if (!iso) return "Not yet saved";
+    const when = new Date(iso);
+    return Number.isNaN(when.getTime())
+      ? "Not yet saved"
+      : `Saved ${when.toLocaleDateString()} ${when.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`;
+  }
 
   const lastPushed = $derived(
     cloudBackupStore.lastPushedAt
@@ -154,6 +175,9 @@
   async function openRestore() {
     showRestore = !showRestore;
     if (!showRestore) return;
+    // Live vault names, so a backup saved before titles were recorded — or a
+    // vault renamed since — still lists under the name the user knows it by.
+    await vaultRegistry.listVaults();
     await cloudBackupStore.loadKnownBackups();
     if (!restoreKey.trim()) {
       const current = cloudBackupStore.knownBackups.find(
@@ -327,14 +351,12 @@
                   class="flex w-full items-baseline justify-between gap-3 border border-theme-border px-3 py-2 text-left transition-colors hover:border-theme-primary/40"
                 >
                   <span class="text-sm text-theme-text"
-                    >{backup.vaultTitle ?? "Untitled vault"}</span
+                    >{backupLabel(backup)}</span
                   >
                   <span
                     class="font-mono text-[10px] uppercase text-theme-muted"
                   >
-                    {backup.lastPushedAt
-                      ? `Saved ${new Date(backup.lastPushedAt).toLocaleDateString()}`
-                      : "Not yet saved"}
+                    {savedAt(backup.lastPushedAt)}
                   </span>
                 </button>
               </li>

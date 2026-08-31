@@ -144,7 +144,13 @@ export async function enableCloudBackup(
   if (existing) {
     // Re-enabling after a disable resumes against the same remote backup; the
     // user never asked for deletion, so there is nothing to recreate.
-    const resumed: LocalCloudBackupRecord = { ...existing, enabled: true };
+    const resumed: LocalCloudBackupRecord = {
+      ...existing,
+      enabled: true,
+      // Same backupId, so re-enabling writes over the vault's existing backup
+      // rather than opening a second one alongside it.
+      vaultTitle: payload.vaultTitle,
+    };
     await runtime.storage.write(vaultId, resumed);
     return { ok: true, value: resumed };
   }
