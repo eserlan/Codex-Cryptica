@@ -17,7 +17,7 @@ A vault owner who wants peace of mind against losing their lore (device loss, br
 
 **Acceptance Scenarios**:
 
-1. **Given** cloud backup has never been enabled for a vault, **When** the user opens the cloud backup setting, **Then** the system shows a consent screen naming what is stored (vault entities, labels, notes, media), where it is stored (Codex Cryptica's own cloud storage), and that it will never be shared with third parties, before offering an enable action.
+1. **Given** cloud backup has never been enabled for a vault, **When** the user opens the cloud backup setting, **Then** the system shows a consent screen naming what is stored (vault entities, labels, notes, maps, canvases, media), where it is stored (Codex Cryptica's own cloud storage), and that it will never be shared with third parties, before offering an enable action.
 2. **Given** the consent screen is showing, **When** the user closes it or declines without confirming, **Then** no vault data is sent anywhere and cloud backup remains off.
 3. **Given** the user confirms consent, **When** confirmation completes, **Then** the system performs an initial backup of the vault and the user can see that backup succeeded (status and a last-synced time).
 4. **Given** cloud backup is off, **When** the app runs normally (editing, browsing, generating lore), **Then** no vault data is transmitted to cloud backup infrastructure.
@@ -27,7 +27,7 @@ A vault owner who wants peace of mind against losing their lore (device loss, br
 
 ### User Story 2 - Restore a vault from cloud backup (Priority: P2)
 
-A user who lost local data (new device, cleared browser storage, corrupted local copy) or who wants to bring a previously-backed-up vault onto another device opens the restore flow, picks the backed-up vault, and gets their entities, labels, notes, and media back.
+A user who lost local data (new device, cleared browser storage, corrupted local copy) or who wants to bring a previously-backed-up vault onto another device opens the restore flow, picks the backed-up vault, and gets their entities, labels, notes, maps, canvases, and media back.
 
 **Why this priority**: Backup without restore delivers no real recovery value — this is the payoff of Story 1. It is P2 rather than P1 because a first backup can be verified (status/timestamp) without a full restore, but the feature is incomplete without this.
 
@@ -35,7 +35,7 @@ A user who lost local data (new device, cleared browser storage, corrupted local
 
 **Acceptance Scenarios**:
 
-1. **Given** a vault has a cloud backup and the user has its ownership code (from the original device's Settings, or preserved locally), **When** the user enters that code and chooses to restore, **Then** the system retrieves the backup and reconstructs the vault's entities, labels, notes, and media locally.
+1. **Given** a vault has a cloud backup and the user has its ownership code (from the original device's Settings, or preserved locally), **When** the user enters that code and chooses to restore, **Then** the system retrieves the backup and reconstructs the vault's entities, labels, notes, maps, canvases, and media locally.
 2. **Given** a user does not have the vault's ownership code, **When** they attempt to restore, **Then** the system clearly explains that the code is required and does not restore or expose any backup content.
 3. **Given** a restore is requested while the destination already has unsaved local vault content, **When** the user proceeds, **Then** the system requires explicit confirmation before the restore can overwrite that local content.
 4. **Given** a restore fails partway (e.g., network interruption), **When** the failure occurs, **Then** the user sees a clear error and the local vault is left in a known, uncorrupted state.
@@ -95,11 +95,11 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 ### Functional Requirements
 
 - **FR-001**: The system MUST keep cloud backup off by default for every vault; it MUST NOT be enabled automatically, silently, or as a side effect of any other action.
-- **FR-002**: The system MUST show an explicit consent screen before the first cloud backup of a vault occurs, stating: what data is stored (entities, labels, notes, media); where it is stored (Codex Cryptica's own cloud storage, hosted on third-party infrastructure); that the backup is not end-to-end encrypted, so both Codex Cryptica and its hosting provider are technically able to read its contents; that the user can disable and delete it at any time; that losing the vault's ownership code (and any identifying detail such as the vault title) means permanently losing access to that backup; and that Codex Cryptica support staff can look up a vault's metadata (e.g., title, size, last-backup time — never content) to help a specific user recover a lost code.
+- **FR-002**: The system MUST show an explicit consent screen before the first cloud backup of a vault occurs, stating: what data is stored (entities, labels, notes, maps, canvases, media); where it is stored (Codex Cryptica's own cloud storage, hosted on third-party infrastructure); that the backup is not end-to-end encrypted, so both Codex Cryptica and its hosting provider are technically able to read its contents; that the user can disable and delete it at any time; that losing the vault's ownership code (and any identifying detail such as the vault title) means permanently losing access to that backup; and that Codex Cryptica support staff can look up a vault's metadata (e.g., title, size, last-backup time — never content) to help a specific user recover a lost code.
 - **FR-003**: The system MUST NOT transmit any vault data to cloud backup infrastructure until the user has explicitly confirmed the consent screen for that vault.
 - **FR-004**: The system MUST NOT sell, forward, or expose backed-up vault data to any third party beyond the infrastructure provider disclosed in FR-002, and MUST NOT feed it into any AI training pipeline. Vault content MUST NOT be transmitted to any analytics, telemetry, or error-reporting destination.
-- **FR-005**: Once enabled, the system MUST perform an initial backup of the vault's entities, labels, notes, and media to cloud storage and make the backup available for restore.
-- **FR-006**: Users MUST be able to restore a vault from its cloud backup, reconstructing entities, labels, notes, and media. Restore MUST always be an explicit, user-initiated action — the system MUST NOT automatically pull from cloud storage on vault open, load, or switch, even when the cloud backup is newer than the local copy.
+- **FR-005**: Once enabled, the system MUST perform an initial backup of the vault's entities, labels, notes, maps, canvases, and media to cloud storage and make the backup available for restore.
+- **FR-006**: Users MUST be able to restore a vault from its cloud backup, reconstructing entities, labels, notes, maps, canvases, and media. Restore MUST always be an explicit, user-initiated action — the system MUST NOT automatically pull from cloud storage on vault open, load, or switch, even when the cloud backup is newer than the local copy.
 - **FR-006a**: Restore MUST create a **new local vault** by default, leaving any existing vault untouched. Restoring _into_ an existing vault MUST be a separate, explicitly chosen destination, and MUST be gated by the overwrite confirmation in FR-007. A restore MUST never silently replace the vault the user currently has open.
 - **FR-007**: The system MUST warn and require explicit confirmation before a restore overwrites existing local vault content.
 - **FR-008**: Users MUST be able to view the current cloud backup status for a vault (idle, syncing, error) and the time of the last successful backup.
@@ -129,7 +129,7 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 
 - **SC-001**: A user can go from "cloud backup off" to "first backup confirmed complete" in under 2 minutes, including reading the consent screen.
 - **SC-002**: 100% of vaults with cloud backup left off show zero vault-data network activity to cloud backup infrastructure — privacy compliance is absolute, not statistical.
-- **SC-003**: A user who restores a vault from cloud backup recovers all entities, labels, notes, and media that existed at the time of the last successful backup, with no data loss.
+- **SC-003**: A user who restores a vault from cloud backup recovers all entities, labels, notes, maps, canvases, and media that existed at the time of the last successful backup, with no data loss.
 - **SC-004**: A user who requests deletion of their cloud backup can no longer restore that vault from the cloud within the same session, and independent verification confirms no vault content remains stored.
 - **SC-005**: Backup and restore failures are correctly surfaced as errors (not false successes) in 100% of tested failure scenarios (network loss, storage error, interrupted operation).
 - **SC-006**: At least 90% of users who enable cloud backup can correctly state, when asked, where their data is stored and how to delete it — evidence the consent screen communicates clearly rather than being a legal-formality checkbox.

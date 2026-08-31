@@ -7,10 +7,11 @@ import type { LocalEntity } from "$lib/stores/vault/types";
  * to actually collect the media — entities alone would restore a vault whose
  * images are all broken, which is a promise the trust contract does not survive.
  *
- * Asset resolution follows `PublishingService`: local paths are turned into
- * blobs through the vault's own image resolver, then base64-encoded for JSON
- * transport. Remote URLs (`http:`, `data:`, `blob:`) are left alone — they are
- * references, not vault-owned files.
+ * Asset resolution follows `PublishingService`, including which fields count as
+ * asset sources: an entity's `image` and `thumbnail`, and a map's `assetPath`.
+ * Local paths are turned into blobs through the vault's own image resolver,
+ * then base64-encoded for JSON transport. Remote URLs (`http:`, `data:`,
+ * `blob:`) are left alone — they are references, not vault-owned files.
  *
  * Pure aside from the injected resolver, so the size accounting and the
  * skip-and-continue behaviour can be tested without a vault.
@@ -27,6 +28,8 @@ export interface CloudBackupPayloadResult {
   bundle: {
     schemaVersion: number;
     entities: LocalEntity[];
+    maps: unknown[];
+    canvases: unknown[];
     assetManifest: { assetId: string; path: string; mimeType: string }[];
   };
   assets: { assetId: string; content: string }[];
@@ -48,12 +51,28 @@ export function assetIdForPath(path: string): string {
     .replace(/[^a-zA-Z0-9.-]/g, "_");
 }
 
-/** Every distinct local asset path referenced by these entities. */
-export function collectAssetPaths(entities: readonly LocalEntity[]): string[] {
+/**
+ * Every distinct local asset path referenced by a vault's content.
+ *
+ * Three sources, matching `PublishingService`: an entity's `image` and its
+ * `thumbnail`, and a map's `assetPath` — a map's background image is a
+ * vault-owned file like any other, and omitting it would restore maps with
+ * nothing on them.
+ */
+export function collectAssetPaths(
+  entities: readonly LocalEntity[],
+  maps: readonly unknown[] = [],
+): string[] {
   const paths = new Set<string>();
+  const add = (value: unknown) => {
+    if (typeof value === "string" && isLocalAssetPath(value)) paths.add(value);
+  };
   for (const entity of entities) {
-    const image = (entity as { image?: string }).image;
-    if (image && isLocalAssetPath(image)) paths.add(image);
+    add((entity as { image?: string }).image);
+    add((entity as { thumbnail?: string }).thumbnail);
+  }
+  for (const map of maps) {
+    add((map as { assetPath?: string }).assetPath);
   }
   return [...paths];
 }
@@ -71,18 +90,21 @@ function toBase64(bytes: Uint8Array): string {
 export async function buildCloudBackupPayload(
   vaultTitle: string,
   // Widened at the boundary: the vault store's entity record is structurally
-  // compatible but not nominally identical, and this only reads `image`.
+  // compatible but not nominally identical, and this only reads a few fields.
   entities: readonly LocalEntity[] | readonly unknown[],
   deps: CloudBackupPayloadDeps,
+  content: { maps?: readonly unknown[]; canvases?: readonly unknown[] } = {},
 ): Promise<CloudBackupPayloadResult> {
   const list = entities as readonly LocalEntity[];
+  const maps = content.maps ?? [];
+  const canvases = content.canvases ?? [];
   const fetcher = deps.fetch ?? fetch;
   const assets: { assetId: string; content: string }[] = [];
   const assetManifest: { assetId: string; path: string; mimeType: string }[] =
     [];
   const skippedAssets: string[] = [];
 
-  for (const path of collectAssetPaths(list)) {
+  for (const path of collectAssetPaths(list, maps)) {
     try {
       const url = await deps.resolveImageUrl(path);
       if (!url) throw new Error("unresolved");
@@ -111,6 +133,8 @@ export async function buildCloudBackupPayload(
     bundle: {
       schemaVersion: 1,
       entities: list as LocalEntity[],
+      maps: maps as unknown[],
+      canvases: canvases as unknown[],
       assetManifest,
     },
     assets,

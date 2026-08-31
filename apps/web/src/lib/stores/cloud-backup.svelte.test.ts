@@ -71,6 +71,12 @@ function harness(
       importEntities: async (vaultId: string, entities: unknown[]) => {
         restoreLog.push(`importEntities:${vaultId}:${entities.length}`);
       },
+      importMaps: async (vaultId: string, maps: unknown[]) => {
+        restoreLog.push(`importMaps:${vaultId}:${maps.length}`);
+      },
+      importCanvases: async (vaultId: string, canvases: unknown[]) => {
+        restoreLog.push(`importCanvases:${vaultId}:${canvases.length}`);
+      },
     },
   });
 
@@ -373,11 +379,39 @@ describe("disable, delete and restore", () => {
     expect(result).toEqual({
       vaultId: "new-vault-id",
       vaultTitle: "The Saltmere Fens",
+      missingAssets: 0,
     });
     // Download first, then create — a failed fetch must not leave a stub vault.
     expect(restoreLog).toEqual([
       "createVault:The Saltmere Fens",
       "importEntities:new-vault-id:2",
+    ]);
+  });
+
+  it("restores maps and canvases, not just entities", async () => {
+    // A vault is more than its entities; a restore that dropped maps and
+    // canvases would look successful while losing work.
+    const { store, restoreLog } = harness([
+      {
+        ok: true,
+        status: 200,
+        body: {
+          manifest: MANIFEST,
+          bundle: {
+            entities: [{ id: "e1" }],
+            maps: [{ id: "m1" }, { id: "m2" }],
+            canvases: [{ id: "c1" }],
+          },
+        },
+      },
+    ]);
+
+    await store.restoreIntoNewVault("b-1", "code-1");
+    expect(restoreLog).toEqual([
+      "createVault:The Saltmere Fens",
+      "importEntities:new-vault-id:1",
+      "importMaps:new-vault-id:2",
+      "importCanvases:new-vault-id:1",
     ]);
   });
 

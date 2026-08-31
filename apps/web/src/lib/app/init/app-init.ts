@@ -14,6 +14,8 @@ import {
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
+import { mapRegistry } from "$lib/stores/map-registry.svelte";
+import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import {
   cloudBackupStore,
   cloudBackupBrowserStorage,
@@ -178,12 +180,17 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       storage: cloudBackupBrowserStorage(),
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
-    // Collects media as well as entities — the consent screen promises both.
+    // Everything the consent screen promises: entities, maps, canvases and
+    // the media all three reference.
     buildPayload: async (_vaultId: string) =>
       buildCloudBackupPayload(
         vault.vaultName || "Vault",
         Object.values(vault.entities ?? {}),
         { resolveImageUrl: (path: string) => vault.resolveImageUrl(path) },
+        {
+          maps: mapRegistry.allMaps ?? [],
+          canvases: canvasRegistry.allCanvases ?? [],
+        },
       ),
     activeVaultId: () => vault.activeVaultId ?? null,
     restore: {
@@ -192,6 +199,19 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       // writes land there rather than in whatever the user had open.
       importEntities: async (_vaultId: string, entities: unknown[]) => {
         await vault.batchCreateEntities(entities as never[]);
+      },
+      importMaps: async (_vaultId: string, maps: unknown[]) => {
+        for (const map of maps as { id?: string }[]) {
+          if (map?.id) mapRegistry.maps[map.id] = map as never;
+        }
+        await mapRegistry.saveMaps();
+      },
+      importCanvases: async (_vaultId: string, canvases: unknown[]) => {
+        for (const canvas of canvases as { id?: string }[]) {
+          if (!canvas?.id) continue;
+          canvasRegistry.canvases[canvas.id] = canvas as never;
+          await canvasRegistry.saveCanvas(canvas.id);
+        }
       },
       importAsset: async (
         path: string,

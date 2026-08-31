@@ -56,8 +56,10 @@ const enableResponse = {
   body: { backupId: "b-1", ownerCode: "code-1", manifest: MANIFEST },
 };
 
-async function enabled() {
-  const h = makeRuntime([enableResponse]);
+async function enabled(
+  ...then: { ok: boolean; status: number; body: unknown }[]
+) {
+  const h = makeRuntime([enableResponse, ...then]);
   await enableCloudBackup(h.runtime, "v-1", PAYLOAD);
   h.calls.length = 0;
   return h;
@@ -248,11 +250,13 @@ describe("disable, delete and code access", () => {
   });
 
   it("deletes the remote copy and clears the local record", async () => {
-    const { runtime, calls } = await enabled();
-    (runtime.fetch as any).mockResolvedValueOnce({
+    // Uses the runtime's own queued-response fetch rather than a one-shot
+    // mock: a `mockResolvedValueOnce` would replace the implementation and so
+    // never record the call this test is asserting on.
+    const { runtime, calls } = await enabled({
       ok: true,
       status: 200,
-      json: async () => ({ deleted: true }),
+      body: { deleted: true },
     });
     const result = await deleteCloudBackup(runtime, "v-1");
     expect(result.ok).toBe(true);

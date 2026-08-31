@@ -50,6 +50,9 @@ export interface CloudBackupDeps {
   restore?: {
     createVault: (name: string) => Promise<string>;
     importEntities: (vaultId: string, entities: unknown[]) => Promise<void>;
+    /** Writes the restored maps and canvases back into the new vault. */
+    importMaps?: (vaultId: string, maps: unknown[]) => Promise<void>;
+    importCanvases?: (vaultId: string, canvases: unknown[]) => Promise<void>;
     /** Writes one restored media file back into the vault. */
     importAsset?: (
       path: string,
@@ -195,14 +198,26 @@ export class CloudBackupStore {
     if (!material) return null;
 
     try {
-      const entities = Array.isArray((material.bundle as any)?.entities)
-        ? ((material.bundle as any).entities as unknown[])
-        : [];
+      const listFrom = (key: string): unknown[] => {
+        const value = (material.bundle as Record<string, unknown>)?.[key];
+        return Array.isArray(value) ? value : [];
+      };
+      const entities = listFrom("entities");
+      const maps = listFrom("maps");
+      const canvases = listFrom("canvases");
       const vaultId = await this.deps.restore.createVault(
         material.manifest.vaultTitle,
       );
       if (entities.length > 0) {
         await this.deps.restore.importEntities(vaultId, entities);
+      }
+      // Maps and canvases are vault content in their own right; a restore that
+      // brought back only entities would silently lose them.
+      if (maps.length > 0 && this.deps.restore.importMaps) {
+        await this.deps.restore.importMaps(vaultId, maps);
+      }
+      if (canvases.length > 0 && this.deps.restore.importCanvases) {
+        await this.deps.restore.importCanvases(vaultId, canvases);
       }
 
       // Media, so a restored vault does not come back with broken images.

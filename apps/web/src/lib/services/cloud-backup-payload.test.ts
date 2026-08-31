@@ -71,6 +71,26 @@ describe("collectAssetPaths", () => {
       ]),
     ).toEqual([]);
   });
+
+  it("collects an entity thumbnail as well as its image", () => {
+    // A thumbnail is a separate vault file; missing it leaves broken previews
+    // in the restored vault.
+    const paths = collectAssetPaths([
+      { id: "a", image: "assets/full.png", thumbnail: "assets/thumb.png" },
+    ] as never);
+    expect(paths.sort()).toEqual(["assets/full.png", "assets/thumb.png"]);
+  });
+
+  it("collects a map's background image", () => {
+    const paths = collectAssetPaths(
+      [],
+      [
+        { id: "m1", assetPath: "maps/fens.jpg" },
+        { id: "m2", assetPath: "https://example.test/remote.jpg" },
+      ],
+    );
+    expect(paths).toEqual(["maps/fens.jpg"]);
+  });
 });
 
 describe("buildCloudBackupPayload", () => {
@@ -160,5 +180,43 @@ describe("buildCloudBackupPayload", () => {
     );
     expect(result.assets[0].content.length).toBeGreaterThan(100_000);
     expect(result.skippedAssets).toEqual([]);
+  });
+});
+
+describe("buildCloudBackupPayload with maps and canvases", () => {
+  it("carries maps and canvases in the bundle", async () => {
+    const result = await buildCloudBackupPayload(
+      "V",
+      [entity("e1")],
+      { resolveImageUrl: async () => "blob:x", fetch: okFetch },
+      { maps: [{ id: "m1" }], canvases: [{ id: "c1" }] },
+    );
+
+    expect(result.bundle.maps).toEqual([{ id: "m1" }]);
+    expect(result.bundle.canvases).toEqual([{ id: "c1" }]);
+  });
+
+  it("uploads a map's background image alongside entity media", async () => {
+    const result = await buildCloudBackupPayload(
+      "V",
+      [entity("e1", "assets/portrait.png")],
+      { resolveImageUrl: async () => "blob:x", fetch: okFetch },
+      { maps: [{ id: "m1", assetPath: "maps/fens.jpg" }] },
+    );
+
+    expect(result.bundle.assetManifest.map((a) => a.path).sort()).toEqual([
+      "assets/portrait.png",
+      "maps/fens.jpg",
+    ]);
+  });
+
+  it("defaults to empty maps and canvases when none are passed", async () => {
+    const result = await buildCloudBackupPayload("V", [entity("e1")], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+    });
+
+    expect(result.bundle.maps).toEqual([]);
+    expect(result.bundle.canvases).toEqual([]);
   });
 });
