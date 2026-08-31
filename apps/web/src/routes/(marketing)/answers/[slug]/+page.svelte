@@ -94,6 +94,31 @@
               {paragraph}
             </p>
           {/each}
+          {#if section.cta}
+            <div class="mt-6 flex flex-col items-start gap-2">
+              <a
+                href={section.cta.href.startsWith("/")
+                  ? `${cleanBase}${section.cta.href}`
+                  : section.cta.href}
+                target={section.cta.external ? "_blank" : undefined}
+                rel={section.cta.external ? "noopener noreferrer" : undefined}
+                class="inline-flex items-center gap-2 border border-theme-primary bg-theme-primary/10 px-5 py-2.5 font-header text-sm font-bold text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
+              >
+                <span>{section.cta.text}</span>
+                <span
+                  class={section.cta.external
+                    ? "icon-[lucide--external-link] h-4 w-4"
+                    : "icon-[lucide--arrow-right] h-4 w-4"}
+                  aria-hidden="true"
+                ></span>
+              </a>
+              {#if section.cta.disclosure}
+                <p class="text-xs text-theme-muted">
+                  {section.cta.disclosure}
+                </p>
+              {/if}
+            </div>
+          {/if}
         {:else if section.kind === "list"}
           {#if section.heading}
             <h2

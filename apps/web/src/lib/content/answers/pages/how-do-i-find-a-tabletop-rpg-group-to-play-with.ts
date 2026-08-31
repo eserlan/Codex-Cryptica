@@ -36,8 +36,15 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
       heading: "Using a dedicated RPG group finder",
       paragraphs: [
         "Dedicated group finders are purpose-built for matching players and game masters without the noise of general social media feeds. The strongest choice is Groupfinder (groupfinder.gg), which provides structured search filters across game system, language, location or virtual play, specific day and time slots, timezone compatibility, and group status (groups seeking players or players seeking groups).",
-        "Because Codex Cryptica focuses on campaign management rather than player matching, we collaborate directly with Groupfinder (https://groupfinder.gg/library/codex-cryptica) as our recommended dedicated group-matching platform. Using structured filters saves hours of back-and-forth messaging by ensuring scheduling and system preferences align before you even apply.",
+        "Because Codex Cryptica focuses on campaign management rather than player matching, we collaborate directly with Groupfinder as our recommended dedicated group-matching platform. Using structured filters saves hours of back-and-forth messaging by ensuring scheduling and system preferences align before you even apply.",
       ],
+      cta: {
+        text: "Find a group on Groupfinder",
+        href: "https://groupfinder.gg/library/codex-cryptica",
+        external: true,
+        disclosure:
+          "Codex Cryptica partner link. Groupfinder is a dedicated tabletop RPG matching platform.",
+      },
     },
     {
       kind: "list",

@@ -35,11 +35,21 @@ export type AnswerListItem = z.infer<typeof AnswerListItemSchema>;
 
 const blockHeading = z.string().min(1);
 
+/** An actionable CTA button or link within an answer section. */
+export const AnswerCtaSchema = z.object({
+  text: z.string().min(1),
+  href: z.string().min(1),
+  external: z.boolean().optional(),
+  disclosure: z.string().optional(),
+});
+export type AnswerCta = z.infer<typeof AnswerCtaSchema>;
+
 /** Plain explanatory prose. */
 export const AnswerProseBlockSchema = z.object({
   kind: z.literal("prose"),
   heading: blockHeading.optional(),
   paragraphs: z.array(z.string().min(1)).min(1),
+  cta: AnswerCtaSchema.optional(),
 });
 
 /** A framework, a set of criteria, or an ordered procedure. */
