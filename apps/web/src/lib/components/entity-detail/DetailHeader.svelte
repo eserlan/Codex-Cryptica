@@ -31,6 +31,7 @@
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
 
   let {
     entity,
@@ -355,26 +356,34 @@
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
-          <input
-            type="text"
-            bind:value={editTitle}
-            class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editTitle}
+              class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5 min-w-0 w-full">
-          <h2
-            class="{isFantasyTheme
-              ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} w-full break-words whitespace-normal font-bold"
-            style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
-          >
-            {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                aria-hidden="true">*</sup
-              ><span class="sr-only"> (past)</span>{/if}
-          </h2>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2
+              class="{isFantasyTheme
+                ? 'text-xl md:text-3xl font-header tracking-wider'
+                : 'text-xl md:text-3xl font-body tracking-wide'} break-words whitespace-normal font-bold"
+              style:color={isFantasyTheme
+                ? "var(--theme-title-ink)"
+                : undefined}
+            >
+              {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                  aria-hidden="true">*</sup
+                ><span class="sr-only"> (past)</span>{/if}
+            </h2>
+            <SaveStatusIndicator />
+          </div>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
               <span

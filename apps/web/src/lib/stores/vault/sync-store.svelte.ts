@@ -558,11 +558,6 @@ export class SyncStore {
         });
 
         this.setStatus("saved");
-        this.savedTimer = setTimeout(() => {
-          if (this._status === "saved") {
-            this.setStatus("idle");
-          }
-        }, 3000);
       }
     } finally {
       // Fix C4: if vault switched mid-save the onStateChange vault-ID guard
@@ -683,10 +678,15 @@ export class SyncStore {
   setStatus(
     s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
-    if (s !== "saved") {
-      this.clearSavedTimer();
-    }
+    this.clearSavedTimer();
     this._status = s;
+    if (s === "saved") {
+      this.savedTimer = setTimeout(() => {
+        if (this._status === "saved") {
+          this._status = "idle";
+        }
+      }, 2500);
+    }
   }
 
   setErrorMessage(m: string | null) {
