@@ -65,6 +65,7 @@ import {
   handleDeleteCloudBackup,
   handleCloudBackupAdminLookup,
   handleCloudBackupReissueCode,
+  handleCloudBackupAdminDelete,
 } from "./cloud-backup";
 
 interface Env {
@@ -280,6 +281,10 @@ export default {
           request.method === "POST"
         ) {
           return handleCloudBackupReissueCode(request, env, parts[4]);
+        }
+        // /api/cloud-backup/admin/{backupId}
+        if (parts.length === 5 && request.method === "DELETE") {
+          return handleCloudBackupAdminDelete(request, env, parts[4]);
         }
         return new Response("Not found", {
           status: 404,
