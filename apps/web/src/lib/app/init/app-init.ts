@@ -15,6 +15,10 @@ import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
 import {
+  cloudBackupStore,
+  cloudBackupBrowserStorage,
+} from "$lib/stores/cloud-backup.svelte";
+import {
   handleVersionSkewReload,
   isVersionSkewError,
 } from "../../../hooks.client";
@@ -164,6 +168,30 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   window.addEventListener("error", handleGlobalError);
   window.addEventListener("unhandledrejection", handleUnhandledRejection);
   window.addEventListener("vault-switched", handleVaultSwitched);
+
+  // Cloud Backup stays inert until a vault opts in; configuring it only wires
+  // the dependencies it would need (spec 162).
+  cloudBackupStore.configure({
+    runtime: {
+      baseUrl: import.meta.env.VITE_ORACLE_PROXY_URL || "",
+      storage: cloudBackupBrowserStorage(),
+      fetch: ((url: string, init?: any) => fetch(url, init)) as never,
+    },
+    buildPayload: async (_vaultId: string) => ({
+      vaultTitle: vault.vaultName || "Vault",
+      bundle: {
+        schemaVersion: 1,
+        entities: Object.values(vault.entities ?? {}),
+      },
+    }),
+    activeVaultId: () => vault.activeVaultId ?? null,
+    restore: {
+      createVault: (name: string) => vault.createVault(name),
+      importEntities: async (_vaultId: string, entities: unknown[]) => {
+        await vault.batchCreateEntities(entities as never[]);
+      },
+    },
+  });
 
   // Debounced entity writes are otherwise lost if the app closes inside the
   // debounce window — see #2584.

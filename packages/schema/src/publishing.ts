@@ -437,3 +437,78 @@ export const TemplateDirectoryPageSchema = z
   .strict();
 
 export type TemplateDirectoryPage = z.infer<typeof TemplateDirectoryPageSchema>;
+
+/* -------------------------------------------------------------------------- */
+/* CC Cloud Backup (spec 162, issue #2593)                                     */
+/* -------------------------------------------------------------------------- */
+
+export const CLOUD_BACKUP_LIMITS = {
+  /**
+   * Whole-vault ceiling: bundle plus every asset. Checked before any object is
+   * written, so an oversized vault never leaves a partial backup behind.
+   */
+  maxVaultBytes: 50 * 1024 * 1024,
+  maxTitleLength: 200,
+  /**
+   * Manifest keys read in one admin-lookup scan. The lookup never paginates
+   * past this — an unbounded walk is bulk enumeration by another name (FR-016).
+   */
+  maxLookupScanKeys: 1_000,
+} as const;
+
+/**
+ * Server-side record of one vault's backup, stored at
+ * `cloud-backup/{backupId}/manifest.json`. The ownership code itself is never
+ * stored — only its SHA-256 hash, in the R2 object's `customMetadata`.
+ */
+export const CloudBackupManifestSchema = z.object({
+  schemaVersion: z.number().int(),
+  backupId: z.string().min(1),
+  /** Plaintext, because it is the only field the support lookup can match on. */
+  vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
+  sizeBytes: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  lastPushedAt: z.string(),
+  entityCount: z.number().int().nonnegative().optional(),
+});
+
+export type CloudBackupManifest = z.infer<typeof CloudBackupManifestSchema>;
+
+/**
+ * Client-side, per-vault record in IndexedDB. Survives reloads so the user is
+ * never re-prompted for consent (FR-020).
+ *
+ * `ownerCode` is the raw credential and the only copy outside the user's own
+ * notes — losing this record without having copied the code elsewhere makes the
+ * backup unreachable except through support lookup.
+ */
+export const LocalCloudBackupRecordSchema = z.object({
+  vaultId: z.string().min(1),
+  backupId: z.string().min(1),
+  ownerCode: z.string().min(1),
+  /** False after disable; the record is kept so re-enabling resumes. */
+  enabled: z.boolean(),
+  status: z.enum(["idle", "syncing", "error"]),
+  lastPushedAt: z.string().nullable(),
+  /** When the consent screen was confirmed (FR-002/FR-003). */
+  consentedAt: z.string(),
+});
+
+export type LocalCloudBackupRecord = z.infer<
+  typeof LocalCloudBackupRecordSchema
+>;
+
+/**
+ * Support lookup response. `matched: false` covers both "no match" and
+ * "several matched" deliberately, so an admin never learns how many vaults
+ * share a title (FR-015, FR-016).
+ */
+export const SupportLookupResultSchema = z.object({
+  matched: z.boolean(),
+  backupId: z.string().optional(),
+  vaultTitle: z.string().optional(),
+  sizeBytes: z.number().int().optional(),
+  lastPushedAt: z.string().optional(),
+});
+
+export type SupportLookupResult = z.infer<typeof SupportLookupResultSchema>;

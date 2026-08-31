@@ -4,7 +4,9 @@ import { readdir, readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
-const WORKSPACE_ROOTS = ["apps", "packages"];
+// "apps/workers" is listed explicitly: the loader reads one level below each
+// root, and the workers live a level deeper than the other apps.
+const WORKSPACE_ROOTS = ["apps", "apps/workers", "packages"];
 const FULL_VALIDATION_FILES = new Set([
   "bun.lock",
   "package.json",

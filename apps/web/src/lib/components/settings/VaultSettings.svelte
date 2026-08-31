@@ -7,6 +7,7 @@
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
   import DriveSettings from "./DriveSettings.svelte";
+  import CloudBackupSettings from "./CloudBackupSettings.svelte";
   import VaultBackupSettings from "./VaultBackupSettings.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -182,6 +183,11 @@
   {#if !sessionModeStore.isDemoMode}
     <div>
       <DriveSettings />
+    </div>
+
+    <!-- CC Cloud Backup (opt-in, consent-gated) -->
+    <div>
+      <CloudBackupSettings />
     </div>
 
     <!-- Portable Backup (works in every browser) -->

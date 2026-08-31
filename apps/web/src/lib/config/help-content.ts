@@ -185,6 +185,16 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
     icon: "icon-[lucide--library]",
   },
+  // The ownership code is the whole risk surface here (spec 162, FR-002/FR-013):
+  // there are no accounts, so a lost code means a lost backup unless support can
+  // find it by title. Say that plainly the first time someone sees the feature.
+  "cloud-backup": {
+    id: "cloud-backup",
+    title: "Cloud Backup",
+    content:
+      "Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates an ownership code — that code is the only key to your backup, so copy it somewhere safe. You can stop backing up, or delete the stored copy for good, at any time.",
+    icon: "icon-[lucide--cloud-upload]",
+  },
   "touch-graph-gestures": {
     id: "touch-graph-gestures",
     title: "Touch gestures",
