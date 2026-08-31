@@ -17,6 +17,10 @@ export const theCinderWren: ExampleConfigInput = {
     { label: "Pressure", value: "Customs blockade and disputed salvage" },
     { label: "Generation", value: "Oracle-generated through the local proxy" },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/ship-cinder-wren.jpg",
+    alt: "A scarred frontier freighter and gunship with coal-black salvaged plating and burning blue-white thrusters navigating an asteroid belt",
+  },
   output: [
     {
       kind: "prose",
