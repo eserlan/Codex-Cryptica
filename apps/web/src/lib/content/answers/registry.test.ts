@@ -121,6 +121,44 @@ describe("answer schema", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts a prose block with an optional cta", () => {
+    const answer = makeAnswer({
+      slug: "with-cta",
+      sections: [
+        {
+          kind: "prose",
+          heading: "CTA Test",
+          paragraphs: ["Paragraph text."],
+          cta: {
+            text: "Click Here",
+            href: "https://example.com",
+            external: true,
+            disclosure: "Partner link",
+          },
+        },
+      ],
+    });
+    expect(answer.sections[0]).toHaveProperty("cta");
+  });
+
+  it("rejects a prose block with an empty cta text or href", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-cta",
+        sections: [
+          {
+            kind: "prose",
+            paragraphs: ["Paragraph text."],
+            cta: {
+              text: "",
+              href: "https://example.com",
+            },
+          },
+        ],
+      }),
+    ).toThrow();
+  });
 });
 
 describe("published answers", () => {

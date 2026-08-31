@@ -16,6 +16,7 @@ import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-play
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 
 /**
  * The published answer library.
@@ -47,6 +48,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldILookForInAnRpgCampaignManager,
     whatRpgSystemShouldWeTryInsteadOfDnd,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    howDoIFindATabletopRpgGroupToPlayWith,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),
