@@ -21,6 +21,7 @@ import {
   cloudBackupBrowserStorage,
 } from "$lib/stores/cloud-backup.svelte";
 import { buildCloudBackupPayload } from "$lib/services/cloud-backup-payload";
+import { writeOpfsFile } from "$lib/utils/opfs";
 import {
   handleVersionSkewReload,
   isVersionSkewError,
@@ -213,16 +214,29 @@ export function initializeGlobalListeners(_calendarStore?: any) {
           await canvasRegistry.saveCanvas(canvas.id);
         }
       },
+      /**
+       * Writes a restored file back at the exact path it came from.
+       *
+       * Not `saveImageToVault`: that renames to `images/<name>.webp` and
+       * re-encodes to WebP, so entities and maps would point at paths that do
+       * not exist, and a fog-of-war mask — binary data, not a picture — would
+       * be destroyed by the conversion. A backup is a copy, so the bytes go
+       * back byte-for-byte where they were.
+       */
       importAsset: async (
         path: string,
         bytes: Uint8Array,
         mimeType: string,
       ) => {
-        const filename = path.split("/").pop() || path;
-        await vault.saveImageToVault(
+        const root = await vault.getActiveVaultHandle();
+        if (!root) throw new Error("No vault is open to restore into.");
+        const segments = path.split("/").filter(Boolean);
+        if (segments.length === 0) return;
+        await writeOpfsFile(
+          segments,
           new Blob([bytes as unknown as BlobPart], { type: mimeType }),
-          "restored",
-          filename,
+          root,
+          vault.activeVaultId ?? undefined,
         );
       },
     },

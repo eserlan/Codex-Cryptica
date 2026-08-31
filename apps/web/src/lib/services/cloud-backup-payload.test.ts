@@ -81,6 +81,28 @@ describe("collectAssetPaths", () => {
     expect(paths.sort()).toEqual(["assets/full.png", "assets/thumb.png"]);
   });
 
+  it("collects a map's fog-of-war mask", () => {
+    // Restoring without the mask reveals every area the GM had hidden, so a
+    // missing mask leaks more than it loses.
+    const paths = collectAssetPaths(
+      [],
+      [
+        {
+          id: "m1",
+          assetPath: "maps/fens.jpg",
+          fogOfWar: { maskPath: "maps/fens_mask.png" },
+        },
+      ],
+    );
+    expect(paths.sort()).toEqual(["maps/fens.jpg", "maps/fens_mask.png"]);
+  });
+
+  it("handles a map with no fog of war", () => {
+    expect(
+      collectAssetPaths([], [{ id: "m1", assetPath: "maps/fens.jpg" }]),
+    ).toEqual(["maps/fens.jpg"]);
+  });
+
   it("collects a map's background image", () => {
     const paths = collectAssetPaths(
       [],

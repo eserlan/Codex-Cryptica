@@ -7,8 +7,9 @@ import type { LocalEntity } from "$lib/stores/vault/types";
  * to actually collect the media — entities alone would restore a vault whose
  * images are all broken, which is a promise the trust contract does not survive.
  *
- * Asset resolution follows `PublishingService`, including which fields count as
- * asset sources: an entity's `image` and `thumbnail`, and a map's `assetPath`.
+ * Asset resolution follows `PublishingService`, extended with the fog-of-war
+ * mask: an entity's `image` and `thumbnail`, a map's `assetPath`, and a map's
+ * `fogOfWar.maskPath`.
  * Local paths are turned into blobs through the vault's own image resolver and
  * kept as raw bytes for individual upload. Remote URLs (`http:`, `data:`,
  * `blob:`) are left alone — they are references, not vault-owned files.
@@ -55,10 +56,14 @@ export function assetIdForPath(path: string): string {
 /**
  * Every distinct local asset path referenced by a vault's content.
  *
- * Three sources, matching `PublishingService`: an entity's `image` and its
- * `thumbnail`, and a map's `assetPath` — a map's background image is a
- * vault-owned file like any other, and omitting it would restore maps with
- * nothing on them.
+ * Four sources: an entity's `image` and its `thumbnail`, a map's `assetPath`,
+ * and a map's `fogOfWar.maskPath`. All four are vault-owned files rather than
+ * external references — the map registry deletes the mask alongside the
+ * background when a map is removed, which is what makes it vault-owned rather
+ * than derived. Omitting the background restores maps with nothing on them;
+ * omitting the mask restores them with every hidden area revealed, which is
+ * worse than losing the map, because it silently exposes what a GM chose to
+ * keep from their players.
  */
 export function collectAssetPaths(
   entities: readonly LocalEntity[],
@@ -74,6 +79,7 @@ export function collectAssetPaths(
   }
   for (const map of maps) {
     add((map as { assetPath?: string }).assetPath);
+    add((map as { fogOfWar?: { maskPath?: string } }).fogOfWar?.maskPath);
   }
   return [...paths];
 }
