@@ -3,6 +3,7 @@ import { base } from "$app/paths";
 import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
+import { resolveOracleProxyUrl } from "../../config/oracle-proxy";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
@@ -177,7 +178,11 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   // the dependencies it would need (spec 162).
   cloudBackupStore.configure({
     runtime: {
-      baseUrl: import.meta.env.VITE_ORACLE_PROXY_URL || "",
+      // An empty base URL resolves `/api/cloud-backup/*` against the page
+      // origin, and codexcryptica.com is static Pages with no `/api` — every
+      // enable POST came back 405. Fall back to the deployed worker the way
+      // every other proxy consumer does.
+      baseUrl: resolveOracleProxyUrl(),
       storage: cloudBackupBrowserStorage(),
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
