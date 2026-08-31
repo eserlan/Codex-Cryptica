@@ -18,6 +18,7 @@ import {
   cloudBackupStore,
   cloudBackupBrowserStorage,
 } from "$lib/stores/cloud-backup.svelte";
+import { buildCloudBackupPayload } from "$lib/services/cloud-backup-payload";
 import {
   handleVersionSkewReload,
   isVersionSkewError,
@@ -177,18 +178,32 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       storage: cloudBackupBrowserStorage(),
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
-    buildPayload: async (_vaultId: string) => ({
-      vaultTitle: vault.vaultName || "Vault",
-      bundle: {
-        schemaVersion: 1,
-        entities: Object.values(vault.entities ?? {}),
-      },
-    }),
+    // Collects media as well as entities — the consent screen promises both.
+    buildPayload: async (_vaultId: string) =>
+      buildCloudBackupPayload(
+        vault.vaultName || "Vault",
+        Object.values(vault.entities ?? {}),
+        { resolveImageUrl: (path: string) => vault.resolveImageUrl(path) },
+      ),
     activeVaultId: () => vault.activeVaultId ?? null,
     restore: {
       createVault: (name: string) => vault.createVault(name),
+      // `createVault` switches to the new vault before this runs, so these
+      // writes land there rather than in whatever the user had open.
       importEntities: async (_vaultId: string, entities: unknown[]) => {
         await vault.batchCreateEntities(entities as never[]);
+      },
+      importAsset: async (
+        path: string,
+        bytes: Uint8Array,
+        mimeType: string,
+      ) => {
+        const filename = path.split("/").pop() || path;
+        await vault.saveImageToVault(
+          new Blob([bytes as unknown as BlobPart], { type: mimeType }),
+          "restored",
+          filename,
+        );
       },
     },
   });

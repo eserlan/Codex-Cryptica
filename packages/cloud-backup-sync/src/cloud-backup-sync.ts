@@ -253,6 +253,31 @@ export async function getCloudBackupStatus(
  * (FR-011). This function never writes to the vault itself — it returns the
  * material and lets the caller decide the destination (FR-006a).
  */
+/**
+ * Downloads one asset from a backup.
+ *
+ * Separate from the bundle fetch so a failing image cannot cost the user the
+ * whole restore — the caller decides what to do with a partial set.
+ */
+export async function fetchCloudBackupAsset(
+  runtime: CloudBackupRuntime,
+  credentials: { backupId: string; ownerCode: string },
+  assetId: string,
+): Promise<CloudBackupOutcome<Uint8Array>> {
+  const response = await runtime.fetch(
+    `${runtime.baseUrl}/api/cloud-backup/${credentials.backupId}/assets/${assetId}`,
+    { headers: { Authorization: `Bearer ${credentials.ownerCode}` } },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: await errorFrom(response),
+      status: response.status,
+    };
+  }
+  return { ok: true, value: new Uint8Array(await response.arrayBuffer()) };
+}
+
 export async function restoreVaultFromCloudBackup(
   runtime: CloudBackupRuntime,
   credentials: { backupId: string; ownerCode: string },

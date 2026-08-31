@@ -4,6 +4,7 @@ import {
   disableCloudBackup,
   deleteCloudBackup,
   restoreVaultFromCloudBackup,
+  fetchCloudBackupAsset,
   getLocalCloudBackupRecord,
   getCloudBackupOwnershipCode,
   createMemoryStorage,
@@ -49,6 +50,12 @@ export interface CloudBackupDeps {
   restore?: {
     createVault: (name: string) => Promise<string>;
     importEntities: (vaultId: string, entities: unknown[]) => Promise<void>;
+    /** Writes one restored media file back into the vault. */
+    importAsset?: (
+      path: string,
+      bytes: Uint8Array,
+      mimeType: string,
+    ) => Promise<void>;
   };
 }
 
@@ -57,6 +64,8 @@ export class CloudBackupStore {
   lastPushedAt = $state<string | null>(null);
   errorMessage = $state<string | null>(null);
   ownerCode = $state<string | null>(null);
+  /** Media the last save could not read. Non-empty means a partial copy. */
+  skippedAssets = $state<string[]>([]);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
 
@@ -172,7 +181,11 @@ export class CloudBackupStore {
   async restoreIntoNewVault(
     backupId: string,
     ownerCode: string,
-  ): Promise<{ vaultId: string; vaultTitle: string } | null> {
+  ): Promise<{
+    vaultId: string;
+    vaultTitle: string;
+    missingAssets: number;
+  } | null> {
     if (!this.deps?.restore) {
       this.errorMessage = "Restore is not available in this context.";
       return null;
@@ -191,7 +204,45 @@ export class CloudBackupStore {
       if (entities.length > 0) {
         await this.deps.restore.importEntities(vaultId, entities);
       }
-      return { vaultId, vaultTitle: material.manifest.vaultTitle };
+
+      // Media, so a restored vault does not come back with broken images.
+      const manifest = Array.isArray((material.bundle as any)?.assetManifest)
+        ? ((material.bundle as any).assetManifest as {
+            assetId: string;
+            path: string;
+            mimeType: string;
+          }[])
+        : [];
+      const importAsset = this.deps.restore.importAsset;
+      let missingAssets = 0;
+
+      if (importAsset) {
+        for (const asset of manifest) {
+          const bytes = await fetchCloudBackupAsset(
+            this.deps.runtime,
+            { backupId, ownerCode },
+            asset.assetId,
+          );
+          if (!bytes.ok) {
+            // One unreadable image must not undo an otherwise good restore.
+            missingAssets += 1;
+            continue;
+          }
+          try {
+            await importAsset(asset.path, bytes.value, asset.mimeType);
+          } catch {
+            missingAssets += 1;
+          }
+        }
+      } else if (manifest.length > 0) {
+        missingAssets = manifest.length;
+      }
+
+      return {
+        vaultId,
+        vaultTitle: material.manifest.vaultTitle,
+        missingAssets,
+      };
     } catch (error) {
       this.errorMessage =
         error instanceof Error
@@ -228,6 +279,8 @@ export class CloudBackupStore {
     this.status = "syncing";
     try {
       const payload = await this.deps.buildPayload(vaultId);
+      this.skippedAssets =
+        (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
       const result = await pushVaultToCloudBackup(
         this.deps.runtime,
         vaultId,

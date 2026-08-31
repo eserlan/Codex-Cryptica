@@ -107,11 +107,14 @@
     } finally {
       isSaving = false;
     }
+    const skipped = cloudBackupStore.skippedAssets.length;
     notificationStore.notify(
       ok
-        ? "Vault saved to Codex Cryptica Cloud."
+        ? skipped > 0
+          ? `Vault saved, but ${skipped} image${skipped === 1 ? "" : "s"} could not be read and ${skipped === 1 ? "is" : "are"} not in the backup.`
+          : "Vault saved to Codex Cryptica Cloud."
         : (cloudBackupStore.errorMessage ?? "Could not save to the cloud."),
-      ok ? "success" : "error",
+      ok ? (skipped > 0 ? "info" : "success") : "error",
     );
   }
 
@@ -131,7 +134,9 @@
     busy = true;
     // Lands in a new vault, so whatever is open is never silently replaced
     // (FR-006a). Nothing is created until the download has succeeded.
-    let restored: { vaultId: string; vaultTitle: string } | null;
+    let restored: Awaited<
+      ReturnType<typeof cloudBackupStore.restoreIntoNewVault>
+    >;
     try {
       restored = await cloudBackupStore.restoreIntoNewVault(
         restoreBackupId.trim(),
@@ -153,8 +158,10 @@
     restoreBackupId = "";
     restoreCode = "";
     notificationStore.notify(
-      `Restored "${restored.vaultTitle}" into a new vault. Your other vaults are unchanged.`,
-      "success",
+      restored.missingAssets > 0
+        ? `Restored "${restored.vaultTitle}" into a new vault, but ${restored.missingAssets} image${restored.missingAssets === 1 ? "" : "s"} could not be recovered.`
+        : `Restored "${restored.vaultTitle}" into a new vault. Your other vaults are unchanged.`,
+      restored.missingAssets > 0 ? "info" : "success",
     );
   }
 </script>
