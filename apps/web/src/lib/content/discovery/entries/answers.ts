@@ -231,6 +231,32 @@ export const answerEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "answer-system-selection",
+    pageKind: "answer",
+    canonicalPath: "/answers/what-rpg-system-should-we-try-instead-of-dnd",
+    primaryIntent:
+      "choose a tabletop rpg system based on desired play style or genre when looking beyond dnd",
+    intentAliases: [
+      "alternatives to dnd",
+      "what rpg should i play instead of dnd",
+      "tabletop rpg recommendations",
+      "games like dnd but different",
+      "what rpg system should we try instead of dnd",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "A play-style decision framework and systems grouped by user need rather than a popularity-ranked list, deliberately naming no single 'best' D&D alternative.",
+    parentCluster: "system-selection",
+    relatedIntents: [
+      "for-dungeons-and-dragons",
+      "for-pathfinder-2e",
+      "for-call-of-cthulhu",
+      "for-cyberpunk-red",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "answer-campaign-manager-criteria",
     pageKind: "answer",
     canonicalPath: "/answers/what-should-i-look-for-in-an-rpg-campaign-manager",
