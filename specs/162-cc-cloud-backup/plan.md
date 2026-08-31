@@ -1,7 +1,7 @@
 # Implementation Plan: CC Cloud Backup
 
-**Branch**: `161-cc-cloud-backup` | **Date**: 2026-08-31 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/161-cc-cloud-backup/spec.md`
+**Branch**: `162-cc-cloud-backup` | **Date**: 2026-08-31 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/162-cc-cloud-backup/spec.md`
 
 ## Summary
 
@@ -50,7 +50,7 @@ _Applies only when the feature adds or materially repositions a public, indexabl
 ### Documentation (this feature)
 
 ```text
-specs/161-cc-cloud-backup/
+specs/162-cc-cloud-backup/
 ├── plan.md              # This file
 ├── research.md          # Phase 0 output
 ├── data-model.md         # Phase 1 output

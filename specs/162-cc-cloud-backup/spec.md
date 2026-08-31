@@ -1,6 +1,6 @@
 # Feature Specification: CC Cloud Backup
 
-**Feature Branch**: `161-cc-cloud-backup`
+**Feature Branch**: `162-cc-cloud-backup`
 **Created**: 2026-08-31
 **Status**: Draft
 **Input**: User description: "Support opt-in cloud backup to Codex Cryptica Cloud via Cloudflare R2 with explicit user permission and zero third-party sharing (GitHub issue #2593)"
