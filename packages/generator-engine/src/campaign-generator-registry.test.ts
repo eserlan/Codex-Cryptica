@@ -70,6 +70,16 @@ describe("registry lookup", () => {
     ]);
   });
 
+  it("offers Space Western in the Ship generator's genre selector", () => {
+    const genre = getGenerator("ship").options.find(
+      (option) => option.id === "genre",
+    );
+    expect(genre?.choices).toContainEqual({
+      value: "Space Western",
+      label: "Space Western",
+    });
+  });
+
   it("builds and generates a minor magic item as an item draft", () => {
     const generator = getGenerator("minor-magic-item");
     const request = run("minor-magic-item", {
@@ -415,7 +425,13 @@ describe("registry lookup", () => {
   });
 
   it("provides a non-empty default instruction for every generator", () => {
-    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+    for (const id of [
+      "npc",
+      "faction",
+      "settlement",
+      "magic-item",
+      "ship",
+    ] as const) {
       expect(getDefaultInstruction(id).trim().length).toBeGreaterThan(0);
       expect(getDefaultInstruction(id)).toBe(
         getGenerator(id).defaultInstruction,

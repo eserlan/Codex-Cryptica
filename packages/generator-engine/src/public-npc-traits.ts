@@ -174,6 +174,13 @@ export const NPC_ANCESTRY_TRAITS: TraitMap = {
   "Cybernetic collective escapee": ["synthetic", "paranoid", "guarded"],
   "Avian academic": ["alien", "scholarly", "formal"],
   "Amphibious diplomat": ["alien", "social", "formal", "affable"],
+
+  // Space Western
+  "Frontier Drifter": ["frontier", "survival", "rough", "cynical"],
+  "Asteroid Belter": ["frontier", "labor", "rough", "survival"],
+  "Scrap-Cyborg": ["synthetic", "technical", "underclass"],
+  "Displaced Colonist": ["frontier", "survival", "weary"],
+  "Desert Moon Native": ["frontier", "tribal", "survival"],
 };
 
 // ---------------------------------------------------------------------------
@@ -310,6 +317,21 @@ export const NPC_ROLE_TRAITS: TraitMap = {
   Xenobiologist: ["scholarly", "academic", "eccentric"],
   "Security Chief": ["military", "martial", "lawful", "stoic"],
 
+  // Space Western
+  "Grease-Monkey Engineer": ["technical", "labor", "rough", "pragmatic"],
+  "Frontier Fixer": ["criminal", "social", "transactional", "cynical"],
+  "Black Market Fence": ["criminal", "mercantile", "transactional", "guarded"],
+  "Corrupt Customs Officer": [
+    "frontier",
+    "lawful",
+    "transactional",
+    "ruthless",
+  ],
+  "Outpost Marshal": ["lawful", "frontier", "martial", "stoic"],
+  "Syndicate Enforcer": ["criminal", "martial", "ruthless", "intense"],
+  "Drifter Scout": ["frontier", "survival", "covert", "weary"],
+  "Ex-Soldier Mercenary": ["military", "martial", "transactional", "stoic"],
+
   // Delve Boss / Inhabitant Roles
   "Dungeon Mastermind": ["leadership", "martial", "ruthless", "intense"],
   "Bound Vault Guardian": ["martial", "stoic", "intense"],
@@ -440,6 +462,14 @@ export const NPC_ALIGNMENT_TRAITS: TraitMap = {
   jaded_veteran: ["military", "weary", "cynical"],
   eager_cadet: ["military", "formal", "affable"],
   enigmatic_observer: ["alien", "esoteric", "stoic"],
+
+  // Space Western
+  scoundrel_code: ["pragmatic", "loyalty", "rebellious", "honourable"],
+  debt_bound_pragmatist: ["transactional", "pragmatic", "cynical", "weary"],
+  frontier_lawman: ["lawful", "frontier", "stoic", "martial"],
+  ruthless_profiteer: ["ruthless", "mercantile", "transactional", "formal"],
+  weary_runaway: ["guarded", "paranoid", "weary", "outcast"],
+  wildcat_rebel: ["rebellious", "frontier", "survival", "rough"],
 };
 
 // ---------------------------------------------------------------------------

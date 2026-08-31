@@ -189,6 +189,14 @@ export const npcConfig = {
       "Traded protected artefacts from a pre-spaceflight culture for personal passage home.",
       "Their breakthrough publication was based on a colleague's research — the colleague is missing.",
     ],
+    "Space Western": [
+      "Carries forged clearance transponder codes for an impounded blockade runner.",
+      "Has a lethal bounty on their head issued by an off-world crime syndicate.",
+      "Stole a shipment of refined antimatter fuel and hid it in a dead asteroid.",
+      "Is an undercover corporate investigator whose handler was murdered yesterday.",
+      "Is paying off the sector marshal with untraceable bearer chits to look the other way.",
+      "Secretly sabotaged their previous captain's hyperdrive to escape a suicide mission.",
+    ],
   } as Record<string, string[]>,
   motivesByTheme: {
     "Classic Fantasy": [
@@ -287,6 +295,14 @@ export const npcConfig = {
       "To recover a colleague's personal logs from a wrecked survey vessel.",
       "To prove a long-dismissed exoplanet theory before a rival publishes with stolen data.",
     ],
+    "Space Western": [
+      "To earn enough credits to pay off the mortgage on their battered freighter.",
+      "To track down the rival bounty hunter who left them for dead in an airlock.",
+      "To smuggle an estranged family member out of a heavily policed corporate colony.",
+      "To find an uncharted asteroid rich with rare heavy-metal ore veins.",
+      "To clear a falsified death warrant before the syndicate enforcers catch up.",
+      "To secure reliable fuel and spare parts before their sub-light thrusters fail completely.",
+    ],
   } as Record<string, string[]>,
   factionsByTheme: {
     "Classic Fantasy": [
@@ -384,6 +400,14 @@ export const npcConfig = {
       "The Colonial Stewardship Commission, advocates for settlement ethics and indigenous species protections.",
       "The Deep Range Pilots' Association, a professional body for long-haul survey vessel crews.",
       "The Luminance Institute, a privately funded think-tank that sometimes gets to places before the Consortium.",
+    ],
+    "Space Western": [
+      "The Dust-Well Salvage Guild, roughneck scrappers with claims on every local wreck.",
+      "The Rust-Star Syndicate, an underworld network controlling black-market fuel.",
+      "The Free Belters' League, independent prospectors resisting corporate tariffs.",
+      "The Iron Star Bounty Guild, licensed trackers operating with minimal oversight.",
+      "The Sector Marshal's Posse, overworked deputies enforcing rough frontier law.",
+      "The Meridian Haulers' Compact, independent captains bound by emergency mutual aid.",
     ],
   } as Record<string, string[]>,
   plotHooks: [
@@ -500,6 +524,14 @@ export const npcThemeConfig = {
       "Cybernetic collective escapee",
       "Avian academic",
       "Amphibious diplomat",
+    ],
+    "Space Western": [
+      "Human",
+      "Frontier Drifter",
+      "Asteroid Belter",
+      "Scrap-Cyborg",
+      "Displaced Colonist",
+      "Desert Moon Native",
     ],
   } as Record<string, string[]>,
   roles: {
@@ -630,6 +662,18 @@ export const npcThemeConfig = {
       "First Officer",
       "Xenobiologist",
       "Security Chief",
+    ],
+    "Space Western": [
+      "Smuggler Captain",
+      "Grease-Monkey Engineer",
+      "Frontier Fixer",
+      "Black Market Fence",
+      "Bounty Hunter",
+      "Corrupt Customs Officer",
+      "Outpost Marshal",
+      "Syndicate Enforcer",
+      "Drifter Scout",
+      "Ex-Soldier Mercenary",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -1121,6 +1165,44 @@ export const npcThemeConfig = {
           "This NPC belongs to a vastly superior or incomprehensible culture. Their dialogue should be calm, slightly detached, and often phrased as questions that challenge basic assumptions about reality.",
       },
     ],
+    "Space Western": [
+      {
+        id: "scoundrel_code",
+        label: "Scoundrel's Code",
+        aiPromptDirective:
+          "Write this NPC as living by a personal scoundrel code: keep your word once coin changes hands, never shoot a partner in the back, and look out for your crew before anyone else.",
+      },
+      {
+        id: "debt_bound_pragmatist",
+        label: "Debt-Bound Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as heavily motivated by looming financial ruin or syndicate mortgages. Every choice is measured against the cost of fuel, ammunition, and staying one step ahead of collectors.",
+      },
+      {
+        id: "frontier_lawman",
+        label: "Frontier Lawman",
+        aiPromptDirective:
+          "Write this NPC as an isolated marshal or peacekeeper who knows central authority is corrupt or useless. They enforce an unwritten frontier law with quiet authority and a ready sidearm.",
+      },
+      {
+        id: "ruthless_profiteer",
+        label: "Ruthless Profiteer",
+        aiPromptDirective:
+          "Write this NPC as a cold cartel fixer or salvage baron who treats human lives and dangerous cargo as ledger lines. Polite, transactional, and entirely without remorse.",
+      },
+      {
+        id: "weary_runaway",
+        label: "Weary Runaway",
+        aiPromptDirective:
+          "Write this NPC as someone fleeing a powerful core-world past, corporate family, or military court martial. Guarded, observant, and desperate to remain off official sensor logs.",
+      },
+      {
+        id: "wildcat_rebel",
+        label: "Wildcat Rebel",
+        aiPromptDirective:
+          "Write this NPC as an independent asteroid miner or colonist fighting corporate monopoly encroachment. Fierce, defiant, and suspicious of off-world strangers.",
+      },
+    ],
   } as Record<string, MoralityAnchor[]>,
 };
 
@@ -1149,6 +1231,8 @@ export const NPC_THEME_VOICE: Record<string, string> = {
     "pulpy galactic rebellion — ancient mystical orders, frontier planets, smugglers, imperial fleets, desert worlds, and desperate heroic missions against overwhelming tyranny",
   "Optimistic Exploration Sci-Fi":
     "optimistic exploration sci-fi — diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded",
+  "Space Western":
+    "space western & scoundrels — smugglers, salvage crews, bounty hunters, corrupt marshals, lived-in battered freighters, unpaid mortgages, and frontier outposts on the rim",
 };
 
 export const NPC_NAMING_STYLES = [

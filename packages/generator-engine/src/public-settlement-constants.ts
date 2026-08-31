@@ -97,6 +97,7 @@ export const settlementConfig = {
     "Steampunk",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
 
   sizesByGenre: {
@@ -317,6 +318,33 @@ export const settlementConfig = {
         pointsOfInterestCount: 6,
       },
     ],
+    "Space Western": [
+      {
+        name: "Prospector Camp",
+        range: "10–50 belters",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Boomtown Outpost",
+        range: "50–500 residents",
+        pointsOfInterestCount: 4,
+      },
+      {
+        name: "Moonbase Settlement",
+        range: "500–5,000 inhabitants",
+        pointsOfInterestCount: 5,
+      },
+      {
+        name: "Orbital Hub",
+        range: "5,000–20,000 residents",
+        pointsOfInterestCount: 5,
+      },
+      {
+        name: "Frontier Free-Port",
+        range: "20,000+ spacers",
+        pointsOfInterestCount: 6,
+      },
+    ],
   } as Record<
     string,
     { name: string; range: string; pointsOfInterestCount: number }[]
@@ -420,6 +448,14 @@ export const settlementConfig = {
       "Gas Giant Atmosphere",
       "Binary Star System",
       "Nebula Edge",
+    ],
+    "Space Western": [
+      "Arid Dust Basin",
+      "Hollowed Asteroid Cavity",
+      "Canyon Fault Line",
+      "Orbital Scrapyard Cluster",
+      "Volcanic Moon Caldera",
+      "Toxic Salt Flats",
     ],
   } as Record<string, string[]>,
 
@@ -529,6 +565,14 @@ export const settlementConfig = {
       "Agricultural Breadbasket",
       "First Contact Staging Area",
     ],
+    "Space Western": [
+      "Ore Smelting Depot",
+      "Black-Market Trading Hub",
+      "Sub-Light Refuelling Station",
+      "Salvage Scrapyard",
+      "Smuggler Way-Station",
+      "Agricultural Hydroponics Dome",
+    ],
   } as Record<string, string[]>,
 
   tonesByGenre: {
@@ -617,6 +661,13 @@ export const settlementConfig = {
       "Bureaucratic",
       "Pioneering",
       "Tense",
+    ],
+    "Space Western": [
+      "Lawless and volatile",
+      "Gritty and debt-ridden",
+      "Rowdy and boomtown-busy",
+      "Desolate and resource-strapped",
+      "Tense under corrupt oversight",
     ],
   } as Record<string, string[]>,
 
@@ -723,6 +774,13 @@ export const settlementConfig = {
       "A mysterious viral outbreak in the medical bay",
       "Sabotage of the main warp reactor",
     ],
+    "Space Western": [
+      "A greedy mining consortium is attempting a hostile takeover of independent claims.",
+      "The local water purification condensers are failing, and the repair parts are locked in customs.",
+      "A bounty hunter syndicate has set up blockades to trap an elusive fugitive.",
+      "Wildcat strikers have shut down the main ore conveyor, demanding fair fuel rations.",
+      "A syndicate enforcer boss is demanding protection money from every docked vessel.",
+    ],
   } as Record<string, string[]>,
 
   authorityTypesByGenre: {
@@ -821,6 +879,14 @@ export const settlementConfig = {
       "Science Director",
       "Fleet Admiral",
       "Ambassador",
+    ],
+    "Space Western": [
+      "Under-resourced Outpost Marshal",
+      "Corrupt Station Factor",
+      "Mining Claim Council",
+      "Syndicate Enforcer Boss",
+      "Elected Saloon Proprietor",
+      "None / Lawless Anarchy",
     ],
   } as Record<string, string[]>,
 
@@ -940,6 +1006,14 @@ export const settlementConfig = {
       "The Arboretum",
       "Shuttlebay",
     ],
+    "Space Western": [
+      "The Dust-Well Cantina & Exchange",
+      "Automated Atmospheric Recycler Station",
+      "Gantry 4 Drydock & Repair Crane",
+      "Assay Office & Claim Registry",
+      "Pressurised Hydroponics Greenhouse",
+      "The Boneyard Scrap Heap",
+    ],
   } as Record<string, string[]>,
 
   factionsByGenre: {
@@ -1029,6 +1103,13 @@ export const settlementConfig = {
       "Maquis equivalent",
       "Section 31 equivalent",
       "Orion Syndicate equivalent",
+    ],
+    "Space Western": [
+      "Independent Belters' League",
+      "Rust-Star Smuggling Ring",
+      "Consortium Security Enforcers",
+      "The Scrappers' Mutual Union",
+      "Frontier Marshals' Posse",
     ],
   } as Record<string, string[]>,
 
@@ -1133,6 +1214,17 @@ export const settlementConfig = {
       "Sirius",
       "Orion",
       "Vega",
+    ],
+    "Space Western": [
+      "Dust",
+      "Rust",
+      "Deadstone",
+      "Copper",
+      "Dry",
+      "Red",
+      "Broken",
+      "Ochre",
+      "Iron",
     ],
   } as Record<string, string[]>,
 
@@ -1246,6 +1338,17 @@ export const settlementConfig = {
       " Outpost",
       " Colony",
       " Hub",
+    ],
+    "Space Western": [
+      " Reach",
+      " Basin",
+      " Well",
+      " Ridge",
+      " Gulch",
+      " Rock",
+      " Landing",
+      " Flats",
+      " Station",
     ],
   } as Record<string, string[]>,
 

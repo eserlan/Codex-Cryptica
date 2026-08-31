@@ -203,4 +203,21 @@ export const forEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "for-scum-and-villainy",
+    pageKind: "for",
+    canonicalPath: "/for/scum-and-villainy",
+    primaryIntent: "scum and villainy campaign manager",
+    intentAliases: [
+      "space scoundrels campaign organiser",
+      "scum and villainy gm notes",
+    ],
+    audience: "Scum and Villainy game masters",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Crews, modified starships, criminal syndicates, ship debt, and sector heat tracked as a connected underworld sandbox.",
+    parentCluster: "system-guides",
+    indexable: true,
+    status: "live",
+  },
 ];
