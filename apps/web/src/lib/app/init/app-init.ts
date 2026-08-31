@@ -4,6 +4,7 @@ import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 import { resolveOracleProxyUrl } from "../../config/oracle-proxy";
+import { requestPersistentStorage } from "$lib/utils/persistent-storage";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
@@ -62,6 +63,10 @@ export function bootSystem(stores: {
  */
 export function initializeGlobalListeners(_calendarStore?: any) {
   if (!browser) return () => {};
+
+  // OPFS and IndexedDB share one evictable origin bucket unless we ask for a
+  // persistence grant, which nothing did until #2619.
+  void requestPersistentStorage();
 
   // Initialize Oracle action listeners
   const unsubOracle: () => void = initOracleEventListeners();
