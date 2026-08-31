@@ -16,6 +16,7 @@ export const factionConfig = {
     "Lancer",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
   typesByTheme: {
     "Classic Fantasy": [
@@ -180,6 +181,19 @@ export const factionConfig = {
       "Peacekeeping Force",
       "Trade Alliance",
     ],
+    "Space Western": [
+      "Smuggler Syndicate",
+      "Salvage Union",
+      "Criminal Syndicate",
+      "Frontier Militia",
+      "Bounty Guild",
+      "Corrupt Customs Authority",
+      "Mining Consortium",
+      "Rogue Flotilla",
+      "Pirate Cartel",
+      "Boomtown Council",
+      "Mercenary Outfit",
+    ],
   } as Record<string, string[]>,
   scopesByTheme: {
     "Classic Fantasy": [
@@ -285,6 +299,14 @@ export const factionConfig = {
       "Exploration corridor",
       "Federation region",
       "Multi-species alliance space",
+    ],
+    "Space Western": [
+      "Single asteroid outpost",
+      "Ramshackle moon port",
+      "Contested mining belt",
+      "Frontier star system",
+      "Uncharted hyper-lane run",
+      "Sector-wide syndicate reach",
     ],
   } as Record<string, string[]>,
   goalsByTheme: {
@@ -392,6 +414,14 @@ export const factionConfig = {
       "Secure a diplomatic treaty with a reclusive civilization before rivals do.",
       "Restore a failing terraforming station before the colony's survival window closes.",
     ],
+    "Space Western": [
+      "Monopolise the only independent fuel refinery in the sector.",
+      "Call in a massive overdue debt from a prominent frontier marshal.",
+      "Secure exclusive salvage rights to a decaying dreadnought before rival crews arrive.",
+      "Smuggle restricted military tech past the planetary customs blockade.",
+      "Break a corporate strike by hiring off-world scoundrels to seize the loading docks.",
+      "Erase a syndicate death mark by delivering a rogue pilot alive.",
+    ],
   } as Record<string, string[]>,
   alignments: [
     "Publicly lawful, privately ruthless",
@@ -454,6 +484,8 @@ export const themeIdToLabel: Record<string, string> = {
   startrek_light: "Optimistic Exploration Sci-Fi",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
   "optimistic-exploration-sci-fi_dark": "Optimistic Exploration Sci-Fi",
+  "space-western": "Space Western",
+  "space-western_light": "Space Western",
 };
 
 export const vampireConfig = {
@@ -547,6 +579,8 @@ export const FACTION_THEME_VOICE: Record<string, string> = {
     "pulpy galactic rebellion — rebel cells, imperial authorities, smuggler syndicates, ancient mystic orders, frontier guilds, and imperial fleets operating across desert worlds and occupied systems",
   "Optimistic Exploration Sci-Fi":
     "optimistic exploration sci-fi — federated councils, scientific directorates, peaceful integration, and complex diplomatic tension over ethical principles",
+  "Space Western":
+    "space western & scoundrels — smugglers, salvage unions, bounty guilds, frontier marshals, boomtown outposts, unpaid debts, and lived-in cargo ships on the rim of civilization",
 };
 
 export const FACTION_NAMING_STYLES = [

@@ -159,6 +159,24 @@ export const VENUE_TYPE_TRAITS: TraitMap = {
     "isolated",
     "modest",
   ],
+
+  // Space Western
+  "Frontier Cantina": ["hospitality", "frontier", "entertainment", "lawless"],
+  "Dust-Well Saloon": ["hospitality", "desert", "frontier", "working-class"],
+  "Asteroid Refuelling Lounge": [
+    "orbital",
+    "transit",
+    "industrial",
+    "working-class",
+  ],
+  "Smuggler's Speakeasy": ["criminal", "clandestine", "lawless", "trade"],
+  "Scrappers' Gambling Den": [
+    "criminal",
+    "entertainment",
+    "working-class",
+    "industrial",
+  ],
+  "Hydroponic Distillery": ["agrarian", "industrial", "trade", "cosy"],
 };
 
 // ---------------------------------------------------------------------------
@@ -341,6 +359,29 @@ export const CLIENTELE_TRAITS: TraitMap = {
   "Civilian colonists": ["agrarian", "hopeful", "transit"],
   "Exchange students": ["academic", "vibrant", "hopeful"],
   "Stellar cartographers": ["research", "transit", "orbital"],
+
+  // Space Western
+  "Scoundrels, smugglers, and debt-dodgers": [
+    "criminal",
+    "lawless",
+    "clandestine",
+  ],
+  "Grease-stained salvage scrappers and belters": [
+    "working-class",
+    "industrial",
+    "mining",
+  ],
+  "Frontier marshals and bounty hunters": [
+    "military",
+    "administrative",
+    "frontier",
+  ],
+  "Wildcat prospectors and ore drillers": [
+    "mining",
+    "frontier",
+    "working-class",
+  ],
+  "Displaced drifters and runaway nobles": ["refuge", "highborn", "desperate"],
 };
 
 // ---------------------------------------------------------------------------

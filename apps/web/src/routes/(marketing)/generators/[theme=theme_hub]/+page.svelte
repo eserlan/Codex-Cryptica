@@ -640,6 +640,35 @@
         surpriseMeCard,
       ],
     },
+    "space-western": {
+      label: "Space Western",
+      localStorageId: "space-western",
+      eyebrow: "Frontier Scoundrels & Asteroid Rigs",
+      intro:
+        "Battered freighters, lawless asteroid boomtowns, mining syndicates, and high-stakes smuggling runs. Generate frontier settlements, scoundrel NPCs, rust-bucket starships, and bounty contracts for your space western campaign — all free and pre-tuned.",
+      metaTitle:
+        "Space Western RPG Generators — NPC, Ship, Faction & More | Codex Cryptica",
+      metaDescription:
+        "Free Space Western and Scoundrel RPG generators for tabletop GMs. Create scoundrel NPCs, smuggling factions, asteroid boomtowns, rust-bucket freighters, and bounty quests. No login required.",
+      cards: [
+        ...sharedCards(
+          "Frontier Outpost Generator",
+          "Build asteroid claims, dusty planetary depots, and hollow-rock cantinas with mining councils, marshals, and corporate enforcers.",
+        ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
+        shipCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Rim-World Gazette Generator",
+          "Generate a frontier news bulletin — bounty warrants, mining claim disputes, customs warnings, and cantina rumours, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
   };
 
   const config = $derived(themeConfig[data.theme]);

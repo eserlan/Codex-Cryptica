@@ -124,6 +124,7 @@ export const socialHubConfig = {
     "Lancer",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -217,6 +218,14 @@ export const socialHubConfig = {
       "Embassy Reception Hall",
       "Planetary Academy Campus",
       "Frontier Research Outpost Canteen",
+    ],
+    "Space Western": [
+      "Frontier Cantina",
+      "Dust-Well Saloon",
+      "Asteroid Refuelling Lounge",
+      "Smuggler's Speakeasy",
+      "Scrappers' Gambling Den",
+      "Hydroponic Distillery",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -335,6 +344,13 @@ export const socialHubConfig = {
       "Civilian colonists",
       "Exchange students",
       "Stellar cartographers",
+    ],
+    "Space Western": [
+      "Scoundrels, smugglers, and debt-dodgers",
+      "Grease-stained salvage scrappers and belters",
+      "Frontier marshals and bounty hunters",
+      "Wildcat prospectors and ore drillers",
+      "Displaced drifters and runaway nobles",
     ],
   } as Record<string, string[]>,
   troubles: [

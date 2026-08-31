@@ -696,4 +696,18 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "hub-space-western",
+    pageKind: "hub",
+    canonicalPath: "/generators/space-western",
+    primaryIntent: "space western rpg generators",
+    intentAliases: ["space western generator hub", "scoundrel rpg generators"],
+    audience: "Space Western and Scoundrel game masters",
+    userJob: "navigate",
+    uniqueValue:
+      "Routes a reader with a Space Western or Scoundrel campaign in mind to the generators that suit it, with genre-appropriate framing.",
+    parentCluster: "theme-hubs",
+    indexable: true,
+    status: "live",
+  },
 ];

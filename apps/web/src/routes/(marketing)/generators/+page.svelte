@@ -337,6 +337,13 @@
         "Diplomatic officers, scientific factions, space station hubs, and first-contact quest hooks for optimistic space opera campaigns.",
       icon: "icon-[lucide--rocket]",
     },
+    {
+      href: "/generators/space-western",
+      label: "Space Western Hub",
+      summary:
+        "Frontier scoundrels, asteroid boomtowns, smuggling rings, and rust-bucket freighters for space western campaigns.",
+      icon: "icon-[lucide--orbit]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);

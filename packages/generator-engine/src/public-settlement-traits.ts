@@ -201,6 +201,14 @@ export const ENVIRONMENT_TRAITS: TraitMap = {
   "Gas Giant Atmosphere": ["orbital", "isolated"],
   "Binary Star System": ["orbital", "research"],
   "Nebula Edge": ["orbital", "research", "isolated"],
+
+  // Space Western
+  "Arid Dust Basin": ["desert", "wasteland", "inland"],
+  "Hollowed Asteroid Cavity": ["orbital", "mining", "isolated", "underground"],
+  "Canyon Fault Line": ["inland", "isolated", "frontier"],
+  "Orbital Scrapyard Cluster": ["orbital", "ruined", "industrial"],
+  "Volcanic Moon Caldera": ["volcanic", "isolated", "frontier"],
+  "Toxic Salt Flats": ["desert", "wasteland", "isolated"],
 };
 
 /** Primary functions, keyed by the exact value in `primaryFunctionsByGenre`. */
@@ -304,6 +312,14 @@ export const FUNCTION_TRAITS: TraitMap = {
   "Fleet Resupply": ["military", "transit"],
   "Agricultural Breadbasket": ["agrarian"],
   "First Contact Staging Area": ["research", "administrative"],
+
+  // Space Western
+  "Ore Smelting Depot": ["mining", "industrial"],
+  "Black-Market Trading Hub": ["trade", "criminal"],
+  "Sub-Light Refuelling Station": ["transit", "industrial"],
+  "Salvage Scrapyard": ["industrial", "trade", "ruined"],
+  "Smuggler Way-Station": ["transit", "criminal", "refuge"],
+  "Agricultural Hydroponics Dome": ["agrarian", "research"],
 };
 
 /** Tones, keyed by the exact value in `tonesByGenre`. */
@@ -387,6 +403,13 @@ export const TONE_TRAITS: TraitMap = {
   Bureaucratic: ["bureaucratic", "administrative"],
   Pioneering: ["frontier", "hopeful"],
   Tense: ["politics"],
+
+  // Space Western
+  "Lawless and volatile": ["lawless", "frontier"],
+  "Gritty and debt-ridden": ["grim", "desperate", "frontier"],
+  "Rowdy and boomtown-busy": ["prosperous", "frontier", "vibrant"],
+  "Desolate and resource-strapped": ["desperate", "declining", "isolated"],
+  "Tense under corrupt oversight": ["oppressive", "crime", "politics"],
 };
 
 /** Dominant tensions, keyed by the exact value in `mainTensionsByGenre`. */
@@ -498,6 +521,18 @@ export const TENSION_TRAITS: TraitMap = {
   "A diplomatic breakdown between two alien delegations": ["politics"],
   "A mysterious viral outbreak in the medical bay": ["disease", "medical"],
   "Sabotage of the main warp reactor": ["betrayal", "technology"],
+
+  // Space Western
+  "A greedy mining consortium is attempting a hostile takeover of independent claims.":
+    ["mining", "politics", "trade"],
+  "The local water purification condensers are failing, and the repair parts are locked in customs.":
+    ["scarcity", "environmental", "technology"],
+  "A bounty hunter syndicate has set up blockades to trap an elusive fugitive.":
+    ["crime", "siege"],
+  "Wildcat strikers have shut down the main ore conveyor, demanding fair fuel rations.":
+    ["labour", "industrial", "mining", "scarcity"],
+  "A syndicate enforcer boss is demanding protection money from every docked vessel.":
+    ["crime", "oppressive"],
 };
 
 /** Official authorities, keyed by the exact value in `authorityTypesByGenre`. */
@@ -583,6 +618,18 @@ export const AUTHORITY_TRAITS: TraitMap = {
   "Science Director": ["research", "academic"],
   "Fleet Admiral": ["military"],
   Ambassador: ["administrative", "politics"],
+
+  // Space Western
+  "Under-resourced Outpost Marshal": [
+    "administrative",
+    "frontier",
+    "desperate",
+  ],
+  "Corrupt Station Factor": ["oligarchic", "crime", "trade"],
+  "Mining Claim Council": ["elected", "mining", "frontier"],
+  "Syndicate Enforcer Boss": ["criminal-rule", "autocratic"],
+  "Elected Saloon Proprietor": ["elected", "entertainment", "frontier"],
+  "None / Lawless Anarchy": ["lawless", "desperate"],
 };
 
 /**
@@ -800,6 +847,14 @@ export const LOCATION_TRAITS: TraitMap = {
   "Diplomatic Quarters": ["administrative", "politics"],
   "The Arboretum": ["research"],
   Shuttlebay: ["transit"],
+
+  // Space Western
+  "The Dust-Well Cantina & Exchange": ["entertainment", "trade", "frontier"],
+  "Automated Atmospheric Recycler Station": ["industrial", "artificial"],
+  "Gantry 4 Drydock & Repair Crane": ["industrial", "transit"],
+  "Assay Office & Claim Registry": ["administrative", "mining", "trade"],
+  "Pressurised Hydroponics Greenhouse": ["agrarian", "research"],
+  "The Boneyard Scrap Heap": ["ruined", "industrial", "trade"],
 };
 
 /** Controlling factions, keyed by the exact value in `factionsByGenre`. */
@@ -887,4 +942,11 @@ export const FACTION_TRAITS: TraitMap = {
   "Maquis equivalent": ["defiant"],
   "Section 31 equivalent": ["mysterious", "military"],
   "Orion Syndicate equivalent": ["criminal"],
+
+  // Space Western
+  "Independent Belters' League": ["mining", "elected", "frontier"],
+  "Rust-Star Smuggling Ring": ["criminal", "transit"],
+  "Consortium Security Enforcers": ["military", "oligarchic", "oppressive"],
+  "The Scrappers' Mutual Union": ["industrial", "trade", "elected"],
+  "Frontier Marshals' Posse": ["military", "frontier", "administrative"],
 };
