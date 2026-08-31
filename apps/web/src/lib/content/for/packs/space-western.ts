@@ -53,8 +53,8 @@ export const spaceWestern: LandingPageConfig = {
       "See how one ship binds a frontier outpost, its disputed cargo, a local authority, and the people prepared to take it.",
     steps: [
       {
-        label: "F/V Coyote",
-        sublabel: "Converted Patrol Gunship",
+        label: "The Cinder Wren",
+        sublabel: "Frontier Courier-Freighter",
         category: "item",
       },
       {
@@ -100,7 +100,7 @@ export const spaceWestern: LandingPageConfig = {
     {
       title: "See a Space Western Ship Example",
       description:
-        "Read F/V Coyote in full: a compromised gunship with disputed salvage and a dangerous cargo-hold secret.",
+        "Read The Cinder Wren in full: a blockade runner with disputed salvage and an outlawed AI core.",
       href: "/examples/fv-coyote-space-western-ship",
       badge: "Example",
     },

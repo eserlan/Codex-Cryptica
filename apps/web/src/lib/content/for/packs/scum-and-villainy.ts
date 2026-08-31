@@ -100,7 +100,7 @@ export const scumAndVillainy: LandingPageConfig = {
     {
       title: "See a Crew-Ready Ship Example",
       description:
-        "Read F/V Coyote in full: an indebted gunship with disputed salvage, a practical crew, and a hidden AI core.",
+        "Read The Cinder Wren in full: a blockade runner with disputed salvage, a practical crew, and an outlawed AI core.",
       href: "/examples/fv-coyote-space-western-ship",
       badge: "Example",
     },
