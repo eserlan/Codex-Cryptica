@@ -222,6 +222,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/scum-and-villainy</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/for/space-western</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/traveller</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -348,6 +358,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-venting-helix-derelict-hazard</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/fv-coyote-space-western-ship</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
