@@ -231,6 +231,27 @@ export const answerEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "answer-beginner-start",
+    pageKind: "answer",
+    canonicalPath:
+      "/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
+    primaryIntent: "how to start playing tabletop rpgs as a complete beginner",
+    intentAliases: [
+      "how to start playing tabletop rpgs",
+      "beginner guide to rpgs",
+      "what do i need to play dnd",
+      "should i start as a player or gm",
+      "tabletop rpgs for beginners",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "States the genuinely small minimum needed to start (no rulebook read-through, no gear list), covers both the player and GM entry points as equally valid, and is explicit that campaign-management software isn't needed for a first session.",
+    parentCluster: "beginner-entry",
+    relatedIntents: ["answer-system-selection", "answer-session-zero"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "answer-system-selection",
     pageKind: "answer",
     canonicalPath: "/answers/what-rpg-system-should-we-try-instead-of-dnd",
