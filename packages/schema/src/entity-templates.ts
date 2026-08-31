@@ -76,6 +76,30 @@ Which organizations or gangs hold sway in this area?
 ## Lore & History
 How did this place come to be, and what major events happened here?`,
 
+  ship: `## Ship Profile
+The vessel's name, class, role, condition, and the impression it makes on approach.
+
+## Command, Crew & Passengers
+Who commands the ship, who keeps it running, and the loyalties or tensions aboard.
+
+## Key Zones
+Important decks, cargo spaces, systems, and places where trouble can unfold.
+
+## Cargo, Capability & Constraints
+What the vessel can do, what it carries, and the limits imposed by fuel, repairs, armament, or missing parts.
+
+## Ownership, Debts & Allegiances
+Who owns, claims, finances, or is looking for the ship — including any obligations that shape its next job.
+
+## Complication
+The immediate operational problem threatening the ship or crew.
+
+## Secret
+A hidden history, illicit modification, previous owner, or dangerous cargo.
+
+## Adventure Hooks
+Concrete jobs, disputes, or discoveries that draw the crew into play.`,
+
   item: `## Summary
 A brief overview of what this object is and who possesses it.
 
