@@ -14,6 +14,8 @@ import { conspiracy } from "./conspiracy";
 import { deltaGreen } from "./delta-green";
 import { scumAndVillainy } from "./scum-and-villainy";
 import { spaceWestern } from "./space-western";
+import { westMarches } from "./west-marches";
+import { sandboxCampaigns } from "./sandbox-campaigns";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -29,6 +31,8 @@ export const packs: Record<string, LandingPageConfig> = {
   "space-opera": spaceOpera,
   "scum-and-villainy": scumAndVillainy,
   "space-western": spaceWestern,
+  "west-marches": westMarches,
+  "sandbox-campaigns": sandboxCampaigns,
   traveller,
   conspiracy,
 };
