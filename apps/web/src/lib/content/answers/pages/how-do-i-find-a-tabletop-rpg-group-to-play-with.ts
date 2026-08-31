@@ -40,7 +40,7 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
       ],
       cta: {
         text: "Find a group on Groupfinder",
-        href: "https://groupfinder.gg/library/codex-cryptica",
+        href: "https://groupfinder.gg/list",
         external: true,
         disclosure:
           "Codex Cryptica partner link. Groupfinder is a dedicated tabletop RPG matching platform.",
