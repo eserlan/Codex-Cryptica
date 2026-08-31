@@ -567,6 +567,16 @@ export class VaultStore {
     }
     return this.entityStore.loadEntityContent(id);
   }
+
+  /**
+   * Whether an entity's full markdown body is in memory. Callers that persist
+   * or transmit a vault need this: until it is true, `content` may only be the
+   * cached preview.
+   */
+  isContentLoaded(id: string): boolean {
+    if (sessionModeStore.isGuestMode) return true;
+    return this.entityStore.isContentLoaded(id);
+  }
   createEntity(
     type: Entity["type"],
     title: string,

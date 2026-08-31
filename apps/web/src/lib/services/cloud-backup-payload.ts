@@ -22,7 +22,32 @@ export interface CloudBackupPayloadDeps {
   /** Resolves a vault-relative path to a fetchable URL, as the vault store does. */
   resolveImageUrl: (path: string) => Promise<string | null | undefined>;
   fetch?: typeof fetch;
+  /**
+   * Loads an entity's full markdown body. Required for a faithful backup:
+   * without it the snapshot stores whatever `content` happens to be in memory,
+   * which for a warm start is a 280-character preview, not the lore.
+   */
+  hydrateEntities?: EntityHydrator;
 }
+
+/**
+ * The vault's on-demand content loader, narrowed to what a backup needs.
+ *
+ * `vault.entities[id].content` is only the real markdown once the entity has
+ * been hydrated; before that a warm start seeds it from the IndexedDB cache
+ * with `contentPreview` — whitespace-collapsed and cut at 280 characters. A
+ * snapshot of the live map therefore captures full lore for whatever the user
+ * happened to open this session and a stub for everything else.
+ */
+export interface EntityHydrator {
+  isContentLoaded: (id: string) => boolean;
+  loadEntityContent: (id: string) => Promise<void>;
+  /** Reads the entity back after loading; the store replaces rather than mutates. */
+  getEntity: (id: string) => LocalEntity | undefined;
+}
+
+/** Entity loads in flight at once. Bounded so a large vault cannot stampede OPFS. */
+const HYDRATION_CONCURRENCY = 8;
 
 export interface CloudBackupPayloadResult {
   vaultTitle: string;
@@ -37,6 +62,8 @@ export interface CloudBackupPayloadResult {
   assets: { assetId: string; bytes: Uint8Array; mimeType: string }[];
   /** Paths that could not be read; surfaced so a partial backup is never silent. */
   skippedAssets: string[];
+  /** Entities whose body could not be hydrated, for the same reason. */
+  skippedEntities: string[];
 }
 
 /** Vault-owned file, as opposed to an external reference. */
@@ -84,6 +111,48 @@ export function collectAssetPaths(
   return [...paths];
 }
 
+/**
+ * Replaces every entity in the list with its fully-hydrated self.
+ *
+ * Entities the vault has already loaded pass through untouched. The rest are
+ * loaded through the vault's own deduplicating loader, bounded so a 5k-entity
+ * vault does not open five thousand OPFS reads at once. An entity that cannot
+ * be read keeps whatever it had and is reported, matching the asset contract:
+ * a partial backup is allowed, a silently partial one is not.
+ */
+export async function hydrateEntityContent(
+  entities: readonly LocalEntity[],
+  hydrator: EntityHydrator,
+  concurrency = HYDRATION_CONCURRENCY,
+): Promise<{ entities: LocalEntity[]; skippedEntities: string[] }> {
+  const hydrated = [...entities];
+  const skippedEntities: string[] = [];
+  const pending = hydrated
+    .map((entity, index) => ({ entity, index }))
+    .filter(({ entity }) => entity?.id && !hydrator.isContentLoaded(entity.id));
+
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < pending.length) {
+      const { entity, index } = pending[cursor++];
+      try {
+        await hydrator.loadEntityContent(entity.id);
+        // The store swaps the record rather than mutating it, so the loaded
+        // body is only visible by reading the entity back.
+        hydrated[index] = hydrator.getEntity(entity.id) ?? entity;
+      } catch {
+        skippedEntities.push(entity.id);
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, pending.length) }, worker),
+  );
+
+  return { entities: hydrated, skippedEntities };
+}
+
 export async function buildCloudBackupPayload(
   vaultTitle: string,
   // Widened at the boundary: the vault store's entity record is structurally
@@ -92,7 +161,18 @@ export async function buildCloudBackupPayload(
   deps: CloudBackupPayloadDeps,
   content: { maps?: readonly unknown[]; canvases?: readonly unknown[] } = {},
 ): Promise<CloudBackupPayloadResult> {
-  const list = entities as readonly LocalEntity[];
+  let list = entities as readonly LocalEntity[];
+  const skippedEntities: string[] = [];
+
+  // Before anything else: the snapshot must hold real markdown, not the
+  // warm-start preview. Asset collection reads the hydrated list too, since
+  // hydration can replace the records it scans.
+  if (deps.hydrateEntities) {
+    const result = await hydrateEntityContent(list, deps.hydrateEntities);
+    list = result.entities;
+    skippedEntities.push(...result.skippedEntities);
+  }
+
   const maps = content.maps ?? [];
   const canvases = content.canvases ?? [];
   const fetcher = deps.fetch ?? fetch;
@@ -133,5 +213,6 @@ export async function buildCloudBackupPayload(
     },
     assets,
     skippedAssets,
+    skippedEntities,
   };
 }

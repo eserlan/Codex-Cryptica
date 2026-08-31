@@ -192,7 +192,17 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       buildCloudBackupPayload(
         vault.vaultName || "Vault",
         Object.values(vault.entities ?? {}),
-        { resolveImageUrl: (path: string) => vault.resolveImageUrl(path) },
+        {
+          resolveImageUrl: (path: string) => vault.resolveImageUrl(path),
+          // Without this the snapshot stores whatever `content` is in memory,
+          // and a warm start seeds that from the cache with a 280-character
+          // preview rather than the entity's markdown.
+          hydrateEntities: {
+            isContentLoaded: (id: string) => vault.isContentLoaded(id),
+            loadEntityContent: (id: string) => vault.loadEntityContent(id),
+            getEntity: (id: string) => vault.entities?.[id] as never,
+          },
+        },
         {
           maps: mapRegistry.allMaps ?? [],
           canvases: canvasRegistry.allCanvases ?? [],

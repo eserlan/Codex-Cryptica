@@ -79,6 +79,8 @@ export class CloudBackupStore {
   knownBackups = $state<KnownCloudBackup[]>([]);
   /** Media the last save could not read. Non-empty means a partial copy. */
   skippedAssets = $state<string[]>([]);
+  /** Entity ids whose markdown body could not be read for the last backup. */
+  skippedEntities = $state<string[]>([]);
   /**
    * Files sent so far in the current save, and how many there are. Media goes
    * up one request at a time, so a large vault takes long enough that silence
@@ -334,6 +336,8 @@ export class CloudBackupStore {
       const payload = await this.deps.buildPayload(vaultId);
       this.skippedAssets =
         (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
+      this.skippedEntities =
+        (payload as { skippedEntities?: string[] }).skippedEntities ?? [];
       const result = await pushVaultToCloudBackup(
         this.deps.runtime,
         vaultId,
