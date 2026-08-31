@@ -589,6 +589,26 @@ export async function handleGetCloudBackupAsset(
   });
 }
 
+/**
+ * Erases every object under a backup's prefix: manifest, bundle and assets.
+ *
+ * Shared by the owner and admin delete routes on purpose. Two copies of this
+ * loop is how one of them ends up leaving orphaned assets behind after the
+ * manifest is gone — unreachable, unbilled to anyone, and invisible.
+ */
+async function eraseBackupObjects(
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<void> {
+  const prefix = getBackupPrefix(backupId);
+  let listed = await env.BUCKET.list({ prefix });
+  while (listed.objects.length > 0) {
+    for (const object of listed.objects) await env.BUCKET.delete(object.key);
+    if (!listed.truncated) break;
+    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
+  }
+}
+
 /** DELETE /api/cloud-backup/{backupId} — permanent erase (FR-010). */
 export async function handleDeleteCloudBackup(
   request: Request,
@@ -601,15 +621,42 @@ export async function handleDeleteCloudBackup(
   const auth = await authorize(request, env, backupId);
   if ("response" in auth) return auth.response;
 
-  const prefix = getBackupPrefix(backupId);
-  let listed = await env.BUCKET.list({ prefix });
-  while (listed.objects.length > 0) {
-    for (const object of listed.objects) await env.BUCKET.delete(object.key);
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
+  await eraseBackupObjects(env, backupId);
 
   return json(request, { deleted: true });
+}
+
+/**
+ * DELETE /api/cloud-backup/admin/{backupId} — operator erase.
+ *
+ * The owner route needs the vault's code, which is exactly what a user who
+ * cleared their browser, lost the device or wants a takedown no longer has.
+ * This is the operator's equivalent: same erase, authorised by the support
+ * token rather than the vault code.
+ *
+ * It deletes by explicit backup id only — there is no "delete everything
+ * matching" here, for the same reason the lookup route refuses to enumerate.
+ * Like the other admin routes it answers 404 rather than 401 when the token is
+ * wrong, so probing cannot distinguish a bad token from a missing backup.
+ */
+export async function handleCloudBackupAdminDelete(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<Response> {
+  if (!isAdmin(request, env)) {
+    return json(request, { error: { message: "Not found" } }, 404);
+  }
+  if (!env.BUCKET) {
+    return json(request, { error: { message: "Storage unavailable" } }, 500);
+  }
+
+  // Reported so an operator running a takedown knows whether they erased
+  // something or were handed a stale id.
+  const existed = (await readManifest(env, backupId)) !== null;
+  await eraseBackupObjects(env, backupId);
+
+  return json(request, { deleted: true, existed });
 }
 
 /**
