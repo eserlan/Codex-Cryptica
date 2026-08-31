@@ -14,6 +14,13 @@ import {
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
+import { mapRegistry } from "$lib/stores/map-registry.svelte";
+import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import {
+  cloudBackupStore,
+  cloudBackupBrowserStorage,
+} from "$lib/stores/cloud-backup.svelte";
+import { buildCloudBackupPayload } from "$lib/services/cloud-backup-payload";
 import {
   handleVersionSkewReload,
   isVersionSkewError,
@@ -165,6 +172,71 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   window.addEventListener("unhandledrejection", handleUnhandledRejection);
   window.addEventListener("vault-switched", handleVaultSwitched);
 
+  // Cloud Backup stays inert until a vault opts in; configuring it only wires
+  // the dependencies it would need (spec 162).
+  cloudBackupStore.configure({
+    runtime: {
+      baseUrl: import.meta.env.VITE_ORACLE_PROXY_URL || "",
+      storage: cloudBackupBrowserStorage(),
+      fetch: ((url: string, init?: any) => fetch(url, init)) as never,
+    },
+    // Everything the consent screen promises: entities, maps, canvases and
+    // the media all three reference.
+    buildPayload: async (_vaultId: string) =>
+      buildCloudBackupPayload(
+        vault.vaultName || "Vault",
+        Object.values(vault.entities ?? {}),
+        { resolveImageUrl: (path: string) => vault.resolveImageUrl(path) },
+        {
+          maps: mapRegistry.allMaps ?? [],
+          canvases: canvasRegistry.allCanvases ?? [],
+        },
+      ),
+    activeVaultId: () => vault.activeVaultId ?? null,
+    restore: {
+      createVault: (name: string) => vault.createVault(name),
+      // `createVault` switches to the new vault before this runs, so these
+      // writes land there rather than in whatever the user had open.
+      importEntities: async (_vaultId: string, entities: unknown[]) => {
+        await vault.batchCreateEntities(entities as never[]);
+      },
+      importMaps: async (_vaultId: string, maps: unknown[]) => {
+        for (const map of maps as { id?: string }[]) {
+          if (map?.id) mapRegistry.maps[map.id] = map as never;
+        }
+        await mapRegistry.saveMaps();
+      },
+      importCanvases: async (_vaultId: string, canvases: unknown[]) => {
+        for (const canvas of canvases as { id?: string }[]) {
+          if (!canvas?.id) continue;
+          canvasRegistry.canvases[canvas.id] = canvas as never;
+          await canvasRegistry.saveCanvas(canvas.id);
+        }
+      },
+      importAsset: async (
+        path: string,
+        bytes: Uint8Array,
+        mimeType: string,
+      ) => {
+        const filename = path.split("/").pop() || path;
+        await vault.saveImageToVault(
+          new Blob([bytes as unknown as BlobPart], { type: mimeType }),
+          "restored",
+          filename,
+        );
+      },
+    },
+  });
+
+  // Read any existing opt-in back so a reload shows the vault's real backup
+  // state rather than "off" and a fresh consent prompt (spec 162, FR-020).
+  const hydrateCloudBackup = () => {
+    const activeVaultId = vault.activeVaultId;
+    if (activeVaultId) void cloudBackupStore.hydrate(activeVaultId);
+  };
+  hydrateCloudBackup();
+  window.addEventListener("vault-switched", hydrateCloudBackup);
+
   // Debounced entity writes are otherwise lost if the app closes inside the
   // debounce window — see #2584.
   const unsubFlushSaves = registerFlushSavesOnHide({
@@ -174,6 +246,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   return () => {
     unsubOracle();
     unsubFlushSaves();
+    window.removeEventListener("vault-switched", hydrateCloudBackup);
+    cloudBackupStore.destroy();
     window.removeEventListener("error", handleGlobalError);
     window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener("vault-switched", handleVaultSwitched);

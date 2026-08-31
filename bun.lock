@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.31.117",
+      "version": "0.31.119",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -150,6 +150,16 @@
         "vitest": "^4.1.7",
       },
     },
+    "apps/workers/oracle-proxy": {
+      "name": "@codex/oracle-proxy",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.14",
+        "vitest": "^4.1.7",
+      },
+    },
     "packages/adventure-engine": {
       "name": "@codex/adventure-engine",
       "version": "0.0.0",
@@ -236,6 +246,20 @@
         "@types/node": "^26.1.0",
         "@vitest/coverage-v8": "^4.1.7",
         "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
+    "packages/cloud-backup-sync": {
+      "name": "@codex/cloud-backup-sync",
+      "version": "0.0.0",
+      "dependencies": {
+        "idb": "^8.0.3",
+        "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.14",
         "vitest": "^4.1.7",
       },
     },
@@ -643,6 +667,8 @@
 
     "@codex/canvas-engine": ["@codex/canvas-engine@workspace:packages/canvas-engine"],
 
+    "@codex/cloud-backup-sync": ["@codex/cloud-backup-sync@workspace:packages/cloud-backup-sync"],
+
     "@codex/content-packs": ["@codex/content-packs@workspace:packages/content-packs"],
 
     "@codex/entity-shelf": ["@codex/entity-shelf@workspace:packages/entity-shelf"],
@@ -656,6 +682,8 @@
     "@codex/importer": ["@codex/importer@workspace:packages/importer"],
 
     "@codex/oracle-engine": ["@codex/oracle-engine@workspace:packages/oracle-engine"],
+
+    "@codex/oracle-proxy": ["@codex/oracle-proxy@workspace:apps/workers/oracle-proxy"],
 
     "@codex/performance-observability": ["@codex/performance-observability@workspace:packages/performance-observability"],
 

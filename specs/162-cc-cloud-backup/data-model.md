@@ -4,15 +4,15 @@
 
 Stored at `cloud-backup/{backupId}/manifest.json`. `{backupId}` is a server-generated UUID, opaque and unrelated to the ownership code.
 
-| Field           | Type          | Notes                                                                        |
-| --------------- | ------------- | ---------------------------------------------------------------------------- |
-| `schemaVersion` | number        | For forward-compatible migrations                                            |
-| `backupId`      | string (UUID) | Matches the R2 key; never shown to end users                                 |
-| `vaultTitle`    | string        | Plaintext, since it's the only field the admin lookup (Story 4) can match on |
-| `sizeBytes`     | number        | Reported in status UI (FR-008)                                               |
-| `createdAt`     | ISO datetime  | First backup                                                                 |
-| `lastPushedAt`  | ISO datetime  | Updated on every push-on-save                                                |
-| `entityCount`   | number        | Optional, for status display richness                                        |
+| Field           | Type          | Notes                                                                                                                              |
+| --------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion` | number        | Written as `1` and validated on read; no migration branching exists yet, and none is in scope until a second version is introduced |
+| `backupId`      | string (UUID) | Matches the R2 key; never shown to end users                                                                                       |
+| `vaultTitle`    | string        | Plaintext, since it's the only field the admin lookup (Story 4) can match on                                                       |
+| `sizeBytes`     | number        | Reported in status UI (FR-008)                                                                                                     |
+| `createdAt`     | ISO datetime  | First backup                                                                                                                       |
+| `lastPushedAt`  | ISO datetime  | Updated on every push-on-save                                                                                                      |
+| `entityCount`   | number        | Optional, for status display richness                                                                                              |
 
 Stored as R2 object `customMetadata` (not in the JSON body, so lookups don't require downloading/parsing the body): `ownerCodeHash` (SHA-256 hex, per research.md §1).
 
@@ -34,7 +34,7 @@ Per vault, mirrors the shape of the existing `PublishRegistry` (`packages/schema
 
 | Field          | Type                             | Notes                                                                                                                                                                                                    |
 | -------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vaultId`      | string                           | Local vault identifier, foreign key into the existing vault registry                                                                                                                                     |
+| `vaultId`      | string                           | Local vault identifier, foreign key into the existing vault registry. On restore this points at the **newly created** vault (FR-006a), not the vault the user had open                                   |
 | `backupId`     | string (UUID)                    | From the manifest, needed to address the R2 keys directly                                                                                                                                                |
 | `ownerCode`    | string                           | The raw, unhashed credential — this is the one copy of it that exists outside the user's own memory/notes; losing this record without having copied the code elsewhere is unrecoverable (spec edge case) |
 | `enabled`      | boolean                          | Reflects the user's current opt-in state; `false` after disable, record itself is not deleted (so re-enabling resumes rather than re-consenting)                                                         |
