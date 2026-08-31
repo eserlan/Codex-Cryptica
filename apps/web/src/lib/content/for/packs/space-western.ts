@@ -101,7 +101,7 @@ export const spaceWestern: LandingPageConfig = {
       title: "See a Space Western Ship Example",
       description:
         "Read The Cinder Wren in full: a blockade runner with disputed salvage and an outlawed AI core.",
-      href: "/examples/fv-coyote-space-western-ship",
+      href: "/examples/the-cinder-wren-space-western-ship",
       badge: "Example",
     },
     {

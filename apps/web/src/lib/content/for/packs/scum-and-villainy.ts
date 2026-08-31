@@ -101,7 +101,7 @@ export const scumAndVillainy: LandingPageConfig = {
       title: "See a Crew-Ready Ship Example",
       description:
         "Read The Cinder Wren in full: a blockade runner with disputed salvage, a practical crew, and an outlawed AI core.",
-      href: "/examples/fv-coyote-space-western-ship",
+      href: "/examples/the-cinder-wren-space-western-ship",
       badge: "Example",
     },
     {
