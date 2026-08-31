@@ -10,6 +10,7 @@
   import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   let showConsent = $state(false);
   let showRestore = $state(false);
@@ -29,6 +30,12 @@
     error: "Last backup failed",
   };
 
+  const handleConsentKeydown = (event: KeyboardEvent) => {
+    // Escape must dismiss without consenting — the same contract every other
+    // modal in the app honours.
+    if (showConsent && event.key === "Escape") showConsent = false;
+  };
+
   const lastPushed = $derived(
     cloudBackupStore.lastPushedAt
       ? new Date(cloudBackupStore.lastPushedAt).toLocaleString()
@@ -38,8 +45,14 @@
   async function confirmConsent() {
     if (!vaultId) return;
     busy = true;
-    const ok = await cloudBackupStore.enable(vaultId);
-    busy = false;
+    let ok: boolean;
+    try {
+      ok = await cloudBackupStore.enable(vaultId);
+    } finally {
+      // Reset in `finally`: a stuck flag leaves the confirm button dead until
+      // the page is reloaded.
+      busy = false;
+    }
     showConsent = false;
     notificationStore.notify(
       ok
@@ -71,8 +84,12 @@
     if (!confirmed) return;
 
     busy = true;
-    const ok = await cloudBackupStore.deleteBackup(vaultId);
-    busy = false;
+    let ok: boolean;
+    try {
+      ok = await cloudBackupStore.deleteBackup(vaultId);
+    } finally {
+      busy = false;
+    }
     notificationStore.notify(
       ok
         ? "Your cloud backup has been deleted."
@@ -97,11 +114,15 @@
     busy = true;
     // Lands in a new vault, so whatever is open is never silently replaced
     // (FR-006a). Nothing is created until the download has succeeded.
-    const restored = await cloudBackupStore.restoreIntoNewVault(
-      restoreBackupId.trim(),
-      restoreCode.trim(),
-    );
-    busy = false;
+    let restored: { vaultId: string; vaultTitle: string } | null;
+    try {
+      restored = await cloudBackupStore.restoreIntoNewVault(
+        restoreBackupId.trim(),
+        restoreCode.trim(),
+      );
+    } finally {
+      busy = false;
+    }
 
     if (!restored) {
       notificationStore.notify(
@@ -120,6 +141,8 @@
     );
   }
 </script>
+
+<svelte:window onkeydown={handleConsentKeydown} />
 
 <section class="flex flex-col gap-4" aria-labelledby="cloud-backup-heading">
   <div class="flex items-start justify-between gap-4">
@@ -259,6 +282,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="cloud-consent-title"
+      tabindex="-1"
+      use:focusTrap
       class="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto border border-theme-border bg-theme-surface p-6"
     >
       <h2

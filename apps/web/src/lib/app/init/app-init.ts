@@ -193,6 +193,15 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     },
   });
 
+  // Read any existing opt-in back so a reload resumes backing up rather than
+  // showing "off" and re-prompting for consent (spec 162, FR-020).
+  const hydrateCloudBackup = () => {
+    const activeVaultId = vault.activeVaultId;
+    if (activeVaultId) void cloudBackupStore.hydrate(activeVaultId);
+  };
+  hydrateCloudBackup();
+  window.addEventListener("vault-switched", hydrateCloudBackup);
+
   // Debounced entity writes are otherwise lost if the app closes inside the
   // debounce window — see #2584.
   const unsubFlushSaves = registerFlushSavesOnHide({
@@ -202,6 +211,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   return () => {
     unsubOracle();
     unsubFlushSaves();
+    window.removeEventListener("vault-switched", hydrateCloudBackup);
+    cloudBackupStore.destroy();
     window.removeEventListener("error", handleGlobalError);
     window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener("vault-switched", handleVaultSwitched);

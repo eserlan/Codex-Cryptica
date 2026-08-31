@@ -140,7 +140,10 @@ export async function authorize(
   request: Request,
   env: CloudBackupEnv,
   backupId: string,
-): Promise<{ manifest: CloudBackupManifest } | { response: Response }> {
+): Promise<
+  | { manifest: CloudBackupManifest; ownerCodeHash: string }
+  | { response: Response }
+> {
   const code = bearerToken(request);
   if (!code) return { response: notFoundOrUnauthorized(request) };
 
@@ -154,7 +157,7 @@ export async function authorize(
   if (record.ownerCodeHash !== (await hashOwnerCode(code))) {
     return { response: notFoundOrUnauthorized(request) };
   }
-  return { manifest: record.manifest };
+  return { manifest: record.manifest, ownerCodeHash: record.ownerCodeHash };
 }
 
 function isAdmin(request: Request, env: CloudBackupEnv): boolean {
@@ -209,6 +212,25 @@ function validatePayload(
       response: json(request, { error: { message: "Invalid assets" } }, 400),
     };
   }
+  for (const asset of candidate.assets ?? []) {
+    if (
+      typeof asset?.assetId !== "string" ||
+      !asset.assetId ||
+      asset.assetId.includes("/") ||
+      typeof asset.content !== "string" ||
+      decodeBase64(asset.content) === null
+    ) {
+      // Caught here so a malformed asset never reaches the write path, where it
+      // would abort partway and leave the backup half-replaced.
+      return {
+        response: json(
+          request,
+          { error: { message: "An attached file could not be read." } },
+          400,
+        ),
+      };
+    }
+  }
 
   const payload = candidate as BackupPayload;
   const actualBytes = measure(payload);
@@ -232,13 +254,29 @@ function validatePayload(
   return { payload };
 }
 
-function decodeBase64(content: string): Uint8Array {
-  const binary = atob(content);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes;
+/** Returns null for anything `atob` refuses, so a bad asset is a 400 not a 500. */
+function decodeBase64(content: string): Uint8Array | null {
+  try {
+    const binary = atob(content);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  } catch {
+    return null;
+  }
 }
 
+/**
+ * Writes a snapshot, then prunes assets the new snapshot no longer contains.
+ *
+ * Order matters. Deleting first would mean a failure partway leaves a backup
+ * with a bundle and no media — a corrupt remote copy the user has no way to
+ * detect. Writing first means the worst case is a few orphaned assets, which
+ * the next successful push clears.
+ *
+ * The manifest is written last for the same reason: until it lands, the backup
+ * still describes the previous, complete state.
+ */
 async function writeBackupObjects(
   env: CloudBackupEnv,
   backupId: string,
@@ -249,16 +287,37 @@ async function writeBackupObjects(
   await env.BUCKET.put(getBundleKey(backupId), JSON.stringify(payload.bundle), {
     httpMetadata: { contentType: "application/json" },
   });
+
+  const keep = new Set<string>();
   for (const asset of payload.assets ?? []) {
-    await env.BUCKET.put(
-      getAssetKey(backupId, asset.assetId),
-      decodeBase64(asset.content),
-    );
+    const bytes = decodeBase64(asset.content);
+    if (!bytes) continue; // Already rejected in validation; belt and braces.
+    await env.BUCKET.put(getAssetKey(backupId, asset.assetId), bytes);
+    keep.add(getAssetKey(backupId, asset.assetId));
   }
+  await pruneAssets(env, backupId, keep);
+
   await env.BUCKET.put(getManifestKey(backupId), JSON.stringify(manifest), {
     httpMetadata: { contentType: "application/json" },
     customMetadata: { ownerCodeHash, vaultTitle: manifest.vaultTitle },
   });
+}
+
+/** Removes assets under the backup that the new snapshot does not include. */
+async function pruneAssets(
+  env: CloudBackupEnv,
+  backupId: string,
+  keep: Set<string>,
+): Promise<void> {
+  const prefix = `${getBackupPrefix(backupId)}assets/`;
+  let listed = await env.BUCKET.list({ prefix });
+  while (listed.objects.length > 0) {
+    for (const object of listed.objects) {
+      if (!keep.has(object.key)) await env.BUCKET.delete(object.key);
+    }
+    if (!listed.truncated) break;
+    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
+  }
 }
 
 /* -------------------------------------------------------------- handlers -- */
@@ -331,10 +390,6 @@ export async function handlePushCloudBackup(
   if ("response" in validated) return validated.response;
   const { payload } = validated;
 
-  // Last-write-wins whole-vault snapshot: previous assets are cleared so a
-  // deleted asset does not linger in the backup forever.
-  await clearAssets(env, backupId);
-
   const manifest: CloudBackupManifest = {
     ...auth.manifest,
     vaultTitle: payload.vaultTitle,
@@ -342,26 +397,17 @@ export async function handlePushCloudBackup(
     lastPushedAt: new Date().toISOString(),
   };
 
-  const code = bearerToken(request) as string;
+  // `authorize` already proved the presented code matches, and a push never
+  // changes it — carry the stored hash through rather than re-deriving it.
   await writeBackupObjects(
     env,
     backupId,
     payload,
     manifest,
-    await hashOwnerCode(code),
+    auth.ownerCodeHash,
   );
 
   return json(request, { manifest });
-}
-
-async function clearAssets(env: CloudBackupEnv, backupId: string) {
-  const prefix = `${getBackupPrefix(backupId)}assets/`;
-  let listed = await env.BUCKET.list({ prefix });
-  while (listed.objects.length > 0) {
-    for (const object of listed.objects) await env.BUCKET.delete(object.key);
-    if (!listed.truncated) break;
-    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
-  }
 }
 
 /** GET /api/cloud-backup/{backupId}/status */

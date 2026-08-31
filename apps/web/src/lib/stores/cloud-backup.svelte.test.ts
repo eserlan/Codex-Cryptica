@@ -148,6 +148,45 @@ describe("privacy gates", () => {
   });
 });
 
+describe("review fixes", () => {
+  it("resolves rather than throwing when the payload builder fails", async () => {
+    // A throw here would escape to the consent dialog and leave it stuck.
+    const { store } = harness([ENABLE]);
+    (store as any).deps.buildPayload = async () => {
+      throw new Error("vault unreadable");
+    };
+    await expect(store.enable("v-1")).resolves.toBe(false);
+    expect(store.status).toBe("error");
+    expect(store.errorMessage).toBe("vault unreadable");
+  });
+
+  it("cancels a pending push when hydrating another vault", async () => {
+    // Otherwise a push scheduled just before a vault switch fires against the
+    // vault the user has moved to.
+    const { store, calls } = harness([ENABLE]);
+    await store.enable("v-1");
+    calls.length = 0;
+
+    (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
+    await store.hydrate("v-2");
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(calls).toEqual([]);
+  });
+
+  it("clears a stale error when switching to a vault with no backup", async () => {
+    const { store } = harness([
+      { ok: false, status: 500, body: { error: { message: "Offline" } } },
+    ]);
+    await store.enable("v-1");
+    expect(store.errorMessage).toBe("Offline");
+
+    await store.hydrate("v-2");
+    expect(store.errorMessage).toBeNull();
+    expect(store.status).toBe("off");
+  });
+});
+
 describe("enable", () => {
   it("backs up and reports a last-backed-up time", async () => {
     const { store } = harness([ENABLE]);

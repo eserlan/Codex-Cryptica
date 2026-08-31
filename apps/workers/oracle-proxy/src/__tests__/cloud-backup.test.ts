@@ -260,6 +260,66 @@ describe("enable and push", () => {
     expect(env.BUCKET.store.size).toBe(0);
   });
 
+  it("rejects a malformed base64 asset with 400 and writes nothing", async () => {
+    // Previously atob threw, producing an uncaught 500.
+    const env = makeEnv();
+    const res = await handleEnableCloudBackup(
+      post({
+        vaultTitle: "T",
+        bundle: {},
+        assets: [{ assetId: "a.png", content: "!!!not base64!!!" }],
+      }),
+      env,
+    );
+    expect(res.status).toBe(400);
+    expect(env.BUCKET.store.size).toBe(0);
+  });
+
+  it("rejects an asset id containing a path separator", async () => {
+    const env = makeEnv();
+    const res = await handleEnableCloudBackup(
+      post({
+        vaultTitle: "T",
+        bundle: {},
+        assets: [{ assetId: "../escape", content: btoa("x") }],
+      }),
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("prunes stale assets after writing the new ones, not before", async () => {
+    // Deleting first would leave a bundle with no media if the write failed.
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(true);
+
+    await handlePushCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [] },
+          assets: [{ assetId: "new.png", content: btoa("new") }],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "new.png"))).toBe(true);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "map.png"))).toBe(false);
+  });
+
+  it("keeps the ownership code valid across a push", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    await handlePushCloudBackup(post(payload(), ownerCode), env, backupId);
+    expect(
+      (await handleGetCloudBackupStatus(get(ownerCode), env, backupId)).status,
+    ).toBe(200);
+  });
+
   it("replaces the whole snapshot on push and moves lastPushedAt", async () => {
     const env = makeEnv();
     const { backupId, ownerCode, manifest } = await enable(env);

@@ -76,10 +76,15 @@ export class CloudBackupStore {
    */
   async hydrate(vaultId: string) {
     if (!this.deps) return;
+    // Drop anything queued for the vault we were on. Without this a push
+    // scheduled just before a switch fires against the newly-active vault, and
+    // the status on screen keeps describing the vault the user has left.
+    this.stopListening();
+    this.errorMessage = null;
+
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
     this.applyRecord(record);
     if (record?.enabled) this.listen();
-    else this.stopListening();
   }
 
   private applyRecord(record: LocalCloudBackupRecord | null) {
@@ -98,16 +103,29 @@ export class CloudBackupStore {
     this.status = "syncing";
     this.errorMessage = null;
 
-    const payload = await this.deps.buildPayload(vaultId);
-    const result = await enableCloudBackup(this.deps.runtime, vaultId, payload);
-    if (!result.ok) {
+    try {
+      const payload = await this.deps.buildPayload(vaultId);
+      const result = await enableCloudBackup(
+        this.deps.runtime,
+        vaultId,
+        payload,
+      );
+      if (!result.ok) {
+        this.status = "error";
+        this.errorMessage = result.error;
+        return false;
+      }
+      this.applyRecord(result.value);
+      this.listen();
+      return true;
+    } catch (error) {
+      // Reading the vault can fail. Callers drive a disabled/busy flag off this
+      // promise, so it must resolve rather than throw or they stay stuck.
       this.status = "error";
-      this.errorMessage = result.error;
+      this.errorMessage =
+        error instanceof Error ? error.message : "Could not read this vault.";
       return false;
     }
-    this.applyRecord(result.value);
-    this.listen();
-    return true;
   }
 
   /** Stops future pushes. Local only — the remote copy is untouched (FR-009). */
