@@ -637,6 +637,20 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Space Western Pack", () => {
+    it("is registered as a genre guide for the Space Western hub", () => {
+      const spaceWestern = getLandingPage("space-western");
+      expect(spaceWestern?.kind).toBe("genre");
+      expect(spaceWestern?.theme).toBe("space-western");
+      expect(spaceWestern?.hub).toBe("space-western");
+      expect(spaceWestern?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/ship-generator" }),
+        ]),
+      );
+    });
+  });
+
   describe("Conspiracy Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const conspiracy = getLandingPage("conspiracy");

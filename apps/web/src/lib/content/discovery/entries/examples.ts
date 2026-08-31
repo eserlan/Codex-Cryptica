@@ -88,6 +88,28 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "example-fv-coyote",
+    pageKind: "example",
+    canonicalPath: "/examples/fv-coyote-space-western-ship",
+    primaryIntent: "space western spaceship example",
+    intentAliases: [
+      "space western ship example",
+      "example of a generated space western ship",
+    ],
+    audience: "Space Western game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A complete ship-generator output that makes the vessel itself a frontier problem: a compromised captain, disputed salvage, practical crew, and a hidden AI core.",
+    parentCluster: "ship-creation",
+    relatedIntents: [
+      "generator-ship-generator",
+      "for-space-western",
+      "hub-space-western",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "example-venting-helix",
     pageKind: "example",
     canonicalPath: "/examples/the-venting-helix-derelict-hazard",
