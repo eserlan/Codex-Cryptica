@@ -193,8 +193,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     },
   });
 
-  // Read any existing opt-in back so a reload resumes backing up rather than
-  // showing "off" and re-prompting for consent (spec 162, FR-020).
+  // Read any existing opt-in back so a reload shows the vault's real backup
+  // state rather than "off" and a fresh consent prompt (spec 162, FR-020).
   const hydrateCloudBackup = () => {
     const activeVaultId = vault.activeVaultId;
     if (activeVaultId) void cloudBackupStore.hydrate(activeVaultId);

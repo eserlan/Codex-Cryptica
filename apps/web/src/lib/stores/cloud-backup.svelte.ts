@@ -11,7 +11,6 @@ import {
   type VaultBundlePayload,
 } from "@codex/cloud-backup-sync";
 import type { LocalCloudBackupRecord } from "schema";
-import { vaultEventBus } from "./vault/events.svelte";
 
 /**
  * Cloud Backup status store (spec 162, issue #2593).
@@ -20,19 +19,20 @@ import { vaultEventBus } from "./vault/events.svelte";
  * What this owns is the app-side wiring — reading the record back on load,
  * mirroring status for Settings, and turning vault saves into pushes.
  *
- * **Push coalescing.** FR-018 wants every save reflected in the backup, and the
- * snapshot is the whole vault. Firing a full upload per entity write would be
- * absurd on a large vault, so saves inside a short window collapse into one
- * push of the vault's *current* state. That is the model the spec already
- * describes for reconnecting after a long offline stretch: only the latest
- * state is ever sent, intermediate history is never replayed.
+ * **Backing up is a deliberate act.** Save and load are both explicit buttons,
+ * mirroring how the Google Drive mirror already works: the user chooses when a
+ * copy goes up and when one comes down. Nothing is uploaded on a timer, on a
+ * save, or in the background.
  *
- * **Nothing is scheduled when backup is off.** No subscription work, no timer,
- * no request — "off by default" has to be true of the machinery, not just the
- * UI (FR-001, FR-003, SC-002).
+ * That is a change from the spec's original FR-018, which called for automatic
+ * push-on-save on the stated grounds that Drive already worked that way. It
+ * does not — Drive has explicit Save and Load buttons — and the intended
+ * behaviour here was always the Drive model.
+ *
+ * **Nothing happens at all when backup is off.** No subscription, no request —
+ * "off by default" has to be true of the machinery, not just the UI
+ * (FR-001, FR-003, SC-002).
  */
-
-const PUSH_COALESCE_MS = 5_000;
 
 export type CloudBackupStatus = "off" | "idle" | "syncing" | "error";
 
@@ -61,8 +61,6 @@ export class CloudBackupStore {
   consented = $state(false);
 
   private deps: CloudBackupDeps | null = null;
-  private timer: ReturnType<typeof setTimeout> | null = null;
-  private unsubscribe: (() => void) | null = null;
   private pushing = false;
 
   /** Wires the store up. Called once from app init with the real runtime. */
@@ -76,15 +74,12 @@ export class CloudBackupStore {
    */
   async hydrate(vaultId: string) {
     if (!this.deps) return;
-    // Drop anything queued for the vault we were on. Without this a push
-    // scheduled just before a switch fires against the newly-active vault, and
-    // the status on screen keeps describing the vault the user has left.
-    this.stopListening();
+    // Clear the previous vault's state, so the status on screen never keeps
+    // describing the vault the user has left.
     this.errorMessage = null;
 
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
     this.applyRecord(record);
-    if (record?.enabled) this.listen();
   }
 
   private applyRecord(record: LocalCloudBackupRecord | null) {
@@ -116,7 +111,6 @@ export class CloudBackupStore {
         return false;
       }
       this.applyRecord(result.value);
-      this.listen();
       return true;
     } catch (error) {
       // Reading the vault can fail. Callers drive a disabled/busy flag off this
@@ -132,7 +126,6 @@ export class CloudBackupStore {
   async disable(vaultId: string) {
     if (!this.deps) return;
     await disableCloudBackup(this.deps.runtime, vaultId);
-    this.stopListening();
     this.status = "off";
     this.errorMessage = null;
   }
@@ -146,7 +139,6 @@ export class CloudBackupStore {
       this.errorMessage = result.error;
       return false;
     }
-    this.stopListening();
     this.applyRecord(null);
     return true;
   }
@@ -218,50 +210,19 @@ export class CloudBackupStore {
     return this.ownerCode;
   }
 
-  /* ---------------------------------------------------------- push-on-save */
-
-  private listen() {
-    if (this.unsubscribe) return;
-    this.unsubscribe = vaultEventBus.subscribe((event) => {
-      // Every event that means "vault content changed on disk".
-      if (
-        event.type === "ENTITY_UPDATED" ||
-        event.type === "ENTITY_DELETED" ||
-        event.type === "BATCH_CREATED" ||
-        event.type === "BATCH_UPDATED"
-      ) {
-        this.schedulePush();
-      }
-    }, "cloud-backup");
-  }
-
-  private stopListening() {
-    this.unsubscribe?.();
-    this.unsubscribe = null;
-    if (this.timer) clearTimeout(this.timer);
-    this.timer = null;
-  }
-
-  /** Collapses a burst of saves into one push of the current vault state. */
-  private schedulePush() {
-    if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
-      this.timer = null;
-      void this.pushNow();
-    }, PUSH_COALESCE_MS);
-  }
+  /* ------------------------------------------------------------ backing up */
 
   /**
-   * Pushes the current vault state.
+   * Uploads the vault's current state, replacing the previous backup.
    *
-   * Never throws and never reports success it did not have: a failure becomes a
-   * visible error state and the local save is entirely unaffected (FR-011,
-   * FR-019).
+   * Explicit — the user presses "Save to cloud". Never throws and never reports
+   * success it did not have: a failure becomes a visible error state and the
+   * local vault is entirely unaffected (FR-011, FR-019).
    */
-  async pushNow(): Promise<void> {
-    if (!this.deps || this.pushing) return;
+  async backUpNow(): Promise<boolean> {
+    if (!this.deps || this.pushing) return false;
     const vaultId = this.deps.activeVaultId();
-    if (!vaultId) return;
+    if (!vaultId) return false;
 
     this.pushing = true;
     this.status = "syncing";
@@ -275,29 +236,30 @@ export class CloudBackupStore {
       if (!result.ok) {
         this.status = "error";
         this.errorMessage = result.error;
-        return;
+        return false;
       }
-      if (result.value) {
-        this.status = "idle";
-        this.errorMessage = null;
-        this.lastPushedAt = result.value.lastPushedAt;
-      } else {
+      if (!result.value) {
         // Not enabled for this vault — nothing was sent.
         this.status = "off";
+        return false;
       }
+      this.status = "idle";
+      this.errorMessage = null;
+      this.lastPushedAt = result.value.lastPushedAt;
+      return true;
     } catch (error) {
-      // The save path must never see an exception from here.
+      // Reading the vault can fail; the caller drives a button state off this.
       this.status = "error";
       this.errorMessage =
         error instanceof Error ? error.message : "Cloud backup failed.";
+      return false;
     } finally {
       this.pushing = false;
     }
   }
 
-  /** Tears down subscriptions; used on vault switch and in tests. */
+  /** Releases the injected dependencies; used on teardown and in tests. */
   destroy() {
-    this.stopListening();
     this.deps = null;
   }
 }

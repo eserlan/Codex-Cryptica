@@ -101,7 +101,7 @@ describe("privacy gates", () => {
     expect((vaultEventBus as any).__listeners).toHaveLength(0);
   });
 
-  it("sends nothing when saves happen with backup off", async () => {
+  it("sends nothing while editing with backup off", async () => {
     const { store, calls } = harness();
     await store.hydrate("v-1");
 
@@ -121,14 +121,13 @@ describe("privacy gates", () => {
     expect(store.consented).toBe(true);
   });
 
-  it("sends no request while disabled, even as saves keep arriving", async () => {
+  it("sends no request while disabled, even if Save is pressed", async () => {
     const { store, calls } = harness([ENABLE]);
     await store.enable("v-1");
     await store.disable("v-1");
     calls.length = 0;
 
-    (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
-    await vi.advanceTimersByTimeAsync(30_000);
+    expect(await store.backUpNow()).toBe(false);
     expect(calls).toEqual([]);
   });
 
@@ -136,8 +135,7 @@ describe("privacy gates", () => {
     // FR-004: vault content must not reach analytics or any other destination.
     const { store, calls } = harness([ENABLE]);
     await store.enable("v-1");
-    (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
-    await vi.advanceTimersByTimeAsync(6_000);
+    await store.backUpNow();
 
     expect(calls.length).toBeGreaterThan(0);
     for (const url of calls) {
@@ -160,18 +158,14 @@ describe("review fixes", () => {
     expect(store.errorMessage).toBe("vault unreadable");
   });
 
-  it("cancels a pending push when hydrating another vault", async () => {
-    // Otherwise a push scheduled just before a vault switch fires against the
-    // vault the user has moved to.
-    const { store, calls } = harness([ENABLE]);
+  it("shows the newly-opened vault's state after a switch", async () => {
+    const { store } = harness([ENABLE]);
     await store.enable("v-1");
-    calls.length = 0;
+    expect(store.status).toBe("idle");
 
-    (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
     await store.hydrate("v-2");
-    await vi.advanceTimersByTimeAsync(30_000);
-
-    expect(calls).toEqual([]);
+    expect(store.status).toBe("off");
+    expect(store.lastPushedAt).toBeNull();
   });
 
   it("clears a stale error when switching to a vault with no backup", async () => {
@@ -225,53 +219,44 @@ describe("enable", () => {
   });
 });
 
-describe("push on save", () => {
-  it("pushes after a save once backup is on", async () => {
+describe("saving is explicit", () => {
+  it("uploads when the user asks, and reports success", async () => {
+    const { store, calls } = harness([ENABLE]);
+    await store.enable("v-1");
+    calls.length = 0;
+
+    expect(await store.backUpNow()).toBe(true);
+    expect(calls.filter((url) => url.endsWith("/push"))).toHaveLength(1);
+    expect(store.status).toBe("idle");
+  });
+
+  it("never uploads on its own — no timer, no save hook", async () => {
+    // The whole point of the manual model: nothing goes up unasked.
     const { store, calls } = harness([ENABLE]);
     await store.enable("v-1");
     calls.length = 0;
 
     (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
-    await vi.advanceTimersByTimeAsync(6_000);
-
-    expect(calls.some((url) => url.endsWith("/push"))).toBe(true);
-  });
-
-  it("collapses a burst of saves into a single push", async () => {
-    // The snapshot is the whole vault; one upload per keystroke would be absurd.
-    const { store, calls } = harness([ENABLE]);
-    await store.enable("v-1");
-    calls.length = 0;
-
-    for (let i = 0; i < 10; i += 1) {
-      (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
-      await vi.advanceTimersByTimeAsync(100);
-    }
-    await vi.advanceTimersByTimeAsync(6_000);
-
-    expect(calls.filter((url) => url.endsWith("/push"))).toHaveLength(1);
-  });
-
-  it("does not schedule anything for events that are not content changes", async () => {
-    const { store, calls } = harness([ENABLE]);
-    await store.enable("v-1");
-    calls.length = 0;
-
-    (vaultEventBus as any).emit({ type: "VAULT_OPENING", vaultId: "v-1" });
-    await vi.advanceTimersByTimeAsync(30_000);
-    expect(calls).toEqual([]);
-  });
-
-  it("never pushes on a timer without a save (FR-018: no polling)", async () => {
-    const { store, calls } = harness([ENABLE]);
-    await store.enable("v-1");
-    calls.length = 0;
-
+    (vaultEventBus as any).emit({ type: "BATCH_UPDATED", vaultId: "v-1" });
     await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+
     expect(calls).toEqual([]);
   });
 
-  it("shows an error state when a push fails, and never throws", async () => {
+  it("subscribes to nothing at all", async () => {
+    const { store } = harness([ENABLE]);
+    await store.enable("v-1");
+    expect((vaultEventBus as any).__listeners).toHaveLength(0);
+  });
+
+  it("does nothing when the vault is not enabled", async () => {
+    const { store, calls } = harness();
+    await store.hydrate("v-1");
+    expect(await store.backUpNow()).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
+  it("shows an error state when a save fails, and never throws", async () => {
     const { store, queue } = harness([ENABLE]);
     await store.enable("v-1");
     queue.push({
@@ -280,22 +265,32 @@ describe("push on save", () => {
       body: { error: { message: "Offline" } },
     });
 
-    (vaultEventBus as any).emit({ type: "ENTITY_UPDATED", vaultId: "v-1" });
-    await expect(vi.advanceTimersByTimeAsync(6_000)).resolves.not.toThrow();
-
+    await expect(store.backUpNow()).resolves.toBe(false);
     expect(store.status).toBe("error");
     expect(store.errorMessage).toBe("Offline");
   });
 
-  it("survives a payload builder that throws, without breaking the save path", async () => {
+  it("survives a payload builder that throws", async () => {
     const { store } = harness([ENABLE]);
     await store.enable("v-1");
     (store as any).deps.buildPayload = async () => {
       throw new Error("vault unreadable");
     };
 
-    await expect(store.pushNow()).resolves.toBeUndefined();
+    await expect(store.backUpNow()).resolves.toBe(false);
     expect(store.status).toBe("error");
+  });
+
+  it("ignores a second save while one is in flight", async () => {
+    const { store, calls } = harness([ENABLE]);
+    await store.enable("v-1");
+    calls.length = 0;
+
+    const first = store.backUpNow();
+    const second = store.backUpNow();
+    expect(await second).toBe(false);
+    await first;
+    expect(calls.filter((url) => url.endsWith("/push"))).toHaveLength(1);
   });
 });
 

@@ -7,10 +7,9 @@
  *
  * Two invariants shape the design:
  *
- * - **Local wins, always.** These functions mirror a vault outward. A push that
- *   fails must never block or roll back the local save (FR-019), so
- *   `pushVaultToCloudBackup` reports failure rather than throwing into the save
- *   path.
+ * - **Local wins, always.** These functions mirror a vault outward, on demand.
+ *   A failed upload must never affect local work (FR-019), so
+ *   `pushVaultToCloudBackup` reports failure rather than throwing.
  * - **Nothing leaves the device before consent.** No function here transmits
  *   anything for a vault with no local record, which is what makes "off by
  *   default" enforceable rather than merely intended (FR-001, FR-003).
@@ -144,11 +143,12 @@ export async function enableCloudBackup(
 }
 
 /**
- * Push-on-save (FR-018).
+ * Uploads the vault's current state, replacing the previous backup (FR-018).
  *
- * Returns an outcome instead of throwing, and is a no-op for a vault that is
- * not enabled — the caller sits on the save path, where an exception or a
- * stray request would be a bug (FR-019, FR-001).
+ * Explicitly triggered — the user presses "Save to cloud"; nothing here runs on
+ * a timer or a save hook. Returns an outcome instead of throwing, and is a
+ * no-op for a vault that is not enabled, so a stray call can never send data
+ * for a vault that never opted in (FR-019, FR-001).
  */
 export async function pushVaultToCloudBackup(
   runtime: CloudBackupRuntime,

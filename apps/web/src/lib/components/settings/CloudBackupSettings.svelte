@@ -17,6 +17,7 @@
   let restoreBackupId = $state("");
   let restoreCode = $state("");
   let busy = $state(false);
+  let isSaving = $state(false);
   let codeVisible = $state(false);
 
   const status = $derived(cloudBackupStore.status);
@@ -25,9 +26,9 @@
 
   const STATUS_LABEL: Record<string, string> = {
     off: "Off",
-    idle: "Backed up",
-    syncing: "Backing up…",
-    error: "Last backup failed",
+    idle: "Saved",
+    syncing: "Saving…",
+    error: "Last save failed",
   };
 
   const handleConsentKeydown = (event: KeyboardEvent) => {
@@ -98,6 +99,22 @@
     );
   }
 
+  async function saveToCloud() {
+    isSaving = true;
+    let ok: boolean;
+    try {
+      ok = await cloudBackupStore.backUpNow();
+    } finally {
+      isSaving = false;
+    }
+    notificationStore.notify(
+      ok
+        ? "Vault saved to Codex Cryptica Cloud."
+        : (cloudBackupStore.errorMessage ?? "Could not save to the cloud."),
+      ok ? "success" : "error",
+    );
+  }
+
   async function copyCode() {
     const code = await cloudBackupStore.revealOwnerCode(vaultId);
     if (!code) return;
@@ -155,7 +172,8 @@
       </h3>
       <p class="mt-1 text-sm text-theme-muted">
         Keep a copy of this vault in Codex Cryptica Cloud, so you can get it
-        back if you lose this device. Off unless you turn it on.
+        back if you lose this device. Off unless you turn it on, and it only
+        uploads when you press Save.
       </p>
     </div>
 
@@ -185,9 +203,10 @@
     <div class="flex flex-col gap-2 border border-theme-border p-4">
       <p class="text-sm text-theme-muted">
         {#if lastPushed}
-          Last backed up {lastPushed}.
+          Last saved {lastPushed}. Press Save to cloud whenever you want to
+          update the stored copy.
         {:else}
-          Not backed up yet.
+          Not saved yet.
         {/if}
       </p>
       {#if status === "error" && cloudBackupStore.errorMessage}
@@ -203,6 +222,14 @@
       {/if}
 
       <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onclick={saveToCloud}
+          disabled={isSaving || busy}
+          class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+        >
+          {isSaving ? "Saving…" : "Save to cloud"}
+        </button>
         <button
           type="button"
           onclick={copyCode}
@@ -234,14 +261,14 @@
     onclick={() => (showRestore = !showRestore)}
     class="self-start text-xs text-theme-muted underline underline-offset-4 transition-colors hover:text-theme-primary"
   >
-    Restore a vault from a backup
+    Load a vault from the cloud
   </button>
 
   {#if showRestore}
     <div class="flex flex-col gap-3 border border-theme-border p-4">
       <p class="text-sm text-theme-muted">
         Enter the backup's id and its ownership code, both from the Settings of
-        the device that made it. The vault is restored as a new vault — nothing
+        the device that made it. The vault is loaded into a new vault — nothing
         you have open is replaced.
       </p>
       <label class="flex flex-col gap-1 text-xs text-theme-muted">
@@ -264,7 +291,7 @@
         disabled={busy || !restoreBackupId.trim() || !restoreCode.trim()}
         class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
       >
-        Restore
+        Load from cloud
       </button>
     </div>
   {/if}
