@@ -231,6 +231,28 @@ export const answerEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "answer-encounter-balance",
+    pageKind: "answer",
+    canonicalPath:
+      "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+    primaryIntent: "how to balance rpg combat encounters safely",
+    intentAliases: [
+      "how do i balance rpg combat encounters without causing a tpk",
+      "how to avoid a tpk",
+      "how to balance combat encounters",
+      "encounter difficulty gm advice",
+      "make rpg combat challenging but fair",
+      "tune encounters on the fly",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "Names what a CR/XP formula misses — action economy, party condition, signalling, objectives, terrain, retreat options and built-in pressure valves — and works one encounter through several ways to soften it without secretly rewriting numbers mid-fight.",
+    parentCluster: "encounter-balance",
+    relatedIntents: ["answer-random-encounter", "generator-encounter"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "answer-conspiracy-campaign",
     pageKind: "answer",
     canonicalPath: "/answers/how-do-you-run-a-conspiracy-campaign",

@@ -11,6 +11,7 @@ import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 
 /**
  * The published answer library.
@@ -37,6 +38,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouRunAConspiracyCampaign,
     howMuchPrepDoYouNeedForAnRpgSession,
     howDoIRunASuccessfulSessionZero,
+    howDoIBalanceRpgCombatEncountersWithoutATpk,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),
