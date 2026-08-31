@@ -9,6 +9,14 @@ import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-desi
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
+import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
+import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
+import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
+import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
+import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
+import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 
 /**
  * The published answer library.
@@ -33,6 +41,14 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldAnRpgSettlementContain,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouRunAConspiracyCampaign,
+    howMuchPrepDoYouNeedForAnRpgSession,
+    howDoIRunASuccessfulSessionZero,
+    howDoIBalanceRpgCombatEncountersWithoutATpk,
+    howDoIGetPlayersToEngageWithMyCampaignWorld,
+    whatShouldILookForInAnRpgCampaignManager,
+    whatRpgSystemShouldWeTryInsteadOfDnd,
+    whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    howDoIFindATabletopRpgGroupToPlayWith,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),
