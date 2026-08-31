@@ -599,7 +599,7 @@ describe("Landing Page Registry", () => {
       expect(sv?.recommendedTools).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            href: "/examples/fv-coyote-space-western-ship",
+            href: "/examples/the-cinder-wren-space-western-ship",
           }),
         ]),
       );
@@ -654,7 +654,7 @@ describe("Landing Page Registry", () => {
         expect.arrayContaining([
           expect.objectContaining({ href: "/generators/ship-generator" }),
           expect.objectContaining({
-            href: "/examples/fv-coyote-space-western-ship",
+            href: "/examples/the-cinder-wren-space-western-ship",
           }),
         ]),
       );

@@ -88,9 +88,9 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
-    id: "example-fv-coyote",
+    id: "example-cinder-wren",
     pageKind: "example",
-    canonicalPath: "/examples/fv-coyote-space-western-ship",
+    canonicalPath: "/examples/the-cinder-wren-space-western-ship",
     primaryIntent: "space western spaceship example",
     intentAliases: [
       "space western ship example",

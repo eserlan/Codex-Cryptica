@@ -2017,11 +2017,11 @@ Real, unedited output from the Codex Cryptica generators, indexed at https://cod
 
 **Summary:** Deep within the drifting hull of the Astragal-Nine, the crew must halt a runaway atmospheric purge loop before the counter-rotating habitat rings tear themselves apart.
 
-### [Space Western ship example: F/V Coyote](https://codexcryptica.com/examples/fv-coyote-space-western-ship)
+### [Space Western ship example: The Cinder Wren](https://codexcryptica.com/examples/the-cinder-wren-space-western-ship)
 
 **Genre:** Space Western
 
-**Summary:** An experimental converted patrol gunship whose underwater mortgage, disputed salvage cargo, and stolen AI core make every stop at a frontier port a new negotiation.
+**Summary:** A scarred frontier freighter and gunship running medicine, fugitives, and inconvenient truths between Last Light Outpost and the lawless dark beyond the customs line.
 
 
 ## TTRPG System & Genre Campaign Management
