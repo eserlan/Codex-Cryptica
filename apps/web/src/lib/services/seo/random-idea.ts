@@ -44,6 +44,7 @@ export const themeToHubGenre: Record<string, string> = {
   Lancer: "Lancer",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Opera Resistance": "Space Opera Resistance",
+  "Space Western": "Space Western",
 };
 
 export function pickRandomIdeaTheme(
