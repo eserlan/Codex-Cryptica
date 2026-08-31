@@ -174,6 +174,31 @@ export const answerEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "answer-session-prep",
+    pageKind: "answer",
+    canonicalPath: "/answers/how-much-prep-do-you-need-for-an-rpg-session",
+    primaryIntent: "how much prep do you need for an rpg session",
+    intentAliases: [
+      "how much prep do i need for an rpg session",
+      "how much should a gm prep",
+      "how much prep for a dnd session",
+      "how long should session prep take",
+      "how to prep an rpg session",
+      "low prep gming",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "Replaces the search for a universal prep-time ratio with a seven-item coverage checklist, a compact worked example, and the essential/reusable/optional-worldbuilding distinction that explains why more hours prepped isn't the same as better prepared.",
+    parentCluster: "session-prep",
+    relatedIntents: [
+      "answer-campaign-notes",
+      "answer-random-encounter",
+      "answer-npc-relationships",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "answer-conspiracy-campaign",
     pageKind: "answer",
     canonicalPath: "/answers/how-do-you-run-a-conspiracy-campaign",
