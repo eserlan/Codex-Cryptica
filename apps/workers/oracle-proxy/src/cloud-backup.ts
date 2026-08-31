@@ -723,6 +723,69 @@ export async function handleCloudBackupAdminLookup(
   });
 }
 
+/** Hard ceiling on how many objects a stats scan will walk, regardless of how
+ * many pages that takes. Existing purely so a very large bucket fails safely
+ * (a bounded, honestly-labelled undercount) instead of running the Worker out
+ * of CPU time. */
+const MAX_STATS_SCAN_OBJECTS = 200_000;
+
+/**
+ * GET /api/cloud-backup/admin/stats — aggregate counts only.
+ *
+ * Deliberately the opposite shape from the lookup above: this one *does* walk
+ * the whole `cloud-backup/` prefix, because the only thing it returns is
+ * summed totals — vault count, total stored bytes, total asset count. It never
+ * returns a title, a backup id, or anything else that identifies one vault, so
+ * it does not reopen the bulk-enumeration door FR-016 closes: an operator
+ * learns "how many" and "how big", never "which ones".
+ */
+export async function handleCloudBackupAdminStats(
+  request: Request,
+  env: CloudBackupEnv,
+): Promise<Response> {
+  if (!isAdmin(request, env)) {
+    return json(request, { error: { message: "Not found" } }, 404);
+  }
+  if (!env.BUCKET) {
+    return json(request, { error: { message: "Storage unavailable" } }, 500);
+  }
+
+  let vaultCount = 0;
+  let assetCount = 0;
+  let totalBytes = 0;
+  let objectsScanned = 0;
+  let cursor: string | undefined;
+  let complete = true;
+
+  do {
+    const listed = await env.BUCKET.list({
+      prefix: PREFIX,
+      cursor,
+      limit: 1000,
+    });
+    for (const object of listed.objects ?? []) {
+      objectsScanned += 1;
+      totalBytes += object.size ?? 0;
+      if (object.key.endsWith("/manifest.json")) vaultCount += 1;
+      else if (object.key.includes("/assets/")) assetCount += 1;
+    }
+    if (objectsScanned >= MAX_STATS_SCAN_OBJECTS && listed.truncated) {
+      complete = false;
+      break;
+    }
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
+
+  return json(request, {
+    vaultCount,
+    assetCount,
+    totalBytes,
+    // False only if the bucket is large enough to hit MAX_STATS_SCAN_OBJECTS —
+    // the counts above are then a floor, not the true total.
+    complete,
+  });
+}
+
 /**
  * POST /api/cloud-backup/admin/{backupId}/reissue-code
  *

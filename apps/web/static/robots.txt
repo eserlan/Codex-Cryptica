@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Disallow: /admin
 
 # --- Search & citation crawlers -------------------------------------------
 # These fetch pages so Codex Cryptica can be summarised, cited and linked in
@@ -12,6 +13,7 @@ User-agent: PerplexityBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Disallow: /admin
 
 # --- Model-training crawlers ----------------------------------------------
 # Deliberately a separate group from the search crawlers above, so training
@@ -23,6 +25,7 @@ User-agent: ClaudeBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
+Disallow: /admin
 
 # Host-specific sitemap declaration
 Sitemap: https://codexcryptica.com/sitemap.xml
