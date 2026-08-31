@@ -33,6 +33,9 @@
     const db = await getDB();
     const ms = new CloudSyncMetadataService(new SyncRegistry(db));
     metadata = await ms.getMetadata(vault.activeVaultId);
+    // Mirrored onto the store so the destination picker can tell whether this
+    // vault is on Drive without repeating the lookup.
+    driveStore.metadata = metadata;
     if (metadata) {
       driveStore.status = "connected";
     }
@@ -88,6 +91,7 @@
     if (confirmed) {
       await disconnectVaultFromDrive(vault.activeVaultId);
       metadata = null;
+      driveStore.metadata = null;
       notificationStore.notify("Google Drive disconnected", "info");
     }
   }

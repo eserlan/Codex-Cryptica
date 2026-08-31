@@ -583,6 +583,84 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Scum and Villainy Pack", () => {
+    it("is registered as system, marked with space-western theme, and includes non-affiliation disclaimer", () => {
+      const sv = getLandingPage("scum-and-villainy");
+      expect(sv).toBeDefined();
+      expect(sv?.slug).toBe("scum-and-villainy");
+      expect(sv?.kind).toBe("system");
+      expect(sv?.theme).toBe("space-western");
+      expect(sv?.hub).toBe("space-western");
+      expect(sv?.disclaimer).toBeDefined();
+      expect(sv?.disclaimer).toContain("Evil Hat Productions");
+      expect(sv?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/scum-and-villainy.jpg",
+      );
+      expect(sv?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
+      expect(sv?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(sv?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic space scoundrels terminology and British spelling", () => {
+      const sv = getLandingPage("scum-and-villainy")!;
+      const copy = JSON.stringify(sv);
+
+      // System-specific scoundrel concepts
+      expect(copy).toContain("smuggling");
+      expect(copy).toContain("syndicate");
+      expect(copy).toContain("heat");
+      expect(copy).toContain("debt");
+      expect(copy).toContain("freighter");
+      expect(copy).toContain("heist");
+      expect(copy).toContain("organise");
+    });
+
+    it("maintains a valid hub-and-spoke scoundrel crew graph with categorised nodes", () => {
+      const sv = getLandingPage("scum-and-villainy")!;
+      const graph = sv.exampleGraph!;
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("item");
+      expect(hub.label).toBe("The Rusted Kestrel");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+    });
+  });
+
+  describe("Space Western Pack", () => {
+    it("is registered as a genre guide for the Space Western hub", () => {
+      const spaceWestern = getLandingPage("space-western");
+      expect(spaceWestern?.kind).toBe("genre");
+      expect(spaceWestern?.theme).toBe("space-western");
+      expect(spaceWestern?.hub).toBe("space-western");
+      expect(spaceWestern?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/ship-generator" }),
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
+    });
+  });
+
   describe("Conspiracy Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const conspiracy = getLandingPage("conspiracy");

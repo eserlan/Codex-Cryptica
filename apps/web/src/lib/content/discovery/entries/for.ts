@@ -203,4 +203,40 @@ export const forEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "for-space-western",
+    pageKind: "for",
+    canonicalPath: "/for/space-western",
+    primaryIntent: "space western campaign worldbuilding",
+    intentAliases: ["space western campaign manager", "space western gm notes"],
+    audience: "Space Western game masters",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "A frontier-scale campaign workflow for ships, outposts, contested claims and the personal obligations that bind an isolated sector together.",
+    parentCluster: "genre-guides",
+    relatedIntents: [
+      "for-space-opera",
+      "for-scum-and-villainy",
+      "hub-space-western",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "for-scum-and-villainy",
+    pageKind: "for",
+    canonicalPath: "/for/scum-and-villainy",
+    primaryIntent: "scum and villainy campaign manager",
+    intentAliases: [
+      "space scoundrels campaign organiser",
+      "scum and villainy gm notes",
+    ],
+    audience: "Scum and Villainy game masters",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Crews, modified starships, criminal syndicates, ship debt, and sector heat tracked as a connected underworld sandbox.",
+    parentCluster: "system-guides",
+    indexable: true,
+    status: "live",
+  },
 ];

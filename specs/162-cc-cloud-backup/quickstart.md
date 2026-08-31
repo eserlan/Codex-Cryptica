@@ -22,3 +22,19 @@
 - Call `/api/cloud-backup/admin/lookup` with a title that matches zero backups → expect `{ matched: false }`.
 - Seed two manifests with the same `vaultTitle` → call lookup with that title → expect `{ matched: false }` (ambiguous, not "pick one").
 - Confirm there is no endpoint, flag, or parameter anywhere under `/api/cloud-backup/admin/*` that returns more than one backup's metadata at once.
+
+## Support runbook: recovering a lost recovery key (Story 4)
+
+The runbook lives with the other operational docs, where support will actually
+look for it: [`docs/deployment/cloud-backup-support-access.md`](../../docs/deployment/cloud-backup-support-access.md).
+It covers what `CLOUD_BACKUP_ADMIN_TOKEN` is, how to set and rotate it, the
+lookup and re-issue calls, and what to refuse.
+
+Two points that constrain the design rather than the process, so they belong
+here too:
+
+- A lookup answers `{ "matched": false }` for "nothing matched" **and** for
+  "several matched". Distinguishing them would let an admin count other
+  people's backups (FR-016).
+- Re-issuing a code invalidates the previous one immediately, so identity has
+  to be verified first — a vault title is not proof of ownership.

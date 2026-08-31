@@ -278,6 +278,22 @@ export const FACTION_TYPE_TRAITS: TraitMap = {
   ],
   "Peacekeeping Force": ["military", "protective", "diplomatic", "lawful"],
   "Trade Alliance": ["trade", "diplomatic", "democratic", "wealth"],
+
+  // Space Western
+  "Salvage Union": ["salvage", "industrial", "trade", "syndicate"],
+  "Frontier Militia": ["military", "protective", "survival", "local"],
+  "Bounty Guild": ["criminal", "violence-power", "information", "pragmatic"],
+  "Corrupt Customs Authority": [
+    "administrative",
+    "autocratic",
+    "ruthless",
+    "oppression",
+  ],
+  "Mining Consortium": ["corporate", "industrial", "wealth", "ruthless"],
+  "Rogue Flotilla": ["fleet", "rebellious", "survival", "salvage"],
+  "Pirate Cartel": ["criminal", "syndicate", "fleet", "ruthless"],
+  "Boomtown Council": ["administrative", "democratic", "local", "pragmatic"],
+  "Mercenary Outfit": ["military", "violence-power", "pragmatic"],
 };
 
 export const FACTION_SCOPE_TRAITS: TraitMap = {
@@ -386,6 +402,14 @@ export const FACTION_SCOPE_TRAITS: TraitMap = {
   "Exploration corridor": ["regional", "exploration", "fleet"],
   "Federation region": ["global", "interstellar", "diplomatic"],
   "Multi-species alliance space": ["global", "interstellar", "diplomatic"],
+
+  // Space Western
+  "Single asteroid outpost": ["local", "isolated", "orbital"],
+  "Ramshackle moon port": ["city", "trade", "orbital"],
+  "Contested mining belt": ["regional", "industrial", "rivalry"],
+  "Frontier star system": ["regional", "interstellar", "isolated"],
+  "Uncharted hyper-lane run": ["regional", "logistics", "clandestine"],
+  "Sector-wide syndicate reach": ["interstellar", "syndicate", "wealth"],
 };
 
 export const FACTION_ALIGNMENT_TRAITS: TraitMap = {
@@ -821,6 +845,36 @@ export const FACTION_GOAL_TRAITS: TraitMap = {
     ["diplomatic", "idealistic", "rivalry", "democratic"],
   "Restore a failing terraforming station before the colony's survival window closes.":
     ["technology", "protective", "survival", "industrial"],
+
+  // Space Western
+  "Monopolise the only independent fuel refinery in the sector.": [
+    "industrial",
+    "trade",
+    "wealth",
+    "syndicate",
+  ],
+  "Call in a massive overdue debt from a prominent frontier marshal.": [
+    "debt",
+    "law-enforcement",
+    "information",
+    "pragmatic",
+  ],
+  "Secure exclusive salvage rights to a decaying dreadnought before rival crews arrive.":
+    ["salvage", "rivalry", "fleet", "wealth"],
+  "Smuggle restricted military tech past the planetary customs blockade.": [
+    "criminal",
+    "technology",
+    "logistics",
+    "subversive",
+  ],
+  "Break a corporate strike by hiring off-world scoundrels to seize the loading docks.":
+    ["corporate", "industrial", "ruthless", "violence-power"],
+  "Erase a syndicate death mark by delivering a rogue pilot alive.": [
+    "criminal",
+    "survival",
+    "debt",
+    "clandestine",
+  ],
 };
 
 export const FACTION_CONFLICT_TRAITS: TraitMap = {

@@ -1,16 +1,17 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.1 -> 1.4.0
-- Modified principles: None
-- Added sections: XIII. Discovery Intent Governance (new principle; minor bump)
+- Version change: 1.4.0 -> 1.5.0
+- Modified principles: V. Privacy & Client-Side Processing (added a narrow, gated
+  exception for opt-in remote storage; materially expanded guidance = minor bump)
+- Added sections: None
 - Removed sections: None
 - Templates requiring updates:
-  - ✅ Updated .specify/templates/plan-template.md; added a Discovery Intent Check to the Constitution Check gate.
-  - ✅ Updated .specify/templates/tasks-template.md; registry task is now required for discovery-page features.
+  - ✅ Verified .specify/templates/plan-template.md; the existing Constitution Check
+    gate already accommodates the new conditions, no structural change needed.
   - ✅ Verified .specify/templates/spec-template.md; no conflicting guidance.
-  - ✅ Updated .github/pull_request_template.md; added the discovery intent checklist.
-  - ✅ Wired `scripts/discovery-audit.mjs` into `apps/web` prebuild as the deterministic gate.
-  - ✅ Updated AGENTS.md; discovery-page workflow now points at the registry.
+  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance.
+  - ✅ Updated specs/162-cc-cloud-backup/plan.md; its Principle V entry now cites the
+    exception's conditions instead of asserting a bare PASS.
 - Follow-up TODOs: None
 -->
 
@@ -39,6 +40,17 @@ The Oracle (powered by OpenAI/Luna or a provider-neutral contract) is the primar
 ### V. Privacy & Client-Side Processing
 
 Always prioritize client-side processing in the browser (OPFS, local library execution) to ensure user lore and data remain private and performant.
+
+**Narrow exception — opt-in remote storage.** A feature MAY store user vault data remotely, but only when every one of the following holds. These are conditions, not guidance; a feature that cannot meet all of them does not qualify for the exception and must be redesigned or abandoned.
+
+1. **Off by default.** It MUST NOT be enabled automatically, silently, or as a side effect of another action.
+2. **Informed, explicit consent before the first byte leaves the device.** The consent surface MUST state, in plain language, what is stored, who can read it — **including any infrastructure provider that holds the bytes** — how to turn it off, and how to erase it.
+3. **Reversible.** The user MUST be able to disable it and to permanently delete the remote copy, without contacting support.
+4. **Local remains authoritative.** Remote storage MUST be a mirror, never the source of truth. Losing remote access MUST NOT degrade local use.
+5. **No onward sharing.** Data MUST NOT be sold, forwarded, or exposed to third parties beyond the infrastructure provider disclosed under condition 2, and MUST NOT enter any AI training pipeline.
+6. **Internal access disclosed.** If staff can reach user data or its metadata for support purposes, that MUST be disclosed under condition 2 and scoped to the narrowest useful surface.
+
+A plan invoking this exception MUST enumerate these six conditions and show how the feature satisfies each. Recording it as a bare "PASS with a documented exception" is not compliance — the point of the gate is that the conditions are checked, not that the departure is noted.
 
 ### VI. Clean Implementation (AI Guardrails)
 
@@ -101,4 +113,4 @@ See `docs/discovery-intent-registry.md` for the authoring workflow.
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.4.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-08-30
+**Version**: 1.5.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-08-31

@@ -58,6 +58,7 @@ export const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   lancer: "Lancer",
   "space-opera-resistance": "Space Opera Resistance",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
+  "space-western": "Space Western",
 };
 
 // Genres not supported by the settlement generator are mapped to the nearest equivalent.
@@ -84,6 +85,7 @@ export const HUB_LABELS: Record<string, string> = {
   lancer: "Lancer Hub",
   "space-opera-resistance": "Space Opera Resistance Hub",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi Hub",
+  "space-western": "Space Western Hub",
 };
 
 export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
@@ -101,6 +103,7 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   Lancer: "Lancer",
   "Space Opera Resistance": "Space Opera Resistance",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
+  "Space Western": "Space Western",
 };
 
 // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids
@@ -119,6 +122,7 @@ export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
   lancer: "lancer",
   "space-opera-resistance": "space-opera-resistance",
   "optimistic-exploration-sci-fi": "startrek",
+  "space-western": "space-western",
 };
 
 export const SLUGS_USING_STORED_THEME = new Set([
@@ -154,6 +158,7 @@ export function mapHubGenreToShipGenre(hubGenre: string): string {
   if (hubGenre === "Space Opera Resistance") return "Space Opera Resistance";
   if (hubGenre === "Optimistic Exploration Sci-Fi")
     return "Optimistic Exploration Sci-Fi";
+  if (hubGenre === "Space Western") return "Space Western";
   if (hubGenre === "Space Opera") return "Space Opera";
   if (hubGenre === "Fantasy") return "Fantasy";
   if (hubGenre === "Dark Fantasy") return "Dark Fantasy";
@@ -173,6 +178,7 @@ export function mapShipGenreToTheme(genre: string): string | null {
     Cyberpunk: "Cyberpunk / Corporate",
     "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
     "Space Opera Resistance": "Space Opera Resistance",
+    "Space Western": "Space Western",
     Lancer: "Lancer",
     "Post-Apocalyptic": "Post-Apocalyptic",
     Fantasy: "Classic Fantasy",
@@ -189,6 +195,7 @@ export function mapWorldGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Hopeful Sci-Fi") return "Optimistic Exploration Sci-Fi";
+  if (genre === "Space Western") return "Space Western";
   if (genre === "Lancer") return "Lancer";
   return "Sci-Fi / Space Opera";
 }
@@ -197,6 +204,7 @@ export function mapStarSystemGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
+  if (genre === "Space Western") return "Space Western";
   return "Sci-Fi / Space Opera";
 }
 
