@@ -8,7 +8,7 @@ Creates the initial backup. Requires the consent screen to have already been con
 
 - **Request body**: `{ vaultTitle: string, bundle: <vault export shape>, assets?: [{ assetId, content (base64) }] }`
 - **Response 201**: `{ backupId: string, ownerCode: string, manifest: CloudBackupManifest }` — `ownerCode` is generated server-side and returned exactly once, same as `template-directory.ts`'s `ownerToken` response shape.
-- **Errors**: `400` invalid bundle shape; `413` vault exceeds size limit (edge case: oversized vaults).
+- **Errors**: `400` invalid bundle shape; `413` vault exceeds the size limit. **The limit is 50 MB for the whole vault** (bundle plus all assets), checked before any object is written so an oversized vault never leaves a partial backup. The 413 body carries `{ error: { message, limitBytes, actualBytes } }` so the client can say how far over the user is.
 
 ## POST /api/cloud-backup/{backupId}/push
 
@@ -16,7 +16,7 @@ Push-on-save (FR-018). Authenticated via `Authorization: Bearer {ownerCode}` hea
 
 - **Request body**: `{ vaultTitle: string, bundle: <vault export shape>, assets?: [...] }` — always a full snapshot (last-write-wins whole-vault replace, per spec Assumptions), never a delta.
 - **Response 200**: `{ manifest: CloudBackupManifest }`
-- **Errors**: `401` missing/invalid owner code; `404` unknown `backupId`; `413` oversized.
+- **Errors**: `401` missing/invalid owner code; `404` unknown `backupId`; `413` oversized (same 50 MB limit and body shape as `enable`).
 
 ## GET /api/cloud-backup/{backupId}/status
 
@@ -56,6 +56,7 @@ Story 4 support-assisted recovery. Never reachable by end users — gated by a W
 - **Response 200 (exactly one match)**: `{ matched: true, backupId, vaultTitle, sizeBytes, lastPushedAt }`
 - **Response 200 (zero or multiple matches)**: `{ matched: false }` — deliberately identical shape for "not found" and "ambiguous," per the ambiguous-title edge case; the admin never learns "there are 3 vaults named X," only "try a different detail."
 - **No pagination parameter, no "list all" mode exists on this endpoint at all** (FR-016).
+- **Scan bound**: the handler reads at most **1,000 manifest keys** per request (a single `list()` page). If the scan hits that ceiling without resolving to exactly one match it returns `{ matched: false }` and logs a bound-exceeded warning — it MUST NOT paginate onward, because an unbounded walk is bulk enumeration by another name. Revisit this design once the bucket holds more than ~1,000 backups; until then a secondary index is premature (research.md §5).
 
 ## POST /api/cloud-backup/admin/{backupId}/reissue-code
 
