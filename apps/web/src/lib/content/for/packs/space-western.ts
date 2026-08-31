@@ -98,6 +98,13 @@ export const spaceWestern: LandingPageConfig = {
       badge: "Generator",
     },
     {
+      title: "See a Space Western Ship Example",
+      description:
+        "Read F/V Coyote in full: a compromised gunship with disputed salvage and a dangerous cargo-hold secret.",
+      href: "/examples/fv-coyote-space-western-ship",
+      badge: "Example",
+    },
+    {
       title: "Space Western Hub",
       description:
         "Open Space Western-ready generators for the people and places around your crew.",
