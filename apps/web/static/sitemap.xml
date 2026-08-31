@@ -37,16 +37,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/tools/dnd-npc-generator</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://codexcryptica.com/tools/faction-generator</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://codexcryptica.com/tools/quest-hook-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

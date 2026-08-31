@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildCloudBackupPayload,
+  hydrateEntityContent,
   collectAssetPaths,
   isLocalAssetPath,
   assetIdForPath,
@@ -242,5 +243,152 @@ describe("buildCloudBackupPayload with maps and canvases", () => {
 
     expect(result.bundle.maps).toEqual([]);
     expect(result.bundle.canvases).toEqual([]);
+  });
+});
+
+describe("hydrateEntityContent", () => {
+  /**
+   * Models the real store: entities start with the 280-char warm-start preview
+   * in `content`, and loading swaps in a new record with the full markdown.
+   */
+  const makeVault = (
+    bodies: Record<string, string>,
+    unreadable: string[] = [],
+  ) => {
+    const loaded = new Set<string>();
+    const records: Record<string, any> = {};
+    for (const id of Object.keys(bodies)) {
+      records[id] = {
+        id,
+        title: id,
+        content: `${id} preview…`,
+        contentLoaded: false,
+      };
+    }
+    return {
+      records,
+      loads: [] as string[],
+      hydrator: {
+        isContentLoaded: (id: string) => loaded.has(id),
+        loadEntityContent: async (id: string) => {
+          if (unreadable.includes(id)) throw new Error("unreadable");
+          loaded.add(id);
+          records[id] = {
+            ...records[id],
+            content: bodies[id],
+            contentLoaded: true,
+          };
+        },
+        getEntity: (id: string) => records[id],
+      },
+    };
+  };
+
+  it("replaces the warm-start preview with the full markdown", async () => {
+    const vault = makeVault({
+      a: "# Aldric\n\nFull lore body.\n",
+      b: "# Brine\n\nMore lore.\n",
+    });
+
+    const result = await hydrateEntityContent(
+      Object.values(vault.records) as never,
+      vault.hydrator,
+    );
+
+    expect(result.entities.map((e: any) => e.content)).toEqual([
+      "# Aldric\n\nFull lore body.\n",
+      "# Brine\n\nMore lore.\n",
+    ]);
+    expect(result.skippedEntities).toEqual([]);
+  });
+
+  it("leaves already-loaded entities untouched", async () => {
+    const vault = makeVault({ a: "full" });
+    await vault.hydrator.loadEntityContent("a");
+    const spy = vi.spyOn(vault.hydrator, "loadEntityContent");
+
+    await hydrateEntityContent(
+      Object.values(vault.records) as never,
+      vault.hydrator,
+    );
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("reports an unreadable entity instead of dropping the backup", async () => {
+    const vault = makeVault({ a: "full a", b: "full b" }, ["b"]);
+
+    const result = await hydrateEntityContent(
+      Object.values(vault.records) as never,
+      vault.hydrator,
+    );
+
+    expect(result.skippedEntities).toEqual(["b"]);
+    expect((result.entities[0] as any).content).toBe("full a");
+    // The unreadable one keeps what it had rather than vanishing.
+    expect(result.entities).toHaveLength(2);
+  });
+
+  it("preserves order under bounded concurrency", async () => {
+    const bodies: Record<string, string> = {};
+    for (let i = 0; i < 25; i++) bodies[`e${i}`] = `body ${i}`;
+    const vault = makeVault(bodies);
+
+    const result = await hydrateEntityContent(
+      Object.values(vault.records) as never,
+      vault.hydrator,
+      4,
+    );
+
+    expect(result.entities.map((e: any) => e.id)).toEqual(Object.keys(bodies));
+    expect(result.entities.map((e: any) => e.content)).toEqual(
+      Object.values(bodies),
+    );
+  });
+});
+
+describe("buildCloudBackupPayload content fidelity", () => {
+  it("backs up the full markdown, never the preview", async () => {
+    // The regression: the snapshot took whatever was in memory, which on a
+    // warm start is a whitespace-collapsed 280-char preview.
+    const records: Record<string, any> = {
+      npc: { id: "npc", title: "npc", content: "npc preview…" },
+    };
+    const loaded = new Set<string>();
+
+    const payload = await buildCloudBackupPayload(
+      "Vault",
+      Object.values(records) as never,
+      {
+        resolveImageUrl: async () => null,
+        fetch: okFetch,
+        hydrateEntities: {
+          isContentLoaded: (id) => loaded.has(id),
+          loadEntityContent: async (id) => {
+            loaded.add(id);
+            records[id] = {
+              ...records[id],
+              content: "# Aldric\n\nThe whole body.\n",
+            };
+          },
+          getEntity: (id) => records[id],
+        },
+      },
+    );
+
+    expect(payload.bundle.entities[0].content).toBe(
+      "# Aldric\n\nThe whole body.\n",
+    );
+    expect(payload.skippedEntities).toEqual([]);
+  });
+
+  it("still builds a payload when no hydrator is injected", async () => {
+    const payload = await buildCloudBackupPayload("Vault", [entity("a")], {
+      resolveImageUrl: async () => null,
+      fetch: okFetch,
+    });
+
+    expect(payload.bundle.entities).toHaveLength(1);
+    expect(payload.skippedEntities).toEqual([]);
   });
 });

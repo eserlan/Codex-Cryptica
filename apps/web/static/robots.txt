@@ -3,12 +3,23 @@ Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
 
-# Explicitly invite AI search & citation bots
-User-agent: GPTBot
+# --- Search & citation crawlers -------------------------------------------
+# These fetch pages so Codex Cryptica can be summarised, cited and linked in
+# AI search results. This is the discovery policy; keep it permissive.
+# Verify with: bun scripts/crawler-access-check.mjs
 User-agent: OAI-SearchBot
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# --- Model-training crawlers ----------------------------------------------
+# Deliberately a separate group from the search crawlers above, so training
+# policy can change later without touching search discovery (#2567). Today
+# both groups grant the same access.
+User-agent: GPTBot
 User-agent: Google-Extended
 User-agent: ClaudeBot
-User-agent: PerplexityBot
 Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt

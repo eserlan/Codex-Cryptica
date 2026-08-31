@@ -140,13 +140,21 @@
       isSaving = false;
     }
     const skipped = cloudBackupStore.skippedAssets.length;
+    const skippedNotes = cloudBackupStore.skippedEntities.length;
+    const partial = skipped + skippedNotes;
+    const parts = [
+      skipped > 0 ? `${skipped} image${skipped === 1 ? "" : "s"}` : "",
+      skippedNotes > 0
+        ? `${skippedNotes} note${skippedNotes === 1 ? "" : "s"}`
+        : "",
+    ].filter(Boolean);
     notificationStore.notify(
       ok
-        ? skipped > 0
-          ? `Vault saved, but ${skipped} image${skipped === 1 ? "" : "s"} could not be read and ${skipped === 1 ? "is" : "are"} not in the backup.`
+        ? partial > 0
+          ? `Vault saved, but ${parts.join(" and ")} could not be read and ${partial === 1 ? "is" : "are"} not in the backup.`
           : "Vault saved to Codex Cryptica Cloud."
         : (cloudBackupStore.errorMessage ?? "Could not save to the cloud."),
-      ok ? (skipped > 0 ? "info" : "success") : "error",
+      ok ? (partial > 0 ? "info" : "success") : "error",
     );
   }
 
