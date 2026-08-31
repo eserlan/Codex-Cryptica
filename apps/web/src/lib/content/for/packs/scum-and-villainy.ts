@@ -98,6 +98,13 @@ export const scumAndVillainy: LandingPageConfig = {
       badge: "Generator",
     },
     {
+      title: "See a Crew-Ready Ship Example",
+      description:
+        "Read F/V Coyote in full: an indebted gunship with disputed salvage, a practical crew, and a hidden AI core.",
+      href: "/examples/fv-coyote-space-western-ship",
+      badge: "Example",
+    },
+    {
       title: "Space Western Hub",
       description:
         "Access the full suite of space western generators — outposts, scoundrels, syndicates, and bounty quests.",

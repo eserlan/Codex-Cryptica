@@ -596,6 +596,13 @@ describe("Landing Page Registry", () => {
       expect(sv?.seo.image).toBe(
         "https://assets.codexcryptica.com/og/scum-and-villainy.jpg",
       );
+      expect(sv?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            href: "/examples/fv-coyote-space-western-ship",
+          }),
+        ]),
+      );
       expect(sv?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(sv?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
     });
@@ -646,6 +653,9 @@ describe("Landing Page Registry", () => {
       expect(spaceWestern?.recommendedTools).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ href: "/generators/ship-generator" }),
+          expect.objectContaining({
+            href: "/examples/fv-coyote-space-western-ship",
+          }),
         ]),
       );
     });
