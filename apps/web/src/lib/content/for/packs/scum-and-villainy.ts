@@ -98,6 +98,13 @@ export const scumAndVillainy: LandingPageConfig = {
       badge: "Generator",
     },
     {
+      title: "See a Crew-Ready Ship Example",
+      description:
+        "Read The Cinder Wren in full: a blockade runner with disputed salvage, a practical crew, and an outlawed AI core.",
+      href: "/examples/the-cinder-wren-space-western-ship",
+      badge: "Example",
+    },
+    {
       title: "Space Western Hub",
       description:
         "Access the full suite of space western generators — outposts, scoundrels, syndicates, and bounty quests.",
