@@ -174,6 +174,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "cif-importer",
       "vault-save",
       "vault-load",
+      // Opt-in and off by default, so it sits with the ownership story rather
+      // than contradicting it: the local files stay the original.
+      "cloud-backup",
       "import-resume",
       "entity-shelf",
     ],
