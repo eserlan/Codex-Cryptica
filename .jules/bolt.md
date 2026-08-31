@@ -216,22 +216,27 @@
 
 **Learning:** In markdown parsing components (like `generator-document-layout.ts` and `markdown-sections.ts`), using `Array.from(markdown.matchAll(...)).map()` forces the JavaScript engine to eagerly evaluate the entire iterator into an intermediate array of match objects, only to immediately throw it away after mapping it into another array. For large generator documents, this spikes unnecessary garbage collection pressure during formatting.
 **Action:** Replace `Array.from(iterator).map()` with a single imperative `for...of` loop over the iterator. This processes the matches lazily, avoids the intermediate `.map` array allocation, and pushes directly into the final array.
+
 ## 2025-02-24 - Avoid allocating unused objects by replacing map().filter() with a loop
 
 **Learning:** When chained array methods like `.map().filter()` create new objects in the `.map()` phase (e.g., `images.map(f => ({ file: f, index })).filter(...)`), they instantiate objects that are immediately thrown away by the subsequent filter. This creates unnecessary garbage collection pressure beyond just the intermediate array allocation.
 **Action:** Replace `.map(x => ({...})).filter(...)` chains with a single imperative loop. Only instantiate the new object if the condition passes, pushing it directly into the result array.
 
 ## 2025-02-27 - Object.values + filter optimization
+
 **Learning:** Calling `Object.values(obj).filter(...)` repeatedly inside reactive/derived blocks creates multiple intermediate arrays and adds heavy garbage collection pressure. This is particularly harmful in hot paths like VTT (Virtual TableTop) tile snapping/placing, which evaluates on every mouse movement.
 **Action:** Replace `Object.values(obj).filter(...)` chains with an imperative `for...in` loop that uses `Object.prototype.hasOwnProperty.call(obj, key)` to safely iterate the object keys and conditionally push to a single result array.
+
 ## 2024-05-18 - Replacing Object.fromEntries(array.map(...)) with imperative loops for performance
 
 **Learning:** When building an object/record from an array of keys (such as `entityDetailTabs`), using `Object.fromEntries(array.map(...))` creates two intermediate arrays: one from `.map()` for the `[key, value]` tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure and garbage collection overhead, especially in hot paths.
 **Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop. Initialize an empty Record and assign the properties directly within the loop to avoid intermediate array allocations.
 
 ## 2025-02-28 - Optimize derived block collection filters
+
 **Learning:** Chaining array methods like `Object.values(obj).filter(...)` inside Svelte `$derived` or `$derived.by` blocks creates intermediate arrays that add to garbage collection pressure, particularly in frequently updated components. Using pre-derived arrays (like `allTokens`) and filtering them via imperative loops is more efficient for larger datasets.
 **Action:** When extracting data from objects in reactive blocks, use a single imperative `for...in` loop with `hasOwnProperty` check, or if a flat derived array already exists, use an imperative `for` loop to filter results instead of chaining `.filter()`.
+
 ## 2026-08-30 - Focus on eliminating intermediate arrays, avoid pure syntax rewrites
 
 **Learning:** When acting as the 'Bolt' persona, avoid refactoring simple object iterations like `Object.keys(obj).filter(...)` into traditional `for...in` loops unless operating on massive data structures, as it's often rejected in code review as an unmeasurable micro-optimization that harms readability.

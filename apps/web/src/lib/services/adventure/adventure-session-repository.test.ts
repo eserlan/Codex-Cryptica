@@ -140,7 +140,10 @@ describe("AdventureSessionRepository.rename", () => {
 
   it("saves the new title and bumps revision without touching other fields", async () => {
     const fixedTime = 1600000000000;
-    const { repository, writes } = mockWritableRepository(archivedSession, () => fixedTime);
+    const { repository, writes } = mockWritableRepository(
+      archivedSession,
+      () => fixedTime,
+    );
 
     const result = await repository.rename(
       "vault-1",
@@ -163,11 +166,14 @@ describe("AdventureSessionRepository.rename", () => {
 describe("AdventureSessionRepository.duplicate", () => {
   it("writes an independent copy under a fresh id, defaulted to archived", async () => {
     const fixedTime = 1600000000000;
-    const { repository, writes } = mockWritableRepository({
-      ...archivedSession,
-      status: "active",
-      title: "Original",
-    }, () => fixedTime);
+    const { repository, writes } = mockWritableRepository(
+      {
+        ...archivedSession,
+        status: "active",
+        title: "Original",
+      },
+      () => fixedTime,
+    );
     (repository as any).generateId = () => "session-copy";
 
     const result = await repository.duplicate("vault-1", "session-1");
