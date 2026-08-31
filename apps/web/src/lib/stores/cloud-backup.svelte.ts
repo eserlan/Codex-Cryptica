@@ -8,6 +8,8 @@ import {
   getLocalCloudBackupRecord,
   getCloudBackupOwnershipCode,
   formatRecoveryKey,
+  listKnownCloudBackups,
+  type KnownCloudBackup,
   createMemoryStorage,
   type CloudBackupRuntime,
   type VaultBundlePayload,
@@ -70,6 +72,11 @@ export class CloudBackupStore {
   ownerCode = $state<string | null>(null);
   /** Backup id and code as one copyable value; see `revealRecoveryKey`. */
   recoveryKey = $state<string | null>(null);
+  /**
+   * Backups this device already holds the key to, newest first. Offered on the
+   * restore form so a key that is already stored never has to be typed back in.
+   */
+  knownBackups = $state<KnownCloudBackup[]>([]);
   /** Media the last save could not read. Non-empty means a partial copy. */
   skippedAssets = $state<string[]>([]);
   /**
@@ -285,6 +292,12 @@ export class CloudBackupStore {
     return this.ownerCode;
   }
 
+  /** Refreshes the list of backups this device can restore without a key. */
+  async loadKnownBackups(): Promise<void> {
+    if (!this.deps) return;
+    this.knownBackups = await listKnownCloudBackups(this.deps.runtime);
+  }
+
   /**
    * The one value a user needs to restore this vault elsewhere.
    *
@@ -395,6 +408,29 @@ export function cloudBackupBrowserStorage() {
         localStorage.removeItem(key(vaultId));
       } catch {
         // Nothing to do.
+      }
+    },
+    async list() {
+      const prefix = key("");
+      try {
+        const entries: { vaultId: string; record: unknown }[] = [];
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const storageKey = localStorage.key(i);
+          if (!storageKey?.startsWith(prefix)) continue;
+          const raw = localStorage.getItem(storageKey);
+          if (!raw) continue;
+          try {
+            entries.push({
+              vaultId: storageKey.slice(prefix.length),
+              record: JSON.parse(raw),
+            });
+          } catch {
+            // One corrupt entry must not hide the rest.
+          }
+        }
+        return entries;
+      } catch {
+        return [];
       }
     },
   };

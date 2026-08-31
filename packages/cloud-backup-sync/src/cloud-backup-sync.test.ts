@@ -8,6 +8,7 @@ import {
   deleteCloudBackup,
   getCloudBackupOwnershipCode,
   getLocalCloudBackupRecord,
+  listKnownCloudBackups,
 } from "./cloud-backup-sync";
 import { createMemoryStorage, type CloudBackupRuntime } from "./runtime";
 
@@ -410,5 +411,58 @@ describe("chunked upload", () => {
     await enableCloudBackup(runtime, "v-9", PAYLOAD);
     const sent = JSON.parse(calls[0].init.body);
     expect(sent).toEqual({ vaultTitle: PAYLOAD.vaultTitle });
+  });
+});
+
+describe("known backups on this device", () => {
+  it("offers each stored backup with a ready-to-use recovery key", async () => {
+    // The key is already on the device; making the user find the one they
+    // copied is needless when switching vaults.
+    const { runtime } = await enabled();
+    const known = await listKnownCloudBackups(runtime);
+    expect(known).toHaveLength(1);
+    expect(known[0].recoveryKey).toBe("b-1:code-1");
+    expect(known[0].vaultTitle).toBe("The Saltmere Fens");
+  });
+
+  it("lists the most recently saved first", async () => {
+    const { runtime } = makeRuntime();
+    await runtime.storage.write("v-old", {
+      vaultId: "v-old",
+      backupId: "b-old",
+      ownerCode: "c".repeat(16),
+      enabled: true,
+      status: "idle",
+      lastPushedAt: "2026-01-01T00:00:00.000Z",
+      consentedAt: "2026-01-01T00:00:00.000Z",
+    });
+    await runtime.storage.write("v-new", {
+      vaultId: "v-new",
+      backupId: "b-new",
+      ownerCode: "d".repeat(16),
+      enabled: true,
+      status: "idle",
+      lastPushedAt: "2026-08-01T00:00:00.000Z",
+      consentedAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const known = await listKnownCloudBackups(runtime);
+    expect(known.map((entry) => entry.vaultId)).toEqual(["v-new", "v-old"]);
+  });
+
+  it("skips an unreadable record instead of losing the whole list", async () => {
+    const { runtime } = await enabled();
+    await runtime.storage.write("v-broken", { nonsense: true });
+    const known = await listKnownCloudBackups(runtime);
+    expect(known.map((entry) => entry.vaultId)).toEqual(["v-1"]);
+  });
+
+  it("returns nothing when storage cannot enumerate", async () => {
+    const { runtime } = await enabled();
+    const noList = {
+      ...runtime,
+      storage: { ...runtime.storage, list: undefined },
+    };
+    expect(await listKnownCloudBackups(noList)).toEqual([]);
   });
 });

@@ -145,6 +145,24 @@
     }
   }
 
+  /**
+   * Opens the restore panel with whatever this device already knows.
+   *
+   * A key stored locally never has to be typed back in — the common case
+   * (restoring a vault saved from this same machine) becomes one click.
+   */
+  async function openRestore() {
+    showRestore = !showRestore;
+    if (!showRestore) return;
+    await cloudBackupStore.loadKnownBackups();
+    if (!restoreKey.trim()) {
+      const current = cloudBackupStore.knownBackups.find(
+        (backup) => backup.vaultId === vaultId,
+      );
+      restoreKey = current?.recoveryKey ?? "";
+    }
+  }
+
   async function runRestore() {
     const parsed = parseRecoveryKey(restoreKey);
     if (!parsed) {
@@ -287,7 +305,7 @@
 
   <button
     type="button"
-    onclick={() => (showRestore = !showRestore)}
+    onclick={openRestore}
     class="self-start text-xs text-theme-muted underline underline-offset-4 transition-colors hover:text-theme-primary"
   >
     Load a vault from the cloud
@@ -295,10 +313,40 @@
 
   {#if showRestore}
     <div class="flex flex-col gap-3 border border-theme-border p-4">
+      {#if cloudBackupStore.knownBackups.length > 0}
+        <div class="flex flex-col gap-2">
+          <p class="text-sm text-theme-muted">
+            Backups this device already has the key to:
+          </p>
+          <ul class="flex flex-col gap-1">
+            {#each cloudBackupStore.knownBackups as backup (backup.backupId)}
+              <li>
+                <button
+                  type="button"
+                  onclick={() => (restoreKey = backup.recoveryKey)}
+                  class="flex w-full items-baseline justify-between gap-3 border border-theme-border px-3 py-2 text-left transition-colors hover:border-theme-primary/40"
+                >
+                  <span class="text-sm text-theme-text"
+                    >{backup.vaultTitle ?? "Untitled vault"}</span
+                  >
+                  <span
+                    class="font-mono text-[10px] uppercase text-theme-muted"
+                  >
+                    {backup.lastPushedAt
+                      ? `Saved ${new Date(backup.lastPushedAt).toLocaleDateString()}`
+                      : "Not yet saved"}
+                  </span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+
       <p class="text-sm text-theme-muted">
-        Paste the recovery key from the Settings of the device that made the
-        backup — the "Copy recovery key" button there. The vault is loaded into
-        a new vault, so nothing you have open is replaced.
+        Or paste a recovery key from another device — the "Copy recovery key"
+        button in its Settings. The vault is loaded into a new vault, so nothing
+        you have open is replaced.
       </p>
       <label class="flex flex-col gap-1 text-xs text-theme-muted">
         Recovery key

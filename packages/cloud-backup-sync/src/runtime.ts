@@ -33,6 +33,13 @@ export interface CloudBackupStorage {
   read(vaultId: string): Promise<unknown | null>;
   write(vaultId: string, record: unknown): Promise<void>;
   clear(vaultId: string): Promise<void>;
+  /**
+   * Every record this device holds.
+   *
+   * Optional so an implementation that cannot enumerate still satisfies the
+   * interface; without it the app simply offers no known backups to pick from.
+   */
+  list?(): Promise<{ vaultId: string; record: unknown }[]>;
 }
 
 export interface CloudBackupRuntime {
@@ -56,6 +63,12 @@ export function createMemoryStorage(): CloudBackupStorage {
     },
     async clear(vaultId) {
       store.delete(vaultId);
+    },
+    async list() {
+      return [...store.entries()].map(([vaultId, record]) => ({
+        vaultId,
+        record,
+      }));
     },
   };
 }

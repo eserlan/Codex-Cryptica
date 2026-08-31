@@ -471,4 +471,20 @@ describe("recovery key", () => {
     const { store } = harness();
     expect(await store.revealRecoveryKey("never-enabled")).toBeNull();
   });
+
+  it("lists the backups this device can restore without a typed key", async () => {
+    const { store } = harness([ENABLE]);
+    await store.enable("v-1");
+
+    await store.loadKnownBackups();
+    expect(store.knownBackups).toHaveLength(1);
+    expect(store.knownBackups[0].recoveryKey).toBe("b-1:code-1");
+    expect(store.knownBackups[0].vaultId).toBe("v-1");
+  });
+
+  it("has no known backups before anything is enabled", async () => {
+    const { store } = harness();
+    await store.loadKnownBackups();
+    expect(store.knownBackups).toEqual([]);
+  });
 });

@@ -504,6 +504,12 @@ export const LocalCloudBackupRecordSchema = z.object({
   lastPushedAt: z.string().nullable(),
   /** When the consent screen was confirmed (FR-002/FR-003). */
   consentedAt: z.string(),
+  /**
+   * The vault's title at the last save, so a device can offer its known
+   * backups by name rather than by opaque id. Optional: records written before
+   * this existed must still load.
+   */
+  vaultTitle: z.string().optional(),
 });
 
 export type LocalCloudBackupRecord = z.infer<
