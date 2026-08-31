@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { activateBuild, getPrecacheAssets, precacheBuild } from "./lifecycle";
+import {
+  activateBuild,
+  installWorker,
+  isVaultAppPath,
+  shouldHandleVaultRequest,
+} from "./lifecycle";
 
 const pagesHeaders = readFileSync(
   resolve(process.cwd(), "static/_headers"),
@@ -23,101 +28,76 @@ describe("Cloudflare Pages cache headers", () => {
   });
 });
 
-describe("getPrecacheAssets", () => {
-  it("drops Cloudflare Pages' _headers and _redirects from the static files list", () => {
-    const assets = getPrecacheAssets({
-      build: ["/_app/immutable/entry.js"],
-      files: ["/_headers", "/_redirects", "/favicon.png", "/robots.txt"],
-      prerendered: ["/"],
-    });
-
-    expect(assets).not.toContain("/_headers");
-    expect(assets).not.toContain("/_redirects");
+describe("isVaultAppPath", () => {
+  it.each([
+    "/",
+    "/vault/world-1",
+    "/canvas",
+    "/canvas/session-map",
+    "/map/initiative",
+    "/oracle",
+    "/import",
+  ])("recognises the vault app route %s", (pathname) => {
+    expect(isVaultAppPath(pathname)).toBe(true);
   });
 
-  it("keeps every other static file, plus the build and prerendered assets", () => {
-    const assets = getPrecacheAssets({
-      build: ["/_app/immutable/entry.js"],
-      files: ["/_headers", "/_redirects", "/favicon.png", "/robots.txt"],
-      prerendered: ["/"],
-    });
+  it.each([
+    "/blog",
+    "/blog/offline-worldbuilding",
+    "/generators",
+    "/generators/fantasy/name",
+    "/for/game-masters",
+    "/tools/faction-generator",
+    "/import/legendkeeper",
+  ])("rejects the public route %s", (pathname) => {
+    expect(isVaultAppPath(pathname)).toBe(false);
+  });
+});
 
-    expect(assets).toEqual([
-      "/_app/immutable/entry.js",
-      "/favicon.png",
-      "/robots.txt",
-      "/",
-    ]);
+describe("shouldHandleVaultRequest", () => {
+  it("handles vault navigations and code requested by a vault client", () => {
+    expect(
+      shouldHandleVaultRequest({
+        pathname: "/vault/world-1",
+        mode: "navigate",
+        destination: "document",
+      }),
+    ).toBe(true);
+    expect(
+      shouldHandleVaultRequest({
+        pathname: "/_app/immutable/nodes/4.js",
+        mode: "cors",
+        destination: "script",
+        clientPathname: "/vault/world-1",
+      }),
+    ).toBe(true);
+  });
+
+  it("bypasses public pages and same-origin API responses", () => {
+    expect(
+      shouldHandleVaultRequest({
+        pathname: "/blog/offline-worldbuilding",
+        mode: "navigate",
+        destination: "document",
+      }),
+    ).toBe(false);
+    expect(
+      shouldHandleVaultRequest({
+        pathname: "/api/cloud-backup/status",
+        mode: "cors",
+        destination: "",
+        clientPathname: "/vault/world-1",
+      }),
+    ).toBe(false);
   });
 });
 
 describe("service worker lifecycle", () => {
-  it("precaches the current build and activates the worker immediately", async () => {
-    const add = vi.fn().mockResolvedValue(undefined);
+  it("activates without eagerly downloading the site build", async () => {
     const skipWaiting = vi.fn().mockResolvedValue(undefined);
 
-    await precacheBuild({
-      cacheName: "cache-current",
-      assets: ["/", "/app.js"],
-      cacheStorage: {
-        open: vi.fn().mockResolvedValue({ add }),
-      },
-      skipWaiting,
-      warn: vi.fn(),
-    });
+    await installWorker({ skipWaiting });
 
-    expect(add).toHaveBeenCalledTimes(2);
-    expect(add).toHaveBeenNthCalledWith(1, "/");
-    expect(add).toHaveBeenNthCalledWith(2, "/app.js");
-    expect(skipWaiting).toHaveBeenCalledOnce();
-  });
-
-  it("still activates when an individual asset cannot be cached", async () => {
-    const cacheError = new Error("asset unavailable");
-    const add = vi
-      .fn()
-      .mockRejectedValueOnce(cacheError)
-      .mockResolvedValueOnce(undefined);
-    const skipWaiting = vi.fn().mockResolvedValue(undefined);
-    const warn = vi.fn();
-
-    await precacheBuild({
-      cacheName: "cache-current",
-      assets: ["/missing.png", "/app.js"],
-      cacheStorage: {
-        open: vi.fn().mockResolvedValue({ add }),
-      },
-      skipWaiting,
-      warn,
-    });
-
-    expect(warn).toHaveBeenCalledWith(
-      "[SW] Failed to cache asset: /missing.png",
-      cacheError,
-    );
-    expect(add).toHaveBeenCalledWith("/app.js");
-    expect(skipWaiting).toHaveBeenCalledOnce();
-  });
-
-  it("still activates when the build cache cannot be opened", async () => {
-    const cacheError = new Error("cache unavailable");
-    const skipWaiting = vi.fn().mockResolvedValue(undefined);
-    const warn = vi.fn();
-
-    await precacheBuild({
-      cacheName: "cache-current",
-      assets: ["/app.js"],
-      cacheStorage: {
-        open: vi.fn().mockRejectedValue(cacheError),
-      },
-      skipWaiting,
-      warn,
-    });
-
-    expect(warn).toHaveBeenCalledWith(
-      "[SW] Failed to open cache: cache-current",
-      cacheError,
-    );
     expect(skipWaiting).toHaveBeenCalledOnce();
   });
 

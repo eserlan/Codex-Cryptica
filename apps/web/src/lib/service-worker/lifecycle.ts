@@ -1,26 +1,60 @@
-// Cloudflare Pages' own deploy-time config files — consumed by the platform
-// to set headers/redirects, never served back as downloadable assets. Since
-// SvelteKit's `$service-worker` `files` list includes everything under
-// `static/`, these otherwise end up in the precache list and always fail.
-const UNCACHEABLE_STATIC_FILES = new Set(["/_headers", "/_redirects"]);
+const VAULT_APP_ROUTE_PREFIXES = [
+  "/adventure",
+  "/canvas",
+  "/decks",
+  "/dice",
+  "/guest",
+  "/help",
+  "/map",
+  "/oracle",
+  "/table",
+  "/tables",
+  "/templates",
+  "/timeline",
+  "/vault",
+] as const;
 
-/** Combines the build/static/prerendered asset lists into the final precache list, dropping files that can never be fetched back (e.g. Cloudflare Pages config). */
-export function getPrecacheAssets(sources: {
-  build: readonly string[];
-  files: readonly string[];
-  prerendered: readonly string[];
-}): string[] {
-  return [
-    ...sources.build,
-    ...sources.files.filter((file) => !UNCACHEABLE_STATIC_FILES.has(file)),
-    ...sources.prerendered,
-  ];
+const CACHEABLE_APP_DESTINATIONS = new Set([
+  "audio",
+  "font",
+  "image",
+  "manifest",
+  "script",
+  "style",
+  "track",
+  "video",
+  "worker",
+]);
+
+/** Returns whether a URL belongs to the interactive vault app rather than the public discovery site. */
+export function isVaultAppPath(pathname: string): boolean {
+  if (pathname === "/" || pathname === "/import") return true;
+
+  return VAULT_APP_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 }
 
-interface PrecacheStorage {
-  open(cacheName: string): Promise<{
-    add(asset: string): Promise<unknown>;
-  }>;
+/** Limits service-worker handling to vault documents and their static runtime assets. */
+export function shouldHandleVaultRequest(request: {
+  pathname: string;
+  mode: string;
+  destination: string;
+  clientPathname?: string;
+}): boolean {
+  if (request.mode === "navigate") {
+    return isVaultAppPath(request.pathname);
+  }
+
+  if (!request.clientPathname || !isVaultAppPath(request.clientPathname)) {
+    return false;
+  }
+
+  return (
+    CACHEABLE_APP_DESTINATIONS.has(request.destination) ||
+    request.pathname.startsWith("/_app/immutable/") ||
+    request.pathname.endsWith(".wasm")
+  );
 }
 
 interface ActivationStorage {
@@ -28,28 +62,11 @@ interface ActivationStorage {
   delete(cacheName: string): Promise<boolean>;
 }
 
-export async function precacheBuild(options: {
-  cacheName: string;
-  assets: string[];
-  cacheStorage: PrecacheStorage;
+/** Activates the worker without downloading unrelated public routes at install time. */
+export async function installWorker(options: {
   skipWaiting: () => Promise<unknown>;
-  warn: (message: string, error: unknown) => void;
 }): Promise<void> {
-  try {
-    const cache = await options.cacheStorage.open(options.cacheName);
-
-    for (const asset of options.assets) {
-      try {
-        await cache.add(asset);
-      } catch (error) {
-        options.warn(`[SW] Failed to cache asset: ${asset}`, error);
-      }
-    }
-  } catch (error) {
-    options.warn(`[SW] Failed to open cache: ${options.cacheName}`, error);
-  } finally {
-    await options.skipWaiting();
-  }
+  await options.skipWaiting();
 }
 
 export async function activateBuild(options: {
