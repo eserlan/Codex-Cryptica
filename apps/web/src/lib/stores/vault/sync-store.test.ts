@@ -84,6 +84,16 @@ describe("SyncStore", () => {
     expect(store.status).toBe("error");
   });
 
+  it("automatically transitions from saved back to idle after timeout", () => {
+    vi.useFakeTimers();
+    store.setStatus("saved");
+    expect(store.status).toBe("saved");
+
+    vi.advanceTimersByTime(2600);
+    expect(store.status).toBe("idle");
+    vi.useRealTimers();
+  });
+
   it("triggers safety gate on pull() when dirty", async () => {
     mockVaultRecord.lastInternalChange = 1000;
     mockVaultRecord.lastSavedToFolder = 500;

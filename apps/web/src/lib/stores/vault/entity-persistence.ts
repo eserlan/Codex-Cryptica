@@ -9,6 +9,8 @@ import { updateLastInternalChange } from "./registry";
 import { systemClock } from "$lib/utils/runtime-deps";
 import { runWithConcurrency } from "./bulk-results";
 
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+
 export interface PersistenceDependencies {
   repository: VaultRepository;
   activeVaultId: () => string | null;
@@ -24,6 +26,7 @@ export interface PersistenceDependencies {
     "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
+  onPermanentFailure?: (id: string, error?: unknown) => void;
   // loader delegation
   isContentLoaded: (id: string) => boolean;
   loadContent: (id: string) => Promise<void>;
@@ -36,6 +39,10 @@ export interface ScheduleSaveOptions {
    * from the cache table instead of hydrating the reactive entity store.
    */
   preserveCachedContent?: boolean;
+  /**
+   * If true, bypasses the debounce delay and persists immediately.
+   */
+  immediate?: boolean;
 }
 
 export interface ImmediateSaveEntry {
@@ -112,36 +119,44 @@ export class EntityPersistenceService {
     // Store the vault ID so flushPendingSaves uses the original context, not
     // whatever vault happens to be active at flush time.
     this._saveVaultIds.set(id, vaultIdAtStart);
-    this._saveOptions.set(
-      id,
-      mergeScheduleSaveOptions(this._saveOptions.get(id), options),
+    const mergedOpts = mergeScheduleSaveOptions(
+      this._saveOptions.get(id),
+      options,
     );
+    this._saveOptions.set(id, mergedOpts);
+
+    this.deps.setStatus("saving");
 
     if (this._savingSuspended) {
       return Promise.resolve();
     }
+
+    const delayMs = mergedOpts.immediate ? 0 : SAVE_DEBOUNCE_MS;
 
     return new Promise<void>((resolve) => {
       const resolvers = this._saveResolvers.get(id) ?? [];
       resolvers.push(resolve);
       this._saveResolvers.set(id, resolvers);
 
-      this._saveTimers.set(
-        id,
-        setTimeout(() => {
-          this._saveTimers.delete(id);
-          this._saveResolvers.delete(id);
-          this._saveVaultIds.delete(id);
-          const saveOptions = this._saveOptions.get(id) ?? {};
-          this._saveOptions.delete(id);
-          this.deps.repository
-            .enqueueSave(id, () =>
-              this._persistEntity(id, vaultIdAtStart, saveOptions),
-            )
-            .catch(() => {})
-            .finally(() => resolvers.forEach((r) => r()));
-        }, SAVE_DEBOUNCE_MS),
-      );
+      const doPersist = () => {
+        this._saveTimers.delete(id);
+        this._saveResolvers.delete(id);
+        this._saveVaultIds.delete(id);
+        const saveOptions = this._saveOptions.get(id) ?? {};
+        this._saveOptions.delete(id);
+        this.deps.repository
+          .enqueueSave(id, () =>
+            this._persistEntity(id, vaultIdAtStart, saveOptions),
+          )
+          .catch(() => {})
+          .finally(() => resolvers.forEach((r) => r()));
+      };
+
+      if (delayMs === 0) {
+        this._saveTimers.set(id, setTimeout(doPersist, 0));
+      } else {
+        this._saveTimers.set(id, setTimeout(doPersist, delayMs));
+      }
     });
   }
 
@@ -268,7 +283,14 @@ export class EntityPersistenceService {
       const vaultHandle =
         await this.deps.getSpecificVaultHandle(vaultIdAtStart);
       if (!vaultHandle) {
-        this.deps.setStatus("idle");
+        if (
+          this._saveTimers.size === 0 &&
+          (this.deps.repository.pendingSaveCount ?? 0) <= 1
+        ) {
+          this.deps.setStatus("saved");
+        } else {
+          this.deps.setStatus("idle");
+        }
         // Preserve the historical no-handle behavior used by guest/test
         // adapters: there is no durable target to write, but the in-memory
         // mutation itself remains valid.
@@ -300,7 +322,14 @@ export class EntityPersistenceService {
       if (hydratedContent) {
         this.deps.markContentLoaded(latestEntity.id);
       }
-      this.deps.setStatus("idle");
+      if (
+        this._saveTimers.size === 0 &&
+        (this.deps.repository.pendingSaveCount ?? 0) <= 1
+      ) {
+        this.deps.setStatus("saved");
+      } else {
+        this.deps.setStatus("idle");
+      }
       return true;
     } catch (error) {
       debugStore.error(
@@ -348,6 +377,22 @@ export class EntityPersistenceService {
     const retries = this._failedSaveRetries.get(id) ?? 0;
     if (retries >= MAX_FAILED_SAVE_REQUEUES) {
       this._failedSaveRetries.delete(id);
+      this.deps.setStatus("error");
+      this.deps.setErrorMessage(
+        "Failed to save entity to storage after multiple attempts.",
+      );
+      if (this.deps.onPermanentFailure) {
+        this.deps.onPermanentFailure(id);
+      } else {
+        try {
+          notificationStore.notify(
+            "Failed to save entity to storage. Storage write error.",
+            "error",
+          );
+        } catch {
+          // Safe fallback in test environments
+        }
+      }
       return;
     }
     this._failedSaveRetries.set(id, retries + 1);
@@ -373,5 +418,6 @@ function mergeScheduleSaveOptions(
     preserveCachedContent:
       (previous?.preserveCachedContent ?? true) &&
       next.preserveCachedContent === true,
+    immediate: (previous?.immediate ?? false) || next.immediate === true,
   };
 }

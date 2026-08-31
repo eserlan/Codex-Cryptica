@@ -235,4 +235,16 @@ describe("DetailHeader stature badge", () => {
       (vault as any).isGuest = false;
     }
   });
+
+  it("surfaces save state indicator when vault is saving", () => {
+    (vault as any).status = "saving";
+    try {
+      const { getByTestId } = renderEntity({
+        labels: [],
+      });
+      expect(getByTestId("save-indicator-saving")).toBeTruthy();
+    } finally {
+      (vault as any).status = "idle";
+    }
+  });
 });
