@@ -23,42 +23,18 @@
 - Seed two manifests with the same `vaultTitle` → call lookup with that title → expect `{ matched: false }` (ambiguous, not "pick one").
 - Confirm there is no endpoint, flag, or parameter anywhere under `/api/cloud-backup/admin/*` that returns more than one backup's metadata at once.
 
-## Support runbook: recovering a lost ownership code (Story 4)
+## Support runbook: recovering a lost recovery key (Story 4)
 
-For support staff. This path exists because there are no accounts — a lost code
-is otherwise unrecoverable. It is deliberately narrow, and it is disclosed to
-users on the consent screen.
+The runbook lives with the other operational docs, where support will actually
+look for it: [`docs/deployment/cloud-backup-support-access.md`](../../docs/deployment/cloud-backup-support-access.md).
+It covers what `CLOUD_BACKUP_ADMIN_TOKEN` is, how to set and rotate it, the
+lookup and re-issue calls, and what to refuse.
 
-**What you can see**: a vault's title, size and last-backup time. **Never** its
-contents. There is no endpoint that returns more than one backup.
+Two points that constrain the design rather than the process, so they belong
+here too:
 
-1. **Get an identifying detail from the user.** Currently that means the vault's
-   exact title. If they cannot supply one, stop — there is nothing to search on,
-   and the backup is unreachable. Say so plainly rather than implying it might
-   be recoverable later.
-2. **Look it up.**
-   ```
-   POST /api/cloud-backup/admin/lookup
-   Authorization: Bearer $CLOUD_BACKUP_ADMIN_TOKEN
-   { "vaultTitle": "The Saltmere Fens" }
-   ```
-   - `{ "matched": true, ... }` — exactly one backup matched.
-   - `{ "matched": false }` — **either** nothing matched **or** several did. The
-     response is identical on purpose, so nobody learns how many vaults share a
-     title. Ask for a different detail; do not guess between candidates.
-3. **Verify identity** through your normal support process, before re-issuing
-   anything. A title is not proof of ownership — anyone who has seen the user's
-   screen knows it.
-4. **Re-issue the code.**
-   ```
-   POST /api/cloud-backup/admin/{backupId}/reissue-code
-   Authorization: Bearer $CLOUD_BACKUP_ADMIN_TOKEN
-   ```
-   This **invalidates the previous code immediately**. If the user later finds
-   their old one, it will not work — tell them so.
-5. **Relay the new code** through the same channel you verified them on, and
-   remind them it is the only key to that backup.
-
-**What to refuse**: any request to list backups, to browse by partial title, or
-to read a vault's contents. None of those exist, and none should be built —
-see FR-016.
+- A lookup answers `{ "matched": false }` for "nothing matched" **and** for
+  "several matched". Distinguishing them would let an admin count other
+  people's backups (FR-016).
+- Re-issuing a code invalidates the previous one immediately, so identity has
+  to be verified first — a vault title is not proof of ownership.
