@@ -74,11 +74,9 @@ jobs:
           if [ -n "${ALLOWED_ORIGINS:-}" ]; then
             echo "::warning::ALLOWED_ORIGINS is set for this environment and overrides"
             echo "::warning::DEFAULT_ALLOWED_ORIGINS for *all* environments this Worker serves."
-            wrangler deploy \
-              --commit-dirty=true \
-              --var ALLOWED_ORIGINS:"$ALLOWED_ORIGINS"
+            wrangler deploy --var ALLOWED_ORIGINS:"$ALLOWED_ORIGINS"
           else
-            wrangler deploy --commit-dirty=true
+            wrangler deploy
           fi
           echo "worker_url=https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_OUTPUT
       
