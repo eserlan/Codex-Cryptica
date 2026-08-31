@@ -36,6 +36,7 @@ ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 #   metadata lookup and code re-issue routes (spec 162). Gates /api/cloud-backup/admin/*
 #   only; it never grants access to a vault's contents. Until it is set those two
 #   routes reject every request, which is the correct closed default.
+#   Runbook: docs/deployment/cloud-backup-support-access.md
 
 # Development configuration
 [dev]
