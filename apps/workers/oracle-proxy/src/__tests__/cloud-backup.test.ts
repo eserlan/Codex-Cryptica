@@ -8,6 +8,7 @@ import {
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
   handleCloudBackupAdminLookup,
+  handleCloudBackupAdminStats,
   handleCloudBackupReissueCode,
   handleCloudBackupAdminDelete,
   hashOwnerCode,
@@ -678,6 +679,66 @@ describe("support lookup", () => {
       env.BUCKET.store.get(getManifestKey(backupId))!.body as string,
     );
     expect(stored.vaultTitle).toBe("Kept Title");
+  });
+});
+
+describe("admin stats", () => {
+  it("rejects a non-admin request", async () => {
+    const env = makeEnv();
+    await enableAndCommit(env, "One Vault");
+    for (const auth of [undefined, "not-the-admin-token"]) {
+      const res = await handleCloudBackupAdminStats(get(auth), env);
+      expect(res.status).toBe(404);
+    }
+  });
+
+  it("stays closed when no admin token is configured", async () => {
+    const env = { BUCKET: new Bucket() } as CloudBackupEnv;
+    const res = await handleCloudBackupAdminStats(get("anything"), env);
+    expect(res.status).toBe(404);
+  });
+
+  it("reports zero counts for an empty bucket", async () => {
+    const env = makeEnv();
+    const body = (await (
+      await handleCloudBackupAdminStats(get(ADMIN_TOKEN), env)
+    ).json()) as any;
+    expect(body).toEqual({
+      vaultCount: 0,
+      assetCount: 0,
+      totalBytes: 0,
+      complete: true,
+    });
+  });
+
+  it("counts vaults and assets, and sums bytes, across every backup", async () => {
+    const env = makeEnv();
+    await enableAndCommit(env, "First Vault");
+    await enableAndCommit(env, "Second Vault");
+
+    const body = (await (
+      await handleCloudBackupAdminStats(get(ADMIN_TOKEN), env)
+    ).json()) as any;
+    expect(body.vaultCount).toBe(2);
+    expect(body.assetCount).toBe(2);
+    expect(body.totalBytes).toBeGreaterThan(0);
+    expect(body.complete).toBe(true);
+  });
+
+  it("never returns a title, a backup id, or any other per-vault detail", async () => {
+    const env = makeEnv();
+    await enableAndCommit(env, "Should Never Appear");
+
+    const text = await (
+      await handleCloudBackupAdminStats(get(ADMIN_TOKEN), env)
+    ).text();
+    expect(text).not.toContain("Should Never Appear");
+    expect(Object.keys(JSON.parse(text)).sort()).toEqual([
+      "assetCount",
+      "complete",
+      "totalBytes",
+      "vaultCount",
+    ]);
   });
 });
 
