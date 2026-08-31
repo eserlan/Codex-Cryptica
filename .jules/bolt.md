@@ -245,3 +245,8 @@
 
 **Learning:** Replacing chained array allocations (`Object.entries().filter().map()`) followed by `Object.fromEntries()` with a single imperative loop over object properties reduces object instantiation overhead and intermediate array generation. This is especially useful for logic run frequently (like reactive declarations and effects).
 **Action:** When extracting data or building objects in frequent/reactive paths, utilize imperative `for...in` or `for...of` loops rather than chaining high-level JS array methods if array allocations become a bottleneck. Ensure the component remains readable.
+
+## 2026-10-25 - [Performance Insight: Avoid intermediate array allocation when translating Map values]
+
+**Learning:** When using `Map.get(id)` over an array of IDs to build a new array of matching values, chaining `.map(id => map.get(id)).filter(Boolean)` forces the creation of an intermediate array containing potentially undefined values, only to immediately traverse and filter it into a second array.
+**Action:** Replace `array.map().filter()` when querying Maps (like `byId.get(id)`) with a single imperative `for...of` loop over the IDs. This allows pushing valid resolved values directly into the final array in a single O(N) pass, completely eliminating the intermediate array allocation and reducing garbage collection pressure.
