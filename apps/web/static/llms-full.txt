@@ -2017,6 +2017,12 @@ Real, unedited output from the Codex Cryptica generators, indexed at https://cod
 
 **Summary:** Deep within the drifting hull of the Astragal-Nine, the crew must halt a runaway atmospheric purge loop before the counter-rotating habitat rings tear themselves apart.
 
+### [Space Western ship example: The Cinder Wren](https://codexcryptica.com/examples/the-cinder-wren-space-western-ship)
+
+**Genre:** Space Western
+
+**Summary:** A scarred frontier freighter and gunship running medicine, fugitives, and inconvenient truths between Last Light Outpost and the lawless dark beyond the customs line.
+
 
 ## TTRPG System & Genre Campaign Management
 
@@ -2082,11 +2088,23 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** An Adventure Path runs for months. By book three the party has crossed two nations, sworn an oath to one deity, and made an enemy of a society you invented as background colour. You are the one who has to remember which — usually mid-session, while four players wait.
 
+### [Codex Cryptica for Scum and Villainy Campaign Management](https://codexcryptica.com/for/scum-and-villainy)
+
+**Summary:** Keep crews, battered ships, criminal syndicates, debts, and sector heat connected in one place.
+
+**Overview:** A space scoundrels campaign moves fast — one session you are smuggling contraband past customs corvettes, the next you are dodging syndicate enforcers over unpaid ship debts. When heat rises across three sectors and rival factions collide, you should not have to scramble through scattered notes to remember who holds your crew's debt, who wants your cargo, and which corrupt marshal is tracking your drive signature.
+
 ### [Codex Cryptica for Space Opera Campaigns](https://codexcryptica.com/for/space-opera)
 
 **Summary:** Keep star systems, worlds, governments, factions, crews, and trade routes connected across your galaxy.
 
 **Overview:** Space opera campaigns span dozens of systems, rival governments, criminal syndicates, and a crew's tangled web of contacts and enemies. When your players reach a new sector, you shouldn't have to reconstruct who controls it, who they owe favours to, and what's already gone wrong there.
+
+### [Codex Cryptica for Space Western Campaigns](https://codexcryptica.com/for/space-western)
+
+**Summary:** Keep your crews, ships, outposts, claims, and grudges connected at the edge of settled space.
+
+**Overview:** A Space Western campaign is held together by fragile routes, personal debts, contested claims, and the few people willing to make a stand when help is weeks away. When a ship is impounded, a mining town runs dry, or a marshal chooses a side, you need the whole frontier web in one place—not scattered across manifests and session notes.
 
 ### [Codex Cryptica for Traveller Campaign Management](https://codexcryptica.com/for/traveller)
 

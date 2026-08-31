@@ -596,6 +596,13 @@ describe("Landing Page Registry", () => {
       expect(sv?.seo.image).toBe(
         "https://assets.codexcryptica.com/og/scum-and-villainy.jpg",
       );
+      expect(sv?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
       expect(sv?.useCases.length).toBeGreaterThanOrEqual(4);
       expect(sv?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
     });
@@ -634,6 +641,23 @@ describe("Landing Page Registry", () => {
       expect(categories).toContain("faction");
       expect(categories).toContain("character");
       expect(categories).toContain("event");
+    });
+  });
+
+  describe("Space Western Pack", () => {
+    it("is registered as a genre guide for the Space Western hub", () => {
+      const spaceWestern = getLandingPage("space-western");
+      expect(spaceWestern?.kind).toBe("genre");
+      expect(spaceWestern?.theme).toBe("space-western");
+      expect(spaceWestern?.hub).toBe("space-western");
+      expect(spaceWestern?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/ship-generator" }),
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
     });
   });
 
