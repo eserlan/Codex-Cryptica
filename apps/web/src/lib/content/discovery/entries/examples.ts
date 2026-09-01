@@ -110,6 +110,24 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "example-vaelgrasp",
+    pageKind: "example",
+    canonicalPath: "/examples/vaelgrasp-the-regents-ruin-artifact",
+    primaryIntent: "magic item example",
+    intentAliases: [
+      "artifact example",
+      "example of a generated magic item",
+      "sample rpg artifact",
+    ],
+    userJob: "see-an-example",
+    uniqueValue:
+      "A dense, campaign-shaping artifact roll where the curse and the power are the same mechanism in reverse, with three factions wanting three different things from it.",
+    parentCluster: "item-creation",
+    relatedIntents: ["generator-artifact-generator"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "example-venting-helix",
     pageKind: "example",
     canonicalPath: "/examples/the-venting-helix-derelict-hazard",
