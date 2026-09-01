@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "prebuild": "bun ../../scripts/discovery-audit.mjs && node ../../scripts/generate-llms-full.mjs && bun ../../scripts/generate-sitemap.mjs",
-    "build": "vite build && touch build/.nojekyll && node scripts/check-compiled-runes.js && node scripts/critical-css.mjs && cp build/index.html build/404.html",
+    "build": "vite build && touch build/.nojekyll && node scripts/check-compiled-runes.js && node scripts/critical-css.mjs && node scripts/inject-shell-og.mjs && cp build/index.html build/404.html",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "test": "vitest run",
