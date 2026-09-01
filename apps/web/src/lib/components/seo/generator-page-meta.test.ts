@@ -17,6 +17,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",

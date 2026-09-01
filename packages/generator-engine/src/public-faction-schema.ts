@@ -1,21 +1,25 @@
 /**
- * The faction, nomad clan, and vampire clan generator smart schemas (#2531).
+ * The faction, nomad clan, vampire clan, and dark fantasy faction generator
+ * smart schemas (#2531, #1136).
  *
  * Builds `SmartGeneratorSchema` definitions for:
  *   1. Standard Factions (genre-aware)
  *   2. Nomad Clans (Cyberpunk)
  *   3. Vampire Clans (Gothic Noir)
+ *   4. Dark Fantasy / Grimdark Factions
  *
  * Each schema's declaration order encodes the causal chain:
  *   Faction: Type -> Scope -> Moral Posture -> Primary Goal -> Internal Conflict -> Immediate Hook
  *   Nomad Clan: Role -> Territory -> Tone -> Goal -> Conflict -> Hook
  *   Vampire Clan: Archetype -> Bloodline -> Scope -> Feeding Habit -> Weakness -> Moral Posture -> Dark Agenda -> Internal Conflict -> Hook
+ *   Dark Fantasy Faction: Mode -> Type -> Scope -> Moral Posture -> Goal -> Conflict -> Hook
  */
 
 import {
   factionConfig,
   nomadClanConfig,
   vampireConfig,
+  darkFactionConfig,
   FACTION_BASE_MAP,
   FACTION_RESOURCE_MAP,
 } from "./public-faction-constants";
@@ -348,6 +352,62 @@ export function buildVampireSchema(): SmartGeneratorSchema {
 }
 
 export const vampireSchema = buildVampireSchema();
+
+// ---------------------------------------------------------------------------
+// Dark Fantasy / Grimdark Faction Schema (#1136)
+// ---------------------------------------------------------------------------
+
+/**
+ * Bare-string pools throughout: a `string[]` is already a valid `OptionPool`
+ * (see smart/types.ts), so this reproduces flat, uniform randomness with no
+ * cross-axis trait correlation — the documented zero-config default, and
+ * appropriate here since these axes (mode/type/scope/posture) don't need the
+ * weighted-affinity machinery the older faction/vampire/nomad schemas use.
+ */
+export function buildDarkFactionSchema(): SmartGeneratorSchema {
+  return {
+    id: "dark-fantasy-faction",
+    axes: [
+      {
+        id: "mode",
+        label: "Dark Fantasy Mode",
+        pool: () => darkFactionConfig.modes,
+      },
+      {
+        id: "factionType",
+        label: "Faction Type",
+        pool: () => darkFactionConfig.types,
+      },
+      {
+        id: "scope",
+        label: "Operating Scope",
+        pool: () => darkFactionConfig.scopes,
+      },
+      {
+        id: "moralPosture",
+        label: "Moral Posture",
+        pool: () => darkFactionConfig.moralPostures,
+      },
+      {
+        id: "goal",
+        label: "Primary Goal",
+        pool: () => darkFactionConfig.goals,
+      },
+      {
+        id: "conflict",
+        label: "Internal Conflict",
+        pool: () => darkFactionConfig.conflicts,
+      },
+      {
+        id: "hook",
+        label: "Immediate Hook",
+        pool: () => darkFactionConfig.hooks,
+      },
+    ],
+  };
+}
+
+export const darkFactionSchema = buildDarkFactionSchema();
 
 // ---------------------------------------------------------------------------
 // Base & Resource Smart Selection

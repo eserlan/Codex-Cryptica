@@ -22,6 +22,9 @@ import {
   buildNomadClanPrompt,
   parseNomadClanResponse,
   generateNomadClanLocal,
+  buildDarkFactionPrompt,
+  parseDarkFactionResponse,
+  generateDarkFactionLocal,
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
@@ -111,6 +114,7 @@ import {
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
+  type DarkFactionGeneratorOptions,
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
@@ -161,12 +165,15 @@ export {
   themeIdToLabel,
   vampireConfig,
   nomadClanConfig,
+  darkFactionConfig,
   resolveFaction,
   resolveNomadClan,
   resolveVampire,
+  resolveDarkFaction,
   factionSchema,
   nomadClanSchema,
   vampireSchema,
+  darkFactionSchema,
   FACTION_PRESETS,
   NOMAD_CLAN_PRESETS,
   VAMPIRE_PRESETS,
@@ -470,6 +477,33 @@ export class DefaultGeneratorEngine {
         return parseNomadClanResponse(text, resolved);
       },
       () => generateNomadClanLocal(nomadOptions),
+    );
+  }
+
+  /** Dark fantasy / grimdark faction generation delegates to the generator-engine package (#1136). */
+  async generateDarkFaction(
+    options: DarkFactionGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...darkFactionOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent(
+      "dark-fantasy-faction",
+    );
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildDarkFactionPrompt(
+            darkFactionOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "dark-fantasy-faction",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseDarkFactionResponse(text, resolved);
+      },
+      () => generateDarkFactionLocal(darkFactionOptions),
     );
   }
 

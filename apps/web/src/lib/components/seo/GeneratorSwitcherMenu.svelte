@@ -18,6 +18,7 @@
     "/generators/pantheon-generator",
     "/generators/god-generator",
     "/generators/tavern",
+    "/generators/dark-fantasy-faction",
   ]);
 
   // Paths specific to the horror/vampire theme
@@ -43,6 +44,10 @@
       label: "Worldbuilding",
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
+        {
+          label: "Dark Fantasy Faction Generator",
+          path: "/generators/dark-fantasy-faction",
+        },
         { label: "Settlement Generator", path: "/generators/settlement" },
         { label: "Star System Generator", path: "/generators/star-system" },
         { label: "Alien Race Generator", path: "/generators/alien-race" },
