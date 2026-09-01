@@ -71,7 +71,7 @@
                 {example.name}
               </h2>
               <p
-                class="mt-2 line-clamp-3 text-sm leading-relaxed text-theme-muted"
+                class="mt-2 line-clamp-3 text-base leading-relaxed text-theme-muted"
               >
                 {example.summary}
               </p>

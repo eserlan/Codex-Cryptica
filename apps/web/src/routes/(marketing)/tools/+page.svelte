@@ -549,7 +549,7 @@
           >
             {section.title}
           </h2>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-base text-theme-muted leading-relaxed">
             {section.description}
           </p>
         </div>
@@ -579,7 +579,7 @@
                         {link.label}
                       </span>
                       <span
-                        class="block text-sm text-theme-muted leading-relaxed"
+                        class="block text-base text-theme-muted leading-relaxed"
                       >
                         {link.summary}
                       </span>

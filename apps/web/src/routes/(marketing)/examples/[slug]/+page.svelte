@@ -116,7 +116,7 @@
 
     {#if connected && example.connectedTo}
       <aside
-        class="mb-8 border-l-2 border-theme-primary pl-5 text-sm leading-relaxed text-theme-muted"
+        class="mb-8 border-l-2 border-theme-primary pl-5 text-base leading-relaxed text-theme-muted"
       >
         {example.connectedTo.note}
         <a
@@ -236,7 +236,7 @@
                       >{link.title}</span
                     >
                     <span
-                      class="mt-1 block text-sm leading-relaxed text-theme-muted"
+                      class="mt-1 block text-base leading-relaxed text-theme-muted"
                       >{link.description}</span
                     >
                   </a>
