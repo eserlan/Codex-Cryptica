@@ -3,6 +3,7 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import DetailHeader from "./DetailHeader.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 // Mock stores
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
@@ -14,6 +15,7 @@ vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
+    openParentPicker: vi.fn(),
   },
 }));
 
@@ -23,12 +25,21 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     selectedEntityId: "entity-1",
     addLabel: vi.fn(),
     removeLabel: vi.fn(),
+    updateEntity: vi.fn(),
     entities: {
+      "entity-1": {
+        id: "entity-1",
+        title: "Test Entity",
+      },
       "parent-id": {
         id: "parent-id",
         title: "Mock Parent Entity",
       },
     },
+    allEntities: [
+      { id: "entity-1", title: "Test Entity", type: "note" },
+      { id: "parent-id", title: "Mock Parent Entity", type: "location" },
+    ],
   },
 }));
 
@@ -164,6 +175,72 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     const indicator = getByTestId("sidebar-parent-indicator");
     expect(indicator).toBeTruthy();
     expect(getByText("Mock Parent Entity")).toBeTruthy();
+  });
+});
+
+describe("DetailHeader parent selection", () => {
+  const renderEntity = (entity: Record<string, unknown>) =>
+    render(DetailHeader, {
+      entity: {
+        id: "entity-1",
+        title: "Test Entity",
+        aliases: [],
+        labels: [],
+        ...entity,
+      } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  it("offers to set a parent where the indicator would otherwise sit", () => {
+    // Without an entry point here, nesting is reachable only by dragging in the
+    // explorer — invisible to anyone working from the detail panel.
+    const { getByTestId, queryByTestId } = renderEntity({});
+
+    expect(getByTestId("set-parent-button")).toBeTruthy();
+    expect(queryByTestId("sidebar-parent-indicator")).toBeNull();
+  });
+
+  it("offers to change the parent an entity already has", () => {
+    const { getByTestId, queryByTestId } = renderEntity({
+      parent: "parent-id",
+    });
+
+    expect(getByTestId("change-parent-button")).toBeTruthy();
+    expect(queryByTestId("set-parent-button")).toBeNull();
+  });
+
+  it("asks the global modal host to open the picker", async () => {
+    // Hosting it here instead would trap the dialog in the detail panel's
+    // stacking context, and leave isAnyModalOpen blind to it.
+    const { getByTestId } = renderEntity({});
+
+    await fireEvent.click(getByTestId("set-parent-button"));
+
+    expect(modalUIStore.openParentPicker).toHaveBeenCalledWith("entity-1");
+  });
+
+  it("opens the picker on the same entity when changing an existing parent", async () => {
+    const { getByTestId } = renderEntity({ parent: "parent-id" });
+
+    await fireEvent.click(getByTestId("change-parent-button"));
+
+    expect(modalUIStore.openParentPicker).toHaveBeenCalledWith("entity-1");
+  });
+
+  it("never offers to rearrange a vault the viewer does not own", () => {
+    (vault as any).isGuest = true;
+    try {
+      const { queryByTestId } = renderEntity({ parent: "parent-id" });
+      expect(queryByTestId("set-parent-button")).toBeNull();
+      expect(queryByTestId("change-parent-button")).toBeNull();
+      // The parent itself still reads, guests just cannot move it.
+      expect(queryByTestId("sidebar-parent-indicator")).toBeTruthy();
+    } finally {
+      (vault as any).isGuest = false;
+    }
   });
 });
 

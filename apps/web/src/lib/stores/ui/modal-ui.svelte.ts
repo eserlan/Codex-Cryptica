@@ -108,6 +108,14 @@ export class ModalUIStore {
     sourceEntityId: null,
   });
 
+  parentPickerDialog = $state<{
+    open: boolean;
+    entityId: string | null;
+  }>({
+    open: false,
+    entityId: null,
+  });
+
   vaultThemePrompt = $state<{
     open: boolean;
     vaultId: string | null;
@@ -212,6 +220,14 @@ export class ModalUIStore {
 
   closeRelatedEntityDialog() {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
+  }
+
+  openParentPicker(entityId: string) {
+    this.parentPickerDialog = { open: true, entityId };
+  }
+
+  closeParentPicker() {
+    this.parentPickerDialog = { open: false, entityId: null };
   }
 
   openVaultThemePrompt(vaultId: string) {
@@ -483,6 +499,7 @@ export class ModalUIStore {
       this.mergeDialog.open ||
       this.bulkLabelDialog.open ||
       this.relatedEntityDialog.open ||
+      this.parentPickerDialog.open ||
       this.vaultThemePrompt.open ||
       this.showVaultSwitcher ||
       this.showShare ||
@@ -501,6 +518,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v10__";
+const KEY = "__codex_modal_ui_store__v11__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

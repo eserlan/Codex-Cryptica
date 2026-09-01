@@ -56,6 +56,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     bulkLabelDialog: { open: false, entityIds: [] },
     soundBite: { show: false, entityId: null },
     relatedEntityDialog: { open: false, sourceEntityId: null },
+    parentPickerDialog: { open: false, entityId: null },
     showVaultSwitcher: false,
     vaultThemePrompt: { open: false, vaultId: null },
     showShare: false,

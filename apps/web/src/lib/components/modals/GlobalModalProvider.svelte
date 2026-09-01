@@ -183,6 +183,18 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.parentPickerDialog.open}
+      {#await loadModal(() => import("$lib/components/entity-detail/ParentPickerModal.svelte"), "ParentPickerModal") then ParentPickerModal}
+        {#if ParentPickerModal}
+          <ParentPickerModal
+            isOpen={modalUIStore.parentPickerDialog.open}
+            entityId={modalUIStore.parentPickerDialog.entityId}
+            onClose={() => modalUIStore.closeParentPicker()}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     {#if modalUIStore.showVaultSwitcher}
       {#await loadModal(() => import("$lib/components/vaults/VaultSwitcherModal.svelte"), "VaultSwitcherModal") then VaultSwitcherModal}
         {#if VaultSwitcherModal}
