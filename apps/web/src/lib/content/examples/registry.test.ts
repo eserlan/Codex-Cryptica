@@ -157,6 +157,16 @@ describe("the published examples", () => {
     expect(vivienne.generator.href).toBe("/generators/bbeg-generator");
   });
 
+  it("publishes a Pirate adventure filling the adventure kind gap", () => {
+    const lettersOfMarque =
+      examples["letters-of-marque-expired-pirate-adventure"];
+    expect(lettersOfMarque.kind).toBe("adventure");
+    expect(lettersOfMarque.genre).toBe("Pirate");
+    expect(lettersOfMarque.generator.href).toBe(
+      "/generators/adventure-generator",
+    );
+  });
+
   it("keys every example by its own slug", () => {
     for (const [key, example] of Object.entries(examples)) {
       expect(key).toBe(example.slug);

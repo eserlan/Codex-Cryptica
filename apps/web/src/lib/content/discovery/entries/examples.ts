@@ -152,4 +152,23 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-letters-of-marque-expired",
+    pageKind: "example",
+    canonicalPath: "/examples/letters-of-marque-expired-pirate-adventure",
+    primaryIntent: "pirate adventure example",
+    intentAliases: [
+      "example of a generated quest",
+      "sample pirate rpg adventure",
+      "example of a generated adventure",
+    ],
+    audience: "Pirate & High Seas game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A full adventure arc with a real clock, physical clues, a non-combat social complication, and three genuinely different resolution paths rather than a single scene.",
+    parentCluster: "adventure-design",
+    relatedIntents: ["generator-adventure-generator"],
+    indexable: true,
+    status: "live",
+  },
 ];
