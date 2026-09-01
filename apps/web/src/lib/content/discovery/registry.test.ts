@@ -429,6 +429,22 @@ describe("the committed registry", () => {
     }
   });
 
+  it("keeps hexcrawl phrasing on West Marches instead of a duplicate route", () => {
+    expect(findIntentOwner("hexcrawl campaign manager", registry)?.id).toBe(
+      "for-west-marches",
+    );
+    expect(getEntryByPath("/for/hexcrawl-campaigns", registry)).toBeUndefined();
+  });
+
+  it("gives solo worldbuilding its own creator-facing intent", () => {
+    expect(findIntentOwner("solo worldbuilding tool", registry)?.id).toBe(
+      "for-solo-worldbuilding",
+    );
+    expect(getEntryByPath("/for/solo-worldbuilding", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+  });
+
   it("seeds every major discovery family", () => {
     const kinds = new Set(registry.map((entry) => entry.pageKind));
     for (const kind of [
