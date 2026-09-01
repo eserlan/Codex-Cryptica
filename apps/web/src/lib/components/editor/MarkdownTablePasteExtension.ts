@@ -7,9 +7,11 @@ export const MARKDOWN_TABLE_PASTE_KEY = new PluginKey("markdownTablePaste");
 /**
  * A GFM table's separator row: `| --- | :--- | ---: |` (leading/trailing
  * pipes optional, alignment colons optional, at least 3 dashes per column
- * per the spec — 2 is also common in the wild, so this is lenient).
+ * per the spec — 2 is also common in the wild, so this is lenient). The
+ * trailing group is `*`, not `+` — a single-column table's separator row
+ * (`| --- |`) has no *additional* `|---|` group after the first column.
  */
-const SEPARATOR_ROW = /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?$/;
+const SEPARATOR_ROW = /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/;
 
 /**
  * Whether pasted plain text looks like a GFM pipe table: a header row

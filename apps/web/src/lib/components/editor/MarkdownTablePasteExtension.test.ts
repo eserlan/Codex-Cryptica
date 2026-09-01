@@ -31,6 +31,12 @@ describe("looksLikeMarkdownTable", () => {
     ).toBe(true);
   });
 
+  it("recognises a single-column table", () => {
+    expect(looksLikeMarkdownTable("| Name |\n| --- |\n| Mira Voss |")).toBe(
+      true,
+    );
+  });
+
   it("recognises a table without leading/trailing pipes", () => {
     expect(
       looksLikeMarkdownTable("Name | Role\n--- | ---\nMira Voss | Captain"),
@@ -133,6 +139,20 @@ describe("MarkdownTablePasteExtension — paste handling", () => {
       "Factor",
       "Friendly",
     ]);
+  });
+
+  it("converts a pasted single-column table into real table nodes", () => {
+    const editor = createTestEditor();
+    editor.commands.focus("end");
+
+    const handled = paste(editor, "| Name |\n| --- |\n| Mira Voss |");
+
+    expect(handled).toBe(true);
+    const dom = editor.view.dom;
+    expect(dom.querySelectorAll("table")).toHaveLength(1);
+    expect(dom.querySelectorAll("tr")).toHaveLength(2);
+    expect(dom.querySelector("th")?.textContent?.trim()).toBe("Name");
+    expect(dom.querySelector("td")?.textContent?.trim()).toBe("Mira Voss");
   });
 
   it("round-trips the pasted table back to adjacent-line GFM markdown, with no blank lines between rows", () => {
