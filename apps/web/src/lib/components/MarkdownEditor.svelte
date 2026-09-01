@@ -391,6 +391,14 @@
     border-color: var(--color-theme-border);
   }
 
+  /* The `prose` class puts ~1.25em top/bottom margin on every <p>, even the
+     empty placeholder paragraph tiptap keeps in a blank cell. Left alone,
+     that margin makes table rows (especially empty ones) balloon in height. */
+  :global(.ProseMirror td p),
+  :global(.ProseMirror th p) {
+    margin: 0;
+  }
+
   :global(.ProseMirror h1),
   :global(.ProseMirror h2),
   :global(.ProseMirror h3) {
