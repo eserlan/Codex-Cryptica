@@ -10,7 +10,7 @@
 
   const { data } = $props();
 
-  // System and genre guides that belong to this hub.
+  // The /for guides — system, genre or campaign style — that belong to this hub.
   const landingPages = $derived(getLandingPagesForHub(data.theme));
 
   const origin = "https://codexcryptica.com";
@@ -875,8 +875,8 @@
           Campaign guides for these worlds
         </h2>
         <p class="text-sm text-theme-muted leading-relaxed mb-6">
-          How Codex Cryptica handles the systems and genres these generators are
-          built for.
+          How Codex Cryptica handles the systems, genres and campaign styles
+          these generators are built for.
         </p>
         <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
           {#each landingPages as page (page.slug)}
