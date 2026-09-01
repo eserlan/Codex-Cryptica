@@ -13,6 +13,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { hubThemeLabel, type HubThemeSlug } from "$lib/content/hub-themes";
   import LandingPageGraphPreview from "$lib/components/for/LandingPageGraphPreview.svelte";
+  import { getLandingPageCanonicalUrl } from "$lib/content/for/canonical";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
@@ -61,6 +62,14 @@
     config.exampleGraph?.badgeLabel ?? "Interactive Graph View",
   );
 
+  // A genre page is a guide to a *world*; system and campaign-style pages are
+  // guides to running a *campaign*.
+  let complicationSubject = $derived(
+    config.kind === "genre" ? "worlds" : "campaigns",
+  );
+
+  let canonicalUrl = $derived(getLandingPageCanonicalUrl(config));
+
   let seoImage = $derived(
     config.seo.image
       ? config.seo.image.startsWith("http://") ||
@@ -73,10 +82,12 @@
     config.seo.imageAlt ?? `${config.hero.title} — Codex Cryptica`,
   );
 
+  // Always assign, never only when a theme exists: SvelteKit reuses this
+  // component across /for/[slug] -> /for/[slug] navigations, so `onDestroy`
+  // does not run between packs. Skipping the call for a theme-less pack would
+  // leave the previous page's theme applied.
   $effect(() => {
-    if (config.theme) {
-      themeStore.previewTheme(config.theme);
-    }
+    themeStore.previewTheme(config.theme ?? null);
   });
 
   onDestroy(() => {
@@ -104,9 +115,7 @@
   <meta name="twitter:description" content={config.seo.description} />
   <meta name="twitter:image" content={seoImage} />
   <meta name="twitter:image:alt" content={seoImageAlt} />
-  {#if config.seo.canonical}
-    <link rel="canonical" href={config.seo.canonical} />
-  {/if}
+  <link rel="canonical" href={canonicalUrl} />
 </svelte:head>
 
 <div
@@ -145,7 +154,7 @@
             <h2
               class="mb-2 font-header text-base font-bold text-theme-text sm:text-lg"
             >
-              Why {config.kind === "system" ? "campaigns" : "worlds"} get complicated
+              Why {complicationSubject} get complicated
             </h2>
             <p
               class="font-light text-sm sm:text-base leading-relaxed text-theme-muted"

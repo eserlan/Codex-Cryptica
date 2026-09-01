@@ -547,6 +547,11 @@ export class VaultStore {
     return this.syncStore.loadFromFolder();
   }
 
+  /** Discards the fast-start cache and re-reads the vault from OPFS (#2619). */
+  async reloadFromDisk() {
+    return this.syncStore.reloadFromDisk();
+  }
+
   async saveToFolder() {
     return this.syncStore.saveToFolder();
   }

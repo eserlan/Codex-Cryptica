@@ -104,7 +104,13 @@ export type LandingPageSurfaceStyle = z.infer<
 
 export const LandingPageConfigSchema = z.object({
   slug: z.string().min(1),
-  kind: z.enum(["system", "genre"]),
+  /**
+   * What the page is a guide *to*. "use-case" covers campaign styles — West
+   * Marches, sandbox play — which are neither a game system nor a genre: they
+   * cut across both, so the /for directory lists them in their own section
+   * rather than filing an open-table fantasy game under "Genres & Settings".
+   */
+  kind: LandingPageKindSchema,
   theme: z.string().optional(),
   surfaceStyle: LandingPageSurfaceStyleSchema.optional(),
   /**

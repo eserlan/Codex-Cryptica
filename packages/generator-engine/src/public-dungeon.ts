@@ -446,8 +446,19 @@ function generateFaction(
 
 /** Resolve sector ids to their names for prose, joined naturally ("A, B and C"). */
 function territoryNames(ids: string[], sectors: DungeonSector[]): string {
-  const byId = new Map(sectors.map((s) => [s.id, s.name]));
-  const names = ids.map((id) => byId.get(id)).filter((n): n is string => !!n);
+  // ⚡ Bolt Optimization: Replace chained .map().filter() and Map allocations
+  // with a single imperative loop over sectors to avoid intermediate arrays.
+  const byId = new Map<string, string>();
+  for (const s of sectors) {
+    byId.set(s.id, s.name);
+  }
+
+  const names: string[] = [];
+  for (const id of ids) {
+    const name = byId.get(id);
+    if (name) names.push(name);
+  }
+
   if (names.length === 0) return "these halls";
   if (names.length === 1) return names[0];
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;

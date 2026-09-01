@@ -4,11 +4,14 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { quickNoteScratchpadMock } = vi.hoisted(() => ({
-  quickNoteScratchpadMock: vi.fn(() => ({
-    $$render: () => "",
-  })),
-}));
+const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
+  () => ({
+    quickNoteScratchpadMock: vi.fn(() => ({
+      $$render: () => "",
+    })),
+    setVaultSessionActiveMock: vi.fn(),
+  }),
+);
 
 vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/paths", () => ({ base: "" }));
@@ -152,7 +155,10 @@ vi.mock("$lib/app/init/app-init", () => ({
   bootSystem: vi.fn(() => true),
   initializeGlobalListeners: vi.fn(() => () => {}),
   setupWindowGlobals: vi.fn(),
-  registerServiceWorker: vi.fn(),
+  registerServiceWorker: vi.fn(() => ({
+    setVaultSessionActive: setVaultSessionActiveMock,
+    destroy: vi.fn(),
+  })),
 }));
 vi.mock("$lib/hooks/useGlobalShortcuts.svelte", () => ({
   useGlobalShortcuts: vi.fn(() => vi.fn()),
@@ -284,6 +290,27 @@ describe("+layout.svelte", () => {
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockClear();
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(false);
     quickNoteScratchpadMock.mockClear();
+    setVaultSessionActiveMock.mockClear();
+  });
+
+  it("activates offline shell caching only for an open local vault route", async () => {
+    render(LayoutTestHost);
+
+    await waitFor(() => {
+      expect(setVaultSessionActiveMock).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it("keeps offline shell caching inactive on non-vault app routes", async () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    await waitFor(() => {
+      expect(setVaultSessionActiveMock).toHaveBeenCalled();
+    });
+    expect(setVaultSessionActiveMock).not.toHaveBeenCalledWith(true);
+    expect(setVaultSessionActiveMock).toHaveBeenLastCalledWith(false);
   });
 
   it("keeps route content mounted beneath the app shell", () => {

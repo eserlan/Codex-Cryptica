@@ -64,6 +64,7 @@ import {
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
   handleCloudBackupAdminLookup,
+  handleCloudBackupAdminStats,
   handleCloudBackupReissueCode,
   handleCloudBackupAdminDelete,
 } from "./cloud-backup";
@@ -270,6 +271,15 @@ export default {
             headers: getCorsHeaders(request.headers, env),
           });
         return handleCloudBackupAdminLookup(request, env);
+      }
+
+      if (pathname === "/api/cloud-backup/admin/stats") {
+        if (request.method !== "GET")
+          return new Response("Method not allowed", {
+            status: 405,
+            headers: getCorsHeaders(request.headers, env),
+          });
+        return handleCloudBackupAdminStats(request, env);
       }
 
       if (pathname.startsWith("/api/cloud-backup/admin/")) {

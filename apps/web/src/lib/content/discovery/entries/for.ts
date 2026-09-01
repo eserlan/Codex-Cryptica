@@ -239,4 +239,50 @@ export const forEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "for-west-marches",
+    pageKind: "for",
+    canonicalPath: "/for/west-marches",
+    primaryIntent: "west marches campaign manager",
+    intentAliases: [
+      "west marches campaign tool",
+      "organise a west marches campaign",
+      "open table campaign organiser",
+    ],
+    audience: "Game masters running open-table West Marches games",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "The open-table problem specifically: one shared map and world state that has to survive a rotating roster, irregular sessions and expeditions that never meet each other.",
+    parentCluster: "campaign-style-guides",
+    relatedIntents: [
+      "for-sandbox-campaigns",
+      "answer-point-crawl",
+      "for-dungeons-and-dragons",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "for-sandbox-campaigns",
+    pageKind: "for",
+    canonicalPath: "/for/sandbox-campaigns",
+    primaryIntent: "sandbox rpg campaign manager",
+    intentAliases: [
+      "sandbox campaign tool",
+      "organise an rpg sandbox",
+      "manage factions and locations in a sandbox campaign",
+    ],
+    audience: "Game masters running player-directed sandbox games of any genre",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Keeping many live hooks, faction agendas and player-caused consequences visible at once, for a table that ignores the prepared thread and chases something else.",
+    parentCluster: "campaign-style-guides",
+    relatedIntents: [
+      "for-west-marches",
+      "answer-campaign-notes",
+      "for-fantasy-worldbuilding",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

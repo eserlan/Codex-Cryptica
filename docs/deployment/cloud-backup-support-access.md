@@ -19,12 +19,14 @@ What it can do:
 - Look up **one** backup's metadata — title, size, last-backup time — by exact
   vault title.
 - Issue that backup a fresh ownership code.
+- Read aggregate totals across every backup — vault count, asset count, total
+  stored bytes — with no per-vault detail in the response at all.
 
 What it cannot do, because the routes do not exist:
 
 - Read, download, or restore a vault's contents.
 - List backups, or browse by partial title.
-- Return more than one backup in a single response.
+- Return more than one backup's identifying detail in a single response.
 
 ## Configure The Worker
 
@@ -143,10 +145,39 @@ This is irreversible and there is no undo, no retention window and no copy
 elsewhere. Verify identity exactly as you would before re-issuing a code, and
 prefer walking the user through deleting it themselves when they still can.
 
+## Checking Overall Usage
+
+`GET /api/cloud-backup/admin/stats` returns aggregate counts only:
+
+```bash
+curl https://oracle-proxy.espen-erlandsen.workers.dev/api/cloud-backup/admin/stats \
+  -H "Authorization: Bearer $CLOUD_BACKUP_ADMIN_TOKEN"
+```
+
+```json
+{
+  "vaultCount": 42,
+  "assetCount": 118,
+  "totalBytes": 933184512,
+  "complete": true
+}
+```
+
+A minimal page at `/admin/cloud-backup` calls the same route and renders the
+same four fields — nothing more. `complete: false` means the bucket is large
+enough that the scan hit its safety cap; the numbers are then a floor, not the
+true total, rather than the route silently paginating into an unbounded walk.
+
+This route walks the whole `cloud-backup/` prefix, unlike the lookup above,
+because summed totals carry no identifying information — an operator learns
+"how many" and "how big", never "which ones". It still cannot be extended to
+return a title, a backup id, or any other per-vault field without reopening
+the door FR-016 closes; treat that boundary as fixed, not as a starting point.
+
 ## What To Refuse
 
-Any request to list backups, to browse by partial title, or to read a vault's
-contents. None of those exist, and none should be built — see FR-016 in
-`specs/162-cc-cloud-backup/spec.md`. The lookup also caps its scan and never
-paginates, for the same reason: an unbounded walk is bulk enumeration by
-another name.
+Any request to list backups, to browse by partial title, to read a vault's
+contents, or to add per-vault detail to the stats route above. None of those
+exist, and none should be built — see FR-016 in `specs/162-cc-cloud-backup/spec.md`.
+The lookup also caps its scan and never paginates, for the same reason: an
+unbounded walk is bulk enumeration by another name.

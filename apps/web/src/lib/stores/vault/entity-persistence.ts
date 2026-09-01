@@ -313,11 +313,19 @@ export class EntityPersistenceService {
       await updateLastInternalChange(vaultIdAtStart);
 
       const path = latestEntity._path || [`${latestEntity.id}.md`];
-      await cacheService.set(
+      const cached = await cacheService.set(
         `${vaultIdAtStart}:${path.join("/")}`,
         systemClock.now(),
         latestEntity,
       );
+      // Explicitly `false`, not falsy: a cache layer that returns nothing must
+      // not be read as "every save failed" and thrash the preload.
+      if (cached === false) {
+        // The entity is on disk; only the fast-start cache row is missing. Drop
+        // the in-memory preload snapshot so nothing downstream reads a copy we
+        // know is behind OPFS (#2619).
+        cacheService.invalidatePreload();
+      }
 
       if (hydratedContent) {
         this.deps.markContentLoaded(latestEntity.id);

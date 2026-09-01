@@ -324,6 +324,21 @@
                 <button
                   type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => vault.reloadFromDisk()}
+                  title="Reload from Disk - discards the fast-start cache and re-reads this vault from the internal archive. Use this if the app is showing older content than you expect."
+                  aria-label="Reload from Disk"
+                  disabled={isLoading || !!editingId}
+                  data-testid="reload-from-disk-button"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--refresh-cw] w-3.5 h-3.5"
+                  ></span>
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => vault.loadFromFolder()}
                   title="Load from Folder - pulls changes from your linked folder into the archive."
                   aria-label="Load from Folder"
