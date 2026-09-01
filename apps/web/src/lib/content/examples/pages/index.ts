@@ -4,6 +4,7 @@ import { theLowTideRust } from "./the-low-tide-rust-dock-syndicate";
 import { arcHub } from "./arc-hub-augmentation-slum";
 import { theVentingHelix } from "./the-venting-helix-derelict-hazard";
 import { theCinderWren } from "./the-cinder-wren-space-western-ship";
+import { voidSiphon } from "./void-siphon-cosmic-horror-creature";
 
 /**
  * The published example library.
@@ -17,7 +18,14 @@ import { theCinderWren } from "./the-cinder-wren-space-western-ship";
  * build time, since these pages prerender.
  */
 export const examples: Record<string, ExampleConfig> = Object.fromEntries(
-  [gullsRoost, theLowTideRust, arcHub, theVentingHelix, theCinderWren]
+  [
+    gullsRoost,
+    theLowTideRust,
+    arcHub,
+    theVentingHelix,
+    theCinderWren,
+    voidSiphon,
+  ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
 );

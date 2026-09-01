@@ -110,6 +110,29 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "example-void-siphon",
+    pageKind: "example",
+    canonicalPath: "/examples/void-siphon-cosmic-horror-creature",
+    primaryIntent: "cosmic horror creature example",
+    intentAliases: [
+      "example of a generated monster",
+      "sample cosmic horror creature",
+      "example of a generated creature",
+    ],
+    audience: "Cosmic Horror game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A monstrous-hazard creature roll shown with the generator's own player-facing/GM-only split intact, rather than flattened into one description.",
+    parentCluster: "antagonist-creation",
+    relatedIntents: [
+      "generator-creature",
+      "answer-random-encounter",
+      "for-cosmic-horror",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "example-venting-helix",
     pageKind: "example",
     canonicalPath: "/examples/the-venting-helix-derelict-hazard",
