@@ -150,6 +150,13 @@ describe("the published examples", () => {
     expect(cinderWren.generator.href).toBe("/generators/ship-generator");
   });
 
+  it("publishes a Gothic Horror villain filling the character kind gap", () => {
+    const vivienne = examples["lady-vivienne-morvath-gothic-horror-villain"];
+    expect(vivienne.kind).toBe("character");
+    expect(vivienne.genre).toBe("Gothic Horror");
+    expect(vivienne.generator.href).toBe("/generators/bbeg-generator");
+  });
+
   it("keys every example by its own slug", () => {
     for (const [key, example] of Object.entries(examples)) {
       expect(key).toBe(example.slug);
