@@ -13,7 +13,9 @@ import {
 } from "$lib/service-worker/lifecycle";
 
 const CACHE_VERSION = "597";
-const CACHE = `cache-${__APP_VERSION__}-${CACHE_VERSION}`;
+const appVersion =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
+const CACHE = `cache-${appVersion}-${CACHE_VERSION}`;
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
