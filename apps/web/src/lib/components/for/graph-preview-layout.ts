@@ -24,7 +24,12 @@ export const COMPACT_VIEWBOX: GraphViewBox = { width: 320, height: 400 };
  */
 export function getPositions(count: number, compact = false): GraphPosition[] {
   if (compact) {
-    const hub: GraphPosition = { cx: 160, cy: 200 };
+    // Hub sits at the exact centre of COMPACT_VIEWBOX; derive it from the
+    // constant so the two can't drift apart if the canvas size changes.
+    const hub: GraphPosition = {
+      cx: COMPACT_VIEWBOX.width / 2,
+      cy: COMPACT_VIEWBOX.height / 2,
+    };
     if (count <= 5) {
       return [
         hub,
@@ -44,7 +49,12 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
     ];
   }
 
-  const hub: GraphPosition = { cx: 270, cy: 140 };
+  // Hub sits at the exact centre of WIDE_VIEWBOX; derive it from the
+  // constant so the two can't drift apart if the canvas size changes.
+  const hub: GraphPosition = {
+    cx: WIDE_VIEWBOX.width / 2,
+    cy: WIDE_VIEWBOX.height / 2,
+  };
   if (count <= 5) {
     return [
       hub,

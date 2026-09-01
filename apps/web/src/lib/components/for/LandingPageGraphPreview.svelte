@@ -129,8 +129,14 @@
     const mq = window.matchMedia("(max-width: 639px)");
     const update = () => (isCompact = mq.matches);
     update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    // Safari <14 and some embedded webviews only support the legacy
+    // addListener/removeListener pair, matching the fallback in theme.svelte.ts.
+    if (mq.addEventListener) {
+      mq.addEventListener("change", update);
+      return () => mq.removeEventListener("change", update);
+    }
+    mq.addListener(update);
+    return () => mq.removeListener(update);
   });
 
   let viewBox = $derived(isCompact ? COMPACT_VIEWBOX : WIDE_VIEWBOX);
@@ -217,8 +223,8 @@
                  four labels converging on a narrow hub can't stay legible
                  at once, so the rest reveal on selection instead. -->
             {@const badgeW = Math.max(
-              54,
-              Math.round(step.relation.length * 7.4 * scale) + 18,
+              54 * scale,
+              Math.round(step.relation.length * 7.4 * scale) + 18 * scale,
             )}
             {@const badgeH = 28 * scale}
             <rect
