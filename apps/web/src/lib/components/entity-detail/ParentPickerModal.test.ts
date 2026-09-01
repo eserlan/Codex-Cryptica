@@ -224,6 +224,33 @@ describe("ParentPickerModal", () => {
     expect(options[0].getAttribute("aria-selected")).toBe("false");
   });
 
+  it("announces no popup when the search matches nothing", async () => {
+    // An empty listbox would advertise a popup with nothing in it, and
+    // role="listbox" may not wrap the empty state — that is not an option.
+    const { getByTestId, container } = open("warden");
+    await fireEvent.input(getByTestId("parent-picker-search"), {
+      target: { value: "nothing matches this" },
+    });
+
+    const search = getByTestId("parent-picker-search");
+    expect(search.getAttribute("aria-expanded")).toBe("false");
+    expect(search.getAttribute("aria-controls")).toBeNull();
+    expect(search.getAttribute("aria-activedescendant")).toBeNull();
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(container.textContent).toContain("No entities found");
+  });
+
+  it("declares itself a list-completing combobox while it has options", () => {
+    const { getByTestId, container } = open("warden");
+    const search = getByTestId("parent-picker-search");
+
+    expect(search.getAttribute("role")).toBe("combobox");
+    expect(search.getAttribute("aria-autocomplete")).toBe("list");
+    expect(search.getAttribute("aria-expanded")).toBe("true");
+    expect(search.getAttribute("aria-controls")).toBe("parent-picker-results");
+    expect(container.querySelector('[role="listbox"]')).not.toBeNull();
+  });
+
   it("closes on Escape without touching the hierarchy", async () => {
     const onClose = vi.fn();
     render(ParentPickerModal, {

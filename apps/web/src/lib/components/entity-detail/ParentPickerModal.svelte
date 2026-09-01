@@ -202,8 +202,11 @@
           placeholder="Search entities…"
           aria-label="Search for a parent entity"
           role="combobox"
+          aria-autocomplete="list"
           aria-expanded={results.length > 0}
-          aria-controls="parent-picker-results"
+          aria-controls={results.length > 0
+            ? "parent-picker-results"
+            : undefined}
           aria-activedescendant={results.length > 0
             ? `parent-picker-option-${activeIndex}`
             : undefined}
@@ -212,68 +215,73 @@
         />
       </div>
 
-      <div
-        bind:this={listEl}
-        id="parent-picker-results"
-        role="listbox"
-        aria-label="Parent candidates"
-        class="custom-scrollbar my-3 max-h-[45vh] space-y-1 overflow-y-auto px-3"
-      >
-        {#each results as candidate, index (candidate.id)}
-          {@const category = categories.getCategory(candidate.type)}
-          <button
-            type="button"
-            id="parent-picker-option-{index}"
-            role="option"
-            aria-selected={index === activeIndex}
-            data-parent-option
-            data-testid="parent-picker-option"
-            disabled={isSaving}
-            onmouseenter={() => (activeIndex = index)}
-            onclick={() => selectParent(candidate.id)}
-            class="group flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors disabled:opacity-50 {index ===
-            activeIndex
-              ? 'border-theme-primary/40 bg-theme-primary/10'
-              : 'border-transparent hover:border-theme-primary/30 hover:bg-theme-primary/5'}"
-          >
-            <span
-              class="{getIconClass(category?.icon)} h-4 w-4 shrink-0"
-              style:color={category?.color}
-              aria-hidden="true"
-            ></span>
-            <span class="min-w-0 flex-1">
+      <!-- The listbox exists only while it holds options: an empty one would
+           announce a popup that has nothing in it, and role="listbox" may not
+           wrap the empty state, which is not an option. -->
+      {#if results.length > 0}
+        <div
+          bind:this={listEl}
+          id="parent-picker-results"
+          role="listbox"
+          aria-label="Parent candidates"
+          class="custom-scrollbar my-3 max-h-[45vh] space-y-1 overflow-y-auto px-3"
+        >
+          {#each results as candidate, index (candidate.id)}
+            {@const category = categories.getCategory(candidate.type)}
+            <button
+              type="button"
+              id="parent-picker-option-{index}"
+              role="option"
+              aria-selected={index === activeIndex}
+              data-parent-option
+              data-testid="parent-picker-option"
+              disabled={isSaving}
+              onmouseenter={() => (activeIndex = index)}
+              onclick={() => selectParent(candidate.id)}
+              class="group flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors disabled:opacity-50 {index ===
+              activeIndex
+                ? 'border-theme-primary/40 bg-theme-primary/10'
+                : 'border-transparent hover:border-theme-primary/30 hover:bg-theme-primary/5'}"
+            >
               <span
-                class="block truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text"
-                data-testid="parent-picker-option-title"
-              >
-                {candidate.title}
+                class="{getIconClass(category?.icon)} h-4 w-4 shrink-0"
+                style:color={category?.color}
+                aria-hidden="true"
+              ></span>
+              <span class="min-w-0 flex-1">
+                <span
+                  class="block truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text"
+                  data-testid="parent-picker-option-title"
+                >
+                  {candidate.title}
+                </span>
+                <span
+                  class="block truncate text-[10px] uppercase tracking-tighter text-theme-muted"
+                >
+                  {category?.label || candidate.type}
+                </span>
               </span>
-              <span
-                class="block truncate text-[10px] uppercase tracking-tighter text-theme-muted"
-              >
-                {category?.label || candidate.type}
-              </span>
-            </span>
-            {#if sanitizeId(candidate.id) === currentParentId}
-              <span
-                class="shrink-0 rounded border border-theme-primary/30 bg-theme-primary/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-theme-secondary"
-              >
-                Current
-              </span>
-            {/if}
-          </button>
-        {:else}
-          <div class="px-2 py-4">
-            <EmptyState
-              icon="icon-[lucide--search-x]"
-              headline="No entities found"
-              body={query.trim()
-                ? `Nothing matches "${query.trim()}"`
-                : "There is nothing else this can be nested under yet."}
-            />
-          </div>
-        {/each}
-      </div>
+              {#if sanitizeId(candidate.id) === currentParentId}
+                <span
+                  class="shrink-0 rounded border border-theme-primary/30 bg-theme-primary/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-theme-secondary"
+                >
+                  Current
+                </span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+      {:else}
+        <div class="px-5 py-4">
+          <EmptyState
+            icon="icon-[lucide--search-x]"
+            headline="No entities found"
+            body={query.trim()
+              ? `Nothing matches "${query.trim()}"`
+              : "There is nothing else this can be nested under yet."}
+          />
+        </div>
+      {/if}
 
       {#if matches.length > results.length}
         <p

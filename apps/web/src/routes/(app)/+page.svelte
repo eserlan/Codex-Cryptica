@@ -147,14 +147,13 @@
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      // 0. If a modal owns Escape, let it handle its own dismissal — otherwise
-      // both listeners fire and the entity behind it is deselected too.
-      if (
-        modalUIStore.showSettings ||
-        modalUIStore.showDiceModal ||
-        modalUIStore.parentPickerDialog.open
-      )
-        return;
+      // 0. Any open modal owns Escape. Modals attach their own window-level
+      // listeners, and stopPropagation cannot help — every listener sits on
+      // window — so this handler has to stand down, or it deselects the entity
+      // behind whichever modal the user was actually dismissing. Reading the
+      // store's own aggregate rather than naming modals keeps that true for
+      // ones added later.
+      if (modalUIStore.isAnyModalOpen) return;
 
       // 1. If an entity is focused (EmbeddedEntityView), close it
       if (layoutUIStore.mainViewMode === "focus") {
