@@ -649,3 +649,17 @@
   --tw-prose-th-borders: var(--color-border-primary);
   --tw-prose-td-borders: var(--color-border-primary);
 }
+
+/*
+ * Typography's default table is a plain block-level `<table>` with no
+ * overflow handling, so a table wider than its container blows out the
+ * entity/mobile layout instead of scrolling (#2635). Scrolling the table
+ * element itself, rather than wrapping it in a container div, needs no
+ * markup change from either the TipTap editor's or the read-only renderer's
+ * output.
+ */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
