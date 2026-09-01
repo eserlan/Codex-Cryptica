@@ -1,7 +1,7 @@
 import type { ExampleConfigInput } from "../schema";
 
 /**
- * Source: discussion #2647. Fills the 'character' kind gap (#2641) with a
+ * Source: discussion #2656. Fills the 'character' kind gap (#2641) with a
  * Gothic Horror BBEG / Campaign Villain generator roll. Output reproduced verbatim.
  */
 export const ladyVivienneMorvath: ExampleConfigInput = {
