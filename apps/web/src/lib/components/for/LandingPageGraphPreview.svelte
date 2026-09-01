@@ -6,7 +6,12 @@
     LandingPageGraphStep,
     LandingPageSurfaceStyle,
   } from "$lib/content/for/schema";
-  import { getPositions } from "$lib/components/for/graph-preview-layout";
+  import { onMount } from "svelte";
+  import {
+    getPositions,
+    WIDE_VIEWBOX,
+    COMPACT_VIEWBOX,
+  } from "$lib/components/for/graph-preview-layout";
 
   let {
     steps,
@@ -116,7 +121,29 @@
 
   let selectAccent = $derived(p.accent);
 
-  let positions = $derived(getPositions(steps.length));
+  // Below `sm` the panel is too narrow for the wide desktop canvas: it scales
+  // down uniformly, which crowds all relation badges near the hub and clips
+  // outer node labels. Swap in a taller, narrower layout instead.
+  let isCompact = $state(false);
+  onMount(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => (isCompact = mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  });
+
+  let viewBox = $derived(isCompact ? COMPACT_VIEWBOX : WIDE_VIEWBOX);
+  /** Uniform shrink for node radii, glow, and text on the smaller canvas. */
+  let scale = $derived(isCompact ? 0.82 : 1);
+
+  const MAX_LABEL_LENGTH = 16;
+  const truncateLabel = (label: string, compact: boolean) =>
+    compact && label.length > MAX_LABEL_LENGTH
+      ? `${label.slice(0, MAX_LABEL_LENGTH - 1).trimEnd()}…`
+      : label;
+
+  let positions = $derived(getPositions(steps.length, isCompact));
   let selectedIndex = $state(0);
   let activeNode = $derived(steps[selectedIndex] || steps[0]);
   let activeColor = $derived(getNodeColor(activeNode));
@@ -139,7 +166,7 @@
     ></div>
 
     <svg
-      viewBox="0 0 540 280"
+      viewBox="0 0 {viewBox.width} {viewBox.height}"
       class="absolute inset-0 h-full w-full"
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
@@ -165,6 +192,11 @@
           {@const pos = positions[i % positions.length]}
           {@const isLinked = selectedIndex === 0 || selectedIndex === i}
           {@const color = isLinked ? selectAccent : p.dimEdge}
+          <!-- Distinct from isLinked: the hub being selected links every
+               spoke's line, but compact badge visibility should only follow
+               the one spoke actually picked, or all 4 badges show at once
+               on the default (hub-selected) state. -->
+          {@const isSpokeSelected = selectedIndex === i}
 
           <line
             x1={hub.cx}
@@ -176,20 +208,24 @@
             stroke-width={isLinked ? "4.5" : "2"}
           />
 
-          {#if step.relation}
+          {#if step.relation && (!isCompact || isSpokeSelected)}
             {@const midX = (hub.cx + pos.cx) / 2}
             {@const midY = (hub.cy + pos.cy) / 2}
             <!-- Relation label badge, sized to its text so short relations
-                 don't crowd the hub or the neighbouring node labels. -->
+                 don't crowd the hub or the neighbouring node labels.
+                 Compact canvases only show the badge for the linked spoke —
+                 four labels converging on a narrow hub can't stay legible
+                 at once, so the rest reveal on selection instead. -->
             {@const badgeW = Math.max(
               54,
-              Math.round(step.relation.length * 7.4) + 18,
+              Math.round(step.relation.length * 7.4 * scale) + 18,
             )}
+            {@const badgeH = 28 * scale}
             <rect
               x={midX - badgeW / 2}
-              y={midY - 14}
+              y={midY - badgeH / 2}
               width={badgeW}
-              height="28"
+              height={badgeH}
               rx={badgeRadius}
               fill={p.badgeFill}
               fill-opacity="0.95"
@@ -199,9 +235,9 @@
             />
             <text
               x={midX}
-              y={midY + 5}
+              y={midY + 5 * scale}
               font-family="var(--font-mono, monospace)"
-              font-size="12.5"
+              font-size={12.5 * scale}
               font-weight="700"
               text-anchor="middle"
               fill={isLinked ? selectAccent : p.badgeText}
@@ -216,7 +252,7 @@
       <circle
         cx={selPos.cx}
         cy={selPos.cy}
-        r="64"
+        r={64 * scale}
         fill={selectAccent}
         fill-opacity="0.25"
       >
@@ -228,7 +264,7 @@
         />
         <animate
           attributeName="r"
-          values="52;68;52"
+          values="{52 * scale};{68 * scale};{52 * scale}"
           dur="3s"
           repeatCount="indefinite"
         />
@@ -236,10 +272,10 @@
 
       <!-- Selection dashed bounding box -->
       <rect
-        x={selPos.cx - 44}
-        y={selPos.cy - 44}
-        width="88"
-        height="88"
+        x={selPos.cx - 44 * scale}
+        y={selPos.cy - 44 * scale}
+        width={88 * scale}
+        height={88 * scale}
         rx="18"
         fill="none"
         stroke={selectAccent}
@@ -254,7 +290,7 @@
         {@const color = getNodeColor(step)}
         {@const isHub = i === 0}
         {@const isSelected = i === selectedIndex}
-        {@const r = isHub ? 38 : 28}
+        {@const r = (isHub ? 38 : 28) * scale}
 
         <g
           class="cursor-pointer transition-transform hover:scale-110"
@@ -299,15 +335,15 @@
                midpoint of every spoke, which crowds the space below the hub. -->
           <text
             x={pos.cx}
-            y={pos.cy + (isHub ? -54 : 48)}
+            y={pos.cy + (isHub ? -54 : 48) * scale}
             font-family="var(--font-header, serif)"
-            font-size={isHub ? "21" : "17"}
+            font-size={(isHub ? 21 : 17) * scale}
             font-weight="700"
             text-anchor="middle"
             fill={isSelected ? p.selectedLabel : "#ffffff"}
             style="filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.95));"
           >
-            {step.label}
+            {truncateLabel(step.label, isCompact)}
           </text>
         </g>
       {/each}

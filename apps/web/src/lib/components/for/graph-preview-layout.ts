@@ -3,11 +3,47 @@ export type GraphPosition = {
   cy: number;
 };
 
+export type GraphViewBox = {
+  width: number;
+  height: number;
+};
+
+/** Landscape canvas used on wide (desktop/tablet) viewports. */
+export const WIDE_VIEWBOX: GraphViewBox = { width: 540, height: 280 };
+
+/** Portrait canvas used below the `sm` breakpoint, where the graph panel is narrow. */
+export const COMPACT_VIEWBOX: GraphViewBox = { width: 320, height: 400 };
+
 /**
- * Computes 2D viewBox node coordinates for landing page graph previews (540x280).
+ * Computes 2D viewBox node coordinates for landing page graph previews.
  * Supports up to 5 steps (4 spokes) and 6 steps (5 spokes) with non-overlapping positions.
+ *
+ * `compact` swaps in a taller, narrower layout (matching COMPACT_VIEWBOX) so relation
+ * badges — which sit at the midpoint of each hub-to-node spoke — get more room to
+ * spread out vertically instead of converging on a wide horizontal hub.
  */
-export function getPositions(count: number): GraphPosition[] {
+export function getPositions(count: number, compact = false): GraphPosition[] {
+  if (compact) {
+    const hub: GraphPosition = { cx: 160, cy: 200 };
+    if (count <= 5) {
+      return [
+        hub,
+        { cx: 75, cy: 78 }, // Top Left (Node 1)
+        { cx: 245, cy: 78 }, // Top Right (Node 2)
+        { cx: 245, cy: 322 }, // Bottom Right (Node 3)
+        { cx: 75, cy: 322 }, // Bottom Left (Node 4)
+      ];
+    }
+    return [
+      hub,
+      { cx: 75, cy: 70 }, // Top Left (Node 1)
+      { cx: 245, cy: 70 }, // Top Right (Node 2)
+      { cx: 250, cy: 260 }, // Right (Node 3)
+      { cx: 160, cy: 370 }, // Bottom Center (Node 4)
+      { cx: 70, cy: 260 }, // Left (Node 5)
+    ];
+  }
+
   const hub: GraphPosition = { cx: 270, cy: 140 };
   if (count <= 5) {
     return [
