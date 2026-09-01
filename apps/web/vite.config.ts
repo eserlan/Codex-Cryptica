@@ -188,7 +188,11 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.{test,spec}.{js,ts}"],
+    include: [
+      "src/**/*.{test,spec}.{js,ts}",
+      // Build scripts keep their tests colocated (e.g. inject-shell-og).
+      "scripts/**/*.{test,spec}.{js,ts}",
+    ],
     environment: "jsdom",
     globals: true,
     pool: "forks",

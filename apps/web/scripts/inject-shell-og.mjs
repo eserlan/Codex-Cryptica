@@ -24,54 +24,111 @@
  *
  * Must run before the build script's `cp build/index.html build/404.html` so
  * the 404 copy inherits the tags. Idempotent — re-running is a no-op.
+ *
+ * `injectShellOg` is exported as a pure function so the rewriting rules are
+ * unit-testable (see inject-shell-og.test.js); everything below the
+ * direct-run guard is a thin CLI wrapper around it.
  */
 
 import { readFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const shellFile = resolve(__dirname, "../build/index.html");
+/**
+ * Default metadata, kept in sync with the tags in `(app)/+page.svelte` so a
+ * crawler and a hydrated browser describe the page the same way.
+ */
+export const DEFAULT_SHELL_META = {
+  title:
+    "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+  description:
+    "Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser.",
+  image: "https://assets.codexcryptica.com/screenshots/living-lore-graph.png",
+  imageAlt:
+    "Codex Cryptica campaign vault showing an interactive knowledge graph and note editor",
+  imageWidth: "1600",
+  imageHeight: "1000",
+  url: "https://codexcryptica.com/",
+  siteName: "Codex Cryptica",
+};
 
-// Kept in sync with the tags in `(app)/+page.svelte` so a crawler and a
-// hydrated browser describe the page the same way.
-const TITLE =
-  "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool";
-const DESCRIPTION =
-  "Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser.";
-const IMAGE = "https://assets.codexcryptica.com/screenshots/living-lore-graph.png";
-const IMAGE_ALT =
-  "Codex Cryptica campaign vault showing an interactive knowledge graph and note editor";
-const URL_ = "https://codexcryptica.com/";
+/** Marker so a re-run recognises its own output regardless of tag contents. */
+const MARKER = "<!-- fallback-social-metadata (scripts/inject-shell-og.mjs) -->";
 
-const OG_BLOCK = `	<!-- Fallback social metadata for CSR-only routes (see scripts/inject-shell-og.mjs) -->
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="Codex Cryptica" />
-	<meta property="og:title" content="${TITLE}" />
-	<meta property="og:description" content="${DESCRIPTION}" />
-	<meta property="og:url" content="${URL_}" />
-	<meta property="og:image" content="${IMAGE}" />
-	<meta property="og:image:alt" content="${IMAGE_ALT}" />
-	<meta property="og:image:width" content="1600" />
-	<meta property="og:image:height" content="1000" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="${TITLE}" />
-	<meta name="twitter:description" content="${DESCRIPTION}" />
-	<meta name="twitter:image" content="${IMAGE}" />
-	<meta name="twitter:image:alt" content="${IMAGE_ALT}" />
-`;
-
-const html = readFileSync(shellFile, "utf-8");
-
-if (html.includes('property="og:image"')) {
-  console.log("[shell-og] build/index.html already has OG tags — skipping.");
-  process.exit(0);
+/**
+ * Escapes a string for use inside a double-quoted HTML attribute. `&` must go
+ * first so it doesn't double-encode the entities introduced below it.
+ */
+export function escapeAttribute(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-if (!html.includes("</head>")) {
-  console.error("[shell-og] No </head> found in build/index.html — aborting.");
-  process.exit(1);
+/** Builds the tag block for the given metadata, escaping every value. */
+export function buildOgBlock(meta = DEFAULT_SHELL_META) {
+  const e = escapeAttribute;
+  return [
+    `\t${MARKER}`,
+    `\t<meta property="og:type" content="website" />`,
+    `\t<meta property="og:site_name" content="${e(meta.siteName)}" />`,
+    `\t<meta property="og:title" content="${e(meta.title)}" />`,
+    `\t<meta property="og:description" content="${e(meta.description)}" />`,
+    `\t<meta property="og:url" content="${e(meta.url)}" />`,
+    `\t<meta property="og:image" content="${e(meta.image)}" />`,
+    `\t<meta property="og:image:alt" content="${e(meta.imageAlt)}" />`,
+    `\t<meta property="og:image:width" content="${e(meta.imageWidth)}" />`,
+    `\t<meta property="og:image:height" content="${e(meta.imageHeight)}" />`,
+    `\t<meta name="twitter:card" content="summary_large_image" />`,
+    `\t<meta name="twitter:title" content="${e(meta.title)}" />`,
+    `\t<meta name="twitter:description" content="${e(meta.description)}" />`,
+    `\t<meta name="twitter:image" content="${e(meta.image)}" />`,
+    `\t<meta name="twitter:image:alt" content="${e(meta.imageAlt)}" />`,
+    "",
+  ].join("\n");
 }
 
-writeFileSync(shellFile, html.replace("</head>", `${OG_BLOCK}</head>`));
-console.log("[shell-og] Injected fallback OG/Twitter tags into build/index.html.");
+/**
+ * Injects the fallback block immediately before `</head>`.
+ *
+ * Returns `{ status, html }` rather than throwing so the caller decides what
+ * is fatal:
+ * - `injected`    — tags added, `html` is the rewritten document
+ * - `already-present` — the marker or a real `og:image` is already there
+ *   (an SSR change that starts emitting genuine tags must not be duplicated)
+ * - `no-head`     — no `</head>` to anchor to; `html` is returned unchanged
+ */
+export function injectShellOg(html, meta = DEFAULT_SHELL_META) {
+  if (html.includes(MARKER) || html.includes('property="og:image"')) {
+    return { status: "already-present", html };
+  }
+  if (!html.includes("</head>")) {
+    return { status: "no-head", html };
+  }
+  return {
+    status: "injected",
+    html: html.replace("</head>", `${buildOgBlock(meta)}</head>`),
+  };
+}
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Only run the CLI when executed directly, so tests can import the helpers.
+if (process.argv[1] && resolve(process.argv[1]) === __filename) {
+  const shellFile = resolve(dirname(__filename), "../build/index.html");
+  const { status, html } = injectShellOg(readFileSync(shellFile, "utf-8"));
+
+  if (status === "already-present") {
+    console.log("[shell-og] build/index.html already has OG tags — skipping.");
+  } else if (status === "no-head") {
+    console.error("[shell-og] No </head> found in build/index.html — aborting.");
+    process.exit(1);
+  } else {
+    writeFileSync(shellFile, html);
+    console.log(
+      "[shell-og] Injected fallback OG/Twitter tags into build/index.html.",
+    );
+  }
+}
