@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   activateBuild,
+  getVaultSeedUrls,
   installWorker,
   isVaultAppPath,
+  seedVaultCache,
   shouldHandleVaultRequest,
 } from "./lifecycle";
 
@@ -49,6 +51,10 @@ describe("isVaultAppPath", () => {
     "/for/game-masters",
     "/tools/faction-generator",
     "/import/legendkeeper",
+    "/guest/shared-world",
+    "/help/offline-sync",
+    "/dice",
+    "/templates",
   ])("rejects the public route %s", (pathname) => {
     expect(isVaultAppPath(pathname)).toBe(false);
   });
@@ -92,6 +98,38 @@ describe("shouldHandleVaultRequest", () => {
   });
 });
 
+describe("getVaultSeedUrls", () => {
+  it("keeps only the current vault document and same-origin immutable assets", () => {
+    expect(
+      getVaultSeedUrls({
+        sourceUrl: "https://codex.test/vault/world-1?view=graph#entity",
+        origin: "https://codex.test",
+        requestedUrls: [
+          "https://codex.test/vault/world-1?view=graph",
+          "https://codex.test/_app/immutable/app.js",
+          "https://codex.test/blog/post",
+          "https://codex.test/api/cloud-backup/status",
+          "https://assets.test/_app/immutable/foreign.js",
+          "http://[invalid",
+        ],
+      }),
+    ).toEqual([
+      "https://codex.test/vault/world-1?view=graph",
+      "https://codex.test/_app/immutable/app.js",
+    ]);
+  });
+
+  it("rejects seed requests sent from a non-vault client", () => {
+    expect(
+      getVaultSeedUrls({
+        sourceUrl: "https://codex.test/help/offline-sync",
+        origin: "https://codex.test",
+        requestedUrls: ["https://codex.test/_app/immutable/app.js"],
+      }),
+    ).toEqual([]);
+  });
+});
+
 describe("service worker lifecycle", () => {
   it("activates without eagerly downloading the site build", async () => {
     const skipWaiting = vi.fn().mockResolvedValue(undefined);
@@ -101,75 +139,113 @@ describe("service worker lifecycle", () => {
     expect(skipWaiting).toHaveBeenCalledOnce();
   });
 
-  it("removes old caches and claims open clients", async () => {
-    const deleteCache = vi.fn().mockResolvedValue(true);
+  it("claims open clients without deleting the last usable cache", async () => {
     const claimClients = vi.fn().mockResolvedValue(undefined);
 
     await activateBuild({
+      claimClients,
+    });
+
+    expect(claimClients).toHaveBeenCalledOnce();
+  });
+
+  it("deletes old service-worker caches only after the vault shell is seeded", async () => {
+    const put = vi.fn().mockResolvedValue(undefined);
+    const deleteCache = vi.fn().mockResolvedValue(true);
+    const fetchResource = vi.fn().mockImplementation(
+      async (url: string) =>
+        new Response(
+          url.endsWith(".js") ? "export {};" : "<main>Vault</main>",
+          {
+            status: 200,
+            headers: {
+              "content-type": url.endsWith(".js")
+                ? "text/javascript"
+                : "text/html",
+            },
+          },
+        ),
+    );
+
+    const seeded = await seedVaultCache({
       cacheName: "cache-current",
+      urls: [
+        "https://codex.test/vault/world-1",
+        "https://codex.test/_app/immutable/app.js",
+      ],
       cacheStorage: {
+        open: vi.fn().mockResolvedValue({ put }),
         keys: vi
           .fn()
-          .mockResolvedValue(["cache-old", "cache-current", "cache-older"]),
+          .mockResolvedValue(["cache-old", "cache-current", "image-cache"]),
         delete: deleteCache,
       },
-      claimClients,
+      fetchResource,
       warn: vi.fn(),
     });
 
-    expect(deleteCache).toHaveBeenCalledTimes(2);
+    expect(seeded).toBe(true);
+    expect(put).toHaveBeenCalledTimes(2);
+    expect(deleteCache).toHaveBeenCalledOnce();
     expect(deleteCache).toHaveBeenCalledWith("cache-old");
-    expect(deleteCache).toHaveBeenCalledWith("cache-older");
-    expect(deleteCache).not.toHaveBeenCalledWith("cache-current");
-    expect(claimClients).toHaveBeenCalledOnce();
+    expect(deleteCache).not.toHaveBeenCalledWith("image-cache");
   });
 
-  it("claims clients when cache enumeration fails", async () => {
-    const cacheError = new Error("cannot list caches");
-    const claimClients = vi.fn().mockResolvedValue(undefined);
+  it("retains old caches when any vault shell resource cannot be seeded", async () => {
+    const seedError = new Error("asset unavailable");
+    const deleteCache = vi.fn();
     const warn = vi.fn();
 
-    await activateBuild({
+    const seeded = await seedVaultCache({
       cacheName: "cache-current",
+      urls: [
+        "https://codex.test/vault/world-1",
+        "https://codex.test/_app/immutable/missing.js",
+      ],
       cacheStorage: {
-        keys: vi.fn().mockRejectedValue(cacheError),
-        delete: vi.fn(),
-      },
-      claimClients,
-      warn,
-    });
-
-    expect(warn).toHaveBeenCalledWith(
-      "[SW] Failed to enumerate caches",
-      cacheError,
-    );
-    expect(claimClients).toHaveBeenCalledOnce();
-  });
-
-  it("continues cleanup and claims clients when deleting a cache fails", async () => {
-    const cacheError = new Error("cannot delete cache");
-    const deleteCache = vi
-      .fn()
-      .mockRejectedValueOnce(cacheError)
-      .mockResolvedValueOnce(true);
-    const claimClients = vi.fn().mockResolvedValue(undefined);
-    const warn = vi.fn();
-
-    await activateBuild({
-      cacheName: "cache-current",
-      cacheStorage: {
-        keys: vi.fn().mockResolvedValue(["cache-old", "cache-older"]),
+        open: vi.fn().mockResolvedValue({
+          put: vi.fn().mockResolvedValue(undefined),
+        }),
+        keys: vi.fn().mockResolvedValue(["cache-old"]),
         delete: deleteCache,
       },
-      claimClients,
+      fetchResource: vi
+        .fn()
+        .mockResolvedValueOnce(new Response("<main>Vault</main>"))
+        .mockRejectedValueOnce(seedError),
       warn,
     });
 
+    expect(seeded).toBe(false);
     expect(warn).toHaveBeenCalledWith(
-      "[SW] Failed to delete cache: cache-old",
+      "[SW] Failed to seed vault shell: https://codex.test/_app/immutable/missing.js",
+      seedError,
+    );
+    expect(deleteCache).not.toHaveBeenCalled();
+  });
+
+  it("reports a cache-open failure without attempting to retire old caches", async () => {
+    const cacheError = new Error("storage unavailable");
+    const deleteCache = vi.fn();
+    const warn = vi.fn();
+
+    const seeded = await seedVaultCache({
+      cacheName: "cache-current",
+      urls: ["https://codex.test/vault/world-1"],
+      cacheStorage: {
+        open: vi.fn().mockRejectedValue(cacheError),
+        keys: vi.fn(),
+        delete: deleteCache,
+      },
+      fetchResource: vi.fn(),
+      warn,
+    });
+
+    expect(seeded).toBe(false);
+    expect(warn).toHaveBeenCalledWith(
+      "[SW] Failed to open vault cache",
       cacheError,
     );
-    expect(deleteCache).toHaveBeenCalledWith("cache-older");
-    expect(claimClients).toHaveBeenCalledOnce();
+    expect(deleteCache).not.toHaveBeenCalled();
   });
 });

@@ -5,7 +5,9 @@
 
 import {
   activateBuild,
+  getVaultSeedUrls,
   installWorker,
+  seedVaultCache,
   shouldHandleVaultRequest,
 } from "$lib/service-worker/lifecycle";
 
@@ -25,9 +27,39 @@ sw.addEventListener("install", (event) => {
 sw.addEventListener("activate", (event) => {
   event.waitUntil(
     activateBuild({
-      cacheName: CACHE,
-      cacheStorage: caches,
       claimClients: () => sw.clients.claim(),
+    }),
+  );
+});
+
+sw.addEventListener("message", (event) => {
+  const data = event.data as
+    { type?: unknown; active?: unknown; urls?: unknown } | undefined;
+  if (
+    data?.type !== "VAULT_CACHE_SESSION" ||
+    data.active !== true ||
+    !Array.isArray(data.urls) ||
+    !event.source ||
+    !("url" in event.source)
+  ) {
+    return;
+  }
+
+  const urls = getVaultSeedUrls({
+    sourceUrl: event.source.url,
+    origin: location.origin,
+    requestedUrls: data.urls.filter(
+      (url): url is string => typeof url === "string",
+    ),
+  });
+  if (urls.length === 0) return;
+
+  event.waitUntil(
+    seedVaultCache({
+      cacheName: CACHE,
+      urls,
+      cacheStorage: caches,
+      fetchResource: (url) => fetch(url),
       warn: (message, error) => console.warn(message, error),
     }),
   );
@@ -116,21 +148,24 @@ sw.addEventListener("fetch", (event) => {
 
       // Only cache valid successful responses from our own origin
       if (response.status === 200 && url.origin === location.origin) {
-        try {
-          await cache.put(event.request, response.clone());
-        } catch (error) {
-          console.warn(`[SW] Failed to cache response: ${url.pathname}`, error);
-        }
+        event.waitUntil(
+          cache.put(event.request, response.clone()).catch((error) => {
+            console.warn(
+              `[SW] Failed to cache response: ${url.pathname}`,
+              error,
+            );
+          }),
+        );
       }
 
       return response;
     } catch (err) {
-      const response = await cache.match(event.request);
+      const response = await caches.match(event.request);
       if (response) return response;
 
       // If it's a navigation request and we don't have it in cache, return index.html (fallback for SPA)
       if (event.request.mode === "navigate") {
-        return (await cache.match("/")) || (await cache.match("index.html"));
+        return (await caches.match("/")) || (await caches.match("/index.html"));
       }
 
       // If we are in development, don't return a 503, let the error bubble
