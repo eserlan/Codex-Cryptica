@@ -52,6 +52,7 @@ import {
   initializeGlobalListeners,
   setupWindowGlobals,
   registerServiceWorker,
+  collectVaultShellUrls,
 } from "./app-init";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { calendarStore } from "$lib/stores/calendar.svelte";
@@ -282,6 +283,26 @@ describe("app-init", () => {
   });
 
   describe("registerServiceWorker", () => {
+    it("collects only the current document and same-origin immutable assets", () => {
+      expect(
+        collectVaultShellUrls(
+          "https://codex.test/vault/world-1?view=graph#entity",
+          [
+            { name: "https://codex.test/_app/immutable/app.js" },
+            { name: "https://codex.test/api/entities" },
+            { name: "https://cdn.test/_app/immutable/vendor.js" },
+          ],
+        ),
+      ).toEqual([
+        "https://codex.test/vault/world-1?view=graph",
+        "https://codex.test/_app/immutable/app.js",
+      ]);
+    });
+
+    it("returns no shell URLs for an invalid document URL", () => {
+      expect(collectVaultShellUrls("not a url", [])).toEqual([]);
+    });
+
     it("should not register if in DEV mode (default in Vitest)", async () => {
       const registerSpy = vi.fn();
       const mockDocument = {
@@ -334,6 +355,63 @@ describe("app-init", () => {
       });
 
       expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
+    });
+
+    it("seeds the loaded vault shell only after the session becomes active", async () => {
+      const postMessage = vi.fn();
+      const registerSpy = vi.fn().mockResolvedValue({
+        active: { postMessage },
+        update: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const session = registerServiceWorker({
+        document: {
+          readyState: "complete",
+          visibilityState: "visible",
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        navigator: {
+          serviceWorker: {
+            controller: null,
+            register: registerSpy,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          },
+        } as any,
+        window: {
+          location: {
+            href: "https://codex.test/vault/world-1#entity",
+            reload: vi.fn(),
+          },
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        performance: {
+          getEntriesByType: vi.fn(
+            () =>
+              [
+                { name: "https://codex.test/_app/immutable/app.js" },
+                { name: "https://codex.test/blog/post" },
+              ] as PerformanceEntry[],
+          ),
+        },
+        isDev: false,
+      });
+
+      session.setVaultSessionActive(true);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(postMessage).toHaveBeenCalledOnce();
+      expect(postMessage).toHaveBeenCalledWith({
+        type: "VAULT_CACHE_SESSION",
+        active: true,
+        urls: [
+          "https://codex.test/vault/world-1",
+          "https://codex.test/_app/immutable/app.js",
+        ],
+      });
     });
 
     it("should prompt user and reload once when a new worker takes control and user confirms", async () => {
