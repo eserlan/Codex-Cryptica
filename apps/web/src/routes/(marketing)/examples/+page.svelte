@@ -12,6 +12,10 @@
   const TITLE = "Generator examples";
   const DESCRIPTION =
     "Curated, unedited output from the Codex Cryptica generators — settlements, factions and encounters you can read in full and take straight to the table.";
+  const SEO_IMAGE =
+    "https://assets.codexcryptica.com/announcements/ship-cinder-wren.jpg";
+  const SEO_IMAGE_ALT =
+    "The Cinder Wren, a space-western ship generated with Codex Cryptica";
 
   let examples = $derived(data.examples);
 </script>
@@ -20,8 +24,10 @@
   title="{TITLE} | Codex Cryptica"
   description={DESCRIPTION}
   canonicalUrl={buildAbsoluteUrl("/examples")}
-  image={buildAbsoluteUrl("/og-image.png")}
-  imageAlt={TITLE}
+  image={SEO_IMAGE}
+  imageAlt={SEO_IMAGE_ALT}
+  imageWidth={1376}
+  imageHeight={768}
   jsonLd={[buildExampleIndexJsonLd(examples)]}
 />
 
