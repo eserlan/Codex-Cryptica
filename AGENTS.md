@@ -46,6 +46,7 @@ This file is the Codex-facing instruction layer for this repository.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
 - **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
 - **Discovery Intent Governance** (Constitution XIII): Before adding or materially repositioning any public, indexable discovery page — `/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference blog posts — consult the discovery intent registry at `apps/web/src/lib/content/discovery/`:
   1. Check whether the intent already has an owner (`findIntentOwner`, or read the audit output).
   2. If it does, extend that page or record the new phrasing as an **alias**. Do not create a second URL for a synonym or word-order variant.
