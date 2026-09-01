@@ -12,7 +12,8 @@ vi.mock("../debug.svelte", () => ({
 vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: { isDemoMode: false, isGuestMode: false },
 }));
-const cacheSet = vi.fn(async () => {});
+const cacheSet = vi.fn(async () => true);
+const cacheInvalidatePreload = vi.fn();
 const cacheGetEntityContent = vi.fn<
   (
     vaultId: string,
@@ -26,6 +27,7 @@ vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     set: (...a: any[]) => (cacheSet as any)(...a),
     getEntityContent: (...a: any[]) => (cacheGetEntityContent as any)(...a),
+    invalidatePreload: (...a: any[]) => (cacheInvalidatePreload as any)(...a),
   },
 }));
 vi.mock("./registry", () => ({ updateLastInternalChange: vi.fn() }));
