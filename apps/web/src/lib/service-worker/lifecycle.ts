@@ -104,6 +104,20 @@ interface VaultSeedStorage extends ActivationStorage {
   }>;
 }
 
+/** Prefers this build's cache while retaining a fallback to an older usable build. */
+export async function matchCurrentThenOlderCache(options: {
+  request: RequestInfo | URL;
+  currentCache: Pick<Cache, "match">;
+  matchOlderCache: (
+    request: RequestInfo | URL,
+  ) => Promise<Response | undefined>;
+}): Promise<Response | undefined> {
+  return (
+    (await options.currentCache.match(options.request)) ??
+    options.matchOlderCache(options.request)
+  );
+}
+
 /** Activates the worker without downloading unrelated public routes at install time. */
 export async function installWorker(options: {
   skipWaiting: () => Promise<unknown>;

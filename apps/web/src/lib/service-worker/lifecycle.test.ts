@@ -6,6 +6,7 @@ import {
   getVaultSeedUrls,
   installWorker,
   isVaultAppPath,
+  matchCurrentThenOlderCache,
   seedVaultCache,
   shouldHandleVaultRequest,
 } from "./lifecycle";
@@ -131,6 +132,36 @@ describe("getVaultSeedUrls", () => {
 });
 
 describe("service worker lifecycle", () => {
+  it("prefers the current service-worker cache for offline responses", async () => {
+    const currentResponse = new Response("current");
+    const matchOlderCache = vi.fn();
+
+    const response = await matchCurrentThenOlderCache({
+      request: new Request("https://codex.test/vault/world-1"),
+      currentCache: { match: vi.fn().mockResolvedValue(currentResponse) },
+      matchOlderCache,
+    });
+
+    expect(response).toBe(currentResponse);
+    expect(matchOlderCache).not.toHaveBeenCalled();
+  });
+
+  it("checks older caches only when the current cache misses", async () => {
+    const olderResponse = new Response("older");
+    const request = new Request("https://codex.test/vault/world-1");
+    const matchOlderCache = vi.fn().mockResolvedValue(olderResponse);
+
+    const response = await matchCurrentThenOlderCache({
+      request,
+      currentCache: { match: vi.fn().mockResolvedValue(undefined) },
+      matchOlderCache,
+    });
+
+    expect(response).toBe(olderResponse);
+    expect(matchOlderCache).toHaveBeenCalledOnce();
+    expect(matchOlderCache).toHaveBeenCalledWith(request);
+  });
+
   it("activates without eagerly downloading the site build", async () => {
     const skipWaiting = vi.fn().mockResolvedValue(undefined);
 

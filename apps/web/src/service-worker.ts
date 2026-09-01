@@ -7,6 +7,7 @@ import {
   activateBuild,
   getVaultSeedUrls,
   installWorker,
+  matchCurrentThenOlderCache,
   seedVaultCache,
   shouldHandleVaultRequest,
 } from "$lib/service-worker/lifecycle";
@@ -160,12 +161,27 @@ sw.addEventListener("fetch", (event) => {
 
       return response;
     } catch (err) {
-      const response = await caches.match(event.request);
+      const response = await matchCurrentThenOlderCache({
+        request: event.request,
+        currentCache: cache,
+        matchOlderCache: (request) => caches.match(request),
+      });
       if (response) return response;
 
       // If it's a navigation request and we don't have it in cache, return index.html (fallback for SPA)
       if (event.request.mode === "navigate") {
-        return (await caches.match("/")) || (await caches.match("/index.html"));
+        return (
+          (await matchCurrentThenOlderCache({
+            request: "/",
+            currentCache: cache,
+            matchOlderCache: (request) => caches.match(request),
+          })) ??
+          matchCurrentThenOlderCache({
+            request: "/index.html",
+            currentCache: cache,
+            matchOlderCache: (request) => caches.match(request),
+          })
+        );
       }
 
       // If we are in development, don't return a 503, let the error bubble
