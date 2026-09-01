@@ -31,6 +31,7 @@ export async function GET() {
     { path: "/for", changefreq: "weekly", priority: "0.9" },
     { path: "/answers", changefreq: "weekly", priority: "0.8" },
     { path: "/examples", changefreq: "weekly", priority: "0.8" },
+    { path: "/explore", changefreq: "monthly", priority: "0.5" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
     { path: "/migrations", changefreq: "weekly", priority: "0.9" },

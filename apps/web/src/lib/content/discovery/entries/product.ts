@@ -284,4 +284,26 @@ export const productEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "explore-index",
+    pageKind: "index",
+    canonicalPath: "/explore",
+    primaryIntent: "codex cryptica site directory",
+    intentAliases: ["every codex cryptica page", "codex cryptica sitemap"],
+    audience:
+      "Existing app users navigating from the in-app footer or mobile menu, not organic searchers arriving cold.",
+    userJob: "navigate",
+    uniqueValue:
+      "The in-app navigation index linked from the app footer and mobile drawer — points an existing user at every section (worlds, examples, tools, guides, legal) at once, rather than one family. /tools covers the same ground for an arriving searcher evaluating generators; this page exists so the app chrome has one link to maintain instead of several that drift.",
+    relatedIntents: ["tools-index"],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "tools-index",
+        reason:
+          "Both are comprehensive directories, but for different readers: tools-index is the SEO entry point for someone searching for generators, while explore-index is in-app chrome for someone already using the product who wants any section, tools included.",
+      },
+    ],
+  },
 ];
