@@ -13,6 +13,7 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { MarkdownTablePasteExtension } from "./editor/MarkdownTablePasteExtension";
   import { protectVaultImageSource } from "./editor/vault-image";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openCanvasHref } from "$lib/stores/ui/navigation";
@@ -137,6 +138,7 @@
         TableRow,
         TableHeader,
         TableCell,
+        MarkdownTablePasteExtension,
         EmbedExtension,
         createEntityAutoLinkExtension(autoLinkOptions),
         Link.configure({
