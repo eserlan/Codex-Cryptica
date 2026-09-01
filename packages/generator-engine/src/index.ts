@@ -29,6 +29,7 @@ export {
   adaptEvent,
   adaptVampire,
   adaptNomadClan,
+  adaptDarkFaction,
   adaptShip,
   adaptLanguage,
   adaptDungeon,
