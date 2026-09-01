@@ -33,7 +33,9 @@
           >
             {page.hero.title}
           </h3>
-          <p class="flex-1 font-light text-sm leading-relaxed text-theme-muted">
+          <p
+            class="flex-1 font-light text-base leading-relaxed text-theme-muted"
+          >
             {page.hero.tagline}
           </p>
           <div
@@ -108,7 +110,7 @@
           <h2 class="font-header text-2xl font-bold text-theme-text">
             Game Systems
           </h2>
-          <p class="mt-1 font-light text-sm text-theme-muted">
+          <p class="mt-1 font-light text-base text-theme-muted">
             Tailored tools and relationship structures for specific tabletop RPG
             systems.
           </p>
@@ -125,7 +127,7 @@
           <h2 class="font-header text-2xl font-bold text-theme-text">
             Genres & Settings
           </h2>
-          <p class="mt-1 font-light text-sm text-theme-muted">
+          <p class="mt-1 font-light text-base text-theme-muted">
             System-agnostic approaches to worldbuilding across fantasy, sci-fi,
             horror, and other genres.
           </p>
@@ -142,7 +144,7 @@
           <h2 class="font-header text-2xl font-bold text-theme-text">
             Campaign Styles
           </h2>
-          <p class="mt-1 font-light text-sm text-theme-muted">
+          <p class="mt-1 font-light text-base text-theme-muted">
             Ways of running a table — open, player-directed, exploration-led —
             whatever system or genre you play them in.
           </p>

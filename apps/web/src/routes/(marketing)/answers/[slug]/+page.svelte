@@ -260,7 +260,7 @@
                     >{tool.title}</span
                   >
                   <span
-                    class="mt-1 block text-sm leading-relaxed text-theme-muted"
+                    class="mt-1 block text-base leading-relaxed text-theme-muted"
                     >{tool.description}</span
                   >
                 </a>
@@ -288,7 +288,7 @@
                     >{guide.title}</span
                   >
                   <span
-                    class="mt-1 block text-sm leading-relaxed text-theme-muted"
+                    class="mt-1 block text-base leading-relaxed text-theme-muted"
                     >{guide.description}</span
                   >
                 </a>

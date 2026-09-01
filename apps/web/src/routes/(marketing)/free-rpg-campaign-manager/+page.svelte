@@ -206,7 +206,7 @@
             <h3 class="text-lg font-bold font-header tracking-wide mb-3">
               {capability.title}
             </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
+            <p class="text-base text-theme-muted leading-relaxed">
               {capability.desc}
             </p>
           </div>
@@ -318,7 +318,7 @@
             <h3 class="text-lg font-bold font-header mb-3 text-theme-primary">
               {faq.q}
             </h3>
-            <p class="text-theme-muted leading-relaxed text-sm md:text-base">
+            <p class="text-theme-muted leading-relaxed text-base md:text-lg">
               {faq.a}
             </p>
           </div>

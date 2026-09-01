@@ -157,7 +157,7 @@
               Why {complicationSubject} get complicated
             </h2>
             <p
-              class="font-light text-sm sm:text-base leading-relaxed text-theme-muted"
+              class="font-light text-base sm:text-lg leading-relaxed text-theme-muted"
             >
               {config.hero.problemStatement}
             </p>
@@ -191,7 +191,7 @@
                   </h3>
                 </div>
                 <p
-                  class="font-light leading-relaxed text-theme-muted text-sm sm:text-base"
+                  class="font-light leading-relaxed text-theme-muted text-base sm:text-lg"
                 >
                   {useCase.description}
                 </p>
