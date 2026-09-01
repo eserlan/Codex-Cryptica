@@ -152,4 +152,27 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-withered-hand",
+    pageKind: "example",
+    canonicalPath: "/examples/the-withered-hand-grimdark-faction",
+    primaryIntent: "grimdark faction example",
+    intentAliases: [
+      "dark fantasy faction example",
+      "example of a generated grimdark faction",
+      "sample corpse guild rpg",
+    ],
+    audience: "Dark Fantasy game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "The first published output of the new Dark Fantasy / Grimdark Faction generator — a corpse guild doing something a plague city genuinely needs in the worst possible way.",
+    parentCluster: "faction-creation",
+    relatedIntents: [
+      "generator-dark-fantasy-faction",
+      "answer-fantasy-faction",
+      "example-low-tide-rust",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];
