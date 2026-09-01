@@ -4,6 +4,21 @@ import { render, screen } from "@testing-library/svelte";
 import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
+// Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () => {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      pause: () => {},
+      play: () => {},
+      reverse: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any;
+  };
+}
+
 describe("GeneratorOutputCard", () => {
   const sampleData: GeneratorOutput = {
     title: "Brotherhood of Hollow Crown",
