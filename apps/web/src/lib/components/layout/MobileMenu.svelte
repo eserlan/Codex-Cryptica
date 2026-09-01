@@ -189,6 +189,7 @@
           Application
         </h3>
         <button
+          type="button"
           class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-theme-primary min-h-[44px]"
           onclick={() => {
             modalUIStore.toggleSettings("vault");
@@ -240,6 +241,7 @@
           Explore
         </a>
         <button
+          type="button"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
           onclick={() => {
             modalUIStore.openSettings("help");

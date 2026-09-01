@@ -48,6 +48,7 @@
       >Explore</a
     >
     <button
+      type="button"
       onclick={() => modalUIStore.openSettings("help")}
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer"
       >Help</button
