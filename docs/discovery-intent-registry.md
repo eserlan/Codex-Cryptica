@@ -60,12 +60,12 @@ copy stay in their existing content modules; this holds intent and rationale.
 
 Two pages on one subject may both exist when they do different jobs:
 
-| Page                             | Job                                             |
-| -------------------------------- | ----------------------------------------------- |
-| `/answers/what-is-a-point-crawl` | `understand` — explain the concept              |
-| a point crawl generator          | `create` — produce one                          |
-| a curated point crawl example    | `see-an-example` — show a finished one          |
-| `/for/hexcrawl-campaigns`        | `adopt-workflow` — how Codex supports the style |
+| Page                             | Job                                                     |
+| -------------------------------- | ------------------------------------------------------- |
+| `/answers/what-is-a-point-crawl` | `understand` — explain the concept                      |
+| a point crawl generator          | `create` — produce one                                  |
+| a curated point crawl example    | `see-an-example` — show a finished one                  |
+| `/for/west-marches`              | `adopt-workflow` — open-table and hexcrawl organisation |
 
 Sharing a subject _and_ a job is the shape cannibalisation takes.
 

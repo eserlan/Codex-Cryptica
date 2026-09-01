@@ -22,6 +22,9 @@ It is especially relevant to users searching for:
 ### The Shelf
 Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.
 
+### Cloud Backup
+Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key — that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time — pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.
+
 ### Touch gestures
 Drag to pan, pinch to zoom, and tap a node to open it.
 
@@ -2088,11 +2091,23 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** An Adventure Path runs for months. By book three the party has crossed two nations, sworn an oath to one deity, and made an enemy of a society you invented as background colour. You are the one who has to remember which — usually mid-session, while four players wait.
 
+### [Codex Cryptica for Sandbox Campaigns](https://codexcryptica.com/for/sandbox-campaigns)
+
+**Summary:** Keep every live thread, faction and consequence in one place, so the world holds together whichever way your players go.
+
+**Overview:** Sandbox play falls apart in your notes long before it falls apart at the table. The party ignores the thing you prepared and goes after a cartel you sketched out three months ago — and you need to know, right now, who runs it, who owes them, what they wanted before the players got involved, and what changed when the players burnt two of their wagons. Kept as separate documents, none of that is answerable at speed.
+
 ### [Codex Cryptica for Scum and Villainy Campaign Management](https://codexcryptica.com/for/scum-and-villainy)
 
 **Summary:** Keep crews, battered ships, criminal syndicates, debts, and sector heat connected in one place.
 
 **Overview:** A space scoundrels campaign moves fast — one session you are smuggling contraband past customs corvettes, the next you are dodging syndicate enforcers over unpaid ship debts. When heat rises across three sectors and rival factions collide, you should not have to scramble through scattered notes to remember who holds your crew's debt, who wants your cargo, and which corrupt marshal is tracking your drive signature.
+
+### [Codex Cryptica for Solo Worldbuilding](https://codexcryptica.com/for/solo-worldbuilding)
+
+**Summary:** Follow each prompt, keep what becomes true, and let every answer change the questions you ask next.
+
+**Overview:** When you are both asking the questions and deciding what becomes true, the difficult part is not producing one more idea. It is remembering which random-table result became canon, what that discovery changed, and which unanswered question should shape the next prompt. In separate journal pages, those connections disappear just when the world starts to feel alive.
 
 ### [Codex Cryptica for Space Opera Campaigns](https://codexcryptica.com/for/space-opera)
 
@@ -2117,4 +2132,10 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Whether you run V5, V20, or classic Revised, a Vampire chronicle quickly becomes a web of Kindred politics, hunting grounds, boons, and lethal secrets. Keep that web connected in one place.
 
 **Overview:** Standard notes break down when every Kindred is tied to three debts, two mortal Touchstones, and a rival faction. When a Primogen shifts allegiance or a Masquerade breach threatens the city, you shouldn’t have to scramble through scattered documents to know who holds leverage over whom.
+
+### [Codex Cryptica for West Marches Campaigns](https://codexcryptica.com/for/west-marches)
+
+**Summary:** One world, one hex map, one set of consequences — however many players turn up, and whenever they do.
+
+**Overview:** In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.
 
