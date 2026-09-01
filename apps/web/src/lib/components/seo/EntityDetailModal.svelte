@@ -57,7 +57,9 @@
         </button>
       </div>
 
-      <div class="p-6 overflow-y-auto seo-md">
+      <div
+        class="p-6 overflow-y-auto seo-md text-base leading-relaxed text-theme-text/90"
+      >
         <!-- content already leads with the italicized summary, so no separate
              summary block here (would duplicate it). -->
         {@html renderGeneratorMarkdown(entity.content, "default")}
@@ -93,7 +95,7 @@
   .seo-md :global(h2) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     margin: 1.5rem 0 0.75rem;
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-border) 40%, transparent);
@@ -102,14 +104,14 @@
   .seo-md :global(h3) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.125rem;
     margin: 1rem 0 0.5rem;
     color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
   }
   .seo-md :global(h4) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     margin: 0.85rem 0 0.35rem;
     color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
   }
