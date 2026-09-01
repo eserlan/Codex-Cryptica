@@ -147,8 +147,14 @@
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      // 0. If settings or dice modal is open, let them handle Escape
-      if (modalUIStore.showSettings || modalUIStore.showDiceModal) return;
+      // 0. If a modal owns Escape, let it handle its own dismissal — otherwise
+      // both listeners fire and the entity behind it is deselected too.
+      if (
+        modalUIStore.showSettings ||
+        modalUIStore.showDiceModal ||
+        modalUIStore.parentPickerDialog.open
+      )
+        return;
 
       // 1. If an entity is focused (EmbeddedEntityView), close it
       if (layoutUIStore.mainViewMode === "focus") {
