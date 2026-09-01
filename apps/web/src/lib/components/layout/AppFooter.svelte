@@ -53,6 +53,11 @@
       >Explore Worlds</a
     >
     <a
+      href="{base}/examples"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Examples</a
+    >
+    <a
       href="{base}/responsible-ai-worldbuilding"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Responsible AI</a
