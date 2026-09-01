@@ -127,4 +127,29 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-lady-vivienne-morvath",
+    pageKind: "example",
+    canonicalPath: "/examples/lady-vivienne-morvath-gothic-horror-villain",
+    primaryIntent: "gothic horror villain example",
+    intentAliases: [
+      "rpg villain example",
+      "example of a campaign antagonist",
+      "gothic horror bbeg example",
+      "sample rpg villain",
+    ],
+    audience: "Gothic Horror game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A campaign-scale Gothic Horror villain with a six-stage escalating timeline, conflicted lieutenants, discoverable clues, and a tragic moral dilemma.",
+    parentCluster: "antagonist-creation",
+    relatedIntents: [
+      "generator-bbeg-generator",
+      "for-gothic-horror",
+      "answer-conspiracy-campaign",
+      "answer-npc-relationships",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];
