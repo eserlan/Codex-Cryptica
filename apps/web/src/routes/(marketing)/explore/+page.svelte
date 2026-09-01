@@ -151,8 +151,10 @@
   title="{TITLE} | Codex Cryptica"
   description={DESCRIPTION}
   canonicalUrl={buildAbsoluteUrl("/explore")}
-  image={buildAbsoluteUrl("/og-image.png")}
-  imageAlt={TITLE}
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="Explore Codex Cryptica's connected campaign-building tools"
+  imageWidth={1600}
+  imageHeight={1000}
 />
 
 <div

@@ -116,6 +116,9 @@
     entity?.parent ? vault.entities[entity.parent] : null,
   );
 
+  // Guests read the hierarchy but never rearrange it.
+  const canEditParent = $derived(!vault.isGuest);
+
   const existingCanvas = $derived.by(() => {
     if (!entity) return undefined;
     return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
@@ -214,6 +217,35 @@
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
                 {parentEntity.title}
+              </button>
+              {#if canEditParent}
+                <button
+                  type="button"
+                  onclick={() => modalUIStore.openParentPicker(entity.id)}
+                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
+                  aria-label="Change parent"
+                  title="Change parent"
+                  data-testid="zen-change-parent-button"
+                >
+                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+          {:else if canEditParent}
+            <div class="mt-1.5">
+              <button
+                type="button"
+                onclick={() => modalUIStore.openParentPicker(entity.id)}
+                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                title="Nest this under another entity"
+                data-testid="zen-set-parent-button"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
+                ></span>
+                <span>Set parent</span>
               </button>
             </div>
           {/if}

@@ -99,7 +99,15 @@ function text(value: unknown): string {
 }
 
 function list(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map(text).filter(Boolean);
+  if (Array.isArray(value)) {
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with a single imperative loop
+    const result: string[] = [];
+    for (const v of value) {
+      const t = text(v);
+      if (t) result.push(t);
+    }
+    return result;
+  }
   const single = text(value);
   return single ? [single] : [];
 }

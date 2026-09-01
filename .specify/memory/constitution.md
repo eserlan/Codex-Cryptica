@@ -1,18 +1,22 @@
 <!--
 Sync Impact Report
-- Version change: 1.4.0 -> 1.5.0
-- Modified principles: V. Privacy & Client-Side Processing (added a narrow, gated
-  exception for opt-in remote storage; materially expanded guidance = minor bump)
-- Added sections: None
+- Version change: 1.5.0 -> 1.6.0
+- Modified principles: None
+- Added sections: XIV. Bounded Responsibility (No God Files) — promotes the practice
+  already established by ADR 003 and docs/STYLE_GUIDE.md into a checkable principle
+  (new principle = minor bump)
 - Removed sections: None
 - Templates requiring updates:
-  - ✅ Verified .specify/templates/plan-template.md; the existing Constitution Check
-    gate already accommodates the new conditions, no structural change needed.
-  - ✅ Verified .specify/templates/spec-template.md; no conflicting guidance.
-  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance.
-  - ✅ Updated specs/162-cc-cloud-backup/plan.md; its Principle V entry now cites the
-    exception's conditions instead of asserting a bare PASS.
-- Follow-up TODOs: None
+  - ✅ Updated .specify/templates/plan-template.md; added a Bounded Responsibility
+    Check to the Constitution Check gate, mirroring the Discovery Intent Check, so
+    the trigger is answered at plan time rather than discovered in review.
+  - ✅ Verified .specify/templates/spec-template.md; specs describe behaviour, not
+    file layout, so no conflicting guidance.
+  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance. A
+    decomposition task is situational and belongs to the plan that finds it, not to
+    every feature's task list.
+- Follow-up TODOs: None. The principle is scoped to files a change touches, so no
+  retroactive audit of the 136 existing files over the trigger is implied.
 -->
 
 # Codex-Arcana Constitution
@@ -109,8 +113,20 @@ Deterministic violations (duplicate ids, duplicate canonical paths, unowned inte
 
 See `docs/discovery-intent-registry.md` for the authoring workflow.
 
+### XIV. Bounded Responsibility (No God Files)
+
+A file MUST hold one responsibility. When a module, component, or store accumulates unrelated concerns, it MUST be decomposed along those concerns rather than extended. See ADR 003, which split `EntityDetailPanel` for exactly this reason, and `docs/STYLE_GUIDE.md` on adding to a monolithic store facade.
+
+1. **Responsibilities, not lines, are the measure.** A 2,000-line table of constants is fine. A 400-line component owning view state, persistence, and keyboard handling is not.
+2. **Review trigger.** A source file the change _touches_, excluding tests and data-only modules, that crosses **500 lines** MUST be justified in review: name the single responsibility it still holds, or split it as part of the change that crossed the line. This is not a backlog sweep — the cost is paid only when the file is already being edited.
+3. **Do not widen a seam you are already opening.** New behaviour MUST NOT be appended to a file over the trigger unless it belongs to that file's existing responsibility. Extract first, per Principle I: into a `packages/` workspace when the logic is not app-specific, or a sibling module when it is.
+4. **Data modules are exempt from the size trigger** — constant tables, catalogues, and template registries carrying no behaviour. The responsibility rule still applies: one catalogue per file.
+5. **A split MUST NOT lose coverage.** Extracted units carry their tests with them or gain their own, per Principle II.
+
+Size is reported for human review, never enforced by a line-count lint rule — such a rule flags the catalogues hardest and the god components not at all.
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.5.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-08-31
+**Version**: 1.6.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-09-01
