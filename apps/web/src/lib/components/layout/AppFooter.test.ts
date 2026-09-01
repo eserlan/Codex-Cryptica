@@ -37,6 +37,14 @@ describe("AppFooter", () => {
     expect(screen.getByRole("link", { name: "Terms of Service" })).toBeTruthy();
   });
 
+  it("links Examples to the marketing examples directory", () => {
+    render(AppFooter);
+
+    const examplesLink = screen.getByRole("link", { name: "Examples" });
+    expect(examplesLink).toBeTruthy();
+    expect(examplesLink.getAttribute("href")).toBe("/examples");
+  });
+
   it("opens Help settings when clicking the Help button", async () => {
     render(AppFooter);
 
