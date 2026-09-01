@@ -240,6 +240,7 @@ TypeScript: Follow standard conventions
 - **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 - **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
 - **PR Quality Gate**: Never create or open a Pull Request unless:
   1. `bun run lint:types` passes with 0 errors.
   2. `bun run lint` passes with 0 errors.

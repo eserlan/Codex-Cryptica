@@ -13,13 +13,13 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | [`directory/listings/`](#directory--public-generator-directory-listing-metadata-json-not-images) | 4               | ~3 KB    | Public generator directory metadata (JSON)                                           |
 | [`discussions/alien-race/`](#discussions--github-discussions-announcement-images)                | 1               | 0.2 MB   | Alien Race generator discussion image                                                |
 | [`images/`](#images--blog-post-inline-images--old-help-doc-screenshots)                          | 50              | ~18 MB   | Blog post inline images + old help-doc screenshots                                   |
-| [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 13              | ~11.5 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages               |
+| [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 17              | ~15.4 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages               |
 | [`screenshots/`](#screenshots--generators--tools-page-cards-and-ogimage)                         | 37              | ~6.3 MB  | `/generators` + `/tools` page cards, og:image                                        |
 | [`vault-samples/images/`](#vault-samples--demoquick-start-vault-portrait-art)                    | 36              | 58.7 MB  | Portrait art for the 9 demo/quick-start vaults                                       |
 | [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing |
 | [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                       |
 
-Total: 852 objects, 158.1 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 856 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -134,9 +134,13 @@ Total: 852 objects, 158.1 MB. The tables below cover everything **except** `publ
 | [`og/fantasy-worldbuilding.jpg`](https://assets.codexcryptica.com/og/fantasy-worldbuilding.jpg)   | 1165 KB | image/jpeg | 2026-08-27 | Fantasy Worldbuilding genre landing page card    |
 | [`og/gothic-horror.jpg`](https://assets.codexcryptica.com/og/gothic-horror.jpg)                   | 804 KB  | image/jpeg | 2026-08-27 | Gothic Horror genre landing page card            |
 | [`og/pathfinder-2e.jpg`](https://assets.codexcryptica.com/og/pathfinder-2e.jpg)                   | 859 KB  | image/jpeg | 2026-08-27 | Pathfinder 2e system landing page card           |
+| [`og/sandbox-campaigns.jpg`](https://assets.codexcryptica.com/og/sandbox-campaigns.jpg)           | 947 KB  | image/jpeg | 2026-09-01 | Sandbox Campaigns style landing page card        |
+| [`og/scum-and-villainy.jpg`](https://assets.codexcryptica.com/og/scum-and-villainy.jpg)           | 986 KB  | image/jpeg | 2026-09-01 | Scum and Villainy system landing page card       |
 | [`og/space-opera.jpg`](https://assets.codexcryptica.com/og/space-opera.jpg)                       | 921 KB  | image/jpeg | 2026-08-27 | Space Opera genre landing page card              |
+| [`og/space-western.jpg`](https://assets.codexcryptica.com/og/space-western.jpg)                   | 960 KB  | image/jpeg | 2026-09-01 | Space Western genre landing page card            |
 | [`og/traveller.jpg`](https://assets.codexcryptica.com/og/traveller.jpg)                           | 915 KB  | image/jpeg | 2026-08-27 | Traveller system landing page card               |
 | [`og/vampire-the-masquerade.jpg`](https://assets.codexcryptica.com/og/vampire-the-masquerade.jpg) | 793 KB  | image/jpeg | 2026-08-27 | Vampire: The Masquerade system landing page card |
+| [`og/west-marches.jpg`](https://assets.codexcryptica.com/og/west-marches.jpg)                     | 950 KB  | image/jpeg | 2026-09-01 | West Marches style landing page card             |
 
 ## `screenshots/` — `/generators` + `/tools` page cards and og:image
 

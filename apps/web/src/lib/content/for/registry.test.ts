@@ -698,7 +698,7 @@ describe("Landing Page Registry", () => {
       expect(copy).toMatch(/base town/i);
       expect(copy).toMatch(/rumour/i);
       expect(copy).toMatch(/roster/i);
-      expect(copy).toMatch(/map/i);
+      expect(copy).toMatch(/hex map|hexes/i);
 
       // The format's premise is that there is no standing party and no plot
       // waiting for one, so neither should appear in the pitch.
@@ -739,6 +739,64 @@ describe("Landing Page Registry", () => {
       expect(categories).toContain("character");
       expect(categories).toContain("note");
       expect(categories).toContain("faction");
+    });
+  });
+
+  describe("Solo Worldbuilding Pack", () => {
+    it("is registered as a genre-neutral campaign-style guide", () => {
+      const solo = getLandingPage("solo-worldbuilding");
+      expect(solo).toBeDefined();
+      expect(solo?.slug).toBe("solo-worldbuilding");
+      expect(solo?.kind).toBe("use-case");
+      expect(solo?.theme).toBeUndefined();
+      expect(solo?.hub).toBeUndefined();
+      expect(solo?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(solo?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("turns prompts and random results into connected canon", () => {
+      const copy = ownCopy(getLandingPage("solo-worldbuilding")!);
+
+      expect(copy).toMatch(/prompt/i);
+      expect(copy).toMatch(/random[- ]table/i);
+      expect(copy).toMatch(/canon/i);
+      expect(copy).toMatch(/unanswered question/i);
+      expect(copy).toMatch(/contradict/i);
+
+      // This is a creator-facing workflow, not a group campaign pitch that
+      // quietly assumes a game master and a standing party.
+      expect(copy).not.toMatch(/game master/i);
+      expect(copy).not.toMatch(/\bthe party\b/i);
+    });
+
+    it("links generators that can answer the next solo prompt", () => {
+      const solo = getLandingPage("solo-worldbuilding")!;
+      expect(solo.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/world" }),
+          expect.objectContaining({ href: "/generators/settlement" }),
+          expect.objectContaining({ href: "/generators/faction" }),
+          expect.objectContaining({ href: "/generators/encounter" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke discovery graph", () => {
+      const graph = getLandingPage("solo-worldbuilding")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("location");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+      expect(categories).toContain("note");
     });
   });
 
@@ -818,7 +876,11 @@ describe("Landing Page Registry", () => {
 
     it("keeps each campaign-style page on a distinct intent", () => {
       expect(campaignStyle.map((page) => page.slug)).toEqual(
-        expect.arrayContaining(["sandbox-campaigns", "west-marches"]),
+        expect.arrayContaining([
+          "sandbox-campaigns",
+          "solo-worldbuilding",
+          "west-marches",
+        ]),
       );
 
       const titles = campaignStyle.map((page) => page.seo.title);
