@@ -450,7 +450,7 @@
               >
                 {hub.label}
               </span>
-              <span class="block text-sm text-theme-muted leading-relaxed">
+              <span class="block text-base text-theme-muted leading-relaxed">
                 {hub.summary}
               </span>
             </a>
@@ -481,7 +481,7 @@
                 >
                   {gen.label}
                 </span>
-                <span class="block text-sm text-theme-muted leading-relaxed">
+                <span class="block text-base text-theme-muted leading-relaxed">
                   {gen.summary}
                 </span>
               </a>

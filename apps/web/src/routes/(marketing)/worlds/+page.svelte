@@ -81,7 +81,7 @@
       <h1 class="text-4xl font-header font-bold text-theme-text">
         Browse shared guest worlds
       </h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-theme-text/70">
+      <p class="max-w-2xl text-base leading-relaxed text-theme-text/70">
         Every result opens the read-only guest view. Private notes, editor
         state, and write access stay out of this directory.
       </p>
@@ -211,7 +211,7 @@
                 <h2 class="text-lg font-header font-bold text-theme-text">
                   {result.title}
                 </h2>
-                <p class="text-sm leading-relaxed text-theme-text/70">
+                <p class="text-base leading-relaxed text-theme-text/70">
                   {@html renderInlineMarkdown(result.description)}
                 </p>
               </div>

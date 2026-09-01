@@ -232,7 +232,7 @@
         <span class="icon-[lucide--info] text-theme-primary w-6 h-6"></span>
         <h2 class="font-header font-bold text-lg">AI Principles at a Glance</h2>
       </div>
-      <ul class="space-y-3 text-sm text-theme-text/85">
+      <ul class="space-y-3 text-base text-theme-text/85">
         <li class="flex items-start gap-3">
           <span
             class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
@@ -307,7 +307,7 @@
         <span class="icon-[lucide--lock] text-theme-primary w-6 h-6"></span>
         <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
       </div>
-      <p class="text-sm text-theme-text/75 leading-relaxed">
+      <p class="text-base text-theme-text/75 leading-relaxed">
         True trust in digital worldbuilding requires full data ownership. Codex
         Cryptica is built around a local-first architecture. Your campaign vault
         lives in your browser's private filesystem (OPFS), running offline.
@@ -326,7 +326,7 @@
         <span class="icon-[lucide--eye] text-theme-primary w-6 h-6"></span>
         <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
       </div>
-      <p class="text-sm text-theme-muted mb-6 leading-relaxed">
+      <p class="text-base text-theme-muted mb-6 leading-relaxed">
         Codex does not upload your entire vault. When you choose to query the
         Lore Oracle, it works only with the specific campaign context needed for
         that action.
@@ -393,7 +393,7 @@
         The 7 Pillars of Responsible AI
       </h2>
       <p
-        class="text-center text-sm text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
+        class="text-center text-base text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
       >
         Read the devlog series detailing the design principles and technical
         implementations behind Codex's local-first AI system.
@@ -421,7 +421,7 @@
               {matchingArticle?.title || principle.title}
             </h3>
 
-            <p class="text-theme-muted text-xs leading-relaxed mb-6 flex-grow">
+            <p class="text-theme-muted text-sm leading-relaxed mb-6 flex-grow">
               {principle.summary}
             </p>
 
@@ -451,7 +451,7 @@
         Frequently Asked Questions
       </h2>
       <p
-        class="text-center text-sm text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
+        class="text-center text-base text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
       >
         Common questions about responsible AI, vault privacy, and how the Lore
         Oracle works.
@@ -472,7 +472,7 @@
               ></span>
             </summary>
             <div
-              class="px-6 pb-5 pt-1 text-sm text-theme-text/80 leading-relaxed border-t border-theme-border/30"
+              class="px-6 pb-5 pt-1 text-base text-theme-text/80 leading-relaxed border-t border-theme-border/30"
             >
               {@html faq.a}
             </div>
@@ -488,7 +488,9 @@
   >
     <div class="max-w-2xl mx-auto px-4 sm:px-6 font-header">
       <h2 class="text-3xl font-extrabold mb-4">Ready to Build Your World?</h2>
-      <p class="text-theme-muted text-sm leading-relaxed mb-8 max-w-md mx-auto">
+      <p
+        class="text-theme-muted text-base leading-relaxed mb-8 max-w-md mx-auto"
+      >
         No email sign-up required to start. Build a private, local-first
         campaign vault and use AI only when you choose.
       </p>
