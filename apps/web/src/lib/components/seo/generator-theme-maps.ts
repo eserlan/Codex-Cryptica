@@ -21,6 +21,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",

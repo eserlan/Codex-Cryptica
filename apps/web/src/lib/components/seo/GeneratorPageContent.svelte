@@ -29,6 +29,7 @@
   import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
   import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
   import NomadClanFormFields from "$lib/components/seo/NomadClanFormFields.svelte";
+  import DarkFactionFormFields from "$lib/components/seo/DarkFactionFormFields.svelte";
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
@@ -62,6 +63,7 @@
     nationConfig,
     vampireConfig,
     nomadClanConfig,
+    darkFactionConfig,
     nameGeneratorConfig,
     pantheonConfig,
     shipConfig,
@@ -340,6 +342,14 @@
     tone: nomadClanConfig.tones[0],
     territory: nomadClanConfig.territories[0],
     conflict: nomadClanConfig.conflicts[0],
+    campaignContext: "",
+  });
+
+  let darkFaction = $state({
+    mode: darkFactionConfig.modes[0],
+    factionType: darkFactionConfig.types[0],
+    scope: darkFactionConfig.scopes[0],
+    moralPosture: darkFactionConfig.moralPostures[0],
     campaignContext: "",
   });
 
@@ -691,6 +701,13 @@
       activeTheme = "Cyberpunk / Corporate";
       return;
     }
+    if (slug === "dark-fantasy-faction") {
+      // No dedicated visual theme for "grimdark" in the 13-theme system;
+      // Classic Fantasy is the closest existing skin, matching the general
+      // Faction generator's own default rather than inventing a new one.
+      activeTheme = "Classic Fantasy";
+      return;
+    }
     if (slug === "pantheon-generator" || slug === "god-generator") {
       activeTheme = pantheon.genre;
       return;
@@ -818,6 +835,8 @@
       generatorEngine.generateVampireClan({ ...vampireClan, useAI }),
     "nomad-clan": (useAI) =>
       generatorEngine.generateNomadClan({ ...nomadClan, useAI }),
+    "dark-fantasy-faction": (useAI) =>
+      generatorEngine.generateDarkFaction({ ...darkFaction, useAI }),
     names: (useAI) =>
       generatorEngine.generateNames({ ...names, theme: activeTheme, useAI }),
     "fantasy-names": (useAI) =>
@@ -1174,6 +1193,15 @@
         bind:territory={nomadClan.territory}
         bind:conflict={nomadClan.conflict}
         bind:campaignContext={nomadClan.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "dark-fantasy-faction"}
+      <DarkFactionFormFields
+        bind:mode={darkFaction.mode}
+        bind:factionType={darkFaction.factionType}
+        bind:scope={darkFaction.scope}
+        bind:moralPosture={darkFaction.moralPosture}
+        bind:campaignContext={darkFaction.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "names"}

@@ -23,6 +23,7 @@ export const GENERATOR_SLUGS = [
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",

@@ -566,6 +566,65 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/settlement", label: "Settlement generator" },
     ],
   },
+  "dark-fantasy-faction": {
+    pageTitle:
+      "Dark Fantasy Faction Generator | Free Grimdark RPG Tool | Codex Cryptica",
+    metaDescription:
+      "Generate dark fantasy and grimdark factions — fallen orders, cursed noble houses, plague cults, witch-hunter lodges, and corpse guilds — with agendas, secrets, and table-ready hooks.",
+    introTitle: "Dark Fantasy Faction Generator",
+    eyebrow: "Dark Fantasy Faction Generator",
+    introText:
+      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+    canonicalPath: "/generators/dark-fantasy-faction",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-dark-fantasy-faction.jpg",
+    ogImageAlt:
+      "Codex Cryptica dark fantasy faction generator drafting a cursed noble house with agenda, secrets, and rivals",
+    keywords: [
+      "dark fantasy faction generator",
+      "grimdark faction generator",
+      "dark rpg faction generator",
+      "osr faction generator",
+      "witch hunter faction generator",
+      "cursed kingdom generator",
+      "fantasy cult generator",
+    ],
+    faqs: [
+      {
+        question: "What does the dark fantasy faction generator create?",
+        answer:
+          "It generates a complete grimdark faction — a fallen order, cursed noble house, witch-hunter lodge, plague cult, corpse guild, or similar — with what they control, what they want, why they're dangerous, notable NPCs, an internal conflict, a rival faction, and a table-ready GM hook.",
+      },
+      {
+        question: "Is every faction just evil for the sake of it?",
+        answer:
+          "No. The generator aims for morally sharp, table-usable factions — institutions doing something defensible in the worst possible way, not cartoon villains. Pick a moral posture (necessary evil, fallen idealists, fanatical purists, and more) to steer the tone.",
+      },
+      {
+        question: "Can I use it without an account?",
+        answer:
+          "Yes. Generate and copy faction notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+      {
+        question: "Which RPG systems does it work with?",
+        answer:
+          "The generator is system-agnostic and works for any dark fantasy or grimdark campaign — OSR, Warhammer-adjacent settings, cursed kingdoms, plague-ridden cities, or your own homebrew. It makes no claim of official affiliation with any third-party system.",
+      },
+      {
+        question: "Can I aim the faction at my current campaign?",
+        answer:
+          "Yes. Add optional campaign context and the generator will fit the faction to your table rather than producing a generic result.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/faction",
+        label: "Classic Fantasy faction generator",
+      },
+      { href: "/generators/vampire-clan", label: "Vampire clan generator" },
+      { href: "/generators/cosmic-horror", label: "Cosmic Horror generators" },
+    ],
+  },
   names: {
     pageTitle:
       "RPG Name Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Names | Codex Cryptica",
