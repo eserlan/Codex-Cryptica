@@ -23,6 +23,7 @@
     isOrderedList: false,
     isBlockquote: false,
     isLink: false,
+    isTable: false,
   });
 
   $effect(() => {
@@ -47,6 +48,7 @@
       activeStates.isBlockquote =
         currentEditor?.isActive("blockquote") ?? false;
       activeStates.isLink = currentEditor?.isActive("link") ?? false;
+      activeStates.isTable = currentEditor?.isActive("table") ?? false;
     };
 
     // Initial update
@@ -86,6 +88,14 @@
       .focus()
       .extendMarkRange("link")
       .setLink({ href: url })
+      .run();
+  };
+
+  const insertTable = () => {
+    editor
+      ?.chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
       .run();
   };
 
@@ -250,7 +260,113 @@
       >
         <span class="icon-[lucide--link] w-4 h-4" aria-hidden="true"></span>
       </button>
+      <button
+        type="button"
+        onclick={insertTable}
+        class="toolbar-btn"
+        title="Insert Table"
+        aria-label="Insert Table"
+      >
+        <span class="icon-[lucide--table] w-4 h-4" aria-hidden="true"></span>
+      </button>
     </div>
+
+    {#if activeStates.isTable}
+      <div class="w-px bg-theme-border/50 mx-1"></div>
+
+      <!-- Table editing -->
+      <div class="flex gap-0.5">
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addRowBefore().run()}
+          class="toolbar-btn"
+          title="Add Row Above"
+          aria-label="Add Row Above"
+        >
+          <span
+            class="icon-[lucide--arrow-up-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addRowAfter().run()}
+          class="toolbar-btn"
+          title="Add Row Below"
+          aria-label="Add Row Below"
+        >
+          <span
+            class="icon-[lucide--arrow-down-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().deleteRow().run()}
+          class="toolbar-btn"
+          title="Delete Row"
+          aria-label="Delete Row"
+        >
+          <span class="icon-[lucide--rows-3] w-4 h-4" aria-hidden="true"></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addColumnBefore().run()}
+          class="toolbar-btn"
+          title="Add Column Left"
+          aria-label="Add Column Left"
+        >
+          <span
+            class="icon-[lucide--arrow-left-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addColumnAfter().run()}
+          class="toolbar-btn"
+          title="Add Column Right"
+          aria-label="Add Column Right"
+        >
+          <span
+            class="icon-[lucide--arrow-right-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().deleteColumn().run()}
+          class="toolbar-btn"
+          title="Delete Column"
+          aria-label="Delete Column"
+        >
+          <span class="icon-[lucide--columns-3] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().toggleHeaderRow().run()}
+          class="toolbar-btn"
+          title="Toggle Header Row"
+          aria-label="Toggle Header Row"
+        >
+          <span
+            class="icon-[lucide--table-properties] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().deleteTable().run()}
+          class="toolbar-btn"
+          title="Delete Table"
+          aria-label="Delete Table"
+        >
+          <span class="icon-[lucide--trash-2] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+      </div>
+    {/if}
 
     <div class="flex-1"></div>
 
