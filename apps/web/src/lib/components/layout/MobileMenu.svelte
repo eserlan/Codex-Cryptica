@@ -7,7 +7,6 @@
   import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { isToolActive, isViewActive, navItems } from "./nav-items";
 
@@ -225,38 +224,20 @@
           </a>
         {/if}
         <a
-          href="{base}/features"
+          href="{base}/examples"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--zap] w-4 h-4"></span>
-          Features
+          <span class="icon-[lucide--file-text] w-4 h-4"></span>
+          Examples
         </a>
         <a
-          href="{base}/blog"
+          href="{base}/explore"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--newspaper] w-4 h-4"></span>
-          Blog
-        </a>
-        {#if !guidedModeStore.isGuidedMode}
-          <a
-            href="{base}/worlds"
-            class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-            onclick={close}
-          >
-            <span class="icon-[lucide--compass] w-4 h-4"></span>
-            Explore Worlds
-          </a>
-        {/if}
-        <a
-          href="{base}/responsible-ai-worldbuilding"
-          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-          onclick={close}
-        >
-          <span class="icon-[lucide--shield-alert] w-4 h-4"></span>
-          Responsible AI
+          <span class="icon-[lucide--compass] w-4 h-4"></span>
+          Explore
         </a>
         <button
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
