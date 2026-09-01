@@ -254,6 +254,14 @@
     icon: "icon-[lucide--truck]",
   };
 
+  const darkFantasyFactionCard: GeneratorCard = {
+    slug: "dark-fantasy-faction",
+    label: "Dark Fantasy Faction Generator",
+    summary:
+      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+    icon: "icon-[lucide--skull]",
+  };
+
   const fantasyOnlyCards: GeneratorCard[] = [
     {
       slug: "dnd-npc",
@@ -304,6 +312,7 @@
         tavernCard,
         shipCard,
         nationCard,
+        darkFantasyFactionCard,
         ...fantasyOnlyCards,
         newsSheetCard(
           "Broadsheet Generator",
@@ -861,7 +870,7 @@
             >
               {card.label}
             </span>
-            <span class="block text-sm text-theme-muted leading-relaxed">
+            <span class="block text-base text-theme-muted leading-relaxed">
               {card.summary}
             </span>
           </a>
@@ -874,7 +883,7 @@
         <h2 class="font-header text-xl font-bold mb-2">
           Campaign guides for these worlds
         </h2>
-        <p class="text-sm text-theme-muted leading-relaxed mb-6">
+        <p class="text-base text-theme-muted leading-relaxed mb-6">
           How Codex Cryptica handles the systems, genres and campaign styles
           these generators are built for.
         </p>
@@ -891,7 +900,9 @@
                   >
                     {page.hero.title}
                   </span>
-                  <span class="block text-sm text-theme-muted leading-relaxed">
+                  <span
+                    class="block text-base text-theme-muted leading-relaxed"
+                  >
                     {page.hero.tagline}
                   </span>
                 </span>

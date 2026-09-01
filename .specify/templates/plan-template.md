@@ -45,6 +45,17 @@ _Applies only when the feature adds or materially repositions a public, indexabl
 
 See Principle XIII and `docs/discovery-intent-registry.md`.
 
+### Bounded Responsibility Check
+
+_Applies when the feature adds behaviour to existing files. Mark N/A when every file it touches is new or data-only._
+
+- [ ] Files this feature will touch that already exceed 500 lines are listed, excluding tests and data-only modules.
+- [ ] For each, either the single responsibility it still holds is named, or a decomposition is planned as part of this work.
+- [ ] New behaviour that does not belong to a listed file's existing responsibility has an extraction target — a `packages/` workspace when the logic is not app-specific, a sibling module when it is.
+- [ ] Any planned split carries its tests across, or gains its own.
+
+See Principle XIV and ADR 003.
+
 ## Project Structure
 
 ### Documentation (this feature)

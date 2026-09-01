@@ -50,6 +50,13 @@
           icon: "icon-[lucide--truck]",
         },
         {
+          href: "/generators/dark-fantasy-faction",
+          label: "Dark Fantasy Faction Generator",
+          summary:
+            "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+          icon: "icon-[lucide--skull]",
+        },
+        {
           href: "/generators/names",
           label: "RPG Name Generator",
           summary:
@@ -450,7 +457,7 @@
               >
                 {hub.label}
               </span>
-              <span class="block text-sm text-theme-muted leading-relaxed">
+              <span class="block text-base text-theme-muted leading-relaxed">
                 {hub.summary}
               </span>
             </a>
@@ -481,7 +488,7 @@
                 >
                   {gen.label}
                 </span>
-                <span class="block text-sm text-theme-muted leading-relaxed">
+                <span class="block text-base text-theme-muted leading-relaxed">
                   {gen.summary}
                 </span>
               </a>

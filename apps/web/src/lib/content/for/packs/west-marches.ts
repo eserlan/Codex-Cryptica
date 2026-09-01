@@ -8,7 +8,7 @@ export const westMarches: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for West Marches Campaigns",
     description:
-      "Run an open-table West Marches game with one shared world: a base town, a map that fills in as parties explore, a rumour board, and consequences that outlast the group who caused them.",
+      "Run an open-table West Marches hexcrawl with one shared world: a base town, a hex map that fills in through exploration, a rumour board, and lasting consequences.",
     image: "https://assets.codexcryptica.com/og/west-marches.jpg",
     imageAlt:
       "A hand-drawn wilderness map on a tavern table, half of it still blank, weighted down with a lantern and a stack of expedition notes",
@@ -17,7 +17,7 @@ export const westMarches: LandingPageConfig = {
     eyebrow: "Open-Table Campaign Management",
     title: "Codex Cryptica for West Marches Campaigns",
     tagline:
-      "One world, one map, one set of consequences — however many players turn up, and whenever they do.",
+      "One world, one hex map, one set of consequences — however many players turn up, and whenever they do.",
     problemStatement:
       "In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.",
   },
@@ -35,9 +35,9 @@ export const westMarches: LandingPageConfig = {
       icon: "icon-[lucide--scroll-text]",
     },
     {
-      title: "The Map Fills In as They Explore",
+      title: "The Hex Map Fills In as They Explore",
       description:
-        "Landmarks, routes and the sites behind them build up as expeditions come back. What has been found, what was only glimpsed, and what is still blank stays visible without you rebuilding the map each session.",
+        "Explored hexes, routes and the sites inside them build up as expeditions come back. What has been found, what was only glimpsed, and what is still blank stays visible without rebuilding the map each session.",
       icon: "icon-[lucide--map]",
     },
     {

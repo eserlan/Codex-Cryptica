@@ -193,7 +193,7 @@
                   >({catAnswers.length})</span
                 >
               </div>
-              <p class="text-sm leading-relaxed text-theme-muted">
+              <p class="text-base leading-relaxed text-theme-muted">
                 {category.description}
               </p>
             </div>
@@ -220,7 +220,7 @@
                           {answer.question}
                         </h3>
                         <p
-                          class="mt-1.5 line-clamp-2 text-sm leading-relaxed text-theme-muted"
+                          class="mt-1.5 line-clamp-2 text-base leading-relaxed text-theme-muted"
                         >
                           {answer.shortAnswer}
                         </p>
@@ -294,7 +294,7 @@
                       {answer.question}
                     </h2>
                     <p
-                      class="mt-1.5 line-clamp-2 text-sm leading-relaxed text-theme-muted"
+                      class="mt-1.5 line-clamp-2 text-base leading-relaxed text-theme-muted"
                     >
                       {answer.shortAnswer}
                     </p>

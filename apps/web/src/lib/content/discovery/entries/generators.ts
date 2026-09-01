@@ -515,6 +515,24 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-dark-fantasy-faction",
+    pageKind: "generator",
+    canonicalPath: "/generators/dark-fantasy-faction",
+    primaryIntent: "dark fantasy faction generator",
+    intentAliases: [
+      "grimdark faction generator",
+      "witch hunter faction generator",
+      "cursed kingdom faction generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Fallen orders, cursed noble houses, plague cults, witch-hunter lodges and corpse guilds — grimdark institutions doing something defensible in the worst possible way, distinct from the generic Classic Fantasy faction and from the gothic/World of Darkness vampire clan.",
+    parentCluster: "faction-creation",
+    relatedIntents: ["generator-faction", "generator-vampire-clan"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "hub-fantasy",
     pageKind: "hub",
     canonicalPath: "/generators/fantasy",

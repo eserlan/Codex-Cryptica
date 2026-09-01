@@ -1041,3 +1041,73 @@ export const nomadClanConfig = {
     "Negotiate a truce with a rival clan before the corporate pressure destroys them both.",
   ],
 };
+
+// Dark Fantasy / Grimdark Faction (#1136): a genre-locked faction variant,
+// alongside vampireConfig and nomadClanConfig above. Flat pools, no per-value
+// FactionTrait annotations — the "smart" schema degrades to uniform random
+// selection with an empty trait/rule set, which is the documented zero-config
+// default (see smart/types.ts) and is enough for a generator this scoped;
+// hand-authoring a trait taxonomy for a single new faction family was judged
+// not worth the maintenance cost it would add to public-faction-traits.ts.
+export const darkFactionConfig = {
+  modes: [
+    "Plague City",
+    "Cursed Kingdom",
+    "Fallen Church",
+    "Border War",
+    "Demon Pact",
+    "Witch-Hunt",
+    "Doomed Crusade",
+    "Corpse Economy",
+  ],
+  types: [
+    "Fallen Order",
+    "Cursed Noble House",
+    "Witch-Hunter Lodge",
+    "Plague Cult",
+    "Corpse Guild",
+    "Mercenary Barony",
+    "Forbidden Alchemy Circle",
+    "Desperate Peasant League",
+  ],
+  scopes: [
+    "A single plague-stricken village",
+    "A cursed city under martial law",
+    "A haunted border march",
+    "An entire doomed barony",
+    "A ruined, half-abandoned province",
+    "A holy war's active theatre",
+  ],
+  moralPostures: [
+    "Necessary evil — everyone knows what they do and needs it done anyway",
+    "Openly cruel — they no longer pretend otherwise",
+    "Fallen idealists — they remember what they meant to be",
+    "Corrupt but stabilising — the alternative is worse and they know it",
+    "Desperate protectors — every atrocity is justified as the lesser one",
+    "Fanatical purists — the cruelty is the point, not a means to one",
+  ],
+  goals: [
+    "Root out every remaining trace of the old faith before the new order arrives.",
+    "Keep the plague quarantine line intact by any means, including ones nobody will admit to.",
+    "Recover the cursed relic their founder bargained away before its debt comes due.",
+    "Hold the border march for one more season, whatever that costs the people living on it.",
+    "Complete the demon pact's final term before a rival claims the same bargain.",
+    "Bury the truth of how the last outbreak actually started.",
+  ],
+  conflicts: [
+    "A faction elder is dying and their chosen successor is not who the rank and file expected.",
+    "The pact that funds them is coming due, and paying it means betraying the people they protect.",
+    "A junior member has started asking questions the leadership cannot afford to answer.",
+    "Their methods worked once and are failing now, and no one will say so out loud.",
+    "A rival within their own ranks is quietly building a faction inside the faction.",
+    "The thing they sealed away is not as sealed as the founding charter claims.",
+  ],
+  hooks: [
+    "A plague-marked messenger arrives asking the party to carry a sealed warning no one else will touch.",
+    "The faction offers safe passage through their territory in exchange for a favour they won't name yet.",
+    "A defector from the faction begs the party for protection, and knows exactly what they're running from.",
+    "Villagers under the faction's protection ask the party to investigate what protection is actually costing them.",
+    "The faction's founding pact is coming due, and someone wants it broken before that happens.",
+    "A body turns up bearing the faction's mark, in a place the faction insists it has never operated.",
+  ],
+};

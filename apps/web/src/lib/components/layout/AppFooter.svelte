@@ -33,31 +33,22 @@
       >
     {/if}
     <a
-      href="{base}/features"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Features</a
-    >
-    <a
       href="{base}/tools"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Tools</a
     >
     <a
-      href="{base}/blog"
+      href="{base}/examples"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Blog</a
+      >Examples</a
     >
     <a
-      href="{base}/worlds"
+      href="{base}/explore"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Explore Worlds</a
-    >
-    <a
-      href="{base}/responsible-ai-worldbuilding"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Responsible AI</a
+      >Explore</a
     >
     <button
+      type="button"
       onclick={() => modalUIStore.openSettings("help")}
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer"
       >Help</button

@@ -12,7 +12,7 @@ import {
   shouldHandleVaultRequest,
 } from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "590";
+const CACHE_VERSION = "596";
 const CACHE = `cache-${__APP_VERSION__}-${CACHE_VERSION}`;
 
 const sw = self as unknown as ServiceWorkerGlobalScope;

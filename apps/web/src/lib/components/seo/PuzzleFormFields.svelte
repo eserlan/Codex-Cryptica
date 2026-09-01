@@ -224,6 +224,6 @@
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize puzzle options and generate a draft"
-    ><span class="icon-[lucide--dices] w-3.5 h-3.5"></span> Surprise Me</button
+    ><span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise Me</button
   >
 </div>

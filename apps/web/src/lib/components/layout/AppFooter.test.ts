@@ -28,13 +28,25 @@ describe("AppFooter", () => {
       screen.getByRole("link", { name: "Support on Patreon" }),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Discord" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Features" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Tools" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Blog" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Explore Worlds" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Responsible AI" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Explore" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Terms of Service" })).toBeTruthy();
+  });
+
+  it("links Examples to the marketing examples directory", () => {
+    render(AppFooter);
+
+    const examplesLink = screen.getByRole("link", { name: "Examples" });
+    expect(examplesLink).toBeTruthy();
+    expect(examplesLink.getAttribute("href")).toBe("/examples");
+  });
+
+  it("links Explore to the site directory page", () => {
+    render(AppFooter);
+
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
+    expect(exploreLink.getAttribute("href")).toBe("/explore");
   });
 
   it("opens Help settings when clicking the Help button", async () => {
