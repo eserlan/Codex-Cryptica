@@ -5,6 +5,7 @@ import { arcHub } from "./arc-hub-augmentation-slum";
 import { theVentingHelix } from "./the-venting-helix-derelict-hazard";
 import { theCinderWren } from "./the-cinder-wren-space-western-ship";
 import { ladyVivienneMorvath } from "./lady-vivienne-morvath-gothic-horror-villain";
+import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 
 /**
  * The published example library.
@@ -25,6 +26,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     theVentingHelix,
     theCinderWren,
     ladyVivienneMorvath,
+    siloZeroSeven,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),

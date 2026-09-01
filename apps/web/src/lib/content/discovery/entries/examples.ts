@@ -152,4 +152,23 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-silo-zero-seven",
+    pageKind: "example",
+    canonicalPath: "/examples/silo-zero-seven-fallout-repository",
+    primaryIntent: "post apocalyptic dungeon example",
+    intentAliases: [
+      "example of a generated ruin",
+      "sample post apocalyptic location",
+      "example of a generated vault",
+    ],
+    audience: "Post-Apocalyptic game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A four-sector explorable site with two truce-bound factions and a suppressed central secret neither faction knows exists, small enough for a GM to run cold.",
+    parentCluster: "adventure-mapping",
+    relatedIntents: ["generator-dungeon-generator", "answer-point-crawl"],
+    indexable: true,
+    status: "live",
+  },
 ];
