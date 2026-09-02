@@ -75,6 +75,10 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
       template: null,
       duplicate: false,
     },
+    silhouettePickerState: {
+      open: false,
+      entity: null,
+    },
     showCanvasSelector: false,
     showMobileCreateSheet: false,
     closeMergeDialog: vi.fn(),
@@ -82,7 +86,12 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     closeRelatedEntityDialog: vi.fn(),
     closeVaultSwitcher: vi.fn(),
     closeShare: vi.fn(),
+    closeSilhouettePicker: vi.fn(),
   },
+}));
+
+vi.mock("./SilhouettePickerModal.svelte", async () => ({
+  default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
 vi.mock("./ZenModeModal.svelte", async () => ({
