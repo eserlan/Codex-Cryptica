@@ -12,6 +12,7 @@ export const lettersOfMarqueExpired: ExampleConfigInput = {
   title: "Pirate adventure example: Letters of Marque, Expired",
   kind: "adventure",
   genre: "Pirate",
+  theme: "pirate",
   summary:
     "The party's privateering commission lapsed at midnight, their captain vanished aboard a ship reported sunk two years ago, and a naval patrol that no longer has to pretend they're not pirates is already closing.",
   provenance: "raw",

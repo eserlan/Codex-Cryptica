@@ -10,6 +10,7 @@ export const arcHub: ExampleConfigInput = {
   title: "Cyberpunk district example: Arc Hub",
   kind: "settlement",
   genre: "Cyberpunk",
+  theme: "cyberpunk",
   summary:
     "A neon-soaked vertical slum built into the scaffolding of an abandoned corporate transit terminal, operating as the city's premier black-market augmentation bazaar under the watchful eye of a malfunctioning municipal AI.",
   provenance: "raw",
