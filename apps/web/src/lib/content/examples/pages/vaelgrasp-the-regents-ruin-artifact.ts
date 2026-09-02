@@ -33,6 +33,10 @@ export const vaelgrasp: ExampleConfigInput = {
       value: "Creeping Corruption (Gradual physical/spiritual decay)",
     },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/artifact-vaelgrasp-ruin.jpg",
+    alt: "Vaelgrasp, the Regent's Ruin, a blackened silver-steel greatsword with clasped-hands crossguard and garnet pommel resting before an iron throne",
+  },
   output: [
     {
       kind: "prose",
