@@ -176,6 +176,25 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "example-letters-of-marque-expired",
+    pageKind: "example",
+    canonicalPath: "/examples/letters-of-marque-expired-pirate-adventure",
+    primaryIntent: "pirate adventure example",
+    intentAliases: [
+      "rpg adventure example",
+      "sample pirate rpg adventure",
+      "example of a generated adventure",
+    ],
+    audience: "Pirate & High Seas game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A full adventure arc with a real clock, physical clues, a non-combat social complication, and three genuinely different resolution paths rather than a single scene.",
+    parentCluster: "adventure-design",
+    relatedIntents: ["generator-adventure-generator"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "example-silo-zero-seven",
     pageKind: "example",
     canonicalPath: "/examples/silo-zero-seven-fallout-repository",

@@ -164,8 +164,20 @@ describe("the published examples", () => {
     expect(vivienne.generator.href).toBe("/generators/bbeg-generator");
   });
 
+  it("publishes a Pirate adventure filling the adventure kind gap", () => {
+    const lettersOfMarque =
+      examples["letters-of-marque-expired-pirate-adventure"];
+    expect(lettersOfMarque).toBeDefined();
+    expect(lettersOfMarque.kind).toBe("adventure");
+    expect(lettersOfMarque.genre).toBe("Pirate");
+    expect(lettersOfMarque.generator.href).toBe(
+      "/generators/adventure-generator",
+    );
+  });
+
   it("publishes a Post-Apocalyptic dungeon filling the location kind gap", () => {
     const siloZeroSeven = examples["silo-zero-seven-fallout-repository"];
+    expect(siloZeroSeven).toBeDefined();
     expect(siloZeroSeven.kind).toBe("location");
     expect(siloZeroSeven.genre).toBe("Post-Apocalyptic");
     expect(siloZeroSeven.generator.href).toBe("/generators/dungeon-generator");

@@ -6,6 +6,7 @@ import { theVentingHelix } from "./the-venting-helix-derelict-hazard";
 import { theCinderWren } from "./the-cinder-wren-space-western-ship";
 import { voidSiphon } from "./void-siphon-cosmic-horror-creature";
 import { ladyVivienneMorvath } from "./lady-vivienne-morvath-gothic-horror-villain";
+import { lettersOfMarqueExpired } from "./letters-of-marque-expired-pirate-adventure";
 import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 
 /**
@@ -28,6 +29,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     theCinderWren,
     voidSiphon,
     ladyVivienneMorvath,
+    lettersOfMarqueExpired,
     siloZeroSeven,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
