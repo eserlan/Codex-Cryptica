@@ -164,6 +164,13 @@ describe("the published examples", () => {
     expect(vivienne.generator.href).toBe("/generators/bbeg-generator");
   });
 
+  it("publishes a Post-Apocalyptic dungeon filling the location kind gap", () => {
+    const siloZeroSeven = examples["silo-zero-seven-fallout-repository"];
+    expect(siloZeroSeven.kind).toBe("location");
+    expect(siloZeroSeven.genre).toBe("Post-Apocalyptic");
+    expect(siloZeroSeven.generator.href).toBe("/generators/dungeon-generator");
+  });
+
   it("keys every example by its own slug", () => {
     for (const [key, example] of Object.entries(examples)) {
       expect(key).toBe(example.slug);

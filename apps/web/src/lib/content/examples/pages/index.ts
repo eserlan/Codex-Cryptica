@@ -6,6 +6,7 @@ import { theVentingHelix } from "./the-venting-helix-derelict-hazard";
 import { theCinderWren } from "./the-cinder-wren-space-western-ship";
 import { voidSiphon } from "./void-siphon-cosmic-horror-creature";
 import { ladyVivienneMorvath } from "./lady-vivienne-morvath-gothic-horror-villain";
+import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 
 /**
  * The published example library.
@@ -27,6 +28,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     theCinderWren,
     voidSiphon,
     ladyVivienneMorvath,
+    siloZeroSeven,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
