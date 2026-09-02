@@ -377,6 +377,36 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/examples/vaelgrasp-the-regents-ruin-artifact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/void-siphon-cosmic-horror-creature</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/lady-vivienne-morvath-gothic-horror-villain</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-withered-hand-grimdark-faction</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/letters-of-marque-expired-pirate-adventure</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/silo-zero-seven-fallout-repository</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/introducing-the-canvas</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
