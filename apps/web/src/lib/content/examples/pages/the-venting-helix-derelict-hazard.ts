@@ -10,6 +10,7 @@ export const theVentingHelix: ExampleConfigInput = {
   title: "Sci-fi encounter example: The Venting Helix",
   kind: "encounter",
   genre: "Space opera",
+  theme: "scifi",
   summary:
     "Deep within the drifting hull of the Astragal-Nine, the crew must halt a runaway atmospheric purge loop before the counter-rotating habitat rings tear themselves apart.",
   provenance: "raw",

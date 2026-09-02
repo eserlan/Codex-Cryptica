@@ -10,6 +10,7 @@ export const ladyVivienneMorvath: ExampleConfigInput = {
   title: "Gothic Horror villain example: Lady Vivienne Morvath",
   kind: "character",
   genre: "Gothic Horror",
+  theme: "horror",
   summary:
     "A grieving matriarch and flesh-alchemist who embalms dying lineages in cold iron and mercury to freeze her decaying valley in permanent, immortal perfection.",
   provenance: "raw",

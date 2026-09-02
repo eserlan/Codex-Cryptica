@@ -12,6 +12,7 @@ export const siloZeroSeven: ExampleConfigInput = {
   title: "Post-Apocalyptic dungeon example: Silo Zero-Seven Fallout Repository",
   kind: "location",
   genre: "Post-Apocalyptic",
+  theme: "fallout",
   summary:
     "A sealed federal fallout shelter that never got its all-clear, now split between a cult that worships its unexploded warhead and a starving vault-dweller remnant that just wants the radiation breach fixed.",
   provenance: "raw",

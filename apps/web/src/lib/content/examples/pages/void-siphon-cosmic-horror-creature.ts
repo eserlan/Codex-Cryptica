@@ -12,6 +12,7 @@ export const voidSiphon: ExampleConfigInput = {
   title: "Cosmic Horror creature example: The Void-Siphon",
   kind: "creature",
   genre: "Cosmic Horror",
+  theme: "cosmic_horror",
   summary:
     "A wagon-sized deep-water aberration that drinks sound and light from a stretch of ocean, leaving fishing crews becalmed in a silence that hides what is actually circling them.",
   provenance: "raw",

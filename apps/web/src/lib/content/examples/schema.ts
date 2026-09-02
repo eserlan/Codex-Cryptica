@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { THEMES } from "schema";
+import type { WorldThemeId } from "schema";
 
 /**
  * Curated generator examples (`/examples/[slug]`), per #2565.
@@ -33,6 +35,22 @@ export const ExampleKindSchema = z.enum([
   "adventure",
 ]);
 export type ExampleKind = z.infer<typeof ExampleKindSchema>;
+
+/**
+ * The world theme the page renders in, so a cyberpunk example is read in the
+ * cyberpunk skin rather than in whatever theme the visitor last happened to
+ * pick up elsewhere on the site.
+ *
+ * Deliberately a separate field rather than something inferred from `genre`:
+ * `genre` is free prose written for the reader ("Classic Fantasy", "Space
+ * opera"), and several genres have no single obvious skin. Choosing the theme
+ * is an editorial act, so it is stated rather than guessed. Use `workspace`
+ * for an example that should stay neutral.
+ */
+export const ExampleThemeSchema = z.enum(
+  Object.keys(THEMES) as [WorldThemeId, ...WorldThemeId[]],
+);
+export type ExampleTheme = z.infer<typeof ExampleThemeSchema>;
 
 /**
  * Honesty about how much the text was touched.
@@ -101,6 +119,8 @@ export const ExampleConfigSchema = z
     title: z.string().min(1),
     kind: ExampleKindSchema,
     genre: z.string().min(1),
+    /** World theme this example is skinned in. See ExampleThemeSchema. */
+    theme: ExampleThemeSchema,
     /** One sentence describing the artefact, reusable as a card subtitle. */
     summary: z.string().min(20),
     provenance: ExampleProvenanceSchema,

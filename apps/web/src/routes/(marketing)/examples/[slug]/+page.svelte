@@ -7,6 +7,7 @@
     buildExampleJsonLd,
     buildExampleBreadcrumbJsonLd,
   } from "$lib/content/examples/json-ld";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -24,6 +25,21 @@
       related.length >
       0,
   );
+
+  /**
+   * Skin the page in the example's own world theme, so a cyberpunk settlement
+   * is read in the cyberpunk palette rather than in whatever theme the visitor
+   * picked up from the last hub they opened.
+   *
+   * This previews rather than sets: `previewTheme` is not persisted, so it
+   * cannot overwrite a theme the visitor actually chose for their own vault.
+   * The effect re-runs when `example.theme` changes (client-side navigation
+   * between two examples) and clears the preview on the way out.
+   */
+  $effect(() => {
+    themeStore.previewTheme(example.theme);
+    return () => themeStore.previewTheme(null);
+  });
 </script>
 
 <SeoHead

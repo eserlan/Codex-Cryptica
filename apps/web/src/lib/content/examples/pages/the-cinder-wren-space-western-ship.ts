@@ -7,6 +7,7 @@ export const theCinderWren: ExampleConfigInput = {
   title: "Space Western ship example: The Cinder Wren",
   kind: "ship",
   genre: "Space Western",
+  theme: "western",
   summary:
     "A scarred frontier freighter and gunship running medicine, fugitives, and inconvenient truths between Last Light Outpost and the lawless dark beyond the customs line.",
   provenance: "raw",

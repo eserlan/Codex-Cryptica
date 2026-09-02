@@ -10,6 +10,7 @@ export const gullsRoost: ExampleConfigInput = {
   title: "Fantasy settlement example: Gull's Roost",
   kind: "settlement",
   genre: "Fantasy",
+  theme: "fantasy",
   summary:
     "A salt-caked coastal smuggling town built around a collapsed sea-arch, nominally governed by an elected council of merchants while petty crews run the docks.",
   provenance: "raw",

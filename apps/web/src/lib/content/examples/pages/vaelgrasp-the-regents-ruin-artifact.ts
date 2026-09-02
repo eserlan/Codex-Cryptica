@@ -12,6 +12,7 @@ export const vaelgrasp: ExampleConfigInput = {
   title: "Fantasy artifact example: Vaelgrasp, the Regent's Ruin",
   kind: "item",
   genre: "Classic Fantasy",
+  theme: "fantasy",
   summary:
     "A golden-age greatsword that made one king unkillable and every king after him worse, currently wielded by the tyrant who will not admit what it has already cost him.",
   provenance: "raw",
