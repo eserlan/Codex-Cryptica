@@ -56,6 +56,13 @@
             "Every standalone generator and utility, grouped by what you're building.",
           icon: "icon-[lucide--wrench]",
         },
+        {
+          href: "/silhouettes",
+          label: "Vector Silhouettes",
+          summary:
+            "Curated, theme-reactive vector RPG silhouettes and token art for characters, creatures, and locations.",
+          icon: "icon-[lucide--shapes]",
+        },
       ],
     },
     {

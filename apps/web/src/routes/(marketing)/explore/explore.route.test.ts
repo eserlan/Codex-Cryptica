@@ -47,4 +47,11 @@ describe("/explore route", () => {
         ?.getAttribute("content"),
     ).not.toBe("https://codexcryptica.com/og-image.png");
   });
+
+  it("renders a link to /silhouettes under Build & Explore", () => {
+    render(Page);
+    const link = document.querySelector('a[href="/silhouettes"]');
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain("Vector Silhouettes");
+  });
 });
