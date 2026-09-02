@@ -28,6 +28,10 @@ export const theWitheredHand: ExampleConfigInput = {
         "Necessary evil — everyone knows what they do and needs it done anyway",
     },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/faction-withered-hand.jpg",
+    alt: "Masked wardens of The Withered Hand tending corpse carts and bone-rendering cauldrons in the Ashfield Charnel Exchange",
+  },
   output: [
     {
       kind: "prose",
