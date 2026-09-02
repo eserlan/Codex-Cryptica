@@ -99,3 +99,36 @@ the cyberpunk demo vault. Three conditions mattered, all learned the hard way:
 
 Resize to 1600px and compress before uploading; the CDN handles format, not
 dimensions.
+
+### Announcement captures
+
+Announcement images live at `announcements/<feature>-<version>.png` and follow a
+different recipe from the feature screenshots above, because they are showing a
+page rather than the app:
+
+- **Full page, not viewport.** A directory or landing page usually runs past
+  900px, and a viewport capture silently crops the part that proves the point.
+  `page.screenshot({ fullPage: true })` at a 1440x900 viewport with
+  `deviceScaleFactor: 2` keeps the layout at its desktop breakpoint and captures
+  everything below the fold.
+- **Run the script from the repo root.** `playwright` resolves out of the root
+  `node_modules`; a script sitting in a temp directory fails with
+  `ERR_MODULE_NOT_FOUND`. On a fresh machine the browser binary is also missing
+  until `bunx playwright install chromium`.
+
+### A 404 from curl does not mean the page is broken
+
+`adapter-static` on Cloudflare Pages serves the SPA shell for any route without
+a prerendered HTML file, and it serves it **with a 404 status code**. So
+`curl -o /dev/null -w '%{http_code}' https://codexcryptica.com/<route>` can
+report 404 for a page that renders correctly in a browser, because SvelteKit
+hydrates and routes client-side once the shell loads.
+
+Check the rendered DOM before concluding a route is down:
+
+```sh
+curl -s https://codexcryptica.com/<route> | grep -c __sveltekit   # shell served
+```
+
+The status code still matters for crawlers, which is the real reason to keep
+`sitemap.xml` correct rather than relying on discovery.
