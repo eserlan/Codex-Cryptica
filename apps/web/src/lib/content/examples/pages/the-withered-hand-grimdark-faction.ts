@@ -11,6 +11,7 @@ export const theWitheredHand: ExampleConfigInput = {
   title: "Dark Fantasy faction example: The Withered Hand",
   kind: "faction",
   genre: "Dark Fantasy",
+  theme: "fantasy",
   summary:
     "A corpse guild that keeps a plague-stricken city from drowning in its own dead, funded by a bargain its founder made that is about to come due at everyone else's expense.",
   provenance: "raw",
