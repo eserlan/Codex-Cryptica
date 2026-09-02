@@ -303,6 +303,15 @@
       {/await}
     {/if}
 
+    <!-- Silhouette Picker Modal -->
+    {#if modalUIStore.silhouettePickerState.open}
+      {#await loadModal(() => import("./SilhouettePickerModal.svelte"), "SilhouettePickerModal") then SilhouettePickerModal}
+        {#if SilhouettePickerModal}
+          <SilhouettePickerModal />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Guest Character Chat Modal -->
     {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
       {#if GuestChatModal}

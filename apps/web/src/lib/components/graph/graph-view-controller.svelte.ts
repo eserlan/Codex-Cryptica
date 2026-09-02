@@ -21,6 +21,8 @@ import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
 import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
+import { resolveEntitySilhouette, getSilhouetteSvgDataUri } from "schema";
+import { themeStore } from "$lib/stores/theme.svelte";
 import {
   DEFAULT_SEARCH_ENTITY_ZOOM,
   consumePendingSearchEntityFocus,
@@ -945,9 +947,29 @@ export class GraphViewController {
           resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
           releaseImageUrl: (path: string) =>
             this.deps.vault.releaseImageUrl(path),
+          resolveSilhouetteUrl: (node) => {
+            const nodeData = node.data();
+            const rawEntity = nodeData.entity || {
+              id: node.id(),
+              title:
+                typeof nodeData.label === "string"
+                  ? nodeData.label.replace(/\*$/, "")
+                  : "",
+              type: nodeData.type,
+              labels: nodeData.labels,
+              silhouette: nodeData.silhouette,
+            };
+            const currentTheme = themeStore.activeTheme?.id;
+            const sil = resolveEntitySilhouette(rawEntity, {
+              worldTheme: currentTheme,
+            });
+            const themeColor =
+              themeStore.activeTheme?.tokens?.primary || "#d4af37";
+            return getSilhouetteSvgDataUri(sil, themeColor);
+          },
           onBatchApplied: (count) => {
             this.deps.debugStore.log(
-              `[GraphView] Applied ${count} images to graph nodes.`,
+              `[GraphView] Applied ${count} visuals to graph nodes.`,
             );
           },
           onLog: (msg) => this.deps.debugStore.log(msg),

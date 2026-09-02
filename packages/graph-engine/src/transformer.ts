@@ -216,6 +216,14 @@ export class GraphTransformer {
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
       if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
+      if (entity.silhouette) (nodeData as any).silhouette = entity.silhouette;
+      (nodeData as any).entity = {
+        id: entity.id,
+        title: entity.title,
+        type: entity.type,
+        labels: entity.labels,
+        silhouette: entity.silhouette,
+      };
       if ((entity as any).guestChatConfig?.isEnabled)
         nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -508,6 +516,22 @@ export const getGraphStyle = (
         "background-position-y": (ele: any) =>
           imageFocusBackgroundPosition(ele.data("imageFocus")).y,
         "background-opacity": 1,
+        "border-color": tokens.primary,
+      },
+    });
+
+    baseStyle.push({
+      selector: "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
+      style: {
+        "background-fit": "contain",
+        "background-width": "72%",
+        "background-height": "72%",
+        "background-clip": "none",
+        "background-image": "data(resolvedImage)",
+        "background-image-crossorigin": "null",
+        "background-position-x": "50%",
+        "background-position-y": "50%",
+        "background-opacity": 0.95,
         "border-color": tokens.primary,
       },
     });

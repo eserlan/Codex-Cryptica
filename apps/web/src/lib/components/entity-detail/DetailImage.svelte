@@ -11,6 +11,7 @@
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import SilhouetteAvatar from "$lib/components/ui/SilhouetteAvatar.svelte";
 
   let {
     entity,
@@ -206,11 +207,11 @@
       aria-hidden="true"
       tabindex="-1"
     />
-    <div class="mb-4 px-4 md:px-6">
+    <div class="mb-4 px-4 md:px-6 flex items-center gap-2">
       <button
         type="button"
         onclick={() => fileInput?.click()}
-        class="w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+        class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
         aria-describedby={imageUploadError
           ? "entity-image-upload-error"
           : undefined}
@@ -221,10 +222,23 @@
         ></span>
         {entity.image ? "Replace image" : "Choose image"}
       </button>
+
+      <button
+        type="button"
+        onclick={() => modalUIStore.openSilhouettePicker(entity)}
+        class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
+        title="Customize vector silhouette"
+      >
+        <span
+          class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
+          aria-hidden="true"
+        ></span>
+        Silhouette
+      </button>
       {#if imageUploadError}
         <p
           id="entity-image-upload-error"
-          class="mt-2 text-xs text-theme-error"
+          class="mt-2 text-xs text-theme-error w-full"
           role="alert"
         >
           {imageUploadError}
@@ -344,18 +358,34 @@
     <div class="px-4 md:px-6">
       {#if !discoveryPolicyStore.aiDisabled && !vault.isGuest}
         <div
-          class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
+          class="mb-4 w-full py-6 md:py-8 rounded border border-theme-border flex flex-col items-center justify-center gap-3 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/40 shadow-inner group"
         >
-          <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
-            <span class="icon-[lucide--image] w-4 h-4 md:w-8 md:h-8 opacity-20"
-            ></span>
+          <!-- Silhouette Hero Visual -->
+          <button
+            type="button"
+            onclick={() => modalUIStore.openSilhouettePicker(entity)}
+            class="flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-102 group/sil"
+            title="Click to change silhouette"
+          >
+            <SilhouetteAvatar
+              {entity}
+              size="3xl"
+              showBadge
+              class="border-theme-border/60 shadow-xl group-hover/sil:border-theme-primary transition-colors"
+            />
             <span
-              class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
-              >No Image</span
+              class="mt-2 text-[9px] font-mono uppercase tracking-wider text-theme-muted group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
             >
-          </div>
+              <span class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
+              ></span>
+              {entity.silhouette
+                ? "Custom Silhouette"
+                : "Auto-Inferred Silhouette"}
+            </span>
+          </button>
 
-          <div class="mt-1 md:mt-2">
+          <!-- Generation Action -->
+          <div class="mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={isVisualizing}
@@ -391,7 +421,7 @@
                 <span
                   class="text-[8px] md:text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
                   >{canGenerateImage
-                    ? "GENERATE IMAGE"
+                    ? "GENERATE AI ART"
                     : "GENERATE PROMPT"}</span
                 >
               {/if}
@@ -400,7 +430,7 @@
 
           {#if isVisualizing}
             <div
-              class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 border border-theme-primary/20"
+              class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 border border-theme-primary/20 z-30"
             >
               <span
                 class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"

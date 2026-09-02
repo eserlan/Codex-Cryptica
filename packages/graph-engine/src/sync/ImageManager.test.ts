@@ -114,4 +114,85 @@ describe("GraphImageManager", () => {
     expect(resolveImageUrl).toHaveBeenCalledTimes(2);
     expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
   });
+
+  it("should resolve silhouette when node has no custom image", async () => {
+    const manager = new GraphImageManager(mockCy);
+    const resolveImageUrl = vi.fn();
+    const releaseImageUrl = vi.fn();
+    const resolveSilhouetteUrl = vi
+      .fn()
+      .mockReturnValue("data:image/svg+xml;utf8,test-svg");
+    let notifyBatch: () => void;
+    const batchApplied = new Promise<void>((resolve) => {
+      notifyBatch = resolve;
+    });
+
+    // Setup node data without image
+    mockNode.data.mockImplementation((key: string) => {
+      if (key === "image") return null;
+      if (key === "thumbnail") return null;
+      if (key === "resolvedImage") return null;
+      return null;
+    });
+
+    manager.sync({
+      showImages: true,
+      resolveImageUrl,
+      releaseImageUrl,
+      resolveSilhouetteUrl,
+      onBatchApplied: notifyBatch,
+    });
+
+    await batchApplied;
+
+    expect(resolveSilhouetteUrl).toHaveBeenCalledWith(mockNode);
+    expect(mockNode.data).toHaveBeenCalledWith(
+      "resolvedImage",
+      "data:image/svg+xml;utf8,test-svg",
+    );
+    expect(mockNode.data).toHaveBeenCalledWith("isSilhouette", true);
+    expect(mockStyle.update).toHaveBeenCalled();
+  });
+
+  it("should re-resolve visual when silhouette override changes", async () => {
+    const manager = new GraphImageManager(mockCy);
+    const resolveImageUrl = vi.fn();
+    const releaseImageUrl = vi.fn();
+    const resolveSilhouetteUrl = vi
+      .fn()
+      .mockReturnValue("data:image/svg+xml;utf8,updated-svg");
+    let notifyBatch: () => void;
+    const batchApplied = new Promise<void>((resolve) => {
+      notifyBatch = resolve;
+    });
+
+    // Setup node that was previously resolved with "fantasy-warrior-male", now updated to "location-inn-tavern"
+    mockNode.data.mockImplementation((key: string) => {
+      if (key === "resolvedImage") return "data:image/svg+xml;utf8,old-svg";
+      if (key === "isSilhouette") return true;
+      if (key === "appliedSilhouetteKey") return "fantasy-warrior-male";
+      if (key === "silhouette") return "location-inn-tavern";
+      return null;
+    });
+
+    manager.sync({
+      showImages: true,
+      resolveImageUrl,
+      releaseImageUrl,
+      resolveSilhouetteUrl,
+      onBatchApplied: notifyBatch,
+    });
+
+    await batchApplied;
+
+    expect(resolveSilhouetteUrl).toHaveBeenCalledWith(mockNode);
+    expect(mockNode.data).toHaveBeenCalledWith(
+      "resolvedImage",
+      "data:image/svg+xml;utf8,updated-svg",
+    );
+    expect(mockNode.data).toHaveBeenCalledWith(
+      "appliedSilhouetteKey",
+      "location-inn-tavern",
+    );
+  });
 });
