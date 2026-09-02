@@ -250,7 +250,7 @@
 
       <div
         role="none"
-        class="seo-md text-sm leading-relaxed text-theme-text/90 flex-grow {variant ===
+        class="seo-md text-base leading-relaxed text-theme-text/90 flex-grow {variant ===
         'names'
           ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
           : 'space-y-4'}"
@@ -270,7 +270,7 @@
                   class="mb-2 flex items-center justify-between gap-3 border-b border-theme-border/35 pb-2"
                 >
                   <h3
-                    class="font-header text-base font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
+                    class="font-header text-base md:text-lg font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
                   >
                     {section.heading}
                   </h3>
@@ -340,7 +340,7 @@
   .seo-md :global(h2) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     margin: 1.5rem 0 0.75rem;
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-border) 40%, transparent);
@@ -350,7 +350,7 @@
   .seo-md :global(h3) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.125rem;
     margin: 1rem 0 0.5rem;
     color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
   }
@@ -358,7 +358,7 @@
   .seo-md :global(h4) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     margin: 0.85rem 0 0.35rem;
     color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
   }

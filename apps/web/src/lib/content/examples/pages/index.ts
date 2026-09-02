@@ -4,6 +4,11 @@ import { theLowTideRust } from "./the-low-tide-rust-dock-syndicate";
 import { arcHub } from "./arc-hub-augmentation-slum";
 import { theVentingHelix } from "./the-venting-helix-derelict-hazard";
 import { theCinderWren } from "./the-cinder-wren-space-western-ship";
+import { vaelgrasp } from "./vaelgrasp-the-regents-ruin-artifact";
+import { voidSiphon } from "./void-siphon-cosmic-horror-creature";
+import { ladyVivienneMorvath } from "./lady-vivienne-morvath-gothic-horror-villain";
+import { lettersOfMarqueExpired } from "./letters-of-marque-expired-pirate-adventure";
+import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 
 /**
  * The published example library.
@@ -17,7 +22,18 @@ import { theCinderWren } from "./the-cinder-wren-space-western-ship";
  * build time, since these pages prerender.
  */
 export const examples: Record<string, ExampleConfig> = Object.fromEntries(
-  [gullsRoost, theLowTideRust, arcHub, theVentingHelix, theCinderWren]
+  [
+    gullsRoost,
+    theLowTideRust,
+    arcHub,
+    theVentingHelix,
+    theCinderWren,
+    vaelgrasp,
+    voidSiphon,
+    ladyVivienneMorvath,
+    lettersOfMarqueExpired,
+    siloZeroSeven,
+  ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
 );
