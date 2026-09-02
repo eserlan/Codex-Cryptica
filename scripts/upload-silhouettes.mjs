@@ -1,5 +1,5 @@
 import { execFileSync } from 'child_process';
-import { writeFileSync, unlinkSync, mkdirSync, rmdirSync, existsSync } from 'fs';
+import { writeFileSync, unlinkSync, mkdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { SILHOUETTES } from '../packages/schema/src/silhouettes.ts';
 
@@ -25,6 +25,12 @@ for (const sil of SILHOUETTES) {
       continue;
     }
   }
+
+  if (!sil.svgContent || typeof sil.svgContent !== 'string') {
+    console.warn(`[upload-silhouettes] Skipping ${sil.id}: missing svgContent`);
+    continue;
+  }
+
   const fileName = `${sil.id}.svg`;
   const filePath = join(TEMP_DIR, fileName);
   const targetPaths = [sil.r2Path, `${REMOTE_PREFIX}/${fileName}`].filter(Boolean);
@@ -75,7 +81,7 @@ for (const sil of SILHOUETTES) {
 }
 
 if (existsSync(TEMP_DIR)) {
-  rmdirSync(TEMP_DIR);
+  rmSync(TEMP_DIR, { recursive: true, force: true });
 }
 
 console.log(`Successfully uploaded ${uploaded.length} silhouettes to R2!`);

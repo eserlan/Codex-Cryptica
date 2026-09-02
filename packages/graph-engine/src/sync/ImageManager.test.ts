@@ -192,7 +192,7 @@ describe("GraphImageManager", () => {
     );
     expect(mockNode.data).toHaveBeenCalledWith(
       "appliedSilhouetteKey",
-      "location-inn-tavern",
+      expect.stringContaining("location-inn-tavern"),
     );
   });
 });

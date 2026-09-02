@@ -33,13 +33,13 @@ export class GraphImageManager {
 
       const currentImagePath = n.data("thumbnail") || n.data("image");
       const isSil = !!n.data("isSilhouette");
-      const currentSil = n.data("silhouette");
-      const cachedSil = n.data("appliedSilhouetteKey");
+      const currentSilKey = this.getSilhouetteKey(n);
+      const cachedSilKey = n.data("appliedSilhouetteKey");
 
       // Stale if custom image state transitioned to/from silhouette,
-      // or if the explicit silhouette override was updated
+      // or if any silhouette-determining field (override, labels, type, title) changed
       if (!!currentImagePath === isSil) return true;
-      if (isSil && currentSil !== cachedSil) return true;
+      if (isSil && currentSilKey !== cachedSilKey) return true;
       return false;
     });
 
@@ -95,9 +95,6 @@ export class GraphImageManager {
         );
 
         if (this.cy.destroyed() || !options.showImages) {
-          nodesNeedingVisuals.forEach((n) => {
-            this.resolvingIds.delete(n.id());
-          });
           return;
         }
 
@@ -118,7 +115,10 @@ export class GraphImageManager {
                 node.data("resolvedImage", newUrl);
                 if (isSilhouette) {
                   node.data("isSilhouette", true);
-                  node.data("appliedSilhouetteKey", node.data("silhouette"));
+                  node.data(
+                    "appliedSilhouetteKey",
+                    this.getSilhouetteKey(node),
+                  );
                 } else {
                   node.removeData("isSilhouette");
                   node.removeData("appliedSilhouetteKey");
@@ -140,11 +140,23 @@ export class GraphImageManager {
         options.onBatchApplied?.(results.length);
       } catch (err) {
         options.onError?.(err);
+      } finally {
         nodesNeedingVisuals.forEach((n) => {
           this.resolvingIds.delete(n.id());
         });
       }
     })();
+  }
+
+  private getSilhouetteKey(node: any): string {
+    const rawSil = node.data("silhouette") ?? "";
+    const rawType = node.data("type") ?? "";
+    const rawLabels = Array.isArray(node.data("labels"))
+      ? node.data("labels").join(",")
+      : "";
+    const rawLabel =
+      typeof node.data("label") === "string" ? node.data("label") : "";
+    return `${rawSil}|${rawType}|${rawLabels}|${rawLabel}`;
   }
 
   private clearImages(options?: ImageManagerOptions) {

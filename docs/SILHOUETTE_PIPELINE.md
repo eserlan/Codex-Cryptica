@@ -88,18 +88,24 @@ function traceRasterToSvg(imagePath: string): Promise<string> {
 let cleanSvg = svg.trim();
 
 // 1. Remove all hardcoded black fills
-cleanSvg = cleanSvg.replace(/fill="(black|#000|#000000)"/g, 'fill="currentColor");
+cleanSvg = cleanSvg.replace(
+  /fill="(black|#000|#000000)"/g,
+  'fill="currentColor"',
+);
 
 // 2. Ensure root svg has fill="currentColor"
-if (!cleanSvg.includes('fill="currentColor")) {
-  cleanSvg = cleanSvg.replace('<svg, '<svg fill="currentColor");
+if (!cleanSvg.includes('fill="currentColor"')) {
+  cleanSvg = cleanSvg.replace("<svg", '<svg fill="currentColor"');
 }
 
 // 3. Ensure path elements have fill="currentColor"
-cleanSvg = cleanSvg.replace(/<path(?!\s+fill)/g, '<path fill="currentColor");
+cleanSvg = cleanSvg.replace(/<path(?!\s+fill)/g, '<path fill="currentColor"');
 
 // 4. Eliminate any duplicate fill attributes on the same tag
-cleanSvg = cleanSvg.replace(/<path\s+fill="currentColor"\s+([^>]*)\s+fill="currentColor"/g, '<path fill="currentColor" $1);
+cleanSvg = cleanSvg.replace(
+  /<path\s+fill="currentColor"\s+([^>]*)\s+fill="currentColor"/g,
+  '<path fill="currentColor" $1',
+);
 ```
 
 ---

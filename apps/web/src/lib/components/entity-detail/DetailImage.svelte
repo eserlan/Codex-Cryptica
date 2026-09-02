@@ -207,38 +207,40 @@
       aria-hidden="true"
       tabindex="-1"
     />
-    <div class="mb-4 px-4 md:px-6 flex items-center gap-2">
-      <button
-        type="button"
-        onclick={() => fileInput?.click()}
-        class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
-        aria-describedby={imageUploadError
-          ? "entity-image-upload-error"
-          : undefined}
-      >
-        <span
-          class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
-          aria-hidden="true"
-        ></span>
-        {entity.image ? "Replace image" : "Choose image"}
-      </button>
+    <div class="mb-4 px-4 md:px-6">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          onclick={() => fileInput?.click()}
+          class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          aria-describedby={imageUploadError
+            ? "entity-image-upload-error"
+            : undefined}
+        >
+          <span
+            class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+            aria-hidden="true"
+          ></span>
+          {entity.image ? "Replace image" : "Choose image"}
+        </button>
 
-      <button
-        type="button"
-        onclick={() => modalUIStore.openSilhouettePicker(entity)}
-        class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
-        title="Customize vector silhouette"
-      >
-        <span
-          class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
-          aria-hidden="true"
-        ></span>
-        Silhouette
-      </button>
+        <button
+          type="button"
+          onclick={() => modalUIStore.openSilhouettePicker(entity)}
+          class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
+          title="Customize vector silhouette"
+        >
+          <span
+            class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
+            aria-hidden="true"
+          ></span>
+          Silhouette
+        </button>
+      </div>
       {#if imageUploadError}
         <p
           id="entity-image-upload-error"
-          class="mt-2 text-xs text-theme-error w-full"
+          class="mt-2 text-xs text-theme-error"
           role="alert"
         >
           {imageUploadError}

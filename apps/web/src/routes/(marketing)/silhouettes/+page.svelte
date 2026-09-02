@@ -199,7 +199,7 @@
 
 <SeoHead
   title="Vector RPG Silhouettes & Token Art | Codex Cryptica"
-  description="Explore 48+ curated, CC-licensed vector RPG silhouettes with live theme palette previews, one-click SVG export, and VTT token assets."
+  description={`Explore ${SILHOUETTES.length}+ curated, CC-licensed vector RPG silhouettes with live theme palette previews, one-click SVG export, and VTT token assets.`}
   canonicalUrl={buildAbsoluteUrl("/silhouettes")}
   keywords={[
     "rpg silhouettes",
@@ -246,7 +246,9 @@
         ></span>
         <span class="text-theme-muted">Free &amp; Open Assets</span>
         <span class="text-theme-border">•</span>
-        <span class="text-theme-primary">48+ Vector Silhouettes</span>
+        <span class="text-theme-primary"
+          >{SILHOUETTES.length}+ Vector Silhouettes</span
+        >
         <span class="text-theme-border">•</span>
         <span class="text-theme-accent font-mono text-[11px]">CC-BY-4.0</span>
       </div>
@@ -261,8 +263,8 @@
         <p class="text-sm sm:text-base text-theme-muted leading-relaxed">
           High-contrast, scalable vector silhouettes for tabletop RPG
           characters, monstrous creatures, places, items, and faction heraldry.
-          All 48+ silhouettes are CC-licensed, vector-scaled, and free to use in
-          your notes, virtual tabletops, and campaigns.
+          All {SILHOUETTES.length}+ silhouettes are CC-licensed, vector-scaled,
+          and free to use in your notes, virtual tabletops, and campaigns.
         </p>
       </div>
 

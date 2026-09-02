@@ -317,7 +317,7 @@
               href: "/silhouettes",
               label: "Vector RPG Silhouettes & Token Art",
               summary:
-                "Browse 48+ CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
+                "Browse the complete library of CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
               icon: "icon-[lucide--shapes]",
             },
           ],

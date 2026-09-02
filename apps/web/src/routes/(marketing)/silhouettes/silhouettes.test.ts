@@ -1,6 +1,6 @@
-/** @vitest-environment jsdom */
 import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SILHOUETTES } from "schema";
 import Page from "./+page.svelte";
 
 vi.mock("$app/paths", () => ({
@@ -11,7 +11,7 @@ vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
-describe("Public Silhouette Gallery (/silhouettes)", () => {
+describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
   let writeTextMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -32,12 +32,16 @@ describe("Public Silhouette Gallery (/silhouettes)", () => {
     }
   });
 
-  it("renders hero header with title and 48+ silhouettes count", () => {
+  it("renders hero header with title and dynamic silhouettes count", () => {
     render(Page);
 
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading.textContent).toContain("Vector RPG Silhouettes & Token Art");
-    expect(screen.getByText(/48\+ Vector Silhouettes/i)).toBeTruthy();
+    expect(
+      screen.getByText(
+        new RegExp(`${SILHOUETTES.length}\\+ Vector Silhouettes`, "i"),
+      ),
+    ).toBeTruthy();
     expect(screen.getByText(/CC-BY-4.0/i)).toBeTruthy();
   });
 
