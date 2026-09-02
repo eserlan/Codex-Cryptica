@@ -34,7 +34,7 @@ export const ladyVivienneMorvath: ExampleConfigInput = {
   ],
   image: {
     src: "https://assets.codexcryptica.com/announcements/villain-lady-vivienne-morvath.jpg",
-    alt: "Lady Vivienne Morvath in mourning silks amidst gothic vaulted crypts and alchemical reliquary apparatus",
+    alt: "Lady Vivienne Morvath in mourning silks standing before her alchemical embalming apparatus in Morvath Manor",
   },
   output: [
     {
