@@ -33,6 +33,10 @@ export const ladyVivienneMorvath: ExampleConfigInput = {
       value: "Alchemical Obsession / Lineage Preservation",
     },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/villain-lady-vivienne-morvath.jpg",
+    alt: "Lady Vivienne Morvath in mourning silks standing before her alchemical embalming apparatus in Morvath Manor",
+  },
   output: [
     {
       kind: "prose",

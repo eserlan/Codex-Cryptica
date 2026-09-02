@@ -7,6 +7,7 @@ import { theCinderWren } from "./the-cinder-wren-space-western-ship";
 import { vaelgrasp } from "./vaelgrasp-the-regents-ruin-artifact";
 import { voidSiphon } from "./void-siphon-cosmic-horror-creature";
 import { ladyVivienneMorvath } from "./lady-vivienne-morvath-gothic-horror-villain";
+import { theWitheredHand } from "./the-withered-hand-grimdark-faction";
 import { lettersOfMarqueExpired } from "./letters-of-marque-expired-pirate-adventure";
 import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 
@@ -31,6 +32,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     vaelgrasp,
     voidSiphon,
     ladyVivienneMorvath,
+    theWitheredHand,
     lettersOfMarqueExpired,
     siloZeroSeven,
   ]

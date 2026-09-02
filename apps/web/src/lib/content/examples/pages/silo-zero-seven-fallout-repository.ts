@@ -26,6 +26,10 @@ export const siloZeroSeven: ExampleConfigInput = {
     { label: "Current State", value: "Sealed Vault" },
     { label: "Scale", value: "Medium Complex (3-4 Sectors)" },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/dungeon-silo-zero-seven.jpg",
+    alt: "The vertical missile launch shaft of Silo Zero-Seven with its unexploded warhead and candle-lit shrines",
+  },
   output: [
     {
       kind: "prose",
