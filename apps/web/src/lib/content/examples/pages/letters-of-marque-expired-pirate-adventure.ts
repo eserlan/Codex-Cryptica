@@ -24,6 +24,10 @@ export const lettersOfMarqueExpired: ExampleConfigInput = {
     { label: "Archetype", value: "Hunt & Pursuit" },
     { label: "Tone", value: "Gritty & Nautical" },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/adventure-dead-mans-tontine.jpg",
+    alt: "Privateers on a lantern-lit sloop deck at midnight examining an iron cipher cylinder under the shadow of a blockading naval squadron",
+  },
   output: [
     {
       kind: "prose",
