@@ -8,6 +8,7 @@ import {
   examplePath,
   groupExamplesByKind,
 } from "./registry";
+import { THEMES } from "schema";
 import { ExampleConfigSchema, type ExampleConfig } from "./schema";
 import { examples } from "./pages";
 import {
@@ -27,6 +28,7 @@ const make = (
     title: "Test example: Test Artefact",
     kind: "settlement",
     genre: "Fantasy",
+    theme: "fantasy",
     summary: "A summary long enough to satisfy the schema's minimum length.",
     provenance: "raw",
     generator: { name: "Settlement generator", href: "/generators/settlement" },
@@ -348,5 +350,41 @@ describe("example structured data", () => {
       summary: "An artefact whose name mentions </script> in passing, safely.",
     });
     expect(buildExampleJsonLd(risky)).not.toContain("</script>");
+  });
+});
+
+describe("example themes", () => {
+  it("gives every published example a theme that resolves to a real skin", () => {
+    for (const example of getAllExamples()) {
+      expect(
+        THEMES,
+        `${example.slug} declares theme "${example.theme}", which is not a THEMES key and would silently fall back to the default skin`,
+      ).toHaveProperty(example.theme);
+    }
+  });
+
+  it("rejects a theme that is not a world theme", () => {
+    expect(() =>
+      make({ slug: "bad-theme", theme: "neon-western" as never }),
+    ).toThrow();
+  });
+
+  /**
+   * `space-western` and `space-opera-resistance` are real THEMES entries, but
+   * they have no light variant and no case in the theme store's light-mode
+   * switch, so in light appearance they resolve to `workspace` instead of
+   * themselves. Examples stay off them until that is fixed, otherwise a
+   * light-mode visitor gets the neutral skin with no indication why.
+   */
+  it("keeps examples off the themes that have no light variant", () => {
+    const darkOnly = new Set(["space-western", "space-opera-resistance"]);
+    for (const example of getAllExamples()) {
+      expect(darkOnly).not.toContain(example.theme);
+    }
+  });
+
+  it("requires a theme, so a new example cannot inherit whatever skin the visitor arrived with", () => {
+    const { theme: _omitted, ...withoutTheme } = make({ slug: "themed" });
+    expect(() => ExampleConfigSchema.parse(withoutTheme)).toThrow();
   });
 });

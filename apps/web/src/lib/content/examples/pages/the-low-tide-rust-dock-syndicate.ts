@@ -11,6 +11,7 @@ export const theLowTideRust: ExampleConfigInput = {
   title: "RPG faction example: The Low-Tide Rust",
   kind: "faction",
   genre: "Fantasy",
+  theme: "fantasy",
   summary:
     "A corrosion-obsessed dock syndicate that dissolves bulkhead locks and drowns rival crews in the limestone stacks of Gull's Roost.",
   provenance: "raw",
