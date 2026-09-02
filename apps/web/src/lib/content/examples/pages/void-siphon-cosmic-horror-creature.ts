@@ -28,6 +28,10 @@ export const voidSiphon: ExampleConfigInput = {
     { label: "Habitat", value: "Oceans & Deep Waters" },
     { label: "Ecological Role", value: "Environmental / Supernatural Hazard" },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/creature-void-siphon.jpg",
+    alt: "The Void-Siphon lurking beneath the glass-like water near a becalmed sailing ship under a grey sky",
+  },
   output: [
     {
       kind: "list",
