@@ -206,7 +206,7 @@ Seamlessly establish peer-to-peer connections between campaign hosts and trusted
 Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle the glassmorphic fast scratchpad. Jot down thoughts, auto-save drafts, and use the 'Elevate' button to let the AI structure your raw notes into complete Character, Location, or Item draft entities.
 
 ### Nested Entities
-Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.
+Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one — the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.
 
 ### Entity Links in Content
 When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.
@@ -2025,6 +2025,42 @@ Real, unedited output from the Codex Cryptica generators, indexed at https://cod
 **Genre:** Space Western
 
 **Summary:** A scarred frontier freighter and gunship running medicine, fugitives, and inconvenient truths between Last Light Outpost and the lawless dark beyond the customs line.
+
+### [Fantasy artifact example: Vaelgrasp, the Regent's Ruin](https://codexcryptica.com/examples/vaelgrasp-the-regents-ruin-artifact)
+
+**Genre:** Classic Fantasy
+
+**Summary:** A golden-age greatsword that made one king unkillable and every king after him worse, currently wielded by the tyrant who will not admit what it has already cost him.
+
+### [Cosmic Horror creature example: The Void-Siphon](https://codexcryptica.com/examples/void-siphon-cosmic-horror-creature)
+
+**Genre:** Cosmic Horror
+
+**Summary:** A wagon-sized deep-water aberration that drinks sound and light from a stretch of ocean, leaving fishing crews becalmed in a silence that hides what is actually circling them.
+
+### [Gothic Horror villain example: Lady Vivienne Morvath](https://codexcryptica.com/examples/lady-vivienne-morvath-gothic-horror-villain)
+
+**Genre:** Gothic Horror
+
+**Summary:** A grieving matriarch and flesh-alchemist who embalms dying lineages in cold iron and mercury to freeze her decaying valley in permanent, immortal perfection.
+
+### [Dark Fantasy faction example: The Withered Hand](https://codexcryptica.com/examples/the-withered-hand-grimdark-faction)
+
+**Genre:** Dark Fantasy
+
+**Summary:** A corpse guild that keeps a plague-stricken city from drowning in its own dead, funded by a bargain its founder made that is about to come due at everyone else's expense.
+
+### [Pirate adventure example: Letters of Marque, Expired](https://codexcryptica.com/examples/letters-of-marque-expired-pirate-adventure)
+
+**Genre:** Pirate
+
+**Summary:** The party's privateering commission lapsed at midnight, their captain vanished aboard a ship reported sunk two years ago, and a naval patrol that no longer has to pretend they're not pirates is already closing.
+
+### [Post-Apocalyptic dungeon example: Silo Zero-Seven Fallout Repository](https://codexcryptica.com/examples/silo-zero-seven-fallout-repository)
+
+**Genre:** Post-Apocalyptic
+
+**Summary:** A sealed federal fallout shelter that never got its all-clear, now split between a cult that worships its unexploded warhead and a starving vault-dweller remnant that just wants the radiation breach fixed.
 
 
 ## TTRPG System & Genre Campaign Management

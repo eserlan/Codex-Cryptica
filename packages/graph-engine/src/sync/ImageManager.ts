@@ -4,6 +4,7 @@ export interface ImageManagerOptions {
   showImages: boolean;
   resolveImageUrl: (path: string) => Promise<string | null>;
   releaseImageUrl: (path: string) => void;
+  resolveSilhouetteUrl?: (node: any) => string | null;
   batchSize?: number;
   onBatchApplied?: (count: number) => void;
   onLog?: (message: string) => void;
@@ -25,50 +26,75 @@ export class GraphImageManager {
       return;
     }
 
-    const nodesWithImages = this.cy
-      .nodes()
-      .filter(
-        (n) =>
-          (n.data("image") || n.data("thumbnail")) &&
-          !n.data("resolvedImage") &&
-          !this.resolvingIds.has(n.id()),
-      );
+    const nodesNeedingVisuals = this.cy.nodes().filter((n) => {
+      if (this.resolvingIds.has(n.id())) return false;
+      const resolved = n.data("resolvedImage");
+      if (!resolved) return true;
 
-    if (nodesWithImages.length === 0) return;
+      const currentImagePath = n.data("thumbnail") || n.data("image");
+      const isSil = !!n.data("isSilhouette");
+      const currentSilKey = this.getSilhouetteKey(n);
+      const cachedSilKey = n.data("appliedSilhouetteKey");
+
+      // Stale if custom image state transitioned to/from silhouette,
+      // or if any silhouette-determining field (override, labels, type, title) changed
+      if (!!currentImagePath === isSil) return true;
+      if (isSil && currentSilKey !== cachedSilKey) return true;
+      return false;
+    });
+
+    if (nodesNeedingVisuals.length === 0) return;
 
     options.onLog?.(
-      `[GraphImageManager] Syncing images for ${nodesWithImages.length} nodes...`,
+      `[GraphImageManager] Syncing visuals for ${nodesNeedingVisuals.length} nodes...`,
     );
 
     // Mark them all as resolving immediately
-    nodesWithImages.forEach((n) => {
+    nodesNeedingVisuals.forEach((n) => {
       this.resolvingIds.add(n.id());
     });
 
-    // Bulk process all images concurrently
+    // Bulk process all images and silhouettes concurrently
     void (async () => {
       try {
         const start = performance.now();
         const results = await Promise.all(
-          nodesWithImages.map(async (node) => {
+          nodesNeedingVisuals.map(async (node) => {
             const imagePath = node.data("thumbnail") || node.data("image");
-            let url = this.urlCache.get(imagePath);
-            if (!url) {
-              url = (await options.resolveImageUrl(imagePath)) || "";
-              if (url) this.urlCache.set(imagePath, url);
+            if (imagePath) {
+              let url = this.urlCache.get(imagePath);
+              if (!url) {
+                url = (await options.resolveImageUrl(imagePath)) || "";
+                if (url) this.urlCache.set(imagePath, url);
+              }
+              return {
+                node,
+                url,
+                isSilhouette: false,
+                oldUrl: node.data("resolvedImage") as string | undefined,
+              };
             }
+
+            if (options.resolveSilhouetteUrl) {
+              const silUrl = options.resolveSilhouetteUrl(node);
+              return {
+                node,
+                url: silUrl || "",
+                isSilhouette: true,
+                oldUrl: node.data("resolvedImage") as string | undefined,
+              };
+            }
+
             return {
               node,
-              url,
+              url: "",
+              isSilhouette: false,
               oldUrl: node.data("resolvedImage") as string | undefined,
             };
           }),
         );
 
         if (this.cy.destroyed() || !options.showImages) {
-          nodesWithImages.forEach((n) => {
-            this.resolvingIds.delete(n.id());
-          });
           return;
         }
 
@@ -77,7 +103,7 @@ export class GraphImageManager {
         for (let i = 0; i < results.length; i += batchSize) {
           const chunk = results.slice(i, i + batchSize);
           this.cy.batch(() => {
-            for (const { node, url, oldUrl } of chunk) {
+            for (const { node, url, isSilhouette, oldUrl } of chunk) {
               const newUrl = url || "none"; // Mark as "none" to avoid infinite retries and prevent broken image states
               if (newUrl !== oldUrl) {
                 const nodeId = node.id();
@@ -87,6 +113,16 @@ export class GraphImageManager {
                 }
 
                 node.data("resolvedImage", newUrl);
+                if (isSilhouette) {
+                  node.data("isSilhouette", true);
+                  node.data(
+                    "appliedSilhouetteKey",
+                    this.getSilhouetteKey(node),
+                  );
+                } else {
+                  node.removeData("isSilhouette");
+                  node.removeData("appliedSilhouetteKey");
+                }
                 const currentPath =
                   node.data("thumbnail") || node.data("image");
                 if (currentPath) {
@@ -99,16 +135,28 @@ export class GraphImageManager {
 
         this.cy.style().update();
         options.onLog?.(
-          `[GraphImageManager] Resolved ${results.length} images in ${(performance.now() - start).toFixed(2)}ms`,
+          `[GraphImageManager] Resolved ${results.length} node visuals in ${(performance.now() - start).toFixed(2)}ms`,
         );
         options.onBatchApplied?.(results.length);
       } catch (err) {
         options.onError?.(err);
-        nodesWithImages.forEach((n) => {
+      } finally {
+        nodesNeedingVisuals.forEach((n) => {
           this.resolvingIds.delete(n.id());
         });
       }
     })();
+  }
+
+  private getSilhouetteKey(node: any): string {
+    const rawSil = node.data("silhouette") ?? "";
+    const rawType = node.data("type") ?? "";
+    const rawLabels = Array.isArray(node.data("labels"))
+      ? node.data("labels").join(",")
+      : "";
+    const rawLabel =
+      typeof node.data("label") === "string" ? node.data("label") : "";
+    return `${rawSil}|${rawType}|${rawLabels}|${rawLabel}`;
   }
 
   private clearImages(options?: ImageManagerOptions) {
@@ -125,6 +173,8 @@ export class GraphImageManager {
         }
         this.nodePathMap.delete(nodeId);
         node.removeData("resolvedImage");
+        node.removeData("isSilhouette");
+        node.removeData("appliedSilhouetteKey");
       });
     this.cy.style().update();
   }

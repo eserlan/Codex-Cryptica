@@ -6,20 +6,21 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 
 ## Summary
 
-| Group                                                                                            | Files           | Size     | What it's for                                                                        |
-| ------------------------------------------------------------------------------------------------ | --------------- | -------- | ------------------------------------------------------------------------------------ |
-| [`announcements/`](#announcements--bluesky--github-discussion-launch-images)                     | 24              | 13.3 MB  | Bluesky / GitHub Discussions launch images                                           |
-| [`blog/assets/`](#blog--legacy-single-blog-asset)                                                | 1               | 1.2 MB   | Legacy single blog asset (Spatial Canvas bsky post)                                  |
-| [`directory/listings/`](#directory--public-generator-directory-listing-metadata-json-not-images) | 4               | ~3 KB    | Public generator directory metadata (JSON)                                           |
-| [`discussions/alien-race/`](#discussions--github-discussions-announcement-images)                | 1               | 0.2 MB   | Alien Race generator discussion image                                                |
-| [`images/`](#images--blog-post-inline-images--old-help-doc-screenshots)                          | 50              | ~18 MB   | Blog post inline images + old help-doc screenshots                                   |
-| [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 17              | ~15.4 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages               |
-| [`screenshots/`](#screenshots--generators--tools-page-cards-and-ogimage)                         | 37              | ~6.3 MB  | `/generators` + `/tools` page cards, og:image                                        |
-| [`vault-samples/images/`](#vault-samples--demoquick-start-vault-portrait-art)                    | 36              | 58.7 MB  | Portrait art for the 9 demo/quick-start vaults                                       |
-| [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing |
-| [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                       |
+| Group                                                                                            | Files           | Size     | What it's for                                                                              |
+| ------------------------------------------------------------------------------------------------ | --------------- | -------- | ------------------------------------------------------------------------------------------ |
+| [`announcements/`](#announcements--bluesky--github-discussion-launch-images)                     | 24              | 13.3 MB  | Bluesky / GitHub Discussions launch images                                                 |
+| [`blog/assets/`](#blog--legacy-single-blog-asset)                                                | 1               | 1.2 MB   | Legacy single blog asset (Spatial Canvas bsky post)                                        |
+| [`directory/listings/`](#directory--public-generator-directory-listing-metadata-json-not-images) | 4               | ~3 KB    | Public generator directory metadata (JSON)                                                 |
+| [`discussions/alien-race/`](#discussions--github-discussions-announcement-images)                | 1               | 0.2 MB   | Alien Race generator discussion image                                                      |
+| [`images/`](#images--blog-post-inline-images--old-help-doc-screenshots)                          | 50              | ~18 MB   | Blog post inline images + old help-doc screenshots                                         |
+| [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 17              | ~15.4 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages                     |
+| [`screenshots/`](#screenshots--generators--tools-page-cards-and-ogimage)                         | 37              | ~6.3 MB  | `/generators` + `/tools` page cards, og:image                                              |
+| [`silhouettes/`](#silhouettes--curated-vector-silhouettes-for-entities-and-generators)           | 148 (74 SVGs)   | ~450 KB  | Curated vector SVG silhouettes for entity types, categories, locations, and public gallery |
+| [`vault-samples/images/`](#vault-samples--demoquick-start-vault-portrait-art)                    | 36              | 58.7 MB  | Portrait art for the 9 demo/quick-start vaults                                             |
+| [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing       |
+| [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                             |
 
-Total: 856 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 884 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -229,6 +230,40 @@ Total: 856 objects, ~162 MB. The tables below cover everything **except** `publi
 | [`vault-samples/images/wasteland-hero.png`](https://assets.codexcryptica.com/vault-samples/images/wasteland-hero.png)         | 1743 KB | image/png | 2026-03-01 | Portrait for the `wasteland` demo vault sample |
 | [`vault-samples/images/wasteland-note.png`](https://assets.codexcryptica.com/vault-samples/images/wasteland-note.png)         | 2037 KB | image/png | 2026-03-01 | Portrait for the `wasteland` demo vault sample |
 | [`vault-samples/images/wasteland-npc2.png`](https://assets.codexcryptica.com/vault-samples/images/wasteland-npc2.png)         | 1724 KB | image/png | 2026-03-01 | Portrait for the `wasteland` demo vault sample |
+
+## `silhouettes/` — curated vector silhouettes for entities and generators
+
+Curated standalone SVG vector silhouettes (`viewBox="0 0 100 100"`, `fill="currentColor"`) for entity archetypes, creature types, factions, items, locations, and wanted poster generators.
+
+| Key                                                                                                                     | Size    | Type          | Modified   | Archetype / Purpose                                  |
+| ----------------------------------------------------------------------------------------------------------------------- | ------- | ------------- | ---------- | ---------------------------------------------------- |
+| [`silhouettes/fantasy-warrior-male.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-warrior-male.svg)         | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Warrior (Male) with sword & armor            |
+| [`silhouettes/fantasy-warrior-female.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-warrior-female.svg)     | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Warrior (Female) with blade & braid          |
+| [`silhouettes/fantasy-caster-male.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-caster-male.svg)           | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Mage / Caster (Male) with staff & robes      |
+| [`silhouettes/fantasy-caster-female.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-caster-female.svg)       | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Sorceress / Caster (Female) with spell orb   |
+| [`silhouettes/fantasy-rogue-male.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-rogue-male.svg)             | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Rogue / Assassin (Male) hooded with daggers  |
+| [`silhouettes/fantasy-rogue-female.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-rogue-female.svg)         | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Rogue / Shadow (Female) hooded with daggers  |
+| [`silhouettes/fantasy-paladin.svg`](https://assets.codexcryptica.com/silhouettes/fantasy-paladin.svg)                   | ~0.5 KB | image/svg+xml | 2026-09-02 | Fantasy Holy Paladin with heavy greatshield & blade  |
+| [`silhouettes/gothic-vampire-male.svg`](https://assets.codexcryptica.com/silhouettes/gothic-vampire-male.svg)           | ~0.5 KB | image/svg+xml | 2026-09-02 | Gothic Vampire Lord (Male) with high collared cape   |
+| [`silhouettes/gothic-vampire-female.svg`](https://assets.codexcryptica.com/silhouettes/gothic-vampire-female.svg)       | ~0.5 KB | image/svg+xml | 2026-09-02 | Gothic Vampire Countess (Female) with sweeping gown  |
+| [`silhouettes/gothic-inquisitor.svg`](https://assets.codexcryptica.com/silhouettes/gothic-inquisitor.svg)               | ~0.5 KB | image/svg+xml | 2026-09-02 | Gothic Inquisitor / Witch Hunter with wide-brim hat  |
+| [`silhouettes/scifi-scientist-alien.svg`](https://assets.codexcryptica.com/silhouettes/scifi-scientist-alien.svg)       | ~0.5 KB | image/svg+xml | 2026-09-02 | Sci-Fi Alien Scientist with cranial crest & datapad  |
+| [`silhouettes/scifi-pilot-explorer.svg`](https://assets.codexcryptica.com/silhouettes/scifi-pilot-explorer.svg)         | ~0.5 KB | image/svg+xml | 2026-09-02 | Sci-Fi Pilot / Explorer in EVA pressurized suit      |
+| [`silhouettes/cyberpunk-hacker-female.svg`](https://assets.codexcryptica.com/silhouettes/cyberpunk-hacker-female.svg)   | ~0.5 KB | image/svg+xml | 2026-09-02 | Cyberpunk Netrunner / Hacker with VR deck & jacket   |
+| [`silhouettes/cyberpunk-enforcer-male.svg`](https://assets.codexcryptica.com/silhouettes/cyberpunk-enforcer-male.svg)   | ~0.5 KB | image/svg+xml | 2026-09-02 | Cyberpunk Street Enforcer with cyberware arm         |
+| [`silhouettes/western-gunslinger-male.svg`](https://assets.codexcryptica.com/silhouettes/western-gunslinger-male.svg)   | ~0.5 KB | image/svg+xml | 2026-09-02 | Western Gunslinger (Male) with Stetson & duster coat |
+| [`silhouettes/western-outlaw-female.svg`](https://assets.codexcryptica.com/silhouettes/western-outlaw-female.svg)       | ~0.5 KB | image/svg+xml | 2026-09-02 | Western Outlaw / Bounty Hunter (Female) with hat     |
+| [`silhouettes/creature-beast-quadruped.svg`](https://assets.codexcryptica.com/silhouettes/creature-beast-quadruped.svg) | ~0.5 KB | image/svg+xml | 2026-09-02 | Quadruped Beast / Dire Wolf creature                 |
+| [`silhouettes/creature-dragon-winged.svg`](https://assets.codexcryptica.com/silhouettes/creature-dragon-winged.svg)     | ~0.5 KB | image/svg+xml | 2026-09-02 | Winged Dragon / Wyvern beast                         |
+| [`silhouettes/creature-horror-aberrant.svg`](https://assets.codexcryptica.com/silhouettes/creature-horror-aberrant.svg) | ~0.5 KB | image/svg+xml | 2026-09-02 | Cosmic Horror Aberration / Eldritch tentacled entity |
+| [`silhouettes/creature-golem-construct.svg`](https://assets.codexcryptica.com/silhouettes/creature-golem-construct.svg) | ~0.5 KB | image/svg+xml | 2026-09-02 | Heavy Stone Golem / Mech Construct                   |
+| [`silhouettes/item-relic-blade.svg`](https://assets.codexcryptica.com/silhouettes/item-relic-blade.svg)                 | ~0.5 KB | image/svg+xml | 2026-09-02 | Ancient Artifact Blade / Relic Sword                 |
+| [`silhouettes/item-arcane-tome.svg`](https://assets.codexcryptica.com/silhouettes/item-arcane-tome.svg)                 | ~0.5 KB | image/svg+xml | 2026-09-02 | Grimoire / Arcane Tome artifact                      |
+| [`silhouettes/location-citadel-castle.svg`](https://assets.codexcryptica.com/silhouettes/location-citadel-castle.svg)   | ~0.5 KB | image/svg+xml | 2026-09-02 | Fortress / Citadel / Castle stronghold               |
+| [`silhouettes/location-scifi-megacity.svg`](https://assets.codexcryptica.com/silhouettes/location-scifi-megacity.svg)   | ~0.5 KB | image/svg+xml | 2026-09-02 | Sci-Fi Megacity Skyline / Spire metropolis           |
+| [`silhouettes/faction-insignia-crest.svg`](https://assets.codexcryptica.com/silhouettes/faction-insignia-crest.svg)     | ~0.5 KB | image/svg+xml | 2026-09-02 | Heraldic Shield Crest for noble factions / guilds    |
+| [`silhouettes/faction-insignia-cyber.svg`](https://assets.codexcryptica.com/silhouettes/faction-insignia-cyber.svg)     | ~0.5 KB | image/svg+xml | 2026-09-02 | Cyber Hex Emblem for megacorps & tech syndicates     |
+| [`silhouettes/generic-humanoid-unknown.svg`](https://assets.codexcryptica.com/silhouettes/generic-humanoid-unknown.svg) | ~0.5 KB | image/svg+xml | 2026-09-02 | Unknown Person / Mysterious Wanderer fallback        |
 
 ## Collapsed groups (user data / bundled packs)
 

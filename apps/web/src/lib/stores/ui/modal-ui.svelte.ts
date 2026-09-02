@@ -1,4 +1,4 @@
-import type { AspectRatio } from "schema";
+import type { AspectRatio, Entity } from "schema";
 
 export type SettingsTab =
   | "vault"
@@ -155,6 +155,14 @@ export class ModalUIStore {
     open: false,
     entityId: null,
     instructions: "",
+  });
+
+  silhouettePickerState = $state<{
+    open: boolean;
+    entity: Entity | null;
+  }>({
+    open: false,
+    entity: null,
   });
 
   // Derived properties for backwards compatibility
@@ -489,6 +497,20 @@ export class ModalUIStore {
     this.closeZenMode();
   }
 
+  openSilhouettePicker(entity: Entity) {
+    this.silhouettePickerState = {
+      open: true,
+      entity,
+    };
+  }
+
+  closeSilhouettePicker() {
+    this.silhouettePickerState = {
+      open: false,
+      entity: null,
+    };
+  }
+
   get isAnyModalOpen() {
     return (
       this.showMobileCreateSheet ||
@@ -508,7 +530,8 @@ export class ModalUIStore {
       this.soundBite.show ||
       this.revisionDialog.open ||
       this.showIntentCreateMenu ||
-      this.showQuickStartModal
+      this.showQuickStartModal ||
+      this.silhouettePickerState.open
     );
   }
 }
@@ -518,6 +541,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v11__";
+const KEY = "__codex_modal_ui_store__v12__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

@@ -290,7 +290,7 @@
     {/if}
 
     <!-- Presentation Template Editor -->
-    {#if modalUIStore.presentationEditorState.open && modalUIStore.presentationEditorState.schema}
+    {#if modalUIStore.presentationEditorState?.open && modalUIStore.presentationEditorState?.schema}
       {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateEditor.svelte"), "PresentationTemplateEditor") then PresentationTemplateEditor}
         {#if PresentationTemplateEditor}
           <PresentationTemplateEditor
@@ -299,6 +299,15 @@
             duplicate={modalUIStore.presentationEditorState.duplicate}
             onClose={() => (modalUIStore.presentationEditorState.open = false)}
           />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Silhouette Picker Modal -->
+    {#if modalUIStore.silhouettePickerState?.open}
+      {#await loadModal(() => import("./SilhouettePickerModal.svelte"), "SilhouettePickerModal") then SilhouettePickerModal}
+        {#if SilhouettePickerModal}
+          <SilhouettePickerModal />
         {/if}
       {/await}
     {/if}
