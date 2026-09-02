@@ -154,19 +154,13 @@ test.describe("Timeline Accessibility", () => {
     });
     await expect(horizontalTimeline).toBeVisible({ timeout: 10000 });
 
-    // Ensure we are at start
+    await horizontalTimeline.focus();
     await horizontalTimeline.evaluate((el) => (el.scrollLeft = 0));
-
     const initialScrollLeft = await horizontalTimeline.evaluate(
       (el) => el.scrollLeft,
     );
 
-    // Instead of trusting `press`, we focus it explicitly and press Right Arrow multiple times to be sure it takes effect.
-    await horizontalTimeline.focus();
-    await page.keyboard.press("ArrowRight");
-
     await expect(async () => {
-      // It may need repeated pressing if the event isn't registering correctly.
       await page.keyboard.press("ArrowRight");
       const currentScrollLeft = await horizontalTimeline.evaluate(
         (el) => el.scrollLeft,
@@ -184,12 +178,11 @@ test.describe("Timeline Accessibility", () => {
     });
     await expect(verticalTimeline).toBeVisible();
 
+    await verticalTimeline.focus();
     await verticalTimeline.evaluate((el) => (el.scrollTop = 0));
     const initialScrollTop = await verticalTimeline.evaluate(
       (el) => el.scrollTop,
     );
-    await verticalTimeline.focus();
-    await page.keyboard.press("ArrowDown");
 
     await expect(async () => {
       await page.keyboard.press("ArrowDown");
