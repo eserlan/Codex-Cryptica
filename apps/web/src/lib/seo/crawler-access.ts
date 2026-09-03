@@ -166,7 +166,9 @@ export interface CrawlResponse {
 
 export interface RouteExpectation {
   /** `html` routes get the full indexability audit; `text` routes only status. */
-  kind: "html" | "text";
+  kind: "html" | "text" | "private";
+  /** Public discovery routes must be indexable; workspace routes must not. */
+  indexability?: "indexable" | "noindex";
   /** Minimum body length before the response counts as substantive. */
   minBytes?: number;
 }
@@ -178,7 +180,7 @@ export interface RouteExpectation {
 export function expectationFor(path: string): RouteExpectation {
   return /\.(txt|xml|json)$/i.test(path)
     ? { kind: "text", minBytes: 100 }
-    : { kind: "html" };
+    : { kind: "html", indexability: "indexable" };
 }
 
 /** Markers Cloudflare's managed challenge/interstitial pages ship with. */
@@ -271,13 +273,35 @@ export function evaluateCrawlResponse(
     });
   }
 
+  const expectsNoindex = expectation.indexability === "noindex";
   const xRobots = readHeader(response.headers, "x-robots-tag");
-  if (xRobots && /noindex/i.test(xRobots)) {
+  const hasXRobotsNoindex = Boolean(xRobots && /noindex/i.test(xRobots));
+  if (!expectsNoindex && hasXRobotsNoindex) {
     findings.push({
       code: "noindex",
       severity: "error",
       message: `X-Robots-Tag header carries noindex: ${xRobots}`,
     });
+  }
+
+  if (expectation.kind === "text") return findings;
+
+  const robotsMeta = extractTag(
+    response.body,
+    /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']*)["']/i,
+  );
+  const hasMetaNoindex = Boolean(robotsMeta && /noindex/i.test(robotsMeta));
+
+  if (expectsNoindex) {
+    if (!hasXRobotsNoindex && !hasMetaNoindex) {
+      findings.push({
+        code: "noindex-missing",
+        severity: "error",
+        message:
+          "private route is missing an X-Robots-Tag or robots meta noindex directive",
+      });
+    }
+    return findings;
   }
 
   if (expectation.kind !== "html") return findings;
@@ -313,11 +337,7 @@ export function evaluateCrawlResponse(
     });
   }
 
-  const robotsMeta = extractTag(
-    response.body,
-    /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']*)["']/i,
-  );
-  if (robotsMeta && /noindex/i.test(robotsMeta)) {
+  if (hasMetaNoindex) {
     findings.push({
       code: "noindex",
       severity: "error",

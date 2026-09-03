@@ -218,6 +218,22 @@ describe("evaluateCrawlResponse", () => {
     expect(fromHeader.map((finding) => finding.code)).toContain("noindex");
   });
 
+  it("accepts noindex for a private route but fails closed when it is missing", () => {
+    const protectedRoute = evaluateCrawlResponse(
+      htmlResponse({ headers: { "X-Robots-Tag": "noindex, nofollow" } }),
+      { kind: "private", indexability: "noindex" },
+    );
+    const unprotectedRoute = evaluateCrawlResponse(htmlResponse(), {
+      kind: "private",
+      indexability: "noindex",
+    });
+
+    expect(protectedRoute).toEqual([]);
+    expect(unprotectedRoute.map((finding) => finding.code)).toContain(
+      "noindex-missing",
+    );
+  });
+
   it("flags an off-origin canonical as an error and a same-origin mismatch as a warning", () => {
     const offOrigin = evaluateCrawlResponse(
       htmlResponse({

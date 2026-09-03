@@ -35,6 +35,24 @@ const REQUEST_TIMEOUT_MS = 20_000;
 /** Text routes that must stay reachable regardless of what the sitemap lists. */
 const REQUIRED_TEXT_ROUTES = ["/llms.txt", "/llms-full.txt", "/sitemap.xml"];
 
+/** Workspace paths that must remain non-indexable and outside the sitemap. */
+const PRIVATE_ROUTE_SAMPLES = [
+  "/adventure",
+  "/canvas",
+  "/decks",
+  "/dice",
+  "/guest",
+  "/help",
+  "/import",
+  "/map",
+  "/oracle",
+  "/table",
+  "/tables",
+  "/templates",
+  "/timeline",
+  "/vault/audit-sample",
+];
+
 /**
  * Discovery families the issue calls out. A family that is absent from the
  * sitemap is a warning, not an error — some families ship later.
@@ -203,8 +221,10 @@ const robotsText = await checkRobots();
 const robots = parseRobotsTxt(robotsText);
 
 let routes = [];
+let sitemapBody = "";
 try {
   const sitemap = await crawl("/sitemap.xml");
+  sitemapBody = sitemap.body;
   routes = pickRepresentativeRoutes(sitemap.body, SAMPLES_PER_FAMILY);
 } catch (error) {
   record("/sitemap.xml", [
@@ -248,6 +268,19 @@ for (const path of routes) {
     continue;
   }
   await checkRoute(path);
+}
+
+for (const path of PRIVATE_ROUTE_SAMPLES) {
+  if (sitemapBody.includes(`<loc>${base}${path}</loc>`)) {
+    record(`${path} (sitemap)`, [
+      {
+        code: "private-route-in-sitemap",
+        severity: "error",
+        message: "private/stateful route appears in the public sitemap",
+      },
+    ]);
+  }
+  await checkRoute(path, { kind: "private", indexability: "noindex" });
 }
 
 await checkUserAgentParity("/");

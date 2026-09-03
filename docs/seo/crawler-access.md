@@ -1,7 +1,7 @@
 # Search-crawler access (OAI-SearchBot)
 
-Tracking issue: [#2567](https://github.com/eserlan/Codex-Cryptica/issues/2567).
-Parent: #1225. Related: #291, #1228, #1083.
+Tracking issues: [#2567](https://github.com/eserlan/Codex-Cryptica/issues/2567), [#2568](https://github.com/eserlan/Codex-Cryptica/issues/2568).
+Parent: #1225. Related: #291, #1228, #1083, #1155.
 
 `robots.txt` saying `Allow` is only half of crawler eligibility. A request also
 has to survive the CDN/WAF stack and come back as the intended public HTML.
@@ -59,6 +59,13 @@ families are covered automatically as they ship rather than by a hard-coded
 list that rots. `/llms.txt`, `/llms-full.txt` and `/sitemap.xml` are always
 checked.
 
+The same command also requests representative workspace, vault, Canvas, VTT
+and session routes. Those must return `X-Robots-Tag: noindex, nofollow` (or a
+crawler-visible equivalent) and must not appear in the sitemap. The guard is
+implemented in `apps/web/static/_headers`, because the workspace route group
+does not SSR. It is intentionally path-specific: public `/import/*`,
+`/generators/*` and other discovery pages retain normal indexability.
+
 The pure logic lives in `apps/web/src/lib/seo/crawler-access.ts` and is unit
 tested; the script is the network layer around it.
 
@@ -67,7 +74,38 @@ demand (`workflow_dispatch`), because the things that break crawler access —
 a WAF rule, a bot-management setting, a header change — happen outside this
 repository and would otherwise land silently.
 
-## 3. Cloudflare / WAF audit
+## 3. Cloudflare Crawler Hints / IndexNow
+
+Crawler Hints is a **zone-level Cloudflare configuration**, not an application
+integration. When enabled, Cloudflare uses cache-change signals and can notify
+IndexNow-supported search engines; Codex Cryptica does not hold an IndexNow key
+or submit URLs itself.
+
+Enable or re-enable it in the Cloudflare dashboard:
+
+1. Select the `codexcryptica.com` zone.
+2. Go to **Cache / CDN → Configuration → Crawler Hints**.
+3. Turn **Crawler Hints** on and record the enablement date below.
+
+To disable it, return to the same control and turn it off. Verify it remains
+enabled by reopening that zone-level control, then run `bun run
+check:crawler-access` to verify the prerequisites Crawler Hints cannot fix:
+the sitemap, canonical URLs, crawlable public HTML, and private-route
+`noindex` protection.
+
+| Field                  | Production record                   |
+| ---------------------- | ----------------------------------- |
+| Crawler Hints enabled  | Pending a zone administrator action |
+| Enablement date        | Record in this table when enabled   |
+| Direct IndexNow client | Deliberately not implemented        |
+
+Do not add a deploy hook, Worker, API key or submission service unless an
+observed production gap is recorded in a separate issue (for example,
+deterministic publish-time notifications or missing changed/deleted URL
+batches). A passing crawler request does not itself prove the dashboard toggle
+is on, so the dashboard remains the source of truth for that setting.
+
+## 4. Cloudflare / WAF audit
 
 Codex Cryptica is a static site on Cloudflare Pages (`wrangler.toml`,
 `adapter-static`). There is no Worker in front of the public site and no
@@ -102,7 +140,7 @@ Cloudflare's _verified bot_ signal (`cf.client.bot`) or on OpenAI's published
 searchbot IP ranges — not on a user-agent string, which anyone can spoof and
 which would turn a security control into a bypass.
 
-## 4. Findings from the 2026-08-31 audit
+## 5. Findings from the 2026-08-31 audit
 
 Fixed under #2567:
 
