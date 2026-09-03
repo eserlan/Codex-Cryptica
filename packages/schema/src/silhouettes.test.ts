@@ -887,3 +887,97 @@ describe("Iconic Fantasy Location Silhouette Resolution", () => {
     expect(match.id).toBe("location-frontier-outpost");
   });
 });
+
+describe("Iconic Sci-Fi Character Silhouette Resolution", () => {
+  it("resolves starship captain / commander for fleet officers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Captain Travis",
+        labels: ["captain", "officer", "commander"],
+        content: "Commanding the starship fleet from the main bridge.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-captain-commander");
+  });
+
+  it("resolves heavy armored marine for exo-suit assault troopers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Sgt. Vance",
+        labels: ["marine", "soldier", "exo-suit"],
+        content: "Heavy assault trooper in sealed powered combat armor.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-marine-soldier");
+  });
+
+  it("resolves starship engineer / mechanic for repair specialists", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Chief Engineer Novak",
+        labels: ["engineer", "mechanic", "technician"],
+        content: "Repairing plasma drive conduits with a fusion torch.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-engineer-mechanic");
+  });
+
+  it("resolves cyber-medic / field surgeon for doctors and triage healers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Dr. Aris Thorne",
+        labels: ["medic", "surgeon", "doctor"],
+        content: "Scanning vital signs and running triage in the medical bay.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-field-medic");
+  });
+
+  it("resolves synthetic android for artificial chassis humanoids", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Unit 734 Synth",
+        labels: ["android", "synth", "synthetic"],
+        content: "An artificial android chassis with neural processing cores.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-android-synth");
+  });
+
+  it("resolves psionic / biotic operative for psychic espers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Kaelen Vane",
+        labels: ["psionic", "psychic", "esper"],
+        content:
+          "Channeling telekinetic force fields and psychic kinetic energy.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-psionic-operative");
+  });
+
+  it("resolves space trader / privateer for smugglers and cargo pilots", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Jax Corvo",
+        labels: ["trader", "smuggler", "scoundrel"],
+        content: "Hauling unregistered contraband in a rusty light freighter.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-trader-smuggler");
+  });
+});

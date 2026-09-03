@@ -253,15 +253,12 @@ And makes them accessible via:
 
 ---
 
-## 4. Alternative Quick Source: Game-Icons Library
+## 4. Absolute Rule: Bespoke Art Only (Never Use External Icon Packs)
 
-When AI image generation is unnecessary or for standard symbols/items (e.g. daggers, dice, shields, spellbooks), you can import directly from `@iconify-json/game-icons` (which has 4,100+ open-source game icons):
+**NEVER use external icon sets, game-icons, or generic symbol libraries (such as `@iconify-json/game-icons` or Lucide) for silhouettes.**
 
-```ts
-import gameIcons from "@iconify-json/game-icons/icons.json" with { type: "json" };
+All silhouettes in Codex Cryptica MUST be custom, bespoke studio drawings generated via AI and vectorized with `potrace`. This guarantees:
 
-const icon = gameIcons.icons["tavern-sign"];
-const svg = `<svg viewBox="0 0 512 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg">${icon.body}</svg>`;
-```
-
-All game icons share standard `0 0 512 512` viewBoxes and clean single/multi-path bodies.
+1. **Artistic Coherence**: A consistent graphic novel / concept art visual style across all archetypes, genres, and subjects.
+2. **Negative Space & Contrast**: Intentional white cutouts and line definition specifically tailored for high-contrast theme-reactive display.
+3. **No Stylistic Clashing**: Generic flat UI glyphs must never be mixed into the silhouette catalogue.
