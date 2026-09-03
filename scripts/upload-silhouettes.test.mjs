@@ -41,9 +41,31 @@ test("rejects artwork that cannot be tinted", () => {
   const svg = good.replace('fill="currentColor"', 'fill="black"');
 
   assert.deepEqual(validateSilhouetteSvg(svg), [
-    "paints no currentColor, so it cannot be tinted",
-    "has a hardcoded black fill that overrides currentColor",
+    "paints fills the theme cannot recolour: black",
   ]);
+});
+
+test("rejects one hardcoded fill hiding among tintable ones", () => {
+  // The weak version of this check asked only whether currentColor appeared
+  // somewhere, which this artwork would have passed while painting a white
+  // hole in every theme.
+  const svg = good.replace(
+    "</svg>",
+    '<path fill="#fff" d="M2 2h1v1H2z"/></svg>',
+  );
+
+  assert.deepEqual(validateSilhouetteSvg(svg), [
+    "paints fills the theme cannot recolour: #fff",
+  ]);
+});
+
+test("accepts fill=none, which paints nothing at all", () => {
+  const svg = good.replace(
+    "</svg>",
+    '<path fill="none" d="M2 2h1v1H2z"/></svg>',
+  );
+
+  assert.deepEqual(validateSilhouetteSvg(svg), []);
 });
 
 test("rejects a file that is not an SVG at all", () => {

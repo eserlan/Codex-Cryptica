@@ -116,6 +116,10 @@ describe("Graph Theme Generation", () => {
 
     it("sizes the glyph itself instead of letting cytoscape refit it", () => {
       const style = silhouetteStyle(THEMES.scifi);
+      expect(
+        style,
+        "silhouette selector missing from the stylesheet",
+      ).toBeDefined();
 
       // `contain` re-scales the image to fill the node box, which cancels the
       // percentage below and spills the glyph outside round/pointed nodes.
@@ -128,6 +132,10 @@ describe("Graph Theme Generation", () => {
 
     it("keeps the glyph inside the fantasy shield, which tapers to a point", () => {
       const style = silhouetteStyle(THEMES.fantasy);
+      expect(
+        style,
+        "silhouette selector missing from the stylesheet",
+      ).toBeDefined();
 
       expect(style["background-width"]).toBe("64%");
       expect(style["background-height"]).toBe("64%");

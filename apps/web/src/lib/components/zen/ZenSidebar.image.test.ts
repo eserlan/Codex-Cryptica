@@ -161,6 +161,23 @@ describe("ZenSidebar silhouette picker", () => {
     );
   });
 
+  it("disables the control while no entity is loaded, rather than offering a dead button", async () => {
+    const { getByTestId } = render(ZenSidebar, {
+      entity: null,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    const button = getByTestId("zen-silhouette-button") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+
+    await fireEvent.click(button);
+    expect(modalUIStore.openSilhouettePicker).not.toHaveBeenCalled();
+  });
+
   it("offers no picker to a guest, who cannot edit the entity", () => {
     mockVault.isGuest = true;
 

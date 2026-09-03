@@ -60,12 +60,18 @@ export function validateSilhouetteSvg(svg) {
     }
   }
 
-  // 3. Tintable. Every surface recolours the artwork for its theme.
-  if (!svg.includes("currentColor")) {
+  // 3. Tintable. Every surface recolours the artwork for its theme, so it is
+  //    not enough for `currentColor` to appear somewhere — a single hardcoded
+  //    fill paints a hole no theme can reach.
+  const TINTABLE_FILLS = new Set(["currentColor", "none"]);
+  const fills = [...svg.matchAll(/\bfill="([^"]*)"/g)].map((m) => m[1]);
+  const fixed = [...new Set(fills.filter((f) => !TINTABLE_FILLS.has(f)))];
+  if (fixed.length > 0) {
+    problems.push(
+      `paints fills the theme cannot recolour: ${fixed.join(", ")}`,
+    );
+  } else if (!fills.includes("currentColor")) {
     problems.push("paints no currentColor, so it cannot be tinted");
-  }
-  if (/fill="(black|#000|#000000)"/.test(svg)) {
-    problems.push("has a hardcoded black fill that overrides currentColor");
   }
 
   return problems;

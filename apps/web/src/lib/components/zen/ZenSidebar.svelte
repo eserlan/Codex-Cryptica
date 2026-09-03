@@ -382,7 +382,8 @@
         <button
           type="button"
           onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
-          class="flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          disabled={!entity}
+          class="flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
           title="Customize vector silhouette"
           data-testid="zen-silhouette-button"
         >
