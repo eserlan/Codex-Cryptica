@@ -101,12 +101,44 @@ if (!cleanSvg.includes('fill="currentColor"')) {
 // 3. Ensure path elements have fill="currentColor"
 cleanSvg = cleanSvg.replace(/<path(?!\s+fill)/g, '<path fill="currentColor"');
 
-// 4. Eliminate any duplicate fill attributes on the same tag
-cleanSvg = cleanSvg.replace(
-  /<path\s+fill="currentColor"\s+([^>]*)\s+fill="currentColor"/g,
-  '<path fill="currentColor" $1',
-);
+// 4. Keep exactly one fill per element. Step 1 rewrites potrace's trailing
+//    fill="black", and step 3 prepends one of its own, so a traced path ends
+//    up carrying two — see the well-formedness rule below.
+cleanSvg = cleanSvg.replace(/<[a-z]+\b[^>]*>/g, (tag) => {
+  let seen = false;
+  return tag.replace(/\s+fill="[^"]*"/g, (attr) => {
+    if (seen) return "";
+    seen = true;
+    return attr;
+  });
+});
+
+// 5. Give the root an intrinsic size taken from its viewBox.
+cleanSvg = cleanSvg.replace(/^<svg\b([^>]*?)\s*>/, (tag, attrs) => {
+  if (/\bwidth=/.test(attrs)) return tag;
+  const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(attrs);
+  return viewBox
+    ? `<svg width="${viewBox[1]}" height="${viewBox[2]}"${attrs}>`
+    : tag;
+});
 ```
+
+#### The two rules a graph node will not forgive
+
+A silhouette is painted on a `<canvas>` as an SVG data URI, which is stricter
+than the DOM in two ways. Both failures are silent — no console error, just a
+wrong-looking node — and both are covered by tests in
+`packages/schema/src/silhouettes.test.ts`.
+
+1. **It must be well-formed XML.** The HTML parser drops a repeated attribute
+   and carries on; an SVG loaded as an image refuses to decode, and the node
+   renders as a flat block of colour with no glyph. A duplicated `fill` (step 4
+   above) is the way this happens in practice.
+2. **It must declare `width` and `height`.** Cytoscape samples the image with a
+   source rectangle taken from its intrinsic size. Without those attributes the
+   browser reports a default box that does not match the rasterisation, so a
+   corner of the artwork is sampled and stretched across the node — the glyph
+   looks cropped and off-centre. Match them to the `viewBox` (step 5).
 
 ---
 
