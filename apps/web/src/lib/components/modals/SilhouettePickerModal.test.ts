@@ -88,4 +88,43 @@ describe("SilhouettePickerModal", () => {
     // Preview panel shows "Hover Preview"
     expect(await findByText("Hover Preview")).toBeTruthy();
   });
+
+  describe("on a phone, where Zen is the whole entity view", () => {
+    it("stacks above the full-screen Zen view instead of behind it", async () => {
+      modalUIStore.openSilhouettePicker(mockEntity as any);
+      const { findByRole } = render(SilhouettePickerModal);
+
+      const dialog = await findByRole("dialog");
+
+      // ZenModeModal owns z-[100]; anything opened from inside it has to clear
+      // that or it renders behind the view that launched it.
+      expect(dialog.className).toContain("z-[110]");
+    });
+
+    it("goes edge to edge rather than sitting in a padded box", async () => {
+      modalUIStore.openSilhouettePicker(mockEntity as any);
+      const { findByRole } = render(SilhouettePickerModal);
+
+      const dialog = await findByRole("dialog");
+      const shell = dialog.firstElementChild as HTMLElement;
+
+      expect(dialog.className).toContain("p-0");
+      expect(shell.className).toContain("h-full");
+      expect(shell.className).toContain("rounded-none");
+    });
+
+    it("gives the grid the screen and summarises the selection in one line", async () => {
+      modalUIStore.openSilhouettePicker(mockEntity as any);
+      const { findByTestId, container } = render(SilhouettePickerModal);
+
+      // The tall preview column would eat the grid it exists to support, so it
+      // is desktop-only and a compact summary stands in for it.
+      const summary = await findByTestId("silhouette-picker-mobile-summary");
+      expect(summary.className).toContain("md:hidden");
+
+      const preview = container.querySelector(".md\\:w-80");
+      expect(preview?.className).toContain("hidden");
+      expect(preview?.className).toContain("md:flex");
+    });
+  });
 });

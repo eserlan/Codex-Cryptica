@@ -255,3 +255,7 @@
 
 **Learning:** In data parsing functions, like those normalising lists in generator responses (`public-plot-twist.ts`), using `Array.isArray(value) ? value.map(text).filter(Boolean) : ...` forces the creation of an intermediate mapped array that might contain empty strings, only to traverse it again to filter them out. This causes unnecessary garbage collection pressure on frequently-called parsing code paths.
 **Action:** Replace `array.map().filter()` when processing parsed values with an imperative `for...of` loop over the elements, checking and pushing the transformed values directly into the result array.
+## 2025-05-18 - Avoid array allocation when mapping iterables
+
+**Learning:** When using `[...iterable].filter(...).map(...)` on collections like Maps, it creates multiple intermediate arrays, causing unnecessary allocations.
+**Action:** Replace chained array methods on iterables with a single imperative `for...of` loop to avoid intermediate allocations and reduce GC pressure.

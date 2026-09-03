@@ -5,7 +5,7 @@ import type {
   StylingTemplate,
   ImageFocus,
 } from "schema";
-import { imageFocusBackgroundPosition } from "schema";
+import { deriveEntityTypePalette, imageFocusBackgroundPosition } from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
 
@@ -523,15 +523,29 @@ export const getGraphStyle = (
     baseStyle.push({
       selector: "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
       style: {
-        "background-fit": "contain",
-        "background-width": "72%",
-        "background-height": "72%",
+        // `none`, not `contain`: cytoscape applies background-width/height
+        // first and then, for `contain`, rescales the image to fill the node
+        // box — which cancelled the 72% and let the glyph spill outside
+        // non-rectangular nodes (the fantasy shield especially), since
+        // background-clip is none. With `none` the 72% stands and
+        // background-position 50% centres what is left.
+        "background-fit": "none",
+        // The fantasy shield is the one non-rectangular node shape: it tapers
+        // to a point, so a glyph sized and centred for the bounding box hangs
+        // over the sides. A smaller box, sat slightly high, lands in the part
+        // of the shield that is actually wide.
+        "background-width": isFantasy ? "64%" : "72%",
+        "background-height": isFantasy ? "64%" : "72%",
         "background-clip": "none",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-position-x": "50%",
-        "background-position-y": "50%",
-        "background-opacity": 0.95,
+        "background-position-y": isFantasy ? "44%" : "50%",
+        // Opaque, not 0.95: the silhouette's fill colour is contrast-checked
+        // against the node tone itself (issue #2680), so the tone has to be
+        // what is actually painted rather than a near-miss blend with the
+        // canvas behind it.
+        "background-opacity": 1,
         "border-color": tokens.primary,
       },
     });
@@ -640,18 +654,28 @@ export const getGraphStyle = (
     },
   );
 
-  const categoryStyles = categories.map((cat) => ({
-    selector: `node[type="${cat.id}"]`,
-    style: {
-      "border-color": cat.color,
-      "border-width": isFantasy
-        ? graph.nodeBorderWidth + 1
-        : graph.nodeBorderWidth + 4,
-      // For fantasy, we want the category color to overlay the parchment background
-      "background-color": cat.color,
-      "background-opacity": isFantasy ? 0.58 : 0.55,
-    },
-  }));
+  // Entity types are painted from theme-derived tones rather than the raw
+  // category colour (issue #2680): the seed hue survives, but saturation and
+  // lightness come from the active theme, so a mixed graph reads as one
+  // palette instead of neon blue/orange/green blocks. The tone is already
+  // blended against the theme surface, so it is applied at full opacity —
+  // that is what makes the icon-vs-fill contrast the palette guarantees hold
+  // on canvas.
+  const palette = deriveEntityTypePalette(template, categories);
+  const categoryStyles = categories.map((cat) => {
+    const tone = palette[cat.id];
+    return {
+      selector: `node[type="${cat.id}"]`,
+      style: {
+        "border-color": tone?.border ?? cat.color,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 1
+          : graph.nodeBorderWidth + 4,
+        "background-color": tone?.fill ?? cat.color,
+        "background-opacity": 1,
+      },
+    };
+  });
 
   const importantStyles: any[] = [
     {

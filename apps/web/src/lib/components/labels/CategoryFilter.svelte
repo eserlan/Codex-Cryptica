@@ -1,5 +1,7 @@
 <script lang="ts">
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { deriveEntityTypePalette } from "schema";
   import { getIconClass } from "$lib/utils/icon";
 
   let {
@@ -13,6 +15,13 @@
   } = $props();
 
   let expanded = $state(false);
+
+  // The filter doubles as the graph's type legend, so its icons carry the same
+  // theme-derived tones the nodes do (issue #2680) rather than the raw, often
+  // neon, category colour. `accent` is the variant held at 3:1 against a panel.
+  const palette = $derived(
+    deriveEntityTypePalette(themeStore.activeTheme, categories.list),
+  );
 </script>
 
 <div
@@ -80,7 +89,7 @@
           class="{getIconClass(cat.icon)} w-3.5 h-3.5"
           style={activeCategories.has(cat.id)
             ? undefined
-            : `color: ${cat.color}`}
+            : `color: ${palette[cat.id]?.accent ?? cat.color}`}
         ></span>
       </button>
     {/each}

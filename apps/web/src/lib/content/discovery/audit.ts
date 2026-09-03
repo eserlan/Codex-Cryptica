@@ -297,9 +297,15 @@ function clusterGenericTokens(
       counts.set(token, (counts.get(token) ?? 0) + 1);
     }
   }
-  return new Set(
-    [...counts].filter(([, count]) => count >= 3).map(([token]) => token),
-  );
+  // ⚡ Bolt Optimization: Replaced chained [...counts].filter().map() with an imperative loop
+  // to avoid allocating intermediate arrays and reduce GC overhead.
+  const result = new Set<string>();
+  for (const [token, count] of counts) {
+    if (count >= 3) {
+      result.add(token);
+    }
+  }
+  return result;
 }
 
 /** Two entries aimed at explicitly different readers are differentiated. */
