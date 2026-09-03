@@ -6,6 +6,8 @@ import {
   FOCUS_ZOOM_STEP_FACTOR,
   type LoadPhase,
 } from "./graph-view-controller.svelte";
+import { deriveEntityTypeTone, PIRATE_DARK } from "schema";
+import { categories } from "$lib/stores/categories.svelte";
 import {
   syncGraphElements,
   applyLargeGraphRenderHints,
@@ -94,6 +96,13 @@ vi.mock("graph-engine", () => {
     applyLargeGraphRenderHints: vi.fn(),
     isLayoutCollinear: vi.fn().mockReturnValue(false),
   };
+});
+
+// A dark theme is what makes the per-type glyph colours diverge: on a light
+// theme every type clears contrast against the theme primary already.
+vi.mock("$lib/stores/theme.svelte", async () => {
+  const { PIRATE_DARK: theme } = await import("schema");
+  return { themeStore: { activeTheme: theme } };
 });
 
 describe("GraphViewController", () => {
@@ -757,6 +766,50 @@ describe("GraphViewController", () => {
         reseed: true,
       });
       expect(lastPolicy()).toBe("fit");
+    });
+  });
+
+  describe("silhouette tinting (issue #2680)", () => {
+    const syncOptions = async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      deps.graph.elements = [
+        { group: "nodes", data: { id: "node-1", type: "location" } },
+      ];
+      controller.syncImages();
+      return vi.mocked(controller.imageManager!.sync).mock.calls.at(-1)?.[0];
+    };
+
+    const node = (type: string) => ({
+      id: () => "node-1",
+      data: () => ({ id: "node-1", type, label: "The Ashen Reach" }),
+    });
+
+    const glyphFor = (type: string) =>
+      deriveEntityTypeTone(categories.getColor(type), PIRATE_DARK.tokens).glyph;
+
+    it("fills a silhouette with its own type's glyph colour", async () => {
+      const options = await syncOptions();
+
+      const location = options?.resolveSilhouetteUrl?.(node("location"));
+      const character = options?.resolveSilhouetteUrl?.(node("character"));
+
+      expect(location).toContain(encodeURIComponent(glyphFor("location")));
+      expect(character).toContain(encodeURIComponent(glyphFor("character")));
+      // A moss node needs a lighter glyph than the theme primary to clear 3:1;
+      // the blue character tone does not, so it keeps the theme's own colour.
+      expect(glyphFor("location")).not.toBe(PIRATE_DARK.tokens.primary);
+      expect(glyphFor("character")).toBe(PIRATE_DARK.tokens.primary);
+      expect(location).not.toBe(character);
+    });
+
+    it("keys the silhouette on the theme so a theme switch re-tints it", async () => {
+      const options = await syncOptions();
+
+      expect(options?.silhouetteVariant).toContain(PIRATE_DARK.id);
+      expect(options?.silhouetteVariant).toContain(
+        categories.getColor("location"),
+      );
     });
   });
 });
