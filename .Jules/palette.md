@@ -145,3 +145,7 @@
 ## 2024-11-20 - Ensure type="button" and aria-hidden on decorative generator icons
 **Learning:** Found multiple `<button>` elements (like "Surprise Me" buttons in generator form fields) that lacked explicit `type="button"`, posing a risk of unintended form submissions when wrapped inside a form component. In addition, their inner decorative `<span class="icon-[...]">` tags lacked `aria-hidden="true"`, causing screen readers to potentially announce unnecessary structural visual hints.
 **Action:** Always verify `<button>` tags specify `type="button"` unless they act as a submit button. For buttons containing visible descriptive text, explicitly assign `aria-hidden="true"` to any decorative icon elements to avoid screen reader verbosity.
+
+## 2024-11-20 - Add aria-hidden to decorative layout icons
+**Learning:** Found multiple layout components like `AppHeader.svelte` and `MobileMenu.svelte` containing buttons with `aria-label`s or descriptive text that had inner decorative `<span class="icon-[...]">` elements without `aria-hidden="true"`. This pattern across global layout components causes unnecessary screen reader verbosity on every page load.
+**Action:** When reviewing or creating global navigation or layout components, ensure all decorative icons nested inside interactive elements explicitly declare `aria-hidden="true"`.
