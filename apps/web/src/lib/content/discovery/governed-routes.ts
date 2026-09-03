@@ -53,6 +53,7 @@ const STANDALONE_PATHS = [
   "/worldbuilding-tool",
   "/ai-rpg-campaign-manager",
   "/responsible-ai-worldbuilding",
+  "/silhouettes",
 ] as const;
 
 /**

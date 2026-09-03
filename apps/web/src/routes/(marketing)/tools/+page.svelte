@@ -313,6 +313,13 @@
                 "Our guiding principles for ethical, optional, local-first AI assistance in worldbuilding.",
               icon: "icon-[lucide--shield-alert]",
             },
+            {
+              href: "/silhouettes",
+              label: "Vector RPG Silhouettes & Token Art",
+              summary:
+                "Browse the complete library of CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
+              icon: "icon-[lucide--shapes]",
+            },
           ],
         },
       ],

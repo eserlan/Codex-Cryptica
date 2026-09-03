@@ -125,4 +125,21 @@ export const toolEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "tool-silhouettes",
+    pageKind: "tool",
+    canonicalPath: "/silhouettes",
+    primaryIntent: "vector rpg silhouettes and token art",
+    intentAliases: [
+      "free rpg vector tokens",
+      "ttrpg character silhouettes svg",
+      "tabletop rpg silhouette art",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Interactive, theme-customizable gallery of 48+ CC-licensed vector silhouettes for RPG entities with live color palette preview, clipboard SVG copy, and SVG asset downloads.",
+    parentCluster: "visual-assets",
+    indexable: true,
+    status: "live",
+  },
 ];
