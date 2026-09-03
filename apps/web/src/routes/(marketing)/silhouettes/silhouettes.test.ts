@@ -1,6 +1,6 @@
-import { render, fireEvent, screen } from "@testing-library/svelte";
+import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SILHOUETTES } from "schema";
+import { SILHOUETTES, clearSilhouetteCache } from "schema";
 import Page from "./+page.svelte";
 
 vi.mock("$app/paths", () => ({
@@ -14,8 +14,17 @@ vi.mock("$app/environment", () => ({
 describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
   let writeTextMock: ReturnType<typeof vi.fn>;
 
+  const ARTWORK =
+    '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Artwork is fetched from R2 rather than inlined in the bundle.
+    clearSilhouetteCache();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(ARTWORK, { status: 200 })),
+    );
 
     writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, {
@@ -162,9 +171,11 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
     const copySvgBtn = screen.getByRole("button", { name: /Copy SVG/i });
     await fireEvent.click(copySvgBtn);
 
-    expect(writeTextMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(writeTextMock).toHaveBeenCalledTimes(1));
     const copiedContent = writeTextMock.mock.calls[0][0];
     expect(copiedContent).toContain("<svg");
+    // Exported in the palette colour, not as an uncoloured currentColor asset.
+    expect(copiedContent).not.toContain("currentColor");
     expect(copiedContent).toContain("fill=");
   });
 
@@ -192,7 +203,7 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
     const downloadBtn = screen.getByRole("button", { name: /Download SVG/i });
     await fireEvent.click(downloadBtn);
 
-    expect(appendChildSpy).toHaveBeenCalled();
+    await waitFor(() => expect(appendChildSpy).toHaveBeenCalled());
     expect(removeChildSpy).toHaveBeenCalled();
   });
 
@@ -210,7 +221,7 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
     ).toBeTruthy();
   });
 
-  it("constrains SVG viewBox and disables pointer-events inside cards to prevent hit-box overlap", () => {
+  it("constrains the artwork inside cards to prevent hit-box overlap", async () => {
     const { container } = render(Page);
 
     const cards = container.querySelectorAll('[data-testid="silhouette-card"]');
@@ -219,9 +230,14 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
     const firstCard = cards[0] as HTMLElement;
     expect(firstCard.className).toContain("overflow-hidden");
 
-    const svgWrapper = firstCard.querySelector(".pointer-events-none");
-    expect(svgWrapper).toBeTruthy();
-    expect(svgWrapper?.className).toContain("[&>svg]:w-full");
-    expect(svgWrapper?.className).toContain("[&>svg]:h-full");
+    const glyph = firstCard.querySelector('[data-testid="silhouette-glyph"]');
+    expect(glyph).toBeTruthy();
+    expect(glyph?.className).toContain("pointer-events-none");
+
+    await waitFor(() =>
+      expect(firstCard.querySelector("svg")?.getAttribute("viewBox")).toBe(
+        "0 0 512 512",
+      ),
+    );
   });
 });

@@ -1,12 +1,13 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { SILHOUETTES } from "schema";
+  import { SILHOUETTES, loadSilhouetteSvg } from "schema";
   import type {
     SilhouetteDefinition,
     SilhouetteGenre,
     SilhouetteCategory,
   } from "schema";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import SilhouetteGlyph from "$lib/components/ui/SilhouetteGlyph.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
 
   interface ThemePalette {
@@ -152,10 +153,13 @@
   async function handleCopySvg() {
     if (!previewSilhouette) return;
     try {
-      const coloredSvg = getExportSvg(
-        previewSilhouette.svgContent,
-        selectedPalette.color,
-      );
+      // The artwork lives in R2, so exporting it starts with fetching it.
+      const svg = await loadSilhouetteSvg(previewSilhouette);
+      if (!svg) {
+        showToast("Could not reach the silhouette artwork.");
+        return;
+      }
+      const coloredSvg = getExportSvg(svg, selectedPalette.color);
       await navigator.clipboard.writeText(coloredSvg);
       showToast(`Copied ${previewSilhouette.name} SVG markup!`, "svg");
     } catch (err) {
@@ -176,12 +180,14 @@
     }
   }
 
-  function handleDownloadSvg() {
+  async function handleDownloadSvg() {
     if (!previewSilhouette) return;
-    const coloredSvg = getExportSvg(
-      previewSilhouette.svgContent,
-      selectedPalette.color,
-    );
+    const svg = await loadSilhouetteSvg(previewSilhouette);
+    if (!svg) {
+      showToast("Could not reach the silhouette artwork.");
+      return;
+    }
+    const coloredSvg = getExportSvg(svg, selectedPalette.color);
     const blob = new Blob([coloredSvg], {
       type: "image/svg+xml;charset=utf-8",
     });
@@ -504,11 +510,7 @@
                   class="w-16 h-16 sm:w-20 sm:h-20 p-2 my-2 rounded-xl bg-theme-base/80 border border-theme-border/50 flex items-center justify-center group-hover:scale-105 transition-all duration-200 shadow-inner overflow-hidden"
                   style="color: {selectedPalette.color};"
                 >
-                  <div
-                    class="w-full h-full flex items-center justify-center pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
-                  >
-                    {@html s.svgContent}
-                  </div>
+                  <SilhouetteGlyph silhouette={s} class="pointer-events-none" />
                 </div>
 
                 <!-- Title & Archetype -->
@@ -569,9 +571,9 @@
             ></div>
 
             <div
-              class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 hover:scale-105 pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
+              class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 hover:scale-105 pointer-events-none"
             >
-              {@html previewSilhouette.svgContent}
+              <SilhouetteGlyph silhouette={previewSilhouette} eager />
             </div>
           </div>
 
