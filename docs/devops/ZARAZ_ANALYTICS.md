@@ -97,16 +97,21 @@ importer | external`
 `target_kind`/`target_id` for a free-form content link (e.g. an answer's
 `codexConnection.href`, or any link whose destination isn't already known
 from the content-collection it came from) is computed by
-`classifyDiscoveryTarget(href)`, which reads the href's first path segment:
-`/generators/*` → `generator`, `/answers/*` → `answer`, `/examples/*` →
-`example`, `/for/*` → `for`, `/vs/*` and `/alternatives/*` → `comparison`,
-`/import/*` and `/migrations/*` → `importer`, an absolute URL → `external`
-(keyed by the full URL), and anything else (`/solutions/*`, `/features/*`,
-`/`, ...) → `app`, since it's a deeper product page rather than another
-discovery page. Where a link's destination kind is already known from its
-source list (e.g. every "Other answers" link on an answer page is another
-answer), the page passes `targetKind`/`targetId` explicitly instead of
-calling the classifier.
+`classifyDiscoveryTarget(href)`, which strips the query string and hash
+first, then reads the href's first path segment: `/generators/*` →
+`generator` (`target_id`: the slug, e.g. `"npc"`), `/answers/*` → `answer`,
+`/examples/*` → `example`, `/for/*` → `for`, `/vs/*` and `/alternatives/*` →
+`comparison`, `/import/*` and `/migrations/*` → `importer` (all keyed by
+slug the same way), an absolute URL → `external` (`target_id`: the URL's
+origin+path, e.g. `"https://groupfinder.gg/list"`), and anything else
+(`/solutions/*`, `/features/*`, `/`, ...) → `app` (`target_id`: the full
+root-relative path, e.g. `"/solutions/campaign-manager"` — not just the
+slug, since `/solutions/x` and `/features/x` would otherwise both collapse
+to the ambiguous `target_id` `"x"`), since it's a deeper product page rather
+than another discovery page. Where a link's destination kind is already
+known from its source list (e.g. every "Other answers" link on an answer
+page is another answer), the page passes `targetKind`/`targetId` explicitly
+instead of calling the classifier.
 
 `placement` is a short, page-local string identifying where on the page the
 link lives — e.g. on `/answers/[slug]`: `section_cta`, `codex_connection`,

@@ -100,16 +100,16 @@ describe("classifyDiscoveryTarget", () => {
     expect(classifyDiscoveryTarget(href)).toEqual({ targetKind, targetId });
   });
 
-  it("treats other internal product pages as app", () => {
+  it("treats other internal product pages as app, keyed by the full path", () => {
     expect(classifyDiscoveryTarget("/solutions/campaign-manager")).toEqual({
       targetKind: "app",
-      targetId: "campaign-manager",
+      targetId: "/solutions/campaign-manager",
     });
     expect(
       classifyDiscoveryTarget("/features/local-first-rpg-campaign-manager"),
     ).toEqual({
       targetKind: "app",
-      targetId: "local-first-rpg-campaign-manager",
+      targetId: "/features/local-first-rpg-campaign-manager",
     });
   });
 
@@ -120,8 +120,17 @@ describe("classifyDiscoveryTarget", () => {
     });
   });
 
-  it("treats an absolute URL as external, keyed by the full URL", () => {
+  it("treats an absolute URL as external, keyed by its origin+path", () => {
     expect(classifyDiscoveryTarget("https://groupfinder.gg/list")).toEqual({
+      targetKind: "external",
+      targetId: "https://groupfinder.gg/list",
+    });
+  });
+
+  it("strips query strings and hashes from an external URL's target_id", () => {
+    expect(
+      classifyDiscoveryTarget("https://groupfinder.gg/list?ref=answer#section"),
+    ).toEqual({
       targetKind: "external",
       targetId: "https://groupfinder.gg/list",
     });
@@ -131,6 +140,14 @@ describe("classifyDiscoveryTarget", () => {
     expect(
       classifyDiscoveryTarget("/generators/npc?utm_source=answer#section"),
     ).toEqual({ targetKind: "generator", targetId: "npc" });
+  });
+
+  it("strips query strings and hashes from an app target's target_id", () => {
+    expect(
+      classifyDiscoveryTarget(
+        "/solutions/campaign-manager?utm_source=answer#pricing",
+      ),
+    ).toEqual({ targetKind: "app", targetId: "/solutions/campaign-manager" });
   });
 });
 

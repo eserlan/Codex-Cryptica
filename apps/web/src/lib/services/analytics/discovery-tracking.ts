@@ -106,23 +106,34 @@ const TARGET_KIND_BY_SEGMENT: Record<string, DiscoveryTargetKind> = {
  * from. Anything that isn't one of the discovery-page families above (e.g.
  * `/solutions/...`, `/features/...`) is treated as `"app"` — a deeper
  * product page rather than another discovery page. An absolute URL (a
- * third-party CTA such as an affiliate/community link) is `"external"`.
+ * third-party CTA such as an affiliate/community link) is `"external"`,
+ * keyed by its origin+path — query strings and hashes are stripped for
+ * both `"external"` and `"app"` targets, same as for the discovery-family
+ * targets below, so a tracking token or anchor never leaks into a
+ * low-cardinality analytics field.
  */
 export function classifyDiscoveryTarget(href: string): {
   targetKind: DiscoveryTargetKind;
   targetId: string;
 } {
-  if (/^https?:\/\//i.test(href)) {
-    return { targetKind: "external", targetId: href };
+  const path = href.split("?")[0]?.split("#")[0] ?? href;
+
+  if (/^https?:\/\//i.test(path)) {
+    return { targetKind: "external", targetId: path };
   }
 
-  const path = href.split("?")[0]?.split("#")[0] ?? href;
   const segments = path.split("/").filter(Boolean);
   const [first, second] = segments;
-  const targetKind = (first && TARGET_KIND_BY_SEGMENT[first]) || "app";
-  const targetId = second ?? (path || "/");
+  const knownKind = first && TARGET_KIND_BY_SEGMENT[first];
 
-  return { targetKind, targetId };
+  if (knownKind) {
+    return { targetKind: knownKind, targetId: second ?? (path || "/") };
+  }
+
+  // Unrecognized internal paths ("app") keep the full path rather than just
+  // the second segment: `/solutions/x` and `/features/x` would otherwise
+  // both collapse to the ambiguous target_id "x".
+  return { targetKind: "app", targetId: path || "/" };
 }
 
 /**
