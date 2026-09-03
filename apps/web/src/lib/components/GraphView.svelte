@@ -595,6 +595,11 @@
     void graph.perfStylingActive;
     void controller.cy;
     void controller.isSuspended;
+    // Silhouettes are tinted from the theme's entity-type palette (issue
+    // #2680), so a theme or category-colour change has to re-resolve them —
+    // otherwise already-painted glyphs keep the previous theme's colour.
+    void themeStore.activeTheme?.id;
+    void categories.list;
     untrack(() => controller.syncImages());
   });
 

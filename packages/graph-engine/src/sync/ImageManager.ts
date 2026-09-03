@@ -5,6 +5,14 @@ export interface ImageManagerOptions {
   resolveImageUrl: (path: string) => Promise<string | null>;
   releaseImageUrl: (path: string) => void;
   resolveSilhouetteUrl?: (node: any) => string | null;
+  /**
+   * Anything outside node data that changes what `resolveSilhouetteUrl`
+   * returns — today the theme, whose palette decides the silhouette's fill
+   * colour (issue #2680). Folded into the per-node silhouette key so a theme
+   * switch re-resolves already-painted silhouettes instead of leaving them in
+   * the previous theme's colour.
+   */
+  silhouetteVariant?: string;
   batchSize?: number;
   onBatchApplied?: (count: number) => void;
   onLog?: (message: string) => void;
@@ -15,6 +23,7 @@ export class GraphImageManager {
   private urlCache = new Map<string, string>();
   private resolvingIds = new Set<string>();
   private nodePathMap = new Map<string, string>();
+  private silhouetteVariant = "";
 
   constructor(private cy: Core) {}
 
@@ -25,6 +34,12 @@ export class GraphImageManager {
       this.clearImages(options);
       return;
     }
+
+    // Captured for this pass: the stamp written when the results land has to
+    // be the variant that produced them, or a theme switch that overlaps an
+    // in-flight resolve would mark the old colour as current.
+    const variant = options.silhouetteVariant ?? "";
+    this.silhouetteVariant = variant;
 
     const nodesNeedingVisuals = this.cy.nodes().filter((n) => {
       if (this.resolvingIds.has(n.id())) return false;
@@ -117,7 +132,7 @@ export class GraphImageManager {
                   node.data("isSilhouette", true);
                   node.data(
                     "appliedSilhouetteKey",
-                    this.getSilhouetteKey(node),
+                    this.getSilhouetteKey(node, variant),
                   );
                 } else {
                   node.removeData("isSilhouette");
@@ -148,7 +163,10 @@ export class GraphImageManager {
     })();
   }
 
-  private getSilhouetteKey(node: any): string {
+  private getSilhouetteKey(
+    node: any,
+    variant = this.silhouetteVariant,
+  ): string {
     const rawSil = node.data("silhouette") ?? "";
     const rawType = node.data("type") ?? "";
     const rawLabels = Array.isArray(node.data("labels"))
@@ -156,7 +174,7 @@ export class GraphImageManager {
       : "";
     const rawLabel =
       typeof node.data("label") === "string" ? node.data("label") : "";
-    return `${rawSil}|${rawType}|${rawLabels}|${rawLabel}`;
+    return `${rawSil}|${rawType}|${rawLabels}|${rawLabel}|${variant}`;
   }
 
   private clearImages(options?: ImageManagerOptions) {
