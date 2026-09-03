@@ -9,6 +9,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import SilhouetteGlyph from "$lib/components/ui/SilhouetteGlyph.svelte";
 
   const entity = $derived(modalUIStore.silhouettePickerState.entity);
   const currentTheme = $derived(themeStore.activeTheme?.id || "default");
@@ -245,11 +246,11 @@
                 <div
                   class="w-10 h-10 p-1.5 rounded-lg bg-theme-surface text-theme-accent border border-theme-accent/30 flex items-center justify-center overflow-hidden"
                 >
-                  <div
-                    class="w-full h-full flex items-center justify-center pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
-                  >
-                    {@html autoMatch.svgContent}
-                  </div>
+                  <SilhouetteGlyph
+                    silhouette={autoMatch}
+                    class="pointer-events-none"
+                    eager
+                  />
                 </div>
                 <div>
                   <div
@@ -317,11 +318,7 @@
                 <div
                   class="w-14 h-14 p-1.5 rounded-lg bg-theme-surface/80 text-theme-primary group-hover:text-theme-accent group-hover:scale-105 transition-all duration-150 flex items-center justify-center my-1 shadow-inner overflow-hidden"
                 >
-                  <div
-                    class="w-full h-full flex items-center justify-center pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
-                  >
-                    {@html s.svgContent}
-                  </div>
+                  <SilhouetteGlyph silhouette={s} class="pointer-events-none" />
                 </div>
 
                 <!-- Name & Archetype -->
@@ -391,9 +388,9 @@
                 class="absolute inset-0 bg-radial from-theme-primary/15 via-transparent to-transparent pointer-events-none"
               ></div>
               <div
-                class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
+                class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 pointer-events-none"
               >
-                {@html previewSilhouette.svgContent}
+                <SilhouetteGlyph silhouette={previewSilhouette} eager />
               </div>
             </div>
 

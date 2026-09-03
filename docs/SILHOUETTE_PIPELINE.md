@@ -148,7 +148,13 @@ wrong-looking node — and both are covered by tests in
 
 ### Step 4: Register in Schema
 
-Add the new definition to `SILHOUETTES` in `packages/schema/src/silhouettes.ts`:
+The catalogue holds **metadata only** — what the matching heuristic reads, plus
+the `r2Path` that points at the artwork. The SVG itself is never inlined: it is
+megabytes of traced path data, and every bundle that imports `schema` would
+carry it. It also must not be committed anywhere else in the repo; image assets
+live in R2 (see the repository rules in `AGENTS.md`).
+
+Add the definition to `SILHOUETTES` in `packages/schema/src/silhouettes.ts`:
 
 ```ts
 {
@@ -160,9 +166,28 @@ Add the new definition to `SILHOUETTES` in `packages/schema/src/silhouettes.ts`:
   gender: "neutral",
   tags: ["village", "hamlet", "cottage", "settlement", "rural", "countryside", "farm", "mill"],
   r2Path: "silhouettes/location/fantasy/village.svg",
-  svgContent: `<svg viewBox="0 0 ... fill="currentColor" xmlns="http://www.w3.org/2000/svg">...</svg>`,
 }
 ```
+
+Then publish the traced file, naming it `<id>.svg` in a working directory:
+
+```sh
+bun scripts/upload-silhouettes.mjs ./traced-svgs --dry-run   # check first
+bun scripts/upload-silhouettes.mjs ./traced-svgs
+```
+
+The script validates every file against the rules above and refuses to upload
+one that breaks them, then writes it to both the entry's `r2Path` and the flat
+`silhouettes/<id>.svg` alias the public gallery links to. Delete the working
+directory afterwards — the traced files do not belong in git.
+
+#### How the app reads it back
+
+`loadSilhouetteSvg()` fetches from `assets.codexcryptica.com` and caches per URL
+for the session; `loadSilhouetteDataUri()` adds the theme tint and wraps it for
+a canvas background. The bucket's CORS rules must allow the calling origin, or
+the fetch fails and surfaces degrade to no glyph — which is also what happens
+offline before an asset has been fetched once.
 
 #### Taxonomy Constraints:
 
