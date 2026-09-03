@@ -113,13 +113,17 @@ cleanSvg = cleanSvg.replace(/<[a-z]+\b[^>]*>/g, (tag) => {
   });
 });
 
-// 5. Give the root an intrinsic size taken from its viewBox.
+// 5. Give the root an intrinsic size taken from its viewBox. Each attribute is
+//    checked on its own — injecting a width beside an existing one would
+//    recreate exactly the duplicate-attribute failure step 4 just cleaned up.
 cleanSvg = cleanSvg.replace(/^<svg\b([^>]*?)\s*>/, (tag, attrs) => {
-  if (/\bwidth=/.test(attrs)) return tag;
   const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(attrs);
-  return viewBox
-    ? `<svg width="${viewBox[1]}" height="${viewBox[2]}"${attrs}>`
-    : tag;
+  if (!viewBox) return tag;
+  const missing = [
+    /\bwidth=/.test(attrs) ? "" : ` width="${viewBox[1]}"`,
+    /\bheight=/.test(attrs) ? "" : ` height="${viewBox[2]}"`,
+  ].join("");
+  return missing ? `<svg${missing}${attrs}>` : tag;
 });
 ```
 
