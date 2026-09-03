@@ -6,7 +6,11 @@ import {
   FOCUS_ZOOM_STEP_FACTOR,
   type LoadPhase,
 } from "./graph-view-controller.svelte";
-import { deriveEntityTypeTone, PIRATE_DARK } from "schema";
+import {
+  clearSilhouetteCache,
+  deriveEntityTypeTone,
+  PIRATE_DARK,
+} from "schema";
 import { categories } from "$lib/stores/categories.svelte";
 import {
   syncGraphElements,
@@ -770,6 +774,33 @@ describe("GraphViewController", () => {
   });
 
   describe("silhouette tinting (issue #2680)", () => {
+    const ARTWORK =
+      '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
+
+    beforeEach(() => {
+      clearSilhouetteCache();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(ARTWORK, { status: 200 })),
+      );
+    });
+
+    it("paints no glyph when the artwork cannot be fetched", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new TypeError("Failed to fetch");
+        }),
+      );
+      const options = await syncOptions();
+
+      // Null, not a broken data URI: the ImageManager leaves the node
+      // unstamped so a later sync retries once the network is back.
+      await expect(
+        options?.resolveSilhouetteUrl?.(node("location")),
+      ).resolves.toBeNull();
+    });
+
     const syncOptions = async () => {
       const container = document.createElement("div");
       await controller.init(container, {});
@@ -791,8 +822,11 @@ describe("GraphViewController", () => {
     it("fills a silhouette with its own type's glyph colour", async () => {
       const options = await syncOptions();
 
-      const location = options?.resolveSilhouetteUrl?.(node("location"));
-      const character = options?.resolveSilhouetteUrl?.(node("character"));
+      // Artwork comes from R2, so resolving one is a fetch.
+      const location = await options?.resolveSilhouetteUrl?.(node("location"));
+      const character = await options?.resolveSilhouetteUrl?.(
+        node("character"),
+      );
 
       expect(location).toContain(encodeURIComponent(glyphFor("location")));
       expect(character).toContain(encodeURIComponent(glyphFor("character")));

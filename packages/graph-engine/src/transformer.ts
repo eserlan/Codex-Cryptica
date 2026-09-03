@@ -523,14 +523,24 @@ export const getGraphStyle = (
     baseStyle.push({
       selector: "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
       style: {
-        "background-fit": "contain",
-        "background-width": "72%",
-        "background-height": "72%",
+        // `none`, not `contain`: cytoscape applies background-width/height
+        // first and then, for `contain`, rescales the image to fill the node
+        // box — which cancelled the 72% and let the glyph spill outside
+        // non-rectangular nodes (the fantasy shield especially), since
+        // background-clip is none. With `none` the 72% stands and
+        // background-position 50% centres what is left.
+        "background-fit": "none",
+        // The fantasy shield is the one non-rectangular node shape: it tapers
+        // to a point, so a glyph sized and centred for the bounding box hangs
+        // over the sides. A smaller box, sat slightly high, lands in the part
+        // of the shield that is actually wide.
+        "background-width": isFantasy ? "64%" : "72%",
+        "background-height": isFantasy ? "64%" : "72%",
         "background-clip": "none",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-position-x": "50%",
-        "background-position-y": "50%",
+        "background-position-y": isFantasy ? "44%" : "50%",
         // Opaque, not 0.95: the silhouette's fill colour is contrast-checked
         // against the node tone itself (issue #2680), so the tone has to be
         // what is actually painted rather than a near-miss blend with the

@@ -101,18 +101,60 @@ if (!cleanSvg.includes('fill="currentColor"')) {
 // 3. Ensure path elements have fill="currentColor"
 cleanSvg = cleanSvg.replace(/<path(?!\s+fill)/g, '<path fill="currentColor"');
 
-// 4. Eliminate any duplicate fill attributes on the same tag
-cleanSvg = cleanSvg.replace(
-  /<path\s+fill="currentColor"\s+([^>]*)\s+fill="currentColor"/g,
-  '<path fill="currentColor" $1',
-);
+// 4. Keep exactly one fill per element. Step 1 rewrites potrace's trailing
+//    fill="black", and step 3 prepends one of its own, so a traced path ends
+//    up carrying two — see the well-formedness rule below.
+cleanSvg = cleanSvg.replace(/<[a-z]+\b[^>]*>/g, (tag) => {
+  let seen = false;
+  return tag.replace(/\s+fill="[^"]*"/g, (attr) => {
+    if (seen) return "";
+    seen = true;
+    return attr;
+  });
+});
+
+// 5. Give the root an intrinsic size taken from its viewBox. Each attribute is
+//    checked on its own — injecting a width beside an existing one would
+//    recreate exactly the duplicate-attribute failure step 4 just cleaned up.
+cleanSvg = cleanSvg.replace(/^<svg\b([^>]*?)\s*>/, (tag, attrs) => {
+  const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(attrs);
+  if (!viewBox) return tag;
+  const missing = [
+    /\bwidth=/.test(attrs) ? "" : ` width="${viewBox[1]}"`,
+    /\bheight=/.test(attrs) ? "" : ` height="${viewBox[2]}"`,
+  ].join("");
+  return missing ? `<svg${missing}${attrs}>` : tag;
+});
 ```
+
+#### The two rules a graph node will not forgive
+
+A silhouette is painted on a `<canvas>` as an SVG data URI, which is stricter
+than the DOM in two ways. Both failures are silent — no console error, just a
+wrong-looking node — and both are covered by tests in
+`packages/schema/src/silhouettes.test.ts`.
+
+1. **It must be well-formed XML.** The HTML parser drops a repeated attribute
+   and carries on; an SVG loaded as an image refuses to decode, and the node
+   renders as a flat block of colour with no glyph. A duplicated `fill` (step 4
+   above) is the way this happens in practice.
+2. **It must declare `width` and `height`.** Cytoscape samples the image with a
+   source rectangle taken from its intrinsic size. Without those attributes the
+   browser reports a default box that does not match the rasterisation, so a
+   corner of the artwork is sampled and stretched across the node — the glyph
+   looks cropped and off-centre. Match them to the `viewBox` (step 5).
 
 ---
 
 ### Step 4: Register in Schema
 
-Add the new definition to `SILHOUETTES` in `packages/schema/src/silhouettes.ts`:
+The catalogue holds **metadata only** — what the matching heuristic reads, plus
+the `r2Path` that points at the artwork. The SVG itself is never inlined: it is
+megabytes of traced path data, and every bundle that imports `schema` would
+carry it. It also must not be committed anywhere else in the repo; image assets
+live in R2 (see the repository rules in `AGENTS.md`).
+
+Add the definition to `SILHOUETTES` in `packages/schema/src/silhouettes.ts`:
 
 ```ts
 {
@@ -124,9 +166,28 @@ Add the new definition to `SILHOUETTES` in `packages/schema/src/silhouettes.ts`:
   gender: "neutral",
   tags: ["village", "hamlet", "cottage", "settlement", "rural", "countryside", "farm", "mill"],
   r2Path: "silhouettes/location/fantasy/village.svg",
-  svgContent: `<svg viewBox="0 0 ... fill="currentColor" xmlns="http://www.w3.org/2000/svg">...</svg>`,
 }
 ```
+
+Then publish the traced file, naming it `<id>.svg` in a working directory:
+
+```sh
+bun scripts/upload-silhouettes.mjs ./traced-svgs --dry-run   # check first
+bun scripts/upload-silhouettes.mjs ./traced-svgs
+```
+
+The script validates every file against the rules above and refuses to upload
+one that breaks them, then writes it to both the entry's `r2Path` and the flat
+`silhouettes/<id>.svg` alias the public gallery links to. Delete the working
+directory afterwards — the traced files do not belong in git.
+
+#### How the app reads it back
+
+`loadSilhouetteSvg()` fetches from `assets.codexcryptica.com` and caches per URL
+for the session; `loadSilhouetteDataUri()` adds the theme tint and wraps it for
+a canvas background. The bucket's CORS rules must allow the calling origin, or
+the fetch fails and surfaces degrade to no glyph — which is also what happens
+offline before an asset has been fetched once.
 
 #### Taxonomy Constraints:
 

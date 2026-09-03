@@ -1,9 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   SILHOUETTES,
   SILHOUETTE_MAP,
+  SILHOUETTE_ASSET_BASE,
   SilhouetteDefinitionSchema,
+  clearSilhouetteCache,
+  getSilhouetteUrl,
+  loadSilhouetteDataUri,
+  loadSilhouetteSvg,
   resolveEntitySilhouette,
+  svgToDataUri,
+  tintSilhouetteSvg,
 } from "./silhouettes";
 
 describe("Silhouette Registry & Schema", () => {
@@ -14,9 +21,9 @@ describe("Silhouette Registry & Schema", () => {
       const result = SilhouetteDefinitionSchema.safeParse(silhouette);
       expect(result.success, `Invalid silhouette: ${silhouette.id}`).toBe(true);
       expect(silhouette.r2Path).toMatch(/^silhouettes\/[a-z0-9-_/]+\.svg$/);
-      expect(silhouette.svgContent).toContain("<svg");
-      expect(silhouette.svgContent).toMatch(/viewBox="[^"]+"/);
-      expect(silhouette.svgContent).toContain('fill="currentColor"');
+      // The artwork is fetched from R2, never inlined: a definition carrying
+      // markup would put megabytes back into every bundle that imports schema.
+      expect(silhouette).not.toHaveProperty("svgContent");
     }
   });
 
@@ -31,6 +38,76 @@ describe("Silhouette Registry & Schema", () => {
     for (const s of SILHOUETTES) {
       expect(SILHOUETTE_MAP.get(s.id)).toBe(s);
     }
+  });
+});
+
+describe("Silhouette artwork loading", () => {
+  const definition = { r2Path: "silhouettes/item/fantasy/relic-blade.svg" };
+  const markup =
+    '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
+  const ok = () =>
+    vi.fn(async () => new Response(markup, { status: 200 })) as any;
+
+  beforeEach(() => {
+    clearSilhouetteCache();
+  });
+
+  it("addresses artwork by its R2 key", () => {
+    expect(getSilhouetteUrl(definition)).toBe(
+      `${SILHOUETTE_ASSET_BASE}silhouettes/item/fantasy/relic-blade.svg`,
+    );
+  });
+
+  it("tints through currentColor, which an SVG loaded as an image cannot inherit", () => {
+    expect(tintSilhouetteSvg(markup, "#5e3018")).toContain('fill="#5e3018"');
+    expect(tintSilhouetteSvg(markup, "#5e3018")).not.toContain("currentColor");
+  });
+
+  it("fetches artwork once and shares it with every later caller", async () => {
+    const fetchImpl = ok();
+
+    const [first, second] = await Promise.all([
+      loadSilhouetteSvg(definition, { fetch: fetchImpl }),
+      loadSilhouetteSvg(definition, { fetch: fetchImpl }),
+    ]);
+    const third = await loadSilhouetteSvg(definition, { fetch: fetchImpl });
+
+    expect(first).toBe(markup);
+    expect(second).toBe(markup);
+    expect(third).toBe(markup);
+    // A graph full of nodes and a picker full of tiles share one request.
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a tinted data URI ready for a canvas background", async () => {
+    const uri = await loadSilhouetteDataUri(definition, "#5e3018", {
+      fetch: ok(),
+    });
+
+    expect(uri).toBe(svgToDataUri(tintSilhouetteSvg(markup, "#5e3018")));
+  });
+
+  it("returns null when the artwork cannot be reached, and retries later", async () => {
+    const offline = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    }) as any;
+
+    expect(await loadSilhouetteSvg(definition, { fetch: offline })).toBeNull();
+    expect(
+      await loadSilhouetteDataUri(definition, "#5e3018", { fetch: offline }),
+    ).toBeNull();
+
+    // The failure is not cached, so coming back online resolves it.
+    const recovered = await loadSilhouetteSvg(definition, { fetch: ok() });
+    expect(recovered).toBe(markup);
+  });
+
+  it("treats a non-200 as unreachable rather than as artwork", async () => {
+    const missing = vi.fn(
+      async () => new Response("nope", { status: 404 }),
+    ) as any;
+
+    expect(await loadSilhouetteSvg(definition, { fetch: missing })).toBeNull();
   });
 });
 

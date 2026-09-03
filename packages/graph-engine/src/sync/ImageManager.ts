@@ -4,7 +4,11 @@ export interface ImageManagerOptions {
   showImages: boolean;
   resolveImageUrl: (path: string) => Promise<string | null>;
   releaseImageUrl: (path: string) => void;
-  resolveSilhouetteUrl?: (node: any) => string | null;
+  /**
+   * May resolve asynchronously: silhouette artwork is fetched rather than
+   * inlined, so this can return a promise for the tinted data URI.
+   */
+  resolveSilhouetteUrl?: (node: any) => string | null | Promise<string | null>;
   /**
    * Anything outside node data that changes what `resolveSilhouetteUrl`
    * returns — today the theme, whose palette decides the silhouette's fill
@@ -86,16 +90,23 @@ export class GraphImageManager {
                 node,
                 url,
                 isSilhouette: false,
+                skip: false,
                 oldUrl: node.data("resolvedImage") as string | undefined,
               };
             }
 
             if (options.resolveSilhouetteUrl) {
-              const silUrl = options.resolveSilhouetteUrl(node);
+              const silUrl = await options.resolveSilhouetteUrl(node);
               return {
                 node,
                 url: silUrl || "",
                 isSilhouette: true,
+                // A silhouette that did not resolve is a fetch that failed,
+                // not artwork that does not exist. Leaving it unstamped keeps
+                // the node stale so the next sync tries again — otherwise one
+                // offline moment would cost the glyph until the entity itself
+                // changed.
+                skip: !silUrl,
                 oldUrl: node.data("resolvedImage") as string | undefined,
               };
             }
@@ -104,6 +115,7 @@ export class GraphImageManager {
               node,
               url: "",
               isSilhouette: false,
+              skip: false,
               oldUrl: node.data("resolvedImage") as string | undefined,
             };
           }),
@@ -118,7 +130,8 @@ export class GraphImageManager {
         for (let i = 0; i < results.length; i += batchSize) {
           const chunk = results.slice(i, i + batchSize);
           this.cy.batch(() => {
-            for (const { node, url, isSilhouette, oldUrl } of chunk) {
+            for (const { node, url, isSilhouette, oldUrl, skip } of chunk) {
+              if (skip) continue;
               const newUrl = url || "none"; // Mark as "none" to avoid infinite retries and prevent broken image states
               if (newUrl !== oldUrl) {
                 const nodeId = node.id();

@@ -106,6 +106,43 @@ describe("Graph Theme Generation", () => {
     ).toBe("url('/themes/blood-270.svg')");
   });
 
+  describe("silhouette placement", () => {
+    const silhouetteStyle = (theme: (typeof THEMES)["fantasy"]) =>
+      getGraphStyle(theme, mockCategories, true).find(
+        (s) =>
+          s.selector ===
+          "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
+      )?.style;
+
+    it("sizes the glyph itself instead of letting cytoscape refit it", () => {
+      const style = silhouetteStyle(THEMES.scifi);
+      expect(
+        style,
+        "silhouette selector missing from the stylesheet",
+      ).toBeDefined();
+
+      // `contain` re-scales the image to fill the node box, which cancels the
+      // percentage below and spills the glyph outside round/pointed nodes.
+      expect(style["background-fit"]).toBe("none");
+      expect(style["background-width"]).toBe("72%");
+      expect(style["background-height"]).toBe("72%");
+      expect(style["background-position-x"]).toBe("50%");
+      expect(style["background-position-y"]).toBe("50%");
+    });
+
+    it("keeps the glyph inside the fantasy shield, which tapers to a point", () => {
+      const style = silhouetteStyle(THEMES.fantasy);
+      expect(
+        style,
+        "silhouette selector missing from the stylesheet",
+      ).toBeDefined();
+
+      expect(style["background-width"]).toBe("64%");
+      expect(style["background-height"]).toBe("64%");
+      expect(style["background-position-y"]).toBe("44%");
+    });
+  });
+
   describe("entity type colours (issue #2680)", () => {
     const mixedGraph: Category[] = [
       { id: "character", label: "Character", color: "#60a5fa", icon: "user" },
