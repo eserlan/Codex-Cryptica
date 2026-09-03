@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
@@ -8,6 +9,12 @@
     buildExampleBreadcrumbJsonLd,
   } from "$lib/content/examples/json-ld";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import {
+    trackDiscoveryPageViewed,
+    classifyDiscoveryTarget,
+    createDiscoveryViewGuard,
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -25,6 +32,21 @@
       related.length >
       0,
   );
+
+  // See discovery-tracking.ts: this route reuses one component instance
+  // across /examples/a -> /examples/b navigations, so the guard (not just
+  // onMount) is what keeps discovery_page_viewed to one fire per slug.
+  const seenExample = createDiscoveryViewGuard();
+  $effect(() => {
+    if (!browser) return;
+    const slug = example.slug;
+    if (!seenExample(slug)) return;
+    trackDiscoveryPageViewed({
+      sourceKind: "example",
+      sourceId: slug,
+      path: examplePath(example),
+    });
+  });
 
   /**
    * Skin the page in the example's own world theme, so a cyberpunk settlement
@@ -107,7 +129,12 @@
             <a
               href="{cleanBase}{example.generator.href}"
               class="underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
-              >{example.generator.name}</a
+              use:trackDiscoveryClick={{
+                sourceKind: "example",
+                sourceId: example.slug,
+                placement: "generation_context",
+                ...classifyDiscoveryTarget(example.generator.href),
+              }}>{example.generator.name}</a
             >
           </dd>
         </div>
@@ -138,7 +165,13 @@
         <a
           href="{cleanBase}/examples/{connected.slug}"
           class="ml-1 font-bold text-theme-text underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
-          >See {connected.name}</a
+          use:trackDiscoveryClick={{
+            sourceKind: "example",
+            sourceId: example.slug,
+            targetKind: "example",
+            targetId: connected.slug,
+            placement: "connected_example",
+          }}>See {connected.name}</a
         >.
       </aside>
     {/if}
@@ -220,6 +253,12 @@
       <a
         href="{cleanBase}{example.generator.href}"
         class="mt-2 inline-flex items-center gap-2 bg-theme-primary px-6 py-3 font-header text-sm font-bold text-theme-bg transition-colors hover:bg-theme-primary/90"
+        use:trackDiscoveryClick={{
+          sourceKind: "example",
+          sourceId: example.slug,
+          placement: "section_cta",
+          ...classifyDiscoveryTarget(example.generator.href),
+        }}
       >
         Roll your own with the {example.generator.name.toLowerCase()}
         <span class="icon-[lucide--arrow-right] h-4 w-4" aria-hidden="true"
@@ -233,7 +272,7 @@
           Related
         </h2>
 
-        {#each [{ label: "Generators", links: example.relatedGenerators }, { label: "Answers", links: example.relatedAnswers }, { label: "Guides", links: example.relatedForPages }] as group (group.label)}
+        {#each [{ label: "Generators", placement: "related_tool", links: example.relatedGenerators }, { label: "Answers", placement: "related_answer", links: example.relatedAnswers }, { label: "Guides", placement: "related_guide", links: example.relatedForPages }] as group (group.label)}
           {#if group.links.length > 0}
             <h3
               class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
@@ -246,6 +285,12 @@
                   <a
                     href="{cleanBase}{link.href}"
                     class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+                    use:trackDiscoveryClick={{
+                      sourceKind: "example",
+                      sourceId: example.slug,
+                      placement: group.placement,
+                      ...classifyDiscoveryTarget(link.href),
+                    }}
                   >
                     <span
                       class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
@@ -274,6 +319,13 @@
                 <a
                   href="{cleanBase}/examples/{other.slug}"
                   class="group flex items-start gap-3 text-theme-text transition-colors hover:text-theme-primary"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "example",
+                    sourceId: example.slug,
+                    targetKind: "example",
+                    targetId: other.slug,
+                    placement: "related_example",
+                  }}
                 >
                   <span
                     class="icon-[lucide--corner-down-right] mt-1 h-4 w-4 shrink-0 text-theme-primary"
