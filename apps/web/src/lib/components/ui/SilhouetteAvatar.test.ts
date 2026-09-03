@@ -35,7 +35,7 @@ describe("SilhouetteAvatar", () => {
     // matters here is that the avatar fetched artwork instead of inlining it.
     expect(fetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /^https:\/\/assets\.codexcryptica\.com\/silhouettes\/.+\.svg$/,
+        /^https:\/\/assets\.codexcryptica\.com\/silhouettes\/.+\.svg\?v=\d+$/,
       ),
     );
   });

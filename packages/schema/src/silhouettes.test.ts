@@ -3,6 +3,7 @@ import {
   SILHOUETTES,
   SILHOUETTE_MAP,
   SILHOUETTE_ASSET_BASE,
+  SILHOUETTE_ASSET_VERSION,
   SilhouetteDefinitionSchema,
   clearSilhouetteCache,
   getSilhouetteUrl,
@@ -52,8 +53,16 @@ describe("Silhouette artwork loading", () => {
     clearSilhouetteCache();
   });
 
-  it("addresses artwork by its R2 key", () => {
+  it("addresses artwork by its R2 key, stamped with the cache generation", () => {
+    // The stamp is what keeps a cached, CORS-less copy of the bare URL from
+    // blanking the glyph — see SILHOUETTE_ASSET_VERSION.
     expect(getSilhouetteUrl(definition)).toBe(
+      `${SILHOUETTE_ASSET_BASE}silhouettes/item/fantasy/relic-blade.svg?v=${SILHOUETTE_ASSET_VERSION}`,
+    );
+  });
+
+  it("offers the bare address for sharing", () => {
+    expect(getSilhouetteUrl(definition, undefined, { bare: true })).toBe(
       `${SILHOUETTE_ASSET_BASE}silhouettes/item/fantasy/relic-blade.svg`,
     );
   });

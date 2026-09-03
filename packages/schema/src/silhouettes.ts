@@ -1764,12 +1764,33 @@ export const SILHOUETTE_ASSET_BASE = "https://assets.codexcryptica.com/";
 /** Fallback tint for callers with no theme to hand. */
 export const DEFAULT_SILHOUETTE_FILL = "#d4af37";
 
-/** Public URL of a silhouette's SVG. */
+/**
+ * Cache generation for the artwork URLs.
+ *
+ * The CDN in front of the bucket does not vary its cache on `Origin`, so one
+ * request made without that header — a crawler, a `curl`, an `<img>` — caches a
+ * response carrying no `Access-Control-Allow-Origin`, and every browser `fetch`
+ * for that URL then fails CORS until the entry expires. That is what left a
+ * scattered handful of silhouettes blank while their neighbours loaded.
+ *
+ * Requesting a generation-stamped URL sidesteps any such entry, and gives us a
+ * way to force a refetch when artwork is republished. Bump it when the assets
+ * in R2 change.
+ */
+export const SILHOUETTE_ASSET_VERSION = "2";
+
+/**
+ * URL the app fetches a silhouette from. `bare` gives the plain address for
+ * showing or sharing (the public gallery's "copy CDN link"), without the
+ * cache generation.
+ */
 export function getSilhouetteUrl(
   silhouette: Pick<SilhouetteDefinition, "r2Path">,
   base = SILHOUETTE_ASSET_BASE,
+  { bare = false }: { bare?: boolean } = {},
 ): string {
-  return `${base}${silhouette.r2Path}`;
+  const url = `${base}${silhouette.r2Path}`;
+  return bare ? url : `${url}?v=${SILHOUETTE_ASSET_VERSION}`;
 }
 
 /**
