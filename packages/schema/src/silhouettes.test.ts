@@ -34,6 +34,54 @@ describe("Silhouette Registry & Schema", () => {
   });
 });
 
+/**
+ * Every silhouette is painted as an SVG data URI on a canvas (graph nodes),
+ * which is far stricter than the DOM: it is parsed as XML, and it is sampled
+ * with a source rectangle taken from the image's intrinsic size. Assets that
+ * break either rule fail silently — a blank coloured node, or a glyph cropped
+ * and shoved off centre — so both rules are pinned here rather than left to
+ * whoever next runs the tracing pipeline (docs/SILHOUETTE_PIPELINE.md).
+ */
+describe("Silhouette SVG rendering contract", () => {
+  const tagsOf = (svg: string) => svg.match(/<[a-z]+\b[^>]*>/g) ?? [];
+
+  it.each(SILHOUETTES.map((s) => [s.id, s] as const))(
+    "%s declares one fill per element",
+    (_id, silhouette) => {
+      // Two `fill` attributes on one tag is not well-formed XML. The HTML
+      // parser forgives it, an SVG loaded as an image does not.
+      const offenders = tagsOf(silhouette.svgContent).filter(
+        (tag) => (tag.match(/\bfill="/g) ?? []).length > 1,
+      );
+      expect(offenders).toEqual([]);
+    },
+  );
+
+  it.each(SILHOUETTES.map((s) => [s.id, s] as const))(
+    "%s declares an intrinsic size matching its viewBox",
+    (_id, silhouette) => {
+      const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(
+        silhouette.svgContent,
+      );
+      expect(viewBox).not.toBeNull();
+
+      const width = /^<svg[^>]*\bwidth="([\d.]+)"/.exec(silhouette.svgContent);
+      const height = /^<svg[^>]*\bheight="([\d.]+)"/.exec(
+        silhouette.svgContent,
+      );
+      expect(width?.[1]).toBe(viewBox![1]);
+      expect(height?.[1]).toBe(viewBox![2]);
+    },
+  );
+
+  it("keeps every silhouette tintable through currentColor", () => {
+    for (const silhouette of SILHOUETTES) {
+      expect(silhouette.svgContent).toContain("currentColor");
+      expect(silhouette.svgContent).not.toMatch(/fill="(black|#000|#000000)"/);
+    }
+  });
+});
+
 describe("resolveEntitySilhouette Heuristic Inference", () => {
   it("honors explicit entity.silhouette override immediately", () => {
     const match = resolveEntitySilhouette({

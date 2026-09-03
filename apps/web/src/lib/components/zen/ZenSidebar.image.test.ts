@@ -2,6 +2,7 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const { mockVault } = vi.hoisted(() => ({
   mockVault: {
@@ -34,7 +35,10 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: { activeTheme: { id: "fantasy" } },
 }));
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
-  modalUIStore: { openRevisionDialog: vi.fn() },
+  modalUIStore: {
+    openRevisionDialog: vi.fn(),
+    openSilhouettePicker: vi.fn(),
+  },
 }));
 vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: { aiDisabled: false },
@@ -126,5 +130,42 @@ describe("ZenSidebar image file picker", () => {
     );
     expect(mockVault.saveImageToVault).not.toHaveBeenCalled();
     expect(mockVault.updateEntity).not.toHaveBeenCalled();
+  });
+});
+
+describe("ZenSidebar silhouette picker", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockVault.isGuest = false;
+  });
+
+  it("opens the picker from the image controls", async () => {
+    // Zen is the entire entity view on a phone, so this is the only route to
+    // the picker there.
+    const { getByTestId } = renderSidebar();
+
+    await fireEvent.click(getByTestId("zen-silhouette-button"));
+
+    expect(modalUIStore.openSilhouettePicker).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "entity-1" }),
+    );
+  });
+
+  it("opens the picker from the placeholder shown in place of an image", async () => {
+    const { getByTestId } = renderSidebar();
+
+    await fireEvent.click(getByTestId("zen-silhouette-placeholder"));
+
+    expect(modalUIStore.openSilhouettePicker).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "entity-1" }),
+    );
+  });
+
+  it("offers no picker to a guest, who cannot edit the entity", () => {
+    mockVault.isGuest = true;
+
+    const { queryByTestId } = renderSidebar();
+
+    expect(queryByTestId("zen-silhouette-button")).toBeNull();
   });
 });
