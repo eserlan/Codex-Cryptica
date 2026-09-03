@@ -886,7 +886,9 @@ describe("Iconic Fantasy Location Silhouette Resolution", () => {
     );
     expect(match.id).toBe("location-frontier-outpost");
   });
+});
 
+describe("Iconic Sci-Fi Character Silhouette Resolution", () => {
   it("resolves starship captain / commander for fleet officers", () => {
     const match = resolveEntitySilhouette(
       {
