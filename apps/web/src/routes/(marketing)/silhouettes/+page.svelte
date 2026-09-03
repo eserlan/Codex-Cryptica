@@ -477,7 +477,7 @@
                 onmouseleave={() => (hoveredSilhouette = null)}
                 onfocus={() => (hoveredSilhouette = s)}
                 onblur={() => (hoveredSilhouette = null)}
-                class="relative flex flex-col items-center text-center p-3.5 rounded-2xl border transition-all cursor-pointer group text-left {isSelected
+                class="relative flex flex-col items-center text-center p-3.5 rounded-2xl border transition-all cursor-pointer group text-left overflow-hidden {isSelected
                   ? 'bg-theme-surface border-theme-accent ring-2 ring-theme-accent/40 shadow-md'
                   : isHovered
                     ? 'bg-theme-surface/90 border-theme-accent/60 shadow-sm scale-102'
@@ -501,10 +501,12 @@
 
                 <!-- Silhouette Vector Icon (Reacts to selectedPalette.color) -->
                 <div
-                  class="w-16 h-16 sm:w-20 sm:h-20 p-2 my-2 rounded-xl bg-theme-base/80 border border-theme-border/50 flex items-center justify-center group-hover:scale-105 transition-all duration-200 shadow-inner"
+                  class="w-16 h-16 sm:w-20 sm:h-20 p-2 my-2 rounded-xl bg-theme-base/80 border border-theme-border/50 flex items-center justify-center group-hover:scale-105 transition-all duration-200 shadow-inner overflow-hidden"
                   style="color: {selectedPalette.color};"
                 >
-                  <div class="w-full h-full flex items-center justify-center">
+                  <div
+                    class="w-full h-full flex items-center justify-center pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
+                  >
                     {@html s.svgContent}
                   </div>
                 </div>
@@ -567,7 +569,7 @@
             ></div>
 
             <div
-              class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 hover:scale-105"
+              class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 hover:scale-105 pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
             >
               {@html previewSilhouette.svgContent}
             </div>
@@ -751,3 +753,14 @@
     </section>
   </main>
 </div>
+
+<style>
+  :global([data-testid="silhouette-card"] svg) {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+</style>

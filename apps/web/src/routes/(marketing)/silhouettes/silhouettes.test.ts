@@ -209,4 +209,19 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
       screen.getByRole("link", { name: /Browse All RPG Tools & Generators/i }),
     ).toBeTruthy();
   });
+
+  it("constrains SVG viewBox and disables pointer-events inside cards to prevent hit-box overlap", () => {
+    const { container } = render(Page);
+
+    const cards = container.querySelectorAll('[data-testid="silhouette-card"]');
+    expect(cards.length).toBeGreaterThan(0);
+
+    const firstCard = cards[0] as HTMLElement;
+    expect(firstCard.className).toContain("overflow-hidden");
+
+    const svgWrapper = firstCard.querySelector(".pointer-events-none");
+    expect(svgWrapper).toBeTruthy();
+    expect(svgWrapper?.className).toContain("[&>svg]:w-full");
+    expect(svgWrapper?.className).toContain("[&>svg]:h-full");
+  });
 });

@@ -243,9 +243,13 @@
             >
               <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 p-1.5 rounded-lg bg-theme-surface text-theme-accent border border-theme-accent/30 flex items-center justify-center"
+                  class="w-10 h-10 p-1.5 rounded-lg bg-theme-surface text-theme-accent border border-theme-accent/30 flex items-center justify-center overflow-hidden"
                 >
-                  {@html autoMatch.svgContent}
+                  <div
+                    class="w-full h-full flex items-center justify-center pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
+                  >
+                    {@html autoMatch.svgContent}
+                  </div>
                 </div>
                 <div>
                   <div
@@ -284,7 +288,7 @@
                 onmouseleave={() => (hoveredSilhouette = null)}
                 onfocus={() => (hoveredSilhouette = s)}
                 onblur={() => (hoveredSilhouette = null)}
-                class="relative flex flex-col items-center text-center p-3 rounded-xl border transition-all cursor-pointer group {isSelected
+                class="relative flex flex-col items-center text-center p-3 rounded-xl border transition-all cursor-pointer group overflow-hidden {isSelected
                   ? 'bg-theme-accent/15 border-theme-accent ring-2 ring-theme-accent/40 shadow-sm'
                   : isHovered
                     ? 'bg-theme-base border-theme-accent/60 shadow-xs scale-102'
@@ -311,9 +315,13 @@
 
                 <!-- Vector Canvas Thumbnail -->
                 <div
-                  class="w-14 h-14 p-1.5 rounded-lg bg-theme-surface/80 text-theme-primary group-hover:text-theme-accent group-hover:scale-105 transition-all duration-150 flex items-center justify-center my-1 shadow-inner"
+                  class="w-14 h-14 p-1.5 rounded-lg bg-theme-surface/80 text-theme-primary group-hover:text-theme-accent group-hover:scale-105 transition-all duration-150 flex items-center justify-center my-1 shadow-inner overflow-hidden"
                 >
-                  {@html s.svgContent}
+                  <div
+                    class="w-full h-full flex items-center justify-center pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
+                  >
+                    {@html s.svgContent}
+                  </div>
                 </div>
 
                 <!-- Name & Archetype -->
@@ -383,7 +391,7 @@
                 class="absolute inset-0 bg-radial from-theme-primary/15 via-transparent to-transparent pointer-events-none"
               ></div>
               <div
-                class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200"
+                class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
               >
                 {@html previewSilhouette.svgContent}
               </div>
