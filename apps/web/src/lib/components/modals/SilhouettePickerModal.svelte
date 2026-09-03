@@ -126,7 +126,7 @@
 
 {#if modalUIStore.silhouettePickerState.open && entity}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+    class="fixed inset-0 z-[110] flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-xs"
     role="dialog"
     aria-modal="true"
     aria-labelledby="silhouette-picker-title"
@@ -139,11 +139,11 @@
     }}
   >
     <div
-      class="flex flex-col w-full max-w-5xl max-h-[90vh] rounded-xl bg-theme-surface border border-theme-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+      class="flex flex-col w-full h-full md:h-auto md:max-w-5xl md:max-h-[90vh] rounded-none md:rounded-xl bg-theme-surface border-0 md:border border-theme-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
     >
       <!-- Header -->
       <div
-        class="flex items-center justify-between px-6 py-4 border-b border-theme-border/60 bg-theme-base/40"
+        class="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-theme-border/60 bg-theme-base/40"
       >
         <div>
           <h2
@@ -171,7 +171,7 @@
 
       <!-- Controls: Search & Filters -->
       <div
-        class="p-4 border-b border-theme-border/40 bg-theme-surface space-y-3"
+        class="p-3 md:p-4 border-b border-theme-border/40 bg-theme-surface space-y-2.5 md:space-y-3"
       >
         <!-- Search Input -->
         <div class="relative">
@@ -235,7 +235,7 @@
       <div class="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
         <!-- Left: Grid Area -->
         <div
-          class="flex-1 overflow-y-auto p-4 md:p-5 space-y-4 border-b md:border-b-0 md:border-r border-theme-border/40"
+          class="flex-1 overflow-y-auto p-3 md:p-5 space-y-3 md:space-y-4 border-b md:border-b-0 md:border-r border-theme-border/40"
         >
           <!-- Auto-match suggestion header if unconfigured -->
           {#if !entity.silhouette && !searchQuery && selectedGenre === "all" && selectedCategory === "all"}
@@ -276,7 +276,7 @@
 
           <!-- Grid of Silhouettes -->
           <div
-            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3"
+            class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3"
           >
             {#each filteredSilhouettes as s (s.id)}
               {@const isSelected = activeSelectedId === s.id}
@@ -354,9 +354,10 @@
           {/if}
         </div>
 
-        <!-- Right: Large Live Preview Panel -->
+        <!-- Right: Large Live Preview Panel (desktop only — on a phone this
+             column would eat the grid it is meant to support) -->
         <div
-          class="w-full md:w-80 shrink-0 bg-theme-base/20 p-5 flex flex-col justify-between overflow-y-auto"
+          class="hidden md:flex w-full md:w-80 shrink-0 bg-theme-base/20 p-5 flex-col justify-between overflow-y-auto"
         >
           <div class="w-full flex flex-col items-center text-center space-y-4">
             <!-- Status Badge -->
@@ -449,9 +450,34 @@
         </div>
       </div>
 
+      <!-- What is selected, for phones, where the preview column is hidden.
+           One line so the grid above it keeps the screen. -->
+      <div
+        class="md:hidden flex items-center gap-3 px-4 py-2 border-t border-theme-border/40 bg-theme-base/30"
+        data-testid="silhouette-picker-mobile-summary"
+      >
+        <div
+          class="w-9 h-9 shrink-0 p-1 rounded-lg bg-theme-surface text-theme-accent border border-theme-border/60 flex items-center justify-center overflow-hidden"
+        >
+          <SilhouetteGlyph
+            silhouette={selectedSilhouette}
+            class="pointer-events-none"
+            eager
+          />
+        </div>
+        <div class="min-w-0">
+          <div class="text-sm font-medium text-theme-primary truncate">
+            {selectedSilhouette.name}
+          </div>
+          <div class="text-[11px] text-theme-muted capitalize truncate">
+            {selectedSilhouette.category} &middot; {selectedSilhouette.archetype}
+          </div>
+        </div>
+      </div>
+
       <!-- Footer Actions -->
       <div
-        class="flex items-center justify-between px-6 py-4 border-t border-theme-border/60 bg-theme-base/40"
+        class="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-t border-theme-border/60 bg-theme-base/40"
       >
         <div>
           {#if entity.silhouette}
