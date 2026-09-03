@@ -177,3 +177,8 @@
 
 **Learning:** `new Date().toISOString()` is a hidden, hard-coded time dependency that complicates testing file update tracking logic.
 **Action:** Expose time functions via optional parameters like `now: () => number = () => Date.now()` inside class constructors to allow precise test assertions without global mocking or relying on arbitrary timing tolerances.
+## $(date +%Y-%m-%d) - Inject UIPersistence into GeneratorPageContent
+
+**Learning:** Direct `localStorage.getItem` access inside large Svelte 5 page components (`GeneratorPageContent.svelte`) makes the initialization logic hard to test in isolation, as it assumes browser context or requires global mocking.
+
+**Action:** Prefer injecting a lightweight, typed adapter like `UIPersistence` (which handles SSR gracefully and encapsulates keys) via `$props()` with a sensible default (`persistence = new UIPersistence()`). This allows tests to easily inject a memory-backed persistence mock without touching `window.localStorage`.
