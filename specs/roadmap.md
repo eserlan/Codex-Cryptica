@@ -14,7 +14,7 @@ The following high-impact candidate specifications target performance, scaling, 
 - **Objective**: Close the loop between creating campaign material and playing with it by letting the Oracle run a system-light solo adventure grounded in the user's existing vault.
 - **Vision**: Tracked in issue [#2278](https://github.com/eserlan/Codex-Cryptica/issues/2278). The issue remains the product vision and roadmap parent; each phase below should receive its own focused specification, acceptance criteria, branch, and pull request.
 - **MVP boundaries**: The initial player is the vault owner playing solo while the Oracle acts as GM. Adventure inventions remain session-local until explicitly accepted into the vault. "Hidden" state means absent from the player-facing transcript and play surface, not encrypted from the vault owner. Multiplayer, system-specific automation, generator launch points, and saving discoveries are later phases.
-- **Status**: Phase 1 shipped to staging (PR [#2311](https://github.com/eserlan/Codex-Cryptica/pull/2311) plus follow-up fixes). Phases 2–5 remain proposals.
+- **Status**: Phase 1 shipped to staging (PR [#2311](https://github.com/eserlan/Codex-Cryptica/pull/2311) plus follow-up fixes; v0.32.0). Phase 2 shipped (specs/2306-adventure-phase-2-play-tools; v0.32.0). Phases 3–5 remain proposals.
 
 #### Phase 1 — Solo Adventure Foundation ✅ Shipped
 
@@ -27,7 +27,7 @@ The following high-impact candidate specifications target performance, scaling, 
 - Support a system-light roll handoff: the Oracle states the uncertainty, stakes, dice expression, and outcome bands before waiting for the player to report an outcome or use a basic Codex Cryptica roll; persist a supplied result before resolution so retry never rerolls it.
 - Keep committed active and archived sessions readable offline, preserve typed actions and recorded roll outcomes, and retry generation-dependent work after reconnection.
 
-#### Phase 2 — Play Tools & Session Control
+#### Phase 2 — Play Tools & Session Control ✅ Shipped
 
 - Add richer optional dice presets, roll-history inspection, and lightweight resource tracking without turning the mode into a mandatory rules engine.
 - Add session recap, visible-state inspection, and explicit correction controls.
@@ -104,6 +104,18 @@ The following high-impact candidate specifications target performance, scaling, 
 ---
 
 ## 🏛️ Historical Roadmap & Release Timeline
+
+### v0.32.0 — The Solo Adventure & Cloud Backup Update (2026-09-03)
+
+- **Highlights**: Solo Adventure Mode (Oracle-run GM sessions, live transcript, dice/tools drawer), opt-in encrypted CC Cloud vault backup, an auto-matched vector silhouette library for portrait-less entities, a Random Tables & Card Decks toolset with chat-inline rolls and import/export, a VTT overhaul (tile deck restock, inline notes, adjustable sidebar, per-player Token Vision fog of war), several new offline-capable generators (BBEG/villain, star system, artifact, minor magic item, creature, encounter, social hub), reusable stat sheet presentations, and Markdown table paste/editing in entity content.
+- **Associated Specifications**:
+  - [160-solo-adventure-mode](./160-solo-adventure-mode/spec.md) (Solo Adventure Foundation)
+  - [2306-adventure-phase-2-play-tools](./2306-adventure-phase-2-play-tools/spec.md) (Play Tools & Session Control)
+  - [162-cc-cloud-backup](./162-cc-cloud-backup/spec.md) (Opt-in CC Cloud vault backup)
+  - [2672-vault-silhouette-library](./2672-vault-silhouette-library/plan.md) (Vector silhouette catalogue, R2-served)
+  - [2526-vtt-tile-deck-notes-ux](./2526-vtt-tile-deck-notes-ux/plan.md) (VTT tile deck & notes UX overhaul)
+  - [2336-smart-deterministic-generators](./2336-smart-deterministic-generators/plan.md) (Deterministic NPC/faction/social-hub generators)
+  - [152-stat-sheet-templates](./152-stat-sheet-templates/spec.md) (Reusable stat sheet presentations)
 
 ### v0.31.0 — The Guided Worldbuilding Update (2026-07-30)
 
