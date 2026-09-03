@@ -152,6 +152,39 @@ describe("deriveEntityTypeTone", () => {
   });
 });
 
+describe("parseColor", () => {
+  it("reads 3- and 6-digit hex", () => {
+    expect(parseColor("#4ade80")).toEqual({ r: 74, g: 222, b: 128 });
+    expect(parseColor("#ABC")).toEqual({ r: 170, g: 187, b: 204 });
+  });
+
+  it("reads rgb()/rgba() channels, ignoring alpha", () => {
+    expect(parseColor("rgb(74, 222, 128)")).toEqual({ r: 74, g: 222, b: 128 });
+    expect(parseColor("rgba(74, 222, 128, 0.32)")).toEqual({
+      r: 74,
+      g: 222,
+      b: 128,
+    });
+  });
+
+  it("scales percentage channels instead of reading them as 0-255", () => {
+    expect(parseColor("rgb(100%, 0%, 0%)")).toEqual({ r: 255, g: 0, b: 0 });
+    expect(parseColor("rgb(50% 50% 50% / 40%)")).toEqual({
+      r: 127.5,
+      g: 127.5,
+      b: 127.5,
+    });
+  });
+
+  it("returns null for anything it cannot read", () => {
+    expect(parseColor("color-mix(in srgb, red, blue)")).toBeNull();
+    expect(parseColor("rebeccapurple")).toBeNull();
+    expect(parseColor("rgb(1, 2)")).toBeNull();
+    expect(parseColor("#12345")).toBeNull();
+    expect(parseColor(undefined)).toBeNull();
+  });
+});
+
 describe("deriveEntityTypePalette", () => {
   it("keys tones by category id, including user-added categories", () => {
     const custom: Category = {

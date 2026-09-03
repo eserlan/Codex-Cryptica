@@ -5,8 +5,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { themeStore } from "$lib/stores/theme.svelte";
-import { deriveEntityTypeTone, parseColor } from "schema";
+import { deriveEntityTypeTone, parseColor, FANTASY_DARK } from "schema";
+
+// Pinned rather than read from the real store: the derived tone has to be
+// deterministic, and the singleton theme store resolves against app appearance
+// and localStorage.
+vi.mock("$lib/stores/theme.svelte", async () => {
+  const { FANTASY_DARK: theme } = await import("schema");
+  return { themeStore: { activeTheme: theme } };
+});
 
 vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
@@ -242,10 +249,7 @@ describe("ContextMenu", () => {
     const swatch = screen
       .getByRole("menu", { name: "Select category" })
       .querySelector("div[style]");
-    const tone = deriveEntityTypeTone(
-      "#4ade80",
-      themeStore.activeTheme.tokens,
-    ).accent;
+    const tone = deriveEntityTypeTone("#4ade80", FANTASY_DARK.tokens).accent;
     const { r, g, b } = parseColor(tone)!;
 
     // The swatch previews the colour the node will take, so it tracks the

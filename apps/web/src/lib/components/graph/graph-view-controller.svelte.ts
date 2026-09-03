@@ -962,10 +962,13 @@ export class GraphViewController {
           releaseImageUrl: (path: string) =>
             this.deps.vault.releaseImageUrl(path),
           // Both inputs of the glyph colour: the theme and the (user-editable)
-          // category colours it derives the tones from.
-          silhouetteVariant: `${activeTheme?.id ?? ""}|${categories.list
-            .map((c) => `${c.id}${c.color}`)
-            .join(",")}`,
+          // category colours it derives the tones from. Serialised rather than
+          // concatenated because category ids are user-authored — two
+          // different category sets must never flatten to the same key.
+          silhouetteVariant: JSON.stringify([
+            activeTheme?.id ?? "",
+            categories.list.map((c) => [c.id, c.color]),
+          ]),
           resolveSilhouetteUrl: (node) => {
             const nodeData = node.data();
             const rawEntity = nodeData.entity || {

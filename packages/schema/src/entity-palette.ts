@@ -94,7 +94,14 @@ export function parseColor(color: string | undefined): Rgb | null {
   if (rgb) {
     const parts = rgb[1].split(/[\s,/]+/).filter(Boolean);
     if (parts.length < 3) return null;
-    const channels = parts.slice(0, 3).map((part) => Number.parseFloat(part));
+    // CSS allows either number or percentage channels, and mixing the two is
+    // invalid — `rgb(100%, 0%, 0%)` read as 0-255 numbers would be a dark red
+    // instead of pure red.
+    const channels = parts.slice(0, 3).map((part) => {
+      const numeric = Number.parseFloat(part);
+      if (Number.isNaN(numeric)) return NaN;
+      return part.trim().endsWith("%") ? (numeric / 100) * 255 : numeric;
+    });
     if (channels.some((c) => Number.isNaN(c))) return null;
     return {
       r: clamp(channels[0], 0, 255),
