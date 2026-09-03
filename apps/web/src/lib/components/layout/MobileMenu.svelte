@@ -82,7 +82,7 @@
       <h2
         class="text-lg font-bold text-theme-text font-mono flex items-center gap-2"
       >
-        <span class="icon-[lucide--menu] text-theme-primary"></span>
+        <span class="icon-[lucide--menu] text-theme-primary" aria-hidden="true"></span>
         MENU
       </h2>
       <button
@@ -220,7 +220,7 @@
             rel="noopener noreferrer"
             class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           >
-            <span class="icon-[lucide--heart] w-4 h-4"></span>
+            <span class="icon-[lucide--heart] w-4 h-4" aria-hidden="true"></span>
             Support on Patreon
           </a>
         {/if}
@@ -229,7 +229,7 @@
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--file-text] w-4 h-4"></span>
+          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
           Examples
         </a>
         <a
@@ -237,7 +237,7 @@
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--compass] w-4 h-4"></span>
+          <span class="icon-[lucide--compass] w-4 h-4" aria-hidden="true"></span>
           Explore
         </a>
         <button
@@ -248,7 +248,7 @@
             close();
           }}
         >
-          <span class="icon-[lucide--help-circle] w-4 h-4"></span>
+          <span class="icon-[lucide--help-circle] w-4 h-4" aria-hidden="true"></span>
           Help
         </button>
         <a
@@ -257,7 +257,7 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--shield] w-4 h-4"></span>
+          <span class="icon-[lucide--shield] w-4 h-4" aria-hidden="true"></span>
           Privacy Policy
         </a>
         <a
@@ -266,7 +266,7 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--file-text] w-4 h-4"></span>
+          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
           Terms of Service
         </a>
       </div>
