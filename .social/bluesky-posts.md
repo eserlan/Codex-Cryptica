@@ -6,6 +6,21 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-09-03 — Vector RPG Silhouettes & Token Art (issue #2690)
+
+- **Text:** Sometimes I don't need a full portrait, just a quick visual that says wizard, vampire, dragon, relic.
+
+  So I built a free RPG silhouette library in Codex Cryptica: characters, creatures, locations, items and factions, in downloadable SVG.
+
+  codexcryptica.com/silhouettes
+
+  #TTRPG #Worldbuilding
+
+- **Image:** fresh screenshot of the live `/silhouettes` browser (cropped to a 16-tile grid plus the full preview panel); no supplied screenshot was found attached to the issue, so a new capture was taken directly from the site instead of the Reddit-footer crop the issue described
+- **Alt:** Codex Cryptica silhouette browser showing a grid of gold fantasy and sci-fi vector character silhouettes including warriors, a wizard, witch, vampire lord and countess, an alien scientist and a star pilot. A preview panel on the right shows the selected Sorceress/Witch silhouette with genre tags, keyword tags, and SVG download/copy controls.
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mun7m7ywms23
+- **Note:** Sourced from standalone issue #2690, not the #2086 backlog.
+
 ### 2026-08-26 — Encounter Generator (ad hoc)
 
 - **Text:** Rolling a random encounter gave me a monster and a number. I still had to invent why it was there.
