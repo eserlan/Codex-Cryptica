@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
@@ -7,6 +8,12 @@
     buildAnswerFaqJsonLd,
     buildAnswerBreadcrumbJsonLd,
   } from "$lib/content/answers/json-ld";
+  import {
+    trackDiscoveryPageViewed,
+    classifyDiscoveryTarget,
+    createDiscoveryViewGuard,
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -30,6 +37,21 @@
     framework: "Framework",
     comparison: "Comparison",
   } as const;
+
+  // See discovery-tracking.ts: this route reuses one component instance
+  // across /answers/a -> /answers/b navigations, so the guard (not just
+  // onMount) is what keeps discovery_page_viewed to one fire per slug.
+  const seenAnswer = createDiscoveryViewGuard();
+  $effect(() => {
+    if (!browser) return;
+    const slug = answer.slug;
+    if (!seenAnswer(slug)) return;
+    trackDiscoveryPageViewed({
+      sourceKind: "answer",
+      sourceId: slug,
+      path: answerPath(answer),
+    });
+  });
 </script>
 
 <SeoHead
@@ -103,6 +125,12 @@
                 target={section.cta.external ? "_blank" : undefined}
                 rel={section.cta.external ? "noopener noreferrer" : undefined}
                 class="inline-flex items-center gap-2 border border-theme-primary bg-theme-primary/10 px-5 py-2.5 font-header text-sm font-bold text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
+                use:trackDiscoveryClick={{
+                  sourceKind: "answer",
+                  sourceId: answer.slug,
+                  placement: "section_cta",
+                  ...classifyDiscoveryTarget(section.cta.href),
+                }}
               >
                 <span>{section.cta.text}</span>
                 <span
@@ -227,6 +255,12 @@
         <a
           href="{cleanBase}{answer.codexConnection.href}"
           class="inline-flex items-center gap-2 bg-theme-primary px-6 py-3 font-header text-sm font-bold text-theme-bg transition-colors hover:bg-theme-primary/90"
+          use:trackDiscoveryClick={{
+            sourceKind: "answer",
+            sourceId: answer.slug,
+            placement: "codex_connection",
+            ...classifyDiscoveryTarget(answer.codexConnection.href),
+          }}
         >
           {answer.codexConnection.linkText}
           <span class="icon-[lucide--arrow-right] h-4 w-4" aria-hidden="true"
@@ -254,6 +288,12 @@
                   href="{cleanBase}{tool.href}"
                   class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
                   style:background-image="var(--bg-texture-overlay)"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    placement: "related_tool",
+                    ...classifyDiscoveryTarget(tool.href),
+                  }}
                 >
                   <span
                     class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
@@ -282,6 +322,12 @@
                   href="{cleanBase}{guide.href}"
                   class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
                   style:background-image="var(--bg-texture-overlay)"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    placement: "related_guide",
+                    ...classifyDiscoveryTarget(guide.href),
+                  }}
                 >
                   <span
                     class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
@@ -309,6 +355,13 @@
                 <a
                   href="{cleanBase}/answers/{other.slug}"
                   class="group flex items-start gap-3 text-theme-text transition-colors hover:text-theme-primary"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    targetKind: "answer",
+                    targetId: other.slug,
+                    placement: "related_answer",
+                  }}
                 >
                   <span
                     class="icon-[lucide--corner-down-right] mt-1 h-4 w-4 shrink-0 text-theme-primary"

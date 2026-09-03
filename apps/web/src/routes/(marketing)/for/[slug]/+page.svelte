@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   // Matches the marketing shell: a bare "/" base would make every link
@@ -14,6 +15,12 @@
   import { hubThemeLabel, type HubThemeSlug } from "$lib/content/hub-themes";
   import LandingPageGraphPreview from "$lib/components/for/LandingPageGraphPreview.svelte";
   import { getLandingPageCanonicalUrl } from "$lib/content/for/canonical";
+  import {
+    trackDiscoveryPageViewed,
+    classifyDiscoveryTarget,
+    createDiscoveryViewGuard,
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
@@ -92,6 +99,21 @@
 
   onDestroy(() => {
     themeStore.previewTheme(null);
+  });
+
+  // See discovery-tracking.ts: this route reuses one component instance
+  // across /for/a -> /for/b navigations, so the guard (not just onMount) is
+  // what keeps discovery_page_viewed to one fire per slug.
+  const seenLandingPage = createDiscoveryViewGuard();
+  $effect(() => {
+    if (!browser) return;
+    const slug = config.slug;
+    if (!seenLandingPage(slug)) return;
+    trackDiscoveryPageViewed({
+      sourceKind: "for",
+      sourceId: slug,
+      path: `/for/${slug}`,
+    });
   });
 </script>
 
@@ -262,6 +284,12 @@
                 href="{cleanBase}{tool.href}"
                 class="group block rounded-[var(--for-surface-radius)] border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50"
                 style:background-image="var(--bg-texture-overlay)"
+                use:trackDiscoveryClick={{
+                  sourceKind: "for",
+                  sourceId: config.slug,
+                  placement: "related_tool",
+                  ...classifyDiscoveryTarget(tool.href),
+                }}
               >
                 <div class="mb-2 flex items-center justify-between">
                   <h3
@@ -291,6 +319,13 @@
             href="{cleanBase}/generators/{hub}"
             class="group flex flex-col gap-3 rounded-[var(--for-surface-radius)] border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 sm:flex-row sm:items-center sm:justify-between sm:p-8"
             style:background-image="var(--bg-texture-overlay)"
+            use:trackDiscoveryClick={{
+              sourceKind: "for",
+              sourceId: config.slug,
+              targetKind: "generator",
+              targetId: hub,
+              placement: "theme_hub",
+            }}
           >
             <div>
               <h2
@@ -336,6 +371,12 @@
           <a
             href="{cleanBase}{config.cta.buttonHref}"
             class="inline-block rounded-[var(--for-surface-radius)] bg-theme-primary px-10 py-4 font-header text-sm font-bold text-theme-bg transition-all hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] active:scale-95"
+            use:trackDiscoveryClick={{
+              sourceKind: "for",
+              sourceId: config.slug,
+              placement: "section_cta",
+              ...classifyDiscoveryTarget(config.cta.buttonHref),
+            }}
           >
             {config.cta.buttonText}
           </a>

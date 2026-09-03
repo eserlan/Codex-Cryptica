@@ -1,9 +1,17 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
   import { base } from "$app/paths";
   const cleanBase = base === "/" ? "" : base;
   import { safeJsonLd } from "$lib/utils/json-ld";
   import type { SEOPageData } from "$lib/config/seo-pages";
   import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
+  import {
+    trackDiscoveryPageViewed,
+    classifyDiscoveryTarget,
+    createDiscoveryViewGuard,
+    type DiscoverySourceKind,
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
 
   let {
     data,
@@ -18,6 +26,36 @@
 
   // FAQ state
   let openFaqIndex = $state<number | null>(null);
+
+  // "comparison" is one of the discovery-page families #2687 defines
+  // (/vs, plus /alternatives which 301s into this same component); every
+  // other use of this shared layout (/solutions, /features, and a couple of
+  // standalone SEO pages) is real discovery traffic too, just not one of
+  // the named families, so it's tracked under the "other" bucket rather
+  // than left dark.
+  let discoverySourceKind: DiscoverySourceKind = $derived(
+    type === "comparison" ? "comparison" : "other",
+  );
+  let discoveryPath = $derived(
+    canonicalUrl ??
+      `/${type === "comparison" ? "vs" : "solutions"}/${data.slug}`,
+  );
+
+  // See discovery-tracking.ts: this component is reused across in-place
+  // navigations between two pages of the same route (e.g. /vs/a -> /vs/b),
+  // so the guard (not just onMount) is what keeps discovery_page_viewed to
+  // one fire per slug.
+  const seenSeoPage = createDiscoveryViewGuard();
+  $effect(() => {
+    if (!browser) return;
+    const slug = data.slug;
+    if (!seenSeoPage(slug)) return;
+    trackDiscoveryPageViewed({
+      sourceKind: discoverySourceKind,
+      sourceId: slug,
+      path: discoveryPath,
+    });
+  });
 
   const comparisonData = $derived(
     type === "comparison" ? (data as SEOComparisonPageData) : null,
@@ -211,6 +249,13 @@
           : 'solution-hero'}&utm_medium=hero-cta&utm_campaign=seo-funnel"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap"
         id="hero-primary-cta"
+        use:trackDiscoveryClick={{
+          sourceKind: discoverySourceKind,
+          sourceId: data.slug,
+          targetKind: "app",
+          targetId: "/",
+          placement: "hero_cta",
+        }}
       >
         {data.ctaText}
       </a>
@@ -219,6 +264,12 @@
           href="{cleanBase}{data.secondaryCtaHref ?? '/tools'}"
           class="px-8 py-3.5 border border-theme-primary/60 text-theme-primary font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-primary/10 transition-all duration-200 whitespace-nowrap"
           id="hero-secondary-cta"
+          use:trackDiscoveryClick={{
+            sourceKind: discoverySourceKind,
+            sourceId: data.slug,
+            placement: "hero_secondary_cta",
+            ...classifyDiscoveryTarget(data.secondaryCtaHref ?? "/tools"),
+          }}
         >
           {data.secondaryCtaText}
         </a>
@@ -627,6 +678,12 @@
             <a
               href="{cleanBase}{link.href}"
               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
+              use:trackDiscoveryClick={{
+                sourceKind: discoverySourceKind,
+                sourceId: data.slug,
+                placement: "related_link",
+                ...classifyDiscoveryTarget(link.href),
+              }}
             >
               <span
                 class="icon-[lucide--arrow-right] w-3 h-3"
@@ -652,6 +709,13 @@
         <a
           href="{cleanBase}/responsible-ai-worldbuilding"
           class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+          use:trackDiscoveryClick={{
+            sourceKind: discoverySourceKind,
+            sourceId: data.slug,
+            targetKind: "app",
+            targetId: "/responsible-ai-worldbuilding",
+            placement: "ai_trust_banner",
+          }}
         >
           <span
             class="icon-[lucide--shield-check] w-3.5 h-3.5"
@@ -727,6 +791,13 @@
           : 'solution-footer'}&utm_medium=footer-cta&utm_campaign=seo-funnel"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all whitespace-nowrap"
         id="footer-cta-btn"
+        use:trackDiscoveryClick={{
+          sourceKind: discoverySourceKind,
+          sourceId: data.slug,
+          targetKind: "app",
+          targetId: "/",
+          placement: "footer_cta",
+        }}
       >
         {type === "comparison" ? "Try Free Now" : "Launch Codex Cryptica"}
       </a>
