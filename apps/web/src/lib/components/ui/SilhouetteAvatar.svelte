@@ -56,7 +56,7 @@
 
   <!-- Raw SVG Path Rendering -->
   <div
-    class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200"
+    class="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-200 pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block"
   >
     {@html resolvedSilhouette.svgContent}
   </div>
