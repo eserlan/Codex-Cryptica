@@ -75,6 +75,13 @@
                 "Generate character, place, faction, and item names across ten cultural styles.",
               icon: "icon-[lucide--pen-line]",
             },
+            {
+              href: "/generators/dark-fantasy-faction",
+              label: "Dark Fantasy Faction Generator",
+              summary:
+                "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+              icon: "icon-[lucide--skull]",
+            },
           ],
         },
         {
@@ -306,6 +313,66 @@
                 "Our guiding principles for ethical, optional, local-first AI assistance in worldbuilding.",
               icon: "icon-[lucide--shield-alert]",
             },
+            {
+              href: "/silhouettes",
+              label: "Vector RPG Silhouettes & Token Art",
+              summary:
+                "Browse the complete library of CC-licensed vector silhouettes for characters, creatures, and places with live theme palette previews and SVG export.",
+              icon: "icon-[lucide--shapes]",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: "Answers",
+      description:
+        "Short, practical answers to questions that come up while running and building campaigns — read first, no login, nothing to install.",
+      groups: [
+        {
+          links: [
+            {
+              href: "/answers",
+              label: "All Answers",
+              summary:
+                "The full answer library — point crawls, factions, pantheons, encounters, notes, and more.",
+              icon: "icon-[lucide--help-circle]",
+            },
+            {
+              href: "/answers/how-do-you-organise-rpg-campaign-notes",
+              label: "How do you organise RPG campaign notes?",
+              summary:
+                "Durable entity pages, dated session logs, disposable prep — and the ten-minute pass that keeps them true.",
+              icon: "icon-[lucide--notebook-pen]",
+            },
+            {
+              href: "/answers/what-is-a-point-crawl",
+              label: "What is a point crawl?",
+              summary:
+                "Mapping an adventure as named locations joined by explicit routes, with a worked fen example.",
+              icon: "icon-[lucide--route]",
+            },
+            {
+              href: "/answers/how-do-you-create-a-fantasy-faction",
+              label: "How do you create a fantasy faction?",
+              summary:
+                "Six questions that turn a faction into something that reacts on its own.",
+              icon: "icon-[lucide--flag]",
+            },
+            {
+              href: "/answers/what-makes-a-good-random-encounter",
+              label: "What makes a good random encounter?",
+              summary:
+                "Four criteria that turn a wandering monster into a situation the party can respond to.",
+              icon: "icon-[lucide--dices]",
+            },
+            {
+              href: "/answers/how-do-you-run-a-conspiracy-campaign",
+              label: "How do you run a conspiracy campaign?",
+              summary:
+                "Decide the truth in full, then design how it leaks — and give every conclusion three routes.",
+              icon: "icon-[lucide--search]",
+            },
           ],
         },
       ],
@@ -496,7 +563,7 @@
           >
             {section.title}
           </h2>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-base text-theme-muted leading-relaxed">
             {section.description}
           </p>
         </div>
@@ -526,7 +593,7 @@
                         {link.label}
                       </span>
                       <span
-                        class="block text-sm text-theme-muted leading-relaxed"
+                        class="block text-base text-theme-muted leading-relaxed"
                       >
                         {link.summary}
                       </span>

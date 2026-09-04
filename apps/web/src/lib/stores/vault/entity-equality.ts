@@ -12,6 +12,11 @@ export function isGraphRelevantEntityChange(
   if (oldEntity.parent !== newEntity.parent) return true;
   if (oldEntity.image !== newEntity.image) return true;
   if (oldEntity.thumbnail !== newEntity.thumbnail) return true;
+  // Both decide what a node paints when it has no portrait, or how a portrait
+  // is framed inside it — a change to either has to reach the graph, or the
+  // node keeps rendering the previous artwork.
+  if (oldEntity.silhouette !== newEntity.silhouette) return true;
+  if (oldEntity.imageFocus !== newEntity.imageFocus) return true;
 
   if (!stringArrayEqual(oldEntity.labels, newEntity.labels)) return true;
   if (!stringArrayEqual(oldEntity.aliases, newEntity.aliases)) return true;

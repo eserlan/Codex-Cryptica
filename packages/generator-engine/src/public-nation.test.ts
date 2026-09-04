@@ -76,6 +76,9 @@ describe("buildNationPrompt", () => {
     expect(nationConfig.polityTypesByGenre["Cosmic Horror"]).toContain(
       "Restricted Research Territory",
     );
+    expect(nationConfig.polityTypesByGenre["Space Western"]).toContain(
+      "Frontier System Authority",
+    );
   });
 });
 

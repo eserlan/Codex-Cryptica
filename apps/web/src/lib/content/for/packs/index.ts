@@ -12,6 +12,11 @@ import { traveller } from "./traveller";
 import { cosmicHorror } from "./cosmic-horror";
 import { conspiracy } from "./conspiracy";
 import { deltaGreen } from "./delta-green";
+import { scumAndVillainy } from "./scum-and-villainy";
+import { spaceWestern } from "./space-western";
+import { soloWorldbuilding } from "./solo-worldbuilding";
+import { westMarches } from "./west-marches";
+import { sandboxCampaigns } from "./sandbox-campaigns";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -25,6 +30,11 @@ export const packs: Record<string, LandingPageConfig> = {
   "cyberpunk-red": cyberpunkRed,
   "dystopian-sci-fi": dystopianSciFi,
   "space-opera": spaceOpera,
+  "scum-and-villainy": scumAndVillainy,
+  "space-western": spaceWestern,
+  "solo-worldbuilding": soloWorldbuilding,
+  "west-marches": westMarches,
+  "sandbox-campaigns": sandboxCampaigns,
   traveller,
   conspiracy,
 };

@@ -25,3 +25,5 @@ export * from "./theme-templates";
 export * from "./entity-templates";
 export * from "./stat-sheet";
 export * from "./template-guidance";
+export * from "./silhouettes";
+export * from "./entity-palette";

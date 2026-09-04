@@ -1,5 +1,6 @@
 import type { Entity } from "schema";
 import type { SearchOptions, SearchResult } from "schema";
+import { matchesEntityQuery } from "$lib/utils/entity-search-match";
 
 export interface EntitySearchService {
   search(query: string, options?: SearchOptions): Promise<SearchResult[]>;
@@ -313,22 +314,16 @@ export function filterEntities(
       (options.textMatchIds
         ? options.textMatchIds.has(e.id)
         : options.textSearchUnavailable || options.textSearchPending
-          ? e.title.toLowerCase().includes(remainingTextQuery) ||
+          ? matchesEntityQuery(e, remainingTextQuery) ||
             e.labels?.some((l: string) =>
               l.toLowerCase().includes(remainingTextQuery),
-            ) ||
-            e.aliases?.some((a: string) =>
-              a.toLowerCase().includes(remainingTextQuery),
             )
-          : e.title.toLowerCase().includes(remainingTextQuery) ||
+          : matchesEntityQuery(e, remainingTextQuery) ||
             (e.contentPreview ?? e.content)
               .toLowerCase()
               .includes(remainingTextQuery) ||
             e.labels?.some((l: string) =>
               l.toLowerCase().includes(remainingTextQuery),
-            ) ||
-            e.aliases?.some((a: string) =>
-              a.toLowerCase().includes(remainingTextQuery),
             ));
 
     if (matchesText) {

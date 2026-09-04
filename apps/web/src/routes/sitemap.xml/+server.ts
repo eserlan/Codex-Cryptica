@@ -7,6 +7,8 @@ import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
 import { getAllLandingPageSlugs } from "$lib/content/for/registry";
+import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
+import { getAllExamples, examplePath } from "$lib/content/examples/registry";
 
 export const prerender = true;
 
@@ -27,6 +29,9 @@ export async function GET() {
     { path: "/", changefreq: "weekly", priority: "1.0" },
     { path: "/blog", changefreq: "weekly", priority: "0.9" },
     { path: "/for", changefreq: "weekly", priority: "0.9" },
+    { path: "/answers", changefreq: "weekly", priority: "0.8" },
+    { path: "/examples", changefreq: "weekly", priority: "0.8" },
+    { path: "/explore", changefreq: "monthly", priority: "0.5" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
     { path: "/migrations", changefreq: "weekly", priority: "0.9" },
@@ -153,6 +158,22 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Answer pages (/answers/[slug]). Keyed off answerPath rather than the slug
+  // so a page that canonicalises to another URL is never listed under one its
+  // own <link rel="canonical"> disowns.
+  const answerRoutes = getAllAnswers().map((answer) => ({
+    path: answerPath(answer),
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Curated example pages (/examples/[slug]), keyed off the canonical path.
+  const exampleRoutes = getAllExamples().map((example) => ({
+    path: examplePath(example),
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
@@ -162,6 +183,8 @@ export async function GET() {
     ...themeHubRoutes,
     ...importRoutes,
     ...landingPageRoutes,
+    ...answerRoutes,
+    ...exampleRoutes,
   ];
 
   const staticUrls = allStatic

@@ -36,6 +36,23 @@ jobs:
           git merge origin/staging --no-ff -m "🚀 promote: merge staging to main after production deployment"
           git push origin main
 
+      # A push made with GITHUB_TOKEN does not trigger other workflows, so the
+      # `on: push: branches: [main]` trigger in deploy-worker.yml never fires
+      # for a promotion. Worker changes reached main and stayed undeployed
+      # until someone ran wrangler by hand. Dispatch it explicitly instead,
+      # and only when the Worker actually changed, to keep the path filter's
+      # intent.
+      - name: Deploy the Oracle Proxy Worker if it changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet HEAD^ HEAD -- apps/workers/oracle-proxy; then
+            echo "Worker unchanged in this promotion; nothing to deploy."
+          else
+            echo "Worker changed; dispatching deploy-worker.yml on main."
+            gh workflow run deploy-worker.yml --ref main -f environment=production
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:

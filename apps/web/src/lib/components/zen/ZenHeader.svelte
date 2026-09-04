@@ -28,6 +28,8 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { shelf } from "$lib/features/shelf";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
 
   let {
     entity,
@@ -62,6 +64,19 @@
   }>();
 
   let linkCopied = $state(false);
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    if (!entity) return;
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
 
   const handleCopyGuestLink = async () => {
     if (!guestVault.publishId || !entity) return;
@@ -100,6 +115,9 @@
   const parentEntity = $derived(
     entity?.parent ? vault.entities[entity.parent] : null,
   );
+
+  // Guests read the hierarchy but never rearrange it.
+  const canEditParent = $derived(!vault.isGuest);
 
   const existingCanvas = $derived.by(() => {
     if (!entity) return undefined;
@@ -145,24 +163,30 @@
       {/if}
       {#if editState.isEditing}
         <div class="space-y-2">
-          <input
-            type="text"
-            bind:value={editState.title}
-            aria-label="Entity Title"
-            class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editState.title}
+              aria-label="Entity Title"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editState.aliases} />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5">
-          <h1
-            id="entity-modal-title"
-            data-testid="entity-title"
-            class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
-          >
-            {entity?.title || ""}
-          </h1>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1
+              id="entity-modal-title"
+              data-testid="entity-title"
+              class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
+            >
+              {entity?.title || ""}
+            </h1>
+            <SaveStatusIndicator />
+          </div>
           {#if entity?.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5">
               <span
@@ -193,6 +217,35 @@
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
                 {parentEntity.title}
+              </button>
+              {#if canEditParent}
+                <button
+                  type="button"
+                  onclick={() => modalUIStore.openParentPicker(entity.id)}
+                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
+                  aria-label="Change parent"
+                  title="Change parent"
+                  data-testid="zen-change-parent-button"
+                >
+                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+          {:else if canEditParent}
+            <div class="mt-1.5">
+              <button
+                type="button"
+                onclick={() => modalUIStore.openParentPicker(entity.id)}
+                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                title="Nest this under another entity"
+                data-testid="zen-set-parent-button"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
+                ></span>
+                <span>Set parent</span>
               </button>
             </div>
           {/if}
@@ -265,6 +318,27 @@
             data-testid="zen-find-in-graph-button"
           >
             <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && !vault.isGuest}
+          <button
+            type="button"
+            onclick={handleSendToShelf}
+            class="px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
+              ? 'text-theme-primary'
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title={shelvedJustNow
+              ? "On the Shelf"
+              : "Send to Shelf — to bring into another vault"}
+            aria-label="Send to Shelf"
+            data-testid="zen-send-to-shelf-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{shelvedJustNow
+                ? 'icon-[lucide--check]'
+                : 'icon-[lucide--library]'} w-4 h-4"
             ></span>
           </button>
         {/if}

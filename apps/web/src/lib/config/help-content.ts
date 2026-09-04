@@ -185,6 +185,16 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
     icon: "icon-[lucide--library]",
   },
+  // The recovery key is the whole risk surface here (spec 162, FR-002/FR-013):
+  // there are no accounts, so a lost code means a lost backup unless support can
+  // find it by title. Say that plainly the first time someone sees the feature.
+  "cloud-backup": {
+    id: "cloud-backup",
+    title: "Cloud Backup",
+    content:
+      "Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key — that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time — pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.",
+    icon: "icon-[lucide--cloud-upload]",
+  },
   "touch-graph-gestures": {
     id: "touch-graph-gestures",
     title: "Touch gestures",
@@ -608,7 +618,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-hierarchy",
     title: "Nested Entities",
     content:
-      "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.",
+      "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one — the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.",
     icon: "icon-[lucide--folder-tree]",
   },
   "entity-auto-link": {

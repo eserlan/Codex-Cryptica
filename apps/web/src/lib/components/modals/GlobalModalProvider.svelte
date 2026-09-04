@@ -9,6 +9,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import ZenModeModal from "./ZenModeModal.svelte";
+  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -102,6 +103,14 @@
       {/await}
     {/if}
 
+    {#if loreMergeStore.dialog.open}
+      {#await loadModal(() => import("./LoreMergeModal.svelte"), "LoreMergeModal") then LoreMergeModal}
+        {#if LoreMergeModal}
+          <LoreMergeModal />
+        {/if}
+      {/await}
+    {/if}
+
     {#if notificationStore.confirmationDialog.open}
       {#await loadModal(() => import("./ConfirmationModal.svelte"), "ConfirmationModal") then ConfirmationModal}
         {#if ConfirmationModal}
@@ -169,6 +178,18 @@
             isOpen={modalUIStore.relatedEntityDialog.open}
             sourceEntityId={modalUIStore.relatedEntityDialog.sourceEntityId}
             onClose={() => modalUIStore.closeRelatedEntityDialog()}
+          />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if modalUIStore.parentPickerDialog.open}
+      {#await loadModal(() => import("$lib/components/entity-detail/ParentPickerModal.svelte"), "ParentPickerModal") then ParentPickerModal}
+        {#if ParentPickerModal}
+          <ParentPickerModal
+            isOpen={modalUIStore.parentPickerDialog.open}
+            entityId={modalUIStore.parentPickerDialog.entityId}
+            onClose={() => modalUIStore.closeParentPicker()}
           />
         {/if}
       {/await}
@@ -269,7 +290,7 @@
     {/if}
 
     <!-- Presentation Template Editor -->
-    {#if modalUIStore.presentationEditorState.open && modalUIStore.presentationEditorState.schema}
+    {#if modalUIStore.presentationEditorState?.open && modalUIStore.presentationEditorState?.schema}
       {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateEditor.svelte"), "PresentationTemplateEditor") then PresentationTemplateEditor}
         {#if PresentationTemplateEditor}
           <PresentationTemplateEditor
@@ -278,6 +299,15 @@
             duplicate={modalUIStore.presentationEditorState.duplicate}
             onClose={() => (modalUIStore.presentationEditorState.open = false)}
           />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Silhouette Picker Modal -->
+    {#if modalUIStore.silhouettePickerState?.open}
+      {#await loadModal(() => import("./SilhouettePickerModal.svelte"), "SilhouettePickerModal") then SilhouettePickerModal}
+        {#if SilhouettePickerModal}
+          <SilhouettePickerModal />
         {/if}
       {/await}
     {/if}

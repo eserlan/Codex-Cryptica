@@ -1,6 +1,13 @@
 import type { ParamMatcher } from "@sveltejs/kit";
 
-const validSlugs = new Set([
+/**
+ * Every generator slug the route serves.
+ *
+ * Exported so the discovery intent registry's governed-route list is derived
+ * from the same source the router uses, rather than a copy that silently stops
+ * matching when a generator is added.
+ */
+export const GENERATOR_SLUGS = [
   "npc",
   "settlement",
   "magic-item",
@@ -16,6 +23,7 @@ const validSlugs = new Set([
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -37,6 +45,8 @@ const validSlugs = new Set([
   "creature",
   "encounter",
   "random",
-]);
+] as const;
+
+const validSlugs = new Set<string>(GENERATOR_SLUGS);
 
 export const match: ParamMatcher = (param) => validSlugs.has(param);

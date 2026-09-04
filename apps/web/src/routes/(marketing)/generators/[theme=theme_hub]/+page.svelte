@@ -10,7 +10,7 @@
 
   const { data } = $props();
 
-  // System and genre guides that belong to this hub.
+  // The /for guides — system, genre or campaign style — that belong to this hub.
   const landingPages = $derived(getLandingPagesForHub(data.theme));
 
   const origin = "https://codexcryptica.com";
@@ -254,6 +254,14 @@
     icon: "icon-[lucide--truck]",
   };
 
+  const darkFantasyFactionCard: GeneratorCard = {
+    slug: "dark-fantasy-faction",
+    label: "Dark Fantasy Faction Generator",
+    summary:
+      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+    icon: "icon-[lucide--skull]",
+  };
+
   const fantasyOnlyCards: GeneratorCard[] = [
     {
       slug: "dnd-npc",
@@ -304,6 +312,7 @@
         tavernCard,
         shipCard,
         nationCard,
+        darkFantasyFactionCard,
         ...fantasyOnlyCards,
         newsSheetCard(
           "Broadsheet Generator",
@@ -640,6 +649,35 @@
         surpriseMeCard,
       ],
     },
+    "space-western": {
+      label: "Space Western",
+      localStorageId: "space-western",
+      eyebrow: "Frontier Scoundrels & Asteroid Rigs",
+      intro:
+        "Battered freighters, lawless asteroid boomtowns, mining syndicates, and high-stakes smuggling runs. Generate frontier settlements, scoundrel NPCs, rust-bucket starships, and bounty contracts for your space western campaign — all free and pre-tuned.",
+      metaTitle:
+        "Space Western RPG Generators — NPC, Ship, Faction & More | Codex Cryptica",
+      metaDescription:
+        "Free Space Western and Scoundrel RPG generators for tabletop GMs. Create scoundrel NPCs, smuggling factions, asteroid boomtowns, rust-bucket freighters, and bounty quests. No login required.",
+      cards: [
+        ...sharedCards(
+          "Frontier Outpost Generator",
+          "Build asteroid claims, dusty planetary depots, and hollow-rock cantinas with mining councils, marshals, and corporate enforcers.",
+        ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
+        shipCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Rim-World Gazette Generator",
+          "Generate a frontier news bulletin — bounty warrants, mining claim disputes, customs warnings, and cantina rumours, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
   };
 
   const config = $derived(themeConfig[data.theme]);
@@ -832,7 +870,7 @@
             >
               {card.label}
             </span>
-            <span class="block text-sm text-theme-muted leading-relaxed">
+            <span class="block text-base text-theme-muted leading-relaxed">
               {card.summary}
             </span>
           </a>
@@ -845,9 +883,9 @@
         <h2 class="font-header text-xl font-bold mb-2">
           Campaign guides for these worlds
         </h2>
-        <p class="text-sm text-theme-muted leading-relaxed mb-6">
-          How Codex Cryptica handles the systems and genres these generators are
-          built for.
+        <p class="text-base text-theme-muted leading-relaxed mb-6">
+          How Codex Cryptica handles the systems, genres and campaign styles
+          these generators are built for.
         </p>
         <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
           {#each landingPages as page (page.slug)}
@@ -862,7 +900,9 @@
                   >
                     {page.hero.title}
                   </span>
-                  <span class="block text-sm text-theme-muted leading-relaxed">
+                  <span
+                    class="block text-base text-theme-muted leading-relaxed"
+                  >
                     {page.hero.tagline}
                   </span>
                 </span>

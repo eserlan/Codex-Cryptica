@@ -18,6 +18,7 @@ import {
   LANCER_LIGHT,
   WESTERN_DARK,
   SPACE_OPERA_RESISTANCE_DARK,
+  SPACE_WESTERN_LIGHT,
 } from "./theme-templates";
 
 describe("Theme Schema & Definitions", () => {
@@ -91,6 +92,10 @@ describe("Theme Schema & Definitions", () => {
       startrek: { light: STARTREK_LIGHT, dark: THEMES.startrek },
       lancer: { light: LANCER_LIGHT, dark: THEMES.lancer },
       western: { light: THEMES.western, dark: WESTERN_DARK },
+      "space-western": {
+        light: SPACE_WESTERN_LIGHT,
+        dark: THEMES["space-western"],
+      },
     };
 
     for (const [key, pair] of Object.entries(counterparts)) {
@@ -145,6 +150,8 @@ describe("Theme Schema & Definitions", () => {
       lancer_light: "tactical_hud.svg",
       "space-opera-resistance": "resistance_console.svg",
       "space-opera-resistance_dark": "resistance_console.svg",
+      "space-western": "rust.svg",
+      "space-western_light": "rust.svg",
       horror_light: "autopsy_smudge.svg",
       cosmic_horror: "eldritch_cartography.svg",
       cosmic_horror_light: "eldritch_cartography.svg",
@@ -167,6 +174,8 @@ describe("Theme Schema & Definitions", () => {
       lancer_light: LANCER_LIGHT,
       "space-opera-resistance": THEMES["space-opera-resistance"],
       "space-opera-resistance_dark": SPACE_OPERA_RESISTANCE_DARK,
+      "space-western": THEMES["space-western"],
+      "space-western_light": SPACE_WESTERN_LIGHT,
       horror_light: HORROR_LIGHT,
       cosmic_horror: THEMES.cosmic_horror,
       cosmic_horror_light: COSMIC_HORROR_LIGHT,

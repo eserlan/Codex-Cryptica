@@ -32,6 +32,11 @@ ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 # - CODEX_AUTOMATION_KEY: Private credential (or comma-separated list of keys)
 #   for trusted automation/agent workflows to mint automation session tokens
 #   without solving Turnstile.
+# - CLOUD_BACKUP_ADMIN_TOKEN: Support-only credential for the CC Cloud Backup
+#   metadata lookup and code re-issue routes (spec 162). Gates /api/cloud-backup/admin/*
+#   only; it never grants access to a vault's contents. Until it is set those two
+#   routes reject every request, which is the correct closed default.
+#   Runbook: docs/deployment/cloud-backup-support-access.md
 
 # Development configuration
 [dev]
@@ -104,6 +109,25 @@ namespace_id = "1354"
 
   [ratelimits.simple]
   limit = 20
+  period = 60
+
+# CC Cloud Backup (spec 162). Enable creates a backup and is once-per-vault in
+# practice, so it is tight. Push fires on every save of a backed-up vault, so it
+# tracks the publish-write limit rather than the create limit.
+[[ratelimits]]
+name = "CLOUD_BACKUP_CREATE_RATE_LIMITER"
+namespace_id = "1356"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "CLOUD_BACKUP_PUSH_RATE_LIMITER"
+namespace_id = "1357"
+
+  [ratelimits.simple]
+  limit = 300
   period = 60
 
 # Dedicated rate limiter for trusted automation sessions.

@@ -50,6 +50,13 @@
           icon: "icon-[lucide--truck]",
         },
         {
+          href: "/generators/dark-fantasy-faction",
+          label: "Dark Fantasy Faction Generator",
+          summary:
+            "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+          icon: "icon-[lucide--skull]",
+        },
+        {
           href: "/generators/names",
           label: "RPG Name Generator",
           summary:
@@ -337,6 +344,13 @@
         "Diplomatic officers, scientific factions, space station hubs, and first-contact quest hooks for optimistic space opera campaigns.",
       icon: "icon-[lucide--rocket]",
     },
+    {
+      href: "/generators/space-western",
+      label: "Space Western Hub",
+      summary:
+        "Frontier scoundrels, asteroid boomtowns, smuggling rings, and rust-bucket freighters for space western campaigns.",
+      icon: "icon-[lucide--orbit]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);
@@ -443,7 +457,7 @@
               >
                 {hub.label}
               </span>
-              <span class="block text-sm text-theme-muted leading-relaxed">
+              <span class="block text-base text-theme-muted leading-relaxed">
                 {hub.summary}
               </span>
             </a>
@@ -474,7 +488,7 @@
                 >
                   {gen.label}
                 </span>
-                <span class="block text-sm text-theme-muted leading-relaxed">
+                <span class="block text-base text-theme-muted leading-relaxed">
                   {gen.summary}
                 </span>
               </a>

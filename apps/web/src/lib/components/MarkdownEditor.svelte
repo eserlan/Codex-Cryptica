@@ -13,6 +13,7 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { MarkdownTablePasteExtension } from "./editor/MarkdownTablePasteExtension";
   import { protectVaultImageSource } from "./editor/vault-image";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openCanvasHref } from "$lib/stores/ui/navigation";
@@ -137,6 +138,7 @@
         TableRow,
         TableHeader,
         TableCell,
+        MarkdownTablePasteExtension,
         EmbedExtension,
         createEntityAutoLinkExtension(autoLinkOptions),
         Link.configure({
@@ -387,6 +389,14 @@
     );
     color: var(--color-theme-primary);
     border-color: var(--color-theme-border);
+  }
+
+  /* The `prose` class puts ~1.25em top/bottom margin on every <p>, even the
+     empty placeholder paragraph tiptap keeps in a blank cell. Left alone,
+     that margin makes table rows (especially empty ones) balloon in height. */
+  :global(.ProseMirror td p),
+  :global(.ProseMirror th p) {
+    margin: 0;
   }
 
   :global(.ProseMirror h1),

@@ -1917,6 +1917,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           "Cyberpunk",
           "Optimistic Exploration Sci-Fi",
           "Space Opera Resistance",
+          "Space Western",
           "Lancer",
           "Post-Apocalyptic",
         ].map((g) => ({ value: g, label: g })),

@@ -316,6 +316,14 @@
     --color-text-muted: #64748b;
     --color-text-dim: #475569;
   }
+  [data-theme="space-western"] {
+    --color-text-muted: #d97706;
+    --color-text-dim: #92400e;
+  }
+  [data-theme="space-western_light"] {
+    --color-text-muted: #b45309;
+    --color-text-dim: #78350f;
+  }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;
@@ -340,7 +348,8 @@
   [data-theme="steampunk"],
   [data-theme="steampunk_dark"],
   [data-theme="space-opera-resistance"],
-  [data-theme="space-opera-resistance_dark"] {
+  [data-theme="space-opera-resistance_dark"],
+  [data-theme="space-western"] {
     --frontpage-vignette:
       radial-gradient(circle at top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.85)),
       linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
@@ -352,9 +361,18 @@
       color-mix(in srgb, var(--color-theme-primary), transparent 78%);
   }
 
-  /* Shield app chrome from world theme colors and fonts */
-  header,
-  footer,
+  /*
+   * Shield app chrome from world theme colors and fonts.
+   *
+   * Opt-in by class, never by element name. This used to select bare `header`
+   * and `footer`, which caught all 35 such elements in the app when only four
+   * are chrome — page titles, panel headers and card headers inherited the
+   * neutral sans stack and a reset palette they never asked for, and the
+   * `!important` on `--font-header` meant a `font-header` utility on the
+   * element could not win. Components that style themselves with `theme-*`
+   * tokens are asking for the world theme; this must not override them (#2578).
+   */
+  .chrome-shield,
   .bg-chrome-surface,
   .bg-chrome-bg {
     --font-header:
@@ -630,4 +648,18 @@
   --tw-prose-pre-bg: var(--color-bg-surface);
   --tw-prose-th-borders: var(--color-border-primary);
   --tw-prose-td-borders: var(--color-border-primary);
+}
+
+/*
+ * Typography's default table is a plain block-level `<table>` with no
+ * overflow handling, so a table wider than its container blows out the
+ * entity/mobile layout instead of scrolling (#2635). Scrolling the table
+ * element itself, rather than wrapping it in a container div, needs no
+ * markup change from either the TipTap editor's or the read-only renderer's
+ * output.
+ */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
 }

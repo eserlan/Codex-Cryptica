@@ -1,12 +1,56 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import type { PageData } from "./$types";
+  import type { LandingPageConfig } from "$lib/content/for/schema";
 
   let { data }: { data: PageData } = $props();
 
   let systemPages = $derived(data.pages.filter((p) => p.kind === "system"));
   let genrePages = $derived(data.pages.filter((p) => p.kind === "genre"));
+  let campaignStylePages = $derived(
+    data.pages.filter((p) => p.kind === "use-case"),
+  );
 </script>
+
+{#snippet pageGrid(pages: LandingPageConfig[], badge: string, linkText: string)}
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {#each pages as page}
+      <a
+        href="{base}/for/{page.slug}"
+        class="group flex h-full flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 hover:shadow-lg"
+        style:background-image="var(--bg-texture-overlay)"
+      >
+        <div class="flex flex-1 flex-col">
+          <div class="mb-3 flex items-center justify-between">
+            <span
+              class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+            >
+              {badge}
+            </span>
+          </div>
+          <h3
+            class="mb-2 font-header text-xl font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+          >
+            {page.hero.title}
+          </h3>
+          <p
+            class="flex-1 font-light text-base leading-relaxed text-theme-muted"
+          >
+            {page.hero.tagline}
+          </p>
+          <div
+            class="mt-6 flex items-center font-header text-xs font-bold text-theme-primary"
+          >
+            {linkText}
+            <span
+              class="icon-[lucide--arrow-right] ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1"
+            ></span>
+          </div>
+        </div>
+      </a>
+    {/each}
+  </div>
+{/snippet}
 
 <svelte:head>
   <title>Find the right Codex Cryptica for your world</title>
@@ -66,49 +110,13 @@
           <h2 class="font-header text-2xl font-bold text-theme-text">
             Game Systems
           </h2>
-          <p class="mt-1 font-light text-sm text-theme-muted">
+          <p class="mt-1 font-light text-base text-theme-muted">
             Tailored tools and relationship structures for specific tabletop RPG
             systems.
           </p>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {#each systemPages as page}
-            <a
-              href="{base}/for/{page.slug}"
-              class="group flex h-full flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 hover:shadow-lg"
-              style:background-image="var(--bg-texture-overlay)"
-            >
-              <div class="flex flex-1 flex-col">
-                <div class="mb-3 flex items-center justify-between">
-                  <span
-                    class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
-                  >
-                    Game System
-                  </span>
-                </div>
-                <h3
-                  class="mb-2 font-header text-xl font-bold text-theme-text transition-colors group-hover:text-theme-primary"
-                >
-                  {page.hero.title}
-                </h3>
-                <p
-                  class="flex-1 font-light text-sm leading-relaxed text-theme-muted"
-                >
-                  {page.hero.tagline}
-                </p>
-                <div
-                  class="mt-6 flex items-center font-header text-xs font-bold text-theme-primary"
-                >
-                  Explore system
-                  <span
-                    class="icon-[lucide--arrow-right] ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1"
-                  ></span>
-                </div>
-              </div>
-            </a>
-          {/each}
-        </div>
+        {@render pageGrid(systemPages, "Game System", "Explore system")}
       </section>
     {/if}
 
@@ -119,49 +127,34 @@
           <h2 class="font-header text-2xl font-bold text-theme-text">
             Genres & Settings
           </h2>
-          <p class="mt-1 font-light text-sm text-theme-muted">
+          <p class="mt-1 font-light text-base text-theme-muted">
             System-agnostic approaches to worldbuilding across fantasy, sci-fi,
             horror, and other genres.
           </p>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {#each genrePages as page}
-            <a
-              href="{base}/for/{page.slug}"
-              class="group flex h-full flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 hover:shadow-lg"
-              style:background-image="var(--bg-texture-overlay)"
-            >
-              <div class="flex flex-1 flex-col">
-                <div class="mb-3 flex items-center justify-between">
-                  <span
-                    class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
-                  >
-                    Genre
-                  </span>
-                </div>
-                <h3
-                  class="mb-2 font-header text-xl font-bold text-theme-text transition-colors group-hover:text-theme-primary"
-                >
-                  {page.hero.title}
-                </h3>
-                <p
-                  class="flex-1 font-light text-sm leading-relaxed text-theme-muted"
-                >
-                  {page.hero.tagline}
-                </p>
-                <div
-                  class="mt-6 flex items-center font-header text-xs font-bold text-theme-primary"
-                >
-                  Explore genre
-                  <span
-                    class="icon-[lucide--arrow-right] ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1"
-                  ></span>
-                </div>
-              </div>
-            </a>
-          {/each}
+        {@render pageGrid(genrePages, "Genre", "Explore genre")}
+      </section>
+    {/if}
+
+    <!-- Campaign Styles Section -->
+    {#if campaignStylePages.length > 0}
+      <section class="mb-16">
+        <div class="mb-8 border-b border-theme-border/60 pb-4">
+          <h2 class="font-header text-2xl font-bold text-theme-text">
+            Campaign Styles
+          </h2>
+          <p class="mt-1 font-light text-base text-theme-muted">
+            Ways of running a table — open, player-directed, exploration-led —
+            whatever system or genre you play them in.
+          </p>
         </div>
+
+        {@render pageGrid(
+          campaignStylePages,
+          "Campaign Style",
+          "Explore campaign style",
+        )}
       </section>
     {/if}
   </div>

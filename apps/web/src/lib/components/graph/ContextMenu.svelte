@@ -5,6 +5,8 @@
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { deriveEntityTypePalette } from "schema";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core } from "cytoscape";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -30,6 +32,10 @@
   $effect(() => {
     return controller.setupEvents();
   });
+
+  const typePalette = $derived(
+    deriveEntityTypePalette(themeStore.activeTheme, categories.list),
+  );
 
   let menuEl = $state<HTMLDivElement>();
 
@@ -320,9 +326,12 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={() => controller.handleSetCategory(cat.id)}
         >
+          <!-- Previews the tone the node will actually take, which is derived
+               from the active theme rather than the raw category colour
+               (issue #2680). -->
           <div
             class="w-2 h-2 rounded-full"
-            style:background-color={cat.color}
+            style:background-color={typePalette[cat.id]?.accent ?? cat.color}
           ></div>
           {cat.label}
         </button>

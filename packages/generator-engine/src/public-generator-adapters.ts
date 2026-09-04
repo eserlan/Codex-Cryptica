@@ -10,8 +10,14 @@
 import { getGenerator } from "./campaign-generator-registry";
 import { generateShipLocal } from "./public-ship";
 import type { ShipGeneratorOptions } from "./public-ship";
-import { generateNomadClanLocal } from "./public-faction";
-import type { NomadClanGeneratorOptions } from "./public-faction";
+import {
+  generateNomadClanLocal,
+  generateDarkFactionLocal,
+} from "./public-faction";
+import type {
+  NomadClanGeneratorOptions,
+  DarkFactionGeneratorOptions,
+} from "./public-faction";
 import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
@@ -158,6 +164,13 @@ export function adaptNomadClan(
   options: NomadClanGeneratorOptions = {},
 ): PublicGeneratorOutput {
   return generateNomadClanLocal(options);
+}
+
+/** Generate a Dark Fantasy / Grimdark Faction using the package's local generator. */
+export function adaptDarkFaction(
+  options: DarkFactionGeneratorOptions = {},
+): PublicGeneratorOutput {
+  return generateDarkFactionLocal(options);
 }
 
 /** Generate a Ship using the package's local generator. */

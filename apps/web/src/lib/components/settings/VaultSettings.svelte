@@ -6,7 +6,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import DriveSettings from "./DriveSettings.svelte";
+  import CloudDestinationSettings from "./CloudDestinationSettings.svelte";
   import VaultBackupSettings from "./VaultBackupSettings.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -178,10 +178,10 @@
     </div>
   </div>
 
-  <!-- Cloud Mirroring -->
+  <!-- Cloud Mirroring: one destination, chosen explicitly -->
   {#if !sessionModeStore.isDemoMode}
     <div>
-      <DriveSettings />
+      <CloudDestinationSettings />
     </div>
 
     <!-- Portable Backup (works in every browser) -->

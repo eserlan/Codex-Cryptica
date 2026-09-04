@@ -6,6 +6,10 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildDarkFactionPrompt,
+  parseDarkFactionResponse,
+  generateDarkFactionLocal,
+  darkFactionConfig,
   factionConfig,
 } from "./public-faction";
 import { NAME_BAN_PROMPT } from "./public-npc";
@@ -131,5 +135,67 @@ describe("vampire clan", () => {
     const out = parseVampireResponse('{"content":"x","lore":"y"}', resolved);
     expect(out.title).toBe(resolved.name);
     expect(out.labels).toContain("vampire-clan");
+  });
+});
+
+describe("dark fantasy faction (#1136)", () => {
+  it("generateDarkFactionLocal returns the four content sections and lore structure", () => {
+    const out = generateDarkFactionLocal({}, seededRng(11));
+    expect(out.type).toBe("faction");
+    expect(out.content).toContain("### What they control");
+    expect(out.content).toContain("### Why they are dangerous");
+    expect(out.lore).toContain("### At a Glance");
+    expect(out.lore).toContain("### Rival Faction");
+    expect(out.labels).toContain("dark-fantasy-faction");
+    expect(out.labels).toContain("grimdark");
+  });
+
+  it("honours explicit mode/factionType/scope/moralPosture", () => {
+    const out = generateDarkFactionLocal(
+      {
+        mode: "Plague City",
+        factionType: "Plague Cult",
+        scope: darkFactionConfig.scopes[0],
+        moralPosture: darkFactionConfig.moralPostures[0],
+      },
+      seededRng(12),
+    );
+    expect(out.summary).toContain("plague cult");
+  });
+
+  it("is deterministic for a fixed seed", () => {
+    expect(generateDarkFactionLocal({}, seededRng(13))).toEqual(
+      generateDarkFactionLocal({}, seededRng(13)),
+    );
+  });
+
+  it("buildDarkFactionPrompt includes resolved options and ban prompt", () => {
+    const { systemInstruction, userMessage, resolved } = buildDarkFactionPrompt(
+      { mode: "Witch-Hunt", factionType: "Witch-Hunter Lodge" },
+      "- Existing: The Ashen Veil (faction)",
+      seededRng(14),
+    );
+    expect(systemInstruction).toContain("grimdark worldbuilding");
+    expect(systemInstruction).toContain(NAME_BAN_PROMPT);
+    expect(systemInstruction).toContain("- Existing: The Ashen Veil (faction)");
+    expect(userMessage).toContain("- Dark Fantasy Mode: Witch-Hunt");
+    expect(userMessage).toContain("- Faction Type: Witch-Hunter Lodge");
+    expect(resolved.name.length).toBeGreaterThan(0);
+  });
+
+  it("parseDarkFactionResponse falls back to the resolved name and labels", () => {
+    const { resolved } = buildDarkFactionPrompt({}, "", seededRng(15));
+    const out = parseDarkFactionResponse(
+      '{"content":"x","lore":"y"}',
+      resolved,
+    );
+    expect(out.title).toBe(resolved.name);
+    expect(out.labels).toContain("dark-fantasy-faction");
+    expect(out.labels).toContain("grimdark");
+  });
+
+  it("throws on invalid JSON", () => {
+    const { resolved } = buildDarkFactionPrompt({}, "", seededRng(16));
+    expect(() => parseDarkFactionResponse("nope", resolved)).toThrow();
   });
 });

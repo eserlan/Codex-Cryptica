@@ -11,6 +11,7 @@
     collectSessionTraits,
     extractPartialJsonStringFields,
   } from "generator-engine";
+  import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -29,6 +30,7 @@
   import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
   import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
   import NomadClanFormFields from "$lib/components/seo/NomadClanFormFields.svelte";
+  import DarkFactionFormFields from "$lib/components/seo/DarkFactionFormFields.svelte";
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
@@ -62,6 +64,7 @@
     nationConfig,
     vampireConfig,
     nomadClanConfig,
+    darkFactionConfig,
     nameGeneratorConfig,
     pantheonConfig,
     shipConfig,
@@ -103,12 +106,17 @@
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
+  import {
+    parseDevelopWorldHandoff,
+    worldGenreForHub,
+  } from "./generator-page-world-handoff";
 
   let {
     slug,
     urlHubTheme = undefined,
     metaOverrides = undefined,
     initialDraftOverride = undefined,
+    persistence = new UIPersistence(),
   }: {
     slug: ValidSlug;
     urlHubTheme?: string;
@@ -128,6 +136,7 @@
      * Used by alternative routes that need a different default draft on first load.
      */
     initialDraftOverride?: GeneratorOutput;
+    persistence?: UIPersistence;
   } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
@@ -147,14 +156,6 @@
     (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
   );
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
-
-  function worldGenreForHub(hubGenre: string | null): string {
-    if (hubGenre === "Cyberpunk") return "Cyberpunk";
-    if (hubGenre === "Optimistic Exploration Sci-Fi") return "Hopeful Sci-Fi";
-    if (hubGenre === "Space Opera Resistance") return "Space Opera";
-    if (hubGenre === "Lancer") return "Lancer";
-    return "Hard Sci-Fi";
-  }
 
   const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
@@ -340,6 +341,14 @@
     tone: nomadClanConfig.tones[0],
     territory: nomadClanConfig.territories[0],
     conflict: nomadClanConfig.conflicts[0],
+    campaignContext: "",
+  });
+
+  let darkFaction = $state({
+    mode: darkFactionConfig.modes[0],
+    factionType: darkFactionConfig.types[0],
+    scope: darkFactionConfig.scopes[0],
+    moralPosture: darkFactionConfig.moralPostures[0],
     campaignContext: "",
   });
 
@@ -547,7 +556,7 @@
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
-      ? localStorage.getItem("codex-cryptica-active-theme")
+      ? persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null)
       : null);
   const _worldInitialTheme = _initialUrlHubTheme
     ? (SOCIAL_HUB_GENRE_TO_THEME[
@@ -615,23 +624,12 @@
   // system context in the query string so the World Generator draft starts
   // pre-populated instead of blank. Cleans the URL after reading it.
   function applyPendingDevelopWorld(): void {
-    const params = page.url.searchParams;
-    const systemTitle = params.get("developSystem");
-    const bodyName = params.get("developBody");
-    if (!systemTitle && !bodyName) return;
-    const bodyType = params.get("developBodyType");
-    const context = params.get("developContext");
-    world.dominantFeature = bodyName
-      ? `${bodyName}${bodyType ? ` (${bodyType})` : ""} — ${context || `part of the ${systemTitle} system.`}`
-      : (context ?? "");
+    const handoff = parseDevelopWorldHandoff(page.url.searchParams);
+    if (!handoff) return;
+    world.dominantFeature = handoff.dominantFeature;
 
     const cleanUrl = new URL(page.url);
-    for (const key of [
-      "developSystem",
-      "developBody",
-      "developBodyType",
-      "developContext",
-    ]) {
+    for (const key of handoff.paramKeys) {
       cleanUrl.searchParams.delete(key);
     }
     goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
@@ -689,6 +687,13 @@
     }
     if (slug === "nomad-clan") {
       activeTheme = "Cyberpunk / Corporate";
+      return;
+    }
+    if (slug === "dark-fantasy-faction") {
+      // No dedicated visual theme for "grimdark" in the 13-theme system;
+      // Classic Fantasy is the closest existing skin, matching the general
+      // Faction generator's own default rather than inventing a new one.
+      activeTheme = "Classic Fantasy";
       return;
     }
     if (slug === "pantheon-generator" || slug === "god-generator") {
@@ -769,7 +774,7 @@
     // For quest/npc/faction on flat URL: read localStorage.
     // On themed URL: urlHubTheme already seeded activeTheme above — skip.
     if (!urlHubTheme) {
-      const stored = localStorage.getItem("codex-cryptica-active-theme");
+      const stored = persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null);
       if (stored && themeIdToLabel[stored]) {
         activeTheme = themeIdToLabel[stored];
       }
@@ -818,6 +823,8 @@
       generatorEngine.generateVampireClan({ ...vampireClan, useAI }),
     "nomad-clan": (useAI) =>
       generatorEngine.generateNomadClan({ ...nomadClan, useAI }),
+    "dark-fantasy-faction": (useAI) =>
+      generatorEngine.generateDarkFaction({ ...darkFaction, useAI }),
     names: (useAI) =>
       generatorEngine.generateNames({ ...names, theme: activeTheme, useAI }),
     "fantasy-names": (useAI) =>
@@ -1174,6 +1181,15 @@
         bind:territory={nomadClan.territory}
         bind:conflict={nomadClan.conflict}
         bind:campaignContext={nomadClan.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "dark-fantasy-faction"}
+      <DarkFactionFormFields
+        bind:mode={darkFaction.mode}
+        bind:factionType={darkFaction.factionType}
+        bind:scope={darkFaction.scope}
+        bind:moralPosture={darkFaction.moralPosture}
+        bind:campaignContext={darkFaction.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "names"}

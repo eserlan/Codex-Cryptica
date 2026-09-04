@@ -181,6 +181,7 @@ export const EntitySchema = z.object({
   lore: z.string().optional(), // Extended lore & rich notes
   artDirection: z.string().optional(),
   image: z.string().optional(),
+  silhouette: z.string().optional(),
   thumbnail: z.string().optional(),
   /** Which part of `image` to keep in view when it's cropped to a shape
    * (graph node, VTT token) that doesn't match its aspect ratio. */

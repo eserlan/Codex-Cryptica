@@ -19,6 +19,7 @@ const validSlugs = new Set([
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -62,6 +63,7 @@ export const load: PageLoad = ({ params }) => {
       | "nation"
       | "vampire-clan"
       | "nomad-clan"
+      | "dark-fantasy-faction"
       | "names"
       | "fantasy-names"
       | "dnd-npc"
@@ -102,6 +104,7 @@ export const entries: EntryGenerator = () => {
     { slug: "nation" },
     { slug: "vampire-clan" },
     { slug: "nomad-clan" },
+    { slug: "dark-fantasy-faction" },
     { slug: "names" },
     { slug: "fantasy-names" },
     { slug: "dnd-npc" },

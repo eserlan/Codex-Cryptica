@@ -297,10 +297,10 @@
           >
             <span class="{feat.icon} w-4 h-4"></span>
           </div>
-          <h3 class="font-header font-bold text-xs text-theme-text">
+          <h3 class="font-header font-bold text-sm text-theme-text">
             {feat.title}
           </h3>
-          <p class="text-xs text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-muted leading-relaxed">
             {feat.description}
           </p>
         </article>
@@ -546,7 +546,7 @@
     <!-- Responsible AI Trust Banner -->
     {#if pageData.aiTrustSection}
       <section class="border-t border-theme-border/60 mt-16 pt-10 text-center">
-        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+        <p class="text-base text-theme-muted leading-relaxed mb-3">
           Responsible AI, not replacement authorship. The Lore Oracle is
           optional, vault-aware, and draft-based. Your vault remains the source
           of truth.
@@ -579,7 +579,7 @@
             <h3 class="font-header font-bold text-sm mb-2">
               {faqItem.question}
             </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
+            <p class="text-base text-theme-muted leading-relaxed">
               {faqItem.answer}
             </p>
           </article>

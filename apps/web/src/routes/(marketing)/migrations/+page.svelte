@@ -80,7 +80,7 @@
             >
               {importer.h1}
             </span>
-            <span class="block text-sm text-theme-muted leading-relaxed mb-4">
+            <span class="block text-base text-theme-muted leading-relaxed mb-4">
               {importer.subheading}
             </span>
             <span

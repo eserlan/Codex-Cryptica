@@ -147,6 +147,14 @@ export const encounterConfig = {
       "Research Laboratory",
       "Terraforming Colony",
     ],
+    "Space Western": [
+      "Dust-Bowl Mining Camp",
+      "Orbital Scrapyard Perimeter",
+      "Hollow Asteroid Saloon",
+      "Corrugated Canyon Redoubt",
+      "Smuggler's Decommissioned Dock",
+      "Volcanic Ridge Claim",
+    ],
   } as Record<string, string[]>,
 };
 

@@ -169,4 +169,16 @@ export const INHABITANT_NAMES_BY_GENRE: Record<string, readonly string[]> = {
     "Elin",
     "Osei",
   ],
+  "Space Western": [
+    "Jeb",
+    "Callie",
+    "Silas",
+    "Vera",
+    "Burl",
+    "Hattie",
+    "Mose",
+    "Rory",
+    "Zeke",
+    "Lula",
+  ],
 };

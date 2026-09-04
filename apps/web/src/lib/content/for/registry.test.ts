@@ -6,7 +6,7 @@ import {
   getLandingPagesForHub,
 } from "./registry";
 import { isHubThemeSlug } from "../hub-themes";
-import type { LandingPageConfig } from "./schema";
+import { LandingPageKindSchema, type LandingPageConfig } from "./schema";
 
 describe("Landing Page Registry", () => {
   const mockRegistry: Record<string, LandingPageConfig> = {
@@ -583,6 +583,333 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Scum and Villainy Pack", () => {
+    it("is registered as system, marked with space-western theme, and includes non-affiliation disclaimer", () => {
+      const sv = getLandingPage("scum-and-villainy");
+      expect(sv).toBeDefined();
+      expect(sv?.slug).toBe("scum-and-villainy");
+      expect(sv?.kind).toBe("system");
+      expect(sv?.theme).toBe("space-western");
+      expect(sv?.hub).toBe("space-western");
+      expect(sv?.disclaimer).toBeDefined();
+      expect(sv?.disclaimer).toContain("Evil Hat Productions");
+      expect(sv?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/scum-and-villainy.jpg",
+      );
+      expect(sv?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
+      expect(sv?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(sv?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic space scoundrels terminology and British spelling", () => {
+      const sv = getLandingPage("scum-and-villainy")!;
+      const copy = JSON.stringify(sv);
+
+      // System-specific scoundrel concepts
+      expect(copy).toContain("smuggling");
+      expect(copy).toContain("syndicate");
+      expect(copy).toContain("heat");
+      expect(copy).toContain("debt");
+      expect(copy).toContain("freighter");
+      expect(copy).toContain("heist");
+      expect(copy).toContain("organise");
+    });
+
+    it("maintains a valid hub-and-spoke scoundrel crew graph with categorised nodes", () => {
+      const sv = getLandingPage("scum-and-villainy")!;
+      const graph = sv.exampleGraph!;
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("item");
+      expect(hub.label).toBe("The Rusted Kestrel");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+    });
+  });
+
+  describe("Space Western Pack", () => {
+    it("is registered as a genre guide for the Space Western hub", () => {
+      const spaceWestern = getLandingPage("space-western");
+      expect(spaceWestern?.kind).toBe("genre");
+      expect(spaceWestern?.theme).toBe("space-western");
+      expect(spaceWestern?.hub).toBe("space-western");
+      expect(spaceWestern?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/ship-generator" }),
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
+    });
+  });
+
+  /**
+   * A page's own pitch, without its cross-links.
+   *
+   * `recommendedTools` points at other pages and has to describe them in their
+   * own vocabulary, so a fan-language assertion run over the whole config would
+   * fail the sandbox page for the sentence that explains what the West Marches
+   * page is for.
+   */
+  const ownCopy = (page: LandingPageConfig) =>
+    JSON.stringify({
+      seo: page.seo,
+      hero: page.hero,
+      useCases: page.useCases,
+      exampleGraph: page.exampleGraph,
+      cta: page.cta,
+    });
+
+  describe("West Marches Pack", () => {
+    it("is registered as a campaign-style guide with open-table framing", () => {
+      const wm = getLandingPage("west-marches");
+      expect(wm).toBeDefined();
+      expect(wm?.slug).toBe("west-marches");
+      expect(wm?.kind).toBe("use-case");
+      expect(wm?.theme).toBe("fantasy");
+      expect(wm?.hub).toBe("fantasy");
+      expect(wm?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(wm?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses open-table language rather than a fixed-party campaign pitch", () => {
+      const copy = ownCopy(getLandingPage("west-marches")!);
+
+      // The things that actually distinguish the format at the table.
+      expect(copy).toMatch(/expedition/i);
+      expect(copy).toMatch(/base town/i);
+      expect(copy).toMatch(/rumour/i);
+      expect(copy).toMatch(/roster/i);
+      expect(copy).toMatch(/hex map|hexes/i);
+
+      // The format's premise is that there is no standing party and no plot
+      // waiting for one, so neither should appear in the pitch.
+      expect(copy).not.toMatch(/\bthe party\b/i);
+      expect(copy).not.toMatch(/\bstory arc\b/i);
+      expect(copy).not.toMatch(/\bmetaplot\b/i);
+    });
+
+    it("cross-links the sandbox guide and the point crawl answer", () => {
+      const wm = getLandingPage("west-marches")!;
+      expect(wm.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/for/sandbox-campaigns" }),
+          expect.objectContaining({ href: "/answers/what-is-a-point-crawl" }),
+          expect.objectContaining({ href: "/generators/settlement" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke expedition record with categorised nodes", () => {
+      const graph = getLandingPage("west-marches")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("event");
+      expect(hub.label).toBe("The Third Ashfall Expedition");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      // An expedition is only a useful example if it touches the base town,
+      // the people who went, the lead they chased and someone who now wants
+      // something from them.
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
+      expect(categories).toContain("note");
+      expect(categories).toContain("faction");
+    });
+  });
+
+  describe("Solo Worldbuilding Pack", () => {
+    it("is registered as a genre-neutral campaign-style guide", () => {
+      const solo = getLandingPage("solo-worldbuilding");
+      expect(solo).toBeDefined();
+      expect(solo?.slug).toBe("solo-worldbuilding");
+      expect(solo?.kind).toBe("use-case");
+      expect(solo?.theme).toBeUndefined();
+      expect(solo?.hub).toBeUndefined();
+      expect(solo?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(solo?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("turns prompts and random results into connected canon", () => {
+      const copy = ownCopy(getLandingPage("solo-worldbuilding")!);
+
+      expect(copy).toMatch(/prompt/i);
+      expect(copy).toMatch(/random[- ]table/i);
+      expect(copy).toMatch(/canon/i);
+      expect(copy).toMatch(/unanswered question/i);
+      expect(copy).toMatch(/contradict/i);
+
+      // This is a creator-facing workflow, not a group campaign pitch that
+      // quietly assumes a game master and a standing party.
+      expect(copy).not.toMatch(/game master/i);
+      expect(copy).not.toMatch(/\bthe party\b/i);
+    });
+
+    it("links generators that can answer the next solo prompt", () => {
+      const solo = getLandingPage("solo-worldbuilding")!;
+      expect(solo.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/world" }),
+          expect.objectContaining({ href: "/generators/settlement" }),
+          expect.objectContaining({ href: "/generators/faction" }),
+          expect.objectContaining({ href: "/generators/encounter" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke discovery graph", () => {
+      const graph = getLandingPage("solo-worldbuilding")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("location");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+      expect(categories).toContain("note");
+    });
+  });
+
+  describe("Sandbox Campaigns Pack", () => {
+    it("is registered as a campaign-style guide with no genre lock-in", () => {
+      const sandbox = getLandingPage("sandbox-campaigns");
+      expect(sandbox).toBeDefined();
+      expect(sandbox?.slug).toBe("sandbox-campaigns");
+      expect(sandbox?.kind).toBe("use-case");
+      // Sandbox play is not a genre, so the page deliberately ships without a
+      // theme or a theme hub rather than dressing itself as a fantasy page.
+      expect(sandbox?.theme).toBeUndefined();
+      expect(sandbox?.hub).toBeUndefined();
+      expect(sandbox?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(sandbox?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("leads with player-directed play, live hooks and consequences", () => {
+      const sandbox = getLandingPage("sandbox-campaigns")!;
+      const copy = ownCopy(sandbox);
+
+      expect(copy).toMatch(/faction/i);
+      expect(copy).toMatch(/hook/i);
+      expect(copy).toMatch(/consequence/i);
+      expect(sandbox.seo.description).toMatch(/^Organise/);
+
+      // Kept broader than the West Marches page: the open-table vocabulary
+      // stays on that page, and none of the dungeon-fantasy nouns that would
+      // narrow an urban or political sandbox out of the pitch appear here.
+      // Scoped to the page's own copy — the cross-link to /for/west-marches
+      // has to be allowed to say what that page is about.
+      expect(copy).not.toMatch(/\brotating roster\b/i);
+      expect(copy).not.toMatch(/\bexpeditions?\b/i);
+      expect(copy).not.toMatch(/\bdungeons?\b/i);
+    });
+
+    it("cross-links the West Marches guide and a settlement example", () => {
+      const sandbox = getLandingPage("sandbox-campaigns")!;
+      expect(sandbox.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/for/west-marches" }),
+          expect.objectContaining({
+            href: "/examples/gulls-roost-coastal-smuggling-town",
+          }),
+          expect.objectContaining({ href: "/generators/faction" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke faction web with categorised nodes", () => {
+      const graph = getLandingPage("sandbox-campaigns")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Coldway Combine");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      // The point of the example is a faction that wants something next and
+      // already blames the players for something, so both events matter.
+      const events = graph.steps.filter((step) => step.category === "event");
+      expect(events.length).toBeGreaterThanOrEqual(2);
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
+    });
+  });
+
+  describe("Campaign style packs", () => {
+    const campaignStyle = getAllLandingPages().filter(
+      (page) => page.kind === "use-case",
+    );
+
+    it("keeps each campaign-style page on a distinct intent", () => {
+      expect(campaignStyle.map((page) => page.slug)).toEqual(
+        expect.arrayContaining([
+          "sandbox-campaigns",
+          "solo-worldbuilding",
+          "west-marches",
+        ]),
+      );
+
+      const titles = campaignStyle.map((page) => page.seo.title);
+      expect(new Set(titles).size).toBe(titles.length);
+
+      const taglines = campaignStyle.map((page) => page.hero.tagline);
+      expect(new Set(taglines).size).toBe(taglines.length);
+    });
+
+    it("gives the /for directory a section for every kind a page can declare", () => {
+      // The directory groups pages by kind; a kind with no section would drop
+      // its pages off the index silently.
+      const rendered = ["genre", "system", "use-case"];
+      expect([...LandingPageKindSchema.options].sort()).toEqual(rendered);
+      for (const page of getAllLandingPages()) {
+        expect(rendered, `${page.slug} -> ${page.kind}`).toContain(page.kind);
+      }
+    });
+
+    it("promises organisation rather than automation or integrations", () => {
+      for (const page of campaignStyle) {
+        const copy = ownCopy(page);
+        expect(copy, `${page.slug}`).not.toMatch(/\bautomatically\b/i);
+        expect(copy, `${page.slug}`).not.toMatch(/\bdiscord\b/i);
+        expect(copy, `${page.slug}`).not.toMatch(/\bschedul(?:e|ing)\b/i);
+      }
+    });
+  });
+
   describe("Conspiracy Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const conspiracy = getLandingPage("conspiracy");
@@ -797,13 +1124,26 @@ describe("Landing Page Registry", () => {
   });
 
   describe("Theme hub linking", () => {
-    it("points every landing page at a hub that exists", () => {
+    it("points every system and genre guide at a hub that exists", () => {
       for (const page of getAllLandingPages()) {
+        if (page.kind === "use-case") continue;
         expect(page.hub, `${page.slug} has no hub`).toBeDefined();
         expect(isHubThemeSlug(page.hub!), `${page.slug} -> ${page.hub}`).toBe(
           true,
         );
       }
+    });
+
+    it("still validates the hub on a campaign-style page that declares one", () => {
+      for (const page of getAllLandingPages()) {
+        if (!page.hub) continue;
+        expect(isHubThemeSlug(page.hub), `${page.slug} -> ${page.hub}`).toBe(
+          true,
+        );
+      }
+      // A campaign style is not a theme, so declaring a hub is optional there.
+      expect(getLandingPage("sandbox-campaigns")?.hub).toBeUndefined();
+      expect(getLandingPage("west-marches")?.hub).toBe("fantasy");
     });
 
     it("groups the horror systems under the hub matching their subject", () => {

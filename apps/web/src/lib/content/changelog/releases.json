@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.32.0",
+    "title": "The Solo Adventure & Cloud Backup Update",
+    "date": "2026-09-03",
+    "type": "minor",
+    "highlights": [
+      "Solo Adventure Mode: Play a full campaign with no other players — the Oracle runs the GM side, tracks your session, and keeps a live transcript with a streamlined dice and tools drawer.",
+      "Opt-In Cloud Backup: Securely back up your vault to Codex Cryptica Cloud with one toggle. Off by default, fully reversible, and never used for anything but keeping your copy safe.",
+      "Vector Silhouette Library: Every character, creature, location, and faction now gets a fitting vector token automatically when it has no portrait yet, matched to your world's genre and theme.",
+      "Random Tables & Card Decks: Build your own roll tables and card decks — loot, omens, NPC quirks, whatever your table needs — roll them inline in chat, and import or export a deck to share.",
+      "Virtual Tabletop Overhaul: A restocked tile deck, inline note editing, an adjustable pinned sidebar, and Token Vision so each player's fog of war follows their own character.",
+      "Expanded Generator Library: New dedicated generators for campaign villains, star systems, artifacts, minor magic items, creatures, encounters, and social hubs — all working fully offline, no AI connection required.",
+      "Reusable Stat Sheet Presentations: Design a custom character or NPC sheet layout once, then share it across your whole roster.",
+      "Rich Table Editing: Paste a Markdown table straight into any entity's notes, or build one from scratch with the new table toolbar."
+    ]
+  },
+  {
     "version": "0.31.0",
     "title": "The Guided Worldbuilding Update",
     "date": "2026-07-30",

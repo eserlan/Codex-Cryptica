@@ -22,6 +22,7 @@ const config = {
         "/privacy",
         "/blog",
         "/sitemap.xml",
+        "/explore",
         "/tools",
         "/free-rpg-campaign-manager",
         "/worldbuilding-tool",

@@ -22,6 +22,13 @@ import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-u
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
 import {
+  resolveEntitySilhouette,
+  loadSilhouetteDataUri,
+  deriveEntityTypePalette,
+} from "schema";
+import { themeStore } from "$lib/stores/theme.svelte";
+import { categories } from "$lib/stores/categories.svelte";
+import {
   DEFAULT_SEARCH_ENTITY_ZOOM,
   consumePendingSearchEntityFocus,
   SEARCH_ENTITY_FOCUS_EVENT,
@@ -939,15 +946,54 @@ export class GraphViewController {
     }
     if (this.cy && this.deps.graph.elements && this.imageManager) {
       untrack(() => {
+        const activeTheme = themeStore.activeTheme;
+        // Derived once per sync rather than per node: a silhouette is drawn on
+        // top of its node's own tone, so its fill is the per-type `glyph`
+        // colour the palette holds at 3:1 against that tone (issue #2680) —
+        // the single theme-primary gold it used to use disappeared against
+        // some type colours.
+        const palette = deriveEntityTypePalette(activeTheme, categories.list);
+        const fallbackGlyph = activeTheme?.tokens?.primary || "#d4af37";
+
         this.imageManager!.sync({
           showImages:
             this.deps.graph.showImages && !this.deps.graph.perfStylingActive,
           resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
           releaseImageUrl: (path: string) =>
             this.deps.vault.releaseImageUrl(path),
+          // Both inputs of the glyph colour: the theme and the (user-editable)
+          // category colours it derives the tones from. Serialised rather than
+          // concatenated because category ids are user-authored — two
+          // different category sets must never flatten to the same key.
+          silhouetteVariant: JSON.stringify([
+            activeTheme?.id ?? "",
+            categories.list.map((c) => [c.id, c.color]),
+          ]),
+          resolveSilhouetteUrl: (node) => {
+            const nodeData = node.data();
+            const rawEntity = nodeData.entity || {
+              id: node.id(),
+              title:
+                typeof nodeData.label === "string"
+                  ? nodeData.label.replace(/\*$/, "")
+                  : "",
+              type: nodeData.type,
+              labels: nodeData.labels,
+              silhouette: nodeData.silhouette,
+            };
+            const sil = resolveEntitySilhouette(rawEntity, {
+              worldTheme: activeTheme?.id,
+            });
+            const glyphColor =
+              palette[String(nodeData.type)]?.glyph ?? fallbackGlyph;
+            // The artwork lives in R2, so this is a fetch (cached per URL for
+            // the session). A node whose silhouette cannot be reached simply
+            // paints without a glyph.
+            return loadSilhouetteDataUri(sil, glyphColor);
+          },
           onBatchApplied: (count) => {
             this.deps.debugStore.log(
-              `[GraphView] Applied ${count} images to graph nodes.`,
+              `[GraphView] Applied ${count} visuals to graph nodes.`,
             );
           },
           onLog: (msg) => this.deps.debugStore.log(msg),

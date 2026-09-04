@@ -272,20 +272,24 @@
         req.generatorId,
         categories.list.map((c) => c.id),
       );
+      // Ships are persisted as locations, but their generated lore needs a
+      // vessel-specific outline rather than the generic location template.
+      const targetTemplateType =
+        req.generatorId === "ship" ? "ship" : targetEntityType;
       let templateOutline = "";
       try {
         const folderHandle = await vault.getActiveFolderHandle();
         const vaultHandle = await vault.getActiveVaultHandle();
         const customTemplatesDirHandle = folderHandle ?? vaultHandle;
         templateOutline = await entityTemplateService.resolveTemplate(
-          targetEntityType,
+          targetTemplateType,
           themeStore.worldThemeId,
           customTemplatesDirHandle,
         );
       } catch {
         // Fall back to system defaults if the vault handle is unavailable.
         templateOutline = await entityTemplateService.resolveTemplate(
-          targetEntityType,
+          targetTemplateType,
           themeStore.worldThemeId,
         );
       }
