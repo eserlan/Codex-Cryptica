@@ -107,16 +107,25 @@ describe("auto-degodify", () => {
       const agyArgs = AGENT_PROVIDERS.agy.getArgs("test-prompt", 15);
       expect(agyArgs).toContain("--print");
       expect(agyArgs).toContain("test-prompt");
+      expect(agyArgs).toContain("--effort=medium");
       expect(agyArgs).toContain("--dangerously-skip-permissions");
       expect(agyArgs).toContain("--print-timeout=15m0s");
 
       const claudeArgs = AGENT_PROVIDERS.claude.getArgs("test-prompt", 15);
       expect(claudeArgs).toContain("-p");
       expect(claudeArgs).toContain("test-prompt");
+      expect(claudeArgs).toContain("--model");
+      expect(claudeArgs).toContain("sonnet");
+      expect(claudeArgs).toContain("--effort");
+      expect(claudeArgs).toContain("medium");
       expect(claudeArgs).toContain("--dangerously-skip-permissions");
 
       const codexArgs = AGENT_PROVIDERS.codex.getArgs("test-prompt", 15);
       expect(codexArgs).toContain("exec");
+      expect(codexArgs).toContain("-m");
+      expect(codexArgs).toContain("gpt-5.6-terra");
+      expect(codexArgs).toContain("-c");
+      expect(codexArgs).toContain('model_reasoning_effort="medium"');
       expect(codexArgs).toContain("--dangerously-bypass-approvals-and-sandbox");
       expect(codexArgs).toContain("test-prompt");
     });

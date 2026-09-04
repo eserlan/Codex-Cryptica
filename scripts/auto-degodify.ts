@@ -36,6 +36,7 @@ export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
     getArgs: (prompt, timeoutMinutes) => [
       "--print",
       prompt,
+      "--effort=medium",
       "--dangerously-skip-permissions",
       `--print-timeout=${timeoutMinutes}m0s`,
     ],
@@ -46,6 +47,10 @@ export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
     getArgs: (prompt) => [
       "-p",
       prompt,
+      "--model",
+      "sonnet",
+      "--effort",
+      "medium",
       "--dangerously-skip-permissions",
     ],
   },
@@ -54,6 +59,10 @@ export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
     binCandidates: ["codex", `${homedir()}/.local/bin/codex`],
     getArgs: (prompt) => [
       "exec",
+      "-m",
+      "gpt-5.6-terra",
+      "-c",
+      'model_reasoning_effort="medium"',
       "--dangerously-bypass-approvals-and-sandbox",
       prompt,
     ],
