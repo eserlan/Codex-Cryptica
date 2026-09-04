@@ -344,5 +344,65 @@ describe("image-processing", () => {
       expect(result).toBeInstanceOf(Blob);
       expect(result.type).toBe("image/png");
     });
+
+    it("should upscale a small image 2x with nearest-neighbor when autoUpscaleSmall is set", async () => {
+      imageDefaults.width = 300;
+      imageDefaults.height = 200;
+      const inputBlob = new Blob(["input"], { type: "image/png" });
+      const promise = convertToWebP(inputBlob, 0.85, {
+        autoUpscaleSmall: true,
+      });
+
+      if (mockImage.onload) {
+        mockImage.onload();
+      }
+
+      await promise;
+
+      expect(mockCanvas.width).toBe(600);
+      expect(mockCanvas.height).toBe(400);
+      expect(mockContext.imageSmoothingEnabled).toBe(false);
+      expect(mockContext.drawImage).toHaveBeenCalledWith(
+        mockImage,
+        0,
+        0,
+        600,
+        400,
+      );
+    });
+
+    it("should not upscale a small image when autoUpscaleSmall is not set", async () => {
+      imageDefaults.width = 300;
+      imageDefaults.height = 200;
+      const inputBlob = new Blob(["input"], { type: "image/png" });
+      const promise = convertToWebP(inputBlob, 0.85);
+
+      if (mockImage.onload) {
+        mockImage.onload();
+      }
+
+      await promise;
+
+      expect(mockCanvas.width).toBe(300);
+      expect(mockCanvas.height).toBe(200);
+    });
+
+    it("should not upscale an image that is already large enough", async () => {
+      imageDefaults.width = 1200;
+      imageDefaults.height = 900;
+      const inputBlob = new Blob(["input"], { type: "image/png" });
+      const promise = convertToWebP(inputBlob, 0.85, {
+        autoUpscaleSmall: true,
+      });
+
+      if (mockImage.onload) {
+        mockImage.onload();
+      }
+
+      await promise;
+
+      expect(mockCanvas.width).toBe(1200);
+      expect(mockCanvas.height).toBe(900);
+    });
   });
 });

@@ -513,7 +513,9 @@ export class MapStore {
 
     // 1. Convert to WebP and Save to OPFS
     try {
-      const webpBlob = await convertToWebP(file, 0.85);
+      const webpBlob = await convertToWebP(file, 0.85, {
+        autoUpscaleSmall: true,
+      });
       await writeOpfsFile(
         ["maps", storageName],
         webpBlob,
