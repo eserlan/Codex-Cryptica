@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
   slug: "how-do-you-run-a-conspiracy-campaign",
   category: "session-prep",
+  publishedAt: "2026-08-30",
   question: "How do you run a conspiracy campaign?",
   kind: "how-to",
   shortAnswer:

@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
   slug: "how-do-you-prep-a-weekly-rpg-session-quickly",
   category: "session-prep",
+  publishedAt: "2026-09-04",
   question: "How do you prep a weekly RPG session quickly?",
   kind: "framework",
   shortAnswer:

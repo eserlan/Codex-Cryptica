@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
   slug: "how-do-you-organise-npc-relationships",
   category: "campaign-notes",
+  publishedAt: "2026-08-30",
   question: "How do you organise NPC relationships?",
   kind: "how-to",
   shortAnswer:

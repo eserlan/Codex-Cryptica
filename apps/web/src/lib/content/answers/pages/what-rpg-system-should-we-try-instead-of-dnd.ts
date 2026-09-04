@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
   slug: "what-rpg-system-should-we-try-instead-of-dnd",
   category: "getting-started",
+  publishedAt: "2026-08-31",
   question: "What RPG system should we try instead of D&D?",
   kind: "framework",
   shortAnswer:

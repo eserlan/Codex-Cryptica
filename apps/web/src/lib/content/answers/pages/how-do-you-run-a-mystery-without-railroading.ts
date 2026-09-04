@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   slug: "how-do-you-run-a-mystery-without-railroading",
   category: "session-prep",
+  publishedAt: "2026-09-04",
   question: "How do you run a mystery without railroading?",
   kind: "how-to",
   shortAnswer:

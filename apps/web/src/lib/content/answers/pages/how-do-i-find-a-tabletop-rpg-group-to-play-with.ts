@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
   slug: "how-do-i-find-a-tabletop-rpg-group-to-play-with",
   category: "getting-started",
+  publishedAt: "2026-08-31",
   question: "How do I find a tabletop RPG group to play with?",
   kind: "how-to",
   shortAnswer:

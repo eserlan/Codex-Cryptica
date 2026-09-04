@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-handle-character-death-in-a-tabletop-rpg",
   category: "campaign-notes",
+  publishedAt: "2026-09-04",
   question: "How do you handle character death in a tabletop RPG?",
   kind: "framework",
   shortAnswer:

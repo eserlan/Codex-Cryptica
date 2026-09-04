@@ -8,6 +8,12 @@
     getAnswerCategory,
     groupAnswersByCategory,
   } from "$lib/content/answers/categories";
+  import {
+    ANSWER_SORT_OPTIONS,
+    formatAnswerDate,
+    sortAnswers,
+    type AnswerSortOption,
+  } from "$lib/content/answers/sort";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -22,6 +28,7 @@
 
   let searchQuery = $state("");
   let activeCategory = $state<string | "all">("all");
+  let sortBy = $state<AnswerSortOption>("category");
 
   const KIND_LABEL: Record<string, string> = {
     definition: "Definition",
@@ -41,7 +48,7 @@
   let filteredAnswers = $derived.by(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return answers.filter((answer) => {
+    const matches = answers.filter((answer) => {
       // Check category filter
       if (activeCategory !== "all") {
         const cat = getAnswerCategory(answer.slug);
@@ -63,17 +70,22 @@
 
       return questionMatch || shortAnswerMatch || kindMatch || categoryMatch;
     });
+
+    return sortAnswers(matches, sortBy);
   });
 
   let groupedSections = $derived(groupAnswersByCategory(answers));
 
   let isSearchingOrFiltered = $derived(
-    searchQuery.trim().length > 0 || activeCategory !== "all",
+    searchQuery.trim().length > 0 ||
+      activeCategory !== "all" ||
+      sortBy !== "category",
   );
 
   function resetFilters() {
     searchQuery = "";
     activeCategory = "all";
+    sortBy = "category";
   }
 </script>
 
@@ -135,43 +147,73 @@
         {/if}
       </div>
 
-      <!-- Category Filter Pills -->
+      <!-- Controls row: Category Filter Pills + Sort Dropdown -->
       <div
-        class="flex flex-wrap items-center gap-2"
-        role="tablist"
-        aria-label="Filter answers by category"
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeCategory === "all"}
-          onclick={() => (activeCategory = "all")}
-          class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-colors {activeCategory ===
-          'all'
-            ? 'bg-theme-primary font-bold text-theme-bg'
-            : 'border border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/40 hover:text-theme-text'}"
+        <!-- Category Filter Pills -->
+        <div
+          class="flex flex-wrap items-center gap-2"
+          role="tablist"
+          aria-label="Filter answers by category"
         >
-          <span>All</span>
-          <span class="opacity-70">({answers.length})</span>
-        </button>
-
-        {#each ANSWER_CATEGORIES as category (category.id)}
-          {@const count = getCategoryCount(category.id)}
           <button
             type="button"
             role="tab"
-            aria-selected={activeCategory === category.id}
-            onclick={() => (activeCategory = category.id)}
+            aria-selected={activeCategory === "all"}
+            onclick={() => (activeCategory = "all")}
             class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-colors {activeCategory ===
-            category.id
+            'all'
               ? 'bg-theme-primary font-bold text-theme-bg'
               : 'border border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/40 hover:text-theme-text'}"
           >
-            <span class="{category.icon} h-3.5 w-3.5" aria-hidden="true"></span>
-            <span>{category.title}</span>
-            <span class="opacity-70">({count})</span>
+            <span>All</span>
+            <span class="opacity-70">({answers.length})</span>
           </button>
-        {/each}
+
+          {#each ANSWER_CATEGORIES as category (category.id)}
+            {@const count = getCategoryCount(category.id)}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === category.id}
+              onclick={() => (activeCategory = category.id)}
+              class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-xs font-medium transition-colors {activeCategory ===
+              category.id
+                ? 'bg-theme-primary font-bold text-theme-bg'
+                : 'border border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/40 hover:text-theme-text'}"
+            >
+              <span class="{category.icon} h-3.5 w-3.5" aria-hidden="true"
+              ></span>
+              <span>{category.title}</span>
+              <span class="opacity-70">({count})</span>
+            </button>
+          {/each}
+        </div>
+
+        <!-- Sort Selector -->
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          <label
+            for="answers-sort"
+            class="flex items-center gap-1.5 font-mono text-xs text-theme-muted"
+          >
+            <span
+              class="icon-[lucide--arrow-up-down] h-3.5 w-3.5 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <span>Sort:</span>
+          </label>
+          <select
+            id="answers-sort"
+            bind:value={sortBy}
+            class="cursor-pointer rounded-lg border border-theme-border bg-theme-surface/70 px-3 py-1.5 font-mono text-xs text-theme-text transition-colors hover:border-theme-primary/40 focus:border-theme-primary focus:outline-none focus:ring-1 focus:ring-theme-primary"
+            aria-label="Sort answers"
+          >
+            {#each ANSWER_SORT_OPTIONS as option (option.id)}
+              <option value={option.id}>{option.label}</option>
+            {/each}
+          </select>
+        </div>
       </div>
     </div>
 
@@ -207,12 +249,21 @@
                   >
                     <div class="flex items-start justify-between gap-4">
                       <div class="flex-1">
-                        <div class="mb-1.5 flex items-center gap-2">
+                        <div class="mb-1.5 flex flex-wrap items-center gap-2">
                           <span
                             class="font-mono text-[11px] uppercase tracking-wider text-theme-primary"
                           >
                             {KIND_LABEL[answer.kind] ?? answer.kind}
                           </span>
+                          {#if answer.publishedAt}
+                            <span class="text-theme-muted/40">&bull;</span>
+                            <time
+                              datetime={answer.publishedAt}
+                              class="font-mono text-[11px] text-theme-muted"
+                            >
+                              {formatAnswerDate(answer.publishedAt)}
+                            </time>
+                          {/if}
                         </div>
                         <h3
                           class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary sm:text-xl"
@@ -255,6 +306,16 @@
               matching &ldquo;<span class="text-theme-text">{searchQuery}</span
               >&rdquo;
             {/if}
+            {#if sortBy !== "category"}
+              {@const currentSort = ANSWER_SORT_OPTIONS.find(
+                (o) => o.id === sortBy,
+              )}
+              {#if currentSort}
+                &bull; sorted by <span class="text-theme-primary"
+                  >{currentSort.label.toLowerCase()}</span
+                >
+              {/if}
+            {/if}
           </p>
           <button
             type="button"
@@ -275,7 +336,7 @@
               >
                 <div class="flex items-start justify-between gap-4">
                   <div class="flex-1">
-                    <div class="mb-1.5 flex items-center gap-2">
+                    <div class="mb-1.5 flex flex-wrap items-center gap-2">
                       <span
                         class="font-mono text-[11px] uppercase tracking-wider text-theme-primary"
                       >
@@ -286,6 +347,15 @@
                         <span class="font-mono text-[11px] text-theme-muted">
                           {cat.title}
                         </span>
+                      {/if}
+                      {#if answer.publishedAt}
+                        <span class="text-theme-muted/40">&bull;</span>
+                        <time
+                          datetime={answer.publishedAt}
+                          class="font-mono text-[11px] text-theme-muted"
+                        >
+                          {formatAnswerDate(answer.publishedAt)}
+                        </time>
                       {/if}
                     </div>
                     <h2
