@@ -6,6 +6,7 @@ import {
   getPinchMidpoint,
   getZoomAtPointUpdate,
   getZoomViewportUpdate,
+  describeMoveBlocked,
   isClickGesture,
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
@@ -16,6 +17,7 @@ import {
   type MapInteractionHandlers,
 } from "./interactions/map-interaction-handler-factory";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 type MapInputEvent = MouseEvent | PointerEvent;
 
@@ -331,6 +333,23 @@ export class MapInteractionManager {
       if (hitToken) {
         this.tokenSelection.applyModifierSelection(hitToken.id, e);
         this.isPanning = false;
+        return;
+      }
+
+      // Pressed a piece that can't be moved (locked token, locked layer, or
+      // someone else's). Falling through to a pan here is what makes a drag
+      // on a tile look like it "moves the whole map instead of the tile",
+      // with no hint as to why — so keep the press on the piece and say so.
+      const blocked = this.tokenDrag.blockedToken;
+      if (blocked) {
+        this.tokenSelection.applyModifierSelection(blocked.id, e);
+        this.isPanning = false;
+        this.mapAnnouncement = describeMoveBlocked(
+          blocked,
+          mapStore.layerLocked[blocked.layer ?? "token"] === true,
+          mapStore.isGMMode,
+        );
+        notificationStore.notify(this.mapAnnouncement, "info");
         return;
       }
     }

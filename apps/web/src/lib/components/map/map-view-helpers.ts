@@ -41,6 +41,28 @@ export function getMapDisplayDimensions(
   return { width: nativeWidth * scale, height: nativeHeight * scale };
 }
 
+// Explains why a token under the cursor refused to be dragged, so pressing
+// a locked piece says so instead of silently doing nothing (or, worse,
+// panning the map out from under the press).
+export function describeMoveBlocked(
+  token: { name?: string; locked?: boolean; layer?: string | null },
+  isLayerLocked: boolean,
+  isHost: boolean,
+): string {
+  const name = token.name?.trim() || "That piece";
+
+  if (token.locked) {
+    return `${name} is locked — unlock it to move it`;
+  }
+  if (isLayerLocked) {
+    return `The ${token.layer ?? "token"} layer is locked — unlock the layer to move ${name}`;
+  }
+  if (!isHost) {
+    return `${name} belongs to someone else — only its owner or the GM can move it`;
+  }
+  return `${name} can't be moved`;
+}
+
 export function findClickedPin(
   pins: MapPin[],
   project: (point: Point) => Point,

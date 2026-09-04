@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { MapPin, StatSheetField } from "schema";
 import {
   findClickedPin,
+  describeMoveBlocked,
   getKeyboardViewportUpdate,
   getMapDisplayDimensions,
   getZoomViewportUpdate,
@@ -32,6 +33,36 @@ describe("getMapDisplayDimensions", () => {
       width: 100,
       height: 1200,
     });
+  });
+});
+
+describe("describeMoveBlocked", () => {
+  it("names a locked token", () => {
+    expect(
+      describeMoveBlocked({ name: "Corridor A", locked: true }, false, true),
+    ).toContain("Corridor A is locked");
+  });
+
+  it("names the locked layer, and how to unlock it", () => {
+    const message = describeMoveBlocked(
+      { name: "Corridor A", layer: "terrain" },
+      true,
+      true,
+    );
+    expect(message).toContain("terrain layer is locked");
+    expect(message).toContain("Corridor A");
+  });
+
+  it("explains ownership when not the host", () => {
+    expect(describeMoveBlocked({ name: "Goblin" }, false, false)).toContain(
+      "belongs to someone else",
+    );
+  });
+
+  it("falls back to a generic name for an unnamed piece", () => {
+    expect(describeMoveBlocked({ locked: true }, false, true)).toContain(
+      "That piece is locked",
+    );
   });
 });
 

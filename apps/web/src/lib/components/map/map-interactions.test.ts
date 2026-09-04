@@ -14,6 +14,7 @@ vi.mock("../../stores/map.svelte", () => ({
     pins: [{ id: "pin-a", coordinates: { x: 100, y: 100 }, visuals: {} }],
     updatePinCoordinatesInMemory: vi.fn(),
     layerVisibility: { terrain: true, object: true, token: true },
+    layerLocked: { terrain: false, object: false, token: false },
   },
 }));
 
@@ -554,6 +555,68 @@ describe("MapInteractionManager", () => {
       expect(manager.selectedPinId).toBeNull();
 
       (mapSession as any).vttEnabled = true;
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  describe("pressing a token that can't be moved", () => {
+    const lockedTile = {
+      id: "tile-a",
+      name: "Corridor A",
+      x: 100,
+      y: 100,
+      width: 50,
+      height: 50,
+      rotation: 0,
+      zIndex: 0,
+      baseShape: "square",
+      layer: "token",
+      visibleTo: "all",
+    };
+
+    it("keeps the press on the tile instead of panning the map", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).allTokens = [lockedTile];
+      (mapSession.canMoveToken as any).mockReturnValue(false);
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+
+      // The whole point: the map must not slide out from under the press.
+      expect(manager.isPanning).toBe(false);
+      expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 160, clientY: 170 }),
+      );
+      expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+      // And it says why, rather than just doing nothing.
+      expect(manager.mapAnnouncement).toContain("Corridor A");
+
+      (mapSession.canMoveToken as any).mockReturnValue(true);
+      (mapSession as any).allTokens = [];
+    });
+
+    it("still pans when the press lands on empty map", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).allTokens = [lockedTile];
+      (mapSession.canMoveToken as any).mockReturnValue(false);
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 600, clientY: 500, button: 0 }),
+      );
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 640, clientY: 540 }),
+      );
+
+      expect(manager.isPanning).toBe(true);
+      expect(mapStore.updateViewport).toHaveBeenCalled();
+
+      (mapSession.canMoveToken as any).mockReturnValue(true);
       (mapSession as any).allTokens = [];
     });
   });
