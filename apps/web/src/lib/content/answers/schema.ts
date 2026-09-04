@@ -139,8 +139,8 @@ export const AnswerConfigSchema = z.object({
     description: z.string().min(1),
     /** Defaults to `/answers/<slug>` when omitted. */
     canonical: z.string().optional(),
-    image: z.string().optional(),
-    imageAlt: z.string().optional(),
+    image: z.string().url().optional(),
+    imageAlt: z.string().min(10).optional(),
   }),
 });
 export type AnswerConfig = z.infer<typeof AnswerConfigSchema>;

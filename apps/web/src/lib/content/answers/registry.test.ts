@@ -158,6 +158,34 @@ describe("answer schema", () => {
     expect(answer.seo.imageAlt).toBe("A scenic road path illustration");
   });
 
+  it("rejects an seo.image that is not a valid absolute URL", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-image-url",
+        seo: {
+          title: "Test Image Title",
+          description: "Test description with image.",
+          image: "/relative/path/test-image.jpg",
+          imageAlt: "A scenic road path illustration",
+        },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects an seo.imageAlt that is empty or too short to be meaningful", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-image-alt",
+        seo: {
+          title: "Test Image Title",
+          description: "Test description with image.",
+          image: "https://assets.codexcryptica.com/og/test-image.jpg",
+          imageAlt: "",
+        },
+      }),
+    ).toThrow();
+  });
+
   it("rejects a prose block with an empty cta text or href", () => {
     expect(() =>
       makeAnswer({
@@ -328,7 +356,7 @@ describe("published answers", () => {
     expect(travelAnswer.seo.image).toMatch(
       /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
     );
-    expect(travelAnswer.seo.imageAlt).toBeDefined();
+    expect(travelAnswer.seo.imageAlt?.trim().length ?? 0).toBeGreaterThan(0);
     expect(travelAnswer.sections.some((s) => s.kind === "example")).toBe(true);
     expect(travelAnswer.sections.some((s) => s.kind === "checklist")).toBe(
       true,
