@@ -68,7 +68,12 @@ export function updateTableHeader(
 ): VisualCard[] {
   return cards.map((card) => {
     if (card.id !== cardId || card.mode !== "table") return card;
-    const headers = [...(card.tableHeaders ?? [])];
+    if (headerIndex < 0 || headerIndex >= card.columns) return card;
+    const existingHeaders = card.tableHeaders ?? [];
+    const headers = Array.from(
+      { length: card.columns },
+      (_, index) => existingHeaders[index] ?? `Column ${index + 1}`,
+    );
     headers[headerIndex] = value;
     return { ...card, tableHeaders: headers };
   });
@@ -171,7 +176,7 @@ export function addValueToTableRow(
   rowIndex: number,
 ): VisualCard[] {
   return cards.map((card) => {
-    if (card.id !== cardId) return card;
+    if (card.id !== cardId || card.mode !== "table") return card;
     return {
       ...card,
       rows: card.rows.map((row, index) =>
@@ -194,7 +199,7 @@ export function updateValueInTableRow(
   value: string,
 ): VisualCard[] {
   return cards.map((card) => {
-    if (card.id !== cardId) return card;
+    if (card.id !== cardId || card.mode !== "table") return card;
     return {
       ...card,
       rows: card.rows.map((row, index) =>
@@ -220,7 +225,7 @@ export function removeValueFromTableRow(
   cellIndex: number,
 ): VisualCard[] {
   return cards.map((card) => {
-    if (card.id !== cardId) return card;
+    if (card.id !== cardId || card.mode !== "table") return card;
     return {
       ...card,
       rows: card.rows.map((row, index) =>
@@ -240,6 +245,7 @@ export function moveCard(
   index: number,
   direction: -1 | 1,
 ): VisualCard[] {
+  if (index < 0 || index >= cards.length) return cards;
   const target = index + direction;
   if (target < 0 || target >= cards.length) return cards;
   const copy = [...cards];
@@ -284,6 +290,7 @@ export function moveFieldBetweenRows(
   targetRowIndex: number,
 ): VisualCard[] {
   return cards.map((c) => {
+    if (c.id !== srcCardId && c.id !== targetCardId) return c;
     let nextRows = c.rows;
     if (c.id === srcCardId) {
       nextRows = nextRows.map((r, idx) =>

@@ -129,6 +129,24 @@ describe("visual-card-operations", () => {
       expect(updateTableHeader(cards, "missing", 0, "Val")).toEqual(cards);
     });
 
+    it("ignores out-of-range header indices and normalizes headers to columns", () => {
+      const cards: VisualCard[] = [
+        {
+          id: "t1",
+          title: "T1",
+          columns: 2,
+          mode: "table",
+          tableHeaders: ["H1", "H2", "H3"],
+          rows: [[]],
+        },
+      ];
+      expect(updateTableHeader(cards, "t1", -1, "Val")).toEqual(cards);
+      expect(updateTableHeader(cards, "t1", 2, "Val")).toEqual(cards);
+
+      const updated = updateTableHeader(cards, "t1", 0, "New H1");
+      expect(updated[0].tableHeaders).toEqual(["New H1", "H2"]);
+    });
+
     it("updates card title", () => {
       const cards: VisualCard[] = [
         { id: "c1", title: "Old Title", columns: 2, rows: [[]] },
@@ -293,6 +311,39 @@ describe("visual-card-operations", () => {
       const updated = removeValueFromTableRow([card], "t1", 0, 0);
       expect(updated[0].rows[0]).toEqual([{ kind: "value", value: "v2" }]);
     });
+
+    it("does not mutate non-table (grid or undefined mode) cards", () => {
+      const gridCard: VisualCard = {
+        id: "g1",
+        title: "G1",
+        columns: 2,
+        mode: "grid",
+        rows: [[]],
+      };
+      expect(addValueToTableRow([gridCard], "g1", 0)).toEqual([gridCard]);
+      expect(
+        updateValueInTableRow([gridCard], "g1", 0, 0, "x"),
+      ).toEqual([gridCard]);
+      expect(removeValueFromTableRow([gridCard], "g1", 0, 0)).toEqual([
+        gridCard,
+      ]);
+
+      const undefinedModeCard: VisualCard = {
+        id: "u1",
+        title: "U1",
+        columns: 2,
+        rows: [[{ kind: "value", value: "v1" }]],
+      };
+      expect(addValueToTableRow([undefinedModeCard], "u1", 0)).toEqual([
+        undefinedModeCard,
+      ]);
+      expect(
+        updateValueInTableRow([undefinedModeCard], "u1", 0, 0, "x"),
+      ).toEqual([undefinedModeCard]);
+      expect(
+        removeValueFromTableRow([undefinedModeCard], "u1", 0, 0),
+      ).toEqual([undefinedModeCard]);
+    });
   });
 
   describe("moveCard & reorderCards", () => {
@@ -315,6 +366,16 @@ describe("visual-card-operations", () => {
       ];
       expect(moveCard(cards, 0, -1)).toEqual(cards);
       expect(moveCard(cards, 0, 1)).toEqual(cards);
+    });
+
+    it("returns unchanged array when moveCard index itself is out of bounds", () => {
+      const cards: VisualCard[] = [
+        { id: "c1", title: "C1", columns: 2, rows: [[]] },
+        { id: "c2", title: "C2", columns: 2, rows: [[]] },
+      ];
+      expect(moveCard(cards, -1, 1)).toEqual(cards);
+      expect(moveCard(cards, cards.length, -1)).toEqual(cards);
+      expect(moveCard(cards, cards.length, 1)).toEqual(cards);
     });
 
     it("reorders cards from drag index to drop index", () => {
@@ -365,6 +426,27 @@ describe("visual-card-operations", () => {
       const result = moveFieldBetweenRows(cards, "c1", 0, "ac", "c1", 1);
       expect(result[0].rows[0]).toEqual([]);
       expect(result[0].rows[1]).toEqual([{ kind: "field", fieldId: "ac" }]);
+    });
+
+    it("returns the same reference for cards that are neither source nor target", () => {
+      const unrelatedCard: VisualCard = {
+        id: "c3",
+        title: "C3",
+        columns: 2,
+        rows: [[]],
+      };
+      const cards: VisualCard[] = [
+        {
+          id: "c1",
+          title: "C1",
+          columns: 2,
+          rows: [[{ kind: "field", fieldId: "hp" }]],
+        },
+        { id: "c2", title: "C2", columns: 2, rows: [[]] },
+        unrelatedCard,
+      ];
+      const result = moveFieldBetweenRows(cards, "c1", 0, "hp", "c2", 0);
+      expect(result[2]).toBe(unrelatedCard);
     });
   });
 });
