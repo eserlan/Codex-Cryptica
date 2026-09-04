@@ -56,7 +56,7 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
         },
         {
           term: "The five-element framework",
-          text: "The GM writes five bullets: Want (needs 40 lbs of quality bog-iron before the baron's bailiff arrives on Morndas); Mannerism (taps tongs rhythmically against his leather apron while listening); Contradiction (faint of heart around blood, turning pale if a PC enters with an open wound); Relationship (secretly sells discounted lockpicks and pitons to the local riverside smugglers); Sensory (smells of elderberry wine and charred oak; wears a chipped jeweler's loupe).",
+          text: "The GM writes five bullets: Want (needs 40 lbs of quality bog-iron before the baron's bailiff arrives on Morndas); Mannerism (taps tongs rhythmically against his leather apron while listening); Contradiction (faint of heart around blood, turning pale if a PC enters with an open wound); Relationship (secretly sells discounted lockpicks and pitons to the local riverside smugglers); Sensory (smells of elderberry wine and charred oak; wears a chipped jeweller's loupe).",
         },
         {
           term: "Why it works",
