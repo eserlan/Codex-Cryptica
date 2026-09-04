@@ -36,6 +36,7 @@
     "assets:sync": "bun scripts/upload-images.mjs",
     "check:crawler-access": "bun scripts/crawler-access-check.mjs",
     "analyze:god-files": "bun scripts/god-file-analysis.ts",
+    "degodify": "bun scripts/auto-degodify.ts",
     "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },
