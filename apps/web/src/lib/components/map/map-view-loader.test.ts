@@ -65,7 +65,9 @@ describe("MapViewAssetLoader", () => {
 
     await vi.waitFor(() => {
       expect(onImageLoaded).toHaveBeenCalledTimes(1);
-      expect(loadMask).toHaveBeenCalledWith(640, 480);
+      // 640x480 is below the small-map display-scale threshold, so the
+      // mask is sized to the 2x display dimensions, not the native image.
+      expect(loadMask).toHaveBeenCalledWith(1280, 960);
       expect(onMaskLoaded).toHaveBeenCalledTimes(1);
       expect(onDimensionsLoaded).toHaveBeenCalledWith(640, 480);
     });
@@ -73,6 +75,52 @@ describe("MapViewAssetLoader", () => {
     cleanup();
     expect(releaseImageUrl).toHaveBeenCalledWith("maps/map-1.webp");
     expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("sizes the mask to a map's already-locked-in dimensions rather than recomputing from the native image", async () => {
+    // A map created before display-scaling existed (or one already synced
+    // once) is locked at whatever `dimensions` its Map entity carries —
+    // here, native/unscaled size for a small image, deliberately NOT what
+    // getMapDisplayDimensions(640, 480) would derive fresh (1280x960). The
+    // renderer's imageDisplaySize is fed from that same stored value, so
+    // the mask must match it exactly or fog painting misaligns.
+    const onImageLoaded = vi.fn();
+    const onMaskLoaded = vi.fn();
+    const onDimensionsLoaded = vi.fn();
+    const loadMask = vi.fn(async () => document.createElement("canvas"));
+    let createdImage: HTMLImageElement | null = null;
+
+    const loader = new MapViewAssetLoader({
+      vault: {
+        resolveImageUrl: vi.fn(async () => "blob:asset"),
+        releaseImageUrl: vi.fn(),
+      },
+      mapStore: { loadMask },
+      createImage: () => (createdImage = createImageMock()),
+      onClear: vi.fn(),
+      onImageLoaded,
+      onMaskLoaded,
+      onDimensionsLoaded,
+      onError: vi.fn(),
+    });
+
+    loader.sync({
+      id: "map-1",
+      name: "Map 1",
+      assetPath: "maps/map-1.webp",
+      dimensions: { width: 640, height: 480 },
+      pins: [],
+      fogOfWar: { maskPath: "maps/map-1_mask.png" },
+    });
+
+    await vi.waitFor(() => expect(createdImage).not.toBeNull());
+    const image = createdImage as unknown as HTMLImageElement;
+    await image.onload?.(new Event("load") as any);
+
+    await vi.waitFor(() => {
+      expect(loadMask).toHaveBeenCalledWith(640, 480);
+      expect(onMaskLoaded).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("sets crossOrigin to anonymous for external http/https image URLs", async () => {

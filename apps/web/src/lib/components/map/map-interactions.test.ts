@@ -14,6 +14,7 @@ vi.mock("../../stores/map.svelte", () => ({
     pins: [{ id: "pin-a", coordinates: { x: 100, y: 100 }, visuals: {} }],
     updatePinCoordinatesInMemory: vi.fn(),
     layerVisibility: { terrain: true, object: true, token: true },
+    layerLocked: { terrain: false, object: false, token: false },
   },
 }));
 
@@ -28,6 +29,8 @@ vi.mock("../../stores/map-session.svelte", () => ({
     myPeerId: null,
     activeLayer: "token",
     canViewToken: vi.fn(() => true),
+    canMoveToken: vi.fn(() => true),
+    setDraggingTokenId: vi.fn(),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
     notePlacementArmed: false,
@@ -552,6 +555,187 @@ describe("MapInteractionManager", () => {
       expect(manager.selectedPinId).toBeNull();
 
       (mapSession as any).vttEnabled = true;
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  describe("pressing a token that can't be moved", () => {
+    const lockedTile = {
+      id: "tile-a",
+      name: "Corridor A",
+      x: 100,
+      y: 100,
+      width: 50,
+      height: 50,
+      rotation: 0,
+      zIndex: 0,
+      baseShape: "square",
+      layer: "token",
+      visibleTo: "all",
+    };
+
+    it("keeps the press on the tile instead of panning the map", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).allTokens = [lockedTile];
+      (mapSession.canMoveToken as any).mockReturnValue(false);
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+
+      // The whole point: the map must not slide out from under the press.
+      expect(manager.isPanning).toBe(false);
+      expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 160, clientY: 170 }),
+      );
+      expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+      // And it says why, rather than just doing nothing.
+      expect(manager.mapAnnouncement).toContain("Corridor A");
+
+      (mapSession.canMoveToken as any).mockReturnValue(true);
+      (mapSession as any).allTokens = [];
+    });
+
+    it("still pans when the press lands on empty map", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).allTokens = [lockedTile];
+      (mapSession.canMoveToken as any).mockReturnValue(false);
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 600, clientY: 500, button: 0 }),
+      );
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 640, clientY: 540 }),
+      );
+
+      expect(manager.isPanning).toBe(true);
+      expect(mapStore.updateViewport).toHaveBeenCalled();
+
+      (mapSession.canMoveToken as any).mockReturnValue(true);
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  describe("move-map-to-fine-tune mode", () => {
+    // The mode exists to nudge a tile-covered map under a fixed grid, so a
+    // pointer-down landing on a tile/token must still pan the map — grabbing
+    // the object instead would drag it snapped to the grid while the map
+    // itself never moved, which reads as "moving the map snaps".
+    it("pans the map even when the drag starts on top of a token or tile", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).gridMoveMode = true;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", {
+          clientX: 110,
+          clientY: 110,
+          button: 0,
+        }),
+      );
+
+      expect(manager.isPanning).toBe(true);
+      expect(manager.tokenDrag.dragState).toBeFalsy();
+
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 117, clientY: 123 }),
+      );
+
+      expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 7, y: 13 }, 1);
+
+      (mapSession as any).gridMoveMode = false;
+      (mapSession as any).allTokens = [];
+    });
+
+    it("leaves the mode on release, so tiles are draggable again afterwards", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).gridMoveMode = true;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 150, clientY: 160 }),
+      );
+      await manager.onMouseUp(
+        new MouseEvent("mouseup", { clientX: 150, clientY: 160 }),
+      );
+
+      expect(mapSession.gridMoveMode).toBe(false);
+
+      // The very next pointer-down on a tile must grab it, not pan the map.
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+
+      expect(manager.tokenDrag.dragState).toBeTruthy();
+      expect(manager.isPanning).toBe(false);
+
+      (mapSession as any).allTokens = [];
+    });
+
+    it("still grabs a token normally when not in move-map mode", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).gridMoveMode = false;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", {
+          clientX: 110,
+          clientY: 110,
+          button: 0,
+        }),
+      );
+
+      expect(manager.isPanning).toBe(false);
+      expect(manager.tokenDrag.dragState).toBeTruthy();
+
       (mapSession as any).allTokens = [];
     });
   });

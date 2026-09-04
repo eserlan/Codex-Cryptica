@@ -1,4 +1,5 @@
 import type { Map } from "schema";
+import { getMapDisplayDimensions } from "./map-view-helpers";
 
 export interface MapViewAssetLoaderDeps {
   vault: Pick<
@@ -75,10 +76,30 @@ export class MapViewAssetLoader {
 
           this.deps.onImageLoaded(image);
 
+          // Mask must be sized to the map's *display* dimensions (which may
+          // be upscaled from the image's native pixel size for small tile
+          // art), matching the image-space coordinate system fog painting
+          // and vision reveal use — not the raw source bitmap's own size.
+          //
+          // A map that already has locked-in dimensions (anything other
+          // than a brand-new upload) MUST use that stored value rather than
+          // recomputing fresh from the native image — the renderer's
+          // imageDisplaySize is fed from the same stored `dimensions`
+          // (MapCanvas.svelte), and a map created before display-scaling
+          // existed is locked at its native, unscaled size. Recomputing
+          // here would size the mask at 2x while the image and every fog
+          // coordinate stayed at 1x, so painting would only ever reach the
+          // mask's top-left quadrant.
+          const hasStoredDimensions =
+            activeMap.dimensions.width > 0 && activeMap.dimensions.height > 0;
+          const displaySize = hasStoredDimensions
+            ? activeMap.dimensions
+            : getMapDisplayDimensions(image.width, image.height);
+
           try {
             const mask = await this.deps.mapStore.loadMask(
-              image.width,
-              image.height,
+              displaySize.width,
+              displaySize.height,
             );
             if (loadId !== this.currentLoadId) return;
 

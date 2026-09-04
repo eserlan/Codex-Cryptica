@@ -78,6 +78,12 @@ export interface RenderMeasurement {
 export interface RenderOptions {
   canvas: HTMLCanvasElement;
   image: HTMLImageElement | null;
+  /** Size (in image-space px) to draw `image` at, when it differs from the
+   * image's own native pixel size — e.g. a small pre-drawn tile that's
+   * displayed at 2x so its grid squares are usable. Falls back to the
+   * image's native size when omitted. Nearest-neighbor scaling is used so
+   * pre-drawn grid/hex lines stay crisp instead of blurring. */
+  imageDisplaySize?: { width: number; height: number } | null;
   transform: ViewportTransform;
   canvasSize: { width: number; height: number };
   pins: MapPin[];
@@ -95,6 +101,12 @@ export interface RenderOptions {
     offsetX?: number;
     offsetY?: number;
     fixed?: boolean;
+    /** Pan value the fixed grid should render at (its "screen position");
+     * ignored unless `fixed` is set. Should be a snapshot of the viewport's
+     * pan taken when fixed mode began, so the grid renders exactly where it
+     * already was instead of jumping to `pan: {0,0}` — while still staying
+     * static (not tracking live pan) as the map is dragged underneath it. */
+    fixedPan?: { x: number; y: number };
   };
 }
 
@@ -478,10 +490,17 @@ export function renderMap(options: RenderOptions) {
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
   const hasImage = Boolean(image && image.width > 0 && image.height > 0);
+  const displayWidth =
+    hasImage && image ? (options.imageDisplaySize?.width ?? image.width) : 0;
+  const displayHeight =
+    hasImage && image ? (options.imageDisplaySize?.height ?? image.height) : 0;
   // The image's on-canvas bounds, also used to size the fog overlay (step 6)
   // even when there's no image — the mask canvas is always sized to the
   // map's intended dimensions (see MapView.svelte's mask-loading effect).
-  const boundsSize = hasImage && image ? image : maskCanvas;
+  const boundsSize =
+    hasImage && image
+      ? { width: displayWidth, height: displayHeight }
+      : maskCanvas;
 
   const center = imageToViewport(
     originPt,
@@ -495,12 +514,16 @@ export function renderMap(options: RenderOptions) {
     ctx.save();
     ctx.translate(center.x, center.y);
     ctx.scale(transform.zoom, transform.zoom);
+    // Nearest-neighbor when displaying larger than native so pre-drawn
+    // grid/hex lines on small tile art stay crisp instead of blurring.
+    ctx.imageSmoothingEnabled =
+      displayWidth === image.width && displayHeight === image.height;
     ctx.drawImage(
       image,
-      -image.width / 2,
-      -image.height / 2,
-      image.width,
-      image.height,
+      -displayWidth / 2,
+      -displayHeight / 2,
+      displayWidth,
+      displayHeight,
     );
     ctx.restore();
   }
@@ -1103,7 +1126,17 @@ function drawGrid(
     ctx.fillStyle = cache.cachedPattern.pattern;
 
     if (grid.fixed) {
-      // Fixed grid mode: ignore pan offset, draw at screen origin
+      // Fixed grid mode: stays at the pan position it had when fixed mode
+      // began (its `fixedPan` snapshot) instead of tracking the live pan —
+      // so the grid holds still on screen while the map is dragged
+      // underneath it, without jumping to a different phase on entry.
+      const fixedPan = grid.fixedPan ?? { x: 0, y: 0 };
+      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
+      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
+      const offsetX = (fixedPan.x + canvasSize.width / 2 + gridOffsetX) % size;
+      const offsetY = (fixedPan.y + canvasSize.height / 2 + gridOffsetY) % size;
+
+      ctx.translate(offsetX, offsetY);
       ctx.fillRect(
         -size,
         -size,
