@@ -53,6 +53,12 @@ export interface PrFeedback {
   hasActionableFeedback: boolean;
 }
 
+export interface PollFeedbackOptions {
+  initialWaitMinutes?: number;
+  pollIntervalSeconds?: number;
+  maxWaitMinutes?: number;
+}
+
 export interface PrFixOptions {
   rootDir?: string;
   prNumber: number;
@@ -61,6 +67,9 @@ export interface PrFixOptions {
   baseBranch?: string;
   agentProviders?: AgentProviderName[];
   timeoutMinutes?: number;
+  initialWaitMinutes?: number;
+  pollIntervalSeconds?: number;
+  maxWaitMinutes?: number;
   waitMinutesForReview?: number;
   maxRounds?: number;
   worktreePath?: string;
@@ -207,17 +216,80 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
 }
 
 /**
- * Poll periodically for feedback to arrive (e.g. waiting for Copilot / CI checks).
+ * Poll periodically for feedback to arrive (initial wait + 1-minute review loop).
  */
 export async function pollForPrFeedback(
   prNumber: number,
   repoDir: string,
-  waitMinutes: number,
+  options: PollFeedbackOptions | number = {},
 ): Promise<PrFeedback> {
-  const maxAttempts = Math.max(1, Math.floor((waitMinutes * 60) / 20));
+  const opts: PollFeedbackOptions =
+    typeof options === "number" ? { initialWaitMinutes: options } : options;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const feedback = fetchPrFeedback(prNumber, repoDir);
+  const initialWaitMinutes = opts.initialWaitMinutes ?? 4;
+  const pollIntervalSeconds = opts.pollIntervalSeconds ?? 60;
+  const maxWaitMinutes = opts.maxWaitMinutes ?? 12;
+
+  // 1. Immediate check: if feedback is already actionable, return immediately
+  let feedback = fetchPrFeedback(prNumber, repoDir);
+  if (feedback.hasActionableFeedback) {
+    console.log(
+      `📬 Detected actionable feedback on PR #${prNumber}: ` +
+        `${feedback.unresolvedComments.length} comment(s), ` +
+        `${feedback.failingChecks.length} failing check(s).`,
+    );
+    return feedback;
+  }
+
+  // If review already arrived with no requested changes and all CI checks completed
+  if (feedback.reviews.length > 0 && feedback.pendingChecks.length === 0) {
+    console.log(
+      `✅ PR #${prNumber} already has completed review with no issues, and all checks finished.`,
+    );
+    return feedback;
+  }
+
+  const startTime = Date.now();
+  const initialWaitMs = initialWaitMinutes * 60 * 1000;
+  const maxWaitMs = maxWaitMinutes * 60 * 1000;
+
+  console.log(
+    `⏳ Waiting initial ${initialWaitMinutes}m for PR #${prNumber} CI runs and bot reviews...`,
+  );
+
+  // Initial wait phase: check every 20s during the first initialWaitMinutes
+  while (Date.now() - startTime < initialWaitMs) {
+    const remainingInitialMs = initialWaitMs - (Date.now() - startTime);
+    const sleepMs = Math.min(20_000, remainingInitialMs);
+    if (sleepMs > 0) {
+      await new Promise((res) => setTimeout(res, sleepMs));
+    }
+
+    feedback = fetchPrFeedback(prNumber, repoDir);
+    if (feedback.hasActionableFeedback) {
+      console.log(
+        `📬 Detected actionable feedback on PR #${prNumber} at ${Math.round((Date.now() - startTime) / 1000)}s: ` +
+          `${feedback.unresolvedComments.length} comment(s), ` +
+          `${feedback.failingChecks.length} failing check(s).`,
+      );
+      return feedback;
+    }
+
+    if (feedback.reviews.length > 0 && feedback.pendingChecks.length === 0) {
+      console.log(
+        `✅ Review landed on PR #${prNumber} with no requested changes, and all CI checks passed.`,
+      );
+      return feedback;
+    }
+  }
+
+  console.log(
+    `\n🔄 Reached ${initialWaitMinutes}m mark. Starting review loop (checking every ${pollIntervalSeconds}s up to ${maxWaitMinutes}m total)...`,
+  );
+
+  // Extended review loop phase: check every pollIntervalSeconds (e.g. 60s / 1 min)
+  while (Date.now() - startTime < maxWaitMs) {
+    feedback = fetchPrFeedback(prNumber, repoDir);
     if (feedback.hasActionableFeedback) {
       console.log(
         `📬 Detected actionable feedback on PR #${prNumber}: ` +
@@ -227,20 +299,25 @@ export async function pollForPrFeedback(
       return feedback;
     }
 
-    // If all checks have completed and there are no pending checks or unresolved comments, exit early
-    if (feedback.pendingChecks.length === 0 && attempt > 1) {
+    if (feedback.reviews.length > 0 && feedback.pendingChecks.length === 0) {
+      console.log(
+        `✅ Review landed on PR #${prNumber} with no requested changes, and all CI checks passed.`,
+      );
       return feedback;
     }
 
-    if (attempt < maxAttempts) {
-      console.log(
-        `⏳ PR #${prNumber} has no issues yet, but ${feedback.pendingChecks.length} check(s) still pending... (waiting 20s)`,
-      );
-      await new Promise((res) => setTimeout(res, 20_000));
-    }
+    const elapsedMinutes = Math.round((Date.now() - startTime) / 60_000);
+    console.log(
+      `⏳ [Minute ${elapsedMinutes}/${maxWaitMinutes}] No review yet on PR #${prNumber}. ` +
+        `Checking again in ${pollIntervalSeconds}s... (${feedback.pendingChecks.length} check(s) still pending)`,
+    );
+
+    await new Promise((res) => setTimeout(res, pollIntervalSeconds * 1000));
   }
 
-  // Final check
+  console.log(
+    `⏰ Reached maximum review wait window (${maxWaitMinutes}m). Concluding review loop.`,
+  );
   return fetchPrFeedback(prNumber, repoDir);
 }
 
@@ -353,12 +430,16 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   const rootDir = options.rootDir || process.cwd();
   const prNumber = options.prNumber;
   const timeoutMinutes = options.timeoutMinutes ?? 20;
-  const waitMinutes = options.waitMinutesForReview ?? 2;
   const maxRounds = options.maxRounds ?? 2;
   const providers = options.agentProviders || ["claude", "codex", "agy"];
 
   console.log(`\n🔍 Checking feedback for PR #${prNumber}...`);
-  const feedback = await pollForPrFeedback(prNumber, rootDir, waitMinutes);
+  const feedback = await pollForPrFeedback(prNumber, rootDir, {
+    initialWaitMinutes:
+      options.initialWaitMinutes ?? options.waitMinutesForReview ?? 4,
+    pollIntervalSeconds: options.pollIntervalSeconds ?? 60,
+    maxWaitMinutes: options.maxWaitMinutes ?? 12,
+  });
 
   if (!feedback.hasActionableFeedback) {
     console.log(

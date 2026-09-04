@@ -25,6 +25,9 @@ export interface AutoDegodifyOptions {
   timeoutMinutes?: number;
   checkFixLoop?: boolean;
   waitMinutesForReview?: number;
+  initialWaitMinutes?: number;
+  pollIntervalSeconds?: number;
+  maxWaitMinutes?: number;
   maxFixRounds?: number;
 }
 
@@ -459,7 +462,9 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
             worktreePath,
             agentProviders: providers,
             timeoutMinutes,
-            waitMinutesForReview: options.waitMinutesForReview ?? 4,
+            initialWaitMinutes: options.initialWaitMinutes ?? 4,
+            pollIntervalSeconds: options.pollIntervalSeconds ?? 60,
+            maxWaitMinutes: options.maxWaitMinutes ?? 12,
             maxRounds: options.maxFixRounds ?? 2,
           });
         }
