@@ -166,7 +166,9 @@ export interface CrawlResponse {
 
 export interface RouteExpectation {
   /** `html` routes get the full indexability audit; `text` routes only status. */
-  kind: "html" | "text";
+  kind: "html" | "text" | "private";
+  /** Public discovery routes must be indexable; workspace routes must not. */
+  indexability?: "indexable" | "noindex";
   /** Minimum body length before the response counts as substantive. */
   minBytes?: number;
 }
@@ -178,7 +180,7 @@ export interface RouteExpectation {
 export function expectationFor(path: string): RouteExpectation {
   return /\.(txt|xml|json)$/i.test(path)
     ? { kind: "text", minBytes: 100 }
-    : { kind: "html" };
+    : { kind: "html", indexability: "indexable" };
 }
 
 /** Markers Cloudflare's managed challenge/interstitial pages ship with. */
@@ -271,13 +273,35 @@ export function evaluateCrawlResponse(
     });
   }
 
+  const expectsNoindex = expectation.indexability === "noindex";
   const xRobots = readHeader(response.headers, "x-robots-tag");
-  if (xRobots && /noindex/i.test(xRobots)) {
+  const hasXRobotsNoindex = Boolean(xRobots && /noindex/i.test(xRobots));
+  if (!expectsNoindex && hasXRobotsNoindex) {
     findings.push({
       code: "noindex",
       severity: "error",
       message: `X-Robots-Tag header carries noindex: ${xRobots}`,
     });
+  }
+
+  if (expectation.kind === "text") return findings;
+
+  const robotsMeta = extractTag(
+    response.body,
+    /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']*)["']/i,
+  );
+  const hasMetaNoindex = Boolean(robotsMeta && /noindex/i.test(robotsMeta));
+
+  if (expectsNoindex) {
+    if (!hasXRobotsNoindex && !hasMetaNoindex) {
+      findings.push({
+        code: "noindex-missing",
+        severity: "error",
+        message:
+          "private route is missing an X-Robots-Tag or robots meta noindex directive",
+      });
+    }
+    return findings;
   }
 
   if (expectation.kind !== "html") return findings;
@@ -313,11 +337,7 @@ export function evaluateCrawlResponse(
     });
   }
 
-  const robotsMeta = extractTag(
-    response.body,
-    /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']*)["']/i,
-  );
-  if (robotsMeta && /noindex/i.test(robotsMeta)) {
+  if (hasMetaNoindex) {
     findings.push({
       code: "noindex",
       severity: "error",
@@ -451,4 +471,90 @@ export function pickRepresentativeRoutes(
   }
 
   return [...seen.values()].flat().sort();
+}
+
+/**
+ * Workspace route families that are client-rendered/stateful and must never
+ * be indexed by crawlers or listed in the sitemap.
+ */
+export const PRIVATE_ROUTE_FAMILIES = [
+  "/adventure",
+  "/canvas",
+  "/decks",
+  "/dice",
+  "/guest",
+  "/help",
+  "/map",
+  "/oracle",
+  "/table",
+  "/tables",
+  "/templates",
+  "/timeline",
+  "/vault",
+] as const;
+
+/**
+ * Representative private paths sampled during crawler access audits to verify
+ * noindex / non-indexability at the static host boundary.
+ */
+export const PRIVATE_ROUTE_SAMPLES = [
+  "/adventure",
+  "/canvas",
+  "/decks",
+  "/dice",
+  "/guest",
+  "/help",
+  "/import",
+  "/map",
+  "/oracle",
+  "/table",
+  "/tables",
+  "/templates",
+  "/timeline",
+  "/vault/audit-sample",
+] as const;
+
+/**
+ * Check if a path corresponds to a private/stateful route that must not
+ * appear in the public sitemap.
+ *
+ * Checks by route-family prefix with an optional trailing slash, with an
+ * explicit exception for `/import`: `/import` (or `/import/`) is the private
+ * in-app importer, while `/import/*` (e.g. `/import/obsidian`) is public discovery.
+ */
+export function isDisallowedSitemapPath(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/import") {
+    return true;
+  }
+  return PRIVATE_ROUTE_FAMILIES.some(
+    (family) => normalized === family || normalized.startsWith(`${family}/`),
+  );
+}
+
+/**
+ * Extract all normalized pathnames declared in `<loc>` tags of a sitemap XML string.
+ */
+export function extractSitemapPaths(sitemapXml: string): string[] {
+  const locs = [...sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(
+    (match) => match[1],
+  );
+  const paths: string[] = [];
+  for (const loc of locs) {
+    try {
+      paths.push(new URL(loc, "https://example.com").pathname);
+    } catch {
+      continue;
+    }
+  }
+  return paths;
+}
+
+/**
+ * Scan a sitemap XML string for any private/stateful routes that must not
+ * be indexed or listed. Returns unique disallowed paths.
+ */
+export function findDisallowedSitemapPaths(sitemapXml: string): string[] {
+  const paths = extractSitemapPaths(sitemapXml);
+  return [...new Set(paths.filter(isDisallowedSitemapPath))].sort();
 }

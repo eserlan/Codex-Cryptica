@@ -23,9 +23,11 @@ import {
   errorsOnly,
   evaluateCrawlResponse,
   expectationFor,
+  findDisallowedSitemapPaths,
   isPathAllowed,
   parseRobotsTxt,
   pickRepresentativeRoutes,
+  PRIVATE_ROUTE_SAMPLES,
   warningsOnly,
 } from "../apps/web/src/lib/seo/crawler-access.ts";
 
@@ -203,8 +205,10 @@ const robotsText = await checkRobots();
 const robots = parseRobotsTxt(robotsText);
 
 let routes = [];
+let sitemapBody = "";
 try {
   const sitemap = await crawl("/sitemap.xml");
+  sitemapBody = sitemap.body;
   routes = pickRepresentativeRoutes(sitemap.body, SAMPLES_PER_FAMILY);
 } catch (error) {
   record("/sitemap.xml", [
@@ -248,6 +252,20 @@ for (const path of routes) {
     continue;
   }
   await checkRoute(path);
+}
+
+for (const path of findDisallowedSitemapPaths(sitemapBody)) {
+  record(`${path} (sitemap)`, [
+    {
+      code: "private-route-in-sitemap",
+      severity: "error",
+      message: "private/stateful route appears in the public sitemap",
+    },
+  ]);
+}
+
+for (const path of PRIVATE_ROUTE_SAMPLES) {
+  await checkRoute(path, { kind: "private", indexability: "noindex" });
 }
 
 await checkUserAgentParity("/");
