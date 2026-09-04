@@ -1971,6 +1971,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world — a person, a place, a faction, an item — and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
 
+### [How do you prep a weekly RPG session quickly?](https://codexcryptica.com/answers/how-do-you-prep-a-weekly-rpg-session-quickly)
+
+**Direct answer:** To prep a weekly RPG session quickly without burnout, run a 30-to-45-minute timeboxed routine focused exclusively on the upcoming three hours of play: (1) review the previous session's recap and extract one or two unresolved player hooks, (2) frame a strong opening scene with immediate momentum, (3) sketch two or three flexible scene nodes rather than a rigid linear plot, (4) prepare one or two portable encounters or hazards with condensed stats, (5) outline two key NPCs with an immediate desire and one distinctive mannerism, and (6) leave a deliberate improvisation buffer. Everything else can be generated or improvised live.
+
 ### [How do you prepare a sandbox RPG campaign?](https://codexcryptica.com/answers/how-do-you-prepare-a-sandbox-rpg-campaign)
 
 **Direct answer:** A sandbox RPG campaign is prepared from the centre outward rather than the top down. Instead of drafting a continental atlas or extensive global lore, establish a compact starting region: one resilient settlement hub, three local factions in active friction, three immediate adventure sites within a day's travel, and a roster of six rumours that point towards distinct hazards and rewards. Worldbuilding beyond that perimeter is only developed when players declare their travel intentions at the end of a session.

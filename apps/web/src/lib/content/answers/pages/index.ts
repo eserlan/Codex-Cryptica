@@ -12,6 +12,7 @@ import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-np
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
 import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
+import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly-rpg-session-quickly";
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
@@ -44,6 +45,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouMakeTravelInterestingInATabletopRpg,
     howDoYouOrganiseNpcRelationships,
     howDoYouOrganiseRpgCampaignNotes,
+    howDoYouPrepAWeeklyRpgSessionQuickly,
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRunAConspiracyCampaign,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
