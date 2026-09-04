@@ -114,6 +114,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
   relatedAnswers: [
     "what-makes-a-good-random-encounter",
     "how-much-prep-do-you-need-for-an-rpg-session",
+    "how-do-you-handle-character-death-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-encounter-balance",

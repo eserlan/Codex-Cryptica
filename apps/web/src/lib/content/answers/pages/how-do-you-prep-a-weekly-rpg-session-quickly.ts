@@ -158,6 +158,10 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
+    "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
+    "how-do-you-run-a-heist-in-a-tabletop-rpg",
+    "how-do-you-start-worldbuilding-from-scratch",
+    "how-do-you-write-a-one-shot-adventure",
   ],
   discovery: {
     id: "answer-prep-weekly-session-quickly",

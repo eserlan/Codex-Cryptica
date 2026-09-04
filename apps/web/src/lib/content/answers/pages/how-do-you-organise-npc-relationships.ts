@@ -138,6 +138,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-much-prep-do-you-need-for-an-rpg-session",
+    "how-do-you-handle-character-death-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-npc-relationships",

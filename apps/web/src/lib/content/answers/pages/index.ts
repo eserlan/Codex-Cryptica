@@ -6,8 +6,11 @@ import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-ses
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-faction";
+import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
+import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
+import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
@@ -15,7 +18,11 @@ import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-camp
 import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly-rpg-session-quickly";
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
+import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-tabletop-rpg";
+import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
+import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
+import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
@@ -39,8 +46,11 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyFaction,
+    howDoYouCreateAMagicSystem,
     howDoYouCreateAPantheon,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
+    howDoYouHandleCharacterDeathInATabletopRpg,
+    howDoYouKeepTrackOfTimeInATabletopCampaign,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
     howDoYouMakeTravelInterestingInATabletopRpg,
     howDoYouOrganiseNpcRelationships,
@@ -48,7 +58,11 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouPrepAWeeklyRpgSessionQuickly,
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRunAConspiracyCampaign,
+    howDoYouRunAHeistInATabletopRpg,
+    howDoYouRunAMysteryWithoutRailroading,
+    howDoYouStartWorldbuildingFromScratch,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
+    howDoYouWriteAOneShotAdventure,
     howMuchPrepDoYouNeedForAnRpgSession,
     whatIsAPointCrawl,
     whatMakesAGoodRandomEncounter,

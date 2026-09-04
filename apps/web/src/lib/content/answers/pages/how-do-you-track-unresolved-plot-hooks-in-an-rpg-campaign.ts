@@ -134,6 +134,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-much-prep-do-you-need-for-an-rpg-session",
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-prep-a-weekly-rpg-session-quickly",
+      "how-do-you-run-a-mystery-without-railroading",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",
