@@ -1975,6 +1975,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
 
+### [How do you track unresolved plot hooks in an RPG campaign?](https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign)
+
+**Direct answer:** Unresolved plot hooks are tracked by treating them as living status states attached to existing campaign entities rather than entries on an endless quest checklist. Record each hook with five lightweight attributes: the origin source, the affected faction or NPC, current lifecycle status (dormant, simmering, active, or rotting), its urgency clock, and the concrete consequence that manifests in the world if the players choose to ignore it.
+
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
