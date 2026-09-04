@@ -3,10 +3,15 @@ import {
   downgradeKnownGaps,
   evaluateCrawlResponse,
   expectationFor,
+  extractSitemapPaths,
+  findDisallowedSitemapPaths,
+  isDisallowedSitemapPath,
   isPathAllowed,
   OAI_SEARCHBOT_TOKEN,
   parseRobotsTxt,
   pickRepresentativeRoutes,
+  PRIVATE_ROUTE_FAMILIES,
+  PRIVATE_ROUTE_SAMPLES,
   selectRobotsGroup,
   type CrawlResponse,
 } from "./crawler-access";
@@ -385,5 +390,88 @@ describe("downgradeKnownGaps", () => {
     expect(findings.every((finding) => finding.severity === "error")).toBe(
       true,
     );
+  });
+});
+
+describe("isDisallowedSitemapPath", () => {
+  it("flags private route families with exact match or subpaths", () => {
+    expect(isDisallowedSitemapPath("/vault")).toBe(true);
+    expect(isDisallowedSitemapPath("/vault/")).toBe(true);
+    expect(isDisallowedSitemapPath("/vault/audit-sample")).toBe(true);
+    expect(isDisallowedSitemapPath("/adventure")).toBe(true);
+    expect(isDisallowedSitemapPath("/adventure/session-123")).toBe(true);
+    expect(isDisallowedSitemapPath("/canvas")).toBe(true);
+    expect(isDisallowedSitemapPath("/canvas/dungeon-1")).toBe(true);
+  });
+
+  it("flags /import and /import/ but allows public /import/* subpaths", () => {
+    expect(isDisallowedSitemapPath("/import")).toBe(true);
+    expect(isDisallowedSitemapPath("/import/")).toBe(true);
+    expect(isDisallowedSitemapPath("/import/obsidian")).toBe(false);
+    expect(isDisallowedSitemapPath("/import/notion")).toBe(false);
+  });
+
+  it("allows public discovery pages and partial name matches", () => {
+    expect(isDisallowedSitemapPath("/")).toBe(false);
+    expect(isDisallowedSitemapPath("/for/game-masters")).toBe(false);
+    expect(isDisallowedSitemapPath("/generators/npc")).toBe(false);
+    expect(isDisallowedSitemapPath("/adventure-hook")).toBe(false);
+    expect(isDisallowedSitemapPath("/dice-roller")).toBe(false);
+    expect(isDisallowedSitemapPath("/timeline-guide")).toBe(false);
+  });
+});
+
+describe("findDisallowedSitemapPaths", () => {
+  it("identifies private routes regardless of trailing slashes or subpaths", () => {
+    const sitemap = `<urlset>
+      <url><loc>https://codexcryptica.com/</loc></url>
+      <url><loc>https://codexcryptica.com/for/game-masters</loc></url>
+      <url><loc>https://codexcryptica.com/import/obsidian</loc></url>
+      <url><loc>https://codexcryptica.com/import</loc></url>
+      <url><loc>https://codexcryptica.com/vault/</loc></url>
+      <url><loc>https://codexcryptica.com/vault/secret-world</loc></url>
+      <url><loc>https://codexcryptica.com/adventure-hook</loc></url>
+      <url><loc>https://codexcryptica.com/dice/session-1</loc></url>
+    </urlset>`;
+
+    expect(findDisallowedSitemapPaths(sitemap)).toEqual([
+      "/dice/session-1",
+      "/import",
+      "/vault/",
+      "/vault/secret-world",
+    ]);
+  });
+
+  it("returns an empty array when no private routes exist", () => {
+    const sitemap = `<urlset>
+      <url><loc>https://codexcryptica.com/</loc></url>
+      <url><loc>https://codexcryptica.com/generators/npc</loc></url>
+      <url><loc>https://codexcryptica.com/import/obsidian</loc></url>
+    </urlset>`;
+
+    expect(findDisallowedSitemapPaths(sitemap)).toEqual([]);
+  });
+});
+
+describe("extractSitemapPaths", () => {
+  it("extracts paths from urlset loc elements", () => {
+    const xml = `<urlset>
+      <url><loc>https://codexcryptica.com/for/game-masters</loc></url>
+      <url><loc>/vault/sample</loc></url>
+    </urlset>`;
+    expect(extractSitemapPaths(xml)).toEqual([
+      "/for/game-masters",
+      "/vault/sample",
+    ]);
+  });
+});
+
+describe("PRIVATE_ROUTE_FAMILIES and PRIVATE_ROUTE_SAMPLES", () => {
+  it("includes all expected workspace families and samples", () => {
+    expect(PRIVATE_ROUTE_FAMILIES).toContain("/vault");
+    expect(PRIVATE_ROUTE_FAMILIES).toContain("/canvas");
+    expect(PRIVATE_ROUTE_FAMILIES).toContain("/adventure");
+    expect(PRIVATE_ROUTE_SAMPLES).toContain("/import");
+    expect(PRIVATE_ROUTE_SAMPLES).toContain("/vault/audit-sample");
   });
 });

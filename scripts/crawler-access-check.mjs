@@ -23,9 +23,11 @@ import {
   errorsOnly,
   evaluateCrawlResponse,
   expectationFor,
+  findDisallowedSitemapPaths,
   isPathAllowed,
   parseRobotsTxt,
   pickRepresentativeRoutes,
+  PRIVATE_ROUTE_SAMPLES,
   warningsOnly,
 } from "../apps/web/src/lib/seo/crawler-access.ts";
 
@@ -34,24 +36,6 @@ const REQUEST_TIMEOUT_MS = 20_000;
 
 /** Text routes that must stay reachable regardless of what the sitemap lists. */
 const REQUIRED_TEXT_ROUTES = ["/llms.txt", "/llms-full.txt", "/sitemap.xml"];
-
-/** Workspace paths that must remain non-indexable and outside the sitemap. */
-const PRIVATE_ROUTE_SAMPLES = [
-  "/adventure",
-  "/canvas",
-  "/decks",
-  "/dice",
-  "/guest",
-  "/help",
-  "/import",
-  "/map",
-  "/oracle",
-  "/table",
-  "/tables",
-  "/templates",
-  "/timeline",
-  "/vault/audit-sample",
-];
 
 /**
  * Discovery families the issue calls out. A family that is absent from the
@@ -270,16 +254,17 @@ for (const path of routes) {
   await checkRoute(path);
 }
 
+for (const path of findDisallowedSitemapPaths(sitemapBody)) {
+  record(`${path} (sitemap)`, [
+    {
+      code: "private-route-in-sitemap",
+      severity: "error",
+      message: "private/stateful route appears in the public sitemap",
+    },
+  ]);
+}
+
 for (const path of PRIVATE_ROUTE_SAMPLES) {
-  if (sitemapBody.includes(`<loc>${base}${path}</loc>`)) {
-    record(`${path} (sitemap)`, [
-      {
-        code: "private-route-in-sitemap",
-        severity: "error",
-        message: "private/stateful route appears in the public sitemap",
-      },
-    ]);
-  }
   await checkRoute(path, { kind: "private", indexability: "noindex" });
 }
 

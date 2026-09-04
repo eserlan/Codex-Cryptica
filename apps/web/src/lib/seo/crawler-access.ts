@@ -472,3 +472,89 @@ export function pickRepresentativeRoutes(
 
   return [...seen.values()].flat().sort();
 }
+
+/**
+ * Workspace route families that are client-rendered/stateful and must never
+ * be indexed by crawlers or listed in the sitemap.
+ */
+export const PRIVATE_ROUTE_FAMILIES = [
+  "/adventure",
+  "/canvas",
+  "/decks",
+  "/dice",
+  "/guest",
+  "/help",
+  "/map",
+  "/oracle",
+  "/table",
+  "/tables",
+  "/templates",
+  "/timeline",
+  "/vault",
+] as const;
+
+/**
+ * Representative private paths sampled during crawler access audits to verify
+ * noindex / non-indexability at the static host boundary.
+ */
+export const PRIVATE_ROUTE_SAMPLES = [
+  "/adventure",
+  "/canvas",
+  "/decks",
+  "/dice",
+  "/guest",
+  "/help",
+  "/import",
+  "/map",
+  "/oracle",
+  "/table",
+  "/tables",
+  "/templates",
+  "/timeline",
+  "/vault/audit-sample",
+] as const;
+
+/**
+ * Check if a path corresponds to a private/stateful route that must not
+ * appear in the public sitemap.
+ *
+ * Checks by route-family prefix with an optional trailing slash, with an
+ * explicit exception for `/import`: `/import` (or `/import/`) is the private
+ * in-app importer, while `/import/*` (e.g. `/import/obsidian`) is public discovery.
+ */
+export function isDisallowedSitemapPath(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (normalized === "/import") {
+    return true;
+  }
+  return PRIVATE_ROUTE_FAMILIES.some(
+    (family) => normalized === family || normalized.startsWith(`${family}/`),
+  );
+}
+
+/**
+ * Extract all normalized pathnames declared in `<loc>` tags of a sitemap XML string.
+ */
+export function extractSitemapPaths(sitemapXml: string): string[] {
+  const locs = [...sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(
+    (match) => match[1],
+  );
+  const paths: string[] = [];
+  for (const loc of locs) {
+    try {
+      paths.push(new URL(loc, "https://example.com").pathname);
+    } catch {
+      continue;
+    }
+  }
+  return paths;
+}
+
+/**
+ * Scan a sitemap XML string for any private/stateful routes that must not
+ * be indexed or listed. Returns unique disallowed paths.
+ */
+export function findDisallowedSitemapPaths(sitemapXml: string): string[] {
+  const paths = extractSitemapPaths(sitemapXml);
+  return [...new Set(paths.filter(isDisallowedSitemapPath))].sort();
+}
