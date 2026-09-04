@@ -35,13 +35,34 @@ vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: {
+const { vaultMock, saveDraftMock, notifyMock } = vi.hoisted(() => {
+  const vaultMock = {
     isGuest: false,
-    entities: {},
+    entities: {} as Record<string, unknown>,
     createEntity: vi.fn(async () => "new-id"),
     addConnection: vi.fn(),
-  },
+    throwOnSelect: false,
+    _selectedEntityId: null as string | null,
+    get selectedEntityId() {
+      return this._selectedEntityId;
+    },
+    set selectedEntityId(id: string | null) {
+      if (this.throwOnSelect) {
+        throw new Error("editor pane unavailable");
+      }
+      this._selectedEntityId = id;
+    },
+  };
+  const saveDraftMock = vi.fn(async () => ({
+    entityId: "new-id",
+    relationshipCreated: false,
+  }));
+  const notifyMock = vi.fn();
+  return { vaultMock, saveDraftMock, notifyMock };
+});
+
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: vaultMock,
 }));
 
 vi.mock("$lib/stores/categories.svelte", () => ({
@@ -53,21 +74,45 @@ vi.mock("$lib/stores/categories.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: {
+    notify: notifyMock,
+  },
+}));
+
 vi.mock("generator-engine", async () => {
   const actual =
     await vi.importActual<typeof import("generator-engine")>(
       "generator-engine",
     );
-  return actual;
+  const draft: import("generator-engine").GeneratedDraft = {
+    title: "The Observatory of Weeping Veins",
+    entityType: "location",
+    summary: "A contested subterranean sanctuary.",
+    content: "",
+    lore: "",
+    labels: ["dungeon", "location"],
+    sourceGeneratorId: "dungeon",
+    templateApplied: false,
+  };
+  class FakeCampaignGeneratorService extends actual.CampaignGeneratorService {
+    async *generateDraftStream() {
+      yield { type: "draft" as const, draft };
+    }
+    saveDraft = saveDraftMock;
+  }
+  return { ...actual, CampaignGeneratorService: FakeCampaignGeneratorService };
 });
 
 import CampaignGeneratorModal from "./CampaignGeneratorModal.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 const store = modalUIStore as typeof modalUIStore & {
   _workflow: {
     launchMode: "workspace" | "contextual";
     sourceEntityId: string | null;
+    generatorId: string | null;
   };
 };
 
@@ -76,6 +121,14 @@ describe("CampaignGeneratorModal", () => {
     vi.clearAllMocks();
     store._workflow.launchMode = "workspace";
     store._workflow.sourceEntityId = null;
+    store._workflow.generatorId = null;
+    vaultMock.throwOnSelect = false;
+    vaultMock._selectedEntityId = null;
+    saveDraftMock.mockClear();
+    saveDraftMock.mockResolvedValue({
+      entityId: "new-id",
+      relationshipCreated: false,
+    });
   });
 
   // T018: generator selection / config form rendering
@@ -142,5 +195,52 @@ describe("CampaignGeneratorModal", () => {
     );
     expect(style).toContain("--color-chrome-text: var(--color-theme-text)");
     expect(style).toContain("--color-chrome-muted: var(--color-theme-muted)");
+  });
+
+  // Regression for #2742: with a vault open, generating a result and
+  // clicking "Open in Editor" must create the entity and select it.
+  it("saves the generated draft and opens it in the editor", async () => {
+    store._workflow.generatorId = "dungeon";
+    render(CampaignGeneratorModal);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    await screen.findByRole("button", { name: "Open in Editor" });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Open in Editor" }),
+    );
+
+    await vi.waitFor(() => {
+      expect(saveDraftMock).toHaveBeenCalledOnce();
+      expect(vaultMock._selectedEntityId).toBe("new-id");
+    });
+    expect(modalUIStore.closeGeneratorWorkflow).toHaveBeenCalledOnce();
+    expect(notificationStore.notify).not.toHaveBeenCalled();
+  });
+
+  // Regression for #2742: the entity must already be saved and the modal
+  // must still close (with a visible error) even if opening it in the
+  // editor fails — the draft must never silently vanish.
+  it("still closes and surfaces an error if opening the saved entity fails", async () => {
+    store._workflow.generatorId = "dungeon";
+    vaultMock.throwOnSelect = true;
+    render(CampaignGeneratorModal);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    await screen.findByRole("button", { name: "Open in Editor" });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Open in Editor" }),
+    );
+
+    await vi.waitFor(() => {
+      expect(saveDraftMock).toHaveBeenCalledOnce();
+      expect(modalUIStore.closeGeneratorWorkflow).toHaveBeenCalledOnce();
+    });
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      expect.stringContaining("couldn't be opened automatically"),
+      "error",
+      true,
+    );
   });
 });
