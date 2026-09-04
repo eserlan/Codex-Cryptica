@@ -7,12 +7,14 @@
     role = $bindable(npcConfig.roles[0]),
     alignment = $bindable(npcConfig.alignments[0]),
     campaignContext = $bindable(""),
+    mode = $bindable("table-card"),
     onSurprise = undefined,
   }: {
     race: string;
     role: string;
     alignment: string;
     campaignContext: string;
+    mode?: "dossier" | "table-card";
     onSurprise?: () => void;
   } = $props();
 
@@ -57,6 +59,23 @@
   inputClass={selectClass}
   customPlaceholder="Enter a custom morality"
 />
+
+<div class="flex flex-col gap-1.5">
+  <label for="npc-mode-select" class={labelClass}>Prep style</label>
+  <select
+    id="npc-mode-select"
+    name="npc_mode"
+    bind:value={mode}
+    class={selectClass}
+  >
+    <option value="table-card">Table Card (5-Element 60-Second Prep)</option>
+    <option value="dossier">Full Dossier (Detailed Background)</option>
+  </select>
+  <p class="text-[10px] text-theme-text/60 leading-relaxed">
+    Table cards provide immediate want, mannerism, contradiction, relationship
+    hook, and sensory tag.
+  </p>
+</div>
 
 <div class="flex flex-col gap-1.5">
   <label for="npc-campaign-context" class={labelClass}

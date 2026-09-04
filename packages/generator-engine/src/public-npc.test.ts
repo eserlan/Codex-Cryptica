@@ -238,3 +238,79 @@ describe("Delve Boss / Key NPC contextual generation", () => {
     expect(out.labels).toContain("dungeon-npc");
   });
 });
+
+describe("Table Card (5-Element) NPC mode", () => {
+  it("generates 5-element table card locally with want, mannerism, contradiction, relationship, and sensory tag", () => {
+    const out = generateNpcLocal(
+      {
+        role: "Blacksmith",
+        theme: "Classic Fantasy",
+        mode: "table-card",
+      },
+      seededRng(42),
+    );
+
+    expect(out.content).toContain("### The Five Elements");
+    expect(out.content).toContain("- **Immediate Want**:");
+    expect(out.content).toContain("- **Physical Mannerism**:");
+    expect(out.content).toContain("- **Sharp Contradiction**:");
+    expect(out.content).toContain("- **Relationship Hook**:");
+    expect(out.content).toContain("- **Sensory Tag**:");
+    expect(out.content).toContain("### Table Delivery");
+
+    expect(out.lore).toContain("- **Immediate Want**:");
+    expect(out.lore).toContain("- **Contradiction**:");
+    expect(out.lore).toContain("- **Relationship Hook**:");
+    expect(out.lore).toContain("- **Sensory Tag**:");
+
+    expect(out.labels).toContain("table-card");
+  });
+
+  it("supports mode: 'short' as an alias for table-card", () => {
+    const out = generateNpcLocal(
+      {
+        role: "Guard",
+        mode: "short",
+      },
+      seededRng(7),
+    );
+
+    expect(out.content).toContain("### The Five Elements");
+    expect(out.labels).toContain("table-card");
+  });
+
+  it("builds an AI prompt tailored for the 5-element memorable NPC anatomy", () => {
+    const { systemInstruction, resolved } = buildNpcPrompt(
+      {
+        role: "Merchant",
+        mode: "table-card",
+      },
+      "",
+      seededRng(9),
+    );
+
+    expect(resolved.mode).toBe("table-card");
+    expect(systemInstruction).toContain("5-element memorable NPC anatomy");
+    expect(systemInstruction).toContain("### The Five Elements");
+    expect(systemInstruction).toContain("### Table Delivery");
+    expect(systemInstruction).toContain("Immediate Want");
+    expect(systemInstruction).toContain("Sharp Contradiction");
+    expect(systemInstruction).toContain("Sensory Tag");
+  });
+
+  it("parses AI response and injects table-card label in table-card mode", () => {
+    const { resolved } = buildNpcPrompt(
+      {
+        role: "Scholar",
+        mode: "table-card",
+      },
+      "",
+      seededRng(12),
+    );
+
+    const json =
+      '{"title":"Master Eldon","summary":"Scholastic fence.","content":"### The Five Elements\\n- **Immediate Want**: Needs ink.","lore":"### At a Glance\\n- **Role**: Scholar","labels":["rpg-character"]}';
+    const out = parseNpcResponse(json, {}, resolved);
+    expect(out.labels).toContain("table-card");
+  });
+});

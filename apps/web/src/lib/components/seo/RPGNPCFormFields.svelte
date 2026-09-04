@@ -12,6 +12,7 @@
     role = $bindable(""),
     alignment = $bindable(""),
     campaignContext = $bindable(""),
+    mode = $bindable("table-card"),
     onSurprise = undefined,
   }: {
     theme: string;
@@ -19,6 +20,7 @@
     role: string;
     alignment: string;
     campaignContext: string;
+    mode?: "dossier" | "table-card";
     onSurprise?: () => void;
   } = $props();
 
@@ -138,6 +140,23 @@
   inputClass={selectClass}
   customPlaceholder="Enter a custom moral stance"
 />
+
+<div class="flex flex-col gap-1.5">
+  <label for="rpgnpc-mode-select" class={labelClass}>Prep style</label>
+  <select
+    id="rpgnpc-mode-select"
+    name="npc_mode"
+    bind:value={mode}
+    class={selectClass}
+  >
+    <option value="table-card">Table Card (5-Element 60-Second Prep)</option>
+    <option value="dossier">Full Dossier (Detailed Background)</option>
+  </select>
+  <p class="text-[10px] text-theme-text/60 leading-relaxed">
+    Table cards provide immediate want, mannerism, contradiction, relationship
+    hook, and sensory tag.
+  </p>
+</div>
 
 <div class="flex flex-col gap-1.5">
   <label for="rpgnpc-campaign-context" class={labelClass}
