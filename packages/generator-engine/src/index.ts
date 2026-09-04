@@ -52,6 +52,7 @@ export {
   BANNED_NAMES,
   NAME_BAN_PROMPT,
   type NpcGeneratorOptions,
+  type NpcMode,
   type NpcPrompt,
   type ResolvedNpc,
 } from "./public-npc";
@@ -60,6 +61,10 @@ export {
   LOCAL_MANNERISMS,
   LOCAL_FACTION_STANCES,
   LOCAL_LEVERAGE_PRICES,
+  LOCAL_CONTRADICTIONS,
+  LOCAL_SENSORY_TAGS,
+  LOCAL_IMMEDIATE_WANTS,
+  LOCAL_RELATIONSHIP_HOOKS,
 } from "./public-npc-schema";
 export {
   NPC_TRAIT_VOCABULARY,

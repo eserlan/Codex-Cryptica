@@ -81,6 +81,7 @@ export const npcConfig = {
     "Neutral Evil",
     "Chaotic Evil",
   ],
+  modes: ["dossier", "table-card"],
   traits: [
     "Always whispers when speaking to build dramatic tension.",
     "Carries a pocket watch that runs backward but claims it is correct.",
