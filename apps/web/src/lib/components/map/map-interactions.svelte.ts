@@ -538,6 +538,27 @@ export class MapInteractionManager {
         return;
       }
 
+      // Fine-tune ends on release, mirroring commitGridFit above: a real
+      // drag applies the alignment, a stray click just leaves the mode.
+      // Enter/Esc still work mid-drag, but they were previously the *only*
+      // ways out — so clicking away left the mode silently armed, and every
+      // later attempt to drag a tile panned the map instead, since
+      // grid-move takes priority in handlePointerDown.
+      if (mapSession.gridMoveMode) {
+        const dragged = !isClickGesture(
+          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+          { x: e.clientX, y: e.clientY },
+        );
+
+        if (dragged) {
+          this.gridInteractions.commitGridMove();
+        } else {
+          this.gridInteractions.cancelGridMove();
+        }
+        this.isPanning = false;
+        return;
+      }
+
       if (this.isPanning) {
         if (
           isClickGesture(

@@ -603,6 +603,47 @@ describe("MapInteractionManager", () => {
       (mapSession as any).allTokens = [];
     });
 
+    it("leaves the mode on release, so tiles are draggable again afterwards", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).gridMoveMode = true;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 150, clientY: 160 }),
+      );
+      await manager.onMouseUp(
+        new MouseEvent("mouseup", { clientX: 150, clientY: 160 }),
+      );
+
+      expect(mapSession.gridMoveMode).toBe(false);
+
+      // The very next pointer-down on a tile must grab it, not pan the map.
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+
+      expect(manager.tokenDrag.dragState).toBeTruthy();
+      expect(manager.isPanning).toBe(false);
+
+      (mapSession as any).allTokens = [];
+    });
+
     it("still grabs a token normally when not in move-map mode", async () => {
       const { mapSession } = await import("../../stores/map-session.svelte");
       (mapSession as any).gridMoveMode = false;

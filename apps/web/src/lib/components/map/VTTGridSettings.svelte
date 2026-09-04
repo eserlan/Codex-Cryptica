@@ -168,7 +168,7 @@
                 mapSession.gridMoveMode = true;
                 close();
                 notificationStore.notify(
-                  "Drag the map to align. Enter to confirm, Esc to cancel.",
+                  "Drag the map to align it with the grid — release to apply. Esc to cancel.",
                   "info",
                   true,
                 );
