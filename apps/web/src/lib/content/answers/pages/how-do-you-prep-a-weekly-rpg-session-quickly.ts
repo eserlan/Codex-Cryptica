@@ -6,7 +6,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
   question: "How do you prep a weekly RPG session quickly?",
   kind: "framework",
   shortAnswer:
-    "To prep a weekly RPG session quickly without burnout, run a 30-to-45-minute timeboxed routine focused exclusively on the upcoming three hours of play: (1) review the previous session's recap and extract one or two unresolved player hooks, (2) frame a strong opening scene with immediate momentum, (3) sketch two or three flexible scene nodes rather than a rigid linear plot, (4) prepare one or two portable encounters or hazards with condensed stats, (5) outline two key NPCs with an immediate desire and one distinctive mannerism, and (6) leave a deliberate improvisation buffer. Everything else can be generated or improvised live.",
+    "To prep a weekly RPG session quickly without burnout, run a 35-minute timeboxed routine focused exclusively on the upcoming three hours of play: (1) review the previous session's recap and extract one or two unresolved player hooks, (2) frame a strong opening scene with immediate momentum, (3) sketch two or three flexible scene nodes rather than a rigid linear plot, (4) prepare one or two portable encounters or hazards with condensed stats, and (5) outline two key NPCs with an immediate desire and one distinctive mannerism. Treat any remaining minutes as a deliberate improvisation buffer, and let everything else be generated or improvised live.",
   sections: [
     {
       kind: "prose",
@@ -105,6 +105,10 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
         {
           term: "NPC sketch (5 mins)",
           text: "Master Aldous Vane. Current want: retrieve the manifest before high tide to avoid the magistrate's scaffold. Mannerism: rhythmically taps brass knuckles and speaks in a raspy whisper.",
+        },
+        {
+          term: "Why it works",
+          text: "Every element maps directly to one of the five prep steps and can be reordered or dropped on the fly, so the party's choices — not the index card — drive the session.",
         },
       ],
     },
