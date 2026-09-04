@@ -133,7 +133,8 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-do-you-organise-npc-relationships",
       "how-much-prep-do-you-need-for-an-rpg-session",
       "how-do-you-run-a-conspiracy-campaign",
-    ],
+    "how-do-you-prep-a-weekly-rpg-session-quickly",
+  ],
     discovery: {
       id: "answer-unresolved-plot-hooks",
       parentCluster: "campaign-notes",

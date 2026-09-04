@@ -28,6 +28,8 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
 5. **No AI Filler or Fluff**:
    - Avoid generic AI intro fluff ("In the vast and wondrous world of tabletop gaming..."). Start directly with the friction point or core design dilemma.
+6. **Clean List Item Titles (No Redundant Numbering)**:
+   - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
 
 ---
 
@@ -185,7 +187,25 @@ export const <camelCaseName>: AnswerConfigInput = {
 
 ---
 
-### 4. Sync Answer Registries
+### 4. Connect & Update the Knowledge Mesh
+
+Reference answers must form an interconnected web, never dead ends. When publishing a new answer:
+
+1. **Reciprocal Linking**:
+   - Check the answers you listed in `relatedAnswers`.
+   - Update those existing answer files (`apps/web/src/lib/content/answers/pages/<existing-slug>.ts`) to include your new answer's slug in their `relatedAnswers`.
+   - Or run the automated fixer:
+     ```sh
+     bun run check:answer-mesh --fix
+     ```
+2. **Intent Pruning & Alias Migration (Constitution XIII)**:
+   - If an existing broader answer in your cluster currently carries an `intentAlias` that your new, specialized page now directly answers, prune that alias from the existing answer's `intentAliases`.
+3. **Mutual Overlap Acknowledgment**:
+   - If your answer shares significant vocabulary or cluster scope with an existing answer, ensure both answers acknowledge each other via `acknowledgedOverlap: [{ with: "<other-intent-id>", reason: "<distinct-role-rationale>" }]`.
+
+---
+
+### 5. Sync Answer Registries
 
 Run the automated synchronization script to register your answer:
 
@@ -203,29 +223,34 @@ No manual editing of index, category, or discovery files is needed!
 
 ---
 
-### 5. Verification Gate (Mandatory)
+### 6. Verification Gate (Mandatory)
 
 Run all targeted tests and static analyses before committing:
 
-1. **Answer Unit Tests**:
+1. **Answer Mesh Check**:
    ```sh
-   bun test apps/web/src/lib/content/answers/
+   bun run check:answer-mesh
+   ```
+   _Audits outbound links, ensures no broken links, and verifies reciprocal cross-links._
+2. **Answer Unit Tests**:
+   ```sh
+   bun test apps/web/src/lib/content/answers/ scripts/check-answer-mesh.test.ts
    ```
    _Verifies schema validation, British English spelling check, slug uniqueness, link liveness, structured data, and category coverage._
-2. **Discovery Intent Audit**:
+3. **Discovery Intent Audit**:
    ```sh
    bun scripts/discovery-audit.mjs
    ```
    _Ensures 0 overlap errors and verifies canonical registration._
-3. **Type & Lint Check**:
+4. **Type & Lint Check**:
    ```sh
    bun run lint:types
-   bun run lint
+   bun run lint:affected
    ```
 
 ---
 
-### 6. Pull Request & Review Loop
+### 7. Pull Request & Review Loop
 
 1. Create a dedicated branch off `origin/staging`:
    ```sh

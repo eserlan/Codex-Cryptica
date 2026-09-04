@@ -142,6 +142,13 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "what-should-an-rpg-settlement-contain",
     "how-do-you-run-a-conspiracy-campaign",
+    "how-do-i-get-players-to-engage-with-my-campaign-world",
+    "how-do-i-run-a-successful-session-0",
+    "how-do-you-create-a-pantheon",
+    "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    "how-much-prep-do-you-need-for-an-rpg-session",
+    "what-is-a-point-crawl",
+    "what-should-i-look-for-in-an-rpg-campaign-manager",
   ],
   discovery: {
     id: "answer-campaign-notes",
