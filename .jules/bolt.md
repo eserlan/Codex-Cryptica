@@ -259,3 +259,6 @@
 
 **Learning:** When using `[...iterable].filter(...).map(...)` on collections like Maps, it creates multiple intermediate arrays, causing unnecessary allocations.
 **Action:** Replace chained array methods on iterables with a single imperative `for...of` loop to avoid intermediate allocations and reduce GC pressure.
+## 2024-05-23 - Avoid Object.fromEntries(Object.entries().map()) in Hot Paths
+**Learning:** Using Object.fromEntries with a mapped Object.entries array creates two intermediate arrays, increasing garbage collection pressure. This is especially impactful in serialization paths like index compression where object counts can be large.
+**Action:** Use an imperative loop to populate a new object or Record when transforming object values instead of chaining Object.entries().map() into Object.fromEntries.
