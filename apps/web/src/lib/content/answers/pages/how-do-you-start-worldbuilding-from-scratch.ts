@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
   slug: "how-do-you-start-worldbuilding-from-scratch",
   category: "worldbuilding",
+  publishedAt: "2026-09-04",
   question: "How do you start worldbuilding from scratch?",
   kind: "framework",
   shortAnswer:

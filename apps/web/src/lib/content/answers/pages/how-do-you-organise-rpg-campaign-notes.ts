@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
   slug: "how-do-you-organise-rpg-campaign-notes",
   category: "campaign-notes",
+  publishedAt: "2026-08-30",
   question: "How do you organise RPG campaign notes?",
   kind: "how-to",
   shortAnswer:

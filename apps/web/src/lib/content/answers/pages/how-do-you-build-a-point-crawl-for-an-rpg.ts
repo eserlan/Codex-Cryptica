@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
   slug: "how-do-you-build-a-point-crawl-for-an-rpg",
   category: "worldbuilding",
+  publishedAt: "2026-09-04",
   question: "How do you build a point crawl for an RPG?",
   kind: "how-to",
   shortAnswer:

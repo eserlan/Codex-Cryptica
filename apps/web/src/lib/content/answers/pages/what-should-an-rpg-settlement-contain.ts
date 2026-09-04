@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
   slug: "what-should-an-rpg-settlement-contain",
   category: "worldbuilding",
+  publishedAt: "2026-08-30",
   question: "What should an RPG settlement contain?",
   kind: "framework",
   shortAnswer:

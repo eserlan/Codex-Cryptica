@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
   slug: "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
   category: "getting-started",
+  publishedAt: "2026-08-31",
   question: "Where do I start if I have never played a tabletop RPG before?",
   kind: "how-to",
   shortAnswer:

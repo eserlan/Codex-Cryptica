@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   slug: "how-do-you-create-a-believable-fictional-religion",
   category: "worldbuilding",
+  publishedAt: "2026-08-30",
   question: "How do you create a believable fictional religion?",
   kind: "how-to",
   shortAnswer:

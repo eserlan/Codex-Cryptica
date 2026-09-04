@@ -75,12 +75,10 @@ export interface CategorisedAnswers {
 export function groupAnswersByCategory(
   answers: AnswerConfig[],
 ): CategorisedAnswers[] {
-  const answerMap = new Map(answers.map((a) => [a.slug, a]));
-
   return ANSWER_CATEGORIES.map((category) => {
-    const categoryAnswers = category.slugs
-      .map((slug) => answerMap.get(slug))
-      .filter((answer): answer is AnswerConfig => answer !== undefined);
+    const categoryAnswers = answers.filter(
+      (answer) => answer.category === category.id,
+    );
 
     return {
       category,

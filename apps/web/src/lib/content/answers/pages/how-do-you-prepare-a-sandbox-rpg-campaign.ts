@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
   slug: "how-do-you-prepare-a-sandbox-rpg-campaign",
   category: "session-prep",
+  publishedAt: "2026-09-04",
   question: "How do you prepare a sandbox RPG campaign?",
   kind: "framework",
   shortAnswer:

@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
   slug: "what-makes-a-good-random-encounter",
   category: "session-prep",
+  publishedAt: "2026-08-30",
   question: "What makes a good random encounter?",
   kind: "framework",
   shortAnswer:

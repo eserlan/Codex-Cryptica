@@ -82,5 +82,20 @@ describe("answer categories", () => {
       expect(grouped[0].category.id).toBe("worldbuilding");
       expect(grouped[0].answers.length).toBe(1);
     });
+
+    it("preserves custom sorted order of input answers within categories", () => {
+      const allAnswers = getAllAnswers();
+      const worldbuildingAnswers = allAnswers.filter(
+        (a) => a.category === "worldbuilding",
+      );
+      // Reverse worldbuilding answers
+      const reversed = [...worldbuildingAnswers].reverse();
+      const grouped = groupAnswersByCategory(reversed);
+
+      expect(grouped[0].category.id).toBe("worldbuilding");
+      expect(grouped[0].answers.map((a) => a.slug)).toEqual(
+        reversed.map((a) => a.slug),
+      );
+    });
   });
 });

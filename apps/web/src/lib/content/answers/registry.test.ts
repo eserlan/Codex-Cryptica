@@ -30,6 +30,7 @@ const makeAnswer = (
     ],
     relatedAnswers: [],
     category: "worldbuilding",
+    publishedAt: "2026-01-01",
     seo: { title: "Test", description: "Test description" },
     ...overrides,
   });
@@ -204,6 +205,29 @@ describe("answer schema", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts an answer with a valid publishedAt date", () => {
+    const answer = makeAnswer({
+      slug: "with-date",
+      publishedAt: "2026-09-04",
+    });
+    expect(answer.publishedAt).toBe("2026-09-04");
+  });
+
+  it("rejects an answer with an invalid publishedAt date format", () => {
+    expect(() =>
+      makeAnswer({
+        slug: "bad-date",
+        publishedAt: "04-09-2026",
+      }),
+    ).toThrow();
+    expect(() =>
+      makeAnswer({
+        slug: "bad-date-string",
+        publishedAt: "invalid",
+      }),
+    ).toThrow();
+  });
 });
 
 describe("published answers", () => {
@@ -212,6 +236,13 @@ describe("published answers", () => {
   it("publishes at least eight distinct answers", () => {
     // The first content pack's acceptance bar (#2564).
     expect(published.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("specifies a valid publishedAt date on every answer", () => {
+    for (const answer of published) {
+      expect(answer.publishedAt).toBeDefined();
+      expect(answer.publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
   });
 
   it("keys every answer by its own slug", () => {
