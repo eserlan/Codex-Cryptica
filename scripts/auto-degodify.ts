@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { basename, resolve } from "node:path";
@@ -246,13 +246,24 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
     );
 
     console.log(`🤖 Launching ${agentBin} in isolated worktree...`);
-    const agyCmd = `${agentBin} --print ${JSON.stringify(prompt)} --dangerously-skip-permissions --print-timeout ${timeoutMinutes}m0s`;
+    const agyResult = spawnSync(
+      agentBin,
+      [
+        "--print",
+        prompt,
+        "--dangerously-skip-permissions",
+        `--print-timeout=${timeoutMinutes}m0s`,
+      ],
+      {
+        cwd: worktreePath,
+        stdio: "inherit",
+        env: { ...process.env, HUSKY: "0" },
+      },
+    );
 
-    execSync(agyCmd, {
-      cwd: worktreePath,
-      stdio: "inherit",
-      env: { ...process.env, HUSKY: "0" },
-    });
+    if (agyResult.error) {
+      throw agyResult.error;
+    }
 
     console.log("✅ AI agent run finished.");
   } catch (err) {
