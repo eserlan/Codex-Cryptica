@@ -133,6 +133,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "what-is-a-point-crawl",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+    "how-do-you-build-a-point-crawl-for-an-rpg",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

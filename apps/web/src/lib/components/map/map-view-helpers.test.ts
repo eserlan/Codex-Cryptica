@@ -2,12 +2,69 @@ import { describe, expect, it } from "vitest";
 import type { MapPin, StatSheetField } from "schema";
 import {
   findClickedPin,
+  describeMoveBlocked,
   getKeyboardViewportUpdate,
+  getMapDisplayDimensions,
   getZoomViewportUpdate,
   isClickGesture,
   resolveHealthBar,
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
+
+describe("getMapDisplayDimensions", () => {
+  it("doubles small maps so grid cells come out usable", () => {
+    expect(getMapDisplayDimensions(300, 200)).toEqual({
+      width: 600,
+      height: 400,
+    });
+  });
+
+  it("leaves large maps at native size", () => {
+    expect(getMapDisplayDimensions(1200, 900)).toEqual({
+      width: 1200,
+      height: 900,
+    });
+  });
+
+  it("uses the larger dimension to decide, for tall/narrow maps", () => {
+    // Larger dimension (1200) is at the threshold, so no scaling — even
+    // though the smaller dimension (100) is tiny.
+    expect(getMapDisplayDimensions(100, 1200)).toEqual({
+      width: 100,
+      height: 1200,
+    });
+  });
+});
+
+describe("describeMoveBlocked", () => {
+  it("names a locked token", () => {
+    expect(
+      describeMoveBlocked({ name: "Corridor A", locked: true }, false, true),
+    ).toContain("Corridor A is locked");
+  });
+
+  it("names the locked layer, and how to unlock it", () => {
+    const message = describeMoveBlocked(
+      { name: "Corridor A", layer: "terrain" },
+      true,
+      true,
+    );
+    expect(message).toContain("terrain layer is locked");
+    expect(message).toContain("Corridor A");
+  });
+
+  it("explains ownership when not the host", () => {
+    expect(describeMoveBlocked({ name: "Goblin" }, false, false)).toContain(
+      "belongs to someone else",
+    );
+  });
+
+  it("falls back to a generic name for an unnamed piece", () => {
+    expect(describeMoveBlocked({ locked: true }, false, true)).toContain(
+      "That piece is locked",
+    );
+  });
+});
 
 describe("map-view helpers", () => {
   it("findClickedPin should return a pin within range", () => {

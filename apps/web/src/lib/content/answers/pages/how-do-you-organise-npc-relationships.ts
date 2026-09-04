@@ -133,6 +133,11 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-run-a-conspiracy-campaign",
+    "how-do-i-get-players-to-engage-with-my-campaign-world",
+    "how-do-i-run-a-successful-session-0",
+    "how-do-you-make-npcs-memorable-without-lots-of-prep",
+    "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    "how-much-prep-do-you-need-for-an-rpg-session",
   ],
   discovery: {
     id: "answer-npc-relationships",

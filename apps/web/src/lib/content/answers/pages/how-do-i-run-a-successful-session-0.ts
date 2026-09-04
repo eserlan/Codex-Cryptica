@@ -139,6 +139,10 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-organise-npc-relationships",
     "how-much-prep-do-you-need-for-an-rpg-session",
+    "how-do-i-find-a-tabletop-rpg-group-to-play-with",
+    "how-do-i-get-players-to-engage-with-my-campaign-world",
+    "what-rpg-system-should-we-try-instead-of-dnd",
+    "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-session-zero",

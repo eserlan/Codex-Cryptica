@@ -35,6 +35,7 @@
     "prepare": "husky",
     "assets:sync": "bun scripts/upload-images.mjs",
     "sync:answers": "bun scripts/sync-answers.ts",
+    "check:answer-mesh": "bun scripts/check-answer-mesh.ts",
     "check:crawler-access": "bun scripts/crawler-access-check.mjs",
     "analyze:god-files": "bun scripts/god-file-analysis.ts",
     "degodify": "bun scripts/auto-degodify.ts",

@@ -6,6 +6,7 @@ import {
   getPinchMidpoint,
   getZoomAtPointUpdate,
   getZoomViewportUpdate,
+  describeMoveBlocked,
   isClickGesture,
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
@@ -16,6 +17,7 @@ import {
   type MapInteractionHandlers,
 } from "./interactions/map-interaction-handler-factory";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 type MapInputEvent = MouseEvent | PointerEvent;
 
@@ -293,6 +295,19 @@ export class MapInteractionManager {
       return;
     }
 
+    // Grid-move is an exclusive mode entered deliberately from Grid Settings
+    // ("Drag the map to align. Enter to confirm, Esc to cancel."), so the
+    // drag must pan the map — and only the map. Checked ahead of every
+    // object handler below: on a map covered in tiles (the exact case this
+    // mode exists for) a pointer-down would otherwise land on a tile and
+    // drag that instead, snapped to the grid, so the map never moved.
+    if (this.cachedRect && this.gridInteractions.shouldStartGridMove()) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isPanning = true;
+      return;
+    }
+
     if (
       e.button === 0 &&
       (mapSession.vttEnabled || mapSession.selectedToken?.kind === "note") &&
@@ -320,6 +335,23 @@ export class MapInteractionManager {
         this.isPanning = false;
         return;
       }
+
+      // Pressed a piece that can't be moved (locked token, locked layer, or
+      // someone else's). Falling through to a pan here is what makes a drag
+      // on a tile look like it "moves the whole map instead of the tile",
+      // with no hint as to why — so keep the press on the piece and say so.
+      const blocked = this.tokenDrag.blockedToken;
+      if (blocked) {
+        this.tokenSelection.applyModifierSelection(blocked.id, e);
+        this.isPanning = false;
+        this.mapAnnouncement = describeMoveBlocked(
+          blocked,
+          mapStore.layerLocked[blocked.layer ?? "token"] === true,
+          mapStore.isGMMode,
+        );
+        notificationStore.notify(this.mapAnnouncement, "info");
+        return;
+      }
     }
 
     if (this.cachedRect && e.button === 0 && !e.altKey) {
@@ -329,13 +361,6 @@ export class MapInteractionManager {
         this.isPanning = false;
         return;
       }
-    }
-
-    if (this.cachedRect && this.gridInteractions.shouldStartGridMove()) {
-      e.preventDefault();
-      e.stopPropagation();
-      this.isPanning = true;
-      return;
     }
 
     if (
@@ -529,6 +554,27 @@ export class MapInteractionManager {
       }
 
       if (this.gridInteractions.commitGridFit()) {
+        return;
+      }
+
+      // Fine-tune ends on release, mirroring commitGridFit above: a real
+      // drag applies the alignment, a stray click just leaves the mode.
+      // Enter/Esc still work mid-drag, but they were previously the *only*
+      // ways out — so clicking away left the mode silently armed, and every
+      // later attempt to drag a tile panned the map instead, since
+      // grid-move takes priority in handlePointerDown.
+      if (mapSession.gridMoveMode) {
+        const dragged = !isClickGesture(
+          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+          { x: e.clientX, y: e.clientY },
+        );
+
+        if (dragged) {
+          this.gridInteractions.commitGridMove();
+        } else {
+          this.gridInteractions.cancelGridMove();
+        }
+        this.isPanning = false;
         return;
       }
 
