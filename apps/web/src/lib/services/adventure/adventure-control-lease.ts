@@ -1,4 +1,10 @@
 import { entityDb } from "$lib/utils/entity-db";
+import {
+  systemClock,
+  systemIdGenerator,
+  type Clock,
+  type IdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export interface AdventureLeaseKey {
   vaultId: string;
@@ -20,8 +26,8 @@ const EXPIRY_MS = 10_000;
 export class AdventureControlAuthority {
   constructor(
     private readonly db = entityDb,
-    private readonly now: () => number = () => Date.now(),
-    private readonly ownerIdFactory: () => string = () => crypto.randomUUID(),
+    private readonly clock: Clock = systemClock,
+    private readonly idGenerator: IdGenerator = systemIdGenerator,
   ) {}
 
   private key(key: AdventureLeaseKey): string {
@@ -32,12 +38,12 @@ export class AdventureControlAuthority {
     return this.db.transaction("rw", this.db.appSettings, async () => {
       const setting = await this.db.appSettings.get(this.key(key));
       const current = setting?.value as AdventureControlLease | undefined;
-      const now = this.now();
+      const now = this.clock.now();
       if (current && current.expiresAt > now)
         return { ok: false, reason: "held" };
       const lease: AdventureControlLease = {
         ...key,
-        ownerId: this.ownerIdFactory(),
+        ownerId: this.idGenerator.uuid(),
         fencingToken: (current?.fencingToken ?? 0) + 1,
         expiresAt: now + EXPIRY_MS,
       };
@@ -60,11 +66,11 @@ export class AdventureControlAuthority {
         current.fencingToken !== lease.fencingToken
       )
         return { ok: false, reason: "stale" };
-      const renewed = { ...current, expiresAt: this.now() + EXPIRY_MS };
+      const renewed = { ...current, expiresAt: this.clock.now() + EXPIRY_MS };
       await this.db.appSettings.put({
         key: this.key(lease),
         value: renewed,
-        updatedAt: this.now(),
+        updatedAt: this.clock.now(),
       });
       return { ok: true, lease: renewed };
     });
@@ -77,7 +83,7 @@ export class AdventureControlAuthority {
       !!current &&
       current.ownerId === lease.ownerId &&
       current.fencingToken === lease.fencingToken &&
-      current.expiresAt > this.now()
+      current.expiresAt > this.clock.now()
     );
   }
 
