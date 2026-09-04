@@ -148,6 +148,8 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-much-prep-do-you-need-for-an-rpg-session",
+    "how-do-you-run-a-heist-in-a-tabletop-rpg",
+    "how-do-you-write-a-one-shot-adventure",
   ],
   discovery: {
     id: "answer-random-encounter",

@@ -146,6 +146,7 @@ export const whatShouldILookForInAnRpgCampaignManager: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-i-get-players-to-engage-with-my-campaign-world",
     "what-rpg-system-should-we-try-instead-of-dnd",
+    "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
   ],
   discovery: {
     id: "answer-campaign-manager-criteria",
