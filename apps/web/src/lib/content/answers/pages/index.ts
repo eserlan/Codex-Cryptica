@@ -11,6 +11,7 @@ import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-np
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
 import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
+import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
@@ -40,6 +41,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouMakeTravelInterestingInATabletopRpg,
     howDoYouOrganiseNpcRelationships,
     howDoYouOrganiseRpgCampaignNotes,
+    howDoYouPrepareASandboxRpgCampaign,
     howDoYouRunAConspiracyCampaign,
     howMuchPrepDoYouNeedForAnRpgSession,
     whatIsAPointCrawl,
