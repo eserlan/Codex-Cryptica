@@ -21,26 +21,25 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
       heading: "The 35-minute weekly prep routine",
       intro:
         "Work through these five steps in order. When the timer rings for each step, write what you have and move on.",
-      ordered: true,
       items: [
         {
-          term: "1. Review hooks and recap (5 mins)",
+          term: "Review hooks and recap (5 mins)",
           text: "Review your notes from last session. Identify one or two unresolved player intentions, lingering consequences, or active promises made to NPCs.",
         },
         {
-          term: "2. Frame a strong opening scene (5 mins)",
+          term: "Strong opening scene (5 mins)",
           text: "Start in media res or with an immediate choice. Never start in a quiet tavern unless someone is kicking the door open; establish momentum in the first three minutes.",
         },
         {
-          term: "3. Sketch 2–3 flexible scene nodes (10 mins)",
+          term: "Flexible scene nodes (10 mins)",
           text: "Jot down two or three probable situations or destinations the party might pursue next. Detail each with three sensory bullet points and one secret or clue.",
         },
         {
-          term: "4. Prep 1–2 portable complications (10 mins)",
+          term: "Portable complications (10 mins)",
           text: "Prepare one combat encounter and one social wrinkle that can drop into any scene. Keep stat blocks condensed to Armour Class, Hit Points, and attack bonuses.",
         },
         {
-          term: "5. Outline key NPC sketches (5 mins)",
+          term: "Key NPC sketches (5 mins)",
           text: "Name two non-player characters likely to appear tonight. Give each an immediate want, what leverage they hold over the party, and one memorable vocal or physical mannerism.",
         },
       ],
