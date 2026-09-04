@@ -98,17 +98,9 @@ function drawOnCanvas(
   encodeCanvasBlob(canvas, 0.75).then(resolve).catch(reject);
 }
 
-// Small pre-drawn map tiles (e.g. geomorph line-art) are often authored at a
-// native resolution that makes each grid square only a handful of pixels
-// once "fit grid to map" divides it up. Below this size (larger dimension,
-// in px) we upscale on upload so grid cells come out usable.
-const SMALL_MAP_UPSCALE_THRESHOLD = 1000;
-const SMALL_MAP_UPSCALE_FACTOR = 2;
-
 export async function convertToWebP(
   blob: Blob,
   quality: number = 0.8,
-  { autoUpscaleSmall = false }: { autoUpscaleSmall?: boolean } = {},
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -116,18 +108,9 @@ export async function convertToWebP(
 
     img.onload = () => {
       URL.revokeObjectURL(url);
-
-      const scale =
-        autoUpscaleSmall &&
-        Math.max(img.width, img.height) < SMALL_MAP_UPSCALE_THRESHOLD
-          ? SMALL_MAP_UPSCALE_FACTOR
-          : 1;
-      const width = img.width * scale;
-      const height = img.height * scale;
-
       const canvas =
         typeof OffscreenCanvas !== "undefined"
-          ? new OffscreenCanvas(width, height)
+          ? new OffscreenCanvas(img.width, img.height)
           : document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
@@ -138,15 +121,9 @@ export async function convertToWebP(
         return;
       }
 
-      canvas.width = width;
-      canvas.height = height;
-      const ctx2d = ctx as CanvasRenderingContext2D;
-      if (scale !== 1) {
-        // Nearest-neighbor upscale keeps pre-drawn grid/hex lines crisp
-        // instead of blurring them the way smoothed scaling would.
-        ctx2d.imageSmoothingEnabled = false;
-      }
-      ctx2d.drawImage(img, 0, 0, width, height);
+      canvas.width = img.width;
+      canvas.height = img.height;
+      (ctx as CanvasRenderingContext2D).drawImage(img, 0, 0);
 
       encodeCanvasBlob(canvas, quality).then(resolve).catch(reject);
     };
