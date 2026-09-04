@@ -10,6 +10,22 @@
     getUnusedFields,
     parseCardsFromSource,
   } from "./visual-card-parser";
+  import {
+    addVisualCard as addVisualCardOp,
+    updateCardColumns as updateCardColumnsOp,
+    updateTableHeader as updateTableHeaderOp,
+    removeVisualCard as removeVisualCardOp,
+    addRowToCard as addRowToCardOp,
+    removeRowFromCard as removeRowFromCardOp,
+    addFieldToCardRow as addFieldToCardRowOp,
+    removeFieldFromCardRow as removeFieldFromCardRowOp,
+    addValueToTableRow as addValueToTableRowOp,
+    updateValueInTableRow as updateValueInTableRowOp,
+    removeValueFromTableRow as removeValueFromTableRowOp,
+    moveCard as moveCardOp,
+    reorderCards as reorderCardsOp,
+    moveFieldBetweenRows as moveFieldBetweenRowsOp,
+  } from "./visual-card-operations";
   import { syncSourceFromVisualCards } from "./visual-card-serializer";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -96,38 +112,12 @@
   }
 
   function addVisualCard(mode: "grid" | "table" = "grid") {
-    visualCards.push({
-      id: Math.random().toString(36).slice(2, 9),
-      title:
-        mode === "table"
-          ? `Table ${visualCards.length + 1}`
-          : `Section ${visualCards.length + 1}`,
-      columns: 2,
-      mode,
-      tableHeaders:
-        mode === "table" ? ["Stat / Item", "Value / Dice"] : undefined,
-      rows: [[]],
-    });
+    visualCards = addVisualCardOp(visualCards, mode);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
   function updateCardColumns(cardId: string, value: number) {
-    const columns = Math.max(1, Math.min(6, Math.round(value) || 1));
-    visualCards = visualCards.map((card) => {
-      if (card.id !== cardId) return card;
-      if (card.mode !== "table") return { ...card, columns };
-
-      const existingHeaders = card.tableHeaders ?? [];
-      return {
-        ...card,
-        columns,
-        tableHeaders: Array.from(
-          { length: columns },
-          (_, index) => existingHeaders[index] ?? `Column ${index + 1}`,
-        ),
-        rows: card.rows.map((row) => row.slice(0, columns)),
-      };
-    });
+    visualCards = updateCardColumnsOp(visualCards, cardId, value);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
@@ -136,33 +126,22 @@
     headerIndex: number,
     value: string,
   ) {
-    visualCards = visualCards.map((card) => {
-      if (card.id !== cardId || card.mode !== "table") return card;
-      const headers = [...(card.tableHeaders ?? [])];
-      headers[headerIndex] = value;
-      return { ...card, tableHeaders: headers };
-    });
+    visualCards = updateTableHeaderOp(visualCards, cardId, headerIndex, value);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeVisualCard(cardId: string) {
-    visualCards = visualCards.filter((c) => c.id !== cardId);
+    visualCards = removeVisualCardOp(visualCards, cardId);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addRowToCard(cardId: string) {
-    visualCards = visualCards.map((c) =>
-      c.id === cardId ? { ...c, rows: [...c.rows, []] } : c,
-    );
+    visualCards = addRowToCardOp(visualCards, cardId);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeRowFromCard(cardId: string, rowIndex: number) {
-    visualCards = visualCards.map((c) => {
-      if (c.id !== cardId) return c;
-      const nextRows = c.rows.filter((_, idx) => idx !== rowIndex);
-      return { ...c, rows: nextRows.length > 0 ? nextRows : [[]] };
-    });
+    visualCards = removeRowFromCardOp(visualCards, cardId, rowIndex);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
@@ -171,30 +150,12 @@
     rowIndex: number,
     fieldId: string,
   ) {
-    visualCards = visualCards.map((c) => {
-      if (c.id !== cardId) return c;
-      const nextRows = c.rows.map((r, idx) =>
-        idx === rowIndex && (c.mode !== "table" || r.length < c.columns)
-          ? [...r, { kind: "field" as const, fieldId }]
-          : r,
-      );
-      return { ...c, rows: nextRows };
-    });
+    visualCards = addFieldToCardRowOp(visualCards, cardId, rowIndex, fieldId);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addValueToTableRow(cardId: string, rowIndex: number) {
-    visualCards = visualCards.map((card) => {
-      if (card.id !== cardId) return card;
-      return {
-        ...card,
-        rows: card.rows.map((row, index) =>
-          index === rowIndex && row.length < card.columns
-            ? [...row, { kind: "value", value: "" }]
-            : row,
-        ),
-      };
-    });
+    visualCards = addValueToTableRowOp(visualCards, cardId, rowIndex);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
@@ -204,21 +165,13 @@
     cellIndex: number,
     value: string,
   ) {
-    visualCards = visualCards.map((card) => {
-      if (card.id !== cardId) return card;
-      return {
-        ...card,
-        rows: card.rows.map((row, index) =>
-          index === rowIndex
-            ? row.map((cell, rowCellIndex) =>
-                rowCellIndex === cellIndex && cell.kind === "value"
-                  ? { ...cell, value }
-                  : cell,
-              )
-            : row,
-        ),
-      };
-    });
+    visualCards = updateValueInTableRowOp(
+      visualCards,
+      cardId,
+      rowIndex,
+      cellIndex,
+      value,
+    );
     handleSyncSourceFromVisualCards(visualCards);
   }
 
@@ -227,17 +180,12 @@
     rowIndex: number,
     cellIndex: number,
   ) {
-    visualCards = visualCards.map((card) => {
-      if (card.id !== cardId) return card;
-      return {
-        ...card,
-        rows: card.rows.map((row, index) =>
-          index === rowIndex
-            ? row.filter((_, rowCellIndex) => rowCellIndex !== cellIndex)
-            : row,
-        ),
-      };
-    });
+    visualCards = removeValueFromTableRowOp(
+      visualCards,
+      cardId,
+      rowIndex,
+      cellIndex,
+    );
     handleSyncSourceFromVisualCards(visualCards);
   }
 
@@ -246,28 +194,17 @@
     rowIndex: number,
     fieldId: string,
   ) {
-    visualCards = visualCards.map((c) => {
-      if (c.id !== cardId) return c;
-      const nextRows = c.rows.map((r, idx) =>
-        idx === rowIndex
-          ? r.filter(
-              (cell) => cell.kind !== "field" || cell.fieldId !== fieldId,
-            )
-          : r,
-      );
-      return { ...c, rows: nextRows };
-    });
+    visualCards = removeFieldFromCardRowOp(
+      visualCards,
+      cardId,
+      rowIndex,
+      fieldId,
+    );
     handleSyncSourceFromVisualCards(visualCards);
   }
 
   function moveCard(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= visualCards.length) return;
-    const copy = [...visualCards];
-    const temp = copy[index];
-    copy[index] = copy[target];
-    copy[target] = temp;
-    visualCards = copy;
+    visualCards = moveCardOp(visualCards, index, direction);
     handleSyncSourceFromVisualCards(visualCards);
   }
 
@@ -279,11 +216,8 @@
   function handleCardDragOver(e: DragEvent, index: number) {
     if (draggedCardIndex === null || draggedCardIndex === index) return;
     e.preventDefault();
-    const copy = [...visualCards];
-    const item = copy.splice(draggedCardIndex, 1)[0];
-    copy.splice(index, 0, item);
+    visualCards = reorderCardsOp(visualCards, draggedCardIndex, index);
     draggedCardIndex = index;
-    visualCards = copy;
     handleSyncSourceFromVisualCards(visualCards);
   }
   function handleCardDragEnd() {
@@ -330,26 +264,14 @@
     const { cardId: srcCardId, rowIndex: srcRowIndex, fieldId } = draggedField;
     draggedField = null;
 
-    visualCards = visualCards.map((c) => {
-      let nextRows = c.rows;
-      if (c.id === srcCardId) {
-        nextRows = nextRows.map((r, idx) =>
-          idx === srcRowIndex
-            ? r.filter(
-                (cell) => cell.kind !== "field" || cell.fieldId !== fieldId,
-              )
-            : r,
-        );
-      }
-      if (c.id === targetCardId) {
-        nextRows = nextRows.map((r, idx) =>
-          idx === targetRowIndex && (c.mode !== "table" || r.length < c.columns)
-            ? [...r, { kind: "field", fieldId }]
-            : r,
-        );
-      }
-      return { ...c, rows: nextRows };
-    });
+    visualCards = moveFieldBetweenRowsOp(
+      visualCards,
+      srcCardId,
+      srcRowIndex,
+      fieldId,
+      targetCardId,
+      targetRowIndex,
+    );
     handleSyncSourceFromVisualCards(visualCards);
   }
   let isSaving = $state(false);
