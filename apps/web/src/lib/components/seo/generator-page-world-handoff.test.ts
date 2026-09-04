@@ -48,4 +48,19 @@ describe("parseDevelopWorldHandoff", () => {
 
     expect(parseDevelopWorldHandoff(params)).toBeNull();
   });
+
+  it("returns null when developSystem is present but developBody is not", () => {
+    const params = new URLSearchParams({ developSystem: "Kepler Reach" });
+
+    expect(parseDevelopWorldHandoff(params)).toBeNull();
+  });
+
+  it("never leaks a literal null into the dominant feature when developSystem and developContext are missing", () => {
+    const params = new URLSearchParams({ developBody: "Aurum Station" });
+
+    const result = parseDevelopWorldHandoff(params);
+
+    expect(result?.dominantFeature).toBe("Aurum Station");
+    expect(result?.dominantFeature).not.toContain("null");
+  });
 });
