@@ -150,6 +150,8 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
+    "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+    "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",

@@ -149,6 +149,8 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
   relatedAnswers: [
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "how-do-i-run-a-successful-session-0",
+    "how-do-i-find-a-tabletop-rpg-group-to-play-with",
+    "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-system-selection",

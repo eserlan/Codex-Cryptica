@@ -108,6 +108,7 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-create-a-fantasy-faction",
     "how-do-i-run-a-successful-session-0",
+    "what-should-i-look-for-in-an-rpg-campaign-manager",
   ],
   discovery: {
     id: "answer-player-engagement",

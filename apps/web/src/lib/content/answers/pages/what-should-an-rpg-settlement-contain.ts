@@ -144,6 +144,9 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "what-is-a-point-crawl",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
+    "how-do-you-create-a-believable-fictional-religion",
+    "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+    "what-makes-a-good-random-encounter",
   ],
   discovery: {
     id: "answer-settlement-contents",

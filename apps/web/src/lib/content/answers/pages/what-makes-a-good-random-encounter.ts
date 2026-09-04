@@ -144,6 +144,10 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "what-is-a-point-crawl",
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "what-should-an-rpg-settlement-contain",
+    "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+    "how-do-you-make-npcs-memorable-without-lots-of-prep",
+    "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+    "how-much-prep-do-you-need-for-an-rpg-session",
   ],
   discovery: {
     id: "answer-random-encounter",

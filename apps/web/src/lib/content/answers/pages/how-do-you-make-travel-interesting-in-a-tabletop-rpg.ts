@@ -135,6 +135,8 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "what-makes-a-good-random-encounter",
     "what-is-a-point-crawl",
     "what-should-an-rpg-settlement-contain",
+    "how-do-you-build-a-point-crawl-for-an-rpg",
+    "how-do-you-prepare-a-sandbox-rpg-campaign",
   ],
   discovery: {
     id: "answer-travel-interesting",

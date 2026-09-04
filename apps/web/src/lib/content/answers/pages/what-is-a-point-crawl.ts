@@ -122,6 +122,10 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "what-makes-a-good-random-encounter",
     "how-do-you-organise-rpg-campaign-notes",
+    "how-do-you-build-a-point-crawl-for-an-rpg",
+    "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+    "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+    "how-do-you-prepare-a-sandbox-rpg-campaign",
   ],
   discovery: {
     id: "answer-point-crawl",

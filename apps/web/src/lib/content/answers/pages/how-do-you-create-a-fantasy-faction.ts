@@ -144,6 +144,10 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-run-a-conspiracy-campaign",
+    "how-do-i-get-players-to-engage-with-my-campaign-world",
+    "how-do-you-create-a-pantheon",
+    "how-do-you-prepare-a-sandbox-rpg-campaign",
+    "what-should-an-rpg-settlement-contain",
   ],
   discovery: {
     id: "answer-fantasy-faction",
