@@ -515,17 +515,9 @@ export function renderMap(options: RenderOptions) {
     ctx.translate(center.x, center.y);
     ctx.scale(transform.zoom, transform.zoom);
     // Nearest-neighbor when displaying larger than native so pre-drawn
-    // grid/hex lines on small tile art stay crisp instead of blurring —
-    // except while actively fine-tuning alignment (`grid.fixed`), where
-    // browsers snap a smoothing-disabled image's draw position to whole
-    // device pixels for crispness. On a small tile blown up 2x that snap
-    // grain reads as the map jumping in visible steps instead of following
-    // the pointer continuously, defeating the point of nudging it under
-    // the grid — so smoothing (and true sub-pixel positioning) is kept on
-    // for the duration of the drag, then crisp scaling resumes after.
+    // grid/hex lines on small tile art stay crisp instead of blurring.
     ctx.imageSmoothingEnabled =
-      Boolean(options.grid?.fixed) ||
-      (displayWidth === image.width && displayHeight === image.height);
+      displayWidth === image.width && displayHeight === image.height;
     ctx.drawImage(
       image,
       -displayWidth / 2,
