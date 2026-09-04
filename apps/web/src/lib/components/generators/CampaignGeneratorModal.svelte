@@ -63,6 +63,7 @@
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
@@ -516,15 +517,29 @@
         deleteOnDiscard: true,
         generatorSessionCommit: true,
       };
-      close({ preserveSession: true });
-      // Review where the user launched from: stay in zen if already in zen (or
-      // on mobile, where zen is the better surface), otherwise show the draft
-      // in the entity sidebar without yanking the user into zen.
-      if (layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile) {
-        focusEntity(result.entityId);
-      } else {
-        vault.selectedEntityId = result.entityId;
+      // The entity is saved as of this point — everything past here is
+      // best-effort UI hand-off. Navigate to it (and only then dismiss the
+      // modal) so that if opening the editor fails, the failure is caught
+      // while the modal is still visible instead of being silently lost
+      // behind an already-closed dialog (#2742).
+      try {
+        // Review where the user launched from: stay in zen if already in zen
+        // (or on mobile, where zen is the better surface), otherwise show the
+        // draft in the entity sidebar without yanking the user into zen.
+        if (layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile) {
+          focusEntity(result.entityId);
+        } else {
+          vault.selectedEntityId = result.entityId;
+        }
+      } catch (err) {
+        console.error("Failed to open generated entity in editor:", err);
+        notificationStore.notify(
+          `"${reviewed.title}" was saved, but couldn't be opened automatically. Find it in the vault to continue editing.`,
+          "error",
+          true,
+        );
       }
+      close({ preserveSession: true });
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : String(err);
       stage = "review";
