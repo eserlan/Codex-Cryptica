@@ -293,6 +293,19 @@ export class MapInteractionManager {
       return;
     }
 
+    // Grid-move is an exclusive mode entered deliberately from Grid Settings
+    // ("Drag the map to align. Enter to confirm, Esc to cancel."), so the
+    // drag must pan the map — and only the map. Checked ahead of every
+    // object handler below: on a map covered in tiles (the exact case this
+    // mode exists for) a pointer-down would otherwise land on a tile and
+    // drag that instead, snapped to the grid, so the map never moved.
+    if (this.cachedRect && this.gridInteractions.shouldStartGridMove()) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isPanning = true;
+      return;
+    }
+
     if (
       e.button === 0 &&
       (mapSession.vttEnabled || mapSession.selectedToken?.kind === "note") &&
@@ -329,13 +342,6 @@ export class MapInteractionManager {
         this.isPanning = false;
         return;
       }
-    }
-
-    if (this.cachedRect && this.gridInteractions.shouldStartGridMove()) {
-      e.preventDefault();
-      e.stopPropagation();
-      this.isPanning = true;
-      return;
     }
 
     if (

@@ -28,6 +28,8 @@ vi.mock("../../stores/map-session.svelte", () => ({
     myPeerId: null,
     activeLayer: "token",
     canViewToken: vi.fn(() => true),
+    canMoveToken: vi.fn(() => true),
+    setDraggingTokenId: vi.fn(),
     measurement: { active: false, start: null, end: null, locked: false },
     tileDeckManager: { pendingPlacement: null },
     notePlacementArmed: false,
@@ -552,6 +554,84 @@ describe("MapInteractionManager", () => {
       expect(manager.selectedPinId).toBeNull();
 
       (mapSession as any).vttEnabled = true;
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  describe("move-map-to-fine-tune mode", () => {
+    // The mode exists to nudge a tile-covered map under a fixed grid, so a
+    // pointer-down landing on a tile/token must still pan the map — grabbing
+    // the object instead would drag it snapped to the grid while the map
+    // itself never moved, which reads as "moving the map snaps".
+    it("pans the map even when the drag starts on top of a token or tile", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).gridMoveMode = true;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", {
+          clientX: 110,
+          clientY: 110,
+          button: 0,
+        }),
+      );
+
+      expect(manager.isPanning).toBe(true);
+      expect(manager.tokenDrag.dragState).toBeFalsy();
+
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 117, clientY: 123 }),
+      );
+
+      expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 7, y: 13 }, 1);
+
+      (mapSession as any).gridMoveMode = false;
+      (mapSession as any).allTokens = [];
+    });
+
+    it("still grabs a token normally when not in move-map mode", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).gridMoveMode = false;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", {
+          clientX: 110,
+          clientY: 110,
+          button: 0,
+        }),
+      );
+
+      expect(manager.isPanning).toBe(false);
+      expect(manager.tokenDrag.dragState).toBeTruthy();
+
       (mapSession as any).allTokens = [];
     });
   });
