@@ -59,6 +59,40 @@ describe("VaultRepository", () => {
     expect(onProgress).toHaveBeenCalled();
   });
 
+  it("should exclude files under reserved internal directories (#2735)", async () => {
+    const mockHandle = {} as FileSystemDirectoryHandle;
+    const mockFiles = [
+      {
+        path: ["test1.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+      {
+        path: ["_tables", "barrowmaze-random-rumour-table.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+      {
+        path: ["_decks", "some-deck.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+      {
+        path: ["files", "uuid-upload.md"],
+        handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+      },
+    ];
+
+    mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
+    mockAdapter.readFileAsText.mockResolvedValue("mock content");
+    mockAdapter.parseMarkdown.mockReturnValue({
+      id: "e1",
+      title: "Entity 1",
+    } as any);
+
+    const result = await repository.loadFiles("vault-1", mockHandle);
+
+    expect(Object.keys(result)).toEqual(["e1"]);
+    expect(mockAdapter.readFileAsText).toHaveBeenCalledTimes(1);
+  });
+
   it("should use cached entities if lastModified matches", async () => {
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockFiles = [

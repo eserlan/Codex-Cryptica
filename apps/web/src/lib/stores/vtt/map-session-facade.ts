@@ -187,6 +187,9 @@ export abstract class MapSessionFacade {
   set gridMoveMode(value) {
     this.gridManager.gridMoveMode = value;
   }
+  get gridFixedPan() {
+    return this.gridManager.gridFixedPan;
+  }
   get activeLayer() {
     return this.layerManager.activeLayer;
   }

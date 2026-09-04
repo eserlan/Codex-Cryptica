@@ -17,6 +17,52 @@ export interface ZoomViewportInput {
   maxZoom?: number;
 }
 
+// Small pre-drawn map tiles (e.g. geomorph line-art) are often authored at a
+// native resolution that makes each grid square only a handful of pixels
+// once "fit grid to map" divides it up. Below this size (larger dimension,
+// in px) the map is displayed at 2x — the source file is untouched, only
+// its on-canvas draw/grid/pin coordinate space is scaled up.
+export const SMALL_MAP_DISPLAY_SCALE_THRESHOLD = 1000;
+export const SMALL_MAP_DISPLAY_SCALE_FACTOR = 2;
+
+// Computes the image-space size a map should be displayed/interacted with
+// at, given its background image's native pixel size. Called once, when a
+// map's dimensions are first recorded (see MapView.svelte), so the result
+// becomes the single source of truth for grid size, pin coordinates, fog
+// mask sizing, and drag bounds clamping from then on.
+export function getMapDisplayDimensions(
+  nativeWidth: number,
+  nativeHeight: number,
+): { width: number; height: number } {
+  const scale =
+    Math.max(nativeWidth, nativeHeight) < SMALL_MAP_DISPLAY_SCALE_THRESHOLD
+      ? SMALL_MAP_DISPLAY_SCALE_FACTOR
+      : 1;
+  return { width: nativeWidth * scale, height: nativeHeight * scale };
+}
+
+// Explains why a token under the cursor refused to be dragged, so pressing
+// a locked piece says so instead of silently doing nothing (or, worse,
+// panning the map out from under the press).
+export function describeMoveBlocked(
+  token: { name?: string; locked?: boolean; layer?: string | null },
+  isLayerLocked: boolean,
+  isHost: boolean,
+): string {
+  const name = token.name?.trim() || "That piece";
+
+  if (token.locked) {
+    return `${name} is locked — unlock it to move it`;
+  }
+  if (isLayerLocked) {
+    return `The ${token.layer ?? "token"} layer is locked — unlock the layer to move ${name}`;
+  }
+  if (!isHost) {
+    return `${name} belongs to someone else — only its owner or the GM can move it`;
+  }
+  return `${name} can't be moved`;
+}
+
 export function findClickedPin(
   pins: MapPin[],
   project: (point: Point) => Point,
