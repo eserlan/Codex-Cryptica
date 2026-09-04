@@ -33,31 +33,16 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
 
 ## Step-by-Step Implementation Workflow
 
-### 1. Check & Register Discovery Intent (Constitution XIII)
+### 1. Check Discovery Intent (Constitution XIII)
 
-Every public answer page must be governed by the Discovery Intent Registry:
+Every public answer page is governed by the Discovery Intent Registry:
 
 1. Run the discovery audit to check existing intents and cluster owners:
    ```sh
    bun scripts/discovery-audit.mjs
    ```
 2. Verify the intent is distinct: do not create a second URL for a synonym or word-order variant of an existing answer.
-3. Register the entry in `apps/web/src/lib/content/discovery/entries/answers.ts`:
-   ```ts
-   {
-     id: "answer-<slug-descriptor>",
-     pageKind: "answer",
-     canonicalPath: "/answers/<kebab-case-slug>",
-     primaryIntent: "<canonical search intent>",
-     intentAliases: ["<alias 1>", "<alias 2>"],
-     userJob: "understand",
-     uniqueValue: "<1-2 sentences explaining the unique technique or framework>",
-     parentCluster: "<cluster-id, e.g. adventure-mapping, session-prep, worldbuilding>",
-     relatedIntents: ["<related-intent-id>"],
-     indexable: true,
-     status: "live",
-   }
-   ```
+3. Identify the parent cluster (e.g. `session-prep`, `worldbuilding`, `adventure-mapping`, `npc-creation`) and search intent aliases. You will define these directly in the answer file's `discovery` object — no separate registry file edit required!
 
 ---
 
@@ -95,6 +80,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const <camelCaseName>: AnswerConfigInput = {
   slug: "<kebab-case-slug>",
+  category: "session-prep", // "getting-started" | "session-prep" | "worldbuilding" | "campaign-notes"
   question: "<Verbatim Question Ending in ?>",
   kind: "framework", // "definition" | "how-to" | "framework" | "comparison"
   shortAnswer:
@@ -181,6 +167,12 @@ export const <camelCaseName>: AnswerConfigInput = {
     "<existing-answer-slug-1>",
     "<existing-answer-slug-2>",
   ],
+  discovery: {
+    parentCluster: "<cluster-id, e.g. adventure-mapping, session-prep, worldbuilding>",
+    intentAliases: ["<alias 1>", "<alias 2>"],
+    uniqueValue: "<1-2 sentences explaining the unique technique or framework>",
+    relatedIntents: ["<related-intent-id>"],
+  },
   seo: {
     title: "<Question>? | Codex Cryptica", // <= 75 chars
     description:
@@ -193,16 +185,21 @@ export const <camelCaseName>: AnswerConfigInput = {
 
 ---
 
-### 4. Wire Registries & Categorisation
+### 4. Sync Answer Registries
 
-1. **Export in `apps/web/src/lib/content/answers/pages/index.ts`**:
-   - Import `<camelCaseName>` and include it in the `answers` record map array.
-2. **Assign to a Category in `apps/web/src/lib/content/answers/categories.ts`**:
-   - Every published answer must belong to **exactly one** category in `ANSWER_CATEGORIES`:
-     - `getting-started`: Beginner onboarding, system choice, group finding, Session 0.
-     - `session-prep`: Prep volume, combat balance, random tables, puzzle design, player engagement, travel mechanics.
-     - `worldbuilding`: Factions, pantheons, religions, settlements, point crawls.
-     - `campaign-notes`: Note structures, relationship mapping, campaign managers.
+Run the automated synchronization script to register your answer:
+
+```sh
+bun sync:answers
+```
+
+This automatically:
+
+- Registers the answer in `apps/web/src/lib/content/answers/pages/index.ts`.
+- Incorporates the answer into its category (`apps/web/src/lib/content/answers/categories.ts`).
+- Generates its Discovery Intent entry (`apps/web/src/lib/content/discovery/entries/answers.ts`).
+
+No manual editing of index, category, or discovery files is needed!
 
 ---
 

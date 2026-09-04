@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   slug: "how-do-you-create-a-fantasy-faction",
+  category: "worldbuilding",
   question: "How do you create a fantasy faction?",
   kind: "framework",
   shortAnswer:
@@ -144,6 +145,16 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-run-a-conspiracy-campaign",
   ],
+  discovery: {
+    id: "answer-fantasy-faction",
+    parentCluster: "faction-creation",
+    primaryIntent: "how do you create a fantasy faction",
+    intentAliases: ["how to make an rpg faction", "faction design framework"],
+    uniqueValue:
+      "Six ordered questions that make a faction predict its own next move, with a worked guild example and a usability test.",
+    relatedIntents: ["generator-faction"],
+  },
+
   seo: {
     title: "How do you create a fantasy faction? | Codex Cryptica",
     description:

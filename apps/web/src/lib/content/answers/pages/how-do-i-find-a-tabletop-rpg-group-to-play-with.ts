@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
   slug: "how-do-i-find-a-tabletop-rpg-group-to-play-with",
+  category: "getting-started",
   question: "How do I find a tabletop RPG group to play with?",
   kind: "how-to",
   shortAnswer:
@@ -149,6 +150,29 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
     "what-rpg-system-should-we-try-instead-of-dnd",
     "how-do-i-run-a-successful-session-0",
   ],
+  discovery: {
+    id: "answer-find-rpg-group",
+    parentCluster: "group-finding",
+    primaryIntent: "find a tabletop rpg group or players to play with",
+    intentAliases: [
+      "how do i find a dnd group",
+      "how to find a ttrpg group",
+      "find rpg players near me",
+      "find an online rpg group",
+      "looking for group tabletop rpg",
+      "where to find dnd players",
+      "how to join an rpg group",
+      "how do i find a tabletop rpg group to play with",
+    ],
+    uniqueValue:
+      "Explains dedicated group finders (including Groupfinder), local offline routes, online communities, a group-fit checklist, and first-contact etiquette without pretending CC finds groups.",
+    relatedIntents: [
+      "answer-beginner-start",
+      "answer-system-selection",
+      "answer-session-zero",
+    ],
+  },
+
   seo: {
     title: "How to find a tabletop RPG group to play with | Codex Cryptica",
     description:

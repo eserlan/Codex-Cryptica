@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
   slug: "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+  category: "session-prep",
   question: "How do I balance RPG combat encounters without causing a TPK?",
   kind: "framework",
   shortAnswer:
@@ -114,6 +115,23 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "what-makes-a-good-random-encounter",
     "how-much-prep-do-you-need-for-an-rpg-session",
   ],
+  discovery: {
+    id: "answer-encounter-balance",
+    parentCluster: "encounter-balance",
+    primaryIntent: "how to balance rpg combat encounters safely",
+    intentAliases: [
+      "how do i balance rpg combat encounters without causing a tpk",
+      "how to avoid a tpk",
+      "how to balance combat encounters",
+      "encounter difficulty gm advice",
+      "make rpg combat challenging but fair",
+      "tune encounters on the fly",
+    ],
+    uniqueValue:
+      "Names what a CR/XP formula misses — action economy, party condition, signalling, objectives, terrain, retreat options and built-in pressure valves — and works one encounter through several ways to soften it without secretly rewriting numbers mid-fight.",
+    relatedIntents: ["answer-random-encounter", "generator-encounter"],
+  },
+
   seo: {
     title:
       "How do I balance RPG combat encounters without a TPK? | Codex Cryptica",

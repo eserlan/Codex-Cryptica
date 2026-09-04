@@ -257,27 +257,32 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/what-is-a-point-crawl</loc>
+    <loc>https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes</loc>
+    <loc>https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://codexcryptica.com/answers/how-do-you-organise-npc-relationships</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://codexcryptica.com/answers/what-makes-a-good-random-encounter</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -292,12 +297,22 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain</loc>
+    <loc>https://codexcryptica.com/answers/how-do-you-make-npcs-memorable-without-lots-of-prep</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion</loc>
+    <loc>https://codexcryptica.com/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-organise-npc-relationships</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -312,22 +327,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0</loc>
+    <loc>https://codexcryptica.com/answers/what-is-a-point-crawl</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager</loc>
+    <loc>https://codexcryptica.com/answers/what-makes-a-good-random-encounter</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -337,12 +342,17 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg</loc>
+    <loc>https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with</loc>
+    <loc>https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

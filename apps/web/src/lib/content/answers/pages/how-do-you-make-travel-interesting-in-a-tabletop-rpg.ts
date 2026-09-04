@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+  category: "session-prep",
   question: "How do you make travel interesting in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
@@ -135,6 +136,20 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "what-is-a-point-crawl",
     "what-should-an-rpg-settlement-contain",
   ],
+  discovery: {
+    id: "answer-travel-interesting",
+    parentCluster: "adventure-mapping",
+    primaryIntent: "how to make travel interesting in a tabletop rpg",
+    intentAliases: [
+      "how to run travel in dnd",
+      "rpg wilderness travel framework",
+      "interesting journey mechanics ttrpg",
+    ],
+    uniqueValue:
+      "A five-pillar wilderness travel framework replacing empty random combat with branching route dilemmas, camp roles, tangible time costs, and situational road discoveries.",
+    relatedIntents: ["answer-point-crawl", "answer-random-encounter"],
+  },
+
   seo: {
     title:
       "How do you make travel interesting in a tabletop RPG? | Codex Cryptica",

@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
   slug: "how-do-you-run-a-conspiracy-campaign",
+  category: "session-prep",
   question: "How do you run a conspiracy campaign?",
   kind: "how-to",
   shortAnswer:
@@ -150,6 +151,23 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
   ],
+  discovery: {
+    id: "answer-conspiracy-campaign",
+    parentCluster: "conspiracy-campaigns",
+    primaryIntent: "how do you run a conspiracy campaign",
+    intentAliases: ["running a mystery campaign", "conspiracy campaign prep"],
+    uniqueValue:
+      "Write the truth first, then design the leak: three prep documents, the three-clue redundancy rule, and one fact reached three ways.",
+    relatedIntents: ["for-conspiracy"],
+    acknowledgedOverlap: [
+      {
+        with: "for-conspiracy",
+        reason:
+          "The answer teaches how to run the campaign; the /for page shows how Codex holds the evidence map. Technique versus tooling, and each is useful without the other.",
+      },
+    ],
+  },
+
   seo: {
     title: "How do you run a conspiracy campaign? | Codex Cryptica",
     description:

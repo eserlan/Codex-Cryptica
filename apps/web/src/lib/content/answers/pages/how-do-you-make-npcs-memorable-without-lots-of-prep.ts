@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
   slug: "how-do-you-make-npcs-memorable-without-lots-of-prep",
+  category: "session-prep",
   question: "How do you make NPCs memorable without lots of prep?",
   kind: "framework",
   shortAnswer:
@@ -127,6 +128,20 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "what-makes-a-good-random-encounter",
   ],
+  discovery: {
+    id: "answer-npcs-memorable",
+    parentCluster: "npc-creation",
+    primaryIntent: "how to make npcs memorable without lots of prep",
+    intentAliases: [
+      "how to make memorable npcs",
+      "quick npc creation framework",
+      "lightweight npc design rpg",
+    ],
+    uniqueValue:
+      "A five-element table-ready NPC anatomy replacing biographical prep with an immediate want, physical mannerism, contradiction, relationship hook, and sensory tag.",
+    relatedIntents: ["generator-npc", "answer-npc-relationships"],
+  },
+
   seo: {
     title:
       "How do you make NPCs memorable without lots of prep? | Codex Cryptica",
