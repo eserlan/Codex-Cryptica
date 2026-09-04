@@ -5,7 +5,7 @@ description: Add a new Codex Cryptica reference answer page (/answers/[slug]) co
 
 # Add an Answer Page
 
-Answer pages (`/answers/[slug]`) are reference entries for real tabletop RPG and worldbuilding questions that players and Game Masters search for — not shallow SEO landing pages and not dated blog posts.
+Answer pages (`/answers/[slug]`) are reference entries for real tabletop RPG and worldbuilding questions that players and Game Masters search for, not shallow SEO landing pages and not dated blog posts.
 
 One page owns one genuine user intent (Constitution XIII). The substantive answer is structured data (`AnswerConfig`), landing in crawler-visible HTML without requiring a bespoke Svelte page per question.
 
@@ -20,14 +20,27 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
 2. **Direct Answer First (`shortAnswer`)**:
    - Must be a single self-contained paragraph of $\ge 140$ characters that directly answers the question before any body prose.
    - Forms the structured FAQPage JSON-LD snippet; it must make total sense when read in search engine results out of context.
-3. **Substantive Framework & Structure**:
+3. **Strict Ban on Obvious AI Writing Tells (Zero Tolerance)**:
+   Prose must read as authentic, authoritative tabletop literature written by an experienced Game Master. Obvious LLM signatures degrade credibility immediately:
+   - **Zero Em Dashes (`—`) or En Dashes (`–`)**: Absolutely forbid em dashes and en dashes in all fields (`shortAnswer`, section headings, prose paragraphs, list intro/terms/text, example blocks, checklist items, `codexConnection`, and SEO metadata). Em dashes are the single most identifiable LLM marker. Use standard punctuation: commas, colons, semicolons, parentheses, full stops, or ordinary hyphens for compound adjectives (`session-long`, `step-by-step`, `tabletop-ready`).
+   - **Zero Emojis**: Never use emojis (`✨`, `🎲`, `🧙`, `⚔️`, `🚀`, `👉`, etc.) anywhere in answer files. Answers are permanent, authoritative reference documents, not social media posts.
+   - **No Synthetic AI Buzzwords & Fluff**: Reject synthetic vocabulary that makes copy read like a boilerplate marketing brochure. Specifically avoid:
+     - Synthetic fillers: `delve`, `tapestry`, `testament`, `beacon`, `plethora`, `myriad`, `vital`, `crucial`, `paramount`, `pivotal`, `holistic`, `synergy`, `foster`, `embark`, `nestled`, `treasure trove`, `realm`, `cornerstone`.
+     - Fluffy marketing adjectives: `seamless`, `effortless`, `game-changing`, `revolutionary`, `transformative`, `robust`, `vibrant`, `richly detailed`, `meticulous`, `cutting-edge`.
+     - Inflated verbs: `elevate`, `supercharge`, `unleash`, `unlock`, `harness`, `leverage`, `navigate the intricacies of`.
+       State mechanical actions plainly (`track`, `note`, `roll`, `draft`, `sketch`, `reveal`, `constrain`).
+   - **No Throat-Clearing Openers**: Never start the `shortAnswer` or first section with broad, sweeping generalizations ("In the vast world of tabletop roleplaying...", "Whether you are a seasoned game master or running your first campaign...", "At its core...", "Every GM knows that..."). Open immediately with the mechanical constraint, table dilemma, or friction point.
+   - **No Symmetrical Contrast Cadences or Generic Contrast Formulas**: Avoid repetitive rhetorical swings like "It is not about X; it is about Y", "X isn't just Y, it's Z", "Not only does this X, but it also Y". State the point directly without artificial rhetorical symmetry.
+   - **No Formulaic Boilerplate Conclusions**: Never end sections or the answer with decorative moralizing recaps ("Ultimately, the key is...", "In conclusion...", "By keeping these principles in mind, your world will come alive..."). When the practical explanation is finished, stop.
+   - **Break the Uniform AI Cadence**: Avoid uniform 3-sentence paragraphs or lists where every bullet has the exact same grammatical shape (e.g. bold verb-noun phrase followed by 12 words of generic explanation). Vary sentence lengths and paragraph depths to match genuine human technical writing.
+4. **Substantive Framework & Structure**:
    - At least 3 body sections (`sections.length >= 3`).
    - **At least one worked `example` block** (`kind: "example"`): Concrete tabletop comparison (e.g. weak/strong or before/after) with a "Why it works" takeaway.
    - **At least one actionable checklist block** (`kind: "checklist"`): Specific, practical prep items the reader can take straight to their table.
-4. **Honest Product Connection**:
+5. **Honest Product Connection**:
    - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
-5. **No AI Filler or Fluff**:
-   - Avoid generic AI intro fluff ("In the vast and wondrous world of tabletop gaming..."). Start directly with the friction point or core design dilemma.
+6. **Clean List Item Titles (No Redundant Numbering)**:
+   - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
 
 ---
 
@@ -42,7 +55,7 @@ Every public answer page is governed by the Discovery Intent Registry:
    bun scripts/discovery-audit.mjs
    ```
 2. Verify the intent is distinct: do not create a second URL for a synonym or word-order variant of an existing answer.
-3. Identify the parent cluster (e.g. `session-prep`, `worldbuilding`, `adventure-mapping`, `npc-creation`) and search intent aliases. You will define these directly in the answer file's `discovery` object — no separate registry file edit required!
+3. Identify the parent cluster (e.g. `session-prep`, `worldbuilding`, `adventure-mapping`, `npc-creation`) and search intent aliases. You will define these directly in the answer file's `discovery` object (no separate registry file edit required).
 
 ---
 
@@ -185,7 +198,25 @@ export const <camelCaseName>: AnswerConfigInput = {
 
 ---
 
-### 4. Sync Answer Registries
+### 4. Connect & Update the Knowledge Mesh
+
+Reference answers must form an interconnected web, never dead ends. When publishing a new answer:
+
+1. **Reciprocal Linking**:
+   - Check the answers you listed in `relatedAnswers`.
+   - Update those existing answer files (`apps/web/src/lib/content/answers/pages/<existing-slug>.ts`) to include your new answer's slug in their `relatedAnswers`.
+   - Or run the automated fixer:
+     ```sh
+     bun run check:answer-mesh --fix
+     ```
+2. **Intent Pruning & Alias Migration (Constitution XIII)**:
+   - If an existing broader answer in your cluster currently carries an `intentAlias` that your new, specialized page now directly answers, prune that alias from the existing answer's `intentAliases`.
+3. **Mutual Overlap Acknowledgment**:
+   - If your answer shares significant vocabulary or cluster scope with an existing answer, ensure both answers acknowledge each other via `acknowledgedOverlap: [{ with: "<other-intent-id>", reason: "<distinct-role-rationale>" }]`.
+
+---
+
+### 5. Sync Answer Registries
 
 Run the automated synchronization script to register your answer:
 
@@ -203,29 +234,34 @@ No manual editing of index, category, or discovery files is needed!
 
 ---
 
-### 5. Verification Gate (Mandatory)
+### 6. Verification Gate (Mandatory)
 
 Run all targeted tests and static analyses before committing:
 
-1. **Answer Unit Tests**:
+1. **Answer Mesh Check**:
    ```sh
-   bun test apps/web/src/lib/content/answers/
+   bun run check:answer-mesh
+   ```
+   _Audits outbound links, ensures no broken links, and verifies reciprocal cross-links._
+2. **Answer Unit Tests**:
+   ```sh
+   bun test apps/web/src/lib/content/answers/ scripts/check-answer-mesh.test.ts
    ```
    _Verifies schema validation, British English spelling check, slug uniqueness, link liveness, structured data, and category coverage._
-2. **Discovery Intent Audit**:
+3. **Discovery Intent Audit**:
    ```sh
    bun scripts/discovery-audit.mjs
    ```
    _Ensures 0 overlap errors and verifies canonical registration._
-3. **Type & Lint Check**:
+4. **Type & Lint Check**:
    ```sh
    bun run lint:types
-   bun run lint
+   bun run lint:affected
    ```
 
 ---
 
-### 6. Pull Request & Review Loop
+### 7. Pull Request & Review Loop
 
 1. Create a dedicated branch off `origin/staging`:
    ```sh
