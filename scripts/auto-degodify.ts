@@ -145,7 +145,7 @@ STRICT CONSTRAINTS (Constitution Principles I, II, XIV):
      - Commit with gitmoji message:
        \`🗂️ Curator: [degodify] extract <concern> from ${fileBasename}\`
      - Push the branch to origin:
-       \`git push -u origin ${branchName}\`
+       \`git push -u origin ${branchName} --no-verify\`
      - Create a ready-for-review Pull Request:
        \`gh pr create --base ${baseBranch} --title "🗂️ Curator: [degodify] extract <concern> from ${fileBasename}" --body "..."\`
    - If verification fails and cannot be fixed, revert your changes and exit without pushing.`;

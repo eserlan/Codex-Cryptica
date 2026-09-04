@@ -91,6 +91,7 @@ describe("auto-degodify", () => {
       expect(prompt).toContain("bun test");
       expect(prompt).toContain("bun run lint:types");
       expect(prompt).toContain("bun run lint");
+      expect(prompt).toContain("--no-verify");
       expect(prompt).toContain("gh pr create --base staging");
     });
   });
