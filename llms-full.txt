@@ -1935,6 +1935,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork — done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
 
+### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
+
+**Direct answer:** To build a point crawl for an RPG, construct a network of six to ten landmark nodes connected by differentiated travel paths. Define each node as an actionable destination with a clear hazard, resource, or encounter. Then connect the nodes with routes that present meaningful trade-offs in travel duration, terrain difficulty, and risk, ensuring there are loops and alternative paths rather than a single linear highway.
+
 ### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
 
 **Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice — the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit — because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.

@@ -3,6 +3,7 @@ import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-faction";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
@@ -34,6 +35,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIRunASuccessfulSessionZero,
+    howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyFaction,
     howDoYouCreateAPantheon,
