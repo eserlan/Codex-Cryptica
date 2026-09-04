@@ -6,3 +6,36 @@
   Cache-Control: public, max-age=3600, must-revalidate
 /llms-full.txt
   Cache-Control: public, max-age=3600, must-revalidate
+
+# Stateful workspace surfaces are client-rendered and may contain local vault,
+# campaign, or session state. Keep the guard at the static host boundary: the
+# app route group has SSR disabled, so a client-side <meta> tag is not a
+# crawler-visible guarantee.
+/adventure*
+  X-Robots-Tag: noindex, nofollow
+/canvas*
+  X-Robots-Tag: noindex, nofollow
+/decks*
+  X-Robots-Tag: noindex, nofollow
+/dice*
+  X-Robots-Tag: noindex, nofollow
+/guest*
+  X-Robots-Tag: noindex, nofollow
+/help*
+  X-Robots-Tag: noindex, nofollow
+/import
+  X-Robots-Tag: noindex, nofollow
+/map*
+  X-Robots-Tag: noindex, nofollow
+/oracle*
+  X-Robots-Tag: noindex, nofollow
+/table*
+  X-Robots-Tag: noindex, nofollow
+/tables*
+  X-Robots-Tag: noindex, nofollow
+/templates*
+  X-Robots-Tag: noindex, nofollow
+/timeline*
+  X-Robots-Tag: noindex, nofollow
+/vault*
+  X-Robots-Tag: noindex, nofollow
