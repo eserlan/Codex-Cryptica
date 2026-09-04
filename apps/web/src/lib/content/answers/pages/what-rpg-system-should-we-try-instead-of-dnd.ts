@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
   slug: "what-rpg-system-should-we-try-instead-of-dnd",
+  category: "getting-started",
   question: "What RPG system should we try instead of D&D?",
   kind: "framework",
   shortAnswer:
@@ -149,6 +150,28 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "how-do-i-run-a-successful-session-0",
   ],
+  discovery: {
+    id: "answer-system-selection",
+    parentCluster: "system-selection",
+    primaryIntent:
+      "choose a tabletop rpg system based on desired play style or genre when looking beyond dnd",
+    intentAliases: [
+      "alternatives to dnd",
+      "what rpg should i play instead of dnd",
+      "tabletop rpg recommendations",
+      "games like dnd but different",
+      "what rpg system should we try instead of dnd",
+    ],
+    uniqueValue:
+      "A play-style decision framework and systems grouped by user need rather than a popularity-ranked list, deliberately naming no single 'best' D&D alternative.",
+    relatedIntents: [
+      "for-dungeons-and-dragons",
+      "for-pathfinder-2e",
+      "for-call-of-cthulhu",
+      "for-cyberpunk-red",
+    ],
+  },
+
   seo: {
     title: "What RPG system should we try instead of D&D? | Codex Cryptica",
     description:

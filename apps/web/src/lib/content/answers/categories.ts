@@ -1,26 +1,24 @@
-import type { AnswerConfig } from "./schema";
+import type { AnswerCategoryId, AnswerConfig } from "./schema";
+import { answers } from "./pages";
 
-export interface AnswerCategory {
-  id: string;
+export interface AnswerCategoryDefinition {
+  id: AnswerCategoryId;
   title: string;
   description: string;
   icon: string;
+}
+
+export interface AnswerCategory extends AnswerCategoryDefinition {
   slugs: string[];
 }
 
-export const ANSWER_CATEGORIES: AnswerCategory[] = [
+export const CATEGORY_DEFINITIONS: AnswerCategoryDefinition[] = [
   {
     id: "getting-started",
     title: "Getting Started & Table Setup",
     description:
       "Beginner onboarding, finding a group, choosing a ruleset, and running Session 0.",
     icon: "icon-[lucide--compass]",
-    slugs: [
-      "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
-      "how-do-i-find-a-tabletop-rpg-group-to-play-with",
-      "what-rpg-system-should-we-try-instead-of-dnd",
-      "how-do-i-run-a-successful-session-0",
-    ],
   },
   {
     id: "session-prep",
@@ -28,16 +26,6 @@ export const ANSWER_CATEGORIES: AnswerCategory[] = [
     description:
       "Prep volume, combat encounter balance, random tables, puzzle design, player engagement, and mystery structure.",
     icon: "icon-[lucide--swords]",
-    slugs: [
-      "how-much-prep-do-you-need-for-an-rpg-session",
-      "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-      "what-makes-a-good-random-encounter",
-      "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-      "how-do-i-get-players-to-engage-with-my-campaign-world",
-      "how-do-you-run-a-conspiracy-campaign",
-      "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
-      "how-do-you-make-npcs-memorable-without-lots-of-prep",
-    ],
   },
   {
     id: "worldbuilding",
@@ -45,13 +33,6 @@ export const ANSWER_CATEGORIES: AnswerCategory[] = [
     description:
       "Factions, pantheons, fictional religions, settlement layouts, and point crawls.",
     icon: "icon-[lucide--globe]",
-    slugs: [
-      "how-do-you-create-a-fantasy-faction",
-      "how-do-you-create-a-pantheon",
-      "how-do-you-create-a-believable-fictional-religion",
-      "what-should-an-rpg-settlement-contain",
-      "what-is-a-point-crawl",
-    ],
   },
   {
     id: "campaign-notes",
@@ -59,13 +40,26 @@ export const ANSWER_CATEGORIES: AnswerCategory[] = [
     description:
       "Note structures, NPC relationship mapping, and evaluating campaign managers.",
     icon: "icon-[lucide--book-open]",
-    slugs: [
-      "how-do-you-organise-rpg-campaign-notes",
-      "how-do-you-organise-npc-relationships",
-      "what-should-i-look-for-in-an-rpg-campaign-manager",
-    ],
   },
 ];
+
+/**
+ * Builds categories dynamically by deriving slugs from the registered answers
+ * according to each answer's `category` property.
+ */
+export function buildAnswerCategories(
+  answersRegistry: Record<string, AnswerConfig> = answers,
+): AnswerCategory[] {
+  const answerList = Object.values(answersRegistry);
+  return CATEGORY_DEFINITIONS.map((category) => ({
+    ...category,
+    slugs: answerList
+      .filter((answer) => answer.category === category.id)
+      .map((answer) => answer.slug),
+  }));
+}
+
+export const ANSWER_CATEGORIES: AnswerCategory[] = buildAnswerCategories();
 
 /** Find the category for a specific answer slug */
 export function getAnswerCategory(slug: string): AnswerCategory | undefined {

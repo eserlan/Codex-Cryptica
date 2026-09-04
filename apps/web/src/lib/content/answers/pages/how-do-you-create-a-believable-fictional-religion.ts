@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   slug: "how-do-you-create-a-believable-fictional-religion",
+  category: "worldbuilding",
   question: "How do you create a believable fictional religion?",
   kind: "how-to",
   shortAnswer:
@@ -142,6 +143,19 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "what-should-an-rpg-settlement-contain",
   ],
+  discovery: {
+    id: "answer-fictional-religion",
+    parentCluster: "gods-and-faith",
+    primaryIntent: "how do you create a believable fictional religion",
+    intentAliases: [
+      "how to write a fictional religion",
+      "designing religions for worldbuilding",
+    ],
+    uniqueValue:
+      "Practice before doctrine — one rite, one prohibition, who funds it, what adherents dispute — and why total coherence reads as fake.",
+    relatedIntents: ["answer-pantheon"],
+  },
+
   seo: {
     title:
       "How do you create a believable fictional religion? | Codex Cryptica",

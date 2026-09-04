@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
   slug: "what-should-an-rpg-settlement-contain",
+  category: "worldbuilding",
   question: "What should an RPG settlement contain?",
   kind: "framework",
   shortAnswer:
@@ -144,6 +145,16 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
   ],
+  discovery: {
+    id: "answer-settlement-contents",
+    parentCluster: "settlement-creation",
+    primaryIntent: "what should an rpg settlement contain",
+    intentAliases: ["how to design a fantasy town", "rpg town prep checklist"],
+    uniqueValue:
+      "Prep sized to what gets used — a reason to exist, four enterable places, three wants, one unsolved problem — plus what to leave out.",
+    relatedIntents: ["generator-settlement"],
+  },
+
   seo: {
     title: "What should an RPG settlement contain? | Codex Cryptica",
     description:

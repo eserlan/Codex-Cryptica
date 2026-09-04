@@ -29,6 +29,7 @@ const makeAnswer = (
       { kind: "prose", heading: "Why", paragraphs: ["Because of reasons."] },
     ],
     relatedAnswers: [],
+    category: "worldbuilding",
     seo: { title: "Test", description: "Test description" },
     ...overrides,
   });
@@ -334,7 +335,8 @@ describe("published answers", () => {
     const americanisms =
       /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense)\w*\b/i;
     for (const answer of published) {
-      const body = JSON.stringify(answer);
+      const { discovery: _discovery, ...readerFacing } = answer;
+      const body = JSON.stringify(readerFacing);
       expect(body.match(americanisms)?.[0] ?? null, answer.slug).toBeNull();
     }
   });

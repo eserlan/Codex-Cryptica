@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
   slug: "how-do-i-get-players-to-engage-with-my-campaign-world",
+  category: "session-prep",
   question: "How do I get players to engage with my campaign world?",
   kind: "framework",
   shortAnswer:
@@ -108,6 +109,28 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-i-run-a-successful-session-0",
   ],
+  discovery: {
+    id: "answer-player-engagement",
+    parentCluster: "player-engagement",
+    primaryIntent: "how to increase player engagement with an rpg campaign",
+    intentAliases: [
+      "how do i get players to engage with my campaign world",
+      "how to get players to roleplay",
+      "how to make players care about the world",
+      "how to get players invested in the campaign",
+      "passive rpg players",
+      "players ignore my lore",
+    ],
+    uniqueValue:
+      "Reframes engagement as a mechanism problem, not a content problem — lore becomes interesting once it's a choice, a stake or a callback — and separates roleplaying from in-character performance so quieter players aren't judged as disengaged.",
+    relatedIntents: [
+      "answer-npc-relationships",
+      "answer-campaign-notes",
+      "answer-fantasy-faction",
+      "answer-session-zero",
+    ],
+  },
+
   seo: {
     title:
       "How do I get players to engage with my campaign world? | Codex Cryptica",

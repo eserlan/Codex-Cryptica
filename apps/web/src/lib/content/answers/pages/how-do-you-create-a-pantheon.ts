@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouCreateAPantheon: AnswerConfigInput = {
   slug: "how-do-you-create-a-pantheon",
+  category: "worldbuilding",
   question: "How do you create a pantheon?",
   kind: "how-to",
   shortAnswer:
@@ -130,6 +131,26 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
   ],
+  discovery: {
+    id: "answer-pantheon",
+    parentCluster: "gods-and-faith",
+    primaryIntent: "how do you create a pantheon",
+    intentAliases: ["how to design rpg gods", "fantasy pantheon design"],
+    uniqueValue:
+      "Builds entanglements between gods before domains, with five structural moves and a three-god example that yields a legal system.",
+    relatedIntents: [
+      "generator-pantheon-generator",
+      "answer-fictional-religion",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-fictional-religion",
+        reason:
+          "Pantheon covers the roster of gods and how they are entangled; religion covers the institution, its rites and its funding. Both pages state the split explicitly and a setting can need either alone.",
+      },
+    ],
+  },
+
   seo: {
     title: "How do you create a pantheon? | Codex Cryptica",
     description:

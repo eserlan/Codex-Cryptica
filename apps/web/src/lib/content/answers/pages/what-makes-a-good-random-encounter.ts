@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
   slug: "what-makes-a-good-random-encounter",
+  category: "session-prep",
   question: "What makes a good random encounter?",
   kind: "framework",
   shortAnswer:
@@ -144,6 +145,19 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "what-should-an-rpg-settlement-contain",
   ],
+  discovery: {
+    id: "answer-random-encounter",
+    parentCluster: "encounter-design",
+    primaryIntent: "what makes a good random encounter",
+    intentAliases: [
+      "how to write random encounter tables",
+      "random encounter design",
+    ],
+    uniqueValue:
+      "Four criteria for an encounter entry, a before-and-after rewrite of the same monster, and guidance on when not to roll at all.",
+    relatedIntents: ["generator-encounter"],
+  },
+
   seo: {
     title: "What makes a good random encounter? | Codex Cryptica",
     description:

@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
   slug: "how-much-prep-do-you-need-for-an-rpg-session",
+  category: "session-prep",
   question: "How much prep do you need for an RPG session?",
   kind: "framework",
   shortAnswer:
@@ -143,6 +144,27 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "what-makes-a-good-random-encounter",
     "how-do-you-organise-npc-relationships",
   ],
+  discovery: {
+    id: "answer-session-prep",
+    parentCluster: "session-prep",
+    primaryIntent: "how much prep do you need for an rpg session",
+    intentAliases: [
+      "how much prep do i need for an rpg session",
+      "how much should a gm prep",
+      "how much prep for a dnd session",
+      "how long should session prep take",
+      "how to prep an rpg session",
+      "low prep gming",
+    ],
+    uniqueValue:
+      "Replaces the search for a universal prep-time ratio with a seven-item coverage checklist, a compact worked example, and the essential/reusable/optional-worldbuilding distinction that explains why more hours prepped isn't the same as better prepared.",
+    relatedIntents: [
+      "answer-campaign-notes",
+      "answer-random-encounter",
+      "answer-npc-relationships",
+    ],
+  },
+
   seo: {
     title: "How much prep do you need for an RPG session? | Codex Cryptica",
     description:
