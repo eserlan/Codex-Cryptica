@@ -12,7 +12,8 @@ export const DEFAULT_PAGES_DIR = path.resolve(
 );
 
 export interface MeshFinding {
-  type: "missing-reciprocal" | "broken-link" | "alias-conflict" | "cluster-orphan";
+  type:
+    "missing-reciprocal" | "broken-link" | "alias-conflict" | "cluster-orphan";
   message: string;
   sourceSlug: string;
   targetSlug?: string;
@@ -120,7 +121,8 @@ export function analyzeAnswerMesh(
       const hasClusterLink = related.some((targetSlug) => {
         const target = answerMap.get(targetSlug);
         if (!target) return false;
-        const targetCluster = target.discovery?.parentCluster ?? target.category;
+        const targetCluster =
+          target.discovery?.parentCluster ?? target.category;
         return targetCluster === cluster;
       });
 
@@ -209,9 +211,7 @@ export function runCli(): void {
   console.log(
     `Analyzed ${result.totalAnswers} answers (${result.totalLinks} outbound cross-links).`,
   );
-  console.log(
-    `✓ ${result.reciprocalCount} reciprocal link pairs verified.`,
-  );
+  console.log(`✓ ${result.reciprocalCount} reciprocal link pairs verified.`);
 
   let hasErrors = false;
 
@@ -232,7 +232,9 @@ export function runCli(): void {
   }
 
   if (result.clusterOrphans.length > 0) {
-    console.warn(`\n⚠ ${result.clusterOrphans.length} Cluster Isolation Warning(s):`);
+    console.warn(
+      `\n⚠ ${result.clusterOrphans.length} Cluster Isolation Warning(s):`,
+    );
     for (const item of result.clusterOrphans) {
       console.warn(`  - ${item.message}`);
     }
@@ -240,7 +242,9 @@ export function runCli(): void {
   }
 
   if (result.missingReciprocal.length > 0) {
-    console.log(`\nℹ ${result.missingReciprocal.length} One-Way Link(s) (Not Reciprocal):`);
+    console.log(
+      `\nℹ ${result.missingReciprocal.length} One-Way Link(s) (Not Reciprocal):`,
+    );
     for (const item of result.missingReciprocal) {
       console.log(`  - ${item.message}`);
     }
