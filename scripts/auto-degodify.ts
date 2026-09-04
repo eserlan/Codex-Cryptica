@@ -355,7 +355,7 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
     options.agentProviders ||
     (options.agentBin
       ? [options.agentBin as AgentProviderName]
-      : ["agy", "claude", "codex"]);
+      : ["claude", "codex", "agy"]);
 
   // Setup isolated worktree
   const worktreePath = resolve(workdirBase, `worktree-${timestamp}`);
@@ -459,7 +459,7 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
             worktreePath,
             agentProviders: providers,
             timeoutMinutes,
-            waitMinutesForReview: options.waitMinutesForReview ?? 2,
+            waitMinutesForReview: options.waitMinutesForReview ?? 4,
             maxRounds: options.maxFixRounds ?? 2,
           });
         }
