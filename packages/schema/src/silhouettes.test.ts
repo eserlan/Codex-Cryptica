@@ -1162,4 +1162,88 @@ describe("Iconic Sci-Fi Character Silhouette Resolution", () => {
     );
     expect(match.id).toBe("scifi-location-reactor-core");
   });
+
+  it("resolves xenomorph alien predator for extraterrestrial stalkers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Apex Stalker",
+        labels: ["xenomorph", "alien", "predator"],
+        content:
+          "Elongated biomechanical carapace with deadly claws and razor tail stalking the corridors.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-creature-xenomorph");
+  });
+
+  it("resolves hive drone insectoid for chitinous swarm beasts", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Hive Brood Soldier",
+        labels: ["swarm", "insectoid", "hive"],
+        content:
+          "Chitin-armored insectoid drone with scythe limbs and clicking mandibles.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-creature-swarm");
+  });
+
+  it("resolves security drone for automated surveillance sentries", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Patrol Sentry 9",
+        labels: ["drone", "sentry", "security"],
+        content:
+          "Hovering repulsor drone with glowing scanner eye patrolling the perimeter.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-construct-drone");
+  });
+
+  it("resolves plasma energy blade for beam sabers and laser weapons", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Thermal Plasma Cutter",
+        labels: ["blade", "plasma", "weapon"],
+        content:
+          "Compact hilt projecting a focused energy beam capable of slicing through bulkheads.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-item-energy-blade");
+  });
+
+  it("resolves hyperspace jump gate for interstellar warp rings", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Orion Gate Station",
+        labels: ["jumpgate", "warp", "portal"],
+        content:
+          "Massive accelerator ring pulsing with hyperspace energy for transit across sectors.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-jump-gate");
+  });
+
+  it("resolves starship astrogator for deep space navigators and cartographers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Chief Astrogator Vance",
+        labels: ["astrogator", "navigator", "surveyor"],
+        content:
+          "Experienced stellar cartographer in an explorer spacesuit consulting starcharts.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-navigator-astrogator");
+  });
 });
