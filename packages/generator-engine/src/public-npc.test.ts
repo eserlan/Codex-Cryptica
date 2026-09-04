@@ -6,6 +6,7 @@ import {
   injectDndNpcQuickStats,
   npcThemeConfig,
   NAME_BAN_PROMPT,
+  resolveNpc,
 } from "./public-npc";
 
 // Deterministic rng (LCG) so prompt/local output is stable across runs.
@@ -312,5 +313,40 @@ describe("Table Card (5-Element) NPC mode", () => {
       '{"title":"Master Eldon","summary":"Scholastic fence.","content":"### The Five Elements\\n- **Immediate Want**: Needs ink.","lore":"### At a Glance\\n- **Role**: Scholar","labels":["rpg-character"]}';
     const out = parseNpcResponse(json, {}, resolved);
     expect(out.labels).toContain("table-card");
+  });
+
+  it("does not consume table-card RNG picks in dossier mode", () => {
+    const resolved = resolveNpc({ role: "Guard" }, seededRng(42));
+
+    expect(resolved.mode).toBe("dossier");
+    expect(resolved.immediateWant).toBeUndefined();
+    expect(resolved.contradiction).toBeUndefined();
+    expect(resolved.relationshipHook).toBeUndefined();
+    expect(resolved.sensoryTag).toBeUndefined();
+  });
+
+  it("consumes exactly 4 fewer RNG calls in dossier mode than table-card mode", () => {
+    function countRngCalls(mode: "dossier" | "table-card"): number {
+      let calls = 0;
+      const base = seededRng(42);
+      const counting = () => {
+        calls++;
+        return base();
+      };
+      resolveNpc({ role: "Guard", mode }, counting);
+      return calls;
+    }
+
+    expect(countRngCalls("table-card") - countRngCalls("dossier")).toBe(4);
+  });
+
+  it("produces grammatically sound summaries for every immediate-want variant", () => {
+    for (let seed = 0; seed < 30; seed++) {
+      const out = generateNpcLocal(
+        { role: "Guard", mode: "table-card" },
+        seededRng(seed),
+      );
+      expect(out.summary).not.toMatch(/who urgently (needs|desperate|seeking|searching|wants|looking)/i);
+    }
   });
 });
