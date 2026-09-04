@@ -116,6 +116,7 @@
     renderMap({
       canvas: canvas,
       image: mapImage,
+      imageDisplaySize: mapStore.activeMap?.dimensions ?? null,
       transform: mapStore.viewport,
       canvasSize: mapStore.canvasSize,
       pins: mapStore.pins,

@@ -89,6 +89,27 @@ describe("renderMap", () => {
     });
 
     expect(ctx.drawImage).toHaveBeenCalledWith(image, -250, -200, 500, 400);
+    expect(ctx.imageSmoothingEnabled).toBe(true);
+  });
+
+  it("draws the background image scaled up to imageDisplaySize with crisp (nearest-neighbor) scaling", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+    const image = { width: 500, height: 400 } as HTMLImageElement;
+
+    renderMap({
+      canvas,
+      image,
+      imageDisplaySize: { width: 1000, height: 800 },
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+    });
+
+    expect(ctx.drawImage).toHaveBeenCalledWith(image, -500, -400, 1000, 800);
+    expect(ctx.imageSmoothingEnabled).toBe(false);
   });
 
   it("draws the grid above tiles/tokens, not underneath them", () => {

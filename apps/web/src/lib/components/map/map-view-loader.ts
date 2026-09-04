@@ -1,4 +1,5 @@
 import type { Map } from "schema";
+import { getMapDisplayDimensions } from "./map-view-helpers";
 
 export interface MapViewAssetLoaderDeps {
   vault: Pick<
@@ -75,10 +76,19 @@ export class MapViewAssetLoader {
 
           this.deps.onImageLoaded(image);
 
+          // Mask must be sized to the map's *display* dimensions (which may
+          // be upscaled from the image's native pixel size for small tile
+          // art), matching the image-space coordinate system fog painting
+          // and vision reveal use — not the raw source bitmap's own size.
+          const displaySize = getMapDisplayDimensions(
+            image.width,
+            image.height,
+          );
+
           try {
             const mask = await this.deps.mapStore.loadMask(
-              image.width,
-              image.height,
+              displaySize.width,
+              displaySize.height,
             );
             if (loadId !== this.currentLoadId) return;
 

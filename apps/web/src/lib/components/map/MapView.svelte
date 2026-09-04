@@ -17,7 +17,10 @@
   import MapContextMenu from "./MapContextMenu.svelte";
   import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
-  import { resolveHealthBar } from "./map-view-helpers";
+  import {
+    resolveHealthBar,
+    getMapDisplayDimensions,
+  } from "./map-view-helpers";
 
   function hashToColor(input: string) {
     let hash = 0;
@@ -86,10 +89,10 @@
         mapStore.activeMapId === activeMap.id &&
         activeMap.dimensions.width === 0
       ) {
-        vault.maps[activeMap.id].dimensions = {
+        vault.maps[activeMap.id].dimensions = getMapDisplayDimensions(
           width,
           height,
-        };
+        );
         await vault.saveMaps();
       }
     },

@@ -65,7 +65,9 @@ describe("MapViewAssetLoader", () => {
 
     await vi.waitFor(() => {
       expect(onImageLoaded).toHaveBeenCalledTimes(1);
-      expect(loadMask).toHaveBeenCalledWith(640, 480);
+      // 640x480 is below the small-map display-scale threshold, so the
+      // mask is sized to the 2x display dimensions, not the native image.
+      expect(loadMask).toHaveBeenCalledWith(1280, 960);
       expect(onMaskLoaded).toHaveBeenCalledTimes(1);
       expect(onDimensionsLoaded).toHaveBeenCalledWith(640, 480);
     });
