@@ -187,3 +187,9 @@ Delete the temporary scratch directory immediately afterwards.
    ```bash
    curl -sI "https://assets.codexcryptica.com/silhouettes/<id>.svg?v=$(date +%s)" | head -n 1
    ```
+
+---
+
+### Step 7 — Update R2 Asset Database (`docs/deployment/r2-asset-db.md`)
+
+Record the newly deployed assets in [`docs/deployment/r2-asset-db.md`](file:///home/espen/Projects/remotecc/docs/deployment/r2-asset-db.md) under the `## silhouettes/` table with their key, approximate size, and archetype / purpose description.
