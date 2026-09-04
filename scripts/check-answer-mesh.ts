@@ -242,7 +242,6 @@ export function runCli(): void {
   }
 
   if (result.missingReciprocal.length > 0) {
-    if (!shouldFix) hasErrors = true;
     console.log(
       `\nℹ ${result.missingReciprocal.length} One-Way Link(s) (Not Reciprocal):`,
     );
@@ -260,9 +259,8 @@ export function runCli(): void {
       console.log(
         "\nTip: Run `bun run check:answer-mesh --fix` to automatically reciprocate links in the corresponding answer files.",
       );
+      hasErrors = true;
     }
-
-    if (isStrict) hasErrors = true;
   }
 
   if (hasErrors) {
@@ -272,6 +270,6 @@ export function runCli(): void {
   console.log("\n✨ Answer mesh health check complete!");
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && __filename === path.resolve(process.argv[1])) {
   runCli();
 }
