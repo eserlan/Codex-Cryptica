@@ -35,6 +35,7 @@ export const ANSWER_CATEGORIES: AnswerCategory[] = [
       "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
       "how-do-i-get-players-to-engage-with-my-campaign-world",
       "how-do-you-run-a-conspiracy-campaign",
+      "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     ],
   },
   {

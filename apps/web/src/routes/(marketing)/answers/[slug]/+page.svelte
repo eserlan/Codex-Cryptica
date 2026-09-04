@@ -101,6 +101,18 @@
       {answer.shortAnswer}
     </p>
 
+    {#if answer.seo.image}
+      <img
+        src={answer.seo.image}
+        alt={answer.seo.imageAlt ?? answer.question}
+        width="1200"
+        height="675"
+        loading="lazy"
+        decoding="async"
+        class="mb-12 w-full border border-theme-border"
+      />
+    {/if}
+
     {#each answer.sections as section, sectionIndex (sectionIndex)}
       <section class="mb-12">
         {#if section.kind === "prose"}

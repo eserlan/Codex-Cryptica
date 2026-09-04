@@ -407,4 +407,23 @@ export const answerEntries: DiscoveryEntryInput[] = [
       },
     ],
   },
+  {
+    id: "answer-travel-interesting",
+    pageKind: "answer",
+    canonicalPath:
+      "/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+    primaryIntent: "how to make travel interesting in a tabletop rpg",
+    intentAliases: [
+      "how to run travel in dnd",
+      "rpg wilderness travel framework",
+      "interesting journey mechanics ttrpg",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "A five-pillar wilderness travel framework replacing empty random combat with branching route dilemmas, camp roles, tangible time costs, and situational road discoveries.",
+    parentCluster: "adventure-mapping",
+    relatedIntents: ["answer-point-crawl", "answer-random-encounter"],
+    indexable: true,
+    status: "live",
+  },
 ];
