@@ -980,4 +980,272 @@ describe("Iconic Sci-Fi Character Silhouette Resolution", () => {
     );
     expect(match.id).toBe("scifi-trader-smuggler");
   });
+
+  it("resolves starship astrogator for deep space navigators and cartographers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Chief Astrogator Vance",
+        labels: ["astrogator", "navigator", "surveyor"],
+        content:
+          "Experienced stellar cartographer in an explorer spacesuit consulting starcharts.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-navigator-astrogator");
+  });
+});
+
+describe("Iconic Sci-Fi Ships, Vehicles & Locations Silhouette Resolution", () => {
+  it("resolves scout ship / light freighter for transport starships", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "The Rusty Pelican",
+        labels: ["freighter", "starship", "cargo"],
+        content:
+          "A worn interstellar light freighter hauling bulk cargo containers across trade lanes.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-ship-freighter");
+  });
+
+  it("resolves starfighter / interceptor for single-pilot combat craft", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "X-7 Interceptor",
+        labels: ["starfighter", "fighter", "interceptor"],
+        content:
+          "Single-pilot delta-wing assault fighter with dual laser cannons.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-ship-fighter");
+  });
+
+  it("resolves fleet dreadnought for capital warships", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Leviathan Battleship",
+        labels: ["dreadnought", "warship", "capital-ship"],
+        content:
+          "Massive dreadnought warship bristling with broadside battery turrets.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-ship-dreadnought");
+  });
+
+  it("resolves tactical dropship for planetary troop transports", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Valkyrie Shuttle",
+        labels: ["dropship", "shuttle", "transport"],
+        content:
+          "Armored planetary dropship with VTOL thrusters and deployment ramp.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-ship-dropship");
+  });
+
+  it("resolves combat mech for bipedal battle walkers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Titan War Walker",
+        labels: ["mech", "walker", "chassis"],
+        content:
+          "Bipedal armored assault mech with twin autocannons and missile pods.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-vehicle-mech");
+  });
+
+  it("resolves planetary rover for all-terrain surface crawlers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Nomad Expedition Rover",
+        labels: ["rover", "buggy", "all-terrain"],
+        content:
+          "Six-wheeled heavy surface rover with pressurized observation cabin.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-vehicle-rover");
+  });
+
+  it("resolves orbital space station for toroidal satellite platforms", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Port Helios Orbital",
+        labels: ["station", "space-station", "orbital"],
+        content:
+          "Massive toroidal space station with rotating habitat ring and docking spire.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-space-station");
+  });
+
+  it("resolves asteroid mining outpost for deep-space quarries", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Belt Quarry 9",
+        labels: ["asteroid", "mining", "outpost"],
+        content:
+          "Industrial mineral mining outpost carved into a craggy asteroid core.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-asteroid-base");
+  });
+
+  it("resolves planetary colony biodome for pressurized biospheres", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "New Eden Biosphere",
+        labels: ["biodome", "dome", "colony"],
+        content:
+          "Geodesic planetary colony dome shielding a thriving metropolis.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-colony-dome");
+  });
+
+  it("resolves derelict space hulk for abandoned starship wrecks", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Wreck of the Chimera",
+        labels: ["derelict", "wreck", "hulk"],
+        content:
+          "Cracked starship wreckage adrift in deep space with shattered ribs.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-derelict-hulk");
+  });
+
+  it("resolves starport hangar docking bay for arrival terminals", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Hangar Bay 4",
+        labels: ["starport", "hangar", "docking-bay"],
+        content:
+          "Cavernous starport hangar bay with gantry cranes and open space doors.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-starport-bay");
+  });
+
+  it("resolves cryo-stasis chamber for suspended animation pods", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Vault of Sleepers",
+        labels: ["stasis", "cryo", "hibernation"],
+        content:
+          "Row of cylindrical cryo stasis pods keeping colonists in deep freeze.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-stasis-chamber");
+  });
+
+  it("resolves fusion reactor core for antimatter power plants", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Antimatter Containment",
+        labels: ["reactor", "core", "warp-core"],
+        content:
+          "Pulsing plasma fusion reactor core surrounded by magnetic containment coils.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-reactor-core");
+  });
+
+  it("resolves xenomorph alien predator for extraterrestrial stalkers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Apex Stalker",
+        labels: ["xenomorph", "alien", "predator"],
+        content:
+          "Elongated biomechanical carapace with deadly claws and razor tail stalking the corridors.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-creature-xenomorph");
+  });
+
+  it("resolves hive drone insectoid for chitinous swarm beasts", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Hive Brood Soldier",
+        labels: ["swarm", "insectoid", "hive"],
+        content:
+          "Chitin-armored insectoid drone with scythe limbs and clicking mandibles.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-creature-swarm");
+  });
+
+  it("resolves security drone for automated surveillance sentries", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Patrol Sentry 9",
+        labels: ["drone", "sentry", "security"],
+        content:
+          "Hovering repulsor drone with glowing scanner eye patrolling the perimeter.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-construct-drone");
+  });
+
+  it("resolves plasma energy blade for beam sabers and laser weapons", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Thermal Plasma Cutter",
+        labels: ["blade", "plasma", "weapon"],
+        content:
+          "Compact hilt projecting a focused energy beam capable of slicing through bulkheads.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-item-energy-blade");
+  });
+
+  it("resolves hyperspace jump gate for interstellar warp rings", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Orion Gate Station",
+        labels: ["jumpgate", "warp", "portal"],
+        content:
+          "Massive accelerator ring pulsing with hyperspace energy for transit across sectors.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-location-jump-gate");
+  });
 });
