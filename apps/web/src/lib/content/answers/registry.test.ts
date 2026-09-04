@@ -142,6 +142,22 @@ describe("answer schema", () => {
     expect(answer.sections[0]).toHaveProperty("cta");
   });
 
+  it("accepts an answer with optional seo image and alt text", () => {
+    const answer = makeAnswer({
+      slug: "with-image",
+      seo: {
+        title: "Test Image Title",
+        description: "Test description with image.",
+        image: "https://assets.codexcryptica.com/og/test-image.jpg",
+        imageAlt: "A scenic road path illustration",
+      },
+    });
+    expect(answer.seo.image).toBe(
+      "https://assets.codexcryptica.com/og/test-image.jpg",
+    );
+    expect(answer.seo.imageAlt).toBe("A scenic road path illustration");
+  });
+
   it("rejects a prose block with an empty cta text or href", () => {
     expect(() =>
       makeAnswer({
@@ -302,6 +318,24 @@ describe("published answers", () => {
         185,
       );
     }
+  });
+
+  it("publishes the travel answer page with complete framework sections and R2 image", () => {
+    const travelAnswer =
+      answers["how-do-you-make-travel-interesting-in-a-tabletop-rpg"];
+    expect(travelAnswer).toBeDefined();
+    expect(travelAnswer.kind).toBe("framework");
+    expect(travelAnswer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(travelAnswer.seo.imageAlt).toBeDefined();
+    expect(travelAnswer.sections.some((s) => s.kind === "example")).toBe(true);
+    expect(travelAnswer.sections.some((s) => s.kind === "checklist")).toBe(
+      true,
+    );
+    expect(travelAnswer.relatedAnswers).toContain(
+      "what-makes-a-good-random-encounter",
+    );
   });
 });
 
