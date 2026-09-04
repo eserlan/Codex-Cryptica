@@ -5,12 +5,21 @@ import { basename, resolve } from "node:path";
 import { homedir } from "node:os";
 import { runGodFileAnalysis, type FileAnalysis } from "./god-file-analysis.ts";
 
+export type AgentProviderName = "agy" | "claude" | "codex";
+
+export interface AgentProviderConfig {
+  name: AgentProviderName;
+  binCandidates: string[];
+  getArgs: (prompt: string, timeoutMinutes: number) => string[];
+}
+
 export interface AutoDegodifyOptions {
   rootDir?: string;
   targetFile?: string;
   dryRun?: boolean;
   workdir?: string;
   agentBin?: string;
+  agentProviders?: AgentProviderName[];
   baseBranch?: string;
   timeoutMinutes?: number;
 }
@@ -18,6 +27,109 @@ export interface AutoDegodifyOptions {
 export interface CandidateSelection {
   candidate: FileAnalysis | null;
   skipped: Array<{ file: FileAnalysis; reason: string }>;
+}
+
+export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
+  agy: {
+    name: "agy",
+    binCandidates: ["agy", `${homedir()}/.local/bin/agy`],
+    getArgs: (prompt, timeoutMinutes) => [
+      "--print",
+      prompt,
+      "--dangerously-skip-permissions",
+      `--print-timeout=${timeoutMinutes}m0s`,
+    ],
+  },
+  claude: {
+    name: "claude",
+    binCandidates: ["claude", `${homedir()}/.local/bin/claude`],
+    getArgs: (prompt) => [
+      "-p",
+      prompt,
+      "--dangerously-skip-permissions",
+    ],
+  },
+  codex: {
+    name: "codex",
+    binCandidates: ["codex", `${homedir()}/.local/bin/codex`],
+    getArgs: (prompt) => [
+      "exec",
+      "--dangerously-bypass-approvals-and-sandbox",
+      prompt,
+    ],
+  },
+};
+
+/**
+ * Locate executable path for a given agent provider.
+ */
+export function resolveAgentExecutable(
+  provider: AgentProviderName,
+): string | null {
+  const config = AGENT_PROVIDERS[provider];
+  if (!config) return null;
+
+  for (const candidate of config.binCandidates) {
+    if (candidate.startsWith("/")) {
+      if (existsSync(candidate)) return candidate;
+    } else {
+      try {
+        const found = execSync(`which ${candidate}`, {
+          encoding: "utf-8",
+          stdio: ["pipe", "pipe", "ignore"],
+        }).trim();
+        if (found) return found;
+      } catch {
+        // continue
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if a pull request exists on GitHub for a given branch head.
+ */
+export function hasOpenPrForBranch(
+  repoDir: string,
+  branchName: string,
+): boolean {
+  try {
+    const prOutput = execSync(
+      `gh pr list --head ${branchName} --json number`,
+      {
+        cwd: repoDir,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "ignore"],
+      },
+    );
+    const prs = JSON.parse(prOutput) as Array<{ number: number }>;
+    return prs.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reset and clean an isolated worktree branch back to origin/baseBranch before fallback retry.
+ */
+export function resetWorktree(
+  worktreeDir: string,
+  baseBranch: string,
+  branchName: string,
+): void {
+  try {
+    execSync(`git checkout -B ${branchName} origin/${baseBranch}`, {
+      cwd: worktreeDir,
+      stdio: "ignore",
+    });
+    execSync("git clean -fdx", {
+      cwd: worktreeDir,
+      stdio: "ignore",
+    });
+  } catch (err) {
+    console.warn("⚠️ Failed to reset worktree between agent attempts:", err);
+  }
 }
 
 /**
@@ -143,11 +255,11 @@ STRICT CONSTRAINTS (Constitution Principles I, II, XIV):
    - When all tests and lints pass with 0 errors:
      - Stage ONLY the files you modified or created.
      - Commit with gitmoji message:
-       \`🗂️ Curator: [degodify] extract <concern> from ${fileBasename}\`
+       \`♻️ Curator: [degodify] extract <concern> from ${fileBasename}\`
      - Push the branch to origin:
        \`git push -u origin ${branchName} --no-verify\`
      - Create a ready-for-review Pull Request:
-       \`gh pr create --base ${baseBranch} --title "🗂️ Curator: [degodify] extract <concern> from ${fileBasename}" --body "..."\`
+       \`gh pr create --base ${baseBranch} --title "♻️ Curator: [degodify] extract <concern> from ${fileBasename}" --body "..."\`
    - If verification fails and cannot be fixed, revert your changes and exit without pushing.`;
 }
 
@@ -157,7 +269,6 @@ STRICT CONSTRAINTS (Constitution Principles I, II, XIV):
 export async function autoDegodify(options: AutoDegodifyOptions = {}) {
   const rootDir = options.rootDir || process.cwd();
   const baseBranch = options.baseBranch || "staging";
-  const agentBin = options.agentBin || "agy";
   const timeoutMinutes = options.timeoutMinutes ?? 25;
   const workdirBase =
     options.workdir || resolve(homedir(), ".cache/codex-degodify");
@@ -227,6 +338,12 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
     return true;
   }
 
+  const providers: AgentProviderName[] =
+    options.agentProviders ||
+    (options.agentBin
+      ? [options.agentBin as AgentProviderName]
+      : ["agy", "claude", "codex"]);
+
   // Setup isolated worktree
   const worktreePath = resolve(workdirBase, `worktree-${timestamp}`);
   await mkdir(workdirBase, { recursive: true });
@@ -245,27 +362,67 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
       },
     );
 
-    console.log(`🤖 Launching ${agentBin} in isolated worktree...`);
-    const agyResult = spawnSync(
-      agentBin,
-      [
-        "--print",
-        prompt,
-        "--dangerously-skip-permissions",
-        `--print-timeout=${timeoutMinutes}m0s`,
-      ],
-      {
+    let prOpened = false;
+
+    for (let i = 0; i < providers.length; i++) {
+      const providerName = providers[i];
+      const binPath = resolveAgentExecutable(providerName);
+      if (!binPath) {
+        console.log(
+          `⏩ Provider '${providerName}' not installed on system, skipping...`,
+        );
+        continue;
+      }
+
+      console.log(
+        `\n🤖 [Attempt ${i + 1}/${providers.length}] Launching ${providerName} (${binPath}) in isolated worktree...`,
+      );
+
+      const providerConfig = AGENT_PROVIDERS[providerName];
+      const args = providerConfig
+        ? providerConfig.getArgs(prompt, timeoutMinutes)
+        : ["--print", prompt, "--dangerously-skip-permissions"];
+
+      const result = spawnSync(binPath, args, {
         cwd: worktreePath,
         stdio: "inherit",
         env: { ...process.env, HUSKY: "0" },
-      },
-    );
+        timeout: timeoutMinutes * 60 * 1000,
+      });
 
-    if (agyResult.error) {
-      throw agyResult.error;
+      // Check if PR was successfully created
+      if (hasOpenPrForBranch(rootDir, branchName)) {
+        console.log(
+          `\n🎉 Success! PR for branch ${branchName} was detected on GitHub.`,
+        );
+        prOpened = true;
+        break;
+      }
+
+      if (result.status === 0) {
+        console.log(`\n✅ ${providerName} completed with exit code 0.`);
+        prOpened = true;
+        break;
+      }
+
+      console.warn(
+        `\n⚠️ ${providerName} failed (exit code: ${result.status}, signal: ${result.signal || "none"}).`,
+      );
+
+      const nextProvider = providers[i + 1];
+      if (nextProvider) {
+        console.log(
+          `🔄 Resetting worktree and falling back to next provider: '${nextProvider}'...`,
+        );
+        resetWorktree(worktreePath, baseBranch, branchName);
+      }
     }
 
-    console.log("✅ AI agent run finished.");
+    if (!prOpened) {
+      console.error(
+        "\n❌ All configured agent providers failed to create a PR.",
+      );
+    }
   } catch (err) {
     console.error("❌ Degodification run encountered an error:", err);
   } finally {
@@ -292,8 +449,15 @@ if (import.meta.main) {
   const dryRun = args.includes("--dry-run");
   const targetIdx = args.indexOf("--target");
   const targetFile = targetIdx !== -1 ? args[targetIdx + 1] : undefined;
+  const agentsIdx = args.indexOf("--agents");
+  const agentProviders =
+    agentsIdx !== -1
+      ? (args[agentsIdx + 1]
+          .split(",")
+          .map((s) => s.trim()) as AgentProviderName[])
+      : undefined;
 
-  autoDegodify({ dryRun, targetFile }).catch((err) => {
+  autoDegodify({ dryRun, targetFile, agentProviders }).catch((err) => {
     console.error("Fatal error:", err);
     process.exit(1);
   });

@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   selectDegodifyCandidate,
   buildDecompositionPrompt,
+  AGENT_PROVIDERS,
+  resolveAgentExecutable,
 } from "./auto-degodify.ts";
 import type { FileAnalysis } from "./god-file-analysis.ts";
 
@@ -93,6 +95,44 @@ describe("auto-degodify", () => {
       expect(prompt).toContain("bun run lint");
       expect(prompt).toContain("--no-verify");
       expect(prompt).toContain("gh pr create --base staging");
+    });
+  });
+
+  describe("multi-provider fallback", () => {
+    it("defines valid configurations for agy, claude, and codex", () => {
+      expect(AGENT_PROVIDERS.agy).toBeDefined();
+      expect(AGENT_PROVIDERS.claude).toBeDefined();
+      expect(AGENT_PROVIDERS.codex).toBeDefined();
+
+      const agyArgs = AGENT_PROVIDERS.agy.getArgs("test-prompt", 15);
+      expect(agyArgs).toContain("--print");
+      expect(agyArgs).toContain("test-prompt");
+      expect(agyArgs).toContain("--dangerously-skip-permissions");
+      expect(agyArgs).toContain("--print-timeout=15m0s");
+
+      const claudeArgs = AGENT_PROVIDERS.claude.getArgs("test-prompt", 15);
+      expect(claudeArgs).toContain("-p");
+      expect(claudeArgs).toContain("test-prompt");
+      expect(claudeArgs).toContain("--dangerously-skip-permissions");
+
+      const codexArgs = AGENT_PROVIDERS.codex.getArgs("test-prompt", 15);
+      expect(codexArgs).toContain("exec");
+      expect(codexArgs).toContain("--dangerously-bypass-approvals-and-sandbox");
+      expect(codexArgs).toContain("test-prompt");
+    });
+
+    it("resolves available agent executables on system", () => {
+      // At least one of the supported agents should be resolvable on this environment
+      const agyPath = resolveAgentExecutable("agy");
+      const claudePath = resolveAgentExecutable("claude");
+      const codexPath = resolveAgentExecutable("codex");
+
+      expect(agyPath || claudePath || codexPath).toBeTruthy();
+    });
+
+    it("returns null for unknown provider", () => {
+      // @ts-expect-error Testing invalid provider
+      expect(resolveAgentExecutable("unknown-agent")).toBeNull();
     });
   });
 });
