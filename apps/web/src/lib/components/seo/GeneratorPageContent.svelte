@@ -167,6 +167,7 @@
     role: npcThemeConfig.roles[factionConfig.themes[0]][0],
     alignment: npcThemeConfig.moralities[factionConfig.themes[0]][0].id,
     campaignContext: "",
+    mode: "table-card" as "dossier" | "table-card",
   });
 
   const settlementGenre =
@@ -364,6 +365,7 @@
     role: npcConfig.roles[0],
     alignment: npcConfig.alignments[0],
     campaignContext: "",
+    mode: "table-card" as "dossier" | "table-card",
   });
 
   let pantheon = $state({
@@ -774,7 +776,11 @@
     // For quest/npc/faction on flat URL: read localStorage.
     // On themed URL: urlHubTheme already seeded activeTheme above — skip.
     if (!urlHubTheme) {
-      const stored = persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null);
+      const stored = persistence.read(
+        UI_STORAGE_KEYS.ACTIVE_THEME,
+        (v) => v,
+        null,
+      );
       if (stored && themeIdToLabel[stored]) {
         activeTheme = themeIdToLabel[stored];
       }
@@ -1004,6 +1010,7 @@
         bind:role={npc.role}
         bind:alignment={npc.alignment}
         bind:campaignContext={npc.campaignContext}
+        bind:mode={npc.mode}
         onSurprise={trigger}
       />
     {:else if slug === "settlement"}
@@ -1214,6 +1221,7 @@
         bind:role={dndNpc.role}
         bind:alignment={dndNpc.alignment}
         bind:campaignContext={dndNpc.campaignContext}
+        bind:mode={dndNpc.mode}
         onSurprise={trigger}
       />
     {:else if slug === "pantheon-generator" || slug === "god-generator"}
