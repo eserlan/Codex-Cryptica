@@ -100,6 +100,7 @@ export class MapStore {
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private _viewportPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private static _vaultSwitchHandler: (() => void) | null = null;
   private storage: StorageLike;
   private idGenerator: IdGenerator;
@@ -487,7 +488,22 @@ export class MapStore {
 
   updateViewport(pan: Point, zoom: number) {
     this.viewport = { pan, zoom };
-    this.persistPageState();
+    // Called on every pointermove while panning/dragging (including a map
+    // being nudged under a fixed grid for fine-tuning) — persisting
+    // synchronously here does a blocking localStorage read+write per frame,
+    // which was dropping frames badly enough to look like the drag was
+    // snapping to grid increments. Debounce it like schedulePersistSettings.
+    this.schedulePersistPageState();
+  }
+
+  private schedulePersistPageState() {
+    if (this._viewportPersistTimer !== null) {
+      clearTimeout(this._viewportPersistTimer);
+    }
+    this._viewportPersistTimer = setTimeout(() => {
+      this._viewportPersistTimer = null;
+      this.persistPageState();
+    }, 250);
   }
 
   setCanvasSize(width: number, height: number) {

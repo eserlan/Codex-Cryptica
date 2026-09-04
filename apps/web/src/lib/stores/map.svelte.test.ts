@@ -296,6 +296,41 @@ describe("MapStore settings persistence", () => {
     });
   });
 
+  it("debounces viewport persistence so rapid drag updates don't do synchronous storage I/O per frame", async () => {
+    vi.useFakeTimers();
+    try {
+      vaultMock.maps = { "map-a": makeMap("map-a", true) };
+      const store = new MapStore();
+      await vi.waitFor(() => expect(store.activeMapId).toBe("map-a"));
+
+      // Simulate several pointermove updates in a fast drag.
+      store.updateViewport({ x: 1, y: 1 }, 1);
+      store.updateViewport({ x: 5, y: 5 }, 1);
+      store.updateViewport({ x: 12, y: 12 }, 1);
+
+      // None of those should have hit storage synchronously yet.
+      const midDrag = window.localStorage.getItem(
+        "codex-map-page-state:vault-a",
+      );
+      const midDragViewport = midDrag
+        ? JSON.parse(midDrag).viewports?.["map-a"]
+        : undefined;
+      expect(midDragViewport).not.toEqual({ pan: { x: 12, y: 12 }, zoom: 1 });
+
+      await vi.advanceTimersByTimeAsync(250);
+
+      const settled = JSON.parse(
+        window.localStorage.getItem("codex-map-page-state:vault-a")!,
+      );
+      expect(settled.viewports["map-a"]).toEqual({
+        pan: { x: 12, y: 12 },
+        zoom: 1,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("uses an injected storage instead of window.localStorage", async () => {
     const mem = new Map<string, string>();
     const storage = {
