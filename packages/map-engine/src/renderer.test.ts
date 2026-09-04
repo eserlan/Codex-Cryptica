@@ -112,6 +112,32 @@ describe("renderMap", () => {
     expect(ctx.imageSmoothingEnabled).toBe(false);
   });
 
+  it("keeps smoothing on for a scaled-up image while grid.fixed (move-map drag), for continuous sub-pixel motion instead of device-pixel-snapped steps", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+    const image = { width: 500, height: 400 } as HTMLImageElement;
+
+    renderMap({
+      canvas,
+      image,
+      imageDisplaySize: { width: 1000, height: 800 },
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "none",
+        size: 50,
+        color: "#fff",
+        opacity: 0.5,
+        fixed: true,
+      },
+    });
+
+    expect(ctx.imageSmoothingEnabled).toBe(true);
+  });
+
   it("draws the grid above tiles/tokens, not underneath them", () => {
     // jsdom has no real canvas backend; drawGrid's offscreen pattern canvas
     // needs a working 2d context to reach ctx.createPattern.
