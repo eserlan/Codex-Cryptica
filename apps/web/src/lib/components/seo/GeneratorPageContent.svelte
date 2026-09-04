@@ -11,6 +11,7 @@
     collectSessionTraits,
     extractPartialJsonStringFields,
   } from "generator-engine";
+  import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -111,6 +112,7 @@
     urlHubTheme = undefined,
     metaOverrides = undefined,
     initialDraftOverride = undefined,
+    persistence = new UIPersistence(),
   }: {
     slug: ValidSlug;
     urlHubTheme?: string;
@@ -130,6 +132,7 @@
      * Used by alternative routes that need a different default draft on first load.
      */
     initialDraftOverride?: GeneratorOutput;
+    persistence?: UIPersistence;
   } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
@@ -557,7 +560,7 @@
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
-      ? localStorage.getItem("codex-cryptica-active-theme")
+      ? persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null)
       : null);
   const _worldInitialTheme = _initialUrlHubTheme
     ? (SOCIAL_HUB_GENRE_TO_THEME[
@@ -786,7 +789,7 @@
     // For quest/npc/faction on flat URL: read localStorage.
     // On themed URL: urlHubTheme already seeded activeTheme above — skip.
     if (!urlHubTheme) {
-      const stored = localStorage.getItem("codex-cryptica-active-theme");
+      const stored = persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null);
       if (stored && themeIdToLabel[stored]) {
         activeTheme = themeIdToLabel[stored];
       }
