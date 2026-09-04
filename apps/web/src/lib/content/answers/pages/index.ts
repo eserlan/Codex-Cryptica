@@ -13,6 +13,7 @@ import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-rela
 import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
+import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
@@ -43,6 +44,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouOrganiseRpgCampaignNotes,
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRunAConspiracyCampaign,
+    howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howMuchPrepDoYouNeedForAnRpgSession,
     whatIsAPointCrawl,
     whatMakesAGoodRandomEncounter,
