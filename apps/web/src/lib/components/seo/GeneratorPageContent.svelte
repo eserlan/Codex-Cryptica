@@ -106,6 +106,10 @@
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
+  import {
+    parseDevelopWorldHandoff,
+    worldGenreForHub,
+  } from "./generator-page-world-handoff";
 
   let {
     slug,
@@ -152,14 +156,6 @@
     (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
   );
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
-
-  function worldGenreForHub(hubGenre: string | null): string {
-    if (hubGenre === "Cyberpunk") return "Cyberpunk";
-    if (hubGenre === "Optimistic Exploration Sci-Fi") return "Hopeful Sci-Fi";
-    if (hubGenre === "Space Opera Resistance") return "Space Opera";
-    if (hubGenre === "Lancer") return "Lancer";
-    return "Hard Sci-Fi";
-  }
 
   const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
@@ -628,23 +624,12 @@
   // system context in the query string so the World Generator draft starts
   // pre-populated instead of blank. Cleans the URL after reading it.
   function applyPendingDevelopWorld(): void {
-    const params = page.url.searchParams;
-    const systemTitle = params.get("developSystem");
-    const bodyName = params.get("developBody");
-    if (!systemTitle && !bodyName) return;
-    const bodyType = params.get("developBodyType");
-    const context = params.get("developContext");
-    world.dominantFeature = bodyName
-      ? `${bodyName}${bodyType ? ` (${bodyType})` : ""} — ${context || `part of the ${systemTitle} system.`}`
-      : (context ?? "");
+    const handoff = parseDevelopWorldHandoff(page.url.searchParams);
+    if (!handoff) return;
+    world.dominantFeature = handoff.dominantFeature;
 
     const cleanUrl = new URL(page.url);
-    for (const key of [
-      "developSystem",
-      "developBody",
-      "developBodyType",
-      "developContext",
-    ]) {
+    for (const key of handoff.paramKeys) {
       cleanUrl.searchParams.delete(key);
     }
     goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
