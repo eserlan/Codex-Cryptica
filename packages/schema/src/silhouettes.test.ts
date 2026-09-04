@@ -1249,3 +1249,187 @@ describe("Iconic Sci-Fi Ships, Vehicles & Locations Silhouette Resolution", () =
     expect(match.id).toBe("scifi-location-jump-gate");
   });
 });
+
+describe("Iconic Fantasy Faction and Event Silhouette Resolution", () => {
+  it("resolves martial knight order for chivalric military factions", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "Order of the Silver Shield",
+        labels: ["knights", "paladin", "martial", "order"],
+        content:
+          "A chivalric brotherhood of paladins dedicated to defending the frontier.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-faction-martial-order");
+  });
+
+  it("resolves arcane wizard circle for mage guilds and colleges", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "Circle of the Astral Eye",
+        labels: ["conclave", "arcane", "wizard", "college"],
+        content:
+          "An elite assembly of arcane scholars and astrologers studying cosmic runes.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-faction-arcane-circle");
+  });
+
+  it("resolves shadow thieves guild for underworld syndicates", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "The Raven Claw Syndicate",
+        labels: ["thieves", "underworld", "shadow", "guild"],
+        content:
+          "A secretive network of cutpurses, lockpicks, and underworld smugglers.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-faction-thieves-guild");
+  });
+
+  it("resolves great battle / war for warfare and siege events", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Siege of Highspire",
+        labels: ["battle", "war", "siege", "campaign"],
+        content:
+          "The climactic battle where two mighty armies clashed beneath the citadel.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-event-battle-war");
+  });
+
+  it("resolves arcane ritual / conjunction for celestial and magical events", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Solar Conjunction",
+        labels: ["ritual", "conjunction", "eclipse", "celestial"],
+        content:
+          "A rare cosmic alignment where wizards gathered at the ancient standing stones.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-event-arcane-ritual");
+  });
+
+  it("resolves royal coronation / summit for diplomatic treaties and crownings", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Coronation of Queen Yvaine",
+        labels: ["coronation", "summit", "treaty", "council"],
+        content:
+          "The solemn crowning ceremony and signing of the grand alliance charter.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-event-coronation-treaty");
+  });
+
+  it("resolves merchant trade league for commercial guilds and trading consortia", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "The Golden Scale Consortium",
+        labels: ["merchant", "trade", "league", "commerce"],
+        content:
+          "A wealthy syndicate of traders, bankers, and galleon captains controlling sea trade.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-faction-merchant-league");
+  });
+
+  it("resolves sacred holy order for temple inquisitions and divine churches", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "Order of the Radiant Sun",
+        labels: ["church", "temple", "holy", "inquisition"],
+        content:
+          "A zealous religious brotherhood wielding flaming blades in defence of the faith.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-faction-holy-order");
+  });
+
+  it("resolves cataclysm / falling ruin for disaster and apocalyptic events", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Fall of Starspire",
+        labels: ["cataclysm", "disaster", "ruin", "meteor"],
+        content:
+          "The tragic day a blazing comet struck the citadel and shattered the eastern ramparts.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-event-cataclysm-ruin");
+  });
+
+  it("resolves grand festival / tournament for festive tourneys and tourney jousts", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Midsummer Grand Joust",
+        labels: ["festival", "tournament", "joust", "celebration"],
+        content:
+          "A grand carnival where knights clash in heraldic pavilions before thousands of onlookers.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-event-festival-tournament");
+  });
+
+  it("resolves sylvan griffin for flying beast mounts", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Highland Feathered Gryphon",
+        labels: ["griffin", "gryphon", "beast", "eagle"],
+        content:
+          "A noble predator with razor talons, golden plumage, and a thunderous cry.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-creature-griffin");
+  });
+
+  it("resolves multi-headed swamp hydra for serpentine regeneration monsters", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Mire-Crawl Venomous Hydra",
+        labels: ["hydra", "serpent", "monster", "swamp"],
+        content:
+          "A multi-headed reptilian terror lurking in the fen whose severed necks sprout twin heads.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-creature-hydra");
+  });
+
+  it("resolves stone colossus for ancient megalith guardians and titans", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "creature",
+        title: "Ancient Megalith Colossus",
+        labels: ["colossus", "titan", "megalith", "golem"],
+        content:
+          "A towering animated titan composed of mossy granite slabs bound by primeval wards.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-creature-stone-colossus");
+  });
+});
