@@ -173,6 +173,108 @@ describe("renderMap", () => {
     vi.restoreAllMocks();
   });
 
+  describe("fixed grid mode (move-map-to-fine-tune)", () => {
+    function mockPatternCanvas() {
+      const realCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+        if (tag !== "canvas") return realCreateElement(tag);
+        return {
+          width: 0,
+          height: 0,
+          getContext: () => ({
+            strokeRect: vi.fn(),
+            strokeStyle: "",
+            globalAlpha: 1,
+            lineWidth: 0,
+          }),
+        } as unknown as HTMLCanvasElement;
+      });
+    }
+
+    it("renders at the same phase a non-fixed grid would show for that pan, instead of jumping to pan:{0,0}", () => {
+      mockPatternCanvas();
+      const ctx = createCtxMock();
+      (ctx.createPattern as any).mockReturnValue({});
+      const canvas = createCanvasMock(ctx);
+      const canvasSize = { width: 800, height: 600 };
+      const grid = {
+        type: "square" as const,
+        size: 50,
+        color: "#fff",
+        opacity: 0.5,
+      };
+
+      // What a non-fixed grid renders at for this pan (the phase the user
+      // was already seeing right before entering move mode).
+      renderMap({
+        canvas,
+        image: null,
+        transform: { pan: { x: 137, y: -42 }, zoom: 1 },
+        canvasSize,
+        pins: [],
+        maskCanvas: null,
+        showFog: false,
+        grid,
+      });
+      const [nonFixedX, nonFixedY] = (ctx.translate as any).mock.calls[0];
+
+      (ctx.translate as any).mockClear();
+
+      // Entering fixed mode with a fixedPan snapshot equal to that same pan
+      // must reproduce the identical on-screen phase — no jump.
+      renderMap({
+        canvas,
+        image: null,
+        transform: { pan: { x: 137, y: -42 }, zoom: 1 },
+        canvasSize,
+        pins: [],
+        maskCanvas: null,
+        showFog: false,
+        grid: { ...grid, fixed: true, fixedPan: { x: 137, y: -42 } },
+      });
+      const [fixedX, fixedY] = (ctx.translate as any).mock.calls[0];
+
+      expect(fixedX).toBe(nonFixedX);
+      expect(fixedY).toBe(nonFixedY);
+
+      vi.restoreAllMocks();
+    });
+
+    it("ignores live pan changes while fixed, staying at the fixedPan snapshot", () => {
+      mockPatternCanvas();
+      const ctx = createCtxMock();
+      (ctx.createPattern as any).mockReturnValue({});
+      const canvas = createCanvasMock(ctx);
+      const canvasSize = { width: 800, height: 600 };
+      const grid = {
+        type: "square" as const,
+        size: 50,
+        color: "#fff",
+        opacity: 0.5,
+      };
+
+      renderMap({
+        canvas,
+        image: null,
+        // Live pan has moved on (e.g. mid-drag), but fixedPan is frozen at
+        // wherever the grid was when move mode began.
+        transform: { pan: { x: 999, y: 999 }, zoom: 1 },
+        canvasSize,
+        pins: [],
+        maskCanvas: null,
+        showFog: false,
+        grid: { ...grid, fixed: true, fixedPan: { x: 137, y: -42 } },
+      });
+
+      expect(ctx.translate).toHaveBeenCalledWith(
+        (137 + canvasSize.width / 2) % 50,
+        (-42 + canvasSize.height / 2) % 50,
+      );
+
+      vi.restoreAllMocks();
+    });
+  });
+
   function baseToken(overrides: Partial<any>) {
     return {
       id: "token-1",

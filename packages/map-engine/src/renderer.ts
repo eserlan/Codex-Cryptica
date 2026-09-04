@@ -101,6 +101,12 @@ export interface RenderOptions {
     offsetX?: number;
     offsetY?: number;
     fixed?: boolean;
+    /** Pan value the fixed grid should render at (its "screen position");
+     * ignored unless `fixed` is set. Should be a snapshot of the viewport's
+     * pan taken when fixed mode began, so the grid renders exactly where it
+     * already was instead of jumping to `pan: {0,0}` — while still staying
+     * static (not tracking live pan) as the map is dragged underneath it. */
+    fixedPan?: { x: number; y: number };
   };
 }
 
@@ -1120,7 +1126,17 @@ function drawGrid(
     ctx.fillStyle = cache.cachedPattern.pattern;
 
     if (grid.fixed) {
-      // Fixed grid mode: ignore pan offset, draw at screen origin
+      // Fixed grid mode: stays at the pan position it had when fixed mode
+      // began (its `fixedPan` snapshot) instead of tracking the live pan —
+      // so the grid holds still on screen while the map is dragged
+      // underneath it, without jumping to a different phase on entry.
+      const fixedPan = grid.fixedPan ?? { x: 0, y: 0 };
+      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
+      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
+      const offsetX = (fixedPan.x + canvasSize.width / 2 + gridOffsetX) % size;
+      const offsetY = (fixedPan.y + canvasSize.height / 2 + gridOffsetY) % size;
+
+      ctx.translate(offsetX, offsetY);
       ctx.fillRect(
         -size,
         -size,

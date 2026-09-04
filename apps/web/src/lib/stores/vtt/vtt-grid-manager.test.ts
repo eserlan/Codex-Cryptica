@@ -61,3 +61,46 @@ describe("VTTGridManager (injected storage)", () => {
     expect(mgr.gridUnit).toBe("ft"); // unchanged default
   });
 });
+
+describe("VTTGridManager gridMoveMode / gridFixedPan", () => {
+  function depsWithPan(pan: { x: number; y: number }) {
+    return {
+      mapStore: { viewport: { pan, zoom: 1 } } as any,
+      getMapId: () => "m1",
+      emit: vi.fn(),
+      persistDraft: vi.fn(),
+      storage: memoryStorage(),
+    };
+  }
+
+  it("snapshots the current pan when move mode is enabled", () => {
+    const mgr = new VTTGridManager(depsWithPan({ x: 42, y: -13 }));
+
+    mgr.gridMoveMode = true;
+
+    expect(mgr.gridMoveMode).toBe(true);
+    expect(mgr.gridFixedPan).toEqual({ x: 42, y: -13 });
+  });
+
+  it("clears the pan snapshot when move mode is disabled", () => {
+    const mgr = new VTTGridManager(depsWithPan({ x: 42, y: -13 }));
+    mgr.gridMoveMode = true;
+
+    mgr.gridMoveMode = false;
+
+    expect(mgr.gridFixedPan).toBeNull();
+  });
+
+  it("re-snapshots pan on re-entry rather than reusing the old value", () => {
+    const pan = { x: 10, y: 10 };
+    const mgr = new VTTGridManager(depsWithPan(pan));
+    mgr.gridMoveMode = true;
+    mgr.gridMoveMode = false;
+
+    pan.x = 99;
+    pan.y = 99;
+    mgr.gridMoveMode = true;
+
+    expect(mgr.gridFixedPan).toEqual({ x: 99, y: 99 });
+  });
+});

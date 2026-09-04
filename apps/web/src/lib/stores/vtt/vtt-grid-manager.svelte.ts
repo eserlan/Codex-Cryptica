@@ -1,4 +1,5 @@
 import { type mapStore } from "../map.svelte";
+import type { Point } from "schema";
 import type { VTTMessage } from "../../../types/vtt";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
@@ -18,9 +19,22 @@ export class VTTGridManager {
   gridDistance = $state(5);
   showGridSettings = $state(false);
   gridFitMode = $state(false);
-  gridMoveMode = $state(false);
+  private _gridMoveMode = $state(false);
+  /** Pan snapshot taken when grid-move mode was entered, so the fixed grid
+   * renders continuously from wherever it already was instead of jumping
+   * to `pan: {0,0}` — see `renderer.ts`'s `grid.fixedPan`. */
+  gridFixedPan = $state<Point | null>(null);
 
   constructor(private deps: VTTGridManagerDependencies) {}
+
+  get gridMoveMode() {
+    return this._gridMoveMode;
+  }
+
+  set gridMoveMode(active: boolean) {
+    this._gridMoveMode = active;
+    this.gridFixedPan = active ? { ...this.deps.mapStore.viewport.pan } : null;
+  }
 
   private get storage(): StorageLike {
     return this.deps.storage ?? browserStorage;

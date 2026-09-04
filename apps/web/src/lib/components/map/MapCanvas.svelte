@@ -132,6 +132,7 @@
         offsetX: mapStore.gridOffsetX,
         offsetY: mapStore.gridOffsetY,
         fixed: mapSession.gridMoveMode && mapStore.isGMMode,
+        fixedPan: mapSession.gridFixedPan ?? undefined,
       },
       tokens: vttTokens,
       measurement: vttMeasurement,
@@ -373,6 +374,7 @@
     void mapStore.gridOffsetY;
     void mapStore.gridColor;
     void mapSession.gridMoveMode;
+    void mapSession.gridFixedPan;
     void themeStore.activeTheme;
     void vttTokens;
     void vttMeasurement;
