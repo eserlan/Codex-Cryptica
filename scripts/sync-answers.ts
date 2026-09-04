@@ -90,6 +90,41 @@ ${exportedAnswers}
 }
 
 /**
+ * Validates the documented invariants across all parsed answer entries:
+ * the file name must match `<slug>.ts`, and slugs/export names must be
+ * unique. Throws with a descriptive message on the first violation found.
+ */
+export function validateAnswerEntries(entries: AnswerExportInfo[]): void {
+  const seenSlugs = new Map<string, string>();
+  const seenExportNames = new Map<string, string>();
+
+  for (const entry of entries) {
+    const slugOwner = seenSlugs.get(entry.slug);
+    if (slugOwner) {
+      throw new Error(
+        `[sync-answers] Duplicate slug "${entry.slug}" found in ${slugOwner} and ${entry.fileName}.`,
+      );
+    }
+    seenSlugs.set(entry.slug, entry.fileName);
+
+    const exportOwner = seenExportNames.get(entry.exportName);
+    if (exportOwner) {
+      throw new Error(
+        `[sync-answers] Duplicate export name "${entry.exportName}" found in ${exportOwner} and ${entry.fileName}.`,
+      );
+    }
+    seenExportNames.set(entry.exportName, entry.fileName);
+
+    const expectedFileName = `${entry.slug}.ts`;
+    if (entry.fileName !== expectedFileName) {
+      throw new Error(
+        `[sync-answers] ${entry.fileName} declares slug "${entry.slug}" but the file name must be "${expectedFileName}".`,
+      );
+    }
+  }
+}
+
+/**
  * Syncs the answer pages index file.
  */
 export function syncAnswers(
@@ -106,11 +141,13 @@ export function syncAnswers(
     if (parsed) {
       entries.push(parsed);
     } else {
-      console.warn(
-        `[sync-answers] Warning: Could not parse answer export from ${file}`,
+      throw new Error(
+        `[sync-answers] Could not parse answer export from ${file}.`,
       );
     }
   }
+
+  validateAnswerEntries(entries);
 
   const generatedSource = generateIndexSource(entries);
   const existingSource = fs.existsSync(indexPath)

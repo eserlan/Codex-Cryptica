@@ -23,9 +23,7 @@ export const answerEntries: DiscoveryEntryInput[] = [
   ...Object.values(answers).map((answer): DiscoveryEntryInput => {
     const disc = answer.discovery;
     return {
-      id:
-        disc?.id ??
-        `answer-${answer.slug.replace(/^(how-do-you|how-do-i|how-much|what-is|what-should|what-makes|what-rpg|where-do-i)-/, "")}`,
+      id: disc?.id ?? `answer-${answer.slug}`,
       pageKind: "answer",
       canonicalPath: `/answers/${answer.slug}`,
       primaryIntent:

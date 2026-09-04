@@ -6,6 +6,7 @@ import {
   parseAnswerExport,
   generateIndexSource,
   syncAnswers,
+  validateAnswerEntries,
   type AnswerExportInfo,
 } from "./sync-answers";
 
@@ -69,6 +70,49 @@ export const howToPlayRpg: AnswerConfigInput = {
     });
   });
 
+  describe("validateAnswerEntries", () => {
+    it("throws when the file name does not match `<slug>.ts`", () => {
+      const entries: AnswerExportInfo[] = [
+        {
+          fileName: "wrong-name.ts",
+          exportName: "someAnswer",
+          slug: "some-answer",
+        },
+      ];
+      expect(() => validateAnswerEntries(entries)).toThrow(
+        /file name must be "some-answer\.ts"/,
+      );
+    });
+
+    it("throws on duplicate slugs", () => {
+      const entries: AnswerExportInfo[] = [
+        { fileName: "a.ts", exportName: "aAnswer", slug: "a" },
+        { fileName: "b.ts", exportName: "bAnswer", slug: "a" },
+      ];
+      expect(() => validateAnswerEntries(entries)).toThrow(
+        /Duplicate slug "a"/,
+      );
+    });
+
+    it("throws on duplicate export names", () => {
+      const entries: AnswerExportInfo[] = [
+        { fileName: "a.ts", exportName: "sharedName", slug: "a" },
+        { fileName: "b.ts", exportName: "sharedName", slug: "b" },
+      ];
+      expect(() => validateAnswerEntries(entries)).toThrow(
+        /Duplicate export name "sharedName"/,
+      );
+    });
+
+    it("does not throw for well-formed, unique entries", () => {
+      const entries: AnswerExportInfo[] = [
+        { fileName: "a.ts", exportName: "aAnswer", slug: "a" },
+        { fileName: "b.ts", exportName: "bAnswer", slug: "b" },
+      ];
+      expect(() => validateAnswerEntries(entries)).not.toThrow();
+    });
+  });
+
   describe("syncAnswers file synchronization", () => {
     let tempDir: string;
 
@@ -103,6 +147,53 @@ export const howToPlayRpg: AnswerConfigInput = {
       const res2 = syncAnswers(tempDir, indexPath);
       expect(res2.changed).toBe(false);
       expect(res2.count).toBe(1);
+    });
+
+    it("throws instead of silently skipping an unparsable answer file", () => {
+      fs.writeFileSync(
+        path.join(tempDir, "broken-answer.ts"),
+        `const notAnExport = { slug: "broken-answer" };`,
+        "utf-8",
+      );
+      const indexPath = path.join(tempDir, "index.ts");
+
+      expect(() => syncAnswers(tempDir, indexPath)).toThrow(
+        /Could not parse answer export/,
+      );
+      expect(fs.existsSync(indexPath)).toBe(false);
+    });
+
+    it("throws on duplicate slugs across two answer files", () => {
+      fs.writeFileSync(
+        path.join(tempDir, "answer-one.ts"),
+        `export const answerOne: AnswerConfigInput = { slug: "answer-one" };`,
+        "utf-8",
+      );
+      fs.writeFileSync(
+        path.join(tempDir, "answer-two.ts"),
+        `export const answerTwo: AnswerConfigInput = { slug: "answer-one" };`,
+        "utf-8",
+      );
+      const indexPath = path.join(tempDir, "index.ts");
+
+      expect(() => syncAnswers(tempDir, indexPath)).toThrow(
+        /Duplicate slug "answer-one"/,
+      );
+      expect(fs.existsSync(indexPath)).toBe(false);
+    });
+
+    it("throws when a file name does not match its declared slug", () => {
+      fs.writeFileSync(
+        path.join(tempDir, "mismatched-name.ts"),
+        `export const someAnswer: AnswerConfigInput = { slug: "different-slug" };`,
+        "utf-8",
+      );
+      const indexPath = path.join(tempDir, "index.ts");
+
+      expect(() => syncAnswers(tempDir, indexPath)).toThrow(
+        /file name must be "different-slug\.ts"/,
+      );
+      expect(fs.existsSync(indexPath)).toBe(false);
     });
   });
 });
