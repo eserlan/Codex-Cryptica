@@ -25,7 +25,7 @@ export const ANSWER_SORT_OPTIONS: AnswerSortItem[] = [
 ];
 
 /**
- * Formats an ISO date string (YYYY-MM-DD) into British English format (e.g. "4 Sep 2026").
+ * Formats an ISO date string (YYYY-MM-DD) into British English format (e.g. "4 Sept 2026").
  */
 export function formatAnswerDate(isoDate?: string): string {
   if (!isoDate) return "";

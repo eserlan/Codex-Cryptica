@@ -34,7 +34,7 @@ function createMockAnswer(
       title: question,
       description: "Description",
     },
-  };
+  } as AnswerConfig;
 }
 
 describe("answer sorting", () => {

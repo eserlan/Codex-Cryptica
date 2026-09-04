@@ -30,6 +30,7 @@ const makeAnswer = (
     ],
     relatedAnswers: [],
     category: "worldbuilding",
+    publishedAt: "2026-01-01",
     seo: { title: "Test", description: "Test description" },
     ...overrides,
   });
