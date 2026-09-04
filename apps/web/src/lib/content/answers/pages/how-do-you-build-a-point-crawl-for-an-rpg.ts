@@ -12,7 +12,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
       kind: "prose",
       heading: "The cartographer's trap: why terrain hexes stall travel prep",
       paragraphs: [
-        "Traditional wilderness exploration prep often bogs down in cartographic busywork. Game Masters spend dozen of hours drawing uniform hexagonal grids across wilderness maps, filling thirty adjacent hexes with identical pine trees, and drafting separate random encounter tables for light forest versus dense forest. At the table, this produces slow, procedural grid-crawling where players roll survival checks, ask if the next hex looks different from the last, and spend three hours wandering through empty space with zero meaningful tactical decisions.",
+        "Traditional wilderness exploration prep often bogs down in cartographic busywork. Game Masters spend dozens of hours drawing uniform hexagonal grids across wilderness maps, filling thirty adjacent hexes with identical pine trees, and drafting separate random encounter tables for light forest versus dense forest. At the table, this produces slow, procedural grid-crawling where players roll survival checks, ask if the next hex looks different from the last, and spend three hours wandering through empty space with zero meaningful tactical decisions.",
         "A point crawl replaces the uniform grid with a network graph. Instead of simulating every square kilometre of unremarkable dirt, you identify the six to ten landmark locations players actually care about — ruined watchtowers, sunken bridges, monster lairs, and hermit shrines — and connect them with defined paths. Wilderness travel shifts from an exercise in navigation bookkeeping to a series of high-stakes route choices: do the players take the fast river trail where goblin toll-collectors lurk, or the slow mountain pass that requires three extra days of rations?",
       ],
     },
@@ -84,8 +84,8 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     paragraphs: [
       "Point crawls are natural network graphs, making them ideal for visual campaign mapping. In Codex Cryptica, you can lay out wilderness nodes on the spatial canvas as rich entity cards, connect them with directed relationship lines tagged with travel times and hazard ratings, and pin regional encounter tables directly to routes. As factions claim territories or paths wash out during seasonal storms, your campaign map stays reactive and up to date.",
     ],
-    linkText: "Explore the Sandbox Campaign Manager",
-    href: "/for/sandbox-campaigns",
+    linkText: "See the RPG knowledge graph",
+    href: "/solutions/rpg-knowledge-graph",
   },
   relatedTools: [
     {
