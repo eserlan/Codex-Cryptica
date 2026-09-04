@@ -21,7 +21,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
       kind: "list",
       heading: "The 1-3-3-6 starting sandbox framework",
       intro:
-        "To launch an open-world campaign that feels expansive without overwhelming your schedule, prepare only these four foundational components before the first roll of the dice:",
+        "To launch an open-world campaign that feels expansive without overwhelming your schedule, prepare only these five foundational components before the first roll of the dice:",
       items: [
         {
           term: "1 resilient settlement hub",
@@ -146,7 +146,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
       "minimum viable sandbox prep",
     ],
     uniqueValue:
-      "A minimum-viable sandbox prep framework replacing premature world atlas generation with a starting hub, three local factions in active friction, six visible rumours, and a three-mile local adventure site.",
+      "A minimum-viable sandbox prep framework replacing premature world atlas generation with a starting hub, three local factions in active friction, three adventure sites within a day's travel, and six visible rumours.",
     relatedIntents: [
       "for-sandbox-campaigns",
       "answer-session-prep",
