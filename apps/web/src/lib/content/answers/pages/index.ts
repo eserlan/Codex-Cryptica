@@ -18,6 +18,7 @@ import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-w
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
+import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
 
 /**
  * The published answer library.
@@ -51,6 +52,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoYouMakeTravelInterestingInATabletopRpg,
+    howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),

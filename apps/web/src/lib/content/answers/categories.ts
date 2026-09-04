@@ -36,6 +36,7 @@ export const ANSWER_CATEGORIES: AnswerCategory[] = [
       "how-do-i-get-players-to-engage-with-my-campaign-world",
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+      "how-do-you-make-npcs-memorable-without-lots-of-prep",
     ],
   },
   {

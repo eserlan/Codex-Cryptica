@@ -365,6 +365,22 @@ describe("published answers", () => {
       "what-makes-a-good-random-encounter",
     );
   });
+
+  it("publishes the memorable NPCs answer page with complete framework sections and R2 image", () => {
+    const npcAnswer =
+      answers["how-do-you-make-npcs-memorable-without-lots-of-prep"];
+    expect(npcAnswer).toBeDefined();
+    expect(npcAnswer.kind).toBe("framework");
+    expect(npcAnswer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(npcAnswer.seo.imageAlt?.trim().length ?? 0).toBeGreaterThan(0);
+    expect(npcAnswer.sections.some((s) => s.kind === "example")).toBe(true);
+    expect(npcAnswer.sections.some((s) => s.kind === "checklist")).toBe(true);
+    expect(npcAnswer.relatedAnswers).toContain(
+      "how-do-you-organise-npc-relationships",
+    );
+  });
 });
 
 describe("answer structured data", () => {

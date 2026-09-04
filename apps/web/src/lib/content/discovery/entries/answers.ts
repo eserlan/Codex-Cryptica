@@ -426,4 +426,23 @@ export const answerEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "answer-npcs-memorable",
+    pageKind: "answer",
+    canonicalPath:
+      "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+    primaryIntent: "how to make npcs memorable without lots of prep",
+    intentAliases: [
+      "how to make memorable npcs",
+      "quick npc creation framework",
+      "lightweight npc design rpg",
+    ],
+    userJob: "understand",
+    uniqueValue:
+      "A five-element table-ready NPC anatomy replacing biographical prep with an immediate want, physical mannerism, contradiction, relationship hook, and sensory tag.",
+    parentCluster: "npc-creation",
+    relatedIntents: ["generator-npc", "answer-npc-relationships"],
+    indexable: true,
+    status: "live",
+  },
 ];
