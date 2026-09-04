@@ -10,7 +10,6 @@ import {
   type RollOutcome,
 } from "random-source-engine";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
-import { TABLE_DIR, DECK_DIR } from "@codex/vault-engine";
 
 /**
  * Vault-backed CRUD for random tables and card decks (#2247).
@@ -18,12 +17,12 @@ import { TABLE_DIR, DECK_DIR } from "@codex/vault-engine";
  * Sources live as Markdown files under `_tables/` and `_decks/`, so they are
  * exported, backed up, and carried by a Drive push/pull exactly like the rest
  * of the vault, and stay readable if a user opens one directly. These
- * directories are excluded from the generic vault entity walk (#2735) —
- * `TABLE_DIR`/`DECK_DIR` are the single source of truth, shared with
- * `@codex/vault-engine`.
+ * directories are excluded from the generic vault entity walk (#2735) — keep
+ * these names in sync with `RESERVED_VAULT_DIRS` in `@codex/vault-engine`.
  */
 
-export { TABLE_DIR, DECK_DIR };
+export const TABLE_DIR = "_tables";
+export const DECK_DIR = "_decks";
 
 /** File access seam, so the store is unit-testable without a real vault. */
 export interface RandomSourceFiles {
