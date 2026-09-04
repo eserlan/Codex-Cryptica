@@ -42,6 +42,7 @@ describe("pr-check-fix", () => {
         workflow: "CI",
       },
     ],
+    pendingChecks: [],
     hasActionableFeedback: true,
   };
 

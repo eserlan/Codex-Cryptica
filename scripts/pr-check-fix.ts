@@ -48,6 +48,7 @@ export interface PrFeedback {
   prMeta: PrMetadata;
   unresolvedComments: PrReviewComment[];
   failingChecks: PrCheck[];
+  pendingChecks: PrCheck[];
   reviews: PrReview[];
   hasActionableFeedback: boolean;
 }
@@ -169,6 +170,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
 
   // 3. Fetch check statuses
   let failingChecks: PrCheck[] = [];
+  let pendingChecks: PrCheck[] = [];
   try {
     const checksRaw = execSync(
       `gh pr checks ${prNumber} --json name,state,bucket,link,workflow`,
@@ -177,6 +179,13 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
     const allChecks = JSON.parse(checksRaw) as PrCheck[];
     failingChecks = allChecks.filter(
       (c) => c.bucket === "fail" || c.state === "FAILURE",
+    );
+    pendingChecks = allChecks.filter(
+      (c) =>
+        c.bucket === "pending" ||
+        c.state === "PENDING" ||
+        c.state === "IN_PROGRESS" ||
+        c.state === "QUEUED",
     );
   } catch {
     // ignore
@@ -191,6 +200,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
     prMeta,
     unresolvedComments,
     failingChecks,
+    pendingChecks,
     reviews,
     hasActionableFeedback,
   };
@@ -205,9 +215,6 @@ export async function pollForPrFeedback(
   waitMinutes: number,
 ): Promise<PrFeedback> {
   const maxAttempts = Math.max(1, Math.floor((waitMinutes * 60) / 20));
-  console.log(
-    `⏳ Checking for PR #${prNumber} reviews and check results (polling up to ${waitMinutes}m)...`,
-  );
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const feedback = fetchPrFeedback(prNumber, repoDir);
@@ -220,7 +227,15 @@ export async function pollForPrFeedback(
       return feedback;
     }
 
+    // If all checks have completed and there are no pending checks or unresolved comments, exit early
+    if (feedback.pendingChecks.length === 0 && attempt > 1) {
+      return feedback;
+    }
+
     if (attempt < maxAttempts) {
+      console.log(
+        `⏳ PR #${prNumber} has no issues yet, but ${feedback.pendingChecks.length} check(s) still pending... (waiting 20s)`,
+      );
       await new Promise((res) => setTimeout(res, 20_000));
     }
   }
