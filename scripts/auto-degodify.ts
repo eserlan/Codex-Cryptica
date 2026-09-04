@@ -4,6 +4,7 @@ import { mkdir, rm } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import { homedir } from "node:os";
 import { runGodFileAnalysis, type FileAnalysis } from "./god-file-analysis.ts";
+import { runPrFixLoop } from "./pr-check-fix.ts";
 
 export type AgentProviderName = "agy" | "claude" | "codex";
 
@@ -22,6 +23,9 @@ export interface AutoDegodifyOptions {
   agentProviders?: AgentProviderName[];
   baseBranch?: string;
   timeoutMinutes?: number;
+  checkFixLoop?: boolean;
+  waitMinutesForReview?: number;
+  maxFixRounds?: number;
 }
 
 export interface CandidateSelection {
@@ -431,6 +435,37 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
       console.error(
         "\n❌ All configured agent providers failed to create a PR.",
       );
+    } else if (options.checkFixLoop !== false) {
+      console.log(
+        `\n🔄 Entering PR check & review fix loop for branch ${branchName}...`,
+      );
+      try {
+        const prListJson = execSync(
+          `gh pr list --head ${branchName} --json number`,
+          {
+            cwd: rootDir,
+            encoding: "utf-8",
+            stdio: ["pipe", "pipe", "ignore"],
+          },
+        );
+        const prs = JSON.parse(prListJson) as Array<{ number: number }>;
+        if (prs.length > 0) {
+          const prNumber = prs[0].number;
+          await runPrFixLoop({
+            rootDir,
+            prNumber,
+            branchName,
+            baseBranch,
+            worktreePath,
+            agentProviders: providers,
+            timeoutMinutes,
+            waitMinutesForReview: options.waitMinutesForReview ?? 2,
+            maxRounds: options.maxFixRounds ?? 2,
+          });
+        }
+      } catch (fixErr) {
+        console.warn("⚠️ PR check/fix loop encountered an error:", fixErr);
+      }
     }
   } catch (err) {
     console.error("❌ Degodification run encountered an error:", err);
@@ -456,6 +491,7 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
 if (import.meta.main) {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
+  const noFixLoop = args.includes("--no-fix-loop");
   const targetIdx = args.indexOf("--target");
   const targetFile = targetIdx !== -1 ? args[targetIdx + 1] : undefined;
   const agentsIdx = args.indexOf("--agents");
@@ -466,7 +502,12 @@ if (import.meta.main) {
           .map((s) => s.trim()) as AgentProviderName[])
       : undefined;
 
-  autoDegodify({ dryRun, targetFile, agentProviders }).catch((err) => {
+  autoDegodify({
+    dryRun,
+    targetFile,
+    agentProviders,
+    checkFixLoop: !noFixLoop,
+  }).catch((err) => {
     console.error("Fatal error:", err);
     process.exit(1);
   });
