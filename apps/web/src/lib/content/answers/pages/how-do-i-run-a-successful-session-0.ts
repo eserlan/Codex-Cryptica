@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
   slug: "how-do-i-run-a-successful-session-0",
+  category: "getting-started",
   question: "How do I run a successful Session 0?",
   kind: "framework",
   shortAnswer:
@@ -139,6 +140,34 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-much-prep-do-you-need-for-an-rpg-session",
   ],
+  discovery: {
+    id: "answer-session-zero",
+    parentCluster: "session-prep",
+    primaryIntent: "how to run an rpg session 0",
+    intentAliases: [
+      "how do i run a successful session 0",
+      "session zero checklist",
+      "what to cover in session 0",
+      "rpg session 0 questions",
+      "dnd session zero guide",
+      "gm session 0 checklist",
+    ],
+    uniqueValue:
+      "An eight-point coverage framework plus a table-agnostic take on boundary-setting (goal, not one mandatory methodology), a worked Session 0 output, and how those decisions become reusable campaign entities instead of a one-off note.",
+    relatedIntents: [
+      "answer-campaign-notes",
+      "answer-npc-relationships",
+      "answer-session-prep",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-session-prep",
+        reason:
+          "Both share the session-prep cluster and the 'understand' job, but answer different questions: how much to prepare for an ongoing session versus how to structure the one conversation that happens before a campaign starts at all. Neither is a rephrasing of the other's intent.",
+      },
+    ],
+  },
+
   seo: {
     title: "How do I run a successful Session 0? | Codex Cryptica",
     description:

@@ -25,6 +25,49 @@ export const AnswerKindSchema = z.enum([
 ]);
 export type AnswerKind = z.infer<typeof AnswerKindSchema>;
 
+/** The four high-level category buckets used for browsing and navigation. */
+export const AnswerCategoryIdSchema = z.enum([
+  "getting-started",
+  "session-prep",
+  "worldbuilding",
+  "campaign-notes",
+]);
+export type AnswerCategoryId = z.infer<typeof AnswerCategoryIdSchema>;
+
+/**
+ * Optional Discovery Intent Registry metadata (Constitution XIII).
+ * Allows single-file answer authoring without editing the discovery registry separately.
+ */
+export const AnswerDiscoverySchema = z.object({
+  id: z.string().optional(),
+  parentCluster: z.string().min(1),
+  primaryIntent: z.string().optional(),
+  intentAliases: z.array(z.string()).default([]),
+  uniqueValue: z.string().optional(),
+  userJob: z
+    .enum([
+      "understand",
+      "create",
+      "see-an-example",
+      "adopt-workflow",
+      "evaluate",
+      "migrate",
+      "navigate",
+      "reference",
+    ])
+    .default("understand"),
+  relatedIntents: z.array(z.string()).default([]),
+  acknowledgedOverlap: z
+    .array(
+      z.object({
+        with: z.string(),
+        reason: z.string(),
+      }),
+    )
+    .default([]),
+});
+export type AnswerDiscovery = z.infer<typeof AnswerDiscoverySchema>;
+
 /** A list item that may lead with a bolded term, e.g. "**Scale** — how far…". */
 export const AnswerListItemSchema = z.object({
   /** Optional lead-in term rendered in the body face, before the text. */
@@ -130,17 +173,21 @@ export const AnswerConfigSchema = z.object({
       href: z.string().startsWith("/"),
     })
     .optional(),
+  /** The category this answer belongs to for browsing and index organisation. */
+  category: AnswerCategoryIdSchema,
   relatedTools: z.array(AnswerLinkSchema).default([]),
   relatedForPages: z.array(AnswerLinkSchema).default([]),
   /** Slugs of other answers. Validated against the registry by its tests. */
   relatedAnswers: z.array(z.string()).default([]),
+  /** Optional discovery intent governance metadata. */
+  discovery: AnswerDiscoverySchema.optional(),
   seo: z.object({
     title: z.string().min(1),
     description: z.string().min(1),
     /** Defaults to `/answers/<slug>` when omitted. */
     canonical: z.string().optional(),
-    image: z.string().optional(),
-    imageAlt: z.string().optional(),
+    image: z.string().url().optional(),
+    imageAlt: z.string().min(10).optional(),
   }),
 });
 export type AnswerConfig = z.infer<typeof AnswerConfigSchema>;

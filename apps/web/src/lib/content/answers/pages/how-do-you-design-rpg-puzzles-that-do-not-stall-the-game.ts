@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
   {
     slug: "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+    category: "session-prep",
     question: "How do you design RPG puzzles that do not stall the game?",
     kind: "framework",
     shortAnswer:
@@ -141,6 +142,16 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       "what-is-a-point-crawl",
       "how-do-you-run-a-conspiracy-campaign",
     ],
+    discovery: {
+      id: "answer-rpg-puzzles",
+      parentCluster: "puzzle-design",
+      primaryIntent: "how do you design rpg puzzles that do not stall the game",
+      intentAliases: ["rpg puzzle design", "stop puzzles stalling the table"],
+      uniqueValue:
+        "Names the single cause of stalling, gives four properties that prevent it, redesigns a vault door, and lists safety valves to prepare.",
+      relatedIntents: ["generator-puzzle"],
+    },
+
     seo: {
       title:
         "How do you design RPG puzzles that do not stall the game? | Codex Cryptica",

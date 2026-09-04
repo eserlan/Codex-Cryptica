@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
   slug: "how-do-you-organise-npc-relationships",
+  category: "campaign-notes",
   question: "How do you organise NPC relationships?",
   kind: "how-to",
   shortAnswer:
@@ -133,6 +134,16 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-run-a-conspiracy-campaign",
   ],
+  discovery: {
+    id: "answer-npc-relationships",
+    parentCluster: "relationship-modelling",
+    primaryIntent: "how do you organise npc relationships",
+    intentAliases: ["track npc relationships rpg", "npc relationship map"],
+    uniqueValue:
+      "Argues for directed, named links over ally/enemy lists, says what each link must record, and gives a five-link worked scenario.",
+    relatedIntents: ["solution-rpg-knowledge-graph"],
+  },
+
   seo: {
     title: "How do you organise NPC relationships? | Codex Cryptica",
     description:

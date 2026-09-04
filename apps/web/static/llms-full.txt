@@ -1919,25 +1919,33 @@ your canonical vault automatically.
 
 Reference answers to real RPG and worldbuilding questions, indexed at https://codexcryptica.com/answers. Each page states the direct answer first, then the framework behind it and a concrete example.
 
-### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
+### [How do I balance RPG combat encounters without causing a TPK?](https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk)
 
-**Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
+**Direct answer:** Encounter balance isn't only a monster-versus-party maths problem — a fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
 
-### [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes)
+### [How do I find a tabletop RPG group to play with?](https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with)
 
-**Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world — a person, a place, a faction, an item — and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
+**Direct answer:** Finding a tabletop RPG group comes down to three main routes: using a dedicated group-finding platform with structured filters (for system, schedule, language, and play format), tapping into local offline communities like friendly game stores, conventions, and clubs, or building a table yourself with friends or fellow players. Selecting the right route depends on whether you are looking for an in-person or online game, and taking a few minutes to check group fit and table expectations beforehand makes joining a new group substantially smoother.
+
+### [How do I get players to engage with my campaign world?](https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world)
+
+**Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them — a piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character — a player making a sharp decision in third person is roleplaying just as much as one doing voices.
+
+### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
+
+**Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork — done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
+
+### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
+
+**Direct answer:** To build a point crawl for an RPG, construct a network of six to ten landmark nodes connected by differentiated travel paths. Define each node as an actionable destination with a clear hazard, resource, or encounter. Then connect the nodes with routes that present meaningful trade-offs in travel duration, terrain difficulty, and risk, ensuring there are loops and alternative paths rather than a single linear highway.
+
+### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
+
+**Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice — the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit — because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
 
 ### [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction)
 
 **Direct answer:** Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move — "restore the drowned line to the throne" rather than "gain power".
-
-### [How do you organise NPC relationships?](https://codexcryptica.com/answers/how-do-you-organise-npc-relationships)
-
-**Direct answer:** Record relationships as directed, named links between two named people, stored once rather than restated on both pages. "Alder Cass owes a debt to Vess Marrow" is a fact with a direction and a reason; a list headed "Allies" on each character's page is not, and it will drift out of step the first time the relationship changes. Keep the direction, the reason, and whether the party knows about it.
-
-### [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter)
-
-**Direct answer:** A good random encounter presents a situation the party can respond to in more than one way, and it tells them something about where they are. A wandering monster with no context and no options is a dice-rolling interruption; the same creature, given a reason for being there and something it currently wants, becomes a scene. The test is whether "fight it" is one option among several rather than the only one.
 
 ### [How do you create a pantheon?](https://codexcryptica.com/answers/how-do-you-create-a-pantheon)
 
@@ -1947,49 +1955,65 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud — the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.
 
-### [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain)
+### [How do you make NPCs memorable without lots of prep?](https://codexcryptica.com/answers/how-do-you-make-npcs-memorable-without-lots-of-prep)
 
-**Direct answer:** Whatever the party will interact with, plus the one thing that explains why the place exists. In practice that is three or four locations they can enter, two or three people worth talking to, one local problem nobody has solved, and a reason for the settlement to be here rather than a mile downriver. A full civic census is wasted prep; the reason-to-exist is what makes the place feel real in one sentence.
+**Direct answer:** NPCs become memorable when defined by playable surface cues rather than hidden backstory. Instead of writing paragraphs of history that players never discover, give each non-player character five immediate elements: an urgent concrete want, an observable physical mannerism or vocal cadence, a sharp internal contradiction, an existing relationship hook, and one striking sensory detail.
 
-### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
+### [How do you make travel interesting in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg)
 
-**Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice — the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit — because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
+**Direct answer:** Travel becomes interesting when a journey is structured around genuine decisions rather than random combat interruptions. Rather than rolling for wandering monsters or hand-waving the trip in a single check, give players competing routes with distinct hazards, active travel roles that grant agency, tangible resource trade-offs, and environmental discoveries that reveal the world they are crossing.
+
+### [How do you organise NPC relationships?](https://codexcryptica.com/answers/how-do-you-organise-npc-relationships)
+
+**Direct answer:** Record relationships as directed, named links between two named people, stored once rather than restated on both pages. "Alder Cass owes a debt to Vess Marrow" is a fact with a direction and a reason; a list headed "Allies" on each character's page is not, and it will drift out of step the first time the relationship changes. Keep the direction, the reason, and whether the party knows about it.
+
+### [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes)
+
+**Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world — a person, a place, a faction, an item — and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
+
+### [How do you prep a weekly RPG session quickly?](https://codexcryptica.com/answers/how-do-you-prep-a-weekly-rpg-session-quickly)
+
+**Direct answer:** To prep a weekly RPG session quickly without burnout, run a 35-minute timeboxed routine focused exclusively on the upcoming three hours of play: (1) review the previous session's recap and extract one or two unresolved player hooks, (2) frame a strong opening scene with immediate momentum, (3) sketch two or three flexible scene nodes rather than a rigid linear plot, (4) prepare one or two portable encounters or hazards with condensed stats, and (5) outline two key NPCs with an immediate desire and one distinctive mannerism. Treat any remaining minutes as a deliberate improvisation buffer, and let everything else be generated or improvised live.
+
+### [How do you prepare a sandbox RPG campaign?](https://codexcryptica.com/answers/how-do-you-prepare-a-sandbox-rpg-campaign)
+
+**Direct answer:** A sandbox RPG campaign is prepared from the centre outward rather than the top down. Instead of drafting a continental atlas or extensive global lore, establish a compact starting region: one resilient settlement hub, three local factions in active friction, three immediate adventure sites within a day's travel, and a roster of six rumours that point towards distinct hazards and rewards. Worldbuilding beyond that perimeter is only developed when players declare their travel intentions at the end of a session.
 
 ### [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign)
 
 **Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
 
+### [How do you track unresolved plot hooks in an RPG campaign?](https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign)
+
+**Direct answer:** Unresolved plot hooks are tracked by treating them as living status states attached to existing campaign entities rather than entries on an endless quest checklist. Record each hook with five lightweight attributes: the origin source, the affected faction or NPC, current lifecycle status (dormant, simmering, active, or rotting), its urgency clock, and the concrete consequence that manifests in the world if the players choose to ignore it.
+
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
 
-### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
+### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
-**Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork — done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
+**Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
 
-### [How do I balance RPG combat encounters without causing a TPK?](https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk)
+### [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter)
 
-**Direct answer:** Encounter balance isn't only a monster-versus-party maths problem — a fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
-
-### [How do I get players to engage with my campaign world?](https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world)
-
-**Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them — a piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character — a player making a sharp decision in third person is roleplaying just as much as one doing voices.
-
-### [What should I look for in an RPG campaign manager?](https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager)
-
-**Direct answer:** There's no single best campaign manager — the right one depends on what kind of game you run and what actually causes you friction. Before comparing named tools, it's worth being clear on the dimensions that matter: how it organises notes and relationships, whether it handles maps or VTT play, how easily data gets in and out, whether it runs locally or requires the cloud, how well it adapts to a system you didn't design it for, and whether it slows you down or speeds you up during an actual session.
+**Direct answer:** A good random encounter presents a situation the party can respond to in more than one way, and it tells them something about where they are. A wandering monster with no context and no options is a dice-rolling interruption; the same creature, given a reason for being there and something it currently wants, becomes a scene. The test is whether "fight it" is one option among several rather than the only one.
 
 ### [What RPG system should we try instead of D&D?](https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd)
 
 **Direct answer:** There's no single best alternative — the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.
 
+### [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain)
+
+**Direct answer:** Whatever the party will interact with, plus the one thing that explains why the place exists. In practice that is three or four locations they can enter, two or three people worth talking to, one local problem nobody has solved, and a reason for the settlement to be here rather than a mile downriver. A full civic census is wasted prep; the reason-to-exist is what makes the place feel real in one sentence.
+
+### [What should I look for in an RPG campaign manager?](https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager)
+
+**Direct answer:** There's no single best campaign manager — the right one depends on what kind of game you run and what actually causes you friction. Before comparing named tools, it's worth being clear on the dimensions that matter: how it organises notes and relationships, whether it handles maps or VTT play, how easily data gets in and out, whether it runs locally or requires the cloud, how well it adapts to a system you didn't design it for, and whether it slows you down or speeds you up during an actual session.
+
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
 **Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty — usually dice — and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
-
-### [How do I find a tabletop RPG group to play with?](https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with)
-
-**Direct answer:** Finding a tabletop RPG group comes down to three main routes: using a dedicated group-finding platform with structured filters (for system, schedule, language, and play format), tapping into local offline communities like friendly game stores, conventions, and clubs, or building a table yourself with friends or fellow players. Selecting the right route depends on whether you are looking for an in-person or online game, and taking a few minutes to check group fit and table expectations beforehand makes joining a new group substantially smoother.
 
 
 ## Curated Generator Examples

@@ -1,0 +1,15 @@
+[Unit]
+Description=Codex-Cryptica Automated God File Decomposition
+Documentation=https://github.com/eserlan/Codex-Cryptica
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/espen/Projects/remotecc
+Environment="PATH=/home/espen/.bun/bin:/home/espen/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/espen/.bun/bin/bun scripts/auto-degodify.ts
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
   slug: "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
+  category: "getting-started",
   question: "Where do I start if I have never played a tabletop RPG before?",
   kind: "how-to",
   shortAnswer:
@@ -128,6 +129,26 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
   ],
+  discovery: {
+    id: "answer-beginner-start",
+    parentCluster: "beginner-entry",
+    primaryIntent: "how to start playing tabletop rpgs as a complete beginner",
+    intentAliases: [
+      "how to start playing tabletop rpgs",
+      "beginner guide to rpgs",
+      "what do i need to play dnd",
+      "should i start as a player or gm",
+      "tabletop rpgs for beginners",
+    ],
+    uniqueValue:
+      "States the genuinely small minimum needed to start (no rulebook read-through, no gear list), covers both the player and GM entry points as equally valid, and is explicit that campaign-management software isn't needed for a first session.",
+    relatedIntents: [
+      "answer-find-rpg-group",
+      "answer-system-selection",
+      "answer-session-zero",
+    ],
+  },
+
   seo: {
     title:
       "Where do I start with tabletop RPGs as a beginner? | Codex Cryptica",

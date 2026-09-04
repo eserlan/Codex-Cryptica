@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
   slug: "how-do-you-organise-rpg-campaign-notes",
+  category: "campaign-notes",
   question: "How do you organise RPG campaign notes?",
   kind: "how-to",
   shortAnswer:
@@ -142,6 +143,26 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "how-do-you-run-a-conspiracy-campaign",
   ],
+  discovery: {
+    id: "answer-campaign-notes",
+    parentCluster: "campaign-notes",
+    primaryIntent: "how do you organise rpg campaign notes",
+    intentAliases: [
+      "how to organize dnd campaign notes",
+      "best way to structure gm notes",
+    ],
+    uniqueValue:
+      "A three-layer structure — entities, session logs, disposable prep — plus the post-session pass that keeps it true. Technique, not product.",
+    relatedIntents: ["solution-campaign-manager"],
+    acknowledgedOverlap: [
+      {
+        with: "solution-campaign-manager",
+        reason:
+          "The answer teaches a note structure that works in any tool; the solution page documents what Codex does. Different jobs — understand versus evaluate — on one subject.",
+      },
+    ],
+  },
+
   seo: {
     title: "How do you organise RPG campaign notes? | Codex Cryptica",
     description:

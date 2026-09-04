@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whatIsAPointCrawl: AnswerConfigInput = {
   slug: "what-is-a-point-crawl",
+  category: "worldbuilding",
   question: "What is a point crawl?",
   kind: "definition",
   shortAnswer:
@@ -122,6 +123,15 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     "what-makes-a-good-random-encounter",
     "how-do-you-organise-rpg-campaign-notes",
   ],
+  discovery: {
+    id: "answer-point-crawl",
+    parentCluster: "adventure-mapping",
+    primaryIntent: "what is a point crawl",
+    intentAliases: ["point crawl meaning", "point crawl vs hex crawl"],
+    uniqueValue:
+      "Defines the structure, names its parts, works a fen example with real travel costs, and says when not to use one.",
+  },
+
   seo: {
     title: "What is a point crawl? | Codex Cryptica",
     description:

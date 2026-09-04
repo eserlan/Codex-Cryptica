@@ -2,6 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whatShouldILookForInAnRpgCampaignManager: AnswerConfigInput = {
   slug: "what-should-i-look-for-in-an-rpg-campaign-manager",
+  category: "campaign-notes",
   question: "What should I look for in an RPG campaign manager?",
   kind: "framework",
   shortAnswer:
@@ -145,6 +146,31 @@ export const whatShouldILookForInAnRpgCampaignManager: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-i-get-players-to-engage-with-my-campaign-world",
   ],
+  discovery: {
+    id: "answer-campaign-manager-criteria",
+    parentCluster: "campaign-management",
+    primaryIntent:
+      "understand the criteria for evaluating rpg campaign management software",
+    intentAliases: [
+      "what should i look for in an rpg campaign manager",
+      "what makes a good rpg campaign manager",
+      "campaign manager features for gms",
+      "what should a ttrpg campaign manager do",
+      "how to choose rpg campaign software",
+      "rpg campaign manager checklist",
+    ],
+    uniqueValue:
+      "A tool-agnostic evaluation framework (organisation, relationships, maps, portability, local/cloud trade-offs, customisation, collaboration) prioritised by workflow, before naming any specific product.",
+    relatedIntents: ["solution-campaign-manager", "answer-campaign-notes"],
+    acknowledgedOverlap: [
+      {
+        with: "solution-campaign-manager",
+        reason:
+          "The answer teaches tool-agnostic evaluation criteria for any campaign manager; the solution page evaluates Codex specifically against them. Different jobs — understand versus evaluate — on the same subject, and the answer explicitly names workflows Codex fits less well.",
+      },
+    ],
+  },
+
   seo: {
     title:
       "What should I look for in an RPG campaign manager? | Codex Cryptica",
