@@ -149,3 +149,7 @@
 ## 2024-11-20 - Add aria-hidden to decorative layout icons
 **Learning:** Found multiple layout components like `AppHeader.svelte` and `MobileMenu.svelte` containing buttons with `aria-label`s or descriptive text that had inner decorative `<span class="icon-[...]">` elements without `aria-hidden="true"`. This pattern across global layout components causes unnecessary screen reader verbosity on every page load.
 **Action:** When reviewing or creating global navigation or layout components, ensure all decorative icons nested inside interactive elements explicitly declare `aria-hidden="true"`.
+
+## 2024-05-15 - Decorative Inner Icons
+**Learning:** Screen readers might announce confusing CSS class names (like `icon-[lucide--copy]`) for inner decorative spans inside buttons if they lack `aria-hidden="true"`, even when the button contains descriptive text.
+**Action:** Always add `aria-hidden="true"` to decorative inner icon elements (e.g. `<span class="icon-[...]">`) when they accompany visual descriptive text or an `aria-label` inside interactive elements.
