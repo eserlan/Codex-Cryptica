@@ -90,16 +90,17 @@ const IGNORED_DIRS = new Set([
  * Determine if a file path is a test file or test utility.
  */
 export function isTestFile(relativePath: string): boolean {
+  const normalized = relativePath.replace(/\\/g, "/");
   if (
-    relativePath.endsWith(".test.ts") ||
-    relativePath.endsWith(".test.js") ||
-    relativePath.endsWith(".test.mjs") ||
-    relativePath.endsWith(".spec.ts") ||
-    relativePath.endsWith(".spec.js")
+    normalized.endsWith(".test.ts") ||
+    normalized.endsWith(".test.js") ||
+    normalized.endsWith(".test.mjs") ||
+    normalized.endsWith(".spec.ts") ||
+    normalized.endsWith(".spec.js")
   ) {
     return true;
   }
-  const parts = relativePath.split("/");
+  const parts = normalized.split("/");
   return (
     parts.includes("tests") ||
     parts.includes("__tests__") ||
@@ -172,10 +173,7 @@ export function isDataCatalogModule(
 
   // 3. Heuristic: if file is mostly constant declarations and has zero/near-zero function declarations
   // or class declarations, check line/function density.
-  const functionMatches = content.match(
-    /function\s+[a-zA-Z0-9_$]+|\b[a-zA-Z0-9_$]+\s*\([^)]*\)\s*:\s*[^={]+=>|\b(?:class)\s+[a-zA-Z0-9_$]+/g,
-  );
-  const functionCount = functionMatches ? functionMatches.length : 0;
+  const functionCount = countFunctions(content);
 
   const lines = content.split("\n").length;
   // If file has over 500 lines but <= 2 function declarations, and exports constants/dictionaries
@@ -190,6 +188,16 @@ export function isDataCatalogModule(
   }
 
   return false;
+}
+
+/**
+ * Accurately count functions, methods, and arrow functions (with or without return types).
+ */
+export function countFunctions(content: string): number {
+  const matches = content.match(
+    /\b(?:function\s+[a-zA-Z0-9_$]+|async\s+function\s+[a-zA-Z0-9_$]+|(?:public\s+|private\s+|protected\s+|async\s+)*[a-zA-Z0-9_$]+\s*\([^)]*\)\s*(?::\s*[^={]+)?\s*\{|(?:const|let|var)\s+[a-zA-Z0-9_$]+\s*=\s*(?:async\s*)?(?:\([^)]*\)|[a-zA-Z0-9_$]+)\s*(?::\s*[^={]+)?\s*=>|\bclass\s+[a-zA-Z0-9_$]+)/g,
+  );
+  return matches ? matches.length : 0;
 }
 
 /**
@@ -231,10 +239,7 @@ export function analyzeContent(content: string): {
     codeLines++;
   }
 
-  const funcMatches = content.match(
-    /\b(?:function\s+[a-zA-Z0-9_$]+|async\s+function\s+[a-zA-Z0-9_$]+|(?:public\s+|private\s+|protected\s+|async\s+)*[a-zA-Z0-9_$]+\s*\([^)]*\)\s*\{|(?:const|let|var)\s+[a-zA-Z0-9_$]+\s*=\s*(?:async\s*)?\([^)]*\)\s*=>)/g,
-  );
-  const functionCount = funcMatches ? funcMatches.length : 0;
+  const functionCount = countFunctions(content);
 
   return { totalLines, codeLines, functionCount };
 }
@@ -311,7 +316,7 @@ export async function runGodFileAnalysis(
   };
 
   for (const filePath of allFiles) {
-    const relativePath = relative(rootDir, filePath);
+    const relativePath = relative(rootDir, filePath).replace(/\\/g, "/");
 
     if (isTestFile(relativePath)) {
       continue;
