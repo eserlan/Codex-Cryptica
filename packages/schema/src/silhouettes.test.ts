@@ -336,6 +336,19 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     expect(match.id).toBe("faction-insignia-crest");
   });
 
+  it("resolves event category for event entities even with sparse metadata", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "Something Happened",
+        labels: [],
+        content: "",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.category).toBe("event");
+  });
+
   it("falls back to generic silhouette when no specific metadata matches", () => {
     const match = resolveEntitySilhouette({
       title: "Unknown Entity",

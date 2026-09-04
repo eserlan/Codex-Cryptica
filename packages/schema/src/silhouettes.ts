@@ -2494,6 +2494,13 @@ export function resolveEntitySilhouette(
     rawType.includes("npc")
   ) {
     targetCategory = "character";
+  } else if (
+    rawType.includes("event") ||
+    rawType.includes("festival") ||
+    rawType.includes("ritual") ||
+    rawType.includes("war")
+  ) {
+    targetCategory = "event";
   }
 
   // 3. World genre context
