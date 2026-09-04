@@ -152,6 +152,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    "how-do-you-run-a-mystery-without-railroading",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",

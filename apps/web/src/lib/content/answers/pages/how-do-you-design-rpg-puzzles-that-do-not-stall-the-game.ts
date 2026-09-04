@@ -141,6 +141,8 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       "what-makes-a-good-random-encounter",
       "what-is-a-point-crawl",
       "how-do-you-run-a-conspiracy-campaign",
+      "how-do-you-run-a-heist-in-a-tabletop-rpg",
+      "how-do-you-run-a-mystery-without-railroading",
     ],
     discovery: {
       id: "answer-rpg-puzzles",
