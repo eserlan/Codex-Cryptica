@@ -105,7 +105,7 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
   codexConnection: {
     heading: "Building one-shot adventures in Codex Cryptica",
     paragraphs: [
-      "Codex Cryptica makes designing and running one-shot sessions seamless. Using the Adventure Generator and Dungeon Builder, you can roll up modular locations, immediate catalysts, and escalating complications in minutes.",
+      "Codex Cryptica makes designing and running one-shot sessions straightforward. Using the Adventure Generator and Dungeon Builder, you can roll up modular locations, immediate catalysts, and escalating complications in minutes.",
       "Track your elastic encounters on an interactive board, ensuring you have backup routes and cuttable skirmishes ready at a single glance during play.",
     ],
     linkText: "Build one-shot dungeons with the Dungeon Builder",

@@ -10,10 +10,10 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
   sections: [
     {
       kind: "prose",
-      heading: "The dangerous trap of worldbuilders disease",
+      heading: "The dangerous trap of worldbuilder's disease",
       paragraphs: [
         "New creators often begin by sketching continental coastlines, charting pantheons of twenty gods, and detailing five thousand years of royal lineages. While this top-down exercise can be personally satisfying, it rarely benefits your tabletop sessions. Players do not interact with tectonic plates or dynasties from four centuries ago; they interact with the blacksmith who refuses to trade with them, the tax collector demanding silver, and the sinister lights flickering in the nearby woods.",
-        "Worldbuilders disease occurs when expansive macro-level lore replaces playable, immediate micro-detail. By starting with a tiny, vivid focal point, you produce material that directly fuels gameplay while leaving room for the larger world to emerge organically during play.",
+        "Worldbuilder's disease occurs when expansive macro-level lore replaces playable, immediate micro-detail. By starting with a tiny, vivid focal point, you produce material that directly fuels gameplay while leaving room for the larger world to emerge organically during play.",
       ],
     },
     {
@@ -110,7 +110,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     heading: "Building living sandboxes in Codex Cryptica",
     paragraphs: [
       "Codex Cryptica is designed specifically for bottom-up campaign management. Rather than forcing you into rigid hierarchies, the knowledge graph connects settlements, factions, and adventure sites organically.",
-      "As your players explore the frontier, create new linked entities in seconds. Your initial five-mile sandbox grows effortlessly into a rich, cohesive world without upfront prep burden.",
+      "As your players explore the frontier, create new linked entities in seconds. Your initial five-mile sandbox grows naturally into a rich, cohesive world without upfront prep burden.",
     ],
     linkText: "Build sandbox settings in Codex Cryptica",
     href: "/solutions/worldbuilding-tool",
@@ -171,7 +171,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
   seo: {
     title: "How to Start Worldbuilding from Scratch | Codex Cryptica",
     description:
-      "Learn how to build a vibrant fictional world from scratch using a bottom-up sandbox framework. Avoid worldbuilder paralysis and focus on playable lore.",
+      "Learn how to build a living fictional world from scratch using a bottom-up sandbox framework. Avoid worldbuilder paralysis and focus on playable lore.",
     image:
       "https://assets.codexcryptica.com/og/how-do-you-start-worldbuilding-from-scratch.jpg",
     imageAlt:

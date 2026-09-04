@@ -76,7 +76,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   codexConnection: {
     heading: "Connecting clues and suspects in Codex Cryptica",
     paragraphs: [
-      "Codex Cryptica interactive knowledge graph is tailor-made for investigative campaigns. You can create entities for every suspect, location, and piece of physical evidence, drawing directional connection arrows between them.",
+      "Codex Cryptica's interactive knowledge graph is tailor-made for investigative campaigns. You can create entities for every suspect, location, and piece of physical evidence, drawing directional connection arrows between them.",
       "As your players uncover clues during the session, tag relationships with labels like 'Possesses weapon', 'Alibi verified', or 'Blackmailed by'. The visual graph ensures you never lose track of which clues your players have verified and which leads remain open.",
     ],
     linkText: "Track mystery campaign nodes in Codex Cryptica",

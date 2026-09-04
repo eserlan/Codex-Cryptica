@@ -80,7 +80,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   codexConnection: {
     heading: "Mapping complex heist scores in Codex Cryptica",
     paragraphs: [
-      "Codex Cryptica makes running intricate heists effortless through spatial relationship mapping. You can plot your target compound on a canvas, linking floorplan nodes directly to security patrols, faction keys, and alarm triggers.",
+      "Codex Cryptica makes running intricate heists easier through spatial relationship mapping. You can plot your target compound on a canvas, linking floorplan nodes directly to security patrols, faction keys, and alarm triggers.",
       "Using the entity graph, you can track which corrupt guards owe debts to the party underworld contacts, allowing players to spend their flashback tokens on existing campaign relationships rather than inventing ad-hoc contacts on the spot.",
     ],
     linkText: "Explore the RPG knowledge graph",

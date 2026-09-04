@@ -64,14 +64,14 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
     },
     {
       kind: "example",
-      heading: "Worked scenario: Pacing the Barrow Mound Delve",
+      heading: "Worked scenario: Pacing the Barrow Mound Expedition",
       paragraphs: [
-        "Contrast unmeasured dungeon exploration against systematic time tracking during a competitive dungeon delve.",
+        "Contrast unmeasured dungeon exploration against systematic time tracking during a competitive dungeon crawl.",
       ],
       items: [
         {
           term: "The handwaved exploration approach",
-          text: "The Game Master did not track time during the delve. The players cast ritual spells four times, thoroughly checked every flagged paving stone, and decided to take an eight-hour rest inside the burial foyer after fighting two skeletons. They suffered no consequences and found the treasure without pressure.",
+          text: "The Game Master did not track time during the descent. The players cast ritual spells four times, thoroughly checked every flagged paving stone, and decided to take an eight-hour rest inside the burial foyer after fighting two skeletons. They suffered no consequences and found the treasure without pressure.",
         },
         {
           term: "The three-tier time tracker approach",
