@@ -242,6 +242,7 @@ export function runCli(): void {
   }
 
   if (result.missingReciprocal.length > 0) {
+    if (!shouldFix) hasErrors = true;
     console.log(
       `\nℹ ${result.missingReciprocal.length} One-Way Link(s) (Not Reciprocal):`,
     );
