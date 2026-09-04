@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatIsAPointCrawl: AnswerConfigInput = {
   slug: "what-is-a-point-crawl",
   category: "worldbuilding",
+  publishedAt: "2026-08-30",
   question: "What is a point crawl?",
   kind: "definition",
   shortAnswer:

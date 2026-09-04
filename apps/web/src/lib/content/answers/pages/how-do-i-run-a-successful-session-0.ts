@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
   slug: "how-do-i-run-a-successful-session-0",
   category: "getting-started",
+  publishedAt: "2026-08-31",
   question: "How do I run a successful Session 0?",
   kind: "framework",
   shortAnswer:

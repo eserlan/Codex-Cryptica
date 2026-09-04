@@ -175,6 +175,17 @@ export const AnswerConfigSchema = z.object({
     .optional(),
   /** The category this answer belongs to for browsing and index organisation. */
   category: AnswerCategoryIdSchema,
+  /**
+   * Optional publication date (ISO format YYYY-MM-DD).
+   * Used for chronological sorting and freshness indicators.
+   */
+  publishedAt: z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "publishedAt must be an ISO date string (YYYY-MM-DD)",
+    )
+    .optional(),
   relatedTools: z.array(AnswerLinkSchema).default([]),
   relatedForPages: z.array(AnswerLinkSchema).default([]),
   /** Slugs of other answers. Validated against the registry by its tests. */

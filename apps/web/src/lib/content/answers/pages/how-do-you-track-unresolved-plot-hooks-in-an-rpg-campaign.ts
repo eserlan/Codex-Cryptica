@@ -4,6 +4,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
   {
     slug: "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     category: "campaign-notes",
+    publishedAt: "2026-09-04",
     question: "How do you track unresolved plot hooks in an RPG campaign?",
     kind: "framework",
     shortAnswer:

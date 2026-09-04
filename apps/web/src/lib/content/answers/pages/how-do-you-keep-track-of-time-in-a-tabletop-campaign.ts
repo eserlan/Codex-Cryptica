@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
   slug: "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
   category: "campaign-notes",
+  publishedAt: "2026-09-04",
   question: "How do you keep track of time in a tabletop campaign?",
   kind: "framework",
   shortAnswer:

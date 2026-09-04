@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
   slug: "how-do-you-make-npcs-memorable-without-lots-of-prep",
   category: "session-prep",
+  publishedAt: "2026-09-04",
   question: "How do you make NPCs memorable without lots of prep?",
   kind: "framework",
   shortAnswer:

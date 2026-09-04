@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
   slug: "how-do-i-get-players-to-engage-with-my-campaign-world",
   category: "session-prep",
+  publishedAt: "2026-08-31",
   question: "How do I get players to engage with my campaign world?",
   kind: "framework",
   shortAnswer:

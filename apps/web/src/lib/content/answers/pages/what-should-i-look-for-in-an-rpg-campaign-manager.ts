@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatShouldILookForInAnRpgCampaignManager: AnswerConfigInput = {
   slug: "what-should-i-look-for-in-an-rpg-campaign-manager",
   category: "campaign-notes",
+  publishedAt: "2026-08-31",
   question: "What should I look for in an RPG campaign manager?",
   kind: "framework",
   shortAnswer:

@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
   slug: "how-much-prep-do-you-need-for-an-rpg-session",
   category: "session-prep",
+  publishedAt: "2026-08-31",
   question: "How much prep do you need for an RPG session?",
   kind: "framework",
   shortAnswer:
