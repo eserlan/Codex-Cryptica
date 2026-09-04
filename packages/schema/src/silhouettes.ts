@@ -1690,27 +1690,8 @@ export const SILHOUETTES: SilhouetteDefinition[] = [
   },
 
   // ==========================================
-  // GENERIC FALLBACK
+  // SCI-FI EXPANSION (SHIPS, VEHICLES & BASES)
   // ==========================================
-  {
-    id: "generic-humanoid-unknown",
-    name: "Mysterious Wanderer",
-    category: "character",
-    genres: ["fantasy", "gothic", "scifi", "western", "modern"],
-    archetype: "generic",
-    gender: "neutral",
-    tags: [
-      "person",
-      "human",
-      "wanderer",
-      "stranger",
-      "unknown",
-      "traveler",
-      "silhouette",
-      "mysterious",
-    ],
-    r2Path: "silhouettes/character/generic/humanoid-unknown.svg",
-  },
   {
     id: "scifi-ship-freighter",
     name: "Scout Ship / Light Freighter",
@@ -2109,6 +2090,29 @@ export const SILHOUETTES: SilhouetteDefinition[] = [
       "pioneer",
     ],
     r2Path: "silhouettes/character/scifi/navigator-astrogator.svg",
+  },
+
+  // ==========================================
+  // GENERIC FALLBACK
+  // ==========================================
+  {
+    id: "generic-humanoid-unknown",
+    name: "Mysterious Wanderer",
+    category: "character",
+    genres: ["fantasy", "gothic", "scifi", "western", "modern"],
+    archetype: "generic",
+    gender: "neutral",
+    tags: [
+      "person",
+      "human",
+      "wanderer",
+      "stranger",
+      "unknown",
+      "traveler",
+      "silhouette",
+      "mysterious",
+    ],
+    r2Path: "silhouettes/character/generic/humanoid-unknown.svg",
   },
 ];
 

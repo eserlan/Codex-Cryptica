@@ -981,6 +981,22 @@ describe("Iconic Sci-Fi Character Silhouette Resolution", () => {
     expect(match.id).toBe("scifi-trader-smuggler");
   });
 
+  it("resolves starship astrogator for deep space navigators and cartographers", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Chief Astrogator Vance",
+        labels: ["astrogator", "navigator", "surveyor"],
+        content:
+          "Experienced stellar cartographer in an explorer spacesuit consulting starcharts.",
+      },
+      { worldTheme: "scifi" },
+    );
+    expect(match.id).toBe("scifi-navigator-astrogator");
+  });
+});
+
+describe("Iconic Sci-Fi Ships, Vehicles & Locations Silhouette Resolution", () => {
   it("resolves scout ship / light freighter for transport starships", () => {
     const match = resolveEntitySilhouette(
       {
@@ -1231,19 +1247,5 @@ describe("Iconic Sci-Fi Character Silhouette Resolution", () => {
       { worldTheme: "scifi" },
     );
     expect(match.id).toBe("scifi-location-jump-gate");
-  });
-
-  it("resolves starship astrogator for deep space navigators and cartographers", () => {
-    const match = resolveEntitySilhouette(
-      {
-        type: "character",
-        title: "Chief Astrogator Vance",
-        labels: ["astrogator", "navigator", "surveyor"],
-        content:
-          "Experienced stellar cartographer in an explorer spacesuit consulting starcharts.",
-      },
-      { worldTheme: "scifi" },
-    );
-    expect(match.id).toBe("scifi-navigator-astrogator");
   });
 });
