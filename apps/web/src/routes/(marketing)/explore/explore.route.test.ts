@@ -24,7 +24,7 @@ describe("/explore route", () => {
         .querySelector('meta[name="description"]')
         ?.getAttribute("content"),
     ).toBe(
-      "Every section of Codex Cryptica in one place — worlds, examples, generators, tools, guides, and the campaign directory.",
+      "Every section of Codex Cryptica in one place: worlds, examples, generators, tools, guides, and the campaign directory.",
     );
     expect(
       document

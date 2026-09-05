@@ -9,9 +9,9 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       "Import your Obsidian TTRPG campaign vault. Convert Markdown files, wiki-links, and YAML frontmatter into a local-first campaign wiki.",
     h1: "Obsidian Vault Importer",
     subheading:
-      "Seamlessly convert your Obsidian markdown campaign files into Codex Cryptica.",
+      "Convert your Obsidian markdown campaign files into Codex Cryptica.",
     introText:
-      "Migrate your Obsidian RPG notes seamlessly. Drop your Markdown files directly to parse frontmatter, resolve wiki links, and construct a live local-first campaign wiki in Codex Cryptica.",
+      "Migrate your Obsidian RPG notes: drop your Markdown files directly to parse frontmatter, resolve wiki links, and build a live local-first campaign wiki in Codex Cryptica.",
     ctaText: "Start Obsidian Migration",
     keywords: [
       "import obsidian vault",
@@ -228,12 +228,12 @@ export const importsConfig: Record<string, SEOImportPageData> = {
     title:
       "Import Thread Weaver Campaigns to Codex Cryptica | Free JSON Import",
     description:
-      "Import a Thread Weaver Engine campaign export. Characters, factions, and settlements — plus every relationship between them — converted and previewed entirely offline.",
+      "Import a Thread Weaver Engine campaign export. Characters, factions, and settlements, plus every relationship between them, converted and previewed entirely offline.",
     h1: "Thread Weaver Campaign Importer",
     subheading:
       "Bring a Thread Weaver Engine campaign export straight into Codex Cryptica.",
     introText:
-      "Thread Weaver Engine generates whole campaign networks — characters, factions, and settlements, wired together with relationships. Drop its export file here to preview every entity before it becomes part of your vault, entirely offline.",
+      "Thread Weaver Engine generates whole campaign networks: characters, factions, and settlements, wired together with relationships. Drop its export file here to preview every entity before it becomes part of your vault, entirely offline.",
     ctaText: "Start Thread Weaver Import",
     toolUrl: "https://ambiancearchitect.itch.io/thread-weaver-engine",
     toolLabel: "Thread Weaver Engine",
@@ -285,7 +285,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
     subheading:
       "Bring your Scabard campaign export straight into Codex Cryptica.",
     introText:
-      "Already building your world in Scabard? Drop its campaign export here to preview every page and connection — converted into characters, factions, locations, and items — before anything is written to your vault, entirely offline.",
+      "Already building your world in Scabard? Drop its campaign export here to preview every page and connection (converted into characters, factions, locations, and items) before anything is written to your vault, entirely offline.",
     ctaText: "Start Scabard Import",
     keywords: [
       "import scabard",
@@ -321,7 +321,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       {
         question: "Are secret pages and GM notes imported?",
         answer:
-          "Yes — GM secrets are mapped to each entity's private lore field, kept separate from the public-facing content.",
+          "Yes, GM secrets are mapped to each entity's private lore field, kept separate from the public-facing content.",
       },
     ],
   },

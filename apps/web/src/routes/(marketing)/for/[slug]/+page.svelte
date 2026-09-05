@@ -336,8 +336,8 @@
               <p
                 class="mt-1 font-light text-sm leading-relaxed text-theme-muted"
               >
-                Every {hubThemeLabel(hub).toLowerCase()} generator in one place —
-                free, no login required.
+                Every {hubThemeLabel(hub).toLowerCase()} generator in one place, free,
+                no login required.
               </p>
             </div>
             <span

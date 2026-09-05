@@ -462,8 +462,8 @@
               aria-hidden="true"
             ></span>
             <span
-              >Complex World Anvil formatting — columns, sidebars, and tooltips
-              — has been simplified to clean Markdown. Review entries below and
+              >Complex World Anvil formatting (columns, sidebars, and tooltips)
+              has been simplified to clean Markdown. Review entries below and
               correct any misdetected types before importing.</span
             >
           </div>

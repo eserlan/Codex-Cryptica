@@ -69,10 +69,10 @@
 
 <SEOGeneratorLayout
   pageTitle="Surprise Me — Random RPG Idea Generator | Codex Cryptica"
-  metaDescription="Hit the button and get a random worldbuilding idea — a faction, kingdom, NPC, quest hook, or social hub. No account, no setup, just inspiration."
+  metaDescription="Hit the button and get a random worldbuilding idea: a faction, kingdom, NPC, quest hook, or social hub. No account, no setup, just inspiration."
   introTitle="Surprise Me"
   eyebrow="Random Idea"
-  introText="Not sure what your world needs next? Spin the idea machine — it picks a random generator and rolls every input for you. Pure inspiration, zero decisions."
+  introText="Not sure what your world needs next? Spin the idea machine: it picks a random generator and rolls every input for you. Pure inspiration, zero decisions."
   canonicalPath="/generators/random"
   {generate}
   initialDraft={null}

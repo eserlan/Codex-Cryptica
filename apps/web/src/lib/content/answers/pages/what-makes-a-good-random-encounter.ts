@@ -13,7 +13,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
       kind: "prose",
       heading: "Encounters are information as much as obstruction",
       paragraphs: [
-        "The oldest justification for random encounters is attrition — they make travel and delay cost something. That still works, but it is the weaker half. The stronger half is that an encounter table is a description of a region. Three entries about starving wolves, refugees on the road, and a burnt-out waystation say more about the state of the frontier than a page of gazetteer prose, and they say it while the party is doing something.",
+        "The oldest justification for random encounters is attrition: they make travel and delay cost something. That still works, but it is the weaker half. The stronger half is that an encounter table is a description of a region. Three entries about starving wolves, refugees on the road, and a burnt-out waystation say more about the state of the frontier than a page of gazetteer prose, and they say it while the party is doing something.",
         "This is also what makes a table reusable. A table written as a list of creatures is exhausted once you have rolled through it; a table written as a list of situations keeps giving, because the party's response is different each time.",
       ],
     },
@@ -36,7 +36,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
         },
         {
           term: "At least one non-combat handle",
-          text: "Something to trade, follow, avoid, warn, or exploit. It does not have to be the likely choice — it has to exist.",
+          text: "Something to trade, follow, avoid, warn, or exploit. It does not have to be the likely choice; it has to exist.",
         },
       ],
     },
@@ -53,7 +53,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
         },
         {
           term: "Strong",
-          text: "Eight giant ravens are tearing apart a mail satchel scattered across the road. The courier's body is fifty yards on, already stripped. The birds are territorial about the satchel specifically, and one has a lacquered seal-case in its beak — the letter inside is addressed to a name the party knows.",
+          text: "Eight giant ravens are tearing apart a mail satchel scattered across the road. The courier's body is fifty yards on, already stripped. The birds are territorial about the satchel specifically, and one has a lacquered seal-case in its beak; the letter inside is addressed to a name the party knows.",
         },
         {
           term: "Why it works",
@@ -65,7 +65,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
       kind: "prose",
       heading: "When to roll, and when not to",
       paragraphs: [
-        "Rolling is worthwhile when the outcome could genuinely change the party's plan — during travel they chose, in a dungeon where noise carries, on a watch they set. It is not worthwhile as a rhythm section. An encounter check that fires while the party is walking to a shop they have already decided to visit adds time and removes nothing.",
+        "Rolling is worthwhile when the outcome could genuinely change the party's plan: during travel they chose, in a dungeon where noise carries, on a watch they set. It is not worthwhile as a rhythm section. An encounter check that fires while the party is walking to a shop they have already decided to visit adds time and removes nothing.",
         "The related discipline is being willing to skip a result. A rolled entry that does not fit where the party actually is has no authority over the fiction; either place it somewhere it makes sense, or roll again. Random tables are a prompt, not an oracle, and treating their output as binding is how sessions end up with an ice troll in a summer marsh.",
         "There is no universal correct frequency here. Attrition-focused play wants regular checks and meaningful resource loss; a table that plays for scenes and intrigue wants far fewer, weighted heavily towards encounters with people. Decide which of those your campaign is, and build the table for it rather than importing someone else's assumptions.",
       ],

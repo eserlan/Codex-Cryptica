@@ -17,7 +17,7 @@ publishedAt: 2026-03-01T10:00:00Z
 
 As a Game Master, your campaign world is a labor of love. Hundreds of hours spent crafting NPCs, drawing maps, and weaving complex plot threads. But where does all that data actually live?
 
-In most modern apps, the answer is "on someone else's server." This is fine until that server goes down, the company changes its pricing model, or—heaven forbid—they shut down entirely.
+In most modern apps, the answer is "on someone else's server." This is fine until that server goes down, the company changes its pricing model, or, heaven forbid, they shut down entirely.
 
 Codex Cryptica takes a different path. We call it **Local-First.**
 
@@ -31,7 +31,7 @@ Local-First software gives you the best of both worlds: the reliability of an of
 
 ## The Power of Synchronization
 
-While your data lives on your device, we know you probably want to work on your campaign from multiple machines—maybe your desktop at home and your laptop at the game table.
+While your data lives on your device, we know you probably want to work on your campaign from multiple machines, maybe your desktop at home and your laptop at the game table.
 
 Instead of building a proprietary cloud that traps your data, Codex Cryptica uses **Local Folder Synchronization.**
 
@@ -49,6 +49,6 @@ Instead of building a proprietary cloud that traps your data, Codex Cryptica use
 
 ## Building for the Long Haul
 
-Campaigns can last years. By building on local-first principles, we're ensuring that your creative work is as durable as the dice on your table. Your world belongs to you—exactly as it should be.
+Campaigns can last years. By building on local-first principles, we're ensuring that your creative work is as durable as the dice on your table. Your world belongs to you, exactly as it should be.
 
 Happy world-building!

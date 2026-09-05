@@ -33,7 +33,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
         },
         {
           term: "A couple of likely locations",
-          text: "Not every place the party could conceivably go — the two or three they're actually likely to head towards next.",
+          text: "Not every place the party could conceivably go; the two or three they're actually likely to head towards next.",
         },
         {
           term: "One or two complications",
@@ -49,7 +49,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
         },
         {
           term: "Blank space",
-          text: "Deliberately unprepared room for whatever the players actually decide — the thing no amount of prep can substitute for.",
+          text: "Deliberately unprepared room for whatever the players actually decide; the thing no amount of prep can substitute for.",
         },
       ],
       outro:
@@ -67,11 +67,11 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
         },
         {
           term: "Reusable campaign prep",
-          text: "Factions, locations, NPCs and the relationships between them — material that outlives one session and pays for itself repeatedly. Worth investing in, but it's background infrastructure, not tonight's checklist.",
+          text: "Factions, locations, NPCs and the relationships between them: material that outlives one session and pays for itself repeatedly. Worth investing in, but it's background infrastructure, not tonight's checklist.",
         },
         {
           term: "Optional worldbuilding",
-          text: "Maps, timelines, invented languages, the political history of a country nobody's visited yet. A legitimate hobby in its own right — genuinely enjoyable, often the reason people GM at all — but it is not session prep, and treating it as a prerequisite for running a session is how prep turns into procrastination.",
+          text: "Maps, timelines, invented languages, the political history of a country nobody's visited yet. A legitimate hobby in its own right, genuinely enjoyable, often the reason people GM at all, but it is not session prep, and treating it as a prerequisite for running a session is how prep turns into procrastination.",
         },
       ],
       outro:
@@ -86,11 +86,11 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
       items: [
         {
           term: "Situation",
-          text: "Caravan didn't arrive. Its guard captain, Bern Ostley, is at the inn asking around — he'll approach the party if they don't approach him.",
+          text: "Caravan didn't arrive. Its guard captain, Bern Ostley, is at the inn asking around; he'll approach the party if they don't approach him.",
         },
         {
           term: "People",
-          text: "Bern wants the caravan found and doesn't much care how. The road-warden, Yeva Sull, wants it quiet — bandits on her watch look bad to her superiors.",
+          text: "Bern wants the caravan found and doesn't much care how. The road-warden, Yeva Sull, wants it quiet; bandits on her watch look bad to her superiors.",
         },
         {
           term: "Likely locations",
@@ -98,7 +98,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
         },
         {
           term: "Complication",
-          text: "The caravan wasn't taken by bandits — it was taken by Yeva's own people, and she'll steer the party away from the truth if she can.",
+          text: "The caravan wasn't taken by bandits; it was taken by Yeva's own people, and she'll steer the party away from the truth if she can.",
         },
         {
           term: "Leads",
@@ -114,8 +114,8 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
   codexConnection: {
     heading: "How Codex Cryptica handles this",
     paragraphs: [
-      "The distinction above maps directly onto how a vault is organised: reusable campaign prep — factions, locations, NPCs and the relationships between them — lives as connected entities you write once and reuse, rather than being retyped into a fresh prep document every week. Tonight's essential-prep checklist is then a quick pass over material that already exists, not a from-scratch write-up.",
-      "Where a generator saves real time — an encounter, a quest hook, a settlement's shape — Codex has one, and the Oracle can draft from what's already in your vault when that's faster than writing it by hand. None of that replaces the judgement call at the table: what a scene needs is still something only the GM running it can decide.",
+      "The distinction above maps directly onto how a vault is organised: reusable campaign prep (factions, locations, NPCs and the relationships between them) lives as connected entities you write once and reuse, rather than being retyped into a fresh prep document every week. Tonight's essential-prep checklist is then a quick pass over material that already exists, not a from-scratch write-up.",
+      "Where a generator saves real time (an encounter, a quest hook, a settlement's shape) Codex has one, and the Oracle can draft from what's already in your vault when that's faster than writing it by hand. None of that replaces the judgement call at the table: what a scene needs is still something only the GM running it can decide.",
     ],
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",
@@ -136,7 +136,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     {
       title: "RPG knowledge graph",
       description:
-        "Where reusable campaign prep — factions, NPCs, locations — lives as connected entities instead of a fresh document per session.",
+        "Where reusable campaign prep (factions, NPCs, locations) lives as connected entities instead of a fresh document per session.",
       href: "/solutions/rpg-knowledge-graph",
     },
   ],

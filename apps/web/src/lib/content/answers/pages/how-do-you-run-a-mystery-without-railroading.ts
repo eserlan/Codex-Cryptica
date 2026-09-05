@@ -7,7 +7,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   question: "How do you run a mystery without railroading?",
   kind: "how-to",
   shortAnswer:
-    "To run a mystery without railroading in a tabletop RPG, decouple your clues from rigid single solutions by applying the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses. Never lock essential clues behind binary failure checks; if a player searches a crime scene, they find the evidence automatically, while die rolls dictate the speed, thoroughness, or stealth of the recovery. Finally, give the culprit an active agenda that progresses whenever the investigators hesitate.",
+    "Apply the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses, so no single missed roll or wrong turn can stall the whole plot. Don't lock essential clues behind binary failure checks; if a player searches a crime scene, they find the evidence automatically, while the dice decide speed, thoroughness, or stealth instead. And give the culprit an active agenda that keeps moving whenever the investigators hesitate.",
   sections: [
     {
       kind: "prose",
@@ -37,7 +37,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
         },
       ],
       outro:
-        "When the culprit acts dynamically, stalled investigations reignite immediately as fresh consequences crash into the scene.",
+        "A culprit who keeps acting reignites a stalled investigation on their own, as fresh consequences land on the scene.",
     },
     {
       kind: "example",
@@ -78,7 +78,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     heading: "Connecting clues and suspects in Codex Cryptica",
     paragraphs: [
       "Codex Cryptica's interactive knowledge graph is tailor-made for investigative campaigns. You can create entities for every suspect, location, and piece of physical evidence, drawing directional connection arrows between them.",
-      "As your players uncover clues during the session, tag relationships with labels like 'Possesses weapon', 'Alibi verified', or 'Blackmailed by'. The visual graph ensures you never lose track of which clues your players have verified and which leads remain open.",
+      "As your players uncover clues during the session, tag relationships with labels like 'Possesses weapon', 'Alibi verified', or 'Blackmailed by'. The visual graph keeps track of which clues your players have verified and which leads remain open, so you don't have to.",
     ],
     linkText: "Track mystery campaign nodes in Codex Cryptica",
     href: "/solutions/campaign-manager",

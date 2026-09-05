@@ -15,7 +15,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
         "The worldbuilder's trap: why top-down prep suffocates sandboxes",
       paragraphs: [
         "The most common failure mode when launching a sandbox campaign is preparing the world as an encyclopaedia rather than a playground. Game Masters spend months designing pantheons, drawing continental coastlines, charting dynastic lineages spanning five centuries, and detailing distant empires. Yet when the players gather for Session 1, this vast repository of background lore produces paralysis: the players are stranded in an enormous setting with no immediate stakes, while the GM is terrified they will travel in an unmapped direction and shatter the illusion.",
-        "A true sandbox does not require infinite pre-generated content; it requires high agency within a bounded, reactive space. Players do not experience your global political treaties — they experience the price of ale, the suspicious temple guard demanding toll coin, the smoke rising from a barrow-mound on the horizon, and the conflicting rumours whispered in the marketplace. By concentrating your preparation exclusively on the local starting environment and building dynamic pressure valves between local groups, you create an immediate sense of consequence while keeping prep time under three hours.",
+        "A true sandbox does not require infinite pre-generated content; it requires high agency within a bounded, reactive space. Players do not experience your global political treaties; they experience the price of ale, the suspicious temple guard demanding toll coin, the smoke rising from a barrow-mound on the horizon, and the conflicting rumours whispered in the marketplace. By concentrating your preparation exclusively on the local starting environment and building dynamic pressure valves between local groups, you create an immediate sense of consequence while keeping prep time under three hours.",
       ],
     },
     {
@@ -26,7 +26,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
       items: [
         {
           term: "1 resilient settlement hub",
-          text: "A frontier town, crossroads hamlet, fortified trading post, or orbital waystation that serves as the party's home base. It must provide reliable supplies, safe rest, basic hirelings, and clear social boundaries. Crucially, give it one internal tension — an incoming tax assessor, an overstretched militia, or food rations spoiling in the grain silos.",
+          text: "A frontier town, crossroads hamlet, fortified trading post, or orbital waystation that serves as the party's home base. It must provide reliable supplies, safe rest, basic hirelings, and clear social boundaries. Crucially, give it one internal tension: an incoming tax assessor, an overstretched militia, or food rations spoiling in the grain silos.",
         },
         {
           term: "3 local factions in active friction",

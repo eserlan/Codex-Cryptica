@@ -14,7 +14,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
       heading: "Write the answer first",
       paragraphs: [
         "The temptation is to keep the conspiracy vague so it can adapt to what the players do. It is the single most reliable way to ruin one. Players in this genre are actively building a model and testing it; a truth that shifts to stay ahead of them produces a trail that does not reconcile, and the table's confidence collapses at the point they realise nothing they deduced was load-bearing.",
-        "Deciding the truth up front does not remove flexibility — it moves it. What stays adaptable is which evidence surfaces where, who talks, and how the conspiracy reacts. That is more than enough improvisation, and all of it is consistent by construction.",
+        "Deciding the truth up front does not remove flexibility; it moves it. What stays adaptable is which evidence surfaces where, who talks, and how the conspiracy reacts. That is more than enough improvisation, and all of it is consistent by construction.",
       ],
     },
     {
@@ -24,7 +24,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
       items: [
         {
           term: "The truth",
-          text: "Who is involved, what they did, when, and why. One page. Includes the parts the party will probably never learn — those are what keep your answers consistent when you improvise.",
+          text: "Who is involved, what they did, when, and why. One page. Includes the parts the party will probably never learn; those are what keep your answers consistent when you improvise.",
         },
         {
           term: "The evidence map",
@@ -42,7 +42,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
       paragraphs: [
         "The classic failure is a single clue that the entire plot depends on the party finding. They will miss it. The standard fix, usually credited to Justin Alexander as the three-clue rule, is to make sure any conclusion the plot requires can be reached from at least three independent traces.",
         "Redundancy does not mean repetition. Three routes to the same conclusion should feel different: a ledger entry, a witness who contradicts herself, and a room that is too clean. Each is weak alone; together they converge.",
-        "The related habit is to let the party be wrong productively. A partially correct theory that names the wrong person should still lead somewhere — ideally into a scene where the real conspirator has to react to being nearly caught by accident.",
+        "The related habit is to let the party be wrong productively. A partially correct theory that names the wrong person should still lead somewhere, ideally into a scene where the real conspirator has to react to being nearly caught by accident.",
       ],
     },
     {
@@ -53,20 +53,20 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
       ],
       items: [
         {
-          term: "Route one — documentary",
+          term: "Route one: documentary",
           text: "The Assize's register records the same solicitor witnessing both the shell company's founding and a Meridian land sale. Findable by anyone who reads carefully; proves association, not control.",
         },
         {
-          term: "Route two — human",
+          term: "Route two: human",
           text: "A dismissed clerk will talk for the right price. He is bitter, exaggerates, and is right about the money and wrong about who ordered it.",
         },
         {
-          term: "Route three — physical",
+          term: "Route three: physical",
           text: "The shell company's registered office has no staff, no wear on the floor, and a month of unopened post addressed to a Meridian director.",
         },
         {
           term: "Why three",
-          text: "Any one is deniable. Any two together force the conspiracy to respond — which is where the campaign's next scene comes from.",
+          text: "Any one is deniable. Any two together force the conspiracy to respond, which is where the campaign's next scene comes from.",
         },
       ],
     },
@@ -107,7 +107,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
   codexConnection: {
     heading: "Keeping the evidence map straight",
     paragraphs: [
-      "Conspiracy prep is a graph problem more than a writing problem: people, front organisations, documents and events, connected by who controls what and who knows whom. Holding those as linked entities means the question you keep asking — what else touches this person? — has an answer on screen rather than in three pages of notes.",
+      "Conspiracy prep is a graph problem more than a writing problem: people, front organisations, documents and events, connected by who controls what and who knows whom. Holding those as linked entities means the question you keep asking (what else touches this person?) has an answer on screen rather than in three pages of notes.",
       "The spatial canvas is the closer match for the players' side of it: a board you arrange by hand, with the connections drawn as you make them. Codex's canvas and graph views cover both halves, and the vault stays local Markdown on your own machine, which is a reasonable thing to want for a campaign built entirely out of secrets.",
     ],
     linkText: "See Codex Cryptica for conspiracy campaigns",
@@ -129,7 +129,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     {
       title: "News sheet generator",
       description:
-        "The public version of events — useful precisely because it is wrong in specific ways.",
+        "The public version of events, useful precisely because it is wrong in specific ways.",
       href: "/generators/news-sheet-generator",
     },
   ],
