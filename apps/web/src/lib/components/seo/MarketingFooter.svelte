@@ -56,7 +56,7 @@
           aria-label="Support Codex Cryptica on Patreon"
           title="Support on Patreon"
         >
-          <span class="icon-[lucide--heart] h-3.5 w-3.5" aria-hidden="true"
+          <span class="icon-[mdi--patreon] h-3.5 w-3.5" aria-hidden="true"
           ></span>
         </a>
       {/if}
