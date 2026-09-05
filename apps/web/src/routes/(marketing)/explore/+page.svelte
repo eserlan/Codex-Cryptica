@@ -2,7 +2,12 @@
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
-  import { DISCORD_URL, PATREON_URL } from "$lib/config";
+  import {
+    DISCORD_URL,
+    GITHUB_URL,
+    REDDIT_URL,
+    PATREON_URL,
+  } from "$lib/config";
 
   const cleanBase = base === "/" ? "" : base;
 
@@ -125,6 +130,22 @@
           external: true,
         },
         {
+          href: REDDIT_URL,
+          label: "Reddit",
+          summary:
+            "Follow devlogs and discuss Codex Cryptica with the community.",
+          icon: "icon-[lucide--message-square]",
+          external: true,
+        },
+        {
+          href: GITHUB_URL,
+          label: "GitHub",
+          summary:
+            "Codex Cryptica is open source. Read the code or file an issue.",
+          icon: "icon-[lucide--github]",
+          external: true,
+        },
+        {
           href: PATREON_URL,
           label: "Support on Patreon",
           summary: "Back development directly and get supporter perks.",
@@ -136,6 +157,19 @@
           label: "Changelog",
           summary: "Every release, in order.",
           icon: "icon-[lucide--list-checks]",
+        },
+        {
+          href: "/sitemap.xml",
+          label: "Sitemap",
+          summary: "The full machine-readable list of every public page.",
+          icon: "icon-[lucide--list-tree]",
+        },
+        {
+          href: "/llms.txt",
+          label: "LLM Docs",
+          summary:
+            "A plain-text index of the site for AI assistants and crawlers.",
+          icon: "icon-[lucide--file-code]",
         },
         {
           href: "/privacy",
