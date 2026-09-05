@@ -14,13 +14,13 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | [`discussions/alien-race/`](#discussions--github-discussions-announcement-images)                | 1               | 0.2 MB   | Alien Race generator discussion image                                                      |
 | [`images/`](#images--blog-post-inline-images--old-help-doc-screenshots)                          | 50              | ~18 MB   | Blog post inline images + old help-doc screenshots                                         |
 | [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 24              | ~21.5 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` and `/answers`                    |
-| [`screenshots/`](#screenshots--generators--tools-page-cards-and-ogimage)                         | 37              | ~6.3 MB  | `/generators` + `/tools` page cards, og:image                                              |
+| [`screenshots/`](#screenshots--generators--tools-page-cards-and-ogimage)                         | 38              | ~6.5 MB  | `/generators` + `/tools` page cards, og:image                                              |
 | [`silhouettes/`](#silhouettes--curated-vector-silhouettes-for-entities-and-generators)           | 148 (74 SVGs)   | ~450 KB  | Curated vector SVG silhouettes for entity types, categories, locations, and public gallery |
 | [`vault-samples/images/`](#vault-samples--demoquick-start-vault-portrait-art)                    | 36              | 58.7 MB  | Portrait art for the 9 demo/quick-start vaults                                             |
 | [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing       |
 | [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                             |
 
-Total: 891 objects, ~168 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 892 objects, ~168 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -185,6 +185,7 @@ Total: 891 objects, ~168 MB. The tables below cover everything **except** `publi
 | [`screenshots/generator-pantheon-generator.jpg`](https://assets.codexcryptica.com/screenshots/generator-pantheon-generator.jpg)             | 166 KB | image/jpeg | 2026-08-15 | Generator card image for `/generators` + `/tools` |
 | [`screenshots/generator-plot-twist-generator.jpg`](https://assets.codexcryptica.com/screenshots/generator-plot-twist-generator.jpg)         | 205 KB | image/jpeg | 2026-08-15 | Generator card image for `/generators` + `/tools` |
 | [`screenshots/generator-quest.jpg`](https://assets.codexcryptica.com/screenshots/generator-quest.jpg)                                       | 202 KB | image/jpeg | 2026-08-15 | Generator card image for `/generators` + `/tools` |
+| [`screenshots/generator-rumour.jpg`](https://assets.codexcryptica.com/screenshots/generator-rumour.jpg)                                     | 188 KB | image/jpeg | 2026-09-05 | Generator card image for `/generators` + `/tools` |
 | [`screenshots/generator-secret-society.jpg`](https://assets.codexcryptica.com/screenshots/generator-secret-society.jpg)                     | 190 KB | image/jpeg | 2026-08-15 | Generator card image for `/generators` + `/tools` |
 | [`screenshots/generator-settlement.jpg`](https://assets.codexcryptica.com/screenshots/generator-settlement.jpg)                             | 165 KB | image/jpeg | 2026-08-15 | Generator card image for `/generators` + `/tools` |
 | [`screenshots/generator-ship-generator.jpg`](https://assets.codexcryptica.com/screenshots/generator-ship-generator.jpg)                     | 176 KB | image/jpeg | 2026-08-15 | Generator card image for `/generators` + `/tools` |
