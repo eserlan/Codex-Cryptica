@@ -141,6 +141,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-you-create-a-fictional-language-for-an-rpg",
     "how-do-you-create-a-pantheon",
     "how-do-you-create-a-fantasy-faction",
     "what-should-an-rpg-settlement-contain",

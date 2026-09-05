@@ -6,6 +6,7 @@ import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-ses
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-faction";
+import { howDoYouCreateAFictionalLanguageForAnRpg } from "./how-do-you-create-a-fictional-language-for-an-rpg";
 import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
@@ -46,6 +47,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyFaction,
+    howDoYouCreateAFictionalLanguageForAnRpg,
     howDoYouCreateAMagicSystem,
     howDoYouCreateAPantheon,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
