@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { HUB_THEME_SLUGS, type HubThemeSlug } from "../hub-themes";
+import { PublicLabelSchema } from "../labels";
 
 export const LandingPageKindSchema = z.enum(["system", "genre", "use-case"]);
 export type LandingPageKind = z.infer<typeof LandingPageKindSchema>;
@@ -118,6 +119,16 @@ export const LandingPageConfigSchema = z.object({
    * to the hub, and the hub's links back to its landing pages.
    */
   hub: z.enum(HUB_THEME_SLUGS as [HubThemeSlug, ...HubThemeSlug[]]).optional(),
+  /**
+   * Public discovery labels (#2762). Chips linking to `/explore?label=X`.
+   *
+   * Optional rather than defaulted: every pack in this family is authored
+   * against the parsed `LandingPageConfig` type (not an input variant), so a
+   * defaulted array would force every existing pack to set it explicitly.
+   * When unset, callers fall back to `[hub]` — see `landingPageLabels()` in
+   * `registry.ts` — since `hub` is already this page's genre/system label.
+   */
+  labels: z.array(PublicLabelSchema).optional(),
   sectionOrder: z.array(LandingPageSectionSchema).optional(),
   seo: z.object({
     title: z.string(),

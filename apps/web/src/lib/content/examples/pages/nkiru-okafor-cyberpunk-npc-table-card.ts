@@ -8,6 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const nkiruOkafor: ExampleConfigInput = {
   slug: "nkiru-okafor-cyberpunk-npc-table-card",
+  labels: ["cyberpunk"],
   name: "Nkiru Okafor",
   title: "Cyberpunk NPC example: Nkiru Okafor, a Table Card roll",
   kind: "character",

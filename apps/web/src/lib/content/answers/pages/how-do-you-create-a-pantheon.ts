@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateAPantheon: AnswerConfigInput = {
   slug: "how-do-you-create-a-pantheon",
   category: "worldbuilding",
+  labels: ["fantasy"],
   publishedAt: "2026-08-30",
   question: "How do you create a pantheon?",
   kind: "how-to",

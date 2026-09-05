@@ -3,6 +3,7 @@ import type { ExampleConfigInput } from "../schema";
 /** Oracle-generated through the configured local proxy; output reproduced verbatim. */
 export const theCinderWren: ExampleConfigInput = {
   slug: "the-cinder-wren-space-western-ship",
+  labels: ["space-western"],
   name: "The Cinder Wren",
   title: "Space Western ship example: The Cinder Wren",
   kind: "ship",

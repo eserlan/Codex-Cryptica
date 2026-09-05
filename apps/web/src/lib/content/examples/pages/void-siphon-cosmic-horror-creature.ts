@@ -8,6 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const voidSiphon: ExampleConfigInput = {
   slug: "void-siphon-cosmic-horror-creature",
+  labels: ["cosmic-horror"],
   name: "The Void-Siphon",
   title: "Cosmic Horror creature example: The Void-Siphon",
   kind: "creature",

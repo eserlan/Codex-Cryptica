@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
   slug: "how-do-you-create-a-magic-system",
   category: "worldbuilding",
+  labels: ["fantasy"],
   publishedAt: "2026-09-04",
   question: "How do you create a magic system?",
   kind: "framework",

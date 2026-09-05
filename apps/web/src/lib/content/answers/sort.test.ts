@@ -30,6 +30,7 @@ function createMockAnswer(
     relatedTools: [],
     relatedForPages: [],
     relatedAnswers: [],
+    labels: [],
     seo: {
       title: question,
       description: "Description",

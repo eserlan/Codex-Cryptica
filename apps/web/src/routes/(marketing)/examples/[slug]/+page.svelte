@@ -15,6 +15,7 @@
     createDiscoveryViewGuard,
   } from "$lib/services/analytics/discovery-tracking";
   import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -101,6 +102,13 @@
       >
         {example.title}
       </h1>
+      {#if example.labels.length}
+        <div class="mb-4 flex flex-wrap gap-2">
+          {#each example.labels as label (label)}
+            <PublicLabelChip {label} />
+          {/each}
+        </div>
+      {/if}
       <p class="text-lg leading-relaxed text-theme-muted">{example.summary}</p>
     </div>
 
