@@ -149,6 +149,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "what-makes-a-good-random-encounter",
+    "how-to-write-an-in-world-newspaper-for-an-rpg",
   ],
   discovery: {
     id: "answer-settlement-contents",

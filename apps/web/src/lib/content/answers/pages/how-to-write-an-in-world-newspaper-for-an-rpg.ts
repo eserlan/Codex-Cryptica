@@ -162,6 +162,8 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     "how-do-i-get-players-to-engage-with-my-campaign-world",
     "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    "how-do-you-create-a-fantasy-faction",
+    "what-should-an-rpg-settlement-contain",
   ],
   seo: {
     title:
