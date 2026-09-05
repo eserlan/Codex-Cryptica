@@ -16,6 +16,7 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import RumourFormFields from "$lib/components/seo/RumourFormFields.svelte";
   import EncounterFormFields from "$lib/components/seo/EncounterFormFields.svelte";
   import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
@@ -55,6 +56,7 @@
     artifactConfig,
     factionConfig,
     questConfig,
+    rumourConfig,
     encounterConfig,
     puzzleConfig,
     councilVoteConfig,
@@ -234,6 +236,14 @@
     threat: questConfig.threats[0],
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+  let rumour = $state({
+    genre: rumourConfig.genres[0],
+    tone: rumourConfig.tones[0],
+    dangerLevel: rumourConfig.dangerLevels[0],
+    subjectFocus: rumourConfig.subjects[0],
+    locationContext: "",
     campaignContext: "",
   });
   let encounter = $state({
@@ -585,6 +595,7 @@
     else if (slug === "faction") faction.theme = activeTheme;
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
+    else if (slug === "rumour") rumour.genre = activeTheme;
     else if (slug === "puzzle") puzzle.genre = activeTheme;
     else if (slug === "encounter") encounter.genre = activeTheme;
     else if (slug === "council-vote") councilVote.genre = activeTheme;
@@ -813,6 +824,7 @@
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
+    rumour: (useAI) => generatorEngine.generateRumour({ ...rumour, useAI }),
     encounter: (useAI) =>
       generatorEngine.generateEncounter({ ...encounter, useAI }),
     puzzle: (useAI) => generatorEngine.generatePuzzle({ ...puzzle, useAI }),
@@ -1071,6 +1083,23 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "rumour"}
+      <RumourFormFields
+        bind:genre={rumour.genre}
+        bind:tone={rumour.tone}
+        bind:dangerLevel={rumour.dangerLevel}
+        bind:subjectFocus={rumour.subjectFocus}
+        bind:locationContext={rumour.locationContext}
+        bind:campaignContext={rumour.campaignContext}
+        onGenreChange={(genre) => {
+          // Custom genre text still flavors the output, but only established
+          // CC themes can select a visual skin.
+          if ((rumourConfig.genres as readonly string[]).includes(genre)) {
+            activeTheme = genre;
+          }
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "encounter"}

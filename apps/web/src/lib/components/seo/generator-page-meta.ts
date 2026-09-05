@@ -343,6 +343,64 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "ttrpg plot hooks",
     ],
   },
+  rumour: {
+    pageTitle:
+      "RPG Rumour Generator | Free Tavern & Town Gossip Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a d6 table of six local rumours for any tavern, shrine, market, or settlement -- each with a concrete lead, a source, and hidden GM-only truth. Free, no login required.",
+    introTitle: "RPG Rumour Generator",
+    eyebrow: "Rumour Generator",
+    introText:
+      "Create a d6 table of six local rumours the party can overhear and choose to chase. Every rumour names a real lead; the truth behind it stays hidden in the GM notes until someone investigates.",
+    canonicalPath: "/generators/rumour",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-rumour.jpg",
+    ogImageAlt:
+      "Codex Cryptica Rumour Generator showing a d6 table of local rumours with a player-facing lead and source, and a GM-only truth rail",
+    keywords: [
+      "rpg rumour generator",
+      "fantasy rumour generator",
+      "tavern rumour generator",
+      "dnd rumour generator",
+      "random rumours for a town",
+      "fantasy town rumours",
+    ],
+    faqs: [
+      {
+        question: "How is a rumour different from a quest hook?",
+        answer:
+          "A quest hook presents something the party could explicitly go and do. A rumour presents something people are saying, with enough specificity that the players can decide for themselves whether it's worth investigating. This generator stays deliberately lighter than the Quest Hook Generator -- no objectives, rewards, or encounter structure, just a gossip line, a lead, and a source.",
+      },
+      {
+        question: "Are the rumours always true?",
+        answer:
+          "No. Each table of six rolls a fixed hidden distribution: four rumours are essentially true, one is an exaggeration of something real, and one is a dangerous misconception that sounds plausible but is materially wrong. Which is which is never shown to players -- it lives in the GM-only notes beneath each entry.",
+      },
+      {
+        question: "Will every rumour actually be useful at the table?",
+        answer:
+          "Yes. Every rumour names at least one concrete, pursuable lead -- a specific person, place, faction, or item the players can seek out, question, or investigate. Vague ominous statements with nothing to act on are treated as a quality failure, not a feature.",
+      },
+      {
+        question: "Does this work for genres other than fantasy?",
+        answer:
+          "Yes. Set the genre to fantasy, cyberpunk, cosmic horror, space opera, western, and more -- the source, subject matter, and vocabulary adapt while the structure (rumour, lead, source, hidden truth) stays the same.",
+      },
+      {
+        question: "Do I have to save all six rumours as separate entities?",
+        answer:
+          "No. The whole table copies and saves as a single lightweight note, so you're not forced to create six new entities in your campaign vault every time you roll a table of local gossip.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/settlement", label: "Settlement Generator" },
+      {
+        href: "/generators/news-sheet-generator",
+        label: "News Sheet Generator",
+      },
+    ],
+  },
   encounter: {
     pageTitle:
       "RPG Encounter Generator | Free Combat, Social & Exploration Tool | Codex Cryptica",
