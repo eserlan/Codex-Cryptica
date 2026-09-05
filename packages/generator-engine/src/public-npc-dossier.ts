@@ -71,7 +71,7 @@ const HOW_TO_USE_CLOSERS = [
 
 const DELVE_WHO_THEY_ARE_INTROS = [
   (name: string, race: string, role: string, sector: string) =>
-    `${name} is a ${race} ${role} holding ${sector}, and everyone else in the delve knows it — routes get redrawn, shifts get rearranged, all to avoid crossing them.`,
+    `${name} is a ${race} ${role} holding ${sector}, and everyone else in the delve knows it. Routes get redrawn and shifts get rearranged, all to avoid crossing them.`,
   (name: string, race: string, role: string, sector: string) =>
     `${name}, a ${race} ${role}, has made ${sector} their own. Nothing moves through it without their say, whether the rest of the delve wants that or not.`,
   (name: string, race: string, role: string, sector: string) =>

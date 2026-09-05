@@ -7,7 +7,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
   question: "How do you build a point crawl for an RPG?",
   kind: "how-to",
   shortAnswer:
-    "A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk — with enough loops and alternative paths that the map isn't a single linear road.",
+    "A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk. Build in enough loops and alternative paths that the map isn't a single linear road.",
   sections: [
     {
       kind: "prose",

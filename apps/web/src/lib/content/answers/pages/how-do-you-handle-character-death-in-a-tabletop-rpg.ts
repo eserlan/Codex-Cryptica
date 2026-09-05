@@ -7,7 +7,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
   question: "How do you handle character death in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath — honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
+    "Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
   sections: [
     {
       kind: "prose",

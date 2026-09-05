@@ -7,7 +7,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   question: "How do you run a mystery without railroading?",
   kind: "how-to",
   shortAnswer:
-    "Apply the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses, so no single missed roll or wrong turn can stall the whole plot. Don't lock essential clues behind binary failure checks — if a player searches a crime scene, they find the evidence automatically, while the dice decide speed, thoroughness, or stealth instead. And give the culprit an active agenda that keeps moving whenever the investigators hesitate.",
+    "Apply the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses, so no single missed roll or wrong turn can stall the whole plot. Don't lock essential clues behind binary failure checks; if a player searches a crime scene, they find the evidence automatically, while the dice decide speed, thoroughness, or stealth instead. And give the culprit an active agenda that keeps moving whenever the investigators hesitate.",
   sections: [
     {
       kind: "prose",

@@ -7,7 +7,7 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
   question: "How do you create a magic system?",
   kind: "framework",
   shortAnswer:
-    "A magic system gets interesting from its limitations, costs, and societal consequences — not from a list of spectacular spells. Define where the energy originates, what physical or psychological price it extracts from the caster, what problems it can't solve, and how mundane institutions like law, commerce, and warfare have adapted to its existence.",
+    "A magic system gets interesting from its limitations, costs, and societal consequences, not from a list of spectacular spells. Define where the energy originates, what physical or psychological price it extracts from the caster, what problems it can't solve, and how mundane institutions like law, commerce, and warfare have adapted to its existence.",
   sections: [
     {
       kind: "prose",

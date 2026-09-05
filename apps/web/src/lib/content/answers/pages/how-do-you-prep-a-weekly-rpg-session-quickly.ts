@@ -7,7 +7,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
   question: "How do you prep a weekly RPG session quickly?",
   kind: "framework",
   shortAnswer:
-    "Give yourself a 35-minute timebox aimed squarely at the next three hours of play, nothing further out. Pull one or two unresolved hooks from last session's recap, write a strong opening scene, sketch two or three flexible scene nodes instead of a linear plot, prepare one or two portable encounters with condensed stats, and outline two key NPCs with a want and a mannerism. Whatever time is left is an improvisation buffer — everything else gets generated or improvised live.",
+    "Give yourself a 35-minute timebox aimed squarely at the next three hours of play, nothing further out. Pull one or two unresolved hooks from last session's recap, write a strong opening scene, sketch two or three flexible scene nodes instead of a linear plot, prepare one or two portable encounters with condensed stats, and outline two key NPCs with a want and a mannerism. Whatever time is left is an improvisation buffer, and everything else gets generated or improvised live.",
   sections: [
     {
       kind: "prose",

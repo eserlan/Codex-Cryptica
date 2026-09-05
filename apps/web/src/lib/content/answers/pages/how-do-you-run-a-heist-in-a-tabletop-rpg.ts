@@ -7,7 +7,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   question: "How do you run a heist in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "Structure the score into four phases — casing the target, engagement with flashback tokens, an active alarm track, and a chaotic getaway — instead of making players plan for every hypothetical complication up front. Give the party flashback points to retroactively reveal preparations when obstacles emerge during the infiltration, and pair it with a visible heat counter that climbs on failed checks, so infiltration becomes a tense back-and-forth rather than a stalled planning session.",
+    "Structure the score into four phases: casing the target, engagement with flashback tokens, an active alarm track, and a chaotic getaway. That way players react in the moment instead of planning for every hypothetical complication up front. Give the party flashback points to retroactively reveal preparations when obstacles emerge during the infiltration, and pair it with a visible heat counter that climbs on failed checks, so infiltration becomes a tense back-and-forth rather than a stalled planning session.",
   sections: [
     {
       kind: "prose",
