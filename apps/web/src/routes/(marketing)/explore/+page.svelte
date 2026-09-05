@@ -255,5 +255,24 @@
         </div>
       </section>
     {/each}
+
+    <div class="flex justify-center">
+      <a
+        href="https://groupfinder.gg/library/codex-cryptica"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center opacity-80 transition-opacity hover:opacity-100"
+        aria-label="Codex Cryptica on Groupfinder"
+      >
+        <img
+          src="https://groupfinder.gg/images/badges/gf-badge-light.svg"
+          alt="Codex Cryptica on Groupfinder"
+          width="164"
+          height="45"
+          loading="lazy"
+          class="h-8 w-auto"
+        />
+      </a>
+    </div>
   </div>
 </div>
