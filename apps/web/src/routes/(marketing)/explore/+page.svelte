@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
@@ -12,9 +13,50 @@
     groupPublicLabelResults,
     type PublicContentKind,
   } from "$lib/content/labels/aggregate";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { HUB_SLUG_TO_THEME_ID } from "$lib/components/seo/generator-theme-maps";
+  import { isPublicLabel } from "$lib/content/labels";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+
+  // A label that is one of the site's genre/system hubs (cyberpunk, vampire,
+  // western, …) gets that hub's actual visual theme rather than the neutral
+  // default — the same mapping /generators/[hub] and /for/[slug] already use.
+  // `isPublicLabel` checks membership in a fixed array rather than indexing
+  // `HUB_SLUG_TO_THEME_ID` with the raw query string, so a label like
+  // `?label=__proto__` or `?label=constructor` can't reach an inherited
+  // Object.prototype property instead of `undefined`.
+  const labelThemeId = $derived(
+    data.label && isPublicLabel(data.label)
+      ? (HUB_SLUG_TO_THEME_ID[data.label] ?? null)
+      : null,
+  );
+  const themeBootstrap = $derived.by(() => {
+    if (!labelThemeId) return "";
+    const serializedTheme = JSON.stringify(labelThemeId).replaceAll(
+      "<",
+      "\\u003C",
+    );
+    return (
+      "<" +
+      "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
+      serializedTheme +
+      ");</" +
+      "script>"
+    );
+  });
+
+  // Always assign, never only when a theme exists: this component is reused
+  // across /explore?label=a -> /explore?label=b navigations, so a themed
+  // label's palette must not linger once the visitor picks another label.
+  $effect(() => {
+    themeStore.previewTheme(labelThemeId);
+  });
+
+  onDestroy(() => {
+    themeStore.previewTheme(null);
+  });
 
   const cleanBase = base === "/" ? "" : base;
 
@@ -208,6 +250,14 @@
     },
   ];
 </script>
+
+<svelte:head>
+  {#if themeBootstrap}
+    <!-- Apply the label's theme before the body is parsed to avoid a first-paint flash. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html themeBootstrap}
+  {/if}
+</svelte:head>
 
 <SeoHead
   title={isLabelView
