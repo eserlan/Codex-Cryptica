@@ -1,6 +1,6 @@
 # R2 Asset Database
 
-Snapshot of everything in the `codex-cryptica-statics` R2 bucket (served at `https://assets.codexcryptica.com/<key>`), captured 2026-08-16 via the Cloudflare API. **This is a point-in-time snapshot, not a live view** — re-run the listing (see bottom) before trusting exact counts/sizes for anything more than a few weeks old.
+Snapshot of everything in the `codex-cryptica-statics` R2 bucket (served at `https://assets.codexcryptica.com/<key>`), updated 2026-09-05 via Cloudflare R2. **This is a point-in-time snapshot, not a live view** — re-run the listing (see bottom) before trusting exact counts/sizes for anything more than a few weeks old.
 
 Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/assets.md`](./assets.md).
 
@@ -8,7 +8,7 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 
 | Group                                                                                            | Files           | Size     | What it's for                                                                              |
 | ------------------------------------------------------------------------------------------------ | --------------- | -------- | ------------------------------------------------------------------------------------------ |
-| [`announcements/`](#announcements--bluesky--github-discussion-launch-images)                     | 24              | 13.3 MB  | Bluesky / GitHub Discussions launch images                                                 |
+| [`announcements/`](#announcements--bluesky--github-discussion-launch-images)                     | 25              | ~13.6 MB | Bluesky / GitHub Discussions launch images                                                 |
 | [`blog/assets/`](#blog--legacy-single-blog-asset)                                                | 1               | 1.2 MB   | Legacy single blog asset (Spatial Canvas bsky post)                                        |
 | [`directory/listings/`](#directory--public-generator-directory-listing-metadata-json-not-images) | 4               | ~3 KB    | Public generator directory metadata (JSON)                                                 |
 | [`discussions/alien-race/`](#discussions--github-discussions-announcement-images)                | 1               | 0.2 MB   | Alien Race generator discussion image                                                      |
@@ -20,7 +20,7 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing       |
 | [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                             |
 
-Total: 884 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 885 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -28,6 +28,7 @@ Total: 884 objects, ~162 MB. The tables below cover everything **except** `publi
 | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------- |
 | [`announcements/adventure-dead-mans-tontine.jpg`](https://assets.codexcryptica.com/announcements/adventure-dead-mans-tontine.jpg)                   | 828 KB  | image/jpeg | 2026-09-02 | Pirate adventure example (The Dead Man's Tontine) showcase / discussion #2664 image               |
 | [`announcements/artifact-vaelgrasp-ruin.jpg`](https://assets.codexcryptica.com/announcements/artifact-vaelgrasp-ruin.jpg)                           | 792 KB  | image/jpeg | 2026-09-02 | Classic Fantasy artifact example (Vaelgrasp, the Regent's Ruin) showcase / discussion #2660 image |
+| [`announcements/character-nkiru-okafor.jpg`](https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg)                             | 265 KB  | image/jpeg | 2026-09-05 | Cyberpunk NPC Table Card example (Nkiru Okafor) showcase / issue #2759 image                      |
 | [`announcements/cosmic-horror-hub-desktop-v1.png`](https://assets.codexcryptica.com/announcements/cosmic-horror-hub-desktop-v1.png)                 | 238 KB  | image/png  | 2026-08-01 | Cosmic Horror Hub discussion post                                                                 |
 | [`announcements/council-vote-costly-best-solution-v1.jpg`](https://assets.codexcryptica.com/announcements/council-vote-costly-best-solution-v1.jpg) | 129 KB  | image/jpeg | 2026-08-04 | Council Vote generator launch (bsky/discussion)                                                   |
 | [`announcements/council-vote-hero-v1.jpg`](https://assets.codexcryptica.com/announcements/council-vote-hero-v1.jpg)                                 | 143 KB  | image/jpeg | 2026-08-04 | Council Vote generator launch (bsky/discussion)                                                   |
