@@ -6,6 +6,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const ladyVivienneMorvath: ExampleConfigInput = {
   slug: "lady-vivienne-morvath-gothic-horror-villain",
+  labels: ["vampire"],
   name: "Lady Vivienne Morvath",
   title: "Gothic Horror villain example: Lady Vivienne Morvath",
   kind: "character",

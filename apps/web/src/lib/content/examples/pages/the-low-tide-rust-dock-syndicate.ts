@@ -7,6 +7,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theLowTideRust: ExampleConfigInput = {
   slug: "the-low-tide-rust-dock-syndicate",
+  labels: ["fantasy"],
   name: "The Low-Tide Rust",
   title: "RPG faction example: The Low-Tide Rust",
   kind: "faction",

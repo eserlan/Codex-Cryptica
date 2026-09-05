@@ -100,6 +100,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.",
     canonicalPath: "/generators/magic-item",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-magic-item.jpg",
     ogImageAlt:
@@ -433,6 +434,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
     canonicalPath: "/generators/item",
+    labels: ["fantasy"],
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-item.jpg",
     ogImageAlt:
       "Codex Cryptica loot and equipment generator drafting custom items and relics",
@@ -497,6 +499,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/kingdom",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-kingdom.jpg",
     ogImageAlt:
@@ -541,6 +544,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/tavern",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-tavern.jpg",
     ogImageAlt:
@@ -717,6 +721,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.",
     canonicalPath: "/generators/fantasy-names",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg",
     ogImageAlt:
@@ -739,6 +744,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/dnd-npc",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-dnd-npc.jpg",
     ogImageAlt:

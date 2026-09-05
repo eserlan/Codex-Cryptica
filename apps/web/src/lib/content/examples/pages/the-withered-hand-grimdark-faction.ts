@@ -7,6 +7,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theWitheredHand: ExampleConfigInput = {
   slug: "the-withered-hand-grimdark-faction",
+  labels: ["fantasy"],
   name: "The Withered Hand",
   title: "Dark Fantasy faction example: The Withered Hand",
   kind: "faction",
