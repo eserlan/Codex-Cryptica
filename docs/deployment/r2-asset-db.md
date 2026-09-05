@@ -1,6 +1,6 @@
 # R2 Asset Database
 
-Snapshot of everything in the `codex-cryptica-statics` R2 bucket (served at `https://assets.codexcryptica.com/<key>`), captured 2026-08-16 via the Cloudflare API. **This is a point-in-time snapshot, not a live view** — re-run the listing (see bottom) before trusting exact counts/sizes for anything more than a few weeks old.
+Snapshot of everything in the `codex-cryptica-statics` R2 bucket (served at `https://assets.codexcryptica.com/<key>`), updated 2026-09-05 via Cloudflare R2. **This is a point-in-time snapshot, not a live view** — re-run the listing (see bottom) before trusting exact counts/sizes for anything more than a few weeks old.
 
 Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/assets.md`](./assets.md).
 
