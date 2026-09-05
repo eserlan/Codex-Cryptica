@@ -27,6 +27,10 @@ export const nkiruOkafor: ExampleConfigInput = {
     { label: "Moral stance", value: "Street Pragmatist" },
     { label: "Prep style", value: "Table Card (5-Element 60-Second Prep)" },
   ],
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg",
+    alt: "Nkiru Okafor in a dark techwear jacket with luminous orange tape wrapped around her thumb, tapping her wrist in a rain-slicked cyberpunk alleyway beside a locked biotech case outside a neon noodle kiosk",
+  },
   output: [
     {
       kind: "list",

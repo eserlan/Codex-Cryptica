@@ -319,6 +319,19 @@ describe("the published examples", () => {
       ).toBeNull();
     }
   });
+
+  it("gives every published example a hero image on Cloudflare R2", () => {
+    for (const example of published) {
+      expect(example.image, `${example.slug} missing image`).toBeDefined();
+      expect(example.image?.src, `${example.slug} image src`).toMatch(
+        /^https:\/\/assets\.codexcryptica\.com\/announcements\//,
+      );
+      expect(
+        example.image?.alt.length,
+        `${example.slug} image alt`,
+      ).toBeGreaterThan(20);
+    }
+  });
 });
 
 describe("example structured data", () => {
