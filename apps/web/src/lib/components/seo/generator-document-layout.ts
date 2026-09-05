@@ -271,6 +271,47 @@ function extractBullets(body: string, labels: Set<string>) {
   return { kept: kept.join("\n").trim(), moved };
 }
 
+/**
+ * True when a section carries nothing but its own heading — the model emitted
+ * `### The Prize` and then wrote nothing under it.
+ */
+function isEmptySection(section: MarkdownSection): boolean {
+  if (!section.heading) return section.body.trim().length === 0;
+  return section.body.split("\n").slice(1).join("\n").trim().length === 0;
+}
+
+/**
+ * A section may render exactly once (#2768).
+ *
+ * A model that restates a heading — most often by repeating the whole document
+ * inside `lore`, sometimes leaving the repeat empty — used to be concatenated
+ * verbatim into the reader's column, producing a document where every section
+ * appeared two or three times and one of them was blank. No amount of prompt
+ * instruction makes that impossible, so the invariant is enforced here, where
+ * the document is actually assembled: the first non-empty occurrence of a
+ * heading wins, later repeats and heading-only sections are dropped.
+ *
+ * `seen` carries across calls so a `lore` section cannot duplicate a heading
+ * that `content` already used. Untitled preamble text is never deduplicated —
+ * there is at most one of it and it has no key to collide on.
+ */
+function keepFirstOccurrence(
+  sections: MarkdownSection[],
+  seen: Set<string>,
+): MarkdownSection[] {
+  const kept: MarkdownSection[] = [];
+  for (const section of sections) {
+    if (isEmptySection(section)) continue;
+    if (section.heading) {
+      const key = section.heading.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+    }
+    kept.push(section);
+  }
+  return kept;
+}
+
 export function getGeneratorDocumentLayout(
   generatedData: GeneratorOutput | null,
 ) {
@@ -282,21 +323,41 @@ export function getGeneratorDocumentLayout(
     ? generatedData.labels
     : [];
 
+  // Deduplicate the reader-facing column first, so its headings are the ones
+  // that win against any later repeat in `lore`.
+  const seenHeadings = new Set<string>();
+  const rawContent = generatedData.content || "";
+  const contentSections = splitMarkdownSections(rawContent);
+  const content = contentSections.length
+    ? keepFirstOccurrence(contentSections, seenHeadings)
+        .map((s) => s.body)
+        .join("\n\n")
+        .trim()
+    : rawContent;
+
   const rule = LAYOUT_RULES.find((r) => labels.includes(r.label));
   if (!rule) {
+    const rawLore = generatedData.lore || "";
+    const loreSections = splitMarkdownSections(rawLore);
     return {
-      content: generatedData.content || "",
-      lore: generatedData.lore || "",
+      content,
+      lore: loreSections.length
+        ? keepFirstOccurrence(loreSections, seenHeadings)
+            .map((s) => s.body)
+            .join("\n\n")
+            .trim()
+        : rawLore,
     };
   }
 
-  const loreSections = splitMarkdownSections(generatedData.lore || "");
-  if (loreSections.length === 0) {
-    return {
-      content: generatedData.content || "",
-      lore: generatedData.lore || "",
-    };
+  const rawLore = generatedData.lore || "";
+  const splitLore = splitMarkdownSections(rawLore);
+  // Headingless lore has no sections to route, so it stays in the rail whole —
+  // the same passthrough this function has always had for that shape.
+  if (splitLore.length === 0) {
+    return { content, lore: rawLore };
   }
+  const loreSections = keepFirstOccurrence(splitLore, seenHeadings);
 
   const mainDocumentSections: string[] = [];
   const railSections: string[] = [];
@@ -327,7 +388,7 @@ export function getGeneratorDocumentLayout(
   }
 
   return {
-    content: [generatedData.content, ...mainDocumentSections]
+    content: [content, ...mainDocumentSections]
       .filter(Boolean)
       .join("\n\n")
       .trim(),

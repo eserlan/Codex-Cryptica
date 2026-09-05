@@ -517,9 +517,10 @@ describe("heist generator", () => {
     expect(prompt).toContain("- Heist Type: Sabotage");
     expect(prompt).toContain("- Target Scale: Legendary");
     expect(prompt).toContain("### GM Quick Reference");
+    // The objective heading is heist-type driven, so it is asserted separately.
+    expect(prompt).toContain("### The System");
     for (const heading of [
       "### The Score",
-      "### The Prize",
       "### Casing the Target",
       "### Security Rings",
       "### Alarm Track",

@@ -17,10 +17,13 @@ function seededRng(seed = 1): () => number {
 
 describe("generateHeistLocal", () => {
   it("returns every section of the heist framework", () => {
-    const out = generateHeistLocal({}, seededRng(5));
+    const out = generateHeistLocal({ heistType: "Theft" }, seededRng(5));
     expect(out.type).toBe("event");
     expect(out.content).toContain("### The Score");
-    expect(out.content).toContain("### The Prize");
+    // The objective section is named for the heist type, not always "The Prize".
+    expect(out.content).toContain(
+      `### ${heistConfig.objectives.Theft.heading}`,
+    );
     expect(out.content).toContain("### Casing the Target");
     expect(out.lore).toContain("### GM Quick Reference");
     expect(out.lore).toContain("### The Hidden Factor");
@@ -120,12 +123,46 @@ describe("generateHeistLocal", () => {
     expect(count).toBeLessThanOrEqual(6);
   });
 
-  it("gives the prize a practical complication drawn from the config", () => {
-    const out = generateHeistLocal({}, seededRng(3));
-    const label = heistConfig.prizeComplications
+  it("gives the objective a practical catch drawn from the config", () => {
+    const out = generateHeistLocal({ heistType: "Theft" }, seededRng(3));
+    const label = heistConfig.catchesByKind.object
       .map((c) => c.split(" — ")[0])
       .find((c) => out.content.includes(`**The catch**: ${c}`));
     expect(label).toBeDefined();
+  });
+
+  it("draws the catch from the pool that suits the objective, not a shared one", () => {
+    // "Cursed — carrying it costs the bearer" is nonsense for an assassination
+    // target, and "it does not want to leave" is nonsense for a machine.
+    for (const [heistType, kind] of Object.entries(
+      heistConfig.catchKindByType,
+    )) {
+      const valid = heistConfig.catchesByKind[kind].map(
+        (c) => c.split(" — ")[0],
+      );
+      for (let seed = 1; seed <= 12; seed += 1) {
+        const out = generateHeistLocal({ heistType }, seededRng(seed));
+        const used = out.content
+          .split("**The catch**: ")[1]
+          .split(" — ")[0]
+          .trim();
+        expect(
+          valid,
+          `${heistType} drew a ${kind}-incompatible catch: ${used}`,
+        ).toContain(used);
+      }
+    }
+  });
+
+  it("gives every catch a matching pressure line", () => {
+    const everyCatch = Object.values(heistConfig.catchesByKind).flat();
+    for (const entry of everyCatch) {
+      const label = entry.split(" — ")[0];
+      expect(
+        heistConfig.pressureByComplication[label],
+        `no pressure defined for catch "${label}"`,
+      ).toBeTruthy();
+    }
   });
 
   it("offers alternate routes that differ in kind, plus a pursuit", () => {
@@ -170,17 +207,20 @@ describe("generateHeistLocal", () => {
 
   it("keeps campaign context inside The Score rather than inventing a section", () => {
     const out = generateHeistLocal(
-      { campaignContext: "a crew burned by their last fixer" },
+      {
+        heistType: "Assassination",
+        campaignContext: "a crew burned by their last fixer",
+      },
       seededRng(2),
     );
     // The AI schema declares content holds exactly Score/Prize/Casing.
     expect(out.content).not.toContain("### Campaign Fit");
     expect(out.content.match(/^### .+$/gm)).toEqual([
       "### The Score",
-      "### The Prize",
+      "### The Target",
       "### Casing the Target",
     ]);
-    expect(out.content.split("### The Prize")[0]).toContain(
+    expect(out.content.split("### The Target")[0]).toContain(
       "a crew burned by their last fixer",
     );
   });
@@ -197,6 +237,54 @@ describe("generateHeistLocal", () => {
     expect(out.labels).toEqual(["heist", "heist-generator"]);
     // The custom values still flavour the prose — they just aren't labels.
     expect(out.content).toContain("encounter-generator at");
+  });
+
+  it("names the objective section for the selected heist type", () => {
+    const cases: Array<[string, string]> = [
+      ["Theft", "### The Prize"],
+      ["Assassination", "### The Target"],
+      ["Rescue", "### The Captive"],
+      ["Extraction", "### The Subject"],
+      ["Sabotage", "### The System"],
+      ["Information", "### The Record"],
+      ["Plant Evidence", "### The Package"],
+    ];
+    for (const [heistType, heading] of cases) {
+      const out = generateHeistLocal({ heistType }, seededRng(3));
+      expect(out.content, `${heistType} should use ${heading}`).toContain(
+        heading,
+      );
+    }
+  });
+
+  it("falls back to a generic objective section for a custom heist type", () => {
+    const out = generateHeistLocal({ heistType: "Blackmail" }, seededRng(3));
+    expect(out.content).toContain("### The Objective");
+  });
+
+  it("gives the objective actionable where/window/protection detail", () => {
+    const out = generateHeistLocal(
+      { heistType: "Assassination" },
+      seededRng(3),
+    );
+    const section = out.content.split("### The Target")[1].split("### ")[0];
+    for (const field of [
+      "**Where**",
+      "**Window**",
+      "**Protection**",
+      "**Once it is done**",
+    ]) {
+      expect(section, `objective missing ${field}`).toContain(field);
+    }
+  });
+
+  it("does not let lockdown pre-empt the route the point of no return closes", () => {
+    const out = generateHeistLocal({}, seededRng(5));
+    const lockdown = out.lore.split("**3 — Lockdown**")[1].split("\n")[0];
+    // Lockdown bars the public doors; the service route is closed later, by
+    // the prize being lifted — the two must not claim the same closure.
+    expect(lockdown).toContain("the service route is a staff route and stays");
+    expect(out.lore).toContain("the crew's way in closes behind them");
   });
 
   it("is deterministic for a fixed seed", () => {
@@ -230,7 +318,6 @@ describe("buildHeistPrompt", () => {
     const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
     for (const heading of [
       "### The Score",
-      "### The Prize",
       "### Casing the Target",
       "### The Hidden Factor",
       "### Security Rings",
@@ -305,6 +392,52 @@ describe("buildHeistPrompt", () => {
     );
     expect(Object.values(heistConfig.pressureByComplication)).toContain(
       resolved.pressure,
+    );
+  });
+
+  it("demands the heist type materially shape the scenario", () => {
+    const { userMessage } = buildHeistPrompt(
+      { heistType: "Assassination" },
+      "",
+      seededRng(1),
+    );
+    expect(userMessage).toContain("### The Target");
+    expect(userMessage).toContain(
+      "a concrete window in which they are alone or unguarded",
+    );
+    expect(userMessage).toContain(
+      "The selected heist type must materially shape the scenario",
+    );
+    expect(userMessage).toContain(
+      'If "The Score" names a second objective as well',
+    );
+    expect(userMessage).toContain("Objective coverage:");
+  });
+
+  it("forbids repeated and empty sections outright", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain(
+      "Every heading above appears exactly ONCE in the whole result",
+    );
+    expect(userMessage).toContain(
+      '"content" and "lore" must share no heading between them',
+    );
+    expect(userMessage).toContain(
+      "never emit a heading with nothing written under it",
+    );
+  });
+
+  it("requires pressure to advance on its own, not only on failure", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain(
+      'The "Pressure" must advance on its own during the job, not only when the crew fails',
+    );
+  });
+
+  it("keeps the point of no return distinct from the alarm track", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain(
+      'if the alarm track already closes a route at some level, "When the Prize Is Taken" must not simply close it again',
     );
   });
 
