@@ -19,9 +19,12 @@
         href={PATREON_URL}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-        >Support on Patreon</a
+        class="inline-flex items-center text-chrome-muted hover:text-chrome-text transition-colors"
+        aria-label="Support Codex Cryptica on Patreon"
+        title="Support on Patreon"
       >
+        <span class="icon-[mdi--patreon] h-3.5 w-3.5" aria-hidden="true"></span>
+      </a>
     {/if}
     {#if DISCORD_URL}
       <a

@@ -24,9 +24,12 @@ describe("AppFooter", () => {
     render(AppFooter);
 
     expect(screen.getByTestId("app-footer")).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Support on Patreon" }),
-    ).toBeTruthy();
+    const patreonLink = screen.getByRole("link", {
+      name: "Support Codex Cryptica on Patreon",
+    });
+    expect(patreonLink.getAttribute("href")).toBe(
+      "https://patreon.com/codexcryptica",
+    );
     expect(screen.getByRole("link", { name: "Discord" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Tools" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Explore" })).toBeTruthy();
