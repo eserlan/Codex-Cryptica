@@ -120,6 +120,7 @@
               ? "Navigation disabled during active import"
               : ""}
             role="tab"
+            aria-label={tab.label}
             aria-selected={modalUIStore.activeSettingsTab === tab.id}
             aria-controls="settings-panel-{tab.id}"
             id="settings-tab-{tab.id}"
