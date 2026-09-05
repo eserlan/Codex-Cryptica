@@ -5,7 +5,12 @@ import type { GeneratorOutput } from "./generator-helpers";
 
 /** Single source of truth for the generator model id (#1494). */
 export const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
-export const LANGUAGE_GENERATION_CONFIG = {
+export const LANGUAGE_GENERATION_CONFIG: Readonly<{
+  temperature: number;
+  topP: number;
+  maxOutputTokens: number;
+  responseMimeType: string;
+}> = {
   temperature: 0.35,
   topP: 0.8,
   maxOutputTokens: 8192,
