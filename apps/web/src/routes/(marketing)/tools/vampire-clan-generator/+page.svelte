@@ -38,7 +38,7 @@
     {
       question: "Can I use it without an account?",
       answer:
-        "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault. No sign-up required.",
     },
     {
       question: "Which RPG systems does it work with?",
@@ -48,7 +48,7 @@
     {
       question: "Can I aim the clan at my current campaign?",
       answer:
-        "Yes. Add optional campaign context — a gothic city, investigator guild, rival faction, or active threat — and the generator will fit the clan to your table rather than producing a generic result.",
+        "Yes. Add optional campaign context (a gothic city, investigator guild, rival faction, or active threat) and the generator will fit the clan to your table rather than producing a generic result.",
     },
     {
       question: "How does saving a generated clan work?",

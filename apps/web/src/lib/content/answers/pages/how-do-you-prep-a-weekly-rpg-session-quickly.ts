@@ -108,7 +108,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "Every element maps directly to one of the five prep steps and can be reordered or dropped on the fly, so the party's choices — not the index card — drive the session.",
+          text: "Every element maps directly to one of the five prep steps and can be reordered or dropped on the fly, so the party's choices, not the index card, drive the session.",
         },
       ],
     },
@@ -129,7 +129,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
   codexConnection: {
     heading: "How Codex Cryptica streamlines weekly prep",
     paragraphs: [
-      "Codex Cryptica is designed around the distinction between persistent campaign knowledge and ephemeral session prep. Reusable entities — such as recurring factions, settlement maps, and NPC relationship webs — live permanently in your knowledge graph. When weekly prep begins, you never waste time retyping background lore.",
+      "Codex Cryptica is designed around the distinction between persistent campaign knowledge and ephemeral session prep. Reusable entities, such as recurring factions, settlement maps, and NPC relationship webs, live permanently in your knowledge graph. When weekly prep begins, you never waste time retyping background lore.",
       "Instead, you can rapidly pull existing vault entities into your session view, drop in procedural complications using instant generators, and sketch node connections on a canvas in minutes. When the session concludes, session logs and updated NPC bonds link directly back into the campaign world without manual bookkeeping.",
     ],
     linkText: "Explore the RPG campaign manager",

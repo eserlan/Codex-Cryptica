@@ -69,7 +69,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
   {
     id: "welcome",
     targetSelector: "body",
-    title: "Welcome — this is your world",
+    title: "Welcome: this is your world",
     // Deliberately agnostic about whether the vault is empty or already
     // populated (e.g. a converted demo already has characters in it) — this
     // step always shows regardless of entity count, so it must not presuppose
@@ -91,7 +91,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="graph-empty-state-cta"]',
     title: "Create your first character",
     content:
-      "Click here to add a character, place, or faction. That's all it takes to start — one person or place is enough.",
+      "Click here to add a character, place, or faction. That's all it takes to start; one person or place is enough.",
     position: "right",
   },
   {
@@ -99,13 +99,13 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="activity-bar-graph"]',
     title: "Watch it connect",
     content:
-      "Mention another name in your notes — like a home town or an ally — and Codex Cryptica suggests a connection. Accept it, then open the Graph to see it appear.",
+      "Mention another name in your notes (like a home town or an ally) and Codex Cryptica suggests a connection. Accept it, then open the Graph to see it appear.",
     position: "right",
   },
   {
     id: "oracle",
     targetSelector: '[data-testid="activity-bar-oracle"]',
-    title: "Optional AI help — and more when you want it",
+    title: "Optional AI help, and more when you want it",
     // Closes the tour with two "optional depth" mentions rather than adding a
     // 5th step: the Oracle, and a pointer to the Help Center. A dedicated
     // step here would re-inflate the ≤4-step tour we deliberately trimmed
@@ -114,7 +114,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     // recommendation to move the exhaustive feature list out of onboarding
     // and into an optional Help gallery.
     content:
-      "Stuck for ideas? The Oracle can suggest names, plot hooks, and summaries whenever you want it — always optional, your world works fully without it. For deeper guides (family trees, calendars, generators, sharing with players), the Help Center is in Settings any time.",
+      "Stuck for ideas? The Oracle can suggest names, plot hooks, and summaries whenever you want it, always optional, your world works fully without it. For deeper guides (family trees, calendars, generators, sharing with players), the Help Center is in Settings any time.",
     position: "right",
   },
 ];
@@ -182,7 +182,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-shelf",
     title: "The Shelf",
     content:
-      "Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
+      "Send an entity, or a whole selection, to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
     icon: "icon-[lucide--library]",
   },
   // The recovery key is the whole risk surface here (spec 162, FR-002/FR-013):
@@ -192,7 +192,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "cloud-backup",
     title: "Cloud Backup",
     content:
-      "Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key — that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time — pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.",
+      "Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key; that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time: pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.",
     icon: "icon-[lucide--cloud-upload]",
   },
   "touch-graph-gestures": {
@@ -219,7 +219,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "guided-mode-toggle",
     title: "Guided Mode",
     content:
-      "Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header — nothing you've created is ever hidden or lost.",
+      "Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header; nothing you've created is ever hidden or lost.",
     icon: "icon-[lucide--compass]",
   },
   "guided-mode-intent-create": {
@@ -254,28 +254,28 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "oracle-memory",
     title: "Oracle Memory",
     content:
-      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
+      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
     icon: "icon-[lucide--brain]",
   },
   adventure: {
     id: "adventure",
     title: "Solo Adventure Mode",
     content:
-      'Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. The play surface stays quiet by default — dice presets, roll history, resource counters, provisional facts, and the adventure archive live behind the Adventure tools panel, open it when you need them. Fullscreen is optional for an even quieter view; Escape leaves browser fullscreen without leaving the adventure. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows — it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.',
+      'Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. The play surface stays quiet by default: dice presets, roll history, resource counters, provisional facts, and the adventure archive live behind the Adventure tools panel, open it when you need them. Fullscreen is optional for an even quieter view; Escape leaves browser fullscreen without leaving the adventure. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows; it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.',
     icon: "icon-[lucide--map]",
   },
   connections: {
     id: "connections",
     title: "Connections",
     content:
-      "The Connections tab puts this entity in the middle and arranges everything linked straight to it around the edge — links you made, links others made to it, and anything filed under it — each one labelled with its relationship. Click any surrounding entity to open it. Connections that do not fit comfortably in the picture are listed underneath it, still one tap away. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.",
+      "The Connections tab puts this entity in the middle and arranges everything linked straight to it around the edge: links you made, links others made to it, and anything filed under it, each one labelled with its relationship. Click any surrounding entity to open it. Connections that do not fit comfortably in the picture are listed underneath it, still one tap away. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.",
     icon: "icon-[lucide--waypoints]",
   },
   "family-tree": {
     id: "family-tree",
     title: "Family Tree",
     content:
-      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.",
+      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree (connect an existing character or create a new one) and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.",
     icon: "icon-[lucide--network]",
   },
   "lineage-controls": {
@@ -296,7 +296,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "world-chronology",
     title: "World Chronology",
     content:
-      "Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year — use Previous / Next to navigate months, or click the month title to jump straight to a year with the scroll picker. Click an entry to open it in the detail panel; double-click to open it full-screen. Double-click an empty area of any date cell to open the entity creation form with that date pre-filled as the start date. Drag an entity from the left sidebar onto any calendar day to set its start or end date. If an entity has a date, click that date text in the detail panel to jump the calendar straight to it. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and 'include undated' toggles to narrow what's visible.",
+      "Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year; use Previous / Next to navigate months, or click the month title to jump straight to a year with the scroll picker. Click an entry to open it in the detail panel; double-click to open it full-screen. Double-click an empty area of any date cell to open the entity creation form with that date pre-filled as the start date. Drag an entity from the left sidebar onto any calendar day to set its start or end date. If an entity has a date, click that date text in the detail panel to jump the calendar straight to it. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and 'include undated' toggles to narrow what's visible.",
     icon: "icon-[lucide--calendar-days]",
   },
   "front-page": {
@@ -317,7 +317,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "cif-importer",
     title: "Codex Interchange Format (CIF) Import",
     content:
-      "Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too — it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
+      "Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault, entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too; it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
     icon: "icon-[lucide--file-json-2]",
   },
   "search-indexing": {
@@ -436,14 +436,14 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "creature-packs",
     title: "Creature Packs",
     content:
-      "Populate a new vault fast with Creature Packs — curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.",
+      "Populate a new vault fast with Creature Packs: curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.",
     icon: "icon-[lucide--book-open]",
   },
   themes: {
     id: "themes",
     title: "Themes",
     content:
-      "Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes—from Ancient Parchment to Sci-Fi Terminal—to perfectly match the genre of your story.",
+      "Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes, from Ancient Parchment to Sci-Fi Terminal, to perfectly match the genre of your story.",
     icon: "icon-[lucide--palette]",
   },
   "draw-button": {
@@ -513,7 +513,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vtt-layers",
     title: "Map Layers",
     content:
-      "Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.",
+      "Every placed tile and token belongs to one of three layers (Terrain, Furniture, or Tokens), always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.",
     icon: "icon-[lucide--layers]",
   },
   "vtt-notes": {
@@ -604,7 +604,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "p2p-connection-manager",
     title: "P2P Connection Manager",
     content:
-      "Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.",
+      "Establish direct peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.",
     icon: "icon-[lucide--wifi]",
   },
   "quicknote-scratchpad": {
@@ -618,28 +618,28 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-hierarchy",
     title: "Nested Entities",
     content:
-      "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one — the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.",
+      "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one; the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.",
     icon: "icon-[lucide--folder-tree]",
   },
   "entity-auto-link": {
     id: "entity-auto-link",
     title: "Entity Links in Content",
     content:
-      "When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.",
+      "When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode; the editor shows plain text while you are writing.",
     icon: "icon-[lucide--link]",
   },
   "guest-character-chat": {
     id: "guest-character-chat",
     title: "Guest Character Chat",
     content:
-      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears — read-only, with a link back — under that character's own Chat tab.",
+      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears (read-only, with a link back) under that character's own Chat tab.",
     icon: "icon-[lucide--messages-square]",
   },
   "in-app-generators": {
     id: "in-app-generators",
     title: "Campaign Generators",
     content:
-      "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+      "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving; nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
   "secret-society-generator": {
@@ -653,14 +653,14 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-timeline",
     title: "Entity Timeline",
     content:
-      "Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity — battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.",
+      "Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity: battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.",
     icon: "icon-[lucide--clock]",
   },
   "generator-local-mode": {
     id: "generator-local-mode",
     title: "Generators Work Offline",
     content:
-      "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
+      "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device; this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
     icon: "icon-[lucide--wifi-off]",
   },
   "generator-presets": {
@@ -681,7 +681,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "news-sheet-generator",
     title: "News Sheets (In-World News)",
     content:
-      "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
+      "Create an in-world news sheet for your campaign: a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
     icon: "icon-[lucide--newspaper]",
   },
   "dungeon-generator": {
@@ -751,7 +751,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "presentation-templates",
     title: "Presentation Templates",
     content:
-      "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types — text, number, dice, counter, or checkbox — so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
+      "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types (text, number, dice, counter, or checkbox) so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
     icon: "icon-[lucide--layout-template]",
   },
 };

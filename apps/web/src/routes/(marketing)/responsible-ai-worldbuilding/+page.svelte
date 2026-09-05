@@ -14,7 +14,7 @@
         name: "What does responsible AI mean for RPG worldbuilding?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
+          text: "It means keeping narrative control with the author. The AI assists with mechanical tasks (expanding notes, drafting entity descriptions, suggesting plot hooks) but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
         },
       },
       {
@@ -54,7 +54,7 @@
         name: "What is the difference between context and memory?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate.",
+          text: "Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault (frontmatter, linked entities, timelines) rather than relying on an opaque memory layer that can drift or hallucinate.",
         },
       },
       {
@@ -130,7 +130,7 @@
   const faqs = [
     {
       q: "What does responsible AI mean for RPG worldbuilding?",
-      a: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
+      a: "It means keeping narrative control with the author. The AI assists with mechanical tasks (expanding notes, drafting entity descriptions, suggesting plot hooks) but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
     },
     {
       q: "Can AI help with campaign prep without taking over?",
@@ -150,7 +150,7 @@
     },
     {
       q: "What is the difference between context and memory?",
-      a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.`,
+      a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault (frontmatter, linked entities, timelines) rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.`,
     },
     {
       q: "Can the Lore Oracle read my whole vault?",

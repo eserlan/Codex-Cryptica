@@ -39,14 +39,14 @@
               href: "/tools/rpg-npc-generator",
               label: "RPG NPC Generator",
               summary:
-                "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
+                "Generate NPCs across six genres: fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
               icon: "icon-[lucide--users]",
             },
             {
               href: "/generators/npc",
               label: "Procedural NPC Generator",
               summary:
-                "Genre-agnostic NPC generator — same six-theme engine via the reusable generator interface.",
+                "Genre-agnostic NPC generator: same six-theme engine via the reusable generator interface.",
               icon: "icon-[lucide--user-round-plus]",
             },
           ],
@@ -110,14 +110,14 @@
               href: "/generators/star-system",
               label: "Star System Generator",
               summary:
-                "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
+                "Generate a coherent sci-fi star system: star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
               icon: "icon-[lucide--orbit]",
             },
             {
               href: "/generators/alien-race",
               label: "Alien Race Generator",
               summary:
-                "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+                "Generate a coherent alien species: biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
               icon: "icon-[lucide--dna]",
             },
             {
@@ -180,7 +180,7 @@
               href: "/generators/council-vote",
               label: "Council Vote Generator",
               summary:
-                "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+                "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision.",
               icon: "icon-[lucide--gavel]",
             },
             {
@@ -243,7 +243,7 @@
               href: "/generators/social-hub",
               label: "Social Hub Generator",
               summary:
-                "Generate a social gathering venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
+                "Generate a social gathering venue for any genre: cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
               icon: "icon-[lucide--map-pin]",
             },
             {
@@ -257,14 +257,14 @@
               href: "/generators/nation",
               label: "Nation Generator",
               summary:
-                "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
+                "Generate a political entity for any genre: fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
               icon: "icon-[lucide--globe]",
             },
             {
               href: "/generators/news-sheet-generator",
               label: "News Sheet Generator",
               summary:
-                "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, and GM-only hooks.",
+                "Generate an in-world news sheet for any genre: cyberpunk screamsheets, fantasy broadsheets, station newsfeeds, with rumours, classifieds, and GM-only hooks.",
               icon: "icon-[lucide--newspaper]",
             },
             {
@@ -278,7 +278,7 @@
               href: "/generators/random",
               label: "Surprise Me",
               summary:
-                "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, or venue.",
+                "Not sure what you need? Spin the idea machine: a random faction, realm, NPC, quest hook, or venue.",
               icon: "icon-[lucide--dices]",
             },
           ],
@@ -334,7 +334,7 @@
     {
       title: "Answers",
       description:
-        "Short, practical answers to questions that come up while running and building campaigns — read first, no login, nothing to install.",
+        "Short, practical answers to questions that come up while running and building campaigns. Read first, no login, nothing to install.",
       groups: [
         {
           links: [
@@ -342,14 +342,14 @@
               href: "/answers",
               label: "All Answers",
               summary:
-                "The full answer library — point crawls, factions, pantheons, encounters, notes, and more.",
+                "The full answer library: point crawls, factions, pantheons, encounters, notes, and more.",
               icon: "icon-[lucide--help-circle]",
             },
             {
               href: "/answers/how-do-you-organise-rpg-campaign-notes",
               label: "How do you organise RPG campaign notes?",
               summary:
-                "Durable entity pages, dated session logs, disposable prep — and the ten-minute pass that keeps them true.",
+                "Durable entity pages, dated session logs, disposable prep, and the ten-minute pass that keeps them true.",
               icon: "icon-[lucide--notebook-pen]",
             },
             {
@@ -377,7 +377,7 @@
               href: "/answers/how-do-you-run-a-conspiracy-campaign",
               label: "How do you run a conspiracy campaign?",
               summary:
-                "Decide the truth in full, then design how it leaks — and give every conclusion three routes.",
+                "Decide the truth in full, then design how it leaks, and give every conclusion three routes.",
               icon: "icon-[lucide--search]",
             },
           ],
@@ -473,7 +473,7 @@
               href: "/migrations",
               label: "Migration Hub",
               summary:
-                "Every supported import source in one place — pick the tool you're migrating from.",
+                "Every supported import source in one place: pick the tool you're migrating from.",
               icon: "icon-[lucide--folder-input]",
             },
             {
@@ -508,7 +508,7 @@
               href: "/import/scabard",
               label: "Scabard Importer",
               summary:
-                "Convert Scabard campaign JSON exports — pages, categories, and connections — into your vault.",
+                "Convert Scabard campaign JSON exports (pages, categories, and connections) into your vault.",
               icon: "icon-[lucide--shapes]",
             },
             {

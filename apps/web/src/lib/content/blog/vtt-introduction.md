@@ -21,9 +21,9 @@ imageAlt: "Data-Native Virtual Tabletop Interface in Codex Cryptica"
 
 ![VTT Interface](https://assets.codexcryptica.com/images/blog/vtt-introduction/vtt-hero.png)
 
-You’ve spent hours building a rich, connected world—then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of disconnected tools.
+You’ve spent hours building a rich, connected world, then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of disconnected tools.
 
-Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Data-Native VTT** — a tactical layer integrated directly into the archive. This isn't a separate application—it’s a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
+Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Data-Native VTT**, a tactical layer integrated directly into the archive. This isn't a separate application; it’s a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
 
 ## Your Lore is the Map
 
@@ -69,10 +69,10 @@ The VTT doesn't replace your notes, it makes them playable.
 
 The VTT is ready for you today.
 
-**Open any map from your sidebar and toggle the VTT mode to start dragging your first entity onto the board—it takes seconds.**
+**Open any map from your sidebar and toggle the VTT mode to start dragging your first entity onto the board. It takes seconds.**
 
 The first minute of your next session just got a whole lot smoother.
 
-I can’t wait to see the worlds you build and the stories you tell—I built this for exactly that.
+I can’t wait to see the worlds you build and the stories you tell. I built this for exactly that.
 
 _Want to learn more about how data is handled? Check out the [GM's Guide to Data Sovereignty](/blog/gm-guide-data-sovereignty)._

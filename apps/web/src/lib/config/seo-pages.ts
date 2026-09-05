@@ -6,12 +6,12 @@ export const solutions: Record<string, SEOPageData> = {
     slug: "campaign-manager",
     title: "How to Manage RPG Campaigns with Codex Cryptica | Features & Setup",
     description:
-      "A feature-by-feature guide to managing TTRPG campaigns in Codex Cryptica: linked lore graphs, private Markdown notes, timelines, and offline prep — all local-first.",
+      "A feature-by-feature guide to managing TTRPG campaigns in Codex Cryptica: linked lore graphs, private Markdown notes, timelines, and offline prep, all local-first.",
     h1: "RPG Campaign Manager Features & Setup Guide",
     subheading:
-      "Everything you need to plan, run, and track campaigns — no cloud account required.",
+      "Everything you need to plan, run, and track campaigns, no cloud account required.",
     introText:
-      "Codex Cryptica is a local-first RPG campaign manager built for GMs who want power without complexity. This guide walks through the core features: bidirectional wiki links, interactive lore graphs, timeline tracking, and offline-first storage. Your campaign data lives on your device and loads in milliseconds — even at the table without Wi-Fi.",
+      "Codex Cryptica is a local-first RPG campaign manager built for GMs who want power without complexity. This guide walks through the core features: bidirectional wiki links, interactive lore graphs, timeline tracking, and offline-first storage. Your campaign data lives on your device and loads in milliseconds, even at the table without Wi-Fi.",
     ctaText: "Explore Campaign Manager",
     keywords: [
       "rpg campaign manager features",
@@ -44,7 +44,7 @@ export const solutions: Record<string, SEOPageData> = {
         question:
           "What makes Codex Cryptica different from other RPG campaign managers?",
         answer:
-          "Codex Cryptica is fully local-first: your notes are stored on your own device, not a remote server. That means instant load times, complete privacy, and full offline support — features most cloud-based campaign managers can't offer.",
+          "Codex Cryptica is fully local-first: your notes are stored on your own device, not a remote server. That means instant load times, complete privacy, and full offline support: features most cloud-based campaign managers can't offer.",
       },
       {
         question: "Can I use Codex Cryptica offline?",
@@ -243,12 +243,12 @@ export const solutions: Record<string, SEOPageData> = {
     eyebrow: "AI-Assisted Game Mastering",
     title: "AI DM Assistant | AI Game Master Helper for TTRPG | Codex Cryptica",
     description:
-      "Use Codex Cryptica's built-in AI DM assistant to draft lore, generate NPCs, revise session notes, and answer campaign questions — all without leaving your vault.",
+      "Use Codex Cryptica's built-in AI DM assistant to draft lore, generate NPCs, revise session notes, and answer campaign questions, all without leaving your vault.",
     h1: "AI DM Assistant for Tabletop GMs",
     subheading:
       "Draft, revise, and expand your campaign lore with a built-in AI co-author.",
     introText:
-      "Codex Cryptica includes an AI-assisted writing layer called the Lore Oracle. It reads your campaign context, answers questions about your world, helps you draft NPC descriptions and faction goals, and suggests revisions to existing entries — all running locally with your own API key.",
+      "Codex Cryptica includes an AI-assisted writing layer called the Lore Oracle. It reads your campaign context, answers questions about your world, helps you draft NPC descriptions and faction goals, and suggests revisions to existing entries, all running locally with your own API key.",
     ctaText: "Try the Lore Oracle",
     secondaryCtaText: "See AI generators",
     secondaryCtaHref: "/tools/dnd-npc-generator",
@@ -275,7 +275,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Bring Your Own API Key",
         description:
-          "Connect your OpenAI/Luna key for full AI generation — no subscription or data sent to Codex servers.",
+          "Connect your OpenAI/Luna key for full AI generation, no subscription or data sent to Codex servers.",
         icon: "icon-[lucide--key]",
       },
     ],
@@ -288,7 +288,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Does the AI DM assistant require a subscription?",
         answer:
-          "No. You bring your own API key (OpenAI/Luna). Codex never charges for AI usage — you pay only your API provider's standard rates.",
+          "No. You bring your own API key (OpenAI/Luna). Codex never charges for AI usage; you pay only your API provider's standard rates.",
       },
       {
         question: "Does the AI see my campaign notes?",
@@ -433,7 +433,7 @@ export const solutions: Record<string, SEOPageData> = {
       "Run your TTRPG campaign manager completely offline. Codex Cryptica stores all notes locally in your browser, works without internet, and never requires a server.",
     h1: "Offline RPG Campaign Manager",
     subheading:
-      "Prep your sessions anywhere — no internet, no server, no problem.",
+      "Prep your sessions anywhere: no internet, no server, no problem.",
     introText:
       "Codex Cryptica is built on the browser's Origin Private File System, which means it runs entirely on your device. Open your campaign at the table, on a train, or at a remote cabin. Your notes load instantly and every edit saves locally without a network call.",
     ctaText: "Open Offline App",
@@ -454,13 +454,13 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Instant Local Loading",
         description:
-          "Notes load from your device's file system in milliseconds — no server round-trip or CDN dependency.",
+          "Notes load from your device's file system in milliseconds, no server round-trip or CDN dependency.",
         icon: "icon-[lucide--zap]",
       },
       {
         title: "Optional Cloud Sync",
         description:
-          "When you want a backup, sync your vault to Google Drive or a local folder — on your terms.",
+          "When you want a backup, sync your vault to Google Drive or a local folder, on your terms.",
         icon: "icon-[lucide--cloud]",
       },
     ],

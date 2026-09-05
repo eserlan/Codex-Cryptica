@@ -20,9 +20,9 @@ publishedAt: 2026-08-14T19:30:00Z
 
 When running or building a tabletop RPG campaign, you need to think in two completely different modes depending on what you're doing.
 
-When you're **brainstorming and connecting lore**, you need a **spatial network**—a knowledge graph that reveals how the duke's secret cult ties into the thieves' guild and the forgotten catacombs beneath the river district.
+When you're **brainstorming and connecting lore**, you need a **spatial network**: a knowledge graph that reveals how the duke's secret cult ties into the thieves' guild and the forgotten catacombs beneath the river district.
 
-When you're **auditing and prepping a live session**, you need a **tabular spreadsheet**—a dense, structured view where you can sort by last modified, find every NPC missing a motivation, and quickly scan stat sheet attachments or connection counts.
+When you're **auditing and prepping a live session**, you need a **tabular spreadsheet**: a dense, structured view where you can sort by last modified, find every NPC missing a motivation, and quickly scan stat sheet attachments or connection counts.
 
 In traditional note apps, switching between these mental models is painful. You either force your world into rigid folder trees that break the moment an NPC belongs to two factions, or you manage disparate search queries across different plugin views.
 

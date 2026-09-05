@@ -7,13 +7,13 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
   question: "How do I run a successful Session 0?",
   kind: "framework",
   shortAnswer:
-    "A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork — done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.",
+    "A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork; done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.",
   sections: [
     {
       kind: "prose",
       heading: "What Session 0 is actually for",
       paragraphs: [
-        "Most Session 0 failures come from treating it as a formality to get through before the 'real' game starts. That framing guarantees it produces nothing — a checklist ticked, nothing decided. A Session 0 that works produces decisions the table will actually use: what this campaign is about, what everyone signed up for, and why these particular characters are standing in the same room.",
+        "Most Session 0 failures come from treating it as a formality to get through before the 'real' game starts. That framing guarantees it produces nothing: a checklist ticked, nothing decided. A Session 0 that works produces decisions the table will actually use: what this campaign is about, what everyone signed up for, and why these particular characters are standing in the same room.",
         "The three jobs it does, in order of how often they get skipped: align expectations (so nobody discovers three sessions in that they wanted a different game), set boundaries (so nobody discovers mid-scene that a topic wasn't okay), and connect the party (so 'we all meet in a tavern' isn't the best reason anyone has for adventuring together).",
       ],
     },
@@ -21,7 +21,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
       kind: "list",
       heading: "Eight things worth covering",
       intro:
-        "Not a script to read verbatim — a coverage list, the same way session prep is measured by coverage rather than hours.",
+        "Not a script to read verbatim: a coverage list, the same way session prep is measured by coverage rather than hours.",
       items: [
         {
           term: "Premise and tone",
@@ -29,7 +29,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
         },
         {
           term: "The kind of play the group wants",
-          text: "Combat-heavy or exploration-heavy, tightly plotted or sandbox, one long arc or episodic — mismatched expectations here are the single most common source of a campaign quietly dying.",
+          text: "Combat-heavy or exploration-heavy, tightly plotted or sandbox, one long arc or episodic: mismatched expectations here are the single most common source of a campaign quietly dying.",
         },
         {
           term: "Character concepts and party connections",
@@ -41,7 +41,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
         },
         {
           term: "House rules and rules assumptions",
-          text: "Whichever system-specific calls the GM is already planning to make — optional rules in or out, how strict the resource tracking will be — said once, up front.",
+          text: "Whichever system-specific calls the GM is already planning to make (optional rules in or out, how strict the resource tracking will be), said once, up front.",
         },
         {
           term: "Boundaries and agreed safety practices",
@@ -62,7 +62,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
       heading: "Boundaries without turning it into policy",
       paragraphs: [
         "The goal is specific and non-negotiable: everyone at the table has clear boundaries and a way to say so, and that mechanism doesn't depend on anyone making a scene to use it. How you get there is genuinely a table-by-table choice, not a universal standard.",
-        "Commonly used approaches include lines and veils (some topics are off-limits entirely, others can be referenced but not shown in detail), an X-card or similar signal anyone can raise without explanation, and simply an open, standing invitation to flag discomfort privately after a session. Pick one that fits how your table actually communicates rather than adopting whichever is most talked-about online — the point is that it gets used, not that it's the 'correct' one.",
+        "Commonly used approaches include lines and veils (some topics are off-limits entirely, others can be referenced but not shown in detail), an X-card or similar signal anyone can raise without explanation, and simply an open, standing invitation to flag discomfort privately after a session. Pick one that fits how your table actually communicates rather than adopting whichever is most talked-about online: the point is that it gets used, not that it's the 'correct' one.",
       ],
     },
     {
@@ -117,7 +117,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     heading: "How Codex Cryptica handles this",
     paragraphs: [
       "Everything a good Session 0 produces is exactly the material a vault is built to hold: campaign truths as labelled notes, characters as entities from the start, the party's connections as links between them, and starting factions or locations as their own entities rather than a line in someone's Session 0 notes that nobody looks at again.",
-      "The player-known/GM-only split maps onto labels rather than a separate document — a campaign truth can be marked hidden until it's meant to be revealed, so the secret and its eventual reveal live in the same place instead of two. None of this replaces the conversation itself; it just means the decisions from it don't disappear into a one-off document once the session ends.",
+      "The player-known/GM-only split maps onto labels rather than a separate document: a campaign truth can be marked hidden until it's meant to be revealed, so the secret and its eventual reveal live in the same place instead of two. None of this replaces the conversation itself; it just means the decisions from it don't disappear into a one-off document once the session ends.",
     ],
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",

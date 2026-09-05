@@ -7,7 +7,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
   question: "Where do I start if I have never played a tabletop RPG before?",
   kind: "how-to",
   shortAnswer:
-    "You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty — usually dice — and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.",
+    "You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.",
   sections: [
     {
       kind: "list",
@@ -15,7 +15,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "A game or beginner ruleset",
-          text: "Many systems publish a free or cheap quick-start version with everything needed for a first session and nothing else — that's a better starting point than a full rulebook.",
+          text: "Many systems publish a free or cheap quick-start version with everything needed for a first session and nothing else; that's a better starting point than a full rulebook.",
         },
         {
           term: "A small group, or a solo option",
@@ -23,7 +23,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "Something to resolve uncertainty",
-          text: "Usually dice, sometimes cards or another randomiser depending on the system — the specific mechanism matters far less than having one.",
+          text: "Usually dice, sometimes cards or another randomiser depending on the system; the specific mechanism matters far less than having one.",
         },
         {
           term: "Character material for that system",
@@ -31,7 +31,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "One short scenario",
-          text: "A single self-contained situation to play through — often called a one-shot — rather than committing to a long campaign before knowing if the hobby suits you.",
+          text: "A single self-contained situation to play through (often called a one-shot) rather than committing to a long campaign before knowing if the hobby suits you.",
         },
       ],
     },
@@ -55,7 +55,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "GM / DM",
-          text: "The person running the game — describing the world, playing everyone except the player characters, and adjudicating what happens. DM (Dungeon Master) is D&D's specific name for the same role.",
+          text: "The person running the game: describing the world, playing everyone except the player characters, and adjudicating what happens. DM (Dungeon Master) is D&D's specific name for the same role.",
         },
         {
           term: "Player character (PC)",
@@ -64,7 +64,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
         { term: "NPC", text: "Any character the GM controls, not a player." },
         {
           term: "One-shot",
-          text: "A single, self-contained session — start to finish in one sitting, no ongoing commitment.",
+          text: "A single, self-contained session: start to finish in one sitting, no ongoing commitment.",
         },
         {
           term: "Campaign",
@@ -72,7 +72,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "VTT",
-          text: "Virtual tabletop — software for playing online with maps, tokens and dice rolling; entirely optional for a first game, especially in person.",
+          text: "Virtual tabletop: software for playing online with maps, tokens and dice rolling; entirely optional for a first game, especially in person.",
         },
       ],
     },
@@ -83,7 +83,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "1. Pick a genre you're excited about",
-          text: "Fantasy, horror, sci-fi, something else — enthusiasm for the setting carries a first session further than picking the 'correct' beginner game.",
+          text: "Fantasy, horror, sci-fi, something else: enthusiasm for the setting carries a first session further than picking the 'correct' beginner game.",
         },
         {
           term: "2. Choose a game with an approachable starting point",
@@ -91,7 +91,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "3. Decide who's running it",
-          text: "Someone needs to GM. It doesn't need to be the most experienced person in the room — it needs to be someone willing to read the quick-start once.",
+          text: "Someone needs to GM. It doesn't need to be the most experienced person in the room; it needs to be someone willing to read the quick-start once.",
         },
         {
           term: "4. Use pre-generated characters",
@@ -109,10 +109,10 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     },
   ],
   codexConnection: {
-    heading: "Where Codex Cryptica comes in — later, not first",
+    heading: "Where Codex Cryptica comes in: later, not first",
     paragraphs: [
-      "You do not need campaign-management software to play your first game, or even your first several sessions — a pre-made character and a short scenario are enough. Codex becomes useful once a group decides to keep going and starts accumulating things worth remembering: recurring NPCs, a growing map, factions with their own agendas, a session's worth of notes that need to still make sense next week.",
-      "At that point, public generators can help a new GM produce an NPC, encounter or location quickly without needing deep system knowledge yet, and a vault gives ongoing campaign notes somewhere to live that isn't scattered across notebooks and memory. None of that is a prerequisite for the first session — it's what tends to become useful once there's a campaign worth organising.",
+      "You do not need campaign-management software to play your first game, or even your first several sessions; a pre-made character and a short scenario are enough. Codex becomes useful once a group decides to keep going and starts accumulating things worth remembering: recurring NPCs, a growing map, factions with their own agendas, a session's worth of notes that need to still make sense next week.",
+      "At that point, public generators can help a new GM produce an NPC, encounter or location quickly without needing deep system knowledge yet, and a vault gives ongoing campaign notes somewhere to live that isn't scattered across notebooks and memory. None of that is a prerequisite for the first session; it's what tends to become useful once there's a campaign worth organising.",
     ],
     linkText: "See the NPC generator",
     href: "/generators/npc",

@@ -13,7 +13,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
       kind: "prose",
       heading: "Start with why it is here",
       paragraphs: [
-        "Every settlement exists because of something: a ford, a mine, a shrine, a garrison, a place where two roads have to meet. That fact determines almost everything else worth knowing — who lives there, who has money, what the town is afraid of losing, and what happens to it if the reason goes away.",
+        "Every settlement exists because of something: a ford, a mine, a shrine, a garrison, a place where two roads have to meet. That fact determines almost everything else worth knowing: who lives there, who has money, what the town is afraid of losing, and what happens to it if the reason goes away.",
         'It is also the fastest possible characterisation. "A town that exists because it is the last place to buy fresh water before the salt flats" tells you more, and generates more play, than three paragraphs about architecture.',
         "The corollary is that a settlement whose reason has recently changed is worth ten that are stable. The mine is failing. The road moved. The garrison left last spring. Now everything about the place is in motion, and the party has arrived at the interesting moment.",
       ],
@@ -26,7 +26,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
       items: [
         {
           term: "Three or four enterable locations",
-          text: "Somewhere to sleep, somewhere to buy, somewhere with authority, and one place that is strange. Not a full street map — four rooms the party can walk into.",
+          text: "Somewhere to sleep, somewhere to buy, somewhere with authority, and one place that is strange. Not a full street map; four rooms the party can walk into.",
         },
         {
           term: "Two or three named people",
@@ -59,7 +59,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
       items: [
         {
           term: "Why it exists",
-          text: "The only ford on the Marrow for thirty miles — and the new bridge upstream opened last autumn.",
+          text: "The only ford on the Marrow for thirty miles, and the new bridge upstream opened last autumn.",
         },
         {
           term: "Locations",
@@ -108,7 +108,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     heading: "Settlements that stay connected to the campaign",
     paragraphs: [
       "A settlement is mostly a set of relationships: the people who live there, the factions that want it, the roads that reach it, and the events that changed it. Holding it as a location entity with those links means a return visit six months later starts from what is on the page rather than what you can remember.",
-      "It also makes consequences visible. When the bridge finally opens, the things that change are the ones linked to the ford — which is exactly the list you need and never have to hand.",
+      "It also makes consequences visible. When the bridge finally opens, the things that change are the ones linked to the ford, which is exactly the list you need and never have to hand.",
     ],
     linkText: "Try the settlement generator",
     href: "/generators/settlement",
@@ -129,7 +129,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     {
       title: "News sheet generator",
       description:
-        "A local broadsheet — the fastest way to put a settlement's problems in the party's hands.",
+        "A local broadsheet: the fastest way to put a settlement's problems in the party's hands.",
       href: "/generators/news-sheet-generator",
     },
   ],
@@ -155,7 +155,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     primaryIntent: "what should an rpg settlement contain",
     intentAliases: ["how to design a fantasy town", "rpg town prep checklist"],
     uniqueValue:
-      "Prep sized to what gets used — a reason to exist, four enterable places, three wants, one unsolved problem — plus what to leave out.",
+      "Prep sized to what gets used (a reason to exist, four enterable places, three wants, one unsolved problem) plus what to leave out.",
     relatedIntents: ["generator-settlement"],
   },
 

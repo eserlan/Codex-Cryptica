@@ -8,7 +8,7 @@
 
   const TITLE = "Explore Codex Cryptica";
   const DESCRIPTION =
-    "Every section of Codex Cryptica in one place — worlds, examples, generators, tools, guides, and the campaign directory.";
+    "Every section of Codex Cryptica in one place: worlds, examples, generators, tools, guides, and the campaign directory.";
 
   type ExploreLink = {
     href: string;
@@ -46,7 +46,7 @@
           href: "/generators",
           label: "Generators",
           summary:
-            "The reusable generator interface — NPCs, factions, quests, and more, theme by theme.",
+            "The reusable generator interface: NPCs, factions, quests, and more, theme by theme.",
           icon: "icon-[lucide--sparkles]",
         },
         {

@@ -14,7 +14,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
       heading: "Why lists on character pages fail",
       paragraphs: [
         'The default habit is to give each NPC an "allies" and "enemies" list. It breaks for two reasons. First, it duplicates: the same relationship is written on two pages, and after a session where it changes, one of them is wrong. Second, it flattens direction. Loyalty, debt, blackmail and unrequited affection all run one way, and that asymmetry is usually the interesting part.',
-        "Storing the relationship as its own thing — a link with a label — fixes both. One record, one place to edit, and the label carries the direction: A owes B, B protects A, A does not know that B reports to C.",
+        "Storing the relationship as its own thing, a link with a label, fixes both. One record, one place to edit, and the label carries the direction: A owes B, B protects A, A does not know that B reports to C.",
       ],
     },
     {
@@ -23,7 +23,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
       items: [
         {
           term: "Direction",
-          text: "From whom, to whom. Reciprocal relationships are two links, not one, and they are frequently unequal — she considers him a friend; he considers her an asset.",
+          text: "From whom, to whom. Reciprocal relationships are two links, not one, and they are frequently unequal: she considers him a friend; he considers her an asset.",
         },
         {
           term: "A verb, not a category",
@@ -96,8 +96,8 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
   codexConnection: {
     heading: "How Codex Cryptica stores this",
     paragraphs: [
-      "In Codex a relationship is a typed link between two entities, held once and rendered on both — so editing it on either side edits the same fact. The graph view then draws the web, which is mainly useful for the thing lists cannot show: clusters, chokepoints, and the person three links from everyone who you had thought was a minor character.",
-      "The spatial canvas is the other half of this. It is closer to a conspiracy board — nodes you place by hand, grouped the way you think about them rather than the way the data is shaped.",
+      "In Codex a relationship is a typed link between two entities, held once and rendered on both, so editing it on either side edits the same fact. The graph view then draws the web, which is mainly useful for the thing lists cannot show: clusters, chokepoints, and the person three links from everyone who you had thought was a minor character.",
+      "The spatial canvas is the other half of this. It is closer to a conspiracy board: nodes you place by hand, grouped the way you think about them rather than the way the data is shaped.",
     ],
     linkText: "See the knowledge graph",
     href: "/solutions/rpg-knowledge-graph",
@@ -118,7 +118,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     {
       title: "Secret society generator",
       description:
-        "When the relationships themselves are the secret — cells, handlers and recognition signs.",
+        "When the relationships themselves are the secret: cells, handlers and recognition signs.",
       href: "/generators/secret-society",
     },
   ],
@@ -154,6 +154,6 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
   seo: {
     title: "How do you organise NPC relationships? | Codex Cryptica",
     description:
-      "Store NPC relationships as directed, named links with a reason and a visibility — not as ally lists on each page. What to record, a worked example, and when to stop.",
+      "Store NPC relationships as directed, named links with a reason and a visibility, not as ally lists on each page. What to record, a worked example, and when to stop.",
   },
 };

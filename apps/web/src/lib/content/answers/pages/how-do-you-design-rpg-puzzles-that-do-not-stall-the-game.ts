@@ -8,13 +8,13 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
     question: "How do you design RPG puzzles that do not stall the game?",
     kind: "framework",
     shortAnswer:
-      "Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud — the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.",
+      "Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud: the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.",
     sections: [
       {
         kind: "prose",
         heading: "The stall has one cause",
         paragraphs: [
-          "Almost every puzzle that kills an hour has the same shape: a single correct answer, held in the GM's notes, with no partial credit and no alternative path. Everything else — difficulty, cleverness, theme — is secondary. A hard puzzle with three routes through it does not stall. An easy puzzle with one route stalls the moment nobody happens to think of it.",
+          "Almost every puzzle that kills an hour has the same shape: a single correct answer, held in the GM's notes, with no partial credit and no alternative path. Everything else (difficulty, cleverness, theme) is secondary. A hard puzzle with three routes through it does not stall. An easy puzzle with one route stalls the moment nobody happens to think of it.",
           'This is worth stating plainly because the usual advice, "make puzzles easier", treats the symptom. The problem is not that players are stuck on a difficult thing; it is that being stuck has no exit.',
         ],
       },
@@ -24,7 +24,7 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
         items: [
           {
             term: "More than one way through",
-            text: "The intended solution, plus a slower or costlier alternative. Force, bribery, a second entrance, or simply spending a resource. The second route should be genuinely worse, not equivalent — that is what preserves the puzzle's weight.",
+            text: "The intended solution, plus a slower or costlier alternative. Force, bribery, a second entrance, or simply spending a resource. The second route should be genuinely worse, not equivalent; that is what preserves the puzzle's weight.",
           },
           {
             term: "Failure that costs something other than time",
@@ -53,11 +53,11 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
           },
           {
             term: "The redesign",
-            text: "The riddle still opens the door cleanly. The hinges are also corroded and can be broken through in ten minutes of loud work — which draws whatever is in the flooded nave. The chapel's register, two rooms away, records the answer obliquely if anyone thinks to look. And each wrong answer spoken aloud drops the water level marker one notch, so guessing is possible but visibly expensive.",
+            text: "The riddle still opens the door cleanly. The hinges are also corroded and can be broken through in ten minutes of loud work, which draws whatever is in the flooded nave. The chapel's register, two rooms away, records the answer obliquely if anyone thinks to look. And each wrong answer spoken aloud drops the water level marker one notch, so guessing is possible but visibly expensive.",
           },
           {
             term: "What changed",
-            text: "The riddle is still the best solution and still feels like an achievement. But the party is never stuck — they are choosing between clever, loud and slow, and every one of those is a scene.",
+            text: "The riddle is still the best solution and still feels like an achievement. But the party is never stuck; they are choosing between clever, loud and slow, and every one of those is a scene.",
           },
         ],
       },
@@ -65,7 +65,7 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
         kind: "prose",
         heading: "Puzzles the characters solve, not the players",
         paragraphs: [
-          "There is a real design fault line here and no consensus about it, so pick a side deliberately. Some tables want puzzles their players solve out of character — lateral thinking, wordplay, logic — and treat character skills as irrelevant. Others want the character sheet to matter, so the puzzle is a task with a difficulty and the player's job is to decide how to approach it.",
+          "There is a real design fault line here and no consensus about it, so pick a side deliberately. Some tables want puzzles their players solve out of character (lateral thinking, wordplay, logic) and treat character skills as irrelevant. Others want the character sheet to matter, so the puzzle is a task with a difficulty and the player's job is to decide how to approach it.",
           "Both work. The failure is mixing them without saying so: presenting a riddle that only player insight can solve, then allowing an Investigation roll when the table gets frustrated, which teaches everyone that thinking was optional.",
           "If you do want player-facing puzzles, keep them physical and manipulable where you can. Something the players can hold, draw, or rearrange holds a table far better than a description read aloud twice.",
         ],

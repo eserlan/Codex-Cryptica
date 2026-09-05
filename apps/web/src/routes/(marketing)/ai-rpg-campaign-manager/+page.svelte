@@ -12,7 +12,7 @@
     subheading:
       "Prep sessions faster with an AI co-author that knows your campaign.",
     introText:
-      "Codex Cryptica combines a local-first campaign wiki with an integrated AI writing layer. Ask the Lore Oracle to draft an NPC for tonight's session, suggest a plot complication, or expand a location stub — all without leaving your notes and all stored privately on your device.",
+      "Codex Cryptica combines a local-first campaign wiki with an integrated AI writing layer. Ask the Lore Oracle to draft an NPC for tonight's session, suggest a plot complication, or expand a location stub, all without leaving your notes and all stored privately on your device.",
     ctaText: "Start Your AI-Assisted Campaign",
     secondaryCtaText: "Try free generators",
     secondaryCtaHref: "/tools",
@@ -33,7 +33,7 @@
       {
         title: "Local-First Privacy",
         description:
-          "All notes stay on your device. AI calls use your own API key or the shared proxy — nothing is stored on Codex servers.",
+          "All notes stay on your device. AI calls use your own API key or the shared proxy, and nothing is stored on Codex servers.",
         icon: "icon-[lucide--shield-check]",
       },
       {
@@ -65,7 +65,7 @@
       {
         question: "Can the AI see all my campaign notes?",
         answer:
-          "Only what you share with it. The Oracle reads selected entities you explicitly include in a prompt — nothing is sent automatically.",
+          "Only what you share with it. The Oracle reads selected entities you explicitly include in a prompt; nothing is sent automatically.",
       },
       {
         question: "Does it work offline?",

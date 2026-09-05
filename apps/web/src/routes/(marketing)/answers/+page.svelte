@@ -22,7 +22,7 @@
 
   const TITLE = "RPG and worldbuilding answers";
   const DESCRIPTION =
-    "Short, practical answers to questions that come up while running and building tabletop campaigns — point crawls, factions, pantheons, encounters, notes and more.";
+    "Short, practical answers to questions that come up while running and building tabletop campaigns: point crawls, factions, pantheons, encounters, notes and more.";
 
   let answers = $derived(data.answers);
 

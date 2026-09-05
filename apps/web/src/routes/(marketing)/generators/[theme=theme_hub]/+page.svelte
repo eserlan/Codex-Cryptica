@@ -96,7 +96,7 @@
       slug: "council-vote",
       label: "Council Vote Generator",
       summary:
-        "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+        "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision.",
       icon: "icon-[lucide--gavel]",
     },
     {
@@ -160,7 +160,7 @@
     slug: "random",
     label: "Surprise Me",
     summary:
-      "Not sure what to generate? Spin the machine — a random idea tuned to your active theme.",
+      "Not sure what to generate? Spin the machine: a random idea tuned to your active theme.",
     icon: "icon-[lucide--dices]",
   };
 
@@ -176,7 +176,7 @@
     slug: "ship-generator",
     label: "Ship Generator",
     summary:
-      "Generate a campaign-ready vessel — freighter, warship, scout, derelict, or colony ship — with crew, complication, secret, and hooks.",
+      "Generate a campaign-ready vessel: freighter, warship, scout, derelict, or colony ship, with crew, complication, secret, and hooks.",
     icon: "icon-[lucide--rocket]",
   };
 
@@ -192,7 +192,7 @@
     slug: "star-system",
     label: "Star System Generator",
     summary:
-      "Generate a coherent star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+      "Generate a coherent star system: star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
     icon: "icon-[lucide--orbit]",
   };
 
@@ -225,7 +225,7 @@
     slug: "language-generator",
     label: "Language Generator",
     summary:
-      "Design a fictional language profile — pronunciation, naming rules, example names, and a starter glossary tuned to your genre.",
+      "Design a fictional language profile: pronunciation, naming rules, example names, and a starter glossary tuned to your genre.",
     icon: "icon-[lucide--languages]",
   };
 
@@ -241,7 +241,7 @@
     slug: "social-hub",
     label: "Social Hub Generator",
     summary:
-      "Generate a social venue for your genre — dive bars, cantinas, nightclubs, or underground markets.",
+      "Generate a social venue for your genre: dive bars, cantinas, nightclubs, or underground markets.",
     icon: "icon-[lucide--map-pin]",
   };
 
@@ -306,7 +306,7 @@
       localStorageId: "fantasy",
       eyebrow: "Swords, Sorcery & Myth",
       intro:
-        "Build the high-fantasy worlds your players will never forget. From legendary kingdoms and divine pantheons to morally ambiguous guilds and cursed artefacts — every generator is tuned for classic fantasy campaigns.",
+        "Build the high-fantasy worlds your players will never forget. From legendary kingdoms and divine pantheons to morally ambiguous guilds and cursed artefacts, every generator is tuned for classic fantasy campaigns.",
       metaTitle:
         "Fantasy RPG Generators — NPC, Faction, Kingdom & More | Codex Cryptica",
       metaDescription:
@@ -323,7 +323,7 @@
         ...fantasyOnlyCards,
         newsSheetCard(
           "Broadsheet Generator",
-          "Generate a town-crier broadsheet — headlines, guild notices, market rumours, and classifieds, with GM-only hooks.",
+          "Generate a town-crier broadsheet: headlines, guild notices, market rumours, and classifieds, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -349,7 +349,7 @@
         nationCard,
         newsSheetCard(
           "Broadside Generator",
-          "Generate a shipboard broadside — harbour notices, prize claims, naval reports, and dockside rumours, with GM-only hooks.",
+          "Generate a shipboard broadside: harbour notices, prize claims, naval reports, and dockside rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -360,7 +360,7 @@
       localStorageId: "cyberpunk",
       eyebrow: "Neon, Megacorps & Chrome",
       intro:
-        "Neon-drenched streets, corporate warfare, and augmented outlaws. Generate megacorp factions, street-level fixers, and underground settlements for your cyberpunk campaign — all pre-tuned to the genre.",
+        "Neon-drenched streets, corporate warfare, and augmented outlaws. Generate megacorp factions, street-level fixers, and underground settlements for your cyberpunk campaign, all pre-tuned to the genre.",
       metaTitle:
         "Cyberpunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -379,7 +379,7 @@
         nationCard,
         newsSheetCard(
           "Screamsheet Generator",
-          "Generate a street screamsheet — corporate spin, gang violence, fixer rumours, and product ads, with GM-only hooks.",
+          "Generate a street screamsheet: corporate spin, gang violence, fixer rumours, and product ads, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -408,7 +408,7 @@
         nationCard,
         newsSheetCard(
           "Newsfeed Generator",
-          "Generate a station newsfeed — pirate alerts, megacorp claims, distress notices, and trade rumours, with GM-only hooks.",
+          "Generate a station newsfeed: pirate alerts, megacorp claims, distress notices, and trade rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -433,7 +433,7 @@
         nationCard,
         newsSheetCard(
           "Wasteland Bulletin Generator",
-          "Generate a bunker bulletin — trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
+          "Generate a bunker bulletin: trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
         ),
         alienRaceCard,
         languageCard,
@@ -459,7 +459,7 @@
         nationCard,
         newsSheetCard(
           "Tabloid Generator",
-          "Generate a local tabloid — cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
+          "Generate a local tabloid: cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
         ),
         alienRaceCard,
         languageCard,
@@ -471,7 +471,7 @@
       localStorageId: "lancer",
       eyebrow: "Mechs, Pilots & the Long Rim",
       intro:
-        "Bleed runs hot and the Long Rim doesn't wait. Build Union operatives, heterodox mech corps, frontier outpost factions, and NHP-adjacent NPCs for your Lancer campaign — every generator is tuned to the cockpit-terminal aesthetic and the weight of post-scarcity warfare.",
+        "Bleed runs hot and the Long Rim doesn't wait. Build Union operatives, heterodox mech corps, frontier outpost factions, and NHP-adjacent NPCs for your Lancer campaign; every generator is tuned to the cockpit-terminal aesthetic and the weight of post-scarcity warfare.",
       metaTitle:
         "Lancer RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -489,7 +489,7 @@
         nationCard,
         newsSheetCard(
           "Comms Digest Generator",
-          "Generate an outpost comms digest — Union bulletins, contractor notices, pilot rumours, and frontier alerts, with GM-only hooks.",
+          "Generate an outpost comms digest: Union bulletins, contractor notices, pilot rumours, and frontier alerts, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -500,7 +500,7 @@
       localStorageId: "steampunk",
       eyebrow: "Brass, Aether & Empire",
       intro:
-        "Gears grind, furnaces roar, and empires expand on the backs of the engine-workers. Build airship consortiums, guild conspiracies, aetheric laboratories, and desperate underclass rebels for your steampunk campaign — every generator is tuned to the smoke and brass of the industrial age.",
+        "Gears grind, furnaces roar, and empires expand on the backs of the engine-workers. Build airship consortiums, guild conspiracies, aetheric laboratories, and desperate underclass rebels for your steampunk campaign; every generator is tuned to the smoke and brass of the industrial age.",
       metaTitle:
         "Steampunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -515,7 +515,7 @@
         nationCard,
         newsSheetCard(
           "Penny Broadsheet Generator",
-          "Generate a penny broadsheet — guild scandals, patent disputes, sky-dock notices, and agitator rumours, with GM-only hooks.",
+          "Generate a penny broadsheet: guild scandals, patent disputes, sky-dock notices, and agitator rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -541,7 +541,7 @@
         nationCard,
         newsSheetCard(
           "Occult Tabloid Generator",
-          "Generate an occult tabloid — supernatural cover-ups, disappearances, ominous notices, and weird classifieds, with GM-only hooks.",
+          "Generate an occult tabloid: supernatural cover-ups, disappearances, ominous notices, and weird classifieds, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -552,7 +552,7 @@
       localStorageId: "cosmic_horror",
       eyebrow: "The Unknown Beneath & Beyond",
       intro:
-        "Build investigations shaped by impossible environments, forgotten expeditions, strange archaeology, and discoveries too large to explain away. These generators favour original eldritch mysteries, fragile certainty, and alien scale—not vampire courts or gothic-noir intrigue.",
+        "Build investigations shaped by impossible environments, forgotten expeditions, strange archaeology, and discoveries too large to explain away. These generators favour original eldritch mysteries, fragile certainty, and alien scale, not vampire courts or gothic-noir intrigue.",
       metaTitle:
         "Cosmic Horror RPG Generators — Investigators, Mysteries & More | Codex Cryptica",
       metaDescription:
@@ -565,7 +565,7 @@
         socialHubCard,
         newsSheetCard(
           "Field Report Generator",
-          "Generate a field report — missing expeditions, astronomical anomalies, restricted notices, and unsettling leads, with GM-only hooks.",
+          "Generate a field report: missing expeditions, astronomical anomalies, restricted notices, and unsettling leads, with GM-only hooks.",
         ),
         alienRaceCard,
         languageCard,
@@ -577,7 +577,7 @@
       localStorageId: "western",
       eyebrow: "Six-Guns, Trails & Dust",
       intro:
-        "Dusty borderlands, rowdy saloons, and dangerous outlaws. Generate frontier settlements, bounty quests, gunslinger NPCs, and rail-baron factions for your Western campaign — all pre-tuned to the genre.",
+        "Dusty borderlands, rowdy saloons, and dangerous outlaws. Generate frontier settlements, bounty quests, gunslinger NPCs, and rail-baron factions for your Western campaign, all pre-tuned to the genre.",
       metaTitle:
         "Western RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -592,7 +592,7 @@
         nationCard,
         newsSheetCard(
           "Frontier Newspaper Generator",
-          "Generate a frontier weekly — telegraph dispatches, outlaw sightings, wanted notices, and saloon rumours, with GM-only hooks.",
+          "Generate a frontier weekly: telegraph dispatches, outlaw sightings, wanted notices, and saloon rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -621,7 +621,7 @@
         nationCard,
         newsSheetCard(
           "Underground Broadcast Generator",
-          "Generate a resistance broadcast — imperial propaganda, smuggler notices, sector alerts, and rebel rumours, with GM-only hooks.",
+          "Generate a resistance broadcast: imperial propaganda, smuggler notices, sector alerts, and rebel rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -650,7 +650,7 @@
         nationCard,
         newsSheetCard(
           "Station Newsfeed Generator",
-          "Generate a station promenade daily — survey reports, diplomatic notices, academy news, and dockside rumours, with GM-only hooks.",
+          "Generate a station promenade daily: survey reports, diplomatic notices, academy news, and dockside rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -661,7 +661,7 @@
       localStorageId: "space-western",
       eyebrow: "Frontier Scoundrels & Asteroid Rigs",
       intro:
-        "Battered freighters, lawless asteroid boomtowns, mining syndicates, and high-stakes smuggling runs. Generate frontier settlements, scoundrel NPCs, rust-bucket starships, and bounty contracts for your space western campaign — all free and pre-tuned.",
+        "Battered freighters, lawless asteroid boomtowns, mining syndicates, and high-stakes smuggling runs. Generate frontier settlements, scoundrel NPCs, rust-bucket starships, and bounty contracts for your space western campaign, all free and pre-tuned.",
       metaTitle:
         "Space Western RPG Generators — NPC, Ship, Faction & More | Codex Cryptica",
       metaDescription:
@@ -679,7 +679,7 @@
         nationCard,
         newsSheetCard(
           "Rim-World Gazette Generator",
-          "Generate a frontier news bulletin — bounty warrants, mining claim disputes, customs warnings, and cantina rumours, with GM-only hooks.",
+          "Generate a frontier news bulletin: bounty warrants, mining claim disputes, customs warnings, and cantina rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,

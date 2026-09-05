@@ -15,7 +15,7 @@ image: "https://assets.codexcryptica.com/images/blog/default-templates/creation-
 imageAlt: "Create Entity Dialog with default format option in Codex Cryptica"
 ---
 
-Starting a new character, location, or faction shouldn't start with staring at a blinking cursor on a blank screen. That cognitive friction—the "blank page syndrome"—is the enemy of creative flow.
+Starting a new character, location, or faction shouldn't start with staring at a blinking cursor on a blank screen. That cognitive friction, the "blank page syndrome," is the enemy of creative flow.
 
 With the release of **Default Entity Templates**, Codex Cryptica now gives every new note a head start. Start a space smuggler or a ruins complex and your archive fills in a structure built for that entity type.
 
