@@ -136,6 +136,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-prep-a-weekly-rpg-session-quickly",
       "how-do-you-run-a-mystery-without-railroading",
+      "how-to-write-an-in-world-newspaper-for-an-rpg",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",

@@ -133,6 +133,7 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
     "how-do-you-prep-a-weekly-rpg-session-quickly",
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "how-do-you-start-worldbuilding-from-scratch",
+    "how-to-write-an-in-world-newspaper-for-an-rpg",
   ],
   discovery: {
     id: "answer-track-time-in-campaign",
