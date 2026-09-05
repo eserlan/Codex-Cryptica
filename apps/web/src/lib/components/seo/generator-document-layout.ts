@@ -194,11 +194,16 @@ const LAYOUT_RULES: LayoutRule[] = [
   {
     label: "heist",
     // Everything else the heist writes — Hidden Factor, Security Rings,
-    // Complications, The Getaway — is narrative payoff a GM reads through,
-    // not a lookup. Only the two genuinely at-a-glance sections stay in the
-    // rail: the alarm ladder is consulted every time the track ticks, and
-    // the flashback list is a menu the GM offers mid-scene.
-    railSections: new Set(["Alarm Track", "Flashback Opportunities"]),
+    // Complications, When the Prize Is Taken, The Getaway — is narrative
+    // payoff a GM reads through, not a lookup. The rail keeps the three
+    // genuinely at-a-glance sections: the 30-second summary, the alarm ladder
+    // consulted every time the track ticks, and the flashback menu the GM
+    // offers mid-scene.
+    railSections: new Set([
+      "GM Quick Reference",
+      "Alarm Track",
+      "Flashback Opportunities",
+    ]),
   },
   {
     label: "encounter-generator",

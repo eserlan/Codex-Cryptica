@@ -515,6 +515,7 @@ describe("heist generator", () => {
     // … followed by the shared public framework.
     expect(prompt).toContain("- Heist Type: Sabotage");
     expect(prompt).toContain("- Target Scale: Legendary");
+    expect(prompt).toContain("### GM Quick Reference");
     for (const heading of [
       "### The Score",
       "### The Prize",
@@ -522,6 +523,7 @@ describe("heist generator", () => {
       "### Security Rings",
       "### Alarm Track",
       "### Complications",
+      "### When the Prize Is Taken",
       "### The Getaway",
       "### Flashback Opportunities",
     ]) {
@@ -540,7 +542,8 @@ describe("heist generator", () => {
     expect(draft.lore).toContain("- **Inner Vault**");
     expect(draft.lore).toContain("**0 — Quiet**");
     expect(draft.lore).toContain("**4 — Lethal Response**");
-    expect(draft.lore).toContain("**When the prize is taken:**");
+    expect(draft.lore).toContain("### GM Quick Reference");
+    expect(draft.lore).toContain("### When the Prize Is Taken");
     expect(draft.labels).toContain("heist");
     expect(draft.labels).toContain("Theft");
   });

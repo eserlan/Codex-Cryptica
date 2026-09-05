@@ -22,10 +22,12 @@ describe("generateHeistLocal", () => {
     expect(out.content).toContain("### The Score");
     expect(out.content).toContain("### The Prize");
     expect(out.content).toContain("### Casing the Target");
+    expect(out.lore).toContain("### GM Quick Reference");
     expect(out.lore).toContain("### The Hidden Factor");
     expect(out.lore).toContain("### Security Rings");
     expect(out.lore).toContain("### Alarm Track");
     expect(out.lore).toContain("### Complications");
+    expect(out.lore).toContain("### When the Prize Is Taken");
     expect(out.lore).toContain("### The Getaway");
     expect(out.lore).toContain("### Flashback Opportunities");
     expect(out.labels).toContain("heist");
@@ -53,10 +55,69 @@ describe("generateHeistLocal", () => {
     }
   });
 
-  it("marks exactly one complication as the default and fires a trigger on the lift", () => {
+  it("marks exactly one complication as the default", () => {
     const out = generateHeistLocal({}, seededRng(12));
     expect(out.lore.match(/\(default\)/g)?.length).toBe(1);
-    expect(out.lore).toContain("**When the prize is taken:**");
+  });
+
+  it("gives the point of no return its own section that feeds the getaway", () => {
+    const out = generateHeistLocal({}, seededRng(12));
+    const section = out.lore
+      .split("### When the Prize Is Taken")[1]
+      .split("### ")[0];
+    // The trigger fires, escalates the alarm, and closes the way in — and the
+    // getaway opens from that same closure rather than an unrelated reason.
+    expect(section).toContain("**2 — Alert**");
+    expect(section).toContain("the crew's way in closes behind them");
+    expect(heistConfig.routeClosures.some((c) => section.includes(c))).toBe(
+      true,
+    );
+    expect(out.lore).toContain(
+      "The service route from the casing is gone for exactly that reason",
+    );
+  });
+
+  it("summarises the whole heist in a seven-line GM quick reference", () => {
+    const out = generateHeistLocal({}, seededRng(15));
+    const section = out.lore
+      .split("### GM Quick Reference")[1]
+      .split("### ")[0];
+    for (const line of [
+      "**Objective**",
+      "**Primary obstacle**",
+      "**Hidden factor**",
+      "**Point of no return**",
+      "**Pressure**",
+      "**Default complication**",
+      "**Escape problem**",
+    ]) {
+      expect(section, `missing quick-reference line ${line}`).toContain(line);
+    }
+    expect(section.match(/^- /gm)?.length).toBe(7);
+  });
+
+  it("states the pressure with a trigger that can fire inside one infiltration", () => {
+    const out = generateHeistLocal({}, seededRng(3));
+    const pressure = Object.values(heistConfig.pressureByComplication).find(
+      (p) => out.content.includes(p),
+    );
+    expect(pressure).toBeDefined();
+    // No wall-clock rates that would never come up during a single job.
+    expect(out.content).not.toMatch(/once per hour|per day|each week/i);
+  });
+
+  it("leaves a costly option open at the top of the alarm track", () => {
+    const out = generateHeistLocal({}, seededRng(5));
+    const lethal = out.lore.split("**4 — Lethal Response**")[1].split("\n")[0];
+    expect(lethal).toMatch(/drawn off|bargained with|given something/);
+  });
+
+  it("offers four to six flashback prompts rather than a long list", () => {
+    const out = generateHeistLocal({}, seededRng(7));
+    const section = out.lore.split("### Flashback Opportunities")[1];
+    const count = section.match(/^- /gm)?.length ?? 0;
+    expect(count).toBeGreaterThanOrEqual(4);
+    expect(count).toBeLessThanOrEqual(6);
   });
 
   it("gives the prize a practical complication drawn from the config", () => {
@@ -67,11 +128,13 @@ describe("generateHeistLocal", () => {
     expect(label).toBeDefined();
   });
 
-  it("compromises the original route and offers alternates plus a pursuit", () => {
+  it("offers alternate routes that differ in kind, plus a pursuit", () => {
     const out = generateHeistLocal({}, seededRng(8));
-    expect(out.lore).toContain("Alternate route A");
-    expect(out.lore).toContain("Alternate route B");
-    expect(out.lore).toContain("**Pursuit**:");
+    const section = out.lore.split("### The Getaway")[1].split("### ")[0];
+    expect(section).toContain("**Fast but exposed**");
+    expect(section).toContain("**Covert but slow**");
+    expect(section).toContain("**Hard route**");
+    expect(section).toContain("**Pursuit**:");
   });
 
   it("honours explicit options and campaign context", () => {
@@ -187,10 +250,53 @@ describe("buildHeistPrompt", () => {
       'exactly one complication is marked "(default)"',
     );
     expect(userMessage).toContain(
-      'the compromised route in "The Getaway" is the same route the crew entered by',
+      'the route lost in "The Getaway" is the one "When the Prize Is Taken" closes, and is the one the crew entered by',
     );
     expect(userMessage).toContain(
-      "each of the three security rings names at least two different approaches",
+      "nothing offered as a solution may be something an earlier rule declared impossible",
+    );
+    expect(userMessage).toContain(
+      "each security ring names at least two genuinely different approaches",
+    );
+    expect(userMessage).toContain("level 4 still leaves a costly option");
+  });
+
+  it("demands system-neutral effects when no system is selected", () => {
+    const { userMessage, resolved } = buildHeistPrompt({}, "", seededRng(1));
+    expect(resolved.system).toBe("System-neutral");
+    expect(userMessage).toContain("keep every effect system-neutral");
+    expect(userMessage).toContain(
+      "Do not use rounds, turns, saving throws, DCs, checks, advantage/disadvantage, hit points, damage numbers",
+    );
+  });
+
+  it("allows system mechanics once a supported system is selected", () => {
+    const { userMessage, resolved } = buildHeistPrompt(
+      { system: "D&D 5e" },
+      "",
+      seededRng(1),
+    );
+    expect(resolved.system).toBe("D&D 5e");
+    expect(userMessage).toContain("The table is playing D&D 5e");
+    expect(userMessage).not.toContain("keep every effect system-neutral");
+  });
+
+  it("ignores an unrecognised system rather than passing it through", () => {
+    const { resolved } = buildHeistPrompt(
+      { system: "Made Up Game" },
+      "",
+      seededRng(1),
+    );
+    expect(resolved.system).toBe("System-neutral");
+  });
+
+  it("names the pressure and its trigger in the options block", () => {
+    const { userMessage, resolved } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain(
+      `- Pressure (what that complication costs during play, and when it bites): ${resolved.pressure}`,
+    );
+    expect(Object.values(heistConfig.pressureByComplication)).toContain(
+      resolved.pressure,
     );
   });
 
