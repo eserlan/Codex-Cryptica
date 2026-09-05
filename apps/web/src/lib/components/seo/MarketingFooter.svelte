@@ -13,9 +13,10 @@
 <!--
   Deliberately minimal (#2760): everything that isn't a legal requirement or
   the single onward-navigation link lives on /explore instead, which is built
-  to carry that weight. Community links (Discord, GitHub, Reddit, Patreon),
-  Sitemap, LLM Docs and the Groupfinder badge moved to /explore's
-  "Community & Legal" section rather than being duplicated here.
+  to carry that weight. Community links (Discord, GitHub, Reddit, Patreon)
+  and Sitemap/LLM Docs moved into /explore's "Community & Legal" section;
+  the Groupfinder badge moved to /explore too, as its own element below that
+  section rather than being duplicated here.
 -->
 <!-- chrome-shield: see app.css and #2578. -->
 <footer
