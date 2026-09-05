@@ -115,6 +115,7 @@ import {
 } from "./public-secret-society";
 import {
   buildHeistPrompt,
+  DEFAULT_HEIST_SYSTEM,
   generateHeistLocal,
   heistConfig,
   type HeistGeneratorOptions,
@@ -3185,7 +3186,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       heistType: "",
       targetScale: "",
       targetType: "",
-      system: "System-neutral",
+      system: DEFAULT_HEIST_SYSTEM,
       prize: "",
     },
     generate: generateHeist,

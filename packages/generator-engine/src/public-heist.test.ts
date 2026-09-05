@@ -281,6 +281,14 @@ describe("buildHeistPrompt", () => {
     expect(userMessage).not.toContain("keep every effect system-neutral");
   });
 
+  it("allows only short in-scene pressure intervals, not wall-clock cadence", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("a short in-scene interval of minutes");
+    expect(userMessage).toContain(
+      "Never a long wall-clock cadence such as once an hour, once a day, or once a week",
+    );
+  });
+
   it("ignores an unrecognised system rather than passing it through", () => {
     const { resolved } = buildHeistPrompt(
       { system: "Made Up Game" },
