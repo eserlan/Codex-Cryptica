@@ -77,14 +77,14 @@ const DELVE_WHO_THEY_ARE_INTROS = [
   (name: string, race: string, role: string, sector: string) =>
     `In ${sector}, ${name} is the answer to most questions. This ${race} ${role} has settled in deep enough that other inhabitants plan around them by default.`,
   (name: string, race: string, role: string, sector: string) =>
-    `${name} did not just move into ${sector} — this ${race} ${role} took it over, and the surrounding sectors have adjusted accordingly.`,
+    `${name} moved into ${sector} and took it over; this ${race} ${role} runs it now, and the surrounding sectors have adjusted accordingly.`,
 ] as const;
 
 const DELVE_WHY_USEFUL_INTROS = [
   () =>
     "Getting past them means picking a lane: talk your way through, slip by unseen, or fight.",
   () =>
-    "There is no route deeper that skips them entirely — the party will end up choosing how to deal with them, not whether to.",
+    "Every route deeper runs through them; the party has to decide how they deal with them, not if.",
   () =>
     "Sooner or later the party has to reckon with them directly, by words, by stealth, or by force.",
   () =>
@@ -135,7 +135,7 @@ export function generateNpcDossierLocal(
   const wantCloser = pickFrom(WHAT_THEY_WANT_CLOSERS, rng);
 
   const usefulIntro = isDelve
-    ? `${delveRelation} ${pickFrom(DELVE_WHY_USEFUL_INTROS, rng)()}`
+    ? `${delveRelation ?? "Their tie to the rest of the delve"} ${pickFrom(DELVE_WHY_USEFUL_INTROS, rng)()}`
     : pickFrom(WHY_USEFUL_INTROS, rng)(role, faction);
 
   const howIntro = isDelve
