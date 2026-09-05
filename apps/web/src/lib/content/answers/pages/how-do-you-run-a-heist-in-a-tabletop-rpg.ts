@@ -20,6 +20,32 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     },
     {
       kind: "list",
+      heading: "Systems worth studying for heist mechanics",
+      intro:
+        "If you want the rules to carry more of the heist structure, these games offer useful mechanics to borrow or play as written:",
+      items: [
+        {
+          term: "Blades in the Dark: flashbacks, stress, and clocks",
+          text: "Flashbacks let players establish preparations when they become relevant, while stress gives those preparations a cost. Clocks make guards, alarms, and rival crews advance in visible steps. Together, the mechanics turn a failed roll into a new pressure rather than a request to restart the plan.",
+        },
+        {
+          term: "Leverage: assets, complications, and reversals",
+          text: "Leverage builds the caper around changing advantages. Players can establish useful assets through flashbacks, while complications keep a successful approach from becoming automatic. This suits groups who want the feel of a television con job, with regular reveals and reversals.",
+        },
+        {
+          term: "The Sprawl: legwork, mission moves, and threat clocks",
+          text: "The Sprawl separates investigation and preparation from the action phase, then uses mission and threat clocks to make earlier choices matter once the operation starts. It is a strong model for cyberpunk or criminal campaigns where the team needs to manage both the target and the organisations reacting to them.",
+        },
+        {
+          term: "A bolt-on for traditional fantasy systems",
+          text: "You do not need to change systems. Add one flashback resource per character, one clock for detection, and a consequence table for failed checks. Charge the resource when a preparation is especially unlikely, expensive, or powerful, so the mechanic creates decisions rather than free solutions.",
+        },
+      ],
+      outro:
+        "The important design choice is deciding what the rules should protect: character competence, escalating pressure, or the surprise of a well-timed reversal.",
+    },
+    {
+      kind: "list",
       heading: "The four-phase heist structure",
       intro:
         "Organise your heist session around these four distinct operational beats:",
