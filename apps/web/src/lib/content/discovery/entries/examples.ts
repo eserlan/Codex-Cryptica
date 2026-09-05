@@ -194,6 +194,26 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "example-nkiru-okafor",
+    pageKind: "example",
+    canonicalPath: "/examples/nkiru-okafor-cyberpunk-npc-table-card",
+    primaryIntent: "cyberpunk npc example",
+    intentAliases: [
+      "table card npc example",
+      "quick npc generator example",
+      "example of a condensed npc",
+      "sample rpg npc",
+    ],
+    audience: "GMs prepping a session under time pressure",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A condensed Table Card NPC (immediate want, mannerism, contradiction, relationship hook, sensory tag) showing that five sharp cues can be enough to run a character, in contrast to the full-dossier villain example.",
+    parentCluster: "npc-creation",
+    relatedIntents: ["generator-npc", "for-cyberpunk-red"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "example-letters-of-marque-expired",
     pageKind: "example",
     canonicalPath: "/examples/letters-of-marque-expired-pirate-adventure",
