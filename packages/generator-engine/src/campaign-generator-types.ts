@@ -33,7 +33,8 @@ export type GeneratorId =
   | "alien-race"
   | "creature"
   | "random-table"
-  | "encounter";
+  | "encounter"
+  | "heist";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -61,6 +62,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "creature",
   "random-table",
   "encounter",
+  "heist",
 ] as const;
 
 /** A user-configurable field for a generator. */

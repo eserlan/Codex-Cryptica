@@ -68,6 +68,7 @@ describe("registry lookup", () => {
       "creature",
       "random-table",
       "encounter",
+      "heist",
     ]);
   });
 
@@ -493,6 +494,55 @@ describe("secret-society generator", () => {
     expect(
       getGenerator("secret-society").generate(run("secret-society")).lore,
     ).toContain("Follow-Up Suggestions");
+  });
+});
+
+describe("heist generator", () => {
+  it("maps to the note vault category", () => {
+    expect(GENERATOR_ENTITY_TYPE.heist).toBe("note");
+    expect(getGenerator("heist").entityType).toBe("note");
+  });
+
+  it("builds a prompt carrying the vault context chain and the full heist framework", () => {
+    const prompt = getGenerator("heist").buildPrompt(
+      run("heist", {
+        instructions: "the crew owes the Ashgrove syndicate a favour",
+        options: { heistType: "Sabotage", targetScale: "Legendary" },
+      }),
+    );
+    // Context chain (the in-app surface's reason for existing) …
+    expect(prompt).toContain("the crew owes the Ashgrove syndicate a favour");
+    // … followed by the shared public framework.
+    expect(prompt).toContain("- Heist Type: Sabotage");
+    expect(prompt).toContain("- Target Scale: Legendary");
+    for (const heading of [
+      "### The Score",
+      "### The Prize",
+      "### Casing the Target",
+      "### Security Rings",
+      "### Alarm Track",
+      "### Complications",
+      "### The Getaway",
+      "### Flashback Opportunities",
+    ]) {
+      expect(prompt).toContain(heading);
+    }
+    expect(prompt).toContain("run a consistency pass");
+  });
+
+  it("generates a local fallback with layered security and an escalating alarm track", () => {
+    const draft = getGenerator("heist").generate(
+      run("heist", { options: { heistType: "Theft", targetScale: "Major" } }),
+    );
+    expect(draft.content).toContain("### The Score");
+    expect(draft.lore).toContain("- **Perimeter**");
+    expect(draft.lore).toContain("- **Access**");
+    expect(draft.lore).toContain("- **Inner Vault**");
+    expect(draft.lore).toContain("**0 — Quiet**");
+    expect(draft.lore).toContain("**4 — Lethal Response**");
+    expect(draft.lore).toContain("**When the prize is taken:**");
+    expect(draft.labels).toContain("heist");
+    expect(draft.labels).toContain("Theft");
   });
 });
 
@@ -1499,6 +1549,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       creature: "creature",
       "random-table": "table",
       encounter: "note",
+      heist: "note",
     });
   });
 

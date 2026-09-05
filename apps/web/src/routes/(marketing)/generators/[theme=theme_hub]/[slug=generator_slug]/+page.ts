@@ -42,6 +42,7 @@ const validSlugs = new Set([
   "alien-race",
   "creature",
   "encounter",
+  "heist",
 ]);
 
 export const load: PageLoad = ({ params }) => {
