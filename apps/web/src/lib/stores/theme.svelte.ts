@@ -500,7 +500,7 @@ export class ThemeStore {
     );
 
     // Semantic tokens for cross-surface contrast compliance
-    root.style.setProperty("--text-primary", tokens.titleInk ?? tokens.text);
+    root.style.setProperty("--text-primary", tokens.text);
     root.style.setProperty(
       "--text-secondary",
       tokens.sectionTitle ?? tokens.secondary,

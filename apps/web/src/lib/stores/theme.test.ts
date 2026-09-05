@@ -238,7 +238,7 @@ describe("ThemeStore", () => {
       expect(root.style.getPropertyValue("--color-text-dim")).toBe("#bfa68b");
 
       // Semantic tokens
-      expect(root.style.getPropertyValue("--text-primary")).toBe("#f1eee5");
+      expect(root.style.getPropertyValue("--text-primary")).toBe("#e8ddc4");
       expect(root.style.getPropertyValue("--text-secondary")).toBe("#d4a85a");
       expect(root.style.getPropertyValue("--text-muted")).toBe("#bfa68b");
       expect(root.style.getPropertyValue("--link")).toBe("#d4a85a");

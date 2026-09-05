@@ -255,7 +255,7 @@
   }
   [data-theme="fantasy_dark"] {
     --color-text-muted: #bfa68b;
-    --color-text-dim: #9e856e;
+    --color-text-dim: #bfa68b;
     --text-primary: #e8ddc4;
     --text-secondary: #d4a85a;
     --text-muted: #bfa68b;
