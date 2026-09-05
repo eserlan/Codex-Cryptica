@@ -6,6 +6,20 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-09-05 — Nkiru Okafor NPC Table Card example (ad hoc)
+
+- **Text:** Meet Nkiru Okafor, a ruthless street fixer who goes pale at blood. She needs a stolen biotech case through a checkpoint in twenty minutes.
+
+  An NPC Table Card example from Codex Cryptica:
+  codexcryptica.com/examples/nkiru-okafor-cyberpunk-npc-table-card
+
+  #TTRPG #Worldbuilding
+
+- **Image:** `https://assets.codexcryptica.com/announcements/character-nkiru-okafor-square-v1.jpg` — centred 768x768 crop of the example page's artwork
+- **Alt:** Nkiru Okafor, a cyberpunk street fixer in dark techwear, stands in a rain-soaked neon alley with glowing orange tape on her hand and a biotech case beside her.
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3murztv43ad2q
+- **Note:** User-approved example showcase, following an earlier announcement of the Table Card format. Posted ad hoc, not from the backlog.
+
 ### 2026-08-26 — Encounter Generator (ad hoc)
 
 - **Text:** Rolling a random encounter gave me a monster and a number. I still had to invent why it was there.
