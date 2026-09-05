@@ -9,6 +9,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "artifact-generator",
   "faction",
   "quest",
+  "rumour",
   "puzzle",
   "item",
   "tavern",

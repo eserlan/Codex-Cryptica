@@ -239,6 +239,15 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  buildRumourPrompt,
+  parseRumourResponse,
+  generateRumourLocal,
+  rumourConfig,
+  type RumourGeneratorOptions,
+  type RumourPrompt,
+  type RumourReality,
+} from "./public-rumour";
+export {
   buildEncounterPrompt,
   parseEncounterResponse,
   generateEncounterLocal,

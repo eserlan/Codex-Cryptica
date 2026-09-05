@@ -56,6 +56,12 @@ import {
   type QuestGeneratorOptions,
 } from "./public-quest";
 import {
+  buildRumourPrompt,
+  generateRumourLocal,
+  rumourConfig,
+  type RumourGeneratorOptions,
+} from "./public-rumour";
+import {
   buildPuzzlePrompt,
   DEFAULT_PUZZLE_SYSTEM,
   generatePuzzleLocal,
@@ -134,6 +140,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   quest: "event",
+  rumour: "note",
   puzzle: "note",
   villain: "character",
   world: "location",
@@ -1013,6 +1020,40 @@ function generateQuest(request: GeneratorRunRequest): GeneratorOutput {
 
 function questPrompt(request: GeneratorRunRequest): string {
   const prompt = buildQuestPrompt(questOptions(request), contextChain(request));
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function rumourOptions(request: GeneratorRunRequest): RumourGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    tone: optionString(request, "tone", ""),
+    dangerLevel: optionString(request, "dangerLevel", ""),
+    subjectFocus: optionString(request, "subjectFocus", ""),
+    locationContext: optionString(request, "locationContext", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateRumour(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateRumourLocal(rumourOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function rumourPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildRumourPrompt(
+    rumourOptions(request),
+    contextChain(request),
+  );
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
@@ -2277,6 +2318,63 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateQuest,
     mapOutputToDraft: mapOutputToDraft("quest"),
     buildPrompt: questPrompt,
+  },
+  rumour: {
+    id: "rumour",
+    label: "Rumour",
+    description:
+      "Generate a d6 table of 6 local rumours — lighter than a quest hook, each with a concrete lead the players can pursue.",
+    entityType: GENERATOR_ENTITY_TYPE.rumour,
+    defaultInstruction:
+      "A d6 table of six local rumours grounded in the campaign, each naming a specific site, NPC, faction, or item the players can pursue, with GM-only truth notes kept separate from the player-facing text.",
+    icon: "lucide:ear",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: rumourConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: rumourConfig.tones.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "dangerLevel",
+        label: "Danger Level",
+        control: "select",
+        choices: rumourConfig.dangerLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "subjectFocus",
+        label: "Subject Focus",
+        control: "select",
+        choices: rumourConfig.subjects.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "locationContext",
+        label: "Settlement / Location",
+        control: "text",
+      },
+    ],
+    defaults: {
+      genre: "",
+      tone: "",
+      dangerLevel: "",
+      subjectFocus: "",
+      locationContext: "",
+    },
+    generate: generateRumour,
+    mapOutputToDraft: mapOutputToDraft("rumour"),
+    buildPrompt: rumourPrompt,
   },
   puzzle: {
     id: "puzzle",

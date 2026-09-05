@@ -29,8 +29,15 @@
 **Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant string generation and formatting logic (`syncSourceFromVisualCards`) to serialize internal visual structures into a source string, this serialization logic can be cleanly extracted to a sibling `.ts` file (`visual-card-serializer.ts`). State dependencies (like `schema.fields` and `fieldDisplayOverrides`) should be refactored into function parameters, returning the final string which the component then assigns to its local state. This drastically improves the readability of the component, and also makes the serialization logic fully unit-testable.
 
 **Action:** Extract large serialization or string-formatting functions into sibling `.ts` files, passing any component state as explicit parameters.
+
 ## 2025-02-28 - Extract Entity List Empty States
 
 **Learning:** Extracted multiple EmptyState conditionals from `EntityList.svelte` (a massive ~900 line component mixing grouping, tree building, sorting, and UI) into dedicated `EntityEmptyState.svelte` and `EntitySearchEmptyState.svelte` presentational components. This reduces JSX verbosity, especially since the "create" intent handler involves fetching global modal states. It keeps the core explorer list rendering cleaner and makes empty state behavior easier to read at a glance.
 
 **Action:** Look for heavy conditional `EmptyState` blocks inside large list components (like `EntityList` or `SourceWorkspace`), particularly those that handle conditional logic based on permissions (like `vault.isGuest`) or dispatch complex UI intents, and extract them into narrow-purpose subcomponents.
+
+## 2026-09-05 - Extract Canvas Workspace Drawing State
+
+**Learning:** Svelte 5 components with overly complex local view state handling multiple disparate interaction contexts (e.g., node interaction vs freehand drawing vs modal states) can cause god-files that are extremely large.
+
+**Action:** Extract interaction-specific sub-features (like CanvasDrawing pointer state management) into custom `use-*` hooks, delegating access and updates to the `logic` store or exposing handlers which simplifies the parent component significantly without changing runtime behaviour.

@@ -56,6 +56,7 @@ describe("registry lookup", () => {
       "dungeon",
       "adventure",
       "quest",
+      "rumour",
       "puzzle",
       "plot-twist",
       "villain",
@@ -185,6 +186,42 @@ describe("registry lookup", () => {
     expect(draft).toMatchObject({
       entityType: "event",
       sourceGeneratorId: "quest",
+    });
+  });
+
+  it("builds and generates a d6 rumour table as a note draft", () => {
+    const generator = getGenerator("rumour");
+    const request = run("rumour", {
+      options: {
+        genre: "Classic Fantasy",
+        tone: "Gossipy",
+        dangerLevel: "Moderate",
+        subjectFocus: "Balanced Mix",
+        locationContext: "Greywick Landing",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.rumour).toBe("note");
+    expect(generator.buildPrompt(request)).toContain(
+      "Generate a d6 table of 6 local rumours",
+    );
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["rumour-generator", "local-rumours"]),
+    );
+    for (let i = 1; i <= 6; i++) {
+      expect(output.content).toContain(`### Rumour ${i}`);
+      expect(output.lore).toContain(`### GM Notes — Rumour ${i}`);
+    }
+    // Player-facing content must never leak truth status.
+    expect(output.content).not.toMatch(
+      /reality|essentially true|misconception/i,
+    );
+    expect(draft).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "rumour",
     });
   });
 
@@ -1450,6 +1487,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       dungeon: "location",
       adventure: "note",
       quest: "event",
+      rumour: "note",
       puzzle: "note",
       "plot-twist": "note",
       villain: "character",

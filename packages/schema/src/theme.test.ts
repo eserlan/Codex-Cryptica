@@ -52,6 +52,64 @@ describe("Theme Schema & Definitions", () => {
     expect(fantasy.graph.edgeWidth).toBeLessThanOrEqual(2); // Reduced from 3
   });
 
+  it("defines FANTASY_DARK with WCAG AA compliant text contrast and complete semantic tokens", () => {
+    expect(FANTASY_DARK).toBeDefined();
+    expect(FANTASY_DARK.id).toBe("fantasy_dark");
+    expect(() => StylingTemplateSchema.parse(FANTASY_DARK)).not.toThrow();
+
+    const tokens = FANTASY_DARK.tokens;
+
+    // Helper for relative luminance according to WCAG 2.1/2.2 specs
+    function relativeLuminance(hex: string): number {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      const [cr, cg, cb] = [r, g, b].map((c) =>
+        c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
+      );
+      return 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
+    }
+
+    function contrastRatio(hex1: string, hex2: string): number {
+      const l1 = relativeLuminance(hex1);
+      const l2 = relativeLuminance(hex2);
+      const lighter = Math.max(l1, l2);
+      const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    // Backgrounds: canvas background (#1c1410), surface (#2a1e16), effective textured background (#241c18)
+    const backgrounds = [tokens.background, tokens.surface, "#241c18"];
+
+    for (const bg of backgrounds) {
+      // 1.4.3 Normal body text (>= 4.5:1)
+      expect(contrastRatio(tokens.text, bg)).toBeGreaterThanOrEqual(4.5);
+
+      // 1.4.3 Secondary / muted readable text (>= 4.5:1)
+      expect(contrastRatio(tokens.secondary, bg)).toBeGreaterThanOrEqual(4.5);
+      expect(tokens.metaText).toBeDefined();
+      expect(contrastRatio(tokens.metaText!, bg)).toBeGreaterThanOrEqual(4.5);
+
+      // Links / interactive primary text (>= 4.5:1)
+      expect(contrastRatio(tokens.primary, bg)).toBeGreaterThanOrEqual(4.5);
+
+      // 1.4.11 Non-text contrast: interactive icons and focus indicator (>= 3:1)
+      expect(tokens.iconDefault).toBeDefined();
+      expect(contrastRatio(tokens.iconDefault!, bg)).toBeGreaterThanOrEqual(
+        3.0,
+      );
+      expect(tokens.iconActive).toBeDefined();
+      expect(contrastRatio(tokens.iconActive!, bg)).toBeGreaterThanOrEqual(3.0);
+      expect(tokens.focus).toBeDefined();
+      expect(contrastRatio(tokens.focus!, bg)).toBeGreaterThanOrEqual(3.0);
+    }
+
+    // CTA Open Codex button contrast: action text against action background
+    expect(
+      contrastRatio(tokens.actionText!, tokens.actionBg!),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("defines the Pirate light and dark themes with nautical contrast tokens", () => {
     expect(THEMES.pirate.id).toBe("pirate");
     expect(PIRATE_DARK.id).toBe("pirate_dark");

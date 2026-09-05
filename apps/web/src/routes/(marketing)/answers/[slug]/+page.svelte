@@ -72,7 +72,7 @@
     <nav aria-label="Breadcrumb" class="mb-8">
       <a
         href="{cleanBase}/answers"
-        class="inline-flex items-center gap-2 font-mono text-xs text-theme-muted transition-colors hover:text-theme-primary"
+        class="inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
       >
         <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
         ></span>
@@ -136,7 +136,7 @@
                   : section.cta.href}
                 target={section.cta.external ? "_blank" : undefined}
                 rel={section.cta.external ? "noopener noreferrer" : undefined}
-                class="inline-flex items-center gap-2 border border-theme-primary bg-theme-primary/10 px-5 py-2.5 font-header text-sm font-bold text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
+                class="inline-flex min-h-[24px] items-center gap-2 border border-theme-primary bg-theme-primary/10 px-5 py-2.5 font-header text-sm font-bold text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg active:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
                 use:trackDiscoveryClick={{
                   sourceKind: "answer",
                   sourceId: answer.slug,
@@ -266,7 +266,7 @@
         {/each}
         <a
           href="{cleanBase}{answer.codexConnection.href}"
-          class="inline-flex items-center gap-2 bg-theme-primary px-6 py-3 font-header text-sm font-bold text-theme-bg transition-colors hover:bg-theme-primary/90"
+          class="inline-flex min-h-[24px] items-center gap-2 bg-theme-primary px-6 py-3 font-header text-sm font-bold text-theme-bg transition-colors hover:bg-theme-primary/90 active:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           use:trackDiscoveryClick={{
             sourceKind: "answer",
             sourceId: answer.slug,
