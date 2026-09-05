@@ -142,6 +142,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-you-create-a-fictional-language-for-an-rpg",
     "what-is-a-point-crawl",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",

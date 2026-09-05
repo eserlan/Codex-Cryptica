@@ -459,6 +459,13 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A language profile — phonology, naming patterns, sample lexicon — used to keep invented names internally consistent.",
     parentCluster: "naming",
+    acknowledgedOverlap: [
+      {
+        with: "answer-fictional-language",
+        reason:
+          "The generator creates a draft profile; the answer teaches a manual language-design workflow with a worked encounter.",
+      },
+    ],
     indexable: true,
     status: "live",
   },
