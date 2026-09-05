@@ -198,6 +198,16 @@ describe("parseRumourResponse", () => {
     expect(() => parseRumourResponse(badJson, resolved)).toThrow();
   });
 
+  it("throws when the response contains more than six rumours", () => {
+    const extraContent = `${validContent}\n\n### Rumour 7\n- **Rumour**: x\n- **Lead**: y\n- **Source**: z`;
+    const badJson = JSON.stringify({
+      title: "Too Many",
+      content: extraContent,
+      lore: validLore,
+    });
+    expect(() => parseRumourResponse(badJson, resolved)).toThrow();
+  });
+
   it("falls back to a default title when none is given", () => {
     const json = JSON.stringify({ content: validContent, lore: validLore });
     const out = parseRumourResponse(json, resolved);

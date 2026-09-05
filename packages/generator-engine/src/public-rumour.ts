@@ -193,13 +193,20 @@ export function parseRumourResponse(
   const data = parseFencedJson<Record<string, unknown>>(text);
   const content = typeof data.content === "string" ? data.content : "";
   const lore = typeof data.lore === "string" ? data.lore : "";
+  const contentRumourCount = (content.match(/^### Rumour \d+/gm) ?? []).length;
+  const loreRumourCount = (lore.match(/^### GM Notes — Rumour \d+/gm) ?? [])
+    .length;
   if (
     !content ||
     !lore ||
+    contentRumourCount !== 6 ||
+    loreRumourCount !== 6 ||
     !CONTENT_HEADINGS.every((heading) => content.includes(heading)) ||
     !LORE_HEADINGS.every((heading) => lore.includes(heading))
   ) {
-    throw new Error("Rumour response is missing the required d6 sections.");
+    throw new Error(
+      "Rumour response must contain exactly the required d6 sections.",
+    );
   }
   return render(
     resolved,

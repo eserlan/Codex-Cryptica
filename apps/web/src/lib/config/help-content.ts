@@ -705,6 +705,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.",
     icon: "icon-[lucide--scroll-text]",
   },
+  "rumour-generator": {
+    id: "rumour-generator",
+    title: "Rumour Generator",
+    content:
+      "Generate a d6 table of six local rumours -- each naming a real lead the party can chase, with a source, but no quest structure. Behind the scenes, four are essentially true, one is an exaggeration, and one is a dangerous misconception; which is which stays in the GM-only notes and is never shown to players.",
+    icon: "icon-[lucide--ear]",
+  },
   "encounter-generator": {
     id: "encounter-generator",
     title: "Encounter Generator",
