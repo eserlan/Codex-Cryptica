@@ -53,6 +53,9 @@ import {
   parseCouncilVotePathsResponse,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
+  buildHeistPrompt,
+  parseHeistResponse,
+  generateHeistLocal,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -125,6 +128,7 @@ import {
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
+  type HeistGeneratorOptions,
   type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
@@ -206,6 +210,7 @@ export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
+export { heistConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
@@ -624,6 +629,31 @@ export class DefaultGeneratorEngine {
     );
     villainDomainHistoryStore.record(result.conflictDomain);
     return result;
+  }
+
+  async generateHeist(
+    options: HeistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...heistOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("heist");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildHeistPrompt(
+          heistOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "heist",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseHeistResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateHeistLocal(heistOptions),
+    );
   }
 
   async generateCouncilVote(

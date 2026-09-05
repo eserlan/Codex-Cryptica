@@ -127,6 +127,7 @@ export async function GET() {
     "bbeg-generator",
     "world",
     "council-vote",
+    "heist",
     "secret-society",
     "star-system",
     "alien-race",

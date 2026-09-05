@@ -114,6 +114,12 @@ import {
   type SecretSocietyGeneratorOptions,
 } from "./public-secret-society";
 import {
+  buildHeistPrompt,
+  generateHeistLocal,
+  heistConfig,
+  type HeistGeneratorOptions,
+} from "./public-heist";
+import {
   buildCreaturePrompt,
   generateCreatureLocal,
   creatureConfig,
@@ -153,6 +159,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "plot-twist": "note",
   "random-table": "table",
   encounter: "note",
+  heist: "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -988,6 +995,45 @@ ${prompt.userMessage}`,
 
 function encounterPrompt(request: GeneratorRunRequest): string {
   return buildCampaignEncounterPrompt(request).userMessage;
+}
+
+// Heist reuses the public generator's prompt and local fallback wholesale
+// (the encounter/adventure pattern), so the framework from the heist answer
+// page — score, prize, casing intel, three security rings, alarm track,
+// complications, compromised getaway, flashbacks — stays defined in exactly
+// one place for both surfaces. Only the vault-grounding context chain is
+// added on top here.
+function heistOptions(request: GeneratorRunRequest): HeistGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    heistType: optionString(request, "heistType", ""),
+    targetScale: optionString(request, "targetScale", ""),
+    targetType: optionString(request, "targetType", ""),
+    prize: optionString(request, "prize", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateHeist(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateHeistLocal(heistOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function heistPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildHeistPrompt(heistOptions(request));
+  return `${contextChain(request)}
+
+${prompt.userMessage}`;
 }
 
 function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {
@@ -3087,6 +3133,54 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateCouncilVote,
     mapOutputToDraft: mapOutputToDraft("council-vote"),
     buildPrompt: councilVoteFoundationPrompt,
+  },
+  heist: {
+    id: "heist",
+    label: "Heist",
+    description:
+      "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+    entityType: GENERATOR_ENTITY_TYPE.heist,
+    defaultInstruction:
+      "A table-ready heist with a concrete objective, actionable casing intel, three security rings that each allow multiple approaches, a five-state alarm track, three complications with a trigger, a compromised getaway, and flashback opportunities the players may establish.",
+    icon: "lucide:key-round",
+    options: [
+      {
+        id: "heistType",
+        label: "Heist Type",
+        control: "select",
+        choices: heistConfig.heistTypes.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "targetScale",
+        label: "Target Scale",
+        description:
+          "How well defended the target is — a single building, a funded institution, or somewhere nobody has ever robbed.",
+        control: "radio",
+        choices: heistConfig.targetScales.map((s) => ({ value: s, label: s })),
+      },
+      {
+        id: "targetType",
+        label: "Target",
+        description: "Optional: the kind of place being hit.",
+        control: "text",
+      },
+      {
+        id: "prize",
+        label: "The Prize",
+        description:
+          "Optional: what the crew is after. Left blank, the generator picks something that fits the target.",
+        control: "textarea",
+      },
+    ],
+    defaults: {
+      heistType: "",
+      targetScale: "",
+      targetType: "",
+      prize: "",
+    },
+    generate: generateHeist,
+    mapOutputToDraft: mapOutputToDraft("heist"),
+    buildPrompt: heistPrompt,
   },
   creature: {
     id: "creature",

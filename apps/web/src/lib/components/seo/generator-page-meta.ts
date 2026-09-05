@@ -1201,6 +1201,58 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/kingdom", label: "Kingdom Generator" },
     ],
   },
+  heist: {
+    pageTitle:
+      "Heist Generator | RPG Score & Infiltration Creator | Codex Cryptica",
+    metaDescription:
+      "Generate a table-ready RPG heist: the score, a prize with a practical catch, casing intel, three security rings, an escalating alarm track, complications, and a compromised getaway.",
+    introTitle: "Heist Generator",
+    eyebrow: "Score & Infiltration Generator",
+    introText:
+      "Build a playable heist instead of a planning session. You get a concrete objective, a prize that is awkward to move, three layered security rings that each allow more than one approach, a five-state alarm track, and a getaway whose original route has already failed. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/heist",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-heist.jpg",
+    ogImageAlt:
+      "Codex Cryptica heist generator drafting a score, layered security rings, and an alarm track",
+    keywords: [
+      "heist generator",
+      "rpg heist generator",
+      "infiltration scenario generator",
+      "blades in the dark score generator",
+      "dnd heist ideas",
+    ],
+    faqs: [
+      {
+        question: "What does the heist generator create?",
+        answer:
+          "A complete score: the objective, the prize and its practical complication, at least three pieces of casing intel, three distinct security rings, a five-state alarm track from Quiet to Lethal Response, three complications with a trigger that fires when the prize is lifted, a compromised getaway with alternate routes, and a menu of flashbacks the players could establish.",
+      },
+      {
+        question: "Is there one correct way through the security?",
+        answer:
+          "No. Every security ring is written with at least two genuinely different approaches, so the crew can talk, sneak, forge, bribe, or force their way past each layer rather than hunting for the single intended solution.",
+      },
+      {
+        question: "How do the flashback opportunities work?",
+        answer:
+          "They are offered, never dictated. The generator lists things the players could plausibly establish after the fact — a bribed guard, forged credentials, cached equipment, an inside contact — so the crew's competence is preserved without the table spending an hour planning for hypotheticals.",
+      },
+      {
+        question: "Does it work outside fantasy?",
+        answer:
+          "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+        label: "How to Run a Heist (Guide)",
+      },
+      { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
+      { href: "/generators/npc", label: "NPC Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+    ],
+  },
   "secret-society": {
     pageTitle:
       "Secret Society Generator | Cult & Conspiracy Creator | Codex Cryptica",

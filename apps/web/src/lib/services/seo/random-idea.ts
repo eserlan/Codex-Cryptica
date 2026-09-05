@@ -14,6 +14,7 @@ export interface RandomIdeaCategory {
     | "minor-magic-item"
     | "artifact"
     | "council-vote"
+    | "heist"
     | "secret-society"
     | "social-hub"
     | "pantheon"
@@ -113,6 +114,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     key: "council-vote",
     label: "Council Vote",
     generate: (engine, useAI) => engine.generateCouncilVote({ useAI }),
+  },
+  {
+    key: "heist",
+    label: "Heist",
+    generate: (engine, useAI, theme) =>
+      engine.generateHeist({ genre: theme, useAI }),
   },
   {
     key: "secret-society",

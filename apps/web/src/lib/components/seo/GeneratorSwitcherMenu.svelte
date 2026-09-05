@@ -86,6 +86,7 @@
           label: "BBEG / Campaign Villain Generator",
           path: "/generators/bbeg-generator",
         },
+        { label: "Heist Generator", path: "/generators/heist" },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {
           label: "Secret Society Generator",

@@ -17,6 +17,10 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
         "Traditional tabletop heists frequently stall because players spend two to three real-world hours arguing over theoretical contingencies. They debate guard shift rotations, buy fifty feet of silk rope, and plan escape routes for scenarios that will never happen. The moment the first stealth roll fails in room two, that exhaustive plan collapses, leaving players frustrated and the Game Master scrambling.",
         "Borrowing the flashback structure pioneered by narrative systems like Blades in the Dark solves this friction completely. By assuming the characters are competent scoundrels who planned off-screen, you can drop the party straight onto the rooftop or into the ventilation duct, shifting table energy from anxiety-driven contingency debates to immediate, reactive problem-solving.",
       ],
+      cta: {
+        text: "Generate a heist",
+        href: "/generators/heist",
+      },
     },
     {
       kind: "list",
@@ -89,6 +93,12 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     href: "/solutions/rpg-knowledge-graph",
   },
   relatedTools: [
+    {
+      title: "Heist generator",
+      description:
+        "Turn this framework into a score: prize, casing intel, three security rings, alarm track, complications, and a compromised getaway.",
+      href: "/generators/heist",
+    },
     {
       title: "Dungeon generator",
       description:

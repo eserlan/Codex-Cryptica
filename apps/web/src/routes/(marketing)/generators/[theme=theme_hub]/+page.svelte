@@ -93,6 +93,13 @@
       icon: "icon-[lucide--skull]",
     },
     {
+      slug: "heist",
+      label: "Heist Generator",
+      summary:
+        "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+      icon: "icon-[lucide--key-round]",
+    },
+    {
       slug: "council-vote",
       label: "Council Vote Generator",
       summary:

@@ -287,6 +287,15 @@ export {
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
 } from "./public-council-vote";
+export {
+  buildHeistPrompt,
+  parseHeistResponse,
+  generateHeistLocal,
+  heistConfig,
+  type HeistGeneratorOptions,
+  type HeistPrompt,
+  type ResolvedHeist,
+} from "./public-heist";
 export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
 export { SETTLEMENT_LEXICON } from "./public-settlement-lexicon";
 export {

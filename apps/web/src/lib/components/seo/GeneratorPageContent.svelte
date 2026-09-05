@@ -20,6 +20,7 @@
   import EncounterFormFields from "$lib/components/seo/EncounterFormFields.svelte";
   import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
+  import HeistFormFields from "$lib/components/seo/HeistFormFields.svelte";
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
@@ -60,6 +61,7 @@
     encounterConfig,
     puzzleConfig,
     councilVoteConfig,
+    heistConfig,
     secretSocietyConfig,
     socialHubConfig,
     kingdomConfig,
@@ -281,6 +283,14 @@
     scope: councilVoteConfig.scopes[0],
     tone: councilVoteConfig.tones[0],
     antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
+    campaignContext: "",
+  });
+  let heist = $state({
+    genre: factionConfig.themes[0],
+    heistType: heistConfig.heistTypes[0],
+    targetScale: heistConfig.targetScales[1],
+    targetType: heistConfig.targetTypesByTheme[factionConfig.themes[0]][0],
+    prize: "",
     campaignContext: "",
   });
   let secretSociety = $state({
@@ -599,6 +609,7 @@
     else if (slug === "puzzle") puzzle.genre = activeTheme;
     else if (slug === "encounter") encounter.genre = activeTheme;
     else if (slug === "council-vote") councilVote.genre = activeTheme;
+    else if (slug === "heist") heist.genre = activeTheme;
     else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
       activeTheme =
@@ -830,6 +841,7 @@
     puzzle: (useAI) => generatorEngine.generatePuzzle({ ...puzzle, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
+    heist: (useAI) => generatorEngine.generateHeist({ ...heist, useAI }),
     "secret-society": (useAI) =>
       generatorEngine.generateSecretSociety({ ...secretSociety, useAI }),
     tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
@@ -1148,6 +1160,16 @@
         bind:tone={councilVote.tone}
         bind:antagonistInfluence={councilVote.antagonistInfluence}
         bind:campaignContext={councilVote.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "heist"}
+      <HeistFormFields
+        bind:theme={activeTheme}
+        bind:heistType={heist.heistType}
+        bind:targetScale={heist.targetScale}
+        bind:targetType={heist.targetType}
+        bind:prize={heist.prize}
+        bind:campaignContext={heist.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "secret-society"}

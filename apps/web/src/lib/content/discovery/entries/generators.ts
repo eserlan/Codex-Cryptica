@@ -176,6 +176,19 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-heist",
+    pageKind: "generator",
+    canonicalPath: "/generators/heist",
+    primaryIntent: "rpg heist generator",
+    intentAliases: ["heist scenario generator", "infiltration generator"],
+    userJob: "create",
+    uniqueValue:
+      "A score with moving parts: layered security that allows multiple approaches, an alarm track that escalates, and a getaway whose planned route has already failed.",
+    parentCluster: "adventure-mapping",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-bbeg-generator",
     pageKind: "generator",
     canonicalPath: "/generators/bbeg-generator",
