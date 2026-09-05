@@ -142,6 +142,13 @@
               icon: "icon-[lucide--scroll-text]",
             },
             {
+              href: "/generators/rumour",
+              label: "Rumour Generator",
+              summary:
+                "Generate a d6 table of six local rumours with a concrete lead and a source for each, lighter than a full quest hook.",
+              icon: "icon-[lucide--ear]",
+            },
+            {
               href: "/generators/encounter",
               label: "Encounter Generator",
               summary:

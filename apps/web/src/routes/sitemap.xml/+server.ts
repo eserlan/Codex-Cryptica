@@ -108,6 +108,7 @@ export async function GET() {
     "kingdom",
     "nation",
     "quest",
+    "rumour",
     "item",
     "vampire-clan",
     "nomad-clan",
