@@ -8,8 +8,12 @@ vi.mock("$app/paths", () => ({
   base: "",
 }));
 
+vi.mock("$lib/config", () => ({
+  PATREON_URL: "https://patreon.com/EspenE",
+}));
+
 describe("MarketingFooter", () => {
-  it("renders only the legal and Explore links, per #2760's minimal footer", () => {
+  it("renders only the legal, Explore, and Patreon symbol links, per #2760's minimal footer", () => {
     render(MarketingFooter);
 
     expect(screen.getByRole("link", { name: "Terms" })).toBeTruthy();
@@ -17,11 +21,16 @@ describe("MarketingFooter", () => {
     const exploreLink = screen.getByRole("link", { name: "Explore" });
     expect(exploreLink.getAttribute("href")).toBe("/explore");
 
-    // Community/utility links moved to /explore instead of living here too.
+    const patreonLink = screen.getByRole("link", {
+      name: "Support Codex Cryptica on Patreon",
+    });
+    expect(patreonLink.getAttribute("href")).toBe("https://patreon.com/EspenE");
+    expect(patreonLink.getAttribute("target")).toBe("_blank");
+
+    // Everything else moved to /explore instead of living here too.
     expect(screen.queryByRole("link", { name: "Discord" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Reddit" })).toBeNull();
     expect(screen.queryByRole("link", { name: "GitHub" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Patreon" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Tools" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Answers" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Sitemap" })).toBeNull();
