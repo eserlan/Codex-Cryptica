@@ -15,6 +15,7 @@ export const GENERATOR_SLUGS = [
   "artifact-generator",
   "faction",
   "quest",
+  "rumour",
   "puzzle",
   "item",
   "tavern",

@@ -6,6 +6,7 @@ export type ValidSlug =
   | "artifact-generator"
   | "faction"
   | "quest"
+  | "rumour"
   | "puzzle"
   | "item"
   | "tavern"

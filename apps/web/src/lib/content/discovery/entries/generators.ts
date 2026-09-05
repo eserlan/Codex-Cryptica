@@ -241,6 +241,19 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-rumour",
+    pageKind: "generator",
+    canonicalPath: "/generators/rumour",
+    primaryIntent: "rpg rumour generator",
+    intentAliases: ["tavern rumour generator", "random rumours for a town"],
+    userJob: "create",
+    uniqueValue:
+      "A d6 table of local rumours, each with a concrete lead and a hidden GM-only truth, lighter than a full quest hook.",
+    parentCluster: "quest-design",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-puzzle",
     pageKind: "generator",
     canonicalPath: "/generators/puzzle",

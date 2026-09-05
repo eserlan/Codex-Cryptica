@@ -33,6 +33,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildRumourPrompt,
+  parseRumourResponse,
+  generateRumourLocal,
   buildEncounterPrompt,
   parseEncounterResponse,
   generateEncounterLocal,
@@ -117,6 +120,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type RumourGeneratorOptions,
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
@@ -197,6 +201,7 @@ export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
@@ -518,6 +523,29 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generateRumour(
+    options: RumourGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rumourOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("rumour");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildRumourPrompt(
+          rumourOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "rumour",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseRumourResponse(text, resolved);
+      },
+      () => generateRumourLocal(rumourOptions),
     );
   }
 
