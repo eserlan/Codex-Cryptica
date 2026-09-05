@@ -415,7 +415,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "era-date-picker",
     title: "Pick Dates",
     content:
-      "Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
+      "Select dates using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
     icon: "icon-[lucide--settings-2]",
   },
   "keyboard-navigation": {

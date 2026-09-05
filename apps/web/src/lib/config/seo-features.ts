@@ -134,7 +134,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
     subheading:
       "Co-author lore, design NPCs, and outline plots with absolute privacy.",
     introText:
-      "Supercharge your worldbuilding using Codex Cryptica's integrated local-first Lore Oracle. Unlike cloud-based TTRPG campaign managers that scrape your creative writing to train proprietary AI models, Codex Cryptica operates on a zero-data-leakage architecture. Your notes, worldbuilding details, and campaign secrets are processed directly using secure API keys on your own terms. We never harvest, log, or sell your intellectual property to cloud scrapers.",
+      "Codex Cryptica's integrated local-first Lore Oracle helps with worldbuilding without the usual trade-off. Unlike cloud-based TTRPG campaign managers that scrape your creative writing to train proprietary AI models, Codex Cryptica operates on a zero-data-leakage architecture. Your notes, worldbuilding details, and campaign secrets are processed directly using secure API keys on your own terms. We never harvest, log, or sell your intellectual property to cloud scrapers.",
     ctaText: "Try AI Assistant Features",
     keywords: [
       "ai gm assistant",

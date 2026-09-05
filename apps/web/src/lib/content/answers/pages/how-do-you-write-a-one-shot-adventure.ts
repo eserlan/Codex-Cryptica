@@ -7,14 +7,14 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
   question: "How do you write a one-shot adventure?",
   kind: "framework",
   shortAnswer:
-    "To write a successful one-shot tabletop adventure, design backward from a strict session time limit using a four-beat structure: an immediate inciting incident, an investigative exploration scene, a high-stakes complication, and a decisive final confrontation. Include at least one elastic middle encounter that can be expanded or cut entirely depending on the clock, ensuring your party reaches the climax before the session concludes.",
+    "Design backward from a strict session time limit, using a four-beat structure: an immediate inciting incident, an investigative exploration scene, a high-stakes complication, and a decisive final confrontation. Build in at least one elastic middle encounter that can be expanded or cut entirely depending on the clock, so the party reaches the climax before the session ends.",
   sections: [
     {
       kind: "prose",
       heading: "The clock is your only true antagonist",
       paragraphs: [
         "Most one-shot adventures fail not because the plot is weak, but because the table runs out of time. When a Game Master writes a single-session adventure like a miniature campaign arc, the party invariably spends ninety minutes bantering in a tavern, forty minutes investigating an inconsequential side room, and then finds themselves facing a rushed, anticlimactic boss fight with ten minutes remaining before players need to leave.",
-        "A one-shot requires aggressive structural discipline. Every scene must either deliver vital information, force an immediate decision, or propel the protagonists directly toward the central conflict. Writing with elastic pacing ensures the adventure lands comfortably within a three- to four-hour table window.",
+        "A one-shot needs real structural discipline. Every scene should either deliver information the party needs, force an immediate decision, or push the party directly toward the central conflict. Elastic pacing is what lands the adventure comfortably within a three- to four-hour table window.",
       ],
     },
     {
@@ -107,7 +107,7 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
     heading: "Building one-shot adventures in Codex Cryptica",
     paragraphs: [
       "Codex Cryptica makes designing and running one-shot sessions straightforward. Using the Adventure Generator and Dungeon Builder, you can roll up modular locations, immediate catalysts, and escalating complications in minutes.",
-      "Track your elastic encounters on an interactive board, ensuring you have backup routes and cuttable skirmishes ready at a single glance during play.",
+      "Track your elastic encounters on an interactive board, so backup routes and cuttable skirmishes are ready at a single glance during play.",
     ],
     linkText: "Build one-shot dungeons with the Dungeon Builder",
     href: "/generators/dungeon-generator",

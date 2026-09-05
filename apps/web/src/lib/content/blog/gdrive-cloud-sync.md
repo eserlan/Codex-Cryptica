@@ -2,7 +2,7 @@
 id: gdrive-cloud-sync
 slug: gdrive-cloud-sync
 title: "Cloud Sync is Here: Back Up Your Vault to Google Drive"
-description: "Your campaign world can now live on Google Drive for seamless cross-device backup. Here's how Codex Cryptica's cloud sync works."
+description: "Your campaign world can now live on Google Drive, backed up across every device. Here's how Codex Cryptica's cloud sync works."
 keywords:
   ["Google Drive", "Cloud Sync", "Vault Backup", "Local-First", "Privacy"]
 publishedAt: 2026-04-30T10:00:00Z

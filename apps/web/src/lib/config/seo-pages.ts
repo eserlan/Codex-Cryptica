@@ -127,7 +127,7 @@ export const solutions: Record<string, SEOPageData> = {
     subheading:
       "Prompt, synthesize, and create structured character and quest records with a local AI partner.",
     introText:
-      "Supercharge your worldbuilding using Codex Cryptica's integrated Lore Oracle. Generate consistent NPC details, settlement layouts, or plot hooks directly inside your workspace using secure, private AI models that respect your campaign context.",
+      "Codex Cryptica's integrated Lore Oracle helps with worldbuilding directly inside your workspace. Generate consistent NPC details, settlement layouts, or plot hooks using secure, private AI models that respect your campaign context.",
     ctaText: "Meet the AI Assistant",
     keywords: [
       "ai gm assistant",
@@ -203,7 +203,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "OPFS Performance",
         description:
-          "Utilizes browser-native Origin Private File System for database-like speed and robust local indexing.",
+          "Uses the browser-native Origin Private File System for database-like speed and reliable local indexing.",
         icon: "icon-[lucide--gauge]",
       },
       {

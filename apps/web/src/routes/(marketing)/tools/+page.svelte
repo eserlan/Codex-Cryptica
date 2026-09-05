@@ -480,7 +480,7 @@
               href: "/import/obsidian-vault",
               label: "Obsidian Vault Importer",
               summary:
-                "Seamlessly convert your Obsidian markdown campaign files into Codex Cryptica format.",
+                "Convert your Obsidian markdown campaign files into Codex Cryptica format.",
               icon: "icon-[lucide--folder-open]",
             },
             {

@@ -113,7 +113,7 @@
       step: 6,
       title: "Continuous Memory",
       summary:
-        "A campaign is a living history. A tool with no memory cannot maintain continuity. Codex leverages structured frontmatter and campaign timeline records to ensure AI suggestions stay consistent over sessions.",
+        "A campaign is a living history. A tool with no memory cannot maintain continuity. Codex uses structured frontmatter and campaign timeline records to keep AI suggestions consistent across sessions.",
       slug: "ai-slop-is-context-failure",
       icon: "icon-[lucide--network]",
     },

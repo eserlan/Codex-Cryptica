@@ -66,7 +66,7 @@ Every person, place, or thing in your world is represented as an **Entity**.
 
 ## 3. Writing & Bidirectional Linking
 
-CC features a bidirectional link editor (built on **Tiptap**). Connecting your notes is seamless and instantaneous.
+CC features a bidirectional link editor (built on **Tiptap**). Connecting your notes happens instantly, right as you type.
 
 - **Entity Auto-Links**: In read mode, any text matching an entity's name or its registered **aliases** is automatically highlighted as a clickable link.
 - **Command Bar (Slash Commands)**: Type a forward slash `/` in the chat input or the editor to trigger commands:

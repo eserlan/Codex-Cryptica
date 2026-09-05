@@ -40,7 +40,7 @@ Unlike the automated **Knowledge Graph** (which algorithmically organizes relati
 
 - **Spatial Intentionality**: Proximity has meaning. Place rival houses on opposite sides of the board, put key suspects in a central ring, or cluster regional settlements by geographic proximity.
 - **Infinite Zoom & Pan**: Move effortlessly from a bird's-eye overview of an entire political landscape down into the gritty details of a single dungeon room.
-- **Theme-Adaptive UI**: Whether you run gritty sci-fi with glowing CRT terminals or dark fantasy with weathered parchment, your canvas, minimap, and cards adapt seamlessly to your active vault theme.
+- **Theme-Adaptive UI**: Run gritty sci-fi with glowing CRT terminals, dark fantasy with weathered parchment, or anything between — your canvas, minimap, and cards adapt to your active vault theme.
 - **Vault-Native `.canvas` Files**: Everything is stored locally on your machine in open, parseable files. No external servers, no cloud lock-in.
 
 ---

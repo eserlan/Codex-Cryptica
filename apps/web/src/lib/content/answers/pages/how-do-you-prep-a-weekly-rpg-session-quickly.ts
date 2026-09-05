@@ -7,7 +7,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
   question: "How do you prep a weekly RPG session quickly?",
   kind: "framework",
   shortAnswer:
-    "To prep a weekly RPG session quickly without burnout, run a 35-minute timeboxed routine focused exclusively on the upcoming three hours of play: (1) review the previous session's recap and extract one or two unresolved player hooks, (2) frame a strong opening scene with immediate momentum, (3) sketch two or three flexible scene nodes rather than a rigid linear plot, (4) prepare one or two portable encounters or hazards with condensed stats, and (5) outline two key NPCs with an immediate desire and one distinctive mannerism. Treat any remaining minutes as a deliberate improvisation buffer, and let everything else be generated or improvised live.",
+    "Give yourself a 35-minute timebox aimed squarely at the next three hours of play, nothing further out. Pull one or two unresolved hooks from last session's recap, write a strong opening scene, sketch two or three flexible scene nodes instead of a linear plot, prepare one or two portable encounters with condensed stats, and outline two key NPCs with a want and a mannerism. Whatever time is left is an improvisation buffer — everything else gets generated or improvised live.",
   sections: [
     {
       kind: "prose",
@@ -116,7 +116,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
       kind: "checklist",
       heading: "The 5-minute pre-game checklist",
       intro:
-        "Right before your players take their seats, ensure you have these five items readily in front of you:",
+        "Right before your players take their seats, have these five items in front of you:",
       items: [
         "The opening sentence written down verbatim so you can launch the session with total clarity.",
         "Condensed combat shorthand (Armour Class, Hit Points, primary attacks) on a single index card or scratchpad.",

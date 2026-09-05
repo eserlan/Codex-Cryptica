@@ -114,7 +114,7 @@ For more complex decisions, use the Oracle's collaborative modes:
 
 ## **Workflow: Improv to Lore**
 
-The Oracle's commands are designed to compose into a seamless narrative pipeline:
+The Oracle's commands are designed to chain together, from improv to lore:
 
 1. **Improvise**: `/create "Zareth Voss" as "NPC"` the moment he's named at the table.
 2. **Connect**: `/connect "Zareth" blackmails "The NPC Group"` as the conversation unfolds.

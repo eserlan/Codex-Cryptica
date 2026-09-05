@@ -26,7 +26,7 @@ When you're **auditing and prepping a live session**, you need a **tabular sprea
 
 In traditional note apps, switching between these mental models is painful. You either force your world into rigid folder trees that break the moment an NPC belongs to two factions, or you manage disparate search queries across different plugin views.
 
-In **Codex Cryptica**, we designed **Unified Saved Views**: a synchronized lens system that lets you define any arbitrary criteria once, and view that exact slice of your world seamlessly across both the **Interactive Graph** and the **Entity Table**.
+In **Codex Cryptica**, we designed **Unified Saved Views**: a synchronized lens system that lets you define any arbitrary criteria once, then view that exact slice of your world in both the **Interactive Graph** and the **Entity Table**.
 
 ---
 
@@ -79,6 +79,6 @@ Filter by `Category: Faction` + `Category: Person` and label `#court-intrigue`.
 
 ## Dynamic, Fast, and Local-First
 
-Saved Views are stored directly inside your browser's private vault storage and sync seamlessly across devices. There is no cloud latency, no proprietary lock-in, and zero risk of your notes drifting out of sync between views.
+Saved Views are stored directly inside your browser's private vault storage and travel with it across devices. There is no cloud latency, no proprietary lock-in, and no risk of your notes drifting out of sync between views.
 
-Try setting up your first unified saved view in your campaign vault today, and experience what it feels like to navigate your world from every angle without friction.
+Set up a unified saved view in your campaign vault and see how it feels to navigate your world from every angle.

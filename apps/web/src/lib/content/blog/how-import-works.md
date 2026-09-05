@@ -2,7 +2,7 @@
 id: how-import-works
 slug: how-import-works
 title: "From Lore Bible to Living Graph: How the Import Feature Works"
-description: "A deep dive into the Codex Cryptica import pipeline — from dropping a PDF onto the screen to having a fully linked, AI-extracted knowledge graph ready for your next session."
+description: "How the Codex Cryptica import pipeline works, from dropping a PDF onto the screen to having a fully linked, AI-extracted knowledge graph ready for your next session."
 keywords:
   - "RPG Lore Importer"
   - "World Building Import"

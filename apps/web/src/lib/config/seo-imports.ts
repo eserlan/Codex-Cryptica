@@ -9,9 +9,9 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       "Import your Obsidian TTRPG campaign vault. Convert Markdown files, wiki-links, and YAML frontmatter into a local-first campaign wiki.",
     h1: "Obsidian Vault Importer",
     subheading:
-      "Seamlessly convert your Obsidian markdown campaign files into Codex Cryptica.",
+      "Convert your Obsidian markdown campaign files into Codex Cryptica.",
     introText:
-      "Migrate your Obsidian RPG notes seamlessly. Drop your Markdown files directly to parse frontmatter, resolve wiki links, and construct a live local-first campaign wiki in Codex Cryptica.",
+      "Migrate your Obsidian RPG notes: drop your Markdown files directly to parse frontmatter, resolve wiki links, and build a live local-first campaign wiki in Codex Cryptica.",
     ctaText: "Start Obsidian Migration",
     keywords: [
       "import obsidian vault",

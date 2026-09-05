@@ -69,6 +69,28 @@ const HOW_TO_USE_CLOSERS = [
   "The more the party relies on them, the more interesting the moment when those loyalties are tested.",
 ] as const;
 
+const DELVE_WHO_THEY_ARE_INTROS = [
+  (name: string, race: string, role: string, sector: string) =>
+    `${name} is a ${race} ${role} holding ${sector}, and everyone else in the delve knows it — routes get redrawn, shifts get rearranged, all to avoid crossing them.`,
+  (name: string, race: string, role: string, sector: string) =>
+    `${name}, a ${race} ${role}, has made ${sector} their own. Nothing moves through it without their say, whether the rest of the delve wants that or not.`,
+  (name: string, race: string, role: string, sector: string) =>
+    `In ${sector}, ${name} is the answer to most questions. This ${race} ${role} has settled in deep enough that other inhabitants plan around them by default.`,
+  (name: string, race: string, role: string, sector: string) =>
+    `${name} did not just move into ${sector} — this ${race} ${role} took it over, and the surrounding sectors have adjusted accordingly.`,
+] as const;
+
+const DELVE_WHY_USEFUL_INTROS = [
+  () =>
+    "Getting past them means picking a lane: talk your way through, slip by unseen, or fight.",
+  () =>
+    "There is no route deeper that skips them entirely — the party will end up choosing how to deal with them, not whether to.",
+  () =>
+    "Sooner or later the party has to reckon with them directly, by words, by stealth, or by force.",
+  () =>
+    "No path through the delve avoids them for long; the only open question is which approach the party picks.",
+] as const;
+
 /**
  * Render the local (AI-free) dossier output. The caller applies quick stats
  * injection and `status` since those are shared with table-card mode.
@@ -99,17 +121,21 @@ export function generateNpcDossierLocal(
     leverage,
     plotHook,
   } = resolved;
-  const { isDelve, delveSector, delveRelation, delveSecretTie } =
-    delveContext;
+  const { isDelve, delveSector, delveRelation, delveSecretTie } = delveContext;
 
   const whoIntro = isDelve
-    ? `${name} is a ${race} ${role} located in the ${delveSector}. Their presence within the site is unmistakable, exerting direct influence over the surrounding sectors.`
+    ? pickFrom(DELVE_WHO_THEY_ARE_INTROS, rng)(
+        name,
+        race,
+        role,
+        delveSector ?? "their sector",
+      )
     : pickFrom(WHO_THEY_ARE_INTROS, rng)(name, race, role);
 
   const wantCloser = pickFrom(WHAT_THEY_WANT_CLOSERS, rng);
 
   const usefulIntro = isDelve
-    ? `${delveRelation} Anyone delving into the site will eventually have to navigate their presence, whether through stealth, negotiation, or force.`
+    ? `${delveRelation} ${pickFrom(DELVE_WHY_USEFUL_INTROS, rng)()}`
     : pickFrom(WHY_USEFUL_INTROS, rng)(role, faction);
 
   const howIntro = isDelve
