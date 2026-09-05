@@ -21,9 +21,9 @@ imageAlt: "Lore Oracle Interface in Codex Cryptica"
 
 ![Lore Oracle Interface](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png)
 
-You're mid-session. Your players just cornered an NPC you invented on the spot, demanding his backstory and a portrait. In thirty seconds, you have a family tree, a dice roll result, and a generated image. That's not magic — it's the **Lore Oracle**.
+You're mid-session. Your players just cornered an NPC you invented on the spot, demanding his backstory and a portrait. In thirty seconds, you have a family tree, a dice roll result, and a generated image. That's not magic; it's the **Lore Oracle**.
 
-The Oracle is the AI engine embedded directly in your Codex. It's not a generic chatbot; it has read every note you've written and is ready to act on them as soon as you type `/`. This guide covers every capability — from the utility commands that work offline to the AI-powered features that transform your narrative.
+The Oracle is the AI engine embedded directly in your Codex. It's not a generic chatbot; it has read every note you've written and is ready to act on them as soon as you type `/`. This guide covers every capability, from the utility commands that work offline to the AI-powered features that transform your narrative.
 
 ---
 
@@ -76,7 +76,7 @@ When the Oracle is in **AI-Powered Mode**, it becomes a genuine creative collabo
 
 ### **Natural Language Chat (RAG)**
 
-The Oracle uses **Retrieval-Augmented Generation (RAG)**, meaning it searches your archive for relevant entities before answering. It doesn't just chat — it acts as your world's ultimate expert.
+The Oracle uses **Retrieval-Augmented Generation (RAG)**, meaning it searches your archive for relevant entities before answering. It doesn't just chat; it acts as your world's ultimate expert.
 
 - _"Who are the most dangerous political figures in the Ironwall province?"_
 - _"What would be the most likely reason the Crimson Veil would target a scholar?"_
@@ -114,7 +114,7 @@ For more complex decisions, use the Oracle's collaborative modes:
 
 ## **Workflow: Improv to Lore**
 
-The Oracle's commands are designed to compose into a seamless narrative pipeline:
+The Oracle's commands are designed to chain together, from improv to lore:
 
 1. **Improvise**: `/create "Zareth Voss" as "NPC"` the moment he's named at the table.
 2. **Connect**: `/connect "Zareth" blackmails "The NPC Group"` as the conversation unfolds.

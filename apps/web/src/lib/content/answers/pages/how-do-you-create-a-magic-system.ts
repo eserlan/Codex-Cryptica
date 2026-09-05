@@ -3,11 +3,12 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
   slug: "how-do-you-create-a-magic-system",
   category: "worldbuilding",
+  labels: ["fantasy"],
   publishedAt: "2026-09-04",
   question: "How do you create a magic system?",
   kind: "framework",
   shortAnswer:
-    "To create a compelling magic system for worldbuilding and tabletop gaming, focus first on limitations, costs, and societal consequences rather than lists of spectacular spells. Define where the energy originates, what physical or psychological price it extracts from the caster, what problems it cannot solve, and how mundane institutions like law, commerce, and warfare have adapted to its existence.",
+    "A magic system gets interesting from its limitations, costs, and societal consequences, not from a list of spectacular spells. Define where the energy originates, what physical or psychological price it extracts from the caster, what problems it can't solve, and how mundane institutions like law, commerce, and warfare have adapted to its existence.",
   sections: [
     {
       kind: "prose",
@@ -88,9 +89,8 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     },
     {
       kind: "checklist",
-      heading: "Magic system worldbuilding consistency checklist",
-      intro:
-        "Test the robustness of your magical rules against these practical worldbuilding questions:",
+      heading: "Magic system consistency checklist",
+      intro: "Check your magical rules against these practical questions:",
       items: [
         "Is the source of power distinct, memorable, and limited in availability?",
         "Are there clear, absolute prohibitions on what magic cannot achieve?",

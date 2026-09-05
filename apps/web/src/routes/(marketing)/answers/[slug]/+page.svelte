@@ -14,6 +14,7 @@
     createDiscoveryViewGuard,
   } from "$lib/services/analytics/discovery-tracking";
   import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -91,6 +92,13 @@
       >
         {answer.question}
       </h1>
+      {#if answer.labels.length}
+        <div class="mt-4 flex flex-wrap gap-2">
+          {#each answer.labels as label (label)}
+            <PublicLabelChip {label} />
+          {/each}
+        </div>
+      {/if}
     </header>
 
     <!-- The direct answer, before anything else on the page. Ruled rather than

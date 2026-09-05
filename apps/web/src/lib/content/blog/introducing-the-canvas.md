@@ -28,7 +28,7 @@ If you try to force those messy, nascent thoughts straight into rigid databases 
 
 **The Canvas is built to bridge that gap.**
 
-It is an infinite, freeform visual workspace integrated directly into your Codex. It gives you the tactile freedom of a physical corkboard or murder board—without losing the power, persistence, and deep linking of a structured lore vault.
+It is an infinite, freeform visual workspace integrated directly into your Codex. It gives you the tactile freedom of a physical corkboard or murder board, without losing the power, persistence, and deep linking of a structured lore vault.
 
 ---
 
@@ -39,8 +39,8 @@ The **Spatial Canvas** is an open-ended tabletop desk where your notes, characte
 Unlike the automated **Knowledge Graph** (which algorithmically organizes relationships derived from your text), the Canvas gives you **100% manual, intentional control**. Every card position, cluster, connection line, rotation angle, and sketched stroke is placed exactly where you want it and saved directly into `.canvas` documents in your vault.
 
 - **Spatial Intentionality**: Proximity has meaning. Place rival houses on opposite sides of the board, put key suspects in a central ring, or cluster regional settlements by geographic proximity.
-- **Infinite Zoom & Pan**: Move effortlessly from a bird's-eye overview of an entire political landscape down into the gritty details of a single dungeon room.
-- **Theme-Adaptive UI**: Whether you run gritty sci-fi with glowing CRT terminals or dark fantasy with weathered parchment, your canvas, minimap, and cards adapt seamlessly to your active vault theme.
+- **Infinite Zoom & Pan**: Move in one continuous zoom from a bird's-eye overview of an entire political landscape down into the gritty details of a single dungeon room.
+- **Theme-Adaptive UI**: Run gritty sci-fi with glowing CRT terminals, dark fantasy with weathered parchment, or anything between. Your canvas, minimap, and cards adapt to your active vault theme.
 - **Vault-Native `.canvas` Files**: Everything is stored locally on your machine in open, parseable files. No external servers, no cloud lock-in.
 
 ---
@@ -49,7 +49,7 @@ Unlike the automated **Knowledge Graph** (which algorithmically organizes relati
 
 Text is sequential, but worlds are spatial and networked.
 
-When you prep a tabletop campaign or write a complex setting, your brain relies heavily on spatial memory—remembering where an idea sits relative to other ideas. A visual canvas solves three fundamental problems that traditional note apps struggle with:
+When you prep a tabletop campaign or write a complex setting, your brain relies heavily on spatial memory: remembering where an idea sits relative to other ideas. A visual canvas solves three fundamental problems that traditional note apps struggle with:
 
 1. **Lowering Cognitive Load During Prep**: Instead of holding a 10-person conspiracy entirely in your working memory while clicking through tabs, you can see the entire web of tension at a single glance.
 2. **Embracing Non-Linear Thinking**: You don't have to decide whether a new NPC is "ready for canon." You can drop a quick note card on the board, connect it with a tentative labeled link, and let the relationship evolve organically.
@@ -87,7 +87,7 @@ When using Codex Cryptica's RPG generators or random tables, you don't always wa
 
 ## 4. Canvas + The Codex Ecosystem: Deep Integration
 
-A standalone whiteboard app (like Miro or generic drawing tools) creates a "data silo"—once you draw something there, you have to manually copy it over to your notes.
+A standalone whiteboard app (like Miro or generic drawing tools) creates a "data silo": once you draw something there, you have to manually copy it over to your notes.
 
 Codex Cryptica's Canvas is deeply wired into the rest of the application:
 
@@ -164,7 +164,7 @@ As your campaign grows, here are a few best practices to keep your boards respon
 
 Worldbuilding shouldn't feel like data entry.
 
-The Canvas gives you the tactile, visual freedom to brainstorm with wild abandon—while keeping every card, connection, and note tethered to your local-first campaign vault.
+The Canvas gives you the tactile, visual freedom to brainstorm with wild abandon, while keeping every card, connection, and note tethered to your local-first campaign vault.
 
 ### **Ready to lay out your next campaign board?**
 

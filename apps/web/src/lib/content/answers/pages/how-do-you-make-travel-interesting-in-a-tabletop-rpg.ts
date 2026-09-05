@@ -26,7 +26,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "Branching routes with visible trade-offs",
-          text: "Never offer only one road. Present at least two distinct paths between points of interest — a faster route carrying clear danger or scrutiny, and a slower route demanding heavier supplies, navigation skill, or physical endurance.",
+          text: "Never offer only one road. Present at least two distinct paths between points of interest: a faster route carrying clear danger or scrutiny, and a slower route demanding heavier supplies, navigation skill, or physical endurance.",
         },
         {
           term: "Active party travel roles",
@@ -72,7 +72,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
       heading: "Running camp and downtime between travel legs",
       paragraphs: [
         "The end of a travel day provides natural pacing for character interaction. Rather than simply declaring that everyone sleeps and recovers resources, invite one or two camp vignettes. Ask who helps prepare the evening meal, what two characters discuss by the fire, or what memories the terrain evokes.",
-        "Establishing a clear camp procedure — setting watches, securing beasts of burden, and checking rations — grounds the physical reality of the expedition. When complications arise during the night, they should challenge camp security or supply reserves rather than always triggering midnight combat in armour.",
+        "Establishing a clear camp procedure (setting watches, securing beasts of burden, and checking rations) grounds the physical reality of the expedition. When complications arise during the night, they should challenge camp security or supply reserves rather than always triggering midnight combat in armour.",
       ],
     },
     {

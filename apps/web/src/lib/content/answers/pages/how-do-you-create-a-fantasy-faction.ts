@@ -3,17 +3,18 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   slug: "how-do-you-create-a-fantasy-faction",
   category: "worldbuilding",
+  labels: ["fantasy"],
   publishedAt: "2026-08-30",
   question: "How do you create a fantasy faction?",
   kind: "framework",
   shortAnswer:
-    'Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move — "restore the drowned line to the throne" rather than "gain power".',
+    'Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move: "restore the drowned line to the throne" rather than "gain power".',
   sections: [
     {
       kind: "prose",
       heading: "A faction is a decision-making machine",
       paragraphs: [
-        "The reason to invent one is so that the world reacts without you having to improvise on the spot. When the party burns the customs house, you should be able to ask each faction the same question — what do you do about this? — and get five different answers.",
+        "The reason to invent one is so that the world reacts without you having to improvise on the spot. When the party burns the customs house, you should be able to ask each faction the same question (what do you do about this?) and get five different answers.",
         "That only works if the faction has been defined by its behaviour rather than its aesthetics. A heraldic device, a colour scheme and a founding legend tell you nothing about what the group does on Tuesday. A goal, a constraint and a preferred method tell you everything.",
       ],
     },
@@ -34,7 +35,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
         },
         {
           term: "Who joins, and why?",
-          text: "The recruitment pitch, honestly stated. This is where a faction stops being an abstraction — someone had a reason to sign up last month.",
+          text: "The recruitment pitch, honestly stated. This is where a faction stops being an abstraction; someone had a reason to sign up last month.",
         },
         {
           term: "What will it not do?",
@@ -63,7 +64,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
         },
         {
           term: "Blocked by",
-          text: "The Ferrymen's Compact, whose members choose the bank — and therefore the verdict — for a fee.",
+          text: "The Ferrymen's Compact, whose members choose the bank, and therefore the verdict, for a fee.",
         },
         {
           term: "Recruits",
@@ -89,7 +90,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
       paragraphs: [
         "A faction in isolation is inert. The interesting properties emerge from overlap: two groups that want the same asset, one group that depends on another it despises, a third that profits from the quarrel continuing. Two factions with an explicit relationship generate more play than five with none.",
         'The cheapest way to get there is to define each new faction partly in terms of the ones you already have. Not "a thieves\' guild", but "the people the Assize cannot prosecute, and why".',
-        "Avoid the tidy symmetry of a faction wheel where every group opposes exactly one other. Real organisations have lopsided relationships — grudges that only run one way, dependencies that only one side knows about — and those asymmetries are where a party finds purchase.",
+        "Avoid the tidy symmetry of a faction wheel where every group opposes exactly one other. Real organisations have lopsided relationships: grudges that only run one way, dependencies that only one side knows about, and those asymmetries are where a party finds purchase.",
       ],
     },
     {
@@ -107,7 +108,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   codexConnection: {
     heading: "Where this lives in Codex Cryptica",
     paragraphs: [
-      "A faction page in Codex holds the six answers as its body and everything else as links: members, rivals, holdings, the assets it controls, the events it caused. Because the relationships are real connections rather than prose, the graph shows you the collisions — two factions pointing at the same location is a plot you had not consciously planned.",
+      "A faction page in Codex holds the six answers as its body and everything else as links: members, rivals, holdings, the assets it controls, the events it caused. Because the relationships are real connections rather than prose, the graph shows you the collisions; two factions pointing at the same location is a plot you had not consciously planned.",
       "The free faction generator is a reasonable way to break a blank page. It produces the goal-and-obstacle skeleton described above; the collisions are still yours to write.",
     ],
     linkText: "Try the faction generator",
@@ -123,7 +124,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     {
       title: "Secret society generator",
       description:
-        "For factions whose membership is itself the secret — cells, oaths and recognition signs.",
+        "For factions whose membership is itself the secret: cells, oaths and recognition signs.",
       href: "/generators/secret-society",
     },
     {
@@ -163,6 +164,6 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   seo: {
     title: "How do you create a fantasy faction? | Codex Cryptica",
     description:
-      "Six questions that turn a faction into a decision-making machine — goal, obstacle, recruits, limits, assets, next move — with a worked example and a usability test.",
+      "Six questions that turn a faction into a decision-making machine (goal, obstacle, recruits, limits, assets, next move) with a worked example and a usability test.",
   },
 };

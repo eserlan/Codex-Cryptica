@@ -7,14 +7,14 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
   question: "How do you handle character death in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "To handle player character death gracefully in a tabletop RPG, follow a three-part protocol: pause the table immediately to confirm the finality of the mechanical result, grant the dying hero agency through a final dying action or parting words, and conduct a brief five-minute debrief before planning the replacement. Never rush a dead character out of the room or immediately slide a new sheet across the table. Honouring the narrative impact of a fallen hero maintains dramatic weight, while establishing clear campaign expectations in advance prevents player resentment.",
+    "Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.",
   sections: [
     {
       kind: "prose",
       heading: "The shock of sudden lethality",
       paragraphs: [
         "Character death is one of the most volatile moments in tabletop gaming. When poorly handled, an abrupt death can leave a player feeling silenced, alienated, or resentful that months of invested personal backstory were extinguished by lucky critical hits. Alternatively, removing the threat of death entirely robs combat encounters of genuine danger and tension.",
-        "The difference between traumatic frustration and a memorable campaign milestone lies in narrative dignity. Even when combat is brutally lethal, giving the dying adventurer a meaningful final moment ensures the death feels like a tragic climax rather than an arbitrary administrative removal.",
+        "The difference between traumatic frustration and a memorable campaign milestone is narrative dignity. Even when combat is brutally lethal, a meaningful final moment for the dying adventurer turns the death into a tragic climax instead of an arbitrary administrative removal.",
       ],
     },
     {
@@ -25,7 +25,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
       items: [
         {
           term: "Call a pause and confirm the maths",
-          text: "Stop the action immediately. Verify hit point calculations and rule interpretations calmly with the player away from combat chaos. Ensure both you and the player agree that the outcome is legitimate and irreversible.",
+          text: "Stop the action immediately. Verify hit point calculations and rule interpretations calmly with the player away from combat chaos, until you both agree the outcome is legitimate and irreversible.",
         },
         {
           term: "Offer a final heroic stand or parting monologue",

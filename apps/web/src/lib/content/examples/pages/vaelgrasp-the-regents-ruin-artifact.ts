@@ -8,6 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const vaelgrasp: ExampleConfigInput = {
   slug: "vaelgrasp-the-regents-ruin-artifact",
+  labels: ["fantasy"],
   name: "Vaelgrasp, the Regent's Ruin",
   title: "Fantasy artifact example: Vaelgrasp, the Regent's Ruin",
   kind: "item",

@@ -2,19 +2,20 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   slug: "how-do-you-create-a-believable-fictional-religion",
+  labels: ["fantasy"],
   category: "worldbuilding",
   publishedAt: "2026-08-30",
   question: "How do you create a believable fictional religion?",
   kind: "how-to",
   shortAnswer:
-    "Write what adherents do, not what they believe. A religion becomes believable through practice — the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit — because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.",
+    "Write what adherents do, not what they believe. A religion becomes believable through practice: the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit, because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.",
   sections: [
     {
       kind: "prose",
       heading: "Practice first, doctrine last",
       paragraphs: [
         "Ask someone to describe a religion they do not belong to and they will describe behaviour: what people wear, when they gather, what they abstain from, what happens at a funeral. The theology comes later, if at all. Invented religions usually run this backwards, opening with a creation myth and a list of tenets that nobody in play will ever ask about.",
-        'Starting from practice also produces friction automatically. A rite that requires still water gives you a reason for temples to sit where they do, a trade in imported water, an argument about whether river water counts, and a schism waiting to happen. A tenet — "they value purity" — produces none of that.',
+        'Starting from practice also produces friction automatically. A rite that requires still water gives you a reason for temples to sit where they do, a trade in imported water, an argument about whether river water counts, and a schism waiting to happen. A tenet, "they value purity," produces none of that.',
         "This page is about the institution and its practice. Designing the gods themselves is a separate problem, and a religion does not need a pantheon at all: ancestor veneration, a philosophy, a state cult and a saint-centred folk practice are all religions with very little theology between them.",
       ],
     },
@@ -25,7 +26,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       items: [
         {
           term: "One rite performed regularly",
-          text: "Weekly, daily, seasonal. Describe it physically — who does what, with which objects, in what building. This single item generates more usable detail than everything below it.",
+          text: "Weekly, daily, seasonal. Describe it physically: who does what, with which objects, in what building. This single item generates more usable detail than everything below it.",
         },
         {
           term: "A prohibition with teeth",
@@ -53,7 +54,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       kind: "example",
       heading: "A worked example: the Kept Flame",
       paragraphs: [
-        "Built from the list above. Notice how much of it is administrative rather than mystical — that is deliberate, and it is what makes the institution feel like it existed before the party arrived.",
+        "Built from the list above. Notice how much of it is administrative rather than mystical; that is deliberate, and it is what makes the institution feel like it existed before the party arrived.",
       ],
       items: [
         {
@@ -62,7 +63,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
         },
         {
           term: "The prohibition",
-          text: "No oath may be sworn over a borrowed flame. Doing so voids it — and lamp-hire is, technically, a serious crime that half the poor quarter commits.",
+          text: "No oath may be sworn over a borrowed flame. Doing so voids it, and lamp-hire is, technically, a serious crime that half the poor quarter commits.",
         },
         {
           term: "Life event",
@@ -88,7 +89,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       paragraphs: [
         "Invented religions read as fake mostly because they are too coherent. Every practice serves the theology, every adherent agrees, and the whole thing was evidently designed at once. Real traditions carry rules whose reason has been forgotten, festivals absorbed from something older, regional variants that embarrass the centre, and a gap between what the institution teaches and what people in the village actually do.",
         "Adding two or three of those is enough. A holiday nobody can explain. A prayer said in a language the congregation does not speak. A shrine the church tolerates but does not endorse.",
-        "One caution, since this material touches real belief: borrowing the surface of a living religion — its sacred names, its liturgy, its iconography — and attaching it to a fictional institution tends to land badly, and it is also the lazier option. Taking the structural lessons instead, and inventing the specifics, produces something both less offensive and more interesting.",
+        "One caution, since this material touches real belief: borrowing the surface of a living religion (its sacred names, its liturgy, its iconography) and attaching it to a fictional institution tends to land badly, and it is also the lazier option. Taking the structural lessons instead, and inventing the specifics, produces something both less offensive and more interesting.",
       ],
     },
     {
@@ -106,7 +107,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   codexConnection: {
     heading: "Where a religion lives in a campaign vault",
     paragraphs: [
-      "A religion is rarely one page. It is an institution, its clergy, its buildings, the families that fund it, and the disputes it is currently having — which is to say it behaves exactly like a faction, and benefits from the same treatment: one entity per part, connected by named links.",
+      "A religion is rarely one page. It is an institution, its clergy, its buildings, the families that fund it, and the disputes it is currently having, which is to say it behaves exactly like a faction, and benefits from the same treatment: one entity per part, connected by named links.",
       "The practical payoff comes when the party leans on it. Voiding one oath should tell you which three inheritance cases are affected, and that is a question a linked graph answers and a document does not.",
     ],
     linkText: "Try the faction generator",
@@ -116,7 +117,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     {
       title: "Faction generator",
       description:
-        "Churches, orders and heresies behave like factions — start from goals and obstacles.",
+        "Churches, orders and heresies behave like factions: start from goals and obstacles.",
       href: "/generators/faction",
     },
     {
@@ -153,7 +154,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       "designing religions for worldbuilding",
     ],
     uniqueValue:
-      "Practice before doctrine — one rite, one prohibition, who funds it, what adherents dispute — and why total coherence reads as fake.",
+      "Practice before doctrine: one rite, one prohibition, who funds it, what adherents dispute, and why total coherence reads as fake.",
     relatedIntents: ["answer-pantheon"],
   },
 

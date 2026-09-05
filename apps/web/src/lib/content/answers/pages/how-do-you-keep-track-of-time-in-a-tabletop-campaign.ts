@@ -7,14 +7,14 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
   question: "How do you keep track of time in a tabletop campaign?",
   kind: "framework",
   shortAnswer:
-    "To manage time effectively across a tabletop campaign, track gameplay through three distinct operational tiers: ten-minute dungeon exploration turns for tactical resource expenditure, four-to-six-hour travel watches for overland journey pacing, and an overarching campaign calendar paired with ticking faction clocks to ensure the world advances dynamically whether the party acts or rests.",
+    "Track it at three separate scales: ten-minute dungeon turns for tactical resource use, four-to-six-hour travel watches for overland journeys, and a campaign calendar with ticking faction clocks so the world keeps moving whether the party acts or rests.",
   sections: [
     {
       kind: "prose",
       heading: "Time is the primary currency of table tension",
       paragraphs: [
         "In many tabletop campaigns, time is treated as casual background flavour rather than a consequential game mechanic. When a Game Master handwaves the passage of hours, players quickly realise that their decisions carry no logistical weight. They take long rests after every minor skirmish, cast ritual spells indefinitely, and spend entire afternoons searching empty rooms because there is no friction or consequence to delay.",
-        "Strict time tracking transforms passive exploration into an active challenge. When every ten minutes spent picking a stubborn lock risks burning down a torch or attracting wandering patrols, choices acquire immediate urgency. Connecting micro-level dungeon actions to macro-level campaign calendars ensures the living world continues moving forward around the protagonists.",
+        "Strict time tracking turns passive exploration into an active challenge. When every ten minutes spent picking a stubborn lock risks burning down a torch or attracting wandering patrols, choices carry immediate urgency. Connecting micro-level dungeon actions to macro-level campaign calendars keeps the world moving forward around the party.",
       ],
     },
     {
@@ -103,7 +103,7 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
     heading: "Chronicle campaign timelines in Codex Cryptica",
     paragraphs: [
       "Codex Cryptica includes an integrated campaign timeline and calendar engine. You can log session events, track seasonal shifts, and tie historical milestones directly to world entities.",
-      "Manage faction downtime clocks and active villain schedules alongside your session notes, ensuring your campaign world stays reactive and urgent from session one to the finale.",
+      "Manage faction downtime clocks and active villain schedules alongside your session notes, so your campaign world stays reactive and urgent from session one to the finale.",
     ],
     linkText: "Track campaign timelines in Codex Cryptica",
     href: "/solutions/campaign-manager",

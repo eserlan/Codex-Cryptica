@@ -118,7 +118,7 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
       kind: "prose",
       heading: "Sensible safety and privacy when meeting new players",
       paragraphs: [
-        "When meeting a new group in person, always choose a public or established venue — such as a local game store, board game cafe, or library room — for the first few sessions. For online games, avoid sharing unnecessary personal details before you know the table.",
+        "When meeting a new group in person, always choose a public or established venue, such as a local game store, board game cafe, or library room, for the first few sessions. For online games, avoid sharing unnecessary personal details before you know the table.",
         "Remember that leaving a group that turns out to be a poor fit is completely normal and acceptable. Table dynamics vary widely, and finding the right mix of personalities, pacing, and play styles often takes trying a couple of one-shots or open tables first.",
       ],
     },
@@ -126,7 +126,7 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
   codexConnection: {
     heading: "From finding a group to running a campaign",
     paragraphs: [
-      "Codex Cryptica does not match players or find groups — that is why we partner with dedicated platforms like Groupfinder. Where Codex comes in is what happens next: once your group is formed and agrees on a game, Codex provides an offline-first, private workspace to organise campaign lore, track character relationships, and manage session notes together.",
+      "Codex Cryptica does not match players or find groups; that is why we partner with dedicated platforms like Groupfinder. Where Codex comes in is what happens next: once your group is formed and agrees on a game, Codex provides an offline-first, private workspace to organise campaign lore, track character relationships, and manage session notes together.",
       "After your group is set up, running a clear Session 0 and keeping shared records prevents the miscommunications that cause new campaigns to drift.",
     ],
     linkText: "See the campaign manager",

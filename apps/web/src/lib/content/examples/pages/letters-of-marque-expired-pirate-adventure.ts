@@ -8,6 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const lettersOfMarqueExpired: ExampleConfigInput = {
   slug: "letters-of-marque-expired-pirate-adventure",
+  labels: ["pirate"],
   name: "Letters of Marque, Expired",
   title: "Pirate adventure example: Letters of Marque, Expired",
   kind: "adventure",

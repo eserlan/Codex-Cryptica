@@ -2,7 +2,7 @@
 id: how-import-works
 slug: how-import-works
 title: "From Lore Bible to Living Graph: How the Import Feature Works"
-description: "A deep dive into the Codex Cryptica import pipeline — from dropping a PDF onto the screen to having a fully linked, AI-extracted knowledge graph ready for your next session."
+description: "How the Codex Cryptica import pipeline works, from dropping a PDF onto the screen to having a fully linked, AI-extracted knowledge graph ready for your next session."
 keywords:
   - "RPG Lore Importer"
   - "World Building Import"
@@ -21,7 +21,7 @@ imageAlt: "Archive Controls and Import Button in Codex Cryptica"
 
 ![Archive Controls and Import Button](https://assets.codexcryptica.com/images/blog/how-import-works/how-import-works-start.png)
 
-You have a binder full of world-building — a Google Doc, a PDF, or a JSON export from years of notes. Transferring it manually to a new tool would take hundreds of hours of copying, pasting, and linking.
+You have a binder full of world-building: a Google Doc, a PDF, or a JSON export from years of notes. Transferring it manually to a new tool would take hundreds of hours of copying, pasting, and linking.
 
 **The Codex Cryptica Import Pipeline** was built to solve this. In a single drag-and-drop (or copy-paste), it transforms your raw lore bible into an AI-extracted knowledge graph. Characters are named, locations are pinned, and factions are linked automatically.
 
@@ -61,7 +61,7 @@ Once the text is extracted, the **Oracle Analyzer** reads your lore with the eye
 
 - **Entity Identification**: It classifies subjects into `Character`, `Location`, `Item`, `Faction`, or `Lore`.
 - **Synthesis**: It drafts one-sentence chronicles and expanded lore notes based on your text.
-- **Relationship Discovery**: It detects links — like a character serving a specific faction — and materializes them as edges on your graph.
+- **Relationship Discovery**: It detects links, like a character serving a specific faction, and materializes them as edges on your graph.
 - **Archive Revision**: It checks your existing archive to see if you already have a node for a discovered entity, offering to **merge** instead of duplicate.
 
 ![Importer Processing Interface](https://assets.codexcryptica.com/images/blog/how-import-works/import-processing.png)

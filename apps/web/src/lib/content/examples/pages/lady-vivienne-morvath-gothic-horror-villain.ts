@@ -6,6 +6,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const ladyVivienneMorvath: ExampleConfigInput = {
   slug: "lady-vivienne-morvath-gothic-horror-villain",
+  labels: ["vampire"],
   name: "Lady Vivienne Morvath",
   title: "Gothic Horror villain example: Lady Vivienne Morvath",
   kind: "character",
@@ -193,6 +194,7 @@ export const ladyVivienneMorvath: ExampleConfigInput = {
       "The difference between a villain that sits at the end of a dungeon and one that drives a campaign is a calendar. Lady Vivienne Morvath does not wait in her drawing room for adventurers to kick down the doors of Morvath Manor; she has six distinct stages of execution, and each stage changes the world whether the party intervenes or not.",
       "Notice how the lieutenants function as narrative hinges rather than meat-shields. Father Lucian has a crisis of conscience, Mistress Brandt has blackmail journals, and Bailiff Cross is hiding Vivienne's terminal illness. Any one of them can be flipped, interrogated, or exploited to peel back a layer of the mystery without fighting through a fortress.",
       "The moral complication at the end is what keeps the resolution from feeling cheap. Killing Vivienne saves the valley from her mercurial embalming apparatus, but it exposes the tenant farmers to the harsh winter famine and imperial tax-assessors she was holding at bay. That gives the players a genuine governance dilemma to solve once the smoke clears.",
+      "That depth is earned here because Vivienne is meant to drive months of play. Not every character needs it: see the compact end of the same spectrum in the Nkiru Okafor Table Card example, a fixer built for a single scene from five sharp cues instead of a six-stage plan.",
     ],
   },
   relatedGenerators: [
@@ -234,6 +236,7 @@ export const ladyVivienneMorvath: ExampleConfigInput = {
   relatedExamples: [
     "gulls-roost-coastal-smuggling-town",
     "the-low-tide-rust-dock-syndicate",
+    "nkiru-okafor-cyberpunk-npc-table-card",
   ],
   sourceUrl: "https://github.com/eserlan/Codex-Cryptica/discussions/2656",
   seo: {

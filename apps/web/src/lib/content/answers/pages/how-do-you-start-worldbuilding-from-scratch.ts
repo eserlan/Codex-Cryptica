@@ -7,7 +7,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
   question: "How do you start worldbuilding from scratch?",
   kind: "framework",
   shortAnswer:
-    "To start worldbuilding from scratch without succumbing to prep paralysis, use a bottom-up approach focused on a single local sandbox. Build one functional settlement, establish three competing local factions, place two adventure locations within a half-day trek, and introduce an immediate crisis. Expand the broader continent and ancient history only when player exploration demands it.",
+    "Start small and bottom-up: build one functional settlement, three competing local factions, two adventure locations within a half-day trek, and an immediate crisis. Expand the broader continent and ancient history only once player exploration actually calls for it.",
   sections: [
     {
       kind: "prose",
@@ -96,7 +96,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
       kind: "checklist",
       heading: "Worldbuilding launch readiness checklist",
       intro:
-        "Ensure your setting is game-ready without over-preparing unnecessary background detail:",
+        "Check your setting is game-ready, without wasting time on background detail nobody will see:",
       items: [
         "Can a player understand the local situation after a two-minute spoken briefing?",
         "Are there at least three distinct NPCs with opposing motivations whom players can speak to immediately?",

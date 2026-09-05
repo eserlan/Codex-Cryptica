@@ -11,7 +11,7 @@
 
   const TITLE = "Generator examples";
   const DESCRIPTION =
-    "Curated, unedited output from the Codex Cryptica generators — settlements, factions and encounters you can read in full and take straight to the table.";
+    "Curated, unedited output from the Codex Cryptica generators: settlements, factions and encounters you can read in full and take straight to the table.";
   const SEO_IMAGE =
     "https://assets.codexcryptica.com/announcements/ship-cinder-wren.jpg";
   const SEO_IMAGE_ALT =

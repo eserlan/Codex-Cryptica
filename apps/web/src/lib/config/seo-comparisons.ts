@@ -51,7 +51,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     subheading:
       "A local-first comparison for RPG campaign managers and worldbuilders.",
     introText:
-      "Both Obsidian and Codex Cryptica offer powerful local-first markdown linking, but they target different goals. Obsidian is a general-purpose note-taking application requiring multiple community plugins to manage campaigns, whereas Codex Cryptica is built from the ground up for TTRPG mechanics, maps, timelines, and relationships.",
+      "Both Obsidian and Codex Cryptica link local-first markdown notes, but they target different goals. Obsidian is a general-purpose note-taking application requiring multiple community plugins to manage campaigns, whereas Codex Cryptica is built from the ground up for TTRPG mechanics, maps, timelines, and relationships.",
     ctaText: "Try Codex Cryptica",
     secondaryCtaText: "Import Obsidian Vault",
     secondaryCtaHref: "/import/obsidian-vault",
@@ -151,7 +151,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     h1: "Your World Is Yours.",
     subheading: "No subscriptions. No cloud lock-in.",
     introText:
-      "Import your World Anvil export and keep building. Your lore lives as local Markdown files — yours to keep, edit, and explore as a connected graph.",
+      "Import your World Anvil export and keep building. Your lore lives as local Markdown files: yours to keep, edit, and explore as a connected graph.",
     ctaText: "Get Free Local Vault",
     secondaryCtaText: "Import World Anvil Export",
     secondaryCtaHref: "/import/world-anvil-export",
@@ -164,7 +164,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       {
         title: "Bring Your World Anvil Export",
         description:
-          "Already have years of lore in World Anvil? Import your export and pick up where you left off — no copy-pasting, no rebuilding from scratch.",
+          "Already have years of lore in World Anvil? Import your export and pick up where you left off, no copy-pasting, no rebuilding from scratch.",
         icon: "icon-[lucide--package-open]",
       },
       {
@@ -194,7 +194,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       {
         feature: "Offline core workflow",
         competitorHas: "Cloud-dependent",
-        codexHas: "Yes — core vault works offline",
+        codexHas: "Yes, core vault works offline",
       },
       {
         feature: "Native local Markdown vault",
@@ -325,7 +325,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
     verdict:
-      "If you love the aesthetic of LegendKeeper but want true data ownership, standard file formats, and no subscription fees, Codex Cryptica provides a powerful, free alternative that keeps your notes safe on your own machine.",
+      "If you love the aesthetic of LegendKeeper but want true data ownership, standard file formats, and no subscription fees, Codex Cryptica is a free alternative that keeps your notes on your own machine.",
     faq: [
       {
         question: "Can I back up my campaign?",
@@ -357,14 +357,14 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     competitorName: "Kanka",
     title: "Self-Hosted Kanka Alternative: No Server | Codex Cryptica",
     description:
-      "Looking for a self-hosted Kanka alternative? Codex keeps your campaign local and offline—no account or campaign server to run. Import a copy and compare.",
+      "Looking for a self-hosted Kanka alternative? Codex keeps your campaign local and offline, no account or campaign server to run. Import a copy and compare.",
     eyebrow: "Looking for a self-hosted Kanka alternative?",
     h1: "Keep the control. Skip the server.",
     subheading:
-      "Codex Cryptica keeps your campaign on your own device — no account, hosted campaign service, or server administration required.",
+      "Codex Cryptica keeps your campaign on your own device: no account, hosted campaign service, or server administration required.",
     introText:
       "Kanka self-hosting gives you control by running your own server. Codex gives you control by not needing one. Kanka also offers a capable hosted service with unlimited campaigns and entries on its free plan; Codex takes a different route by keeping the core campaign workflow local-first.\n\nKeep your Kanka campaign exactly where it is. Import a copy into Codex and see whether a local, offline Kanka alternative works better for you.",
-    ctaText: "Open Codex — No Account Required",
+    ctaText: "Open Codex, No Account Required",
     secondaryCtaText: "Import a Kanka Copy",
     secondaryCtaHref: "/import/kanka-json",
     keywords: [
@@ -471,7 +471,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         feature: "Offline core workflow",
         competitorHas:
           "Hosted Kanka requires its service; self-hosting depends on deployment",
-        codexHas: "Yes — the core vault is local-first",
+        codexHas: "Yes, the core vault is local-first",
       },
       {
         feature: "Account for the core workflow",

@@ -7,33 +7,32 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
   question: "How do you build a point crawl for an RPG?",
   kind: "how-to",
   shortAnswer:
-    "To build a point crawl for an RPG, construct a network of six to ten landmark nodes connected by differentiated travel paths. Define each node as an actionable destination with a clear hazard, resource, or encounter. Then connect the nodes with routes that present meaningful trade-offs in travel duration, terrain difficulty, and risk, ensuring there are loops and alternative paths rather than a single linear highway.",
+    "A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk. Build in enough loops and alternative paths that the map isn't a single linear road.",
   sections: [
     {
       kind: "prose",
       heading: "The cartographer's trap: why terrain hexes stall travel prep",
       paragraphs: [
         "Traditional wilderness exploration prep often bogs down in cartographic busywork. Game Masters spend dozens of hours drawing uniform hexagonal grids across wilderness maps, filling thirty adjacent hexes with identical pine trees, and drafting separate random encounter tables for light forest versus dense forest. At the table, this produces slow, procedural grid-crawling where players roll survival checks, ask if the next hex looks different from the last, and spend three hours wandering through empty space with zero meaningful tactical decisions.",
-        "A point crawl replaces the uniform grid with a network graph. Instead of simulating every square kilometre of unremarkable dirt, you identify the six to ten landmark locations players actually care about — ruined watchtowers, sunken bridges, monster lairs, and hermit shrines — and connect them with defined paths. Wilderness travel shifts from an exercise in navigation bookkeeping to a series of high-stakes route choices: do the players take the fast river trail where goblin toll-collectors lurk, or the slow mountain pass that requires three extra days of rations?",
+        "A point crawl replaces the uniform grid with a network graph. Instead of simulating every square kilometre of unremarkable dirt, you identify the six to ten landmark locations players actually care about (ruined watchtowers, sunken bridges, monster lairs, and hermit shrines) and connect them with defined paths. Wilderness travel shifts from an exercise in navigation bookkeeping to a series of high-stakes route choices: do the players take the fast river trail where goblin toll-collectors lurk, or the slow mountain pass that requires three extra days of rations?",
       ],
     },
     {
       kind: "list",
-      heading: "The five-step point crawl construction procedure",
-      intro:
-        "Follow these five structural steps to design an engaging regional point crawl in under an hour:",
+      heading: "Five steps to build one",
+      intro: "A regional point crawl in about an hour:",
       items: [
         {
           term: "Step 1: Place landmark nodes",
-          text: "Select six to ten distinct destinations across your region. Ensure each node has a strong sensory identity, a reason to visit (a treasure, an allied NPC, a defensive redoubt, or an alchemical ingredient), and an immediate obstacle or inhabitant.",
+          text: "Pick six to ten distinct destinations across your region. Give each one a strong sensory identity, a reason to visit (a treasure, an allied NPC, a defensive redoubt, or an alchemical ingredient), and an immediate obstacle or inhabitant.",
         },
         {
           term: "Step 2: Differentiate connecting paths",
-          text: "Never draw two routes with identical properties. For every path between nodes, establish three variables: travel time (e.g. half a day vs two days), resource costs (rations, torchlight, or climbing gear), and the distinctive hazard native to that trail.",
+          text: "Never draw two routes with identical properties. For every path between nodes, set three variables: travel time (half a day vs two days, say), resource costs (rations, torchlight, or climbing gear), and the hazard specific to that trail.",
         },
         {
-          term: "Step 3: Engineer loops and branch points",
-          text: "Ensure every major node connects to at least two other nodes, forming loops and circuits. If your map is a straight tree with dead ends, players have no real choice but to push forward or retreat. Loops allow the party to detour around known monster territories or plan circular patrol routes.",
+          term: "Step 3: Build in loops and branch points",
+          text: "Every major node should connect to at least two others, forming loops and circuits. A straight tree with dead ends leaves players no real choice but to push forward or retreat. Loops let the party detour around known monster territory or plan circular patrol routes.",
         },
         {
           term: "Step 4: Seed transitional road discoveries",
@@ -41,13 +40,13 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
         },
         {
           term: "Step 5: Telegraph route conditions in advance",
-          text: "Players cannot make informed decisions if all paths look identical on paper. Provide scouts, barkeeps, or local guides in the hub who warn travellers about route conditions: 'The ridge trail is fast but exposed to wyverns; the low fen is quiet, but the mud will exhaust your pack mules.'",
+          text: "Players can't make informed decisions if all paths look identical on paper. Give them scouts, barkeeps, or local guides in the hub who warn travellers about route conditions: 'The ridge trail is fast but exposed to wyverns; the low fen is quiet, but the mud will exhaust your pack mules.'",
         },
       ],
     },
     {
       kind: "example",
-      heading: "Worked Example Scenario: Before and After",
+      heading: "A worked example: before and after",
       paragraphs: [
         "Contrast how wilderness travel operates when preparing an expedition to the Sunken Crypt of Morzan:",
       ],
@@ -68,12 +67,12 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     },
     {
       kind: "checklist",
-      heading: "Point Crawl Construction Checklist",
+      heading: "Point crawl checklist",
       intro:
-        "Before presenting your regional travel map to your players, verify that your network satisfies these core design principles:",
+        "Before you put the regional map in front of your players, check it against these:",
       items: [
         "Placed six to ten memorable landmark nodes with distinct environmental landmarks and interactable entities.",
-        "Ensured every major destination connects to at least two distinct paths to enable circular detours and player agency.",
+        "Connected every major destination to at least two distinct paths, so there's room for circular detours and real choice.",
         "Assigned explicit travel duration in hours or days, ration consumption, and specific hazards to each connecting route.",
         "Seeded transitional discoveries or minor obstacles along paths to break up linear transit.",
         "Telegraphed route hazards through local NPCs or visible landmarks so players make informed tactical choices.",

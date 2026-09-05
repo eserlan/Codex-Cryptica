@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PublicLabelSchema } from "../labels";
 
 /**
  * Answer pages (`/answers/[slug]`) are reference entries for real
@@ -189,6 +190,11 @@ export const AnswerConfigSchema = z.object({
   relatedForPages: z.array(AnswerLinkSchema).default([]),
   /** Slugs of other answers. Validated against the registry by its tests. */
   relatedAnswers: z.array(z.string()).default([]),
+  /**
+   * Public discovery labels (#2762). Chips linking to `/explore?label=X`.
+   * From the shared canonical vocabulary — see `lib/content/labels.ts`.
+   */
+  labels: z.array(PublicLabelSchema).default([]),
   /** Optional discovery intent governance metadata. */
   discovery: AnswerDiscoverySchema.optional(),
   seo: z.object({

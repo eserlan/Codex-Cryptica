@@ -13,15 +13,15 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
       kind: "prose",
       heading: "The backstory trap: why biographical prep fails at the table",
       paragraphs: [
-        "Many Game Masters believe that bringing an NPC to life requires extensive biographical prep — childhood histories, lineage charts, and multi-paragraph personality profiles. At the table, almost none of this prep surfaces. When the party stops at a roadside trading post, a three-page dossier explaining the merchant's deceased uncle and childhood apprenticeship remains trapped behind the GM screen. Players do not experience an NPC's past; they experience how the character speaks, what they demand from the party right now, and how they react under pressure.",
-        "Prep that cannot be demonstrated in sixty seconds of dialogue is dead weight. By trading exhaustive historical exposition for sharp, observable behavioural cues, you can forge characters that players remember and quote months later — all recorded on half an index card.",
+        "Many Game Masters believe that bringing an NPC to life requires extensive biographical prep: childhood histories, lineage charts, and multi-paragraph personality profiles. At the table, almost none of this prep surfaces. When the party stops at a roadside trading post, a three-page dossier explaining the merchant's deceased uncle and childhood apprenticeship remains trapped behind the GM screen. Players do not experience an NPC's past; they experience how the character speaks, what they demand from the party right now, and how they react under pressure.",
+        "Prep that cannot be demonstrated in sixty seconds of dialogue is dead weight. By trading exhaustive historical exposition for sharp, observable behavioural cues, you can forge characters that players remember and quote months later, all recorded on half an index card.",
       ],
     },
     {
       kind: "list",
       heading: "The five-element memorable NPC anatomy",
       intro:
-        "Whenever you create an NPC — whether during prep or improvised mid-session — jot down these five concrete hooks:",
+        "Whenever you create an NPC, whether during prep or improvised mid-session, jot down these five concrete hooks:",
       items: [
         {
           term: "An immediate, concrete want",
@@ -80,7 +80,7 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
       intro: "Before introducing any non-player character, confirm you have:",
       items: [
         "A clear, immediate desire they want from the current interaction.",
-        "One effortless physical habit, gesture, or vocal cadence you can reproduce.",
+        "One small physical habit, gesture, or vocal cadence you can reproduce every time they appear.",
         "One unexpected trait or contradiction that subverts their archetype.",
         "At least one link of debt, family, or rivalry tying them to another entity.",
         "One distinct sensory detail (scent, sound, or physical mark) that anchors memory.",

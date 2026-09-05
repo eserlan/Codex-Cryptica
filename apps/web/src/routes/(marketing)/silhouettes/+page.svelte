@@ -319,8 +319,8 @@
             {/each}
           </div>
           <div class="text-[11px] text-theme-muted/80 text-left px-1">
-            {selectedPalette.description} — dynamically updates vector fills and exports
-            below.
+            {selectedPalette.description}. Dynamically updates vector fills and
+            exports below.
           </div>
         </div>
       </div>

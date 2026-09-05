@@ -7,17 +7,17 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
   question: "What RPG system should we try instead of D&D?",
   kind: "framework",
   shortAnswer:
-    "There's no single best alternative — the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.",
+    "There's no single best alternative: the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.",
   sections: [
     {
       kind: "list",
       heading: "A decision framework before any recommendation",
       intro:
-        "Work through these with your group before picking a name off a list — they matter more than popularity.",
+        "Work through these with your group before picking a name off a list; they matter more than popularity.",
       items: [
         {
           term: "What genre do you actually want?",
-          text: "Fantasy, horror, sci-fi, contemporary, something else entirely — this narrows the field before anything else does.",
+          text: "Fantasy, horror, sci-fi, contemporary, something else entirely: this narrows the field before anything else does.",
         },
         {
           term: "How tactical or crunchy should combat be?",
@@ -33,7 +33,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
         },
         {
           term: "What structure does the group want to play in?",
-          text: "GM-led adventure, player-driven narrative, investigation, survival, open sandbox — this shapes which system's default assumptions will feel natural rather than fought against.",
+          text: "GM-led adventure, player-driven narrative, investigation, survival, open sandbox: this shapes which system's default assumptions will feel natural rather than fought against.",
         },
         {
           term: "How much published support or VTT support matters?",
@@ -45,7 +45,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
       kind: "list",
       heading: "Representative systems, organised by what you're after",
       intro:
-        "Not a ranking — a starting point for each job. Many good systems in each category aren't named here; these are simply well-known enough to be a useful reference point.",
+        "Not a ranking: a starting point for each job. Many good systems in each category aren't named here; these are simply well-known enough to be a useful reference point.",
       items: [
         {
           term: "Fantasy with deeper tactical combat",
@@ -53,7 +53,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
         },
         {
           term: "Lighter, faster fantasy",
-          text: "Old-school-style fantasy systems strip the character sheet down and lean on GM judgement over rules lookups — good for groups who found D&D's rules overhead getting in the way of play.",
+          text: "Old-school-style fantasy systems strip the character sheet down and lean on GM judgement over rules lookups; good for groups who found D&D's rules overhead getting in the way of play.",
         },
         {
           term: "Horror and investigation",
@@ -61,7 +61,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
         },
         {
           term: "Science fiction and space opera",
-          text: "Traveller handles hard-edged, sandbox-driven science fiction — trade, exploration, and consequences that outlast any one mission.",
+          text: "Traveller handles hard-edged, sandbox-driven science fiction: trade, exploration, and consequences that outlast any one mission.",
         },
         {
           term: "Cyberpunk",
@@ -90,7 +90,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
       items: [
         {
           term: "Genre",
-          text: "They want to stay in fantasy — the switch is about mechanics and pacing, not setting.",
+          text: "They want to stay in fantasy; the switch is about mechanics and pacing, not setting.",
         },
         {
           term: "Combat weight",
@@ -110,7 +110,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
         },
         {
           term: "Result",
-          text: "Those answers point toward a lighter, faster fantasy system over a tactical-combat one — not because it's more popular, but because it matches what this specific group already said they wanted.",
+          text: "Those answers point toward a lighter, faster fantasy system over a tactical-combat one, not because it's more popular, but because it matches what this specific group already said they wanted.",
         },
       ],
     },
@@ -118,7 +118,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
   codexConnection: {
     heading: "How Codex Cryptica fits, whichever system you land on",
     paragraphs: [
-      "Codex Cryptica isn't a rules system and doesn't try to be one — it's campaign and worldbuilding infrastructure that stays useful regardless of which system a group picks, because entities, relationships and custom fields aren't tied to any single ruleset. If a group is currently running D&D and considering a switch, the same vault structure — NPCs, factions, locations, session history — carries over; only the character sheet and dice mechanics change underneath it.",
+      "Codex Cryptica isn't a rules system and doesn't try to be one; it's campaign and worldbuilding infrastructure that stays useful regardless of which system a group picks, because entities, relationships and custom fields aren't tied to any single ruleset. If a group is currently running D&D and considering a switch, the same vault structure (NPCs, factions, locations, session history) carries over; only the character sheet and dice mechanics change underneath it.",
       "Where Codex has a dedicated guide for a system or genre already, that's a natural next stop once a group knows what they're after. It's also a reasonable fit for smaller or indie systems that don't ship their own campaign-management or VTT tooling, since the vault doesn't assume any particular rules engine to be useful.",
     ],
     linkText: "Browse Codex Cryptica system and genre guides",

@@ -145,7 +145,7 @@
             Campaign Styles
           </h2>
           <p class="mt-1 font-light text-base text-theme-muted">
-            Ways of running a table — open, player-directed, exploration-led —
+            Ways of running a table: open, player-directed, exploration-led,
             whatever system or genre you play them in.
           </p>
         </div>

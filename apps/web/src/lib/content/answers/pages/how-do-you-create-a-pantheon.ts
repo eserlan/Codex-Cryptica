@@ -3,17 +3,18 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateAPantheon: AnswerConfigInput = {
   slug: "how-do-you-create-a-pantheon",
   category: "worldbuilding",
+  labels: ["fantasy"],
   publishedAt: "2026-08-30",
   question: "How do you create a pantheon?",
   kind: "how-to",
   shortAnswer:
-    "Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree — who was betrayed, who was replaced, whose worship displaced whose — and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.",
+    "Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree: who was betrayed, who was replaced, whose worship displaced whose, and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.",
   sections: [
     {
       kind: "prose",
       heading: "Portfolios are the least useful place to start",
       paragraphs: [
-        "The standard approach is to enumerate domains — war, harvest, the sea, the dead — and assign a god to each. It produces a complete pantheon quickly and a dull one permanently, because a tidy division of labour gives the gods nothing to want from one another.",
+        "The standard approach is to enumerate domains (war, harvest, the sea, the dead) and assign a god to each. It produces a complete pantheon quickly and a dull one permanently, because a tidy division of labour gives the gods nothing to want from one another.",
         "Mythologies people actually find memorable are messy in specific ways: overlapping claims, gods who are the same figure under two names, a domain held by someone who took it from someone else. Those irregularities are not decoration. They are the reason a pantheon can carry a plot.",
       ],
     },
@@ -28,7 +29,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
         },
         {
           term: "A displaced god",
-          text: "Someone held a portfolio before the current holder. Where the old worship survives — remote valleys, sailors, criminals — you have an instant subculture.",
+          text: "Someone held a portfolio before the current holder. Where the old worship survives (remote valleys, sailors, criminals) you have an instant subculture.",
         },
         {
           term: "A binding debt or crime",
@@ -57,7 +58,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
         },
         {
           term: "Vaun of the Low Water",
-          text: "Held the oath-portfolio before Ismera and lost it, which the surviving Vaunish houses dispute. They still swear the old way, and those oaths are not recognised — a running source of inheritance disputes.",
+          text: "Held the oath-portfolio before Ismera and lost it, which the surviving Vaunish houses dispute. They still swear the old way, and those oaths are not recognised: a running source of inheritance disputes.",
         },
         {
           term: "The Ninth Sister",
@@ -65,7 +66,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
         },
         {
           term: "What this yields",
-          text: "A legal system, two rival clergies with a concrete grievance, an inheritance plot, and a mystery — before a single domain list was written.",
+          text: "A legal system, two rival clergies with a concrete grievance, an inheritance plot, and a mystery, all before a single domain list was written.",
         },
       ],
     },
@@ -74,8 +75,8 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
       heading: "Decide what the gods do, mechanically and narratively",
       paragraphs: [
         "Two questions determine how the pantheon behaves in play, and they are worth settling explicitly rather than by drift. Do the gods answer? And can anyone tell the difference between a god answering and a coincidence?",
-        "A setting where divine intervention is verifiable produces theocracies, tested prophecies and clergy with actual authority. One where it is ambiguous produces schisms, competing interpretations and faith as a genuine choice. Neither is more correct — but a table that has not decided will produce both by accident, and players will notice the inconsistency long before they notice the pantheon.",
-        "This is also the boundary between a pantheon and a religion. The pantheon is the roster and its entanglements; the religion is what people do about it — the rites, the institutions, the money, the schisms. They are separate design problems, and the second is usually where the play is.",
+        "A setting where divine intervention is verifiable produces theocracies, tested prophecies and clergy with actual authority. One where it is ambiguous produces schisms, competing interpretations and faith as a genuine choice. Neither is more correct, but a table that has not decided will produce both by accident, and players will notice the inconsistency long before they notice the pantheon.",
+        "This is also the boundary between a pantheon and a religion. The pantheon is the roster and its entanglements; the religion is what people do about it: the rites, the institutions, the money, the schisms. They are separate design problems, and the second is usually where the play is.",
       ],
     },
     {
@@ -109,7 +110,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     {
       title: "God generator",
       description:
-        "A single deity in depth — rites, iconography, and what their worship demands.",
+        "A single deity in depth: rites, iconography, and what their worship demands.",
       href: "/generators/god-generator",
     },
     {

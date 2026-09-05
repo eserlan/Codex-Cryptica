@@ -13,9 +13,9 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       kind: "prose",
       heading: "Why nodes instead of hexes",
       paragraphs: [
-        'A hex map answers the question "what is over there?" A point crawl answers "where can I get to from here, and what does it cost?" That difference matters at the table. Most of the interesting decisions in overland travel are about routes and trade-offs — the fast road that is watched, the slow marsh path that is not — and a hex grid buries those choices under bookkeeping about how many hexes a party clears per day.',
+        'A hex map answers the question "what is over there?" A point crawl answers "where can I get to from here, and what does it cost?" That difference matters at the table. Most of the interesting decisions in overland travel are about routes and trade-offs (the fast road that is watched, the slow marsh path that is not) and a hex grid buries those choices under bookkeeping about how many hexes a party clears per day.',
         "A point crawl also degrades gracefully. If players ignore three of your seven locations, nothing breaks; the unused nodes are simply still there next time. A hex map that has been half-populated tends to develop conspicuous blank regions instead.",
-        "The structure is not new, and it is not owned by any one system. It is the same shape as a flowchart, a transport map, or the room-and-corridor graph of a dungeon — which is why it works equally well for a swamp, a city's underworld, a derelict station, or a stretch of coastline.",
+        "The structure is not new, and it is not owned by any one system. It is the same shape as a flowchart, a transport map, or the room-and-corridor graph of a dungeon, which is why it works equally well for a swamp, a city's underworld, a derelict station, or a stretch of coastline.",
       ],
     },
     {
@@ -29,7 +29,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
         },
         {
           term: "Links",
-          text: "The routes between points, each carrying its own travel time, difficulty and hazard. Links are where the choice lives, so they should differ from one another — a two-day safe road and a half-day climb are a decision; two identical one-day paths are not.",
+          text: "The routes between points, each carrying its own travel time, difficulty and hazard. Links are where the choice lives, so they should differ from one another: a two-day safe road and a half-day climb are a decision; two identical one-day paths are not.",
         },
         {
           term: "Hidden or conditional links",
@@ -41,7 +41,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       kind: "example",
       heading: "A worked example: the Saltmere fens",
       paragraphs: [
-        "Six points, four of which the party will probably visit. The costs are what make the map playable — without them, every route is the same route.",
+        "Six points, four of which the party will probably visit. The costs are what make the map playable; without them, every route is the same route.",
       ],
       items: [
         {
@@ -66,7 +66,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
       kind: "prose",
       heading: "Where point crawls struggle",
       paragraphs: [
-        "They are a poor fit when the geography itself is the content. Wilderness exploration where the point is not knowing what is out there — survey play, hex-by-hex discovery, resource attrition over unmapped country — needs a map that can hold unknowns. A point crawl tells players the shape of the network up front, which is a feature for a heist or a journey and a problem for a frontier.",
+        "They are a poor fit when the geography itself is the content. Wilderness exploration where the point is not knowing what is out there (survey play, hex-by-hex discovery, resource attrition over unmapped country) needs a map that can hold unknowns. A point crawl tells players the shape of the network up front, which is a feature for a heist or a journey and a problem for a frontier.",
         "They also assume you have decided what the interesting places are. That is genuinely harder than rolling terrain, and it is the actual work: a point crawl with six dull nodes is worse than a hex map, not better.",
       ],
     },
@@ -78,7 +78,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
         "Every point is somewhere a scene could plausibly happen.",
         "No two links out of the same point cost the same thing.",
         "At least one link is conditional, hidden, or earned.",
-        "The party can learn about a point before they reach it — rumour, signpost, map fragment.",
+        "The party can learn about a point before they reach it: rumour, signpost, map fragment.",
         "You know what changes at each point if the party comes back later.",
       ],
     },
@@ -107,7 +107,7 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     },
     {
       title: "Encounter generator",
-      description: "Fills the links — what the party meets between the nodes.",
+      description: "Fills the links: what the party meets between the nodes.",
       href: "/generators/encounter",
     },
   ],

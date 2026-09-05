@@ -6,6 +6,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const gullsRoost: ExampleConfigInput = {
   slug: "gulls-roost-coastal-smuggling-town",
+  labels: ["fantasy"],
   name: "Gull's Roost",
   title: "Fantasy settlement example: Gull's Roost",
   kind: "settlement",
