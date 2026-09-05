@@ -105,6 +105,37 @@ describe("generateHeistLocal", () => {
     expect(matched).toBe(true);
   });
 
+  it("keeps campaign context inside The Score rather than inventing a section", () => {
+    const out = generateHeistLocal(
+      { campaignContext: "a crew burned by their last fixer" },
+      seededRng(2),
+    );
+    // The AI schema declares content holds exactly Score/Prize/Casing.
+    expect(out.content).not.toContain("### Campaign Fit");
+    expect(out.content.match(/^### .+$/gm)).toEqual([
+      "### The Score",
+      "### The Prize",
+      "### Casing the Target",
+    ]);
+    expect(out.content.split("### The Prize")[0]).toContain(
+      "a crew burned by their last fixer",
+    );
+  });
+
+  it("never turns a custom option into a label that could hijack another generator's layout rule", () => {
+    const out = generateHeistLocal(
+      {
+        genre: "quest-generator",
+        heistType: "encounter-generator",
+        targetType: "npc-generator",
+      },
+      seededRng(4),
+    );
+    expect(out.labels).toEqual(["heist", "heist-generator"]);
+    // The custom values still flavour the prose — they just aren't labels.
+    expect(out.content).toContain("encounter-generator at");
+  });
+
   it("is deterministic for a fixed seed", () => {
     expect(generateHeistLocal({}, seededRng(9))).toEqual(
       generateHeistLocal({}, seededRng(9)),
@@ -194,6 +225,21 @@ describe("parseHeistResponse", () => {
     expect(out.labels).not.toContain("quest-generator");
     expect(out.labels).toContain("heist");
     expect(out.labels).toContain("infiltration");
+  });
+
+  it("does not echo a custom genre or heist type into the labels", () => {
+    const { resolved } = buildHeistPrompt(
+      { genre: "quest-generator", heistType: "puzzle-generator" },
+      "",
+      seededRng(1),
+    );
+    const out = parseHeistResponse(
+      '{"title":"T","content":"c","lore":"l","labels":["heist"]}',
+      resolved,
+    );
+    expect(out.labels).not.toContain("quest-generator");
+    expect(out.labels).not.toContain("puzzle-generator");
+    expect(out.labels).toContain("heist");
   });
 
   it("falls back to the resolved title when the model omits one", () => {

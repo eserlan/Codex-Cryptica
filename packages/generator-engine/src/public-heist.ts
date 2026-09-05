@@ -257,6 +257,34 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
 // differently-headed lore. Whitelisting closes that off.
 const KNOWN_LABELS = ["heist", "heist-generator", "infiltration"];
 
+// The resolved options are just as user-controlled as the model's output: the
+// public form's genre/heist-type/target selects all accept custom free text
+// (SelectWithCustomOption), and the in-app "Target" option is a plain text
+// field. Echoing them into `labels` unchecked would reopen exactly the hijack
+// KNOWN_LABELS closes — a user typing "quest-generator" as their target would
+// win the LAYOUT_RULES match ahead of "heist" and split this generator's lore
+// against quest's headings. Custom values still flavour the generated content;
+// they just don't become labels.
+const CANONICAL_GENRES = Object.keys(heistConfig.targetTypesByTheme);
+const CANONICAL_TARGETS = [
+  ...Object.values(heistConfig.targetTypesByTheme).flat(),
+  ...heistConfig.targetTypes,
+];
+
+function canonicalOptionLabels(resolved: ResolvedHeist): string[] {
+  const labels: string[] = [];
+  if (heistConfig.heistTypes.includes(resolved.heistType)) {
+    labels.push(resolved.heistType);
+  }
+  if (CANONICAL_TARGETS.includes(resolved.targetType)) {
+    labels.push(resolved.targetType);
+  }
+  if (CANONICAL_GENRES.includes(resolved.genre)) {
+    labels.push(resolved.genre);
+  }
+  return labels;
+}
+
 export interface HeistPrompt {
   systemInstruction: string;
   userMessage: string;
@@ -314,8 +342,9 @@ export function parseHeistResponse(
       typeof label === "string" && KNOWN_LABELS.includes(label),
   );
   if (!labels.includes("heist")) labels.unshift("heist");
-  if (!labels.includes(resolved.heistType)) labels.push(resolved.heistType);
-  if (!labels.includes(resolved.genre)) labels.push(resolved.genre);
+  for (const label of canonicalOptionLabels(resolved)) {
+    if (!labels.includes(label)) labels.push(label);
+  }
   return {
     type: "event",
     title: data.title || resolved.title,
@@ -361,10 +390,14 @@ export function generateHeistLocal(
     flashbacks.splice(flashbacks.indexOf(seed), 1);
   }
 
+  // Campaign context is a sentence inside The Score, not a section of its own:
+  // the AI schema declares `content` holds exactly Score/Prize/Casing, and a
+  // fallback that invents a fourth heading would make the two paths
+  // structurally different for no reader benefit.
   const content = `### The Score
-${resolved.heistType} at ${site}. The crew has one night to get ${prize} clear of a ${resolved.targetScale.toLowerCase()}-scale ${resolved.targetType.toLowerCase()}, and the window is not negotiable.
+${resolved.heistType} at ${site}. The crew has one night to get ${prize} clear of a ${resolved.targetScale.toLowerCase()}-scale ${resolved.targetType.toLowerCase()}, and the window is not negotiable.${resolved.campaignContext ? ` This score ties into ${resolved.campaignContext}.` : ""}
 
-${resolved.campaignContext ? `### Campaign Fit\nThis score ties into ${resolved.campaignContext}.\n\n` : ""}### The Prize
+### The Prize
 The prize — ${prize} — is worth more to the person paying for it than to anyone who would take it honestly, which is why the job exists at all. Losing the prize costs the target something they cannot replace, and that is the part they will pursue.
 - **The catch**: ${complicationLabel} — ${complicationDetail ?? "it will not travel quietly"}. Plan the exit around this, not around the entry.
 
@@ -411,13 +444,7 @@ ${chosenFlashbacks.map((f) => `- ${f}`).join("\n")}`;
     summary: "",
     content,
     lore,
-    labels: [
-      "heist",
-      "heist-generator",
-      resolved.heistType,
-      resolved.targetType,
-      resolved.genre,
-    ],
+    labels: ["heist", "heist-generator", ...canonicalOptionLabels(resolved)],
     status: "active",
   };
 }
