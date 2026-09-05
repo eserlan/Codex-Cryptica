@@ -15,6 +15,7 @@
   } from "$lib/content/labels/aggregate";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { HUB_SLUG_TO_THEME_ID } from "$lib/components/seo/generator-theme-maps";
+  import { isPublicLabel } from "$lib/content/labels";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -22,8 +23,14 @@
   // A label that is one of the site's genre/system hubs (cyberpunk, vampire,
   // western, …) gets that hub's actual visual theme rather than the neutral
   // default — the same mapping /generators/[hub] and /for/[slug] already use.
+  // `isPublicLabel` checks membership in a fixed array rather than indexing
+  // `HUB_SLUG_TO_THEME_ID` with the raw query string, so a label like
+  // `?label=__proto__` or `?label=constructor` can't reach an inherited
+  // Object.prototype property instead of `undefined`.
   const labelThemeId = $derived(
-    data.label ? (HUB_SLUG_TO_THEME_ID[data.label] ?? null) : null,
+    data.label && isPublicLabel(data.label)
+      ? (HUB_SLUG_TO_THEME_ID[data.label] ?? null)
+      : null,
   );
   const themeBootstrap = $derived.by(() => {
     if (!labelThemeId) return "";
