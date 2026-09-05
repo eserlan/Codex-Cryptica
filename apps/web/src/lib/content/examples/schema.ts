@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { THEMES } from "schema";
 import type { WorldThemeId } from "schema";
+import { PublicLabelSchema } from "../labels";
 
 /**
  * Curated generator examples (`/examples/[slug]`), per #2565.
@@ -156,6 +157,11 @@ export const ExampleConfigSchema = z
     relatedAnswers: z.array(ExampleLinkSchema).default([]),
     relatedForPages: z.array(ExampleLinkSchema).default([]),
     relatedExamples: z.array(z.string()).default([]),
+    /**
+     * Public discovery labels (#2762). Chips linking to `/explore?label=X`.
+     * From the shared canonical vocabulary — see `lib/content/labels.ts`.
+     */
+    labels: z.array(PublicLabelSchema).default([]),
     /** Where this example was first published. */
     sourceUrl: z.string().url().optional(),
     seo: z.object({

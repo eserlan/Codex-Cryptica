@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-run-a-heist-in-a-tabletop-rpg",
   category: "session-prep",
+  labels: ["cyberpunk"],
   publishedAt: "2026-09-04",
   question: "How do you run a heist in a tabletop RPG?",
   kind: "framework",

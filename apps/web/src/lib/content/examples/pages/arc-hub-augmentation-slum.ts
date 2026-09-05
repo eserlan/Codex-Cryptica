@@ -6,6 +6,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const arcHub: ExampleConfigInput = {
   slug: "arc-hub-augmentation-slum",
+  labels: ["cyberpunk"],
   name: "Arc Hub",
   title: "Cyberpunk district example: Arc Hub",
   kind: "settlement",

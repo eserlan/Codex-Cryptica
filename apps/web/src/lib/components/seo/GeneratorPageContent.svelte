@@ -996,6 +996,7 @@
   ogImage={meta.ogImage}
   ogImageAlt={meta.ogImageAlt}
   keywords={meta.keywords ?? []}
+  labels={meta.labels ?? []}
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}

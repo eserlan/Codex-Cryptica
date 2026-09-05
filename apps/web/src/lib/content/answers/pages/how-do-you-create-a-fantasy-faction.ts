@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
   slug: "how-do-you-create-a-fantasy-faction",
   category: "worldbuilding",
+  labels: ["fantasy"],
   publishedAt: "2026-08-30",
   question: "How do you create a fantasy faction?",
   kind: "framework",

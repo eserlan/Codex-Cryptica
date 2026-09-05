@@ -15,6 +15,8 @@
   import { hubThemeLabel, type HubThemeSlug } from "$lib/content/hub-themes";
   import LandingPageGraphPreview from "$lib/components/for/LandingPageGraphPreview.svelte";
   import { getLandingPageCanonicalUrl } from "$lib/content/for/canonical";
+  import { landingPageLabels } from "$lib/content/for/registry";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import {
     trackDiscoveryPageViewed,
     classifyDiscoveryTarget,
@@ -24,6 +26,7 @@
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
+  let labels = $derived(landingPageLabels(config));
   let themeBootstrap = $derived.by(() => {
     if (!config.theme) return "";
 
@@ -168,6 +171,14 @@
           >
             {config.hero.tagline}
           </p>
+
+          {#if labels.length}
+            <div class="mb-8 flex flex-wrap justify-center gap-2">
+              {#each labels as label (label)}
+                <PublicLabelChip {label} />
+              {/each}
+            </div>
+          {/if}
 
           <div
             class="mx-auto max-w-2xl rounded-[var(--for-surface-radius)] border border-theme-border/70 bg-theme-surface/50 p-6 text-left shadow-sm sm:p-8"

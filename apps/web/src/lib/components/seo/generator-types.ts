@@ -53,6 +53,11 @@ export type SlugMetaEntry = {
   ogImage?: string;
   ogImageAlt?: string;
   keywords?: string[];
+  /**
+   * Public discovery labels (#2762). Chips linking to `/explore?label=X`.
+   * From the shared canonical vocabulary — see `lib/content/labels.ts`.
+   */
+  labels?: string[];
   faqs?: {
     question: string;
     answer: string;

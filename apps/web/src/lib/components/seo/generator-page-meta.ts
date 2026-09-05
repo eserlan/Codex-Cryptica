@@ -563,6 +563,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/vampire-clan",
+    labels: ["vampire"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-vampire-clan.jpg",
     ogImageAlt:
@@ -585,6 +586,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/nomad-clan",
+    labels: ["cyberpunk", "post-apocalyptic"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-nomad-clan.jpg",
     ogImageAlt:
@@ -634,6 +636,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/dark-fantasy-faction",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-dark-fantasy-faction.jpg",
     ogImageAlt:
@@ -1246,6 +1249,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a coherent sci-fi star system for your campaign — not just an astronomical inventory. Choose its system type, genre, civilisation level, character, and scientific realism, then generate a star (or stars), major bodies, factions, resources, hazards, and a system-wide conflict or mystery worth building a campaign around.",
     canonicalPath: "/generators/star-system",
+    labels: ["sci-fi"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-star-system.jpg",
     ogImageAlt:
@@ -1296,6 +1300,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Build an alien species that is genuinely non-human. Every biological and environmental trait changes something else — six limbs reach their tools and architecture, chemical speech changes what privacy means, a long life reshapes their politics.",
     canonicalPath: "/generators/alien-race",
+    labels: ["sci-fi"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
     ogImageAlt:

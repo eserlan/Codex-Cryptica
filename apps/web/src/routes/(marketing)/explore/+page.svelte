@@ -8,12 +8,33 @@
     REDDIT_URL,
     PATREON_URL,
   } from "$lib/config";
+  import {
+    groupPublicLabelResults,
+    type PublicContentKind,
+  } from "$lib/content/labels/aggregate";
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
 
   const cleanBase = base === "/" ? "" : base;
 
   const TITLE = "Explore Codex Cryptica";
   const DESCRIPTION =
     "Every section of Codex Cryptica in one place: worlds, examples, generators, tools, guides, and the campaign directory.";
+
+  const KIND_LABEL: Record<PublicContentKind, string> = {
+    answer: "Answers",
+    for: "Campaign Guides",
+    example: "Examples",
+    generator: "Generators",
+    world: "Public Worlds",
+  };
+
+  // A hand-picked label link is a genuine, indexable /explore destination.
+  // A ?label= filter view is dynamic and thin by construction, so it stays
+  // out of the crawl graph (mirrors /worlds's own dynamic/unindexed status).
+  const isLabelView = $derived(Boolean(data.label));
+  const groups = $derived(groupPublicLabelResults(data.results));
 
   type ExploreLink = {
     href: string;
@@ -189,13 +210,18 @@
 </script>
 
 <SeoHead
-  title="{TITLE} | Codex Cryptica"
-  description={DESCRIPTION}
+  title={isLabelView
+    ? `#${data.label} on Codex Cryptica | Explore`
+    : `${TITLE} | Codex Cryptica`}
+  description={isLabelView
+    ? `Public Codex Cryptica content tagged #${data.label}: worlds, answers, guides, examples, and generators.`
+    : DESCRIPTION}
   canonicalUrl={buildAbsoluteUrl("/explore")}
   image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
   imageAlt="Explore Codex Cryptica's connected campaign-building tools"
   imageWidth={1600}
   imageHeight={1000}
+  robots={isLabelView ? "noindex, follow" : undefined}
 />
 
 <div
@@ -204,57 +230,121 @@
 >
   <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-20">
     <div class="mb-12 max-w-2xl">
-      <h1
-        class="mb-4 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
-      >
-        {TITLE}
-      </h1>
-      <p class="text-lg leading-relaxed text-theme-muted">
-        {DESCRIPTION}
-      </p>
+      {#if isLabelView}
+        <a
+          href="{cleanBase}/explore"
+          class="mb-4 inline-flex items-center gap-2 py-1 font-mono text-xs text-theme-muted transition-colors hover:text-theme-primary"
+        >
+          <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
+          ></span>
+          All of Explore
+        </a>
+        <h1
+          class="mb-4 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
+        >
+          #{data.label}
+        </h1>
+        <p class="text-lg leading-relaxed text-theme-muted">
+          Public Codex Cryptica content tagged <strong>#{data.label}</strong>.
+        </p>
+      {:else}
+        <h1
+          class="mb-4 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
+        >
+          {TITLE}
+        </h1>
+        <p class="text-lg leading-relaxed text-theme-muted">
+          {DESCRIPTION}
+        </p>
+      {/if}
     </div>
 
-    {#each sections as section}
-      <section class="mb-14">
-        <div class="mb-6 border-b border-theme-border/60 pb-3">
-          <h2 class="font-header text-xl font-bold text-theme-text sm:text-2xl">
-            {section.title}
-          </h2>
-          {#if section.description}
-            <p class="mt-1 font-light text-sm text-theme-muted">
-              {section.description}
-            </p>
-          {/if}
+    {#if isLabelView}
+      {#if data.results.length === 0}
+        <div
+          class="mb-14 rounded border border-theme-border bg-theme-surface/40 px-6 py-10 text-center text-sm text-theme-text/70"
+        >
+          Nothing is tagged <strong>#{data.label}</strong> yet. Try browsing
+          <a
+            href="{cleanBase}/explore"
+            class="text-theme-primary hover:underline">all of Explore</a
+          > instead.
         </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-          {#each section.links as link}
-            <a
-              href={link.external ? link.href : `${cleanBase}${link.href}`}
-              target={link.external ? "_blank" : undefined}
-              rel={link.external ? "noopener noreferrer" : undefined}
-              class="group flex items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-4 shadow-sm transition-all hover:border-theme-primary/50 hover:shadow-md"
-            >
-              <span
-                class="{link.icon} mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
-              ></span>
-              <span class="flex flex-col">
-                <span
-                  class="font-header text-sm font-bold text-theme-text group-hover:text-theme-primary"
+      {:else}
+        {#each [...groups.entries()] as [kind, group] (kind)}
+          <section class="mb-14">
+            <div class="mb-6 border-b border-theme-border/60 pb-3">
+              <h2
+                class="font-header text-xl font-bold text-theme-text sm:text-2xl"
+              >
+                {KIND_LABEL[kind]}
+              </h2>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              {#each group as result (result.href)}
+                <a
+                  href={result.href.startsWith("/")
+                    ? `${cleanBase}${result.href}`
+                    : result.href}
+                  class="group flex flex-col gap-1 rounded-xl border border-theme-border bg-theme-surface p-4 shadow-sm transition-all hover:border-theme-primary/50 hover:shadow-md"
                 >
-                  {link.label}
-                </span>
-                {#if link.summary}
-                  <span class="mt-0.5 text-sm text-theme-muted">
-                    {link.summary}
+                  <span
+                    class="font-header text-sm font-bold text-theme-text group-hover:text-theme-primary"
+                  >
+                    {result.title}
                   </span>
-                {/if}
-              </span>
-            </a>
-          {/each}
-        </div>
-      </section>
-    {/each}
+                  <span class="text-sm text-theme-muted">{result.summary}</span>
+                </a>
+              {/each}
+            </div>
+          </section>
+        {/each}
+      {/if}
+    {:else}
+      {#each sections as section}
+        <section class="mb-14">
+          <div class="mb-6 border-b border-theme-border/60 pb-3">
+            <h2
+              class="font-header text-xl font-bold text-theme-text sm:text-2xl"
+            >
+              {section.title}
+            </h2>
+            {#if section.description}
+              <p class="mt-1 font-light text-sm text-theme-muted">
+                {section.description}
+              </p>
+            {/if}
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            {#each section.links as link}
+              <a
+                href={link.external ? link.href : `${cleanBase}${link.href}`}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
+                class="group flex items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-4 shadow-sm transition-all hover:border-theme-primary/50 hover:shadow-md"
+              >
+                <span
+                  class="{link.icon} mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
+                ></span>
+                <span class="flex flex-col">
+                  <span
+                    class="font-header text-sm font-bold text-theme-text group-hover:text-theme-primary"
+                  >
+                    {link.label}
+                  </span>
+                  {#if link.summary}
+                    <span class="mt-0.5 text-sm text-theme-muted">
+                      {link.summary}
+                    </span>
+                  {/if}
+                </span>
+              </a>
+            {/each}
+          </div>
+        </section>
+      {/each}
+    {/if}
 
     <div class="flex justify-center">
       <a

@@ -7,13 +7,15 @@ vi.mock("$app/paths", () => ({ base: "" }));
 
 import Page from "./+page.svelte";
 
+const emptyData = { label: "", results: [] };
+
 describe("/explore route", () => {
   afterEach(() => {
     document.head.innerHTML = "";
   });
 
   it("publishes dedicated Open Graph and Twitter metadata", () => {
-    render(Page);
+    render(Page, { props: { data: emptyData } });
 
     const expectedImage =
       "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
@@ -49,7 +51,7 @@ describe("/explore route", () => {
   });
 
   it("renders a link to /silhouettes under Build & Explore", () => {
-    render(Page);
+    render(Page, { props: { data: emptyData } });
     const link = document.querySelector('a[href="/silhouettes"]');
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain("Vector Silhouettes");

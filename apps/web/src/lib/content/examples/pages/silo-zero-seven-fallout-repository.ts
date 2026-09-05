@@ -8,6 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const siloZeroSeven: ExampleConfigInput = {
   slug: "silo-zero-seven-fallout-repository",
+  labels: ["post-apocalyptic"],
   name: "Silo Zero-Seven Fallout Repository",
   title: "Post-Apocalyptic dungeon example: Silo Zero-Seven Fallout Repository",
   kind: "location",

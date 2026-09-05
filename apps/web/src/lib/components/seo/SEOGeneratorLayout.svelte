@@ -51,6 +51,7 @@
     countRelatedEntities,
   } from "$lib/services/analytics/generator-save-tracking";
   import { registerShellCtaHandler } from "./marketing-shell";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -69,6 +70,7 @@
     ogImage = DEFAULT_OG_IMAGE,
     ogImageAlt = undefined,
     keywords = [],
+    labels = [],
     relatedLinks = [],
     faqs = [],
     theme = $bindable("Classic Fantasy"),
@@ -91,6 +93,8 @@
     ogImage?: string;
     ogImageAlt?: string;
     keywords?: string[];
+    /** Public discovery labels (#2762). Chips linking to `/explore?label=X`. */
+    labels?: string[];
     eyebrow?: string;
     introTitle?: string;
     introText?: string;
@@ -705,6 +709,13 @@
         <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
         </p>
+        {#if labels.length}
+          <div class="mb-4 flex flex-wrap gap-2">
+            {#each labels as label (label)}
+              <PublicLabelChip {label} size="sm" />
+            {/each}
+          </div>
+        {/if}
         {#if inputHint}
           <p
             class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
