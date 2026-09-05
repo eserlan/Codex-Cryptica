@@ -401,13 +401,13 @@ export const heistConfig = {
     Fragile:
       "Each time it is run with, fought over, or dropped, it takes a mark. The third mark ruins it.",
     Alive:
-      "Every time the alarm ticks up, it panics again, and someone has to spend that moment calming it instead of acting.",
+      "It frets whenever it is moved and panics outright at each alarm tick — advance the distress clock every time the crew relocates it, and when it fills it makes a noise someone hears.",
     Cursed:
       "Every ten minutes it is carried, the bearer loses something small and permanent. Handing it on does not undo what is already gone.",
     Traceable:
       "Every ten minutes, whoever is hunting it learns roughly where it is — and moves.",
     Volatile:
-      "Any fall, blow, or hurried climb risks setting it off, and the odds worsen at every alarm level.",
+      "It grows less stable the longer it is handled — advance the instability clock at every obstacle the crew carries it through, and any fall or hurried climb risks setting it off outright.",
     Anchored:
       "Freeing it takes three stages of several minutes each. Advance the house clock after every stage; on the third advance the dawn staff begin arriving.",
     Unwilling:
@@ -421,7 +421,7 @@ export const heistConfig = {
     Delayed:
       "The delay has to be set before the shift ends, and the mechanism is looked over at the change — advance the shift clock after each stage of the work.",
     Precise:
-      "Anything broken beside the one thing fails loudly and immediately, which ends the quiet part of the job on the spot.",
+      "Finding the one part that matters costs time — advance the work clock at each stage of tracing it, and when it fills the operator comes to check. Anything broken beside it fails loudly and at once.",
     Witnessed:
       "The witness has to be in position first and will not wait past the next patrol — advance the patrol clock each time the crew is delayed.",
   } as Record<string, string>,

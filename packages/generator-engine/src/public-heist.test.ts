@@ -154,6 +154,19 @@ describe("generateHeistLocal", () => {
     }
   });
 
+  it("gives every pressure line something that advances during normal play", () => {
+    // The prompt requires pressure to advance on its own, not only when the
+    // crew fails — a config entry that only bites on a mistake contradicts it.
+    for (const [label, pressure] of Object.entries(
+      heistConfig.pressureByComplication,
+    )) {
+      expect(
+        /\b(advance|every|each)\b/i.test(pressure),
+        `pressure for "${label}" names no advancing trigger: ${pressure}`,
+      ).toBe(true);
+    }
+  });
+
   it("gives every catch a matching pressure line", () => {
     const everyCatch = Object.values(heistConfig.catchesByKind).flat();
     for (const entry of everyCatch) {
