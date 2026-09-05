@@ -130,7 +130,7 @@
               ? 'opacity-50 cursor-not-allowed pointer-events-none'
               : ''}"
           >
-            <span class="{tab.icon} w-5 h-5"></span>
+            <span class="{tab.icon} w-5 h-5" aria-hidden="true"></span>
             <span
               class="text-sm font-bold uppercase font-header tracking-wider hidden md:block"
               >{tab.label}</span
