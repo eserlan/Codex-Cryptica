@@ -30,7 +30,9 @@ describe("generateHeistLocal", () => {
     expect(out.lore).toContain("### Security Rings");
     expect(out.lore).toContain("### Alarm Track");
     expect(out.lore).toContain("### Complications");
-    expect(out.lore).toContain("### When the Prize Is Taken");
+    expect(out.lore).toContain(
+      `### ${heistConfig.objectives.Theft.momentHeading}`,
+    );
     expect(out.lore).toContain("### The Getaway");
     expect(out.lore).toContain("### Flashback Opportunities");
     expect(out.labels).toContain("heist");
@@ -64,9 +66,9 @@ describe("generateHeistLocal", () => {
   });
 
   it("gives the point of no return its own section that feeds the getaway", () => {
-    const out = generateHeistLocal({}, seededRng(12));
+    const out = generateHeistLocal({ heistType: "Theft" }, seededRng(12));
     const section = out.lore
-      .split("### When the Prize Is Taken")[1]
+      .split(`### ${heistConfig.objectives.Theft.momentHeading}`)[1]
       .split("### ")[0];
     // The trigger fires, escalates the alarm, and closes the way in — and the
     // getaway opens from that same closure rather than an unrelated reason.
@@ -270,6 +272,76 @@ describe("generateHeistLocal", () => {
     }
   });
 
+  it("names the point of no return for the deed, not always the prize", () => {
+    const expected: Array<[string, string]> = [
+      ["Theft", "### When the Prize Is Taken"],
+      ["Plant Evidence", "### When the Evidence Is Planted"],
+      ["Assassination", "### When the Target Is Struck"],
+      ["Rescue", "### When the Captive Is Freed"],
+      ["Extraction", "### When the Subject Walks"],
+      ["Sabotage", "### When the Sabotage Is Committed"],
+      ["Information", "### When the Record Is Read"],
+    ];
+    for (const [heistType, heading] of expected) {
+      const out = generateHeistLocal({ heistType }, seededRng(4));
+      expect(out.lore, `${heistType} should use ${heading}`).toContain(heading);
+      // A plant job has no "prize taken" moment at all.
+      if (heistType !== "Theft") {
+        expect(out.lore).not.toContain("### When the Prize Is Taken");
+      }
+    }
+  });
+
+  it("does not write a retrieval step for a job the crew starts holding", () => {
+    const out = generateHeistLocal(
+      { heistType: "Plant Evidence" },
+      seededRng(4),
+    );
+    const objective = out.content.split("### The Package")[1].split("### ")[0];
+    // The package is not already inside the target — getting it in is the job.
+    expect(objective).toContain("The crew already has it");
+    expect(objective).toContain("has to end up in the innermost secured space");
+    // The rings guard the destination, not the package.
+    expect(out.lore).toContain(
+      "the destination the package must reach, not the package itself",
+    );
+  });
+
+  it("keeps the completing action from skipping most of the alarm track", () => {
+    for (const heistType of Object.keys(heistConfig.objectives)) {
+      const out = generateHeistLocal({ heistType }, seededRng(6));
+      const moment = out.lore
+        .split(`### ${heistConfig.objectives[heistType].momentHeading}`)[1]
+        .split("### ")[0];
+      expect(moment, `${heistType} skipped the alarm track`).toContain(
+        "**2 — Alert**",
+      );
+      expect(moment).not.toContain("Lethal Response");
+      expect(moment).not.toContain("Lockdown");
+    }
+  });
+
+  it("keeps the shared pools free of theft-only assumptions", () => {
+    // These pools are reused by every heist type, so nothing in them may
+    // assume the objective is an object being removed — a plant job has
+    // nothing go missing, and a sabotage has nothing to carry out.
+    const removalWording = /\bthe prize\b|absence|taken away|carried out/i;
+    for (const pool of [
+      heistConfig.triggers,
+      heistConfig.complications,
+      heistConfig.routeClosures,
+      heistConfig.pursuits,
+      heistConfig.flashbackSeeds,
+    ]) {
+      for (const entry of pool) {
+        expect(
+          removalWording.test(entry),
+          `shared pool entry assumes a theft: ${entry}`,
+        ).toBe(false);
+      }
+    }
+  });
+
   it("falls back to a generic objective section for a custom heist type", () => {
     const out = generateHeistLocal({ heistType: "Blackmail" }, seededRng(3));
     expect(out.content).toContain("### The Objective");
@@ -344,7 +416,12 @@ describe("buildHeistPrompt", () => {
   });
 
   it("ends with a field-specific consistency pass", () => {
-    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    // Pinned to Theft: the route check now names the type's own moment heading.
+    const { userMessage } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
     expect(userMessage).toContain("run a consistency pass");
     expect(userMessage).toContain(
       'exactly one complication is marked "(default)"',
@@ -352,6 +429,8 @@ describe("buildHeistPrompt", () => {
     expect(userMessage).toContain(
       'the route lost in "The Getaway" is the one "When the Prize Is Taken" closes, and is the one the crew entered by',
     );
+    expect(userMessage).toContain("Ownership and location:");
+    expect(userMessage).toContain("Alarm reachability:");
     expect(userMessage).toContain(
       "nothing offered as a solution may be something an earlier rule declared impossible",
     );
@@ -405,6 +484,30 @@ describe("buildHeistPrompt", () => {
     );
     expect(Object.values(heistConfig.pressureByComplication)).toContain(
       resolved.pressure,
+    );
+  });
+
+  it("states the type's starting position, protection and completing action", () => {
+    const { userMessage } = buildHeistPrompt(
+      { heistType: "Plant Evidence" },
+      "",
+      seededRng(1),
+    );
+    expect(userMessage).toContain(
+      "- Starting position: The crew already has the package when the job begins.",
+    );
+    expect(userMessage).toContain(
+      "- What the security protects: the destination the package must reach, not the package itself",
+    );
+    expect(userMessage).toContain(
+      "- The action that completes the job: leaving the package where it will be found and believed",
+    );
+    expect(userMessage).toContain("### When the Evidence Is Planted");
+    expect(userMessage).toContain(
+      "Do NOT merely rename theft concepts for the other heist types",
+    );
+    expect(userMessage).toContain(
+      "if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write",
     );
   });
 

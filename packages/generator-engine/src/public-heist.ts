@@ -197,22 +197,34 @@ export const heistConfig = {
     Extraction: "someone who wants out and cannot simply walk out",
     Information: "the record that proves what everyone here denies",
     "Plant Evidence":
-      "an incriminating item that has to end up somewhere it was never kept",
+      "a forged document that will damn whoever it is found beside",
     Assassination: "a mark who is only ever alone inside this building",
   } as Record<string, string>,
   /**
-   * The objective section, per heist type. An assassination whose only
-   * mention of the mark is one clause in The Score is a theft with a name
-   * attached — the selected type has to change what the scenario actually
-   * contains, so each type names its own section and demands its own
-   * actionable fields (where the objective is, when it is reachable, what
-   * protects it, what changes once it is done, and several ways in).
+   * The semantic model for each heist type, not just its vocabulary.
+   *
+   * Renaming "The Prize" to "The Package" is not adaptation: a Plant Evidence
+   * job whose package is already inside the target, and whose pivotal moment
+   * is "when the prize is taken", is still a theft with the nouns swapped. So
+   * each type declares what the crew begins with, what the rings actually
+   * protect, what action completes the objective, what starts the escape, and
+   * what the point-of-no-return section is even called.
    */
   objectives: {
     Theft: {
       heading: "The Prize",
+      momentHeading: "When the Prize Is Taken",
       fields:
         "what it is, who wants it and why, why it matters beyond its price, and where it is normally kept",
+      startsWith:
+        "The target holds the prize. The crew arrives empty-handed and leaves carrying it.",
+      protects: "the prize itself, where it is kept",
+      casing:
+        "an entry vector, a known obstacle, and where the prize is kept and how it is handled",
+      completion: "lifting the prize out of its place",
+      escapeCause: "the prize's absence being registered",
+      complicationFocus:
+        "the prize's location, its handling routine, and who else wants it",
       score: "one night to get {prize} clear of it",
       lead: "{Prize} — worth more to whoever is paying than to any honest market, and the target cannot replace it.",
       where: "In the innermost secured space, behind all three rings.",
@@ -222,11 +234,59 @@ export const heistConfig = {
         "The vault layer itself, plus the few staff who hold legitimate access.",
       aftermath: "The target misses it within the hour and comes after it.",
       moment: "Lifting the prize",
+      casingLine:
+        "Kept in the innermost secured space and handled by a few named staff on a fixed routine.",
+      momentBody:
+        "{prize} leaves its place, and the space it occupied is now conspicuously empty.",
+    },
+    "Plant Evidence": {
+      heading: "The Package",
+      momentHeading: "When the Evidence Is Planted",
+      fields:
+        "what it is and whom it will incriminate, where inside the target it must end up for anyone to believe it, what would give it away as planted, who will find it and when, and two or three genuinely different ways to place it",
+      startsWith:
+        "The crew already has the package when the job begins. Nothing has to be stolen first, and the package is NOT inside the target — getting it in is the entire job.",
+      protects:
+        "the destination the package must reach, not the package itself",
+      casing:
+        "an entry vector, the exact placement spot and its handling routine, and when and by whom the package will be discovered",
+      completion: "leaving the package where it will be found and believed",
+      escapeCause:
+        "the plant being completed, or the crew being seen making it",
+      complicationFocus:
+        "the package's credibility, its placement, the timing of its discovery, and anyone who could testify it was planted",
+      score: "one night to leave {prize} somewhere it will be believed",
+      lead: "{Prize}. The crew already has it; getting in is half the job, and leaving it somewhere convincing is the other half.",
+      where:
+        "It has to end up in the innermost secured space, where only the guilty could have put it.",
+      window:
+        "Before the next inspection, so that inspection is what finds it.",
+      protection:
+        "The same three rings — placing something is as hard as removing it.",
+      aftermath:
+        "Whoever finds it starts an investigation the crew no longer controls.",
+      moment: "Leaving the package",
+      casingLine:
+        "The placement spot is inspected on a fixed schedule, and that inspection is who finds the package.",
+      momentBody:
+        "The package settles into place and reads as having always been there. Retrieving it now would be as hard as planting it was, and twice as incriminating.",
     },
     Assassination: {
       heading: "The Target",
+      momentHeading: "When the Target Is Struck",
       fields:
         "who they are, where they will be tonight, a concrete window in which they are alone or unguarded, what protects them the rest of the time, what changes the moment they die and how long it takes anyone to notice, and two or three genuinely different ways to reach them",
+      startsWith:
+        "The target is inside and alive. The crew arrives with whatever they mean to use and leaves without it if they are sensible.",
+      protects:
+        "the target — their routine, their escort, and the rooms they are ever alone in",
+      casing:
+        "an entry vector, the target's routine and escort, and the window in which they are alone",
+      completion: "the killing blow",
+      escapeCause:
+        "the body being found, or the target failing to appear for whatever came next",
+      complicationFocus:
+        "the target's protection, the timing of the window, and who else is in the room",
       score: "one night to reach {prize} and leave without being placed there",
       lead: "{Prize}. Killing them is the job; not being the obvious answer afterwards is the rest of it.",
       where:
@@ -238,11 +298,25 @@ export const heistConfig = {
       aftermath:
         "Their death stops whatever they were due to do next, and is noticed the moment they fail to appear for it.",
       moment: "The kill",
+      casingLine:
+        "They are alone only at the end of the nightly inspection, and escorted every other hour of the day.",
+      momentBody:
+        "They go down, and the clock starts on whoever expects to see them next.",
     },
     Rescue: {
       heading: "The Captive",
+      momentHeading: "When the Captive Is Freed",
       fields:
         "who they are, the conditions they are held in, what state they are in and what they can or cannot do for themselves, who guards them and on what routine, what happens when they are found missing, and two or three genuinely different ways to reach them",
+      startsWith:
+        "The target holds the captive. The crew arrives with only what they can carry and leaves with a person who cannot move as fast as they can.",
+      protects: "the captive — the cell, the keyholder, and the guard rota",
+      casing:
+        "an entry vector, where the captive is held and who guards them, and the schedule of checks on the cell",
+      completion: "getting the captive out of the cell",
+      escapeCause: "the empty cell being found at the next check",
+      complicationFocus:
+        "the captive's condition, the guard rota, and whether the captive cooperates",
       score: "one night to get {prize} out alive",
       lead: "{Prize}. They cannot fight, and they cannot run far.",
       where:
@@ -254,11 +328,26 @@ export const heistConfig = {
       aftermath:
         "The empty cell is found at the next check, and the search starts from there.",
       moment: "Getting them out of the cell",
+      casingLine:
+        "The cell is checked on a fixed rota, and the corridor outside is unwatched only between reliefs.",
+      momentBody:
+        "The cell is empty and the captive is in the corridor. Everything from here is a chase with a passenger.",
     },
     Extraction: {
       heading: "The Subject",
+      momentHeading: "When the Subject Walks",
       fields:
         "who they are, why they cannot simply walk out, what they will and will not agree to, who is watching them, what happens when they are missed, and two or three genuinely different ways to reach them",
+      startsWith:
+        "The subject is inside and wants out. The crew arrives with a way to move them, not a way to carry them.",
+      protects:
+        "the routine that keeps track of the subject, far more than any lock",
+      casing:
+        "an entry vector, the subject's supervised routine, and the roll-call schedule",
+      completion: "walking the subject off the floor",
+      escapeCause: "the subject being missed at the next roll call",
+      complicationFocus:
+        "the subject's willingness, who is watching them, and the timing of the handover",
       score: "one night to walk {prize} out without anyone stopping them",
       lead: "{Prize}. They want to leave; the building is what will not let them.",
       where:
@@ -270,11 +359,26 @@ export const heistConfig = {
       aftermath:
         "They are missed at the next roll call, and the building starts asking who signed them out.",
       moment: "Walking them off the floor",
+      casingLine:
+        "Their whereabouts are tracked by routine rather than by lock, and the tracking lapses at the shift handover.",
+      momentBody:
+        "They step off the floor with the crew. From here they are a person out of place, and every routine in the building is built to notice that.",
     },
     Sabotage: {
       heading: "The System",
+      momentHeading: "When the Sabotage Is Committed",
       fields:
         "what the system does, which single part actually matters, what protects that part, what visibly happens when it fails and how long the failure lasts, and two or three genuinely different ways to break it",
+      startsWith:
+        "The crew arrives with tools and leaves with them. The system is running and stays in the building.",
+      protects:
+        "the system's critical part, and the operators who would notice a hand on it",
+      casing:
+        "an entry vector, which part of the system actually matters, and the inspection schedule",
+      completion: "breaking the part that matters",
+      escapeCause: "the failure showing, or an operator noticing the tampering",
+      complicationFocus:
+        "the system's redundancy, the inspection timing, and who is on the floor",
       score: "one night to break {prize} and be gone before it shows",
       lead: "{Prize}. Breaking it is easy; breaking it so that nobody knows who did is the job.",
       where:
@@ -286,11 +390,26 @@ export const heistConfig = {
       aftermath:
         "It fails visibly some time after the crew has gone, and stays failed until it can be rebuilt.",
       moment: "The moment the system breaks",
+      casingLine:
+        "Only one component actually matters, and it is looked over on a fixed inspection schedule.",
+      momentBody:
+        "The part gives way. Nothing visible happens yet, which is the point — the failure surfaces later, on its own schedule.",
     },
     Information: {
       heading: "The Record",
+      momentHeading: "When the Record Is Read",
       fields:
         "what it records and whom it damages, what form it takes and whether it can be copied rather than removed, where it is kept and who is permitted to read it, what happens when it is found missing or found altered, and two or three genuinely different ways to get at it",
+      startsWith:
+        "The record is inside. The crew arrives with the means to read or copy it, and may not need to remove anything at all.",
+      protects: "the record and the register of who is permitted to read it",
+      casing:
+        "an entry vector, where the record is kept and who may read it, and the audit schedule",
+      completion: "reading or copying the record",
+      escapeCause:
+        "the record being found missing, found altered, or found read out of turn",
+      complicationFocus:
+        "whether a copy will do, the reading register, and the timing of the audit",
       score: "one night to get {prize} out, or a copy of it",
       lead: "{Prize}. It does not have to leave the building — it only has to be read.",
       where:
@@ -301,28 +420,23 @@ export const heistConfig = {
       aftermath:
         "A missing record is noticed at the next audit; an altered one may never be.",
       moment: "Taking or copying the record",
-    },
-    "Plant Evidence": {
-      heading: "The Package",
-      fields:
-        "what it is and whom it will incriminate, where it must end up for anyone to believe it, what would give it away as planted, who will find it and when, and two or three genuinely different ways to place it",
-      score: "one night to leave {prize} somewhere it will be believed",
-      lead: "{Prize}. Getting in is half of it; leaving it somewhere convincing is the other half.",
-      where:
-        "It has to end up in the innermost secured space, where only the guilty could have put it.",
-      window:
-        "Before the next inspection, so that inspection is what finds it.",
-      protection:
-        "The same three rings — placing something is as hard as removing it.",
-      aftermath:
-        "Whoever finds it starts an investigation the crew no longer controls.",
-      moment: "Leaving the package",
+      casingLine:
+        "It is filed with the rest of the records, readable only by the register's names, and audited on a schedule.",
+      momentBody:
+        "The record is read and the crew knows what it says. Whether anyone else ever learns that depends entirely on how they leave.",
     },
   } as Record<
     string,
     {
       heading: string;
+      momentHeading: string;
       fields: string;
+      startsWith: string;
+      protects: string;
+      casing: string;
+      completion: string;
+      escapeCause: string;
+      complicationFocus: string;
       /** Tokens {prize} / {Prize} / {site} are substituted by the fallback. */
       score: string;
       lead: string;
@@ -331,26 +445,28 @@ export const heistConfig = {
       protection: string;
       aftermath: string;
       moment: string;
+      casingLine: string;
+      momentBody: string;
     }
   >,
   /** Fixed five-state ladder, matching the answer page's alarm track. */
   alarmStates: ["Quiet", "Suspicion", "Alert", "Lockdown", "Lethal Response"],
   complications: [
     "The buyer is already inside, negotiating with the target in person.",
-    "The prize was moved this morning, and only one person on site knows where.",
+    "The one detail the crew's intel was surest about changed this morning, and only one person on site knows how.",
     "A rival crew has started its own run on the same target tonight.",
     "Someone the crew knows is on guard duty and will recognise them.",
-    "The prize does not want to leave and will resist being taken.",
+    "A member of staff has decided tonight is the night they finally do their job properly.",
     "The target expected the crew and deliberately let them in.",
     "A scheduled inspection has put twice the usual staff on site tonight.",
     "The inside contact has already been caught and is being questioned.",
   ],
   triggers: [
-    "an alarm nobody knew was fitted to the prize's cradle starts sounding",
+    "an alarm nobody knew was there starts sounding",
     "every lock in the building closes at once, including the ones behind the crew",
     "the lights die, and something in the dark starts calling the staff's names one by one",
     "a countersign the crew has never heard is shouted from three directions",
-    "the prize's absence is announced by something that was watching it",
+    "something that was watching announces the crew's presence in a voice nobody recognises",
     "a second, quieter alarm sounds — one the staff were never told about",
   ],
   /**
@@ -369,7 +485,7 @@ export const heistConfig = {
   pursuits: [
     "A specialist tracker who is paid on delivery, not on capture",
     "A patrol that has cut ahead to the crew's likely destination",
-    "The rival crew, who would rather take the prize than the credit",
+    "The rival crew, who would rather have the job's payoff than the credit",
     "A single relentless officer who saw a face and will not stop",
     "Whatever the target keeps for exactly this situation",
     "The buyer's own people, sent to make the handover cheaper",
@@ -458,6 +574,20 @@ export interface ResolvedHeist {
   objectiveHeading: string;
   /** The actionable fields that section has to carry for this heist type. */
   objectiveFields: string;
+  /** The point-of-no-return section's heading for this heist type. */
+  momentHeading: string;
+  /** Who holds the core object when the job begins, and what the crew carries. */
+  objectiveStartsWith: string;
+  /** What the three security rings actually protect for this heist type. */
+  objectiveProtects: string;
+  /** What the three casing bullets must cover for this heist type. */
+  objectiveCasing: string;
+  /** The action that completes the objective. */
+  objectiveCompletion: string;
+  /** What tips the job from infiltration into escape. */
+  objectiveEscapeCause: string;
+  /** What complications should threaten for this heist type. */
+  objectiveComplicationFocus: string;
   /** Per-type fallback copy; tokens are substituted in generateHeistLocal. */
   objectiveCopy: {
     score: string;
@@ -467,6 +597,8 @@ export interface ResolvedHeist {
     protection: string;
     aftermath: string;
     moment: string;
+    casingLine: string;
+    momentBody: string;
   };
 }
 
@@ -491,8 +623,18 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
   // generic objective rather than losing the section altogether.
   const objective = heistConfig.objectives[heistType] ?? {
     heading: "The Objective",
+    momentHeading: "When the Objective Is Met",
     fields:
       "what it is, where it is, what protects it, what changes once the crew has it, and two or three genuinely different ways to reach it",
+    startsWith:
+      "The objective is inside the target. The crew arrives with what they can carry.",
+    protects: "the objective, wherever it sits",
+    casing:
+      "an entry vector, a known obstacle, and where the objective sits and how it is handled",
+    completion: "doing the thing the job was hired for",
+    escapeCause: "the crew's work being noticed",
+    complicationFocus:
+      "the objective's location, its handling, and who else has an interest in it",
     score: "one night to get {prize} clear of it",
     lead: "{Prize}. Getting to it is the job; getting away afterwards is the rest of it.",
     where: "In the innermost secured space, behind all three rings.",
@@ -500,6 +642,10 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
     protection: "The vault layer, plus whoever holds legitimate access to it.",
     aftermath: "The target knows within the hour, and acts on it.",
     moment: "Taking the objective",
+    casingLine:
+      "It sits in the innermost secured space and is handled on a fixed routine.",
+    momentBody:
+      "The job is done, and the building has not caught up with that fact yet.",
   };
   return {
     genre,
@@ -520,6 +666,13 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
       "The catch bites every time the crew has to move quickly, and moving quickly is the whole job.",
     objectiveHeading: objective.heading,
     objectiveFields: objective.fields,
+    momentHeading: objective.momentHeading,
+    objectiveStartsWith: objective.startsWith,
+    objectiveProtects: objective.protects,
+    objectiveCasing: objective.casing,
+    objectiveCompletion: objective.completion,
+    objectiveEscapeCause: objective.escapeCause,
+    objectiveComplicationFocus: objective.complicationFocus,
     objectiveCopy: {
       score: objective.score,
       lead: objective.lead,
@@ -528,6 +681,8 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
       protection: objective.protection,
       aftermath: objective.aftermath,
       moment: objective.moment,
+      casingLine: objective.casingLine,
+      momentBody: objective.momentBody,
     },
   };
 }
@@ -592,7 +747,11 @@ Options:
 - Heist Type: ${resolved.heistType}
 - Target Scale: ${resolved.targetScale}
 - Target: ${resolved.targetType}
-- Prize Complication (the prize MUST have this practical problem): ${resolved.prizeComplication}
+- Starting position: ${resolved.objectiveStartsWith}
+- What the security protects: ${resolved.objectiveProtects}
+- The action that completes the job: ${resolved.objectiveCompletion}
+- What starts the escape: ${resolved.objectiveEscapeCause}
+- Objective Complication (the objective MUST have this practical problem): ${resolved.prizeComplication}
 - Pressure (what that complication costs during play, and when it bites): ${resolved.pressure}
 - Rules system: ${resolved.system}
 ${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}
@@ -600,21 +759,21 @@ ${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${f
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative name for this score (3-6 words)",
-  "content": "Player-facing material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### The Score' (ONE sentence naming the prize, the place, and the deadline — e.g. \\"Steal the Glass Testament from beneath the Cathedral of Saint Orla before its contents are read aloud at dawn\\" — plus at most one more sentence of context), '### ${resolved.objectiveHeading}' (at most four sentences covering ${resolved.objectiveFields}, then two bullets: '- **The catch**: ' restating the practical complication given in the options as a concrete physical problem, and '- **Pressure**: ' stating what that costs and the exact trigger that makes it cost. Use something the GM can see fire during one infiltration: an obstacle cleared, an alarm tick, a handover, or a short in-scene interval of minutes. Never a long wall-clock cadence such as once an hour, once a day, or once a week, and never a vague \\"over time\\"), '### Casing the Target' (exactly three '- **Label**: detail' bullets, one sentence each: an entry vector, a known obstacle, and where the prize is kept and how it is handled).",
-  "lore": "GM-only material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### GM Quick Reference' (seven one-line bullets and nothing else — '- **Objective**:', '- **Primary obstacle**:', '- **Hidden factor**:', '- **Point of no return**:', '- **Pressure**:', '- **Default complication**:', '- **Escape problem**:' — each a single short sentence summarising what the section below says, so a GM understands the whole heist in under thirty seconds), '### The Hidden Factor' (at most two sentences: one thing the crew's intel gets wrong, and when it becomes obvious at the table. It must complicate the plan, never invalidate every approach at once), '### Security Rings' (three bullets, '- **Perimeter**: ', '- **Access**: ', '- **Inner Vault**: ', TWO TO FOUR SENTENCES EACH: what protects the layer, then two or three genuinely different ways past it. Draw those from stealth, deception, social leverage, stolen credentials, magic or technology, physical infiltration, bribery, prior preparation, exploiting a schedule, or environmental access — not three variations on fighting, and never one intended solution), '### Alarm Track' (exactly five bullets, '- **0 — Quiet**:' through '- **4 — Lethal Response**:', ONE OR TWO SENTENCES EACH, using the labels Quiet, Suspicion, Alert, Lockdown, Lethal Response. Each level must change what the opposition does, close or complicate some options, and still leave the crew a real choice. Level 4 is extremely dangerous but still interactive — no automatic death, and no state where every exit is simply impossible; if something seals the building, name the obvious but costly way to answer it), '### Complications' (exactly three '- **Label**: detail' bullets, one sentence each, one marked '(default)' after its label. Build them from people, factions, or facts already established elsewhere in this scenario wherever you can, rather than introducing new ones), '### When the Prize Is Taken' (at most two sentences: the single concrete event that fires the instant the prize is lifted, and what it changes — alarm escalation, a route closing, a guardian waking, a curse starting, the crew being identified. This is the moment the job turns from infiltration into escape, and \\"The Getaway\\" must follow from it), '### The Getaway' (one sentence on why the planned route is gone, which must be the consequence named in \\"When the Prize Is Taken\\", then two or three '- **Label**: detail' bullets, one sentence each, for genuinely different alternate routes — fast but exposed, covert but socially risky, environmentally dangerous, one that costs the crew their equipment, one that needs an NPC's help — then a final '**Pursuit**: ' line naming one threat that follows them out), '### Flashback Opportunities' (four to six '- ' bullets, one line each, naming preparations the players COULD establish. Each must attach to an obstacle actually described above, and none may do something the security rules established above say is impossible. Offer them; never state that the players used them).",
+  "content": "Player-facing material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### The Score' (ONE sentence naming the prize, the place, and the deadline — e.g. \\"Steal the Glass Testament from beneath the Cathedral of Saint Orla before its contents are read aloud at dawn\\" — plus at most one more sentence of context), '### ${resolved.objectiveHeading}' (at most four sentences covering ${resolved.objectiveFields}, then two bullets: '- **The catch**: ' restating the practical complication given in the options as a concrete physical problem, and '- **Pressure**: ' stating what that costs and the exact trigger that makes it cost. Use something the GM can see fire during one infiltration: an obstacle cleared, an alarm tick, a handover, or a short in-scene interval of minutes. Never a long wall-clock cadence such as once an hour, once a day, or once a week, and never a vague \\"over time\\"), '### Casing the Target' (exactly three '- **Label**: detail' bullets, one sentence each, covering ${resolved.objectiveCasing}).",
+  "lore": "GM-only material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### GM Quick Reference' (seven one-line bullets and nothing else — '- **Objective**:', '- **Primary obstacle**:', '- **Hidden factor**:', '- **Point of no return**:', '- **Pressure**:', '- **Default complication**:', '- **Escape problem**:' — each a single short sentence summarising what the section below says, so a GM understands the whole heist in under thirty seconds), '### The Hidden Factor' (at most two sentences: one thing the crew's intel gets wrong, and when it becomes obvious at the table. It must complicate the plan, never invalidate every approach at once), '### Security Rings' (three bullets, '- **Perimeter**: ', '- **Access**: ', '- **Inner Vault**: ', TWO TO FOUR SENTENCES EACH. These rings protect ${resolved.objectiveProtects} — describe what protects each layer, then two or three genuinely different ways past it. Draw those from stealth, deception, social leverage, stolen credentials, magic or technology, physical infiltration, bribery, prior preparation, exploiting a schedule, or environmental access — not three variations on fighting, and never one intended solution), '### Alarm Track' (exactly five bullets, '- **0 — Quiet**:' through '- **4 — Lethal Response**:', ONE OR TWO SENTENCES EACH, using the labels Quiet, Suspicion, Alert, Lockdown, Lethal Response. Each level must change what the opposition does, close or complicate some options, and still leave the crew a real choice. Level 4 is extremely dangerous but still interactive — no automatic death, and no state where every exit is simply impossible; if something seals the building, name the obvious but costly way to answer it), '### Complications' (exactly three '- **Label**: detail' bullets, one sentence each, one marked '(default)' after its label. They should threaten ${resolved.objectiveComplicationFocus}. Build them from people, factions, or facts already established elsewhere in this scenario wherever you can, rather than introducing new ones), '### ${resolved.momentHeading}' (at most two sentences: the single concrete event that fires the instant the crew completes ${resolved.objectiveCompletion}, and what it changes — alarm escalation, a route closing, a guardian waking, a curse starting, the crew being identified. This is the moment the job turns from infiltration into escape — it fires on ${resolved.objectiveEscapeCause}, and \\"The Getaway\\" must follow from it), '### The Getaway' (one sentence on why the planned route is gone, which must be the consequence named in \\"${resolved.momentHeading}\\", then two or three '- **Label**: detail' bullets, one sentence each, for genuinely different alternate routes — fast but exposed, covert but socially risky, environmentally dangerous, one that costs the crew their equipment, one that needs an NPC's help — then a final '**Pursuit**: ' line naming one threat that follows them out), '### Flashback Opportunities' (four to six '- ' bullets, one line each, naming preparations the players COULD establish. Each must attach to an obstacle actually described above, and none may do something the security rules established above say is impossible. Offer them; never state that the players used them).",
   "labels": ["heist", "heist-generator"]
 }
 Every heading above appears exactly ONCE in the whole result. "content" and "lore" must share no heading between them, neither may repeat one of its own, and you must never emit a heading with nothing written under it. Do not restate a section you have already written.
 Density matters as much as content. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
 ${systemNote}
-The selected heist type must materially shape the scenario, not just the wording of "The Score". "${resolved.objectiveHeading}" carries the actionable detail for a ${resolved.heistType} job, and the casing intel, security rings, complications and getaway must all engage with that objective rather than treating it as a container to be lifted. If "The Score" names a second objective as well — an object to take AND a person to kill, say — that objective gets its own section immediately after "${resolved.objectiveHeading}", written to the same depth, with its own location, window, protection and two or three ways to reach it.
+Do NOT merely rename theft concepts for the other heist types. The selected heist type determines the scenario's logic: what the crew begins with, what they must reach, what action completes the objective, and what triggers the escape phase. Take the starting position above literally — if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write, and the security exists to keep them away from where it must go; if the objective is a person, a system, or a record, the job is not a removal unless the starting position says it is. The selected heist type must materially shape the scenario, not just the wording of "The Score". "${resolved.objectiveHeading}" carries the actionable detail for a ${resolved.heistType} job, and the casing intel, security rings, complications and getaway must all engage with that objective rather than treating it as a container to be lifted. If "The Score" names a second objective as well — an object to take AND a person to kill, say — that objective gets its own section immediately after "${resolved.objectiveHeading}", written to the same depth, with its own location, window, protection and two or three ways to reach it.
 The "Pressure" must advance on its own during the job, not only when the crew fails. If the catch creates risk only on a bad outcome, pair it with something that moves regardless — a shift change, an inspection, a ritual, a tide — and say what happens when it runs out.
 Set the score firmly within the ${resolved.genre} genre — the target, its security, the alarm flavour, and the pursuit should all feel native to that setting rather than a fantasy heist with the nouns swapped.
 Scale the target to "${resolved.targetScale}": a Small score is a single building with a handful of staff, a Major score is a well-defended institution with a real security budget, and a Legendary score is a place that has never been successfully robbed and everyone knows it.
 ${NAME_BAN_PROMPT}
 ${sessionContext}
 Write every section as scene-appropriate prose. Do not restate the wording of these instructions verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated — the output is the scenario itself, nothing about producing it.
-Before returning, run a consistency pass and fix anything that fails it. Contradictions: nothing offered as a solution may be something an earlier rule declared impossible, unless the text explicitly explains how that rule is circumvented — if the ward only admits a living guild member, no later flashback or route may bypass it with a dead member's signet. Every access method obeys the rules established for that ring; every named person, faction, patron, or rival keeps one consistent role throughout; no alarm effect closes a route that a later section still offers; "The Hidden Factor" complicates the plan without invalidating every approach at once. Continuity: the prize in "The Score", "The Prize", and the "Casing the Target" bullet is the same object; the entry vector is a real way through the "Perimeter" ring; the route lost in "The Getaway" is the one "When the Prize Is Taken" closes, and is the one the crew entered by; the "GM Quick Reference" lines match the sections they summarise. Objective coverage: every objective named in "The Score" has its own section with its own location, window, protection and multiple ways in, and is engaged with by the casing intel, the rings, and the getaway — never introduce an objective in "The Score" and then ignore it for the rest of the scenario. Playability: each security ring names at least two genuinely different approaches; the five alarm states escalate without repeating each other and level 4 still leaves a costly option; exactly one complication is marked "(default)"; the pressure advances on a trigger the GM can actually see fire during one infiltration, on its own rather than only on a failure. Distinctness: if the alarm track already closes a route at some level, "When the Prize Is Taken" must not simply close it again — either name a different mechanism, or say explicitly that it makes the existing closure irreversible. No section repeats a heading used anywhere else, and no heading is left with nothing under it. Density: delete any sentence that does not create a decision, reveal usable information, or change how the heist plays.
+Before returning, run a consistency pass and fix anything that fails it. Contradictions: nothing offered as a solution may be something an earlier rule declared impossible, unless the text explicitly explains how that rule is circumvented — if the ward only admits a living guild member, no later flashback or route may bypass it with a dead member's signet. Every access method obeys the rules established for that ring; every named person, faction, patron, or rival keeps one consistent role throughout; no alarm effect closes a route that a later section still offers; "The Hidden Factor" complicates the plan without invalidating every approach at once. Continuity: the prize in "The Score", "The Prize", and the "Casing the Target" bullet is the same object; the entry vector is a real way through the "Perimeter" ring; the route lost in "The Getaway" is the one "${resolved.momentHeading}" closes, and is the one the crew entered by; the "GM Quick Reference" lines match the sections they summarise. Ownership and location: confirm who holds the objective when the job begins, and keep it consistent everywhere. If the crew starts with it, no section may also describe it as already secured inside the target, and there must be no step spent retrieving it. If the target holds it, the crew must not already have it. Alarm reachability: every level of the alarm track must be a state that can plausibly be reached during play — a mandatory objective action may not jump the track straight to Lockdown or Lethal Response, since that skips the escalation the track exists to provide. Unless the scenario deliberately opens above Quiet, completing the objective should advance the alarm by a step or two, not to the top. Objective coverage: every objective named in "The Score" has its own section with its own location, window, protection and multiple ways in, and is engaged with by the casing intel, the rings, and the getaway — never introduce an objective in "The Score" and then ignore it for the rest of the scenario. Playability: each security ring names at least two genuinely different approaches; the five alarm states escalate without repeating each other and level 4 still leaves a costly option; exactly one complication is marked "(default)"; the pressure advances on a trigger the GM can actually see fire during one infiltration, on its own rather than only on a failure. Distinctness: if the alarm track already closes a route at some level, "When the Prize Is Taken" must not simply close it again — either name a different mechanism, or say explicitly that it makes the existing closure irreversible. No section repeats a heading used anywhere else, and no heading is left with nothing under it. Density: delete any sentence that does not create a decision, reveal usable information, or change how the heist plays.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   return {
@@ -708,7 +867,7 @@ ${fill(resolved.objectiveCopy.lead)}
 ### Casing the Target
 - **Entry vector**: A service route staff use daily and nobody watches closely — open only during working hours.
 - **Known obstacle**: The credential check between the public floor and the secured floor is watched, not merely locked.
-- **The objective**: ${fill(resolved.objectiveCopy.where)} ${fill(resolved.objectiveCopy.window)}`;
+- **The objective**: ${fill(resolved.objectiveCopy.casingLine)}`;
 
   const lore = `### GM Quick Reference
 - **Objective**: ${resolved.heistType} — ${fill(resolved.objectiveCopy.score)}.
@@ -725,7 +884,7 @@ Whichever detail the crew leans on hardest in planning is the one that has chang
 ### Security Rings
 - **Perimeter**: Patrols, watchers, and sightlines around the ${site}. Past it by timing the gap between rounds, by arriving as someone the staff already expect, or by an approach the patrol route simply does not cover.
 - **Access**: The credential check onto the secured floor, staffed by someone who has done this a thousand times. Past it with a forged or borrowed credential, by being escorted through by staff who have a reason to vouch, or by making the check read as a maintenance fault rather than an intrusion.
-- **Inner Vault**: The last layer around ${prize} — the part the target actually spent money on. Past it by defeating the mechanism, by getting someone with legitimate access to open it for their own reasons, or by taking the container and dealing with it elsewhere.
+- **Inner Vault**: The last layer around ${resolved.objectiveProtects} — the part the target actually spent money on. Past it by defeating the mechanism, by getting someone with legitimate access to open it for their own reasons, or by taking the container and dealing with it elsewhere.
 
 ### Alarm Track
 - **0 — Quiet**: Routine holds. Patrols on schedule, staff bored, nobody looking for anyone.
@@ -739,14 +898,14 @@ Whichever detail the crew leans on hardest in planning is the one that has chang
 - **Alternative**: ${secondComplication}
 - **Alternative**: ${thirdComplication}
 
-### When the Prize Is Taken
-${trigger[0].toUpperCase()}${trigger.slice(1)}. The alarm jumps straight to **2 — Alert**, and the crew's way in closes behind them: ${routeClosure}.
+### ${resolved.momentHeading}
+${fill(resolved.objectiveCopy.momentBody)} ${trigger[0].toUpperCase()}${trigger.slice(1)}, the alarm steps up to **2 — Alert**, and the crew's way in closes behind them: ${routeClosure}.
 
 ### The Getaway
 The service route from the casing is gone for exactly that reason. Every remaining exit costs something.
 - **Fast but exposed**: Out through the public front — quick, and it spends the crew's anonymity for good.
 - **Covert but slow**: The service tunnels or roofline — unseen, and slow enough for the pursuit to get ahead of them.
-- **Hard route**: The way the prize's catch makes awkward — passable, but it puts the prize itself at risk.
+- **Hard route**: The way the catch makes awkward — passable, but it risks the job itself.
 **Pursuit**: ${pursuit}. It does not stop at the door.
 
 ### Flashback Opportunities
