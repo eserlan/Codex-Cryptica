@@ -17,6 +17,9 @@
   --color-theme-border: var(--color-border-primary);
   --color-theme-text: var(--color-text-primary);
   --color-theme-muted: var(--color-text-muted);
+  --color-theme-link: var(--link);
+  --color-theme-icon-interactive: var(--icon-interactive);
+  --color-theme-border-interactive: var(--border-interactive);
 
   --bg-theme-surface: var(--bg-texture-overlay);
 
@@ -209,6 +212,14 @@
     /* Fix for EdgeLabel white box artifacts */
     --xy-edge-label-background-color-default: transparent;
     --xy-edge-label-background-color: transparent;
+
+    /* Semantic text and interaction tokens */
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-accent-dim);
+    --text-muted: var(--color-text-muted);
+    --link: var(--color-accent-primary);
+    --icon-interactive: var(--theme-icon-active, var(--color-accent-primary));
+    --border-interactive: var(--color-border-primary);
   }
 
   @supports (height: 100dvh) {
@@ -243,8 +254,14 @@
     --color-text-dim: #78716c;
   }
   [data-theme="fantasy_dark"] {
-    --color-text-muted: #a08870;
-    --color-text-dim: #7a6450;
+    --color-text-muted: #bfa68b;
+    --color-text-dim: #bfa68b;
+    --text-primary: #e8ddc4;
+    --text-secondary: #d4a85a;
+    --text-muted: #bfa68b;
+    --link: #d4a85a;
+    --icon-interactive: #d4a85a;
+    --border-interactive: rgba(212, 168, 90, 0.45);
   }
   [data-theme="pirate_dark"] {
     --color-text-muted: #b2c0c0;
@@ -551,16 +568,22 @@
       0 1px 3px rgba(94, 48, 24, 0.12) !important;
   }
 
-  /* Gold feedback on interaction — inputs, selects, focus-visible buttons all get a warm gold ring */
+  /* Gold feedback on interaction — inputs, selects, focus-visible buttons and links */
   [data-theme="fantasy"] input:focus,
   [data-theme="fantasy"] textarea:focus,
-  [data-theme="fantasy"] select:focus {
+  [data-theme="fantasy"] select:focus,
+  [data-theme="fantasy_dark"] input:focus,
+  [data-theme="fantasy_dark"] textarea:focus,
+  [data-theme="fantasy_dark"] select:focus {
     border-color: var(--color-theme-accent) !important;
     box-shadow: 0 0 0 2px rgba(200, 151, 58, 0.22) !important;
     outline: none !important;
   }
 
-  [data-theme="fantasy"] button:focus-visible {
+  [data-theme="fantasy"] button:focus-visible,
+  [data-theme="fantasy"] a:focus-visible,
+  [data-theme="fantasy_dark"] button:focus-visible,
+  [data-theme="fantasy_dark"] a:focus-visible {
     outline: 2px solid var(--color-theme-accent) !important;
     outline-offset: 2px !important;
   }

@@ -139,7 +139,7 @@
           <button
             type="button"
             onclick={() => (searchQuery = "")}
-            class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-theme-muted transition-colors hover:text-theme-text"
+            class="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-1 text-theme-muted transition-colors hover:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
             aria-label="Clear search"
           >
             <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
@@ -168,7 +168,7 @@
               : 'border border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/40 hover:text-theme-text'}"
           >
             <span>All</span>
-            <span class="opacity-70">({answers.length})</span>
+            <span class="opacity-80">({answers.length})</span>
           </button>
 
           {#each ANSWER_CATEGORIES as category (category.id)}
@@ -186,7 +186,7 @@
               <span class="{category.icon} h-3.5 w-3.5" aria-hidden="true"
               ></span>
               <span>{category.title}</span>
-              <span class="opacity-70">({count})</span>
+              <span class="opacity-80">({count})</span>
             </button>
           {/each}
         </div>
