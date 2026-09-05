@@ -19,6 +19,7 @@ import {
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { DEFAULT_HEIST_SYSTEM } from "./public-heist";
 import { factionConfig } from "./public-faction-constants";
 
 function run(
@@ -515,6 +516,7 @@ describe("heist generator", () => {
     // … followed by the shared public framework.
     expect(prompt).toContain("- Heist Type: Sabotage");
     expect(prompt).toContain("- Target Scale: Legendary");
+    expect(prompt).toContain("### GM Quick Reference");
     for (const heading of [
       "### The Score",
       "### The Prize",
@@ -522,6 +524,7 @@ describe("heist generator", () => {
       "### Security Rings",
       "### Alarm Track",
       "### Complications",
+      "### When the Prize Is Taken",
       "### The Getaway",
       "### Flashback Opportunities",
     ]) {
@@ -540,9 +543,43 @@ describe("heist generator", () => {
     expect(draft.lore).toContain("- **Inner Vault**");
     expect(draft.lore).toContain("**0 — Quiet**");
     expect(draft.lore).toContain("**4 — Lethal Response**");
-    expect(draft.lore).toContain("**When the prize is taken:**");
+    expect(draft.lore).toContain("### GM Quick Reference");
+    expect(draft.lore).toContain("### When the Prize Is Taken");
     expect(draft.labels).toContain("heist");
     expect(draft.labels).toContain("Theft");
+  });
+
+  // The exemplar drifted out of sync with the schema once already (a rewrite
+  // dropped Flashback Opportunities), which a reader of the prompt alone
+  // cannot catch — pin every section the schema asks for.
+  it("ships an exemplar carrying every section its own schema requires", () => {
+    const exemplar = JSON.parse(EXEMPLARS.heist);
+    for (const heading of [
+      "### The Score",
+      "### The Prize",
+      "### Casing the Target",
+    ]) {
+      expect(exemplar.content, `exemplar missing ${heading}`).toContain(
+        heading,
+      );
+    }
+    for (const heading of [
+      "### GM Quick Reference",
+      "### The Hidden Factor",
+      "### Security Rings",
+      "### Alarm Track",
+      "### Complications",
+      "### When the Prize Is Taken",
+      "### The Getaway",
+      "### Flashback Opportunities",
+    ]) {
+      expect(exemplar.lore, `exemplar missing ${heading}`).toContain(heading);
+    }
+  });
+
+  it("defaults the rules system to the shared neutral constant", () => {
+    expect(getGenerator("heist").defaults.system).toBe(DEFAULT_HEIST_SYSTEM);
+    expect(DEFAULT_HEIST_SYSTEM).toBe("System-neutral");
   });
 });
 

@@ -13,6 +13,7 @@
     targetType = $bindable(
       heistConfig.targetTypesByTheme[factionConfig.themes[0]][0],
     ),
+    system = $bindable(heistConfig.systems[0]),
     prize = $bindable(""),
     campaignContext = $bindable(""),
     onSurprise = undefined,
@@ -21,6 +22,7 @@
     heistType: string;
     targetScale: string;
     targetType: string;
+    system: string;
     prize: string;
     campaignContext: string;
     onSurprise?: () => void;
@@ -98,6 +100,27 @@
   {inputClass}
   customPlaceholder="Enter a custom target"
 />
+
+<div class="flex flex-col gap-1.5">
+  <label for="heist-system-select" class={labelClass}>Rules System</label>
+  <select
+    id="heist-system-select"
+    bind:value={system}
+    aria-describedby="heist-system-help"
+    class={inputClass}
+  >
+    {#each heistConfig.systems as s (s)}
+      <option value={s}>{s}</option>
+    {/each}
+  </select>
+  <p
+    id="heist-system-help"
+    class="text-[10px] text-theme-muted leading-relaxed"
+  >
+    Left system-neutral, effects are described in the fiction rather than one
+    game's mechanics.
+  </p>
+</div>
 
 <div class="flex flex-col gap-1.5">
   <label for="heist-prize" class={labelClass}>The Prize (optional)</label>
