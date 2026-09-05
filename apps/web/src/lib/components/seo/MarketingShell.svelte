@@ -109,7 +109,7 @@
             href={DISCORD_URL}
             target="_blank"
             rel="noopener noreferrer"
-            class="hidden sm:flex items-center justify-center p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors"
+            class="hidden sm:inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
             aria-label="Discord Community"
             title="Discord Community"
             data-testid="shell-discord-link"
@@ -125,7 +125,7 @@
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            class="hidden sm:flex items-center justify-center p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors"
+            class="hidden sm:inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
             aria-label="GitHub Repository"
             title="GitHub Repository"
             data-testid="shell-github-link"
@@ -136,7 +136,7 @@
         {/if}
         <a
           href={ctaHref}
-          class="px-4 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
+          class="min-h-[24px] px-4 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 active:brightness-95 shadow-sm transition-all whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           id="nav-cta-btn"
           data-testid="shell-cta"
           onclick={() => {
@@ -148,7 +148,7 @@
         </a>
         <button
           type="button"
-          class="md:hidden p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors"
+          class="md:hidden inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           onclick={() => (menuOpen = !menuOpen)}
           aria-expanded={menuOpen}
           aria-controls="shell-mobile-nav"
