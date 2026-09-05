@@ -82,15 +82,16 @@ describe("generateRumourLocal", () => {
   });
 
   it("actually selects the focused subject twice, not just once", () => {
-    // The dedicated "Missing People" rumour uses this fixed phrase; if the
-    // selection logic collapses the duplicate back down to one occurrence
-    // (as it did before the bias-dedup bug was fixed), this only matches once.
+    // Both phrasing variants of the "Missing People" rumour share this
+    // closing clause; if the selection logic collapses the duplicate back
+    // down to one occurrence (as it did before the bias-dedup bug was
+    // fixed), this only matches once.
     const out = generateRumourLocal(
       { subjectFocus: "Missing People" },
       seededRng(6),
     );
     const occurrences = (
-      out.content.match(/hasn't been seen in five days/g) ?? []
+      out.content.match(/arguing with someone no one can name/g) ?? []
     ).length;
     expect(occurrences).toBe(2);
   });

@@ -263,7 +263,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const site = `${generateName(rng)}'s ${pickFrom(["warehouse", "counting-house", "storeroom", "strongbox"], rng)}`;
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${name} has been paying off the night watch to look the other way at ${site} — three shipments have gone through unlogged this month.`,
+        rumour: pickFrom(
+          [
+            `${name} has been paying off the night watch to look the other way at ${site} — three shipments have gone through unlogged this month.`,
+            `Word going around says ${name} bribes the night watch to look the other way at ${site} — three shipments have gone through unlogged this month.`,
+          ],
+          rng,
+        ),
         lead: `${name}, ${site}`,
         source,
         truth: {
@@ -298,7 +304,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const site = `${where(loc, "the outskirts")}'s ${pickFrom(["old mill", "north road", "grain silo", "boundary marker"], rng)}`;
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `Livestock keep vanishing near ${site}, and two herders swear they saw ${creature} circling at dusk.`,
+        rumour: pickFrom(
+          [
+            `Livestock keep vanishing near ${site}, and two herders swear they saw ${creature} circling at dusk.`,
+            `Something has been picking off livestock near ${site}, and two herders swear they saw ${creature} circling at dusk.`,
+          ],
+          rng,
+        ),
         lead: site,
         source,
         truth: {
@@ -325,7 +337,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const rival = generateName(rng);
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${official} is quietly buying the loyalty of ${rival}'s clerks before next season's council vote.`,
+        rumour: pickFrom(
+          [
+            `${official} is quietly buying the loyalty of ${rival}'s clerks before next season's council vote.`,
+            `${official} has reportedly been courting ${rival}'s clerks with quiet favours before next season's council vote.`,
+          ],
+          rng,
+        ),
         lead: `${official}, ${rival}`,
         source,
         truth: {
@@ -360,7 +378,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const site = `${where(loc, "the old district")}'s ${pickFrom(["collapsed cellar", "flooded crypt", "abandoned counting-house", "sealed well"], rng)}`;
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `A labourer clearing rubble near ${site} says he found ${item} — then sold his silence to someone before he could say more.`,
+        rumour: pickFrom(
+          [
+            `A labourer clearing rubble near ${site} says he found ${item} — then sold his silence to someone before he could say more.`,
+            `A labourer working near ${site} claims he turned up ${item} — then sold his silence to someone before he could say more.`,
+          ],
+          rng,
+        ),
         lead: site,
         source,
         truth: {
@@ -387,7 +411,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const witness = generateName(rng);
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${witness} swears ${site} rang, hummed, or moved on its own last night — and insists it happens whenever someone nearby is about to die.`,
+        rumour: pickFrom(
+          [
+            `${witness} swears ${site} rang, hummed, or moved on its own last night — and insists it happens whenever someone nearby is about to die.`,
+            `According to ${witness}, ${site} rang, hummed, or moved on its own last night — and it always happens whenever someone nearby is about to die.`,
+          ],
+          rng,
+        ),
         lead: `${witness}, ${site}`,
         source,
         truth: {
@@ -414,7 +444,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const b = generateName(rng);
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${a} and ${b} were once inseparable business partners — now ${a} won't say ${b}'s name, and ${b} has stopped coming to market entirely.`,
+        rumour: pickFrom(
+          [
+            `${a} and ${b} were once inseparable business partners — now ${a} won't say ${b}'s name, and ${b} has stopped coming to market entirely.`,
+            `${a} and ${b} used to run their business side by side — these days ${a} won't say ${b}'s name, and ${b} has stopped coming to market entirely.`,
+          ],
+          rng,
+        ),
         lead: `${a}, ${b}`,
         source,
         truth: {
@@ -441,7 +477,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const inn = `${generateName(rng)}'s ${pickFrom(["inn", "waystation", "lodging house", "hostel"], rng)}`;
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `A stranger calling themself ${stranger} has taken a room at ${inn} and is asking pointed questions about who lives where.`,
+        rumour: pickFrom(
+          [
+            `A stranger calling themself ${stranger} has taken a room at ${inn} and is asking pointed questions about who lives where.`,
+            `Someone going by ${stranger} checked into ${inn} last night and is asking pointed questions about who lives where.`,
+          ],
+          rng,
+        ),
         lead: `${stranger}, ${inn}`,
         source,
         truth: {
@@ -468,7 +510,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const cleric = generateName(rng);
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${cleric} at ${site} has stopped performing the dawn rite, and refuses to say why the ritual objects are locked away.`,
+        rumour: pickFrom(
+          [
+            `${cleric} at ${site} has stopped performing the dawn rite, and refuses to say why the ritual objects are locked away.`,
+            `${cleric} has quietly cancelled the dawn rite at ${site}, and refuses to say why the ritual objects are locked away.`,
+          ],
+          rng,
+        ),
         lead: `${cleric}, ${site}`,
         source,
         truth: {
@@ -495,7 +543,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const site = `${where(loc, "the district")}'s ${pickFrom(["meeting hall", "warehouse", "shipping office", "back room"], rng)}`;
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${faction} has been meeting at ${site} at odd hours, and members who leave early won't discuss what was decided.`,
+        rumour: pickFrom(
+          [
+            `${faction} has been meeting at ${site} at odd hours, and members who leave early won't discuss what was decided.`,
+            `${faction} keeps convening at ${site} at odd hours, and members who leave early won't discuss what was decided.`,
+          ],
+          rng,
+        ),
         lead: `${faction}, ${site}`,
         source,
         truth: {
@@ -522,7 +576,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const lastSeen = `${where(loc, "the settlement")}'s ${pickFrom(["north gate", "riverside path", "market square", "old bridge"], rng)}`;
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${missing} hasn't been seen in five days — last spotted near ${lastSeen}, arguing with someone no one can name.`,
+        rumour: pickFrom(
+          [
+            `${missing} hasn't been seen in five days — last spotted near ${lastSeen}, arguing with someone no one can name.`,
+            `Five days now since anyone has seen ${missing} — last spotted near ${lastSeen}, arguing with someone no one can name.`,
+          ],
+          rng,
+        ),
         lead: `${missing}, ${lastSeen}`,
         source,
         truth: {
@@ -549,7 +609,13 @@ const RUMOUR_SEEDS: RumourSeed[] = [
       const witness = generateName(rng);
       const source = pickFrom(rumourConfig.sources, rng);
       return {
-        rumour: `${witness} says compasses and clocks stop working near ${site}, and refuses to go back for a wager they left behind.`,
+        rumour: pickFrom(
+          [
+            `${witness} says compasses and clocks stop working near ${site}, and refuses to go back for a wager they left behind.`,
+            `${witness} insists compasses and clocks stop working near ${site}, and refuses to go back for a wager they left behind.`,
+          ],
+          rng,
+        ),
         lead: `${witness}, ${site}`,
         source,
         truth: {
