@@ -174,12 +174,30 @@ export const heistConfig = {
       "Precise — one specific thing must happen and nothing beside it",
       "Witnessed — the right person has to see it, or it counts for nothing",
     ],
+    // Something the crew brings IN cannot need freeing from a plinth, and
+    // cannot be "traceable while the crew still holds it" — the trail runs
+    // backwards, to whoever supplied it.
+    carried: [
+      "Fragile — a hard knock ruins it and it will not pass inspection",
+      "Volatile — rough handling makes it dangerous to everyone nearby",
+      "Distinctive — it cannot be hidden on a person, only carried openly",
+      "Perishable — it stops looking convincing after tonight",
+      "Sourced — it can be traced back to whoever supplied it",
+    ],
+    // A record need not leave the building at all, so catches about carrying
+    // it out ("Huge", "Anchored") contradict the objective's own terms.
+    record: [
+      "Sealed — it cannot be read where it lies, and moving it is what gets noticed",
+      "Encrypted — it needs a key the crew does not have, or someone who can read it",
+      "Voluminous — copying it takes far longer than reading it",
+      "Registered — every reading writes a line that cannot be skipped",
+    ],
   } as Record<string, string[]>,
   /** Which catch pool each heist type draws from. */
   catchKindByType: {
     Theft: "object",
-    Information: "object",
-    "Plant Evidence": "object",
+    Information: "record",
+    "Plant Evidence": "carried",
     Rescue: "person",
     Extraction: "person",
     Assassination: "deed",
@@ -194,10 +212,10 @@ export const heistConfig = {
     Theft: "the single most closely held object in the building",
     Rescue: "a prisoner nobody outside is supposed to know is held here",
     Sabotage: "the mechanism the whole operation depends on",
-    Extraction: "someone who wants out and cannot simply walk out",
+    Extraction: "a specialist the building will not let leave",
     Information: "the record that proves what everyone here denies",
     "Plant Evidence":
-      "a forged document that will damn whoever it is found beside",
+      "an incriminating item the target must appear to have hidden",
     Assassination: "a mark who is only ever alone inside this building",
   } as Record<string, string>,
   /**
@@ -255,7 +273,7 @@ export const heistConfig = {
         "the plant being completed, or the crew being seen making it",
       complicationFocus:
         "the package's credibility, its placement, the timing of its discovery, and anyone who could testify it was planted",
-      score: "one night to leave {prize} somewhere it will be believed",
+      score: "one night to place {prize} where it will be believed",
       lead: "{Prize}. The crew already has it; getting in is half the job, and leaving it somewhere convincing is the other half.",
       where:
         "It has to end up in the innermost secured space, where only the guilty could have put it.",
@@ -540,6 +558,49 @@ export const heistConfig = {
       "Finding the one part that matters costs time — advance the work clock at each stage of tracing it, and when it fills the operator comes to check. Anything broken beside it fails loudly and at once.",
     Witnessed:
       "The witness has to be in position first and will not wait past the next patrol — advance the patrol clock each time the crew is delayed.",
+    Distinctive:
+      "It cannot be pocketed — advance the exposure clock every time the crew passes someone, and when it fills a staff member remembers what they saw.",
+    Perishable:
+      "It reads as fresh for a few hours only — advance the decay clock at every obstacle, and when it fills the plant will convince nobody.",
+    Sourced:
+      "Every hand it passes through adds a name to the trail — advance the trace clock at each handover, and when it fills the supplier can be identified.",
+    Sealed:
+      "It cannot be read in place — advance the exposure clock at each stage of moving it somewhere it can be, and when it fills someone sees the gap on the shelf.",
+    Encrypted:
+      "Every attempt at the key costs minutes the crew can hear passing — advance the work clock at each attempt, and when it fills the reading hour ends.",
+    Voluminous:
+      "Copying runs at a fixed rate — advance the copy clock every few minutes, and the crew must decide how much is enough before it fills.",
+    Registered:
+      "Every reading writes a line in the register — advance the audit clock each time the crew opens it, and when it fills the next reader sees their entry.",
+  } as Record<string, string>,
+  /**
+   * The quick-reference form of each pressure: the trigger and the stake, and
+   * nothing else. The full line lives in the objective section; repeating it
+   * verbatim in a section whose whole job is to be scannable was the single
+   * most common redundancy in generated output.
+   */
+  pressureSummaryByComplication: {
+    Huge: "Every short-handed obstacle costs time before the shift changes.",
+    Fragile: "Three marks and it is ruined.",
+    Alive: "Distress clock; when it fills, it makes a noise.",
+    Cursed: "A permanent loss every ten minutes carried.",
+    Traceable: "The hunt relocates every ten minutes.",
+    Volatile: "Instability clock rises at every obstacle.",
+    Anchored: "Three stages to free; dawn staff arrive on the third.",
+    Unwilling: "They stall at every handover.",
+    Injured: "Twice as long over every stretch of ground.",
+    Watched: "Check clock; when it fills, that door opens.",
+    Deniable: "Investigation clock; when it fills, the patron is named.",
+    Delayed: "Shift clock; the mechanism is looked over at the change.",
+    Precise: "Work clock; when it fills, the operator comes to check.",
+    Witnessed: "Patrol clock; the witness will not wait past it.",
+    Distinctive: "Exposure clock at every person passed.",
+    Perishable: "Decay clock; when it fills, nobody believes it.",
+    Sourced: "Trace clock; when it fills, the supplier is named.",
+    Sealed: "Exposure clock while it is moved to be read.",
+    Encrypted: "Work clock per attempt; the reading hour ends when it fills.",
+    Voluminous: "Copy clock; how much is enough is the crew's call.",
+    Registered: "Audit clock; the next reader sees their entry.",
   } as Record<string, string>,
 };
 
@@ -570,6 +631,8 @@ export interface ResolvedHeist {
   prizeComplicationLabel: string;
   /** What the catch costs during play, and the trigger that makes it cost. */
   pressure: string;
+  /** The scannable form of the same, for the GM Quick Reference. */
+  pressureSummary: string;
   /** The objective section's heading for this heist type, e.g. "The Target". */
   objectiveHeading: string;
   /** The actionable fields that section has to carry for this heist type. */
@@ -664,6 +727,9 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
     pressure:
       heistConfig.pressureByComplication[prizeComplicationLabel] ??
       "The catch bites every time the crew has to move quickly, and moving quickly is the whole job.",
+    pressureSummary:
+      heistConfig.pressureSummaryByComplication[prizeComplicationLabel] ??
+      "The catch bites whenever the crew has to move quickly.",
     objectiveHeading: objective.heading,
     objectiveFields: objective.fields,
     momentHeading: objective.momentHeading,
@@ -760,7 +826,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative name for this score (3-6 words)",
   "content": "Player-facing material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### The Score' (ONE sentence naming the prize, the place, and the deadline — e.g. \\"Steal the Glass Testament from beneath the Cathedral of Saint Orla before its contents are read aloud at dawn\\" — plus at most one more sentence of context), '### ${resolved.objectiveHeading}' (at most four sentences covering ${resolved.objectiveFields}, then two bullets: '- **The catch**: ' restating the practical complication given in the options as a concrete physical problem, and '- **Pressure**: ' stating what that costs and the exact trigger that makes it cost. Use something the GM can see fire during one infiltration: an obstacle cleared, an alarm tick, a handover, or a short in-scene interval of minutes. Never a long wall-clock cadence such as once an hour, once a day, or once a week, and never a vague \\"over time\\"), '### Casing the Target' (exactly three '- **Label**: detail' bullets, one sentence each, covering ${resolved.objectiveCasing}).",
-  "lore": "GM-only material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### GM Quick Reference' (seven one-line bullets and nothing else — '- **Objective**:', '- **Primary obstacle**:', '- **Hidden factor**:', '- **Point of no return**:', '- **Pressure**:', '- **Default complication**:', '- **Escape problem**:' — each a single short sentence summarising what the section below says, so a GM understands the whole heist in under thirty seconds), '### The Hidden Factor' (at most two sentences: one thing the crew's intel gets wrong, and when it becomes obvious at the table. It must complicate the plan, never invalidate every approach at once), '### Security Rings' (three bullets, '- **Perimeter**: ', '- **Access**: ', '- **Inner Vault**: ', TWO TO FOUR SENTENCES EACH. These rings protect ${resolved.objectiveProtects} — describe what protects each layer, then two or three genuinely different ways past it. Draw those from stealth, deception, social leverage, stolen credentials, magic or technology, physical infiltration, bribery, prior preparation, exploiting a schedule, or environmental access — not three variations on fighting, and never one intended solution), '### Alarm Track' (exactly five bullets, '- **0 — Quiet**:' through '- **4 — Lethal Response**:', ONE OR TWO SENTENCES EACH, using the labels Quiet, Suspicion, Alert, Lockdown, Lethal Response. Each level must change what the opposition does, close or complicate some options, and still leave the crew a real choice. Level 4 is extremely dangerous but still interactive — no automatic death, and no state where every exit is simply impossible; if something seals the building, name the obvious but costly way to answer it), '### Complications' (exactly three '- **Label**: detail' bullets, one sentence each, one marked '(default)' after its label. They should threaten ${resolved.objectiveComplicationFocus}. Build them from people, factions, or facts already established elsewhere in this scenario wherever you can, rather than introducing new ones), '### ${resolved.momentHeading}' (at most two sentences: the single concrete event that fires the instant the crew completes ${resolved.objectiveCompletion}, and what it changes — alarm escalation, a route closing, a guardian waking, a curse starting, the crew being identified. This is the moment the job turns from infiltration into escape — it fires on ${resolved.objectiveEscapeCause}, and \\"The Getaway\\" must follow from it), '### The Getaway' (one sentence on why the planned route is gone, which must be the consequence named in \\"${resolved.momentHeading}\\", then two or three '- **Label**: detail' bullets, one sentence each, for genuinely different alternate routes — fast but exposed, covert but socially risky, environmentally dangerous, one that costs the crew their equipment, one that needs an NPC's help — then a final '**Pursuit**: ' line naming one threat that follows them out), '### Flashback Opportunities' (four to six '- ' bullets, one line each, naming preparations the players COULD establish. Each must attach to an obstacle actually described above, and none may do something the security rules established above say is impossible. Offer them; never state that the players used them).",
+  "lore": "GM-only material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### GM Quick Reference' (seven one-line bullets and nothing else — '- **Objective**:', '- **Primary obstacle**:', '- **Hidden factor**:', '- **Point of no return**:', '- **Pressure**:', '- **Default complication**:', '- **Escape problem**:' — each a single short sentence summarising what the section below says, so a GM understands the whole heist in under thirty seconds. Summarise; never copy a sentence verbatim from the section it stands for), '### The Hidden Factor' (at most two sentences: one thing the crew's intel gets wrong, and when it becomes obvious at the table. It must complicate the plan, never invalidate every approach at once), '### Security Rings' (three bullets, '- **Perimeter**: ', '- **Access**: ', '- **Inner Vault**: ', TWO TO FOUR SENTENCES EACH. These rings protect ${resolved.objectiveProtects} — describe what protects each layer, then two or three genuinely different ways past it. Draw those from stealth, deception, social leverage, stolen credentials, magic or technology, physical infiltration, bribery, prior preparation, exploiting a schedule, or environmental access — not three variations on fighting, and never one intended solution), '### Alarm Track' (exactly five bullets, '- **0 — Quiet**:' through '- **4 — Lethal Response**:', ONE OR TWO SENTENCES EACH, using the labels Quiet, Suspicion, Alert, Lockdown, Lethal Response. Each level must change what the opposition does, close or complicate some options, and still leave the crew a real choice. Level 4 is extremely dangerous but still interactive — no automatic death, and no state where every exit is simply impossible; if something seals the building, name the obvious but costly way to answer it), '### Complications' (exactly three '- **Label**: detail' bullets, one sentence each, one marked '(default)' after its label. They should threaten ${resolved.objectiveComplicationFocus}. Build them from people, factions, or facts already established elsewhere in this scenario wherever you can, rather than introducing new ones), '### ${resolved.momentHeading}' (at most two sentences: the single concrete event that fires the instant the crew completes ${resolved.objectiveCompletion}, and what it changes — alarm escalation, a route closing, a guardian waking, a curse starting, the crew being identified. This is the moment the job turns from infiltration into escape — it fires on ${resolved.objectiveEscapeCause}, and \\"The Getaway\\" must follow from it), '### The Getaway' (one sentence on why the planned route is gone, which must be the consequence named in \\"${resolved.momentHeading}\\", then two or three '- **Label**: detail' bullets, one sentence each, for genuinely different alternate routes — fast but exposed, covert but socially risky, environmentally dangerous, one that costs the crew their equipment, one that needs an NPC's help — then a final '**Pursuit**: ' line naming one threat that follows them out), '### Flashback Opportunities' (four to six '- ' bullets, one line each, naming preparations the players COULD establish. Each must attach to an obstacle actually described above, and none may do something the security rules established above say is impossible. Offer them; never state that the players used them).",
   "labels": ["heist", "heist-generator"]
 }
 Every heading above appears exactly ONCE in the whole result. "content" and "lore" must share no heading between them, neither may repeat one of its own, and you must never emit a heading with nothing written under it. Do not restate a section you have already written.
@@ -874,7 +940,7 @@ ${fill(resolved.objectiveCopy.lead)}
 - **Primary obstacle**: Three layers — patrols outside, a watched credential check, and the vault itself.
 - **Hidden factor**: One thing the crew was told about the routine is out of date.
 - **Point of no return**: ${resolved.objectiveCopy.moment} — ${trigger}.
-- **Pressure**: ${resolved.pressure.split(". ")[0].replace(/\.$/, "")}.
+- **Pressure**: ${resolved.pressureSummary}
 - **Default complication**: ${defaultComplication}
 - **Escape problem**: The way in closes behind them; every remaining exit costs something.
 
@@ -906,7 +972,7 @@ The service route from the casing is gone for exactly that reason. Every remaini
 - **Fast but exposed**: Out through the public front — quick, and it spends the crew's anonymity for good.
 - **Covert but slow**: The service tunnels or roofline — unseen, and slow enough for the pursuit to get ahead of them.
 - **Hard route**: The way the catch makes awkward — passable, but it risks the job itself.
-**Pursuit**: ${pursuit}. It does not stop at the door.
+**Pursuit**: ${pursuit}.
 
 ### Flashback Opportunities
 Offer these; never assume the players used them.

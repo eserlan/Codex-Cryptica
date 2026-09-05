@@ -169,6 +169,42 @@ describe("generateHeistLocal", () => {
     }
   });
 
+  it("summarises pressure in the quick reference instead of copying it", () => {
+    // Verbatim duplication here was the single most common redundancy across a
+    // 240-generation sweep — it hit every single output.
+    for (const heistType of Object.keys(heistConfig.objectives)) {
+      const out = generateHeistLocal({ heistType }, seededRng(9));
+      const full = out.content.split("- **Pressure**: ")[1].split("\n")[0];
+      const summary = out.lore.split("- **Pressure**: ")[1].split("\n")[0];
+      expect(summary).not.toBe(full);
+      expect(summary.length).toBeLessThan(full.length);
+    }
+  });
+
+  it("gives every catch a quick-reference summary as well as a full line", () => {
+    for (const entry of Object.values(heistConfig.catchesByKind).flat()) {
+      const label = entry.split(" — ")[0];
+      expect(
+        heistConfig.pressureSummaryByComplication[label],
+        `no pressure summary for catch "${label}"`,
+      ).toBeTruthy();
+    }
+  });
+
+  it("never gives a record or a carried package a catch about freeing it", () => {
+    // A record need not leave the building and a planted package arrives with
+    // the crew, so "fixed in place and must be freed" contradicts both.
+    for (const heistType of ["Information", "Plant Evidence"]) {
+      for (let seed = 1; seed <= 12; seed += 1) {
+        const out = generateHeistLocal({ heistType }, seededRng(seed));
+        const line = out.content.split("**The catch**: ")[1].split("\n")[0];
+        expect(line, `${heistType} drew a removal catch: ${line}`).not.toMatch(
+          /freed|fixed in place|cannot be carried by one person/i,
+        );
+      }
+    }
+  });
+
   it("gives every catch a matching pressure line", () => {
     const everyCatch = Object.values(heistConfig.catchesByKind).flat();
     for (const entry of everyCatch) {
