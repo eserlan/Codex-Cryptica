@@ -684,36 +684,29 @@ describe("buildHeistRepairPrompt", () => {
     );
   });
 
-  it("stays compact rather than a numbered checklist the model can satisfy mechanically", () => {
-    // The point of the redesign: keep the reviewer's job to "spot
-    // contradictions, fix them, don't rewrite everything" rather than a
-    // mini rules manual with lettered sub-items.
+  it("never regresses to a flat lettered checklist, even after adding priority invariants", () => {
+    // The point of the original redesign was never a specific character
+    // count — it was keeping the reviewer's job to "spot contradictions, fix
+    // them, don't rewrite everything" rather than a mini rules manual with
+    // lettered sub-items (9a/9b/...). Naming three invariants ahead of a
+    // demoted prose paragraph grew the prompt somewhat, which is an accepted
+    // trade for correctly prioritising them — but it must still read as one
+    // reviewer's brief, not a rulebook with per-letter clauses.
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
     expect(prompt).not.toMatch(/\n9[a-f]\./);
-    // The prior numbered-checklist version ran past 3800 characters even with
-    // no findings attached; the compact version should read as a short brief.
-    expect(prompt.length).toBeLessThan(3200);
+    expect(prompt.length).toBeLessThan(4200);
   });
 
-  it("carries the compact checklist regardless of whether findings were auto-detected", () => {
+  it("carries the demoted checklist regardless of whether findings were auto-detected", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
     expect(prompt).toContain("contradictions between sections");
     expect(prompt).toContain(
-      "objective completion being confused with detection",
-    );
-    expect(prompt).toContain(
       "hidden factors that invalidate rather than complicate the plan",
     );
-    expect(prompt).toContain(
-      "point-of-no-return triggers that do not logically follow from the objective",
-    );
-    expect(prompt).toContain(
-      'default complication differing between "Complications" and "GM Quick Reference"',
-    );
     expect(prompt).toContain("genre-inappropriate or system-specific language");
-    expect(prompt).toContain("duplicated sections, empty headings");
+    expect(prompt).toContain("duplicated or empty sections");
     expect(prompt).toContain(
       "Every primary objective has multiple viable approaches where appropriate — not merely multiple ways to reach it.",
     );
@@ -722,26 +715,64 @@ describe("buildHeistRepairPrompt", () => {
     );
   });
 
-  it("checks for objective/point-of-no-return/detection conflation and dangling setup (real sample)", () => {
-    // Added from a live sample ("The Ledgered Prisoner") where the compact
-    // prompt let both through: the GM Quick Reference summarised leaving the
-    // counting floor — an intermediate transition — as the mission's
-    // completion rather than the escape trigger it actually was, and a
-    // "collapsible moonbridge" introduced in The Score never affected a
-    // single obstacle.
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+  it("puts three named invariants ahead of everything else (real samples, #2768)", () => {
+    // "The Orchid Ledger" and "Payroll Under Red Dust" both reproduced the
+    // same completion-vs-detection conflation that the flat checklist
+    // (one bullet among twenty) failed to catch twice in a row. These three
+    // checks are now named invariants that come before the demoted list,
+    // rather than one more equally-weighted line.
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Plant Evidence" },
+      "",
+      seededRng(1),
+    );
     const prompt = buildHeistRepairPrompt([], resolved);
+
+    const invariantsIndex = prompt.indexOf(
+      "Before anything else, verify these three invariants",
+    );
+    const demotedIndex = prompt.indexOf(
+      "After those three, do the normal pass",
+    );
+    expect(invariantsIndex).toBeGreaterThan(-1);
+    expect(demotedIndex).toBeGreaterThan(invariantsIndex);
+
+    // Invariant 1: completion is not detection.
+    expect(prompt).toContain("Completion is not detection.");
     expect(prompt).toContain(
-      "Clearly distinguish the primary objective, the point of no return, detection, and successful escape.",
+      "For Plant Evidence, Information, and Sabotage especially, successful covert completion should stay undiscovered until a believable later trigger",
     );
     expect(prompt).toContain(
-      "Do not summarise an intermediate transition (leaving a room, triggering an alarm) as completion of the mission.",
+      "Never invent an automatic alarm merely because the scenario needs a getaway",
     );
     expect(prompt).toContain(
-      'Every unusual tool, constraint, capability, NPC, or special fact introduced prominently in "The Score" or the objective section affects play later.',
+      "preserve that and let the crew potentially leave through their original route",
+    );
+
+    // Invariant 2: the timeline must be executable.
+    expect(prompt).toContain("The timeline must be executable.");
+    expect(prompt).toContain(
+      "referring to the same event must name the same time",
     );
     expect(prompt).toContain(
-      "If it never matters, integrate it into an obstacle or approach, or remove it.",
+      'avoid a vague trigger such as "each obstacle" unless those obstacles are explicitly defined',
+    );
+
+    // Invariant 3: completion state must propagate consistently.
+    expect(prompt).toContain("Completion state must propagate consistently.");
+    expect(prompt).toContain(
+      '"When the Evidence Is Planted", "The Getaway", "GM Quick Reference", "Alarm Track", and "Complications"',
+    );
+    expect(prompt).toContain(
+      "The route must not seal immediately in one section and only on discovery in another",
+    );
+    expect(prompt).toContain(
+      "Remove any consequence that only fits a failed approach from the default successful path",
+    );
+
+    // The demoted pass still covers the setup/payoff check, folded to prose.
+    expect(prompt).toContain(
+      'any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it)',
     );
   });
 

@@ -977,9 +977,18 @@ function backfillMissingSections(
  * counting floor) as if it were the mission's completion, rather than the
  * transition into the escape phase that it actually is; and a "collapsible
  * moonbridge" was introduced prominently in The Score and then never mattered
- * to a single obstacle. Both are cheap, general checks — not new
- * type-specific machinery — so they were added as two more lines rather than
- * reopened into another numbered rubric.
+ * to a single obstacle.
+ *
+ * PRIORITY, NOT BREADTH (still #2768): two more live samples ("The Orchid
+ * Ledger", "Payroll Under Red Dust") kept reproducing the exact same
+ * completion-vs-detection conflation — the "moonbridge" fix above treated it
+ * as one line among many, and a model reading twenty equally-weighted bullets
+ * casually missed the one that actually mattered both times. So rather than
+ * adding a ninth/tenth bullet to the same flat list, the three checks that
+ * repeatedly caused real damage (completion-vs-detection, timeline
+ * arithmetic, and cross-section propagation of that timing) are now called
+ * out ahead of everything else as named invariants, with the rest of the
+ * review demoted below them. Breadth was never the gap; priority was.
  *
  * @param findings deterministic problems already detected, possibly empty —
  *   an empty list still leaves the semantic checks worth running, but the
@@ -1002,34 +1011,20 @@ Do not generate a new heist. Preserve the scenario and make only the smallest ed
 
 This is a ${resolved.heistType} job in a ${resolved.genre} setting: the objective section is "${resolved.objectiveHeading}", the point of no return is "${resolved.momentHeading}", and the crew's starting position is: ${resolved.objectiveStartsWith}
 
-${detected}Check for:
-- contradictions between sections
-- objectives in "The Score" that are not supported later
-- incorrect terminology for the selected heist type
-- inconsistent locations, ownership, NPC roles, or motivations
-- hidden factors that invalidate rather than complicate the plan
-- security approaches that later turn out not to work
-- clocks, countdowns, or timing that do not make mathematical or playable sense
-- alarm levels that are skipped, unreachable, contradictory, or insufficiently escalating
-- objective completion being confused with detection
-- point-of-no-return triggers that do not logically follow from the objective
-- getaway routes or pursuit that contradict earlier facts
-- default complication differing between "Complications" and "GM Quick Reference"
-- "GM Quick Reference" disagreeing with the detailed sections
-- generic flashbacks when more scenario-specific ones are possible
-- details leaking in from a different scenario
-- genre-inappropriate or system-specific language
-- duplicated sections, empty headings, or repeated information
+${detected}Before anything else, verify these three invariants — they matter more than everything checked afterward.
+
+1. Completion is not detection. Distinguish completing the objective, someone discovering that, raising the alarm, and beginning the escape — these may happen at different times. For Plant Evidence, Information, and Sabotage especially, successful covert completion should stay undiscovered until a believable later trigger, unless the scenario explicitly establishes an unavoidable detection mechanism. Never invent an automatic alarm merely because the scenario needs a getaway: if a convincing plant, covert read, or subtle sabotage would logically go unnoticed, preserve that and let the crew potentially leave through their original route.
+2. The timeline must be executable. Reconstruct it before returning the result. Every deadline, inspection, handover, vulnerability window, clock, delayed discovery, and lockdown trigger referring to the same event must name the same time. Every clock must state exactly what advances it; avoid a vague trigger such as "each obstacle" unless those obstacles are explicitly defined.
+3. Completion state must propagate consistently. Once you know when the objective is completed and when it is detected, check "${resolved.momentHeading}", "The Getaway", "GM Quick Reference", "Alarm Track", and "Complications" against those two facts — all must agree. The route must not seal immediately in one section and only on discovery in another. Remove any consequence that only fits a failed approach from the default successful path.
+
+After those three, do the normal pass: contradictions between sections; objectives in "The Score" left unsupported; wrong terminology for the heist type; inconsistent locations, ownership, NPC roles, or motivations; hidden factors that invalidate rather than complicate the plan; security approaches that turn out not to work; alarm levels that are skipped or insufficiently escalating; getaway routes contradicting earlier facts; generic flashbacks where scenario-specific ones are possible; details leaking in from elsewhere; genre-inappropriate or system-specific language; duplicated or empty sections; and any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it).
 
 Also verify:
 1. Every primary objective has multiple viable approaches where appropriate — not merely multiple ways to reach it.
 2. Every pressure mechanic has a clear trigger and consequence.
 3. Every complication changes play in a concrete way.
-4. Completing the objective does not automatically trigger detection unless the scenario gives a clear reason.
-5. The scenario remains playable at every alarm level.
-6. The final result can be run as written without the GM having to resolve obvious inconsistencies.
-7. Clearly distinguish the primary objective, the point of no return, detection, and successful escape. Do not summarise an intermediate transition (leaving a room, triggering an alarm) as completion of the mission.
-8. Every unusual tool, constraint, capability, NPC, or special fact introduced prominently in "The Score" or the objective section affects play later. If it never matters, integrate it into an obstacle or approach, or remove it.
+4. The scenario remains playable at every alarm level.
+5. The final result can be run as written without the GM having to resolve obvious inconsistencies.
 
 Return the complete corrected heist as a valid JSON object in the exact same schema as before — "title", "content", "lore", "labels" — with every field present, not just the parts you changed. If nothing needs fixing, return what you wrote unchanged.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
