@@ -84,7 +84,7 @@ describe("gradeHeist", () => {
   it("catches a repeated heading", () => {
     const draft = goodDraft();
     draft.lore += "\n\n### Security Rings\n- **Perimeter**: again";
-    expect(kinds(draft)).toContain("duplicate-heading");
+    expect(kinds(draft)).toContain("duplicate-section");
   });
 
   it("catches a heading with nothing under it", () => {
@@ -102,7 +102,7 @@ describe("gradeHeist", () => {
   it("catches the wrong point-of-no-return heading for the type", () => {
     const draft = goodDraft({ heistType: "Plant Evidence" });
     expect(kinds(draft)).toContain("moment-heading");
-    expect(kinds(draft)).toContain("theft-moment-on-other-type");
+    expect(kinds(draft)).toContain("theft-terminology");
   });
 
   it("catches a catch drawn from the wrong pool", () => {

@@ -864,6 +864,40 @@ function loreHeadings(lore: string): string[] {
 }
 
 /**
+ * Drop repeated and heading-only sections at parse time.
+ *
+ * The renderer already enforces this for what a reader sees, but the parsed
+ * output is also what gets saved to the vault — and, more to the point, a
+ * duplicate is something code can fix perfectly, so it must never be worth a
+ * repair call. Measured: asking the model to deduplicate turned one duplicate
+ * into three, because "tidy this up" invites restructuring.
+ *
+ * `seen` carries across the content and lore fields so a lore section cannot
+ * duplicate a heading that content already used. Untitled preamble text has no
+ * key to collide on and is always kept.
+ */
+function dedupeSections(markdown: string, seen: Set<string>): string {
+  const matches = [...markdown.matchAll(/^#{2,4}\s+(.+?)\s*$/gm)];
+  if (matches.length === 0) return markdown;
+  const kept: string[] = [];
+  const preamble = markdown.slice(0, matches[0].index ?? 0).trim();
+  if (preamble) kept.push(preamble);
+  for (const [i, match] of matches.entries()) {
+    const start = match.index ?? 0;
+    const end = matches[i + 1]?.index ?? markdown.length;
+    const block = markdown.slice(start, end).trim();
+    const heading = match[1].trim();
+    const body = block.split("\n").slice(1).join("\n").trim();
+    if (!body) continue;
+    const key = heading.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    kept.push(block);
+  }
+  return kept.join("\n\n");
+}
+
+/**
  * Restore a required section the model skipped. Observed in a real sample:
  * one generation in ten ended cleanly after "The Getaway" and simply never
  * wrote "Flashback Opportunities". The prompt asks for every section, but
@@ -874,11 +908,19 @@ function backfillMissingSections(
   lore: string,
   resolved: ResolvedHeist,
   rng: Rng,
+  alreadyPresent: ReadonlySet<string>,
 ): string {
-  const present = new Set(loreHeadings(lore));
+  // Headings seen anywhere in the document, not just in `lore`. When the model
+  // files a lore section under `content` instead, cross-field deduplication
+  // drops the lore copy — and backfilling from the lore field alone would then
+  // re-add it, manufacturing the duplicate this is meant to prevent.
+  const present = new Set([
+    ...alreadyPresent,
+    ...loreHeadings(lore).map((h) => h.toLowerCase()),
+  ]);
   const additions: string[] = [];
   for (const heading of BACKFILLABLE) {
-    if (present.has(heading)) continue;
+    if (present.has(heading.toLowerCase())) continue;
     const local = generateHeistLocal(
       { genre: resolved.genre, heistType: resolved.heistType },
       rng,
@@ -892,12 +934,64 @@ function backfillMissingSections(
   return additions.length ? [lore, ...additions].join("\n\n") : lore;
 }
 
+/**
+ * Pass 2 — validate and repair.
+ *
+ * Pass 1 is asked to invent an interesting heist *and* police its own logic,
+ * and those goals compete: the remaining failures in real output were almost
+ * all consistency failures rather than dull content. This turn reads the
+ * finished heist as a whole and fixes it, with the deterministic findings from
+ * heist-validation.ts passed in verbatim so the model spends its attention on
+ * the semantic checks it is the only thing that can do.
+ *
+ * The hard constraint is minimal edits. A repair pass that decides to move the
+ * job to the docks and replace the fixer with a cyborg priest has thrown away
+ * pass 1's work, so this prompt forbids reinvention in as many words.
+ *
+ * @param findings deterministic problems already detected, possibly empty —
+ *   an empty list still leaves the semantic checklist worth running, but the
+ *   caller decides whether that is worth a second model call.
+ */
+export function buildHeistRepairPrompt(
+  findings: readonly { message: string }[],
+  resolved: ResolvedHeist,
+): string {
+  const detected = findings.length
+    ? `Automated checks already found these specific problems. Fix every one, and where one of them asks you to cut length, cutting IS the minimal edit — the instruction above to leave correct sections alone does not exempt you from it:\n${findings.map((f, i) => `${i + 1}. ${f.message}`).join("\n")}\n`
+    : "Automated checks found no structural problems, so concentrate on the judgement calls below.\n";
+
+  return `Proofread and repair the heist you just wrote. Do NOT write a new one.
+
+Make the smallest edits that fix what is broken and change nothing else. Keep the same target, the same named people, the same objective, the same routes and the same overall shape — if a section is already correct, return it word for word. Reinventing the scenario is a failure, not a fix.
+
+${detected}
+Then read the whole thing once more and check the things only a reader can catch:
+1. Every objective named in "The Score" is supported by a later section — never introduce an objective and then ignore it.
+2. The terminology matches the heist type throughout: this is a ${resolved.heistType} job whose objective section is "${resolved.objectiveHeading}" and whose point of no return is "${resolved.momentHeading}".
+3. The core object's starting state is consistent everywhere. ${resolved.objectiveStartsWith} No section may contradict that, and there must be no step spent obtaining something the crew already has.
+4. "${resolved.momentHeading}" describes ${resolved.objectiveCompletion}, and "The Getaway" follows from that event rather than from something unrelated.
+5. "The Hidden Factor" complicates the plan without invalidating every approach at once — at least one route established elsewhere must survive it.
+6. No complication contradicts a fact established earlier, and no flashback opportunity does something the security rules declared impossible. If a rule says a thing cannot be done, nothing later may quietly do it.
+7. Every alarm level is reachable in play and escalates meaningfully, and completing the objective does not jump the track past most of its own levels.
+8. The pressure can actually fire during a single infiltration, and any counting in it adds up.
+9. Named people behave in line with the motives given for them — someone who wants to stay hidden does not announce themselves.
+10. "GM Quick Reference" matches the sections it summarises, and summarises rather than repeating them word for word.
+11. No section appears twice and none is left empty.
+12. No proper noun, place or detail appears that belongs to a different scenario than this one.
+
+Return the complete corrected heist as a valid JSON object in the exact same schema as before — "title", "content", "lore", "labels" — with every field present, not just the parts you changed. If nothing needs fixing, return what you wrote unchanged.
+Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+}
+
 export function parseHeistResponse(
   text: string,
   resolved: ResolvedHeist,
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  const seenHeadings = new Set<string>();
+  const content = dedupeSections(data.content || "", seenHeadings);
+  const lore = dedupeSections(data.lore || "", seenHeadings);
   const rawLabels = Array.isArray(data.labels) ? data.labels : [];
   const labels = rawLabels.filter(
     (label: unknown): label is string =>
@@ -911,8 +1005,8 @@ export function parseHeistResponse(
     type: "event",
     title: data.title || resolved.title,
     summary: data.summary || "",
-    content: data.content || "",
-    lore: backfillMissingSections(data.lore || "", resolved, rng),
+    content,
+    lore: backfillMissingSections(lore, resolved, rng, seenHeadings),
     labels,
     status: "active",
   };

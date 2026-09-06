@@ -288,7 +288,19 @@ export {
   type CouncilVotePaths,
 } from "./public-council-vote";
 export {
+  validateHeist,
+  needsRepair,
+  splitHeistSections,
+  heistWordCount,
+  REQUIRED_LORE_SECTIONS,
+  HEIST_WORD_BUDGET,
+  type HeistDraftFields,
+  type HeistFinding,
+  type HeistSection,
+} from "./heist-validation";
+export {
   buildHeistPrompt,
+  buildHeistRepairPrompt,
   parseHeistResponse,
   generateHeistLocal,
   heistConfig,
