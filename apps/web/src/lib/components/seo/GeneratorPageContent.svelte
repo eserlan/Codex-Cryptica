@@ -290,7 +290,6 @@
     heistType: heistConfig.heistTypes[0],
     targetScale: heistConfig.targetScales[1],
     targetType: heistConfig.targetTypesByTheme[factionConfig.themes[0]][0],
-    system: heistConfig.systems[0],
     prize: "",
     campaignContext: "",
   });
@@ -1169,7 +1168,6 @@
         bind:heistType={heist.heistType}
         bind:targetScale={heist.targetScale}
         bind:targetType={heist.targetType}
-        bind:system={heist.system}
         bind:prize={heist.prize}
         bind:campaignContext={heist.campaignContext}
         onSurprise={trigger}

@@ -19,7 +19,6 @@ import {
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 import { EXEMPLARS } from "./campaign-generator-exemplars";
-import { DEFAULT_HEIST_SYSTEM } from "./public-heist";
 import { factionConfig } from "./public-faction-constants";
 
 function run(
@@ -577,11 +576,6 @@ describe("heist generator", () => {
     ]) {
       expect(exemplar.lore, `exemplar missing ${heading}`).toContain(heading);
     }
-  });
-
-  it("defaults the rules system to the shared neutral constant", () => {
-    expect(getGenerator("heist").defaults.system).toBe(DEFAULT_HEIST_SYSTEM);
-    expect(DEFAULT_HEIST_SYSTEM).toBe("System-neutral");
   });
 });
 
