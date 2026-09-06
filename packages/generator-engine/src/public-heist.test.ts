@@ -30,7 +30,9 @@ describe("generateHeistLocal", () => {
     expect(out.lore).toContain("### Security Rings");
     expect(out.lore).toContain("### Alarm Track");
     expect(out.lore).toContain("### Complications");
-    expect(out.lore).toContain("### When the Prize Is Taken");
+    expect(out.lore).toContain(
+      `### ${heistConfig.objectives.Theft.momentHeading}`,
+    );
     expect(out.lore).toContain("### The Getaway");
     expect(out.lore).toContain("### Flashback Opportunities");
     expect(out.labels).toContain("heist");
@@ -64,9 +66,9 @@ describe("generateHeistLocal", () => {
   });
 
   it("gives the point of no return its own section that feeds the getaway", () => {
-    const out = generateHeistLocal({}, seededRng(12));
+    const out = generateHeistLocal({ heistType: "Theft" }, seededRng(12));
     const section = out.lore
-      .split("### When the Prize Is Taken")[1]
+      .split(`### ${heistConfig.objectives.Theft.momentHeading}`)[1]
       .split("### ")[0];
     // The trigger fires, escalates the alarm, and closes the way in — and the
     // getaway opens from that same closure rather than an unrelated reason.
@@ -164,6 +166,42 @@ describe("generateHeistLocal", () => {
         /\b(advance|every|each)\b/i.test(pressure),
         `pressure for "${label}" names no advancing trigger: ${pressure}`,
       ).toBe(true);
+    }
+  });
+
+  it("summarises pressure in the quick reference instead of copying it", () => {
+    // Verbatim duplication here was the single most common redundancy across a
+    // 240-generation sweep — it hit every single output.
+    for (const heistType of Object.keys(heistConfig.objectives)) {
+      const out = generateHeistLocal({ heistType }, seededRng(9));
+      const full = out.content.split("- **Pressure**: ")[1].split("\n")[0];
+      const summary = out.lore.split("- **Pressure**: ")[1].split("\n")[0];
+      expect(summary).not.toBe(full);
+      expect(summary.length).toBeLessThan(full.length);
+    }
+  });
+
+  it("gives every catch a quick-reference summary as well as a full line", () => {
+    for (const entry of Object.values(heistConfig.catchesByKind).flat()) {
+      const label = entry.split(" — ")[0];
+      expect(
+        heistConfig.pressureSummaryByComplication[label],
+        `no pressure summary for catch "${label}"`,
+      ).toBeTruthy();
+    }
+  });
+
+  it("never gives a record or a carried package a catch about freeing it", () => {
+    // A record need not leave the building and a planted package arrives with
+    // the crew, so "fixed in place and must be freed" contradicts both.
+    for (const heistType of ["Information", "Plant Evidence"]) {
+      for (let seed = 1; seed <= 12; seed += 1) {
+        const out = generateHeistLocal({ heistType }, seededRng(seed));
+        const line = out.content.split("**The catch**: ")[1].split("\n")[0];
+        expect(line, `${heistType} drew a removal catch: ${line}`).not.toMatch(
+          /freed|fixed in place|cannot be carried by one person/i,
+        );
+      }
     }
   });
 
@@ -270,6 +308,76 @@ describe("generateHeistLocal", () => {
     }
   });
 
+  it("names the point of no return for the deed, not always the prize", () => {
+    const expected: Array<[string, string]> = [
+      ["Theft", "### When the Prize Is Taken"],
+      ["Plant Evidence", "### When the Evidence Is Planted"],
+      ["Assassination", "### When the Target Is Struck"],
+      ["Rescue", "### When the Captive Is Freed"],
+      ["Extraction", "### When the Subject Walks"],
+      ["Sabotage", "### When the Sabotage Is Committed"],
+      ["Information", "### When the Record Is Read"],
+    ];
+    for (const [heistType, heading] of expected) {
+      const out = generateHeistLocal({ heistType }, seededRng(4));
+      expect(out.lore, `${heistType} should use ${heading}`).toContain(heading);
+      // A plant job has no "prize taken" moment at all.
+      if (heistType !== "Theft") {
+        expect(out.lore).not.toContain("### When the Prize Is Taken");
+      }
+    }
+  });
+
+  it("does not write a retrieval step for a job the crew starts holding", () => {
+    const out = generateHeistLocal(
+      { heistType: "Plant Evidence" },
+      seededRng(4),
+    );
+    const objective = out.content.split("### The Package")[1].split("### ")[0];
+    // The package is not already inside the target — getting it in is the job.
+    expect(objective).toContain("The crew already has it");
+    expect(objective).toContain("has to end up in the innermost secured space");
+    // The rings guard the destination, not the package.
+    expect(out.lore).toContain(
+      "the destination the package must reach, not the package itself",
+    );
+  });
+
+  it("keeps the completing action from skipping most of the alarm track", () => {
+    for (const heistType of Object.keys(heistConfig.objectives)) {
+      const out = generateHeistLocal({ heistType }, seededRng(6));
+      const moment = out.lore
+        .split(`### ${heistConfig.objectives[heistType].momentHeading}`)[1]
+        .split("### ")[0];
+      expect(moment, `${heistType} skipped the alarm track`).toContain(
+        "**2 — Alert**",
+      );
+      expect(moment).not.toContain("Lethal Response");
+      expect(moment).not.toContain("Lockdown");
+    }
+  });
+
+  it("keeps the shared pools free of theft-only assumptions", () => {
+    // These pools are reused by every heist type, so nothing in them may
+    // assume the objective is an object being removed — a plant job has
+    // nothing go missing, and a sabotage has nothing to carry out.
+    const removalWording = /\bthe prize\b|absence|taken away|carried out/i;
+    for (const pool of [
+      heistConfig.triggers,
+      heistConfig.complications,
+      heistConfig.routeClosures,
+      heistConfig.pursuits,
+      heistConfig.flashbackSeeds,
+    ]) {
+      for (const entry of pool) {
+        expect(
+          removalWording.test(entry),
+          `shared pool entry assumes a theft: ${entry}`,
+        ).toBe(false);
+      }
+    }
+  });
+
   it("falls back to a generic objective section for a custom heist type", () => {
     const out = generateHeistLocal({ heistType: "Blackmail" }, seededRng(3));
     expect(out.content).toContain("### The Objective");
@@ -344,7 +452,12 @@ describe("buildHeistPrompt", () => {
   });
 
   it("ends with a field-specific consistency pass", () => {
-    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    // Pinned to Theft: the route check now names the type's own moment heading.
+    const { userMessage } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
     expect(userMessage).toContain("run a consistency pass");
     expect(userMessage).toContain(
       'exactly one complication is marked "(default)"',
@@ -352,6 +465,8 @@ describe("buildHeistPrompt", () => {
     expect(userMessage).toContain(
       'the route lost in "The Getaway" is the one "When the Prize Is Taken" closes, and is the one the crew entered by',
     );
+    expect(userMessage).toContain("Ownership and location:");
+    expect(userMessage).toContain("Alarm reachability:");
     expect(userMessage).toContain(
       "nothing offered as a solution may be something an earlier rule declared impossible",
     );
@@ -405,6 +520,30 @@ describe("buildHeistPrompt", () => {
     );
     expect(Object.values(heistConfig.pressureByComplication)).toContain(
       resolved.pressure,
+    );
+  });
+
+  it("states the type's starting position, protection and completing action", () => {
+    const { userMessage } = buildHeistPrompt(
+      { heistType: "Plant Evidence" },
+      "",
+      seededRng(1),
+    );
+    expect(userMessage).toContain(
+      "- Starting position: The crew already has the package when the job begins.",
+    );
+    expect(userMessage).toContain(
+      "- What the security protects: the destination the package must reach, not the package itself",
+    );
+    expect(userMessage).toContain(
+      "- The action that completes the job: leaving the package where it will be found and believed",
+    );
+    expect(userMessage).toContain("### When the Evidence Is Planted");
+    expect(userMessage).toContain(
+      "Do NOT merely rename theft concepts for the other heist types",
+    );
+    expect(userMessage).toContain(
+      "if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write",
     );
   });
 
@@ -508,6 +647,71 @@ describe("parseHeistResponse", () => {
     expect(out.title).toBe(resolved.title);
     expect(out.labels).toContain("heist");
     expect(out.labels).toContain(resolved.genre);
+  });
+
+  it("backfills a required section the model skipped", () => {
+    // Observed in a real sample: one generation in ten ended cleanly after
+    // "The Getaway" and never wrote "Flashback Opportunities".
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const lore =
+      "### GM Quick Reference\n- **Objective**: x\n\n### The Getaway\nGone.";
+    const out = parseHeistResponse(
+      JSON.stringify({ title: "T", content: "### The Score\nGo.", lore }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore).toContain("### Flashback Opportunities");
+    expect(out.lore).toContain("### Alarm Track");
+    expect(out.lore).toContain("**0 — Quiet**");
+    // What the model did write is untouched.
+    expect(out.lore).toContain("### The Getaway");
+    expect(out.lore).toContain("Gone.");
+  });
+
+  it("leaves sections alone when the model wrote them all", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const lore =
+      "### Alarm Track\n- **0 — Quiet**: calm\n\n### Flashback Opportunities\n- a bribed guard";
+    const out = parseHeistResponse(
+      JSON.stringify({ title: "T", content: "c", lore }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore).toBe(lore);
+  });
+
+  it("does not invent sections it cannot rebuild coherently", () => {
+    // A Security Rings block naming a different building would be worse than
+    // its absence, so only the generic pools are backfilled.
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const out = parseHeistResponse(
+      JSON.stringify({
+        title: "T",
+        content: "c",
+        lore: "### The Getaway\nGone.",
+      }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore).not.toContain("### Security Rings");
+    expect(out.lore).not.toContain("### The Hidden Factor");
+  });
+
+  it("states a concrete overall word budget", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("must come in under 900 words");
   });
 
   it("throws on unusable JSON so the engine can fall back locally", () => {

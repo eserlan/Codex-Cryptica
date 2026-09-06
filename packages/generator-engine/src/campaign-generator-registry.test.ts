@@ -525,7 +525,8 @@ describe("heist generator", () => {
       "### Security Rings",
       "### Alarm Track",
       "### Complications",
-      "### When the Prize Is Taken",
+      // Sabotage: the point of no return is named for the deed, not a prize.
+      "### When the Sabotage Is Committed",
       "### The Getaway",
       "### Flashback Opportunities",
     ]) {
