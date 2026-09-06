@@ -17,7 +17,7 @@
  * apart on what "correct" means.
  */
 
-import { heistConfig } from "./public-heist";
+import { heistConfig, HEIST_WORD_BUDGET } from "./public-heist";
 import { BANNED_NAMES } from "./public-npc";
 
 export interface HeistDraftFields {
@@ -81,8 +81,7 @@ const SYSTEM_MECHANICS =
 /** Wording that assumes the objective is an object being removed. */
 const REMOVAL_WORDING = /\bthe prize\b|\bprize's\b|absence of/i;
 
-/** The whole document should stay scannable at the table. */
-export const HEIST_WORD_BUDGET = 1100;
+export { HEIST_WORD_BUDGET };
 
 export function heistWordCount(draft: HeistDraftFields): number {
   return `${draft.content}\n${draft.lore}`.trim().split(/\s+/).filter(Boolean)

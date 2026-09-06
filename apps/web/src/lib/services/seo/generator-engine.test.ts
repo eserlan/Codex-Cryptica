@@ -609,7 +609,7 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
-  describe("generateCouncilVote", () => {
+  describe("generateHeist", () => {
     it("skips the heist repair turn when the draft already validates", async () => {
       const clean = generateHeistLocal({ heistType: "Theft" });
       const json = JSON.stringify({
@@ -688,6 +688,46 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toContain("### The Prize");
     });
 
+    it("accepts a repair that fixes the structural break but is still long", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      // Structurally correct now, but padded past the advisory word budget —
+      // a raw finding-count comparison would tie and discard this.
+      const fixedButLongJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: `${clean.lore}\n\n### Notes\n${"filler ".repeat(1200)}`,
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(fixedButLongJson)),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(res.content).toContain("### The Prize");
+      expect(res.content).not.toContain("### The Loot");
+    });
+
     it("keeps the original when the repair turn makes it worse", async () => {
       const clean = generateHeistLocal({ heistType: "Theft" });
       const brokenJson = JSON.stringify({
@@ -726,7 +766,9 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Alarm Track");
       expect(res.lore).toContain("### Flashback Opportunities");
     });
+  });
 
+  describe("generateCouncilVote", () => {
     it("should generate council vote details locally when useAI is false", async () => {
       const res = await engine.generateCouncilVote({
         councilSize: "3",

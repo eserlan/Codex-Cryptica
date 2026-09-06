@@ -604,6 +604,17 @@ export const heistConfig = {
   } as Record<string, string>,
 };
 
+/**
+ * Length targets. The prompt aims at {@link HEIST_WORD_TARGET} and the
+ * validator tolerates up to {@link HEIST_WORD_BUDGET}: aiming low is what
+ * actually moves a model's output down, while flagging every word over the
+ * target would fire on most generations and buy nothing, since length alone
+ * never earns a repair call. Both live here so the two numbers cannot drift
+ * apart by accident — the gap between them is deliberate.
+ */
+export const HEIST_WORD_TARGET = 900;
+export const HEIST_WORD_BUDGET = 1100;
+
 /** Generation stays system-neutral unless the user selects a system. */
 export const DEFAULT_HEIST_SYSTEM = "System-neutral";
 
@@ -830,7 +841,7 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["heist", "heist-generator"]
 }
 Every heading above appears exactly ONCE in the whole result. "content" and "lore" must share no heading between them, neither may repeat one of its own, and you must never emit a heading with nothing written under it. Do not restate a section you have already written.
-Density matters as much as content. The entire result — "content" and "lore" together — must come in under 900 words; a GM has to be able to scan it at the table. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
+Density matters as much as content. The entire result — "content" and "lore" together — must come in under ${HEIST_WORD_TARGET} words; a GM has to be able to scan it at the table. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
 ${systemNote}
 Do NOT merely rename theft concepts for the other heist types. The selected heist type determines the scenario's logic: what the crew begins with, what they must reach, what action completes the objective, and what triggers the escape phase. Take the starting position above literally — if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write, and the security exists to keep them away from where it must go; if the objective is a person, a system, or a record, the job is not a removal unless the starting position says it is. The selected heist type must materially shape the scenario, not just the wording of "The Score". "${resolved.objectiveHeading}" carries the actionable detail for a ${resolved.heistType} job, and the casing intel, security rings, complications and getaway must all engage with that objective rather than treating it as a container to be lifted. If "The Score" names a second objective as well — an object to take AND a person to kill, say — that objective gets its own section immediately after "${resolved.objectiveHeading}", written to the same depth, with its own location, window, protection and two or three ways to reach it.
 The "Pressure" must advance on its own during the job, not only when the crew fails. If the catch creates risk only on a bad outcome, pair it with something that moves regardless — a shift change, an inspection, a ritual, a tide — and say what happens when it runs out.

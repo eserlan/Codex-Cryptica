@@ -695,7 +695,17 @@ export class DefaultGeneratorEngine {
             content: repaired.content,
             lore: repaired.lore,
           });
-          return after.length < findings.length ? repaired : draft;
+          // Compare structural problems first. A raw count would discard a
+          // repair that fixed the only structural break but left an advisory
+          // "slightly long" behind — keeping a genuinely broken draft over a
+          // sound one because the totals happened to tie.
+          const structural = (list: typeof findings) =>
+            list.filter((f) => f.severity === "structural").length;
+          const fixedSomething = structural(after) < structural(findings);
+          const noWorseAndTighter =
+            structural(after) === structural(findings) &&
+            after.length < findings.length;
+          return fixedSomething || noWorseAndTighter ? repaired : draft;
         } catch {
           return draft;
         }
