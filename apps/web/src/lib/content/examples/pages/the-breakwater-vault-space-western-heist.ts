@@ -14,7 +14,7 @@ export const theBreakwaterVault: ExampleConfigInput = {
   genre: "Space Western",
   theme: "western",
   summary:
-    "An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost, holding seized pitch-cobalt specie behind pneumatic vacuum seals, shifting patrol shifts, and a compromised getaway.",
+    "An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost, holding seized pitch-cobalt specie behind pneumatic vacuum seals, rotating patrols, and a compromised getaway.",
   provenance: "raw",
   generator: { name: "Heist generator", href: "/generators/heist" },
   context: [
