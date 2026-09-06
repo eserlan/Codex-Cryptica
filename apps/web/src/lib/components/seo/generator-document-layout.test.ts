@@ -461,3 +461,85 @@ Yeva will remember who paid better.`,
     expect(layout.content).toContain("### Follow-Up Hooks");
   });
 });
+
+describe("section uniqueness invariant (#2768)", () => {
+  const heist = (content: string, lore: string) =>
+    ({
+      type: "event",
+      title: "T",
+      summary: "",
+      status: "active",
+      labels: ["heist", "heist-generator"],
+      content,
+      lore,
+    }) as unknown as Parameters<typeof getGeneratorDocumentLayout>[0];
+
+  it("renders a heading once when lore restates one the content already used", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist(
+        "### The Score\nSteal it.\n\n### The Prize\nA diadem.",
+        "### The Prize\n\n### The Hidden Factor\nPellanor is asleep downstairs.",
+      ),
+    );
+    expect(layout.content.match(/### The Prize/g)).toHaveLength(1);
+    // The real one survives; the empty restatement does not.
+    expect(layout.content).toContain("A diadem.");
+    expect(layout.content).toContain("Pellanor is asleep downstairs.");
+  });
+
+  it("drops a repeated section even when both copies have a body", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist(
+        "### The Score\nSteal it.",
+        "### Security Rings\n- **Perimeter**: first\n\n### Security Rings\n- **Perimeter**: second",
+      ),
+    );
+    expect(layout.content.match(/### Security Rings/g)).toHaveLength(1);
+    expect(layout.content).toContain("first");
+    expect(layout.content).not.toContain("second");
+  });
+
+  it("deduplicates rail sections too", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist(
+        "### The Score\nSteal it.",
+        "### Alarm Track\n- **0 — Quiet**: calm\n\n### Alarm Track\n- **0 — Quiet**: calm again",
+      ),
+    );
+    expect(layout.lore.match(/### Alarm Track/g)).toHaveLength(1);
+    expect(layout.lore).not.toContain("calm again");
+  });
+
+  it("drops heading-only sections rather than rendering an empty one", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist("### The Score\nSteal it.\n\n### The Prize\n", "### The Getaway\n"),
+    );
+    expect(layout.content).not.toContain("### The Prize");
+    expect(layout.content).not.toContain("### The Getaway");
+    expect(layout.content).toContain("### The Score");
+  });
+
+  it("applies the invariant to generators with no layout rule", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "note",
+      title: "T",
+      summary: "",
+      status: "active",
+      labels: ["no-rule-for-this"],
+      content: "### A\none\n\n### A\ntwo",
+      lore: "### B\nthree\n\n### B\nfour",
+    } as unknown as Parameters<typeof getGeneratorDocumentLayout>[0]);
+    expect(layout.content.match(/### A/g)).toHaveLength(1);
+    expect(layout.content).not.toContain("two");
+    expect(layout.lore.match(/### B/g)).toHaveLength(1);
+    expect(layout.lore).not.toContain("four");
+  });
+
+  it("leaves untitled preamble text alone", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist("A line before any heading.\n\n### The Score\nSteal it.", ""),
+    );
+    expect(layout.content).toContain("A line before any heading.");
+    expect(layout.content).toContain("### The Score");
+  });
+});

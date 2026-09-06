@@ -1,5 +1,11 @@
 export * from "./campaign-generator-types";
 export {
+  runHeistGeneration,
+  streamHeistGeneration,
+  type HeistGenerationTurns,
+  type HeistGenerationResult,
+} from "./heist-generation";
+export {
   getThemeDefaults,
   THEME_GENERATOR_DEFAULTS,
 } from "./campaign-generator-theme";
@@ -287,6 +293,30 @@ export {
   type CouncilVotePathsPrompt,
   type CouncilVotePaths,
 } from "./public-council-vote";
+export {
+  validateHeist,
+  needsRepair,
+  splitHeistSections,
+  heistWordCount,
+  REQUIRED_LORE_SECTIONS,
+  HEIST_WORD_BUDGET,
+  type HeistDraftFields,
+  type HeistFinding,
+  type HeistSection,
+} from "./heist-validation";
+export {
+  buildHeistAuditPrompt,
+  buildHeistPrompt,
+  buildHeistRepairPrompt,
+  parseHeistAuditResponse,
+  parseHeistResponse,
+  generateHeistLocal,
+  heistConfig,
+  type HeistGeneratorOptions,
+  type HeistPrompt,
+  type HeistSemanticAudit,
+  type ResolvedHeist,
+} from "./public-heist";
 export { SETTLEMENT_PRESETS } from "./public-settlement-presets";
 export { SETTLEMENT_LEXICON } from "./public-settlement-lexicon";
 export {

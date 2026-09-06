@@ -58,6 +58,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "alien-race" },
         { slug: "creature" },
         { slug: "encounter" },
+        { slug: "heist" },
       ]);
     });
   });

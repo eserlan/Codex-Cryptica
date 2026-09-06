@@ -397,6 +397,31 @@ describe("saveDraft", () => {
     );
   });
 
+  it("preserves both player-facing and GM-facing heist sections when saving", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    await svc.saveDraft({
+      draft: draft({
+        sourceGeneratorId: "heist",
+        entityType: "event",
+        summary: "Rescue Nessa and leave the payroll office with her.",
+        content: "### The Score\nGet Nessa clear of the payroll office.",
+        lore: "### GM Quick Reference\n- **Objective**: Escape with Nessa.",
+        labels: ["heist", "event"],
+      }),
+      createRelationship: false,
+    });
+
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "event",
+      "Kaeldar",
+      expect.objectContaining({
+        content: "Rescue Nessa and leave the payroll office with her.",
+        lore: "### The Score\nGet Nessa clear of the payroll office.\n\n### GM Quick Reference\n- **Objective**: Escape with Nessa.",
+      }),
+    );
+  });
+
   it("does not merge rich content into lore for ordinary entity drafts", () => {
     expect(
       composeDraftVaultFields(

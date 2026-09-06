@@ -71,6 +71,7 @@
               <div class="flex items-center gap-3">
                 <span
                   class="icon-[lucide--tag] text-theme-secondary w-3.5 h-3.5"
+                  aria-hidden="true"
                 ></span>
                 <span class="text-xs font-bold text-theme-text truncate"
                   >{label}</span
@@ -114,6 +115,7 @@
         >
           <div
             class="icon-[lucide--tag] w-8 h-8 text-theme-muted/20 mx-auto mb-3"
+            aria-hidden="true"
           ></div>
           <p
             class="text-xs text-theme-muted uppercase font-mono tracking-widest"

@@ -53,6 +53,9 @@ import {
   parseCouncilVotePathsResponse,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
+  buildHeistPrompt,
+  runHeistGeneration,
+  generateHeistLocal,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -125,6 +128,7 @@ import {
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
+  type HeistGeneratorOptions,
   type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
@@ -206,6 +210,7 @@ export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
+export { heistConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
@@ -624,6 +629,48 @@ export class DefaultGeneratorEngine {
     );
     villainDomainHistoryStore.record(result.conflictDomain);
     return result;
+  }
+
+  /**
+   * Generate, independently audit, then conditionally repair (#2768).
+   *
+   * Public and campaign generation share the same policy. A fresh reviewer
+   * always externalises the scenario's state transitions. Repair runs in that
+   * reviewer's conversation only when semantic or deterministic issues exist;
+   * failed or structurally worse repairs retain the usable original.
+   */
+  async generateHeist(
+    options: HeistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...heistOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("heist");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const prompt = buildHeistPrompt(
+          heistOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        const { systemInstruction, resolved } = prompt;
+        generationInputHistoryStore.record(
+          "heist",
+          summarizeResolvedInputs(resolved),
+        );
+        const generationChat = await this.startChat(systemInstruction);
+        let reviewChatPromise:
+          ReturnType<DefaultGeneratorEngine["startChat"]> | undefined;
+        const result = await runHeistGeneration(prompt, {
+          generate: (message) => this.sendChatMessage(generationChat, message),
+          review: async (message) =>
+            this.sendChatMessage(
+              await (reviewChatPromise ??= this.startChat(systemInstruction)),
+              message,
+            ),
+        });
+        return result.output;
+      },
+      () => generateHeistLocal(heistOptions),
+    );
   }
 
   async generateCouncilVote(

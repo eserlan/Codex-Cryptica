@@ -40,6 +40,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "bbeg-generator",
   "creature",
   "encounter",
+  "heist",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -149,6 +150,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "bbeg-generator",
   "creature",
   "encounter",
+  "heist",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship

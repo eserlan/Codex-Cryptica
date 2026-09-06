@@ -150,6 +150,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-you-create-a-pantheon",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-should-an-rpg-settlement-contain",
+    "how-to-write-an-in-world-newspaper-for-an-rpg",
   ],
   discovery: {
     id: "answer-fantasy-faction",

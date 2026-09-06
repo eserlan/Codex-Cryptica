@@ -103,7 +103,7 @@
       id="share-modal-title"
       class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase font-header flex items-center gap-2"
     >
-      <span class="icon-[lucide--share-2] w-5 h-5"></span>
+      <span class="icon-[lucide--share-2] w-5 h-5" aria-hidden="true"></span>
       Share World
     </h2>
 
@@ -178,6 +178,7 @@
         </div>
 
         <button
+          type="button"
           class="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-black rounded text-sm font-bold tracking-widest uppercase font-header transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2"
           onclick={handleP2PStart}
           disabled={p2pLoading}
@@ -190,7 +191,7 @@
             ></span>
             STARTING...
           {:else}
-            <span class="icon-[lucide--zap] w-4 h-4"></span>
+            <span class="icon-[lucide--zap] w-4 h-4" aria-hidden="true"></span>
             START LIVE SESSION
           {/if}
         </button>

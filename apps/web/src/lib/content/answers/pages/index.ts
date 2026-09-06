@@ -6,6 +6,7 @@ import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-ses
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-faction";
+import { howDoYouCreateAFictionalLanguageForAnRpg } from "./how-do-you-create-a-fictional-language-for-an-rpg";
 import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
@@ -24,6 +25,7 @@ import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldb
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
+import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
@@ -46,6 +48,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyFaction,
+    howDoYouCreateAFictionalLanguageForAnRpg,
     howDoYouCreateAMagicSystem,
     howDoYouCreateAPantheon,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
@@ -64,6 +67,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouWriteAOneShotAdventure,
     howMuchPrepDoYouNeedForAnRpgSession,
+    howToWriteAnInWorldNewspaperForAnRpg,
     whatIsAPointCrawl,
     whatMakesAGoodRandomEncounter,
     whatRpgSystemShouldWeTryInsteadOfDnd,

@@ -21,6 +21,7 @@ describe("randomIdeaCategories", () => {
       "deity",
       "encounter",
       "faction",
+      "heist",
       "minor-magic-item",
       "nation",
       "npc",
@@ -51,6 +52,7 @@ describe("randomIdeaCategories", () => {
         .mockResolvedValue("minor-magic-item-result"),
       generateArtifact: vi.fn().mockResolvedValue("artifact-result"),
       generateCouncilVote: vi.fn().mockResolvedValue("council-vote-result"),
+      generateHeist: vi.fn().mockResolvedValue("heist-result"),
       generateSecretSociety: vi.fn().mockResolvedValue("secret-society-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
@@ -98,6 +100,10 @@ describe("randomIdeaCategories", () => {
     });
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
       useAI: true,
+    });
+    expect(engine.generateHeist).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
     expect(engine.generateSecretSociety).toHaveBeenCalledWith({
       useAI: true,
