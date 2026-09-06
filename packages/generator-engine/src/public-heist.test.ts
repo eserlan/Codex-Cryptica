@@ -695,7 +695,7 @@ describe("buildHeistRepairPrompt", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
     expect(prompt).not.toMatch(/\n9[a-f]\./);
-    expect(prompt.length).toBeLessThan(4200);
+    expect(prompt.length).toBeLessThan(5000);
   });
 
   it("carries the demoted checklist regardless of whether findings were auto-detected", () => {
@@ -715,10 +715,10 @@ describe("buildHeistRepairPrompt", () => {
     );
   });
 
-  it("puts three named invariants ahead of everything else (real samples, #2768)", () => {
+  it("puts five named invariants ahead of everything else (real samples, #2768)", () => {
     // "The Orchid Ledger" and "Payroll Under Red Dust" both reproduced the
     // same completion-vs-detection conflation that the flat checklist
-    // (one bullet among twenty) failed to catch twice in a row. These three
+    // (one bullet among twenty) failed to catch twice in a row. These
     // checks are now named invariants that come before the demoted list,
     // rather than one more equally-weighted line.
     const { resolved } = buildHeistPrompt(
@@ -729,11 +729,9 @@ describe("buildHeistRepairPrompt", () => {
     const prompt = buildHeistRepairPrompt([], resolved);
 
     const invariantsIndex = prompt.indexOf(
-      "Before anything else, verify these three invariants",
+      "Before anything else, verify these five invariants",
     );
-    const demotedIndex = prompt.indexOf(
-      "After those three, do the normal pass",
-    );
+    const demotedIndex = prompt.indexOf("After those five, do the normal pass");
     expect(invariantsIndex).toBeGreaterThan(-1);
     expect(demotedIndex).toBeGreaterThan(invariantsIndex);
 
@@ -773,6 +771,39 @@ describe("buildHeistRepairPrompt", () => {
     // The demoted pass still covers the setup/payoff check, folded to prose.
     expect(prompt).toContain(
       'any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it)',
+    );
+  });
+
+  it("does not let a later section nullify an established bypass (real sample, #2768)", () => {
+    // "The Meteorite Job": the scenario gave the crew a way to spoof a mass
+    // sensor, then declared the same sensor fires "the instant" the prize
+    // leaves its cradle regardless of the spoof — silently overriding the
+    // bypass it had just granted.
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("Preserve a successful bypass.");
+    expect(prompt).toContain(
+      "a later section must not declare that same mechanism unavoidable regardless",
+    );
+    expect(prompt).toContain("A spoofed sensor stays spoofed");
+  });
+
+  it("requires the prize's catch to hold through the getaway, not only the rings (real sample, #2768)", () => {
+    // Same sample: a 1,200kg prize whose catch was respected inside the
+    // security rings but ignored by the getaway — a roof-ladder escape, a
+    // folding handcart, a pursuit assuming hand-carriage.
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("Carry the prize's catch through to the end.");
+    expect(prompt).toContain(
+      `The established catch — ${resolved.prizeComplication} — must still be true in "The Getaway", the flashbacks, and the pursuit, not only inside the security rings.`,
+    );
+    expect(prompt).toContain(
+      "a roof escape or a hand-carried tool for something huge or fragile",
     );
   });
 

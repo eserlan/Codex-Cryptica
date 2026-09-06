@@ -990,6 +990,20 @@ function backfillMissingSections(
  * out ahead of everything else as named invariants, with the rest of the
  * review demoted below them. Breadth was never the gap; priority was.
  *
+ * A fourth live sample ("The Meteorite Job") — the first genuinely clean run,
+ * 8.5+/10 on everything already checked — still found two more instances of
+ * the same underlying pattern (a section quietly overriding a fact a *prior*
+ * section established), just in forms specific enough that invariants 1-3
+ * didn't catch them: a scenario that gave the crew a way to spoof a mass
+ * sensor, then declared that same sensor fires "the instant" the prize
+ * leaves its cradle regardless — nullifying the bypass it had just granted —
+ * and a 1,200kg prize whose catch was respected inside the security rings
+ * but ignored by the getaway (a roof-ladder escape, a folding handcart, a
+ * pursuit assuming hand-carriage). Added as invariants 4 and 5 rather than
+ * folded into 1-3, since "don't nullify an established bypass" and "a
+ * physical constraint applies everywhere, not just where it was introduced"
+ * are their own failure shapes, not restatements of completion-vs-detection.
+ *
  * @param findings deterministic problems already detected, possibly empty —
  *   an empty list still leaves the semantic checks worth running, but the
  *   caller decides whether that is worth a second model call.
@@ -1011,13 +1025,15 @@ Do not generate a new heist. Preserve the scenario and make only the smallest ed
 
 This is a ${resolved.heistType} job in a ${resolved.genre} setting: the objective section is "${resolved.objectiveHeading}", the point of no return is "${resolved.momentHeading}", and the crew's starting position is: ${resolved.objectiveStartsWith}
 
-${detected}Before anything else, verify these three invariants — they matter more than everything checked afterward.
+${detected}Before anything else, verify these five invariants — they matter more than everything checked afterward.
 
 1. Completion is not detection. Distinguish completing the objective, someone discovering that, raising the alarm, and beginning the escape — these may happen at different times. For Plant Evidence, Information, and Sabotage especially, successful covert completion should stay undiscovered until a believable later trigger, unless the scenario explicitly establishes an unavoidable detection mechanism. Never invent an automatic alarm merely because the scenario needs a getaway: if a convincing plant, covert read, or subtle sabotage would logically go unnoticed, preserve that and let the crew potentially leave through their original route.
 2. The timeline must be executable. Reconstruct it before returning the result. Every deadline, inspection, handover, vulnerability window, clock, delayed discovery, and lockdown trigger referring to the same event must name the same time. Every clock must state exactly what advances it; avoid a vague trigger such as "each obstacle" unless those obstacles are explicitly defined.
 3. Completion state must propagate consistently. Once you know when the objective is completed and when it is detected, check "${resolved.momentHeading}", "The Getaway", "GM Quick Reference", "Alarm Track", and "Complications" against those two facts — all must agree. The route must not seal immediately in one section and only on discovery in another. Remove any consequence that only fits a failed approach from the default successful path.
+4. Preserve a successful bypass. If the scenario gives the crew a way to spoof, disable, or deceive a security or detection mechanism, a later section must not declare that same mechanism unavoidable regardless. A spoofed sensor stays spoofed; if detection should still be possible another way, say so explicitly and distinctly, rather than silently overriding the bypass you already granted.
+5. Carry the prize's catch through to the end. The established catch — ${resolved.prizeComplication} — must still be true in "The Getaway", the flashbacks, and the pursuit, not only inside the security rings. A route, tool, or pursuer that ignores it (a roof escape or a hand-carried tool for something huge or fragile, a pursuit that assumes the crew is carrying it conventionally when the catch says otherwise) must be repaired or replaced with one that actually respects it.
 
-After those three, do the normal pass: contradictions between sections; objectives in "The Score" left unsupported; wrong terminology for the heist type; inconsistent locations, ownership, NPC roles, or motivations; hidden factors that invalidate rather than complicate the plan; security approaches that turn out not to work; alarm levels that are skipped or insufficiently escalating; getaway routes contradicting earlier facts; generic flashbacks where scenario-specific ones are possible; details leaking in from elsewhere; genre-inappropriate or system-specific language; duplicated or empty sections; and any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it).
+After those five, do the normal pass: contradictions between sections; objectives in "The Score" left unsupported; wrong terminology for the heist type; inconsistent locations, ownership, NPC roles, or motivations; hidden factors that invalidate rather than complicate the plan; security approaches that turn out not to work; alarm levels that are skipped or insufficiently escalating; getaway routes contradicting earlier facts; generic flashbacks where scenario-specific ones are possible; details leaking in from elsewhere; genre-inappropriate or system-specific language; duplicated or empty sections; and any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it).
 
 Also verify:
 1. Every primary objective has multiple viable approaches where appropriate — not merely multiple ways to reach it.
