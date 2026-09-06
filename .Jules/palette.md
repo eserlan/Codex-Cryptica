@@ -153,3 +153,8 @@
 ## 2024-05-15 - Decorative Inner Icons
 **Learning:** Screen readers might announce confusing CSS class names (like `icon-[lucide--copy]`) for inner decorative spans inside buttons if they lack `aria-hidden="true"`, even when the button contains descriptive text.
 **Action:** Always add `aria-hidden="true"` to decorative inner icon elements (e.g. `<span class="icon-[...]">`) when they accompany visual descriptive text or an `aria-label` inside interactive elements.
+
+## 2026-11-20 - Add type button and aria-hidden to share modal elements
+
+**Learning:** Svelte dropdown items acting as options (like those in Autocomplete or ShareModal) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads. Also, decorative icons inside those buttons or headings need `aria-hidden="true"`.
+**Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere, and ensure all inner decorative `<span class="icon-[...]">` tags have `aria-hidden="true"`.
