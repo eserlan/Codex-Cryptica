@@ -942,8 +942,19 @@ function backfillMissingSections(
  * job to the docks and replace the fixer with a cyborg priest has thrown away
  * pass 1's work, so this prompt forbids reinvention in as many words.
  *
+ * DESIGN NOTE (#2768): an earlier version of this prompt spelled every check
+ * out as a numbered checklist (12 items, several with lettered sub-items). A
+ * model handed that ends up satisfying it mechanically — working down the
+ * list rather than reading the scenario — which is the opposite of what a
+ * repair pass is for. The runtime prompt below is deliberately compact:
+ * "spot contradictions, fix them, don't rewrite everything." The numbered
+ * version remains useful as a design rubric (and is close to what
+ * heist-validation.ts and scripts/heist-eval.ts check deterministically) —
+ * see git history on this function for that fuller list — but it is not what
+ * gets sent to the model.
+ *
  * @param findings deterministic problems already detected, possibly empty —
- *   an empty list still leaves the semantic checklist worth running, but the
+ *   an empty list still leaves the semantic checks worth running, but the
  *   caller decides whether that is worth a second model call.
  */
 export function buildHeistRepairPrompt(
@@ -951,33 +962,41 @@ export function buildHeistRepairPrompt(
   resolved: ResolvedHeist,
 ): string {
   const detected = findings.length
-    ? `Automated checks already found these specific problems. Fix every one, and where one of them asks you to cut length, cutting IS the minimal edit — the instruction above to leave correct sections alone does not exempt you from it:\n${findings.map((f, i) => `${i + 1}. ${f.message}`).join("\n")}\n`
-    : "Automated checks found no structural problems, so concentrate on the judgement calls below.\n";
+    ? `\nAutomated checks already found these specific problems — fix every one; if one asks you to cut length, cutting IS the minimal edit:\n${findings.map((f, i) => `${i + 1}. ${f.message}`).join("\n")}\n`
+    : "";
 
-  return `Proofread and repair the heist you just wrote. Do NOT write a new one.
+  return `You are the verification and repair pass for a generated tabletop RPG heist.
 
-Make the smallest edits that fix what is broken and change nothing else. Keep the same target, the same named people, the same objective, the same routes and the same overall shape — if a section is already correct, return it word for word. Reinventing the scenario is a failure, not a fix.
+Do not generate a new heist. Preserve the scenario and make only the smallest edits needed to fix problems. Prefer changing one sentence over rewriting a section. Do not add substantial new content unless required to resolve a contradiction, and do not increase the overall length unless necessary.
 
+This is a ${resolved.heistType} job in a ${resolved.genre} setting: the objective section is "${resolved.objectiveHeading}", the point of no return is "${resolved.momentHeading}", and the crew's starting position is: ${resolved.objectiveStartsWith}
 ${detected}
-Then read the whole thing once more and check the things only a reader can catch:
-1. Every objective named in "The Score" is supported by a later section — never introduce an objective and then ignore it.
-2. The terminology matches the heist type throughout: this is a ${resolved.heistType} job whose objective section is "${resolved.objectiveHeading}" and whose point of no return is "${resolved.momentHeading}".
-3. The core object's starting state is consistent everywhere. ${resolved.objectiveStartsWith} No section may contradict that, and there must be no step spent obtaining something the crew already has.
-4. "${resolved.momentHeading}" describes ${resolved.objectiveCompletion}, and "The Getaway" follows from that event rather than from something unrelated.
-5. "The Hidden Factor" complicates the plan without invalidating every approach at once — at least one route established elsewhere must survive it.
-6. No complication contradicts a fact established earlier, and no flashback opportunity does something the security rules declared impossible. If a rule says a thing cannot be done, nothing later may quietly do it.
-7. Every alarm level is reachable in play and escalates meaningfully, and completing the objective does not jump the track past most of its own levels.
-8. The pressure can actually fire during a single infiltration, and any counting in it adds up.
-9. Named people behave in line with the motives given for them — someone who wants to stay hidden does not announce themselves.
-9a. There are two or three genuinely different ways to accomplish the objective itself, not merely to reach it. Ways in are not ways to do the job: if the only answer once the crew arrives is one prescribed action, add further opportunities or methods that respect whatever special vulnerability you established.
-9b. Any special vulnerability, weak point or single-target rule is explained in the fiction — why that spot and not another. Delete or justify anything that reads as an arbitrary game mechanic.
-9c. Every magical or technical effect is unambiguous about what it actually does. If something alters an appearance, a reflection or a reading rather than the thing itself, say so plainly; a description that could mean either is a description the GM cannot run.
-9d. Every clock names what advances it and how many advances fill it. Remove or complete any clock that cannot be run as written.
-9e. The catch and the complications belong to THIS job. A constraint that would only matter for a different kind of heist — keeping collateral damage down on a job with nothing fragile nearby, say — is leftover scaffolding: cut it or give it a reason that exists in this scenario.
-9f. Names, ranks and titles suit the setting. A ${resolved.genre} scenario should not carry job titles from a different era or technology level.
-10. "GM Quick Reference" agrees with the sections it summarises on every fact — timings, triggers and consequences especially — and summarises rather than repeating them word for word. If the detail says an alarm fires on the deed itself, the summary must not say it fires when the body is found.
-11. No section appears twice and none is left empty.
-12. No proper noun, place or detail appears that belongs to a different scenario than this one.
+Check for:
+- contradictions between sections
+- objectives in "The Score" that are not supported later
+- incorrect terminology for the selected heist type
+- inconsistent locations, ownership, NPC roles, or motivations
+- hidden factors that invalidate rather than complicate the plan
+- security approaches that later turn out not to work
+- clocks, countdowns, or timing that do not make mathematical or playable sense
+- alarm levels that are skipped, unreachable, contradictory, or insufficiently escalating
+- objective completion being confused with detection
+- point-of-no-return triggers that do not logically follow from the objective
+- getaway routes or pursuit that contradict earlier facts
+- default complication differing between "Complications" and "GM Quick Reference"
+- "GM Quick Reference" disagreeing with the detailed sections
+- generic flashbacks when more scenario-specific ones are possible
+- details leaking in from a different scenario
+- genre-inappropriate or system-specific language
+- duplicated sections, empty headings, or repeated information
+
+Also verify:
+1. Every primary objective has multiple viable approaches where appropriate — not merely multiple ways to reach it.
+2. Every pressure mechanic has a clear trigger and consequence.
+3. Every complication changes play in a concrete way.
+4. Completing the objective does not automatically trigger detection unless the scenario gives a clear reason.
+5. The scenario remains playable at every alarm level.
+6. The final result can be run as written without the GM having to resolve obvious inconsistencies.
 
 Return the complete corrected heist as a valid JSON object in the exact same schema as before — "title", "content", "lore", "labels" — with every field present, not just the parts you changed. If nothing needs fixing, return what you wrote unchanged.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;

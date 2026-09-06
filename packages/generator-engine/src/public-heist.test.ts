@@ -589,23 +589,17 @@ describe("buildHeistPrompt", () => {
     );
   });
 
-  it("asks the repair pass for objective approaches and coherent effects", () => {
-    const { resolved } = buildHeistPrompt(
+  it("requires objective approaches and coherent effects in the generation prompt itself", () => {
+    // These land in pass 1 (buildHeistPrompt), not the compact repair
+    // checklist — the model should get them right the first time rather than
+    // relying on a second pass to catch them.
+    const { userMessage } = buildHeistPrompt(
       { heistType: "Assassination", genre: "Classic Fantasy" },
       "",
       seededRng(1),
     );
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("Ways in are not ways to do the job");
-    expect(prompt).toContain("reads as an arbitrary game mechanic");
-    expect(prompt).toContain(
-      "If something alters an appearance, a reflection or a reading rather than the thing itself",
-    );
-    expect(prompt).toContain("how many advances fill it");
-    expect(prompt).toContain("leftover scaffolding");
-    expect(prompt).toContain(
-      "A Classic Fantasy scenario should not carry job titles",
-    );
+    expect(userMessage).toContain("reads as an arbitrary game mechanic");
+    expect(userMessage).toContain("how many advances fill it");
   });
 
   it("keeps the point of no return distinct from the alarm track", () => {
@@ -643,20 +637,54 @@ describe("buildHeistRepairPrompt", () => {
   it("forbids reinventing the scenario", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("Do NOT write a new one");
+    expect(prompt).toContain("Do not generate a new heist");
     expect(prompt).toContain(
-      "Reinventing the scenario is a failure, not a fix",
+      "Preserve the scenario and make only the smallest edits needed to fix problems",
     );
     expect(prompt).toContain(
-      "if a section is already correct, return it word for word",
+      "Prefer changing one sentence over rewriting a section",
+    );
+    expect(prompt).toContain(
+      "do not increase the overall length unless necessary",
     );
   });
 
-  it("still runs the semantic checklist when nothing was auto-detected", () => {
+  it("stays compact rather than a numbered checklist the model can satisfy mechanically", () => {
+    // The point of the redesign: keep the reviewer's job to "spot
+    // contradictions, fix them, don't rewrite everything" rather than a
+    // mini rules manual with lettered sub-items.
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("Automated checks found no structural problems");
-    expect(prompt).toContain("Named people behave in line with the motives");
+    expect(prompt).not.toMatch(/\n9[a-f]\./);
+    // The prior numbered-checklist version ran past 3800 characters even with
+    // no findings attached; the compact version should read as a short brief.
+    expect(prompt.length).toBeLessThan(3000);
+  });
+
+  it("carries the compact checklist regardless of whether findings were auto-detected", () => {
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("contradictions between sections");
+    expect(prompt).toContain(
+      "objective completion being confused with detection",
+    );
+    expect(prompt).toContain(
+      "hidden factors that invalidate rather than complicate the plan",
+    );
+    expect(prompt).toContain(
+      "point-of-no-return triggers that do not logically follow from the objective",
+    );
+    expect(prompt).toContain(
+      'default complication differing between "Complications" and "GM Quick Reference"',
+    );
+    expect(prompt).toContain("genre-inappropriate or system-specific language");
+    expect(prompt).toContain("duplicated sections, empty headings");
+    expect(prompt).toContain(
+      "Every primary objective has multiple viable approaches where appropriate — not merely multiple ways to reach it.",
+    );
+    expect(prompt).toContain(
+      "The scenario remains playable at every alarm level.",
+    );
   });
 
   it("restates the type's own terminology and starting state", () => {
@@ -669,9 +697,6 @@ describe("buildHeistRepairPrompt", () => {
     expect(prompt).toContain('"The Package"');
     expect(prompt).toContain('"When the Evidence Is Planted"');
     expect(prompt).toContain("already has the package");
-    expect(prompt).toContain(
-      "no step spent obtaining something the crew already has",
-    );
   });
 
   it("asks for the whole corrected object, not a list of criticisms", () => {
