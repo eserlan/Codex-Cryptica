@@ -1,19 +1,29 @@
 import {
+  buildHeistAuditPrompt,
   buildHeistRepairPrompt,
+  parseHeistAuditResponse,
   parseHeistResponse,
+  type HeistSemanticAudit,
   type HeistPrompt,
 } from "./public-heist";
-import { validateHeist, type HeistFinding } from "./heist-validation";
+import {
+  needsRepair,
+  validateHeist,
+  type HeistFinding,
+} from "./heist-validation";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import type { GenerationEvent } from "./campaign-generator-types";
 
 export interface HeistGenerationResult {
   output: PublicGeneratorOutput;
   initial: PublicGeneratorOutput;
+  audit?: HeistSemanticAudit;
   reviewed?: PublicGeneratorOutput;
+  /** Diagnostic only; callers still receive the usable initial draft. */
+  reviewError?: string;
   before: HeistFinding[];
   after: HeistFinding[];
-  reviewStatus: "accepted" | "rejected" | "failed";
+  reviewStatus: "clean" | "accepted" | "rejected" | "failed";
 }
 
 export interface HeistGenerationOptions {
@@ -26,15 +36,24 @@ export type HeistSendStream = (
   message: string,
 ) => AsyncGenerator<GenerationEvent>;
 
-/** Shared public, campaign and evaluation workflow. Transport owns chat history. */
+export interface HeistGenerationTurns {
+  /** Pass 1 conversation. */
+  generate: HeistSendStream;
+  /** Independent reviewer conversation, retained between audit and repair. */
+  review: HeistSendStream;
+}
+
+/** Shared generate-audit-repair workflow. Transport owns chat history. */
 export async function* streamHeistGeneration(
   prompt: HeistPrompt,
-  send: HeistSendStream,
+  turns: HeistGenerationTurns,
   options: HeistGenerationOptions = {},
 ): AsyncGenerator<GenerationEvent, HeistGenerationResult> {
   const checkCancellation = () => options.signal?.throwIfAborted();
   async function* turn(
+    send: HeistSendStream,
     message: string,
+    showProgress = true,
   ): AsyncGenerator<GenerationEvent, string> {
     checkCancellation();
     let response: string | undefined;
@@ -44,7 +63,7 @@ export async function* streamHeistGeneration(
       if (event.type === "complete") response = event.text;
       // Only the final selected document is complete. Intermediate turn output
       // may be shown progressively, but must never be mistaken for a saved draft.
-      if (event.type !== "complete") yield event;
+      if (showProgress && event.type !== "complete") yield event;
     }
     checkCancellation();
     if (response === undefined)
@@ -65,53 +84,97 @@ export async function* streamHeistGeneration(
     return output;
   };
   yield { type: "phase", label: "Creating the heist" };
-  const initial = parse(yield* turn(prompt.userMessage));
+  const initial = parse(yield* turn(turns.generate, prompt.userMessage));
   const before = findings(initial);
   let output = initial;
+  let audit: HeistSemanticAudit | undefined;
   let reviewed: PublicGeneratorOutput | undefined;
+  let reviewError: string | undefined;
   let after = before;
   let reviewStatus: HeistGenerationResult["reviewStatus"] = "failed";
   try {
-    yield { type: "phase", label: "Checking the heist" };
-    const repaired = parse(
-      yield* turn(buildHeistRepairPrompt(before, prompt.resolved)),
+    yield { type: "phase", label: "Auditing the heist" };
+    audit = parseHeistAuditResponse(
+      yield* turn(
+        turns.review,
+        buildHeistAuditPrompt(
+          initial,
+          before,
+          prompt.resolved,
+          prompt.reviewContext,
+        ),
+        false,
+      ),
     );
-    reviewed = repaired;
-    after = findings(repaired);
-    const structuralCount = (list: HeistFinding[]) =>
-      list.filter((f) => f.severity === "structural").length;
-    // Semantic improvements need not change deterministic counts. Keep the
-    // original if review increases structural damage or violates caller policy.
-    if (
-      structuralCount(after) <= structuralCount(before) &&
-      (options.acceptOutput?.(repaired) ?? true)
-    ) {
-      output = repaired;
-      reviewStatus = "accepted";
+    const clean =
+      audit.verdict === "clean" &&
+      audit.issues.length === 0 &&
+      !needsRepair(before);
+    if (clean) {
+      reviewStatus = "clean";
     } else {
-      reviewStatus = "rejected";
+      yield { type: "phase", label: "Repairing the heist" };
+      const repaired = parse(
+        yield* turn(
+          turns.review,
+          buildHeistRepairPrompt(audit, before, prompt.resolved),
+        ),
+      );
+      reviewed = repaired;
+      after = findings(repaired);
+      const structuralCount = (list: HeistFinding[]) =>
+        list.filter((f) => f.severity === "structural").length;
+      // Semantic improvements need not change deterministic counts. Keep the
+      // original if review increases structural damage or violates caller policy.
+      if (
+        structuralCount(after) <= structuralCount(before) &&
+        (options.acceptOutput?.(repaired) ?? true)
+      ) {
+        output = repaired;
+        reviewStatus = "accepted";
+      } else {
+        reviewStatus = "rejected";
+      }
     }
-  } catch {
+  } catch (error) {
     checkCancellation();
+    reviewError = error instanceof Error ? error.message : String(error);
     // A failed optional repair must not discard a usable first draft.
   }
   checkCancellation();
   if (options.acceptOutput && !options.acceptOutput(output)) {
     throw new Error("The heist does not satisfy the campaign's constraints.");
   }
-  return { output, initial, reviewed, before, after, reviewStatus };
+  return {
+    output,
+    initial,
+    audit,
+    reviewed,
+    reviewError,
+    before,
+    after,
+    reviewStatus,
+  };
 }
 
-/** Buffered adapter over the same two-pass implementation used by streaming. */
+/** Buffered adapter over the same conditional three-pass streaming flow. */
 export async function runHeistGeneration(
   prompt: HeistPrompt,
-  send: (message: string) => Promise<string>,
+  turns: {
+    generate: (message: string) => Promise<string>;
+    review: (message: string) => Promise<string>;
+  },
   options: HeistGenerationOptions = {},
 ): Promise<HeistGenerationResult> {
   const stream = streamHeistGeneration(
     prompt,
-    async function* (message) {
-      yield { type: "complete", text: await send(message) };
+    {
+      generate: async function* (message) {
+        yield { type: "complete", text: await turns.generate(message) };
+      },
+      review: async function* (message) {
+        yield { type: "complete", text: await turns.review(message) };
+      },
     },
     options,
   );

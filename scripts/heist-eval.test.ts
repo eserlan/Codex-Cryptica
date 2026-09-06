@@ -9,8 +9,32 @@ import {
 import { generateHeistLocal } from "../packages/generator-engine/src/public-heist";
 import { heistStateCases } from "./fixtures/heist-state-cases";
 
+const audit = (verdict: "clean" | "repair" = "repair") => ({
+  verdict,
+  fullScore: "Escape with the objective.",
+  transitions: [
+    {
+      event: "The objective moves",
+      stateBefore: "Objective secured",
+      stateAfter: "Objective with crew",
+      factsChanged: ["objective.location: secured -> with crew"],
+    },
+  ],
+  issues:
+    verdict === "repair"
+      ? [
+          {
+            id: "state-1",
+            sections: ["The Getaway"],
+            problem: "A later fact is stale.",
+            requiredFact: "The objective is with the crew.",
+          },
+        ]
+      : [],
+});
+
 describe("heist evaluation pipeline", () => {
-  it("evaluates the reviewed output and sends the original as chat history", async () => {
+  it("evaluates repaired output after an independent audit", async () => {
     const initial = generateHeistLocal({ heistType: "Rescue" }, () => 0.9);
     const final = {
       ...initial,
@@ -25,6 +49,9 @@ describe("heist evaluation pipeline", () => {
       .mockResolvedValueOnce(
         Response.json({ content: JSON.stringify(initial) }),
       )
+      .mockResolvedValueOnce(
+        Response.json({ content: JSON.stringify(audit()) }),
+      )
       .mockResolvedValueOnce(Response.json({ content: JSON.stringify(final) }));
     const output = await generateViaProxy(
       "http://localhost:8787",
@@ -32,20 +59,24 @@ describe("heist evaluation pipeline", () => {
       "Classic Fantasy",
       fetcher,
     );
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3);
     const sent = JSON.parse(fetcher.mock.calls[1][1].body);
-    expect(sent.messages[2]).toEqual({
-      role: "assistant",
-      content: JSON.stringify(initial),
-    });
-    expect(sent.messages[3].content).toContain(
-      "silently reconstruct its sequence of states",
+    expect(sent.messages).toHaveLength(2);
+    expect(sent.messages[1].content).toContain(JSON.stringify(initial.title));
+    expect(sent.messages[1].content).toContain(
+      "At every transition, update the current facts",
     );
+    const repair = JSON.parse(fetcher.mock.calls[2][1].body);
+    expect(repair.messages[2]).toEqual({
+      role: "assistant",
+      content: JSON.stringify(audit()),
+    });
+    expect(repair.messages[3].content).toContain("state-1");
     expect(output.content).toContain("Reviewed success condition");
     expect(output.review?.status).toBe("accepted");
   });
 
-  it("reports a failed review while retaining the original", async () => {
+  it("reports a failed audit while retaining the original", async () => {
     const initial = generateHeistLocal({ heistType: "Theft" }, () => 0.5);
     const fetcher = vi
       .fn()
@@ -63,14 +94,14 @@ describe("heist evaluation pipeline", () => {
     expect(output.content).toContain("### The Score");
   });
 
-  it("replays each synthetic case in one review call and preserves its human rubric", async () => {
+  it("audits each synthetic case once and preserves its human rubric", async () => {
     const fixtures = heistStateCases();
-    expect(fixtures).toHaveLength(5);
+    expect(fixtures).toHaveLength(6);
     for (const fixture of fixtures) {
       const fetcher = vi
         .fn()
         .mockResolvedValueOnce(
-          Response.json({ content: JSON.stringify(fixture.draft) }),
+          Response.json({ content: JSON.stringify(audit("clean")) }),
         );
       const output = await generateViaProxy(
         "http://localhost:8787",
@@ -82,6 +113,7 @@ describe("heist evaluation pipeline", () => {
       expect(fetcher).toHaveBeenCalledTimes(1);
       expect(output.review?.criteria).toEqual(fixture.criteria);
       expect(output.review?.original.lore).toBe(fixture.draft.lore);
+      expect(output.review?.status).toBe("clean");
     }
   });
 });

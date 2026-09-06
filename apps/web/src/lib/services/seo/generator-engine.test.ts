@@ -610,6 +610,31 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateHeist", () => {
+    const auditJson = (verdict: "clean" | "repair" = "repair") =>
+      JSON.stringify({
+        verdict,
+        fullScore: "Escape with the objective.",
+        transitions: [
+          {
+            event: "The objective moves",
+            stateBefore: "Objective secured",
+            stateAfter: "Objective with crew",
+            factsChanged: ["objective.location: secured -> with crew"],
+          },
+        ],
+        issues:
+          verdict === "repair"
+            ? [
+                {
+                  id: "state-1",
+                  sections: ["The Getaway"],
+                  problem: "A later fact is stale.",
+                  requiredFact: "The objective is with the crew.",
+                },
+              ]
+            : [],
+      });
+
     it("reviews a structurally valid heist and keeps semantic-only improvements", async () => {
       const clean = generateHeistLocal({ heistType: "Theft" });
       const json = JSON.stringify({
@@ -623,10 +648,13 @@ describe("DefaultGeneratorEngine", () => {
           yield { text: () => text };
         })(),
       });
-      const mockChat = {
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(json)),
+      };
+      const reviewChat = {
         sendMessageStream: vi
           .fn()
-          .mockResolvedValueOnce(stream(json))
+          .mockResolvedValueOnce(stream(auditJson()))
           .mockResolvedValueOnce(
             stream(
               JSON.stringify({
@@ -636,16 +664,25 @@ describe("DefaultGeneratorEngine", () => {
             ),
           ),
       };
-      mockClientManager.getModel.mockResolvedValue({
-        startChat: vi.fn().mockReturnValue(mockChat),
-      });
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
 
       const res = await engine.generateHeist({
         heistType: "Theft",
+        campaignContext: "The crew owes Magistrate Sorn a favour.",
         useAI: true,
       });
 
-      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      expect(generationChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(reviewChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      expect(reviewChat.sendMessageStream.mock.calls[0][0]).toContain(
+        "The crew owes Magistrate Sorn a favour.",
+      );
       expect(res.title).toBe("The Reviewed Heist");
       expect(res.lore).toContain("### Alarm Track");
     });
@@ -671,28 +708,36 @@ describe("DefaultGeneratorEngine", () => {
           yield { text: () => text };
         })(),
       });
-      const mockChat = {
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(brokenJson)),
+      };
+      const reviewChat = {
         sendMessageStream: vi
           .fn()
-          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(auditJson("clean")))
           .mockResolvedValueOnce(stream(fixedJson)),
       };
-      mockClientManager.getModel.mockResolvedValue({
-        startChat: vi.fn().mockReturnValue(mockChat),
-      });
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
 
       const res = await engine.generateHeist({
         heistType: "Theft",
         useAI: true,
       });
 
-      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(2);
-      // The repair turn must carry the detected problem and forbid a rewrite.
-      expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
+      expect(generationChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(reviewChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      // The audit receives deterministic findings; repair remains surgical.
+      expect(reviewChat.sendMessageStream.mock.calls[0][0]).toContain(
         'must be headed "The Prize"',
       );
-      expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
-        "Do not generate a new heist",
+      expect(reviewChat.sendMessageStream.mock.calls[1][0]).toContain(
+        "Do not generate a new scenario",
       );
       expect(res.content).toContain("### The Prize");
     });
@@ -718,15 +763,22 @@ describe("DefaultGeneratorEngine", () => {
           yield { text: () => text };
         })(),
       });
-      const mockChat = {
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(brokenJson)),
+      };
+      const reviewChat = {
         sendMessageStream: vi
           .fn()
-          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(auditJson("clean")))
           .mockResolvedValueOnce(stream(fixedButLongJson)),
       };
-      mockClientManager.getModel.mockResolvedValue({
-        startChat: vi.fn().mockReturnValue(mockChat),
-      });
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
 
       const res = await engine.generateHeist({
         heistType: "Theft",
@@ -757,15 +809,22 @@ describe("DefaultGeneratorEngine", () => {
           yield { text: () => text };
         })(),
       });
-      const mockChat = {
+      const generationChat = {
+        sendMessageStream: vi.fn().mockResolvedValueOnce(stream(brokenJson)),
+      };
+      const reviewChat = {
         sendMessageStream: vi
           .fn()
-          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(auditJson()))
           .mockResolvedValueOnce(stream(worseJson)),
       };
-      mockClientManager.getModel.mockResolvedValue({
-        startChat: vi.fn().mockReturnValue(mockChat),
-      });
+      mockClientManager.getModel
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(generationChat),
+        })
+        .mockResolvedValueOnce({
+          startChat: vi.fn().mockReturnValue(reviewChat),
+        });
 
       const res = await engine.generateHeist({
         heistType: "Theft",

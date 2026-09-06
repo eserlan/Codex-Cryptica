@@ -48,6 +48,9 @@ export function heistStateCases(): HeistStateCase[] {
     /- \*\*Objective\*\*:[^\n]*/,
     "- **Objective**: Get Nessa physically out of her cell.",
   );
+  const possession = make("Plant Evidence", "a forged payment ledger");
+  possession.draft.lore +=
+    "\n\n### Carrying detail\nAfter planting the ledger among the target's records, the crew must keep it hidden under a coat throughout the getaway; guards pursue whoever is carrying it.";
   return [
     {
       id: "dormant-tracker",
@@ -91,6 +94,15 @@ export function heistStateCases(): HeistStateCase[] {
       criteria: [
         "Quick Reference retains escape from the site with Nessa as the full success condition.",
         "Freeing her is an intermediate transition, not the completed rescue.",
+      ],
+    },
+    {
+      id: "post-transition-possession",
+      ...possession,
+      criteria: [
+        "The ledger's location changes from carried by the crew to planted among the target's records.",
+        "The getaway and pursuit no longer treat the crew as carrying the planted ledger.",
+        "Later sections preserve the post-plant possession state.",
       ],
     },
   ];

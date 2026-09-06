@@ -26,9 +26,10 @@
  *   3. `bun scripts/heist-eval.ts --mode ai`
  *
  * Note that AI mode spends real tokens against whichever key that file holds.
- * AI mode runs generation and review. Fixtures mode sends one review call per
- * synthetic case and exposes the original, selected output and human rubric.
- * Both modes spend provider tokens.
+ * AI mode runs generation, an independent audit and conditional repair.
+ * Fixtures mode starts from each synthetic case, audits it, conditionally
+ * repairs it, and exposes the original, audit, selected output and human
+ * rubric. Both modes spend provider tokens.
  *
  * Findings are printed grouped by kind, with a few examples each. A clean run
  * prints "no structural/advisory findings (semantic quality not measured)" — which is the point: this is a sweep, not
@@ -56,6 +57,8 @@ export interface HeistDraft {
   lore: string;
   review?: {
     status: string;
+    audit?: unknown;
+    error?: string;
     original: { content: string; lore: string };
     candidate?: { content: string; lore: string };
     beforeFindings: string[];
@@ -177,35 +180,44 @@ export async function generateViaProxy(
   const prompt =
     fixture?.prompt ??
     buildHeistPrompt({ heistType, genre, targetScale: "Major" });
-  const messages = [{ role: "system", content: prompt.systemInstruction }];
-  const result = await runHeistGeneration(prompt, async (message) => {
-    messages.push({ role: "user", content: message });
-    let content: string;
-    if (fixture && messages.length === 2) {
-      content = JSON.stringify(fixture.draft);
-    } else {
-      const response = await fetcher(proxy, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: "http://localhost:5173",
-        },
-        body: JSON.stringify({ operation: "freeform-generation", messages }),
-      });
-      const payload = (await response.json()) as {
-        content?: string;
-        error?: unknown;
-      };
-      if (!response.ok) throw new Error(JSON.stringify(payload).slice(0, 200));
-      content = payload.content ?? "";
-    }
-    messages.push({ role: "assistant", content });
-    return content;
+  const conversation = (useFixture = false) => {
+    const messages = [{ role: "system", content: prompt.systemInstruction }];
+    return async (message: string) => {
+      messages.push({ role: "user", content: message });
+      let content: string;
+      if (useFixture && fixture && messages.length === 2) {
+        content = JSON.stringify(fixture.draft);
+      } else {
+        const response = await fetcher(proxy, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: "http://localhost:5173",
+          },
+          body: JSON.stringify({ operation: "freeform-generation", messages }),
+        });
+        const payload = (await response.json()) as {
+          content?: string;
+          error?: unknown;
+        };
+        if (!response.ok)
+          throw new Error(JSON.stringify(payload).slice(0, 200));
+        content = payload.content ?? "";
+      }
+      messages.push({ role: "assistant", content });
+      return content;
+    };
+  };
+  const result = await runHeistGeneration(prompt, {
+    generate: conversation(true),
+    review: conversation(),
   });
   return {
     ...renderDraft(heistType, genre, result.output.content, result.output.lore),
     review: {
       status: result.reviewStatus,
+      audit: result.audit,
+      error: result.reviewError,
       original: { content: result.initial.content, lore: result.initial.lore },
       candidate: result.reviewed
         ? { content: result.reviewed.content, lore: result.reviewed.lore }
@@ -276,6 +288,8 @@ async function main() {
   }
 
   const reviews = drafts.filter((draft) => draft.review);
+  const unsuccessfulReview = (draft: HeistDraft) =>
+    draft.review?.status !== "accepted" && draft.review?.status !== "clean";
   if (args.includes("--json")) {
     console.log(
       JSON.stringify(
@@ -289,11 +303,7 @@ async function main() {
         2,
       ),
     );
-    if (
-      errors.length ||
-      grouped.size ||
-      reviews.some((draft) => draft.review?.status !== "accepted")
-    )
+    if (errors.length || grouped.size || reviews.some(unsuccessfulReview))
       process.exitCode = 1;
     return;
   }
@@ -304,8 +314,7 @@ async function main() {
       return acc;
     }, {});
     console.log("review outcomes:", JSON.stringify(counts));
-    if (reviews.some((draft) => draft.review?.status !== "accepted"))
-      process.exitCode = 1;
+    if (reviews.some(unsuccessfulReview)) process.exitCode = 1;
     console.log(
       "Semantic quality is not scored automatically. Use --json to inspect original/reviewed documents and fixture criteria.",
     );
