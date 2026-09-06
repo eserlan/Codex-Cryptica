@@ -961,8 +961,11 @@ export function buildHeistRepairPrompt(
   findings: readonly { message: string }[],
   resolved: ResolvedHeist,
 ): string {
+  // Built without a leading/trailing newline of its own, so the template
+  // below controls all line breaks and the prompt is stable either way
+  // rather than depending on `detected` carrying its own whitespace.
   const detected = findings.length
-    ? `\nAutomated checks already found these specific problems — fix every one; if one asks you to cut length, cutting IS the minimal edit:\n${findings.map((f, i) => `${i + 1}. ${f.message}`).join("\n")}\n`
+    ? `Automated checks already found these specific problems — fix every one; if one asks you to cut length, cutting IS the minimal edit:\n${findings.map((f, i) => `${i + 1}. ${f.message}`).join("\n")}\n\n`
     : "";
 
   return `You are the verification and repair pass for a generated tabletop RPG heist.
@@ -970,8 +973,8 @@ export function buildHeistRepairPrompt(
 Do not generate a new heist. Preserve the scenario and make only the smallest edits needed to fix problems. Prefer changing one sentence over rewriting a section. Do not add substantial new content unless required to resolve a contradiction, and do not increase the overall length unless necessary.
 
 This is a ${resolved.heistType} job in a ${resolved.genre} setting: the objective section is "${resolved.objectiveHeading}", the point of no return is "${resolved.momentHeading}", and the crew's starting position is: ${resolved.objectiveStartsWith}
-${detected}
-Check for:
+
+${detected}Check for:
 - contradictions between sections
 - objectives in "The Score" that are not supported later
 - incorrect terminology for the selected heist type

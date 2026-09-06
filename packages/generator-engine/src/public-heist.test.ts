@@ -589,17 +589,28 @@ describe("buildHeistPrompt", () => {
     );
   });
 
-  it("requires objective approaches and coherent effects in the generation prompt itself", () => {
-    // These land in pass 1 (buildHeistPrompt), not the compact repair
-    // checklist — the model should get them right the first time rather than
-    // relying on a second pass to catch them.
+  it("puts the detailed rubric in pass 1, not the compact repair checklist", () => {
+    // These checks belong to buildHeistPrompt: the model should get them
+    // right on the first pass rather than relying on a second one to catch
+    // them, and the repair prompt is deliberately compact rather than
+    // carrying the same lettered detail (see buildHeistRepairPrompt's design
+    // note). "how many advances fill it" is already asserted for pass 1 in
+    // the test above; the negative half is what is new here.
     const { userMessage } = buildHeistPrompt(
       { heistType: "Assassination", genre: "Classic Fantasy" },
       "",
       seededRng(1),
     );
     expect(userMessage).toContain("reads as an arbitrary game mechanic");
-    expect(userMessage).toContain("how many advances fill it");
+
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Assassination", genre: "Classic Fantasy" },
+      "",
+      seededRng(1),
+    );
+    const repairPrompt = buildHeistRepairPrompt([], resolved);
+    expect(repairPrompt).not.toContain("reads as an arbitrary game mechanic");
+    expect(repairPrompt).not.toContain("how many advances fill it");
   });
 
   it("keeps the point of no return distinct from the alarm track", () => {
