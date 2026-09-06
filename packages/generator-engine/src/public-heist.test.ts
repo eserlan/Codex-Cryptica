@@ -649,6 +649,71 @@ describe("parseHeistResponse", () => {
     expect(out.labels).toContain(resolved.genre);
   });
 
+  it("backfills a required section the model skipped", () => {
+    // Observed in a real sample: one generation in ten ended cleanly after
+    // "The Getaway" and never wrote "Flashback Opportunities".
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const lore =
+      "### GM Quick Reference\n- **Objective**: x\n\n### The Getaway\nGone.";
+    const out = parseHeistResponse(
+      JSON.stringify({ title: "T", content: "### The Score\nGo.", lore }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore).toContain("### Flashback Opportunities");
+    expect(out.lore).toContain("### Alarm Track");
+    expect(out.lore).toContain("**0 — Quiet**");
+    // What the model did write is untouched.
+    expect(out.lore).toContain("### The Getaway");
+    expect(out.lore).toContain("Gone.");
+  });
+
+  it("leaves sections alone when the model wrote them all", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const lore =
+      "### Alarm Track\n- **0 — Quiet**: calm\n\n### Flashback Opportunities\n- a bribed guard";
+    const out = parseHeistResponse(
+      JSON.stringify({ title: "T", content: "c", lore }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore).toBe(lore);
+  });
+
+  it("does not invent sections it cannot rebuild coherently", () => {
+    // A Security Rings block naming a different building would be worse than
+    // its absence, so only the generic pools are backfilled.
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const out = parseHeistResponse(
+      JSON.stringify({
+        title: "T",
+        content: "c",
+        lore: "### The Getaway\nGone.",
+      }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore).not.toContain("### Security Rings");
+    expect(out.lore).not.toContain("### The Hidden Factor");
+  });
+
+  it("states a concrete overall word budget", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("must come in under 900 words");
+  });
+
   it("throws on unusable JSON so the engine can fall back locally", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     expect(() => parseHeistResponse("not json at all", resolved)).toThrow();

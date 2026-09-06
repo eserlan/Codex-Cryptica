@@ -830,7 +830,7 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["heist", "heist-generator"]
 }
 Every heading above appears exactly ONCE in the whole result. "content" and "lore" must share no heading between them, neither may repeat one of its own, and you must never emit a heading with nothing written under it. Do not restate a section you have already written.
-Density matters as much as content. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
+Density matters as much as content. The entire result — "content" and "lore" together — must come in under 900 words; a GM has to be able to scan it at the table. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
 ${systemNote}
 Do NOT merely rename theft concepts for the other heist types. The selected heist type determines the scenario's logic: what the crew begins with, what they must reach, what action completes the objective, and what triggers the escape phase. Take the starting position above literally — if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write, and the security exists to keep them away from where it must go; if the objective is a person, a system, or a record, the job is not a removal unless the starting position says it is. The selected heist type must materially shape the scenario, not just the wording of "The Score". "${resolved.objectiveHeading}" carries the actionable detail for a ${resolved.heistType} job, and the casing intel, security rings, complications and getaway must all engage with that objective rather than treating it as a container to be lifted. If "The Score" names a second objective as well — an object to take AND a person to kill, say — that objective gets its own section immediately after "${resolved.objectiveHeading}", written to the same depth, with its own location, window, protection and two or three ways to reach it.
 The "Pressure" must advance on its own during the job, not only when the crew fails. If the catch creates risk only on a bad outcome, pair it with something that moves regardless — a shift change, an inspection, a ritual, a tide — and say what happens when it runs out.
@@ -850,9 +850,52 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+/**
+ * Sections safe to reconstruct when the model omits one: both are written
+ * from generic pools in the local fallback, so a backfilled copy cannot
+ * contradict the fiction the model invented. The rest are deliberately not
+ * backfilled — a Security Rings block naming a different building would be
+ * worse than its absence.
+ */
+const BACKFILLABLE = ["Alarm Track", "Flashback Opportunities"] as const;
+
+function loreHeadings(lore: string): string[] {
+  return [...lore.matchAll(/^#{2,4}\s+(.+?)\s*$/gm)].map((m) => m[1].trim());
+}
+
+/**
+ * Restore a required section the model skipped. Observed in a real sample:
+ * one generation in ten ended cleanly after "The Getaway" and simply never
+ * wrote "Flashback Opportunities". The prompt asks for every section, but
+ * asking is not a guarantee — so the sections that can be rebuilt safely are
+ * rebuilt here rather than silently missing from the reader's document.
+ */
+function backfillMissingSections(
+  lore: string,
+  resolved: ResolvedHeist,
+  rng: Rng,
+): string {
+  const present = new Set(loreHeadings(lore));
+  const additions: string[] = [];
+  for (const heading of BACKFILLABLE) {
+    if (present.has(heading)) continue;
+    const local = generateHeistLocal(
+      { genre: resolved.genre, heistType: resolved.heistType },
+      rng,
+    ).lore;
+    const block = local
+      .split(`### ${heading}`)[1]
+      ?.split(/\n### /)[0]
+      ?.trim();
+    if (block) additions.push(`### ${heading}\n${block}`);
+  }
+  return additions.length ? [lore, ...additions].join("\n\n") : lore;
+}
+
 export function parseHeistResponse(
   text: string,
   resolved: ResolvedHeist,
+  rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
   const rawLabels = Array.isArray(data.labels) ? data.labels : [];
@@ -869,7 +912,7 @@ export function parseHeistResponse(
     title: data.title || resolved.title,
     summary: data.summary || "",
     content: data.content || "",
-    lore: data.lore || "",
+    lore: backfillMissingSections(data.lore || "", resolved, rng),
     labels,
     status: "active",
   };
