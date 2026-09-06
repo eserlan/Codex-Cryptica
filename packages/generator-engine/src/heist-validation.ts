@@ -24,6 +24,8 @@ export interface HeistDraftFields {
   heistType: string;
   content: string;
   lore: string;
+  /** Optional: enables the era-appropriate-titles check. */
+  genre?: string;
 }
 
 export interface HeistFinding {
@@ -80,6 +82,20 @@ const SYSTEM_MECHANICS =
 
 /** Wording that assumes the objective is an object being removed. */
 const REMOVAL_WORDING = /\bthe prize\b|\bprize's\b|absence of/i;
+
+/**
+ * Corporate and industrial job titles, which read as anachronisms in a
+ * pre-industrial setting — a Classic Fantasy vault does not employ a "Chief
+ * Operator". Only checked for the genres where they cannot be right; the same
+ * words are perfectly correct in Cyberpunk, Sci-Fi or Lancer.
+ */
+const MODERN_TITLES =
+  /\b(Chief Operator|Operator|Manager|Director|Supervisor|Technician|Coordinator|Executive|Administrator)\b/;
+const PRE_INDUSTRIAL_GENRES = new Set([
+  "Classic Fantasy",
+  "Pirate",
+  "Vampire / Gothic Noir",
+]);
 
 export { HEIST_WORD_BUDGET };
 
@@ -255,6 +271,16 @@ export function validateHeist(draft: HeistDraftFields): HeistFinding[] {
       } else {
         seen.set(key, section.heading);
       }
+    }
+  }
+
+  if (draft.genre && PRE_INDUSTRIAL_GENRES.has(draft.genre)) {
+    const match = whole.match(MODERN_TITLES);
+    if (match) {
+      add(
+        "anachronistic-title",
+        `"${match[0]}" is a modern job title and does not belong in a ${draft.genre} setting. Use a rank or office that suits the era.`,
+      );
     }
   }
 

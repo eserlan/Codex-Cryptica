@@ -673,6 +673,7 @@ export class DefaultGeneratorEngine {
 
         const findings = validateHeist({
           heistType: resolved.heistType,
+          genre: resolved.genre,
           content: draft.content ?? "",
           lore: draft.lore ?? "",
         });
@@ -692,6 +693,7 @@ export class DefaultGeneratorEngine {
           if (!repaired.content?.trim() || !repaired.lore?.trim()) return draft;
           const after = validateHeist({
             heistType: resolved.heistType,
+            genre: resolved.genre,
             content: repaired.content,
             lore: repaired.lore,
           });

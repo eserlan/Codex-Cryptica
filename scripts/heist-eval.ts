@@ -119,6 +119,7 @@ export function splitSections(markdown: string): MarkdownSection[] {
 export function gradeHeist(draft: HeistDraft): Finding[] {
   return validateHeist({
     heistType: draft.heistType,
+    genre: draft.genre,
     content: draft.content,
     lore: draft.lore,
   }).map((f) => ({
