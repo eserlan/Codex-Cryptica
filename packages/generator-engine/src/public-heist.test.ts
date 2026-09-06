@@ -50,7 +50,7 @@ describe("generateHeistLocal", () => {
   });
 
   it("gives each security ring more than one way through it", () => {
-    const out = generateHeistLocal({}, seededRng(4));
+    const out = generateHeistLocal({ heistType: "Theft" }, seededRng(4));
     for (const ring of ["Perimeter", "Access", "Inner Vault"]) {
       const line = out.lore
         .split("\n")
@@ -315,7 +315,7 @@ describe("generateHeistLocal", () => {
       ["Plant Evidence", "### When the Evidence Is Planted"],
       ["Assassination", "### When the Target Is Killed"],
       ["Rescue", "### When the Captive Is Freed"],
-      ["Extraction", "### When the Subject Walks"],
+      ["Extraction", "### When the Subject Leaves Custody"],
       ["Sabotage", "### When the Sabotage Is Committed"],
       ["Information", "### When the Record Is Read"],
     ];
@@ -325,6 +325,30 @@ describe("generateHeistLocal", () => {
       // A plant job has no "prize taken" moment at all.
       if (heistType !== "Theft") {
         expect(out.lore).not.toContain("### When the Prize Is Taken");
+      }
+    }
+  });
+
+  it("labels the innermost security ring for what it actually guards, not always a vault", () => {
+    // "Inner Vault" fits a treasury, not a person: a real sample ("The
+    // Ledgered Prisoner") had an Extraction job's inner ring still labelled
+    // Inner Vault even though the ring was guarding a captive employee.
+    const expected: Array<[string, string]> = [
+      ["Theft", "Inner Vault"],
+      ["Plant Evidence", "Inner Vault"],
+      ["Assassination", "Inner Sanctum"],
+      ["Rescue", "Custody Floor"],
+      ["Extraction", "Custody Floor"],
+      ["Sabotage", "Inner Works"],
+      ["Information", "Inner Archive"],
+    ];
+    for (const [heistType, label] of expected) {
+      const out = generateHeistLocal({ heistType }, seededRng(4));
+      expect(out.lore, `${heistType} should use ${label}`).toContain(
+        `- **${label}**`,
+      );
+      if (label !== "Inner Vault") {
+        expect(out.lore).not.toContain("- **Inner Vault**");
       }
     }
   });
@@ -669,7 +693,7 @@ describe("buildHeistRepairPrompt", () => {
     expect(prompt).not.toMatch(/\n9[a-f]\./);
     // The prior numbered-checklist version ran past 3800 characters even with
     // no findings attached; the compact version should read as a short brief.
-    expect(prompt.length).toBeLessThan(3000);
+    expect(prompt.length).toBeLessThan(3200);
   });
 
   it("carries the compact checklist regardless of whether findings were auto-detected", () => {
@@ -695,6 +719,29 @@ describe("buildHeistRepairPrompt", () => {
     );
     expect(prompt).toContain(
       "The scenario remains playable at every alarm level.",
+    );
+  });
+
+  it("checks for objective/point-of-no-return/detection conflation and dangling setup (real sample)", () => {
+    // Added from a live sample ("The Ledgered Prisoner") where the compact
+    // prompt let both through: the GM Quick Reference summarised leaving the
+    // counting floor — an intermediate transition — as the mission's
+    // completion rather than the escape trigger it actually was, and a
+    // "collapsible moonbridge" introduced in The Score never affected a
+    // single obstacle.
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain(
+      "Clearly distinguish the primary objective, the point of no return, detection, and successful escape.",
+    );
+    expect(prompt).toContain(
+      "Do not summarise an intermediate transition (leaving a room, triggering an alarm) as completion of the mission.",
+    );
+    expect(prompt).toContain(
+      'Every unusual tool, constraint, capability, NPC, or special fact introduced prominently in "The Score" or the objective section affects play later.',
+    );
+    expect(prompt).toContain(
+      "If it never matters, integrate it into an obstacle or approach, or remove it.",
     );
   });
 

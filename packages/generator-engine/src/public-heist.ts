@@ -231,6 +231,7 @@ export const heistConfig = {
     Theft: {
       heading: "The Prize",
       momentHeading: "When the Prize Is Taken",
+      innerRingLabel: "Inner Vault",
       fields:
         "what it is, who wants it and why, why it matters beyond its price, where it is normally kept, and — separately from reaching it — two or three genuinely different ways to get it out of its place",
       startsWith:
@@ -259,6 +260,7 @@ export const heistConfig = {
     "Plant Evidence": {
       heading: "The Package",
       momentHeading: "When the Evidence Is Planted",
+      innerRingLabel: "Inner Vault",
       fields:
         "what it is and whom it will incriminate, where inside the target it must end up for anyone to believe it, what would give it away as planted, who will find it and when, and — separately from reaching the spot — two or three genuinely different ways to make the placement convincing",
       startsWith:
@@ -291,6 +293,7 @@ export const heistConfig = {
     Assassination: {
       heading: "The Target",
       momentHeading: "When the Target Is Killed",
+      innerRingLabel: "Inner Sanctum",
       fields:
         "who they are, where they will be tonight, a concrete window in which they are alone or unguarded, what protects them the rest of the time, what changes the moment they die and how long it takes anyone to notice, and — separately from any question of getting to them — two or three genuinely different opportunities or methods for the kill itself",
       startsWith:
@@ -323,6 +326,7 @@ export const heistConfig = {
     Rescue: {
       heading: "The Captive",
       momentHeading: "When the Captive Is Freed",
+      innerRingLabel: "Custody Floor",
       fields:
         "who they are, the conditions they are held in, what state they are in and what they can or cannot do for themselves, who guards them and on what routine, what happens when they are found missing, and — separately from reaching the cell — two or three genuinely different ways to actually get them out",
       startsWith:
@@ -352,7 +356,8 @@ export const heistConfig = {
     },
     Extraction: {
       heading: "The Subject",
-      momentHeading: "When the Subject Walks",
+      momentHeading: "When the Subject Leaves Custody",
+      innerRingLabel: "Custody Floor",
       fields:
         "who they are, why they cannot simply walk out, what they will and will not agree to, who is watching them, what happens when they are missed, and — separately from reaching them — two or three genuinely different ways to get them out past the routine that tracks them",
       startsWith:
@@ -384,6 +389,7 @@ export const heistConfig = {
     Sabotage: {
       heading: "The System",
       momentHeading: "When the Sabotage Is Committed",
+      innerRingLabel: "Inner Works",
       fields:
         "what the system does, which single part actually matters, what protects that part, what visibly happens when it fails and how long the failure lasts, and — separately from reaching it — two or three genuinely different ways to break it",
       startsWith:
@@ -416,6 +422,7 @@ export const heistConfig = {
     Information: {
       heading: "The Record",
       momentHeading: "When the Record Is Read",
+      innerRingLabel: "Inner Archive",
       fields:
         "what it records and whom it damages, what form it takes and whether it can be copied rather than removed, where it is kept and who is permitted to read it, what happens when it is found missing or found altered, and — separately from reaching it — two or three genuinely different ways to read, copy or remove it",
       startsWith:
@@ -448,6 +455,13 @@ export const heistConfig = {
     {
       heading: string;
       momentHeading: string;
+      /**
+       * The Security Rings' innermost layer's label. "Inner Vault" fits a
+       * theft, a record, or a sabotage target; it does not fit a person being
+       * moved through custody, which is the security rings' actual subject
+       * for Extraction and Rescue jobs.
+       */
+      innerRingLabel: string;
       fields: string;
       startsWith: string;
       protects: string;
@@ -639,6 +653,8 @@ export interface ResolvedHeist {
   objectiveFields: string;
   /** The point-of-no-return section's heading for this heist type. */
   momentHeading: string;
+  /** The label for Security Rings' innermost layer, e.g. "Custody Floor". */
+  innerRingLabel: string;
   /** Who holds the core object when the job begins, and what the crew carries. */
   objectiveStartsWith: string;
   /** What the three security rings actually protect for this heist type. */
@@ -687,6 +703,7 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
   const objective = heistConfig.objectives[heistType] ?? {
     heading: "The Objective",
     momentHeading: "When the Objective Is Met",
+    innerRingLabel: "Inner Vault",
     fields:
       "what it is, where it is, what protects it, what changes once the crew has it, and two or three genuinely different ways to reach it",
     startsWith:
@@ -730,6 +747,7 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
     objectiveHeading: objective.heading,
     objectiveFields: objective.fields,
     momentHeading: objective.momentHeading,
+    innerRingLabel: objective.innerRingLabel,
     objectiveStartsWith: objective.startsWith,
     objectiveProtects: objective.protects,
     objectiveCasing: objective.casing,
@@ -817,7 +835,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative name for this score (3-6 words)",
   "content": "Player-facing material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### The Score' (ONE sentence naming the prize, the place, and the deadline — e.g. \\"Steal the Glass Testament from beneath the Cathedral of Saint Orla before its contents are read aloud at dawn\\" — plus at most one more sentence of context), '### ${resolved.objectiveHeading}' (at most four sentences covering ${resolved.objectiveFields}, then two bullets: '- **The catch**: ' restating the practical complication given in the options as a concrete physical problem, and '- **Pressure**: ' stating what that costs and the exact trigger that makes it cost. Use something the GM can see fire during one infiltration: an obstacle cleared, an alarm tick, a handover, or a short in-scene interval of minutes. Never a long wall-clock cadence such as once an hour, once a day, or once a week, and never a vague \\"over time\\"), '### Casing the Target' (exactly three '- **Label**: detail' bullets, one sentence each, covering ${resolved.objectiveCasing}).",
-  "lore": "GM-only material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### GM Quick Reference' (seven one-line bullets and nothing else — '- **Objective**:', '- **Primary obstacle**:', '- **Hidden factor**:', '- **Point of no return**:', '- **Pressure**:', '- **Default complication**:', '- **Escape problem**:' — each a single short sentence summarising what the section below says, so a GM understands the whole heist in under thirty seconds. Summarise; never copy a sentence verbatim from the section it stands for), '### The Hidden Factor' (at most two sentences: one thing the crew's intel gets wrong, and when it becomes obvious at the table. It must complicate the plan, never invalidate every approach at once), '### Security Rings' (three bullets, '- **Perimeter**: ', '- **Access**: ', '- **Inner Vault**: ', TWO TO FOUR SENTENCES EACH. These rings protect ${resolved.objectiveProtects} — describe what protects each layer, then two or three genuinely different ways past it. Draw those from stealth, deception, social leverage, stolen credentials, magic or technology, physical infiltration, bribery, prior preparation, exploiting a schedule, or environmental access — not three variations on fighting, and never one intended solution), '### Alarm Track' (exactly five bullets, '- **0 — Quiet**:' through '- **4 — Lethal Response**:', ONE OR TWO SENTENCES EACH, using the labels Quiet, Suspicion, Alert, Lockdown, Lethal Response. Each level must change what the opposition does, close or complicate some options, and still leave the crew a real choice. Level 4 is extremely dangerous but still interactive — no automatic death, and no state where every exit is simply impossible; if something seals the building, name the obvious but costly way to answer it), '### Complications' (exactly three '- **Label**: detail' bullets, one sentence each, one marked '(default)' after its label. They should threaten ${resolved.objectiveComplicationFocus}. Build them from people, factions, or facts already established elsewhere in this scenario wherever you can, rather than introducing new ones), '### ${resolved.momentHeading}' (at most two sentences: the single concrete event that fires the instant the crew completes ${resolved.objectiveCompletion}, and what it changes — alarm escalation, a route closing, a guardian waking, a curse starting, the crew being identified. This is the moment the job turns from infiltration into escape — it fires on ${resolved.objectiveEscapeCause}, and \\"The Getaway\\" must follow from it), '### The Getaway' (one sentence on why the planned route is gone, which must be the consequence named in \\"${resolved.momentHeading}\\", then two or three '- **Label**: detail' bullets, one sentence each, for genuinely different alternate routes — fast but exposed, covert but socially risky, environmentally dangerous, one that costs the crew their equipment, one that needs an NPC's help — then a final '**Pursuit**: ' line naming one threat that follows them out), '### Flashback Opportunities' (four to six '- ' bullets, one line each, naming preparations the players COULD establish. Each must attach to an obstacle actually described above, and none may do something the security rules established above say is impossible. Offer them; never state that the players used them).",
+  "lore": "GM-only material (markdown formatted) with EXACTLY these sections, in this order, and no others: '### GM Quick Reference' (seven one-line bullets and nothing else — '- **Objective**:', '- **Primary obstacle**:', '- **Hidden factor**:', '- **Point of no return**:', '- **Pressure**:', '- **Default complication**:', '- **Escape problem**:' — each a single short sentence summarising what the section below says, so a GM understands the whole heist in under thirty seconds. Summarise; never copy a sentence verbatim from the section it stands for), '### The Hidden Factor' (at most two sentences: one thing the crew's intel gets wrong, and when it becomes obvious at the table. It must complicate the plan, never invalidate every approach at once), '### Security Rings' (three bullets, '- **Perimeter**: ', '- **Access**: ', '- **${resolved.innerRingLabel}**: ', TWO TO FOUR SENTENCES EACH. These rings protect ${resolved.objectiveProtects} — describe what protects each layer, then two or three genuinely different ways past it. Draw those from stealth, deception, social leverage, stolen credentials, magic or technology, physical infiltration, bribery, prior preparation, exploiting a schedule, or environmental access — not three variations on fighting, and never one intended solution), '### Alarm Track' (exactly five bullets, '- **0 — Quiet**:' through '- **4 — Lethal Response**:', ONE OR TWO SENTENCES EACH, using the labels Quiet, Suspicion, Alert, Lockdown, Lethal Response. Each level must change what the opposition does, close or complicate some options, and still leave the crew a real choice. Level 4 is extremely dangerous but still interactive — no automatic death, and no state where every exit is simply impossible; if something seals the building, name the obvious but costly way to answer it), '### Complications' (exactly three '- **Label**: detail' bullets, one sentence each, one marked '(default)' after its label. They should threaten ${resolved.objectiveComplicationFocus}. Build them from people, factions, or facts already established elsewhere in this scenario wherever you can, rather than introducing new ones), '### ${resolved.momentHeading}' (at most two sentences: the single concrete event that fires the instant the crew completes ${resolved.objectiveCompletion}, and what it changes — alarm escalation, a route closing, a guardian waking, a curse starting, the crew being identified. This is the moment the job turns from infiltration into escape — it fires on ${resolved.objectiveEscapeCause}, and \\"The Getaway\\" must follow from it), '### The Getaway' (one sentence on why the planned route is gone, which must be the consequence named in \\"${resolved.momentHeading}\\", then two or three '- **Label**: detail' bullets, one sentence each, for genuinely different alternate routes — fast but exposed, covert but socially risky, environmentally dangerous, one that costs the crew their equipment, one that needs an NPC's help — then a final '**Pursuit**: ' line naming one threat that follows them out), '### Flashback Opportunities' (four to six '- ' bullets, one line each, naming preparations the players COULD establish. Each must attach to an obstacle actually described above, and none may do something the security rules established above say is impossible. Offer them; never state that the players used them).",
   "labels": ["heist", "heist-generator"]
 }
 Every heading above appears exactly ONCE in the whole result. "content" and "lore" must share no heading between them, neither may repeat one of its own, and you must never emit a heading with nothing written under it. Do not restate a section you have already written.
@@ -953,6 +971,16 @@ function backfillMissingSections(
  * see git history on this function for that fuller list — but it is not what
  * gets sent to the model.
  *
+ * Two items were added after that redesign (still #2768), from a live sample
+ * ("The Ledgered Prisoner") that the compact prompt let through: the GM Quick
+ * Reference summarised the objective's own intermediate step (leaving the
+ * counting floor) as if it were the mission's completion, rather than the
+ * transition into the escape phase that it actually is; and a "collapsible
+ * moonbridge" was introduced prominently in The Score and then never mattered
+ * to a single obstacle. Both are cheap, general checks — not new
+ * type-specific machinery — so they were added as two more lines rather than
+ * reopened into another numbered rubric.
+ *
  * @param findings deterministic problems already detected, possibly empty —
  *   an empty list still leaves the semantic checks worth running, but the
  *   caller decides whether that is worth a second model call.
@@ -1000,6 +1028,8 @@ Also verify:
 4. Completing the objective does not automatically trigger detection unless the scenario gives a clear reason.
 5. The scenario remains playable at every alarm level.
 6. The final result can be run as written without the GM having to resolve obvious inconsistencies.
+7. Clearly distinguish the primary objective, the point of no return, detection, and successful escape. Do not summarise an intermediate transition (leaving a room, triggering an alarm) as completion of the mission.
+8. Every unusual tool, constraint, capability, NPC, or special fact introduced prominently in "The Score" or the objective section affects play later. If it never matters, integrate it into an obstacle or approach, or remove it.
 
 Return the complete corrected heist as a valid JSON object in the exact same schema as before — "title", "content", "lore", "labels" — with every field present, not just the parts you changed. If nothing needs fixing, return what you wrote unchanged.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
@@ -1096,7 +1126,7 @@ ${fill(resolved.objectiveCopy.lead)}
 
   const lore = `### GM Quick Reference
 - **Objective**: ${resolved.heistType} — ${fill(resolved.objectiveCopy.score)}.
-- **Primary obstacle**: Three layers — patrols outside, a watched credential check, and the vault itself.
+- **Primary obstacle**: Three layers — patrols outside, a watched credential check, and the ${resolved.innerRingLabel.toLowerCase()}.
 - **Hidden factor**: One thing the crew was told about the routine is out of date.
 - **Point of no return**: ${resolved.objectiveCopy.moment} — ${trigger}.
 - **Pressure**: ${resolved.pressureSummary}
@@ -1109,7 +1139,7 @@ Whichever detail the crew leans on hardest in planning is the one that has chang
 ### Security Rings
 - **Perimeter**: Patrols, watchers, and sightlines around the ${site}. Past it by timing the gap between rounds, by arriving as someone the staff already expect, or by an approach the patrol route simply does not cover.
 - **Access**: The credential check onto the secured floor, staffed by someone who has done this a thousand times. Past it with a forged or borrowed credential, by being escorted through by staff who have a reason to vouch, or by making the check read as a maintenance fault rather than an intrusion.
-- **Inner Vault**: The last layer around ${resolved.objectiveProtects} — the part the target actually spent money on. Past it by defeating the mechanism, by getting someone with legitimate access to open it for their own reasons, or by taking the container and dealing with it elsewhere.
+- **${resolved.innerRingLabel}**: The last layer around ${resolved.objectiveProtects} — the part the target actually spent money on. Past it by defeating the mechanism, by getting someone with legitimate access to open it for their own reasons, or by taking the container and dealing with it elsewhere.
 
 ### Alarm Track
 - **0 — Quiet**: Routine holds. Patrols on schedule, staff bored, nobody looking for anyone.
