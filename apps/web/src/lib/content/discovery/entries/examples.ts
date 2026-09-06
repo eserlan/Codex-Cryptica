@@ -274,4 +274,28 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-breakwater-vault",
+    pageKind: "example",
+    canonicalPath: "/examples/the-breakwater-vault-space-western-heist",
+    primaryIntent: "space western heist example",
+    intentAliases: [
+      "rpg heist example",
+      "example of a generated heist",
+      "sample space western score",
+    ],
+    audience: "Space Western and sci-fi game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A complete, table-ready Space Western score demonstrating how security rings, an interactive alarm ladder, and a compromised getaway interact during play rather than reading as a static synopsis.",
+    parentCluster: "adventure-mapping",
+    relatedIntents: [
+      "generator-heist",
+      "example-cinder-wren",
+      "for-space-western",
+      "hub-space-western",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

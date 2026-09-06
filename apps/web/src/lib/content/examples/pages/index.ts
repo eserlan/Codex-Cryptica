@@ -11,6 +11,7 @@ import { theWitheredHand } from "./the-withered-hand-grimdark-faction";
 import { lettersOfMarqueExpired } from "./letters-of-marque-expired-pirate-adventure";
 import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 import { nkiruOkafor } from "./nkiru-okafor-cyberpunk-npc-table-card";
+import { theBreakwaterVault } from "./the-breakwater-vault-space-western-heist";
 
 /**
  * The published example library.
@@ -37,6 +38,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     lettersOfMarqueExpired,
     siloZeroSeven,
     nkiruOkafor,
+    theBreakwaterVault,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
