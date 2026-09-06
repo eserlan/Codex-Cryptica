@@ -20,7 +20,7 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing       |
 | [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                             |
 
-Total: 886 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 887 objects, ~162 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -38,6 +38,7 @@ Total: 886 objects, ~162 MB. The tables below cover everything **except** `publi
 | [`announcements/faction-generator-iron-syndicate-v1.png`](https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png)   | 553 KB  | image/png  | 2026-08-14 | Faction Generator bsky post (2026-08-15)                                                          |
 | [`announcements/faction-withered-hand.jpg`](https://assets.codexcryptica.com/announcements/faction-withered-hand.jpg)                               | 881 KB  | image/jpeg | 2026-09-02 | Dark Fantasy faction example (The Withered Hand) showcase / discussion #2666 image                |
 | [`announcements/generator-hub-desktop-v1.png`](https://assets.codexcryptica.com/announcements/generator-hub-desktop-v1.png)                         | 120 KB  | image/png  | 2026-08-01 | Generator hub discussion post                                                                     |
+| [`announcements/heist-the-breakwater-vault.jpg`](https://assets.codexcryptica.com/announcements/heist-the-breakwater-vault.jpg)                     | 325 KB  | image/jpeg | 2026-09-06 | Space Western heist example (`/examples/the-breakwater-vault-space-western-heist`) hero card      |
 | [`announcements/secret-society-form-v1.jpg`](https://assets.codexcryptica.com/announcements/secret-society-form-v1.jpg)                             | 147 KB  | image/jpeg | 2026-08-09 | Secret Society generator launch                                                                   |
 | [`announcements/secret-society-hero-v1.jpg`](https://assets.codexcryptica.com/announcements/secret-society-hero-v1.jpg)                             | 146 KB  | image/jpeg | 2026-08-09 | Secret Society generator launch                                                                   |
 | [`announcements/secret-society-hero-v2.png`](https://assets.codexcryptica.com/announcements/secret-society-hero-v2.png)                             | 1517 KB | image/png  | 2026-08-09 | Secret Society generator launch (alt hero)                                                        |

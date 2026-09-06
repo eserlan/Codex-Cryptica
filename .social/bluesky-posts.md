@@ -6,6 +6,21 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-09-06 — Heist Generator (ad hoc)
+
+- **Text:** I needed heists that didn't fall apart on the first bad roll.
+
+  So I built the Heist Generator in Codex Cryptica. It sets up concentric security rings, rising alarms, and an escape plan where taking the prize changes the rules.
+
+  codexcryptica.com/generators/heist
+
+  #TTRPG #Worldbuilding #heist
+
+- **Image:** `https://assets.codexcryptica.com/screenshots/generator-heist.jpg`
+- **Alt:** The Codex Cryptica Heist Generator showing a generated score titled The Morggar Job with security rings, alarm ladder, and GM quick reference
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3muuvoosgdc2i
+- **Note:** Ad hoc launch announcement for the Heist Generator.
+
 ### 2026-09-05 — Nkiru Okafor NPC Table Card example (ad hoc)
 
 - **Text:** Meet Nkiru Okafor, a ruthless street fixer who goes pale at blood. She needs a stolen biotech case through a checkpoint in twenty minutes.
