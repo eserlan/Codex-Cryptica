@@ -25,7 +25,6 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
-import { puzzleConfig } from "./public-puzzle";
 
 export const heistConfig = {
   heistTypes: [
@@ -520,12 +519,6 @@ export const heistConfig = {
     "A debt called in with a local fixer for a single, no-questions favour",
   ],
   /**
-   * Rules tailoring. Reuses the puzzle generator's vocabulary rather than
-   * coining a second list for the same concept — generation stays
-   * system-neutral unless a user explicitly asks otherwise.
-   */
-  systems: puzzleConfig.systems,
-  /**
    * What the prize's catch actually costs during play, keyed by the catch.
    * Each one names a trigger the GM can see fire — an obstacle cleared, an
    * alarm tick, a handover — rather than a wall-clock rate like "once per
@@ -616,16 +609,12 @@ export const heistConfig = {
 export const HEIST_WORD_TARGET = 900;
 export const HEIST_WORD_BUDGET = 1100;
 
-/** Generation stays system-neutral unless the user selects a system. */
-export const DEFAULT_HEIST_SYSTEM = "System-neutral";
-
 export interface HeistGeneratorOptions {
   genre?: string;
   heistType?: string;
   targetScale?: string;
   targetType?: string;
   prize?: string;
-  system?: string;
   campaignContext?: string;
 }
 
@@ -635,7 +624,6 @@ export interface ResolvedHeist {
   targetScale: string;
   targetType: string;
   prize?: string;
-  system: string;
   campaignContext?: string;
   title: string;
   prizeComplication: string;
@@ -729,9 +717,6 @@ function resolveHeist(options: HeistGeneratorOptions, rng: Rng): ResolvedHeist {
       options.targetScale?.trim() || pickFrom(heistConfig.targetScales, rng),
     targetType,
     prize: options.prize?.trim() || undefined,
-    system: heistConfig.systems.includes(options.system as never)
-      ? options.system!
-      : DEFAULT_HEIST_SYSTEM,
     campaignContext: options.campaignContext?.trim() || undefined,
     title: `The ${generateName(rng)} ${pickFrom(["Job", "Score", "Run", "Lift", "Take"], rng)}`,
     prizeComplication,
@@ -814,11 +799,6 @@ export function buildHeistPrompt(
 ): HeistPrompt {
   const resolved = resolveHeist(options, rng);
 
-  const systemNote =
-    resolved.system === DEFAULT_HEIST_SYSTEM
-      ? `No rules system has been selected, so keep every effect system-neutral: describe what happens in the fiction, never in one game's mechanics. Do not use rounds, turns, saving throws, DCs, checks, advantage/disadvantage, hit points, damage numbers, or any named condition from a specific system. Write "the tuning fork can briefly immobilise whoever it is aimed at", not "the tuning fork freezes the bearer for one round".`
-      : `The table is playing ${resolved.system}. Stay fiction-first, but where a mechanic genuinely helps the GM run a moment, you may name it in ${resolved.system} terms. Never make an obstacle solvable only through one specific mechanic.`;
-
   const userMessage = `Generate a table-ready RPG heist scenario in JSON format. This is a playable situation with interacting parts — an objective, intel, layered security, escalating consequences, and a compromised escape — not an adventure synopsis and not long-form prose. Every detail you write must either create a decision, reveal usable information, or change how the heist can play. Cut anything that only sets a mood.
 Options:
 - Genre: ${resolved.genre}
@@ -831,7 +811,6 @@ Options:
 - What starts the escape: ${resolved.objectiveEscapeCause}
 - Objective Complication (the objective MUST have this practical problem): ${resolved.prizeComplication}
 - Pressure (what that complication costs during play, and when it bites): ${resolved.pressure}
-- Rules system: ${resolved.system}
 ${resolved.prize ? `- Requested Prize / Objective: ${resolved.prize}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly:
@@ -843,7 +822,7 @@ You must return a valid JSON object matching the following structure exactly:
 }
 Every heading above appears exactly ONCE in the whole result. "content" and "lore" must share no heading between them, neither may repeat one of its own, and you must never emit a heading with nothing written under it. Do not restate a section you have already written.
 Density matters as much as content. The entire result — "content" and "lore" together — must come in under ${HEIST_WORD_TARGET} words; a GM has to be able to scan it at the table. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
-${systemNote}
+Keep every effect system-neutral: describe what happens in the fiction, never in one game's mechanics. Do not use rounds, turns, saving throws, DCs, checks, advantage/disadvantage, hit points, damage numbers, or any named condition from a specific system. Write "the tuning fork can briefly immobilise whoever it is aimed at", not "the tuning fork freezes the bearer for one round". This generator only produces the idea — a GM converts it to their system of choice at the table.
 Do NOT merely rename theft concepts for the other heist types. The selected heist type determines the scenario's logic: what the crew begins with, what they must reach, what action completes the objective, and what triggers the escape phase. Take the starting position above literally — if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write, and the security exists to keep them away from where it must go; if the objective is a person, a system, or a record, the job is not a removal unless the starting position says it is. The selected heist type must materially shape the scenario, not just the wording of "The Score". "${resolved.objectiveHeading}" carries the actionable detail for a ${resolved.heistType} job, and the casing intel, security rings, complications and getaway must all engage with that objective rather than treating it as a container to be lifted. If "The Score" names a second objective as well — an object to take AND a person to kill, say — that objective gets its own section immediately after "${resolved.objectiveHeading}", written to the same depth, with its own location, window, protection and two or three ways to reach it.
 Getting to the objective and accomplishing it are two different problems, and the scenario must solve both. The security rings answer "how do we reach it"; "${resolved.objectiveHeading}" must answer "and then what do we actually do", with more than one live option. A job whose only answer is a single prescribed action once the crew arrives has no objective for the players to solve.
 If the objective has a special vulnerability, weakness, or single point that matters, say in one clause WHY it works — a ward anchored there, an old injury the wards never sealed, a maker's flaw. An unexplained weak point reads as an arbitrary game mechanic rather than something true about the fiction, and the players cannot reason about it.

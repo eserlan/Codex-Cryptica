@@ -477,24 +477,13 @@ describe("buildHeistPrompt", () => {
     expect(userMessage).toContain("level 4 still leaves a costly option");
   });
 
-  it("demands system-neutral effects when no system is selected", () => {
-    const { userMessage, resolved } = buildHeistPrompt({}, "", seededRng(1));
-    expect(resolved.system).toBe("System-neutral");
-    expect(userMessage).toContain("keep every effect system-neutral");
+  it("always demands system-neutral effects — this generator has no system option", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("Keep every effect system-neutral");
     expect(userMessage).toContain(
       "Do not use rounds, turns, saving throws, DCs, checks, advantage/disadvantage, hit points, damage numbers",
     );
-  });
-
-  it("allows system mechanics once a supported system is selected", () => {
-    const { userMessage, resolved } = buildHeistPrompt(
-      { system: "D&D 5e" },
-      "",
-      seededRng(1),
-    );
-    expect(resolved.system).toBe("D&D 5e");
-    expect(userMessage).toContain("The table is playing D&D 5e");
-    expect(userMessage).not.toContain("keep every effect system-neutral");
+    expect(userMessage).toContain("a GM converts it to their system of choice");
   });
 
   it("allows only short in-scene pressure intervals, not wall-clock cadence", () => {
@@ -503,15 +492,6 @@ describe("buildHeistPrompt", () => {
     expect(userMessage).toContain(
       "Never a long wall-clock cadence such as once an hour, once a day, or once a week",
     );
-  });
-
-  it("ignores an unrecognised system rather than passing it through", () => {
-    const { resolved } = buildHeistPrompt(
-      { system: "Made Up Game" },
-      "",
-      seededRng(1),
-    );
-    expect(resolved.system).toBe("System-neutral");
   });
 
   it("names the pressure and its trigger in the options block", () => {
