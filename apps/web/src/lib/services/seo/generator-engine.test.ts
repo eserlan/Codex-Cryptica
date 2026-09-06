@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
+import { generateHeistLocal } from "generator-engine";
 import {
   BANNED_NAMES,
   NAME_BAN_PROMPT,
@@ -605,6 +606,165 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("- **📅 Threat**");
       expect(res.lore).toContain("- **👤");
       expect(res.labels).toContain("imported-draft");
+    });
+  });
+
+  describe("generateHeist", () => {
+    it("skips the heist repair turn when the draft already validates", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const json = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: clean.lore,
+        labels: ["heist", "heist-generator"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi.fn().mockResolvedValue(stream(json)),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      // One turn only: the deterministic check found nothing to repair, so the
+      // second model call is never made.
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(res.lore).toContain("### Alarm Track");
+    });
+
+    it("repairs a heist the deterministic check rejects", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      // The objective section under the wrong heading for the type: a break
+      // that code cannot fix on its own, unlike a duplicate.
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      const fixedJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(fixedJson)),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      // The repair turn must carry the detected problem and forbid a rewrite.
+      expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
+        'must be headed "The Prize"',
+      );
+      expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
+        "Do NOT write a new one",
+      );
+      expect(res.content).toContain("### The Prize");
+    });
+
+    it("accepts a repair that fixes the structural break but is still long", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      // Structurally correct now, but padded past the advisory word budget —
+      // a raw finding-count comparison would tie and discard this.
+      const fixedButLongJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: `${clean.lore}\n\n### Notes\n${"filler ".repeat(1200)}`,
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(fixedButLongJson)),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(res.content).toContain("### The Prize");
+      expect(res.content).not.toContain("### The Loot");
+    });
+
+    it("keeps the original when the repair turn makes it worse", async () => {
+      const clean = generateHeistLocal({ heistType: "Theft" });
+      const brokenJson = JSON.stringify({
+        title: clean.title,
+        content: (clean.content ?? "").replace("### The Prize", "### The Loot"),
+        lore: clean.lore,
+        labels: ["heist"],
+      });
+      // A "repair" that strips half the document is worse, not better.
+      const worseJson = JSON.stringify({
+        title: clean.title,
+        content: clean.content,
+        lore: "### The Getaway\nGone.",
+        labels: ["heist"],
+      });
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(brokenJson))
+          .mockResolvedValueOnce(stream(worseJson)),
+      };
+      mockClientManager.getModel.mockResolvedValue({
+        startChat: vi.fn().mockReturnValue(mockChat),
+      });
+
+      const res = await engine.generateHeist({
+        heistType: "Theft",
+        useAI: true,
+      });
+
+      expect(res.lore).toContain("### Alarm Track");
+      expect(res.lore).toContain("### Flashback Opportunities");
     });
   });
 

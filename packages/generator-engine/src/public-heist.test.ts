@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildHeistPrompt,
+  buildHeistRepairPrompt,
   generateHeistLocal,
   heistConfig,
   parseHeistResponse,
@@ -603,6 +604,63 @@ describe("buildHeistPrompt", () => {
   });
 });
 
+describe("buildHeistRepairPrompt", () => {
+  it("passes the deterministic findings through verbatim", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Sabotage" },
+      "",
+      seededRng(1),
+    );
+    const prompt = buildHeistRepairPrompt(
+      [{ message: "Alarm level 3 is missing." }, { message: "Two defaults." }],
+      resolved,
+    );
+    expect(prompt).toContain("1. Alarm level 3 is missing.");
+    expect(prompt).toContain("2. Two defaults.");
+  });
+
+  it("forbids reinventing the scenario", () => {
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("Do NOT write a new one");
+    expect(prompt).toContain(
+      "Reinventing the scenario is a failure, not a fix",
+    );
+    expect(prompt).toContain(
+      "if a section is already correct, return it word for word",
+    );
+  });
+
+  it("still runs the semantic checklist when nothing was auto-detected", () => {
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("Automated checks found no structural problems");
+    expect(prompt).toContain("Named people behave in line with the motives");
+  });
+
+  it("restates the type's own terminology and starting state", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Plant Evidence" },
+      "",
+      seededRng(1),
+    );
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain('"The Package"');
+    expect(prompt).toContain('"When the Evidence Is Planted"');
+    expect(prompt).toContain("already has the package");
+    expect(prompt).toContain(
+      "no step spent obtaining something the crew already has",
+    );
+  });
+
+  it("asks for the whole corrected object, not a list of criticisms", () => {
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("Return the complete corrected heist");
+    expect(prompt).toContain("with every field present");
+  });
+});
+
 describe("parseHeistResponse", () => {
   it("parses a fenced JSON response", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
@@ -647,6 +705,75 @@ describe("parseHeistResponse", () => {
     expect(out.title).toBe(resolved.title);
     expect(out.labels).toContain("heist");
     expect(out.labels).toContain(resolved.genre);
+  });
+
+  it("deduplicates sections at parse time so no repair call is needed", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const out = parseHeistResponse(
+      JSON.stringify({
+        title: "T",
+        content: "### The Score\nSteal it.\n\n### The Prize\nA diadem.",
+        lore:
+          "### Security Rings\n- **Perimeter**: first\n\n" +
+          "### Security Rings\n- **Perimeter**: second\n\n" +
+          "### The Prize\n\n### The Getaway\nGone.",
+      }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.lore.match(/### Security Rings/g)).toHaveLength(1);
+    expect(out.lore).toContain("first");
+    expect(out.lore).not.toContain("second");
+    // A lore section may not restate a heading content already used, and a
+    // heading with nothing under it is dropped rather than rendered empty.
+    expect(out.lore).not.toContain("### The Prize");
+    expect(out.content).toContain("A diadem.");
+  });
+
+  it("does not backfill a section the model filed under content", () => {
+    // Cross-field dedupe drops the lore copy; backfilling from lore alone
+    // would then re-add it and manufacture a duplicate across the document.
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const out = parseHeistResponse(
+      JSON.stringify({
+        title: "T",
+        content: "### The Score\nGo.\n\n### Alarm Track\n- **0 — Quiet**: calm",
+        lore: "### The Getaway\nGone.",
+      }),
+      resolved,
+      seededRng(2),
+    );
+    const whole = `${out.content}\n${out.lore}`;
+    expect(whole.match(/### Alarm Track/g)).toHaveLength(1);
+    // Flashbacks were genuinely absent, so those are still restored.
+    expect(out.lore).toContain("### Flashback Opportunities");
+  });
+
+  it("keeps text that appears before the first heading", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Theft" },
+      "",
+      seededRng(1),
+    );
+    const out = parseHeistResponse(
+      JSON.stringify({
+        title: "T",
+        content: "A line first.\n\n### The Score\nGo.",
+        lore: "",
+      }),
+      resolved,
+      seededRng(2),
+    );
+    expect(out.content).toContain("A line first.");
+    expect(out.content).toContain("### The Score");
   });
 
   it("backfills a required section the model skipped", () => {

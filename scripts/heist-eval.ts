@@ -38,6 +38,7 @@ import {
   heistConfig,
   parseHeistResponse,
 } from "../packages/generator-engine/src/public-heist";
+import { validateHeist } from "../packages/generator-engine/src/heist-validation";
 import { factionConfig } from "../packages/generator-engine/src/public-faction-constants";
 import { getGeneratorDocumentLayout } from "../apps/web/src/lib/components/seo/generator-document-layout";
 
@@ -110,132 +111,20 @@ export function splitSections(markdown: string): MarkdownSection[] {
   return sections;
 }
 
-const REQUIRED_LORE_SECTIONS = [
-  "GM Quick Reference",
-  "The Hidden Factor",
-  "Security Rings",
-  "Alarm Track",
-  "Complications",
-  "The Getaway",
-  "Flashback Opportunities",
-];
-
-/** Mechanics belonging to one game system, which System-neutral output bans. */
-const SYSTEM_MECHANICS =
-  /\b(saving throw|hit points?|\bDC\s?\d|advantage|disadvantage|\bd20\b|per round|one round)\b/i;
-
-/** Wording that assumes the objective is an object being removed. */
-const REMOVAL_WORDING = /\bthe prize\b|\bprize's\b|absence of/i;
-
 /**
- * Grade one generated heist against the contract. Pure, so the rules are
- * testable without generating anything.
+ * Grade one generated heist. The rules live in the generator-engine package so
+ * the runtime repair pass and this sweep can never disagree about what
+ * "correct" means; this wrapper only adapts the finding shape.
  */
 export function gradeHeist(draft: HeistDraft): Finding[] {
-  const findings: Finding[] = [];
-  const add = (kind: string, detail: string) => findings.push({ kind, detail });
-  const id = `${draft.heistType}/${draft.genre}`;
-  const objective = heistConfig.objectives[draft.heistType];
-
-  const contentSections = splitSections(draft.content);
-  const loreSections = splitSections(draft.lore);
-  const headings = [...contentSections, ...loreSections].map((s) => s.heading);
-
-  const duplicates = [
-    ...new Set(headings.filter((h, i) => headings.indexOf(h) !== i)),
-  ];
-  if (duplicates.length)
-    add("duplicate-heading", `${id}: ${duplicates.join(", ")}`);
-
-  for (const section of [...contentSections, ...loreSections]) {
-    if (!section.body.trim()) add("empty-section", `${id}: ${section.heading}`);
-  }
-
-  if (objective) {
-    if (!headings.includes(objective.heading)) {
-      add("objective-heading", `${id}: expected "${objective.heading}"`);
-    }
-    if (!headings.includes(objective.momentHeading)) {
-      add("moment-heading", `${id}: expected "${objective.momentHeading}"`);
-    }
-    // A plant, a kill or a sabotage has no "prize taken" moment at all.
-    if (
-      draft.heistType !== "Theft" &&
-      headings.includes("When the Prize Is Taken")
-    ) {
-      add("theft-moment-on-other-type", id);
-    }
-  }
-
-  for (const required of REQUIRED_LORE_SECTIONS) {
-    if (!headings.includes(required))
-      add("missing-section", `${id}: ${required}`);
-  }
-
-  const whole = `${draft.content}\n${draft.lore}`;
-  for (let level = 0; level <= 4; level += 1) {
-    if (!whole.includes(`${level} —`))
-      add("alarm-level", `${id}: level ${level}`);
-  }
-  // Check the whole rendered document: the layout routes Complications into
-  // the main column, so a lore-only check would never find the marker.
-  const defaults = (whole.match(/\(default\)/g) ?? []).length;
-  if (defaults !== 1) add("default-marker", `${id}: ${defaults}`);
-
-  const flashbacks = [...contentSections, ...loreSections].find(
-    (s) => s.heading === "Flashback Opportunities",
-  );
-  if (flashbacks) {
-    const count = (flashbacks.body.match(/^\s*-\s/gm) ?? []).length;
-    if (count < 4 || count > 6) add("flashback-count", `${id}: ${count}`);
-  }
-
-  if (SYSTEM_MECHANICS.test(whole)) {
-    add("system-mechanics", `${id}: ${whole.match(SYSTEM_MECHANICS)?.[0]}`);
-  }
-  if (draft.heistType !== "Theft" && REMOVAL_WORDING.test(whole)) {
-    add("removal-wording", `${id}: ${whole.match(REMOVAL_WORDING)?.[0]}`);
-  }
-
-  // The catch has to suit what the objective actually is. The AI writes this
-  // line as prose rather than the fallback's "Label — detail" shape, so only
-  // flag a line that opens with a label belonging to a *different* pool —
-  // anything else is a formatting difference, not a coherence failure.
-  const kind = heistConfig.catchKindByType[draft.heistType] ?? "object";
-  const catchLine = (draft.content.split("**The catch**: ")[1] ?? "")
-    .split("\n")[0]
-    .trim();
-  if (catchLine) {
-    const labelled = Object.entries(heistConfig.catchesByKind).flatMap(
-      ([poolKind, pool]) =>
-        pool
-          .map((entry) => entry.split(" — ")[0])
-          .filter((label) => new RegExp(`^${label}\\b`, "i").test(catchLine))
-          .map((label) => ({ poolKind, label })),
-    );
-    if (labelled.length && !labelled.some((m) => m.poolKind === kind)) {
-      add("catch-kind", `${id}: "${labelled[0].label}" is not a ${kind} catch`);
-    }
-  }
-
-  // The same sentence appearing under two headings is redundancy, not emphasis.
-  const seen = new Map<string, string>();
-  for (const section of [...contentSections, ...loreSections]) {
-    for (const sentence of section.body
-      .split(/(?<=[.!?])\s+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 45)) {
-      const key = sentence.toLowerCase().replace(/[^a-z ]/g, "");
-      const previous = seen.get(key);
-      if (previous && previous !== section.heading) {
-        add("verbatim-repeat", `${id}: ${previous} + ${section.heading}`);
-      } else {
-        seen.set(key, section.heading);
-      }
-    }
-  }
-
-  return findings;
+  return validateHeist({
+    heistType: draft.heistType,
+    content: draft.content,
+    lore: draft.lore,
+  }).map((f) => ({
+    kind: f.kind,
+    detail: `${draft.heistType}/${draft.genre}: ${f.message}`,
+  }));
 }
 
 export function wordCount(draft: HeistDraft): number {

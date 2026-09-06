@@ -54,8 +54,11 @@ import {
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
   buildHeistPrompt,
+  buildHeistRepairPrompt,
   parseHeistResponse,
   generateHeistLocal,
+  validateHeist,
+  needsRepair,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -631,6 +634,21 @@ export class DefaultGeneratorEngine {
     return result;
   }
 
+  /**
+   * Two passes: generate, then validate-and-repair (#2768).
+   *
+   * Pass 1 optimises for an interesting, playable heist. Everything decidable
+   * by reading the result — duplicate or empty sections, wrong terminology for
+   * the heist type, banned names, system mechanics in neutral output — is then
+   * checked deterministically for free by `validateHeist`. The second model
+   * call happens only when that check finds something, so a clean generation
+   * costs exactly what it always did.
+   *
+   * The repair turn goes on the same chat session, so the model reads its own
+   * output as history rather than a re-injected summary of it. A repair that
+   * comes back unparseable, empty, or measurably worse than the original is
+   * discarded — a cleanup step must never cost us an otherwise-good heist.
+   */
   async generateHeist(
     options: HeistGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
@@ -647,10 +665,50 @@ export class DefaultGeneratorEngine {
           "heist",
           summarizeResolvedInputs(resolved),
         );
-        return parseHeistResponse(
-          await this.runModel(systemInstruction, userMessage),
+        const chat = await this.startChat(systemInstruction);
+        const draft = parseHeistResponse(
+          await this.sendChatMessage(chat, userMessage),
           resolved,
         );
+
+        const findings = validateHeist({
+          heistType: resolved.heistType,
+          content: draft.content ?? "",
+          lore: draft.lore ?? "",
+        });
+        // Only a structural break earns a second model call; "slightly long"
+        // measurably does not improve when repaired, so it rides along with a
+        // real repair rather than triggering one.
+        if (!needsRepair(findings)) return draft;
+
+        try {
+          const repaired = parseHeistResponse(
+            await this.sendChatMessage(
+              chat,
+              buildHeistRepairPrompt(findings, resolved),
+            ),
+            resolved,
+          );
+          if (!repaired.content?.trim() || !repaired.lore?.trim()) return draft;
+          const after = validateHeist({
+            heistType: resolved.heistType,
+            content: repaired.content,
+            lore: repaired.lore,
+          });
+          // Compare structural problems first. A raw count would discard a
+          // repair that fixed the only structural break but left an advisory
+          // "slightly long" behind — keeping a genuinely broken draft over a
+          // sound one because the totals happened to tie.
+          const structural = (list: typeof findings) =>
+            list.filter((f) => f.severity === "structural").length;
+          const fixedSomething = structural(after) < structural(findings);
+          const noWorseAndTighter =
+            structural(after) === structural(findings) &&
+            after.length < findings.length;
+          return fixedSomething || noWorseAndTighter ? repaired : draft;
+        } catch {
+          return draft;
+        }
       },
       () => generateHeistLocal(heistOptions),
     );
