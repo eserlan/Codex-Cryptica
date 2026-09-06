@@ -19,8 +19,11 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
   const connectionHint = FEATURE_HINTS["oracle-connection-modes"];
+
+  let { storage = browserStorage }: { storage?: StorageLike } = $props();
 
   let showHint = $state(false);
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
@@ -37,10 +40,10 @@
     void oracle.init();
 
     // Show hint on first open
-    const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
+    const hasSeenHint = storage.getItem(HINT_KEYS.ORACLE_CONNECTION);
     if (!hasSeenHint) {
       showHint = true;
-      localStorage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
+      storage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
     }
   });
 

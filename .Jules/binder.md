@@ -177,8 +177,14 @@
 
 **Learning:** `new Date().toISOString()` is a hidden, hard-coded time dependency that complicates testing file update tracking logic.
 **Action:** Expose time functions via optional parameters like `now: () => number = () => Date.now()` inside class constructors to allow precise test assertions without global mocking or relying on arbitrary timing tolerances.
+
 ## $(date +%Y-%m-%d) - Inject UIPersistence into GeneratorPageContent
 
 **Learning:** Direct `localStorage.getItem` access inside large Svelte 5 page components (`GeneratorPageContent.svelte`) makes the initialization logic hard to test in isolation, as it assumes browser context or requires global mocking.
 
 **Action:** Prefer injecting a lightweight, typed adapter like `UIPersistence` (which handles SSR gracefully and encapsulates keys) via `$props()` with a sensible default (`persistence = new UIPersistence()`). This allows tests to easily inject a memory-backed persistence mock without touching `window.localStorage`.
+
+## 2024-09-06 - Inject storage into Svelte UI components
+
+**Learning:** UI components that rely on `localStorage` for visual state (like dismissing hints) should accept `storage` as an injected prop rather than hard-coding `localStorage`. This allows tests to simulate various state scenarios without wiping or leaking into the global `window.localStorage`.
+**Action:** When adding state persistence to a Svelte 5 component, use `$props()` to inject an optional `storage` dependency that defaults to `browserStorage` from `$lib/utils/runtime-deps`.
