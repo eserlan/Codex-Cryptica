@@ -1031,9 +1031,13 @@ function generateHeist(request: GeneratorRunRequest): GeneratorOutput {
 
 export function buildCampaignHeistPrompt(request: GeneratorRunRequest) {
   const prompt = buildHeistPrompt(heistOptions(request));
+  const context = contextChain(request);
   return {
     ...prompt,
-    userMessage: `${contextChain(request)}\n\n${prompt.userMessage}`,
+    userMessage: `${context}\n\n${prompt.userMessage}`,
+    // contextChain already includes the request instructions. Repeat the same
+    // bounded grounding for the independent reviewer without duplicating it.
+    reviewContext: context,
   };
 }
 

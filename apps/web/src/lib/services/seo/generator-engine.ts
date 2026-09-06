@@ -632,11 +632,12 @@ export class DefaultGeneratorEngine {
   }
 
   /**
-   * Two passes: generate, then validate-and-repair (#2768).
+   * Generate, independently audit, then conditionally repair (#2768).
    *
-   * Public and campaign generation share the same two-pass policy. Review
-   * always runs, even when structural checks pass; failed or structurally
-   * worse reviews retain the usable original.
+   * Public and campaign generation share the same policy. A fresh reviewer
+   * always externalises the scenario's state transitions. Repair runs in that
+   * reviewer's conversation only when semantic or deterministic issues exist;
+   * failed or structurally worse repairs retain the usable original.
    */
   async generateHeist(
     options: HeistGeneratorOptions & { useAI?: boolean } = {},
@@ -646,19 +647,26 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage, resolved } = buildHeistPrompt(
+        const prompt = buildHeistPrompt(
           heistOptions,
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
+        const { systemInstruction, resolved } = prompt;
         generationInputHistoryStore.record(
           "heist",
           summarizeResolvedInputs(resolved),
         );
-        const chat = await this.startChat(systemInstruction);
-        const result = await runHeistGeneration(
-          { systemInstruction, userMessage, resolved },
-          (message) => this.sendChatMessage(chat, message),
-        );
+        const generationChat = await this.startChat(systemInstruction);
+        let reviewChatPromise:
+          ReturnType<DefaultGeneratorEngine["startChat"]> | undefined;
+        const result = await runHeistGeneration(prompt, {
+          generate: (message) => this.sendChatMessage(generationChat, message),
+          review: async (message) =>
+            this.sendChatMessage(
+              await (reviewChatPromise ??= this.startChat(systemInstruction)),
+              message,
+            ),
+        });
         return result.output;
       },
       () => generateHeistLocal(heistOptions),

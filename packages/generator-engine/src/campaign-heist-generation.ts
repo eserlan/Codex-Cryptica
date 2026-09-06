@@ -29,39 +29,56 @@ export async function* streamCampaignHeist(
   ]);
   for (let attempt = 0; attempt < 3; attempt++) {
     signal?.throwIfAborted();
-    const chat = await gateway.startChat?.(SYSTEM_INSTRUCTION);
-    // Complete-only gateways replay the actual conversation, including the
-    // original grounded request, rather than inventing a summary for review.
-    const history: Array<{ role: "user" | "assistant"; content: string }> = [];
-    async function* send(message: string): AsyncGenerator<GenerationEvent> {
-      signal?.throwIfAborted();
-      history.push({ role: "user", content: message });
-      const input =
-        history.length === 1
-          ? message
-          : `Continue this conversation. Return only the requested JSON.\n${JSON.stringify(history)}`;
-      let response: string | undefined;
-      if (chat?.sendStream || (!chat && gateway.completeStream)) {
-        const stream = chat?.sendStream
-          ? chat.sendStream(message, signal)
-          : gateway.completeStream!(input, SYSTEM_INSTRUCTION, { signal });
-        for await (const event of stream) {
-          signal?.throwIfAborted();
-          if (event.type === "complete") response = event.text;
-          yield event;
-        }
-      } else {
-        const result = chat
-          ? await chat.send(message)
-          : await gateway.complete(input, SYSTEM_INSTRUCTION, { signal });
+    const conversation = () => {
+      // Initialise lazily so cleanly failed generation never opens a reviewer.
+      let chatPromise:
+        ReturnType<NonNullable<AIGeneratorGateway["startChat"]>> | undefined;
+      const history: Array<{
+        role: "user" | "assistant";
+        content: string;
+      }> = [];
+      return async function* send(
+        message: string,
+      ): AsyncGenerator<GenerationEvent> {
         signal?.throwIfAborted();
-        response = typeof result === "string" ? result : result.text;
-        yield { type: "complete", text: response };
-      }
-      if (response !== undefined)
-        history.push({ role: "assistant", content: response });
-    }
-    const result = yield* streamHeistGeneration(prompt, send, { signal });
+        const chat = gateway.startChat
+          ? await (chatPromise ??= gateway.startChat(SYSTEM_INSTRUCTION))
+          : undefined;
+        history.push({ role: "user", content: message });
+        // Complete-only gateways replay the full conversation. The reviewer
+        // therefore sees its audit before applying repairs without sharing the
+        // generator's self-anchored chat session.
+        const input =
+          history.length === 1
+            ? message
+            : `Continue this conversation. Return only the requested JSON.\n${JSON.stringify(history)}`;
+        let response: string | undefined;
+        if (chat?.sendStream || (!chat && gateway.completeStream)) {
+          const stream = chat?.sendStream
+            ? chat.sendStream(message, signal)
+            : gateway.completeStream!(input, SYSTEM_INSTRUCTION, { signal });
+          for await (const event of stream) {
+            signal?.throwIfAborted();
+            if (event.type === "complete") response = event.text;
+            yield event;
+          }
+        } else {
+          const result = chat
+            ? await chat.send(message)
+            : await gateway.complete(input, SYSTEM_INSTRUCTION, { signal });
+          signal?.throwIfAborted();
+          response = typeof result === "string" ? result : result.text;
+          yield { type: "complete", text: response };
+        }
+        if (response !== undefined)
+          history.push({ role: "assistant", content: response });
+      };
+    };
+    const result = yield* streamHeistGeneration(
+      prompt,
+      { generate: conversation(), review: conversation() },
+      { signal },
+    );
     if (!isTitleBanned(result.output.title, banned)) return result.output;
     // A repair may rename a previously valid draft to a forbidden title.
     if (!isTitleBanned(result.initial.title, banned)) return result.initial;

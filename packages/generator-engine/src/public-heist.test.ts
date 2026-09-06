@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildHeistAuditPrompt,
   buildHeistPrompt,
   buildHeistRepairPrompt,
   generateHeistLocal,
   heistConfig,
+  parseHeistAuditResponse,
   parseHeistResponse,
 } from "./public-heist";
 import { NAME_BAN_PROMPT } from "./public-npc";
@@ -672,9 +674,9 @@ describe("buildHeistPrompt", () => {
   it("puts the detailed rubric in pass 1, not the compact repair checklist", () => {
     // These checks belong to buildHeistPrompt: the model should get them
     // right on the first pass rather than relying on a second one to catch
-    // them, and the repair prompt is deliberately compact rather than
-    // carrying the same lettered detail (see buildHeistRepairPrompt's design
-    // note). "how many advances fill it" is already asserted for pass 1 in
+    // them, and the audit prompt stays focused on cross-section state rather
+    // than carrying the same lettered detail. "how many advances fill it" is
+    // already asserted for pass 1 in
     // the test above; the negative half is what is new here.
     const { userMessage } = buildHeistPrompt(
       { heistType: "Assassination", genre: "Classic Fantasy" },
@@ -688,9 +690,13 @@ describe("buildHeistPrompt", () => {
       "",
       seededRng(1),
     );
-    const repairPrompt = buildHeistRepairPrompt([], resolved);
-    expect(repairPrompt).not.toContain("reads as an arbitrary game mechanic");
-    expect(repairPrompt).not.toContain("how many advances fill it");
+    const auditPrompt = buildHeistAuditPrompt(
+      generateHeistLocal({ heistType: "Assassination" }, seededRng(1)),
+      [],
+      resolved,
+    );
+    expect(auditPrompt).not.toContain("reads as an arbitrary game mechanic");
+    expect(auditPrompt).not.toContain("how many advances fill it");
   });
 
   it("keeps the point of no return distinct from the alarm track", () => {
@@ -710,100 +716,42 @@ describe("buildHeistPrompt", () => {
   });
 });
 
-describe("buildHeistRepairPrompt", () => {
-  it("passes the deterministic findings through verbatim", () => {
-    const { resolved } = buildHeistPrompt(
-      { heistType: "Sabotage" },
-      "",
-      seededRng(1),
-    );
-    const prompt = buildHeistRepairPrompt(
-      [{ message: "Alarm level 3 is missing." }, { message: "Two defaults." }],
-      resolved,
-    );
-    expect(prompt).toContain("1. Alarm level 3 is missing.");
-    expect(prompt).toContain("2. Two defaults.");
-  });
+describe("heist semantic audit and repair prompts", () => {
+  const setup = (heistType = "Rescue") => {
+    const { resolved } = buildHeistPrompt({ heistType }, "", seededRng(1));
+    const draft = generateHeistLocal({ heistType }, seededRng(1));
+    return { resolved, draft };
+  };
 
-  it("forbids reinventing the scenario", () => {
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("Do not generate a new heist");
-    expect(prompt).toContain("Make the smallest fixes");
-    expect(prompt).toContain("Replace sentences instead of expanding sections");
-    expect(prompt).toContain("Return no more words than the original");
-    expect(prompt).toContain("delete at least as much as you add");
-  });
-
-  it("keeps the state model compact instead of accumulating individual rules", () => {
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).not.toMatch(/\n9[a-f]\./);
-    expect(prompt.length).toBeLessThan(4500);
-    expect(prompt).not.toContain("verify these five invariants");
-  });
-
-  it("carries the demoted checklist regardless of whether findings were auto-detected", () => {
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("contradictions between sections");
-    expect(prompt).toContain(
-      "hidden factors that invalidate rather than complicate the plan",
-    );
-    expect(prompt).toContain("genre-inappropriate or system-specific language");
-    expect(prompt).toContain("duplicated or empty sections");
-    expect(prompt).toContain(
-      "Every primary objective has multiple viable approaches where appropriate — not merely multiple ways to reach it.",
-    );
-    expect(prompt).toContain(
-      "The scenario remains playable at every alarm level.",
-    );
-  });
-
-  it("reconstructs the five states before repairs, even with automated findings", () => {
-    const { resolved } = buildHeistPrompt(
-      { heistType: "Plant Evidence" },
-      "",
-      seededRng(1),
-    );
-    const prompt = buildHeistRepairPrompt(
+  it("externalises the five states and propagates changed facts", () => {
+    const { resolved, draft } = setup("Plant Evidence");
+    const prompt = buildHeistAuditPrompt(
+      draft,
       [{ message: "Alarm level 3 is missing." }],
       resolved,
     );
-    const states = [
+    for (const state of [
       "1. Infiltration",
       "2. Objective transition",
       "3. Undetected window",
       "4. Detection / response",
       "5. Escape",
-    ];
-    let previousIndex = prompt.indexOf(
-      "silently reconstruct its sequence of states",
-    );
-    expect(previousIndex).toBeGreaterThan(-1);
-    for (const state of states) {
-      const index = prompt.indexOf(state);
-      expect(index).toBeGreaterThan(previousIndex);
-      previousIndex = index;
-    }
-    expect(prompt.indexOf("Automated checks already found")).toBeGreaterThan(
-      previousIndex,
-    );
-    expect(prompt.indexOf("Then do the normal pass")).toBeGreaterThan(
-      previousIndex,
+    ])
+      expect(prompt).toContain(state);
+    expect(prompt).toContain("At every transition, update the current facts");
+    expect(prompt).toContain(
+      "possession, location, security state, route availability, tracking capability, NPC allegiance, and mission phase",
     );
     expect(prompt).toContain(
-      'any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it)',
+      "Do not preserve consequences or constraints that belonged only to an earlier state",
     );
+    expect(prompt).toContain("1. Alarm level 3 is missing.");
+    expect(prompt).toContain(JSON.stringify(draft.title));
   });
 
-  it("preserves delayed discovery and escape before a closure trigger (#2768)", () => {
-    const { resolved } = buildHeistPrompt(
-      { heistType: "Rescue" },
-      "",
-      seededRng(1),
-    );
-    const prompt = buildHeistRepairPrompt([], resolved);
+  it("audits delayed discovery, tracking, bypasses and full Score completion", () => {
+    const { resolved, draft } = setup();
+    const prompt = buildHeistAuditPrompt(draft, [], resolved);
     expect(prompt).toContain(
       "Escape can overlap the undetected window or finish before detection",
     );
@@ -811,108 +759,101 @@ describe("buildHeistRepairPrompt", () => {
       "Never make a scheduled future event happen instantly because the objective transition occurred",
     );
     expect(prompt).toContain(
-      "Keep the original entry route available until its stated closure trigger, including a race to leave before it closes",
+      "Keep the original entry route available until its stated closure trigger",
     );
     expect(prompt).toContain(
-      "Never invent an automatic alarm merely to force a getaway",
-    );
-    expect(prompt).toContain("refer to the same event must agree on its time");
-  });
-
-  it("ties pressure and pursuit to their activation state, not automatically to infiltration (#2768)", () => {
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain(
-      "For every clock, pressure, security response, route closure, pursuit, and alarm trigger",
+      "No tracking pursuit may begin before an active way to track exists or continue after that method is disabled or shielded",
     );
     expect(prompt).toContain(
-      "identify its active state, activation event, and consequence",
+      'The GM Quick Reference Objective must preserve the full success condition from "The Score"',
     );
     expect(prompt).toContain(
-      "No tracking pursuit before the fiction provides an active way to track the crew or objective",
+      "leaving a cell, vault, or custody floor is not mission success when escape is still required",
     );
-    expect(prompt).toContain("Every clock must say exactly what advances it");
-  });
-
-  it("keeps the full Score in the quick reference across objective types (#2768)", () => {
-    for (const heistType of [
-      "Theft",
-      "Rescue",
-      "Plant Evidence",
-      "Information",
-      "Sabotage",
-    ]) {
-      const { resolved } = buildHeistPrompt({ heistType }, "", seededRng(1));
-      const prompt = buildHeistRepairPrompt([], resolved);
-      expect(prompt).toContain(
-        `"The Score", "${resolved.momentHeading}", "The Getaway", "GM Quick Reference", "Alarm Track", "Pressure", and "Complications"`,
-      );
-      expect(prompt).toContain(
-        'The GM Quick Reference Objective must preserve the full success condition from "The Score"',
-      );
-      expect(prompt).toContain(
-        "leaving a cell, vault, or custody floor is not mission success when escape is still required",
-      );
-      expect(prompt).toContain(
-        "summaries must preserve the same facts and default complication",
-      );
-    }
-  });
-
-  it("does not let a later section nullify an established bypass (real sample, #2768)", () => {
-    // "The Meteorite Job": the scenario gave the crew a way to spoof a mass
-    // sensor, then declared the same sensor fires "the instant" the prize
-    // leaves its cradle regardless of the spoof — silently overriding the
-    // bypass it had just granted.
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
-    const prompt = buildHeistRepairPrompt([], resolved);
     expect(prompt).toContain(
       "Carry successful bypasses into every later state",
     );
-    expect(prompt).toContain(
-      "a spoofed or disabled sensor cannot detect them unless an established event restores it",
-    );
-    expect(prompt).toContain(
-      "Any independent detection needs its own explicit trigger",
-    );
+    expect(prompt).toContain("Carry the prize's catch through to the end");
   });
 
-  it("requires the prize's catch to hold through the getaway, not only the rings (real sample, #2768)", () => {
-    // Same sample: a 1,200kg prize whose catch was respected inside the
-    // security rings but ignored by the getaway — a roof-ladder escape, a
-    // folding handcart, a pursuit assuming hand-carriage.
-    const { resolved } = buildHeistPrompt(
-      { heistType: "Theft" },
-      "",
-      seededRng(1),
-    );
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("Carry the prize's catch through to the end.");
-    expect(prompt).toContain(
-      `The established catch — ${resolved.prizeComplication} — must still be true in "The Getaway", the flashbacks, and the pursuit, not only inside the security rings.`,
-    );
-    expect(prompt).toContain(
-      "a roof escape or a hand-carried tool for something huge or fragile",
-    );
+  it("requests conclusions rather than hidden reasoning or a rewritten heist", () => {
+    const { resolved, draft } = setup();
+    const prompt = buildHeistAuditPrompt(draft, [], resolved);
+    expect(prompt).toContain("Do not rewrite it yet");
+    expect(prompt).toContain('"factsChanged"');
+    expect(prompt).toContain('"requiredFact"');
+    expect(prompt).toContain("not hidden chain-of-thought");
   });
 
-  it("restates the type's own terminology and starting state", () => {
-    const { resolved } = buildHeistPrompt(
-      { heistType: "Plant Evidence" },
-      "",
-      seededRng(1),
+  it("parses a complete audit and rejects contradictory verdicts", () => {
+    const valid = {
+      verdict: "repair",
+      fullScore: "Escape with the captive.",
+      transitions: [
+        {
+          event: "The cell opens",
+          stateBefore: "Captive in cell",
+          stateAfter: "Captive with crew",
+          factsChanged: ["location: cell -> crew"],
+        },
+      ],
+      issues: [
+        {
+          id: "state-1",
+          sections: ["The Getaway"],
+          problem: "The captive is still described inside.",
+          requiredFact: "The captive is with the crew.",
+        },
+      ],
+    } as const;
+    expect(parseHeistAuditResponse(JSON.stringify(valid)).issues).toHaveLength(
+      1,
     );
-    const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain('"The Package"');
-    expect(prompt).toContain('"When the Evidence Is Planted"');
-    expect(prompt).toContain("already has the package");
+    expect(() =>
+      parseHeistAuditResponse(JSON.stringify({ ...valid, verdict: "clean" })),
+    ).toThrow();
+    expect(() =>
+      parseHeistAuditResponse(JSON.stringify({ ...valid, transitions: [] })),
+    ).toThrow();
   });
 
-  it("asks for the whole corrected object, not a list of criticisms", () => {
-    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
-    const prompt = buildHeistRepairPrompt([], resolved);
+  it("turns audit issue ids into a compact surgical repair request", () => {
+    const { resolved } = setup();
+    const audit = parseHeistAuditResponse(
+      JSON.stringify({
+        verdict: "repair",
+        fullScore: "Escape with the captive.",
+        transitions: [
+          {
+            event: "The cell opens",
+            stateBefore: "Captive in cell",
+            stateAfter: "Captive with crew",
+            factsChanged: ["location: cell -> crew"],
+          },
+        ],
+        issues: [
+          {
+            id: "state-1",
+            sections: ["The Getaway"],
+            problem: "The captive is still described inside.",
+            requiredFact: "The captive is with the crew.",
+          },
+        ],
+      }),
+    );
+    const prompt = buildHeistRepairPrompt(
+      audit,
+      [{ message: "Alarm level 3 is missing." }],
+      resolved,
+    );
+    expect(prompt).toContain("state-1 [The Getaway]");
+    expect(prompt).toContain("1. Alarm level 3 is missing.");
+    expect(prompt).toContain("Make the smallest edits");
+    expect(prompt).toContain("no more words than the original heist");
     expect(prompt).toContain("Return the complete corrected heist");
-    expect(prompt).toContain("with every field present");
+    expect(prompt).toContain('"content" must remain non-empty');
+    expect(prompt).toContain('"lore" must remain non-empty');
+    expect(prompt).toContain("Never move all sections into one field");
   });
 });
 

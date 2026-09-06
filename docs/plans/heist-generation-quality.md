@@ -2,15 +2,18 @@
 
 The heist's objective transition, detection and full success condition must agree
 across generation, review and local fallback. Public and campaign generation must
-use the same two-pass workflow, including when structural validation passes.
+use the same independent audit and conditional-repair workflow, including when
+structural validation passes.
 
 ## Implementation
 
 - Align Pass 1 with the five-state review model; keep discovery and route closure
   conditional on their actual triggers. Request the same JSON fields everywhere.
-- Put two-pass orchestration and repair acceptance in a framework-free package
-  module. Keep a usable original on failed or structurally worse review; accept
-  semantic corrections with unchanged structural findings.
+- Put generate-audit-repair orchestration and repair acceptance in a
+  framework-free package module. The fresh reviewer emits an inspectable state
+  audit, then repairs in its own conversation only when semantic or deterministic
+  issues exist. Keep a usable original on failed or structurally worse review;
+  accept semantic corrections with unchanged structural findings.
 - Adapt both public and campaign generation to that module. Preserve campaign
   grounding, name constraints and cancellation, and retain complete heists on save.
 - Make local fallback discovery, clocks, hidden factors and escape options concrete.
