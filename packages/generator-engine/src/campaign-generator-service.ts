@@ -44,6 +44,10 @@ import {
   validateLanguageNameBans,
 } from "./language-profile";
 import type { LanguageGenerationResultV1 } from "schema";
+import {
+  generateCampaignHeist,
+  streamCampaignHeist,
+} from "./campaign-heist-generation";
 
 const LANGUAGE_GENERATION_CONFIG = {
   temperature: 0.35,
@@ -103,7 +107,8 @@ export function composeDraftVaultFields(draft: GeneratedDraft): {
   return {
     content: draft.summary || "",
     lore:
-      draft.sourceGeneratorId === "dungeon"
+      draft.sourceGeneratorId === "dungeon" ||
+      draft.sourceGeneratorId === "heist"
         ? [draft.content, draft.lore].filter(Boolean).join("\n\n")
         : draft.lore || "",
   };
@@ -939,6 +944,21 @@ export class CampaignGeneratorService {
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
+    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "heist") {
+      try {
+        const output = await generateCampaignHeist(
+          mergedRequest,
+          this.aiGateway,
+        );
+        return generator.mapOutputToDraft(
+          { ...output, summary: output.summary ?? "" },
+          mergedRequest,
+        );
+      } catch {
+        // Initial generation failed; use the local heist below.
+      }
+    }
+
     if (canUseAI && this.aiGateway && mergedRequest.generatorId === "dungeon") {
       const dungeonDraft = await this.generateDungeonWithAI(
         generator,
@@ -977,6 +997,7 @@ export class CampaignGeneratorService {
       this.aiGateway &&
       mergedRequest.generatorId !== "dungeon" &&
       mergedRequest.generatorId !== "language" &&
+      mergedRequest.generatorId !== "heist" &&
       mergedRequest.generatorId !== "council-vote"
     ) {
       const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
@@ -1070,6 +1091,49 @@ export class CampaignGeneratorService {
   ): AsyncGenerator<
     GenerationEvent | { type: "draft"; draft: GeneratedDraft }
   > {
+    if (request.generatorId === "heist") {
+      if (signal?.aborted) return;
+      yield { type: "started" };
+      const mergedRequest = {
+        ...request,
+        options: {
+          ...getThemeDefaults(request.themeId, "heist"),
+          ...request.options,
+        },
+      };
+      const generator = getGenerator("heist");
+      if (
+        request.useAI &&
+        this.aiPolicy.isEnabled &&
+        this.aiPolicy.isAvailable &&
+        this.aiGateway
+      ) {
+        try {
+          const output = yield* streamCampaignHeist(
+            mergedRequest,
+            this.aiGateway,
+            signal,
+          );
+          if (!signal?.aborted)
+            yield {
+              type: "draft",
+              draft: generator.mapOutputToDraft(
+                { ...output, summary: output.summary ?? "" },
+                mergedRequest,
+              ),
+            };
+          return;
+        } catch {
+          if (signal?.aborted) return;
+        }
+      }
+      if (!signal?.aborted)
+        yield {
+          type: "draft",
+          draft: await this.generateDraft({ ...mergedRequest, useAI: false }),
+        };
+      return;
+    }
     if (request.generatorId === "council-vote") {
       yield* this.generateCouncilVoteWithAIStream(request, signal);
       return;

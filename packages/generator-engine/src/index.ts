@@ -1,5 +1,10 @@
 export * from "./campaign-generator-types";
 export {
+  runHeistGeneration,
+  streamHeistGeneration,
+  type HeistGenerationResult,
+} from "./heist-generation";
+export {
   getThemeDefaults,
   THEME_GENERATOR_DEFAULTS,
 } from "./campaign-generator-theme";

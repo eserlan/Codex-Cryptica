@@ -10,6 +10,7 @@
  *
  *   bun scripts/heist-eval.ts                    # local fallback, no setup
  *   bun scripts/heist-eval.ts --mode ai --runs 10
+ *   bun scripts/heist-eval.ts --mode fixtures --json
  *
  * ## Running the AI mode
  *
@@ -25,10 +26,12 @@
  *   3. `bun scripts/heist-eval.ts --mode ai`
  *
  * Note that AI mode spends real tokens against whichever key that file holds.
- * Roughly 4.5k tokens per generation at the time of writing.
+ * AI mode runs generation and review. Fixtures mode sends one review call per
+ * synthetic case and exposes the original, selected output and human rubric.
+ * Both modes spend provider tokens.
  *
  * Findings are printed grouped by kind, with a few examples each. A clean run
- * prints "no contract violations" — which is the point: this is a sweep, not
+ * prints "no structural/advisory findings (semantic quality not measured)" — which is the point: this is a sweep, not
  * an assertion suite, so it is meant to be run and read, not wired into CI.
  */
 
@@ -36,8 +39,12 @@ import {
   buildHeistPrompt,
   generateHeistLocal,
   heistConfig,
-  parseHeistResponse,
 } from "../packages/generator-engine/src/public-heist";
+import { runHeistGeneration } from "../packages/generator-engine/src/heist-generation";
+import {
+  heistStateCases,
+  type HeistStateCase,
+} from "./fixtures/heist-state-cases";
 import { validateHeist } from "../packages/generator-engine/src/heist-validation";
 import { factionConfig } from "../packages/generator-engine/src/public-faction-constants";
 import { getGeneratorDocumentLayout } from "../apps/web/src/lib/components/seo/generator-document-layout";
@@ -47,6 +54,15 @@ export interface HeistDraft {
   genre: string;
   content: string;
   lore: string;
+  review?: {
+    status: string;
+    original: { content: string; lore: string };
+    candidate?: { content: string; lore: string };
+    beforeFindings: string[];
+    afterFindings: string[];
+    criteria?: string[];
+    caseId?: string;
+  };
 }
 
 export interface Finding {
@@ -151,46 +167,55 @@ function buildPlan(runs: number): Array<{ heistType: string; genre: string }> {
   }));
 }
 
-async function generateViaProxy(
+export async function generateViaProxy(
   proxy: string,
   heistType: string,
   genre: string,
+  fetcher: typeof fetch = fetch,
+  fixture?: HeistStateCase,
 ): Promise<HeistDraft> {
-  const { systemInstruction, userMessage, resolved } = buildHeistPrompt({
-    heistType,
-    genre,
-    targetScale: "Major",
+  const prompt =
+    fixture?.prompt ??
+    buildHeistPrompt({ heistType, genre, targetScale: "Major" });
+  const messages = [{ role: "system", content: prompt.systemInstruction }];
+  const result = await runHeistGeneration(prompt, async (message) => {
+    messages.push({ role: "user", content: message });
+    let content: string;
+    if (fixture && messages.length === 2) {
+      content = JSON.stringify(fixture.draft);
+    } else {
+      const response = await fetcher(proxy, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost:5173",
+        },
+        body: JSON.stringify({ operation: "freeform-generation", messages }),
+      });
+      const payload = (await response.json()) as {
+        content?: string;
+        error?: unknown;
+      };
+      if (!response.ok) throw new Error(JSON.stringify(payload).slice(0, 200));
+      content = payload.content ?? "";
+    }
+    messages.push({ role: "assistant", content });
+    return content;
   });
-  const response = await fetch(proxy, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Origin: "http://localhost:5173",
+  return {
+    ...renderDraft(heistType, genre, result.output.content, result.output.lore),
+    review: {
+      status: result.reviewStatus,
+      original: { content: result.initial.content, lore: result.initial.lore },
+      candidate: result.reviewed
+        ? { content: result.reviewed.content, lore: result.reviewed.lore }
+        : undefined,
+      beforeFindings: result.before.map((finding) => finding.message),
+      afterFindings: result.after.map((finding) => finding.message),
+      criteria: fixture?.criteria,
+      caseId: fixture?.id,
     },
-    body: JSON.stringify({
-      operation: "freeform-generation",
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: userMessage },
-      ],
-    }),
-  });
-  const payload = (await response.json()) as {
-    content?: string;
-    error?: unknown;
   };
-  if (!response.ok) throw new Error(JSON.stringify(payload).slice(0, 200));
-  const output = parseHeistResponse(payload.content ?? "", resolved);
-  const repaired = rawDuplicateHeadings(
-    output.content ?? "",
-    output.lore ?? "",
-  );
-  if (repaired.length) {
-    process.stderr.write(
-      `      (layout repaired duplicates: ${repaired.join(", ")})\n`,
-    );
-  }
-  return renderDraft(heistType, genre, output.content ?? "", output.lore ?? "");
 }
 
 async function main() {
@@ -200,17 +225,31 @@ async function main() {
     return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
   };
   const mode = flag("mode", "local");
-  const runs = Number(flag("runs", mode === "ai" ? "10" : "240"));
+  const runs = Number(flag("runs", mode === "local" ? "240" : "10"));
   const proxy = flag("proxy", "http://localhost:8787");
 
   const drafts: HeistDraft[] = [];
   const errors: string[] = [];
-  const plan = buildPlan(runs);
+  const fixtures = mode === "fixtures" ? heistStateCases() : [];
+  const plan = fixtures.length
+    ? fixtures.map((fixture) => ({
+        heistType: fixture.prompt.resolved.heistType,
+        genre: fixture.prompt.resolved.genre,
+      }))
+    : buildPlan(runs);
 
   for (const [index, { heistType, genre }] of plan.entries()) {
-    if (mode === "ai") {
+    if (mode === "ai" || mode === "fixtures") {
       try {
-        drafts.push(await generateViaProxy(proxy, heistType, genre));
+        drafts.push(
+          await generateViaProxy(
+            proxy,
+            heistType,
+            genre,
+            fetch,
+            fixtures[index],
+          ),
+        );
         process.stderr.write(`  ok  ${heistType}/${genre}\n`);
       } catch (error) {
         errors.push(`${heistType}/${genre}: ${String(error).slice(0, 160)}`);
@@ -236,6 +275,41 @@ async function main() {
     }
   }
 
+  const reviews = drafts.filter((draft) => draft.review);
+  if (args.includes("--json")) {
+    console.log(
+      JSON.stringify(
+        {
+          mode,
+          drafts,
+          errors,
+          structuralFindings: Object.fromEntries(grouped),
+        },
+        null,
+        2,
+      ),
+    );
+    if (
+      errors.length ||
+      grouped.size ||
+      reviews.some((draft) => draft.review?.status !== "accepted")
+    )
+      process.exitCode = 1;
+    return;
+  }
+  if (reviews.length) {
+    const counts = reviews.reduce<Record<string, number>>((acc, draft) => {
+      const status = draft.review!.status;
+      acc[status] = (acc[status] ?? 0) + 1;
+      return acc;
+    }, {});
+    console.log("review outcomes:", JSON.stringify(counts));
+    if (reviews.some((draft) => draft.review?.status !== "accepted"))
+      process.exitCode = 1;
+    console.log(
+      "Semantic quality is not scored automatically. Use --json to inspect original/reviewed documents and fixture criteria.",
+    );
+  }
   const lengths = drafts.map(wordCount).sort((a, b) => a - b);
   console.log(`\n${mode} mode — graded ${drafts.length} generations`);
   if (lengths.length) {
@@ -256,8 +330,8 @@ async function main() {
   if (!grouped.size) {
     console.log(
       errors.length
-        ? "no contract violations in the generations that succeeded"
-        : "no contract violations",
+        ? "no structural/advisory findings in the generations that succeeded"
+        : "no structural/advisory findings (semantic quality not measured)",
     );
     return;
   }

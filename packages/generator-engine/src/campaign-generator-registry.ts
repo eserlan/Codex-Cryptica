@@ -1029,11 +1029,16 @@ function generateHeist(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
-function heistPrompt(request: GeneratorRunRequest): string {
+export function buildCampaignHeistPrompt(request: GeneratorRunRequest) {
   const prompt = buildHeistPrompt(heistOptions(request));
-  return `${contextChain(request)}
+  return {
+    ...prompt,
+    userMessage: `${contextChain(request)}\n\n${prompt.userMessage}`,
+  };
+}
 
-${prompt.userMessage}`;
+function heistPrompt(request: GeneratorRunRequest): string {
+  return buildCampaignHeistPrompt(request).userMessage;
 }
 
 function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {

@@ -78,6 +78,22 @@ describe("validateHeist", () => {
     expect(kinds(d)).toContain("banned-name");
   });
 
+  it("does not mistake an ambiguous banned name for an ordinary word", () => {
+    const d = draft();
+    d.lore += "\n\nCross the yard before the patrol. Leave the stone behind.";
+    expect(kinds(d)).not.toContain("banned-name");
+    d.lore += " Keeper Cross's lantern marks the route.";
+    expect(kinds(d)).toContain("banned-name");
+  });
+
+  it("catches an ambiguous banned name used as the subject of an action", () => {
+    for (const name of ["Cross", "Vale", "Stone", "Grey", "Ash"]) {
+      const d = draft();
+      d.lore += `\n\n${name} waits by the door.`;
+      expect(kinds(d)).toContain("banned-name");
+    }
+  });
+
   it("catches one game system's mechanics", () => {
     const d = draft();
     d.lore += "\n\nThe ward holds them for one round.";

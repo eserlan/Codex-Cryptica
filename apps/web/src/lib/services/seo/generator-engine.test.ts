@@ -610,7 +610,7 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateHeist", () => {
-    it("skips the heist repair turn when the draft already validates", async () => {
+    it("reviews a structurally valid heist and keeps semantic-only improvements", async () => {
       const clean = generateHeistLocal({ heistType: "Theft" });
       const json = JSON.stringify({
         title: clean.title,
@@ -624,7 +624,17 @@ describe("DefaultGeneratorEngine", () => {
         })(),
       });
       const mockChat = {
-        sendMessageStream: vi.fn().mockResolvedValue(stream(json)),
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(json))
+          .mockResolvedValueOnce(
+            stream(
+              JSON.stringify({
+                ...JSON.parse(json),
+                title: "The Reviewed Heist",
+              }),
+            ),
+          ),
       };
       mockClientManager.getModel.mockResolvedValue({
         startChat: vi.fn().mockReturnValue(mockChat),
@@ -635,9 +645,8 @@ describe("DefaultGeneratorEngine", () => {
         useAI: true,
       });
 
-      // One turn only: the deterministic check found nothing to repair, so the
-      // second model call is never made.
-      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(1);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(2);
+      expect(res.title).toBe("The Reviewed Heist");
       expect(res.lore).toContain("### Alarm Track");
     });
 
