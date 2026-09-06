@@ -390,11 +390,12 @@ export const heistConfig = {
       startsWith:
         "The crew arrives with tools and leaves with them. The system is running and stays in the building.",
       protects:
-        "the system's critical part, and the operators who would notice a hand on it",
+        "the system's critical part, and the attendants who would notice a hand on it",
       casing:
         "an entry vector, which part of the system actually matters, and the inspection schedule",
       completion: "breaking the part that matters",
-      escapeCause: "the failure showing, or an operator noticing the tampering",
+      escapeCause:
+        "the failure showing, or an attendant noticing the tampering",
       complicationFocus:
         "the system's redundancy, the inspection timing, and who is on the floor",
       score: "one night to break {prize} and be gone before it shows",
@@ -404,7 +405,7 @@ export const heistConfig = {
       window:
         "While it is running — stopped, it gets inspected, and the damage would be found.",
       protection:
-        "The vault layer, plus an operator who would notice a hand on the wrong lever.",
+        "The vault layer, plus an attendant who would notice a hand on the wrong lever.",
       aftermath:
         "It fails visibly some time after the crew has gone, and stays failed until it can be rebuilt.",
       moment: "The moment the system breaks",
@@ -555,7 +556,7 @@ export const heistConfig = {
     Delayed:
       "The delay has to be set before the shift ends, and the mechanism is looked over at the change — advance the shift clock after each stage of the work.",
     Precise:
-      "Finding the one part that matters costs time — advance the work clock at each stage of tracing it, and when it fills the operator comes to check. Anything broken beside it fails loudly and at once.",
+      "Finding the one part that matters costs time — advance the work clock at each stage of tracing it, and when it fills an attendant comes to check. Anything broken beside it fails loudly and at once.",
     Witnessed:
       "The witness has to be in position first and will not wait past the next patrol — advance the patrol clock each time the crew is delayed.",
     Distinctive:
@@ -592,7 +593,7 @@ export const heistConfig = {
     Watched: "Check clock; when it fills, that door opens.",
     Deniable: "Investigation clock; when it fills, the patron is named.",
     Delayed: "Shift clock; the mechanism is looked over at the change.",
-    Precise: "Work clock; when it fills, the operator comes to check.",
+    Precise: "Work clock; when it fills, an attendant comes to check.",
     Witnessed: "Patrol clock; the witness will not wait past it.",
     Distinctive: "Exposure clock at every person passed.",
     Perishable: "Decay clock; when it fills, nobody believes it.",

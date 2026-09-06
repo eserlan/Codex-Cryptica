@@ -90,7 +90,7 @@ const REMOVAL_WORDING = /\bthe prize\b|\bprize's\b|absence of/i;
  * words are perfectly correct in Cyberpunk, Sci-Fi or Lancer.
  */
 const MODERN_TITLES =
-  /\b(Chief Operator|Operator|Manager|Director|Supervisor|Technician|Coordinator|Executive|Administrator)\b/;
+  /\b(chief operator|operator|manager|director|supervisor|technician|coordinator|executive|administrator)\b/i;
 const PRE_INDUSTRIAL_GENRES = new Set([
   "Classic Fantasy",
   "Pirate",
