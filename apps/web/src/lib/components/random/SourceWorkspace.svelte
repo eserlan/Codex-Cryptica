@@ -26,6 +26,7 @@
     type SourceMode,
   } from "./source-workspace";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { createLongPressTracker } from "./long-press-tracker";
 
   /**
    * The shell both tables and decks live in (#2247, FR-003, FR-009).
@@ -203,45 +204,29 @@
     showContextMenu(source, e.clientX, e.clientY);
   }
 
-  let longPressTimer: ReturnType<typeof setTimeout> | undefined;
-  let longPressTriggered = false;
-  let touchStartX = 0;
-  let touchStartY = 0;
+  const longPress = createLongPressTracker<RandomSource>({
+    onLongPress: (source, clientX, clientY) =>
+      showContextMenu(source, clientX, clientY),
+    vibrate: (ms) => {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(ms);
+      }
+    },
+  });
 
   function handleItemTouchStart(e: TouchEvent, source: RandomSource) {
     const touch = e.touches?.[0];
-    const clientX = touch ? touch.clientX : 0;
-    const clientY = touch ? touch.clientY : 0;
-    touchStartX = clientX;
-    touchStartY = clientY;
-    longPressTriggered = false;
-    clearTimeout(longPressTimer);
-
-    longPressTimer = setTimeout(() => {
-      longPressTriggered = true;
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        try {
-          navigator.vibrate(40);
-        } catch {
-          // ignore
-        }
-      }
-      showContextMenu(source, clientX, clientY);
-    }, 450);
+    longPress.handleTouchStart(source, touch?.clientX ?? 0, touch?.clientY ?? 0);
   }
 
   function handleItemTouchMove(e: TouchEvent) {
     const touch = e.touches[0];
     if (!touch) return;
-    const dx = Math.abs(touch.clientX - touchStartX);
-    const dy = Math.abs(touch.clientY - touchStartY);
-    if (dx > 10 || dy > 10) {
-      clearTimeout(longPressTimer);
-    }
+    longPress.handleTouchMove(touch.clientX, touch.clientY);
   }
 
   function handleItemTouchEnd() {
-    clearTimeout(longPressTimer);
+    longPress.handleTouchEnd();
   }
 
   function closeContextMenu() {
@@ -739,10 +724,7 @@
             <button
               type="button"
               onclick={() => {
-                if (longPressTriggered) {
-                  longPressTriggered = false;
-                  return;
-                }
+                if (longPress.consumeTriggered()) return;
                 select(source);
               }}
               class="flex flex-1 min-w-0 items-center justify-between text-left focus:outline-none"
