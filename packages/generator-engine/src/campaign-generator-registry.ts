@@ -115,7 +115,6 @@ import {
 } from "./public-secret-society";
 import {
   buildHeistPrompt,
-  DEFAULT_HEIST_SYSTEM,
   generateHeistLocal,
   heistConfig,
   type HeistGeneratorOptions,
@@ -1014,7 +1013,6 @@ function heistOptions(request: GeneratorRunRequest): HeistGeneratorOptions {
     heistType: optionString(request, "heistType", ""),
     targetScale: optionString(request, "targetScale", ""),
     targetType: optionString(request, "targetType", ""),
-    system: optionString(request, "system", ""),
     prize: optionString(request, "prize", ""),
     campaignContext: request.instructions?.trim() || undefined,
   };
@@ -3167,14 +3165,6 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "text",
       },
       {
-        id: "system",
-        label: "Rules System",
-        description:
-          "Generation stays system-neutral unless you pick a system to tailor for.",
-        control: "select",
-        choices: heistConfig.systems.map((s) => ({ value: s, label: s })),
-      },
-      {
         id: "prize",
         label: "The Prize",
         description:
@@ -3186,7 +3176,6 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       heistType: "",
       targetScale: "",
       targetType: "",
-      system: DEFAULT_HEIST_SYSTEM,
       prize: "",
     },
     generate: generateHeist,
