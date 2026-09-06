@@ -683,7 +683,7 @@ describe("DefaultGeneratorEngine", () => {
         'must be headed "The Prize"',
       );
       expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
-        "Do NOT write a new one",
+        "Do not generate a new heist",
       );
       expect(res.content).toContain("### The Prize");
     });
