@@ -2,6 +2,7 @@ export * from "./campaign-generator-types";
 export {
   runHeistGeneration,
   streamHeistGeneration,
+  type HeistGenerationTurns,
   type HeistGenerationResult,
 } from "./heist-generation";
 export {
@@ -304,13 +305,16 @@ export {
   type HeistSection,
 } from "./heist-validation";
 export {
+  buildHeistAuditPrompt,
   buildHeistPrompt,
   buildHeistRepairPrompt,
+  parseHeistAuditResponse,
   parseHeistResponse,
   generateHeistLocal,
   heistConfig,
   type HeistGeneratorOptions,
   type HeistPrompt,
+  type HeistSemanticAudit,
   type ResolvedHeist,
 } from "./public-heist";
 export { SETTLEMENT_PRESETS } from "./public-settlement-presets";

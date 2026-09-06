@@ -6,11 +6,12 @@
  * split: everything that can be checked by reading the document — duplicate or
  * empty sections, missing fields, wrong terminology for the heist type, banned
  * names, system mechanics in neutral output — is checked here, for free,
- * before the semantic review call.
+ * before the semantic audit call.
  *
  * What is left over is genuinely semantic ("she wants to escape, so why does
- * she broadcast the theft?") and is what the unconditional repair pass fixes.
- * Passing these checks does not establish semantic consistency.
+ * she broadcast the theft?") and is what the unconditional audit identifies
+ * for the conditional repair pass. Passing these checks does not establish
+ * semantic consistency.
  *
  * Pure and framework-free: the same rulebook backs the runtime pipeline and
  * `scripts/heist-eval.ts`, so the sweep tool and the generator can never drift
@@ -104,7 +105,7 @@ export function heistWordCount(draft: HeistDraftFields): number {
     .length;
 }
 
-/** Whether structural repairs are needed; semantic review runs regardless. */
+/** Whether structural repairs are needed; semantic audit runs regardless. */
 export function needsRepair(findings: readonly HeistFinding[]): boolean {
   return findings.some((f) => f.severity === "structural");
 }
