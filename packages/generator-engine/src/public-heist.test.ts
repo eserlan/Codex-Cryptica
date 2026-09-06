@@ -17,6 +17,31 @@ function seededRng(seed = 1): () => number {
 }
 
 describe("generateHeistLocal", () => {
+  it("gives clocks explicit bounds and keeps tracing dormant until movement", () => {
+    for (const pressure of Object.values(heistConfig.pressureByComplication)) {
+      if (pressure.includes("clock"))
+        expect(pressure).toMatch(/three|four|third/);
+    }
+    expect(heistConfig.pressureByComplication.Traceable).toContain(
+      "only once the objective is moved out of its shielded resting place",
+    );
+    expect(heistConfig.pressureByComplication.Traceable).toContain(
+      "disabling or shielding the trace stops these updates",
+    );
+  });
+
+  it("preserves covert completion and a fixed hidden factor in the fallback", () => {
+    for (const heistType of ["Sabotage", "Plant Evidence", "Information"]) {
+      const out = generateHeistLocal({ heistType }, seededRng(4));
+      expect(out.lore).toContain("thirty minutes after entry");
+      expect(out.lore).toContain("a covert crew can leave before discovery");
+      expect(out.lore).not.toContain(
+        "Whichever detail the crew leans on hardest",
+      );
+      expect(out.lore).not.toContain("an alarm nobody knew was there");
+      expect(out.content).toContain("**Methods**");
+    }
+  });
   it("returns every section of the heist framework", () => {
     const out = generateHeistLocal({ heistType: "Theft" }, seededRng(5));
     expect(out.type).toBe("event");
@@ -56,8 +81,8 @@ describe("generateHeistLocal", () => {
         .split("\n")
         .find((l) => l.startsWith(`- **${ring}**`));
       expect(line, `missing ${ring} ring`).toBeDefined();
-      // "by X, by Y, or by Z" — at least two distinct approaches per layer.
-      expect(line!.match(/\bby\b/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+      expect(line).toContain(" or ");
+      expect(line!.split(",").length).toBeGreaterThanOrEqual(2);
     }
   });
 
@@ -71,15 +96,14 @@ describe("generateHeistLocal", () => {
     const section = out.lore
       .split(`### ${heistConfig.objectives.Theft.momentHeading}`)[1]
       .split("### ")[0];
-    // The trigger fires, escalates the alarm, and closes the way in — and the
-    // getaway opens from that same closure rather than an unrelated reason.
     expect(section).toContain("**2 — Alert**");
-    expect(section).toContain("the crew's way in closes behind them");
-    expect(heistConfig.routeClosures.some((c) => section.includes(c))).toBe(
-      true,
+    expect(section).toContain(
+      "Taking the object does not itself sound an alarm",
     );
+    expect(section).toContain("thirty-minute shelf inspection");
+    expect(section).toContain("five minutes to reach the service entrance");
     expect(out.lore).toContain(
-      "The service route from the casing is gone for exactly that reason",
+      "The entry route remains usable until reinforcements reach it",
     );
   });
 
@@ -220,9 +244,9 @@ describe("generateHeistLocal", () => {
   it("offers alternate routes that differ in kind, plus a pursuit", () => {
     const out = generateHeistLocal({}, seededRng(8));
     const section = out.lore.split("### The Getaway")[1].split("### ")[0];
-    expect(section).toContain("**Fast but exposed**");
-    expect(section).toContain("**Covert but slow**");
-    expect(section).toContain("**Hard route**");
+    expect(section).toContain("**Race back**");
+    expect(section).toContain("**Public departure**");
+    expect(section).toContain("**Drain route**");
     expect(section).toContain("**Pursuit**:");
   });
 
@@ -424,13 +448,12 @@ describe("generateHeistLocal", () => {
     }
   });
 
-  it("does not let lockdown pre-empt the route the point of no return closes", () => {
+  it("keeps the entry route usable until reinforcements arrive after detection", () => {
     const out = generateHeistLocal({}, seededRng(5));
     const lockdown = out.lore.split("**3 — Lockdown**")[1].split("\n")[0];
-    // Lockdown bars the public doors; the service route is closed later, by
-    // the prize being lifted — the two must not claim the same closure.
-    expect(lockdown).toContain("the service route is a staff route and stays");
-    expect(out.lore).toContain("the crew's way in closes behind them");
+    expect(lockdown).toContain("Five minutes after Alert");
+    expect(out.lore).toContain("a covert crew can leave before discovery");
+    expect(out.lore).not.toContain("the crew's way in closes behind them");
   });
 
   it("is deterministic for a fixed seed", () => {
@@ -441,6 +464,24 @@ describe("generateHeistLocal", () => {
 });
 
 describe("buildHeistPrompt", () => {
+  it("separates transition, detection and full success for every objective type", () => {
+    for (const heistType of heistConfig.heistTypes) {
+      const { userMessage } = buildHeistPrompt({ heistType }, "", seededRng(1));
+      expect(userMessage).toContain('"summary":');
+      expect(userMessage).toContain(
+        "Objective must preserve the full success condition",
+      );
+      expect(userMessage).toContain(
+        "an objective transition does not itself advance time or force an alarm",
+      );
+      expect(userMessage).toContain(
+        "including the original route if still usable",
+      );
+      expect(userMessage).not.toContain("fires the instant the crew completes");
+      expect(userMessage).not.toContain("why the planned route is gone");
+      expect(userMessage).not.toContain("The action that completes the job:");
+    }
+  });
   it("passes the resolved options through into the prompt", () => {
     const { userMessage, resolved } = buildHeistPrompt(
       {
@@ -488,7 +529,7 @@ describe("buildHeistPrompt", () => {
       'exactly one complication is marked "(default)"',
     );
     expect(userMessage).toContain(
-      'the route lost in "The Getaway" is the one "When the Prize Is Taken" closes, and is the one the crew entered by',
+      "escape options remain usable until their stated closure triggers, including the original entry route",
     );
     expect(userMessage).toContain("Ownership and location:");
     expect(userMessage).toContain("Alarm reachability:");
@@ -541,7 +582,7 @@ describe("buildHeistPrompt", () => {
       "- What the security protects: the destination the package must reach, not the package itself",
     );
     expect(userMessage).toContain(
-      "- The action that completes the job: leaving the package where it will be found and believed",
+      "- Objective transition (not full mission success): leaving the package where it will be found and believed",
     );
     expect(userMessage).toContain("### When the Evidence Is Planted");
     expect(userMessage).toContain(
@@ -587,7 +628,7 @@ describe("buildHeistPrompt", () => {
   it("requires pressure to advance on its own, not only on failure", () => {
     const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
     expect(userMessage).toContain(
-      'The "Pressure" must advance on its own during the job, not only when the crew fails',
+      "Once active, Pressure must advance during the job, not only on failure",
     );
   });
 
@@ -673,29 +714,18 @@ describe("buildHeistRepairPrompt", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
     expect(prompt).toContain("Do not generate a new heist");
-    expect(prompt).toContain(
-      "Preserve the scenario and make only the smallest edits needed to fix problems",
-    );
-    expect(prompt).toContain(
-      "Prefer changing one sentence over rewriting a section",
-    );
-    expect(prompt).toContain(
-      "do not increase the overall length unless necessary",
-    );
+    expect(prompt).toContain("Make the smallest fixes");
+    expect(prompt).toContain("Replace sentences instead of expanding sections");
+    expect(prompt).toContain("Return no more words than the original");
+    expect(prompt).toContain("delete at least as much as you add");
   });
 
-  it("never regresses to a flat lettered checklist, even after adding priority invariants", () => {
-    // The point of the original redesign was never a specific character
-    // count — it was keeping the reviewer's job to "spot contradictions, fix
-    // them, don't rewrite everything" rather than a mini rules manual with
-    // lettered sub-items (9a/9b/...). Naming three invariants ahead of a
-    // demoted prose paragraph grew the prompt somewhat, which is an accepted
-    // trade for correctly prioritising them — but it must still read as one
-    // reviewer's brief, not a rulebook with per-letter clauses.
+  it("keeps the state model compact instead of accumulating individual rules", () => {
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
     expect(prompt).not.toMatch(/\n9[a-f]\./);
-    expect(prompt.length).toBeLessThan(5000);
+    expect(prompt.length).toBeLessThan(4500);
+    expect(prompt).not.toContain("verify these five invariants");
   });
 
   it("carries the demoted checklist regardless of whether findings were auto-detected", () => {
@@ -715,63 +745,103 @@ describe("buildHeistRepairPrompt", () => {
     );
   });
 
-  it("puts five named invariants ahead of everything else (real samples, #2768)", () => {
-    // "The Orchid Ledger" and "Payroll Under Red Dust" both reproduced the
-    // same completion-vs-detection conflation that the flat checklist
-    // (one bullet among twenty) failed to catch twice in a row. These
-    // checks are now named invariants that come before the demoted list,
-    // rather than one more equally-weighted line.
+  it("reconstructs the five states before repairs, even with automated findings", () => {
     const { resolved } = buildHeistPrompt(
       { heistType: "Plant Evidence" },
       "",
       seededRng(1),
     );
-    const prompt = buildHeistRepairPrompt([], resolved);
-
-    const invariantsIndex = prompt.indexOf(
-      "Before anything else, verify these five invariants",
+    const prompt = buildHeistRepairPrompt(
+      [{ message: "Alarm level 3 is missing." }],
+      resolved,
     );
-    const demotedIndex = prompt.indexOf("After those five, do the normal pass");
-    expect(invariantsIndex).toBeGreaterThan(-1);
-    expect(demotedIndex).toBeGreaterThan(invariantsIndex);
-
-    // Invariant 1: completion is not detection.
-    expect(prompt).toContain("Completion is not detection.");
-    expect(prompt).toContain(
-      "For Plant Evidence, Information, and Sabotage especially, successful covert completion should stay undiscovered until a believable later trigger",
+    const states = [
+      "1. Infiltration",
+      "2. Objective transition",
+      "3. Undetected window",
+      "4. Detection / response",
+      "5. Escape",
+    ];
+    let previousIndex = prompt.indexOf(
+      "silently reconstruct its sequence of states",
     );
-    expect(prompt).toContain(
-      "Never invent an automatic alarm merely because the scenario needs a getaway",
+    expect(previousIndex).toBeGreaterThan(-1);
+    for (const state of states) {
+      const index = prompt.indexOf(state);
+      expect(index).toBeGreaterThan(previousIndex);
+      previousIndex = index;
+    }
+    expect(prompt.indexOf("Automated checks already found")).toBeGreaterThan(
+      previousIndex,
     );
-    expect(prompt).toContain(
-      "preserve that and let the crew potentially leave through their original route",
+    expect(prompt.indexOf("Then do the normal pass")).toBeGreaterThan(
+      previousIndex,
     );
-
-    // Invariant 2: the timeline must be executable.
-    expect(prompt).toContain("The timeline must be executable.");
-    expect(prompt).toContain(
-      "referring to the same event must name the same time",
-    );
-    expect(prompt).toContain(
-      'avoid a vague trigger such as "each obstacle" unless those obstacles are explicitly defined',
-    );
-
-    // Invariant 3: completion state must propagate consistently.
-    expect(prompt).toContain("Completion state must propagate consistently.");
-    expect(prompt).toContain(
-      '"When the Evidence Is Planted", "The Getaway", "GM Quick Reference", "Alarm Track", and "Complications"',
-    );
-    expect(prompt).toContain(
-      "The route must not seal immediately in one section and only on discovery in another",
-    );
-    expect(prompt).toContain(
-      "Remove any consequence that only fits a failed approach from the default successful path",
-    );
-
-    // The demoted pass still covers the setup/payoff check, folded to prose.
     expect(prompt).toContain(
       'any unusual tool or fact introduced prominently in "The Score" that never affects play later (integrate it into an obstacle, or remove it)',
     );
+  });
+
+  it("preserves delayed discovery and escape before a closure trigger (#2768)", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Rescue" },
+      "",
+      seededRng(1),
+    );
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain(
+      "Escape can overlap the undetected window or finish before detection",
+    );
+    expect(prompt).toContain(
+      "Never make a scheduled future event happen instantly because the objective transition occurred",
+    );
+    expect(prompt).toContain(
+      "Keep the original entry route available until its stated closure trigger, including a race to leave before it closes",
+    );
+    expect(prompt).toContain(
+      "Never invent an automatic alarm merely to force a getaway",
+    );
+    expect(prompt).toContain("refer to the same event must agree on its time");
+  });
+
+  it("ties pressure and pursuit to their activation state, not automatically to infiltration (#2768)", () => {
+    const { resolved } = buildHeistPrompt({}, "", seededRng(1));
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain(
+      "For every clock, pressure, security response, route closure, pursuit, and alarm trigger",
+    );
+    expect(prompt).toContain(
+      "identify its active state, activation event, and consequence",
+    );
+    expect(prompt).toContain(
+      "No tracking pursuit before the fiction provides an active way to track the crew or objective",
+    );
+    expect(prompt).toContain("Every clock must say exactly what advances it");
+  });
+
+  it("keeps the full Score in the quick reference across objective types (#2768)", () => {
+    for (const heistType of [
+      "Theft",
+      "Rescue",
+      "Plant Evidence",
+      "Information",
+      "Sabotage",
+    ]) {
+      const { resolved } = buildHeistPrompt({ heistType }, "", seededRng(1));
+      const prompt = buildHeistRepairPrompt([], resolved);
+      expect(prompt).toContain(
+        `"The Score", "${resolved.momentHeading}", "The Getaway", "GM Quick Reference", "Alarm Track", "Pressure", and "Complications"`,
+      );
+      expect(prompt).toContain(
+        'The GM Quick Reference Objective must preserve the full success condition from "The Score"',
+      );
+      expect(prompt).toContain(
+        "leaving a cell, vault, or custody floor is not mission success when escape is still required",
+      );
+      expect(prompt).toContain(
+        "summaries must preserve the same facts and default complication",
+      );
+    }
   });
 
   it("does not let a later section nullify an established bypass (real sample, #2768)", () => {
@@ -781,11 +851,15 @@ describe("buildHeistRepairPrompt", () => {
     // bypass it had just granted.
     const { resolved } = buildHeistPrompt({}, "", seededRng(1));
     const prompt = buildHeistRepairPrompt([], resolved);
-    expect(prompt).toContain("Preserve a successful bypass.");
     expect(prompt).toContain(
-      "a later section must not declare that same mechanism unavoidable regardless",
+      "Carry successful bypasses into every later state",
     );
-    expect(prompt).toContain("A spoofed sensor stays spoofed");
+    expect(prompt).toContain(
+      "a spoofed or disabled sensor cannot detect them unless an established event restores it",
+    );
+    expect(prompt).toContain(
+      "Any independent detection needs its own explicit trigger",
+    );
   });
 
   it("requires the prize's catch to hold through the getaway, not only the rings (real sample, #2768)", () => {
@@ -919,8 +993,8 @@ describe("parseHeistResponse", () => {
     );
     const whole = `${out.content}\n${out.lore}`;
     expect(whole.match(/### Alarm Track/g)).toHaveLength(1);
-    // Flashbacks were genuinely absent, so those are still restored.
-    expect(out.lore).toContain("### Flashback Opportunities");
+    // Review must see the omission instead of a generic invented backfill.
+    expect(out.lore).not.toContain("### Flashback Opportunities");
   });
 
   it("keeps text that appears before the first heading", () => {
@@ -942,7 +1016,7 @@ describe("parseHeistResponse", () => {
     expect(out.content).toContain("### The Score");
   });
 
-  it("backfills a required section the model skipped", () => {
+  it("leaves missing sections visible for scenario-aware review", () => {
     // Observed in a real sample: one generation in ten ended cleanly after
     // "The Getaway" and never wrote "Flashback Opportunities".
     const { resolved } = buildHeistPrompt(
@@ -957,9 +1031,8 @@ describe("parseHeistResponse", () => {
       resolved,
       seededRng(2),
     );
-    expect(out.lore).toContain("### Flashback Opportunities");
-    expect(out.lore).toContain("### Alarm Track");
-    expect(out.lore).toContain("**0 — Quiet**");
+    expect(out.lore).not.toContain("### Flashback Opportunities");
+    expect(out.lore).not.toContain("### Alarm Track");
     // What the model did write is untouched.
     expect(out.lore).toContain("### The Getaway");
     expect(out.lore).toContain("Gone.");

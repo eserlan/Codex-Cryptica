@@ -6,11 +6,11 @@
  * split: everything that can be checked by reading the document — duplicate or
  * empty sections, missing fields, wrong terminology for the heist type, banned
  * names, system mechanics in neutral output — is checked here, for free,
- * before any second model call is considered.
+ * before the semantic review call.
  *
  * What is left over is genuinely semantic ("she wants to escape, so why does
- * she broadcast the theft?") and is what the repair pass is asked to fix. When
- * this module finds nothing, the repair pass is skipped entirely.
+ * she broadcast the theft?") and is what the unconditional repair pass fixes.
+ * Passing these checks does not establish semantic consistency.
  *
  * Pure and framework-free: the same rulebook backs the runtime pipeline and
  * `scripts/heist-eval.ts`, so the sweep tool and the generator can never drift
@@ -35,8 +35,8 @@ export interface HeistFinding {
   message: string;
   /**
    * `structural` problems are contract breaks a reader would notice, and are
-   * what earns a second model call. `advisory` ones are worth mentioning while
-   * we are already repairing, but not worth a call of their own — measured:
+   * used to reject structurally worse repairs. `advisory` findings guide the
+   * review without overriding a structural improvement — measured:
    * every repair triggered by length alone came back the same length, because
    * trimming is exactly the edit a "change as little as possible" instruction
    * discourages.
@@ -104,7 +104,7 @@ export function heistWordCount(draft: HeistDraftFields): number {
     .length;
 }
 
-/** Whether these findings justify spending a second model call. */
+/** Whether structural repairs are needed; semantic review runs regardless. */
 export function needsRepair(findings: readonly HeistFinding[]): boolean {
   return findings.some((f) => f.severity === "structural");
 }
@@ -147,7 +147,11 @@ export function validateHeist(draft: HeistDraftFields): HeistFinding[] {
     }
   }
 
-  for (const required of REQUIRED_LORE_SECTIONS) {
+  for (const required of [
+    "The Score",
+    "Casing the Target",
+    ...REQUIRED_LORE_SECTIONS,
+  ]) {
     if (!headings.includes(required)) {
       add("missing-section", `"${required}" is missing entirely. Add it.`);
     }
@@ -243,10 +247,18 @@ export function validateHeist(draft: HeistDraftFields): HeistFinding[] {
     }
   }
 
-  // Placeholder names the house style bans outright — the cheapest proxy for
-  // "detail leaked in from somewhere else".
+  // Some banned placeholder names are also ordinary words ("Cross", "Stone",
+  // "Ash"). Only treat those as names in name-like contexts, or sentence-open
+  // verbs such as "Cross the yard" become structural failures.
+  const ambiguousNames = new Set(["Cross", "Vale", "Stone", "Grey", "Ash"]);
   for (const name of BANNED_NAMES) {
-    if (new RegExp(`\\b${name}\\b`).test(whole)) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const usedAsName = ambiguousNames.has(name)
+      ? new RegExp(
+          `(?:\\b(?:named|called|Captain|Keeper|Guard|Officer|Master|Mistress)\\s+${escaped}\\b|\\b${escaped}(?:'s|’s)\\b)`,
+        ).test(whole)
+      : new RegExp(`\\b${escaped}\\b`).test(whole);
+    if (usedAsName) {
       add(
         "banned-name",
         `"${name}" is a banned placeholder name. Rename that entity everywhere it appears.`,

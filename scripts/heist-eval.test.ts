@@ -1,10 +1,90 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   gradeHeist,
+  generateViaProxy,
   splitSections,
   wordCount,
   type HeistDraft,
 } from "./heist-eval";
+import { generateHeistLocal } from "../packages/generator-engine/src/public-heist";
+import { heistStateCases } from "./fixtures/heist-state-cases";
+
+describe("heist evaluation pipeline", () => {
+  it("evaluates the reviewed output and sends the original as chat history", async () => {
+    const initial = generateHeistLocal({ heistType: "Rescue" }, () => 0.9);
+    const final = {
+      ...initial,
+      title: "Reviewed Rescue",
+      content: initial.content.replace(
+        "### The Score",
+        "### The Score\nReviewed success condition.",
+      ),
+    };
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ content: JSON.stringify(initial) }),
+      )
+      .mockResolvedValueOnce(Response.json({ content: JSON.stringify(final) }));
+    const output = await generateViaProxy(
+      "http://localhost:8787",
+      "Rescue",
+      "Classic Fantasy",
+      fetcher,
+    );
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const sent = JSON.parse(fetcher.mock.calls[1][1].body);
+    expect(sent.messages[2]).toEqual({
+      role: "assistant",
+      content: JSON.stringify(initial),
+    });
+    expect(sent.messages[3].content).toContain(
+      "silently reconstruct its sequence of states",
+    );
+    expect(output.content).toContain("Reviewed success condition");
+    expect(output.review?.status).toBe("accepted");
+  });
+
+  it("reports a failed review while retaining the original", async () => {
+    const initial = generateHeistLocal({ heistType: "Theft" }, () => 0.5);
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ content: JSON.stringify(initial) }),
+      )
+      .mockRejectedValueOnce(new Error("offline"));
+    const output = await generateViaProxy(
+      "http://localhost:8787",
+      "Theft",
+      "Classic Fantasy",
+      fetcher,
+    );
+    expect(output.review?.status).toBe("failed");
+    expect(output.content).toContain("### The Score");
+  });
+
+  it("replays each synthetic case in one review call and preserves its human rubric", async () => {
+    const fixtures = heistStateCases();
+    expect(fixtures).toHaveLength(5);
+    for (const fixture of fixtures) {
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(
+          Response.json({ content: JSON.stringify(fixture.draft) }),
+        );
+      const output = await generateViaProxy(
+        "http://localhost:8787",
+        fixture.prompt.resolved.heistType,
+        fixture.prompt.resolved.genre,
+        fetcher,
+        fixture,
+      );
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(output.review?.criteria).toEqual(fixture.criteria);
+      expect(output.review?.original.lore).toBe(fixture.draft.lore);
+    }
+  });
+});
 
 /**
  * A draft that satisfies the contract. Each test bends exactly one thing, so
