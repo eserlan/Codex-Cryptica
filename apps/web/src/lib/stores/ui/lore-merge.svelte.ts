@@ -45,9 +45,13 @@ export class LoreMergeStore {
 
   /** Choices the dialog starts with, taken from each entry's safe default. */
   defaultChoices(plan: LoreMergePlan): Record<string, LoreSectionChoice> {
-    return Object.fromEntries(
-      plan.entries.map((entry) => [entry.key, entry.defaultChoice]),
-    );
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+    // to avoid intermediate array allocations and reduce garbage collection pressure.
+    const choices: Record<string, LoreSectionChoice> = {};
+    for (const entry of plan.entries) {
+      choices[entry.key] = entry.defaultChoice;
+    }
+    return choices;
   }
 }
 
