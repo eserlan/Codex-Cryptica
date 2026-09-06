@@ -108,6 +108,41 @@ describe("validateHeist", () => {
   });
 });
 
+describe("era-appropriate titles", () => {
+  it("catches a modern job title in a pre-industrial setting", () => {
+    const d = { ...draft(), genre: "Classic Fantasy" };
+    d.lore = d.lore.replace("A rival crew", "Chief Operator Magrida Pell");
+    d.lore += "\n\nChief Operator Magrida Pell signs the ledger nightly.";
+    const findings = validateHeist(d);
+    expect(findings.map((f) => f.kind)).toContain("anachronistic-title");
+  });
+
+  it("catches the title in lower case too", () => {
+    // LLM prose does not capitalise reliably, so casing cannot gate the rule.
+    const d = { ...draft(), genre: "Classic Fantasy" };
+    d.lore += "\n\nThe vault's chief operator signs the ledger nightly.";
+    expect(validateHeist(d).map((f) => f.kind)).toContain(
+      "anachronistic-title",
+    );
+  });
+
+  it("leaves the same title alone where it belongs", () => {
+    const d = { ...draft(), genre: "Cyberpunk / Corporate" };
+    d.lore += "\n\nChief Operator Magrida Pell signs the ledger nightly.";
+    expect(validateHeist(d).map((f) => f.kind)).not.toContain(
+      "anachronistic-title",
+    );
+  });
+
+  it("is skipped entirely when no genre is supplied", () => {
+    const d = draft();
+    d.lore += "\n\nThe Operator signs the ledger nightly.";
+    expect(validateHeist(d).map((f) => f.kind)).not.toContain(
+      "anachronistic-title",
+    );
+  });
+});
+
 describe("needsRepair", () => {
   it("does not spend a model call on length alone", () => {
     const d = draft();

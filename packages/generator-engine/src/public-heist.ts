@@ -233,7 +233,7 @@ export const heistConfig = {
       heading: "The Prize",
       momentHeading: "When the Prize Is Taken",
       fields:
-        "what it is, who wants it and why, why it matters beyond its price, and where it is normally kept",
+        "what it is, who wants it and why, why it matters beyond its price, where it is normally kept, and — separately from reaching it — two or three genuinely different ways to get it out of its place",
       startsWith:
         "The target holds the prize. The crew arrives empty-handed and leaves carrying it.",
       protects: "the prize itself, where it is kept",
@@ -261,7 +261,7 @@ export const heistConfig = {
       heading: "The Package",
       momentHeading: "When the Evidence Is Planted",
       fields:
-        "what it is and whom it will incriminate, where inside the target it must end up for anyone to believe it, what would give it away as planted, who will find it and when, and two or three genuinely different ways to place it",
+        "what it is and whom it will incriminate, where inside the target it must end up for anyone to believe it, what would give it away as planted, who will find it and when, and — separately from reaching the spot — two or three genuinely different ways to make the placement convincing",
       startsWith:
         "The crew already has the package when the job begins. Nothing has to be stolen first, and the package is NOT inside the target — getting it in is the entire job.",
       protects:
@@ -291,9 +291,9 @@ export const heistConfig = {
     },
     Assassination: {
       heading: "The Target",
-      momentHeading: "When the Target Is Struck",
+      momentHeading: "When the Target Is Killed",
       fields:
-        "who they are, where they will be tonight, a concrete window in which they are alone or unguarded, what protects them the rest of the time, what changes the moment they die and how long it takes anyone to notice, and two or three genuinely different ways to reach them",
+        "who they are, where they will be tonight, a concrete window in which they are alone or unguarded, what protects them the rest of the time, what changes the moment they die and how long it takes anyone to notice, and — separately from any question of getting to them — two or three genuinely different opportunities or methods for the kill itself",
       startsWith:
         "The target is inside and alive. The crew arrives with whatever they mean to use and leaves without it if they are sensible.",
       protects:
@@ -325,7 +325,7 @@ export const heistConfig = {
       heading: "The Captive",
       momentHeading: "When the Captive Is Freed",
       fields:
-        "who they are, the conditions they are held in, what state they are in and what they can or cannot do for themselves, who guards them and on what routine, what happens when they are found missing, and two or three genuinely different ways to reach them",
+        "who they are, the conditions they are held in, what state they are in and what they can or cannot do for themselves, who guards them and on what routine, what happens when they are found missing, and — separately from reaching the cell — two or three genuinely different ways to actually get them out",
       startsWith:
         "The target holds the captive. The crew arrives with only what they can carry and leaves with a person who cannot move as fast as they can.",
       protects: "the captive — the cell, the keyholder, and the guard rota",
@@ -355,7 +355,7 @@ export const heistConfig = {
       heading: "The Subject",
       momentHeading: "When the Subject Walks",
       fields:
-        "who they are, why they cannot simply walk out, what they will and will not agree to, who is watching them, what happens when they are missed, and two or three genuinely different ways to reach them",
+        "who they are, why they cannot simply walk out, what they will and will not agree to, who is watching them, what happens when they are missed, and — separately from reaching them — two or three genuinely different ways to get them out past the routine that tracks them",
       startsWith:
         "The subject is inside and wants out. The crew arrives with a way to move them, not a way to carry them.",
       protects:
@@ -386,15 +386,16 @@ export const heistConfig = {
       heading: "The System",
       momentHeading: "When the Sabotage Is Committed",
       fields:
-        "what the system does, which single part actually matters, what protects that part, what visibly happens when it fails and how long the failure lasts, and two or three genuinely different ways to break it",
+        "what the system does, which single part actually matters, what protects that part, what visibly happens when it fails and how long the failure lasts, and — separately from reaching it — two or three genuinely different ways to break it",
       startsWith:
         "The crew arrives with tools and leaves with them. The system is running and stays in the building.",
       protects:
-        "the system's critical part, and the operators who would notice a hand on it",
+        "the system's critical part, and the attendants who would notice a hand on it",
       casing:
         "an entry vector, which part of the system actually matters, and the inspection schedule",
       completion: "breaking the part that matters",
-      escapeCause: "the failure showing, or an operator noticing the tampering",
+      escapeCause:
+        "the failure showing, or an attendant noticing the tampering",
       complicationFocus:
         "the system's redundancy, the inspection timing, and who is on the floor",
       score: "one night to break {prize} and be gone before it shows",
@@ -404,7 +405,7 @@ export const heistConfig = {
       window:
         "While it is running — stopped, it gets inspected, and the damage would be found.",
       protection:
-        "The vault layer, plus an operator who would notice a hand on the wrong lever.",
+        "The vault layer, plus an attendant who would notice a hand on the wrong lever.",
       aftermath:
         "It fails visibly some time after the crew has gone, and stays failed until it can be rebuilt.",
       moment: "The moment the system breaks",
@@ -417,7 +418,7 @@ export const heistConfig = {
       heading: "The Record",
       momentHeading: "When the Record Is Read",
       fields:
-        "what it records and whom it damages, what form it takes and whether it can be copied rather than removed, where it is kept and who is permitted to read it, what happens when it is found missing or found altered, and two or three genuinely different ways to get at it",
+        "what it records and whom it damages, what form it takes and whether it can be copied rather than removed, where it is kept and who is permitted to read it, what happens when it is found missing or found altered, and — separately from reaching it — two or three genuinely different ways to read, copy or remove it",
       startsWith:
         "The record is inside. The crew arrives with the means to read or copy it, and may not need to remove anything at all.",
       protects: "the record and the register of who is permitted to read it",
@@ -555,7 +556,7 @@ export const heistConfig = {
     Delayed:
       "The delay has to be set before the shift ends, and the mechanism is looked over at the change — advance the shift clock after each stage of the work.",
     Precise:
-      "Finding the one part that matters costs time — advance the work clock at each stage of tracing it, and when it fills the operator comes to check. Anything broken beside it fails loudly and at once.",
+      "Finding the one part that matters costs time — advance the work clock at each stage of tracing it, and when it fills an attendant comes to check. Anything broken beside it fails loudly and at once.",
     Witnessed:
       "The witness has to be in position first and will not wait past the next patrol — advance the patrol clock each time the crew is delayed.",
     Distinctive:
@@ -592,7 +593,7 @@ export const heistConfig = {
     Watched: "Check clock; when it fills, that door opens.",
     Deniable: "Investigation clock; when it fills, the patron is named.",
     Delayed: "Shift clock; the mechanism is looked over at the change.",
-    Precise: "Work clock; when it fills, the operator comes to check.",
+    Precise: "Work clock; when it fills, an attendant comes to check.",
     Witnessed: "Patrol clock; the witness will not wait past it.",
     Distinctive: "Exposure clock at every person passed.",
     Perishable: "Decay clock; when it fills, nobody believes it.",
@@ -844,6 +845,9 @@ Every heading above appears exactly ONCE in the whole result. "content" and "lor
 Density matters as much as content. The entire result — "content" and "lore" together — must come in under ${HEIST_WORD_TARGET} words; a GM has to be able to scan it at the table. Short paragraphs and bullets only. Do not restate the same fact in "The Prize", "Security Rings", "Alarm Track", "The Getaway", and "Flashback Opportunities" — state it once, in the section that owns it, and let the others rely on it.
 ${systemNote}
 Do NOT merely rename theft concepts for the other heist types. The selected heist type determines the scenario's logic: what the crew begins with, what they must reach, what action completes the objective, and what triggers the escape phase. Take the starting position above literally — if the crew already carries the objective then it is NOT inside the target, there is no retrieval step to write, and the security exists to keep them away from where it must go; if the objective is a person, a system, or a record, the job is not a removal unless the starting position says it is. The selected heist type must materially shape the scenario, not just the wording of "The Score". "${resolved.objectiveHeading}" carries the actionable detail for a ${resolved.heistType} job, and the casing intel, security rings, complications and getaway must all engage with that objective rather than treating it as a container to be lifted. If "The Score" names a second objective as well — an object to take AND a person to kill, say — that objective gets its own section immediately after "${resolved.objectiveHeading}", written to the same depth, with its own location, window, protection and two or three ways to reach it.
+Getting to the objective and accomplishing it are two different problems, and the scenario must solve both. The security rings answer "how do we reach it"; "${resolved.objectiveHeading}" must answer "and then what do we actually do", with more than one live option. A job whose only answer is a single prescribed action once the crew arrives has no objective for the players to solve.
+If the objective has a special vulnerability, weakness, or single point that matters, say in one clause WHY it works — a ward anchored there, an old injury the wards never sealed, a maker's flaw. An unexplained weak point reads as an arbitrary game mechanic rather than something true about the fiction, and the players cannot reason about it.
+Any clock you introduce must be runnable: name what advances it and how many advances fill it. "Advance the work clock" with no stated stages and no stated limit cannot be run at a table.
 The "Pressure" must advance on its own during the job, not only when the crew fails. If the catch creates risk only on a bad outcome, pair it with something that moves regardless — a shift change, an inspection, a ritual, a tide — and say what happens when it runs out.
 Set the score firmly within the ${resolved.genre} genre — the target, its security, the alarm flavour, and the pursuit should all feel native to that setting rather than a fantasy heist with the nouns swapped.
 Scale the target to "${resolved.targetScale}": a Small score is a single building with a handful of staff, a Major score is a well-defended institution with a real security budget, and a Legendary score is a place that has never been successfully robbed and everyone knows it.
@@ -986,7 +990,13 @@ Then read the whole thing once more and check the things only a reader can catch
 7. Every alarm level is reachable in play and escalates meaningfully, and completing the objective does not jump the track past most of its own levels.
 8. The pressure can actually fire during a single infiltration, and any counting in it adds up.
 9. Named people behave in line with the motives given for them — someone who wants to stay hidden does not announce themselves.
-10. "GM Quick Reference" matches the sections it summarises, and summarises rather than repeating them word for word.
+9a. There are two or three genuinely different ways to accomplish the objective itself, not merely to reach it. Ways in are not ways to do the job: if the only answer once the crew arrives is one prescribed action, add further opportunities or methods that respect whatever special vulnerability you established.
+9b. Any special vulnerability, weak point or single-target rule is explained in the fiction — why that spot and not another. Delete or justify anything that reads as an arbitrary game mechanic.
+9c. Every magical or technical effect is unambiguous about what it actually does. If something alters an appearance, a reflection or a reading rather than the thing itself, say so plainly; a description that could mean either is a description the GM cannot run.
+9d. Every clock names what advances it and how many advances fill it. Remove or complete any clock that cannot be run as written.
+9e. The catch and the complications belong to THIS job. A constraint that would only matter for a different kind of heist — keeping collateral damage down on a job with nothing fragile nearby, say — is leftover scaffolding: cut it or give it a reason that exists in this scenario.
+9f. Names, ranks and titles suit the setting. A ${resolved.genre} scenario should not carry job titles from a different era or technology level.
+10. "GM Quick Reference" agrees with the sections it summarises on every fact — timings, triggers and consequences especially — and summarises rather than repeating them word for word. If the detail says an alarm fires on the deed itself, the summary must not say it fires when the body is found.
 11. No section appears twice and none is left empty.
 12. No proper noun, place or detail appears that belongs to a different scenario than this one.
 

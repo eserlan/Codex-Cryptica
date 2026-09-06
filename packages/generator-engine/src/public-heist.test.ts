@@ -313,7 +313,7 @@ describe("generateHeistLocal", () => {
     const expected: Array<[string, string]> = [
       ["Theft", "### When the Prize Is Taken"],
       ["Plant Evidence", "### When the Evidence Is Planted"],
-      ["Assassination", "### When the Target Is Struck"],
+      ["Assassination", "### When the Target Is Killed"],
       ["Rescue", "### When the Captive Is Freed"],
       ["Extraction", "### When the Subject Walks"],
       ["Sabotage", "### When the Sabotage Is Committed"],
@@ -584,6 +584,47 @@ describe("buildHeistPrompt", () => {
     const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
     expect(userMessage).toContain(
       'The "Pressure" must advance on its own during the job, not only when the crew fails',
+    );
+  });
+
+  it("separates reaching the objective from accomplishing it", () => {
+    const { userMessage } = buildHeistPrompt(
+      { heistType: "Assassination" },
+      "",
+      seededRng(1),
+    );
+    expect(userMessage).toContain(
+      "Getting to the objective and accomplishing it are two different problems",
+    );
+    expect(userMessage).toContain(
+      "two or three genuinely different opportunities or methods for the kill itself",
+    );
+  });
+
+  it("requires special vulnerabilities to be explained and clocks to be runnable", () => {
+    const { userMessage } = buildHeistPrompt({}, "", seededRng(1));
+    expect(userMessage).toContain("say in one clause WHY it works");
+    expect(userMessage).toContain(
+      "name what advances it and how many advances fill it",
+    );
+  });
+
+  it("asks the repair pass for objective approaches and coherent effects", () => {
+    const { resolved } = buildHeistPrompt(
+      { heistType: "Assassination", genre: "Classic Fantasy" },
+      "",
+      seededRng(1),
+    );
+    const prompt = buildHeistRepairPrompt([], resolved);
+    expect(prompt).toContain("Ways in are not ways to do the job");
+    expect(prompt).toContain("reads as an arbitrary game mechanic");
+    expect(prompt).toContain(
+      "If something alters an appearance, a reflection or a reading rather than the thing itself",
+    );
+    expect(prompt).toContain("how many advances fill it");
+    expect(prompt).toContain("leftover scaffolding");
+    expect(prompt).toContain(
+      "A Classic Fantasy scenario should not carry job titles",
     );
   });
 
