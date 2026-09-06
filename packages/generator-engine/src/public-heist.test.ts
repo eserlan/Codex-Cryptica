@@ -42,6 +42,21 @@ describe("generateHeistLocal", () => {
       expect(out.content).toContain("**Methods**");
     }
   });
+
+  it("uses objective intel rather than repeating the timing window in Casing", () => {
+    const out = generateHeistLocal({ heistType: "Rescue" }, seededRng(4));
+    const window = out.content
+      ?.split("\n")
+      .find((line) => line.startsWith("- **Window**:"));
+    const objective = out.content
+      ?.split("\n")
+      .find((line) => line.startsWith("- **The objective**:"));
+    expect(window).toBeDefined();
+    expect(objective).toBeDefined();
+    expect(objective).not.toBe(window);
+    expect(objective).toContain("fixed rota");
+  });
+
   it("returns every section of the heist framework", () => {
     const out = generateHeistLocal({ heistType: "Theft" }, seededRng(5));
     expect(out.type).toBe("event");

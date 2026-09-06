@@ -251,11 +251,13 @@ export function validateHeist(draft: HeistDraftFields): HeistFinding[] {
   // "Ash"). Only treat those as names in name-like contexts, or sentence-open
   // verbs such as "Cross the yard" become structural failures.
   const ambiguousNames = new Set(["Cross", "Vale", "Stone", "Grey", "Ash"]);
+  const characterAction =
+    "(?:waits|stands|guards|watches|speaks|says|asks|answers|opens|closes|carries|holds|wears|knows|wants|needs|offers|leads|follows|enters|leaves|moves|keeps|serves|works|lives|refuses|agrees|insists|believes|plans|tries|helps|betrays|attacks|escapes|is|was|has|will|can|must)";
   for (const name of BANNED_NAMES) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const usedAsName = ambiguousNames.has(name)
       ? new RegExp(
-          `(?:\\b(?:named|called|Captain|Keeper|Guard|Officer|Master|Mistress)\\s+${escaped}\\b|\\b${escaped}(?:'s|’s)\\b)`,
+          `(?:\\b(?:named|called|Captain|Keeper|Guard|Officer|Master|Mistress)\\s+${escaped}\\b|\\b${escaped}(?:'s|’s)\\b|\\b${escaped}\\s+${characterAction}\\b)`,
         ).test(whole)
       : new RegExp(`\\b${escaped}\\b`).test(whole);
     if (usedAsName) {

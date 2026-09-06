@@ -86,6 +86,14 @@ describe("validateHeist", () => {
     expect(kinds(d)).toContain("banned-name");
   });
 
+  it("catches an ambiguous banned name used as the subject of an action", () => {
+    for (const name of ["Cross", "Vale", "Stone", "Grey", "Ash"]) {
+      const d = draft();
+      d.lore += `\n\n${name} waits by the door.`;
+      expect(kinds(d)).toContain("banned-name");
+    }
+  });
+
   it("catches one game system's mechanics", () => {
     const d = draft();
     d.lore += "\n\nThe ward holds them for one round.";

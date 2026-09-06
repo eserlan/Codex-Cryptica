@@ -1083,7 +1083,7 @@ ${fill(resolved.objectiveCopy.lead)}
 ### Casing the Target
 - **Entry vector**: A service route staff use daily stays open throughout this shift; its covered alcove is out of sight of the outer patrol.
 - **Known obstacle**: The credential check between the public floor and the secured floor is watched, not merely locked.
-- **The objective**: ${state.window}`;
+- **The objective**: ${fill(resolved.objectiveCopy.casingLine)}`;
 
   const lore = `### GM Quick Reference
 - **Objective**: ${resolved.heistType} — ${fill(resolved.objectiveCopy.score)}.
