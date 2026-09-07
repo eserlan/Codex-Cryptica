@@ -138,6 +138,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "point-crawl-vs-hex-crawl",
     "how-do-you-create-quest-hooks-without-railroading",
     "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-do-you-run-an-rpg-campaign-in-one-city",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

@@ -133,7 +133,10 @@ export const howToCreateACyberpunkCityDistrict: AnswerConfigInput = {
       href: "/for/cyberpunk-red",
     },
   ],
-  relatedAnswers: ["what-should-an-rpg-settlement-contain"],
+  relatedAnswers: [
+    "what-should-an-rpg-settlement-contain",
+    "how-do-you-run-an-rpg-campaign-in-one-city",
+  ],
   labels: ["cyberpunk"],
   discovery: {
     id: "answer-cyberpunk-city-district",

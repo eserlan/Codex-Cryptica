@@ -151,6 +151,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "what-makes-a-good-random-encounter",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-to-create-a-cyberpunk-city-district",
+    "how-do-you-run-an-rpg-campaign-in-one-city",
   ],
   discovery: {
     id: "answer-settlement-contents",

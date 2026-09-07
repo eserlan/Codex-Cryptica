@@ -144,6 +144,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-you-improvise-npcs-on-the-spot",
     "how-do-you-track-faction-turns-between-rpg-sessions",
+    "how-do-you-run-an-rpg-campaign-in-one-city",
   ],
   discovery: {
     id: "answer-npc-relationships",
