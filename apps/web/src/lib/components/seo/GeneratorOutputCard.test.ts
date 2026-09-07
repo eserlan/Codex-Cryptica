@@ -80,4 +80,127 @@ describe("GeneratorOutputCard", () => {
     expect(seoMdContainer?.classList.contains("text-base")).toBe(true);
     expect(seoMdContainer?.classList.contains("text-sm")).toBe(false);
   });
+
+  it("renders Generate Roster and per-member Open as Character with interpolated aria-labels (#2808)", () => {
+    const rosterData: GeneratorOutput = {
+      title: "The Compact's Inner Circle",
+      type: "note",
+      summary: "Two notable members of The Compact.",
+      content: "### Vess Marrow — Quartermaster\n- **Duty**: Moves cargo.",
+      lore: "### At a Glance\n- **Structure**: Council",
+      status: "active",
+      labels: ["faction-roster", "faction-roster-generator"],
+    };
+    const rosterSections = [
+      {
+        id: "vess-marrow-quartermaster-0",
+        heading: "Vess Marrow — Quartermaster",
+        markdown: "### Vess Marrow — Quartermaster\n- **Duty**: Moves cargo.",
+        body: "- **Duty**: Moves cargo.",
+      },
+    ];
+
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: rosterData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Faction Roster",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: rosterData.content,
+        documentSections: rosterSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onOpenMemberAsCharacter: vi.fn(),
+      },
+    });
+
+    // The aria-label must interpolate the actual member heading, not the
+    // literal template text — this is the same interpolation pattern the
+    // pre-existing "Copy MD" button already uses successfully.
+    expect(
+      screen.getByLabelText("Open Vess Marrow — Quartermaster as a Character"),
+    ).toBeTruthy();
+  });
+
+  it("shows Generate Roster for a faction-family draft when onGenerateRoster is provided", () => {
+    // sampleData carries the "dark-fantasy-faction" label, one of the
+    // faction-family labels isFactionDraft() recognizes.
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: sampleData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Faction",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: sampleData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onGenerateRoster: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: /generate roster/i }),
+    ).toBeTruthy();
+  });
+
+  it("hides Generate Roster for a non-faction draft even when onGenerateRoster is provided", () => {
+    const npcData: GeneratorOutput = {
+      ...sampleData,
+      labels: ["npc-generator", "rpg-npc"],
+    };
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: npcData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "NPC",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: npcData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onGenerateRoster: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: /generate roster/i }),
+    ).toBeNull();
+  });
 });

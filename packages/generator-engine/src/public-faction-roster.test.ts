@@ -36,7 +36,7 @@ describe("resolveFactionRoster", () => {
 describe("generateFactionRosterLocal", () => {
   it("generates exactly `size` member sections, each with a connection to another member", () => {
     const out = generateFactionRosterLocal({ size: "4" }, seededRng(3));
-    expect(out.type).toBe("faction");
+    expect(out.type).toBe("note");
     const headings = out.content.match(/^### .+$/gm) ?? [];
     expect(headings).toHaveLength(4);
     // Every member section names a connection back into the roster.
@@ -160,6 +160,24 @@ describe("parseFactionRosterResponse", () => {
     expect(out.content).toContain("### Sister Aln — True believer");
     expect(out.content).toContain("- **Connection**: reports to (Sister Aln)");
     expect(out.lore).toContain("### At a Glance");
+  });
+
+  it("clamps parsed members to the resolved roster size, not a fixed cap", () => {
+    const { resolved: sizeThreeResolved } = buildFactionRosterPrompt(
+      { size: "3" },
+      "",
+      seededRng(1),
+    );
+    const json = JSON.stringify({
+      title: "Roster",
+      members: Array.from({ length: 6 }, (_, i) => ({
+        name: `Member ${i + 1}`,
+        role: "Role",
+      })),
+    });
+    const out = parseFactionRosterResponse(json, sizeThreeResolved);
+    const headings = out.content.match(/^### .+$/gm) ?? [];
+    expect(headings).toHaveLength(3);
   });
 
   it("drops a connection naming a member not present in the roster", () => {

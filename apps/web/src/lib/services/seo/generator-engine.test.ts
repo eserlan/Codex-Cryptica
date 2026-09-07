@@ -353,7 +353,7 @@ describe("DefaultGeneratorEngine", () => {
         useAI: false,
       });
 
-      expect(res.type).toBe("faction");
+      expect(res.type).toBe("note");
       expect(res.title).toBeDefined();
       const headings = res.content.match(/^### .+$/gm) ?? [];
       expect(headings).toHaveLength(4);
@@ -392,7 +392,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(mockModel.generateContent).toHaveBeenCalledWith(
         expect.stringContaining("The Compact fixes prices across three ports."),
       );
-      expect(res.type).toBe("faction");
+      expect(res.type).toBe("note");
       expect(res.title).toBe("The Compact's Inner Circle");
       expect(res.content).toContain("### Vess Marrow — Quartermaster");
       expect(res.labels).toContain("faction-roster");

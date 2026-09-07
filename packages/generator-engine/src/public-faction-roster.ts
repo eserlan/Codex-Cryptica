@@ -228,17 +228,14 @@ function formatMemberSection(member: FactionRosterMember): string {
 
 export function parseFactionRosterResponse(
   text: string,
-  // Accepted for API symmetry with the sibling parse* functions (and in case
-  // a future fallback wants it); unlike ResolvedFaction, ResolvedFactionRoster
-  // carries no generated name/title to fall back to.
-  _resolved: ResolvedFactionRoster,
+  resolved: ResolvedFactionRoster,
 ): PublicGeneratorOutput {
   const data = rec(parseFencedJson(text));
 
   const rawMembers = arr(data.members)
     .map((m) => rec(m))
     .filter((m) => str(m.name).trim())
-    .slice(0, 6);
+    .slice(0, resolved.size);
   const validNames = new Set(
     rawMembers.map((m) => str(m.name).trim().toLowerCase()),
   );
@@ -269,7 +266,11 @@ export function parseFactionRosterResponse(
   const content = members.map(formatMemberSection).join("\n\n");
 
   return {
-    type: "faction",
+    // A roster is a document *about* several people tied to a faction, not
+    // the faction itself or a single character — "note" matches the in-app
+    // registry's GENERATOR_ENTITY_TYPE["faction-roster"] mapping, so a
+    // roster imports as the same vault entity type on both surfaces.
+    type: "note",
     title: str(data.title) || "Notable Members",
     summary: str(data.summary),
     content,
@@ -372,7 +373,7 @@ export function generateFactionRosterLocal(
 Loyalty to the faction is not the same as loyalty to each other — the ${emphasis.toLowerCase()} in this group means the fault line runs through people who each think they are the reasonable one.`;
 
   return {
-    type: "faction",
+    type: "note",
     title: "Notable Members",
     summary,
     content,
