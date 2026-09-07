@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
@@ -10,10 +11,14 @@
   } from "$lib/content/answers/categories";
   import {
     ANSWER_SORT_OPTIONS,
+    DEFAULT_ANSWER_SORT,
     formatAnswerDate,
+    persistAnswerSort,
+    readStoredAnswerSort,
     sortAnswers,
     type AnswerSortOption,
   } from "$lib/content/answers/sort";
+  import { browserStorage } from "$lib/utils/runtime-deps";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -28,7 +33,22 @@
 
   let searchQuery = $state("");
   let activeCategory = $state<string | "all">("all");
-  let sortBy = $state<AnswerSortOption>("category");
+  let sortBy = $state<AnswerSortOption>(DEFAULT_ANSWER_SORT);
+  let isHydrated = $state(false);
+
+  onMount(() => {
+    const saved = readStoredAnswerSort(browserStorage);
+    if (saved !== sortBy) {
+      sortBy = saved;
+    }
+    isHydrated = true;
+  });
+
+  $effect(() => {
+    if (isHydrated) {
+      persistAnswerSort(sortBy, browserStorage);
+    }
+  });
 
   const KIND_LABEL: Record<string, string> = {
     definition: "Definition",
@@ -79,13 +99,13 @@
   let isSearchingOrFiltered = $derived(
     searchQuery.trim().length > 0 ||
       activeCategory !== "all" ||
-      sortBy !== "category",
+      sortBy !== DEFAULT_ANSWER_SORT,
   );
 
   function resetFilters() {
     searchQuery = "";
     activeCategory = "all";
-    sortBy = "category";
+    sortBy = DEFAULT_ANSWER_SORT;
   }
 </script>
 
@@ -306,7 +326,7 @@
               matching &ldquo;<span class="text-theme-text">{searchQuery}</span
               >&rdquo;
             {/if}
-            {#if sortBy !== "category"}
+            {#if sortBy !== DEFAULT_ANSWER_SORT}
               {@const currentSort = ANSWER_SORT_OPTIONS.find(
                 (o) => o.id === sortBy,
               )}
