@@ -131,6 +131,7 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
     "how-do-you-prep-a-weekly-rpg-session-quickly",
     "how-do-you-create-a-magic-system",
     "how-do-you-start-worldbuilding-from-scratch",
+    "how-do-you-improvise-npcs-on-the-spot",
   ],
   discovery: {
     id: "answer-npcs-memorable",
