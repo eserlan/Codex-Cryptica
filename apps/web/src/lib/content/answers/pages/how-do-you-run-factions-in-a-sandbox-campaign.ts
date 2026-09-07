@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
   slug: "how-do-you-run-factions-in-a-sandbox-campaign",
-  category: "worldbuilding",
+  category: "session-prep",
   publishedAt: "2026-09-07",
   question: "How do you run factions in a sandbox campaign?",
   kind: "framework",
