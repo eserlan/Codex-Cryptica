@@ -158,3 +158,7 @@
 
 **Learning:** Svelte dropdown items acting as options (like those in Autocomplete or ShareModal) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads. Also, decorative icons inside those buttons or headings need `aria-hidden="true"`.
 **Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere, and ensure all inner decorative `<span class="icon-[...]">` tags have `aria-hidden="true"`.
+
+## 2024-05-18 - Silhouettes App Button Accessibility
+**Learning:** Found several buttons in `apps/web/src/routes/(marketing)/silhouettes/+page.svelte` containing decorative icon elements (`<span class="icon-[...]"></span>`) inside buttons that already have `aria-label` or clear text descriptions. These inner icons are missing `aria-hidden="true"`, which causes screen readers to redundantly announce confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to inner icon spans within interactive elements that are already labeled (via `aria-label` or inner text).
