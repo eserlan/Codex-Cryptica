@@ -311,6 +311,38 @@ Code snippets welcome. Mention Codex Cryptica as project context. Disclosure man
 
 ---
 
+## Posting via Chrome (when the user asks you to actually submit)
+
+Drafting and posting are usually one request. When asked to post (not just draft), use the `mcp__claude-in-chrome__*` tools directly against `reddit.com` — no Reddit API access exists, and the user is already logged in via their browser session. Known gotchas, hit repeatedly in practice:
+
+- **Go to the submit page directly**: `https://www.reddit.com/r/<sub>/submit?type=TEXT`. This lands with the target sub pre-selected.
+- **Title/body click-order trap**: after typing the title, a screenshot or `find`/`read_page` check before clicking into the body field is not optional. If the title field has wrapped to multiple lines (long titles do), the "Body text" placeholder sits lower than a fixed y-coordinate guess expects, and a click aimed at "the body" can land back inside the still-expanded title field instead — silently absorbing the whole post body as title text until the title's ~300-char limit truncates it. Always screenshot after typing the title and locate the body field fresh (via `find` or by eye) before clicking into it, rather than chaining a fixed coordinate.
+- **The post image is almost always already hosted**, not a local file: an OG image, a `/screenshots/` asset, or an R2-generated illustration under `assets.codexcryptica.com`. The user's own habit is to drag-and-drop that hosted image straight into the composer. The automation equivalent is to `curl` the asset URL down to a local file first (scratchpad directory), then feed that local path into the upload flow below — `file_upload` takes a local path, not a URL, so there's no way to hand it the R2 URL directly. Fetching the bytes in-page via `javascript_tool` and constructing a `File`/`DataTransfer` to simulate a real drop is possible in principle but depends on the R2 bucket sending CORS headers permissive enough for `reddit.com` to read the response as a blob, which is not guaranteed — `curl` + `file_upload` sidesteps that entirely and has been the reliable path.
+- **Image upload does not go through the visible toolbar button.** Clicking the image icon in the composer toolbar opens a native OS file picker, which is invisible to `computer` (screenshot/click) and to `read_page`/`find` (both only see the page's accessibility tree, not OS chrome). Pressing the toolbar button and then trying to interact with a "file dialog" will hang or silently fail. Instead:
+  1. Press `Escape` to close whatever native dialog opened (harmless if none did).
+  2. Locate the actual `<input type="file">` with a shadow-DOM-piercing query via `javascript_tool` — Reddit's composer is built from web components (`r-post-media-input`, `post-composer-toolbar-button-image`, `post-composer-standalone-toolbar`, etc.), so `document.querySelectorAll('input[type=file]')` on the light DOM returns nothing. A recursive shadow-root walk is required:
+     ```js
+     function findFileInputs(root, path) {
+       let results = [];
+       root
+         .querySelectorAll("input[type=file]")
+         .forEach((i) => results.push({ path, el: i }));
+       root.querySelectorAll("*").forEach((el) => {
+         if (el.shadowRoot)
+           results = results.concat(
+             findFileInputs(el.shadowRoot, path + "/" + el.tagName),
+           );
+       });
+       return results;
+     }
+     findFileInputs(document, "document");
+     ```
+  3. Get a `ref` for the matching input via `read_page` or `find` (searching inside the located shadow root context), then call `file_upload` with that `ref` and the local image path directly — do not click the input or the toolbar button first.
+- **Verify before posting**: screenshot the finished composer (title, body, image) before clicking Post. A wrong-field mistake is easy to make and easy to miss without a visual check, and posting is a one-way action on a public subreddit.
+- **After posting**, grab the permalink via `javascript_tool`: `document.querySelector('a[href*="/comments/"]')?.href` on the redirected post page, rather than guessing the URL.
+
+---
+
 ## When NOT to Post
 
 Skip the Reddit post entirely if any of these apply:
