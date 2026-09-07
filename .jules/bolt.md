@@ -262,3 +262,7 @@
 ## 2024-05-23 - Avoid Object.fromEntries(Object.entries().map()) in Hot Paths
 **Learning:** Using Object.fromEntries with a mapped Object.entries array creates two intermediate arrays, increasing garbage collection pressure. This is especially impactful in serialization paths like index compression where object counts can be large.
 **Action:** Use an imperative loop to populate a new object or Record when transforming object values instead of chaining Object.entries().map() into Object.fromEntries.
+
+## 2026-09-07 - Avoid Object.fromEntries(array.map(...)) in UI Components and Hot Paths
+**Learning:** Constructing objects using `Object.fromEntries(array.map(...))` or `Object.fromEntries(Object.entries(...).map(...))` allocates multiple intermediate arrays that are immediately discarded, increasing garbage collection pressure. This is especially prevalent when transforming arrays of items into lookup records or updating object state in UI handlers.
+**Action:** Use an imperative `for...of` or `for` loop to instantiate and populate a `Record` directly (e.g., `const result = {}; for (let i = 0; i < items.length; i++) { result[items[i].id] = items[i]; }`). This avoids temporary array allocations and is measurably faster for large objects or frequent UI updates. Avoid this optimization in cold paths like tests or static data initialization where readability outweighs unmeasurable micro-optimizations.

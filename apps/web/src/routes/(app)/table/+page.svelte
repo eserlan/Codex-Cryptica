@@ -358,9 +358,12 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        const result = await vault.bulkUpdate(
-          Object.fromEntries(targetIds.map((id) => [id, { type }])),
-        );
+        // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+        const updates: Record<string, { type: string }> = {};
+        for (let i = 0; i < targetIds.length; i++) {
+          updates[targetIds[i]] = { type };
+        }
+        const result = await vault.bulkUpdate(updates);
         if (result.failedIds.length > 0 || result.skippedIds.length > 0) {
           notificationStore.notify(
             `Changed ${result.succeededIds.length} entities; ${
