@@ -12,6 +12,7 @@ import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
 import { howDoYouCreateQuestHooksWithoutRailroading } from "./how-do-you-create-quest-hooks-without-railroading";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
+import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
 import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
@@ -60,6 +61,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouCreateQuestHooksWithoutRailroading,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
     howDoYouHandleCharacterDeathInATabletopRpg,
+    howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
     howDoYouMakeAnAlienSpeciesFeelBelievable,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,

@@ -142,6 +142,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+    "how-do-you-improvise-npcs-on-the-spot",
   ],
   discovery: {
     id: "answer-npc-relationships",
