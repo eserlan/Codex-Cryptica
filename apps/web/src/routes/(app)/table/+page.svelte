@@ -359,7 +359,7 @@
       isCommitting = true;
       try {
         // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
-        const updates: Record<string, { type: string }> = {};
+        const updates: Record<string, { type: string }> = Object.create(null);
         for (let i = 0; i < targetIds.length; i++) {
           updates[targetIds[i]] = { type };
         }

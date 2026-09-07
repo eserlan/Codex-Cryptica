@@ -241,6 +241,7 @@
 
 **Learning:** When acting as the 'Bolt' persona, avoid refactoring simple object iterations like `Object.keys(obj).filter(...)` into traditional `for...in` loops unless operating on massive data structures, as it's often rejected in code review as an unmeasurable micro-optimization that harms readability.
 **Action:** Focus instead on chained array methods like `.map().filter()` that explicitly allocate unused intermediate objects or arrays (e.g., mapping strings to trim them before filtering out empty ones), as replacing these with a single imperative loop offers a clearer memory optimization without sacrificing readability.
+
 ## 2024-08-30 - Eliminate chained array allocations in SettlementFormFields
 
 **Learning:** Replacing chained array allocations (`Object.entries().filter().map()`) followed by `Object.fromEntries()` with a single imperative loop over object properties reduces object instantiation overhead and intermediate array generation. This is especially useful for logic run frequently (like reactive declarations and effects).
@@ -255,14 +256,18 @@
 
 **Learning:** In data parsing functions, like those normalising lists in generator responses (`public-plot-twist.ts`), using `Array.isArray(value) ? value.map(text).filter(Boolean) : ...` forces the creation of an intermediate mapped array that might contain empty strings, only to traverse it again to filter them out. This causes unnecessary garbage collection pressure on frequently-called parsing code paths.
 **Action:** Replace `array.map().filter()` when processing parsed values with an imperative `for...of` loop over the elements, checking and pushing the transformed values directly into the result array.
+
 ## 2025-05-18 - Avoid array allocation when mapping iterables
 
 **Learning:** When using `[...iterable].filter(...).map(...)` on collections like Maps, it creates multiple intermediate arrays, causing unnecessary allocations.
 **Action:** Replace chained array methods on iterables with a single imperative `for...of` loop to avoid intermediate allocations and reduce GC pressure.
+
 ## 2024-05-23 - Avoid Object.fromEntries(Object.entries().map()) in Hot Paths
+
 **Learning:** Using Object.fromEntries with a mapped Object.entries array creates two intermediate arrays, increasing garbage collection pressure. This is especially impactful in serialization paths like index compression where object counts can be large.
 **Action:** Use an imperative loop to populate a new object or Record when transforming object values instead of chaining Object.entries().map() into Object.fromEntries.
 
 ## 2026-09-07 - Avoid Object.fromEntries(array.map(...)) in UI Components and Hot Paths
+
 **Learning:** Constructing objects using `Object.fromEntries(array.map(...))` or `Object.fromEntries(Object.entries(...).map(...))` allocates multiple intermediate arrays that are immediately discarded, increasing garbage collection pressure. This is especially prevalent when transforming arrays of items into lookup records or updating object state in UI handlers.
-**Action:** Use an imperative `for...of` or `for` loop to instantiate and populate a `Record` directly (e.g., `const result = {}; for (let i = 0; i < items.length; i++) { result[items[i].id] = items[i]; }`). This avoids temporary array allocations and is measurably faster for large objects or frequent UI updates. Avoid this optimization in cold paths like tests or static data initialization where readability outweighs unmeasurable micro-optimizations.
+**Action:** Use an imperative `for...of` or `for` loop to instantiate and populate a `Record` directly (e.g., `const result: Record<string, Item> = Object.create(null); for (let i = 0; i < items.length; i++) { result[items[i].id] = items[i]; }`). Use `Object.create(null)` for ID-keyed records to prevent prototype pollution from special keys like `__proto__`. This avoids temporary array allocations and is measurably faster for large objects or frequent UI updates. Avoid this optimization in cold paths like tests or static data initialization where readability outweighs unmeasurable micro-optimizations.
