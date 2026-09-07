@@ -5,6 +5,10 @@ import {
   resolvePlotTwistPremiseForGeneration,
   isDelveDraft,
   buildDelveBossContext,
+  isFactionDraft,
+  buildFactionRosterContext,
+  isFactionRosterDraft,
+  buildRosterMemberContext,
 } from "./generator-handoffs";
 
 describe("buildPlotTwistPremise", () => {
@@ -58,6 +62,69 @@ describe("buildPlotTwistPremise", () => {
     expect(context).toContain("A fortified underground dwarven bastion.");
     expect(context).toContain("Duergar raiders led by a warlord.");
     expect(context).toContain("An ancient fire elemental is bound below.");
+  });
+});
+
+describe("isFactionDraft", () => {
+  it("recognizes every faction-family label", () => {
+    expect(isFactionDraft(["faction-generator", "cyberpunk"])).toBe(true);
+    expect(isFactionDraft(["vampire-clan"])).toBe(true);
+    expect(isFactionDraft(["nomad-clan"])).toBe(true);
+    expect(isFactionDraft(["dark-fantasy-faction", "grimdark"])).toBe(true);
+    expect(isFactionDraft(["character", "npc"])).toBe(false);
+    expect(isFactionDraft(undefined)).toBe(false);
+  });
+});
+
+describe("buildFactionRosterContext", () => {
+  it("builds a bounded faction context for roster generation", () => {
+    const context = buildFactionRosterContext({
+      title: "The Compact",
+      summary: "A merchant guild fixing prices across three ports.",
+      content: "### What they control\nThe harbour tariffs.",
+      lore: "### At a Glance\n- **Secret**: The founder is still alive.",
+    });
+
+    expect(context).toContain("[Faction Context]");
+    expect(context).toContain("Faction: The Compact");
+    expect(context).toContain(
+      "A merchant guild fixing prices across three ports.",
+    );
+    expect(context).toContain("The harbour tariffs.");
+    expect(context).toContain("The founder is still alive.");
+  });
+
+  it("bounds long handoff context to the roster form limit", () => {
+    expect(
+      buildFactionRosterContext({
+        title: "The Compact",
+        summary: "",
+        content: "x".repeat(5000),
+        lore: "",
+      }),
+    ).toHaveLength(4000);
+  });
+});
+
+describe("isFactionRosterDraft", () => {
+  it("recognizes faction-roster labels", () => {
+    expect(isFactionRosterDraft(["faction-roster", "cyberpunk"])).toBe(true);
+    expect(isFactionRosterDraft(["faction-roster-generator"])).toBe(true);
+    expect(isFactionRosterDraft(["faction-generator"])).toBe(false);
+    expect(isFactionRosterDraft(undefined)).toBe(false);
+  });
+});
+
+describe("buildRosterMemberContext", () => {
+  it("bounds the member section with the roster title for provenance", () => {
+    const context = buildRosterMemberContext(
+      "### Vess Marrow — Quartermaster\n- **Duty**: Moves cargo",
+      "The Compact's Inner Circle",
+    );
+
+    expect(context).toContain("[Faction Roster Member]");
+    expect(context).toContain("From roster: The Compact's Inner Circle");
+    expect(context).toContain("### Vess Marrow — Quartermaster");
   });
 });
 

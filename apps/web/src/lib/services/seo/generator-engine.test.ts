@@ -345,6 +345,60 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateFactionRoster", () => {
+    it("should generate roster details locally when useAI is false", async () => {
+      const res = await engine.generateFactionRoster({
+        size: "4",
+        factionContext: "The Compact: a merchant guild fixing prices.",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      const headings = res.content.match(/^### .+$/gm) ?? [];
+      expect(headings).toHaveLength(4);
+      expect(res.labels).toContain("faction-roster");
+      expect(res.labels).toContain("faction-roster-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include the faction context in the AI prompt", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Compact's Inner Circle",
+                summary: "x",
+                members: [
+                  { name: "Vess Marrow", role: "Quartermaster" },
+                  { name: "Sister Aln", role: "True believer" },
+                  { name: "Old Fritjof", role: "Recent recruit" },
+                ],
+                lore: "### At a Glance",
+                labels: ["rpg-faction", "faction-roster"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateFactionRoster({
+        factionContext: "The Compact fixes prices across three ports.",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("The Compact fixes prices across three ports."),
+      );
+      expect(res.type).toBe("faction");
+      expect(res.title).toBe("The Compact's Inner Circle");
+      expect(res.content).toContain("### Vess Marrow — Quartermaster");
+      expect(res.labels).toContain("faction-roster");
+    });
+  });
+
   describe("generateVampireClan", () => {
     it("should generate vampire clan details locally when useAI is false", async () => {
       const res = await engine.generateVampireClan({
@@ -1432,6 +1486,10 @@ describe("DefaultGeneratorEngine", () => {
     }> = [
       { label: "NPC", call: (e) => e.generateNPC({ useAI: true }) },
       { label: "faction", call: (e) => e.generateFaction({ useAI: true }) },
+      {
+        label: "faction roster",
+        call: (e) => e.generateFactionRoster({ useAI: true }),
+      },
       {
         label: "vampire clan",
         call: (e) => e.generateVampireClan({ useAI: true }),
