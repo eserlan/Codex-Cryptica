@@ -23,6 +23,7 @@ import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandb
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-tabletop-rpg";
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
+import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions-in-a-sandbox-campaign";
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
@@ -69,6 +70,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouRunAConspiracyCampaign,
     howDoYouRunAHeistInATabletopRpg,
     howDoYouRunAMysteryWithoutRailroading,
+    howDoYouRunFactionsInASandboxCampaign,
     howDoYouStartWorldbuildingFromScratch,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouWriteAOneShotAdventure,
