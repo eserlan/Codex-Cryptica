@@ -54,7 +54,9 @@ export function languageOptions(
 ): LanguageGeneratorOptions {
   const option = (key: string, fallback: string): string => {
     const value = request.options[key];
-    return typeof value === "string" && value.trim() ? value : fallback;
+    if (typeof value !== "string") return fallback;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : fallback;
   };
   return {
     genre: option("genre", "Classic Fantasy"),

@@ -36,6 +36,16 @@ describe("languageOptions", () => {
       structure: "Compound Words",
     });
   });
+
+  it("trims whitespace-padded option values", () => {
+    const request: GeneratorRunRequest = {
+      generatorId: "language",
+      options: { genre: "  Cyberpunk  " },
+      useAI: false,
+      themeId: "workspace",
+    };
+    expect(languageOptions(request).genre).toBe("Cyberpunk");
+  });
 });
 
 describe("languageResultFromOutput / languageGeneratorOutput", () => {
