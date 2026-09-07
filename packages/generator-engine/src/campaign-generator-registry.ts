@@ -99,6 +99,12 @@ import {
   starSystemConfig,
 } from "./public-star-system";
 import {
+  buildConstellationPrompt,
+  generateConstellationLocal,
+  type ConstellationGeneratorOptions,
+  constellationConfig,
+} from "./public-constellation";
+import {
   alienRaceConfig,
   buildAlienRacePrompt,
   generateAlienRaceLocal,
@@ -153,6 +159,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "council-vote": "note",
   "secret-society": "faction",
   "star-system": "location",
+  constellation: "note",
   // A species, not an individual — creature rather than character.
   "alien-race": "creature",
   creature: "creature",
@@ -266,6 +273,10 @@ function mapOutputToDraft(
       primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
       bodies: output.bodies ? [...output.bodies] : undefined,
       starType: output.starType,
+      pattern: output.pattern,
+      interpretations: output.interpretations
+        ? [...output.interpretations]
+        : undefined,
       contextProvenance: contextProvenance.length
         ? contextProvenance
         : undefined,
@@ -1459,6 +1470,52 @@ ${exemplarBlock(request, "star-system")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the core concept; the star(s); 3-12 major bodies; settlements and factions; resources and strategic importance; travel hazards; history; the system-wide conflict or mystery; and adventure hooks",
+)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Constellation generator helpers
+// ---------------------------------------------------------------------------
+
+function constellationOptions(
+  request: GeneratorRunRequest,
+): ConstellationGeneratorOptions {
+  return {
+    genre: optionString(request, "genre", ""),
+    visualImpression: optionString(request, "visualImpression", ""),
+    practicalUse: optionString(request, "practicalUse", ""),
+    culturalMeaning: optionString(request, "culturalMeaning", ""),
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateConstellation(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateConstellationLocal(constellationOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+    pattern: result.pattern,
+    interpretations: result.interpretations,
+  };
+}
+
+function constellationPrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+${buildConstellationPrompt(constellationOptions(request)).userMessage}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "constellation")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  "seasonal visibility; practical use; cultural and religious meaning; omens; and an adventure hook",
 )}`;
 }
 
@@ -2880,6 +2937,68 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       starType: output.starType,
     }),
     buildPrompt: starSystemPrompt,
+  },
+  constellation: {
+    id: "constellation",
+    label: "Constellation",
+    description:
+      "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, an omen, and an adventure hook.",
+    entityType: GENERATOR_ENTITY_TYPE["constellation"],
+    defaultInstruction:
+      "A constellation a specific culture reads a clear meaning into — a shape, a myth explaining it, a mundane use (navigation, planting, migration, timekeeping), and one concrete adventure hook.",
+    icon: "lucide:stars",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: constellationConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "visualImpression",
+        label: "Visual Impression",
+        control: "select",
+        choices: constellationConfig.visualImpressions.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "practicalUse",
+        label: "Practical Use",
+        control: "select",
+        choices: constellationConfig.practicalUses.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "culturalMeaning",
+        label: "Cultural Meaning",
+        control: "select",
+        choices: constellationConfig.culturalMeanings.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      genre: "Classic Fantasy",
+      visualImpression: "Beast",
+      practicalUse: "Navigation",
+      culturalMeaning: "A deity or divine figure",
+    },
+    generate: generateConstellation,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("constellation")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+      pattern: output.pattern,
+      interpretations: output.interpretations,
+    }),
+    buildPrompt: constellationPrompt,
   },
   "alien-race": {
     id: "alien-race",

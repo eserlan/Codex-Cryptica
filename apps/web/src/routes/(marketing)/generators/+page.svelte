@@ -172,6 +172,13 @@
           icon: "icon-[lucide--orbit]",
         },
         {
+          href: "/generators/constellation",
+          label: "Constellation Generator",
+          summary:
+            "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, and an adventure hook.",
+          icon: "icon-[lucide--stars]",
+        },
+        {
           href: "/generators/alien-race",
           label: "Alien Race Generator",
           summary:

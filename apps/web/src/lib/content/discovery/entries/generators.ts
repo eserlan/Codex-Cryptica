@@ -505,6 +505,37 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A whole system — stars, major bodies and their relationships — at the scale above a single world.",
     parentCluster: "cosmography",
+    acknowledgedOverlap: [
+      {
+        with: "generator-constellation",
+        reason:
+          "This generator builds the physical system a star belongs to; the constellation generator builds a single named star pattern as seen from a world's sky, with its own culture and myth.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "generator-constellation",
+    pageKind: "generator",
+    canonicalPath: "/generators/constellation",
+    primaryIntent: "constellation generator",
+    intentAliases: [
+      "rpg night sky generator",
+      "star lore generator",
+      "fantasy constellation names",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A single constellation with a culture's origin myth, seasonal visibility, practical use and an omen, not just a random star-pattern name.",
+    parentCluster: "cosmography",
+    acknowledgedOverlap: [
+      {
+        with: "generator-star-system",
+        reason:
+          "The star system generator builds the physical system; this generator builds a single named star pattern as seen from a world's sky, with its own culture and myth.",
+      },
+    ],
     indexable: true,
     status: "live",
   },

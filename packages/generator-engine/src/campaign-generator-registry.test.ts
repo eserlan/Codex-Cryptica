@@ -64,6 +64,7 @@ describe("registry lookup", () => {
       "council-vote",
       "secret-society",
       "star-system",
+      "constellation",
       "alien-race",
       "creature",
       "random-table",
@@ -387,6 +388,38 @@ describe("registry lookup", () => {
     const draft = getGenerator("star-system").generate(run("star-system"));
     expect(draft.lore).toContain("## Adventure Hooks");
     expect(draft.lore).toContain("## System-Wide Conflict or Mystery");
+  });
+
+  it("builds a genre-aware constellation prompt and maps constellations to notes", () => {
+    const prompt = getGenerator("constellation").buildPrompt(
+      run("constellation", {
+        options: {
+          genre: "Cyberpunk / Corporate",
+          visualImpression: "Weapon",
+        },
+      }),
+    );
+    expect(prompt).toContain("Cyberpunk / Corporate");
+    expect(prompt).toContain("Weapon");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+    expect(GENERATOR_ENTITY_TYPE["constellation"]).toBe("note");
+    const draft = getGenerator("constellation").generate(run("constellation"));
+    expect(draft.lore).toContain("## Adventure Hook");
+    expect(draft.content).toContain("## Origin Myth");
+    expect(draft.pattern?.stars.length).toBeGreaterThanOrEqual(4);
+    expect(draft.interpretations?.length).toBe(1);
+  });
+
+  it("carries constellation pattern/interpretations through mapOutputToDraft", () => {
+    const output = getGenerator("constellation").generate(run("constellation"));
+    const draft = getGenerator("constellation").mapOutputToDraft(
+      output,
+      run("constellation"),
+    );
+    expect(draft.entityType).toBe("note");
+    expect(draft.pattern?.lines.length).toBeGreaterThan(0);
+    expect(draft.interpretations?.[0]?.culture).toBeTruthy();
   });
 
   it("builds a context-aware alien-race prompt and maps species to creatures", () => {
@@ -1578,6 +1611,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "council-vote": "note",
       "secret-society": "faction",
       "star-system": "location",
+      constellation: "note",
       "alien-race": "creature",
       creature: "creature",
       "random-table": "table",

@@ -105,6 +105,9 @@ import {
   buildStarSystemPrompt,
   parseStarSystemResponse,
   generateStarSystemLocal,
+  buildConstellationPrompt,
+  parseConstellationResponse,
+  generateConstellationLocal,
   buildAlienRacePrompt,
   parseAlienRaceResponse,
   generateAlienRaceLocal,
@@ -143,6 +146,7 @@ import {
   type PlotTwistGeneratorOptions,
   type WorldGeneratorOptions,
   type StarSystemGeneratorOptions,
+  type ConstellationGeneratorOptions,
   type AlienRaceGeneratorOptions,
   type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
@@ -225,6 +229,7 @@ export { adventureConfig, forAdventureGenre } from "generator-engine";
 export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
 export { starSystemConfig } from "generator-engine";
+export { constellationConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
 export { creatureConfig } from "generator-engine";
 
@@ -1265,6 +1270,35 @@ export class DefaultGeneratorEngine {
           avoidNames: [
             ...BANNED_NAMES,
             ...(starSystemOptions.avoidNames ?? []),
+          ],
+        }),
+    );
+  }
+
+  /** Constellation generation delegates to the shared offline-first generator package. */
+  async generateConstellation(
+    options: ConstellationGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...constellationOptions } = options;
+    // buildConstellationPrompt's ConstellationPrompt return type has no
+    // `resolved` field, so it's not wired into generationInputHistoryStore.
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildConstellationPrompt(constellationOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseConstellationResponse(text, [
+          ...BANNED_NAMES,
+          ...(constellationOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateConstellationLocal({
+          ...constellationOptions,
+          avoidNames: [
+            ...BANNED_NAMES,
+            ...(constellationOptions.avoidNames ?? []),
           ],
         }),
     );

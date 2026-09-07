@@ -1348,6 +1348,57 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/faction", label: "Faction Generator" },
     ],
   },
+  constellation: {
+    pageTitle:
+      "Constellation Generator | RPG Night Sky & Star Lore Creator | Codex Cryptica",
+    metaDescription:
+      "Generate a culturally meaningful RPG constellation — a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, an omen, and an adventure hook.",
+    introTitle: "Constellation Generator",
+    eyebrow: "Constellation Generator",
+    introText:
+      "Create a night-sky constellation with a story behind it, not just a random name. Choose its genre, visual impression, practical use, and cultural meaning, then generate a star pattern, the culture that reads meaning into it, an origin myth, when it's visible, what it's used for, and one adventure hook.",
+    canonicalPath: "/generators/constellation",
+    labels: ["worldbuilding"],
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-constellation.jpg",
+    ogImageAlt:
+      "Codex Cryptica constellation generator drafting a star pattern, origin myth, and cultural meaning",
+    keywords: [
+      "constellation generator",
+      "rpg night sky generator",
+      "star lore generator",
+      "fantasy constellation names",
+      "worldbuilding star myths",
+    ],
+    faqs: [
+      {
+        question: "What does the constellation generator create?",
+        answer:
+          "It generates one named constellation: a star pattern, the specific culture that reads a shape into it, an origin myth explaining why that shape exists, when and where it's visible, a practical mundane use (navigation, planting, migration, timekeeping), its cultural or religious meaning, an omen, and one playable adventure hook.",
+      },
+      {
+        question: "Is this astronomically accurate?",
+        answer:
+          "No, and it isn't meant to be. Star positions are a readable worldbuilding shape, not a real sky chart — the goal is a constellation a GM can use at the table, not a planetarium simulation.",
+      },
+      {
+        question:
+          "Can different cultures interpret the same stars differently?",
+        answer:
+          "The generator's data model is built to support that: a star pattern is kept separate from its cultural interpretation, so a later pass can hand the same pattern to a second culture with its own myth, use, and meaning.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy constellations on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/star-system", label: "Star System Generator" },
+      { href: "/generators/world", label: "Sci-Fi World Generator" },
+      { href: "/generators/settlement", label: "Settlement Generator" },
+    ],
+  },
   "alien-race": {
     pageTitle:
       "Alien Race Generator | Sci-Fi Alien Species Creator | Codex Cryptica",

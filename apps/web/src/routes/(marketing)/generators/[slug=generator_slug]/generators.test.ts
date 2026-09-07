@@ -55,6 +55,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "council-vote" },
         { slug: "secret-society" },
         { slug: "star-system" },
+        { slug: "constellation" },
         { slug: "alien-race" },
         { slug: "creature" },
         { slug: "encounter" },
