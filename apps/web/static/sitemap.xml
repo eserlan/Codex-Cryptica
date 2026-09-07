@@ -322,6 +322,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-make-an-alien-species-feel-believable</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-make-npcs-memorable-without-lots-of-prep</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -387,7 +392,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-to-write-an-in-world-newspaper-for-an-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/point-crawl-vs-hex-crawl</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
