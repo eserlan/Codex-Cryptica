@@ -127,6 +127,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-track-faction-turns-between-rpg-sessions",
+    "how-do-you-run-an-rpg-campaign-in-one-city",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
