@@ -67,6 +67,7 @@ Every public answer page is governed by the Discovery Intent Registry:
 1. Generate or prepare a 16:9 illustration for the topic:
    - Aspect ratio: `16:9`.
    - Evocative, atmospheric tabletop RPG illustration matching Codex's aesthetic.
+   - **Tool fallback order:** try the `agy` CLI first. If `agy` reports its image-generation quota is exhausted, fall back to `codex`. If `codex` also fails, fall back to Claude Code's own image generation. Only move to the next tool once the current one has failed or is out of quota.
 2. Upload directly to R2 using wrangler:
    ```sh
    bunx wrangler r2 object put \
