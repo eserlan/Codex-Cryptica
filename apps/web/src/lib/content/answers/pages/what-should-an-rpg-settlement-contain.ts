@@ -150,6 +150,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "what-makes-a-good-random-encounter",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
+    "how-to-create-a-cyberpunk-city-district",
   ],
   discovery: {
     id: "answer-settlement-contents",
@@ -159,6 +160,13 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     uniqueValue:
       "Prep sized to what gets used (a reason to exist, four enterable places, three wants, one unsolved problem) plus what to leave out.",
     relatedIntents: ["generator-settlement"],
+    acknowledgedOverlap: [
+      {
+        with: "answer-cyberpunk-city-district",
+        reason:
+          "This answer gives general settlement prep, while the cyberpunk district answer applies it to power, infrastructure, exclusion, and street-level jobs.",
+      },
+    ],
   },
 
   seo: {

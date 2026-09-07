@@ -25,6 +25,7 @@ import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldb
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
+import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
@@ -67,6 +68,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouWriteAOneShotAdventure,
     howMuchPrepDoYouNeedForAnRpgSession,
+    howToCreateACyberpunkCityDistrict,
     howToWriteAnInWorldNewspaperForAnRpg,
     whatIsAPointCrawl,
     whatMakesAGoodRandomEncounter,
