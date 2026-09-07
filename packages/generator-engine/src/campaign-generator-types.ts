@@ -11,6 +11,7 @@ import type { StarSystemBody } from "./public-star-system";
 export type GeneratorId =
   | "npc"
   | "faction"
+  | "faction-roster"
   | "settlement"
   | "magic-item"
   | "minor-magic-item"
@@ -39,6 +40,7 @@ export type GeneratorId =
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
   "faction",
+  "faction-roster",
   "settlement",
   "magic-item",
   "minor-magic-item",
