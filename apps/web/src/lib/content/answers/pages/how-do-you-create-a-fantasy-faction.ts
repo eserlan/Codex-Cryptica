@@ -152,6 +152,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-do-you-track-faction-turns-between-rpg-sessions",
   ],
   discovery: {
     id: "answer-fantasy-faction",

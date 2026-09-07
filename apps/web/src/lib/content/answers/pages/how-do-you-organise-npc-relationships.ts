@@ -143,6 +143,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-you-improvise-npcs-on-the-spot",
+    "how-do-you-track-faction-turns-between-rpg-sessions",
   ],
   discovery: {
     id: "answer-npc-relationships",
