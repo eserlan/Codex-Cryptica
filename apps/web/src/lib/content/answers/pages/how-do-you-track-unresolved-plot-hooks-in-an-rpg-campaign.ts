@@ -139,6 +139,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-to-write-an-in-world-newspaper-for-an-rpg",
       "how-do-you-create-quest-hooks-without-railroading",
       "how-do-you-run-factions-in-a-sandbox-campaign",
+      "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",

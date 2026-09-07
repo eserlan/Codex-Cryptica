@@ -141,6 +141,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
     "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-do-you-manage-a-campaign-timeline-in-an-rpg",
   ],
   discovery: {
     id: "answer-npc-relationships",

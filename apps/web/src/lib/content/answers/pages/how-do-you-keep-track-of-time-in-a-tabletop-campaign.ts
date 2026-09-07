@@ -134,6 +134,7 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "how-do-you-start-worldbuilding-from-scratch",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
+    "how-do-you-manage-a-campaign-timeline-in-an-rpg",
   ],
   discovery: {
     id: "answer-track-time-in-campaign",
@@ -154,6 +155,14 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
       "answer-prep-weekly-session-quickly",
       "answer-run-heist-in-tabletop-rpg",
       "answer-worldbuilding-from-scratch",
+      "answer-manage-campaign-timeline",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-manage-campaign-timeline",
+        reason:
+          "This page covers in-fiction pacing during play: dungeon turns, travel watches, and downtime clocks. The other page covers recording the world's permanent chronology afterwards: dated events, their precision, and which entities they touch.",
+      },
     ],
   },
   seo: {
