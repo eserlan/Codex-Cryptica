@@ -59,10 +59,10 @@ Every public answer page is governed by the Discovery Intent Registry:
 
 ---
 
-### 2. Image Asset Workflow (Cloudflare R2 Only)
+### 2. Image Asset Workflow (Cloudflare R2 Only, Mandatory)
 
 > [!IMPORTANT]
-> **NEVER commit image files to git.** All image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local files created temporarily during generation must be deleted immediately after upload.
+> **Every answer page requires an R2 illustration.** `seo.image`/`seo.imageAlt` are enforced by `registry.test.ts` for every answer with `publishedAt` on or after 2026-09-07; skipping the image will fail that test. **NEVER commit image files to git.** All image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local files created temporarily during generation must be deleted immediately after upload.
 
 1. Generate or prepare a 16:9 illustration for the topic:
    - Aspect ratio: `16:9`.

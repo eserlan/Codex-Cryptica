@@ -147,5 +147,9 @@ export const howManyNpcsDoesAnRpgTownNeed: AnswerConfigInput = {
     title: "How many NPCs does an RPG town need? | Codex Cryptica",
     description:
       "Three to five named NPCs for a stopover, six to ten for a recurring base. How to scale a town's cast by role instead of population, with a worked example.",
+    image:
+      "https://assets.codexcryptica.com/og/how-many-npcs-does-an-rpg-town-need.jpg",
+    imageAlt:
+      "A hooded traveller crossing a lantern-lit fantasy town square at dusk, past a stone well and timber-framed market stalls",
   },
 };
