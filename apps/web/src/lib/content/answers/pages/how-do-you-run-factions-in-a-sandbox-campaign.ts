@@ -155,5 +155,9 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     title: "How do you run factions in a sandbox campaign? | Codex Cryptica",
     description:
       "A four-part framework for running factions as active pressure in a sandbox: goal, resource, rival, and scheduled move, with a worked before/after example.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-run-factions-in-a-sandbox-campaign.jpg",
+    imageAlt:
+      "Two rival faction banners crossed over a river town dock map with wooden tokens marking contested territory",
   },
 };
