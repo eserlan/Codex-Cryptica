@@ -34,19 +34,20 @@
   let searchQuery = $state("");
   let activeCategory = $state<string | "all">("all");
   let sortBy = $state<AnswerSortOption>(DEFAULT_ANSWER_SORT);
-  let isHydrated = $state(false);
+  let lastSyncedSort = $state<AnswerSortOption | null>(null);
 
   onMount(() => {
     const saved = readStoredAnswerSort(browserStorage);
     if (saved !== sortBy) {
       sortBy = saved;
     }
-    isHydrated = true;
+    lastSyncedSort = saved;
   });
 
   $effect(() => {
-    if (isHydrated) {
+    if (lastSyncedSort !== null && sortBy !== lastSyncedSort) {
       persistAnswerSort(sortBy, browserStorage);
+      lastSyncedSort = sortBy;
     }
   });
 
