@@ -44,9 +44,12 @@ type PersistedMapSettings = {
 };
 
 function layerRecord<T>(value: T): Record<MapLayer, T> {
-  return Object.fromEntries(
-    MAP_LAYER_ORDER.map((layer) => [layer, value]),
-  ) as Record<MapLayer, T>;
+  // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+  const result = Object.create(null) as Record<MapLayer, T>;
+  for (let i = 0; i < MAP_LAYER_ORDER.length; i++) {
+    result[MAP_LAYER_ORDER[i]] = value;
+  }
+  return result;
 }
 
 type PersistedMapPageState = {
@@ -337,14 +340,20 @@ export class MapStore {
           typeof parsed.activeMapId === "string" || parsed.activeMapId === null
             ? parsed.activeMapId
             : null,
-        viewports:
-          parsed.viewports && typeof parsed.viewports === "object"
-            ? Object.fromEntries(
-                Object.entries(parsed.viewports).filter(([, viewport]) =>
-                  this.isViewportTransform(viewport),
-                ),
-              )
-            : {},
+        viewports: (() => {
+          if (!parsed.viewports || typeof parsed.viewports !== "object") return Object.create(null);
+          // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().filter(...)) with an imperative loop
+          const result: Record<string, ViewportTransform> = Object.create(null);
+          for (const key in parsed.viewports) {
+            if (Object.hasOwn(parsed.viewports, key)) {
+              const vp = (parsed.viewports as any)[key];
+              if (this.isViewportTransform(vp)) {
+                result[key] = vp;
+              }
+            }
+          }
+          return result;
+        })(),
       };
     } catch {
       return null;

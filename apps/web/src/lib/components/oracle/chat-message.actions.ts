@@ -134,16 +134,22 @@ export class ChatMessageActions {
 
     const updates = await this.oracle.reviseSmartApply(finalTargetId, incoming);
 
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map(...)) with an imperative loop
+    const updatesSummary: Record<string, unknown> = Object.create(null);
+    if (updates) {
+      for (const k in updates) {
+        if (Object.hasOwn(updates, k)) {
+          const v = (updates as any)[k];
+          updatesSummary[k] = typeof v === "string" ? `${v.length} chars` : v;
+        }
+      }
+    }
+
     debugStore.log(
       "[Oracle] Smart Apply revised updates:",
       // Log a summary only — `updates` may contain full content/lore strings
       // which would hold large references in debugStore's ring buffer.
-      Object.fromEntries(
-        Object.entries(updates ?? {}).map(([k, v]) => [
-          k,
-          typeof v === "string" ? `${v.length} chars` : v,
-        ]),
-      ),
+      updatesSummary,
     );
 
     // Instead of immediate update with undo, use the draft flow for a unified experience

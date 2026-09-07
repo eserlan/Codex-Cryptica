@@ -21,14 +21,21 @@ function char(
 }
 
 function map(...entities: Entity[]): Record<string, Entity> {
-  return Object.fromEntries(entities.map((e) => [e.id, e]));
+  // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+  const result: Record<string, Entity> = Object.create(null);
+  for (let i = 0; i < entities.length; i++) {
+    result[entities[i].id] = entities[i];
+  }
+  return result;
 }
 
 function fiveGenerationLine(): Record<string, Entity> {
   const chain = ["ggparent", "gparent", "parent", "focus", "child"];
-  const conns: Record<string, Conn[]> = Object.fromEntries(
-    chain.map((id) => [id, []]),
-  );
+  // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+  const conns: Record<string, Conn[]> = Object.create(null);
+  for (let i = 0; i < chain.length; i++) {
+    conns[chain[i]] = [];
+  }
   for (let i = 0; i < chain.length - 1; i++) {
     conns[chain[i]].push({ target: chain[i + 1], type: "parent_of" });
     conns[chain[i + 1]].push({ target: chain[i], type: "child_of" });
