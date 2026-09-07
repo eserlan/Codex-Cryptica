@@ -126,6 +126,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    "how-do-you-track-faction-turns-between-rpg-sessions",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
@@ -148,6 +149,11 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
         with: "answer-fantasy-faction",
         reason:
           "That page covers designing a faction from scratch (goal, obstacle, recruits, limits, assets, next move). This page assumes a faction already exists and covers running it as ongoing pressure across a sandbox: scheduling its move, surfacing the consequence, and keeping several factions moving in parallel between sessions.",
+      },
+      {
+        with: "answer-track-faction-turns-between-sessions",
+        reason:
+          "That page provides the concrete five-step downtime procedure (intent, action, outcome, consequence, history) for resolving off-screen faction clashes and updating the campaign timeline. This page covers running factions as continuous active pressure in a sandbox using the goal/resource/rival/scheduled-move concept.",
       },
     ],
   },
