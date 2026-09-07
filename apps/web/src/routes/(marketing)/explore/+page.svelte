@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { base } from "$app/paths";
+  import { page } from "$app/state";
+  import { invalidateAll } from "$app/navigation";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import {
@@ -52,6 +54,16 @@
   // label's palette must not linger once the visitor picks another label.
   $effect(() => {
     themeStore.previewTheme(labelThemeId);
+  });
+
+  // On direct entry to /explore?label=... (hard navigation), SvelteKit serves
+  // the statically prerendered base shell. Invalidate once mounted if the URL
+  // carries a label filter that load() couldn't evaluate during prerendering.
+  onMount(() => {
+    const queryLabel = page.url.searchParams.get("label")?.trim();
+    if (queryLabel && queryLabel !== data.label) {
+      void invalidateAll();
+    }
   });
 
   onDestroy(() => {
