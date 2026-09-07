@@ -433,7 +433,8 @@
             onclick={clearAllFilters}
             class="text-theme-accent hover:underline flex items-center gap-1 font-medium cursor-pointer"
           >
-            <span aria-hidden="true" class="icon-[lucide--rotate-ccw] h-3 w-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--rotate-ccw] h-3 w-3"
+            ></span>
             Reset all filters
           </button>
         {/if}
@@ -465,7 +466,10 @@
               onclick={clearAllFilters}
               class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-theme-accent text-theme-accent-contrast hover:opacity-90 transition-opacity cursor-pointer"
             >
-              <span aria-hidden="true" class="icon-[lucide--rotate-ccw] h-3.5 w-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--rotate-ccw] h-3.5 w-3.5"
+              ></span>
               Clear search &amp; filters
             </button>
           </div>
