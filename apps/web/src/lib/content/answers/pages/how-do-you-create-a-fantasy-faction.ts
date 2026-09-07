@@ -151,6 +151,8 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-should-an-rpg-settlement-contain",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
+    "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-do-you-track-faction-turns-between-rpg-sessions",
   ],
   discovery: {
     id: "answer-fantasy-faction",
@@ -159,7 +161,14 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     intentAliases: ["how to make an rpg faction", "faction design framework"],
     uniqueValue:
       "Six ordered questions that make a faction predict its own next move, with a worked guild example and a usability test.",
-    relatedIntents: ["generator-faction"],
+    relatedIntents: ["generator-faction", "answer-run-factions-sandbox"],
+    acknowledgedOverlap: [
+      {
+        with: "answer-run-factions-sandbox",
+        reason:
+          "This page covers designing a faction from scratch. The other page assumes a faction already exists and covers running it as ongoing pressure across a sandbox campaign.",
+      },
+    ],
   },
 
   seo: {

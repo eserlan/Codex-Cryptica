@@ -201,6 +201,14 @@ describe("the published examples", () => {
     expect(siloZeroSeven.generator.href).toBe("/generators/dungeon-generator");
   });
 
+  it("publishes a Space Western heist filling the heist kind gap", () => {
+    const breakwater = examples["the-breakwater-vault-space-western-heist"];
+    expect(breakwater).toBeDefined();
+    expect(breakwater.kind).toBe("heist");
+    expect(breakwater.genre).toBe("Space Western");
+    expect(breakwater.generator.href).toBe("/generators/heist");
+  });
+
   it("keys every example by its own slug", () => {
     for (const [key, example] of Object.entries(examples)) {
       expect(key).toBe(example.slug);

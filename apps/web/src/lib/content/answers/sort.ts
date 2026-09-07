@@ -1,6 +1,11 @@
 import type { AnswerConfig } from "./schema";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 export type AnswerSortOption = "category" | "az" | "za" | "newest" | "oldest";
+
+export const DEFAULT_ANSWER_SORT: AnswerSortOption = "category";
+
+export const ANSWER_SORT_STORAGE_KEY = "codex_answers_sort";
 
 export interface AnswerSortItem {
   id: AnswerSortOption;
@@ -23,6 +28,62 @@ export const ANSWER_SORT_OPTIONS: AnswerSortItem[] = [
     icon: "icon-[lucide--calendar-arrow-up]",
   },
 ];
+
+/**
+ * Type guard verifying if a value matches a valid AnswerSortOption.
+ */
+export function isAnswerSortOption(value: unknown): value is AnswerSortOption {
+  return (
+    typeof value === "string" &&
+    ANSWER_SORT_OPTIONS.some((opt) => opt.id === value)
+  );
+}
+
+/**
+ * Reads the persisted answer sort preference from storage.
+ * Falls back to DEFAULT_ANSWER_SORT if storage is missing, inaccessible,
+ * or contains an invalid value.
+ */
+export function readStoredAnswerSort(
+  storage: StorageLike = browserStorage,
+): AnswerSortOption {
+  try {
+    const raw = storage?.getItem(ANSWER_SORT_STORAGE_KEY);
+    if (raw && isAnswerSortOption(raw)) {
+      return raw;
+    }
+  } catch {
+    // Fall back safely if storage access fails
+  }
+  return DEFAULT_ANSWER_SORT;
+}
+
+/**
+ * Persists the user's answer sort preference to storage.
+ */
+export function persistAnswerSort(
+  sortBy: AnswerSortOption,
+  storage: StorageLike = browserStorage,
+): void {
+  try {
+    storage?.setItem(ANSWER_SORT_STORAGE_KEY, sortBy);
+  } catch {
+    // Ignore storage failures
+  }
+}
+
+/**
+ * Clears any stored answer sort preference from storage.
+ */
+export function clearStoredAnswerSort(
+  storage: StorageLike = browserStorage,
+): void {
+  try {
+    storage?.removeItem(ANSWER_SORT_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures
+  }
+}
 
 /**
  * Formats an ISO date string (YYYY-MM-DD) into British English format (e.g. "4 Sept 2026").

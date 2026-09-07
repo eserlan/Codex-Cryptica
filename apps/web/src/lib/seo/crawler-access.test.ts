@@ -239,6 +239,33 @@ describe("evaluateCrawlResponse", () => {
     );
   });
 
+  it("accepts 404 with noindex for private routes on static hosting", () => {
+    const findings = evaluateCrawlResponse(
+      htmlResponse({
+        status: 404,
+        headers: { "X-Robots-Tag": "noindex, nofollow" },
+      }),
+      { kind: "private", indexability: "noindex" },
+    );
+
+    expect(findings).toEqual([]);
+  });
+
+  it("flags unexpected status codes for private routes", () => {
+    const findings = evaluateCrawlResponse(
+      htmlResponse({
+        status: 500,
+        headers: { "X-Robots-Tag": "noindex, nofollow" },
+      }),
+      { kind: "private", indexability: "noindex" },
+    );
+
+    expect(findings.map((f) => f.code)).toContain("status");
+    expect(findings.find((f) => f.code === "status")?.message).toContain(
+      "expected 200 or 404 for private route, received 500",
+    );
+  });
+
   it("flags an off-origin canonical as an error and a same-origin mismatch as a warning", () => {
     const offOrigin = evaluateCrawlResponse(
       htmlResponse({

@@ -292,12 +292,42 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-fictional-language-for-an-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-magic-system</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-create-a-pantheon</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-quest-hooks-without-railroading</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-keep-track-of-time-in-a-tabletop-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-make-an-alien-species-feel-believable</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -337,12 +367,52 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-a-mystery-without-railroading</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-factions-in-a-sandbox-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-start-worldbuilding-from-scratch</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-write-a-one-shot-adventure</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-to-write-an-in-world-newspaper-for-an-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/point-crawl-vs-hex-crawl</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -433,6 +503,16 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/silo-zero-seven-fallout-repository</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/nkiru-okafor-cyberpunk-npc-table-card</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-breakwater-vault-space-western-heist</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -569,13 +649,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>

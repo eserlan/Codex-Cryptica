@@ -20,10 +20,10 @@ It is especially relevant to users searching for:
 ## Core Features
 
 ### The Shelf
-Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.
+Send an entity, or a whole selection, to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.
 
 ### Cloud Backup
-Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key — that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time — pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.
+Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key; that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time: pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.
 
 ### Touch gestures
 Drag to pan, pinch to zoom, and tap a node to open it.
@@ -35,7 +35,7 @@ Settings → Help has a getting-started checklist, and a button to replay the we
 Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation. One choice sets both the genre of the generated world and your workspace appearance, and the dialog previews what you'll get before you commit. Works fully offline.
 
 ### Guided Mode
-Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header — nothing you've created is ever hidden or lost.
+Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header; nothing you've created is ever hidden or lost.
 
 ### + Create
 Pick Character, Place, Faction, Event, or Item and Codex Cryptica infers the current context and generates a draft immediately. Click Customize on the draft to reveal the full generator options.
@@ -50,16 +50,16 @@ Chat with the AI about your world. Ask questions, brainstorm ideas, or get help 
 The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to OpenAI/Luna). The status badge in the Oracle sidebar shows which mode is active.
 
 ### Oracle Memory
-The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
 
 ### Solo Adventure Mode
-Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. The play surface stays quiet by default — dice presets, roll history, resource counters, provisional facts, and the adventure archive live behind the Adventure tools panel, open it when you need them. Fullscreen is optional for an even quieter view; Escape leaves browser fullscreen without leaving the adventure. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows — it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.
+Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner. The play surface stays quiet by default: dice presets, roll history, resource counters, provisional facts, and the adventure archive live behind the Adventure tools panel, open it when you need them. Fullscreen is optional for an even quieter view; Escape leaves browser fullscreen without leaving the adventure. When a player-visible person, place, faction, item, event, or clue first appears, you can choose Add to Codex to save its visible summary as a normal campaign entity. The adventure archive lets you rename, duplicate, search, and resume past sessions. "Fix something wrong with the current situation" lets you correct what the player currently knows; it never touches anything the GM is keeping hidden. Optional dice presets, a roll history, and simple named resource counters (ammo, favor, a countdown) are there if you want a bit more structure, but nothing about them is required.
 
 ### Connections
-The Connections tab puts this entity in the middle and arranges everything linked straight to it around the edge — links you made, links others made to it, and anything filed under it — each one labelled with its relationship. Click any surrounding entity to open it. Connections that do not fit comfortably in the picture are listed underneath it, still one tap away. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.
+The Connections tab puts this entity in the middle and arranges everything linked straight to it around the edge: links you made, links others made to it, and anything filed under it, each one labelled with its relationship. Click any surrounding entity to open it. Connections that do not fit comfortably in the picture are listed underneath it, still one tap away. The view stops at one step: to follow a chain further, open the next entity and look at its Connections, or use the graph.
 
 ### Family Tree
-Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
+Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree (connect an existing character or create a new one) and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
 
 ### Explore the lineage
 Drag to pan, scroll or pinch to zoom, and use ⊞ to expand a branch. Choose Show all generations to reveal the whole recorded lineage.
@@ -68,7 +68,7 @@ Drag to pan, scroll or pinch to zoom, and use ⊞ to expand a branch. Choose Sho
 Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; use Fit to Screen in the graph controls whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance. The drawing needs a pointer and a screen, so Browse as table in the graph controls opens the same entities as a keyboard-friendly list, and each entity page names its connections and their direction.
 
 ### World Chronology
-Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year — use Previous / Next to navigate months, or click the month title to jump straight to a year with the scroll picker. Click an entry to open it in the detail panel; double-click to open it full-screen. Double-click an empty area of any date cell to open the entity creation form with that date pre-filled as the start date. Drag an entity from the left sidebar onto any calendar day to set its start or end date. If an entity has a date, click that date text in the detail panel to jump the calendar straight to it. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and 'include undated' toggles to narrow what's visible.
+Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year; use Previous / Next to navigate months, or click the month title to jump straight to a year with the scroll picker. Click an entry to open it in the detail panel; double-click to open it full-screen. Double-click an empty area of any date cell to open the entity creation form with that date pre-filled as the start date. Drag an entity from the left sidebar onto any calendar day to set its start or end date. If an entity has a date, click that date text in the detail panel to jump the calendar straight to it. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and 'include undated' toggles to narrow what's visible.
 
 ### World Front Page
 Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.
@@ -77,7 +77,7 @@ Use the briefing field to edit the world blurb directly. If it is empty, the Gen
 Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
 
 ### Codex Interchange Format (CIF) Import
-Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too — it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.
+Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault, entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too; it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.
 
 ### Search Indexing
 Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.
@@ -119,7 +119,7 @@ Keep secrets hidden. Hide items from your map so players don't see them during a
 Change your world. Click the folder name at the top to switch to a different story.
 
 ### Pick Dates
-Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.
+Select dates using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.
 
 ### Keyboard Navigation
 Use `Shift+Left` and `Shift+Right` arrows to quickly navigate back and forward through your recently viewed entities. Navigation history is preserved during your session. Shortcuts are disabled while editing text or when modals are open.
@@ -128,10 +128,10 @@ Use `Shift+Left` and `Shift+Right` arrows to quickly navigate back and forward t
 Safe file loading. If a file import stops, just pick the file again to finish where you left off.
 
 ### Creature Packs
-Populate a new vault fast with Creature Packs — curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.
+Populate a new vault fast with Creature Packs: curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.
 
 ### Themes
-Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes—from Ancient Parchment to Sci-Fi Terminal—to perfectly match the genre of your story.
+Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes, from Ancient Parchment to Sci-Fi Terminal, to perfectly match the genre of your story.
 
 ### Instant Visualization
 For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.
@@ -161,7 +161,7 @@ Open Vault Entities in the VTT sidebar to search your world notes, then drag cha
 Use Tile Decks in the VTT sidebar to add a starter pack (Scribble Dungeons, Geomorphs 2013, Geomorph Collection) or import your own PNG or JPG images. Filter the tile palette by category, choose a specific tile, draw one at random from a deck, or use "Draw from all decks" to pull from every installed deck at once. New tiles snap edge-to-edge against tiles already on the map. Starter tiles are downloaded once into the current vault, so drawing remains available offline.
 
 ### Map Layers
-Every placed tile and token belongs to one of three layers — Terrain, Furniture, or Tokens — always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.
+Every placed tile and token belongs to one of three layers (Terrain, Furniture, or Tokens), always drawn in that order so tokens never disappear beneath the map. Click LAYERS in the VTT toolbar to pick which layer new placements land on; only items on that active layer can be clicked, selected, or dragged, so you can safely work on furniture without nudging tokens or terrain by accident. Hide a layer to declutter your view, or lock one to stop edits entirely (a locked layer blocks even the GM). Right-click an existing tile or token and choose Move to Layer to reassign it. Players moving their own token are never restricted by your active layer.
 
 ### Map Notes
 Pin a note anywhere on the map to remember what happens there. Press the note button, then click the spot it belongs to and write down whatever you want to remember; press Escape to back out without placing one. Notes are not just for VTT mode: the button sits in the VTT toolbar while you are in play and in the map bar when you are not, and a note stays clickable and draggable either way. A note lands folded down to a marker, no bigger than a lore pin, so a stocked dungeon does not bury the map art underneath it: double-click a marker to open the note, and double-click again to fold it away. Shift+scroll over an open note to resize it. Note text takes basic markdown, and the toolbar above the note body writes it for you: bold, italic, headings, and bullet lists all show through on the note face on the map. Notes start hidden from players, so you can stock a dungeon ahead of time; right-click one and show it when the party finds it. Select a note to edit its text, and drag it to move it, whichever layer you happen to be editing. When you roll on a table, "Pin to map" drops the result straight onto the map as a note, so a rolled encounter stays attached to the room it belongs to. A note lives and dies with the session; for the one that turns out to matter, "Keep in vault" writes it into your vault as a Note entity and links the marker to it.
@@ -200,31 +200,31 @@ Draft entities stay separate from your active lore until you review them. Open t
 Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
 
 ### P2P Connection Manager
-Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.
+Establish direct peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.
 
 ### QuickNote Fast Scratchpad
 Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle the glassmorphic fast scratchpad. Jot down thoughts, auto-save drafts, and use the 'Elevate' button to let the AI structure your raw notes into complete Character, Location, or Item draft entities.
 
 ### Nested Entities
-Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one — the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.
+Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one; the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.
 
 ### Entity Links in Content
-When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.
+When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode; the editor shows plain text while you are writing.
 
 ### Guest Character Chat
-Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears — read-only, with a link back — under that character's own Chat tab.
+Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears (read-only, with a link back) under that character's own Chat tab.
 
 ### Campaign Generators
-Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.
+Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving; nothing is written until you confirm.
 
 ### Secret Societies & Cults
 Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.
 
 ### Entity Timeline
-Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity — battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.
+Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity: battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.
 
 ### Generators Work Offline
-The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.
+The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device; this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.
 
 ### Presets and Matching Options
 Above the generator options, Start From offers a few ready-made settings like Merchant Port or Boom Town. Picking one fills in two or three fields and leaves the rest blank. You can also describe what you want in your own words, and any field still blank is filled in from that description, with a chip showing what was read so you can remove anything you disagree with. Blank fields are then chosen to match what you did pick: a coastal trade hub tends to end up under merchant rule with a market district, while a mountain mining village does not. Everything stays editable, and nothing you set by hand is ever overwritten.
@@ -233,7 +233,7 @@ Above the generator options, Start From offers a few ready-made settings like Me
 Design structured language profiles (conlangs) with pronunciation guidance, naming structures, example names, phrases, and a glossary. When generating an NPC, faction, settlement, or ship, choose one saved Naming language to apply its rules. No language is applied automatically.
 
 ### News Sheets (In-World News)
-Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.
+Create an in-world news sheet for your campaign: a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.
 
 ### Dungeon & Delve Generator
 Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks. After generating a delve, choose Generate Boss / Key NPC to create a site-anchored Character draft complete with lair sector, alert escalation, and inhabitant relationships.
@@ -243,6 +243,9 @@ Generate campaign-ready adventure concepts tailored to your world theme. Each sc
 
 ### Quest Hook Generator
 Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.
+
+### Rumour Generator
+Generate a d6 table of six local rumours -- each naming a real lead the party can chase, with a source, but no quest structure. Behind the scenes, four are essentially true, one is an exaggeration, and one is a dangerous misconception; which is which stays in the GM-only notes and is never shown to players.
 
 ### Encounter Generator
 Generate a playable combat, social, exploration, environmental, or mixed encounter -- not just a monster list. Each output includes an at-a-glance summary, a player-facing description, participants and their motives, environment, non-combat approaches, a complication, and outcomes/rewards. Threat is described in fictional terms so it works with any RPG system.
@@ -260,7 +263,7 @@ Transform dungeon concepts into interactive spatial canvas maps. Open a generate
 Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.
 
 ### Presentation Templates
-Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types — text, number, dice, counter, or checkbox — so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
+Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types (text, number, dice, counter, or checkbox) so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
 
 
 ## Help Documentation
@@ -1921,7 +1924,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I balance RPG combat encounters without causing a TPK?](https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk)
 
-**Direct answer:** Encounter balance isn't only a monster-versus-party maths problem — a fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
+**Direct answer:** Encounter balance isn't only a monster-versus-party maths problem. A fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
 
 ### [How do I find a tabletop RPG group to play with?](https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with)
 
@@ -1929,31 +1932,55 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I get players to engage with my campaign world?](https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world)
 
-**Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them — a piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character — a player making a sharp decision in third person is roleplaying just as much as one doing voices.
+**Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them. A piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character: a player making a sharp decision in third person is roleplaying just as much as one doing voices.
 
 ### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
 
-**Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork — done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
+**Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork; done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
 
 ### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
 
-**Direct answer:** To build a point crawl for an RPG, construct a network of six to ten landmark nodes connected by differentiated travel paths. Define each node as an actionable destination with a clear hazard, resource, or encounter. Then connect the nodes with routes that present meaningful trade-offs in travel duration, terrain difficulty, and risk, ensuring there are loops and alternative paths rather than a single linear highway.
+**Direct answer:** A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk. Build in enough loops and alternative paths that the map isn't a single linear road.
 
 ### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
 
-**Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice — the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit — because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
+**Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice: the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit, because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
 
 ### [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction)
 
-**Direct answer:** Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move — "restore the drowned line to the throne" rather than "gain power".
+**Direct answer:** Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move: "restore the drowned line to the throne" rather than "gain power".
+
+### [How do you create a fictional language for an RPG?](https://codexcryptica.com/answers/how-do-you-create-a-fictional-language-for-an-rpg)
+
+**Direct answer:** Create a fictional language for an RPG by choosing a small set of sounds, repeatable naming patterns, three simple structural rules and a dozen words the party will encounter. Write a pronunciation key, build names from recurring roots, and tie greetings or titles to local customs. Test it on a sign, an NPC introduction and a place name before expanding the vocabulary.
+
+### [How do you create a magic system?](https://codexcryptica.com/answers/how-do-you-create-a-magic-system)
+
+**Direct answer:** A magic system gets interesting from its limitations, costs, and societal consequences, not from a list of spectacular spells. Define where the energy originates, what physical or psychological price it extracts from the caster, what problems it can't solve, and how mundane institutions like law, commerce, and warfare have adapted to its existence.
 
 ### [How do you create a pantheon?](https://codexcryptica.com/answers/how-do-you-create-a-pantheon)
 
-**Direct answer:** Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree — who was betrayed, who was replaced, whose worship displaced whose — and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.
+**Direct answer:** Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree: who was betrayed, who was replaced, whose worship displaced whose, and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.
+
+### [How do you create quest hooks without railroading?](https://codexcryptica.com/answers/how-do-you-create-quest-hooks-without-railroading)
+
+**Direct answer:** Create quest hooks without railroading by framing every hook as a visible situation with clear information, tangible stakes, and an actionable choice rather than an assignment from an untouchable authority. Offer at least three distinct entry points to any major scenario, ensure players can decline or approach the problem on their own terms, and attach an escalating world consequence to inaction so the situation develops dynamically whether the party intervenes or walks away.
 
 ### [How do you design RPG puzzles that do not stall the game?](https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game)
 
-**Direct answer:** Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud — the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.
+**Direct answer:** Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud: the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.
+
+### [How do you handle character death in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg)
+
+**Direct answer:** Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
+
+### [How do you keep track of time in a tabletop campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-time-in-a-tabletop-campaign)
+
+**Direct answer:** Track it at three separate scales: ten-minute dungeon turns for tactical resource use, four-to-six-hour travel watches for overland journeys, and a campaign calendar with ticking faction clocks so the world keeps moving whether the party acts or rests.
+
+### [How do you make an alien species feel believable?](https://codexcryptica.com/answers/how-do-you-make-an-alien-species-feel-believable)
+
+**Direct answer:** Make an alien species feel believable by linking its biology, environment, and social institutions into a single chain of cause and effect instead of relying on a single psychological gimmick. Start with the evolutionary pressures of their homeworld, derive physical constraints and sensory organs from those pressures, establish what resources their biology makes scarce, and build institutions around those needs. Give them competing factions and internal disagreements so the species never behaves as a monolithic monoculture at the table.
 
 ### [How do you make NPCs memorable without lots of prep?](https://codexcryptica.com/answers/how-do-you-make-npcs-memorable-without-lots-of-prep)
 
@@ -1969,11 +1996,11 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes)
 
-**Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world — a person, a place, a faction, an item — and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
+**Direct answer:** Separate your notes by how long they stay true, not by session. Keep one durable page per thing that exists in the world (a person, a place, a faction, an item) and let session logs be a dated stream that points at those pages. Everything a campaign needs to recall later is an answer to "what do I know about X?", and a per-session diary is the one structure that cannot answer it.
 
 ### [How do you prep a weekly RPG session quickly?](https://codexcryptica.com/answers/how-do-you-prep-a-weekly-rpg-session-quickly)
 
-**Direct answer:** To prep a weekly RPG session quickly without burnout, run a 35-minute timeboxed routine focused exclusively on the upcoming three hours of play: (1) review the previous session's recap and extract one or two unresolved player hooks, (2) frame a strong opening scene with immediate momentum, (3) sketch two or three flexible scene nodes rather than a rigid linear plot, (4) prepare one or two portable encounters or hazards with condensed stats, and (5) outline two key NPCs with an immediate desire and one distinctive mannerism. Treat any remaining minutes as a deliberate improvisation buffer, and let everything else be generated or improvised live.
+**Direct answer:** Give yourself a 35-minute timebox aimed squarely at the next three hours of play, nothing further out. Pull one or two unresolved hooks from last session's recap, write a strong opening scene, sketch two or three flexible scene nodes instead of a linear plot, prepare one or two portable encounters with condensed stats, and outline two key NPCs with a want and a mannerism. Whatever time is left is an improvisation buffer, and everything else gets generated or improvised live.
 
 ### [How do you prepare a sandbox RPG campaign?](https://codexcryptica.com/answers/how-do-you-prepare-a-sandbox-rpg-campaign)
 
@@ -1983,13 +2010,45 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
 
+### [How do you run a heist in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg)
+
+**Direct answer:** Structure the score into four phases: casing the target, engagement with flashback tokens, an active alarm track, and a chaotic getaway. That way players react in the moment instead of planning for every hypothetical complication up front. Give the party flashback points to retroactively reveal preparations when obstacles emerge during the infiltration, and pair it with a visible heat counter that climbs on failed checks, so infiltration becomes a tense back-and-forth rather than a stalled planning session.
+
+### [How do you run a mystery without railroading?](https://codexcryptica.com/answers/how-do-you-run-a-mystery-without-railroading)
+
+**Direct answer:** Apply the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses, so no single missed roll or wrong turn can stall the whole plot. Don't lock essential clues behind binary failure checks; if a player searches a crime scene, they find the evidence automatically, while the dice decide speed, thoroughness, or stealth instead. And give the culprit an active agenda that keeps moving whenever the investigators hesitate.
+
+### [How do you run factions in a sandbox campaign?](https://codexcryptica.com/answers/how-do-you-run-factions-in-a-sandbox-campaign)
+
+**Direct answer:** Running factions in a sandbox means giving each one a goal, a resource it defends, a rival it is losing ground to, and a scheduled move it makes whether or not the party is watching, then surfacing that move through a visible consequence the players can react to. Treat every faction as a clock that keeps advancing between sessions rather than a paragraph of static lore, and the sandbox starts to feel like it moves on its own.
+
+### [How do you start worldbuilding from scratch?](https://codexcryptica.com/answers/how-do-you-start-worldbuilding-from-scratch)
+
+**Direct answer:** Start small and bottom-up: build one functional settlement, three competing local factions, two adventure locations within a half-day trek, and an immediate crisis. Expand the broader continent and ancient history only once player exploration actually calls for it.
+
 ### [How do you track unresolved plot hooks in an RPG campaign?](https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign)
 
 **Direct answer:** Unresolved plot hooks are tracked by treating them as living status states attached to existing campaign entities rather than entries on an endless quest checklist. Record each hook with five lightweight attributes: the origin source, the affected faction or NPC, current lifecycle status (dormant, simmering, active, or rotting), its urgency clock, and the concrete consequence that manifests in the world if the players choose to ignore it.
 
+### [How do you write a one-shot adventure?](https://codexcryptica.com/answers/how-do-you-write-a-one-shot-adventure)
+
+**Direct answer:** Design backward from a strict session time limit, using a four-beat structure: an immediate inciting incident, an investigative exploration scene, a high-stakes complication, and a decisive final confrontation. Build in at least one elastic middle encounter that can be expanded or cut entirely depending on the clock, so the party reaches the climax before the session ends.
+
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
+
+### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
+
+**Direct answer:** Create a cyberpunk district by deciding what work it does for the city, who extracts value from that work, and what daily cost residents pay for staying there. Give it one stressed piece of infrastructure, a visible social divide, a local authority with limits, and a problem that forces people into difficult bargains. Then prepare a few places where that pressure can meet the crew.
+
+### [How do you write an in-world newspaper for an RPG?](https://codexcryptica.com/answers/how-to-write-an-in-world-newspaper-for-an-rpg)
+
+**Direct answer:** Write an in-world RPG newspaper as a playable handout: give it a local headline, two or three public facts, a recognisable editorial voice, one clear bias, a rumour marked by its source, and a hook the players can pursue. Keep the truth behind each item in your GM notes, then connect names, places and dates to the campaign so the paper changes when the world does.
+
+### [Point crawl vs hex crawl: which should you use?](https://codexcryptica.com/answers/point-crawl-vs-hex-crawl)
+
+**Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
 
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
@@ -2001,7 +2060,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [What RPG system should we try instead of D&D?](https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd)
 
-**Direct answer:** There's no single best alternative — the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.
+**Direct answer:** There's no single best alternative: the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.
 
 ### [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain)
 
@@ -2009,11 +2068,11 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [What should I look for in an RPG campaign manager?](https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager)
 
-**Direct answer:** There's no single best campaign manager — the right one depends on what kind of game you run and what actually causes you friction. Before comparing named tools, it's worth being clear on the dimensions that matter: how it organises notes and relationships, whether it handles maps or VTT play, how easily data gets in and out, whether it runs locally or requires the cloud, how well it adapts to a system you didn't design it for, and whether it slows you down or speeds you up during an actual session.
+**Direct answer:** There's no single best campaign manager: the right one depends on what kind of game you run and what actually causes you friction. Before comparing named tools, it's worth being clear on the dimensions that matter: how it organises notes and relationships, whether it handles maps or VTT play, how easily data gets in and out, whether it runs locally or requires the cloud, how well it adapts to a system you didn't design it for, and whether it slows you down or speeds you up during an actual session.
 
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
-**Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty — usually dice — and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
+**Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
 
 
 ## Curated Generator Examples
@@ -2085,6 +2144,18 @@ Real, unedited output from the Codex Cryptica generators, indexed at https://cod
 **Genre:** Post-Apocalyptic
 
 **Summary:** A sealed federal fallout shelter that never got its all-clear, now split between a cult that worships its unexploded warhead and a starving vault-dweller remnant that just wants the radiation breach fixed.
+
+### [Cyberpunk NPC example: Nkiru Okafor, a Table Card roll](https://codexcryptica.com/examples/nkiru-okafor-cyberpunk-npc-table-card)
+
+**Genre:** Cyberpunk
+
+**Summary:** Nkiru Okafor is a razor-tongued street fixer who needs the crew to move a stolen biotech case before her gang-backed clinic gets raided, despite being squeamish enough to gag at a paper cut.
+
+### [Space Western heist example: The Breakwater Vault](https://codexcryptica.com/examples/the-breakwater-vault-space-western-heist)
+
+**Genre:** Space Western
+
+**Summary:** An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost, holding seized pitch-cobalt specie behind pneumatic vacuum seals, rotating patrols, and a compromised getaway.
 
 
 ## TTRPG System & Genre Campaign Management

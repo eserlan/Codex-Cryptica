@@ -140,6 +140,10 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
+    "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+    "how-do-you-improvise-npcs-on-the-spot",
+    "how-do-you-track-faction-turns-between-rpg-sessions",
   ],
   discovery: {
     id: "answer-npc-relationships",

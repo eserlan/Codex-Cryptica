@@ -9,11 +9,15 @@ import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-fac
 import { howDoYouCreateAFictionalLanguageForAnRpg } from "./how-do-you-create-a-fictional-language-for-an-rpg";
 import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
+import { howDoYouCreateQuestHooksWithoutRailroading } from "./how-do-you-create-quest-hooks-without-railroading";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
+import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
+import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
+import { howDoYouManageACampaignTimelineInAnRpg } from "./how-do-you-manage-a-campaign-timeline-in-an-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
 import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-campaign-notes";
 import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly-rpg-session-quickly";
@@ -21,11 +25,15 @@ import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandb
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-tabletop-rpg";
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
+import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions-in-a-sandbox-campaign";
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
+import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-faction-turns-between-rpg-sessions";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
+import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
+import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
@@ -51,11 +59,15 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouCreateAFictionalLanguageForAnRpg,
     howDoYouCreateAMagicSystem,
     howDoYouCreateAPantheon,
+    howDoYouCreateQuestHooksWithoutRailroading,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
     howDoYouHandleCharacterDeathInATabletopRpg,
+    howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
+    howDoYouMakeAnAlienSpeciesFeelBelievable,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
     howDoYouMakeTravelInterestingInATabletopRpg,
+    howDoYouManageACampaignTimelineInAnRpg,
     howDoYouOrganiseNpcRelationships,
     howDoYouOrganiseRpgCampaignNotes,
     howDoYouPrepAWeeklyRpgSessionQuickly,
@@ -63,11 +75,15 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouRunAConspiracyCampaign,
     howDoYouRunAHeistInATabletopRpg,
     howDoYouRunAMysteryWithoutRailroading,
+    howDoYouRunFactionsInASandboxCampaign,
     howDoYouStartWorldbuildingFromScratch,
+    howDoYouTrackFactionTurnsBetweenRpgSessions,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouWriteAOneShotAdventure,
     howMuchPrepDoYouNeedForAnRpgSession,
+    howToCreateACyberpunkCityDistrict,
     howToWriteAnInWorldNewspaperForAnRpg,
+    pointCrawlVsHexCrawl,
     whatIsAPointCrawl,
     whatMakesAGoodRandomEncounter,
     whatRpgSystemShouldWeTryInsteadOfDnd,

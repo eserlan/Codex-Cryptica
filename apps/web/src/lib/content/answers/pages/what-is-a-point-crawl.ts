@@ -127,14 +127,23 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
+    "point-crawl-vs-hex-crawl",
   ],
   discovery: {
     id: "answer-point-crawl",
     parentCluster: "adventure-mapping",
     primaryIntent: "what is a point crawl",
-    intentAliases: ["point crawl meaning", "point crawl vs hex crawl"],
+    intentAliases: ["point crawl meaning"],
     uniqueValue:
       "Defines the structure, names its parts, works a fen example with real travel costs, and says when not to use one.",
+    relatedIntents: ["answer-point-crawl-vs-hex-crawl"],
+    acknowledgedOverlap: [
+      {
+        with: "answer-point-crawl-vs-hex-crawl",
+        reason:
+          "This page defines point crawls and their component parts; the comparison page helps a GM decide between point crawls and hex crawls before choosing a mapping structure.",
+      },
+    ],
   },
 
   seo: {
