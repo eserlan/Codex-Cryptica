@@ -31,6 +31,7 @@ import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldb
 import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-faction-turns-between-rpg-sessions";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
+import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
@@ -82,6 +83,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouTrackFactionTurnsBetweenRpgSessions,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouWriteAOneShotAdventure,
+    howManyNpcsDoesAnRpgTownNeed,
     howMuchPrepDoYouNeedForAnRpgSession,
     howToCreateACyberpunkCityDistrict,
     howToWriteAnInWorldNewspaperForAnRpg,
