@@ -217,7 +217,18 @@ export function evaluateCrawlResponse(
   const findings: CrawlFinding[] = [];
   const lowerBody = response.body.toLowerCase();
 
-  if (response.status !== 200) {
+  if (expectation.kind === "private") {
+    // For private workspace routes, 200 or 404 is valid at the static host
+    // boundary. Cloudflare Pages serves non-prerendered SPA routes as 404
+    // with X-Robots-Tag: noindex, nofollow, which fully blocks indexing.
+    if (response.status !== 200 && response.status !== 404) {
+      findings.push({
+        code: "status",
+        severity: "error",
+        message: `expected 200 or 404 for private route, received ${response.status}`,
+      });
+    }
+  } else if (response.status !== 200) {
     findings.push({
       code: "status",
       severity: "error",

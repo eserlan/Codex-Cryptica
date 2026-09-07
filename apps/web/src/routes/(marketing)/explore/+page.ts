@@ -1,7 +1,8 @@
 import type { PageLoad } from "./$types";
+import { building } from "$app/environment";
 import { getPublicContentByLabel } from "$lib/content/labels/aggregate";
 
-export const prerender = false;
+export const prerender = true;
 export const ssr = true;
 
 const DIRECTORY_BASE_URL =
@@ -21,7 +22,7 @@ interface WorldDirectoryResult {
 }
 
 export const load: PageLoad = async ({ fetch, url }) => {
-  const label = url.searchParams.get("label")?.trim() || "";
+  const label = building ? "" : url.searchParams.get("label")?.trim() || "";
 
   if (!label) {
     return { label: "", results: [] };
