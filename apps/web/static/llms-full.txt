@@ -1962,6 +1962,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree: who was betrayed, who was replaced, whose worship displaced whose, and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.
 
+### [How do you create quest hooks without railroading?](https://codexcryptica.com/answers/how-do-you-create-quest-hooks-without-railroading)
+
+**Direct answer:** Create quest hooks without railroading by framing every hook as a visible situation with clear information, tangible stakes, and an actionable choice rather than an assignment from an untouchable authority. Offer at least three distinct entry points to any major scenario, ensure players can decline or approach the problem on their own terms, and attach an escalating world consequence to inaction so the situation develops dynamically whether the party intervenes or walks away.
+
 ### [How do you design RPG puzzles that do not stall the game?](https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game)
 
 **Direct answer:** Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud: the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.

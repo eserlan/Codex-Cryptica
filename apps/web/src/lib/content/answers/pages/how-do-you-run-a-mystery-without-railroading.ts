@@ -109,6 +109,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+    "how-do-you-create-quest-hooks-without-railroading",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",

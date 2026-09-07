@@ -136,6 +136,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-you-build-a-point-crawl-for-an-rpg",
     "point-crawl-vs-hex-crawl",
+    "how-do-you-create-quest-hooks-without-railroading",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
