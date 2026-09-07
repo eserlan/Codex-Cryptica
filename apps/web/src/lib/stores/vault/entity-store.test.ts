@@ -287,6 +287,19 @@ describe("EntityStore", () => {
     expect(store.entities.place.type).toBe("location");
   });
 
+  it("handles null-prototype update dictionaries safely", async () => {
+    const updates: Record<string, Partial<LocalEntity>> = Object.create(null);
+    updates["hero"] = { type: "faction" };
+    updates["__proto__"] = { type: "item" };
+
+    const result = await store.bulkUpdate(updates);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["__proto__"]);
+    expect(store.entities.hero.type).toBe("faction");
+    expect(({} as any).type).toBeUndefined();
+  });
+
   it("deletes an entity", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
       entities: { place: repository.entities.place },
