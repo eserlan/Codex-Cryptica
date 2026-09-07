@@ -5,6 +5,9 @@ import { HINT_KEYS } from "$lib/config/help-content";
 import type { StorageLike } from "$lib/utils/runtime-deps";
 
 describe("OracleSidebarPanel", () => {
+  const originalAnimate = Element.prototype.animate;
+  let installedStub = false;
+
   beforeAll(() => {
     // jsdom doesn't implement Element.prototype.animate
     if (!Element.prototype.animate) {
@@ -12,12 +15,14 @@ describe("OracleSidebarPanel", () => {
         finished: Promise.resolve(),
         cancel: vi.fn(),
       });
+      installedStub = true;
     }
   });
 
   afterAll(() => {
-    // @ts-expect-error - jsdom animate type is missing
-    delete Element.prototype.animate;
+    if (installedStub) {
+      Element.prototype.animate = originalAnimate;
+    }
   });
 
   it("uses the injected storage dependency instead of hardcoded localStorage", () => {
