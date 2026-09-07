@@ -33,7 +33,7 @@ export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
         },
         {
           term: "Attitude toward the party",
-          text: "Pick one word: wary, bored, eager, hostile, amused. This single word sets tone of voice and body language for the whole exchange and stops the NPC drifting into a neutral information dispenser.",
+          text: "Pick one word: wary, bored, eager, hostile, amused. This single word sets the tone of voice and body language for the whole exchange and stops the NPC from drifting into a neutral information dispenser.",
         },
         {
           term: "One distinguishing behaviour",
