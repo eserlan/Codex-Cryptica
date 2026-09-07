@@ -12,6 +12,7 @@ import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
+import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
 import { howDoYouOrganiseNpcRelationships } from "./how-do-you-organise-npc-relationships";
@@ -56,6 +57,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
     howDoYouHandleCharacterDeathInATabletopRpg,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
+    howDoYouMakeAnAlienSpeciesFeelBelievable,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
     howDoYouMakeTravelInterestingInATabletopRpg,
     howDoYouOrganiseNpcRelationships,

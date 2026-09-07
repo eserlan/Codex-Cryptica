@@ -141,6 +141,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-you-prep-a-weekly-rpg-session-quickly",
     "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
+    "how-do-you-make-an-alien-species-feel-believable",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",

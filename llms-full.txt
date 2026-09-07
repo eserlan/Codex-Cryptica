@@ -1974,6 +1974,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Track it at three separate scales: ten-minute dungeon turns for tactical resource use, four-to-six-hour travel watches for overland journeys, and a campaign calendar with ticking faction clocks so the world keeps moving whether the party acts or rests.
 
+### [How do you make an alien species feel believable?](https://codexcryptica.com/answers/how-do-you-make-an-alien-species-feel-believable)
+
+**Direct answer:** Make an alien species feel believable by linking its biology, environment, and social institutions into a single chain of cause and effect instead of relying on a single psychological gimmick. Start with the evolutionary pressures of their homeworld, derive physical constraints and sensory organs from those pressures, establish what resources their biology makes scarce, and build institutions around those needs. Give them competing factions and internal disagreements so the species never behaves as a monolithic monoculture at the table.
+
 ### [How do you make NPCs memorable without lots of prep?](https://codexcryptica.com/answers/how-do-you-make-npcs-memorable-without-lots-of-prep)
 
 **Direct answer:** NPCs become memorable when defined by playable surface cues rather than hidden backstory. Instead of writing paragraphs of history that players never discover, give each non-player character five immediate elements: an urgent concrete want, an observable physical mannerism or vocal cadence, a sharp internal contradiction, an existing relationship hook, and one striking sensory detail.
@@ -2026,9 +2030,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
 
+### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
+
+**Direct answer:** Create a cyberpunk district by deciding what work it does for the city, who extracts value from that work, and what daily cost residents pay for staying there. Give it one stressed piece of infrastructure, a visible social divide, a local authority with limits, and a problem that forces people into difficult bargains. Then prepare a few places where that pressure can meet the crew.
+
 ### [How do you write an in-world newspaper for an RPG?](https://codexcryptica.com/answers/how-to-write-an-in-world-newspaper-for-an-rpg)
 
 **Direct answer:** Write an in-world RPG newspaper as a playable handout: give it a local headline, two or three public facts, a recognisable editorial voice, one clear bias, a rumour marked by its source, and a hook the players can pursue. Keep the truth behind each item in your GM notes, then connect names, places and dates to the campaign so the paper changes when the world does.
+
+### [Point crawl vs hex crawl: which should you use?](https://codexcryptica.com/answers/point-crawl-vs-hex-crawl)
+
+**Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
 
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
