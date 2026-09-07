@@ -153,5 +153,9 @@ export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
     title: "How do you improvise NPCs on the spot? | Codex Cryptica",
     description:
       "Improvise usable RPG NPCs in seconds with a 5-beat method: role, immediate want, attitude, one distinguishing behaviour, and one campaign connection.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-you-improvise-npcs-on-the-spot.jpg",
+    imageAlt:
+      "A Game Master gestures mid-sentence at a lamplit table while players lean in, a hand-drawn sketch of an improvised guard NPC propped beside the map",
   },
 };
