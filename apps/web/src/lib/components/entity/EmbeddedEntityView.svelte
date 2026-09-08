@@ -1,5 +1,4 @@
 <script lang="ts">
-  import ZenView from "../zen/ZenView.svelte";
   import { fade } from "svelte/transition";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";
@@ -22,5 +21,7 @@
   transition:fade={{ duration: 200 }}
   data-testid="embedded-entity-view"
 >
-  <ZenView {entityId} onClose={handleClose} />
+  {#await import("../zen/ZenView.svelte") then { default: ZenView }}
+    <ZenView {entityId} onClose={handleClose} />
+  {/await}
 </div>

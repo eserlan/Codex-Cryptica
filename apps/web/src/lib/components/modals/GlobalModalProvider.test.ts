@@ -81,6 +81,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     },
     showCanvasSelector: false,
     showMobileCreateSheet: false,
+    showZenMode: false,
     closeMergeDialog: vi.fn(),
     closeBulkLabelDialog: vi.fn(),
     closeRelatedEntityDialog: vi.fn(),
@@ -95,7 +96,7 @@ vi.mock("./SilhouettePickerModal.svelte", async () => ({
 }));
 
 vi.mock("./ZenModeModal.svelte", async () => ({
-  default: (await import("./__tests__/ModalStub.svelte")).default,
+  default: (await import("./__tests__/ZenModeModalStub.svelte")).default,
 }));
 
 vi.mock("$lib/components/dice/DiceModal.svelte", async () => ({
@@ -123,6 +124,21 @@ describe("GlobalModalProvider", () => {
   beforeEach(() => {
     modalUIStore.showCanvasSelector = false;
     modalUIStore.showMobileCreateSheet = false;
+    modalUIStore.showZenMode = false;
+  });
+
+  it("renders ZenModeModal when showZenMode is true", async () => {
+    modalUIStore.showZenMode = true;
+
+    render(GlobalModalProvider);
+
+    expect(await screen.findByTestId("zen-mode-modal-stub")).toBeTruthy();
+  });
+
+  it("does not render ZenModeModal when showZenMode is false", () => {
+    render(GlobalModalProvider);
+
+    expect(screen.queryByTestId("zen-mode-modal-stub")).toBeNull();
   });
 
   it("renders CanvasSelectionModal from the global provider when the modal state is open", async () => {
