@@ -12,6 +12,11 @@
   import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
+  import {
+    buildGeneratorMarkdown,
+    buildSectionMarkdown,
+    buildSessionEntityMarkdown,
+  } from "$lib/components/seo/generator-copy";
   import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import ProvenanceBadge from "./ProvenanceBadge.svelte";
@@ -53,6 +58,10 @@
   } from "$lib/services/analytics/generator-save-tracking";
   import { registerShellCtaHandler } from "./marketing-shell";
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import {
+    clipboardService as defaultClipboardService,
+    type ClipboardService,
+  } from "$lib/services/ClipboardService";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -89,6 +98,7 @@
     onGeneratePlotTwist = undefined,
     onGenerateRoster = undefined,
     onOpenMemberAsCharacter = undefined,
+    clipboardService = defaultClipboardService,
     autoGenerateExplicit = false,
   }: {
     canonicalPath?: string;
@@ -124,20 +134,10 @@
       section: MarkdownSectionForCopy,
       data: GeneratorOutput,
     ) => void;
+    clipboardService?: ClipboardService;
+    autoGenerateExplicit?: boolean;
     backHref?: string;
     backLabel?: string;
-    /**
-     * This page's auto-draft is driven explicitly by the parent (via
-     * `triggerExplicitAutoGenerate()`, called once the parent's own
-     * handoff state has actually settled) instead of the passive "cheap
-     * local example" effect below — set purely from a synchronously-known
-     * value like `slug` (never from state that only becomes correct after a
-     * navigation lifecycle callback runs, e.g. `handedOffFactionContext`),
-     * so this component's own on-mount effects can't race ahead of it and
-     * fire the passive path with incomplete/no context (e.g. Faction ->
-     * Roster).
-     */
-    autoGenerateExplicit?: boolean;
   } = $props();
 
   let isGenerating = $state(false);
@@ -157,23 +157,6 @@
   const showOutputLoading = $derived(isBusy && !hasStreamedPreview);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
-
-  // Resets generatedData/userGenerated exactly once per genuine navigation
-  // to a new page (keyed by canonicalPath), never on a spurious re-render of
-  // the *same* page — this component is reused across client-side
-  // navigations between generator slugs (Faction -> Roster -> NPC handoffs
-  // all share one instance rather than remounting). Two bugs this specifically
-  // avoids:
-  //  - An unconditional `generatedData = initialDraft` on every re-render
-  //    would re-run whenever anything in this large component's reactive
-  //    graph churns, silently clobbering a just-completed generation back to
-  //    null on a handoff-arrival page (where initialDraft is null) with no
-  //    error shown.
-  //  - Naively guarding that with `!userGenerated` instead breaks the *next*
-  //    handoff page, because `userGenerated` is never otherwise reset when
-  //    only the page changes — it would still read true from the previous
-  //    page's explicit generation, permanently blocking this page's own
-  //    reset and leaving the previous page's stale draft on screen.
   let currentPagePath = $state<string | undefined>(undefined);
 
   $effect(() => {
@@ -193,6 +176,7 @@
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let copiedSectionId = $state<string | null>(null);
+  let copyError = $state(false);
   let useAI = $state(true);
   let showSaveModal = $state(false);
   let redirectQuery = $state("");
@@ -281,30 +265,8 @@
     }
   });
 
-  // One-shot per page (keyed by canonicalPath, not component lifetime — this
-  // component is reused across client-side navigations between generator
-  // slugs, e.g. Faction -> Roster -> NPC handoffs). Without this guard, a
-  // handoff-arrival slug (initialDraft resolving to null so the page seeds
-  // itself from the handed-over context) can drive `generatedData` and the
-  // effect below into a runaway loop — each auto-draft re-render is itself
-  // enough to make the effect's dependencies look "changed" again, and each
-  // pass reattempts a full generate() call, hanging the tab (#2808 review).
   let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
 
-  // `autoGenerateExplicit` pages (e.g. faction-roster) are driven explicitly
-  // by the parent via `triggerExplicitAutoGenerate()` below instead of this
-  // passive effect: the parent's client-side-navigation handoff state (e.g.
-  // `handedOffFactionContext`, set inside SvelteKit's `afterNavigate`) can
-  // still be settling in the same tick this effect first fires — reading it
-  // here would race and could catch it still empty, silently falling through
-  // to a contextless local example with no way to retry (the one-shot guard
-  // is single-use). The parent's own effect reacts precisely to that state
-  // actually changing, so it never has to guess how long to wait.
-  // `!isAutoDrafting` guards against marking a page "attempted" while a prior
-  // page's auto-draft is still in flight: without it, a navigation mid-draft
-  // would set autoDraftAttemptedForPath to the new page, handleGenerateOnMount
-  // would then no-op on its own isAutoDrafting check, and the new page would
-  // never get a retry (the guard above is one-shot).
   $effect(() => {
     if (
       browser &&
@@ -318,12 +280,6 @@
     }
   });
 
-  /**
-   * Called by the parent once its handoff state for this page is known-good
-   * (e.g. once `handedOffFactionContext` has actually settled) — see the
-   * comment above. Shares the same one-shot guard as the passive effect so
-   * the two paths can never double-fire a generation for the same page.
-   */
   export function triggerExplicitAutoGenerate() {
     if (autoDraftAttemptedForPath === canonicalPath) return;
     autoDraftAttemptedForPath = canonicalPath;
@@ -591,27 +547,27 @@
       copy_target: "markdown",
     });
 
-    const markdownText = [
-      `# ${generatedData.title}`,
-      generatedData.summary ? `*${generatedData.summary}*` : "",
-      `Labels: ${generatedData.labels.join(", ")}`,
-      "",
-      documentLayout.content,
-      "",
-      documentLayout.lore,
-    ]
-      .filter((line) => line !== undefined)
-      .join("\n")
-      .trim();
+    const markdownText = buildGeneratorMarkdown({
+      title: generatedData.title,
+      summary: generatedData.summary,
+      labels: generatedData.labels,
+      content: documentLayout.content,
+      lore: documentLayout.lore,
+    });
 
     try {
-      await navigator.clipboard.writeText(markdownText);
+      const success = await clipboardService.copyContent({
+        markdown: markdownText,
+      });
+      if (!success) throw new Error("Clipboard copy failed");
+      copyError = false;
       copied = true;
       setTimeout(() => {
         copied = false;
       }, 2000);
     } catch (err) {
       console.error("Failed to copy markdown:", err);
+      copyError = true;
     }
   }
 
@@ -622,14 +578,31 @@
       section_id: sectionId,
     });
     try {
-      await navigator.clipboard.writeText(markdown.trim());
+      const success = await clipboardService.copyContent({
+        markdown: buildSectionMarkdown(markdown),
+      });
+      if (!success) throw new Error("Clipboard copy failed");
+      copyError = false;
       copiedSectionId = sectionId;
       setTimeout(() => {
         if (copiedSectionId === sectionId) copiedSectionId = null;
       }, 1600);
     } catch (err) {
       console.error("Failed to copy section markdown:", err);
+      copyError = true;
     }
+  }
+
+  async function handleCopySessionEntity(
+    entity: SessionEntity,
+  ): Promise<boolean> {
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "session_hub_detail",
+    });
+    return clipboardService.copyContent({
+      markdown: buildSessionEntityMarkdown(entity),
+    });
   }
 
   function handleContainerKeydown(event: KeyboardEvent) {
@@ -913,6 +886,15 @@
             {errorMessage}
           </div>
         {/if}
+        {#if copyError}
+          <div
+            class="mt-4 text-xs text-theme-danger"
+            role="status"
+            aria-live="polite"
+          >
+            Could not copy
+          </div>
+        {/if}
 
         <!-- Related links moved to bottom discover section -->
       </div>
@@ -1032,6 +1014,7 @@
   <EntityDetailModal
     entity={selectedHubEntity}
     onClose={() => (selectedHubEntity = null)}
+    onCopy={handleCopySessionEntity}
   />
 </div>
 

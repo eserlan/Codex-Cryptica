@@ -7,6 +7,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
+  import { clipboardService } from "$lib/services/ClipboardService";
 
   const close = () => modalUIStore.closeReadMode();
 
@@ -117,21 +118,12 @@
     if (!entity || !renderedContent) return;
 
     try {
-      const typeHtml = "text/html";
-      const typeText = "text/plain";
-
-      const blobHtml = new Blob([renderedContent], { type: typeHtml });
-      const blobText = new Blob([entity.content || ""], { type: typeText });
-
-      const data = [
-        new ClipboardItem({
-          [typeHtml]: blobHtml,
-          [typeText]: blobText,
-        }),
-      ];
-
-      await navigator.clipboard.write(data);
-      copyStatus = "success";
+      copyStatus = (await clipboardService.copyContent({
+        html: renderedContent,
+        markdown: entity.content || "",
+      }))
+        ? "success"
+        : "error";
       setTimeout(() => (copyStatus = "idle"), 2000);
     } catch (err) {
       console.error("Failed to copy", err);

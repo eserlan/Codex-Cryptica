@@ -347,6 +347,75 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
   });
 
+  describe("Smart copy integration", () => {
+    it("passes full and section Markdown through the injected clipboard service", async () => {
+      const copyContent = vi.fn().mockResolvedValue(true);
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Chronicle\nA useful NPC.",
+        lore: "### Secret\nA hidden truth.",
+        labels: ["ally"],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          clipboardService: { copyContent } as never,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy Chronicle as Markdown" }),
+      );
+
+      expect(copyContent).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          markdown: expect.stringContaining("# Seed"),
+        }),
+      );
+      expect(copyContent).toHaveBeenNthCalledWith(2, {
+        markdown: "### Chronicle\nA useful NPC.",
+      });
+    });
+
+    it("shows error feedback when the injected service reports total failure", async () => {
+      const copyContent = vi.fn().mockResolvedValue(false);
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        content: "A useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          clipboardService: { copyContent } as never,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+
+      expect(screen.getByText("Could not copy")).toBeTruthy();
+      expect(screen.queryByText("Copied!")).toBeNull();
+    });
+  });
+
   describe("Names variant rendering", () => {
     it("renders names as beautiful cards with copy buttons when variant is 'names'", () => {
       const mockGenerate = vi.fn().mockResolvedValue({});
