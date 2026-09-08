@@ -10,10 +10,12 @@
     entity,
     onClose,
     onCopy,
+    onRefine,
   }: {
     entity: SessionEntity | null;
     onClose: () => void;
     onCopy?: (entity: SessionEntity) => Promise<boolean>;
+    onRefine?: (entity: SessionEntity) => void;
   } = $props();
 
   let copyState = $state<"idle" | "success" | "error">("idle");
@@ -113,6 +115,15 @@
           >
             {copyState === "success" ? "Copied!" : "Could not copy."}
           </span>
+        {/if}
+        {#if onRefine}
+          <button
+            type="button"
+            onclick={() => entity && onRefine(entity)}
+            class="rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase font-header tracking-widest text-theme-primary hover:bg-theme-primary/20 transition-all"
+          >
+            Refine
+          </button>
         {/if}
         <button
           type="button"

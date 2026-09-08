@@ -42,6 +42,7 @@
     contextTrimmed,
     onDismissAiFallback,
     onSaveToCodex,
+    onRefine,
     onCopyMarkdown,
     onCopySection,
     onContainerClick,
@@ -68,6 +69,7 @@
     contextTrimmed: boolean;
     onDismissAiFallback: () => void;
     onSaveToCodex: () => void;
+    onRefine?: (data: GeneratorOutput) => void;
     onCopyMarkdown: () => void;
     onCopySection: (sectionId: string, markdown: string) => void;
     onContainerClick: (event: MouseEvent) => void;
@@ -201,6 +203,21 @@
                 title="Import this draft into your local Codex Cryptica vault"
               >
                 Save to Codex
+              </button>
+            {/if}
+            {#if onRefine && generatedData}
+              <button
+                type="button"
+                onclick={() => onRefine(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                id="refine-draft-btn"
+                title="Refine this draft with an instruction"
+              >
+                <span
+                  class="icon-[lucide--wand-sparkles] h-3.5 w-3.5"
+                  aria-hidden="true"
+                ></span>
+                Refine
               </button>
             {/if}
             {#if ((generatedData?.kind as string) === "dungeon" || generatedData?.labels?.includes("dungeon")) && onBuildDelveCanvas}
