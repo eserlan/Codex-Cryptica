@@ -126,9 +126,12 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByText("Spatial lore graph")).toBeTruthy();
     expect(screen.getByText("Optional AI")).toBeTruthy();
 
-    expect(screen.getByRole("link", { name: /discord/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /reddit/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /github/i })).toBeTruthy();
+    // Discord/Reddit/GitHub/Features/Changelog links used to be duplicated
+    // directly on the welcome screen; they now live on /explore, and the
+    // welcome page carries only the shared lightweight footer (#2830).
+    expect(screen.getByRole("link", { name: /^explore$/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^terms$/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^privacy$/i })).toBeTruthy();
   });
 
   it("renders complete Open Graph and Twitter Card tags in head", () => {
