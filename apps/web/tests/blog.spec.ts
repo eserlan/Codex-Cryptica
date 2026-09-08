@@ -230,18 +230,10 @@ test.describe("Blog editorial structure", () => {
     // Mobile viewport check
     await page.setViewportSize({ width: 375, height: 667 });
     await expect(page.locator("header")).toHaveCount(1);
-    const menuToggle = page.getByTestId("shell-menu-toggle");
-    await expect(menuToggle).toBeVisible();
+    const explore = page.getByTestId("shell-explore-link");
+    await expect(explore).toBeVisible();
+    await expect(explore).toHaveAttribute("href", "/explore");
+    await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
     await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
-
-    // Toggle menu
-    await page.waitForLoadState("networkidle");
-    await menuToggle.click();
-    await expect(page.getByTestId("shell-mobile-nav")).toBeVisible();
-    await expect(
-      page
-        .getByTestId("shell-mobile-nav")
-        .getByRole("link", { name: "Devlog" }),
-    ).toBeVisible();
   });
 });
