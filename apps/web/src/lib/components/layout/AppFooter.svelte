@@ -1,6 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { DISCORD_URL, PATREON_URL } from "$lib/config";
+  import { PATREON_URL } from "$lib/config";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 </script>
 
@@ -26,25 +26,6 @@
         <span class="icon-[mdi--patreon] h-3.5 w-3.5" aria-hidden="true"></span>
       </a>
     {/if}
-    {#if DISCORD_URL}
-      <a
-        href={DISCORD_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-        >Discord</a
-      >
-    {/if}
-    <a
-      href="{base}/tools"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Tools</a
-    >
-    <a
-      href="{base}/examples"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Examples</a
-    >
     <a
       href="{base}/explore"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
@@ -61,14 +42,14 @@
       target="_blank"
       rel="noopener noreferrer"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Privacy Policy</a
+      >Privacy</a
     >
     <a
       href="{base}/terms"
       target="_blank"
       rel="noopener noreferrer"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
-      >Terms of Service</a
+      >Terms</a
     >
   </div>
 </footer>
