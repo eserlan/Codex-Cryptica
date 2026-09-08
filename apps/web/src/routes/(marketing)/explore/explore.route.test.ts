@@ -26,7 +26,7 @@ describe("/explore route", () => {
         .querySelector('meta[name="description"]')
         ?.getAttribute("content"),
     ).toBe(
-      "Every section of Codex Cryptica in one place: worlds, examples, generators, tools, guides, and the campaign directory.",
+      "Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, guides, and the campaign directory.",
     );
     expect(
       document
@@ -50,10 +50,15 @@ describe("/explore route", () => {
     ).not.toBe("https://codexcryptica.com/og-image.png");
   });
 
-  it("renders a link to /silhouettes under Build & Explore", () => {
+  it("renders Features and silhouettes links under Build & Explore", () => {
     render(Page, { props: { data: emptyData } });
-    const link = document.querySelector('a[href="/silhouettes"]');
-    expect(link).toBeTruthy();
-    expect(link?.textContent).toContain("Vector Silhouettes");
+
+    const featuresLink = document.querySelector('a[href="/features"]');
+    expect(featuresLink).toBeTruthy();
+    expect(featuresLink?.textContent).toContain("Features");
+
+    const silhouettesLink = document.querySelector('a[href="/silhouettes"]');
+    expect(silhouettesLink).toBeTruthy();
+    expect(silhouettesLink?.textContent).toContain("Vector Silhouettes");
   });
 });

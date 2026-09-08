@@ -225,14 +225,6 @@
           </a>
         {/if}
         <a
-          href="{base}/examples"
-          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-          onclick={close}
-        >
-          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
-          Examples
-        </a>
-        <a
           href="{base}/explore"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
@@ -258,7 +250,7 @@
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
           <span class="icon-[lucide--shield] w-4 h-4" aria-hidden="true"></span>
-          Privacy Policy
+          Privacy
         </a>
         <a
           href="{base}/terms"
@@ -267,7 +259,7 @@
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
           <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
-          Terms of Service
+          Terms
         </a>
       </div>
     </div>

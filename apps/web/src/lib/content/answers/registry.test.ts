@@ -351,6 +351,23 @@ describe("published answers", () => {
     }
   });
 
+  it("requires an R2 OG image on every answer published from 2026-09-07 onward", () => {
+    // #2711: seo.image/imageAlt stay optional in the schema so the 17
+    // answers published before this date are not broken retroactively, but
+    // every answer from this date forward must ship a real R2 illustration.
+    const IMAGE_REQUIRED_FROM = "2026-09-07";
+    for (const answer of published) {
+      if (answer.publishedAt < IMAGE_REQUIRED_FROM) continue;
+      expect(answer.seo.image, `${answer.slug} is missing seo.image`).toMatch(
+        /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+      );
+      expect(
+        answer.seo.imageAlt?.trim().length ?? 0,
+        `${answer.slug} is missing seo.imageAlt`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
   it("includes a concrete worked example on every answer", () => {
     for (const answer of published) {
       expect(

@@ -74,11 +74,13 @@ describe("MobileMenu", () => {
     });
   });
 
-  it("links to Examples and the site directory regardless of Guided Mode", () => {
+  it("uses Explore as the public directory instead of duplicating Examples", () => {
     render(MobileMenu, { isOpen: true });
 
-    expect(screen.getByRole("link", { name: "Examples" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Explore" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Examples" })).toBeNull();
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
+    expect(exploreLink).toBeTruthy();
+    expect(exploreLink.getAttribute("href")).toBe("/explore");
   });
 
   it("exposes a Guided Mode toggle so mobile users can switch modes", () => {

@@ -45,6 +45,7 @@ describe("registry lookup", () => {
     expect(listGenerators().map((g) => g.id)).toEqual([
       "npc",
       "faction",
+      "faction-roster",
       "settlement",
       "magic-item",
       "minor-magic-item",
@@ -1559,6 +1560,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
     expect(GENERATOR_ENTITY_TYPE).toEqual({
       npc: "character",
       faction: "faction",
+      "faction-roster": "note",
       settlement: "location",
       "magic-item": "item",
       "minor-magic-item": "item",

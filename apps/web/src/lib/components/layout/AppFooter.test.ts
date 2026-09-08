@@ -11,7 +11,6 @@ vi.mock("$app/paths", () => ({
 
 vi.mock("$lib/config", () => ({
   PATREON_URL: "https://patreon.com/codexcryptica",
-  DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
 
 describe("AppFooter", () => {
@@ -20,7 +19,7 @@ describe("AppFooter", () => {
     modalUIStore.activeSettingsTab = "vault";
   });
 
-  it("renders the footer landmark and legal / navigational links", () => {
+  it("renders the lightweight footer links", () => {
     render(AppFooter);
 
     expect(screen.getByTestId("app-footer")).toBeTruthy();
@@ -30,19 +29,17 @@ describe("AppFooter", () => {
     expect(patreonLink.getAttribute("href")).toBe(
       "https://patreon.com/codexcryptica",
     );
-    expect(screen.getByRole("link", { name: "Discord" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Tools" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Explore" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Terms of Service" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Privacy" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Terms" })).toBeTruthy();
   });
 
-  it("links Examples to the marketing examples directory", () => {
+  it("does not duplicate discovery destinations already available from Explore", () => {
     render(AppFooter);
 
-    const examplesLink = screen.getByRole("link", { name: "Examples" });
-    expect(examplesLink).toBeTruthy();
-    expect(examplesLink.getAttribute("href")).toBe("/examples");
+    expect(screen.queryByRole("link", { name: "Discord" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Tools" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Examples" })).toBeNull();
   });
 
   it("links Explore to the site directory page", () => {

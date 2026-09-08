@@ -47,33 +47,15 @@ import {
   type GraphVisibilityReason,
   type GraphVisibilitySnapshot,
 } from "./graph-visibility";
+import {
+  FocusZoomRatchet,
+  FOCUS_ZOOM_STEP_FACTOR,
+  resolveFocusDepth,
+} from "./graph-focus-zoom-ratchet";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
-/** Each `FOCUS_ZOOM_STEP_FACTOR`x zoom in/out changes one focus detail level. */
-export const FOCUS_ZOOM_STEP_FACTOR = 1.8;
-
-/**
- * Pure ratchet that maps a zoom change into a focus-view depth change, relative
- * to the zoom at the last depth change (`zoomMark`). Zooming in past the step
- * factor reveals more detail; zooming out hides detail. Returns the (possibly
- * unchanged) depth and the mark to anchor the next step from. Relative rather
- * than absolute so it composes with whatever zoom an auto-fit lands on.
- */
-export function resolveFocusDepth(
-  currentDepth: number,
-  zoom: number,
-  zoomMark: number,
-  bounds: { min: number; max: number; stepFactor: number },
-): { depth: number; mark: number } {
-  if (zoom >= zoomMark * bounds.stepFactor && currentDepth < bounds.max) {
-    return { depth: currentDepth + 1, mark: zoom };
-  }
-  if (zoom <= zoomMark / bounds.stepFactor && currentDepth > bounds.min) {
-    return { depth: currentDepth - 1, mark: zoom };
-  }
-  return { depth: currentDepth, mark: zoomMark };
-}
+export { FOCUS_ZOOM_STEP_FACTOR, resolveFocusDepth };
 
 /**
  * Pure viewport-policy resolver — no class state, fully unit-testable.
@@ -148,22 +130,16 @@ export class GraphViewController {
   private focusDepthStartCounts: { nodes: number; edges: number } | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
 
-  // Zoom-driven focus depth: the zoom at the last depth change (ratchet anchor),
-  // a debounce timer so we only act on settled zoom, and a one-shot flag set by
-  // programmatic fits so their zoom re-anchors the ratchet instead of changing
-  // depth. lastSyncedFocusDepth lets syncElements detect depth-driven element
-  // churn and preserve the viewport for it.
-  private focusZoomMark = 0;
-  private focusZoomTimer: number | null = null;
-  private focusRebaselineTimer: number | null = null;
-  private suppressFocusZoom = false;
+  // Zoom-driven focus depth ratchet (debounces zoom into settled samples and
+  // maps them to depth changes; see FocusZoomRatchet). lastSyncedFocusDepth
+  // lets syncElements detect depth-driven element churn and preserve the
+  // viewport for it.
+  private focusZoomRatchet = new FocusZoomRatchet();
   private lastSyncedFocusDepth = MIN_FOCUS_DEPTH;
   private lastSyncedFocusRootId: string | null = null;
   private lastSyncedGraphStructureVersion = 0;
   private lastSyncedFilterSignature = "";
   private elementSyncGeneration = 0;
-  private readonly FOCUS_ZOOM_SETTLE_MS = 150;
-  private readonly FOCUS_REBASELINE_MS = 300;
 
   private resizeTimer: number | null = null;
   private lastOrientation: "landscape" | "portrait" | null = null;
@@ -241,7 +217,7 @@ export class GraphViewController {
     );
     this.deps.debugStore.log(`[GraphView] Suspended rendering: ${reason}`);
     this.isLayoutRunning = false;
-    this.suppressFocusZoom = false;
+    this.focusZoomRatchet.unsuppress();
     this.layoutManager?.stop();
     this.cy?.stop();
     this.clearRenderReadyMeasurement();
@@ -281,14 +257,7 @@ export class GraphViewController {
   };
 
   private clearVisibilityTimers = () => {
-    if (this.focusZoomTimer) {
-      clearTimeout(this.focusZoomTimer);
-      this.focusZoomTimer = null;
-    }
-    if (this.focusRebaselineTimer) {
-      clearTimeout(this.focusRebaselineTimer);
-      this.focusRebaselineTimer = null;
-    }
+    this.focusZoomRatchet.clearTimers();
     if (this.resizeTimer) {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
@@ -497,14 +466,7 @@ export class GraphViewController {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
     }
-    if (this.focusZoomTimer) {
-      clearTimeout(this.focusZoomTimer);
-      this.focusZoomTimer = null;
-    }
-    if (this.focusRebaselineTimer) {
-      clearTimeout(this.focusRebaselineTimer);
-      this.focusRebaselineTimer = null;
-    }
+    this.focusZoomRatchet.clearTimers();
     if (this.slashGuardTimer) {
       clearTimeout(this.slashGuardTimer);
       this.slashGuardTimer = null;
@@ -581,7 +543,7 @@ export class GraphViewController {
     // its duration and re-anchor the mark to where the fit lands (in
     // onLayoutStop), so the fit isn't misread as a user-driven reveal.
     const isFit = viewport === "fit";
-    if (isFit) this.suppressFocusZoom = true;
+    if (isFit) this.focusZoomRatchet.suppress();
 
     try {
       await this.layoutManager.apply(
@@ -619,21 +581,11 @@ export class GraphViewController {
             if (isInitial) {
               this.loadPhase = "ready";
             }
-            // Re-enable the ratchet and re-anchor it to the *settled* zoom. A
-            // re-cull can chain fits (cluster → spread) and the slash guard can
-            // re-fit later, so capture the mark on a dedicated timer (which a fast
-            // user zoom can't clear) rather than trusting this stop's transient zoom.
+            // Re-enable the ratchet and re-anchor it to the *settled* zoom.
             if (isFit) {
-              this.suppressFocusZoom = false;
-              if (this.focusRebaselineTimer)
-                clearTimeout(this.focusRebaselineTimer);
-              this.focusRebaselineTimer = window.setTimeout(() => {
-                this.focusRebaselineTimer = null;
-                if (this.cy && !this.cy.destroyed()) {
-                  const z = this.cy.zoom();
-                  if (z > 0) this.focusZoomMark = z;
-                }
-              }, this.FOCUS_REBASELINE_MS);
+              this.focusZoomRatchet.scheduleRebaseline(() =>
+                this.cy && !this.cy.destroyed() ? this.cy.zoom() : null,
+              );
             }
           },
           onPositionsUpdated: (updates, meta) => {
@@ -879,46 +831,29 @@ export class GraphViewController {
 
   private scheduleFocusSettle = () => {
     if (this.isSuspended) return;
-    if (this.focusZoomTimer) clearTimeout(this.focusZoomTimer);
-    this.focusZoomTimer = window.setTimeout(
-      this.settleFocusZoom,
-      this.FOCUS_ZOOM_SETTLE_MS,
-    );
+    this.focusZoomRatchet.scheduleSettle(this.settleFocusZoom);
   };
 
   private settleFocusZoom = () => {
-    this.focusZoomTimer = null;
     if (this.isSuspended) return;
     const cy = this.cy;
     if (!cy || cy.destroyed() || !this.deps.graph.focusViewActive) return;
-    // Ignore zoom while a programmatic fit is in flight.
-    if (this.suppressFocusZoom) return;
 
-    const zoom = cy.zoom();
-    // First observation just anchors the ratchet (fits re-anchor it separately
-    // via the dedicated rebaseline timer in onLayoutStop).
-    if (this.focusZoomMark === 0) {
-      this.focusZoomMark = zoom;
-      return;
-    }
-
-    const { depth, mark } = resolveFocusDepth(
+    const result = this.focusZoomRatchet.resolveSettledZoom(
+      cy.zoom(),
       this.deps.graph.focusDepth,
-      zoom,
-      this.focusZoomMark,
       {
         min: MIN_FOCUS_DEPTH,
         max: MAX_FOCUS_DEPTH,
         stepFactor: FOCUS_ZOOM_STEP_FACTOR,
       },
     );
-    this.focusZoomMark = mark;
-    if (depth !== this.deps.graph.focusDepth) {
+    if (result) {
       this.focusDepthSpan?.cancel();
       this.focusDepthSpan = null;
       this.focusDepthStartCounts = null;
       this.startFocusDepthMeasurement();
-      this.deps.graph.focusDepth = depth;
+      this.deps.graph.focusDepth = result.depth;
     }
   };
 

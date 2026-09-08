@@ -36,6 +36,13 @@
           icon: "icon-[lucide--flag]",
         },
         {
+          href: "/generators/faction-roster",
+          label: "Faction Roster Generator",
+          summary:
+            "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+          icon: "icon-[lucide--users-round]",
+        },
+        {
           href: "/generators/vampire-clan",
           label: "Vampire Clan Generator",
           summary:

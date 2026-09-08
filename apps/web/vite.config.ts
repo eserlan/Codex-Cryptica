@@ -170,22 +170,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 900,
     minify: "esbuild",
     target: "es2020",
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (
-            id.includes("@tiptap/") ||
-            id.includes("svelte-tiptap") ||
-            id.includes("tiptap-markdown")
-          )
-            return "chunk-editor";
-          if (id.includes("cytoscape")) return "chunk-graph";
-          if (id.includes("peerjs") || id.includes("peerjs/"))
-            return "chunk-p2p";
-          if (id.includes("pdfjs-dist")) return "chunk-pdf";
-        },
-      },
-    },
+    rollupOptions: {},
   },
   test: {
     include: [

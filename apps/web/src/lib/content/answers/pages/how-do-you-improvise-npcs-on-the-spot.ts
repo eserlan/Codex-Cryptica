@@ -128,6 +128,7 @@ export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-you-prep-a-weekly-rpg-session-quickly",
     "how-do-you-organise-npc-relationships",
+    "how-many-npcs-does-an-rpg-town-need",
   ],
   discovery: {
     id: "answer-npcs-improvise-on-the-spot",

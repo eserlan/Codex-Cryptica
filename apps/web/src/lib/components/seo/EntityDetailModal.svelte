@@ -9,13 +9,37 @@
   let {
     entity,
     onClose,
+    onCopy,
   }: {
     entity: SessionEntity | null;
     onClose: () => void;
+    onCopy?: (entity: SessionEntity) => Promise<boolean>;
   } = $props();
+
+  let copyState = $state<"idle" | "success" | "error">("idle");
+  let copyInFlight = $state(false);
+  let copyTimeout: ReturnType<typeof setTimeout> | undefined;
 
   function handleKeydown(e: KeyboardEvent) {
     if (entity && e.key === "Escape") onClose();
+  }
+
+  async function handleCopy() {
+    if (!entity || !onCopy) return;
+    if (copyInFlight) return;
+    clearTimeout(copyTimeout);
+    copyInFlight = true;
+    copyState = "idle";
+    try {
+      const success = await onCopy(entity);
+      copyState = success ? "success" : "error";
+    } catch (error) {
+      console.error("Failed to copy Session Hub entity", error);
+      copyState = "error";
+    } finally {
+      copyInFlight = false;
+      copyTimeout = setTimeout(() => (copyState = "idle"), 2000);
+    }
   }
 </script>
 
@@ -77,8 +101,27 @@
       </div>
 
       <div
-        class="px-6 py-4 border-t border-theme-border/60 bg-theme-surface/40 flex justify-end"
+        class="px-6 py-4 border-t border-theme-border/60 bg-theme-surface/40 flex items-center justify-end gap-2"
       >
+        {#if copyState !== "idle"}
+          <span
+            class="mr-auto text-xs {copyState === 'success'
+              ? 'text-theme-primary'
+              : 'text-theme-danger'}"
+            role="status"
+            aria-live="polite"
+          >
+            {copyState === "success" ? "Copied!" : "Could not copy."}
+          </span>
+        {/if}
+        <button
+          type="button"
+          onclick={handleCopy}
+          disabled={!onCopy || copyInFlight || copyState === "success"}
+          class="px-4 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-primary/20 transition-all disabled:opacity-50"
+        >
+          {copyState === "success" ? "Copied!" : "Copy"}
+        </button>
         <button
           type="button"
           onclick={onClose}

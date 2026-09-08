@@ -10,6 +10,7 @@ const validSlugs = new Set([
   "minor-magic-item",
   "artifact-generator",
   "faction",
+  "faction-roster",
   "quest",
   "rumour",
   "puzzle",
@@ -56,6 +57,7 @@ export const load: PageLoad = ({ params }) => {
       | "minor-magic-item"
       | "artifact-generator"
       | "faction"
+      | "faction-roster"
       | "quest"
       | "rumour"
       | "puzzle"
@@ -99,6 +101,7 @@ export const entries: EntryGenerator = () => {
     { slug: "minor-magic-item" },
     { slug: "artifact-generator" },
     { slug: "faction" },
+    { slug: "faction-roster" },
     { slug: "quest" },
     { slug: "rumour" },
     { slug: "puzzle" },

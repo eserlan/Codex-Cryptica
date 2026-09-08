@@ -153,6 +153,19 @@ export {
   type ResolvedDarkFaction,
 } from "./public-faction";
 export {
+  factionRosterConfig,
+  buildFactionRosterPrompt,
+  parseFactionRosterResponse,
+  generateFactionRosterLocal,
+  resolveFactionRoster,
+  extractFactionNotableNpcs,
+  type FactionRosterGeneratorOptions,
+  type FactionRosterPrompt,
+  type ResolvedFactionRoster,
+  type FactionRosterMember,
+  type FactionNotableNpc,
+} from "./public-faction-roster";
+export {
   factionSchema,
   buildFactionSchema,
   nomadClanSchema,

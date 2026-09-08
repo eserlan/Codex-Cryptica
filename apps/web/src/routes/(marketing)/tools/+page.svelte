@@ -82,6 +82,13 @@
                 "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
               icon: "icon-[lucide--skull]",
             },
+            {
+              href: "/generators/faction-roster",
+              label: "Faction Roster Generator",
+              summary:
+                "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+              icon: "icon-[lucide--users-round]",
+            },
           ],
         },
         {

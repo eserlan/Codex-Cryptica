@@ -4,6 +4,7 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -11,6 +12,11 @@
   import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
+  import {
+    buildGeneratorMarkdown,
+    buildSectionMarkdown,
+    buildSessionEntityMarkdown,
+  } from "$lib/components/seo/generator-copy";
   import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import ProvenanceBadge from "./ProvenanceBadge.svelte";
@@ -52,6 +58,10 @@
   } from "$lib/services/analytics/generator-save-tracking";
   import { registerShellCtaHandler } from "./marketing-shell";
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import {
+    clipboardService as defaultClipboardService,
+    type ClipboardService,
+  } from "$lib/services/ClipboardService";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -86,6 +96,10 @@
     backHref = undefined,
     backLabel = undefined,
     onGeneratePlotTwist = undefined,
+    onGenerateRoster = undefined,
+    onOpenMemberAsCharacter = undefined,
+    clipboardService = defaultClipboardService,
+    autoGenerateExplicit = false,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -115,6 +129,13 @@
     inputHint?: string;
     onLinkToHub?: () => void;
     onGeneratePlotTwist?: (data: GeneratorOutput) => void;
+    onGenerateRoster?: (data: GeneratorOutput) => void;
+    onOpenMemberAsCharacter?: (
+      section: MarkdownSectionForCopy,
+      data: GeneratorOutput,
+    ) => void;
+    clipboardService?: ClipboardService;
+    autoGenerateExplicit?: boolean;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -136,10 +157,16 @@
   const showOutputLoading = $derived(isBusy && !hasStreamedPreview);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
+  let currentPagePath = $state<string | undefined>(undefined);
 
   $effect(() => {
-    generatedData = initialDraft;
-    isExampleDraft = true;
+    if (canonicalPath !== currentPagePath) {
+      currentPagePath = canonicalPath;
+      userGenerated = false;
+      userGenerationSucceeded = false;
+      generatedData = initialDraft;
+      isExampleDraft = true;
+    }
   });
 
   let outputCard = $state<HTMLElement | null>(null);
@@ -149,6 +176,7 @@
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let copiedSectionId = $state<string | null>(null);
+  let copyError = $state(false);
   let useAI = $state(true);
   let showSaveModal = $state(false);
   let redirectQuery = $state("");
@@ -237,11 +265,26 @@
     }
   });
 
+  let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
+
   $effect(() => {
-    if (browser && !generatedData) {
+    if (
+      browser &&
+      !generatedData &&
+      !autoGenerateExplicit &&
+      !isAutoDrafting &&
+      autoDraftAttemptedForPath !== canonicalPath
+    ) {
+      autoDraftAttemptedForPath = canonicalPath;
       void handleGenerateOnMount();
     }
   });
+
+  export function triggerExplicitAutoGenerate() {
+    if (autoDraftAttemptedForPath === canonicalPath) return;
+    autoDraftAttemptedForPath = canonicalPath;
+    void handleGenerate();
+  }
 
   async function handleGenerateOnMount() {
     if (isAutoDrafting || generatedData) return;
@@ -504,27 +547,27 @@
       copy_target: "markdown",
     });
 
-    const markdownText = [
-      `# ${generatedData.title}`,
-      generatedData.summary ? `*${generatedData.summary}*` : "",
-      `Labels: ${generatedData.labels.join(", ")}`,
-      "",
-      documentLayout.content,
-      "",
-      documentLayout.lore,
-    ]
-      .filter((line) => line !== undefined)
-      .join("\n")
-      .trim();
+    const markdownText = buildGeneratorMarkdown({
+      title: generatedData.title,
+      summary: generatedData.summary,
+      labels: generatedData.labels,
+      content: documentLayout.content,
+      lore: documentLayout.lore,
+    });
 
     try {
-      await navigator.clipboard.writeText(markdownText);
+      const success = await clipboardService.copyContent({
+        markdown: markdownText,
+      });
+      if (!success) throw new Error("Clipboard copy failed");
+      copyError = false;
       copied = true;
       setTimeout(() => {
         copied = false;
       }, 2000);
     } catch (err) {
       console.error("Failed to copy markdown:", err);
+      copyError = true;
     }
   }
 
@@ -535,14 +578,31 @@
       section_id: sectionId,
     });
     try {
-      await navigator.clipboard.writeText(markdown.trim());
+      const success = await clipboardService.copyContent({
+        markdown: buildSectionMarkdown(markdown),
+      });
+      if (!success) throw new Error("Clipboard copy failed");
+      copyError = false;
       copiedSectionId = sectionId;
       setTimeout(() => {
         if (copiedSectionId === sectionId) copiedSectionId = null;
       }, 1600);
     } catch (err) {
       console.error("Failed to copy section markdown:", err);
+      copyError = true;
     }
+  }
+
+  async function handleCopySessionEntity(
+    entity: SessionEntity,
+  ): Promise<boolean> {
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "session_hub_detail",
+    });
+    return clipboardService.copyContent({
+      markdown: buildSessionEntityMarkdown(entity),
+    });
   }
 
   function handleContainerKeydown(event: KeyboardEvent) {
@@ -826,6 +886,15 @@
             {errorMessage}
           </div>
         {/if}
+        {#if copyError}
+          <div
+            class="mt-4 text-xs text-theme-danger"
+            role="status"
+            aria-live="polite"
+          >
+            Could not copy
+          </div>
+        {/if}
 
         <!-- Related links moved to bottom discover section -->
       </div>
@@ -878,6 +947,10 @@
         onGeneratePlotTwist={userGenerationSucceeded
           ? onGeneratePlotTwist
           : undefined}
+        onGenerateRoster={userGenerationSucceeded
+          ? onGenerateRoster
+          : undefined}
+        {onOpenMemberAsCharacter}
       />
     </div>
 
@@ -941,6 +1014,7 @@
   <EntityDetailModal
     entity={selectedHubEntity}
     onClose={() => (selectedHubEntity = null)}
+    onCopy={handleCopySessionEntity}
   />
 </div>
 
