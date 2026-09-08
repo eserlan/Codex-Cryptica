@@ -19,6 +19,7 @@
   } from "$lib/components/seo/generator-copy";
   import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import ProvenanceBadge from "./ProvenanceBadge.svelte";
   import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
   import FaqSection from "./FaqSection.svelte";
@@ -26,6 +27,7 @@
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorRefinementModal from "./GeneratorRefinementModal.svelte";
+  import LoreMergeModal from "$lib/components/modals/LoreMergeModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
@@ -45,6 +47,7 @@
     type RefinementDocument,
   } from "generator-engine";
   import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
+  import { buildLoreMergePlan } from "$lib/utils/lore-sections";
   import {
     buildFaqJsonLd,
     buildSoftwareApplicationJsonLd,
@@ -197,6 +200,7 @@
   let refinementOpen = $state(false);
   let refinementOrigin = $state<"current_output" | "session_hub" | null>(null);
   let refinementSourceId = $state<string | undefined>(undefined);
+  let refinementSourceDocument = $state<RefinementDocument | null>(null);
 
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
@@ -431,7 +435,7 @@
     origin: "current_output" | "session_hub",
     sourceId?: string,
   ) {
-    refinementService.start(source);
+    refinementSourceDocument = refinementService.start(source);
     refinementOrigin = origin;
     refinementSourceId = sourceId;
     refinementOpen = true;
@@ -461,6 +465,7 @@
 
   function handleRefinementCancel() {
     refinementService.cancel();
+    refinementSourceDocument = null;
     refinementOpen = false;
     refinementOrigin = null;
     refinementSourceId = undefined;
@@ -477,7 +482,29 @@
     });
   }
 
-  function handleRefinementAccept(document: RefinementDocument) {
+  async function handleRefinementAccept(document: RefinementDocument) {
+    const sourceDocument = refinementSourceDocument;
+
+    if (
+      sourceDocument?.lore &&
+      document.lore &&
+      sourceDocument.lore !== document.lore
+    ) {
+      const plan = buildLoreMergePlan(sourceDocument.lore, document.lore);
+      if (plan.hasChanges) {
+        refinementOpen = false;
+        const resolvedLore = await loreMergeStore.request(
+          plan,
+          sourceDocument.title,
+        );
+        if (resolvedLore === null) {
+          refinementOpen = true;
+          return;
+        }
+        document = { ...document, lore: resolvedLore };
+      }
+    }
+
     const acceptedOrigin = refinementOrigin ?? "current_output";
     const sourceId = refinementSourceId;
     const accepted = {
@@ -526,13 +553,17 @@
         currentContext.trimmed,
       ),
     );
+    if (sourceId) sessionHubStore.removeEntity(sourceId);
+    const acceptedIteration = refinementService.iteration;
+    refinementService.accept();
     refinementOpen = false;
     refinementOrigin = null;
     refinementSourceId = undefined;
+    refinementSourceDocument = null;
     trackEvent("generator_refinement_accepted", {
       generator_type: generatorType,
       source: acceptedOrigin,
-      iteration: refinementService.lastAcceptedIteration,
+      iteration: acceptedIteration,
     });
   }
 
@@ -1146,6 +1177,8 @@
     onCancel={handleRefinementCancel}
     onRequested={handleRefinementRequested}
   />
+
+  <LoreMergeModal />
 </div>
 
 <style>

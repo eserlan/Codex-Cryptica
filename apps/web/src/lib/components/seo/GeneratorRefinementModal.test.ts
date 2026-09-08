@@ -52,6 +52,34 @@ describe("GeneratorRefinementModal", () => {
     );
     expect(onRequested).toHaveBeenCalledWith(false);
     expect(await screen.findByText("Mara runs before dawn.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Use revision" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Review changes" })).toBeTruthy();
+  });
+
+  it("lets the parent finish review before consuming the proposal", async () => {
+    const runner = vi
+      .fn()
+      .mockResolvedValue({ content: "Mara runs before dawn." });
+    const service = new GeneratorRefinementService(runner);
+    service.start(source);
+    await service.refine("Make it urgent");
+    const onAccept = vi.fn().mockResolvedValue(undefined);
+
+    render(GeneratorRefinementModal, {
+      props: {
+        open: true,
+        service,
+        onAccept,
+        onCancel: vi.fn(),
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review changes" }),
+    );
+
+    expect(onAccept).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Mara runs before dawn." }),
+    );
+    expect(service.proposal).not.toBeNull();
   });
 });

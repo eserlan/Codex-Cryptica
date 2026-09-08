@@ -12,7 +12,7 @@
   }: {
     open: boolean;
     service: GeneratorRefinementService;
-    onAccept: (document: RefinementDocument) => void;
+    onAccept: (document: RefinementDocument) => void | Promise<void>;
     onCancel: () => void;
     onRequested?: (repeated: boolean) => void;
   } = $props();
@@ -20,6 +20,7 @@
   let dialog = $state<HTMLDialogElement | null>(null);
   let instructions = $state("");
   let cancelNotified = false;
+  let isAccepting = $state(false);
   let current = $derived(service.proposal ?? service.source);
 
   $effect(() => {
@@ -50,9 +51,17 @@
     if (!service.error) instructions = "";
   }
 
-  function accept() {
-    const accepted = service.accept();
-    if (accepted) onAccept(accepted);
+  async function accept() {
+    if (isAccepting || service.isRefining) return;
+    const accepted = service.proposal;
+    if (!accepted) return;
+
+    isAccepting = true;
+    try {
+      await onAccept(accepted);
+    } finally {
+      isAccepting = false;
+    }
   }
 </script>
 
@@ -88,8 +97,8 @@
             id="generator-refinement-help"
             class="mt-2 max-w-prose text-sm text-theme-muted"
           >
-            Describe the change you want. The original stays unchanged until you
-            use a revision.
+            Describe the change you want. Review the proposed changes before
+            replacing the current draft.
           </p>
         </div>
         <button
@@ -169,10 +178,10 @@
             type="button"
             onclick={accept}
             class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
-            disabled={service.isRefining}
-            aria-busy={service.isRefining}
+            disabled={service.isRefining || isAccepting}
+            aria-busy={service.isRefining || isAccepting}
           >
-            Use revision
+            Review changes
           </button>
           <button
             type="button"
