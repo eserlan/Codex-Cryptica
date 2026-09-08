@@ -60,7 +60,7 @@
   bind:this={dialog}
   aria-labelledby="generator-refinement-title"
   aria-describedby="generator-refinement-help"
-  class="w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] rounded-2xl border border-theme-border bg-theme-surface p-0 text-theme-text shadow-2xl backdrop:bg-black/75 backdrop:backdrop-blur-sm"
+  class="fixed inset-0 m-auto w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] rounded-2xl border border-theme-border bg-theme-surface p-0 text-theme-text shadow-2xl backdrop:bg-black/75 backdrop:backdrop-blur-sm"
   onclose={() => open && close()}
 >
   {#if current}
