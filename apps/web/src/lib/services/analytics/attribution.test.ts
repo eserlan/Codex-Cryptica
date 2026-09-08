@@ -100,6 +100,62 @@ describe("AttributionStore", () => {
     expect(store.getLatestTouch()).toBeNull();
   });
 
+  it("captures a recognised AI referrer without UTM parameters", () => {
+    const { storage } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    expect(
+      store.captureIfAttributed(
+        urlWith("/answers/example"),
+        "https://chatgpt.com/c/example",
+      ),
+    ).toBe(true);
+
+    expect(store.getLatestTouch()).toEqual({
+      channel: "ai_referral",
+      provider: "openai",
+      source: "chatgpt",
+      landing_path: "/answers/example",
+      at: 100,
+    });
+  });
+
+  it("keeps generic search referrals out of AI attribution", () => {
+    const { storage } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    expect(
+      store.captureIfAttributed(
+        urlWith("/answers/example"),
+        "https://www.google.com/search?q=campaign",
+      ),
+    ).toBe(false);
+    expect(store.getLatestTouch()).toBeNull();
+  });
+
+  it("preserves UTM values while using the recognised AI campaign source", () => {
+    const { storage } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    store.captureIfAttributed(
+      urlWith("/answers/example", {
+        utm_source: "chatgpt.com",
+        utm_medium: "referral",
+      }),
+      "https://perplexity.ai/search/example",
+    );
+
+    expect(store.getLatestTouch()).toEqual({
+      utm_source: "chatgpt.com",
+      utm_medium: "referral",
+      channel: "ai_referral",
+      provider: "openai",
+      source: "chatgpt",
+      landing_path: "/answers/example",
+      at: 100,
+    });
+  });
+
   it("ignores corrupt persisted state and treats it as no attribution", () => {
     const { storage } = makeStorage({
       "codex-cryptica-attribution-first": "not json",

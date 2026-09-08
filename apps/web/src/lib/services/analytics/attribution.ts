@@ -16,11 +16,19 @@
  */
 
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import {
+  classifyAiReferral,
+  type AiReferralProvider,
+  type AiReferralSource,
+} from "./ai-referral";
 
 export interface Attribution {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  channel?: "ai_referral";
+  provider?: AiReferralProvider;
+  source?: AiReferralSource;
   landing_path: string;
   at: number;
 }
@@ -76,9 +84,10 @@ export class AttributionStore {
    *
    * Returns true if this call actually captured (new) attribution.
    */
-  captureIfAttributed(url: URL): boolean {
+  captureIfAttributed(url: URL, referrer?: string): boolean {
     const hasAnyUtm = UTM_PARAMS.some((p) => !!url.searchParams.get(p));
-    if (!hasAnyUtm) return false;
+    const aiReferral = classifyAiReferral(url, referrer);
+    if (!hasAnyUtm && !aiReferral) return false;
 
     const attribution: Attribution = {
       landing_path: url.pathname,
@@ -88,6 +97,7 @@ export class AttributionStore {
       const value = url.searchParams.get(param);
       if (value) attribution[param] = value;
     }
+    if (aiReferral) Object.assign(attribution, aiReferral);
 
     writeAttribution(this.storage, LATEST_TOUCH_KEY, attribution);
     if (!readAttribution(this.storage, FIRST_TOUCH_KEY)) {
