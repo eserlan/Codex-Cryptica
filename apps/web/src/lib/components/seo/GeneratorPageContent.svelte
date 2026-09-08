@@ -15,7 +15,6 @@
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
-  import FactionRosterFormFields from "$lib/components/seo/FactionRosterFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import RumourFormFields from "$lib/components/seo/RumourFormFields.svelte";
   import EncounterFormFields from "$lib/components/seo/EncounterFormFields.svelte";
@@ -57,7 +56,6 @@
     minorMagicItemConfig,
     artifactConfig,
     factionConfig,
-    factionRosterConfig,
     questConfig,
     rumourConfig,
     encounterConfig,
@@ -97,10 +95,7 @@
   import {
     buildPlotTwistPremise,
     resolvePlotTwistPremiseForGeneration,
-    buildFactionRosterContext,
-    buildRosterMemberContext,
   } from "$lib/services/seo/generator-handoffs";
-  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
@@ -170,18 +165,12 @@
 
   const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
 
-  const initialHandedOffNpcContext =
-    browser && _initialSlug === "npc"
-      ? (new URLSearchParams(window.location.search).get("npcContext") ?? "")
-      : "";
-  let handedOffNpcContext = $state(initialHandedOffNpcContext);
-
   let npc = $state({
     theme: factionConfig.themes[0],
     ancestry: npcThemeConfig.ancestries[factionConfig.themes[0]][0],
     role: npcThemeConfig.roles[factionConfig.themes[0]][0],
     alignment: npcThemeConfig.moralities[factionConfig.themes[0]][0].id,
-    campaignContext: initialHandedOffNpcContext,
+    campaignContext: "",
     mode: "table-card" as "dossier" | "table-card",
   });
 
@@ -238,22 +227,6 @@
     type: factionConfig.typesByTheme["Classic Fantasy"][0],
     scope: factionConfig.scopesByTheme["Classic Fantasy"][1],
     alignment: factionConfig.alignments[0],
-    campaignContext: "",
-  });
-
-  const initialHandedOffFactionContext =
-    browser && _initialSlug === "faction-roster"
-      ? (new URLSearchParams(window.location.search).get("factionContext") ??
-        "")
-      : "";
-  let handedOffFactionContext = $state(initialHandedOffFactionContext);
-
-  let factionRoster = $state({
-    theme: factionConfig.themes[0],
-    size: factionRosterConfig.sizes[1],
-    structure: factionRosterConfig.structures[0],
-    emphasis: factionRosterConfig.emphases[0],
-    factionContext: initialHandedOffFactionContext,
     campaignContext: "",
   });
 
@@ -514,18 +487,6 @@
         : "";
     handedOffQuestPremise = premise;
     if (premise) plotTwist.premise = premise;
-
-    const factionContext =
-      slug === "faction-roster"
-        ? (to?.url.searchParams.get("factionContext") ?? "")
-        : "";
-    handedOffFactionContext = factionContext;
-    if (factionContext) factionRoster.factionContext = factionContext;
-
-    const npcContext =
-      slug === "npc" ? (to?.url.searchParams.get("npcContext") ?? "") : "";
-    handedOffNpcContext = npcContext;
-    if (npcContext) npc.campaignContext = npcContext;
   });
 
   let villain = $state({
@@ -642,7 +603,6 @@
   $effect(() => {
     if (slug === "npc") npc.theme = activeTheme;
     else if (slug === "faction") faction.theme = activeTheme;
-    else if (slug === "faction-roster") factionRoster.theme = activeTheme;
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
     else if (slug === "rumour") rumour.genre = activeTheme;
@@ -874,8 +834,6 @@
       }),
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
-    "faction-roster": (useAI) =>
-      generatorEngine.generateFactionRoster({ ...factionRoster, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
     rumour: (useAI) => generatorEngine.generateRumour({ ...rumour, useAI }),
     encounter: (useAI) =>
@@ -1033,27 +991,8 @@
     void goto(resolve(`/generators/plot-twist-generator?${params}`));
   }
 
-  function openRosterFromFaction(draft: GeneratorOutput) {
-    const params = new URLSearchParams({
-      factionContext: buildFactionRosterContext(draft),
-    });
-    void goto(resolve(`/generators/faction-roster?${params}`));
-  }
-
-  function openMemberAsCharacter(
-    section: MarkdownSectionForCopy,
-    data: GeneratorOutput,
-  ) {
-    const params = new URLSearchParams({
-      npcContext: buildRosterMemberContext(section.markdown, data.title),
-    });
-    void goto(resolve(`/generators/npc?${params}`));
-  }
-
   const initialDraft = $derived(
-    (handedOffQuestPremise && slug === "plot-twist-generator") ||
-      (handedOffFactionContext && slug === "faction-roster") ||
-      (handedOffNpcContext && slug === "npc")
+    handedOffQuestPremise && slug === "plot-twist-generator"
       ? null
       : (initialDraftOverride ?? slugDrafts[slug] ?? null),
   );
@@ -1087,8 +1026,6 @@
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
   onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
-  onGenerateRoster={slug === "faction" ? openRosterFromFaction : undefined}
-  onOpenMemberAsCharacter={openMemberAsCharacter}
 >
   {#snippet formFields(trigger)}
     {#if slug === "npc"}
@@ -1147,16 +1084,6 @@
         bind:scope={faction.scope}
         bind:alignment={faction.alignment}
         bind:campaignContext={faction.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "faction-roster"}
-      <FactionRosterFormFields
-        bind:theme={activeTheme}
-        bind:size={factionRoster.size}
-        bind:structure={factionRoster.structure}
-        bind:emphasis={factionRoster.emphasis}
-        bind:factionContext={factionRoster.factionContext}
-        bind:campaignContext={factionRoster.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "quest"}

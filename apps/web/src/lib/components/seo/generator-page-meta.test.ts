@@ -8,7 +8,6 @@ const allExpectedSlugs: ValidSlug[] = [
   "minor-magic-item",
   "artifact-generator",
   "faction",
-  "faction-roster",
   "quest",
   "rumour",
   "puzzle",

@@ -108,12 +108,6 @@ import {
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
 import { councilVoteConfig } from "./public-council-vote-constants";
 import {
-  buildFactionRosterPrompt,
-  generateFactionRosterLocal,
-  factionRosterConfig,
-  type FactionRosterGeneratorOptions,
-} from "./public-faction-roster";
-import {
   buildSecretSocietyPrompt,
   generateSecretSocietyLocal,
   secretSocietyConfig,
@@ -141,7 +135,6 @@ import {
 export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   npc: "character",
   faction: "faction",
-  "faction-roster": "note",
   settlement: "location",
   "magic-item": "item",
   "minor-magic-item": "item",
@@ -1690,27 +1683,6 @@ If nothing needs fixing, return the paths exactly as they were.
 Return ONLY the JSON object.`;
 }
 
-function generateFactionRoster(request: GeneratorRunRequest): GeneratorOutput {
-  const output = generateFactionRosterLocal(
-    request.options as FactionRosterGeneratorOptions,
-  );
-  return {
-    title: output.title,
-    summary: output.summary ?? "",
-    content: output.content,
-    lore: output.lore,
-    labels: output.labels,
-  };
-}
-
-function factionRosterPrompt(request: GeneratorRunRequest): string {
-  const { systemInstruction, userMessage } = buildFactionRosterPrompt(
-    request.options as FactionRosterGeneratorOptions,
-    contextChain(request),
-  );
-  return `${systemInstruction}\n\n${userMessage}`;
-}
-
 function generateSecretSociety(request: GeneratorRunRequest): GeneratorOutput {
   const output = generateSecretSocietyLocal(
     request.options as SecretSocietyGeneratorOptions,
@@ -1780,52 +1752,6 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateFaction,
     mapOutputToDraft: mapOutputToDraft("faction"),
     buildPrompt: factionPrompt,
-  },
-  "faction-roster": {
-    id: "faction-roster",
-    label: "Faction Roster",
-    description: "Generate notable members of an existing faction.",
-    entityType: GENERATOR_ENTITY_TYPE["faction-roster"],
-    defaultInstruction:
-      "3-6 notable members of the faction, each with a personal motive, a stance toward the faction, and a connection to another member on the roster.",
-    icon: "lucide:users-round",
-    options: [
-      {
-        id: "size",
-        label: "Roster Size",
-        control: "select",
-        choices: factionRosterConfig.sizes.map((s) => ({
-          value: s,
-          label: `${s} members`,
-        })),
-      },
-      {
-        id: "structure",
-        label: "Structure",
-        control: "select",
-        choices: factionRosterConfig.structures.map((s) => ({
-          value: s,
-          label: s,
-        })),
-      },
-      {
-        id: "emphasis",
-        label: "Emphasis",
-        control: "select",
-        choices: factionRosterConfig.emphases.map((e) => ({
-          value: e,
-          label: e,
-        })),
-      },
-    ],
-    defaults: {
-      size: factionRosterConfig.sizes[1],
-      structure: factionRosterConfig.structures[0],
-      emphasis: factionRosterConfig.emphases[0],
-    },
-    generate: generateFactionRoster,
-    mapOutputToDraft: mapOutputToDraft("faction-roster"),
-    buildPrompt: factionRosterPrompt,
   },
   settlement: {
     id: "settlement",

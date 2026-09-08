@@ -5,7 +5,6 @@ export type ValidSlug =
   | "minor-magic-item"
   | "artifact-generator"
   | "faction"
-  | "faction-roster"
   | "quest"
   | "rumour"
   | "puzzle"

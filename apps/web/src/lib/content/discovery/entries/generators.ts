@@ -150,26 +150,6 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
-    id: "generator-faction-roster",
-    pageKind: "generator",
-    canonicalPath: "/generators/faction-roster",
-    primaryIntent: "faction roster generator",
-    intentAliases: ["faction members generator", "generate npcs for a faction"],
-    userJob: "create",
-    uniqueValue:
-      "3-6 named members of a faction that already exists, each with a personal motive, a stance toward the faction, and a connection to another member.",
-    parentCluster: "faction-creation",
-    indexable: true,
-    status: "live",
-    acknowledgedOverlap: [
-      {
-        with: "generator-faction",
-        reason:
-          "The faction generator creates the organisation itself; this creates the named people inside one that already exists, and expects a faction as input rather than producing one.",
-      },
-    ],
-  },
-  {
     id: "generator-secret-society",
     pageKind: "generator",
     canonicalPath: "/generators/secret-society",

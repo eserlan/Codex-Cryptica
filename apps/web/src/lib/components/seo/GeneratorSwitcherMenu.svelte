@@ -45,10 +45,6 @@
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
         {
-          label: "Faction Roster Generator",
-          path: "/generators/faction-roster",
-        },
-        {
           label: "Dark Fantasy Faction Generator",
           path: "/generators/dark-fantasy-faction",
         },

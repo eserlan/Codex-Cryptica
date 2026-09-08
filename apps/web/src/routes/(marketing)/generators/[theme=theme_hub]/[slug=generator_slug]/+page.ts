@@ -11,7 +11,6 @@ const validSlugs = new Set([
   "minor-magic-item",
   "artifact-generator",
   "faction",
-  "faction-roster",
   "quest",
   "rumour",
   "puzzle",

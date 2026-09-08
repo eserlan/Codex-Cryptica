@@ -4,7 +4,6 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -87,8 +86,6 @@
     backHref = undefined,
     backLabel = undefined,
     onGeneratePlotTwist = undefined,
-    onGenerateRoster = undefined,
-    onOpenMemberAsCharacter = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -118,11 +115,6 @@
     inputHint?: string;
     onLinkToHub?: () => void;
     onGeneratePlotTwist?: (data: GeneratorOutput) => void;
-    onGenerateRoster?: (data: GeneratorOutput) => void;
-    onOpenMemberAsCharacter?: (
-      section: MarkdownSectionForCopy,
-      data: GeneratorOutput,
-    ) => void;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -886,10 +878,6 @@
         onGeneratePlotTwist={userGenerationSucceeded
           ? onGeneratePlotTwist
           : undefined}
-        onGenerateRoster={userGenerationSucceeded
-          ? onGenerateRoster
-          : undefined}
-        {onOpenMemberAsCharacter}
       />
     </div>
 
