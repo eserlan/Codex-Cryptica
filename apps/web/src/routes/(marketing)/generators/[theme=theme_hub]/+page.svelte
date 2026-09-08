@@ -168,6 +168,13 @@
         "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
       icon: "icon-[lucide--gem]",
     },
+    {
+      slug: "constellation",
+      label: "Constellation Generator",
+      summary:
+        "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, and an adventure hook.",
+      icon: "icon-[lucide--stars]",
+    },
   ];
 
   const surpriseMeCard: GeneratorCard = {

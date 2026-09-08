@@ -153,6 +153,8 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-track-faction-turns-between-rpg-sessions",
+    "how-do-you-create-a-secret-society-for-an-rpg-campaign",
+    "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
   ],
   discovery: {
     id: "answer-fantasy-faction",

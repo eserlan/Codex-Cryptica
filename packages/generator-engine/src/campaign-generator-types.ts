@@ -7,6 +7,11 @@
  */
 import type { LanguageProfileV1 } from "schema";
 import type { StarSystemBody } from "./public-star-system";
+import type {
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "./public-constellation";
 
 export type GeneratorId =
   | "npc"
@@ -31,6 +36,7 @@ export type GeneratorId =
   | "council-vote"
   | "secret-society"
   | "star-system"
+  | "constellation"
   | "alien-race"
   | "creature"
   | "random-table"
@@ -60,6 +66,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
   "creature",
   "random-table",
@@ -121,6 +128,15 @@ export interface GeneratorOutput {
   bodies?: StarSystemBody[];
   /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
   starType?: string;
+  /**
+   * Structured star-pattern data for the constellation generator, driving a
+   * future star-chart diagram. Absent for every other generator.
+   */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -229,6 +245,12 @@ export interface GeneratedDraft {
   bodies?: StarSystemBody[];
   /** Carried through from {@link GeneratorOutput.starType}. */
   starType?: string;
+  /** Carried through from {@link GeneratorOutput.pattern}. */
+  pattern?: ConstellationPattern;
+  /** Carried through from {@link GeneratorOutput.interpretations}. */
+  interpretations?: ConstellationInterpretation[];
+  /** Carried through from {@link GeneratorOutput.nightSky}. */
+  nightSky?: NightSkyData;
   /**
    * Source and direct neighbor entity references supplied from the vault context
    * that grounded this generation.

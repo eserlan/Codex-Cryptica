@@ -164,6 +164,11 @@ export const howToCreateACyberpunkCityDistrict: AnswerConfigInput = {
         reason:
           "Arc Hub shows a finished cyberpunk district; this page explains the reusable design process that can produce other districts.",
       },
+      {
+        with: "answer-create-fantasy-town-rumours",
+        reason:
+          "This answer builds a cyberpunk district through local power and infrastructure, while the fantasy-town rumours answer builds the information sources and consequences that expose a town's existing tensions.",
+      },
     ],
   },
   seo: {

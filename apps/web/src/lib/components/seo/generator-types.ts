@@ -34,6 +34,7 @@ export type ValidSlug =
   | "council-vote"
   | "secret-society"
   | "star-system"
+  | "constellation"
   | "alien-race"
   | "creature"
   | "encounter"

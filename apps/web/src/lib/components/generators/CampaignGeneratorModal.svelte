@@ -34,6 +34,7 @@
   import { getThemeLoadingMessages } from "generator-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import StarSystemDiagram from "$lib/components/seo/StarSystemDiagram.svelte";
+  import ConstellationChart from "$lib/components/seo/ConstellationChart.svelte";
   import { blobToFile } from "$lib/utils/svg-export";
   import { entityMapLinkingService } from "$lib/services/entity-map-linking";
   import {
@@ -115,6 +116,9 @@
   let generationAbortController = $state<AbortController | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
     typeof StarSystemDiagram
+  > | null>(null);
+  let constellationChartRef = $state<ReturnType<
+    typeof ConstellationChart
   > | null>(null);
   let errorMsg = $state<string | null>(null);
   let generatorId = $state<GeneratorId | null>(null);
@@ -474,6 +478,20 @@
         } catch (err) {
           console.error("Failed to link generated map image:", err);
         }
+      } else if (reviewed.pattern?.stars?.length && constellationChartRef) {
+        try {
+          const blob = await constellationChartRef.exportPng();
+          if (blob) {
+            const file = blobToFile(blob, `${reviewed.title}.png`);
+            await entityMapLinkingService.linkImageToEntity(
+              file,
+              `${reviewed.title} Map`,
+              result.entityId,
+            );
+          }
+        } catch (err) {
+          console.error("Failed to link generated constellation chart:", err);
+        }
       }
       // Auto-wire the AI's suggested connections to existing entities (matched
       // by exact, case-insensitive title). These live on the skeleton, so they
@@ -716,6 +734,21 @@
             bind:this={starSystemDiagramRef}
             bodies={draft.bodies}
             starType={draft.starType}
+            title={draft.title}
+          />
+        </div>
+      {/if}
+      {#if draft.pattern?.stars?.length}
+        <!-- Rendered off-screen and not otherwise shown in this review UI —
+             its only purpose here is to give exportPng() a live <svg> to
+             rasterize into the entity's linked map when the draft is saved. -->
+        <div
+          class="absolute h-px w-px overflow-hidden opacity-0"
+          aria-hidden="true"
+        >
+          <ConstellationChart
+            bind:this={constellationChartRef}
+            pattern={draft.pattern}
             title={draft.title}
           />
         </div>

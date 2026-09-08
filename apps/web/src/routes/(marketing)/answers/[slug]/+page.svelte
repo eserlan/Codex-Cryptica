@@ -180,16 +180,16 @@
           {/if}
           <svelte:element
             this={section.ordered ? "ol" : "ul"}
-            class="flex list-none flex-col gap-4 sm:gap-6"
+            class={section.ordered
+              ? "list-decimal space-y-4 pl-5 marker:font-mono marker:text-sm marker:text-theme-primary sm:space-y-6"
+              : "flex list-none flex-col gap-4 sm:gap-6"}
           >
-            {#each section.items as item, index}
-              <li class="border-l border-theme-border pl-5">
-                {#if section.ordered}
-                  <span
-                    class="mb-1 block font-mono text-xs text-theme-primary"
-                    aria-hidden="true">{index + 1}</span
-                  >
-                {/if}
+            {#each section.items as item}
+              <li
+                class={section.ordered
+                  ? "pl-2"
+                  : "border-l border-theme-border pl-5"}
+              >
                 {#if item.term}
                   <strong class="block font-header text-base text-theme-text"
                     >{item.term}</strong

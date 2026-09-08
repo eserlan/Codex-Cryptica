@@ -111,6 +111,7 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
+    "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
   ],
   discovery: {
     id: "answer-player-engagement",

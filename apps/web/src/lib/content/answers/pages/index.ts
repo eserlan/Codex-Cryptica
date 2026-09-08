@@ -9,6 +9,7 @@ import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-fac
 import { howDoYouCreateAFictionalLanguageForAnRpg } from "./how-do-you-create-a-fictional-language-for-an-rpg";
 import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
+import { howDoYouCreateASecretSocietyForAnRpgCampaign } from "./how-do-you-create-a-secret-society-for-an-rpg-campaign";
 import { howDoYouCreateQuestHooksWithoutRailroading } from "./how-do-you-create-quest-hooks-without-railroading";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
@@ -30,10 +31,13 @@ import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
 import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-faction-turns-between-rpg-sessions";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
+import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
+import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
+import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
@@ -61,6 +65,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouCreateAFictionalLanguageForAnRpg,
     howDoYouCreateAMagicSystem,
     howDoYouCreateAPantheon,
+    howDoYouCreateASecretSocietyForAnRpgCampaign,
     howDoYouCreateQuestHooksWithoutRailroading,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
     howDoYouHandleCharacterDeathInATabletopRpg,
@@ -82,10 +87,13 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouStartWorldbuildingFromScratch,
     howDoYouTrackFactionTurnsBetweenRpgSessions,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
+    howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchPrepDoYouNeedForAnRpgSession,
     howToCreateACyberpunkCityDistrict,
+    howToCreateASciFiStarSystemForAnRpg,
+    howToCreateRumoursForAFantasyTown,
     howToWriteAnInWorldNewspaperForAnRpg,
     pointCrawlVsHexCrawl,
     whatIsAPointCrawl,
