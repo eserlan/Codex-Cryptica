@@ -139,6 +139,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-you-create-quest-hooks-without-railroading",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-run-an-rpg-campaign-in-one-city",
+    "how-to-create-rumours-for-a-fantasy-town",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

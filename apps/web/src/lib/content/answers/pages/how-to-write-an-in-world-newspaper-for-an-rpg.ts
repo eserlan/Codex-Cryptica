@@ -164,6 +164,7 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-create-a-fantasy-faction",
     "what-should-an-rpg-settlement-contain",
+    "how-to-create-rumours-for-a-fantasy-town",
   ],
   seo: {
     title:
