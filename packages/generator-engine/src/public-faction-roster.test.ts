@@ -48,6 +48,38 @@ describe("generateFactionRosterLocal", () => {
     expect(out.lore).toContain("### At a Glance");
   });
 
+  it("reflects the handed-over faction in the local (no-AI) fallback, not generic filler", () => {
+    // The public "Generate Roster" handoff always seeds a local draft on
+    // mount before any AI call — matches generatePlotTwistLocal's precedent
+    // of using a handed-over premise even offline (#2808 follow-up).
+    const out = generateFactionRosterLocal(
+      {
+        size: "3",
+        factionContext:
+          "[Faction Context]\nFaction: The Compact\nA merchant guild that fixes prices across three ports.",
+      },
+      seededRng(4),
+    );
+    expect(out.title).toBe("The Compact's Notable Members");
+    expect(out.summary).toContain("The Compact");
+    expect(out.content).toContain("for The Compact");
+    expect(out.lore).toContain("Loyalty to The Compact");
+  });
+
+  it("falls back to a proper noun when factionContext has no 'Faction:' line", () => {
+    const out = generateFactionRosterLocal(
+      { size: "3", factionContext: "Vess Marrow leads the operation." },
+      seededRng(4),
+    );
+    expect(out.title).toBe("Vess Marrow's Notable Members");
+  });
+
+  it("falls back to generic phrasing when no factionContext is given", () => {
+    const out = generateFactionRosterLocal({ size: "3" }, seededRng(4));
+    expect(out.title).toBe("Notable Members");
+    expect(out.summary).toContain("of the faction,");
+  });
+
   it("never points a member's connection at itself", () => {
     const out = generateFactionRosterLocal({ size: "3" }, seededRng(21));
     const names = [...out.content.matchAll(/^### (.+?) — /gm)].map((m) => m[1]);

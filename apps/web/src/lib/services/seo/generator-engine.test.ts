@@ -360,6 +360,11 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("faction-roster");
       expect(res.labels).toContain("faction-roster-generator");
       expect(res.labels).toContain("imported-draft");
+      // The local (no-AI) seed draft that fires on page mount for the
+      // Faction -> Roster handoff must reflect the handed-over faction
+      // rather than reading as generic filler (#2808 follow-up).
+      expect(res.title).toContain("The Compact");
+      expect(res.summary).toContain("The Compact");
     });
 
     it("should include the faction context in the AI prompt", async () => {

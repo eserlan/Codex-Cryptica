@@ -331,12 +331,29 @@ const ROSTER_ARCHETYPES = [
   },
 ] as const;
 
+/**
+ * Best-effort faction name from a handed-over `factionContext` blob, so the
+ * local (no-AI) fallback still reflects which faction was rostered rather
+ * than reading as generic filler — matching how `generatePlotTwistLocal`
+ * incorporates a handed-over premise even offline. Prefers the exact
+ * "Faction: X" line `buildFactionRosterContext` produces, and falls back to
+ * the first proper noun for context pasted in free-form.
+ */
+function extractFactionName(factionContext?: string): string | undefined {
+  if (!factionContext?.trim()) return undefined;
+  const labeled = factionContext.match(/^Faction:\s*(.+)$/m);
+  if (labeled?.[1]?.trim()) return labeled[1].trim();
+  return extractProperNouns(factionContext)[0];
+}
+
 export function generateFactionRosterLocal(
   options: FactionRosterGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveFactionRoster(options, rng);
   const { size, structure, emphasis } = resolved;
+  const factionName = extractFactionName(resolved.factionContext);
+  const factionLabel = factionName ?? "the faction";
 
   const archetypes = pickRandomItems(ROSTER_ARCHETYPES, size, rng);
   const names = Array.from({ length: size }, () => generateName(rng));
@@ -348,8 +365,8 @@ export function generateFactionRosterLocal(
     return {
       name: names[i],
       role: archetype.role,
-      duty: `Handles what a ${archetype.role.toLowerCase()} handles for a ${structure.toLowerCase()} — the work nobody minutes.`,
-      motive: `Wants something for themselves out of this, separate from what the faction claims to want.`,
+      duty: `Handles what a ${archetype.role.toLowerCase()} handles for ${factionLabel}, organised as a ${structure.toLowerCase()} — the work nobody minutes.`,
+      motive: `Wants something for themselves out of this, separate from what ${factionLabel} claims to want.`,
       stance: archetype.stance,
       trait: archetype.trait,
       wantNow: `Needs a decision made before the next ${structure.toLowerCase()} meeting forces one on them.`,
@@ -362,7 +379,7 @@ export function generateFactionRosterLocal(
   });
 
   const content = members.map(formatMemberSection).join("\n\n");
-  const summary = `${size} notable members of the faction, organised as a ${structure.toLowerCase()} and weighted toward ${emphasis.toLowerCase()}.`;
+  const summary = `${size} notable members of ${factionLabel}, organised as a ${structure.toLowerCase()} and weighted toward ${emphasis.toLowerCase()}.`;
 
   const lore = `### At a Glance
 - **Structure**: ${structure}
@@ -370,11 +387,11 @@ export function generateFactionRosterLocal(
 - **Immediate Hook**: The roster's internal tension is one bad decision from spilling into the open.
 
 ### How This Roster Divides
-Loyalty to the faction is not the same as loyalty to each other — the ${emphasis.toLowerCase()} in this group means the fault line runs through people who each think they are the reasonable one.`;
+Loyalty to ${factionLabel} is not the same as loyalty to each other — the ${emphasis.toLowerCase()} in this group means the fault line runs through people who each think they are the reasonable one.`;
 
   return {
     type: "note",
-    title: "Notable Members",
+    title: factionName ? `${factionName}'s Notable Members` : "Notable Members",
     summary,
     content,
     lore,
