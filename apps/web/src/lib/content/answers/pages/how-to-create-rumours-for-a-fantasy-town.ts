@@ -96,12 +96,18 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
   codexConnection: {
     heading: "Keep rumours attached to the people who spread them",
     paragraphs: [
-      "Use the Settlement, Tavern, and News Sheet generators to create the town's locations and public stories, then link each rumour to its source, subject, and likely consequence in your campaign notes. When the party exposes a lie or backs a faction, those connections show which source changes their story next.",
+      "Use the Rumour Generator to draft claims and leads, then use the Settlement, Tavern, and News Sheet generators to give them town context and public versions. Link each rumour to its source, subject, and likely consequence in your campaign notes. When the party exposes a lie or backs a faction, those connections show which source changes their story next.",
     ],
-    linkText: "Try the Settlement Generator",
-    href: "/generators/settlement",
+    linkText: "Try the Rumour Generator",
+    href: "/generators/rumour",
   },
   relatedTools: [
+    {
+      title: "Rumour Generator",
+      description:
+        "Draft actionable local rumours with hooks that you can connect to a town's people, places, and current trouble.",
+      href: "/generators/rumour",
+    },
     {
       title: "Settlement generator",
       description:
@@ -150,6 +156,7 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
     relatedIntents: [
       "answer-settlement-contents",
       "answer-sandbox-campaign-prep",
+      "generator-rumour",
       "generator-settlement",
       "generator-tavern",
       "generator-news-sheet-generator",
