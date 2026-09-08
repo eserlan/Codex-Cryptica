@@ -243,6 +243,18 @@
                 </div>
               {/each}
             </dl>
+          {:else if block.kind === "image"}
+            <img
+              src={block.src}
+              alt={block.alt}
+              loading="lazy"
+              class="w-full border border-theme-border"
+            />
+            {#if block.caption}
+              <p class="mt-2 font-mono text-xs text-theme-muted">
+                {block.caption}
+              </p>
+            {/if}
           {/if}
         </section>
       {/each}

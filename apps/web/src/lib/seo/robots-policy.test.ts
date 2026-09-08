@@ -5,6 +5,7 @@ import {
   isPathAllowed,
   OAI_SEARCHBOT_TOKEN,
   parseRobotsTxt,
+  SEARCH_CRAWLERS,
   selectRobotsGroup,
 } from "./crawler-access";
 
@@ -28,7 +29,7 @@ describe("shipped robots.txt", () => {
     expect(group?.agents).not.toContain("*");
   });
 
-  it("lets OAI-SearchBot reach every public discovery family", () => {
+  it("lets every verified discovery crawler reach every public discovery family", () => {
     const paths = [
       "/",
       "/llms.txt",
@@ -44,8 +45,10 @@ describe("shipped robots.txt", () => {
       "/tools/quest-hook-generator",
     ];
 
-    for (const path of paths) {
-      expect(isPathAllowed(robots, OAI_SEARCHBOT_TOKEN, path)).toBe(true);
+    for (const crawler of SEARCH_CRAWLERS) {
+      for (const path of paths) {
+        expect(isPathAllowed(robots, crawler.robotsToken, path)).toBe(true);
+      }
     }
   });
 

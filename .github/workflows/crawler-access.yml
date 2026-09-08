@@ -1,10 +1,10 @@
 name: Crawler Access Check
 
-# Verifies that OAI-SearchBot (and, by proxy, every other well-behaved search
-# crawler) can still retrieve the public discovery routes through Cloudflare —
-# see docs/seo/crawler-access.md and issue #2567. A WAF rule, bot-management
-# change or stray `noindex` can break discovery without touching this repo, so
-# this runs on a schedule rather than only on push.
+# Verifies that the major discovery crawlers can retrieve the public routes
+# through Cloudflare — see docs/seo/crawler-access.md and issues #2567, #2844.
+# A WAF rule, bot-management change or stray `noindex` can break discovery
+# without touching this repo, so this runs on a schedule rather than only on
+# push.
 
 on:
   schedule:
@@ -26,9 +26,21 @@ permissions:
 
 jobs:
   check:
-    name: OAI-SearchBot access
+    name: ${{ matrix.crawler.name }} access
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        crawler:
+          - id: oai-searchbot
+            name: OAI-SearchBot
+          - id: googlebot
+            name: Googlebot
+          - id: bingbot
+            name: Bingbot
+          - id: perplexitybot
+            name: PerplexityBot
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -41,4 +53,5 @@ jobs:
       - name: Check crawler access
         run: |
           bun scripts/crawler-access-check.mjs \
-            --base="${{ inputs.base || 'https://codexcryptica.com' }}"
+            --base="${{ inputs.base || 'https://codexcryptica.com' }}" \
+            --crawler="${{ matrix.crawler.id }}"

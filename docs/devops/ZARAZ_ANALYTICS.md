@@ -28,9 +28,11 @@ user-authored content.
 ## Where it's wired
 
 - `apps/web/src/lib/services/analytics/attribution.ts` — captures
-  `utm_source`/`utm_medium`/`utm_campaign` from the landing URL into
-  first-touch (write-once) and latest-touch (always-overwrite) `localStorage`
-  records.
+  `utm_source`/`utm_medium`/`utm_campaign` and recognised AI referrals from
+  the landing URL into first-touch (write-once) and latest-touch
+  (always-overwrite) `localStorage` records.
+- `apps/web/src/lib/services/analytics/ai-referral.ts` — the allowlisted,
+  fail-closed classifier for AI-assistant UTM values and referrer hostnames.
 - `apps/web/src/lib/services/analytics/zaraz-analytics.ts` — `trackEvent()`,
   a fail-silent wrapper around `window.zaraz.track()` that merges current
   attribution into every event. Also defines `window.__codexAnalytics.track`,
@@ -66,7 +68,7 @@ user-authored content.
 
 | Event                    | Fires when                                                                  | Properties                                                                                                                     |
 | ------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `seo_entry`              | A marketing page is visited with new UTM attribution                        | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
+| `seo_entry`              | A marketing page is visited with new UTM or AI-referral attribution         | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
 | `generator_started`      | A visitor submits a generator form (not the silent auto-draft on page load) | `generator_type`                                                                                                               |
 | `generator_completed`    | Generation succeeds                                                         | `generator_type`                                                                                                               |
 | `entity_saved`           | "Save to Codex" is clicked                                                  | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
@@ -75,9 +77,40 @@ user-authored content.
 | `discovery_page_viewed`  | A supported discovery page is viewed (once per page per visit — see below)  | `source_kind`, `source_id`, `path`                                                                                             |
 | `discovery_click`        | A visitor follows a meaningful discovery-page link/CTA                      | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
 
-Every event also carries `first_touch` and `latest_touch` objects (each
-`{ utm_source?, utm_medium?, utm_campaign?, landing_path, at }`) when
-attribution has been captured for the current browser.
+Every event also carries `first_touch` and `latest_touch` objects when
+attribution has been captured for the current browser. Their shape is
+`{ utm_source?, utm_medium?, utm_campaign?, channel?, provider?, source?, landing_path, at }`.
+For a latest-touch AI referral, the event additionally exposes flat properties
+for destination-tool segmentation:
+
+- `acquisition_channel`: `ai_referral`
+- `acquisition_provider`: `openai`, `perplexity`, `microsoft`, `anthropic` or `google`
+- `acquisition_source`: `chatgpt`, `perplexity`, `copilot`, `claude` or `gemini`
+- `acquisition_landing_path`: the root-relative landing path
+
+Zaraz and the configured destination tool supply the browser session/visit
+association. Codex does not create a separate visitor identifier.
+
+### AI-referral classification
+
+Classification is deliberately allowlisted and fail-closed. A recognised
+`utm_source` wins over a conflicting referrer; otherwise the initial external
+referrer hostname is checked. Only the hostname is retained — referrer paths,
+queries and fragments are discarded.
+
+| Provider   | Source       | Recognised UTM values                         | Recognised referrer hosts        |
+| ---------- | ------------ | --------------------------------------------- | -------------------------------- |
+| OpenAI     | `chatgpt`    | `chatgpt`, `chatgpt.com`                      | `chatgpt.com`, `chat.openai.com` |
+| Perplexity | `perplexity` | `perplexity`, `perplexity.ai`                 | `perplexity.ai`                  |
+| Microsoft  | `copilot`    | `copilot`, `copilot.microsoft.com`, `bing-ai` | `copilot.microsoft.com`          |
+| Anthropic  | `claude`     | `claude`, `claude.ai`                         | `claude.ai`                      |
+| Google     | `gemini`     | `gemini`, `gemini.google.com`                 | `gemini.google.com`              |
+
+Plain Google/Bing search referrals, `openai.com`, unknown assistants and
+spoofed suffixes remain in their existing channel because they cannot be
+identified confidently. The initial referrer is consumed once per marketing
+page mount; later client-side navigation can still capture a new UTM-tagged
+landing URL without reusing the original referrer.
 
 ### Discovery funnel (#2687)
 
