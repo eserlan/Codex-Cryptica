@@ -4,6 +4,7 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -95,7 +96,10 @@
     backHref = undefined,
     backLabel = undefined,
     onGeneratePlotTwist = undefined,
+    onGenerateRoster = undefined,
+    onOpenMemberAsCharacter = undefined,
     clipboardService = defaultClipboardService,
+    autoGenerateExplicit = false,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -125,7 +129,13 @@
     inputHint?: string;
     onLinkToHub?: () => void;
     onGeneratePlotTwist?: (data: GeneratorOutput) => void;
+    onGenerateRoster?: (data: GeneratorOutput) => void;
+    onOpenMemberAsCharacter?: (
+      section: MarkdownSectionForCopy,
+      data: GeneratorOutput,
+    ) => void;
     clipboardService?: ClipboardService;
+    autoGenerateExplicit?: boolean;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -147,10 +157,16 @@
   const showOutputLoading = $derived(isBusy && !hasStreamedPreview);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
+  let currentPagePath = $state<string | undefined>(undefined);
 
   $effect(() => {
-    generatedData = initialDraft;
-    isExampleDraft = true;
+    if (canonicalPath !== currentPagePath) {
+      currentPagePath = canonicalPath;
+      userGenerated = false;
+      userGenerationSucceeded = false;
+      generatedData = initialDraft;
+      isExampleDraft = true;
+    }
   });
 
   let outputCard = $state<HTMLElement | null>(null);
@@ -249,11 +265,26 @@
     }
   });
 
+  let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
+
   $effect(() => {
-    if (browser && !generatedData) {
+    if (
+      browser &&
+      !generatedData &&
+      !autoGenerateExplicit &&
+      !isAutoDrafting &&
+      autoDraftAttemptedForPath !== canonicalPath
+    ) {
+      autoDraftAttemptedForPath = canonicalPath;
       void handleGenerateOnMount();
     }
   });
+
+  export function triggerExplicitAutoGenerate() {
+    if (autoDraftAttemptedForPath === canonicalPath) return;
+    autoDraftAttemptedForPath = canonicalPath;
+    void handleGenerate();
+  }
 
   async function handleGenerateOnMount() {
     if (isAutoDrafting || generatedData) return;
@@ -916,6 +947,10 @@
         onGeneratePlotTwist={userGenerationSucceeded
           ? onGeneratePlotTwist
           : undefined}
+        onGenerateRoster={userGenerationSucceeded
+          ? onGenerateRoster
+          : undefined}
+        {onOpenMemberAsCharacter}
       />
     </div>
 

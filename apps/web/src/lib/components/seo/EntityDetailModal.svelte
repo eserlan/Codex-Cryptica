@@ -17,6 +17,7 @@
   } = $props();
 
   let copyState = $state<"idle" | "success" | "error">("idle");
+  let copyInFlight = $state(false);
   let copyTimeout: ReturnType<typeof setTimeout> | undefined;
 
   function handleKeydown(e: KeyboardEvent) {
@@ -25,11 +26,20 @@
 
   async function handleCopy() {
     if (!entity || !onCopy) return;
+    if (copyInFlight) return;
     clearTimeout(copyTimeout);
+    copyInFlight = true;
     copyState = "idle";
-    const success = await onCopy(entity);
-    copyState = success ? "success" : "error";
-    copyTimeout = setTimeout(() => (copyState = "idle"), 2000);
+    try {
+      const success = await onCopy(entity);
+      copyState = success ? "success" : "error";
+    } catch (error) {
+      console.error("Failed to copy Session Hub entity", error);
+      copyState = "error";
+    } finally {
+      copyInFlight = false;
+      copyTimeout = setTimeout(() => (copyState = "idle"), 2000);
+    }
   }
 </script>
 
@@ -107,7 +117,7 @@
         <button
           type="button"
           onclick={handleCopy}
-          disabled={!onCopy || copyState === "success"}
+          disabled={!onCopy || copyInFlight || copyState === "success"}
           class="px-4 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-primary/20 transition-all disabled:opacity-50"
         >
           {copyState === "success" ? "Copied!" : "Copy"}
