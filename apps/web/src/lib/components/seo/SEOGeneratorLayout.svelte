@@ -245,8 +245,23 @@
     }
   });
 
+  // One-shot per page (keyed by canonicalPath, not component lifetime — this
+  // component is reused across client-side navigations between generator
+  // slugs, e.g. Faction -> Roster -> NPC handoffs). Without this guard, a
+  // handoff-arrival slug (initialDraft resolving to null so the page seeds
+  // itself from the handed-over context) can drive `generatedData` and the
+  // effect below into a runaway loop — each auto-draft re-render is itself
+  // enough to make the effect's dependencies look "changed" again, and each
+  // pass reattempts a full generate() call, hanging the tab (#2808 review).
+  let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
+
   $effect(() => {
-    if (browser && !generatedData) {
+    if (
+      browser &&
+      !generatedData &&
+      autoDraftAttemptedForPath !== canonicalPath
+    ) {
+      autoDraftAttemptedForPath = canonicalPath;
       void handleGenerateOnMount();
     }
   });

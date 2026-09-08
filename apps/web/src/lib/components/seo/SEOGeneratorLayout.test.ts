@@ -536,6 +536,46 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
     });
 
+    it("auto-drafts at most once per canonicalPath even if the component re-renders (regression, #2808 review)", async () => {
+      // A handoff-arrival page (initialDraft resolving to null so the page
+      // seeds itself from handed-over context, e.g. Faction -> Roster) drove
+      // this effect and the generatedData=initialDraft sync effect into a
+      // runaway loop that hung the tab, because SEOGeneratorLayout is reused
+      // across client-side navigations rather than remounted. The guard is
+      // keyed by canonicalPath precisely so it survives spurious re-renders
+      // of the same page without re-arming for a genuinely new one.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { rerender } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+        },
+      });
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+
+      await rerender({
+        canonicalPath: "/generators/faction-roster",
+        generate: mockGenerate,
+        formFields: noopSnippet,
+        initialDraft: null,
+      });
+      await tick();
+      await tick();
+
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
+    });
+
     it("fires generator_started then generator_completed on an explicit Generate click", async () => {
       const seedDraft = {
         type: "character" as const,
