@@ -46,6 +46,7 @@
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
+  import ConstellationFormFields from "$lib/components/seo/ConstellationFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
   import {
@@ -82,6 +83,7 @@
     villainConfig,
     worldConfig,
     starSystemConfig,
+    constellationConfig,
     alienRaceConfig,
     creatureConfig,
     themeIdToLabel,
@@ -591,6 +593,22 @@
     campaignContext: "",
   });
 
+  let constellation = $state<{
+    mode: "single" | "night-sky";
+    genre: string;
+    visualImpression: string;
+    practicalUse: string;
+    culturalMeaning: string;
+    campaignContext: string;
+  }>({
+    mode: "single",
+    genre: constellationConfig.genres[0],
+    visualImpression: constellationConfig.visualImpressions[0],
+    practicalUse: constellationConfig.practicalUses[0],
+    culturalMeaning: constellationConfig.culturalMeanings[0],
+    campaignContext: "",
+  });
+
   let alienRace = $state<{
     genre: string;
     generationMode: string;
@@ -688,6 +706,7 @@
     else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
     else if (slug === "star-system")
       activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    else if (slug === "constellation") constellation.genre = activeTheme;
     else if (slug === "alien-race")
       activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
@@ -993,6 +1012,12 @@
     "star-system": (useAI) =>
       generatorEngine.generateStarSystem({
         ...starSystem,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    constellation: (useAI) =>
+      generatorEngine.generateConstellation({
+        ...constellation,
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
@@ -1493,6 +1518,16 @@
         onGenreChange={(genre) => {
           activeTheme = mapStarSystemGenreToTheme(genre);
         }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "constellation"}
+      <ConstellationFormFields
+        bind:mode={constellation.mode}
+        bind:theme={activeTheme}
+        bind:visualImpression={constellation.visualImpression}
+        bind:practicalUse={constellation.practicalUse}
+        bind:culturalMeaning={constellation.culturalMeaning}
+        bind:campaignContext={constellation.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "alien-race"}

@@ -34,6 +34,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "news-sheet-generator",
   "world",
   "star-system",
+  "constellation",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
@@ -153,6 +154,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "creature",
   "encounter",
   "heist",
+  "constellation",
 ]);
 
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship

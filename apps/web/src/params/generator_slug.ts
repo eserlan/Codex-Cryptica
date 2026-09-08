@@ -43,6 +43,7 @@ export const GENERATOR_SLUGS = [
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
   "creature",
   "encounter",

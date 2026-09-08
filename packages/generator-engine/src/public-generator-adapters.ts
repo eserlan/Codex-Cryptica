@@ -25,6 +25,11 @@ import type {
 } from "./campaign-generator-types";
 import type { LanguageProfileV1 } from "schema";
 import type { StarSystemBody } from "./public-star-system";
+import type {
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "./public-constellation";
 
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
@@ -52,6 +57,12 @@ export interface PublicGeneratorOutput {
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
   starType?: string;
+  /** Structured star-pattern data for constellations, for a future diagram. */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
   /**
    * Short label for the dominant conflict domain driving a BBEG villain's
    * plan (e.g. "Political Corruption", "Cult Ritual"). Used to track domain

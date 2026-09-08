@@ -108,6 +108,12 @@ import {
   buildStarSystemPrompt,
   parseStarSystemResponse,
   generateStarSystemLocal,
+  buildConstellationPrompt,
+  parseConstellationResponse,
+  generateConstellationLocal,
+  buildNightSkyPrompt,
+  parseNightSkyResponse,
+  generateNightSkyLocal,
   buildAlienRacePrompt,
   parseAlienRaceResponse,
   generateAlienRaceLocal,
@@ -147,6 +153,7 @@ import {
   type PlotTwistGeneratorOptions,
   type WorldGeneratorOptions,
   type StarSystemGeneratorOptions,
+  type ConstellationGeneratorOptions,
   type AlienRaceGeneratorOptions,
   type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
@@ -230,6 +237,7 @@ export { adventureConfig, forAdventureGenre } from "generator-engine";
 export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
 export { starSystemConfig } from "generator-engine";
+export { constellationConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
 export { creatureConfig } from "generator-engine";
 
@@ -1297,6 +1305,41 @@ export class DefaultGeneratorEngine {
             ...(starSystemOptions.avoidNames ?? []),
           ],
         }),
+    );
+  }
+
+  /** Constellation generation delegates to the shared offline-first generator package. */
+  async generateConstellation(
+    options: ConstellationGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...constellationOptions } = options;
+    const isNightSky = constellationOptions.mode === "night-sky";
+    // buildConstellationPrompt/buildNightSkyPrompt's return type has no
+    // `resolved` field, so this isn't wired into generationInputHistoryStore.
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = isNightSky
+          ? buildNightSkyPrompt(constellationOptions)
+          : buildConstellationPrompt(constellationOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        const avoidNames = [
+          ...BANNED_NAMES,
+          ...(constellationOptions.avoidNames ?? []),
+        ];
+        return isNightSky
+          ? parseNightSkyResponse(text, avoidNames)
+          : parseConstellationResponse(text, avoidNames);
+      },
+      () => {
+        const avoidNames = [
+          ...BANNED_NAMES,
+          ...(constellationOptions.avoidNames ?? []),
+        ];
+        return isNightSky
+          ? generateNightSkyLocal({ ...constellationOptions, avoidNames })
+          : generateConstellationLocal({ ...constellationOptions, avoidNames });
+      },
     );
   }
 

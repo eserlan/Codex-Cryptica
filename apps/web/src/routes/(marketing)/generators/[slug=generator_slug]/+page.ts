@@ -39,6 +39,7 @@ const validSlugs = new Set([
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
   "creature",
   "encounter",
@@ -86,6 +87,7 @@ export const load: PageLoad = ({ params }) => {
       | "council-vote"
       | "secret-society"
       | "star-system"
+      | "constellation"
       | "alien-race"
       | "creature"
       | "encounter"
@@ -130,6 +132,7 @@ export const entries: EntryGenerator = () => {
     { slug: "council-vote" },
     { slug: "secret-society" },
     { slug: "star-system" },
+    { slug: "constellation" },
     { slug: "alien-race" },
     { slug: "creature" },
     { slug: "encounter" },

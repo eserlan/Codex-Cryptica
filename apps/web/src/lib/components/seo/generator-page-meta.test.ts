@@ -37,6 +37,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
   "creature",
   "encounter",
@@ -51,7 +52,7 @@ describe("generator-page-meta completeness and social preview tags", () => {
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
   });
 
-  it("has metadata entries for all 30 valid generator slugs", () => {
+  it("has metadata entries for all valid generator slugs", () => {
     const keys = Object.keys(slugMeta);
     expect(keys.length).toBe(allExpectedSlugs.length);
     for (const slug of allExpectedSlugs) {
