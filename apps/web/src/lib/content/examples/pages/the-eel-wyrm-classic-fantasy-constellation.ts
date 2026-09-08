@@ -16,9 +16,7 @@ export const theEelWyrm: ExampleConfigInput = {
   theme: "fantasy",
   summary:
     "A serpent-shaped constellation the fishers of a coastal eel-harvesting culture read as a rising and setting timer for their autumn migration season, complete with an origin myth, a set of omens, and a hook about a star that has gone missing.",
-  provenance: "lightly-edited",
-  provenanceNote:
-    "The raw generation doubled a word and a punctuation mark where two fields met ('read as a a long... stars..'). That was a genuine bug in the generator, not a phrasing slip, and it's fixed as of this example. The Core Concept text below is the corrected result; nothing else was added, removed, or reworded.",
+  provenance: "raw",
   generator: {
     name: "Constellation generator",
     href: "/generators/constellation",
