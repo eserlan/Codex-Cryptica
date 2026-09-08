@@ -62,7 +62,7 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
         },
         {
           term: "Table-ready system",
-          text: "Nacre Station refines coolant from the gas giant and sells it to the mining moon Dross, whose excavators expose a rare isotope used in jump coils. The only fast corridor crosses a debris belt controlled by the station's contracted security fleet. A solar flare has blinded the public relay for six hours, while a Dross ore tender disappears carrying enough isotope to keep the station operating through winter. The station director blames smugglers, the miners blame security, and a salvage cooperative says the tender answered a call from the abandoned research base. The crew can take a slow safe route, buy an illegal beacon code, investigate the base, or escort the next coolant run before Dross shuts down its extraction tunnels.",
+          text: "Nacre Station refines coolant from the gas giant and sells it to the mining moon Dross, whose excavators expose a rare isotope used in jump coils. The only fast corridor crosses a debris belt controlled by the station's contracted security fleet. A solar flare has blinded the public relay for six hours, while a Dross ore tender disappears carrying enough isotope to keep the station operating through winter. The station director blames smugglers, the miners blame security, and a salvage cooperative says the tender answered a call from the abandoned research base. The crew can take a slow safe route, bribe security for a forged transponder code, investigate the base, or escort the next coolant run before Dross shuts down its extraction tunnels.",
         },
         {
           term: "Why it works",
