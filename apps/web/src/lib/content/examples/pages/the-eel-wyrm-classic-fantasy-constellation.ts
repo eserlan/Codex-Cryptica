@@ -39,6 +39,13 @@ export const theEelWyrm: ExampleConfigInput = {
   },
   output: [
     {
+      kind: "image",
+      src: "https://assets.codexcryptica.com/announcements/constellation-eel-wyrm-star-chart.jpg",
+      alt: "The star chart diagram for the Eel-Wyrm constellation, showing its stars named Drowned Tail and Mouth of the Wyrm connected in a winding line",
+      caption:
+        "The mechanical star chart the generator renders alongside the lore, built from the same star-position data as the entity's Map tab.",
+    },
+    {
       kind: "prose",
       heading: "Core Concept",
       paragraphs: [
