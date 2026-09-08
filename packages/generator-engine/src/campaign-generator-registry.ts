@@ -101,6 +101,8 @@ import {
 import {
   buildConstellationPrompt,
   generateConstellationLocal,
+  buildNightSkyPrompt,
+  generateNightSkyLocal,
   type ConstellationGeneratorOptions,
   constellationConfig,
 } from "./public-constellation";
@@ -277,6 +279,7 @@ function mapOutputToDraft(
       interpretations: output.interpretations
         ? [...output.interpretations]
         : undefined,
+      nightSky: output.nightSky,
       contextProvenance: contextProvenance.length
         ? contextProvenance
         : undefined,
@@ -1481,6 +1484,10 @@ function constellationOptions(
   request: GeneratorRunRequest,
 ): ConstellationGeneratorOptions {
   return {
+    mode:
+      optionString(request, "mode", "single") === "night-sky"
+        ? "night-sky"
+        : "single",
     genre: optionString(request, "genre", ""),
     visualImpression: optionString(request, "visualImpression", ""),
     practicalUse: optionString(request, "practicalUse", ""),
@@ -1493,7 +1500,11 @@ function constellationOptions(
 }
 
 function generateConstellation(request: GeneratorRunRequest): GeneratorOutput {
-  const result = generateConstellationLocal(constellationOptions(request));
+  const options = constellationOptions(request);
+  const result =
+    options.mode === "night-sky"
+      ? generateNightSkyLocal(options)
+      : generateConstellationLocal(options);
   return {
     title: result.title,
     summary: result.summary ?? "",
@@ -1502,20 +1513,28 @@ function generateConstellation(request: GeneratorRunRequest): GeneratorOutput {
     labels: result.labels,
     pattern: result.pattern,
     interpretations: result.interpretations,
+    nightSky: result.nightSky,
   };
 }
 
 function constellationPrompt(request: GeneratorRunRequest): string {
+  const options = constellationOptions(request);
+  const brief =
+    options.mode === "night-sky"
+      ? buildNightSkyPrompt(options).userMessage
+      : buildConstellationPrompt(options).userMessage;
   return `${contextChain(request)}
 
-${buildConstellationPrompt(constellationOptions(request)).userMessage}
+${brief}
 
 Return ONLY a JSON object matching this shared schema:
 ${OUTPUT_SCHEMA}
 ${exemplarBlock(request, "constellation")}${groundingNote(request)}
 ${loreGuidance(
   request,
-  "seasonal visibility; practical use; cultural and religious meaning; omens; and an adventure hook",
+  options.mode === "night-sky"
+    ? "every named constellation, grouped by season, each with its practical use, cultural meaning, omen and an adventure hook"
+    : "seasonal visibility; practical use; cultural and religious meaning; omens; and an adventure hook",
 )}`;
 }
 
@@ -2949,6 +2968,15 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     icon: "lucide:stars",
     options: [
       {
+        id: "mode",
+        label: "Mode",
+        control: "select",
+        choices: [
+          { value: "single", label: "Single Constellation" },
+          { value: "night-sky", label: "Full Night Sky (8-15)" },
+        ],
+      },
+      {
         id: "genre",
         label: "Genre",
         control: "select",
@@ -2965,6 +2993,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           value,
           label: value,
         })),
+        visibleWhen: { optionId: "mode", notValues: ["night-sky"] },
       },
       {
         id: "practicalUse",
@@ -2974,6 +3003,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           value,
           label: value,
         })),
+        visibleWhen: { optionId: "mode", notValues: ["night-sky"] },
       },
       {
         id: "culturalMeaning",
@@ -2983,9 +3013,11 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           value,
           label: value,
         })),
+        visibleWhen: { optionId: "mode", notValues: ["night-sky"] },
       },
     ],
     defaults: {
+      mode: "single",
       genre: "Classic Fantasy",
       visualImpression: "Beast",
       practicalUse: "Navigation",
@@ -2997,6 +3029,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
       pattern: output.pattern,
       interpretations: output.interpretations,
+      nightSky: output.nightSky,
     }),
     buildPrompt: constellationPrompt,
   },

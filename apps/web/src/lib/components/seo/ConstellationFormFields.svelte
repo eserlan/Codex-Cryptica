@@ -7,6 +7,7 @@
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
+    mode = $bindable("single"),
     theme = $bindable(factionConfig.themes[0]),
     visualImpression = $bindable(constellationConfig.visualImpressions[0]),
     practicalUse = $bindable(constellationConfig.practicalUses[0]),
@@ -14,6 +15,7 @@
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
+    mode: "single" | "night-sky";
     theme: string;
     visualImpression: string;
     practicalUse: string;
@@ -26,7 +28,21 @@
     "w-full min-h-12 rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2.5 text-base text-theme-text focus:border-theme-primary/60 focus:outline-none md:text-sm";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+
+  const modeChoices = [
+    { value: "single", label: "Single Constellation" },
+    { value: "night-sky", label: "Full Night Sky (8-15)" },
+  ] as const;
 </script>
+
+<div class="flex flex-col gap-1.5">
+  <label for="constellation-mode-select" class={labelClass}>Generate</label>
+  <select id="constellation-mode-select" bind:value={mode} class={selectClass}>
+    {#each modeChoices as choice (choice.value)}
+      <option value={choice.value}>{choice.label}</option>
+    {/each}
+  </select>
+</div>
 
 <SelectWithCustomOption
   id="constellation-theme-select"
@@ -39,47 +55,54 @@
   customPlaceholder="Enter a custom genre"
 />
 
-<SelectWithCustomOption
-  id="constellation-visual-impression-select"
-  label="Visual Impression"
-  bind:value={visualImpression}
-  choices={constellationConfig.visualImpressions.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom visual impression"
-/>
+{#if mode === "single"}
+  <SelectWithCustomOption
+    id="constellation-visual-impression-select"
+    label="Visual Impression"
+    bind:value={visualImpression}
+    choices={constellationConfig.visualImpressions.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom visual impression"
+  />
 
-<SelectWithCustomOption
-  id="constellation-practical-use-select"
-  label="Practical Use"
-  bind:value={practicalUse}
-  choices={constellationConfig.practicalUses.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom practical use"
-/>
+  <SelectWithCustomOption
+    id="constellation-practical-use-select"
+    label="Practical Use"
+    bind:value={practicalUse}
+    choices={constellationConfig.practicalUses.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom practical use"
+  />
 
-<SelectWithCustomOption
-  id="constellation-cultural-meaning-select"
-  label="Cultural Meaning"
-  bind:value={culturalMeaning}
-  choices={constellationConfig.culturalMeanings.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom cultural meaning"
-/>
+  <SelectWithCustomOption
+    id="constellation-cultural-meaning-select"
+    label="Cultural Meaning"
+    bind:value={culturalMeaning}
+    choices={constellationConfig.culturalMeanings.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom cultural meaning"
+  />
+{:else}
+  <p class="text-[11px] text-theme-text/60 leading-relaxed">
+    Generates 8 to 15 constellations for one coherent culture, spanning every
+    season, with recurring myths tying some of them together.
+  </p>
+{/if}
 
 <div class="flex justify-end pt-2">
   <button

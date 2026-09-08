@@ -422,6 +422,21 @@ describe("registry lookup", () => {
     expect(draft.interpretations?.[0]?.culture).toBeTruthy();
   });
 
+  it("switches to night-sky mode and carries nightSky through mapOutputToDraft", () => {
+    const request = run("constellation", { options: { mode: "night-sky" } });
+    const prompt = getGenerator("constellation").buildPrompt(request);
+    expect(prompt).toContain("8 to 15");
+    const output = getGenerator("constellation").generate(request);
+    expect(output.nightSky?.constellations.length).toBeGreaterThanOrEqual(8);
+    expect(output.pattern).toBeUndefined();
+    const draft = getGenerator("constellation").mapOutputToDraft(
+      output,
+      request,
+    );
+    expect(draft.nightSky?.culture).toBeTruthy();
+    expect(draft.nightSky?.constellations.length).toBeGreaterThanOrEqual(8);
+  });
+
   it("builds a context-aware alien-race prompt and maps species to creatures", () => {
     const prompt = getGenerator("alien-race").buildPrompt(
       run("alien-race", {

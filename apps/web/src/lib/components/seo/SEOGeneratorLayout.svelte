@@ -21,6 +21,7 @@
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
+  import ConstellationChart from "./ConstellationChart.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
   import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
   import { buildAbsoluteUrl } from "$lib/seo/site";
@@ -145,6 +146,9 @@
   let outputCard = $state<HTMLElement | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
     typeof StarSystemDiagram
+  > | null>(null);
+  let constellationChartRef = $state<ReturnType<
+    typeof ConstellationChart
   > | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
@@ -465,6 +469,13 @@
           if (blob) mapImageDataUrl = await blobToDataUrl(blob);
         } catch (err) {
           console.error("Failed to rasterize star system diagram:", err);
+        }
+      } else if (constellationChartRef) {
+        try {
+          const blob = await constellationChartRef.exportPng();
+          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
+        } catch (err) {
+          console.error("Failed to rasterize constellation chart:", err);
         }
       }
 
@@ -842,6 +853,20 @@
             bind:this={starSystemDiagramRef}
             bodies={generatedData.bodies}
             starType={generatedData.starType}
+            title={generatedData.title}
+            onCopy={() =>
+              trackPublicGeneratorAction("copy", {
+                generator_type: generatorType,
+                copy_target: "diagram_image",
+              })}
+          />
+        </div>
+      {/if}
+      {#if generatedData?.labels?.includes("constellation") && generatedData.pattern?.stars?.length}
+        <div class="mb-6">
+          <ConstellationChart
+            bind:this={constellationChartRef}
+            pattern={generatedData.pattern}
             title={generatedData.title}
             onCopy={() =>
               trackPublicGeneratorAction("copy", {

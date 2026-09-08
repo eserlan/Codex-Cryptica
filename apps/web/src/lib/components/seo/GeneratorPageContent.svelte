@@ -535,12 +535,14 @@
   });
 
   let constellation = $state<{
+    mode: "single" | "night-sky";
     genre: string;
     visualImpression: string;
     practicalUse: string;
     culturalMeaning: string;
     campaignContext: string;
   }>({
+    mode: "single",
     genre: constellationConfig.genres[0],
     visualImpression: constellationConfig.visualImpressions[0],
     practicalUse: constellationConfig.practicalUses[0],
@@ -1425,6 +1427,7 @@
       />
     {:else if slug === "constellation"}
       <ConstellationFormFields
+        bind:mode={constellation.mode}
         bind:theme={activeTheme}
         bind:visualImpression={constellation.visualImpression}
         bind:practicalUse={constellation.practicalUse}

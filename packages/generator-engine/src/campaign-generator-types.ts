@@ -10,6 +10,7 @@ import type { StarSystemBody } from "./public-star-system";
 import type {
   ConstellationPattern,
   ConstellationInterpretation,
+  NightSkyData,
 } from "./public-constellation";
 
 export type GeneratorId =
@@ -132,6 +133,8 @@ export interface GeneratorOutput {
   pattern?: ConstellationPattern;
   /** Constellation generator's cultural interpretation(s) of `pattern`. */
   interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -244,6 +247,8 @@ export interface GeneratedDraft {
   pattern?: ConstellationPattern;
   /** Carried through from {@link GeneratorOutput.interpretations}. */
   interpretations?: ConstellationInterpretation[];
+  /** Carried through from {@link GeneratorOutput.nightSky}. */
+  nightSky?: NightSkyData;
   /**
    * Source and direct neighbor entity references supplied from the vault context
    * that grounded this generation.

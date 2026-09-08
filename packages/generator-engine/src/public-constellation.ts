@@ -78,9 +78,38 @@ export const constellationConfig = {
     "the Corvane Highwatch",
     "the Idris Pilgrims",
   ],
+  seasons: ["Spring", "Summer", "Autumn", "Winter", "Year-round"],
+  skyRegions: ["North", "South", "East", "West", "Circumpolar", "Zenith"],
+  // Combined with nameNouns to synthesize enough distinct constellation
+  // names for a full night sky (up to 15), since the fixed `names` pool
+  // alone is too small to guarantee uniqueness at that count.
+  nameAdjectives: [
+    "Iron",
+    "Salt",
+    "Ashen",
+    "Drowned",
+    "Silent",
+    "Broken",
+    "Ember",
+    "Widow's",
+  ],
+  nameNouns: [
+    "Wolf",
+    "Crown",
+    "Chain",
+    "Archer",
+    "Serpent",
+    "Lantern",
+    "Plough",
+    "Oar",
+  ],
 } as const;
 
+export type ConstellationMode = "single" | "night-sky";
+
 export interface ConstellationGeneratorOptions {
+  /** "single" (default): one constellation. "night-sky": 8-15 for one culture. */
+  mode?: ConstellationMode;
   genre?: string;
   visualImpression?: string;
   practicalUse?: string;
@@ -130,6 +159,25 @@ export interface ConstellationData {
   interpretations: ConstellationInterpretation[];
 }
 
+export type ConstellationSeason =
+  "Spring" | "Summer" | "Autumn" | "Winter" | "Year-round";
+
+export type ConstellationSkyRegion =
+  "North" | "South" | "East" | "West" | "Circumpolar" | "Zenith";
+
+/** One constellation as it sits within a coherent full night sky. */
+export interface NightSkyConstellationEntry {
+  constellation: ConstellationData;
+  season: ConstellationSeason;
+  skyRegion: ConstellationSkyRegion;
+}
+
+/** A coherent set of 8-15 constellations for a single culture's sky. */
+export interface NightSkyData {
+  culture: string;
+  constellations: NightSkyConstellationEntry[];
+}
+
 function choose(
   value: string | undefined,
   choices: readonly string[],
@@ -149,6 +197,33 @@ function chooseName(avoidNames: readonly string[], rng: Rng): string {
     available.length ? available : constellationConfig.names,
     rng,
   );
+}
+
+/**
+ * Picks a name not already used in this sky and not in `avoidNames`: first
+ * from the fixed `names` pool, then falling back to a synthesized
+ * adjective+noun combination (64 possible pairs) once that pool is
+ * exhausted — needed for a full night sky of up to 15 constellations, where
+ * the fixed pool alone can't guarantee uniqueness.
+ */
+function chooseUniqueName(
+  avoidNames: ReadonlySet<string>,
+  usedInSky: ReadonlySet<string>,
+  rng: Rng,
+): string {
+  const forbidden = (name: string) =>
+    avoidNames.has(name.toLowerCase()) || usedInSky.has(name.toLowerCase());
+  const availableFixed = constellationConfig.names.filter(
+    (name) => !forbidden(name),
+  );
+  if (availableFixed.length) return pickFrom(availableFixed, rng);
+  for (let attempts = 0; attempts < 40; attempts++) {
+    const candidate = `The ${pickFrom(constellationConfig.nameAdjectives, rng)} ${pickFrom(constellationConfig.nameNouns, rng)}`;
+    if (!forbidden(candidate)) return candidate;
+  }
+  // Pool genuinely exhausted (should not happen at <=15 entries): make the
+  // fixed pool's first name unique with a numeric suffix rather than crash.
+  return `${constellationConfig.names[0]} II`;
 }
 
 function genreLabel(value: string): string {
@@ -561,5 +636,292 @@ export function parseConstellationResponse(
     status: "active",
     pattern,
     interpretations,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Night Sky mode: 8-15 coherent constellations for a single culture
+// ---------------------------------------------------------------------------
+
+/**
+ * Renders "## Core Concept" + a by-season index from the single source of
+ * truth (the parsed `NightSkyData`), the same derivation pattern as
+ * formatConstellationContent() above.
+ */
+function formatNightSkyContent(skyName: string, data: NightSkyData): string {
+  const bySeasonLines = (
+    constellationConfig.seasons as readonly ConstellationSeason[]
+  )
+    .map((season) => {
+      const inSeason = data.constellations.filter((c) => c.season === season);
+      if (!inSeason.length) return undefined;
+      const names = inSeason
+        .map((c) => `**${c.constellation.interpretations[0]?.name}**`)
+        .join(", ");
+      return `- **${season}**: ${names}`;
+    })
+    .filter((line): line is string => line !== undefined);
+
+  return [
+    "## Core Concept",
+    `${skyName} is how ${data.culture} read the whole night sky: ${data.constellations.length} constellations spanning every season, sharing one mythology.`,
+    "",
+    "## Constellations by Season",
+    ...bySeasonLines,
+  ].join("\n");
+}
+
+/** GM-only reference block per constellation, derived the same way as content above. */
+function formatNightSkyLore(data: NightSkyData): string {
+  return data.constellations
+    .map((entry) => {
+      const interp = entry.constellation.interpretations[0];
+      if (!interp) return "";
+      return [
+        `### ${interp.name} (${entry.season}, ${entry.skyRegion})`,
+        interp.originMyth,
+        `- **Practical use**: ${interp.practicalUse}`,
+        `- **Cultural meaning**: ${interp.culturalMeaning}`,
+        `- **Omen**: ${interp.omen}`,
+        `- **Adventure hook**: ${interp.adventureHook}`,
+      ].join("\n");
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/** Generate a complete local night-sky draft without network access or vault writes. */
+export function generateNightSkyLocal(
+  options: ConstellationGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const genre = choose(options.genre, constellationConfig.genres, rng);
+  const culture = pickFrom(constellationConfig.cultures, rng);
+  const avoidNames = new Set(
+    (options.avoidNames ?? []).map((n) => n.trim().toLowerCase()),
+  );
+  const count = 8 + Math.floor(rng() * 8); // 8-15
+  const usedNames = new Set<string>();
+  const entries: NightSkyConstellationEntry[] = [];
+  const skyName = `The ${culture.replace(/^the /i, "")} Sky`;
+
+  for (let i = 0; i < count; i++) {
+    const name = chooseUniqueName(avoidNames, usedNames, rng);
+    usedNames.add(name.toLowerCase());
+    const visualImpression = pickFrom(
+      constellationConfig.visualImpressions,
+      rng,
+    );
+    const practicalUse = pickFrom(constellationConfig.practicalUses, rng);
+    const culturalMeaning = pickFrom(constellationConfig.culturalMeanings, rng);
+    const season = pickFrom(
+      constellationConfig.seasons as readonly ConstellationSeason[],
+      rng,
+    );
+    const skyRegion = pickFrom(
+      constellationConfig.skyRegions as readonly ConstellationSkyRegion[],
+      rng,
+    );
+
+    const pattern = generatePattern(rng);
+    const brightestIndex = pattern.stars.findIndex(
+      (s) => s.brightness === "bright",
+    );
+    if (brightestIndex >= 0) {
+      pattern.stars[brightestIndex] = {
+        ...pattern.stars[brightestIndex],
+        name: `${name.split(" ").slice(-1)[0]}'s Eye`,
+        notes: `The star ${culture} point to first when teaching the shape to children.`,
+      };
+    }
+
+    let myth = originMyth(name, visualImpression, culture, rng);
+    // Recurring myths: tie some entries back to an earlier one so the sky
+    // reads as one connected mythology, not N independent rolls.
+    if (entries.length > 0 && rng() < 0.35) {
+      const earlierName =
+        entries[Math.floor(rng() * entries.length)].constellation
+          .interpretations[0]?.name;
+      if (earlierName) {
+        myth = `${myth} Its story is bound to ${earlierName}: the two are told together, one explaining the other.`;
+      }
+    }
+
+    const visibility = seasonalVisibility(rng);
+    const regionClause =
+      skyRegion === "Circumpolar"
+        ? "circling the pole year-round"
+        : skyRegion === "Zenith"
+          ? "passing directly overhead"
+          : `toward the ${skyRegion.toLowerCase()}`;
+
+    const interpretation: ConstellationInterpretation = {
+      culture,
+      name,
+      visualImpression,
+      originMyth: myth,
+      seasonalVisibility: `${visibility} Most prominent in the ${season.toLowerCase() === "year-round" ? "sky year-round" : `${season.toLowerCase()} sky`}, ${regionClause}.`,
+      practicalUse: `Used by ${culture} for ${practicalUse.toLowerCase()}.`,
+      culturalMeaning: `Regarded by ${culture} as ${culturalMeaning.toLowerCase()}.`,
+      omen: omen(culture, rng),
+      adventureHook: adventureHook(name, culture, rng),
+    };
+
+    entries.push({
+      constellation: { pattern, interpretations: [interpretation] },
+      season,
+      skyRegion,
+    });
+  }
+
+  const nightSky: NightSkyData = { culture, constellations: entries };
+  const content = formatNightSkyContent(skyName, nightSky);
+  const lore = formatNightSkyLore(nightSky);
+
+  return {
+    type: "note",
+    kind: "night-sky",
+    title: skyName,
+    summary: `${skyName} is a coherent set of ${count} constellations ${culture} read into the stars, spanning every season.`,
+    content,
+    lore,
+    nightSky,
+    labels: ["constellation", "night-sky", genreLabel(genre)],
+    status: "active",
+  };
+}
+
+/** Build the dedicated night-sky AI brief; campaign context is prepended by the registry. */
+export function buildNightSkyPrompt(
+  options: ConstellationGeneratorOptions = {},
+): ConstellationPrompt {
+  const genre = options.genre?.trim() || "an appropriate genre";
+  const extraAvoidedNames = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  )
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const nameRestrictions = extraAvoidedNames.length
+    ? ` Also do not use these campaign-specific names: ${extraAvoidedNames.join(", ")}.`
+    : "";
+
+  return {
+    systemInstruction:
+      "You are a worldbuilder creating one coherent, culturally meaningful night sky for a single people, not a list of unrelated star names. Return only one valid JSON object.",
+    userMessage: `Create a full ${genre} night sky: one specific culture's complete set of named constellations, covering every season.
+${formatCampaignContextBlock(options.campaignContext)}
+
+Return JSON with "title" (a name for this sky/tradition as a whole, e.g. "The <Culture> Sky"), "summary", "labels", "connections", a markdown "lore" field, "culture", and "constellations". "culture" is the specific people or group whose sky this is (never "some cultures" or "many people"). "constellations" is an array of 8 to 15 entries, each shaped as {"season": "Spring"|"Summer"|"Autumn"|"Winter"|"Year-round", "skyRegion": "North"|"South"|"East"|"West"|"Circumpolar"|"Zenith", "pattern": {"stars": [{"name": string (optional), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional)}], "lines": [[number, number], ...]}, "interpretation": {"culture": string, "name": string, "visualImpression": string, "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string}}. Every entry's "pattern" follows the same rules as a single constellation (4 to 9 stars, valid "lines" indices only). Every entry's "interpretation.culture" must be the exact same string as the top-level "culture", and "interpretation.name" must be unique across the whole array. Distribute entries across all five seasons and multiple sky regions rather than clustering them in one combination.
+
+At least three entries' "originMyth" must explicitly reference another named constellation in this same array by its exact name (a sibling, a rival, a shared origin), so the sky reads as one connected mythology; the rest can stand alone. Keep the same rules as a single constellation: "practicalUse" stays a genuinely mundane use distinct from "culturalMeaning"/"omen", and not every entry needs a supernatural omen as its main point. Labels must include "constellation" and "night-sky" plus factual tags for the genre. The "lore" field must cover every constellation by name, grouped by season, each with its practical use, cultural meaning, omen and one adventure hook.
+
+${NAME_BAN_PROMPT}${nameRestrictions}
+
+Before returning the JSON, perform one internal validation: confirm "constellations" has between 8 and 15 entries, each with a unique "interpretation.name" and the exact same "interpretation.culture" as top-level "culture"; confirm every entry's "pattern" has 4-9 stars and only valid "lines" indices; confirm at least three entries cross-reference another entry's exact name in their "originMyth"; confirm entries are spread across seasons and sky regions rather than repeating one combination; and re-read every field for wording slips or a name reused inconsistently. Quietly correct any mismatch, then return only the corrected final JSON.`,
+  };
+}
+
+/** Parse an AI night-sky draft into the public generator output contract. */
+export function parseNightSkyResponse(
+  text: string,
+  avoidNames: readonly string[] = [],
+): PublicGeneratorOutput {
+  const data = parseFencedJson<{
+    title?: unknown;
+    summary?: unknown;
+    lore?: unknown;
+    labels?: unknown;
+    culture?: unknown;
+    constellations?: unknown;
+  }>(text);
+
+  if (typeof data.title !== "string" || !data.title.trim()) {
+    throw new Error("Night sky response is missing a title.");
+  }
+  if (typeof data.lore !== "string" || !data.lore.trim()) {
+    throw new Error("Night sky response is missing lore.");
+  }
+  if (typeof data.culture !== "string" || !data.culture.trim()) {
+    throw new Error("Night sky response is missing a culture.");
+  }
+  const forbidden = new Set(
+    [...BANNED_NAMES, ...avoidNames].map((name) => name.trim().toLowerCase()),
+  );
+  if (forbidden.has(data.title.trim().toLowerCase())) {
+    throw new Error("Night sky response uses a banned title.");
+  }
+
+  const culture = sanitizeText(data.culture.trim());
+  const rawEntries = Array.isArray(data.constellations)
+    ? data.constellations
+    : [];
+  const seenNames = new Set<string>();
+  const constellations: NightSkyConstellationEntry[] = [];
+  for (const raw of rawEntries) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const { season, skyRegion, pattern, interpretation } = raw as Record<
+      string,
+      unknown
+    >;
+    const validSeason = (
+      constellationConfig.seasons as readonly string[]
+    ).includes(season as string)
+      ? (season as ConstellationSeason)
+      : undefined;
+    const validRegion = (
+      constellationConfig.skyRegions as readonly string[]
+    ).includes(skyRegion as string)
+      ? (skyRegion as ConstellationSkyRegion)
+      : undefined;
+    if (!validSeason || !validRegion) continue;
+    const parsedPattern = parseConstellationPattern(pattern);
+    if (parsedPattern.stars.length < 3) continue;
+    const parsedInterpretations = parseConstellationInterpretations([
+      interpretation,
+    ]);
+    if (parsedInterpretations.length < 1) continue;
+    const interp = parsedInterpretations[0];
+    const key = interp.name.toLowerCase();
+    if (seenNames.has(key) || forbidden.has(key)) continue;
+    seenNames.add(key);
+    constellations.push({
+      constellation: {
+        pattern: parsedPattern,
+        interpretations: [{ ...interp, culture }],
+      },
+      season: validSeason,
+      skyRegion: validRegion,
+    });
+  }
+  if (constellations.length < 8) {
+    throw new Error(
+      "Night sky response is missing enough usable constellations.",
+    );
+  }
+
+  const nightSky: NightSkyData = { culture, constellations };
+  const title = data.title.trim();
+  const labels = [
+    "constellation",
+    "night-sky",
+    ...(Array.isArray(data.labels)
+      ? data.labels.filter(
+          (label): label is string =>
+            typeof label === "string" && !!label.trim(),
+        )
+      : []),
+  ].filter((label, index, all) => all.indexOf(label) === index);
+
+  return {
+    type: "note",
+    kind: "night-sky",
+    title,
+    summary: typeof data.summary === "string" ? sanitizeText(data.summary) : "",
+    content: formatNightSkyContent(title, nightSky),
+    lore: sanitizeText(data.lore.trim()),
+    labels,
+    status: "active",
+    nightSky,
   };
 }
