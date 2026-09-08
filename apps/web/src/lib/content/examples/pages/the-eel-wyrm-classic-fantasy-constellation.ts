@@ -35,7 +35,7 @@ export const theEelWyrm: ExampleConfigInput = {
   ],
   image: {
     src: "https://assets.codexcryptica.com/announcements/constellation-eel-wyrm.jpg",
-    alt: "The star chart diagram for the Eel-Wyrm constellation, showing its stars named Drowned Tail and Mouth of the Wyrm connected in a winding line",
+    alt: "An artist's impression of the Eel-Wyrm, a serpentine star-formed creature winding across the night sky above a lantern-lit fishing village and its docked boats",
   },
   output: [
     {
