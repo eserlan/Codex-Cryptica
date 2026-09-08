@@ -141,6 +141,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-do-you-run-factions-in-a-sandbox-campaign",
       "how-do-you-manage-a-campaign-timeline-in-an-rpg",
       "how-do-you-track-faction-turns-between-rpg-sessions",
+      "how-to-create-rumours-for-a-fantasy-town",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",

@@ -153,6 +153,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-to-create-a-cyberpunk-city-district",
     "how-do-you-run-an-rpg-campaign-in-one-city",
     "how-many-npcs-does-an-rpg-town-need",
+    "how-to-create-rumours-for-a-fantasy-town",
   ],
   discovery: {
     id: "answer-settlement-contents",
