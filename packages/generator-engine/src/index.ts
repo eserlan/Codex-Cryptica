@@ -1,5 +1,14 @@
 export * from "./campaign-generator-types";
 export {
+  applyRefinementProposal,
+  buildRefinementPrompt,
+  normalizeRefinementDocument,
+  parseRefinementResponse,
+  type RefinableSource,
+  type RefinementDocument,
+  type RefinementProposal,
+} from "./generator-refinement";
+export {
   runHeistGeneration,
   streamHeistGeneration,
   type HeistGenerationTurns,

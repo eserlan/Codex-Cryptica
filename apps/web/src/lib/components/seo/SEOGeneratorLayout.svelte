@@ -19,12 +19,15 @@
   } from "$lib/components/seo/generator-copy";
   import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import ProvenanceBadge from "./ProvenanceBadge.svelte";
   import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
+  import GeneratorRefinementModal from "./GeneratorRefinementModal.svelte";
+  import LoreMergeModal from "$lib/components/modals/LoreMergeModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
@@ -41,7 +44,10 @@
     computeProvenance,
     generateAdventureGraphTopology,
     type SessionEntity,
+    type RefinementDocument,
   } from "generator-engine";
+  import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
+  import { buildLoreMergePlan } from "$lib/utils/lore-sections";
   import {
     buildFaqJsonLd,
     buildSoftwareApplicationJsonLd,
@@ -189,6 +195,12 @@
   // Dismissal flag for the "AI was unavailable, used local" notice; reset on
   // each new generation so a later failure shows it again.
   let aiFallbackDismissed = $state(false);
+
+  const refinementService = new GeneratorRefinementService();
+  let refinementOpen = $state(false);
+  let refinementOrigin = $state<"current_output" | "session_hub" | null>(null);
+  let refinementSourceId = $state<string | undefined>(undefined);
+  let refinementSourceDocument = $state<RefinementDocument | null>(null);
 
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
@@ -417,6 +429,143 @@
   const contextSelection = $derived(
     getContextSelection(sessionHubStore.entities),
   );
+
+  function openRefinement(
+    source: Parameters<typeof refinementService.start>[0],
+    origin: "current_output" | "session_hub",
+    sourceId?: string,
+  ) {
+    refinementSourceDocument = refinementService.start(source);
+    refinementOrigin = origin;
+    refinementSourceId = sourceId;
+    refinementOpen = true;
+    trackEvent("generator_refinement_opened", {
+      generator_type: generatorType,
+      source: origin,
+    });
+  }
+
+  function handleOpenCurrentRefinement() {
+    if (!generatedData || !userGenerationSucceeded) return;
+    openRefinement(
+      {
+        ...generatedData,
+        content: documentLayout.content || generatedData.content,
+        lore: documentLayout.lore || generatedData.lore,
+      },
+      "current_output",
+      currentEntityId ?? undefined,
+    );
+  }
+
+  function handleOpenSessionRefinement(entity: SessionEntity) {
+    selectedHubEntity = null;
+    openRefinement(entity, "session_hub", entity.id);
+  }
+
+  function handleRefinementCancel() {
+    refinementService.cancel();
+    refinementSourceDocument = null;
+    refinementOpen = false;
+    refinementOrigin = null;
+    refinementSourceId = undefined;
+    trackEvent("generator_refinement_cancelled", {
+      generator_type: generatorType,
+    });
+  }
+
+  function handleRefinementRequested(repeated: boolean) {
+    trackEvent("generator_refinement_requested", {
+      generator_type: generatorType,
+      source: refinementOrigin ?? "current_output",
+      repeated,
+    });
+  }
+
+  async function handleRefinementAccept(document: RefinementDocument) {
+    const sourceDocument = refinementSourceDocument;
+
+    if (
+      sourceDocument?.lore &&
+      document.lore &&
+      sourceDocument.lore !== document.lore
+    ) {
+      const plan = buildLoreMergePlan(sourceDocument.lore, document.lore);
+      if (plan.hasChanges) {
+        refinementOpen = false;
+        const resolvedLore = await loreMergeStore.request(
+          plan,
+          sourceDocument.title,
+        );
+        if (resolvedLore === null) {
+          refinementOpen = true;
+          return;
+        }
+        document = { ...document, lore: resolvedLore };
+      }
+    }
+
+    const acceptedOrigin = refinementOrigin ?? "current_output";
+    const sourceId = refinementSourceId;
+    const accepted = {
+      ...(acceptedOrigin === "current_output" && generatedData
+        ? generatedData
+        : {}),
+      type: document.type as GeneratorOutput["type"],
+      ...(document.kind ? { kind: document.kind } : {}),
+      title: document.title,
+      summary: document.summary ?? "",
+      content: document.content,
+      lore: document.lore ?? "",
+      labels: document.labels,
+      status: document.status ?? "draft",
+      aiFallback: undefined,
+    } satisfies GeneratorOutput;
+    generatedData = accepted;
+    isExampleDraft = false;
+    userGenerated = true;
+    userGenerationSucceeded = true;
+
+    const content = accepted.summary
+      ? `*${accepted.summary}*\n\n${accepted.content}`
+      : accepted.content;
+    const currentContext = $state.snapshot(contextSelection);
+    const derivedId = sessionHubStore.addEntity({
+      type: accepted.type,
+      kind: accepted.kind,
+      title: accepted.title,
+      summary: accepted.summary,
+      content,
+      lore: accepted.lore,
+      labels: accepted.labels,
+      status: accepted.status,
+      reuseEnabled: true,
+      pinned: false,
+      ...(sourceId ? { derivedFromEntityId: sourceId } : {}),
+      derivation: "refine",
+    });
+    currentEntityId = derivedId;
+    sessionHubStore.addProvenance(
+      computeProvenance(
+        derivedId,
+        content + "\n" + accepted.lore,
+        currentContext.entities,
+        currentContext.trimmed,
+      ),
+    );
+    if (sourceId) sessionHubStore.removeEntity(sourceId);
+    const acceptedIteration = refinementService.iteration;
+    refinementService.accept();
+    refinementOpen = false;
+    refinementOrigin = null;
+    refinementSourceId = undefined;
+    refinementSourceDocument = null;
+    trackEvent("generator_refinement_accepted", {
+      generator_type: generatorType,
+      source: acceptedOrigin,
+      iteration: acceptedIteration,
+    });
+  }
 
   function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
     if (entitiesToSave.length === 0) return;
@@ -935,6 +1084,9 @@
         contextTrimmed={contextSelection.trimmed}
         onDismissAiFallback={() => (aiFallbackDismissed = true)}
         onSaveToCodex={handleSaveToCodex}
+        onRefine={userGenerationSucceeded
+          ? handleOpenCurrentRefinement
+          : undefined}
         onCopyMarkdown={handleCopyMarkdown}
         onCopySection={(sectionId, markdown) =>
           void handleCopySection(sectionId, markdown)}
@@ -1015,7 +1167,18 @@
     entity={selectedHubEntity}
     onClose={() => (selectedHubEntity = null)}
     onCopy={handleCopySessionEntity}
+    onRefine={handleOpenSessionRefinement}
   />
+
+  <GeneratorRefinementModal
+    open={refinementOpen}
+    service={refinementService}
+    onAccept={handleRefinementAccept}
+    onCancel={handleRefinementCancel}
+    onRequested={handleRefinementRequested}
+  />
+
+  <LoreMergeModal />
 </div>
 
 <style>
