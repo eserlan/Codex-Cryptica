@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
@@ -166,6 +166,38 @@ describe("GeneratorOutputCard", () => {
     expect(
       screen.getByRole("button", { name: /generate roster/i }),
     ).toBeTruthy();
+  });
+
+  it("exposes the shared refinement action for a completed draft", async () => {
+    const onRefine = vi.fn();
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: sampleData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Faction",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: sampleData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onRefine,
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /refine/i }));
+    expect(onRefine).toHaveBeenCalledWith(sampleData);
   });
 
   it("hides Generate Roster for a non-faction draft even when onGenerateRoster is provided", () => {

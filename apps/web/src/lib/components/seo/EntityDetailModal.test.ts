@@ -44,4 +44,14 @@ describe("EntityDetailModal", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("Could not copy.")).toBeTruthy();
   });
+
+  it("offers refinement for historical Hub entries", async () => {
+    const onRefine = vi.fn();
+    render(EntityDetailModal, {
+      props: { entity, onClose: vi.fn(), onRefine },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Refine" }));
+    expect(onRefine).toHaveBeenCalledWith(entity);
+  });
 });
