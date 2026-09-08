@@ -13,6 +13,8 @@ This document establishes the core design principles and component implementatio
 5.  **Accessibility**: Components must be navigable and usable by everyone, following standard ARIA patterns.
 6.  **Simplicity**: Prefer established patterns and avoid over-engineering (YAGNI).
 
+7.  **Clipboard intent**: Copy authored or generated document content through the shared smart-copy service so Markdown/plain text and sanitised rich text are written together. Keep literal values such as URLs, secrets, prompts, identifiers, raw source, logs, and image-only exports on the plain or format-specific clipboard path.
+
 ## Naming Conventions
 
 Consistent naming is critical for maintainability and readability across our large codebase.
