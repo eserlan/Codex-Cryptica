@@ -93,6 +93,28 @@ describe("trackEvent", () => {
     expect(properties).not.toHaveProperty("acquisition_provider");
   });
 
+  it("does not add AI acquisition fields for malformed persisted attribution", () => {
+    localStorage.setItem(
+      "codex-cryptica-attribution-latest",
+      JSON.stringify({
+        channel: "ai_referral",
+        provider: 42,
+        source: null,
+        landing_path: undefined,
+        at: Date.now(),
+      }),
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).not.toHaveProperty("acquisition_channel");
+    expect(properties).not.toHaveProperty("acquisition_provider");
+    expect(properties).not.toHaveProperty("acquisition_source");
+    expect(properties).not.toHaveProperty("acquisition_landing_path");
+  });
+
   it("omits attribution properties entirely when none is on record", () => {
     const track = vi.fn();
     trackEvent("seo_entry", {}, { zaraz: { track } });

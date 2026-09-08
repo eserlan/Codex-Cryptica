@@ -30,11 +30,19 @@ export type PublicGeneratorAction = "save_to_codex" | "copy" | "open_codex";
 function flatAcquisitionProperties(
   attribution: ReturnType<typeof attributionStore.getLatestTouch>,
 ): Record<string, string> {
-  if (!attribution?.channel) return {};
+  if (
+    attribution?.channel !== "ai_referral" ||
+    typeof attribution.provider !== "string" ||
+    typeof attribution.source !== "string" ||
+    typeof attribution.landing_path !== "string"
+  ) {
+    return {};
+  }
+
   return {
     acquisition_channel: attribution.channel,
-    acquisition_provider: attribution.provider ?? "unknown",
-    acquisition_source: attribution.source ?? "unknown",
+    acquisition_provider: attribution.provider,
+    acquisition_source: attribution.source,
     acquisition_landing_path: attribution.landing_path,
   };
 }
