@@ -31,6 +31,7 @@ import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
 import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-faction-turns-between-rpg-sessions";
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
+import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
@@ -85,6 +86,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouStartWorldbuildingFromScratch,
     howDoYouTrackFactionTurnsBetweenRpgSessions,
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
+    howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchPrepDoYouNeedForAnRpgSession,
