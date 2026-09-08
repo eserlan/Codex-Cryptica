@@ -300,11 +300,17 @@
   // to a contextless local example with no way to retry (the one-shot guard
   // is single-use). The parent's own effect reacts precisely to that state
   // actually changing, so it never has to guess how long to wait.
+  // `!isAutoDrafting` guards against marking a page "attempted" while a prior
+  // page's auto-draft is still in flight: without it, a navigation mid-draft
+  // would set autoDraftAttemptedForPath to the new page, handleGenerateOnMount
+  // would then no-op on its own isAutoDrafting check, and the new page would
+  // never get a retry (the guard above is one-shot).
   $effect(() => {
     if (
       browser &&
       !generatedData &&
       !autoGenerateExplicit &&
+      !isAutoDrafting &&
       autoDraftAttemptedForPath !== canonicalPath
     ) {
       autoDraftAttemptedForPath = canonicalPath;
