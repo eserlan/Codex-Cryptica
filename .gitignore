@@ -105,3 +105,7 @@ apps/web/ios/App/Podfile.lock
 # Reddit Automation Session
 .reddit-session/
 .reddit-auth/
+
+# CodeGraph local index + agent wiring (trial; remove if adopted repo-wide)
+.codegraph/
+.mcp.json
