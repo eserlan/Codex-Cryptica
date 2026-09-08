@@ -74,7 +74,7 @@
 
   const TITLE = "Explore Codex Cryptica";
   const DESCRIPTION =
-    "Every section of Codex Cryptica in one place: worlds, examples, generators, tools, guides, and the campaign directory.";
+    "Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, guides, and the campaign directory.";
 
   const KIND_LABEL: Record<PublicContentKind, string> = {
     answer: "Answers",
@@ -109,6 +109,13 @@
       title: "Build & Explore",
       description: "See the vault in action and generate content of your own.",
       links: [
+        {
+          href: "/features",
+          label: "Features",
+          summary:
+            "See the core Codex workflow and the tools that connect your campaign.",
+          icon: "icon-[lucide--layout-grid]",
+        },
         {
           href: "/worlds",
           label: "Explore Worlds",
