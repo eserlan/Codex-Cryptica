@@ -52,7 +52,9 @@ test.describe("Public shell", () => {
     });
   }
 
-  test("Explore is directly reachable on a phone", async ({ page }) => {
+  test("Explore is directly reachable on a phone and covers Features", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/generators");
 
@@ -64,6 +66,14 @@ test.describe("Public shell", () => {
     // one clear onward-navigation action instead.
     await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
     await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
+
+    // Anything removed from that mobile directory must remain reachable from
+    // Explore. Features was the one destination missing from the hub.
+    await explore.click();
+    await expect(page).toHaveURL(/\/explore$/);
+    await expect(
+      page.getByRole("link", { name: "Features", exact: true }),
+    ).toBeVisible();
   });
 
   test("the header CTA keeps its campaign attribution", async ({ page }) => {
