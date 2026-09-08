@@ -50,10 +50,10 @@ export function normalizeRefinementDocument(
     content: source.content?.trim() || source.lore?.trim() || "",
     ...(source.lore?.trim() ? { lore: source.lore.trim() } : {}),
     labels: Array.isArray(source.labels)
-      ? source.labels.filter(
-          (label): label is string =>
-            typeof label === "string" && label.trim().length > 0,
-        )
+      ? source.labels
+          .filter((label): label is string => typeof label === "string")
+          .map((label) => label.trim())
+          .filter(Boolean)
       : [],
     ...(source.status ? { status: source.status } : {}),
   };
@@ -73,10 +73,10 @@ export function applyRefinementProposal(
   const content = readText(proposal.content) ?? source.content;
   const lore = readText(proposal.lore) ?? source.lore;
   const labels = Array.isArray(proposal.labels)
-    ? proposal.labels.filter(
-        (label): label is string =>
-          typeof label === "string" && label.trim().length > 0,
-      )
+    ? proposal.labels
+        .filter((label): label is string => typeof label === "string")
+        .map((label) => label.trim())
+        .filter(Boolean)
     : source.labels;
 
   if (!title || (!content && !lore)) {
@@ -155,7 +155,7 @@ export function buildRefinementPrompt(
   return [
     "Refine the RPG draft below according to the user's instruction.",
     "Treat the user's instruction as the highest priority. Preserve details that were not requested to change.",
-    "Return JSON only with these optional string fields: title, summary, content, lore, labels (an array of strings).",
+    "Return JSON only with these optional fields: title, summary, content, and lore are strings; labels is an array of strings.",
     "Do not include markdown fences or commentary.",
     "",
     `Type: ${source.type}`,

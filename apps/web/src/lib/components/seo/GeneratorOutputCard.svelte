@@ -209,7 +209,7 @@
               <button
                 type="button"
                 onclick={() => onRefine(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
                 id="refine-draft-btn"
                 title="Refine this draft with an instruction"
               >

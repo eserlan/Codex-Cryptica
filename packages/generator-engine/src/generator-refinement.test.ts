@@ -29,6 +29,17 @@ describe("generator refinement core", () => {
     });
   });
 
+  it("trims labels while normalizing and applying model proposals", () => {
+    const normalized = normalizeRefinementDocument({
+      ...source,
+      labels: [" courier ", ""],
+    });
+    expect(normalized.labels).toEqual(["courier"]);
+    expect(
+      applyRefinementProposal(normalized, { labels: [" revised "] }).labels,
+    ).toEqual(["revised"]);
+  });
+
   it("merges partial proposals over the latest source", () => {
     expect(
       applyRefinementProposal(source, {

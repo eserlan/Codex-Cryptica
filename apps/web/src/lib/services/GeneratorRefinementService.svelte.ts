@@ -33,7 +33,8 @@ function defaultRunner(transport: GeneratorAITransport): RefinementRunner {
 
 /**
  * Shared, vault-independent refinement loop used by public generators and the
- * Session Hub. Repeated passes always refine the latest accepted proposal.
+ * Session Hub. Repeated passes refine the latest proposal until the user
+ * accepts or cancels the review.
  */
 export class GeneratorRefinementService {
   source = $state<RefinementDocument | null>(null);

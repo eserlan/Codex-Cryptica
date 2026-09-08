@@ -19,11 +19,13 @@
 
   let dialog = $state<HTMLDialogElement | null>(null);
   let instructions = $state("");
+  let cancelNotified = false;
   let current = $derived(service.proposal ?? service.source);
 
   $effect(() => {
     if (!dialog) return;
     if (open && current && !dialog.open) {
+      cancelNotified = false;
       dialog.showModal();
       instructions = "";
       void tick().then(() =>
@@ -35,6 +37,8 @@
   });
 
   function close() {
+    if (cancelNotified) return;
+    cancelNotified = true;
     onCancel();
   }
 
@@ -57,7 +61,7 @@
   aria-labelledby="generator-refinement-title"
   aria-describedby="generator-refinement-help"
   class="w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] rounded-2xl border border-theme-border bg-theme-surface p-0 text-theme-text shadow-2xl backdrop:bg-black/75 backdrop:backdrop-blur-sm"
-  onclose={() => open && onCancel()}
+  onclose={() => open && close()}
 >
   {#if current}
     <form
@@ -156,6 +160,7 @@
           onclick={close}
           class="rounded-lg border border-theme-border/60 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text hover:bg-theme-surface"
           disabled={service.isRefining}
+          aria-busy={service.isRefining}
         >
           Cancel
         </button>
@@ -165,6 +170,7 @@
             onclick={accept}
             class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
             disabled={service.isRefining}
+            aria-busy={service.isRefining}
           >
             Use revision
           </button>
@@ -173,6 +179,7 @@
             onclick={submit}
             class="rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-primary hover:bg-theme-primary/20"
             disabled={service.isRefining || !instructions.trim()}
+            aria-busy={service.isRefining}
           >
             {service.isRefining ? "Refining…" : "Refine again"}
           </button>
@@ -182,6 +189,7 @@
             onclick={submit}
             class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
             disabled={service.isRefining || !instructions.trim()}
+            aria-busy={service.isRefining}
           >
             {service.isRefining ? "Refining…" : "Refine"}
           </button>
