@@ -308,6 +308,18 @@ function omen(culture: string, rng: Rng): string {
 }
 
 /**
+ * Strips a leading indefinite/definite article so a phrase can be embedded
+ * after this template's own "read as a " connective without doubling it
+ * ("read as a a long, sinuous creature..."). The local generator always
+ * supplies a short, bare category label here (e.g. "Serpent or Dragon"), but
+ * the AI path's "interpretations[0].visualImpression" is free text the model
+ * sometimes writes as a full clause already carrying its own article.
+ */
+function stripLeadingArticle(text: string): string {
+  return text.replace(/^(a|an|the)\s+/i, "");
+}
+
+/**
  * Renders "## Core Concept" + "## Origin Myth" from the single source of
  * truth (the parsed interpretation), the same way star-system's
  * formatMajorBodies() derives its markdown from "bodies" JSON — used by both
@@ -318,13 +330,22 @@ function formatConstellationContent(
   title: string,
   interpretation: ConstellationInterpretation,
 ): string {
-  return [
-    "## Core Concept",
-    `${title} is a constellation ${interpretation.culture} read as a ${interpretation.visualImpression.toLowerCase()}. ${interpretation.practicalUse}`,
-    "",
-    "## Origin Myth",
-    interpretation.originMyth,
-  ].join("\n");
+  const visualImpression = stripLeadingArticle(
+    interpretation.visualImpression.toLowerCase(),
+  );
+  // sanitizeText already ran on each field individually before this join;
+  // run it again on the composed sentence since gluing two already-clean
+  // fields together can still create a fresh doubled period at the seam
+  // (a visualImpression phrase ending in "." plus this template's own ".").
+  return sanitizeText(
+    [
+      "## Core Concept",
+      `${title} is a constellation ${interpretation.culture} read as a ${visualImpression}. ${interpretation.practicalUse}`,
+      "",
+      "## Origin Myth",
+      interpretation.originMyth,
+    ].join("\n"),
+  );
 }
 
 function adventureHook(title: string, culture: string, rng: Rng): string {
@@ -458,7 +479,7 @@ export function buildConstellationPrompt(
     userMessage: `Create a ${genre} constellation whose shape reads as a ${visualImpression}, primarily used for ${practicalUse}, and culturally regarded as ${culturalMeaning}.
 ${formatCampaignContextBlock(options.campaignContext)}
 
-Return JSON with "title", "summary", "labels", "connections", a markdown "lore" field, "pattern", and "interpretations". "summary" must describe the constellation as a whole in one sentence: what it looks like, who reads it that way, and why it matters. "pattern" is the star layout, shaped as {"stars": [{"name": string (optional, only for a prominent star worth naming), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional, a short folklore note for a named star only)}], "lines": [[number, number], ...]} — "x"/"y" are normalized 0-100 sky-plane coordinates (not astronomically real), "lines" are index pairs into "stars" tracing the shape as a single connected outline; include 4 to 9 stars, name only the one or two most prominent, and make every "lines" index a valid position in "stars". "interpretations" is an array with exactly one entry shaped as {"culture": string, "name": string (matching "title"), "visualImpression": string, "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string} — "culture" is the specific people or group who read the stars this way (never "some cultures" or "many people"), "originMyth" explains concretely why this shape is believed to exist in the sky, "seasonalVisibility" states when and where in the sky it can actually be seen, "practicalUse" is a concrete, mundane use (navigation, planting, migration, festivals, timekeeping) distinct from any supernatural meaning, "culturalMeaning" is its religious or symbolic weight, "omen" is what an unusual event involving it is believed to mean, and "adventureHook" is one concrete, playable hook tied to this specific constellation and culture, not a generic prophecy. The lore must use these exact sections:
+Return JSON with "title", "summary", "labels", "connections", a markdown "lore" field, "pattern", and "interpretations". "summary" must describe the constellation as a whole in one sentence: what it looks like, who reads it that way, and why it matters. "pattern" is the star layout, shaped as {"stars": [{"name": string (optional, only for a prominent star worth naming), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional, a short folklore note for a named star only)}], "lines": [[number, number], ...]} — "x"/"y" are normalized 0-100 sky-plane coordinates (not astronomically real), "lines" are index pairs into "stars" tracing the shape as a single connected outline; include 4 to 9 stars, name only the one or two most prominent, and make every "lines" index a valid position in "stars". "interpretations" is an array with exactly one entry shaped as {"culture": string, "name": string (matching "title"), "visualImpression": string (a short descriptive phrase of a few words only, e.g. "a hooked serpent" or "a rearing beast with a raised head" — no leading article, since it is embedded after "read as a "; no terminal punctuation; the fuller description belongs in "summary" or "originMyth"), "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string} — "culture" is the specific people or group who read the stars this way (never "some cultures" or "many people"), "originMyth" explains concretely why this shape is believed to exist in the sky, "seasonalVisibility" states when and where in the sky it can actually be seen, "practicalUse" is a concrete, mundane use (navigation, planting, migration, festivals, timekeeping) distinct from any supernatural meaning, "culturalMeaning" is its religious or symbolic weight, "omen" is what an unusual event involving it is believed to mean, and "adventureHook" is one concrete, playable hook tied to this specific constellation and culture, not a generic prophecy. The lore must use these exact sections:
 ## Seasonal Visibility
 ## Practical Use
 ## Cultural & Religious Meaning
@@ -821,7 +842,7 @@ export function buildNightSkyPrompt(
     userMessage: `Create a full ${genre} night sky: one specific culture's complete set of named constellations, covering every season.
 ${formatCampaignContextBlock(options.campaignContext)}
 
-Return JSON with "title" (a name for this sky/tradition as a whole, e.g. "The <Culture> Sky"), "summary", "labels", "connections", a markdown "lore" field, "culture", and "constellations". "culture" is the specific people or group whose sky this is (never "some cultures" or "many people"). "constellations" is an array of 8 to 15 entries, each shaped as {"season": "Spring"|"Summer"|"Autumn"|"Winter"|"Year-round", "skyRegion": "North"|"South"|"East"|"West"|"Circumpolar"|"Zenith", "pattern": {"stars": [{"name": string (optional), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional)}], "lines": [[number, number], ...]}, "interpretation": {"culture": string, "name": string, "visualImpression": string, "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string}}. Every entry's "pattern" follows the same rules as a single constellation (4 to 9 stars, valid "lines" indices only). Every entry's "interpretation.culture" must be the exact same string as the top-level "culture", and "interpretation.name" must be unique across the whole array. Distribute entries across all five seasons and multiple sky regions rather than clustering them in one combination.
+Return JSON with "title" (a name for this sky/tradition as a whole, e.g. "The <Culture> Sky"), "summary", "labels", "connections", a markdown "lore" field, "culture", and "constellations". "culture" is the specific people or group whose sky this is (never "some cultures" or "many people"). "constellations" is an array of 8 to 15 entries, each shaped as {"season": "Spring"|"Summer"|"Autumn"|"Winter"|"Year-round", "skyRegion": "North"|"South"|"East"|"West"|"Circumpolar"|"Zenith", "pattern": {"stars": [{"name": string (optional), "brightness": "bright"|"moderate"|"faint", "x": number, "y": number, "notes": string (optional)}], "lines": [[number, number], ...]}, "interpretation": {"culture": string, "name": string, "visualImpression": string (a short descriptive phrase of a few words only, no leading article, no terminal punctuation — see the single-constellation format above), "originMyth": string, "seasonalVisibility": string, "practicalUse": string, "culturalMeaning": string, "omen": string, "adventureHook": string}}. Every entry's "pattern" follows the same rules as a single constellation (4 to 9 stars, valid "lines" indices only). Every entry's "interpretation.culture" must be the exact same string as the top-level "culture", and "interpretation.name" must be unique across the whole array. Distribute entries across all five seasons and multiple sky regions rather than clustering them in one combination.
 
 At least three entries' "originMyth" must explicitly reference another named constellation in this same array by its exact name (a sibling, a rival, a shared origin), so the sky reads as one connected mythology; the rest can stand alone. Keep the same rules as a single constellation: "practicalUse" stays a genuinely mundane use distinct from "culturalMeaning"/"omen", and not every entry needs a supernatural omen as its main point. Labels must include "constellation" and "night-sky" plus factual tags for the genre. The "lore" field must cover every constellation by name, grouped by season, each with its practical use, cultural meaning, omen and one adventure hook.
 

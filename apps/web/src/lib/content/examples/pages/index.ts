@@ -12,6 +12,7 @@ import { lettersOfMarqueExpired } from "./letters-of-marque-expired-pirate-adven
 import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 import { nkiruOkafor } from "./nkiru-okafor-cyberpunk-npc-table-card";
 import { theBreakwaterVault } from "./the-breakwater-vault-space-western-heist";
+import { theEelWyrm } from "./the-eel-wyrm-classic-fantasy-constellation";
 
 /**
  * The published example library.
@@ -39,6 +40,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     siloZeroSeven,
     nkiruOkafor,
     theBreakwaterVault,
+    theEelWyrm,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
