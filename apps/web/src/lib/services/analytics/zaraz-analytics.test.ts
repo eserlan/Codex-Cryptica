@@ -55,6 +55,44 @@ describe("trackEvent", () => {
     );
   });
 
+  it("adds flat AI acquisition fields for destination-tool segmentation", () => {
+    attributionStore.captureIfAttributed(
+      new URL("https://codexcryptica.com/answers/example"),
+      "https://perplexity.ai/search/example",
+    );
+    const track = vi.fn();
+
+    trackEvent(
+      "generator_completed",
+      { generator_type: "npc" },
+      { zaraz: { track } },
+    );
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).toEqual(
+      expect.objectContaining({
+        acquisition_channel: "ai_referral",
+        acquisition_provider: "perplexity",
+        acquisition_source: "perplexity",
+        acquisition_landing_path: "/answers/example",
+      }),
+    );
+  });
+
+  it("does not add AI acquisition fields for an unclassified visit", () => {
+    attributionStore.captureIfAttributed(
+      new URL("https://codexcryptica.com/answers/example"),
+      "https://www.google.com/search?q=campaign",
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).not.toHaveProperty("acquisition_channel");
+    expect(properties).not.toHaveProperty("acquisition_provider");
+  });
+
   it("omits attribution properties entirely when none is on record", () => {
     const track = vi.fn();
     trackEvent("seo_entry", {}, { zaraz: { track } });

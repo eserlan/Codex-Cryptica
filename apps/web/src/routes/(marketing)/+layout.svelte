@@ -15,6 +15,9 @@
   } from "$lib/services/analytics/zaraz-analytics";
 
   let { children } = $props();
+  let analyticsReady = $state(false);
+  let initialReferrer = "";
+  let initialReferrerConsumed = false;
 
   const schemaOrgString = $derived(safeJsonLd(SCHEMA_ORG));
 
@@ -37,6 +40,8 @@
   // docstrings for the hard "nothing inside the app" scope boundary.
   onMount(() => {
     initCodexAnalyticsBridge();
+    initialReferrer = document.referrer;
+    analyticsReady = true;
   });
 
   // Reactive on page.url (not just onMount) so a second attributed URL
@@ -44,9 +49,12 @@
   // — is still captured, not just the very first page load (#1796 review
   // feedback).
   $effect(() => {
-    if (!browser) return;
+    if (!browser || !analyticsReady) return;
+    const referrer = initialReferrerConsumed ? undefined : initialReferrer;
+    initialReferrerConsumed = true;
     const capturedNewAttribution = attributionStore.captureIfAttributed(
       new URL(page.url),
+      referrer,
     );
     if (capturedNewAttribution) {
       trackEvent("seo_entry", {
