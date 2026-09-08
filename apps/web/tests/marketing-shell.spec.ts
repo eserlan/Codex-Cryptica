@@ -6,7 +6,7 @@ import { test, expect, type Page } from "@playwright/test";
  * Before it existed, `(marketing)/+layout.svelte` rendered nothing shared and
  * 10 of 30 public pages had no chrome at all. These tests pin the two things
  * that regress silently: that every public page has exactly one of each
- * landmark, and that the nav is reachable on a phone, which it never was.
+ * landmark, and that onward navigation is reachable on a phone.
  */
 
 const SHELL_PAGES = [
@@ -52,26 +52,18 @@ test.describe("Public shell", () => {
     });
   }
 
-  test("the nav is reachable on a phone", async ({ page }) => {
+  test("Explore is directly reachable on a phone", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/generators");
 
-    // Both previous headers were `hidden md:flex`, so mobile had no navigation
-    // at all, on 55% of real visits.
-    const toggle = page.getByTestId("shell-menu-toggle");
-    await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    const explore = page.getByTestId("shell-explore-link");
+    await expect(explore).toBeVisible();
+    await expect(explore).toHaveAttribute("href", "/explore");
 
-    // The button is server-rendered, so it is clickable before hydration and a
-    // click that lands early is simply dropped.
-    await page.waitForLoadState("networkidle");
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    const mobileNav = page.getByTestId("shell-mobile-nav");
-    await expect(mobileNav).toBeVisible();
-    await expect(
-      mobileNav.getByRole("link", { name: "Features" }),
-    ).toBeVisible();
+    // The old hamburger was another miniature site directory. Mobile now has
+    // one clear onward-navigation action instead.
+    await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
+    await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
   });
 
   test("the header CTA keeps its campaign attribution", async ({ page }) => {
