@@ -11,12 +11,67 @@
  * — see `docs/seo/crawler-access.md`.
  */
 
-/** User agent OpenAI publishes for its search-discovery crawler. */
-export const OAI_SEARCHBOT_USER_AGENT =
-  "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot";
+/** A production crawler whose access is verified by the live smoke check. */
+export interface SearchCrawler {
+  /** Stable CLI and CI-matrix identifier. */
+  id: string;
+  /** Human-readable crawler name for reports. */
+  name: string;
+  /** Full user agent sent with live requests. */
+  userAgent: string;
+  /** Product token the crawler matches in `robots.txt`. */
+  robotsToken: string;
+  /** Whether this crawler must retain its own named `robots.txt` group. */
+  requiresExplicitRobotsGroup: boolean;
+}
 
-/** The product token OAI-SearchBot matches against in `robots.txt`. */
-export const OAI_SEARCHBOT_TOKEN = "oai-searchbot";
+/**
+ * Search and citation crawlers whose production access is checked in CI.
+ * User agents come from the crawler operators' published documentation.
+ */
+export const SEARCH_CRAWLERS = [
+  {
+    id: "oai-searchbot",
+    name: "OAI-SearchBot",
+    userAgent:
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
+    robotsToken: "oai-searchbot",
+    requiresExplicitRobotsGroup: true,
+  },
+  {
+    id: "googlebot",
+    name: "Googlebot",
+    userAgent:
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    robotsToken: "googlebot",
+    requiresExplicitRobotsGroup: false,
+  },
+  {
+    id: "bingbot",
+    name: "Bingbot",
+    userAgent:
+      "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+    robotsToken: "bingbot",
+    requiresExplicitRobotsGroup: false,
+  },
+  {
+    id: "perplexitybot",
+    name: "PerplexityBot",
+    userAgent:
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
+    robotsToken: "perplexitybot",
+    requiresExplicitRobotsGroup: true,
+  },
+] as const satisfies readonly SearchCrawler[];
+
+/** Find a crawler requested by the CLI or CI matrix. */
+export function findSearchCrawler(id: string): SearchCrawler | undefined {
+  return SEARCH_CRAWLERS.find((crawler) => crawler.id === id);
+}
+
+/** Backwards-compatible aliases for the original single-crawler API. */
+export const OAI_SEARCHBOT_USER_AGENT = SEARCH_CRAWLERS[0].userAgent;
+export const OAI_SEARCHBOT_TOKEN = SEARCH_CRAWLERS[0].robotsToken;
 
 export interface RobotsGroup {
   agents: string[];

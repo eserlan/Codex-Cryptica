@@ -1,11 +1,12 @@
 /**
- * OAI-SearchBot production access smoke check (#2567).
+ * Search-crawler production access smoke check (#2567, #2844).
  *
  * `robots.txt` saying `Allow` does not prove a crawler can actually reach the
  * page: Cloudflare bot management, a WAF rule, a rate limit or a stray
  * `noindex` can all break discovery without changing a single robots line.
- * This script walks the live site as OAI-SearchBot and fails when any of that
- * happens, so a security or header change that breaks discovery is caught.
+ * This script walks the live site as one selected discovery crawler and fails
+ * when any of that happens, so a security or header change that breaks a
+ * crawler is caught.
  *
  * It only ever touches intentionally public discovery routes taken from the
  * production sitemap — private/app/vault routes are out of scope and stay
@@ -15,19 +16,20 @@
  *   bun scripts/crawler-access-check.mjs                  check production
  *   bun scripts/crawler-access-check.mjs --report         report only, exit 0
  *   bun scripts/crawler-access-check.mjs --base=https://… check a preview
+ *   bun scripts/crawler-access-check.mjs --crawler=googlebot
  */
 import {
-  OAI_SEARCHBOT_TOKEN,
-  OAI_SEARCHBOT_USER_AGENT,
   downgradeKnownGaps,
   errorsOnly,
   evaluateCrawlResponse,
   expectationFor,
+  findSearchCrawler,
   findDisallowedSitemapPaths,
   isPathAllowed,
   parseRobotsTxt,
   pickRepresentativeRoutes,
   PRIVATE_ROUTE_SAMPLES,
+  SEARCH_CRAWLERS,
   warningsOnly,
 } from "../apps/web/src/lib/seo/crawler-access.ts";
 
@@ -77,6 +79,17 @@ const args = process.argv.slice(2);
 const reportOnly = args.includes("--report");
 const asJson = args.includes("--json");
 const baseArg = args.find((arg) => arg.startsWith("--base="));
+const crawlerArg = args.find((arg) => arg.startsWith("--crawler="));
+const crawlerId = crawlerArg
+  ? crawlerArg.slice("--crawler=".length)
+  : "oai-searchbot";
+const crawler = findSearchCrawler(crawlerId);
+if (!crawler) {
+  console.error(
+    `Unknown crawler "${crawlerId}". Supported crawlers: ${SEARCH_CRAWLERS.map((candidate) => candidate.id).join(", ")}`,
+  );
+  process.exit(2);
+}
 const base = (baseArg ? baseArg.slice("--base=".length) : DEFAULT_BASE).replace(
   /\/+$/,
   "",
@@ -89,7 +102,7 @@ const record = (path, findings) => {
   return findings;
 };
 
-async function crawl(path, userAgent = OAI_SEARCHBOT_USER_AGENT) {
+async function crawl(path, userAgent = crawler.userAgent) {
   const requestedUrl = `${base}${path}`;
   const response = await fetch(requestedUrl, {
     headers: { "user-agent": userAgent, accept: "*/*" },
@@ -148,13 +161,13 @@ async function checkRobots() {
 
   const robots = parseRobotsTxt(response.body);
   const named = robots.groups.some((group) =>
-    group.agents.includes(OAI_SEARCHBOT_TOKEN),
+    group.agents.includes(crawler.robotsToken),
   );
-  if (!named) {
+  if (crawler.requiresExplicitRobotsGroup && !named) {
     findings.push({
       code: "robots-agent-missing",
       severity: "error",
-      message: "robots.txt has no explicit OAI-SearchBot group",
+      message: `robots.txt has no explicit ${crawler.name} group`,
     });
   }
   if (robots.sitemaps.length === 0) {
@@ -187,7 +200,7 @@ async function checkUserAgentParity(path) {
       {
         code: "ua-parity",
         severity: "error",
-        message: `OAI-SearchBot got ${asBot.status} where a browser got ${asBrowser.status}`,
+        message: `${crawler.name} got ${asBot.status} where a browser got ${asBrowser.status}`,
       },
     ]);
   } catch (error) {
@@ -241,12 +254,12 @@ for (const path of REQUIRED_TEXT_ROUTES) {
 
 for (const path of routes) {
   if (REQUIRED_TEXT_ROUTES.includes(path)) continue;
-  if (robotsText && !isPathAllowed(robots, OAI_SEARCHBOT_TOKEN, path)) {
+  if (robotsText && !isPathAllowed(robots, crawler.robotsToken, path)) {
     record(path, [
       {
         code: "robots-disallow",
         severity: "error",
-        message: "sitemap lists a path robots.txt disallows for OAI-SearchBot",
+        message: `sitemap lists a path robots.txt disallows for ${crawler.name}`,
       },
     ]);
     continue;
@@ -275,9 +288,9 @@ const errors = errorsOnly(allFindings);
 const warnings = warningsOnly(allFindings);
 
 if (asJson) {
-  console.log(JSON.stringify({ base, results }, null, 2));
+  console.log(JSON.stringify({ base, crawler, results }, null, 2));
 } else {
-  console.log(`OAI-SearchBot access check — ${base}\n`);
+  console.log(`${crawler.name} access check — ${base}\n`);
   for (const result of results) {
     const failed = errorsOnly(result.findings);
     const warned = warningsOnly(result.findings);

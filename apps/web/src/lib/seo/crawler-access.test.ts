@@ -4,6 +4,7 @@ import {
   evaluateCrawlResponse,
   expectationFor,
   extractSitemapPaths,
+  findSearchCrawler,
   findDisallowedSitemapPaths,
   isDisallowedSitemapPath,
   isPathAllowed,
@@ -12,9 +13,44 @@ import {
   pickRepresentativeRoutes,
   PRIVATE_ROUTE_FAMILIES,
   PRIVATE_ROUTE_SAMPLES,
+  SEARCH_CRAWLERS,
   selectRobotsGroup,
   type CrawlResponse,
 } from "./crawler-access";
+
+describe("search crawler definitions", () => {
+  it("defines every crawler the production workflow verifies", () => {
+    expect(
+      SEARCH_CRAWLERS.map(({ id, name, robotsToken }) => ({
+        id,
+        name,
+        robotsToken,
+      })),
+    ).toEqual([
+      {
+        id: "oai-searchbot",
+        name: "OAI-SearchBot",
+        robotsToken: "oai-searchbot",
+      },
+      { id: "googlebot", name: "Googlebot", robotsToken: "googlebot" },
+      { id: "bingbot", name: "Bingbot", robotsToken: "bingbot" },
+      {
+        id: "perplexitybot",
+        name: "PerplexityBot",
+        robotsToken: "perplexitybot",
+      },
+    ]);
+
+    for (const crawler of SEARCH_CRAWLERS) {
+      expect(crawler.userAgent.toLowerCase()).toContain(crawler.robotsToken);
+    }
+  });
+
+  it("resolves a supported crawler and rejects an unknown identifier", () => {
+    expect(findSearchCrawler("googlebot")?.name).toBe("Googlebot");
+    expect(findSearchCrawler("unknown-crawler")).toBeUndefined();
+  });
+});
 
 const PRODUCTION_ROBOTS = `User-agent: *
 Allow: /

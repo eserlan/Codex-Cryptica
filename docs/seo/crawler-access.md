@@ -1,6 +1,6 @@
-# Search-crawler access (OAI-SearchBot)
+# Search-crawler access
 
-Tracking issues: [#2567](https://github.com/eserlan/Codex-Cryptica/issues/2567), [#2568](https://github.com/eserlan/Codex-Cryptica/issues/2568).
+Tracking issues: [#2567](https://github.com/eserlan/Codex-Cryptica/issues/2567), [#2568](https://github.com/eserlan/Codex-Cryptica/issues/2568), [#2844](https://github.com/eserlan/Codex-Cryptica/issues/2844).
 Parent: #1225. Related: #291, #1228, #1083, #1155.
 
 `robots.txt` saying `Allow` is only half of crawler eligibility. A request also
@@ -39,10 +39,11 @@ bun run check:crawler-access                       # production
 bun run check:crawler-access -- --report           # never fail, just report
 bun run check:crawler-access -- --base=https://…   # a Pages preview
 bun run check:crawler-access -- --json             # machine-readable
+bun run check:crawler-access -- --crawler=googlebot
 ```
 
-`scripts/crawler-access-check.mjs` requests live URLs with OpenAI's published
-`OAI-SearchBot` user agent and, per route, asserts:
+`scripts/crawler-access-check.mjs` requests live URLs with one selected crawler
+user agent and, per route, asserts:
 
 - HTTP 200, no `cf-mitigated` header, no 403/429/503, no challenge
   interstitial in the body
@@ -53,6 +54,20 @@ bun run check:crawler-access -- --json             # machine-readable
 - a canonical that is present and on-origin
 - **user-agent parity**: the crawler and a desktop-Chrome user agent get the
   same status for `/`, which is how UA-specific blocking would show up
+
+The default crawler remains `OAI-SearchBot` for backwards-compatible local
+commands. CI runs the exact same check independently for all four crawlers:
+
+| CLI identifier  | Crawler       | robots.txt policy                |
+| --------------- | ------------- | -------------------------------- |
+| `oai-searchbot` | OAI-SearchBot | Explicit search & citation group |
+| `googlebot`     | Googlebot     | Default `User-agent: *` group    |
+| `bingbot`       | Bingbot       | Default `User-agent: *` group    |
+| `perplexitybot` | PerplexityBot | Explicit search & citation group |
+
+Each matrix job is named for its crawler and the check prints that crawler in
+its heading and failures, so a route or WAF regression can be assigned to the
+affected crawler immediately. A failure in any job fails the workflow.
 
 Routes are sampled from the live sitemap (two per family), so new discovery
 families are covered automatically as they ship rather than by a hard-coded
@@ -69,10 +84,10 @@ does not SSR. It is intentionally path-specific: public `/import/*`,
 The pure logic lives in `apps/web/src/lib/seo/crawler-access.ts` and is unit
 tested; the script is the network layer around it.
 
-`.github/workflows/crawler-access.yml` runs the check daily at 05:00 UTC and on
-demand (`workflow_dispatch`), because the things that break crawler access —
-a WAF rule, a bot-management setting, a header change — happen outside this
-repository and would otherwise land silently.
+`.github/workflows/crawler-access.yml` runs the four-crawler matrix daily at
+05:00 UTC and on demand (`workflow_dispatch`), because the things that break
+crawler access — a WAF rule, a bot-management setting, a header change — happen
+outside this repository and would otherwise land silently.
 
 ## 3. Cloudflare Crawler Hints / IndexNow
 
