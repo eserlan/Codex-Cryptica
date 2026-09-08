@@ -182,6 +182,35 @@ describe("public-constellation", () => {
       expect(result.lore).toContain("## Omens");
     });
 
+    it("does not double the article or the terminal punctuation when the model writes visualImpression as a full clause instead of a short label", () => {
+      // A real production response: the model ignored the "short phrase, no
+      // leading article, no terminal punctuation" instruction and returned a
+      // full descriptive sentence for visualImpression instead.
+      const result = parseConstellationResponse(
+        validResponse({
+          interpretations: [
+            {
+              culture: "the Salt Coast fishers",
+              name: "The Widow's Lantern",
+              visualImpression:
+                "a long, sinuous creature with a raised, bright head, a dipping spine, and a hooked tail, resembling both a river serpent and a small dragon swimming through the stars.",
+              originMyth: "A widow's light, fixed in place to guide the lost.",
+              seasonalVisibility: "Visible in winter.",
+              practicalUse: "Used for timekeeping.",
+              culturalMeaning: "A guardian spirit.",
+              omen: "A fading light warns of betrayal.",
+              adventureHook: "Someone wants the lantern's story silenced.",
+            },
+          ],
+        }),
+      );
+      expect(result.content).not.toMatch(/\ba a\b/i);
+      expect(result.content).not.toContain("..");
+      expect(result.content).toContain(
+        "read as a long, sinuous creature with a raised, bright head, a dipping spine, and a hooked tail, resembling both a river serpent and a small dragon swimming through the stars. Used for timekeeping.",
+      );
+    });
+
     it("drops a line referencing an out-of-range star index", () => {
       const result = parseConstellationResponse(
         validResponse({
