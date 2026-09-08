@@ -107,11 +107,6 @@ vi.mock("$lib/components/modals/GuestChatModal.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
-  default: (await import("./__tests__/CanvasSelectionModalStub.svelte"))
-    .default,
-}));
-
 vi.mock("./MobileCreateEntitySheet.svelte", async () => ({
   default: (await import("./__tests__/MobileCreateEntitySheetStub.svelte"))
     .default,
@@ -141,20 +136,22 @@ describe("GlobalModalProvider", () => {
     expect(screen.queryByTestId("zen-mode-modal-stub")).toBeNull();
   });
 
-  it("renders CanvasSelectionModal from the global provider when the modal state is open", async () => {
+  it("renders Canvas Registry from the global provider when the modal state is open", async () => {
     modalUIStore.showCanvasSelector = true;
 
     render(GlobalModalProvider);
 
     expect(
-      await screen.findByTestId("canvas-selection-modal-stub"),
+      await screen.findByRole("heading", { name: "Canvas Registry" }),
     ).toBeTruthy();
   });
 
-  it("does not render CanvasSelectionModal content when the modal state is closed", () => {
+  it("does not render Canvas Registry content when the modal state is closed", () => {
     render(GlobalModalProvider);
 
-    expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Canvas Registry" }),
+    ).toBeNull();
   });
 
   it("renders MobileCreateEntitySheet when showMobileCreateSheet is true", async () => {
