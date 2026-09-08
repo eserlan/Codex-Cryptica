@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import MarketingShell from "./MarketingShell.svelte";
 
@@ -14,14 +14,9 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-vi.mock("$app/navigation", () => ({
-  afterNavigate: vi.fn(),
-}));
-
 vi.mock("$lib/config", () => ({
   DISCORD_URL: "https://discord.gg/5UUMCChF2u",
   GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
-  REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",
   PATREON_URL: "https://patreon.com/EspenE",
 }));
 
@@ -45,17 +40,13 @@ describe("MarketingShell component", () => {
     expect(screen.getByTestId("shell-wordmark")).toBeTruthy();
   });
 
-  it("toggles mobile navigation menu including community links", async () => {
+  it("renders a direct Explore action instead of a mobile directory menu", () => {
     render(MarketingShell);
 
-    const toggleBtn = screen.getByTestId("shell-menu-toggle");
+    const exploreLink = screen.getByTestId("shell-explore-link");
+    expect(exploreLink.getAttribute("href")).toBe("/explore");
+    expect(exploreLink.textContent).toContain("Explore");
+    expect(screen.queryByTestId("shell-menu-toggle")).toBeNull();
     expect(screen.queryByTestId("shell-mobile-nav")).toBeNull();
-
-    await fireEvent.click(toggleBtn);
-    const mobileNav = screen.getByTestId("shell-mobile-nav");
-    expect(mobileNav).toBeTruthy();
-    expect(mobileNav.textContent).toContain("Discord");
-    expect(mobileNav.textContent).toContain("GitHub");
-    expect(mobileNav.textContent).toContain("Reddit");
   });
 });
