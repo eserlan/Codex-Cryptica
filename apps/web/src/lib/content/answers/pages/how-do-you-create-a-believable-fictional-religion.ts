@@ -8,7 +8,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   question: "How do you create a believable fictional religion?",
   kind: "how-to",
   shortAnswer:
-    "Write what adherents do, not what they believe. A religion becomes believable through practice: the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit, because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.",
+    "Start with what adherents do, not what they believe. A religion becomes believable through practice: the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit, because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.",
   sections: [
     {
       kind: "prose",
@@ -16,7 +16,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       paragraphs: [
         "Ask someone to describe a religion they do not belong to and they will describe behaviour: what people wear, when they gather, what they abstain from, what happens at a funeral. The theology comes later, if at all. Invented religions usually run this backwards, opening with a creation myth and a list of tenets that nobody in play will ever ask about.",
         'Starting from practice also produces friction automatically. A rite that requires still water gives you a reason for temples to sit where they do, a trade in imported water, an argument about whether river water counts, and a schism waiting to happen. A tenet, "they value purity," produces none of that.',
-        "This page is about the institution and its practice. Designing the gods themselves is a separate problem, and a religion does not need a pantheon at all: ancestor veneration, a philosophy, a state cult and a saint-centred folk practice are all religions with very little theology between them.",
+        "This page is about the tradition and its practice, whether or not it has a formal institution behind it. Designing the gods themselves is a separate problem, and a religion does not need a pantheon at all: ancestor veneration, a state cult, a decentralised household or animist tradition, and a saint-centred folk practice can all carry a full religious life with very little theology behind them.",
       ],
     },
     {
@@ -30,7 +30,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
         },
         {
           term: "A prohibition with teeth",
-          text: "Something adherents will not do, and what happens when they do it anyway. Enforcement is what separates a religion from a preference.",
+          text: "Something adherents will not do, and what happens when they do it anyway. The consequence does not need a court behind it: social exclusion, a ritual cleansing, a bad omen the community holds against you, or simply a household that will not eat at your table again all count.",
         },
         {
           term: "A life event it owns",
@@ -42,7 +42,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
         },
         {
           term: "Its internal disagreement",
-          text: "Every real tradition has one. Two readings of the same rule, and a faction behind each. This is where a party can get involved.",
+          text: "Long-lived traditions tend to develop one: competing interpretations, regional variants, a reform movement the centre distrusts. Two readings of the same rule, and a faction behind each, is where a party can get involved.",
         },
         {
           term: "Only then, the doctrine",
@@ -87,7 +87,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       kind: "prose",
       heading: "Believability comes from inconsistency",
       paragraphs: [
-        "Invented religions read as fake mostly because they are too coherent. Every practice serves the theology, every adherent agrees, and the whole thing was evidently designed at once. Real traditions carry rules whose reason has been forgotten, festivals absorbed from something older, regional variants that embarrass the centre, and a gap between what the institution teaches and what people in the village actually do.",
+        "Invented religions read as fake mostly because they are too coherent. Every practice serves the theology, every adherent agrees, and the whole thing was evidently designed at once. Real traditions carry rules whose reason has been forgotten, festivals absorbed from something older, regional variants that embarrass the centre, and a gap between what the tradition teaches and what people in the village actually do.",
         "Adding two or three of those is enough. A holiday nobody can explain. A prayer said in a language the congregation does not speak. A shrine the church tolerates but does not endorse.",
         "One caution, since this material touches real belief: borrowing the surface of a living religion (its sacred names, its liturgy, its iconography) and attaching it to a fictional institution tends to land badly, and it is also the lazier option. Taking the structural lessons instead, and inventing the specifics, produces something both less offensive and more interesting.",
       ],
