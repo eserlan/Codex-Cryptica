@@ -18,7 +18,7 @@ export const theEelWyrm: ExampleConfigInput = {
     "A serpent-shaped constellation the fishers of a coastal eel-harvesting culture read as a rising and setting timer for their autumn migration season, complete with an origin myth, a set of omens, and a hook about a star that has gone missing.",
   provenance: "lightly-edited",
   provenanceNote:
-    "The raw response's visualImpression field came back as a full descriptive clause ('a long, sinuous creature...') rather than the short label the Core Concept template expects, which doubled the leading article and the terminal period ('read as a a long... stars..'). That was a real bug in the generator's template, not a one-off wording slip, fixed alongside this example (stripLeadingArticle() plus a re-sanitize pass in formatConstellationContent, packages/generator-engine/src/public-constellation.ts). The Core Concept text below reflects that corrected output; no wording was added, removed, or otherwise changed.",
+    "The raw generation doubled a word and a punctuation mark where two fields met ('read as a a long... stars..'). That was a genuine bug in the generator, not a phrasing slip, and it's fixed as of this example. The Core Concept text below is the corrected result; nothing else was added, removed, or reworded.",
   generator: {
     name: "Constellation generator",
     href: "/generators/constellation",
