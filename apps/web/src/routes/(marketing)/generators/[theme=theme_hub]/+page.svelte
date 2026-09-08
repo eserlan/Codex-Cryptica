@@ -51,6 +51,13 @@
       icon: "icon-[lucide--flag]",
     },
     {
+      slug: "faction-roster",
+      label: "Faction Roster Generator",
+      summary:
+        "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+      icon: "icon-[lucide--users-round]",
+    },
+    {
       slug: "quest",
       label: "Quest Generator",
       summary:

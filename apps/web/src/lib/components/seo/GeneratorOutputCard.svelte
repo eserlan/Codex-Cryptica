@@ -5,6 +5,10 @@
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import type { SessionEntity } from "generator-engine";
   import SessionHubWidget from "./SessionHubWidget.svelte";
+  import {
+    isFactionDraft,
+    isFactionRosterDraft,
+  } from "$lib/services/seo/generator-handoffs";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -47,6 +51,8 @@
     onBuildDelveCanvas,
     onBuildAdventureCanvas,
     onGeneratePlotTwist,
+    onGenerateRoster,
+    onOpenMemberAsCharacter,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -71,6 +77,11 @@
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
     onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
     onGeneratePlotTwist?: (data: GeneratorOutput) => void;
+    onGenerateRoster?: (data: GeneratorOutput) => void;
+    onOpenMemberAsCharacter?: (
+      section: MarkdownSectionForCopy,
+      data: GeneratorOutput,
+    ) => void;
   } = $props();
 
   import { getThemeLoadingMessages } from "generator-engine";
@@ -233,6 +244,21 @@
                 Generate Plot Twist
               </button>
             {/if}
+            {#if onGenerateRoster && isFactionDraft(generatedData?.labels)}
+              <button
+                type="button"
+                onclick={() => onGenerateRoster(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                id="generate-roster-btn"
+                title="Generate notable members of this faction"
+              >
+                <span
+                  class="icon-[lucide--users-round] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                Generate Roster
+              </button>
+            {/if}
             <button
               type="button"
               onclick={onCopyMarkdown}
@@ -274,21 +300,40 @@
                   >
                     {section.heading}
                   </h3>
-                  <button
-                    type="button"
-                    onclick={() => onCopySection(section.id, section.markdown)}
-                    class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
-                    aria-label="Copy {section.heading} as Markdown"
-                    title="Copy this section as Markdown"
-                  >
-                    <span
-                      class={copiedSectionId === section.id
-                        ? "icon-[lucide--check] h-3.5 w-3.5"
-                        : "icon-[lucide--copy] h-3.5 w-3.5"}
-                      aria-hidden="true"
-                    ></span>
-                    {copiedSectionId === section.id ? "Copied" : "Copy MD"}
-                  </button>
+                  <div class="flex items-center gap-1.5">
+                    {#if onOpenMemberAsCharacter && isFactionRosterDraft(generatedData?.labels)}
+                      <button
+                        type="button"
+                        onclick={() =>
+                          onOpenMemberAsCharacter(section, generatedData!)}
+                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                        aria-label="Open {section.heading} as a Character"
+                        title="Continue this member in the NPC generator"
+                      >
+                        <span
+                          class="icon-[lucide--user-round-plus] h-3.5 w-3.5"
+                          aria-hidden="true"
+                        ></span>
+                        Open as Character
+                      </button>
+                    {/if}
+                    <button
+                      type="button"
+                      onclick={() =>
+                        onCopySection(section.id, section.markdown)}
+                      class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                      aria-label="Copy {section.heading} as Markdown"
+                      title="Copy this section as Markdown"
+                    >
+                      <span
+                        class={copiedSectionId === section.id
+                          ? "icon-[lucide--check] h-3.5 w-3.5"
+                          : "icon-[lucide--copy] h-3.5 w-3.5"}
+                        aria-hidden="true"
+                      ></span>
+                      {copiedSectionId === section.id ? "Copied" : "Copy MD"}
+                    </button>
+                  </div>
                 </div>
               {/if}
               <div>

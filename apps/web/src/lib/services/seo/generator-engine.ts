@@ -15,6 +15,9 @@ import {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
+  buildFactionRosterPrompt,
+  parseFactionRosterResponse,
+  generateFactionRosterLocal,
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
@@ -117,6 +120,7 @@ import {
   type MinorMagicItemGeneratorOptions,
   type ArtifactGeneratorOptions,
   type FactionGeneratorOptions,
+  type FactionRosterGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
   type DarkFactionGeneratorOptions,
@@ -189,6 +193,7 @@ export {
   NOMAD_CLAN_PRESETS,
   VAMPIRE_PRESETS,
 } from "generator-engine";
+export { factionRosterConfig } from "generator-engine";
 export {
   settlementConfig,
   SETTLEMENT_PRESETS,
@@ -330,6 +335,31 @@ export class DefaultGeneratorEngine {
         return parseFactionResponse(text, resolved);
       },
       () => generateFactionLocal(factionOptions),
+    );
+  }
+
+  /** Faction roster generation (#2808): notable members of a faction. */
+  async generateFactionRoster(
+    options: FactionRosterGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rosterOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("faction-roster");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildFactionRosterPrompt(
+            rosterOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "faction-roster",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseFactionRosterResponse(text, resolved);
+      },
+      () => generateFactionRosterLocal(rosterOptions),
     );
   }
 
