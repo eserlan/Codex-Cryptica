@@ -9,6 +9,7 @@ import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-fac
 import { howDoYouCreateAFictionalLanguageForAnRpg } from "./how-do-you-create-a-fictional-language-for-an-rpg";
 import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
 import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
+import { howDoYouCreateASecretSocietyForAnRpgCampaign } from "./how-do-you-create-a-secret-society-for-an-rpg-campaign";
 import { howDoYouCreateQuestHooksWithoutRailroading } from "./how-do-you-create-quest-hooks-without-railroading";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
@@ -61,6 +62,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouCreateAFictionalLanguageForAnRpg,
     howDoYouCreateAMagicSystem,
     howDoYouCreateAPantheon,
+    howDoYouCreateASecretSocietyForAnRpgCampaign,
     howDoYouCreateQuestHooksWithoutRailroading,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
     howDoYouHandleCharacterDeathInATabletopRpg,
