@@ -253,8 +253,14 @@ function generatePattern(rng: Rng): ConstellationPattern {
       brightness,
     };
   });
-  // At least one bright star is guaranteed a name/note further up (in
-  // generateConstellationLocal), so the pattern always has an anchor point.
+  // Brightness above is independently random per star and can land on zero
+  // "bright" stars — force one so the pattern always has an anchor point for
+  // the caller to name (chooseUniqueName/generateConstellationLocal rely on
+  // finding one).
+  if (!stars.some((s) => s.brightness === "bright")) {
+    const anchorIndex = Math.floor(rng() * stars.length);
+    stars[anchorIndex] = { ...stars[anchorIndex], brightness: "bright" };
+  }
   const lines: [number, number][] = [];
   for (let i = 0; i < stars.length - 1; i++) {
     lines.push([i, i + 1]);
@@ -269,7 +275,7 @@ function originMyth(
   rng: Rng,
 ): string {
   const causes = [
-    `a founding figure ${culture} still name in oaths, flung into the sky at the end of their final act`,
+    `a founding figure ${culture} still named in oaths, flung into the sky at the end of their final act`,
     `a punishment handed down for a debt the sky itself would not forgive`,
     `a warning left by the ancestors, fixed in place so it could never be forgotten`,
     `a guardian who chose to stand watch from above rather than leave the living undefended`,
@@ -602,7 +608,10 @@ export function parseConstellationResponse(
   }
 
   const pattern = parseConstellationPattern(data.pattern);
-  if (pattern.stars.length < 3) {
+  // Matches the prompt's stated 4-9 star range (buildConstellationPrompt) —
+  // unlike star-system's 3-12 body range, this floor isn't independently
+  // "3 is a real minimum", it's this generator's own low end.
+  if (pattern.stars.length < 4) {
     throw new Error("Constellation response is missing a usable star pattern.");
   }
   const interpretations = parseConstellationInterpretations(
@@ -876,7 +885,7 @@ export function parseNightSkyResponse(
       : undefined;
     if (!validSeason || !validRegion) continue;
     const parsedPattern = parseConstellationPattern(pattern);
-    if (parsedPattern.stars.length < 3) continue;
+    if (parsedPattern.stars.length < 4) continue;
     const parsedInterpretations = parseConstellationInterpretations([
       interpretation,
     ]);

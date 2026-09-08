@@ -72,6 +72,18 @@ describe("public-constellation", () => {
       expect(interpretation.adventureHook).toBeTruthy();
     });
 
+    it("always names an anchor star, even when brightness rolls no 'bright' star", () => {
+      // Regression: brightness is independently random per star and can
+      // legitimately produce zero "bright" stars across a 4-9 star pattern.
+      for (let seed = 0; seed < 100; seed++) {
+        const result = generateConstellationLocal({}, seededRng(seed));
+        expect(
+          result.pattern!.stars.some((s) => s.brightness === "bright"),
+        ).toBe(true);
+        expect(result.pattern!.stars.some((s) => !!s.name)).toBe(true);
+      }
+    });
+
     it("avoids banned names when an avoid list is provided", () => {
       const [firstBanned] = constellationConfig.names;
       const result = generateConstellationLocal(
@@ -128,7 +140,7 @@ describe("public-constellation", () => {
     function validResponse(overrides: Record<string, unknown> = {}) {
       return JSON.stringify({
         title: "The Widow's Lantern",
-        summary: "A three-star constellation read as a warning light.",
+        summary: "A four-star constellation read as a warning light.",
         lore: "## Seasonal Visibility\nVisible in winter.\n## Practical Use\nUsed for timekeeping.\n## Cultural & Religious Meaning\nA guardian spirit.\n## Omens\nA fading light warns of betrayal.\n## Adventure Hook\nSomeone wants the lantern's story silenced.",
         labels: ["classic-fantasy"],
         pattern: {
@@ -136,10 +148,12 @@ describe("public-constellation", () => {
             { x: 10, y: 10, brightness: "bright", name: "The Wick" },
             { x: 20, y: 15, brightness: "moderate" },
             { x: 30, y: 12, brightness: "faint" },
+            { x: 25, y: 22, brightness: "faint" },
           ],
           lines: [
             [0, 1],
             [1, 2],
+            [2, 3],
           ],
         },
         interpretations: [
@@ -162,7 +176,7 @@ describe("public-constellation", () => {
     it("parses a well-formed response into the public output contract", () => {
       const result = parseConstellationResponse(validResponse());
       expect(result.title).toBe("The Widow's Lantern");
-      expect(result.pattern?.stars).toHaveLength(3);
+      expect(result.pattern?.stars).toHaveLength(4);
       expect(result.interpretations).toHaveLength(1);
       expect(result.content).toContain("## Core Concept");
       expect(result.lore).toContain("## Omens");
@@ -176,6 +190,7 @@ describe("public-constellation", () => {
               { x: 10, y: 10 },
               { x: 20, y: 20 },
               { x: 30, y: 30 },
+              { x: 40, y: 40 },
             ],
             lines: [
               [0, 1],
@@ -187,11 +202,18 @@ describe("public-constellation", () => {
       expect(result.pattern?.lines).toEqual([[0, 1]]);
     });
 
-    it("throws when the star pattern has fewer than 3 stars", () => {
+    it("throws when the star pattern has fewer than 4 stars", () => {
       expect(() =>
         parseConstellationResponse(
           validResponse({
-            pattern: { stars: [{ x: 1, y: 1 }], lines: [] },
+            pattern: {
+              stars: [
+                { x: 1, y: 1 },
+                { x: 2, y: 2 },
+                { x: 3, y: 3 },
+              ],
+              lines: [],
+            },
           }),
         ),
       ).toThrow();
@@ -316,10 +338,12 @@ describe("public-constellation", () => {
             { x: 10, y: 10 },
             { x: 20, y: 20 },
             { x: 30, y: 30 },
+            { x: 40, y: 40 },
           ],
           lines: [
             [0, 1],
             [1, 2],
+            [2, 3],
           ],
         },
         interpretation: {
