@@ -34,6 +34,7 @@ import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-ad
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
+import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
@@ -86,6 +87,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howManyNpcsDoesAnRpgTownNeed,
     howMuchPrepDoYouNeedForAnRpgSession,
     howToCreateACyberpunkCityDistrict,
+    howToCreateASciFiStarSystemForAnRpg,
     howToWriteAnInWorldNewspaperForAnRpg,
     pointCrawlVsHexCrawl,
     whatIsAPointCrawl,
