@@ -536,6 +536,127 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
     });
 
+    it("auto-drafts at most once per canonicalPath even if the component re-renders (regression, #2808 review)", async () => {
+      // A handoff-arrival page (initialDraft resolving to null so the page
+      // seeds itself from handed-over context, e.g. Faction -> Roster) drove
+      // this effect and the generatedData=initialDraft sync effect into a
+      // runaway loop that hung the tab, because SEOGeneratorLayout is reused
+      // across client-side navigations rather than remounted. The guard is
+      // keyed by canonicalPath precisely so it survives spurious re-renders
+      // of the same page without re-arming for a genuinely new one.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { rerender } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+        },
+      });
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+
+      await rerender({
+        canonicalPath: "/generators/faction-roster",
+        generate: mockGenerate,
+        formFields: noopSnippet,
+        initialDraft: null,
+      });
+      await tick();
+      await tick();
+
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
+    });
+
+    it("autoGenerateExplicit=true suppresses the passive on-mount example — nothing fires until the parent calls triggerExplicitAutoGenerate()", async () => {
+      // The parent (GeneratorPageContent) owns the handoff-arrival timing —
+      // see triggerExplicitAutoGenerate()'s doc comment for why this can't
+      // safely be decided reactively inside this component alone.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+          autoGenerateExplicit: true,
+        },
+      });
+
+      // Give any (incorrect) passive auto-draft a chance to fire before
+      // asserting it didn't.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it("triggerExplicitAutoGenerate() fires a real (AI-on-by-default) generation, not a throwaway example", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { component } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+          autoGenerateExplicit: true,
+        },
+      });
+
+      (
+        component as unknown as { triggerExplicitAutoGenerate: () => void }
+      ).triggerExplicitAutoGenerate();
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+      // useAI defaults to true — this goes through the same handleGenerate()
+      // path an explicit click uses, unlike the passive example-seed path,
+      // which is hardcoded to useAI:false.
+      expect(mockGenerate).toHaveBeenCalledWith(
+        expect.objectContaining({ useAI: true }),
+      );
+      // Real generation, not a throwaway example: fires the normal funnel
+      // tracking and unlocks onward handoffs the same way an explicit click does.
+      await vi.waitFor(() => {
+        expect(trackEventMock).toHaveBeenCalledWith(
+          "generator_started",
+          expect.anything(),
+        );
+        expect(trackEventMock).toHaveBeenCalledWith(
+          "generator_completed",
+          expect.anything(),
+        );
+      });
+
+      // Calling it again for the same page must not double-fire.
+      (
+        component as unknown as { triggerExplicitAutoGenerate: () => void }
+      ).triggerExplicitAutoGenerate();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
+    });
+
     it("fires generator_started then generator_completed on an explicit Generate click", async () => {
       const seedDraft = {
         type: "character" as const,

@@ -158,10 +158,12 @@ export {
   parseFactionRosterResponse,
   generateFactionRosterLocal,
   resolveFactionRoster,
+  extractFactionNotableNpcs,
   type FactionRosterGeneratorOptions,
   type FactionRosterPrompt,
   type ResolvedFactionRoster,
   type FactionRosterMember,
+  type FactionNotableNpc,
 } from "./public-faction-roster";
 export {
   factionSchema,

@@ -5,8 +5,34 @@ import {
   generateFactionRosterLocal,
   resolveFactionRoster,
   factionRosterConfig,
+  extractFactionNotableNpcs,
 } from "./public-faction-roster";
 import { NAME_BAN_PROMPT } from "./public-npc";
+
+// A realistic faction-generator output, matching the exact "- **👤 Name**:
+// description" convention every public-faction.ts variant renders.
+const FACTION_WITH_NOTABLE_NPCS = `[Faction Context]
+
+Faction: Kaelrin Compact
+
+A publicly lawful, privately ruthless underground network.
+
+### At a Glance
+- **📍 Base**: A distributed network of locations with no single point of failure
+- **Resource**: Control of a single critical resource
+- **Symbol**: Kaelrin iconography worn by inner-circle members
+- **Secret**: A splinter leader is selling secrets to an enemy.
+- **Immediate Hook**: They ask for protection during a meeting with a bitter rival.
+
+### Notable NPCs
+- **👤 Aelon**: Public face who insists every deal serves the common good.
+- **👤 Aelwen**: Field operative who knows where the faction buries its failures.
+
+### Internal Conflict
+A splinter leader is selling secrets to an enemy.
+
+### Rival Faction
+- **👥 Aelmar Covenant**: Pursuing the same influence and will reach it first if the party does nothing.`;
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -33,7 +59,71 @@ describe("resolveFactionRoster", () => {
   });
 });
 
+describe("extractFactionNotableNpcs", () => {
+  it("extracts named people, not the faction or its rival", () => {
+    const npcs = extractFactionNotableNpcs(FACTION_WITH_NOTABLE_NPCS);
+    expect(npcs).toEqual([
+      {
+        name: "Aelon",
+        description:
+          "Public face who insists every deal serves the common good.",
+      },
+      {
+        name: "Aelwen",
+        description:
+          "Field operative who knows where the faction buries its failures.",
+      },
+    ]);
+    // The rival faction uses 👥, not 👤, and must not be picked up as a person.
+    expect(npcs.map((n) => n.name)).not.toContain("Aelmar Covenant");
+  });
+
+  it("returns an empty array for context with no Notable NPCs section", () => {
+    expect(extractFactionNotableNpcs("Just some plain text.")).toEqual([]);
+    expect(extractFactionNotableNpcs(undefined)).toEqual([]);
+  });
+});
+
 describe("generateFactionRosterLocal", () => {
+  it("promotes the faction's already-named people onto the roster instead of inventing a fresh cast", () => {
+    const out = generateFactionRosterLocal(
+      { size: "4", factionContext: FACTION_WITH_NOTABLE_NPCS },
+      seededRng(7),
+    );
+    expect(out.content).toContain("### Aelon —");
+    expect(out.content).toContain("### Aelwen —");
+    expect(out.content).toContain(
+      "Public face who insists every deal serves the common good.",
+    );
+    // Only 2 slots are pre-filled; the rest are still generated to hit size.
+    const headings = out.content.match(/^### .+$/gm) ?? [];
+    expect(headings).toHaveLength(4);
+  });
+
+  it("caps promoted notable NPCs at the roster size when the faction names more people than fit", () => {
+    const factionWithFourNpcs = `${FACTION_WITH_NOTABLE_NPCS}\n- **👤 Branon**: A third named contact.\n- **👤 Caelthas**: A fourth named contact.`;
+    const out = generateFactionRosterLocal(
+      { size: "3", factionContext: factionWithFourNpcs },
+      seededRng(7),
+    );
+    const headings = out.content.match(/^### .+$/gm) ?? [];
+    expect(headings).toHaveLength(3);
+  });
+
+  it("falls back to fresh archetype members when the faction names nobody", () => {
+    const out = generateFactionRosterLocal(
+      {
+        size: "3",
+        factionContext:
+          "[Faction Context]\nFaction: The Compact\nA merchant guild.",
+      },
+      seededRng(4),
+    );
+    expect(out.content).not.toMatch(/### 👤/);
+    const headings = out.content.match(/^### .+$/gm) ?? [];
+    expect(headings).toHaveLength(3);
+  });
+
   it("generates exactly `size` member sections, each with a connection to another member", () => {
     const out = generateFactionRosterLocal({ size: "4" }, seededRng(3));
     expect(out.type).toBe("note");
@@ -137,6 +227,36 @@ describe("buildFactionRosterPrompt", () => {
       seededRng(5),
     );
     expect(userMessage).toContain("Vess Marrow");
+  });
+
+  it("requires the faction's Notable NPCs to appear in the roster, by exact name", () => {
+    const { userMessage, systemInstruction } = buildFactionRosterPrompt(
+      { factionContext: FACTION_WITH_NOTABLE_NPCS },
+      "",
+      seededRng(5),
+    );
+    expect(userMessage).toContain("Aelon");
+    expect(userMessage).toContain("Aelwen");
+    expect(userMessage).toContain("MUST appear as a member");
+    // Not the rival faction — it's a group, not a person.
+    expect(userMessage).not.toContain(
+      "already-named people on record: Aelon, Aelwen, Aelmar Covenant",
+    );
+    expect(systemInstruction).toContain(
+      "This faction's already-named people (Aelon, Aelwen)",
+    );
+    expect(systemInstruction).toContain(
+      "confirm every already-named person from the source faction",
+    );
+  });
+
+  it("does not require any Notable NPCs when the faction context names none", () => {
+    const { systemInstruction } = buildFactionRosterPrompt(
+      { factionContext: "A generic merchant guild with no named people." },
+      "",
+      seededRng(5),
+    );
+    expect(systemInstruction).not.toContain("already-named people");
   });
 
   it("excludes names already established by the handed-over context from the avoid-list", () => {

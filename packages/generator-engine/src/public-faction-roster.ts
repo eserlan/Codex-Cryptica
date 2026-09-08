@@ -114,17 +114,51 @@ export function resolveFactionRoster(
   };
 }
 
+/** One person the faction generator already named, extracted from its output. */
+export interface FactionNotableNpc {
+  name: string;
+  description: string;
+}
+
+/**
+ * Every faction sub-generator (public-faction.ts and its variants) renders
+ * its named people as "- **👤 Name**: description" under a "### Notable
+ * NPCs"/"### Notable Members" heading — the 👤 marker is used only for an
+ * actual person (a rival *faction* uses 👥 instead), so matching on it
+ * directly is more precise than the generic `extractProperNouns` (which
+ * would also pick up the faction's own name, its rival's name, and genre
+ * labels). Exported so the local fallback and the AI prompt can share one
+ * extraction instead of drifting.
+ */
+export function extractFactionNotableNpcs(
+  factionContext?: string,
+): FactionNotableNpc[] {
+  if (!factionContext) return [];
+  const pattern = /^-\s*\*\*👤\s*([^*]+?)\*\*:\s*(.+)$/gm;
+  const results: FactionNotableNpc[] = [];
+  for (const match of factionContext.matchAll(pattern)) {
+    const name = match[1].trim();
+    const description = match[2].trim();
+    if (name && description) results.push({ name, description });
+  }
+  return results;
+}
+
 /**
  * The faction being rostered, as a binding block distinct from the generic
  * "campaign context" block — mirrors `formatDelveContextBlock` in
- * `public-npc.ts`. Proper nouns already named in the faction (its leaders,
- * base, rivals) are pinned so the roster promotes them rather than inventing
- * a parallel cast.
+ * `public-npc.ts`. The faction's already-named people (its Notable NPCs) are
+ * pinned as a hard requirement, not a suggestion — the whole point of a
+ * roster is the people already tied to this specific faction, so the two
+ * most obvious candidates must not be silently dropped or duplicated under a
+ * different name.
  */
-function formatFactionContextBlock(factionContext?: string): string {
+function formatFactionContextBlock(
+  factionContext: string | undefined,
+  notableNpcs: FactionNotableNpc[],
+): string {
   const trimmed = factionContext?.trim();
   if (!trimmed) return "";
-  const properNouns = extractProperNouns(trimmed);
   return [
     ``,
     ``,
@@ -132,9 +166,9 @@ function formatFactionContextBlock(factionContext?: string): string {
     trimmed,
     ``,
     `Every member must fit this specific faction, not a generic organisation of the same type.`,
-    ...(properNouns.length > 0
+    ...(notableNpcs.length > 0
       ? [
-          `If any of these names from the faction already name a person rather than the faction itself, promote that person into the roster instead of inventing a duplicate: ${properNouns.join(", ")}.`,
+          `This faction already has named people on record: ${notableNpcs.map((n) => n.name).join(", ")}. Every one of them MUST appear as a member of this roster, using their exact name and their existing description (given above) as the starting point for that member's duty and role — never invent a duplicate or a renamed stand-in, and never omit one. Fill any remaining roster slots beyond these with new members.`,
         ]
       : []),
     ``,
@@ -155,6 +189,7 @@ export function buildFactionRosterPrompt(
   const resolved = resolveFactionRoster(options, rng);
   const { size, structure, emphasis, theme, campaignContext } = resolved;
   const voice = FACTION_THEME_VOICE[theme] ?? "tabletop RPG";
+  const notableNpcs = extractFactionNotableNpcs(resolved.factionContext);
   // The campaign-context block above already tells the model that names
   // introduced by the handed-over faction are established and must be kept —
   // listing those same names under "do not use" would contradict it.
@@ -167,6 +202,14 @@ export function buildFactionRosterPrompt(
   const nameRestrictions = extraAvoidedNames.length
     ? ` Also do not use these already-used names: ${extraAvoidedNames.join(", ")}.`
     : "";
+  const notableNpcRule =
+    notableNpcs.length > 0
+      ? `\n- This faction's already-named people (${notableNpcs.map((n) => n.name).join(", ")}) must each appear in "members" under their exact name.`
+      : "";
+  const notableNpcConsistencyClause =
+    notableNpcs.length > 0
+      ? ` confirm every already-named person from the source faction (${notableNpcs.map((n) => n.name).join(", ")}) appears in "members" under their exact name;`
+      : "";
 
   const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You turn factions into the specific people who make them up, in JSON format.
 
@@ -201,14 +244,14 @@ QUALITY RULES:
 - No member's "motive" may simply restate the faction's own stated goal — it must be personal.
 - Every member needs a genuine immediate hook in "wantNow" — something a GM can use the moment the party meets them, not a vague ambition.
 - Avoid generic RPG naming clichés.
-- ${NAME_BAN_PROMPT}${nameRestrictions}
+- ${NAME_BAN_PROMPT}${nameRestrictions}${notableNpcRule}
 ${sessionContext}
-- Before finalising, run a consistency pass: every "connection.member" value names another member actually present in this same "members" array (never the faction itself, never a member's own name, never someone outside the array); at least two members' priorities genuinely conflict; no member's motive duplicates the faction's own goal; every role and duty fits a ${structure.toLowerCase()}, not a generic hierarchy; every name fits ${theme}. Fix any mismatch before responding.`;
+- Before finalising, run a consistency pass: every "connection.member" value names another member actually present in this same "members" array (never the faction itself, never a member's own name, never someone outside the array); at least two members' priorities genuinely conflict; no member's motive duplicates the faction's own goal; every role and duty fits a ${structure.toLowerCase()}, not a generic hierarchy; every name fits ${theme};${notableNpcConsistencyClause} Fix any mismatch before responding.`;
 
   const userMessage = `Generate a faction roster of ${size} notable members.
 - Theme/Genre: ${theme}
 - Structure: ${structure}
-- Emphasis: ${emphasis}${formatFactionContextBlock(resolved.factionContext)}${formatCampaignContextBlock(campaignContext)}`;
+- Emphasis: ${emphasis}${formatFactionContextBlock(resolved.factionContext, notableNpcs)}${formatCampaignContextBlock(campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }
@@ -355,17 +398,30 @@ export function generateFactionRosterLocal(
   const factionName = extractFactionName(resolved.factionContext);
   const factionLabel = factionName ?? "the faction";
 
+  // Promote the faction's own already-named people onto the roster first —
+  // they're exactly who a roster should surface — before filling any
+  // remaining slots with fresh archetype-based members.
+  const notableNpcs = extractFactionNotableNpcs(resolved.factionContext).slice(
+    0,
+    size,
+  );
+  const freshNames = Array.from({ length: size - notableNpcs.length }, () =>
+    generateName(rng),
+  );
+  const names = [...notableNpcs.map((npc) => npc.name), ...freshNames];
   const archetypes = pickRandomItems(ROSTER_ARCHETYPES, size, rng);
-  const names = Array.from({ length: size }, () => generateName(rng));
 
   const members: FactionRosterMember[] = archetypes.map((archetype, i) => {
     // Each member connects to the next in the shuffled order (circular), so
     // every member has exactly one outward connection into the roster.
     const nextIndex = (i + 1) % size;
+    const notable = notableNpcs[i];
     return {
       name: names[i],
       role: archetype.role,
-      duty: `Handles what a ${archetype.role.toLowerCase()} handles for ${factionLabel}, organised as a ${structure.toLowerCase()} — the work nobody minutes.`,
+      duty:
+        notable?.description ??
+        `Handles what a ${archetype.role.toLowerCase()} handles for ${factionLabel}, organised as a ${structure.toLowerCase()} — the work nobody minutes.`,
       motive: `Wants something for themselves out of this, separate from what ${factionLabel} claims to want.`,
       stance: archetype.stance,
       trait: archetype.trait,
