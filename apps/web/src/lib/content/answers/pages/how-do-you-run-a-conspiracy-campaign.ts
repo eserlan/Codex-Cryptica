@@ -156,6 +156,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-do-you-create-a-secret-society-for-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",
