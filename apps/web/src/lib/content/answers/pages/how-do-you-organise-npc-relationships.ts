@@ -147,6 +147,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-run-an-rpg-campaign-in-one-city",
     "how-many-npcs-does-an-rpg-town-need",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
+    "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
   ],
   discovery: {
     id: "answer-npc-relationships",

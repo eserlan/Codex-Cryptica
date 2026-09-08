@@ -142,6 +142,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-do-you-manage-a-campaign-timeline-in-an-rpg",
       "how-do-you-track-faction-turns-between-rpg-sessions",
       "how-to-create-rumours-for-a-fantasy-town",
+      "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",
