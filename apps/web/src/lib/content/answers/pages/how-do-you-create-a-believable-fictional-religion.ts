@@ -8,7 +8,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
   question: "How do you create a believable fictional religion?",
   kind: "how-to",
   shortAnswer:
-    "Start with what adherents do, not what they believe. A religion becomes believable through practice: the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit, because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.",
+    "Start with what adherents do, and let belief follow from that. A religion becomes believable through practice: the rites people perform, the days they cannot work, who pays for it, the questions it will not permit, because that is how a religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.",
   sections: [
     {
       kind: "prose",
