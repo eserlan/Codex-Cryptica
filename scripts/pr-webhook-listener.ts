@@ -2,10 +2,13 @@ import { execFileSync, spawn } from "node:child_process";
 import { fetchPrFeedback } from "./pr-check-fix.ts";
 import {
   getUnseenFeedback,
+  hasFixEvidence,
   isAutoMergeEligible,
+  isInternalReviewDue,
   loadPrAutomationState,
   markAutoMergeRequested,
   markFeedbackHandled,
+  markInternalReviewCompleted,
   savePrAutomationState,
 } from "./pr-review-automation-state.ts";
 
@@ -40,6 +43,13 @@ export interface WebhookEventSummary {
 
 export function shouldHandleEvent(event: string, action: string): boolean {
   return EVENT_ACTIONS[event]?.includes(action) ?? false;
+}
+
+export function isStagingPush(
+  event: string,
+  payload: Record<string, any>,
+): boolean {
+  return event === "push" && payload.ref === "refs/heads/staging";
 }
 
 export function summariseEvent(
@@ -135,8 +145,16 @@ function resolveBaseRef(pullRequestNumber: number): string | null {
   }
 }
 
-async function scheduleAutoMerge(pullRequestNumber: number): Promise<void> {
-  if (!AUTO_MERGE_ENABLED || scheduledMerges.has(pullRequestNumber)) return;
+export async function scheduleAutoMerge(
+  pullRequestNumber: number,
+): Promise<void> {
+  if (!AUTO_MERGE_ENABLED) return;
+
+  const existingTimer = scheduledMerges.get(pullRequestNumber);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    scheduledMerges.delete(pullRequestNumber);
+  }
 
   const timer = setTimeout(async () => {
     scheduledMerges.delete(pullRequestNumber);
@@ -144,7 +162,7 @@ async function scheduleAutoMerge(pullRequestNumber: number): Promise<void> {
       const feedback = fetchPrFeedback(pullRequestNumber, REPOSITORY_ROOT);
       const state = await loadPrAutomationState();
       const unseen = getUnseenFeedback(feedback, state);
-      if (!isAutoMergeEligible(feedback, unseen)) {
+      if (!isAutoMergeEligible(feedback, unseen, state)) {
         console.log(
           `[webhook] PR #${pullRequestNumber} is not eligible for auto-merge yet`,
         );
@@ -212,7 +230,8 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
     );
     const state = await loadPrAutomationState();
     const unseen = getUnseenFeedback(feedback, state);
-    if (!unseen.hasActionableFeedback) {
+    const reviewIfClear = isInternalReviewDue(feedback, unseen, state);
+    if (!unseen.hasActionableFeedback && !reviewIfClear) {
       console.log(
         `[webhook] PR #${summary.pullRequestNumber} has no new actionable feedback; ignoring duplicate`,
       );
@@ -222,7 +241,11 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
 
     const child = spawn(
       "bun",
-      ["scripts/pr-check-fix.ts", String(summary.pullRequestNumber)],
+      [
+        "scripts/pr-check-fix.ts",
+        String(summary.pullRequestNumber),
+        ...(reviewIfClear ? ["--review-if-clear"] : []),
+      ],
       {
         cwd: REPOSITORY_ROOT,
         env: { ...process.env, HUSKY: "0" },
@@ -237,6 +260,33 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       );
       if (code !== 0) return;
 
+      const refreshedFeedback = fetchPrFeedback(
+        summary.pullRequestNumber,
+        REPOSITORY_ROOT,
+      );
+      if (reviewIfClear) {
+        const completedState = await loadPrAutomationState();
+        await savePrAutomationState(
+          markInternalReviewCompleted(
+            completedState,
+            summary.pullRequestNumber,
+            refreshedFeedback.prMeta.headRefOid,
+          ),
+        );
+        console.log(
+          `[webhook] internal two-pass review completed for PR #${summary.pullRequestNumber} at ${refreshedFeedback.prMeta.headRefOid}`,
+        );
+        await scheduleAutoMerge(summary.pullRequestNumber);
+        return;
+      }
+
+      if (!hasFixEvidence(feedback, refreshedFeedback)) {
+        console.warn(
+          `[webhook] fixer for PR #${summary.pullRequestNumber} produced no observable fix; leaving feedback actionable`,
+        );
+        return;
+      }
+
       const completedState = await loadPrAutomationState();
       await savePrAutomationState(
         markFeedbackHandled(feedback, completedState),
@@ -244,7 +294,7 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       await scheduleAutoMerge(summary.pullRequestNumber);
     });
     console.log(
-      `[webhook] started fixer for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
+      `[webhook] started ${reviewIfClear ? "internal reviewer" : "fixer"} for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
     );
     return true;
   } catch (error) {
@@ -255,6 +305,68 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
   } finally {
     claimedJobs.delete(summary.pullRequestNumber);
   }
+}
+
+async function launchStagingConflictFixes(): Promise<number> {
+  let prNumbers: number[];
+  try {
+    const output = execFileSync(
+      "gh",
+      [
+        "pr",
+        "list",
+        "--base",
+        "staging",
+        "--state",
+        "open",
+        "--json",
+        "number",
+        "--jq",
+        ".[].number",
+      ],
+      {
+        cwd: REPOSITORY_ROOT,
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    );
+    prNumbers = output
+      .split("\n")
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isInteger(value));
+  } catch (error) {
+    console.error(
+      `[webhook] could not list staging PRs after a staging push: ${error instanceof Error ? error.message : error}`,
+    );
+    return 0;
+  }
+
+  let started = 0;
+  for (const pullRequestNumber of prNumbers) {
+    try {
+      const feedback = fetchPrFeedback(pullRequestNumber, REPOSITORY_ROOT);
+      const hasConflict =
+        feedback.prMeta.mergeable === "CONFLICTING" ||
+        feedback.prMeta.mergeStateStatus === "DIRTY";
+      if (!hasConflict) continue;
+      if (
+        await launchFix({
+          event: "push",
+          action: "staging-updated",
+          repository: EXPECTED_REPOSITORY,
+          pullRequestNumber,
+          baseRef: "staging",
+        })
+      ) {
+        started += 1;
+      }
+    } catch (error) {
+      console.error(
+        `[webhook] could not inspect conflicted PR #${pullRequestNumber}: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+  return started;
 }
 
 function response(body: string, status = 200): Response {
@@ -344,6 +456,13 @@ if (import.meta.main) {
         return response(
           JSON.stringify({ error: "repository not allowed" }),
           403,
+        );
+      }
+      if (isStagingPush(event, payload)) {
+        void launchStagingConflictFixes();
+        return response(
+          JSON.stringify({ accepted: true, scope: "staging-conflicts" }),
+          202,
         );
       }
       const summary = summariseEvent(event, payload);
