@@ -109,17 +109,54 @@ export function openExternalGeneratorUrl(
 }
 
 /**
+ * Opens a blank tab synchronously — call this directly inside a click
+ * handler, before any `await`. Browsers only allow `window.open` without a
+ * popup-blocker prompt while it runs inside the call stack of a user
+ * gesture; that window closes the moment execution crosses an `await`. A
+ * caller that needs to build the URL asynchronously (e.g. an AI compression
+ * pass) should open this placeholder tab first, then hand it to
+ * {@link sendToExternalGenerator} as `pendingTab` once the URL is ready.
+ */
+export function openPendingExternalGeneratorTab(
+  windowRef?: Pick<Window, "open">,
+): Window | null {
+  const target =
+    windowRef ?? (typeof window === "undefined" ? undefined : window);
+  if (!target) return null;
+  return target.open("", "_blank", "noopener,noreferrer");
+}
+
+/**
  * Builds the handoff URL and, if it succeeds, opens it in a new tab.
  * Returns the same result `buildExternalGeneratorUrl` would, so a caller
  * can render an explicit error state (e.g. "too large to send") instead of
  * content silently going missing.
+ *
+ * Pass `pendingTab` (from {@link openPendingExternalGeneratorTab}, called
+ * synchronously before any `await`) when the content was built
+ * asynchronously — the tab is redirected to the built URL, or closed on
+ * failure, instead of calling `window.open` fresh (which would likely be
+ * blocked outside the original user gesture).
  */
 export function sendToExternalGenerator(
   options: ExternalGeneratorHandoffOptions & {
     windowRef?: Pick<Window, "open">;
+    pendingTab?: Window | null;
   },
 ): ExternalGeneratorHandoffResult {
   const result = buildExternalGeneratorUrl(options);
+  if (options.pendingTab !== undefined) {
+    if (result.ok) {
+      try {
+        options.pendingTab?.location.assign(result.url);
+      } catch {
+        // The tab may have been closed by the user already; nothing more to do.
+      }
+    } else {
+      options.pendingTab?.close();
+    }
+    return result;
+  }
   if (result.ok) {
     openExternalGeneratorUrl(result.url, options.windowRef);
   }

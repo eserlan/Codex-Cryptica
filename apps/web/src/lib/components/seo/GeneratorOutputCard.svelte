@@ -59,6 +59,7 @@
     onGenerateRoster,
     onOpenMemberAsCharacter,
     onSendToMonsterLabs,
+    isSendingToMonsterLabs = false,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -90,6 +91,7 @@
       data: GeneratorOutput,
     ) => void;
     onSendToMonsterLabs?: (data: GeneratorOutput) => void;
+    isSendingToMonsterLabs?: boolean;
   } = $props();
 
   import { getThemeLoadingMessages } from "generator-engine";
@@ -289,17 +291,23 @@
               <button
                 type="button"
                 onclick={() => onSendToMonsterLabs(generatedData!)}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                disabled={isSendingToMonsterLabs}
+                aria-busy={isSendingToMonsterLabs}
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
                 id="send-to-monsterlabs-btn"
                 title="Create a D&D {isItem
                   ? 'magic item'
                   : 'monster'} from this draft in MonsterLabs (opens in a new tab)"
               >
                 <span
-                  class="icon-[lucide--external-link] w-3.5 h-3.5"
+                  class="{isSendingToMonsterLabs
+                    ? 'icon-[lucide--loader-2] animate-spin'
+                    : 'icon-[lucide--external-link]'} w-3.5 h-3.5"
                   aria-hidden="true"
                 ></span>
-                Create D&D {isItem ? "Magic Item" : "Monster"}
+                {isSendingToMonsterLabs
+                  ? "Sending…"
+                  : `Create D&D ${isItem ? "Magic Item" : "Monster"}`}
               </button>
             {/if}
             <button

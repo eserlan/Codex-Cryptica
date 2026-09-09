@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   buildExternalGeneratorUrl,
   openExternalGeneratorUrl,
+  openPendingExternalGeneratorTab,
   sendToExternalGenerator,
   MAX_EXTERNAL_GENERATOR_URL_LENGTH,
 } from "./external-generator-handoff";
@@ -231,6 +232,75 @@ describe("sendToExternalGenerator", () => {
           "https://monsterlabs.app/dnd-magic-item-generator?",
         ),
       ).toBe(true);
+    }
+  });
+
+  it("redirects a pre-opened tab to the built URL instead of opening a fresh one", () => {
+    const open = vi.fn();
+    const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
+
+    const result = sendToExternalGenerator({
+      baseUrl: "https://monsterlabs.app/dnd-monster-generator",
+      paramName: "prompt",
+      content: "A cursed lantern",
+      windowRef: { open },
+      pendingTab: pendingTab as unknown as Window,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(open).not.toHaveBeenCalled();
+    expect(pendingTab.location.assign).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "https://monsterlabs.app/dnd-monster-generator?prompt=",
+      ),
+    );
+    expect(pendingTab.close).not.toHaveBeenCalled();
+  });
+
+  it("closes the pre-opened tab instead of leaving it blank when the payload fails", () => {
+    const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
+
+    const result = sendToExternalGenerator({
+      baseUrl: "https://monsterlabs.app/dnd-monster-generator",
+      paramName: "prompt",
+      content: "",
+      pendingTab: pendingTab as unknown as Window,
+    });
+
+    expect(result).toEqual({ ok: false, reason: "empty-content" });
+    expect(pendingTab.close).toHaveBeenCalledTimes(1);
+    expect(pendingTab.location.assign).not.toHaveBeenCalled();
+  });
+
+  it("tolerates a null pendingTab (e.g. the pre-open itself was blocked)", () => {
+    expect(() =>
+      sendToExternalGenerator({
+        baseUrl: "https://monsterlabs.app/dnd-monster-generator",
+        paramName: "prompt",
+        content: "A cursed lantern",
+        pendingTab: null,
+      }),
+    ).not.toThrow();
+  });
+});
+
+describe("openPendingExternalGeneratorTab", () => {
+  it("opens a blank tab synchronously", () => {
+    const open = vi.fn().mockReturnValue({ location: {}, close: vi.fn() });
+
+    const tab = openPendingExternalGeneratorTab({ open });
+
+    expect(open).toHaveBeenCalledWith("", "_blank", "noopener,noreferrer");
+    expect(tab).toBeTruthy();
+  });
+
+  it("no-ops instead of throwing when called in a non-browser context", () => {
+    vi.stubGlobal("window", undefined);
+    try {
+      expect(() => openPendingExternalGeneratorTab()).not.toThrow();
+      expect(openPendingExternalGeneratorTab()).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });

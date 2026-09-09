@@ -6,8 +6,14 @@
  */
 import {
   sendToExternalGenerator,
+  openPendingExternalGeneratorTab,
   type ExternalGeneratorHandoffResult,
 } from "$lib/utils/external-generator-handoff";
+import {
+  compressMonsterLabsDescription,
+  MONSTERLABS_PROMPT_CHAR_LIMIT,
+} from "./monsterlabs-description-compression";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 export const MONSTERLABS_MONSTER_GENERATOR_URL =
   "https://monsterlabs.app/dnd-monster-generator";
@@ -68,17 +74,59 @@ export function buildMonsterLabsPrompt(
   ].join("\n");
 }
 
-function sendMonsterLabsHandoff(
+/**
+ * Builds the prompt, compressing the description with the Oracle first if
+ * the full prompt would exceed MonsterLabs' own apparent ~1000-character
+ * limit on the `prompt` parameter (observed in practice — MonsterLabs
+ * truncates/rejects longer submissions on its end, independent of Codex's
+ * own much larger URL-length guard). The Name/Type header is preserved
+ * exactly; only the description is compressed, and only by as much as
+ * needed to fit the remaining budget. Respects the user's global AI
+ * opt-out: if AI is disabled, the description is hard-truncated to fit
+ * instead of being sent to the Oracle.
+ */
+async function buildMonsterLabsPromptWithinLimit(
+  source: MonsterLabsHandoffSource,
+  limit: number = MONSTERLABS_PROMPT_CHAR_LIMIT,
+): Promise<string> {
+  const fullPrompt = buildMonsterLabsPrompt(source);
+  if (!fullPrompt || fullPrompt.length <= limit) return fullPrompt;
+
+  const description = source.description.trim();
+  const header = fullPrompt.slice(0, fullPrompt.length - description.length);
+  const descriptionBudget = Math.max(0, limit - header.length);
+  const compressedDescription = await compressMonsterLabsDescription(
+    description,
+    descriptionBudget,
+    undefined,
+    !discoveryPolicyStore.aiDisabled,
+  );
+  return header + compressedDescription;
+}
+
+async function sendMonsterLabsHandoff(
   baseUrl: string,
   source: MonsterLabsHandoffSource,
   windowRef?: Pick<Window, "open">,
-): ExternalGeneratorHandoffResult {
+): Promise<ExternalGeneratorHandoffResult> {
+  if (!source.description.trim()) {
+    return { ok: false, reason: "empty-content" };
+  }
+
+  // Opened synchronously (still inside the caller's click handler, before
+  // this function's first `await`) so the browser attributes it to the
+  // user gesture instead of blocking it as a popup once the async
+  // compression pass below has run.
+  const pendingTab = openPendingExternalGeneratorTab(windowRef);
+
+  const content = await buildMonsterLabsPromptWithinLimit(source);
   return sendToExternalGenerator({
     baseUrl,
     paramName: PROMPT_PARAM_NAME,
-    content: buildMonsterLabsPrompt(source),
+    content,
     extraParams: ATTRIBUTION_PARAMS,
     windowRef,
+    pendingTab,
   });
 }
 
@@ -88,10 +136,10 @@ function sendMonsterLabsHandoff(
  * helper so a caller can surface an explicit error instead of content
  * silently going missing.
  */
-export function sendToMonsterLabsMonsterGenerator(
+export async function sendToMonsterLabsMonsterGenerator(
   source: MonsterLabsHandoffSource,
   windowRef?: Pick<Window, "open">,
-): ExternalGeneratorHandoffResult {
+): Promise<ExternalGeneratorHandoffResult> {
   return sendMonsterLabsHandoff(
     MONSTERLABS_MONSTER_GENERATOR_URL,
     source,
@@ -105,10 +153,10 @@ export function sendToMonsterLabsMonsterGenerator(
  * caller can surface an explicit error instead of content silently going
  * missing.
  */
-export function sendToMonsterLabsMagicItemGenerator(
+export async function sendToMonsterLabsMagicItemGenerator(
   source: MonsterLabsHandoffSource,
   windowRef?: Pick<Window, "open">,
-): ExternalGeneratorHandoffResult {
+): Promise<ExternalGeneratorHandoffResult> {
   return sendMonsterLabsHandoff(
     MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
     source,
@@ -139,10 +187,10 @@ export function getMonsterLabsActionLabel(type: string | undefined): string {
  * generator (monster vs magic item) in a new tab. The single entry point UI
  * actions should call once gated by `isMonsterLabsHandoffEligibleType`.
  */
-export function sendEntityToMonsterLabs(
+export async function sendEntityToMonsterLabs(
   source: MonsterLabsHandoffSource,
   windowRef?: Pick<Window, "open">,
-): ExternalGeneratorHandoffResult {
+): Promise<ExternalGeneratorHandoffResult> {
   return isMonsterLabsItemEligibleType(source.type)
     ? sendToMonsterLabsMagicItemGenerator(source, windowRef)
     : sendToMonsterLabsMonsterGenerator(source, windowRef);
