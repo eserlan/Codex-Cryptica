@@ -33,8 +33,8 @@
   import {
     isMonsterLabsHandoffEligibleType,
     getMonsterLabsActionLabel,
-    sendEntityToMonsterLabs,
   } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
   import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
@@ -84,49 +84,24 @@
     setTimeout(() => (shelvedJustNow = false), 2000);
   };
 
-  let isSendingToMonsterLabs = $state(false);
-  let monsterLabsBlockedUrl = $state<string | null>(null);
-
   /**
    * Hands this entity's content off to MonsterLabs' D&D monster or magic
    * item generator in a new tab (#2871, #2872). Read-only against this
-   * vault, like Send to Shelf. A description over MonsterLabs' own prompt
-   * budget is compressed by the Oracle first, which is why this awaits —
-   * the modal shows a "preparing" state for that gap in this tab rather
-   * than a blank placeholder tab stealing focus for the duration.
+   * vault, like Send to Shelf. The user confirms in a modal first; only
+   * after that confirm does the Oracle compression call run (shown as its
+   * own "loading" state), and MonsterLabs opens once the URL is ready.
    */
-  const handleSendToMonsterLabs = async () => {
-    if (!entity || isSendingToMonsterLabs) return;
-    isSendingToMonsterLabs = true;
-    monsterLabsBlockedUrl = null;
-    const result = await sendEntityToMonsterLabs({
+  const monsterLabsFlow = createMonsterLabsHandoffFlow();
+  const handleSendToMonsterLabs = () => {
+    if (!entity) return;
+    monsterLabsFlow.start({
       name: entity.title,
       type: entity.type,
       description: [entity.content, entity.lore]
         .filter((part): part is string => Boolean(part?.trim()))
         .join("\n\n"),
     });
-    if (!result.ok) {
-      notificationStore.notify(
-        result.reason === "url-too-long"
-          ? "This entity is too long to send to MonsterLabs."
-          : "Add some content before sending to MonsterLabs.",
-        "error",
-      );
-      isSendingToMonsterLabs = false;
-      return;
-    }
-    if (result.popupBlocked) {
-      monsterLabsBlockedUrl = result.url;
-      return;
-    }
-    isSendingToMonsterLabs = false;
   };
-
-  function handleOpenBlockedMonsterLabsTab() {
-    isSendingToMonsterLabs = false;
-    monsterLabsBlockedUrl = null;
-  }
 
   const handleCopyGuestLink = async () => {
     if (!guestVault.publishId || !entity) return;
@@ -396,8 +371,8 @@
           <button
             type="button"
             onclick={handleSendToMonsterLabs}
-            disabled={isSendingToMonsterLabs}
-            aria-busy={isSendingToMonsterLabs}
+            disabled={monsterLabsFlow.open}
+            aria-busy={monsterLabsFlow.open}
             class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest disabled:opacity-50"
             title="{getMonsterLabsActionLabel(
               entity.type,
@@ -407,7 +382,7 @@
           >
             <span
               aria-hidden="true"
-              class="{isSendingToMonsterLabs
+              class="{monsterLabsFlow.open
                 ? 'icon-[lucide--loader-2] animate-spin'
                 : 'icon-[lucide--external-link]'} w-4 h-4"
             ></span>
@@ -595,8 +570,11 @@
 </header>
 
 <MonsterLabsSendingModal
-  open={isSendingToMonsterLabs}
-  entityLabel={entity?.title}
-  blockedUrl={monsterLabsBlockedUrl}
-  onOpenBlocked={handleOpenBlockedMonsterLabsTab}
+  open={monsterLabsFlow.open}
+  state={monsterLabsFlow.state}
+  entityLabel={monsterLabsFlow.entityLabel}
+  url={monsterLabsFlow.url}
+  onConfirm={monsterLabsFlow.confirm}
+  onOpen={monsterLabsFlow.close}
+  onClose={monsterLabsFlow.close}
 />

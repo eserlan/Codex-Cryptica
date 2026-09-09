@@ -405,18 +405,21 @@ describe("DetailHeader MonsterLabs handoff", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("opens the magic item generator for an item entity", async () => {
-    // The handoff no longer pre-opens a blank tab — it shows the "preparing"
-    // modal in this tab while building the (possibly AI-compressed) prompt,
-    // then opens MonsterLabs fresh with the final URL in one window.open call.
+  it("opens the magic item generator for an item entity, only after confirming in the modal", async () => {
+    // Clicking the header button no longer sends anything immediately — it
+    // opens a confirm modal. Only clicking "Go to MonsterLabs" inside that
+    // modal builds the (possibly AI-compressed) prompt and opens the tab.
     const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
-    const { getAllByTestId } = renderEntity({
+    const { getAllByTestId, findByTestId } = renderEntity({
       type: "item",
       title: "Crown of the Last Ember",
       content: "A tarnished circlet that hums when a fire is near.",
     });
 
     await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+    expect(openSpy).not.toHaveBeenCalled();
+
+    await fireEvent.click(await findByTestId("monsterlabs-confirm-button"));
 
     expect(openSpy).toHaveBeenCalledTimes(1);
     const [url] = openSpy.mock.calls[0];
@@ -431,15 +434,16 @@ describe("DetailHeader MonsterLabs handoff", () => {
     openSpy.mockRestore();
   });
 
-  it("opens MonsterLabs with the entity's name, type, and content", async () => {
+  it("opens MonsterLabs with the entity's name, type, and content after confirming", async () => {
     const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
-    const { getAllByTestId } = renderEntity({
+    const { getAllByTestId, findByTestId } = renderEntity({
       type: "creature",
       title: "Ash-Eater Varkesh",
       content: "A soot-caked horror.",
     });
 
     await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+    await fireEvent.click(await findByTestId("monsterlabs-confirm-button"));
 
     expect(openSpy).toHaveBeenCalledTimes(1);
     const [url, target, features] = openSpy.mock.calls[0];
@@ -456,20 +460,27 @@ describe("DetailHeader MonsterLabs handoff", () => {
     openSpy.mockRestore();
   });
 
-  it("keeps the modal open with a manual link when the deferred window.open is blocked", async () => {
+  it("clears the busy state even when window.open returns null (noopener always returns null)", async () => {
+    // window.open's return value is not a success/failure signal once
+    // "noopener" is passed — treating a null return as "blocked" would
+    // report every successful send as a failure. See
+    // external-generator-handoff.ts for the full explanation. The "ready"
+    // state's own open link is the real fallback for a genuinely blocked
+    // popup, not busy-state detection.
     const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
-    const { getAllByTestId, findByText } = renderEntity({
+    const { getAllByTestId, findByTestId, findAllByTestId } = renderEntity({
       type: "creature",
       title: "Ash-Eater Varkesh",
       content: "A soot-caked horror.",
     });
 
     await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+    await fireEvent.click(await findByTestId("monsterlabs-confirm-button"));
 
-    const link = (await findByText("Open MonsterLabs")) as HTMLAnchorElement;
-    expect(link.href).toContain(
-      "https://monsterlabs.app/dnd-monster-generator",
-    );
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(await findByTestId("monsterlabs-open-link")).toBeTruthy();
+    const [button] = await findAllByTestId("send-to-monsterlabs-button");
+    expect(button.getAttribute("aria-busy")).toBe("true");
 
     openSpy.mockRestore();
   });

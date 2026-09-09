@@ -3,74 +3,100 @@ import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import MonsterLabsSendingModal from "./MonsterLabsSendingModal.svelte";
 
+const noop = () => {};
+
 describe("MonsterLabsSendingModal", () => {
   it("is not rendered when closed", () => {
-    render(MonsterLabsSendingModal, { open: false });
+    render(MonsterLabsSendingModal, {
+      open: false,
+      state: "confirm",
+      onConfirm: noop,
+      onOpen: noop,
+      onClose: noop,
+    });
 
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("shows a busy dialog naming the entity while sending", () => {
+  it("asks for confirmation before doing anything, naming the entity", () => {
     render(MonsterLabsSendingModal, {
       open: true,
+      state: "confirm",
       entityLabel: "Ash-Eater Varkesh",
+      onConfirm: noop,
+      onOpen: noop,
+      onClose: noop,
     });
 
     const dialog = screen.getByRole("dialog", {
-      name: "Preparing MonsterLabs instruction…",
+      name: "Send to MonsterLabs?",
     });
     expect(dialog).toBeTruthy();
-    expect(
-      screen.getByText(/Getting Ash-Eater Varkesh ready for MonsterLabs\./),
-    ).toBeTruthy();
+    expect(screen.getByText(/sends Ash-Eater Varkesh/)).toBeTruthy();
+    expect(screen.getByTestId("monsterlabs-confirm-button")).toBeTruthy();
+  });
+
+  it("calls onConfirm when the confirm button is clicked", async () => {
+    const onConfirm = vi.fn();
+    render(MonsterLabsSendingModal, {
+      open: true,
+      state: "confirm",
+      entityLabel: "Ash-Eater Varkesh",
+      onConfirm,
+      onOpen: noop,
+      onClose: noop,
+    });
+
+    await fireEvent.click(screen.getByTestId("monsterlabs-confirm-button"));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a busy dialog naming the entity while the Oracle call runs", () => {
+    render(MonsterLabsSendingModal, {
+      open: true,
+      state: "loading",
+      entityLabel: "Ash-Eater Varkesh",
+      onConfirm: noop,
+      onOpen: noop,
+      onClose: noop,
+    });
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Asking the Oracle…",
+    });
+    expect(dialog).toBeTruthy();
+    expect(screen.getByText(/Shortening Ash-Eater Varkesh/)).toBeTruthy();
   });
 
   it("falls back to a generic message when no entity label is given", () => {
-    render(MonsterLabsSendingModal, { open: true });
-
-    expect(
-      screen.getByText(/Getting this ready for MonsterLabs\./),
-    ).toBeTruthy();
-  });
-
-  it("renders a non-interactive backdrop with no dismiss control", () => {
-    render(MonsterLabsSendingModal, { open: true });
-
-    // The backdrop must not be exposed as an actionable control — an
-    // accessible no-op button would confuse screen-reader users.
-    expect(
-      screen.queryByLabelText("Preparing MonsterLabs instruction"),
-    ).toBeNull();
-    expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.getByRole("dialog")).toBeTruthy();
-  });
-
-  it("switches to a manual open link once blockedUrl is set", () => {
     render(MonsterLabsSendingModal, {
       open: true,
-      entityLabel: "Ash-Eater Varkesh",
-      blockedUrl: "https://monsterlabs.app/dnd-monster-generator?prompt=x",
+      state: "confirm",
+      onConfirm: noop,
+      onOpen: noop,
+      onClose: noop,
     });
 
-    expect(screen.queryByText("Preparing MonsterLabs instruction…")).toBeNull();
-    const link = screen.getByText("Open MonsterLabs") as HTMLAnchorElement;
+    expect(screen.getByText(/sends this/)).toBeTruthy();
+  });
+
+  it("shows an open link once ready, and cannot be dismissed while loading", () => {
+    render(MonsterLabsSendingModal, {
+      open: true,
+      state: "ready",
+      entityLabel: "Ash-Eater Varkesh",
+      url: "https://monsterlabs.app/dnd-monster-generator?prompt=x",
+      onConfirm: noop,
+      onOpen: noop,
+      onClose: noop,
+    });
+
+    const link = screen.getByTestId(
+      "monsterlabs-open-link",
+    ) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe(
       "https://monsterlabs.app/dnd-monster-generator?prompt=x",
     );
     expect(link.getAttribute("target")).toBe("_blank");
-    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
-  });
-
-  it("calls onOpenBlocked when the manual link is followed", async () => {
-    const onOpenBlocked = vi.fn();
-    render(MonsterLabsSendingModal, {
-      open: true,
-      blockedUrl: "https://monsterlabs.app/dnd-monster-generator?prompt=x",
-      onOpenBlocked,
-    });
-
-    await fireEvent.click(screen.getByText("Open MonsterLabs"));
-
-    expect(onOpenBlocked).toHaveBeenCalledTimes(1);
   });
 });

@@ -16,7 +16,7 @@ const SYSTEM_INSTRUCTION =
   "You compress tabletop RPG character, creature, and item descriptions for a partner tool that turns fiction into Dungeons & Dragons 5th edition game mechanics. Keep the concrete, mechanically relevant details: appearance, notable abilities or powers, personality, and history. Drop repetition and flourish. Output plain prose only — no headings, no markdown, no preamble, no explanation of what you did.";
 
 function buildUserPrompt(description: string, limit: number): string {
-  return `Rewrite the following description so it fits within ${limit} characters while staying useful for a D&D stat block generator. Output only the rewritten description, nothing else.\n\n${description}`;
+  return `Rewrite the following description so it fits within ${limit} characters while staying useful for a D&D stat block generator. Stay comfortably under the limit — end on a complete sentence rather than running up against it. Output only the rewritten description, nothing else.\n\n${description}`;
 }
 
 /** Cuts at the nearest earlier word boundary rather than mid-word. Reserves one character for the trailing ellipsis so the result never exceeds `limit`. A `limit` of 0 leaves no room for even the ellipsis, so it returns an empty string. */
@@ -58,8 +58,14 @@ export async function compressMonsterLabsDescription(
   if (!allowAi) return hardTruncate(description, limit);
 
   try {
+    // Models are unreliable at hitting an exact character count and tend to
+    // overshoot. Asking for a target below the real limit means an overshoot
+    // still usually lands under `limit`, so the fallback truncation below —
+    // which would otherwise chop the model's own prose off mid-sentence —
+    // rarely has to fire.
+    const target = Math.max(1, Math.round(limit * 0.85));
     const compressed = (
-      await runModel(SYSTEM_INSTRUCTION, buildUserPrompt(description, limit))
+      await runModel(SYSTEM_INSTRUCTION, buildUserPrompt(description, target))
     ).trim();
     if (compressed && compressed.length <= limit) return compressed;
     // The model returned nothing usable, or ignored the limit — fall back

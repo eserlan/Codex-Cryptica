@@ -70,7 +70,7 @@
     clipboardService as defaultClipboardService,
     type ClipboardService,
   } from "$lib/services/ClipboardService";
-  import { sendEntityToMonsterLabs } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -733,50 +733,22 @@
     }
   }
 
-  let isSendingToMonsterLabs = $state(false);
-  let monsterLabsBlockedUrl = $state<string | null>(null);
-
-  // A description over MonsterLabs' own prompt budget is compressed by the
-  // Oracle first, which is why this awaits — the modal shows a "preparing"
-  // state for that gap in this tab rather than a blank placeholder tab
-  // stealing focus for the duration.
-  async function handleSendToMonsterLabs(data: GeneratorOutput) {
-    if (isSendingToMonsterLabs) return;
+  // The user confirms in a modal first; only after that confirm does the
+  // Oracle compression call run (shown as its own "loading" state), and
+  // MonsterLabs opens once the URL is ready.
+  const monsterLabsFlow = createMonsterLabsHandoffFlow();
+  function handleSendToMonsterLabs(data: GeneratorOutput) {
     trackPublicGeneratorAction("copy", {
       generator_type: generatorType,
       copy_target: "monsterlabs",
     });
-
-    isSendingToMonsterLabs = true;
-    monsterLabsBlockedUrl = null;
-    const result = await sendEntityToMonsterLabs({
+    monsterLabsFlow.start({
       name: data.title,
       type: data.type,
       description: [documentLayout.content, documentLayout.lore]
         .filter((part): part is string => Boolean(part?.trim()))
         .join("\n\n"),
     });
-
-    if (!result.ok) {
-      errorMessage =
-        result.reason === "url-too-long"
-          ? "This draft is too long to send to MonsterLabs."
-          : "Add some content before sending to MonsterLabs.";
-      isSendingToMonsterLabs = false;
-      return;
-    }
-
-    errorMessage = null;
-    if (result.popupBlocked) {
-      monsterLabsBlockedUrl = result.url;
-      return;
-    }
-    isSendingToMonsterLabs = false;
-  }
-
-  function handleOpenBlockedMonsterLabsTab() {
-    isSendingToMonsterLabs = false;
-    monsterLabsBlockedUrl = null;
   }
 
   async function handleCopySection(sectionId: string, markdown: string) {
@@ -1179,7 +1151,7 @@
         onSendToMonsterLabs={userGenerationSucceeded
           ? handleSendToMonsterLabs
           : undefined}
-        {isSendingToMonsterLabs}
+        isSendingToMonsterLabs={monsterLabsFlow.open}
       />
     </div>
 
@@ -1258,10 +1230,13 @@
   <LoreMergeModal />
 
   <MonsterLabsSendingModal
-    open={isSendingToMonsterLabs}
-    entityLabel={generatedData?.title}
-    blockedUrl={monsterLabsBlockedUrl}
-    onOpenBlocked={handleOpenBlockedMonsterLabsTab}
+    open={monsterLabsFlow.open}
+    state={monsterLabsFlow.state}
+    entityLabel={monsterLabsFlow.entityLabel}
+    url={monsterLabsFlow.url}
+    onConfirm={monsterLabsFlow.confirm}
+    onOpen={monsterLabsFlow.close}
+    onClose={monsterLabsFlow.close}
   />
 </div>
 
