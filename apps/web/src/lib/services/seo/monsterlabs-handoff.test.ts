@@ -30,21 +30,23 @@ import { compressMonsterLabsDescription } from "./monsterlabs-description-compre
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 /**
- * A `window.open` stub that returns a fake pre-opened tab, mirroring the
- * real pending-tab flow: the handoff opens a blank tab synchronously, then
- * redirects it via `location.assign` once the (possibly AI-compressed)
- * prompt is ready.
+ * A `window.open` stub. The handoff no longer pre-opens a blank tab (that
+ * traded a guaranteed-open for a blank tab stealing focus for the whole
+ * async compression gap) — it now opens fresh, once, with the final URL,
+ * after the (possibly AI-compressed) prompt is ready. Pass `returns: null`
+ * to simulate a browser blocking that deferred open.
  */
-function stubWindow() {
-  const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
-  const open = vi.fn().mockReturnValue(pendingTab);
-  return { open, pendingTab };
+function stubWindow(options: { returns?: Window | null } = {}) {
+  const open = vi
+    .fn()
+    .mockReturnValue(
+      options.returns === undefined ? ({} as Window) : options.returns,
+    );
+  return { open };
 }
 
-function sentUrl(pendingTab: {
-  location: { assign: ReturnType<typeof vi.fn> };
-}) {
-  const call = pendingTab.location.assign.mock.calls[0];
+function sentUrl(open: ReturnType<typeof vi.fn>) {
+  const call = open.mock.calls[0];
   return call ? new URL(call[0] as string) : null;
 }
 
@@ -119,7 +121,7 @@ describe("buildMonsterLabsPrompt", () => {
 
 describe("sendToMonsterLabsMonsterGenerator", () => {
   it("opens the monster generator with the prompt and attribution params", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
 
     const result = await sendToMonsterLabsMonsterGenerator(
       {
@@ -132,7 +134,7 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
 
     expect(result.ok).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url).not.toBeNull();
     expect(url!.origin + url!.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
     expect(url!.searchParams.get("prompt")).toBe(
@@ -144,7 +146,7 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
   it("survives markdown, unicode, and special characters in the description", async () => {
     const description =
       "# Notes\n\n*Cunning & ruthless* — wields a +2 blade\nHP: 120 | 世界";
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const result = await sendToMonsterLabsMonsterGenerator(
       {
         name: "Grand Vizier",
@@ -155,14 +157,14 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     );
 
     expect(result.ok).toBe(true);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url!.searchParams.get("prompt")).toBe(
       `Name: Grand Vizier\nType: Character\n\n${description}`,
     );
   });
 
   it("reports an explicit failure instead of opening a tab for a blank description", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const result = await sendToMonsterLabsMonsterGenerator(
       {
         name: "Empty Shell",
@@ -174,14 +176,13 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
 
     expect(result.ok).toBe(false);
     expect(open).not.toHaveBeenCalled();
-    expect(pendingTab.location.assign).not.toHaveBeenCalled();
     if (!result.ok) {
       expect(result.reason).toBe("empty-content");
     }
   });
 
   it("compresses a description over MonsterLabs' own ~1000-char budget before sending it", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const longDescription = "a".repeat(1500);
     const compressMock = vi.mocked(compressMonsterLabsDescription);
     compressMock.mockClear();
@@ -199,14 +200,14 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     expect(result.ok).toBe(true);
     expect(compressMock).toHaveBeenCalledTimes(1);
     expect(compressMock.mock.calls[0][0]).toBe(longDescription);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url!.searchParams.get("prompt")).toBe(
       "Name: Wall of Text\nType: Creature\n\nA much shorter horror description.",
     );
   });
 
   it("tells the compressor not to call the Oracle when the user has disabled AI", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const longDescription = "a".repeat(1500);
     const compressMock = vi.mocked(compressMonsterLabsDescription);
     compressMock.mockClear();
@@ -226,7 +227,7 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
       expect(result.ok).toBe(true);
       expect(compressMock).toHaveBeenCalledTimes(1);
       expect(compressMock.mock.calls[0][3]).toBe(false);
-      const url = sentUrl(pendingTab);
+      const url = sentUrl(open);
       expect(url!.searchParams.get("prompt")).toBe(
         "Name: Wall of Text\nType: Creature\n\nHard-truncated fallback description.",
       );
@@ -249,7 +250,7 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
   });
 
   it("still reports url-too-long as a defence-in-depth guard even if compression somehow returns an oversized result", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const compressMock = vi.mocked(compressMonsterLabsDescription);
     compressMock.mockClear();
     compressMock.mockResolvedValueOnce("b".repeat(9000));
@@ -267,14 +268,32 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     if (!result.ok) {
       expect(result.reason).toBe("url-too-long");
     }
-    expect(pendingTab.close).toHaveBeenCalledTimes(1);
-    expect(pendingTab.location.assign).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("reports popupBlocked instead of silently losing the tab when window.open is blocked", async () => {
+    const { open } = stubWindow({ returns: null });
+
+    const result = await sendToMonsterLabsMonsterGenerator(
+      {
+        name: "Ash-Eater Varkesh",
+        type: "creature",
+        description: "A soot-caked horror.",
+      },
+      { open },
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.popupBlocked).toBe(true);
+      expect(result.url).toContain(MONSTERLABS_MONSTER_GENERATOR_URL);
+    }
   });
 });
 
 describe("sendToMonsterLabsMagicItemGenerator", () => {
   it("opens the magic item generator with the prompt and attribution params", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
 
     const result = await sendToMonsterLabsMagicItemGenerator(
       {
@@ -287,7 +306,7 @@ describe("sendToMonsterLabsMagicItemGenerator", () => {
 
     expect(result.ok).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url!.origin + url!.pathname).toBe(
       MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
     );
@@ -300,7 +319,7 @@ describe("sendToMonsterLabsMagicItemGenerator", () => {
   it("survives markdown, unicode, and special characters in the description", async () => {
     const description =
       "# Notes\n\n*Cursed & coveted* — grants +2 to fire saves\nWeight: 1 lb | 世界";
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const result = await sendToMonsterLabsMagicItemGenerator(
       {
         name: "Crown of the Last Ember",
@@ -311,7 +330,7 @@ describe("sendToMonsterLabsMagicItemGenerator", () => {
     );
 
     expect(result.ok).toBe(true);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url!.searchParams.get("prompt")).toBe(
       `Name: Crown of the Last Ember\nType: Item\n\n${description}`,
     );
@@ -369,7 +388,7 @@ describe("getMonsterLabsActionLabel", () => {
 
 describe("sendEntityToMonsterLabs", () => {
   it("routes an item to the magic item generator", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const result = await sendEntityToMonsterLabs(
       {
         name: "Crown of the Last Ember",
@@ -380,14 +399,14 @@ describe("sendEntityToMonsterLabs", () => {
     );
 
     expect(result.ok).toBe(true);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url!.origin + url!.pathname).toBe(
       MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
     );
   });
 
   it("routes a character or creature to the monster generator", async () => {
-    const { open, pendingTab } = stubWindow();
+    const { open } = stubWindow();
     const result = await sendEntityToMonsterLabs(
       {
         name: "Ash-Eater Varkesh",
@@ -398,7 +417,7 @@ describe("sendEntityToMonsterLabs", () => {
     );
 
     expect(result.ok).toBe(true);
-    const url = sentUrl(pendingTab);
+    const url = sentUrl(open);
     expect(url!.origin + url!.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
   });
 

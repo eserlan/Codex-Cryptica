@@ -30,7 +30,7 @@ export interface ExternalGeneratorHandoffOptions {
 }
 
 export type ExternalGeneratorHandoffResult =
-  | { ok: true; url: string }
+  | { ok: true; url: string; popupBlocked?: boolean }
   | { ok: false; reason: "empty-content" }
   | { ok: false; reason: "invalid-base-url" }
   | { ok: false; reason: "unsupported-protocol" }
@@ -133,10 +133,20 @@ export function openPendingExternalGeneratorTab(
  * content silently going missing.
  *
  * Pass `pendingTab` (from {@link openPendingExternalGeneratorTab}, called
- * synchronously before any `await`) when the content was built
- * asynchronously — the tab is redirected to the built URL, or closed on
- * failure, instead of calling `window.open` fresh (which would likely be
- * blocked outside the original user gesture).
+ * synchronously before any `await`) when a caller wants the tab open
+ * throughout an async content-building step — the tab is redirected to the
+ * built URL, or closed on failure. This trades a synchronous-open guarantee
+ * for a blank tab that steals focus for the whole async gap; most callers
+ * that show their own "preparing…" UI in the meantime should omit
+ * `pendingTab` instead and open fresh once `content` is ready.
+ *
+ * Without `pendingTab`, the tab opens fresh after the URL is built. A
+ * user-gesture `window.open` called after crossing an `await` is not
+ * guaranteed to succeed in every browser (Safari in particular can block
+ * it), so the `ok: true` result carries `popupBlocked: true` when the open
+ * call returned `null` — callers should surface a manual "open" link/button
+ * in that case (a real click is itself a fresh gesture, so a retry from
+ * there will not be blocked) rather than assuming the tab is there.
  */
 export function sendToExternalGenerator(
   options: ExternalGeneratorHandoffOptions & {
@@ -147,8 +157,11 @@ export function sendToExternalGenerator(
   const result = buildExternalGeneratorUrl(options);
   if (options.pendingTab !== undefined) {
     if (result.ok) {
+      if (options.pendingTab === null) {
+        return { ...result, popupBlocked: true };
+      }
       try {
-        options.pendingTab?.location.assign(result.url);
+        options.pendingTab.location.assign(result.url);
       } catch {
         // The tab may have been closed by the user already; nothing more to do.
       }
@@ -158,7 +171,8 @@ export function sendToExternalGenerator(
     return result;
   }
   if (result.ok) {
-    openExternalGeneratorUrl(result.url, options.windowRef);
+    const opened = openExternalGeneratorUrl(result.url, options.windowRef);
+    return { ...result, popupBlocked: opened === null };
   }
   return result;
 }
