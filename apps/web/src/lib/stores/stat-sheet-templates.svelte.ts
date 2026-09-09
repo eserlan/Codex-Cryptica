@@ -149,7 +149,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "sec_identity", label: "Identity", type: "heading" },
       { id: "size", label: "Size", type: "text" },
       { id: "creature_type", label: "Creature Type", type: "text" },
-      { id: "subtype", label: "Subtype / Tags", type: "text" },
+      { id: "subtype", label: "Subtype / Qualifiers", type: "text" },
       { id: "alignment", label: "Alignment", type: "text" },
       { id: "cr", label: "Challenge Rating", type: "text" },
       { id: "proficiency_bonus", label: "Proficiency Bonus", type: "number" },

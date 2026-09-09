@@ -39,7 +39,7 @@ authoritative type list. Relevant to this template:
 | ------------------- | ------ | --------------------------------------------------------------------------- |
 | `size`              | text   | e.g. "Large"                                                                |
 | `creature_type`     | text   | e.g. "Dragon"                                                               |
-| `subtype`           | text   | Subtype/tags, e.g. "shapechanger"                                           |
+| `subtype`           | text   | Subtype/qualifiers, e.g. "shapechanger"                                     |
 | `alignment`         | text   | Optional                                                                    |
 | `cr`                | text   | Challenge Rating — text, not number, to hold fractional CRs (1/8, 1/4, 1/2) |
 | `proficiency_bonus` | number |                                                                             |
