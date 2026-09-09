@@ -299,6 +299,29 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "example-lowmere-rumour-table",
+    pageKind: "example",
+    canonicalPath: "/examples/lowmere-six-words-rumour-table",
+    primaryIntent: "rpg rumour table example",
+    intentAliases: [
+      "example of a generated rpg rumour table",
+      "sample tabletop rumours",
+      "fantasy rumour table example",
+    ],
+    audience: "Game masters preparing a local situation",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A complete six-entry rumour table with player-facing gossip, separate GM truth notes, named sources, and one connected Lowmere situation that changes when the party acts.",
+    parentCluster: "quest-design",
+    relatedIntents: [
+      "generator-rumour",
+      "answer-useful-rpg-rumours",
+      "answer-create-fantasy-town-rumours",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "example-dawnheart-diadem",
     pageKind: "example",
     canonicalPath: "/examples/the-dawnheart-diadem-fantasy-heist",

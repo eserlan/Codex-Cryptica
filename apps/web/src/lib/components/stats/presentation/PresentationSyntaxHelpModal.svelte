@@ -59,8 +59,8 @@
           >.
         </p>
         <p class="text-theme-muted text-[11px]">
-          In the Visual Builder, right-click a field chip to choose a
-          compatible display mode or hide its label.
+          In the Visual Builder, right-click a field chip to choose a compatible
+          display mode or hide its label.
         </p>
         <div
           class="font-mono text-[11px] space-y-1 bg-theme-bg p-2 rounded border border-theme-border"
@@ -71,8 +71,7 @@
           </div>
           <div>
             <span class="text-theme-primary">[ac:prominent]</span>
-            <span class="text-theme-muted"
-              >→ Prominent / large score badge</span
+            <span class="text-theme-muted">→ Prominent / large score badge</span
             >
           </div>
           <div>
@@ -132,11 +131,9 @@
                 >
               </tr>
               <tr>
-                <td class="py-1 px-1 text-theme-primary font-bold"
-                  >prominent</td
+                <td class="py-1 px-1 text-theme-primary font-bold">prominent</td
                 >
-                <td class="py-1 px-1 text-theme-muted"
-                  >number, dice, counter</td
+                <td class="py-1 px-1 text-theme-muted">number, dice, counter</td
                 >
                 <td class="py-1 px-1 font-sans">Big, bold stat score</td>
               </tr>
@@ -145,36 +142,26 @@
                   >current-max</td
                 >
                 <td class="py-1 px-1 text-theme-muted">counter</td>
-                <td class="py-1 px-1 font-sans"
-                  >Counter badge (e.g. 12 / 20)</td
+                <td class="py-1 px-1 font-sans">Counter badge (e.g. 12 / 20)</td
                 >
               </tr>
               <tr>
-                <td class="py-1 px-1 text-theme-primary font-bold">counter</td
-                >
+                <td class="py-1 px-1 text-theme-primary font-bold">counter</td>
                 <td class="py-1 px-1 text-theme-muted">counter</td>
-                <td class="py-1 px-1 font-sans"
-                  >Interactive stepper (— / +)</td
-                >
+                <td class="py-1 px-1 font-sans">Interactive stepper (— / +)</td>
               </tr>
               <tr>
-                <td class="py-1 px-1 text-theme-primary font-bold"
-                  >progress</td
-                >
+                <td class="py-1 px-1 text-theme-primary font-bold">progress</td>
                 <td class="py-1 px-1 text-theme-muted">counter</td>
                 <td class="py-1 px-1 font-sans">Resource progress bar</td>
               </tr>
               <tr>
-                <td class="py-1 px-1 text-theme-primary font-bold"
-                  >checkbox</td
-                >
+                <td class="py-1 px-1 text-theme-primary font-bold">checkbox</td>
                 <td class="py-1 px-1 text-theme-muted">text</td>
                 <td class="py-1 px-1 font-sans">Checkable toggle box</td>
               </tr>
               <tr>
-                <td class="py-1 px-1 text-theme-primary font-bold"
-                  >tag-list</td
-                >
+                <td class="py-1 px-1 text-theme-primary font-bold">tag-list</td>
                 <td class="py-1 px-1 text-theme-muted">text</td>
                 <td class="py-1 px-1 font-sans">Comma-separated pill tags</td>
               </tr>
@@ -252,8 +239,8 @@
           5. Markdown Tables
         </h4>
         <p class="text-theme-muted text-[11px]">
-          Use standard GFM Markdown tables to embed rollable attacks or stats
-          in table rows.
+          Use standard GFM Markdown tables to embed rollable attacks or stats in
+          table rows.
         </p>
         <pre
           class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">

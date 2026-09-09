@@ -9,9 +9,7 @@ describe("PresentationSyntaxHelpModal", () => {
   it("renders the syntax guide content", () => {
     render(PresentationSyntaxHelpModal, { props: { onClose: vi.fn() } });
 
-    expect(
-      screen.getByTestId("presentation-syntax-help-modal"),
-    ).toBeTruthy();
+    expect(screen.getByTestId("presentation-syntax-help-modal")).toBeTruthy();
     expect(
       screen.getByText(
         "In the Visual Builder, right-click a field chip to choose a compatible display mode or hide its label.",

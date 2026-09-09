@@ -121,6 +121,7 @@ export const howDoYouCreateQuestHooksWithoutRailroading: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "how-do-you-run-a-mystery-without-railroading",
+    "how-do-you-generate-useful-rpg-rumours",
   ],
   discovery: {
     id: "answer-quest-hooks-without-railroading",

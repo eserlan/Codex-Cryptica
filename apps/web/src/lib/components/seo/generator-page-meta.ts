@@ -413,7 +413,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Rumour Generator",
     eyebrow: "Rumour Generator",
     introText:
-      "Create a d6 table of six local rumours the party can overhear and choose to chase. Every rumour names a real lead; the truth behind it stays hidden in the GM notes until someone investigates.",
+      "Create a d6 table of six local rumours the party can overhear and choose to chase. Four are essentially true, one is exaggerated, and one is a dangerous misconception. Every rumour names a real lead; the truth stays hidden in GM notes until someone investigates.",
     canonicalPath: "/generators/rumour",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-rumour.jpg",
@@ -421,8 +421,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "Codex Cryptica Rumour Generator showing a d6 table of local rumours with a player-facing lead and source, and a GM-only truth rail",
     keywords: [
       "rpg rumour generator",
+      "rpg rumor generator",
       "fantasy rumour generator",
       "tavern rumour generator",
+      "tavern rumor generator",
       "dnd rumour generator",
       "random rumours for a town",
       "fantasy town rumours",
@@ -460,6 +462,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/generators/news-sheet-generator",
         label: "News Sheet Generator",
+      },
+      {
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "How to generate useful RPG rumours",
+      },
+      {
+        href: "/examples/lowmere-six-words-rumour-table",
+        label: "Lowmere rumour table example",
       },
     ],
   },

@@ -507,6 +507,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-generate-useful-rpg-rumours</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -748,6 +753,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-breakwater-vault-space-western-heist</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/lowmere-six-words-rumour-table</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

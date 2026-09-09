@@ -226,7 +226,7 @@ if (fs.existsSync(examplesDir)) {
 
   if (entries.length > 0) {
     fullContent += `\n## Curated Generator Examples\n\n`;
-    fullContent += `Real, unedited output from the Codex Cryptica generators, indexed at https://codexcryptica.com/examples. Each page shows the full artefact, the settings that produced it, and a short editorial note on what makes it usable at the table.\n\n`;
+    fullContent += `Curated raw or lightly edited output from the Codex Cryptica generators, indexed at https://codexcryptica.com/examples. Each page states its provenance, shows the full artefact and the settings that produced it, and includes a short editorial note on what makes it usable at the table.\n\n`;
     for (const entry of entries) {
       fullContent += `### [${entry.title}](https://codexcryptica.com/examples/${entry.slug})\n\n`;
       if (entry.genre) fullContent += `**Genre:** ${entry.genre}\n\n`;
@@ -276,4 +276,3 @@ const rootOutputPath = path.join(rootDir, 'llms-full.txt');
 fs.writeFileSync(rootOutputPath, fullContent);
 console.log(`\n✅ Generated ${outputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
 console.log(`✅ Generated ${rootOutputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
-

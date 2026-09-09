@@ -283,7 +283,12 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     pageKind: "generator",
     canonicalPath: "/generators/rumour",
     primaryIntent: "rpg rumour generator",
-    intentAliases: ["tavern rumour generator", "random rumours for a town"],
+    intentAliases: [
+      "rpg rumor generator",
+      "tavern rumour generator",
+      "tavern rumor generator",
+      "random rumours for a town",
+    ],
     userJob: "create",
     uniqueValue:
       "A d6 table of local rumours, each with a concrete lead and a hidden GM-only truth, lighter than a full quest hook.",
