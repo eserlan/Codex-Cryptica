@@ -140,15 +140,16 @@ export function openPendingExternalGeneratorTab(
  * that show their own "preparing…" UI in the meantime should omit
  * `pendingTab` instead and open fresh once `content` is ready.
  *
- * Without `pendingTab`, the tab opens fresh after the URL is built via
- * {@link openExternalGeneratorUrl}. That call passes `noopener`, and per
- * spec `window.open` always returns `null` when `noopener` is set —
- * regardless of whether the tab actually opened — so that return value
- * cannot be used to detect a blocked popup here (an earlier version of this
- * function tried exactly that and reported every successful open as
- * blocked). There is no reliable way to detect a blocked deferred popup
- * while keeping `noopener`; callers needing a guarantee should use
- * `pendingTab` instead, accepting the blank-tab-steals-focus trade-off.
+ * Neither path can reliably report a blocked popup back to the caller.
+ * `openExternalGeneratorUrl` and `openPendingExternalGeneratorTab` both
+ * pass `noopener`, and per spec `window.open` always returns `null` when
+ * `noopener` is set — regardless of whether the tab actually opened. So a
+ * `null` return, or a `null` `pendingTab`, means "we discarded the
+ * reference," not "this was blocked." Two earlier versions of this
+ * function each tried treating one of those `null`s as a block signal and
+ * both reported every successful open as blocked. Do not reintroduce this:
+ * there is no reliable way to detect a blocked popup while keeping
+ * `noopener` on either code path.
  */
 export function sendToExternalGenerator(
   options: ExternalGeneratorHandoffOptions & {
@@ -159,11 +160,8 @@ export function sendToExternalGenerator(
   const result = buildExternalGeneratorUrl(options);
   if (options.pendingTab !== undefined) {
     if (result.ok) {
-      if (options.pendingTab === null) {
-        return { ...result, popupBlocked: true };
-      }
       try {
-        options.pendingTab.location.assign(result.url);
+        options.pendingTab?.location.assign(result.url);
       } catch {
         // The tab may have been closed by the user already; nothing more to do.
       }
