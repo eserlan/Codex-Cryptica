@@ -302,7 +302,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
       .filter((c) => c.bucket === "fail" || c.state === "FAILURE")
       .map((check) => ({
         ...check,
-        failureDetails: fetchFailedCheckLog(check),
+        failureDetails: fetchFailedCheckLog(check, repoDir),
       }));
     pendingChecks = allChecks.filter(
       (c) =>
@@ -333,11 +333,15 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
 }
 
 /** Fetch a bounded failed-job excerpt when a GitHub Actions run is available. */
-export function fetchFailedCheckLog(check: PrCheck): string | undefined {
+export function fetchFailedCheckLog(
+  check: PrCheck,
+  repoDir: string,
+): string | undefined {
   const runId = check.link.match(/\/actions\/runs\/(\d+)/)?.[1];
   if (!runId) return undefined;
   try {
     const output = execSync(`gh run view ${runId} --log-failed`, {
+      cwd: repoDir,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "ignore"],
     }).trim();
@@ -558,7 +562,7 @@ GitHub has no actionable review feedback and all current checks are green. Perfo
 1. GENERAL DEFECT REVIEW (your built-in reviewer): inspect the actual merge diff against \`origin/${baseBranch}\`, surrounding call sites, and relevant tests. Report only concrete regressions introduced by this PR that affect correctness, security, performance, or maintainability. Do not invent style nits or speculative findings.
 2. CODEX-CRYPTICA REVIEW: read \`.codex/skills/codex-review/SKILL.md\`, then its linked extended review guidance. Apply the project's Svelte 5, TypeScript, worker-safety, async race, privacy, accessibility, DI, test, and bounded-responsibility checks to this diff.
 
-If both passes find no actionable defect, make no changes and exit successfully. Do not create empty commits.
+If both passes find no actionable defect: check \`git rev-parse HEAD\` against the original PR head SHA (\`${feedback.prMeta.headRefOid}\`). If they match, make no changes and exit successfully. If HEAD has moved (e.g. a pre-merge \`git merge origin/${baseBranch}\` created a merge commit), you MUST still push that commit with \`git push origin HEAD:${branchName} --no-verify\` before exiting, even though there are no code changes to make — the merge commit needs to reach the PR branch. Do not create empty commits.
 
 If either pass finds a concrete defect:
 - Make the smallest correct fix; do not refactor unrelated code.

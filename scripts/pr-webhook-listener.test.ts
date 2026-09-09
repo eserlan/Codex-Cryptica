@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   MAX_BODY_BYTES,
   readRequestBody,
@@ -105,5 +105,32 @@ describe("PR webhook listener", () => {
         }),
       ),
     ).toBe("{}");
+  });
+
+  it("resets the debounce timer on repeated auto-merge scheduling instead of skipping it", async () => {
+    vi.useFakeTimers();
+    const previousAutoMerge = process.env.PR_AUTO_MERGE;
+    process.env.PR_AUTO_MERGE = "true";
+    let clearSpy: ReturnType<typeof vi.spyOn> | undefined;
+    try {
+      const { scheduleAutoMerge } = await import(
+        `./pr-webhook-listener.ts?debounce-test=${Date.now()}`
+      );
+      clearSpy = vi.spyOn(global, "clearTimeout");
+
+      await scheduleAutoMerge(4242);
+      expect(vi.getTimerCount()).toBe(1);
+      expect(clearSpy).not.toHaveBeenCalled();
+
+      // A second event arriving before the quiet window elapses must
+      // debounce from this latest event, not be silently dropped.
+      await scheduleAutoMerge(4242);
+      expect(clearSpy).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+      process.env.PR_AUTO_MERGE = previousAutoMerge;
+      clearSpy?.mockRestore();
+    }
   });
 });

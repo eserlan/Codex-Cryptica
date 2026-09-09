@@ -145,8 +145,16 @@ function resolveBaseRef(pullRequestNumber: number): string | null {
   }
 }
 
-async function scheduleAutoMerge(pullRequestNumber: number): Promise<void> {
-  if (!AUTO_MERGE_ENABLED || scheduledMerges.has(pullRequestNumber)) return;
+export async function scheduleAutoMerge(
+  pullRequestNumber: number,
+): Promise<void> {
+  if (!AUTO_MERGE_ENABLED) return;
+
+  const existingTimer = scheduledMerges.get(pullRequestNumber);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    scheduledMerges.delete(pullRequestNumber);
+  }
 
   const timer = setTimeout(async () => {
     scheduledMerges.delete(pullRequestNumber);
