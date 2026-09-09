@@ -32,7 +32,8 @@ In the repository settings, add a webhook with:
 - Content type: `application/json`
 - Secret: the value of `GITHUB_WEBHOOK_SECRET`
 - Events: pull request reviews, pull request review comments, pull requests,
-  and check runs
+  check runs, and pushes (needed to detect pushes to `staging` and rescan open
+  PRs for merge conflicts)
 
 The listener ignores pull requests targeting anything other than `staging`.
 It keeps its handled-feedback state in
@@ -43,8 +44,15 @@ check.
 When `PR_AUTO_MERGE=true`, the listener enables GitHub squash auto-merge only
 after a fresh state check confirms that the PR targets `staging`, is mergeable,
 is not a draft or changes-requested review, has no pending or failing checks,
-and has no new actionable feedback. It waits 60 seconds after the final event
-before making that request; GitHub branch protection remains the final gate.
+and has no new actionable feedback. Before that request, every new green PR
+head gets one local, two-pass agent review: a general defect review followed by
+the repository's `codex-review` Svelte/TypeScript and CC-architecture review.
+The agent exits without a commit when both find no defect; otherwise it fixes,
+tests, and pushes before CI runs again. The completed review is recorded per
+head SHA, so duplicate webhooks do not spend another LLM run and a new push
+always receives a fresh review. It waits 60 seconds after the final event
+before making the merge request; GitHub branch protection remains the final
+gate.
 
 ## Tunnel configuration
 
@@ -93,3 +101,17 @@ journalctl --user -u codex-pr-review-webhook.service -f
 ls -lt ~/.local/state/codex-pr-review/
 tail -f ~/.local/state/codex-pr-review/pr-<number>-<run-id>.log
 ```
+
+## Fixer safeguards
+
+Before invoking an LLM, the fixer fetches the current `staging` branch and
+merges it into its isolated PR worktree. If that merge conflicts, the agent
+receives the exact paths and must resolve, test, commit, and push the merge
+before it can continue. Failed GitHub Actions checks include a bounded
+failed-job log excerpt in the fix prompt. A successful agent exit is not
+enough to suppress feedback: the listener requires a pushed head change or
+the originally actionable items to be observably resolved.
+
+A push to `staging` performs a lightweight scan of open staging PRs and starts
+the fixer only for PRs GitHub reports as conflicting. It does not otherwise
+reprocess dormant PRs.
