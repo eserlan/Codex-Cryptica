@@ -327,7 +327,7 @@
 
       <div
         role="none"
-        class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow {variant ===
+        class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
         'names'
           ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
           : 'space-y-4'}"

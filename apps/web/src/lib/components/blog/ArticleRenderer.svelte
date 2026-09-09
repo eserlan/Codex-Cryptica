@@ -32,7 +32,7 @@
 </script>
 
 <article
-  class="blog-content prose prose-invert max-w-none break-words text-lg leading-relaxed prose-p:text-theme-text/80 prose-headings:text-theme-text prose-a:text-theme-primary hover:prose-a:text-theme-primary/80 prose-strong:text-theme-text prose-code:text-theme-primary/90 prose-pre:bg-theme-surface prose-pre:border prose-pre:border-theme-border"
+  class="blog-content prose prose-invert max-w-none break-words text-lg leading-relaxed prose-p:text-theme-text/80 prose-headings:text-theme-text prose-a:text-theme-primary hover:prose-a:text-theme-primary/80 prose-strong:text-theme-text prose-code:text-theme-primary/90 prose-pre:bg-theme-surface prose-pre:border prose-pre:border-theme-border prose-pre:overflow-x-auto"
   onclickcapture={(e) => {
     const target = e.target as HTMLElement;
     if (target && target.tagName === "IMG") {
