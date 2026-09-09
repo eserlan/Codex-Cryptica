@@ -22,6 +22,8 @@ GITHUB_WEBHOOK_SECRET=replace-with-the-github-webhook-secret
 GITHUB_REPOSITORY=eserlan/Codex-Cryptica
 PR_FIX_ROOT=/path/to/remotecc
 PR_WEBHOOK_PORT=8788
+# Explicit opt-in: only staging PRs that settle green may be squash auto-merged.
+PR_AUTO_MERGE=true
 ```
 
 In the repository settings, add a webhook with:
@@ -33,6 +35,16 @@ In the repository settings, add a webhook with:
   and check runs
 
 The listener ignores pull requests targeting anything other than `staging`.
+It keeps its handled-feedback state in
+`~/.local/state/codex-pr-review/feedback-state.json`, so duplicate deliveries
+and service restarts do not repeat an LLM fix for the same comment or failed
+check.
+
+When `PR_AUTO_MERGE=true`, the listener enables GitHub squash auto-merge only
+after a fresh state check confirms that the PR targets `staging`, is mergeable,
+is not a draft or changes-requested review, has no pending or failing checks,
+and has no new actionable feedback. It waits 60 seconds after the final event
+before making that request; GitHub branch protection remains the final gate.
 
 ## Tunnel configuration
 

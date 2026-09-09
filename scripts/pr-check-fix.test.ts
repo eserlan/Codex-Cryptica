@@ -16,6 +16,7 @@ describe("pr-check-fix", () => {
       number: 1234,
       title: "Test PR Degodification",
       headRefName: "curator/degod-sample-1234",
+      headRefOid: "abc123",
       baseRefName: "staging",
       url: "https://github.com/eserlan/Codex-Cryptica/pull/1234",
       state: "OPEN",

@@ -38,10 +38,13 @@ export interface PrMetadata {
   number: number;
   title: string;
   headRefName: string;
+  headRefOid: string;
   baseRefName: string;
   url: string;
   state: string;
   mergeable: string;
+  reviewDecision?: string | null;
+  isDraft?: boolean;
 }
 
 export interface PrFeedback {
@@ -196,7 +199,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   const repoSlug = getRepoSlug(repoDir);
 
   const prMetaRaw = execSync(
-    `gh pr view ${prNumber} --json number,title,headRefName,baseRefName,url,state,mergeable`,
+    `gh pr view ${prNumber} --json number,title,headRefName,headRefOid,baseRefName,url,state,mergeable,reviewDecision,isDraft`,
     { cwd: repoDir, encoding: "utf-8" },
   );
   const prMeta = JSON.parse(prMetaRaw) as PrMetadata;
@@ -599,6 +602,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   }
 
   try {
+    let fixSucceeded = false;
     for (let round = 1; round <= maxRounds; round++) {
       console.log(
         `\n🚀 [Round ${round}/${maxRounds}] Running agent fix pass...`,
@@ -650,8 +654,16 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
 
       if (passSucceeded) {
         console.log(`\n🎉 Fix round ${round} complete.`);
+        fixSucceeded = true;
         break;
       }
+    }
+
+    if (!fixSucceeded) {
+      console.error(
+        `[pr-fix:${runId}] no provider completed a fix pass successfully.`,
+      );
+      return false;
     }
   } finally {
     if (ownWorktree && worktreePath && existsSync(worktreePath)) {

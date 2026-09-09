@@ -42,6 +42,11 @@ secret:
 It must stay mode `600`. The secret is shared only with the GitHub repository
 webhook configuration and is not stored in this repository.
 
+The same private environment file enables squash auto-merge with
+`PR_AUTO_MERGE=true`. The listener persists handled feedback under
+`~/.local/state/codex-pr-review/`, so a restart does not cause repeated fixes
+for the same unchanged PR state.
+
 ## Checking the setup
 
 ```sh
