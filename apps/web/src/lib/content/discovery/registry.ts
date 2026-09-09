@@ -66,3 +66,43 @@ export function getClusters(
   }
   return clusters;
 }
+
+/**
+ * Clusters assigned to an entry: its explicit `clusters` array, plus its `parentCluster`
+ * if specified.
+ */
+export function getEntryClusters(entry: DiscoveryEntry): string[] {
+  const set = new Set<string>();
+  if (entry.parentCluster) set.add(entry.parentCluster);
+  for (const c of entry.clusters ?? []) {
+    set.add(c);
+  }
+  return [...set];
+}
+
+/**
+ * All live indexable entries that belong to a given cluster.
+ */
+export function getClusterEntries(
+  cluster: string,
+  registry: DiscoveryEntry[] = allEntries,
+): DiscoveryEntry[] {
+  const needle = cluster.toLowerCase().trim();
+  return registry.filter((entry) => {
+    if (!entry.indexable || entry.status !== "live") return false;
+    const clusters = getEntryClusters(entry).map((c) => c.toLowerCase().trim());
+    return clusters.includes(needle);
+  });
+}
+
+/**
+ * All unique canonical paths that belong to a given cluster.
+ */
+export function getClusterRoutes(
+  cluster: string,
+  registry: DiscoveryEntry[] = allEntries,
+): string[] {
+  return getClusterEntries(cluster, registry).map(
+    (entry) => entry.canonicalPath,
+  );
+}

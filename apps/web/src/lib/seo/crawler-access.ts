@@ -10,7 +10,6 @@
  * separate decision and must not be changed as a side effect of anything here
  * — see `docs/seo/crawler-access.md`.
  */
-
 /** A production crawler whose access is verified by the live smoke check. */
 export interface SearchCrawler {
   /** Stable CLI and CI-matrix identifier. */
@@ -251,14 +250,14 @@ const CHALLENGE_MARKERS = [
 
 const AUTH_PATH = /\/(login|signin|sign-in|auth|account)(\/|$|\?)/i;
 
-const readHeader = (headers: Record<string, string>, name: string) => {
+export const readHeader = (headers: Record<string, string>, name: string) => {
   const key = Object.keys(headers).find(
     (candidate) => candidate.toLowerCase() === name,
   );
   return key ? headers[key] : undefined;
 };
 
-const extractTag = (body: string, pattern: RegExp) =>
+export const extractTag = (body: string, pattern: RegExp) =>
   body.match(pattern)?.[1]?.trim();
 
 /**
@@ -624,3 +623,8 @@ export function findDisallowedSitemapPaths(sitemapXml: string): string[] {
   const paths = extractSitemapPaths(sitemapXml);
   return [...new Set(paths.filter(isDisallowedSitemapPath))].sort();
 }
+/**
+ * Re-export content cluster crawler readiness verification (#2861).
+ * Decomposed into ./crawler-access-clusters.ts per Constitution Principle XIV (Bounded Responsibility).
+ */
+export * from "./crawler-access-clusters";

@@ -42,6 +42,7 @@ export type AnswerCategoryId = z.infer<typeof AnswerCategoryIdSchema>;
 export const AnswerDiscoverySchema = z.object({
   id: z.string().optional(),
   parentCluster: z.string().min(1),
+  clusters: z.array(z.string().min(2)).default([]),
   primaryIntent: z.string().optional(),
   intentAliases: z.array(z.string()).default([]),
   uniqueValue: z.string().optional(),

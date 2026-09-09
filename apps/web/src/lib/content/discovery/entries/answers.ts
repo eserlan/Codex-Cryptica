@@ -32,6 +32,10 @@ export const answerEntries: DiscoveryEntryInput[] = [
       userJob: disc?.userJob ?? "understand",
       uniqueValue: disc?.uniqueValue ?? answer.shortAnswer,
       parentCluster: disc?.parentCluster ?? answer.category,
+      clusters:
+        disc?.clusters && disc.clusters.length > 0
+          ? disc.clusters
+          : [disc?.parentCluster ?? answer.category].filter(Boolean),
       ...(disc?.relatedIntents?.length
         ? { relatedIntents: disc.relatedIntents }
         : {}),

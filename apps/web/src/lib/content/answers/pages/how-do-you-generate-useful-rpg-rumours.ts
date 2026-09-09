@@ -183,6 +183,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
   discovery: {
     id: "answer-useful-rpg-rumours",
     parentCluster: "quest-design",
+    clusters: ["rumour", "quest-design"],
     primaryIntent: "how to generate useful rpg rumours",
     intentAliases: [
       "how do i generate useful rpg rumours",
