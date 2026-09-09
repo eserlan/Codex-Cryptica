@@ -16,6 +16,7 @@ vi.mock("./monsterlabs-description-compression", () => ({
 
 import {
   buildMonsterLabsPrompt,
+  buildMonsterLabsHandoffUrl,
   isMonsterLabsEligibleType,
   isMonsterLabsItemEligibleType,
   isMonsterLabsHandoffEligibleType,
@@ -271,7 +272,11 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     expect(open).not.toHaveBeenCalled();
   });
 
-  it("reports popupBlocked instead of silently losing the tab when window.open is blocked", async () => {
+  it("still reports ok when window.open returns null, since noopener always returns null on success too", async () => {
+    // window.open's return value is not a reliable success/failure signal
+    // once "noopener" is passed — the spec defines it as always null in
+    // that case, whether or not the tab actually opened. This must not be
+    // mistaken for a blocked popup (see external-generator-handoff.ts).
     const { open } = stubWindow({ returns: null });
 
     const result = await sendToMonsterLabsMonsterGenerator(
@@ -284,10 +289,7 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     );
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.popupBlocked).toBe(true);
-      expect(result.url).toContain(MONSTERLABS_MONSTER_GENERATOR_URL);
-    }
+    expect(open).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -437,5 +439,71 @@ describe("sendEntityToMonsterLabs", () => {
       ),
     ).resolves.toEqual({ ok: false, reason: "empty-content" });
     expect(open).not.toHaveBeenCalled();
+  });
+});
+
+describe("buildMonsterLabsHandoffUrl", () => {
+  it("builds a URL without opening any window", async () => {
+    const result = await buildMonsterLabsHandoffUrl({
+      name: "Ash-Eater Varkesh",
+      type: "creature",
+      description: "A soot-caked horror.",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const url = new URL(result.url);
+      expect(url.origin + url.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
+      expect(url.searchParams.get("prompt")).toBe(
+        "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
+      );
+    }
+  });
+
+  it("routes items to the magic item generator", async () => {
+    const result = await buildMonsterLabsHandoffUrl({
+      name: "Crown of the Last Ember",
+      type: "item",
+      description: "A tarnished circlet.",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const url = new URL(result.url);
+      expect(url.origin + url.pathname).toBe(
+        MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
+      );
+    }
+  });
+
+  it("reports empty-content for a blank description", async () => {
+    await expect(
+      buildMonsterLabsHandoffUrl({
+        name: "Nameless",
+        type: "creature",
+        description: "   ",
+      }),
+    ).resolves.toEqual({ ok: false, reason: "empty-content" });
+  });
+
+  it("compresses an over-budget description via the Oracle before building the URL", async () => {
+    const compressMock = vi.mocked(compressMonsterLabsDescription);
+    compressMock.mockClear();
+    compressMock.mockResolvedValueOnce("A much shorter horror description.");
+
+    const result = await buildMonsterLabsHandoffUrl({
+      name: "Wall of Text",
+      type: "creature",
+      description: "a".repeat(1500),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(compressMock).toHaveBeenCalledTimes(1);
+    if (result.ok) {
+      const url = new URL(result.url);
+      expect(url.searchParams.get("prompt")).toBe(
+        "Name: Wall of Text\nType: Creature\n\nA much shorter horror description.",
+      );
+    }
   });
 });
