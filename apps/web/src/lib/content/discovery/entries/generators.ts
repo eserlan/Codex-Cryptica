@@ -210,6 +210,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A score with moving parts: layered security that allows multiple approaches, an alarm track that escalates, and a getaway whose planned route has already failed.",
     parentCluster: "adventure-mapping",
+    clusters: ["heist", "adventure-mapping"],
     indexable: true,
     status: "live",
   },
@@ -293,6 +294,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A d6 table of local rumours, each with a concrete lead and a hidden GM-only truth, lighter than a full quest hook.",
     parentCluster: "quest-design",
+    clusters: ["rumour", "quest-design"],
     indexable: true,
     status: "live",
   },

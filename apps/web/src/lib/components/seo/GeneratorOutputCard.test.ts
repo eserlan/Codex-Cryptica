@@ -235,4 +235,195 @@ describe("GeneratorOutputCard", () => {
       screen.queryByRole("button", { name: /generate roster/i }),
     ).toBeNull();
   });
+
+  it("shows Create D&D Monster for a creature draft when onSendToMonsterLabs is provided", () => {
+    const creatureData: GeneratorOutput = {
+      ...sampleData,
+      type: "creature",
+      labels: ["rpg-creature"],
+    };
+    const onSendToMonsterLabs = vi.fn();
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: creatureData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Creature",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: creatureData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs,
+      },
+    });
+
+    const button = screen.getByRole("button", {
+      name: /create d&d monster/i,
+    });
+    expect(button).toBeTruthy();
+  });
+
+  it("hides Create D&D Monster for a non character/creature draft even when onSendToMonsterLabs is provided", () => {
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: sampleData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Faction",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: sampleData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: /create d&d monster/i }),
+    ).toBeNull();
+  });
+
+  it("calls onSendToMonsterLabs with the current draft when clicked", async () => {
+    const creatureData: GeneratorOutput = {
+      ...sampleData,
+      type: "character",
+      labels: [],
+    };
+    const onSendToMonsterLabs = vi.fn();
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: creatureData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Character",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: creatureData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /create d&d monster/i }),
+    );
+
+    expect(onSendToMonsterLabs).toHaveBeenCalledWith(creatureData);
+  });
+
+  it("shows Create D&D Magic Item for an item draft when onSendToMonsterLabs is provided", () => {
+    const itemData: GeneratorOutput = {
+      ...sampleData,
+      type: "item",
+      labels: ["rpg-item"],
+    };
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: itemData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Item",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: itemData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: /create d&d magic item/i }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /^create d&d monster$/i }),
+    ).toBeNull();
+  });
+
+  it("calls onSendToMonsterLabs with the current draft for an item", async () => {
+    const itemData: GeneratorOutput = {
+      ...sampleData,
+      type: "item",
+      labels: [],
+    };
+    const onSendToMonsterLabs = vi.fn();
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: itemData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Item",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: itemData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /create d&d magic item/i }),
+    );
+
+    expect(onSendToMonsterLabs).toHaveBeenCalledWith(itemData);
+  });
 });

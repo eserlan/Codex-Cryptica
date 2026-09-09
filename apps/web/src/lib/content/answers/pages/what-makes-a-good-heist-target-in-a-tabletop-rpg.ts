@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatMakesAGoodHeistTargetInATabletopRpg: AnswerConfigInput = {
   slug: "what-makes-a-good-heist-target-in-a-tabletop-rpg",
   category: "session-prep",
+  labels: ["heist"],
   publishedAt: "2026-09-09",
   question: "What makes a good heist target in a tabletop RPG?",
   kind: "framework",
@@ -73,6 +74,17 @@ export const whatMakesAGoodHeistTargetInATabletopRpg: AnswerConfigInput = {
       ],
     },
     {
+      kind: "prose",
+      heading: "See a designed prize in action",
+      paragraphs: [
+        "The Dawnheart Diadem shows how a prize with practical weight and a living verification mark creates its own security puzzle and political complications during play.",
+      ],
+      cta: {
+        text: "Read the Dawnheart Diadem heist example",
+        href: "/examples/the-dawnheart-diadem-fantasy-heist",
+      },
+    },
+    {
       kind: "checklist",
       heading: "Prize design checklist before you write the security",
       intro: "Confirm these before building the rest of the score:",
@@ -118,6 +130,7 @@ export const whatMakesAGoodHeistTargetInATabletopRpg: AnswerConfigInput = {
   discovery: {
     id: "answer-heist-target-design",
     parentCluster: "adventure-mapping",
+    clusters: ["heist", "adventure-mapping"],
     primaryIntent: "what makes a good heist target in a tabletop rpg",
     intentAliases: [
       "choosing a heist prize",

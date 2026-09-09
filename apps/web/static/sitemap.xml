@@ -517,6 +517,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-handle-players-going-off-script-as-a-gm</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -672,6 +677,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-should-a-new-dnd-player-learn-first</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -775,6 +785,12 @@
     <loc>https://codexcryptica.com/examples/the-quell-extraction-cyberpunk-heist</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/generate-here-use-it-anywhere</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-09-09T15:00:00.000Z</lastmod>
   </url>
   <url>
     <loc>https://codexcryptica.com/blog/introducing-the-canvas</loc>

@@ -37,10 +37,13 @@
     "sync:answers": "bun scripts/sync-answers.ts",
     "check:answer-mesh": "bun scripts/check-answer-mesh.ts",
     "check:crawler-access": "bun scripts/crawler-access-check.mjs",
+    "report:crawler-activity": "bun scripts/crawler-activity-report.ts",
+    "update:crawler-ips": "bun scripts/update-crawler-ip-ranges.ts",
     "analyze:god-files": "bun scripts/god-file-analysis.ts",
     "eval:heist": "bun scripts/heist-eval.ts",
     "degodify": "bun scripts/auto-degodify.ts",
     "pr:fix": "bun scripts/pr-check-fix.ts",
+    "pr:webhook": "bun scripts/pr-webhook-listener.ts",
     "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },

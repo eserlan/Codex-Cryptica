@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-run-a-heist-in-a-tabletop-rpg",
   category: "session-prep",
-  labels: ["cyberpunk"],
+  labels: ["cyberpunk", "heist"],
   publishedAt: "2026-09-04",
   question: "How do you run a heist in a tabletop RPG?",
   kind: "framework",
@@ -96,6 +96,17 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       ],
     },
     {
+      kind: "prose",
+      heading: "See a table-ready score in action",
+      paragraphs: [
+        "A finished score shows how concentric security rings, escalating alarm states, and compromised getaways connect during play without endless pre-planning.",
+      ],
+      cta: {
+        text: "Read the Breakwater Vault heist example",
+        href: "/examples/the-breakwater-vault-space-western-heist",
+      },
+    },
+    {
       kind: "checklist",
       heading: "The table-ready heist prep checklist",
       intro:
@@ -156,6 +167,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   discovery: {
     id: "answer-run-heist-in-tabletop-rpg",
     parentCluster: "adventure-mapping",
+    clusters: ["heist", "adventure-mapping"],
     primaryIntent: "how to run a heist in a tabletop rpg",
     intentAliases: [
       "how to run an rpg heist",

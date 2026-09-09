@@ -2,7 +2,7 @@ import type { ExampleConfigInput } from "../schema";
 
 export const lowmereSixWordsRumourTable: ExampleConfigInput = {
   slug: "lowmere-six-words-rumour-table",
-  labels: ["fantasy"],
+  labels: ["fantasy", "rumour"],
   name: "Six Words from Lowmere",
   title: "RPG rumour table example: Six Words from Lowmere",
   kind: "rumour",

@@ -5,6 +5,22 @@ import DetailHeader from "./DetailHeader.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
+// Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
+// (MonsterLabsSendingModal's ModalShell uses fade/scale transitions).
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () => {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      pause: () => {},
+      play: () => {},
+      reverse: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any;
+  };
+}
+
 // Mock stores
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
@@ -323,5 +339,138 @@ describe("DetailHeader stature badge", () => {
     } finally {
       (vault as any).status = "idle";
     }
+  });
+});
+
+describe("DetailHeader MonsterLabs handoff", () => {
+  const renderEntity = (entity: Record<string, unknown>) =>
+    render(DetailHeader, {
+      entity: { id: "entity-1", title: "Test Entity", ...entity } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  it("offers to send characters to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "character",
+      content: "A disgraced noble.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers to send creatures to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "creature",
+      content: "A soot-caked horror.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers to send items to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("does not offer the handoff for other entity types", () => {
+    const { queryByTestId } = renderEntity({
+      type: "location",
+      content: "A ruined watchtower.",
+    });
+
+    expect(queryByTestId("send-to-monsterlabs-button")).toBeNull();
+  });
+
+  it("labels the item action as a magic item handoff", () => {
+    const { getAllByLabelText } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet.",
+    });
+
+    expect(
+      getAllByLabelText("Create D&D magic item in MonsterLabs").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("opens the magic item generator for an item entity", async () => {
+    // The handoff no longer pre-opens a blank tab — it shows the "preparing"
+    // modal in this tab while building the (possibly AI-compressed) prompt,
+    // then opens MonsterLabs fresh with the final URL in one window.open call.
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      title: "Crown of the Last Ember",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [url] = openSpy.mock.calls[0];
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-magic-item-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Crown of the Last Ember\nType: Item\n\nA tarnished circlet that hums when a fire is near.",
+    );
+
+    openSpy.mockRestore();
+  });
+
+  it("opens MonsterLabs with the entity's name, type, and content", async () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    const { getAllByTestId } = renderEntity({
+      type: "creature",
+      title: "Ash-Eater Varkesh",
+      content: "A soot-caked horror.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [url, target, features] = openSpy.mock.calls[0];
+    expect(target).toBe("_blank");
+    expect(features).toBe("noopener,noreferrer");
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-monster-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
+    );
+
+    openSpy.mockRestore();
+  });
+
+  it("keeps the modal open with a manual link when the deferred window.open is blocked", async () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    const { getAllByTestId, findByText } = renderEntity({
+      type: "creature",
+      title: "Ash-Eater Varkesh",
+      content: "A soot-caked horror.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    const link = (await findByText("Open MonsterLabs")) as HTMLAnchorElement;
+    expect(link.href).toContain(
+      "https://monsterlabs.app/dnd-monster-generator",
+    );
+
+    openSpy.mockRestore();
   });
 });

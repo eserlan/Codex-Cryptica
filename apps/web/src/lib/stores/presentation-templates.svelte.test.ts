@@ -33,10 +33,21 @@ vi.mock("../utils/idb", () => {
 
 import { PresentationTemplateStore } from "./presentation-templates.svelte";
 
-function makeStore() {
-  return new PresentationTemplateStore({
-    uuid: vi.fn(() => `id-${Math.random()}`),
-  });
+function makeClock(initial = "2024-01-01T00:00:00.000Z") {
+  let current = new Date(initial).getTime();
+  return {
+    now: () => current,
+    advance: (ms: number) => {
+      current += ms;
+    },
+  };
+}
+
+function makeStore(clock = makeClock()) {
+  return new PresentationTemplateStore(
+    { uuid: vi.fn(() => `id-${Math.random()}`) },
+    clock,
+  );
 }
 
 describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
@@ -140,13 +151,15 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
   });
 
   it("does not suffix when re-saving an existing template under its own unchanged name", async () => {
-    const store = makeStore();
+    const clock = makeClock();
+    const store = makeStore(clock);
     const created = await store.saveTemplate({
       schemaTemplateId: "schema-1",
       name: "My Layout",
       source: "one",
       formatVersion: 1,
     });
+    clock.advance(60_000);
     const resaved = await store.saveTemplate({
       id: created!.id,
       schemaTemplateId: "schema-1",
@@ -158,6 +171,8 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     expect(resaved?.id).toBe(created?.id);
     expect(resaved?.name).toBe("My Layout");
     expect(resaved?.source).toBe("two");
+    expect(resaved?.createdAt).toBe("2024-01-01T00:00:00.000Z");
+    expect(resaved?.updatedAt).toBe("2024-01-01T00:01:00.000Z");
   });
 
   it("copies a template from one schema to another with unique naming", async () => {

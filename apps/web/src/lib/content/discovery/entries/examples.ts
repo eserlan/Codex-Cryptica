@@ -289,6 +289,7 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A complete, table-ready Space Western score demonstrating how security rings, an interactive alarm ladder, and a compromised getaway interact during play rather than reading as a static synopsis.",
     parentCluster: "adventure-mapping",
+    clusters: ["heist", "adventure-mapping"],
     relatedIntents: [
       "generator-heist",
       "example-cinder-wren",
@@ -313,6 +314,7 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A complete six-entry rumour table with player-facing gossip, separate GM truth notes, named sources, and one connected Lowmere situation that changes when the party acts.",
     parentCluster: "quest-design",
+    clusters: ["rumour", "quest-design"],
     relatedIntents: [
       "generator-rumour",
       "answer-useful-rpg-rumours",
@@ -336,6 +338,7 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A complete fantasy vault score showing how a prize's own properties (a warded relic, a living verification mark) generate security and complications without a generic dungeon template.",
     parentCluster: "adventure-mapping",
+    clusters: ["heist", "adventure-mapping"],
     relatedIntents: [
       "generator-heist",
       "answer-heist-target-design",
@@ -360,6 +363,7 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A complete extraction-style score showing how the Heist Generator's security-ring and alarm-track structure adapts to rescuing an uncooperative subject rather than stealing an object.",
     parentCluster: "adventure-mapping",
+    clusters: ["heist", "adventure-mapping"],
     relatedIntents: [
       "generator-heist",
       "answer-heist-target-design",
@@ -384,6 +388,7 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "The first published output of the new Constellation generator — a serpent-shaped star pattern that a coastal culture actually uses to time its eel harvest, with a star chart, omens, and a missing-star adventure hook.",
     parentCluster: "cosmography",
+    clusters: ["religion", "cosmography"],
     relatedIntents: [
       "generator-constellation",
       "generator-star-system",

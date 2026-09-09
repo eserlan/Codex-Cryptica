@@ -32,6 +32,12 @@
   import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
   import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+    sendEntityToMonsterLabs,
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -86,6 +92,53 @@
     shelvedJustNow = true;
     setTimeout(() => (shelvedJustNow = false), 2000);
   };
+
+  let isSendingToMonsterLabs = $state(false);
+  let monsterLabsBlockedUrl = $state<string | null>(null);
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf. A description over MonsterLabs' own prompt
+   * budget is compressed by the Oracle first, which is why this awaits —
+   * the modal shows a "preparing" state for that gap in this tab rather
+   * than a blank placeholder tab stealing focus for the duration.
+   */
+  const handleSendToMonsterLabs = async () => {
+    if (isSendingToMonsterLabs) return;
+    isSendingToMonsterLabs = true;
+    monsterLabsBlockedUrl = null;
+    const result = await sendEntityToMonsterLabs({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
+    if (!result.ok) {
+      notificationStore.notify(
+        result.reason === "url-too-long"
+          ? "This entity is too long to send to MonsterLabs."
+          : "Add some content before sending to MonsterLabs.",
+        "error",
+      );
+      isSendingToMonsterLabs = false;
+      return;
+    }
+    if (result.popupBlocked) {
+      // Keep the modal open with a manual link instead of clearing the busy
+      // state — the tab never opened, so silently closing would strand the
+      // user with no way to continue except starting over.
+      monsterLabsBlockedUrl = result.url;
+      return;
+    }
+    isSendingToMonsterLabs = false;
+  };
+
+  function handleOpenBlockedMonsterLabsTab() {
+    isSendingToMonsterLabs = false;
+    monsterLabsBlockedUrl = null;
+  }
 
   const handleFindInGraph = () => {
     const nodeId = vault.selectedEntityId;
@@ -243,6 +296,27 @@
           class="{shelvedJustNow
             ? 'icon-[lucide--check]'
             : 'icon-[lucide--library]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
+    {#if isMonsterLabsHandoffEligibleType(entity.type)}
+      <button
+        type="button"
+        onclick={handleSendToMonsterLabs}
+        disabled={isSendingToMonsterLabs}
+        aria-busy={isSendingToMonsterLabs}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50"
+        aria-label={getMonsterLabsActionLabel(entity.type)}
+        title="{getMonsterLabsActionLabel(
+          entity.type,
+        )} — opens monsterlabs.app in a new tab"
+        data-testid="send-to-monsterlabs-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{isSendingToMonsterLabs
+            ? 'icon-[lucide--loader-2] animate-spin'
+            : 'icon-[lucide--external-link]'} w-5 h-5"
         ></span>
       </button>
     {/if}
@@ -525,3 +599,10 @@
     <StructuralSuggestionBanner entityId={entity.id} />
   {/if}
 </div>
+
+<MonsterLabsSendingModal
+  open={isSendingToMonsterLabs}
+  entityLabel={entity.title}
+  blockedUrl={monsterLabsBlockedUrl}
+  onOpenBlocked={handleOpenBlockedMonsterLabsTab}
+/>

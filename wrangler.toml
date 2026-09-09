@@ -5,3 +5,7 @@ pages_build_output_dir = "dist"
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "codex-cryptica-statics"
+
+[[analytics_engine_datasets]]
+binding = "AI_CRAWLER_ANALYTICS"
+dataset = "ai_crawler_activity"

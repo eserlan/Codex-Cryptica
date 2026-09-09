@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLUSTER_TARGETS,
+  CRAWLER_READINESS_DISCLAIMER,
+  discoverClusterTargetRoutes,
   downgradeKnownGaps,
+  evaluateClusterLinks,
+  evaluateClusterRouteResponse,
   evaluateCrawlResponse,
   expectationFor,
+  extractOutgoingClusterLinks,
   extractSitemapPaths,
   findSearchCrawler,
   findDisallowedSitemapPaths,
+  formatClusterFailureDetail,
+  formatClusterSummaryTable,
   isDisallowedSitemapPath,
   isPathAllowed,
   OAI_SEARCHBOT_TOKEN,
@@ -15,6 +23,8 @@ import {
   PRIVATE_ROUTE_SAMPLES,
   SEARCH_CRAWLERS,
   selectRobotsGroup,
+  validateSingleH1,
+  validateStructuredData,
   type CrawlResponse,
 } from "./crawler-access";
 
@@ -536,5 +546,534 @@ describe("PRIVATE_ROUTE_FAMILIES and PRIVATE_ROUTE_SAMPLES", () => {
     expect(PRIVATE_ROUTE_FAMILIES).toContain("/adventure");
     expect(PRIVATE_ROUTE_SAMPLES).toContain("/import");
     expect(PRIVATE_ROUTE_SAMPLES).toContain("/vault/audit-sample");
+  });
+});
+
+describe("CLUSTER_TARGETS and CRAWLER_READINESS_DISCLAIMER", () => {
+  it("defines the targeted content clusters", () => {
+    expect(CLUSTER_TARGETS).toEqual(["heist", "rumour", "religion"]);
+  });
+
+  it("enforces explicit boundary statement on crawler readiness vs search outcomes", () => {
+    expect(CRAWLER_READINESS_DISCLAIMER).toContain("crawler readiness");
+    expect(CRAWLER_READINESS_DISCLAIMER.toLowerCase()).toContain(
+      "not guarantee",
+    );
+    expect(CRAWLER_READINESS_DISCLAIMER.toLowerCase()).toContain("indexing");
+    expect(CRAWLER_READINESS_DISCLAIMER.toLowerCase()).toContain("ranking");
+    expect(CRAWLER_READINESS_DISCLAIMER.toLowerCase()).toContain("citations");
+    expect(CRAWLER_READINESS_DISCLAIMER.toLowerCase()).toContain("referral");
+  });
+});
+
+describe("discoverClusterTargetRoutes", () => {
+  it("discovers all indexable live cluster routes from the discovery registry", () => {
+    const routeMap = discoverClusterTargetRoutes();
+    const discoveredPaths = [...routeMap.keys()];
+
+    // Must include routes from all targeted clusters
+    expect(discoveredPaths).toContain(
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    );
+    expect(discoveredPaths).toContain("/generators/heist");
+    expect(discoveredPaths).toContain(
+      "/examples/the-breakwater-vault-space-western-heist",
+    );
+    expect(discoveredPaths).toContain(
+      "/answers/how-do-you-generate-useful-rpg-rumours",
+    );
+    expect(discoveredPaths).toContain("/generators/rumour");
+    expect(discoveredPaths).toContain(
+      "/answers/how-do-you-create-a-believable-fictional-religion",
+    );
+    expect(discoveredPaths).toContain(
+      "/examples/the-eel-wyrm-classic-fantasy-constellation",
+    );
+
+    for (const [path, target] of routeMap.entries()) {
+      expect(target.path).toBe(path);
+      expect(target.clusters.length).toBeGreaterThan(0);
+      expect(
+        target.clusters.some((c) =>
+          CLUSTER_TARGETS.includes(c as (typeof CLUSTER_TARGETS)[number]),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("deduplicates multi-cluster entities by path while preserving cluster attribution", () => {
+    const mockRegistry: any[] = [
+      {
+        id: "shared-heist-rumour",
+        canonicalPath: "/answers/shared-rumour-heist",
+        primaryIntent: "shared intent",
+        intentAliases: [],
+        parentCluster: "heist",
+        clusters: ["rumour"],
+        userJob: "job",
+        uniqueValue: "uv",
+        status: "live",
+        indexable: true,
+      },
+    ];
+
+    const routeMap = discoverClusterTargetRoutes(
+      ["heist", "rumour"],
+      mockRegistry,
+    );
+    expect(routeMap.size).toBe(1);
+    const target = routeMap.get("/answers/shared-rumour-heist");
+    expect(target).toBeDefined();
+    expect(target?.clusters).toContain("heist");
+    expect(target?.clusters).toContain("rumour");
+  });
+
+  it("fails coverage check if any live indexable cluster route is missing", () => {
+    const fullMap = discoverClusterTargetRoutes();
+    const simulatedMissingCoverage = new Map(fullMap);
+    simulatedMissingCoverage.delete("/generators/heist");
+
+    const allRegisteredRoutes = [...fullMap.keys()];
+    const missingRoutes = allRegisteredRoutes.filter(
+      (path) => !simulatedMissingCoverage.has(path),
+    );
+    expect(missingRoutes).toContain("/generators/heist");
+    expect(missingRoutes.length).toBeGreaterThan(0);
+  });
+});
+
+describe("validateSingleH1", () => {
+  it("passes when exactly one meaningful <h1> exists", () => {
+    const html = `<html><body><h1 class="font-bold">Heist Design Guide</h1></body></html>`;
+    expect(validateSingleH1(html)).toEqual([]);
+  });
+
+  it("fails when no <h1> is present", () => {
+    const html = `<html><body><h2>Not an H1</h2></body></html>`;
+    const findings = validateSingleH1(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("h1-missing");
+    expect(findings[0].severity).toBe("error");
+  });
+
+  it("fails when multiple <h1> headings are present", () => {
+    const html = `<html><body><h1>First</h1><h1>Second</h1></body></html>`;
+    const findings = validateSingleH1(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("h1-multiple");
+    expect(findings[0].severity).toBe("error");
+  });
+
+  it("fails when <h1> heading is empty or whitespace-only", () => {
+    const html = `<html><body><h1>   <span></span>   </h1></body></html>`;
+    const findings = validateSingleH1(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("h1-empty");
+    expect(findings[0].severity).toBe("error");
+  });
+});
+
+describe("validateStructuredData", () => {
+  it("passes for valid schema.org JSON-LD with @type", () => {
+    const html = `<html><head>
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": []
+        }
+      </script>
+    </head></html>`;
+    expect(validateStructuredData(html)).toEqual([]);
+  });
+
+  it("passes for valid schema.org JSON-LD with @graph containing @type", () => {
+    const html = `<html><head>
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            { "@type": "BreadcrumbList", "itemListElement": [] }
+          ]
+        }
+      </script>
+    </head></html>`;
+    expect(validateStructuredData(html)).toEqual([]);
+  });
+
+  it("fails when structured data script is missing", () => {
+    const html = `<html><head><title>No JSON-LD</title></head></html>`;
+    const findings = validateStructuredData(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("structured-data-missing");
+  });
+
+  it("fails when JSON-LD is malformed", () => {
+    const html = `<html><head>
+      <script type="application/ld+json">{ broken json </script>
+    </head></html>`;
+    const findings = validateStructuredData(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("structured-data-invalid-json");
+  });
+
+  it("fails when @context does not refer to schema.org", () => {
+    const html = `<html><head>
+      <script type="application/ld+json">
+        {
+          "@context": "https://other-vocab.org",
+          "@type": "Thing"
+        }
+      </script>
+    </head></html>`;
+    const findings = validateStructuredData(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("structured-data-invalid-context");
+  });
+
+  it("fails when neither @type nor @graph with @type is provided", () => {
+    const html = `<html><head>
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "name": "Untyped Thing"
+        }
+      </script>
+    </head></html>`;
+    const findings = validateStructuredData(html);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].code).toBe("structured-data-missing-type");
+  });
+});
+
+describe("evaluateClusterRouteResponse", () => {
+  const target: any = {
+    path: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    clusters: ["heist"],
+  };
+
+  const validHtml = `
+    <title>How to Run a Heist in a Tabletop RPG</title>
+    <meta name="description" content="A complete GM guide to running RPG heists.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": []
+      }
+    </script>
+    <h1>How to Run a Heist in a Tabletop RPG</h1>
+    <p>${"x".repeat(1500)}</p>
+  `;
+
+  const validResponse: CrawlResponse = {
+    requestedUrl:
+      "https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    finalUrl:
+      "https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    status: 200,
+    headers: { "content-type": "text/html; charset=utf-8" },
+    body: validHtml,
+  };
+
+  const mockContext = {
+    robots: {
+      groups: [{ agents: ["oai-searchbot"], allow: ["/"], disallow: [] }],
+      sitemaps: ["https://codexcryptica.com/sitemap.xml"],
+    },
+    crawlerToken: "oai-searchbot",
+    sitemapXml: `<urlset><url><loc>https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg</loc></url></urlset>`,
+    llmsFullTxt: `https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg`,
+  };
+
+  it("passes when all cluster route requirements are met", () => {
+    const findings = evaluateClusterRouteResponse(
+      validResponse,
+      target,
+      mockContext,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("fails when robots.txt disallows the cluster route", () => {
+    const disallowedContext = {
+      ...mockContext,
+      robots: {
+        groups: [
+          { agents: ["oai-searchbot"], allow: [], disallow: ["/answers/"] },
+        ],
+        sitemaps: [],
+      },
+    };
+    const findings = evaluateClusterRouteResponse(
+      validResponse,
+      target,
+      disallowedContext,
+    );
+    expect(findings.some((f) => f.code === "robots-disallow")).toBe(true);
+  });
+
+  it("fails when canonical URL mismatches the route", () => {
+    const mismatchedResponse: CrawlResponse = {
+      ...validResponse,
+      body: validHtml.replace(
+        `href="https://codexcryptica.com/answers/how-do-you-run-a-heist-in-a-tabletop-rpg"`,
+        `href="https://codexcryptica.com/answers/other-url"`,
+      ),
+    };
+    const findings = evaluateClusterRouteResponse(
+      mismatchedResponse,
+      target,
+      mockContext,
+    );
+    expect(findings.some((f) => f.code === "canonical-mismatch")).toBe(true);
+  });
+
+  it("fails when route is missing from sitemap.xml", () => {
+    const emptySitemapContext = {
+      ...mockContext,
+      sitemapXml: `<urlset></urlset>`,
+    };
+    const findings = evaluateClusterRouteResponse(
+      validResponse,
+      target,
+      emptySitemapContext,
+    );
+    expect(findings.some((f) => f.code === "cluster-sitemap-missing")).toBe(
+      true,
+    );
+  });
+
+  it("fails when answer is missing from llms-full.txt", () => {
+    const emptyLlmsContext = {
+      ...mockContext,
+      llmsFullTxt: "something else",
+    };
+    const findings = evaluateClusterRouteResponse(
+      validResponse,
+      target,
+      emptyLlmsContext,
+    );
+    expect(findings.some((f) => f.code === "cluster-llms-full-missing")).toBe(
+      true,
+    );
+  });
+
+  it("does not require generators in llms-full.txt per content policy", () => {
+    const generatorTarget = {
+      path: "/generators/heist",
+      clusters: ["heist"],
+    };
+    const genResponse: CrawlResponse = {
+      ...validResponse,
+      requestedUrl: "https://codexcryptica.com/generators/heist",
+      finalUrl: "https://codexcryptica.com/generators/heist",
+      body: validHtml.replace(
+        /\/answers\/how-do-you-run-a-heist-in-a-tabletop-rpg/g,
+        "/generators/heist",
+      ),
+    };
+    const genContext = {
+      ...mockContext,
+      sitemapXml: `<urlset><url><loc>https://codexcryptica.com/generators/heist</loc></url></urlset>`,
+      llmsFullTxt: "no generators here",
+    };
+    const findings = evaluateClusterRouteResponse(
+      genResponse,
+      generatorTarget,
+      genContext,
+    );
+    expect(findings.some((f) => f.code === "cluster-llms-full-missing")).toBe(
+      false,
+    );
+  });
+
+  it("fails when X-Robots-Tag header carries nofollow", () => {
+    const nofollowHeaderResponse: CrawlResponse = {
+      ...validResponse,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": "noindex, nofollow",
+      },
+    };
+    const findings = evaluateClusterRouteResponse(
+      nofollowHeaderResponse,
+      target,
+      mockContext,
+    );
+    expect(
+      findings.some((f) => f.code === "nofollow" && f.severity === "error"),
+    ).toBe(true);
+  });
+
+  it('fails when <meta name="robots"> carries nofollow', () => {
+    const nofollowMetaResponse: CrawlResponse = {
+      ...validResponse,
+      body: validHtml.replace(
+        '<meta name="robots" content="index, follow">',
+        '<meta name="robots" content="index, nofollow">',
+      ),
+    };
+    const findings = evaluateClusterRouteResponse(
+      nofollowMetaResponse,
+      target,
+      mockContext,
+    );
+    expect(
+      findings.some((f) => f.code === "nofollow" && f.severity === "error"),
+    ).toBe(true);
+  });
+});
+
+describe("extractOutgoingClusterLinks and evaluateClusterLinks", () => {
+  it("extracts relative and absolute outgoing links to cluster routes", () => {
+    const html = `
+      <p>
+        <a href="/generators/heist">Heist Generator</a>
+        <a href="../examples/the-breakwater-vault-space-western-heist">Vault Example</a>
+        <a href="https://example.com/external">External</a>
+      </p>
+    `;
+    const knownRoutes = [
+      "/generators/heist",
+      "/examples/the-breakwater-vault-space-western-heist",
+      "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+    ];
+    const links = extractOutgoingClusterLinks(
+      html,
+      knownRoutes,
+      "https://codexcryptica.com",
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    );
+    expect(links).toContain("/generators/heist");
+    expect(links).toContain(
+      "/examples/the-breakwater-vault-space-western-heist",
+    );
+    expect(links).not.toContain("https://example.com/external");
+  });
+
+  it("evaluates contextual cluster links and flags pending direct CTA links", () => {
+    const clusterRoutes = [
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+      "/generators/heist",
+      "/examples/the-breakwater-vault-space-western-heist",
+    ];
+
+    const htmlByRoute = new Map<string, string>();
+    // Answer links only to generator, direct example link pending
+    htmlByRoute.set(
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+      `<a href="/generators/heist">Generator</a>`,
+    );
+    // Generator links to answer and example
+    htmlByRoute.set(
+      "/generators/heist",
+      `<a href="/answers/how-do-you-run-a-heist-in-a-tabletop-rpg">Answer</a>
+       <a href="/examples/the-breakwater-vault-space-western-heist">Example</a>`,
+    );
+    // Example links to answer and generator
+    htmlByRoute.set(
+      "/examples/the-breakwater-vault-space-western-heist",
+      `<a href="/answers/how-do-you-run-a-heist-in-a-tabletop-rpg">Answer</a>
+       <a href="/generators/heist">Generator</a>`,
+    );
+
+    const findings = evaluateClusterLinks("heist", clusterRoutes, htmlByRoute);
+    const answerFindings = findings.find(
+      (f) => f.route === "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+    );
+    expect(answerFindings).toBeDefined();
+    expect(
+      answerFindings?.findings.some(
+        (f) =>
+          f.code === "cluster-direct-link-pending" && f.severity === "warning",
+      ),
+    ).toBe(true);
+
+    // Generator and example have all required links and zero error findings
+    const genFindings = findings.find((f) => f.route === "/generators/heist");
+    expect(genFindings).toBeUndefined();
+    const exampleFindings = findings.find(
+      (f) => f.route === "/examples/the-breakwater-vault-space-western-heist",
+    );
+    expect(exampleFindings).toBeUndefined();
+  });
+
+  it("fails when an example does not link to any answer in the cluster", () => {
+    const clusterRoutes = [
+      "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+      "/generators/heist",
+      "/examples/the-breakwater-vault-space-western-heist",
+    ];
+
+    const htmlByRoute = new Map<string, string>();
+    htmlByRoute.set(
+      "/examples/the-breakwater-vault-space-western-heist",
+      `<a href="/generators/heist">Generator only</a>`,
+    );
+
+    const findings = evaluateClusterLinks("heist", clusterRoutes, htmlByRoute);
+    const exampleFindings = findings.find(
+      (f) => f.route === "/examples/the-breakwater-vault-space-western-heist",
+    );
+    expect(exampleFindings).toBeDefined();
+    expect(
+      exampleFindings?.findings.some(
+        (f) =>
+          f.code === "cluster-example-missing-answer-link" &&
+          f.severity === "error",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("formatClusterSummaryTable and formatClusterFailureDetail", () => {
+  it("formats markdown table matching the required structure", () => {
+    const summaries = [
+      {
+        crawler: "OAI-SearchBot",
+        cluster: "heist",
+        routes: 6,
+        errors: 0,
+        warnings: 2,
+      },
+      {
+        crawler: "OAI-SearchBot",
+        cluster: "rumour",
+        routes: 4,
+        errors: 0,
+        warnings: 1,
+      },
+      {
+        crawler: "OAI-SearchBot",
+        cluster: "religion",
+        routes: 2,
+        errors: 0,
+        warnings: 1,
+      },
+    ];
+    const table = formatClusterSummaryTable(summaries);
+    expect(table).toContain(
+      "| Crawler | Cluster | Routes | Errors | Warnings |",
+    );
+    expect(table).toContain("| OAI-SearchBot | heist | 6 | 0 | 2 |");
+    expect(table).toContain("| OAI-SearchBot | rumour | 4 | 0 | 1 |");
+    expect(table).toContain("| OAI-SearchBot | religion | 2 | 0 | 1 |");
+  });
+
+  it("formats failure detail naming crawler, cluster(s), route, assertion, and observed value", () => {
+    const detail = {
+      crawler: "Googlebot",
+      clusters: ["heist", "adventure-mapping"],
+      route: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+      assertion: "canonical-mismatch",
+      observed: "canonical points to /answers/wrong",
+    };
+    const message = formatClusterFailureDetail(detail);
+    expect(message).toBe(
+      `[Googlebot] [heist, adventure-mapping] /answers/how-do-you-run-a-heist-in-a-tabletop-rpg: failed assertion "canonical-mismatch" — observed: canonical points to /answers/wrong`,
+    );
   });
 });

@@ -179,10 +179,11 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
   ],
-  labels: ["fantasy"],
+  labels: ["fantasy", "rumour"],
   discovery: {
     id: "answer-useful-rpg-rumours",
     parentCluster: "quest-design",
+    clusters: ["rumour", "quest-design"],
     primaryIntent: "how to generate useful rpg rumours",
     intentAliases: [
       "how do i generate useful rpg rumours",

@@ -28,6 +28,7 @@
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorRefinementModal from "./GeneratorRefinementModal.svelte";
   import LoreMergeModal from "$lib/components/modals/LoreMergeModal.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import ConstellationChart from "./ConstellationChart.svelte";
@@ -69,6 +70,7 @@
     clipboardService as defaultClipboardService,
     type ClipboardService,
   } from "$lib/services/ClipboardService";
+  import { sendEntityToMonsterLabs } from "$lib/services/seo/monsterlabs-handoff";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -731,6 +733,52 @@
     }
   }
 
+  let isSendingToMonsterLabs = $state(false);
+  let monsterLabsBlockedUrl = $state<string | null>(null);
+
+  // A description over MonsterLabs' own prompt budget is compressed by the
+  // Oracle first, which is why this awaits — the modal shows a "preparing"
+  // state for that gap in this tab rather than a blank placeholder tab
+  // stealing focus for the duration.
+  async function handleSendToMonsterLabs(data: GeneratorOutput) {
+    if (isSendingToMonsterLabs) return;
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "monsterlabs",
+    });
+
+    isSendingToMonsterLabs = true;
+    monsterLabsBlockedUrl = null;
+    const result = await sendEntityToMonsterLabs({
+      name: data.title,
+      type: data.type,
+      description: [documentLayout.content, documentLayout.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
+
+    if (!result.ok) {
+      errorMessage =
+        result.reason === "url-too-long"
+          ? "This draft is too long to send to MonsterLabs."
+          : "Add some content before sending to MonsterLabs.";
+      isSendingToMonsterLabs = false;
+      return;
+    }
+
+    errorMessage = null;
+    if (result.popupBlocked) {
+      monsterLabsBlockedUrl = result.url;
+      return;
+    }
+    isSendingToMonsterLabs = false;
+  }
+
+  function handleOpenBlockedMonsterLabsTab() {
+    isSendingToMonsterLabs = false;
+    monsterLabsBlockedUrl = null;
+  }
+
   async function handleCopySection(sectionId: string, markdown: string) {
     trackPublicGeneratorAction("copy", {
       generator_type: generatorType,
@@ -1128,6 +1176,10 @@
           ? onGenerateRoster
           : undefined}
         {onOpenMemberAsCharacter}
+        onSendToMonsterLabs={userGenerationSucceeded
+          ? handleSendToMonsterLabs
+          : undefined}
+        {isSendingToMonsterLabs}
       />
     </div>
 
@@ -1204,6 +1256,13 @@
   />
 
   <LoreMergeModal />
+
+  <MonsterLabsSendingModal
+    open={isSendingToMonsterLabs}
+    entityLabel={generatedData?.title}
+    blockedUrl={monsterLabsBlockedUrl}
+    onOpenBlocked={handleOpenBlockedMonsterLabsTab}
+  />
 </div>
 
 <style>

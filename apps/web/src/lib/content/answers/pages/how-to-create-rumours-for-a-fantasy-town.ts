@@ -142,10 +142,11 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-generate-useful-rpg-rumours",
   ],
-  labels: ["fantasy"],
+  labels: ["fantasy", "rumour"],
   discovery: {
     id: "answer-create-fantasy-town-rumours",
     parentCluster: "settlement-creation",
+    clusters: ["rumour", "settlement-creation"],
     primaryIntent: "how to create rumours for a fantasy town",
     intentAliases: [
       "fantasy town rumour table",
