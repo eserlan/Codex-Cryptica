@@ -272,15 +272,18 @@ describe("sendToExternalGenerator", () => {
     expect(pendingTab.location.assign).not.toHaveBeenCalled();
   });
 
-  it("tolerates a null pendingTab (e.g. the pre-open itself was blocked)", () => {
-    expect(() =>
-      sendToExternalGenerator({
-        baseUrl: "https://monsterlabs.app/dnd-monster-generator",
-        paramName: "prompt",
-        content: "A cursed lantern",
-        pendingTab: null,
-      }),
-    ).not.toThrow();
+  it("reports popupBlocked when pendingTab is null (the pre-open itself was blocked)", () => {
+    const result = sendToExternalGenerator({
+      baseUrl: "https://monsterlabs.app/dnd-monster-generator",
+      paramName: "prompt",
+      content: "A cursed lantern",
+      pendingTab: null,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.popupBlocked).toBe(true);
+    }
   });
 });
 

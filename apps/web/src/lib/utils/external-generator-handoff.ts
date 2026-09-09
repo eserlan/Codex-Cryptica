@@ -159,8 +159,11 @@ export function sendToExternalGenerator(
   const result = buildExternalGeneratorUrl(options);
   if (options.pendingTab !== undefined) {
     if (result.ok) {
+      if (options.pendingTab === null) {
+        return { ...result, popupBlocked: true };
+      }
       try {
-        options.pendingTab?.location.assign(result.url);
+        options.pendingTab.location.assign(result.url);
       } catch {
         // The tab may have been closed by the user already; nothing more to do.
       }
