@@ -5,8 +5,8 @@ import type { ExampleConfigInput } from "../schema";
  * the production heist generator for this content pass, not sourced from a
  * community discussion. Reformatted into the example page's block structure
  * and given editorial headings; the generated text itself is unaltered aside
- * from British spelling of two words ("recognises", "colour"-family terms
- * were not present, but "recognizes" was corrected).
+ * from one American spelling corrected to British English ("recognizes" ->
+ * "recognises").
  */
 export const theQuellExtraction: ExampleConfigInput = {
   slug: "the-quell-extraction-cyberpunk-heist",
