@@ -320,7 +320,6 @@ for (const target of clusterTargetMap.values()) {
       continue;
     }
   }
-  htmlByRoute.set(target.path, response.body);
   const routeFindings = evaluateClusterRouteResponse(response, target, {
     robots,
     crawlerToken: crawler.robotsToken,
@@ -330,6 +329,18 @@ for (const target of clusterTargetMap.values()) {
   });
   clusterRouteFindings.set(target.path, routeFindings);
   record(`${target.path} [cluster]`, routeFindings);
+
+  const hasTransportOrMitigationError = routeFindings.some(
+    (f) =>
+      f.severity === "error" &&
+      (f.code === "status" ||
+        f.code === "challenge" ||
+        f.code === "auth-redirect" ||
+        f.code === "thin-content"),
+  );
+  if (!hasTransportOrMitigationError && response.status === 200) {
+    htmlByRoute.set(target.path, response.body);
+  }
 }
 
 // Cluster contextual links verification

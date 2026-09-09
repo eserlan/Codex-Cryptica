@@ -889,6 +889,42 @@ describe("evaluateClusterRouteResponse", () => {
       false,
     );
   });
+
+  it("fails when X-Robots-Tag header carries nofollow", () => {
+    const nofollowHeaderResponse: CrawlResponse = {
+      ...validResponse,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": "noindex, nofollow",
+      },
+    };
+    const findings = evaluateClusterRouteResponse(
+      nofollowHeaderResponse,
+      target,
+      mockContext,
+    );
+    expect(
+      findings.some((f) => f.code === "nofollow" && f.severity === "error"),
+    ).toBe(true);
+  });
+
+  it('fails when <meta name="robots"> carries nofollow', () => {
+    const nofollowMetaResponse: CrawlResponse = {
+      ...validResponse,
+      body: validHtml.replace(
+        '<meta name="robots" content="index, follow">',
+        '<meta name="robots" content="index, nofollow">',
+      ),
+    };
+    const findings = evaluateClusterRouteResponse(
+      nofollowMetaResponse,
+      target,
+      mockContext,
+    );
+    expect(
+      findings.some((f) => f.code === "nofollow" && f.severity === "error"),
+    ).toBe(true);
+  });
 });
 
 describe("extractOutgoingClusterLinks and evaluateClusterLinks", () => {
