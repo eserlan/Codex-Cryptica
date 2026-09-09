@@ -30,6 +30,11 @@
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
   import { shelf } from "$lib/features/shelf";
   import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+    sendEntityToMonsterLabs,
+  } from "$lib/services/seo/monsterlabs-handoff";
 
   let {
     entity,
@@ -76,6 +81,30 @@
     if (!ok) return;
     shelvedJustNow = true;
     setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf.
+   */
+  const handleSendToMonsterLabs = () => {
+    if (!entity) return;
+    const result = sendEntityToMonsterLabs({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
+    if (!result.ok) {
+      notificationStore.notify(
+        result.reason === "url-too-long"
+          ? "This entity is too long to send to MonsterLabs."
+          : "Add some content before sending to MonsterLabs.",
+        "error",
+      );
+    }
   };
 
   const handleCopyGuestLink = async () => {
@@ -339,6 +368,23 @@
               class="{shelvedJustNow
                 ? 'icon-[lucide--check]'
                 : 'icon-[lucide--library]'} w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && isMonsterLabsHandoffEligibleType(entity.type)}
+          <button
+            type="button"
+            onclick={handleSendToMonsterLabs}
+            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title="{getMonsterLabsActionLabel(
+              entity.type,
+            )} — opens monsterlabs.app in a new tab"
+            aria-label={getMonsterLabsActionLabel(entity.type)}
+            data-testid="zen-send-to-monsterlabs-button"
+          >
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--external-link] w-4 h-4"
             ></span>
           </button>
         {/if}
