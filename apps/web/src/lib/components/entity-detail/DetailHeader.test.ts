@@ -358,6 +358,17 @@ describe("DetailHeader MonsterLabs handoff", () => {
     );
   });
 
+  it("offers to send items to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
   it("does not offer the handoff for other entity types", () => {
     const { queryByTestId } = renderEntity({
       type: "location",
@@ -365,6 +376,40 @@ describe("DetailHeader MonsterLabs handoff", () => {
     });
 
     expect(queryByTestId("send-to-monsterlabs-button")).toBeNull();
+  });
+
+  it("labels the item action as a magic item handoff", () => {
+    const { getAllByLabelText } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet.",
+    });
+
+    expect(
+      getAllByLabelText("Create D&D magic item in MonsterLabs").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("opens the magic item generator for an item entity", async () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      title: "Crown of the Last Ember",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [url] = openSpy.mock.calls[0];
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-magic-item-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Crown of the Last Ember\nType: Item\n\nA tarnished circlet that hums when a fire is near.",
+    );
+
+    openSpy.mockRestore();
   });
 
   it("opens MonsterLabs with the entity's name, type, and content", async () => {

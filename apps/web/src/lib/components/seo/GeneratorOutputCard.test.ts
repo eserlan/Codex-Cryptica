@@ -346,4 +346,84 @@ describe("GeneratorOutputCard", () => {
 
     expect(onSendToMonsterLabs).toHaveBeenCalledWith(creatureData);
   });
+
+  it("shows Create D&D Magic Item for an item draft when onSendToMonsterLabs is provided", () => {
+    const itemData: GeneratorOutput = {
+      ...sampleData,
+      type: "item",
+      labels: ["rpg-item"],
+    };
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: itemData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Item",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: itemData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: /create d&d magic item/i }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /^create d&d monster$/i }),
+    ).toBeNull();
+  });
+
+  it("calls onSendToMonsterLabs with the current draft for an item", async () => {
+    const itemData: GeneratorOutput = {
+      ...sampleData,
+      type: "item",
+      labels: [],
+    };
+    const onSendToMonsterLabs = vi.fn();
+    render(GeneratorOutputCard, {
+      props: {
+        generatedData: itemData,
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Item",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent: itemData.content,
+        documentSections: sampleSections,
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+        onSendToMonsterLabs,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /create d&d magic item/i }),
+    );
+
+    expect(onSendToMonsterLabs).toHaveBeenCalledWith(itemData);
+  });
 });
