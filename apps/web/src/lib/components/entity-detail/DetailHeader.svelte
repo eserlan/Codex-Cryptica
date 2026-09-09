@@ -32,6 +32,10 @@
   import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
   import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsEligibleType,
+    sendToMonsterLabsMonsterGenerator,
+  } from "$lib/services/seo/monsterlabs-handoff";
 
   let {
     entity,
@@ -85,6 +89,28 @@
     if (!ok) return;
     shelvedJustNow = true;
     setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster generator in
+   * a new tab (#2871). Read-only against this vault, like Send to Shelf.
+   */
+  const handleSendToMonsterLabs = () => {
+    const result = sendToMonsterLabsMonsterGenerator({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
+    if (!result.ok) {
+      notificationStore.notify(
+        result.reason === "url-too-long"
+          ? "This entity is too long to send to MonsterLabs."
+          : "Add some content before sending to MonsterLabs.",
+        "error",
+      );
+    }
   };
 
   const handleFindInGraph = () => {
@@ -243,6 +269,19 @@
           class="{shelvedJustNow
             ? 'icon-[lucide--check]'
             : 'icon-[lucide--library]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
+    {#if isMonsterLabsEligibleType(entity.type)}
+      <button
+        type="button"
+        onclick={handleSendToMonsterLabs}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        aria-label="Create D&D monster in MonsterLabs"
+        title="Create D&D monster in MonsterLabs — opens monsterlabs.app in a new tab"
+        data-testid="send-to-monsterlabs-button"
+      >
+        <span aria-hidden="true" class="icon-[lucide--external-link] w-5 h-5"
         ></span>
       </button>
     {/if}
