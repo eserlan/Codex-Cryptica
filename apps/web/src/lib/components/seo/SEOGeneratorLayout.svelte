@@ -69,7 +69,7 @@
     clipboardService as defaultClipboardService,
     type ClipboardService,
   } from "$lib/services/ClipboardService";
-  import { sendToMonsterLabsMonsterGenerator } from "$lib/services/seo/monsterlabs-handoff";
+  import { sendEntityToMonsterLabs } from "$lib/services/seo/monsterlabs-handoff";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -738,7 +738,7 @@
       copy_target: "monsterlabs",
     });
 
-    const result = sendToMonsterLabsMonsterGenerator({
+    const result = sendEntityToMonsterLabs({
       name: data.title,
       type: data.type,
       description: [documentLayout.content, documentLayout.lore]

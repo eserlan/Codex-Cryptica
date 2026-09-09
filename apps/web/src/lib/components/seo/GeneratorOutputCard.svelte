@@ -9,7 +9,10 @@
     isFactionDraft,
     isFactionRosterDraft,
   } from "$lib/services/seo/generator-handoffs";
-  import { isMonsterLabsEligibleType } from "$lib/services/seo/monsterlabs-handoff";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    isMonsterLabsItemEligibleType,
+  } from "$lib/services/seo/monsterlabs-handoff";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -279,19 +282,24 @@
                 Generate Roster
               </button>
             {/if}
-            {#if onSendToMonsterLabs && isMonsterLabsEligibleType(generatedData?.type)}
+            {#if onSendToMonsterLabs && isMonsterLabsHandoffEligibleType(generatedData?.type)}
+              {@const isItem = isMonsterLabsItemEligibleType(
+                generatedData?.type,
+              )}
               <button
                 type="button"
                 onclick={() => onSendToMonsterLabs(generatedData!)}
                 class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
                 id="send-to-monsterlabs-btn"
-                title="Create a D&D monster from this draft in MonsterLabs (opens in a new tab)"
+                title="Create a D&D {isItem
+                  ? 'magic item'
+                  : 'monster'} from this draft in MonsterLabs (opens in a new tab)"
               >
                 <span
                   class="icon-[lucide--external-link] w-3.5 h-3.5"
                   aria-hidden="true"
                 ></span>
-                Create D&D Monster
+                Create D&D {isItem ? "Magic Item" : "Monster"}
               </button>
             {/if}
             <button

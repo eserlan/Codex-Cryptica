@@ -33,8 +33,9 @@
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
   import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
   import {
-    isMonsterLabsEligibleType,
-    sendToMonsterLabsMonsterGenerator,
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+    sendEntityToMonsterLabs,
   } from "$lib/services/seo/monsterlabs-handoff";
 
   let {
@@ -92,11 +93,12 @@
   };
 
   /**
-   * Hands this entity's content off to MonsterLabs' D&D monster generator in
-   * a new tab (#2871). Read-only against this vault, like Send to Shelf.
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf.
    */
   const handleSendToMonsterLabs = () => {
-    const result = sendToMonsterLabsMonsterGenerator({
+    const result = sendEntityToMonsterLabs({
       name: entity.title,
       type: entity.type,
       description: [entity.content, entity.lore]
@@ -272,13 +274,15 @@
         ></span>
       </button>
     {/if}
-    {#if isMonsterLabsEligibleType(entity.type)}
+    {#if isMonsterLabsHandoffEligibleType(entity.type)}
       <button
         type="button"
         onclick={handleSendToMonsterLabs}
         class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-        aria-label="Create D&D monster in MonsterLabs"
-        title="Create D&D monster in MonsterLabs — opens monsterlabs.app in a new tab"
+        aria-label={getMonsterLabsActionLabel(entity.type)}
+        title="{getMonsterLabsActionLabel(
+          entity.type,
+        )} — opens monsterlabs.app in a new tab"
         data-testid="send-to-monsterlabs-button"
       >
         <span aria-hidden="true" class="icon-[lucide--external-link] w-5 h-5"
