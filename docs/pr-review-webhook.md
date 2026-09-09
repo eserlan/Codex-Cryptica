@@ -64,3 +64,20 @@ systemctl --user enable --now codex-pr-review-webhook.service
 Keep the tunnel running as a separate user service. The machine must be awake
 and connected for webhook delivery; a scheduled GitHub poller is still useful
 as a recovery path for missed events.
+
+## Fixer logs
+
+Every PR fixer run gets a timestamped log in:
+
+```text
+~/.local/state/codex-pr-review/pr-<number>-<run-id>.log
+```
+
+The listener journal includes the agent output and emits a heartbeat every 30
+seconds while the LLM or its checks are running:
+
+```sh
+journalctl --user -u codex-pr-review-webhook.service -f
+ls -lt ~/.local/state/codex-pr-review/
+tail -f ~/.local/state/codex-pr-review/pr-<number>-<run-id>.log
+```

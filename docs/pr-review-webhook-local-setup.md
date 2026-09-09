@@ -50,11 +50,20 @@ systemctl --user status codex-pr-review-tunnel.service
 curl -fsS https://pr-webhook.codexcryptica.com/health
 journalctl --user -u codex-pr-review-webhook.service -f
 journalctl --user -u codex-pr-review-tunnel.service -f
+# List durable per-run fixer logs
+ls -lt ~/.local/state/codex-pr-review/
+# Follow the latest fixer log
+tail -f ~/.local/state/codex-pr-review/pr-<number>-<run-id>.log
 ```
 
 The health endpoint should return JSON containing `ok: true`. The tunnel must
 be running before GitHub can deliver events. The PC must be awake and online;
 a future scheduled poller can recover events missed while it is unavailable.
+
+Each fixer run also writes the agent's stdout and stderr to a durable log under
+`~/.local/state/codex-pr-review/`. The systemd journal contains the same agent
+output plus periodic heartbeat messages, so a quiet journal can be diagnosed by
+checking the active process and its per-run log.
 
 ## Reinstalling the services
 
