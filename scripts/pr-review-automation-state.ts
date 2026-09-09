@@ -7,8 +7,6 @@ export interface PrAutomationRecord {
   handledCommentIds: number[];
   handledReviewIds: string[];
   handledCheckKeys: string[];
-  /** The head SHA that has completed the local two-pass agent review. */
-  lastInternalReviewHeadSha?: string;
   lastAutoMergeHeadSha?: string;
 }
 
@@ -21,7 +19,6 @@ export interface UnseenFeedback {
   comments: PrFeedback["unresolvedComments"];
   reviews: PrFeedback["reviews"];
   checks: PrCheck[];
-  hasMergeConflict: boolean;
   hasActionableFeedback: boolean;
 }
 
@@ -89,27 +86,18 @@ export function getUnseenFeedback(
     (comment) => !handledComments.has(comment.id),
   );
   const reviews = feedback.reviews.filter(
-    (review) =>
-      review.state === "CHANGES_REQUESTED" && !handledReviews.has(review.id),
+    (review) => !handledReviews.has(review.id),
   );
   const checks = feedback.failingChecks.filter(
     (check) => !handledChecks.has(getCheckKey(headSha, check)),
   );
 
-  const hasMergeConflict =
-    feedback.prMeta.mergeable === "CONFLICTING" ||
-    feedback.prMeta.mergeStateStatus === "DIRTY";
-
   return {
     comments,
     reviews,
     checks,
-    hasMergeConflict,
     hasActionableFeedback:
-      comments.length > 0 ||
-      reviews.length > 0 ||
-      checks.length > 0 ||
-      hasMergeConflict,
+      comments.length > 0 || reviews.length > 0 || checks.length > 0,
   };
 }
 
@@ -144,49 +132,6 @@ export function markFeedbackHandled(
   return state;
 }
 
-/**
- * Only suppress feedback after the fixer has produced observable evidence:
- * a new pushed head, or every originally actionable item is no longer open.
- */
-export function hasFixEvidence(before: PrFeedback, after: PrFeedback): boolean {
-  const openCommentIds = new Set(
-    after.unresolvedComments.map((comment) => comment.id),
-  );
-  const resolvedComments = before.unresolvedComments.every(
-    (comment) => !openCommentIds.has(comment.id),
-  );
-  const openFailures = new Set(
-    after.failingChecks.map(
-      (check) => `${check.workflow ?? ""}:${check.name}:${check.state}`,
-    ),
-  );
-  const resolvedFailures = before.failingChecks.every(
-    (check) =>
-      !openFailures.has(`${check.workflow ?? ""}:${check.name}:${check.state}`),
-  );
-  const openChangesRequested = new Set(
-    after.reviews
-      .filter((review) => review.state === "CHANGES_REQUESTED")
-      .map((review) => review.id),
-  );
-  const resolvedReviews = before.reviews
-    .filter((review) => review.state === "CHANGES_REQUESTED")
-    .every((review) => !openChangesRequested.has(review.id));
-
-  const hadReviewFeedback = before.reviews.some(
-    (review) => review.state === "CHANGES_REQUESTED",
-  );
-  const hadExplicitFeedback =
-    before.unresolvedComments.length > 0 ||
-    before.failingChecks.length > 0 ||
-    hadReviewFeedback;
-  if (!hadExplicitFeedback) {
-    return before.prMeta.headRefOid !== after.prMeta.headRefOid;
-  }
-
-  return resolvedComments && resolvedFailures && resolvedReviews;
-}
-
 export function markAutoMergeRequested(
   state: PrAutomationState,
   prNumber: number,
@@ -200,44 +145,10 @@ export function markAutoMergeRequested(
   return state;
 }
 
-export function isInternalReviewDue(
-  feedback: PrFeedback,
-  unseen: UnseenFeedback,
-  state: PrAutomationState,
-): boolean {
-  const record = getRecord(state, feedback.prMeta.number);
-  return (
-    feedback.prMeta.state === "OPEN" &&
-    feedback.prMeta.baseRefName === "staging" &&
-    !feedback.prMeta.isDraft &&
-    feedback.prMeta.mergeable === "MERGEABLE" &&
-    feedback.prMeta.reviewDecision !== "CHANGES_REQUESTED" &&
-    feedback.failingChecks.length === 0 &&
-    feedback.pendingChecks.length === 0 &&
-    !unseen.hasActionableFeedback &&
-    record.lastInternalReviewHeadSha !== feedback.prMeta.headRefOid
-  );
-}
-
-export function markInternalReviewCompleted(
-  state: PrAutomationState,
-  prNumber: number,
-  headSha: string,
-): PrAutomationState {
-  const record = getRecord(state, prNumber);
-  state.pullRequests[String(prNumber)] = {
-    ...record,
-    lastInternalReviewHeadSha: headSha,
-  };
-  return state;
-}
-
 export function isAutoMergeEligible(
   feedback: PrFeedback,
   unseen: UnseenFeedback,
-  state: PrAutomationState,
 ): boolean {
-  const record = getRecord(state, feedback.prMeta.number);
   return (
     feedback.prMeta.state === "OPEN" &&
     feedback.prMeta.baseRefName === "staging" &&
@@ -246,7 +157,6 @@ export function isAutoMergeEligible(
     feedback.prMeta.reviewDecision !== "CHANGES_REQUESTED" &&
     feedback.failingChecks.length === 0 &&
     feedback.pendingChecks.length === 0 &&
-    !unseen.hasActionableFeedback &&
-    record.lastInternalReviewHeadSha === feedback.prMeta.headRefOid
+    !unseen.hasActionableFeedback
   );
 }

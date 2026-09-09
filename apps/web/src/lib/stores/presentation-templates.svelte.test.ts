@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 
@@ -33,24 +33,23 @@ vi.mock("../utils/idb", () => {
 
 import { PresentationTemplateStore } from "./presentation-templates.svelte";
 
-function makeClock(initial = "2024-01-01T00:00:00.000Z") {
-  let current = new Date(initial).getTime();
-  return {
-    now: () => current,
-    advance: (ms: number) => {
-      current += ms;
-    },
-  };
+let mockTime = new Date("2024-01-01T00:00:00.000Z").getTime();
+function advanceTime(ms: number) {
+  mockTime += ms;
 }
 
-function makeStore(clock = makeClock()) {
+function makeStore() {
   return new PresentationTemplateStore(
     { uuid: vi.fn(() => `id-${Math.random()}`) },
-    clock,
+    { now: () => mockTime }
   );
 }
 
 describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
+  beforeEach(() => {
+    mockTime = new Date("2024-01-01T00:00:00.000Z").getTime();
+  });
+
   it("provides a generated NPC or monster presentation for creature sheets", () => {
     const store = makeStore();
 
@@ -151,15 +150,16 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
   });
 
   it("does not suffix when re-saving an existing template under its own unchanged name", async () => {
-    const clock = makeClock();
-    const store = makeStore(clock);
+    const store = makeStore();
     const created = await store.saveTemplate({
       schemaTemplateId: "schema-1",
       name: "My Layout",
       source: "one",
       formatVersion: 1,
     });
-    clock.advance(60_000);
+
+    advanceTime(60000); // Advance by 1 minute
+
     const resaved = await store.saveTemplate({
       id: created!.id,
       schemaTemplateId: "schema-1",
