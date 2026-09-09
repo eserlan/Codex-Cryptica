@@ -109,3 +109,6 @@ apps/web/ios/App/Podfile.lock
 # CodeGraph local index + agent wiring (trial; remove if adopted repo-wide)
 .codegraph/
 .mcp.json
+
+# Cloudflare Pages functions build
+_worker.bundle*

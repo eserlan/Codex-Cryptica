@@ -177,6 +177,9 @@ export default defineConfig({
       "src/**/*.{test,spec}.{js,ts}",
       // Build scripts keep their tests colocated (e.g. inject-shell-og).
       "scripts/**/*.{test,spec}.{js,ts}",
+      // Cloudflare Pages Functions live at the repo root and aren't their own
+      // workspace, so they ride along with the web app's test run (#2864).
+      "../../functions/**/*.{test,spec}.{js,ts}",
     ],
     environment: "jsdom",
     globals: true,
@@ -187,6 +190,7 @@ export default defineConfig({
       ["src/lib/utils/**", "node"],
       ["src/lib/config/**", "node"],
       ["src/lib/seo/**", "node"],
+      ["../../functions/**", "node"],
       ["src/lib/content/**", "node"],
       ["../../packages/ai-engine/src/prompts/**", "node"],
       ["../../packages/ai-engine/src/capability-guard*", "node"],

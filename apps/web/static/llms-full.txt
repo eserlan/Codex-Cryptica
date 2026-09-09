@@ -1982,6 +1982,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
 
+### [How do you handle players going off script as a GM?](https://codexcryptica.com/answers/how-do-you-handle-players-going-off-script-as-a-gm)
+
+**Direct answer:** Handle players going off script by treating your prep as a toolbox rather than a route. Identify what the nearest NPC, faction, or site actually wants, reuse that motivation to improvise the new direction, and let the fiction absorb the consequences instead of steering the party back by force. Reserve a hard pause, calling for a short break to think, for the rare moment a rule, a safety concern, or a genuine plot dead end requires it, not for every deviation from your notes.
+
 ### [How do you improvise NPCs on the spot?](https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot)
 
 **Direct answer:** Improvise an NPC on the spot by fixing five things in the order the table will notice them: role, immediate want, attitude toward the party, one distinguishing behaviour you can repeat every time they speak, and one connection to something already in the campaign. Say the role out loud first so the scene has a name to react to, then let the rest surface through dialogue instead of description.
@@ -2105,6 +2109,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What RPG system should we try instead of D&D?](https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd)
 
 **Direct answer:** There's no single best alternative: the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.
+
+### [What should a new D&D player learn first?](https://codexcryptica.com/answers/what-should-a-new-dnd-player-learn-first)
+
+**Direct answer:** Before your first D&D session, learn only what your own character can do, how the basic d20 roll works, and how the table takes turns describing actions and resolving them. You do not need to memorise every class, species, background, rule, or spell. Ask the Dungeon Master which books and options the campaign uses, bring a simple reason for your character to join the party, and expect to ask questions while you play.
 
 ### [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain)
 
