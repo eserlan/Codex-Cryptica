@@ -137,6 +137,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-should-a-new-dnd-player-learn-first",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-organise-npc-relationships",
     "how-much-prep-do-you-need-for-an-rpg-session",
