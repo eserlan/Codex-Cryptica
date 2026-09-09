@@ -271,7 +271,11 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     expect(open).not.toHaveBeenCalled();
   });
 
-  it("reports popupBlocked instead of silently losing the tab when window.open is blocked", async () => {
+  it("still reports ok when window.open returns null, since noopener always returns null on success too", async () => {
+    // window.open's return value is not a reliable success/failure signal
+    // once "noopener" is passed — the spec defines it as always null in
+    // that case, whether or not the tab actually opened. This must not be
+    // mistaken for a blocked popup (see external-generator-handoff.ts).
     const { open } = stubWindow({ returns: null });
 
     const result = await sendToMonsterLabsMonsterGenerator(
@@ -284,10 +288,7 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     );
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.popupBlocked).toBe(true);
-      expect(result.url).toContain(MONSTERLABS_MONSTER_GENERATOR_URL);
-    }
+    expect(open).toHaveBeenCalledTimes(1);
   });
 });
 

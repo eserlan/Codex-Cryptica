@@ -85,7 +85,6 @@
   };
 
   let isSendingToMonsterLabs = $state(false);
-  let monsterLabsBlockedUrl = $state<string | null>(null);
 
   /**
    * Hands this entity's content off to MonsterLabs' D&D monster or magic
@@ -98,35 +97,26 @@
   const handleSendToMonsterLabs = async () => {
     if (!entity || isSendingToMonsterLabs) return;
     isSendingToMonsterLabs = true;
-    monsterLabsBlockedUrl = null;
-    const result = await sendEntityToMonsterLabs({
-      name: entity.title,
-      type: entity.type,
-      description: [entity.content, entity.lore]
-        .filter((part): part is string => Boolean(part?.trim()))
-        .join("\n\n"),
-    });
-    if (!result.ok) {
-      notificationStore.notify(
-        result.reason === "url-too-long"
-          ? "This entity is too long to send to MonsterLabs."
-          : "Add some content before sending to MonsterLabs.",
-        "error",
-      );
+    try {
+      const result = await sendEntityToMonsterLabs({
+        name: entity.title,
+        type: entity.type,
+        description: [entity.content, entity.lore]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join("\n\n"),
+      });
+      if (!result.ok) {
+        notificationStore.notify(
+          result.reason === "url-too-long"
+            ? "This entity is too long to send to MonsterLabs."
+            : "Add some content before sending to MonsterLabs.",
+          "error",
+        );
+      }
+    } finally {
       isSendingToMonsterLabs = false;
-      return;
     }
-    if (result.popupBlocked) {
-      monsterLabsBlockedUrl = result.url;
-      return;
-    }
-    isSendingToMonsterLabs = false;
   };
-
-  function handleOpenBlockedMonsterLabsTab() {
-    isSendingToMonsterLabs = false;
-    monsterLabsBlockedUrl = null;
-  }
 
   const handleCopyGuestLink = async () => {
     if (!guestVault.publishId || !entity) return;
@@ -597,6 +587,4 @@
 <MonsterLabsSendingModal
   open={isSendingToMonsterLabs}
   entityLabel={entity?.title}
-  blockedUrl={monsterLabsBlockedUrl}
-  onOpenBlocked={handleOpenBlockedMonsterLabsTab}
 />

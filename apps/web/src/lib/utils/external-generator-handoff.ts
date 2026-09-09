@@ -30,7 +30,7 @@ export interface ExternalGeneratorHandoffOptions {
 }
 
 export type ExternalGeneratorHandoffResult =
-  | { ok: true; url: string; popupBlocked?: boolean }
+  | { ok: true; url: string }
   | { ok: false; reason: "empty-content" }
   | { ok: false; reason: "invalid-base-url" }
   | { ok: false; reason: "unsupported-protocol" }
@@ -140,13 +140,15 @@ export function openPendingExternalGeneratorTab(
  * that show their own "preparing…" UI in the meantime should omit
  * `pendingTab` instead and open fresh once `content` is ready.
  *
- * Without `pendingTab`, the tab opens fresh after the URL is built. A
- * user-gesture `window.open` called after crossing an `await` is not
- * guaranteed to succeed in every browser (Safari in particular can block
- * it), so the `ok: true` result carries `popupBlocked: true` when the open
- * call returned `null` — callers should surface a manual "open" link/button
- * in that case (a real click is itself a fresh gesture, so a retry from
- * there will not be blocked) rather than assuming the tab is there.
+ * Without `pendingTab`, the tab opens fresh after the URL is built via
+ * {@link openExternalGeneratorUrl}. That call passes `noopener`, and per
+ * spec `window.open` always returns `null` when `noopener` is set —
+ * regardless of whether the tab actually opened — so that return value
+ * cannot be used to detect a blocked popup here (an earlier version of this
+ * function tried exactly that and reported every successful open as
+ * blocked). There is no reliable way to detect a blocked deferred popup
+ * while keeping `noopener`; callers needing a guarantee should use
+ * `pendingTab` instead, accepting the blank-tab-steals-focus trade-off.
  */
 export function sendToExternalGenerator(
   options: ExternalGeneratorHandoffOptions & {
@@ -168,8 +170,7 @@ export function sendToExternalGenerator(
     return result;
   }
   if (result.ok) {
-    const opened = openExternalGeneratorUrl(result.url, options.windowRef);
-    return { ...result, popupBlocked: opened === null };
+    openExternalGeneratorUrl(result.url, options.windowRef);
   }
   return result;
 }

@@ -456,9 +456,13 @@ describe("DetailHeader MonsterLabs handoff", () => {
     openSpy.mockRestore();
   });
 
-  it("keeps the modal open with a manual link when the deferred window.open is blocked", async () => {
+  it("clears the busy state even when window.open returns null (noopener always returns null)", async () => {
+    // window.open's return value is not a success/failure signal once
+    // "noopener" is passed — treating a null return as "blocked" would
+    // report every successful send as a failure. See
+    // external-generator-handoff.ts for the full explanation.
     const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
-    const { getAllByTestId, findByText } = renderEntity({
+    const { getAllByTestId, findAllByTestId } = renderEntity({
       type: "creature",
       title: "Ash-Eater Varkesh",
       content: "A soot-caked horror.",
@@ -466,10 +470,9 @@ describe("DetailHeader MonsterLabs handoff", () => {
 
     await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
 
-    const link = (await findByText("Open MonsterLabs")) as HTMLAnchorElement;
-    expect(link.href).toContain(
-      "https://monsterlabs.app/dnd-monster-generator",
-    );
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [button] = await findAllByTestId("send-to-monsterlabs-button");
+    expect(button.getAttribute("aria-busy")).toBe("false");
 
     openSpy.mockRestore();
   });

@@ -94,7 +94,6 @@
   };
 
   let isSendingToMonsterLabs = $state(false);
-  let monsterLabsBlockedUrl = $state<string | null>(null);
 
   /**
    * Hands this entity's content off to MonsterLabs' D&D monster or magic
@@ -107,38 +106,26 @@
   const handleSendToMonsterLabs = async () => {
     if (isSendingToMonsterLabs) return;
     isSendingToMonsterLabs = true;
-    monsterLabsBlockedUrl = null;
-    const result = await sendEntityToMonsterLabs({
-      name: entity.title,
-      type: entity.type,
-      description: [entity.content, entity.lore]
-        .filter((part): part is string => Boolean(part?.trim()))
-        .join("\n\n"),
-    });
-    if (!result.ok) {
-      notificationStore.notify(
-        result.reason === "url-too-long"
-          ? "This entity is too long to send to MonsterLabs."
-          : "Add some content before sending to MonsterLabs.",
-        "error",
-      );
+    try {
+      const result = await sendEntityToMonsterLabs({
+        name: entity.title,
+        type: entity.type,
+        description: [entity.content, entity.lore]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join("\n\n"),
+      });
+      if (!result.ok) {
+        notificationStore.notify(
+          result.reason === "url-too-long"
+            ? "This entity is too long to send to MonsterLabs."
+            : "Add some content before sending to MonsterLabs.",
+          "error",
+        );
+      }
+    } finally {
       isSendingToMonsterLabs = false;
-      return;
     }
-    if (result.popupBlocked) {
-      // Keep the modal open with a manual link instead of clearing the busy
-      // state — the tab never opened, so silently closing would strand the
-      // user with no way to continue except starting over.
-      monsterLabsBlockedUrl = result.url;
-      return;
-    }
-    isSendingToMonsterLabs = false;
   };
-
-  function handleOpenBlockedMonsterLabsTab() {
-    isSendingToMonsterLabs = false;
-    monsterLabsBlockedUrl = null;
-  }
 
   const handleFindInGraph = () => {
     const nodeId = vault.selectedEntityId;
@@ -603,6 +590,4 @@
 <MonsterLabsSendingModal
   open={isSendingToMonsterLabs}
   entityLabel={entity.title}
-  blockedUrl={monsterLabsBlockedUrl}
-  onOpenBlocked={handleOpenBlockedMonsterLabsTab}
 />
