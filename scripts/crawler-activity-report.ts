@@ -85,6 +85,7 @@ async function queryAnalyticsEngine(
     WHERE timestamp >= NOW() - INTERVAL '${days}' DAY
     ORDER BY timestamp DESC
     LIMIT 10000
+    FORMAT JSON
   `;
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics_engine/sql`;
@@ -92,7 +93,7 @@ async function queryAnalyticsEngine(
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiToken}`,
-      "Content-Type": "application/json",
+      "Content-Type": "text/plain",
     },
     body: query,
   });
@@ -103,6 +104,9 @@ async function queryAnalyticsEngine(
     );
   }
 
+  // The SQL API is ClickHouse-compatible and returns newline-delimited JSON
+  // rows unless the query explicitly requests `FORMAT JSON`, which wraps the
+  // rows in a single `{ data: [...] }` object that `res.json()` can parse.
   const result = (await res.json()) as {
     data?: Array<Record<string, unknown>>;
   };

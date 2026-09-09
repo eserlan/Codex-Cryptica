@@ -117,8 +117,12 @@ export async function collectCrawlerTelemetry(
 
     return event;
   } catch (err) {
-    // Deliberate fail-silent: never allow telemetry to break public page delivery
-    if (process.env.NODE_ENV === "development") {
+    // Deliberate fail-silent: never allow telemetry to break public page delivery.
+    // `process` is undefined in the Cloudflare Workers/Pages runtime, so guard access.
+    if (
+      typeof process !== "undefined" &&
+      process.env?.NODE_ENV === "development"
+    ) {
       console.warn("[CrawlerObservability] Fail-silent collection error:", err);
     }
     return null;
