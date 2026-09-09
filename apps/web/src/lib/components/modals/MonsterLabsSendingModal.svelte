@@ -14,6 +14,7 @@
 <ModalShell
   {open}
   onClose={() => {}}
+  dismissible={false}
   labelledBy="monsterlabs-sending-heading"
   maxWidthClass="max-w-sm"
   class="rounded-xl border border-theme-border bg-theme-surface p-6"

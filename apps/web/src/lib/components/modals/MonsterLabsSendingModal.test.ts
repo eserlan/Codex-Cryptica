@@ -33,17 +33,13 @@ describe("MonsterLabsSendingModal", () => {
     ).toBeTruthy();
   });
 
-  it("cannot be dismissed by clicking the backdrop — the send keeps running regardless", async () => {
-    const { getByLabelText } = render(MonsterLabsSendingModal, {
-      open: true,
-    });
+  it("renders a non-interactive backdrop with no dismiss control", () => {
+    render(MonsterLabsSendingModal, { open: true });
 
-    const backdrop = getByLabelText("Preparing MonsterLabs instruction");
-    await backdrop.click();
-
-    // Still open: onClose is intentionally a no-op, since dismissing the
-    // notice should not appear to cancel a send that has no cancellation
-    // path.
+    // The backdrop must not be exposed as an actionable control — an
+    // accessible no-op button would confuse screen-reader users.
+    expect(screen.queryByLabelText("Preparing MonsterLabs instruction")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 });
