@@ -7,6 +7,8 @@ export interface PrAutomationRecord {
   handledCommentIds: number[];
   handledReviewIds: string[];
   handledCheckKeys: string[];
+  /** The head SHA that has completed the local two-pass agent review. */
+  lastInternalReviewHeadSha?: string;
   lastAutoMergeHeadSha?: string;
 }
 
@@ -198,10 +200,12 @@ export function markAutoMergeRequested(
   return state;
 }
 
-export function isAutoMergeEligible(
+export function isInternalReviewDue(
   feedback: PrFeedback,
   unseen: UnseenFeedback,
+  state: PrAutomationState,
 ): boolean {
+  const record = getRecord(state, feedback.prMeta.number);
   return (
     feedback.prMeta.state === "OPEN" &&
     feedback.prMeta.baseRefName === "staging" &&
@@ -210,6 +214,39 @@ export function isAutoMergeEligible(
     feedback.prMeta.reviewDecision !== "CHANGES_REQUESTED" &&
     feedback.failingChecks.length === 0 &&
     feedback.pendingChecks.length === 0 &&
-    !unseen.hasActionableFeedback
+    !unseen.hasActionableFeedback &&
+    record.lastInternalReviewHeadSha !== feedback.prMeta.headRefOid
+  );
+}
+
+export function markInternalReviewCompleted(
+  state: PrAutomationState,
+  prNumber: number,
+  headSha: string,
+): PrAutomationState {
+  const record = getRecord(state, prNumber);
+  state.pullRequests[String(prNumber)] = {
+    ...record,
+    lastInternalReviewHeadSha: headSha,
+  };
+  return state;
+}
+
+export function isAutoMergeEligible(
+  feedback: PrFeedback,
+  unseen: UnseenFeedback,
+  state: PrAutomationState,
+): boolean {
+  const record = getRecord(state, feedback.prMeta.number);
+  return (
+    feedback.prMeta.state === "OPEN" &&
+    feedback.prMeta.baseRefName === "staging" &&
+    !feedback.prMeta.isDraft &&
+    feedback.prMeta.mergeable === "MERGEABLE" &&
+    feedback.prMeta.reviewDecision !== "CHANGES_REQUESTED" &&
+    feedback.failingChecks.length === 0 &&
+    feedback.pendingChecks.length === 0 &&
+    !unseen.hasActionableFeedback &&
+    record.lastInternalReviewHeadSha === feedback.prMeta.headRefOid
   );
 }

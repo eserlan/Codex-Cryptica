@@ -4,9 +4,11 @@ import {
   getUnseenFeedback,
   hasFixEvidence,
   isAutoMergeEligible,
+  isInternalReviewDue,
   loadPrAutomationState,
   markAutoMergeRequested,
   markFeedbackHandled,
+  markInternalReviewCompleted,
   savePrAutomationState,
 } from "./pr-review-automation-state.ts";
 
@@ -152,7 +154,7 @@ async function scheduleAutoMerge(pullRequestNumber: number): Promise<void> {
       const feedback = fetchPrFeedback(pullRequestNumber, REPOSITORY_ROOT);
       const state = await loadPrAutomationState();
       const unseen = getUnseenFeedback(feedback, state);
-      if (!isAutoMergeEligible(feedback, unseen)) {
+      if (!isAutoMergeEligible(feedback, unseen, state)) {
         console.log(
           `[webhook] PR #${pullRequestNumber} is not eligible for auto-merge yet`,
         );
@@ -220,7 +222,8 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
     );
     const state = await loadPrAutomationState();
     const unseen = getUnseenFeedback(feedback, state);
-    if (!unseen.hasActionableFeedback) {
+    const reviewIfClear = isInternalReviewDue(feedback, unseen, state);
+    if (!unseen.hasActionableFeedback && !reviewIfClear) {
       console.log(
         `[webhook] PR #${summary.pullRequestNumber} has no new actionable feedback; ignoring duplicate`,
       );
@@ -230,7 +233,11 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
 
     const child = spawn(
       "bun",
-      ["scripts/pr-check-fix.ts", String(summary.pullRequestNumber)],
+      [
+        "scripts/pr-check-fix.ts",
+        String(summary.pullRequestNumber),
+        ...(reviewIfClear ? ["--review-if-clear"] : []),
+      ],
       {
         cwd: REPOSITORY_ROOT,
         env: { ...process.env, HUSKY: "0" },
@@ -249,6 +256,22 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
         summary.pullRequestNumber,
         REPOSITORY_ROOT,
       );
+      if (reviewIfClear) {
+        const completedState = await loadPrAutomationState();
+        await savePrAutomationState(
+          markInternalReviewCompleted(
+            completedState,
+            summary.pullRequestNumber,
+            refreshedFeedback.prMeta.headRefOid,
+          ),
+        );
+        console.log(
+          `[webhook] internal two-pass review completed for PR #${summary.pullRequestNumber} at ${refreshedFeedback.prMeta.headRefOid}`,
+        );
+        await scheduleAutoMerge(summary.pullRequestNumber);
+        return;
+      }
+
       if (!hasFixEvidence(feedback, refreshedFeedback)) {
         console.warn(
           `[webhook] fixer for PR #${summary.pullRequestNumber} produced no observable fix; leaving feedback actionable`,
@@ -263,7 +286,7 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       await scheduleAutoMerge(summary.pullRequestNumber);
     });
     console.log(
-      `[webhook] started fixer for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
+      `[webhook] started ${reviewIfClear ? "internal reviewer" : "fixer"} for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
     );
     return true;
   } catch (error) {

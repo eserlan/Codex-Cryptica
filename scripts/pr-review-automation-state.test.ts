@@ -3,6 +3,8 @@ import {
   getUnseenFeedback,
   hasFixEvidence,
   isAutoMergeEligible,
+  isInternalReviewDue,
+  markInternalReviewCompleted,
   markFeedbackHandled,
   type PrAutomationState,
 } from "./pr-review-automation-state.ts";
@@ -150,7 +152,13 @@ describe("PR review automation state", () => {
       unresolvedComments: [],
     };
 
-    expect(isAutoMergeEligible(settled, unseen)).toBe(true);
+    expect(isAutoMergeEligible(settled, unseen, emptyState())).toBe(false);
+    const reviewed = markInternalReviewCompleted(
+      emptyState(),
+      settled.prMeta.number,
+      settled.prMeta.headRefOid,
+    );
+    expect(isAutoMergeEligible(settled, unseen, reviewed)).toBe(true);
     expect(
       isAutoMergeEligible(
         {
@@ -160,7 +168,36 @@ describe("PR review automation state", () => {
           ],
         },
         unseen,
+        reviewed,
       ),
     ).toBe(false);
+  });
+
+  it("requires one internal review for each settled PR head", () => {
+    const settled: PrFeedback = {
+      ...feedback,
+      unresolvedComments: [],
+      hasActionableFeedback: false,
+    };
+    const unseen = getUnseenFeedback(settled, emptyState());
+
+    expect(isInternalReviewDue(settled, unseen, emptyState())).toBe(true);
+
+    const reviewed = markInternalReviewCompleted(
+      emptyState(),
+      settled.prMeta.number,
+      settled.prMeta.headRefOid,
+    );
+    expect(isInternalReviewDue(settled, unseen, reviewed)).toBe(false);
+    expect(
+      isInternalReviewDue(
+        { ...settled, prMeta: { ...settled.prMeta, headRefOid: "head-2" } },
+        getUnseenFeedback(
+          { ...settled, prMeta: { ...settled.prMeta, headRefOid: "head-2" } },
+          reviewed,
+        ),
+        reviewed,
+      ),
+    ).toBe(true);
   });
 });

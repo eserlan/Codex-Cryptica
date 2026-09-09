@@ -43,8 +43,15 @@ check.
 When `PR_AUTO_MERGE=true`, the listener enables GitHub squash auto-merge only
 after a fresh state check confirms that the PR targets `staging`, is mergeable,
 is not a draft or changes-requested review, has no pending or failing checks,
-and has no new actionable feedback. It waits 60 seconds after the final event
-before making that request; GitHub branch protection remains the final gate.
+and has no new actionable feedback. Before that request, every new green PR
+head gets one local, two-pass agent review: a general defect review followed by
+the repository's `codex-review` Svelte/TypeScript and CC-architecture review.
+The agent exits without a commit when both find no defect; otherwise it fixes,
+tests, and pushes before CI runs again. The completed review is recorded per
+head SHA, so duplicate webhooks do not spend another LLM run and a new push
+always receives a fresh review. It waits 60 seconds after the final event
+before making the merge request; GitHub branch protection remains the final
+gate.
 
 ## Tunnel configuration
 

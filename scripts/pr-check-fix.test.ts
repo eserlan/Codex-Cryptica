@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   buildPrFixPrompt,
+  buildInternalPrReviewPrompt,
   getRepoSlug,
   getPrFixLogPath,
   runAgentWithLogging,
@@ -91,6 +92,27 @@ describe("pr-check-fix", () => {
       expect(prompt).toContain("GENERAL REVIEWS:\n_None_");
       expect(prompt).toContain("Guard out-of-bounds index");
     });
+  });
+
+  it("builds a two-pass internal review prompt that permits a clean no-op", () => {
+    const prompt = buildInternalPrReviewPrompt(
+      {
+        ...sampleFeedback,
+        unresolvedComments: [],
+        reviews: [],
+        failingChecks: [],
+        hasActionableFeedback: false,
+      },
+      "curator/degod-sample-1234",
+      "staging",
+    );
+
+    expect(prompt).toContain("GENERAL DEFECT REVIEW");
+    expect(prompt).toContain("CODEX-CRYPTICA REVIEW");
+    expect(prompt).toContain(".codex/skills/codex-review/SKILL.md");
+    expect(prompt).toContain("make no changes and exit successfully");
+    expect(prompt).toContain("bun run lint:types");
+    expect(prompt).toContain("HEAD:curator/degod-sample-1234");
   });
 
   it("includes staging conflict paths and bounded failed-check details", () => {
