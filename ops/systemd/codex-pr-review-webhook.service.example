@@ -1,0 +1,15 @@
+[Unit]
+Description=Codex Cryptica GitHub PR webhook listener
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/espen/dev/remotecc
+EnvironmentFile=%h/.config/codex-pr-review/webhook.env
+ExecStart=/home/espen/.bun/bin/bun scripts/pr-webhook-listener.ts
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
