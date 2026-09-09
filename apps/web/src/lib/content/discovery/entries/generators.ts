@@ -200,7 +200,12 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     pageKind: "generator",
     canonicalPath: "/generators/heist",
     primaryIntent: "rpg heist generator",
-    intentAliases: ["heist scenario generator", "infiltration generator"],
+    intentAliases: [
+      "heist scenario generator",
+      "infiltration generator",
+      "best rpg heist generator",
+      "best heist generator for tabletop rpg campaigns",
+    ],
     userJob: "create",
     uniqueValue:
       "A score with moving parts: layered security that allows multiple approaches, an alarm track that escalates, and a getaway whose planned route has already failed.",
@@ -278,7 +283,12 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     pageKind: "generator",
     canonicalPath: "/generators/rumour",
     primaryIntent: "rpg rumour generator",
-    intentAliases: ["tavern rumour generator", "random rumours for a town"],
+    intentAliases: [
+      "rpg rumor generator",
+      "tavern rumour generator",
+      "tavern rumor generator",
+      "random rumours for a town",
+    ],
     userJob: "create",
     uniqueValue:
       "A d6 table of local rumours, each with a concrete lead and a hidden GM-only truth, lighter than a full quest hook.",
@@ -291,7 +301,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     pageKind: "generator",
     canonicalPath: "/generators/puzzle",
     primaryIntent: "rpg puzzle generator",
-    intentAliases: ["dungeon puzzle generator"],
+    intentAliases: ["dungeon puzzle generator", "best rpg puzzle generator"],
     userJob: "create",
     uniqueValue:
       "Puzzles built with layered clues and multiple solutions, which is the property that keeps a table moving.",

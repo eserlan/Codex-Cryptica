@@ -55,6 +55,17 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain("https://codexcryptica.com/migrations");
     expect(xml).toContain("https://codexcryptica.com/generators");
     expect(xml).toContain("https://codexcryptica.com/generators/faction");
+    // Regression check for #2850: these generator slugs previously drifted
+    // out of the hand-maintained sitemap slug list and went undiscovered.
+    expect(xml).toContain("https://codexcryptica.com/generators/puzzle");
+    expect(xml).toContain(
+      "https://codexcryptica.com/generators/faction-roster",
+    );
+    expect(xml).toContain(
+      "https://codexcryptica.com/generators/dark-fantasy-faction",
+    );
+    expect(xml).toContain("https://codexcryptica.com/generators/constellation");
+    expect(xml).toContain("https://codexcryptica.com/generators/encounter");
     expect(xml).toContain(
       "https://codexcryptica.com/tools/vampire-clan-generator",
     );

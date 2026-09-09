@@ -75,12 +75,20 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
         },
         {
           term: "The disagreement",
-          text: "Whether an oath survives the death of the lamp-keeper. The strict reading voids it; the lenient reading does not. Two inheritance disputes in the city currently turn on this, and each side has a bishop.",
+          text: "Whether an oath survives the death of the lamp-keeper. The strict reading voids it; the lenient reading does not. Two inheritance disputes in the city currently turn on this, and each side has a bishop. A reformist chapter wants lay witnesses to settle the question, which the bishops regard as a direct threat to their authority.",
         },
         {
           term: "What is left unwritten",
           text: "Where Ismera came from, and what she wants. Nobody at the table has needed it yet.",
         },
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "Let place and class change the practice",
+      paragraphs: [
+        "A religion becomes social when the same rule costs different people different things. A merchant can afford imported still water for the morning rite; a dockworker may share one bowl with three households and face criticism for doing so. A rural chapel might treat the rite as a private household duty, while a city temple records it publicly because the records support its authority over marriage, apprenticeship, and inheritance.",
+        "Give the centre one approved practice, then write two local versions and one reform movement. The coastal version might use salt water because fresh water is scarce. A wealthy district may pay for brass lamps that poorer congregations repair with clay cups. Reformers can argue that the old rule has been misunderstood, that the institution has become too wealthy, or that ordinary adherents should be allowed to lead the rite. These disagreements produce people, money, and consequences the party can meet in play.",
       ],
     },
     {

@@ -12,6 +12,7 @@ import { howDoYouCreateAPantheon } from "./how-do-you-create-a-pantheon";
 import { howDoYouCreateASecretSocietyForAnRpgCampaign } from "./how-do-you-create-a-secret-society-for-an-rpg-campaign";
 import { howDoYouCreateQuestHooksWithoutRailroading } from "./how-do-you-create-quest-hooks-without-railroading";
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
+import { howDoYouGenerateUsefulRpgRumours } from "./how-do-you-generate-useful-rpg-rumours";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
@@ -41,6 +42,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
+import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-heist-target-in-a-tabletop-rpg";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
@@ -68,6 +70,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouCreateASecretSocietyForAnRpgCampaign,
     howDoYouCreateQuestHooksWithoutRailroading,
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
+    howDoYouGenerateUsefulRpgRumours,
     howDoYouHandleCharacterDeathInATabletopRpg,
     howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
@@ -97,6 +100,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     pointCrawlVsHexCrawl,
     whatIsAPointCrawl,
+    whatMakesAGoodHeistTargetInATabletopRpg,
     whatMakesAGoodRandomEncounter,
     whatRpgSystemShouldWeTryInsteadOfDnd,
     whatShouldAnRpgSettlementContain,

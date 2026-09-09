@@ -6,6 +6,7 @@ import {
 import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
+import { GENERATOR_SLUGS } from "../../params/generator_slug";
 import { getAllLandingPageSlugs } from "$lib/content/for/registry";
 import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
 import { getAllExamples, examplePath } from "$lib/content/examples/registry";
@@ -95,45 +96,10 @@ export async function GET() {
     priority: "0.8",
   }));
 
-  // Generator pages
-  const generatorRoutes = [
-    "npc",
-    "settlement",
-    "magic-item",
-    "minor-magic-item",
-    "artifact-generator",
-    "faction",
-    "tavern",
-    "social-hub",
-    "kingdom",
-    "nation",
-    "quest",
-    "rumour",
-    "item",
-    "vampire-clan",
-    "nomad-clan",
-    "names",
-    "fantasy-names",
-    "dnd-npc",
-    "pantheon-generator",
-    "god-generator",
-    "ship-generator",
-    "language-generator",
-    "news-sheet-generator",
-    "dungeon-generator",
-    "adventure-generator",
-    "adventure-idea-generator",
-    "plot-twist-generator",
-    "bbeg-generator",
-    "world",
-    "council-vote",
-    "heist",
-    "secret-society",
-    "star-system",
-    "alien-race",
-    "creature",
-    "random",
-  ].map((slug) => ({
+  // Generator pages — derived from GENERATOR_SLUGS (the route matcher's own
+  // slug list) rather than a hand-maintained copy, so a new generator can't
+  // silently go missing from the sitemap the way /generators/puzzle did (#2850).
+  const generatorRoutes = GENERATOR_SLUGS.map((slug) => ({
     path: `/generators/${slug}`,
     changefreq: "monthly",
     priority: "0.8",

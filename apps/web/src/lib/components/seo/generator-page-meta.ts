@@ -362,8 +362,21 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         answer:
           "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
       },
+      {
+        question: "What makes this the best RPG puzzle generator to try?",
+        answer:
+          "Look for three things in any puzzle generator: layered clues instead of a single answer, multiple viable solutions rather than one intended path, and a fail-forward consequence instead of a dead stop. This generator is built around all three, plus a GM reference rail that keeps the solution space visible during play.",
+      },
     ],
     relatedLinks: [
+      {
+        href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+        label: "How to Design RPG Puzzles (Guide)",
+      },
+      {
+        href: "/examples/the-venting-helix-derelict-hazard",
+        label: "Derelict Hazard Puzzle Example",
+      },
       { href: "/generators/quest", label: "Quest Hook Generator" },
       {
         href: "/generators/dungeon-generator",
@@ -400,7 +413,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Rumour Generator",
     eyebrow: "Rumour Generator",
     introText:
-      "Create a d6 table of six local rumours the party can overhear and choose to chase. Every rumour names a real lead; the truth behind it stays hidden in the GM notes until someone investigates.",
+      "Create a d6 table of six local rumours the party can overhear and choose to chase. Four are essentially true, one is exaggerated, and one is a dangerous misconception. Every rumour names a real lead; the truth stays hidden in GM notes until someone investigates.",
     canonicalPath: "/generators/rumour",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-rumour.jpg",
@@ -408,8 +421,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "Codex Cryptica Rumour Generator showing a d6 table of local rumours with a player-facing lead and source, and a GM-only truth rail",
     keywords: [
       "rpg rumour generator",
+      "rpg rumor generator",
       "fantasy rumour generator",
       "tavern rumour generator",
+      "tavern rumor generator",
       "dnd rumour generator",
       "random rumours for a town",
       "fantasy town rumours",
@@ -447,6 +462,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/generators/news-sheet-generator",
         label: "News Sheet Generator",
+      },
+      {
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "How to generate useful RPG rumours",
+      },
+      {
+        href: "/examples/lowmere-six-words-rumour-table",
+        label: "Lowmere rumour table example",
       },
     ],
   },
@@ -1265,6 +1288,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     keywords: [
       "heist generator",
       "rpg heist generator",
+      "tabletop rpg heist generator",
       "infiltration scenario generator",
       "blades in the dark score generator",
       "dnd heist ideas",
@@ -1290,11 +1314,33 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         answer:
           "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
       },
+      {
+        question:
+          "What makes this the best heist generator for a tabletop campaign?",
+        answer:
+          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. This generator is built around all three, with a prize specific enough to create its own complications rather than a generic MacGuffin.",
+      },
     ],
     relatedLinks: [
       {
         href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
         label: "How to Run a Heist (Guide)",
+      },
+      {
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Choosing a Heist Target (Guide)",
+      },
+      {
+        href: "/examples/the-breakwater-vault-space-western-heist",
+        label: "Space Western Heist Example",
+      },
+      {
+        href: "/examples/the-dawnheart-diadem-fantasy-heist",
+        label: "Classic Fantasy Heist Example",
+      },
+      {
+        href: "/examples/the-quell-extraction-cyberpunk-heist",
+        label: "Cyberpunk Extraction Example",
       },
       { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
       { href: "/generators/npc", label: "NPC Generator" },
