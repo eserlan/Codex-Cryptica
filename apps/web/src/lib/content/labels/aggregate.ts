@@ -3,6 +3,7 @@ import { getAllLandingPages, landingPageLabels } from "../for/registry";
 import { getLandingPageCanonicalUrl } from "../for/canonical";
 import { getAllExamples, examplePath } from "../examples/registry";
 import { slugMeta } from "$lib/components/seo/generator-page-meta";
+import { isContentClusterSlug, isPublicLabel } from "../labels";
 
 /**
  * "world" is produced by the `/explore` loader (from the public directory
@@ -26,12 +27,17 @@ export interface PublicLabelResult {
  * `discovery/entries`, which is governance metadata, not rendering content.
  */
 export function getPublicContentByLabel(label: string): PublicLabelResult[] {
+  if (!isPublicLabel(label)) {
+    return [];
+  }
+
+  const isCluster = isContentClusterSlug(label);
   const results: PublicLabelResult[] = [];
 
   for (const answer of getAllAnswers()) {
     const matches =
       (answer.labels as string[]).includes(label) ||
-      (answer.discovery?.clusters ?? []).includes(label);
+      (isCluster && (answer.discovery?.clusters ?? []).includes(label));
     if (!matches) continue;
     results.push({
       kind: "answer",
@@ -53,7 +59,8 @@ export function getPublicContentByLabel(label: string): PublicLabelResult[] {
 
   for (const example of getAllExamples()) {
     const matches =
-      (example.labels as string[]).includes(label) || example.kind === label;
+      (example.labels as string[]).includes(label) ||
+      (isCluster && example.kind === label);
     if (!matches) continue;
     results.push({
       kind: "example",

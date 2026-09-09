@@ -136,6 +136,15 @@ describe("public label content aggregation (#2762, #2863)", () => {
     expect(getPublicContentByLabel("non-existent-label-123")).toEqual([]);
   });
 
+  it("does not expose internal taxonomy or uncurated example kinds via explore", () => {
+    // Internal discovery cluster not in PUBLIC_LABELS
+    expect(getPublicContentByLabel("adventure-mapping")).toEqual([]);
+    expect(getPublicContentByLabel("quest-design")).toEqual([]);
+    // Example kind not in PUBLIC_LABELS
+    expect(getPublicContentByLabel("character")).toEqual([]);
+    expect(getPublicContentByLabel("location")).toEqual([]);
+  });
+
   it("groups public label results by kind accurately", () => {
     const results = getPublicContentByLabel("heist");
     const grouped = groupPublicLabelResults(results);

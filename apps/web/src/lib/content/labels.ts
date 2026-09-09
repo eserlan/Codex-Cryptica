@@ -24,7 +24,7 @@ export const isContentClusterSlug = (
  *
  * Combines two governed dimensions:
  * 1. Theme/genre hubs (`hub-themes.ts`) shared between `/for` pages and `/generators/[hub]`.
- * 2. Curated content clusters (`discovery/entries.ts`) shared across generators, answers, and examples.
+ * 2. Curated content clusters (`discovery/entries/`) shared across generators, answers, and examples.
  */
 export const PUBLIC_LABELS = [
   ...HUB_THEME_SLUGS,
