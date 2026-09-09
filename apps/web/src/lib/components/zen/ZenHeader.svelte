@@ -35,6 +35,7 @@
     getMonsterLabsActionLabel,
     sendEntityToMonsterLabs,
   } from "$lib/services/seo/monsterlabs-handoff";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -581,3 +582,8 @@
     </div>
   </div>
 </header>
+
+<MonsterLabsSendingModal
+  open={isSendingToMonsterLabs}
+  entityLabel={entity?.title}
+/>

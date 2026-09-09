@@ -28,6 +28,7 @@
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorRefinementModal from "./GeneratorRefinementModal.svelte";
   import LoreMergeModal from "$lib/components/modals/LoreMergeModal.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import ConstellationChart from "./ConstellationChart.svelte";
@@ -1245,6 +1246,11 @@
   />
 
   <LoreMergeModal />
+
+  <MonsterLabsSendingModal
+    open={isSendingToMonsterLabs}
+    entityLabel={generatedData?.title}
+  />
 </div>
 
 <style>

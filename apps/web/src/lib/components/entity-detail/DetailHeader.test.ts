@@ -5,6 +5,22 @@ import DetailHeader from "./DetailHeader.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
+// Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
+// (MonsterLabsSendingModal's ModalShell uses fade/scale transitions).
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () => {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      pause: () => {},
+      play: () => {},
+      reverse: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any;
+  };
+}
+
 // Mock stores
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
