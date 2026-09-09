@@ -34,7 +34,7 @@ If you use any AI feature (Lore Oracle chat, entity generation/revision, connect
 Tracking is limited to our public marketing and generator pages (the pages you land on from search engines or ads, before you have a vault open):
 
 - **Cloudflare Web Analytics:** Anonymous, cookie-free pageview counts across the site.
-- **Cloudflare Zaraz:** Anonymous funnel events on marketing/generator pages only — a page visit, starting or completing a generator, and the moment you choose to save generated content to your vault (including whether that content had links to other entities). We also record which search engine, campaign, or referral link brought you to the site (via standard `utm_*` URL parameters), so we can tell which marketing efforts are effective. None of these events include your generated content, campaign data, or anything that happens after you land in the app.
+- **Cloudflare Zaraz:** Anonymous funnel events on marketing/generator pages only — a page visit, starting or completing a generator, and the moment you choose to save generated content to your vault (including whether that content had links to other entities). We also record campaign parameters and, when a referral is clearly from an identified AI assistant such as ChatGPT, Perplexity, Copilot, Claude, or Gemini, the assistant category and landing page. We keep only the recognised source category, not the referrer's path or query string. None of these events include your generated content, campaign data, or anything that happens after you land in the app.
 
 ## 5. Third-Party Services
 

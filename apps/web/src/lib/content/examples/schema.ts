@@ -95,10 +95,23 @@ const ExampleFactsBlockSchema = z.object({
     .min(1),
 });
 
+/**
+ * A secondary in-body image — a mechanical diagram, a map, a chart — distinct
+ * from the page's single hero/OG `image`. Optional, so most examples never
+ * need it.
+ */
+const ExampleImageBlockSchema = z.object({
+  kind: z.literal("image"),
+  src: z.string().url(),
+  alt: z.string().min(10),
+  caption: z.string().min(1).optional(),
+});
+
 export const ExampleBlockSchema = z.discriminatedUnion("kind", [
   ExampleProseBlockSchema,
   ExampleListBlockSchema,
   ExampleFactsBlockSchema,
+  ExampleImageBlockSchema,
 ]);
 export type ExampleBlock = z.infer<typeof ExampleBlockSchema>;
 

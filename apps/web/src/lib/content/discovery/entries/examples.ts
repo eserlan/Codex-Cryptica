@@ -321,4 +321,27 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-eel-wyrm",
+    pageKind: "example",
+    canonicalPath: "/examples/the-eel-wyrm-classic-fantasy-constellation",
+    primaryIntent: "classic fantasy constellation example",
+    intentAliases: [
+      "rpg constellation example",
+      "example of a generated constellation",
+      "sample night sky lore",
+    ],
+    audience: "Classic Fantasy and coastal-campaign game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "The first published output of the new Constellation generator — a serpent-shaped star pattern that a coastal culture actually uses to time its eel harvest, with a star chart, omens, and a missing-star adventure hook.",
+    parentCluster: "cosmography",
+    relatedIntents: [
+      "generator-constellation",
+      "generator-star-system",
+      "answer-pantheon",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

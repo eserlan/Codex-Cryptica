@@ -364,6 +364,14 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
     relatedLinks: [
+      {
+        href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+        label: "How to Design RPG Puzzles (Guide)",
+      },
+      {
+        href: "/examples/the-venting-helix-derelict-hazard",
+        label: "Derelict Hazard Puzzle Example",
+      },
       { href: "/generators/quest", label: "Quest Hook Generator" },
       {
         href: "/generators/dungeon-generator",
@@ -1275,6 +1283,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     keywords: [
       "heist generator",
       "rpg heist generator",
+      "tabletop rpg heist generator",
       "infiltration scenario generator",
       "blades in the dark score generator",
       "dnd heist ideas",
@@ -1305,6 +1314,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
         label: "How to Run a Heist (Guide)",
+      },
+      {
+        href: "/examples/the-breakwater-vault-space-western-heist",
+        label: "Space Western Heist Example",
       },
       { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
       { href: "/generators/npc", label: "NPC Generator" },
