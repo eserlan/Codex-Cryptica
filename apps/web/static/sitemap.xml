@@ -652,6 +652,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-makes-a-good-random-encounter</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -748,6 +753,16 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-eel-wyrm-classic-fantasy-constellation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-dawnheart-diadem-fantasy-heist</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-quell-extraction-cyberpunk-heist</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

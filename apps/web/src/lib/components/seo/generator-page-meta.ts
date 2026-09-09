@@ -362,6 +362,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         answer:
           "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
       },
+      {
+        question: "What makes this the best RPG puzzle generator to try?",
+        answer:
+          "Look for three things in any puzzle generator: layered clues instead of a single answer, multiple viable solutions rather than one intended path, and a fail-forward consequence instead of a dead stop. This generator is built around all three, plus a GM reference rail that keeps the solution space visible during play.",
+      },
     ],
     relatedLinks: [
       {
@@ -1299,6 +1304,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         answer:
           "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
       },
+      {
+        question:
+          "What makes this the best heist generator for a tabletop campaign?",
+        answer:
+          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. This generator is built around all three, with a prize specific enough to create its own complications rather than a generic MacGuffin.",
+      },
     ],
     relatedLinks: [
       {
@@ -1306,8 +1317,20 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         label: "How to Run a Heist (Guide)",
       },
       {
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Choosing a Heist Target (Guide)",
+      },
+      {
         href: "/examples/the-breakwater-vault-space-western-heist",
         label: "Space Western Heist Example",
+      },
+      {
+        href: "/examples/the-dawnheart-diadem-fantasy-heist",
+        label: "Classic Fantasy Heist Example",
+      },
+      {
+        href: "/examples/the-quell-extraction-cyberpunk-heist",
+        label: "Cyberpunk Extraction Example",
       },
       { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
       { href: "/generators/npc", label: "NPC Generator" },

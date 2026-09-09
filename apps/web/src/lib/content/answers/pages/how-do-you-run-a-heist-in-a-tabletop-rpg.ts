@@ -145,6 +145,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-makes-a-good-heist-target-in-a-tabletop-rpg",
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "how-do-you-prep-a-weekly-rpg-session-quickly",
@@ -169,6 +170,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     relatedIntents: [
       "answer-rpg-puzzles",
       "answer-prep-weekly-session-quickly",
+      "answer-heist-target-design",
     ],
   },
   seo: {
