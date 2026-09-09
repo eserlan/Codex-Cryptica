@@ -1,10 +1,11 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 
 const PORT = Number(process.env.PR_WEBHOOK_PORT ?? 8788);
 const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
 const EXPECTED_REPOSITORY =
   process.env.GITHUB_REPOSITORY ?? "eserlan/Codex-Cryptica";
 const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
+export const MAX_BODY_BYTES = 1_000_000;
 
 const activeJobs = new Map<number, ReturnType<typeof spawn>>();
 
@@ -37,7 +38,10 @@ export function summariseEvent(
 ): WebhookEventSummary | null {
   const pullRequest = payload.pull_request;
   const checkPullRequest = payload.check_run?.pull_requests?.[0];
-  const number = pullRequest?.number ?? payload.number;
+  const number =
+    pullRequest?.number ??
+    payload.check_run?.pull_requests?.[0]?.number ??
+    payload.number;
   const repository = payload.repository?.full_name;
   if (
     typeof number !== "number" ||
@@ -52,7 +56,7 @@ export function summariseEvent(
     action: String(payload.action),
     repository,
     pullRequestNumber: number,
-    headSha: pullRequest?.head?.sha ?? checkPullRequest?.sha,
+    headSha: pullRequest?.head?.sha ?? checkPullRequest?.head_sha,
     baseRef: pullRequest?.base?.ref,
   };
 }
@@ -85,16 +89,44 @@ export async function verifySignature(
 ): Promise<boolean> {
   if (!header) return false;
   const expected = await signatureFor(body, secret);
-  const actualBytes = new TextEncoder().encode(header);
-  const expectedBytes = new TextEncoder().encode(expected);
-  if (actualBytes.length !== expectedBytes.length) return false;
-  return actualBytes.every((byte, index) => byte === expectedBytes[index]);
+  const [actualDigest, expectedDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(header)),
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(expected)),
+  ]);
+  const actualBytes = new Uint8Array(actualDigest);
+  const expectedBytes = new Uint8Array(expectedDigest);
+  let difference = 0;
+  for (let index = 0; index < expectedBytes.length; index++) {
+    difference |= actualBytes[index] ^ expectedBytes[index];
+  }
+  return difference === 0;
+}
+
+function resolveBaseRef(pullRequestNumber: number): string | null {
+  try {
+    return execFileSync(
+      "gh",
+      [
+        "pr",
+        "view",
+        String(pullRequestNumber),
+        "--json",
+        "baseRefName",
+        "--jq",
+        ".baseRefName",
+      ],
+      { cwd: REPOSITORY_ROOT, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
+    ).trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 function launchFix(summary: WebhookEventSummary): boolean {
-  if (summary.baseRef && summary.baseRef !== "staging") {
+  const baseRef = summary.baseRef ?? resolveBaseRef(summary.pullRequestNumber);
+  if (baseRef !== "staging") {
     console.log(
-      `[webhook] ignoring PR #${summary.pullRequestNumber}: base is ${summary.baseRef}`,
+      `[webhook] ignoring PR #${summary.pullRequestNumber}: base is ${baseRef ?? "unknown"}`,
     );
     return false;
   }
@@ -134,6 +166,37 @@ function response(body: string, status = 200): Response {
   });
 }
 
+export async function readRequestBody(
+  request: Request,
+): Promise<string | null> {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && Number(contentLength) > MAX_BODY_BYTES) return null;
+
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) return null;
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 if (import.meta.main && !WEBHOOK_SECRET) {
   throw new Error("GITHUB_WEBHOOK_SECRET must be set");
 }
@@ -149,7 +212,10 @@ if (import.meta.main) {
         return response(JSON.stringify({ error: "not found" }), 404);
       }
 
-      const body = await request.text();
+      const body = await readRequestBody(request);
+      if (body === null) {
+        return response(JSON.stringify({ error: "payload too large" }), 413);
+      }
       if (!(await verifySignature(body, request.headers.get("x-hub-signature-256"), WEBHOOK_SECRET))) {
         return response(JSON.stringify({ error: "invalid signature" }), 401);
       }

@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/espen/dev/remotecc
+WorkingDirectory=%h/dev/remotecc
 EnvironmentFile=%h/.config/codex-pr-review/webhook.env
 ExecStart=/usr/bin/bun run pr:webhook
 Restart=on-failure

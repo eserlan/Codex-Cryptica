@@ -20,7 +20,7 @@ Create `~/.config/codex-pr-review/webhook.env` with mode `600`:
 ```sh
 GITHUB_WEBHOOK_SECRET=replace-with-the-github-webhook-secret
 GITHUB_REPOSITORY=eserlan/Codex-Cryptica
-PR_FIX_ROOT=/home/espen/dev/remotecc
+PR_FIX_ROOT=/path/to/remotecc
 PR_WEBHOOK_PORT=8788
 ```
 
@@ -37,9 +37,8 @@ The listener ignores pull requests targeting anything other than `staging`.
 ## Tunnel configuration
 
 Copy `ops/cloudflared/codex-pr-review-config.yml.example` to
-`~/.cloudflared/codex-pr-review.yml`, replacing `TUNNEL_ID` with
-`7a69276b-2275-40ff-93f8-f9a6af4714f3` and using the credentials file created
-by `cloudflared tunnel create`.
+`~/.cloudflared/codex-pr-review.yml`, replacing `TUNNEL_ID` with the ID
+returned by `cloudflared tunnel create` and using its credentials file.
 
 Run the tunnel manually during initial testing:
 
