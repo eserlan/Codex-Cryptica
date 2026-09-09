@@ -1,15 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   MAX_BODY_BYTES,
   readRequestBody,
   shouldHandleEvent,
   summariseEvent,
+  isStagingPush,
   verifySignature,
 } from "./pr-webhook-listener.ts";
 
 describe("PR webhook listener", () => {
+  it("recognises pushes to staging as conflict-reconciliation triggers", () => {
+    expect(isStagingPush("push", { ref: "refs/heads/staging" })).toBe(true);
+    expect(isStagingPush("push", { ref: "refs/heads/main" })).toBe(false);
+    expect(isStagingPush("pull_request", { ref: "refs/heads/staging" })).toBe(
+      false,
+    );
+  });
+
   it("accepts only relevant PR event actions", () => {
-    expect(shouldHandleEvent("pull_request_review_comment", "created")).toBe(true);
+    expect(shouldHandleEvent("pull_request_review_comment", "created")).toBe(
+      true,
+    );
     expect(shouldHandleEvent("check_run", "completed")).toBe(true);
     expect(shouldHandleEvent("pull_request", "closed")).toBe(false);
     expect(shouldHandleEvent("push", "created")).toBe(false);
@@ -94,5 +105,32 @@ describe("PR webhook listener", () => {
         }),
       ),
     ).toBe("{}");
+  });
+
+  it("resets the debounce timer on repeated auto-merge scheduling instead of skipping it", async () => {
+    vi.useFakeTimers();
+    const previousAutoMerge = process.env.PR_AUTO_MERGE;
+    process.env.PR_AUTO_MERGE = "true";
+    let clearSpy: ReturnType<typeof vi.spyOn> | undefined;
+    try {
+      const { scheduleAutoMerge } = await import(
+        `./pr-webhook-listener.ts?debounce-test=${Date.now()}`
+      );
+      clearSpy = vi.spyOn(global, "clearTimeout");
+
+      await scheduleAutoMerge(4242);
+      expect(vi.getTimerCount()).toBe(1);
+      expect(clearSpy).not.toHaveBeenCalled();
+
+      // A second event arriving before the quiet window elapses must
+      // debounce from this latest event, not be silently dropped.
+      await scheduleAutoMerge(4242);
+      expect(clearSpy).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+      process.env.PR_AUTO_MERGE = previousAutoMerge;
+      clearSpy?.mockRestore();
+    }
   });
 });
