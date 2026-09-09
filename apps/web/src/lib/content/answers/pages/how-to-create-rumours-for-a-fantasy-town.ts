@@ -146,6 +146,7 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
   discovery: {
     id: "answer-create-fantasy-town-rumours",
     parentCluster: "settlement-creation",
+    clusters: ["rumour", "settlement-creation"],
     primaryIntent: "how to create rumours for a fantasy town",
     intentAliases: [
       "fantasy town rumour table",

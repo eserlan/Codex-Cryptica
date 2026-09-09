@@ -89,6 +89,59 @@ tested; the script is the network layer around it.
 crawler access — a WAF rule, a bot-management setting, a header change — happen
 outside this repository and would otherwise land silently.
 
+### 2.1 Content cluster crawler readiness (#2861)
+
+The smoke check also executes targeted crawler readiness audits against newly
+released content clusters:
+
+| Cluster    | Key Themes                                                          | Discovered Route Types                              |
+| ---------- | ------------------------------------------------------------------- | --------------------------------------------------- |
+| `heist`    | Heist frameworks, target design, score generation, worked vaults    | Answers, Generator (`/generators/heist`), Examples  |
+| `rumour`   | Rumour generation, fantasy town rumours, rumour tables              | Answers, Generator (`/generators/rumour`), Examples |
+| `religion` | Believable fictional religions, divine cosmology, religious symbols | Answers, Examples                                   |
+
+#### Verification requirements
+
+1. **Dynamic discovery**: Cluster routes are discovered directly from the
+   discovery registry (`discoverClusterTargetRoutes()` in
+   `apps/web/src/lib/seo/crawler-access.ts`). Missing any newly registered live,
+   indexable cluster route fails crawler coverage checks.
+2. **Multi-cluster entity handling**: Entities associated with multiple clusters
+   are fetched only once to eliminate duplicate network requests while retaining
+   full attribution in cluster reports.
+3. **Route integrity assertions**:
+   - HTTP 200 without bot mitigation (`cf-mitigated`, 403, 429, 503).
+   - Allowed by `robots.txt` for the active crawler.
+   - Non-empty `<title>`.
+   - Exactly one meaningful `<h1>` heading (catches missing, multiple, or empty headings).
+   - Non-empty meta description.
+   - Self-referencing canonical URL on the same origin.
+   - Free of accidental `noindex` or `nofollow` directives in meta tags or headers.
+   - Valid JSON-LD structured data (`<script type="application/ld+json">`) with
+     valid `schema.org` `@context` and typed entities (`@type` or typed `@graph`).
+   - Declared in `sitemap.xml`.
+   - Per-content-type LLM discovery policy: Answers and Examples must appear in
+     `llms-full.txt`. Generator landing pages are excluded from `llms-full.txt` by
+     design.
+4. **Contextual link verification**: Verifies internal cluster navigation from
+   rendered HTML:
+   - `answer → generator/workflow` (when the cluster includes a generator)
+   - `answer → example` (direct CTA link or pending deployment notice)
+   - `example → answer` (example links back to cluster answer)
+   - `example → generator` (example links to cluster generator when present)
+   - `generator → answer/example` (generator links to cluster answers and examples)
+5. **Grouped reporting**: Output includes a Markdown summary table grouped by
+   Crawler and Cluster (`| Crawler | Cluster | Routes | Errors | Warnings |`),
+   written to GitHub Actions step summaries. Any failure details explicitly name
+   the crawler, cluster(s), route, assertion, and observed value.
+
+#### Explicit boundary statement
+
+> **Notice**: Passing crawler readiness verifies that discovery routes are
+> reachable, allowed by robots.txt, structurally complete, indexable, and linked.
+> It does **not** guarantee actual search-engine crawling, indexing, ranking,
+> citations, or referral traffic.
+
 ## 3. Cloudflare Crawler Hints / IndexNow
 
 Crawler Hints is a **zone-level Cloudflare configuration**, not an application

@@ -120,6 +120,11 @@ export const DiscoveryEntrySchema = z.object({
    * see the shape of each one.
    */
   parentCluster: z.string().min(2).optional(),
+  /**
+   * Clusters this entry belongs to. An entry may belong to multiple clusters
+   * without losing attribution in crawler and audit checks.
+   */
+  clusters: z.array(z.string().min(2)).default([]),
   /** Whether the page is meant to be indexed. Redirect stubs are not. */
   indexable: z.boolean(),
   status: DiscoveryStatusSchema,

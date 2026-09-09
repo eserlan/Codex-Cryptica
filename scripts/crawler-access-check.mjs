@@ -18,13 +18,21 @@
  *   bun scripts/crawler-access-check.mjs --base=https://… check a preview
  *   bun scripts/crawler-access-check.mjs --crawler=googlebot
  */
+import fs from "node:fs";
 import {
+  CLUSTER_TARGETS,
+  CRAWLER_READINESS_DISCLAIMER,
+  discoverClusterTargetRoutes,
   downgradeKnownGaps,
   errorsOnly,
+  evaluateClusterLinks,
+  evaluateClusterRouteResponse,
   evaluateCrawlResponse,
   expectationFor,
   findSearchCrawler,
   findDisallowedSitemapPaths,
+  formatClusterFailureDetail,
+  formatClusterSummaryTable,
   isPathAllowed,
   parseRobotsTxt,
   pickRepresentativeRoutes,
@@ -96,6 +104,7 @@ const base = (baseArg ? baseArg.slice("--base=".length) : DEFAULT_BASE).replace(
 );
 
 const results = [];
+const crawledResponses = new Map();
 
 const record = (path, findings) => {
   results.push({ path, findings });
@@ -110,18 +119,22 @@ async function crawl(path, userAgent = crawler.userAgent) {
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   const body = await response.text();
-  return {
+  const crawlResult = {
     requestedUrl,
     finalUrl: response.url || requestedUrl,
     status: response.status,
     headers: Object.fromEntries(response.headers.entries()),
     body,
   };
+  if (userAgent === crawler.userAgent) {
+    crawledResponses.set(path, crawlResult);
+  }
+  return crawlResult;
 }
 
 async function checkRoute(path, expectation = expectationFor(path)) {
   try {
-    const response = await crawl(path);
+    const response = crawledResponses.get(path) ?? (await crawl(path));
     return record(
       path,
       downgradeKnownGaps(
@@ -283,12 +296,144 @@ for (const path of PRIVATE_ROUTE_SAMPLES) {
 
 await checkUserAgentParity("/");
 
+// Cluster readiness checks (#2861)
+const clusterTargetMap = discoverClusterTargetRoutes();
+const htmlByRoute = new Map();
+const clusterRouteFindings = new Map();
+
+const llmsTxtBody = crawledResponses.get("/llms.txt")?.body ?? "";
+const llmsFullTxtBody = crawledResponses.get("/llms-full.txt")?.body ?? "";
+
+for (const target of clusterTargetMap.values()) {
+  let response = crawledResponses.get(target.path);
+  if (!response) {
+    try {
+      response = await crawl(target.path);
+    } catch (error) {
+      const finding = {
+        code: "unreachable",
+        severity: "error",
+        message: `request failed: ${error instanceof Error ? error.message : error}`,
+      };
+      clusterRouteFindings.set(target.path, [finding]);
+      record(`${target.path} [cluster]`, [finding]);
+      continue;
+    }
+  }
+  htmlByRoute.set(target.path, response.body);
+  const routeFindings = evaluateClusterRouteResponse(response, target, {
+    robots,
+    crawlerToken: crawler.robotsToken,
+    sitemapXml: sitemapBody,
+    llmsTxt: llmsTxtBody,
+    llmsFullTxt: llmsFullTxtBody,
+  });
+  clusterRouteFindings.set(target.path, routeFindings);
+  record(`${target.path} [cluster]`, routeFindings);
+}
+
+// Cluster contextual links verification
+const clusterLinkFindingsByCluster = new Map();
+for (const cluster of CLUSTER_TARGETS) {
+  const routesForCluster = [...clusterTargetMap.values()]
+    .filter((t) => t.clusters.includes(cluster))
+    .map((t) => t.path);
+  const linkResults = evaluateClusterLinks(
+    cluster,
+    routesForCluster,
+    htmlByRoute,
+    base,
+  );
+  clusterLinkFindingsByCluster.set(cluster, linkResults);
+  for (const { route, findings } of linkResults) {
+    record(`${route} [${cluster} links]`, findings);
+  }
+}
+
+// Summarize by Crawler and Cluster
+const clusterSummaries = [];
+const clusterFailureDetails = [];
+
+for (const cluster of CLUSTER_TARGETS) {
+  const clusterTargets = [...clusterTargetMap.values()].filter((t) =>
+    t.clusters.includes(cluster),
+  );
+  const clusterRoutes = clusterTargets.map((t) => t.path);
+
+  let clusterErrors = 0;
+  let clusterWarnings = 0;
+
+  for (const target of clusterTargets) {
+    const findings = clusterRouteFindings.get(target.path) ?? [];
+    for (const f of findings) {
+      if (f.severity === "error") {
+        clusterErrors++;
+        clusterFailureDetails.push({
+          crawler: crawler.name,
+          clusters: target.clusters,
+          route: target.path,
+          assertion: f.code,
+          observed: f.message,
+        });
+      } else if (f.severity === "warning") {
+        clusterWarnings++;
+      }
+    }
+  }
+
+  const linkResults = clusterLinkFindingsByCluster.get(cluster) ?? [];
+  for (const { route, findings } of linkResults) {
+    const target = clusterTargetMap.get(route);
+    for (const f of findings) {
+      if (f.severity === "error") {
+        clusterErrors++;
+        clusterFailureDetails.push({
+          crawler: crawler.name,
+          clusters: target ? target.clusters : [cluster],
+          route,
+          assertion: f.code,
+          observed: f.message,
+        });
+      } else if (f.severity === "warning") {
+        clusterWarnings++;
+      }
+    }
+  }
+
+  clusterSummaries.push({
+    crawler: crawler.name,
+    cluster,
+    routes: clusterRoutes.length,
+    errors: clusterErrors,
+    warnings: clusterWarnings,
+  });
+}
+
+const clusterSummaryTable = formatClusterSummaryTable(clusterSummaries);
+
+if (process.env.GITHUB_STEP_SUMMARY) {
+  try {
+    fs.appendFileSync(
+      process.env.GITHUB_STEP_SUMMARY,
+      `\n### Cluster Crawler Readiness: ${crawler.name}\n\n${clusterSummaryTable}\n\n> **Notice**: ${CRAWLER_READINESS_DISCLAIMER}\n`,
+    );
+  } catch (err) {
+    console.warn(`Failed writing to GITHUB_STEP_SUMMARY: ${err}`);
+  }
+}
+
 const allFindings = results.flatMap((result) => result.findings);
 const errors = errorsOnly(allFindings);
 const warnings = warningsOnly(allFindings);
 
 if (asJson) {
-  console.log(JSON.stringify({ base, crawler, results }, null, 2));
+  console.log(
+    JSON.stringify(
+      { base, crawler, clusterSummaries, results },
+      null,
+      2,
+    ),
+  );
 } else {
   console.log(`${crawler.name} access check — ${base}\n`);
   for (const result of results) {
@@ -302,6 +447,19 @@ if (asJson) {
       );
     }
   }
+
+  console.log(`\n### Cluster Crawler Readiness Summary (${crawler.name})\n`);
+  console.log(clusterSummaryTable);
+  console.log(`\n> **Notice**: ${CRAWLER_READINESS_DISCLAIMER}\n`);
+
+  if (clusterFailureDetails.length > 0) {
+    console.log("Cluster failure details:");
+    for (const detail of clusterFailureDetails) {
+      console.log(`  ${formatClusterFailureDetail(detail)}`);
+    }
+    console.log("");
+  }
+
   console.log(
     `\n${results.length} checks · ${errors.length} error(s) · ${warnings.length} warning(s)`,
   );
