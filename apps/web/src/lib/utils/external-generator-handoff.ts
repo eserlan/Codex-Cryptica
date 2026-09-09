@@ -32,12 +32,17 @@ export interface ExternalGeneratorHandoffOptions {
 export type ExternalGeneratorHandoffResult =
   | { ok: true; url: string }
   | { ok: false; reason: "empty-content" }
+  | { ok: false; reason: "invalid-base-url" }
+  | { ok: false; reason: "unsupported-protocol" }
   | { ok: false; reason: "url-too-long"; length: number; limit: number };
 
 /**
  * Builds a fully encoded external generator URL from Codex content.
- * Never throws and never truncates content: an oversized or empty payload
- * is reported as an explicit failure result for the caller to surface.
+ * Never throws: an invalid `baseUrl`, non-http(s) protocol, or an oversized
+ * or empty payload is reported as an explicit failure result for the caller
+ * to surface, rather than a runtime exception. Content bytes are preserved
+ * exactly (only whitespace-only content is rejected as empty) — this is a
+ * handoff, not a formatter.
  */
 export function buildExternalGeneratorUrl(
   options: ExternalGeneratorHandoffOptions,
@@ -50,13 +55,22 @@ export function buildExternalGeneratorUrl(
     maxLength = MAX_EXTERNAL_GENERATOR_URL_LENGTH,
   } = options;
 
-  const trimmedContent = content.trim();
-  if (!trimmedContent) {
+  if (!content.trim()) {
     return { ok: false, reason: "empty-content" };
   }
 
-  const url = new URL(baseUrl);
-  url.searchParams.set(paramName, trimmedContent);
+  let url: URL;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    return { ok: false, reason: "invalid-base-url" };
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return { ok: false, reason: "unsupported-protocol" };
+  }
+
+  url.searchParams.set(paramName, content);
   for (const [key, value] of Object.entries(extraParams ?? {})) {
     url.searchParams.set(key, value);
   }
@@ -79,12 +93,19 @@ export function buildExternalGeneratorUrl(
  * away from Codex. `noopener,noreferrer` is used since this is a true
  * cross-origin handoff with no need for a return handshake (contrast with
  * `zen-popout.ts`, which intentionally keeps `opener` for guest tabs).
+ *
+ * SSR-safe: `window` is resolved lazily at call time rather than captured as
+ * a default parameter, so this no-ops (returning `null`) outside a browser
+ * instead of throwing.
  */
 export function openExternalGeneratorUrl(
   url: string,
-  windowRef: Pick<Window, "open"> = window,
+  windowRef?: Pick<Window, "open">,
 ): Window | null {
-  return windowRef.open(url, "_blank", "noopener,noreferrer");
+  const target =
+    windowRef ?? (typeof window === "undefined" ? undefined : window);
+  if (!target) return null;
+  return target.open(url, "_blank", "noopener,noreferrer");
 }
 
 /**

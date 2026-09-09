@@ -52,7 +52,7 @@ describe("buildExternalGeneratorUrl", () => {
     }
   });
 
-  it("trims the content before encoding", () => {
+  it("preserves leading/trailing whitespace in content instead of trimming it", () => {
     const result = buildExternalGeneratorUrl({
       baseUrl: "https://monsterlabs.app/dnd-monster-generator",
       paramName: "prompt",
@@ -63,7 +63,7 @@ describe("buildExternalGeneratorUrl", () => {
     if (result.ok) {
       const url = new URL(result.url);
       expect(url.searchParams.get("prompt")).toBe(
-        "a lone wolf stalking the treeline",
+        "  a lone wolf stalking the treeline  ",
       );
     }
   });
@@ -76,6 +76,26 @@ describe("buildExternalGeneratorUrl", () => {
     });
 
     expect(result).toEqual({ ok: false, reason: "empty-content" });
+  });
+
+  it("reports an invalid base URL instead of throwing", () => {
+    const result = buildExternalGeneratorUrl({
+      baseUrl: "not a valid url",
+      paramName: "prompt",
+      content: "A cursed lantern",
+    });
+
+    expect(result).toEqual({ ok: false, reason: "invalid-base-url" });
+  });
+
+  it("rejects non-http(s) protocols instead of building a javascript: URL", () => {
+    const result = buildExternalGeneratorUrl({
+      baseUrl: "javascript:alert(1)",
+      paramName: "prompt",
+      content: "A cursed lantern",
+    });
+
+    expect(result).toEqual({ ok: false, reason: "unsupported-protocol" });
   });
 
   it("reports an oversized payload explicitly instead of truncating it", () => {
@@ -124,6 +144,24 @@ describe("openExternalGeneratorUrl", () => {
       "_blank",
       "noopener,noreferrer",
     );
+  });
+
+  it("no-ops instead of throwing when called in a non-browser context", () => {
+    vi.stubGlobal("window", undefined);
+    try {
+      expect(() =>
+        openExternalGeneratorUrl(
+          "https://monsterlabs.app/dnd-monster-generator",
+        ),
+      ).not.toThrow();
+      expect(
+        openExternalGeneratorUrl(
+          "https://monsterlabs.app/dnd-monster-generator",
+        ),
+      ).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

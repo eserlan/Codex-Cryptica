@@ -1,5 +1,5 @@
-import { execSync, spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { execSync, spawn, spawnSync } from "node:child_process";
+import { createWriteStream, existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { homedir } from "node:os";
@@ -38,10 +38,13 @@ export interface PrMetadata {
   number: number;
   title: string;
   headRefName: string;
+  headRefOid: string;
   baseRefName: string;
   url: string;
   state: string;
   mergeable: string;
+  reviewDecision?: string | null;
+  isDraft?: boolean;
 }
 
 export interface PrFeedback {
@@ -73,7 +76,100 @@ export interface PrFixOptions {
   waitMinutesForReview?: number;
   maxRounds?: number;
   worktreePath?: string;
+  logDir?: string;
   dryRun?: boolean;
+}
+
+export interface AgentRunResult {
+  status: number | null;
+  signal: NodeJS.Signals | null;
+  timedOut: boolean;
+}
+
+/** Return the durable log path for one PR fixer run. */
+export function getPrFixLogPath(
+  prNumber: number,
+  runId: string,
+  logDir = resolve(homedir(), ".local/state/codex-pr-review"),
+): string {
+  const safeRunId = runId.replace(/[^a-zA-Z0-9_-]/g, "-");
+  return resolve(logDir, `pr-${prNumber}-${safeRunId}.log`);
+}
+
+/**
+ * Run an agent while forwarding its output to the journal and a durable file.
+ * The async implementation also lets us emit heartbeats during long checks.
+ */
+export async function runAgentWithLogging(
+  binPath: string,
+  args: string[],
+  options: {
+    cwd: string;
+    env: NodeJS.ProcessEnv;
+    timeoutMs: number;
+    logPath: string;
+    runId: string;
+  },
+): Promise<AgentRunResult> {
+  await mkdir(resolve(options.logPath, ".."), { recursive: true });
+  const log = createWriteStream(options.logPath, { flags: "a" });
+  const startedAt = new Date().toISOString();
+  log.write(`\n=== agent started ${startedAt} (${options.runId}) ===\n`);
+  console.log(`[pr-fix:${options.runId}] agent output: ${options.logPath}`);
+
+  const child = spawn(binPath, args, {
+    cwd: options.cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+    env: options.env,
+  });
+
+  let timedOut = false;
+  let heartbeatSeconds = 0;
+  const heartbeat = setInterval(() => {
+    heartbeatSeconds += 30;
+    const message = `[pr-fix:${options.runId}] agent still running (${heartbeatSeconds}s elapsed)`;
+    console.log(message);
+    log.write(`${message}\n`);
+  }, 30_000);
+
+  const forward = (stream: NodeJS.ReadableStream | null, label: string) => {
+    stream?.on("data", (chunk: Buffer | string) => {
+      const output = chunk.toString();
+      log.write(`[${label}] ${output}`);
+      process.stdout.write(`[agent:${label}] ${output}`);
+    });
+  };
+  forward(child.stdout, "stdout");
+  forward(child.stderr, "stderr");
+
+  const result = await new Promise<AgentRunResult>((resolveResult) => {
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      const message = `[pr-fix:${options.runId}] timeout reached; terminating agent`;
+      console.error(message);
+      log.write(`${message}\n`);
+      child.kill("SIGTERM");
+    }, options.timeoutMs);
+
+    child.once("error", (error) => {
+      clearTimeout(timeout);
+      resolveResult({ status: null, signal: null, timedOut });
+      console.error(
+        `[pr-fix:${options.runId}] agent process error: ${error.message}`,
+      );
+    });
+    child.once("close", (status, signal) => {
+      clearTimeout(timeout);
+      resolveResult({ status, signal, timedOut });
+    });
+  });
+
+  clearInterval(heartbeat);
+  log.write(
+    `=== agent finished ${new Date().toISOString()} status=${result.status ?? "null"} signal=${result.signal ?? "none"} timedOut=${result.timedOut} ===\n`,
+  );
+  await new Promise<void>((resolveLog) => log.end(resolveLog));
+  return result;
 }
 
 /**
@@ -81,11 +177,14 @@ export interface PrFixOptions {
  */
 export function getRepoSlug(repoDir: string): string {
   try {
-    const slug = execSync("gh repo view --json nameWithOwner -q .nameWithOwner", {
-      cwd: repoDir,
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "ignore"],
-    }).trim();
+    const slug = execSync(
+      "gh repo view --json nameWithOwner -q .nameWithOwner",
+      {
+        cwd: repoDir,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "ignore"],
+      },
+    ).trim();
     if (slug) return slug;
   } catch {
     // fallback
@@ -100,7 +199,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   const repoSlug = getRepoSlug(repoDir);
 
   const prMetaRaw = execSync(
-    `gh pr view ${prNumber} --json number,title,headRefName,baseRefName,url,state,mergeable`,
+    `gh pr view ${prNumber} --json number,title,headRefName,headRefOid,baseRefName,url,state,mergeable,reviewDecision,isDraft`,
     { cwd: repoDir, encoding: "utf-8" },
   );
   const prMeta = JSON.parse(prMetaRaw) as PrMetadata;
@@ -147,10 +246,11 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   // 2. Fetch top-level reviews
   let reviews: PrReview[] = [];
   try {
-    const reviewsRaw = execSync(
-      `gh pr view ${prNumber} --json reviews`,
-      { cwd: repoDir, encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] },
-    );
+    const reviewsRaw = execSync(`gh pr view ${prNumber} --json reviews`, {
+      cwd: repoDir,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
+    });
     const parsed = JSON.parse(reviewsRaw) as {
       reviews?: Array<{
         id: string;
@@ -164,7 +264,9 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
         .filter(
           (r) =>
             r.state === "CHANGES_REQUESTED" ||
-            (r.body && r.body.length > 50 && r.author?.login.includes("copilot")),
+            (r.body &&
+              r.body.length > 50 &&
+              r.author?.login.includes("copilot")),
         )
         .map((r) => ({
           id: r.id,
@@ -432,8 +534,14 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   const timeoutMinutes = options.timeoutMinutes ?? 20;
   const maxRounds = options.maxRounds ?? 2;
   const providers = options.agentProviders || ["claude", "codex", "agy"];
+  const runId = new Date()
+    .toISOString()
+    .replace(/[-:T.]/g, "")
+    .slice(0, 14);
+  const logPath = getPrFixLogPath(prNumber, runId, options.logDir);
 
-  console.log(`\n🔍 Checking feedback for PR #${prNumber}...`);
+  console.log(`\n🔍 Checking feedback for PR #${prNumber} (run ${runId})...`);
+  console.log(`[pr-fix:${runId}] durable log: ${logPath}`);
   const feedback = await pollForPrFeedback(prNumber, rootDir, {
     initialWaitMinutes:
       options.initialWaitMinutes ?? options.waitMinutesForReview ?? 4,
@@ -494,8 +602,11 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   }
 
   try {
+    let fixSucceeded = false;
     for (let round = 1; round <= maxRounds; round++) {
-      console.log(`\n🚀 [Round ${round}/${maxRounds}] Running agent fix pass...`);
+      console.log(
+        `\n🚀 [Round ${round}/${maxRounds}] Running agent fix pass...`,
+      );
 
       let passSucceeded = false;
 
@@ -513,11 +624,12 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           ? providerConfig.getArgs(prompt, timeoutMinutes)
           : ["-p", prompt, "--dangerously-skip-permissions"];
 
-        const result = spawnSync(binPath, args, {
+        const result = await runAgentWithLogging(binPath, args, {
           cwd: worktreePath,
-          stdio: "inherit",
           env: { ...process.env, HUSKY: "0" },
-          timeout: timeoutMinutes * 60 * 1000,
+          timeoutMs: timeoutMinutes * 60 * 1000,
+          logPath,
+          runId,
         });
 
         if (result.status === 0) {
@@ -526,19 +638,32 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           break;
         }
 
-        console.warn(`⚠️ ${providerName} exited with code ${result.status}.`);
+        console.warn(
+          `⚠️ ${providerName} exited with code ${result.status ?? "null"}` +
+            ` (signal: ${result.signal ?? "none"}, timed out: ${result.timedOut}).`,
+        );
 
         const nextProvider = providers[i + 1];
         if (nextProvider) {
-          console.log(`🔄 Resetting worktree and falling back to ${nextProvider}...`);
+          console.log(
+            `🔄 Resetting worktree and falling back to ${nextProvider}...`,
+          );
           resetWorktree(worktreePath, branchName, branchName);
         }
       }
 
       if (passSucceeded) {
         console.log(`\n🎉 Fix round ${round} complete.`);
+        fixSucceeded = true;
         break;
       }
+    }
+
+    if (!fixSucceeded) {
+      console.error(
+        `[pr-fix:${runId}] no provider completed a fix pass successfully.`,
+      );
+      return false;
     }
   } finally {
     if (ownWorktree && worktreePath && existsSync(worktreePath)) {
@@ -555,6 +680,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     }
   }
 
+  console.log(`[pr-fix:${runId}] run complete; detailed output: ${logPath}`);
   return true;
 }
 

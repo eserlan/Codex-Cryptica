@@ -147,6 +147,7 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-should-a-new-dnd-player-learn-first",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "what-rpg-system-should-we-try-instead-of-dnd",
     "how-do-i-run-a-successful-session-0",

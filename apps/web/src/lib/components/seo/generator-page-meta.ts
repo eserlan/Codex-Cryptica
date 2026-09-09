@@ -429,6 +429,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "random rumours for a town",
       "fantasy town rumours",
     ],
+    labels: ["rumour"],
     faqs: [
       {
         question: "How is a rumour different from a quest hook?",
@@ -849,6 +850,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "divine hierarchy tool",
       "worldbuilding gods",
     ],
+    labels: ["religion"],
   },
   "god-generator": {
     pageTitle:
@@ -1293,6 +1295,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "blades in the dark score generator",
       "dnd heist ideas",
     ],
+    labels: ["heist"],
     faqs: [
       {
         question: "What does the heist generator create?",

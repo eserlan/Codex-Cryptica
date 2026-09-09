@@ -14,6 +14,7 @@ import { howDoYouCreateQuestHooksWithoutRailroading } from "./how-do-you-create-
 import { howDoYouDesignRpgPuzzlesThatDoNotStallTheGame } from "./how-do-you-design-rpg-puzzles-that-do-not-stall-the-game";
 import { howDoYouGenerateUsefulRpgRumours } from "./how-do-you-generate-useful-rpg-rumours";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
+import { howDoYouHandlePlayersGoingOffScriptAsAGm } from "./how-do-you-handle-players-going-off-script-as-a-gm";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
 import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
@@ -45,6 +46,7 @@ import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-heist-target-in-a-tabletop-rpg";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
+import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
@@ -72,6 +74,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouDesignRpgPuzzlesThatDoNotStallTheGame,
     howDoYouGenerateUsefulRpgRumours,
     howDoYouHandleCharacterDeathInATabletopRpg,
+    howDoYouHandlePlayersGoingOffScriptAsAGm,
     howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
     howDoYouMakeAnAlienSpeciesFeelBelievable,
@@ -103,6 +106,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatMakesAGoodHeistTargetInATabletopRpg,
     whatMakesAGoodRandomEncounter,
     whatRpgSystemShouldWeTryInsteadOfDnd,
+    whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
