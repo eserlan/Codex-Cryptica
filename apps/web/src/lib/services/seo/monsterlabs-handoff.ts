@@ -45,14 +45,17 @@ function titleCase(value: string): string {
 export function buildMonsterLabsPrompt(
   source: MonsterLabsHandoffSource,
 ): string {
+  const description = source.description.trim();
+  if (!description) {
+    return "";
+  }
+
   return [
     `Name: ${source.name}`,
     `Type: ${titleCase(source.type)}`,
     "",
-    source.description.trim(),
-  ]
-    .join("\n")
-    .trim();
+    description,
+  ].join("\n");
 }
 
 /**

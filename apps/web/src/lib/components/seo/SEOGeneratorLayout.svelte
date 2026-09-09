@@ -751,7 +751,10 @@
         result.reason === "url-too-long"
           ? "This draft is too long to send to MonsterLabs."
           : "Add some content before sending to MonsterLabs.";
+      return;
     }
+
+    errorMessage = null;
   }
 
   async function handleCopySection(sectionId: string, markdown: string) {

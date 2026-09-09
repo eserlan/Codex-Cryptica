@@ -107,6 +107,24 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     }
   });
 
+  it("reports an explicit failure instead of opening a tab for a blank description", () => {
+    const open = vi.fn();
+    const result = sendToMonsterLabsMonsterGenerator(
+      {
+        name: "Empty Shell",
+        type: "creature",
+        description: "   ",
+      },
+      { open },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(open).not.toHaveBeenCalled();
+    if (!result.ok) {
+      expect(result.reason).toBe("empty-content");
+    }
+  });
+
   it("reports an explicit failure instead of opening a tab for an oversized entity", () => {
     const open = vi.fn();
     const result = sendToMonsterLabsMonsterGenerator(
