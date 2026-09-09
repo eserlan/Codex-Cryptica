@@ -31,7 +31,7 @@ describe("ZenHeader MonsterLabs handoff action", () => {
   it("only starts the confirm flow — no sending happens until confirmed in the modal", () => {
     expect(source).toContain("monsterLabsFlow.start({");
     expect(source).toContain("disabled={monsterLabsFlow.open}");
-    expect(source).toContain("aria-busy={monsterLabsFlow.open}");
+    expect(source).toContain('aria-busy={monsterLabsFlow.state === "loading"}');
   });
 
   it("sends the entity's title, type, and content/lore", () => {

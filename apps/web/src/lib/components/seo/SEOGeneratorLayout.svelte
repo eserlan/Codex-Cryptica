@@ -1151,7 +1151,7 @@
         onSendToMonsterLabs={userGenerationSucceeded
           ? handleSendToMonsterLabs
           : undefined}
-        isSendingToMonsterLabs={monsterLabsFlow.open}
+        isSendingToMonsterLabs={monsterLabsFlow.state === "loading"}
       />
     </div>
 

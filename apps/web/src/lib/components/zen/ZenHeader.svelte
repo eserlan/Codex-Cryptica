@@ -372,7 +372,7 @@
             type="button"
             onclick={handleSendToMonsterLabs}
             disabled={monsterLabsFlow.open}
-            aria-busy={monsterLabsFlow.open}
+            aria-busy={monsterLabsFlow.state === "loading"}
             class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest disabled:opacity-50"
             title="{getMonsterLabsActionLabel(
               entity.type,
@@ -382,7 +382,7 @@
           >
             <span
               aria-hidden="true"
-              class="{monsterLabsFlow.open
+              class="{monsterLabsFlow.state === 'loading'
                 ? 'icon-[lucide--loader-2] animate-spin'
                 : 'icon-[lucide--external-link]'} w-4 h-4"
             ></span>

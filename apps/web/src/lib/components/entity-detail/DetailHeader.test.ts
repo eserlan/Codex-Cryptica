@@ -480,7 +480,7 @@ describe("DetailHeader MonsterLabs handoff", () => {
     expect(openSpy).toHaveBeenCalledTimes(1);
     expect(await findByTestId("monsterlabs-open-link")).toBeTruthy();
     const [button] = await findAllByTestId("send-to-monsterlabs-button");
-    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.getAttribute("aria-busy")).toBe("false");
 
     openSpy.mockRestore();
   });
