@@ -1,4 +1,4 @@
-import { execSync, spawn, spawnSync } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import { createWriteStream, existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -9,6 +9,12 @@ import {
   resetWorktree,
   type AgentProviderName,
 } from "./auto-degodify.ts";
+import {
+  buildConflictResolutionInstructions,
+  getUnmergedPaths,
+  isWorktreePushed,
+  mergeStagingIntoWorktree,
+} from "./pr-worktree-merge.ts";
 
 export interface PrReviewComment {
   id: number;
@@ -25,6 +31,7 @@ export interface PrCheck {
   bucket: string;
   link: string;
   workflow?: string;
+  failureDetails?: string;
 }
 
 export interface PrReview {
@@ -43,6 +50,7 @@ export interface PrMetadata {
   url: string;
   state: string;
   mergeable: string;
+  mergeStateStatus?: string;
   reviewDecision?: string | null;
   isDraft?: boolean;
 }
@@ -199,7 +207,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   const repoSlug = getRepoSlug(repoDir);
 
   const prMetaRaw = execSync(
-    `gh pr view ${prNumber} --json number,title,headRefName,headRefOid,baseRefName,url,state,mergeable,reviewDecision,isDraft`,
+    `gh pr view ${prNumber} --json number,title,headRefName,headRefOid,baseRefName,url,state,mergeable,mergeStateStatus,reviewDecision,isDraft`,
     { cwd: repoDir, encoding: "utf-8" },
   );
   const prMeta = JSON.parse(prMetaRaw) as PrMetadata;
@@ -288,9 +296,12 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
       { cwd: repoDir, encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] },
     );
     const allChecks = JSON.parse(checksRaw) as PrCheck[];
-    failingChecks = allChecks.filter(
-      (c) => c.bucket === "fail" || c.state === "FAILURE",
-    );
+    failingChecks = allChecks
+      .filter((c) => c.bucket === "fail" || c.state === "FAILURE")
+      .map((check) => ({
+        ...check,
+        failureDetails: fetchFailedCheckLog(check),
+      }));
     pendingChecks = allChecks.filter(
       (c) =>
         c.bucket === "pending" ||
@@ -305,7 +316,9 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   const hasActionableFeedback =
     unresolvedComments.length > 0 ||
     failingChecks.length > 0 ||
-    reviews.some((r) => r.state === "CHANGES_REQUESTED");
+    reviews.some((r) => r.state === "CHANGES_REQUESTED") ||
+    prMeta.mergeable === "CONFLICTING" ||
+    prMeta.mergeStateStatus === "DIRTY";
 
   return {
     prMeta,
@@ -315,6 +328,22 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
     reviews,
     hasActionableFeedback,
   };
+}
+
+/** Fetch a bounded failed-job excerpt when a GitHub Actions run is available. */
+export function fetchFailedCheckLog(check: PrCheck): string | undefined {
+  const runId = check.link.match(/\/actions\/runs\/(\d+)/)?.[1];
+  if (!runId) return undefined;
+  try {
+    const output = execSync(`gh run view ${runId} --log-failed`, {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
+    }).trim();
+    if (!output) return undefined;
+    return output.slice(-12_000);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -430,6 +459,7 @@ export function buildPrFixPrompt(
   feedback: PrFeedback,
   branchName: string,
   baseBranch: string,
+  mergeConflictPaths: string[] = [],
 ): string {
   const { prMeta, unresolvedComments, failingChecks, reviews } = feedback;
 
@@ -460,7 +490,10 @@ export function buildPrFixPrompt(
       ? failingChecks
           .map(
             (c, i) =>
-              `${i + 1}. **${c.name}** (${c.workflow || "CI"}): state=${c.state}, link=${c.link}`,
+              `${i + 1}. **${c.name}** (${c.workflow || "CI"}): state=${c.state}, link=${c.link}` +
+              (c.failureDetails
+                ? `\n\nFailed-job excerpt:\n\`\`\`text\n${c.failureDetails}\n\`\`\``
+                : ""),
           )
           .join("\n")
       : "_None_";
@@ -500,8 +533,10 @@ STRICT INSTRUCTIONS & CONSTRAINTS (Constitution Principles I, II, XIV):
      - Commit with gitmoji message:
        \`♻️ refactor: address PR #${prMeta.number} review comments and check failures\`
      - Push to remote branch:
-       \`git push origin ${branchName} --no-verify\`
-   - Do NOT close the PR.`;
+       \`git push origin HEAD:${branchName} --no-verify\`
+   - Reply to each addressed inline review comment with a concise summary of the fix.
+   - Do NOT close the PR.
+${mergeConflictPaths.length > 0 ? buildConflictResolutionInstructions(mergeConflictPaths) : ""}`;
 }
 
 /**
@@ -563,11 +598,9 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     `\n🛠️ PR #${prNumber} has ${feedback.unresolvedComments.length} comment(s) and ${feedback.failingChecks.length} failing check(s).`,
   );
 
-  const prompt = buildPrFixPrompt(feedback, branchName, baseBranch);
-
   if (options.dryRun) {
     console.log("\n[DRY RUN] Fix prompt that would be sent to agent:\n");
-    console.log(prompt);
+    console.log(buildPrFixPrompt(feedback, branchName, baseBranch));
     return true;
   }
 
@@ -588,7 +621,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     await mkdir(workdirBase, { recursive: true });
     console.log(`📦 Creating isolated worktree at ${worktreePath}...`);
 
-    execSync(`git fetch origin ${branchName}`, {
+    execSync(`git fetch origin ${branchName} ${baseBranch}`, {
       cwd: rootDir,
       stdio: "inherit",
     });
@@ -602,6 +635,27 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   }
 
   try {
+    let mergeResult = mergeStagingIntoWorktree(worktreePath, baseBranch);
+    if (mergeResult.kind === "failed") {
+      console.error(
+        `[pr-fix:${runId}] could not merge staging: ${mergeResult.message}`,
+      );
+      return false;
+    }
+    let mergeConflictPaths =
+      mergeResult.kind === "conflicted" ? mergeResult.paths : [];
+    let prompt = buildPrFixPrompt(
+      feedback,
+      branchName,
+      baseBranch,
+      mergeConflictPaths,
+    );
+    if (mergeConflictPaths.length > 0) {
+      console.log(
+        `[pr-fix:${runId}] staging merge has ${mergeConflictPaths.length} conflict(s); handing them to the agent.`,
+      );
+    }
+
     let fixSucceeded = false;
     for (let round = 1; round <= maxRounds; round++) {
       console.log(
@@ -632,10 +686,26 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           runId,
         });
 
-        if (result.status === 0) {
+        const unresolvedPaths = getUnmergedPaths(worktreePath);
+        const pushed =
+          result.status === 0 &&
+          unresolvedPaths.length === 0 &&
+          isWorktreePushed(worktreePath, branchName);
+
+        if (pushed) {
           console.log(`✅ ${providerName} completed successfully.`);
           passSucceeded = true;
           break;
+        }
+
+        if (result.status === 0 && unresolvedPaths.length > 0) {
+          console.warn(
+            `⚠️ ${providerName} left ${unresolvedPaths.length} merge conflict(s) behind.`,
+          );
+        } else if (result.status === 0) {
+          console.warn(
+            `⚠️ ${providerName} completed but did not push the resulting branch.`,
+          );
         }
 
         console.warn(
@@ -649,6 +719,21 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
             `🔄 Resetting worktree and falling back to ${nextProvider}...`,
           );
           resetWorktree(worktreePath, branchName, branchName);
+          mergeResult = mergeStagingIntoWorktree(worktreePath, baseBranch);
+          if (mergeResult.kind === "failed") {
+            console.error(
+              `[pr-fix:${runId}] could not restore the staging merge for ${nextProvider}: ${mergeResult.message}`,
+            );
+            break;
+          }
+          mergeConflictPaths =
+            mergeResult.kind === "conflicted" ? mergeResult.paths : [];
+          prompt = buildPrFixPrompt(
+            feedback,
+            branchName,
+            baseBranch,
+            mergeConflictPaths,
+          );
         }
       }
 

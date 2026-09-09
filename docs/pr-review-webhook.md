@@ -93,3 +93,17 @@ journalctl --user -u codex-pr-review-webhook.service -f
 ls -lt ~/.local/state/codex-pr-review/
 tail -f ~/.local/state/codex-pr-review/pr-<number>-<run-id>.log
 ```
+
+## Fixer safeguards
+
+Before invoking an LLM, the fixer fetches the current `staging` branch and
+merges it into its isolated PR worktree. If that merge conflicts, the agent
+receives the exact paths and must resolve, test, commit, and push the merge
+before it can continue. Failed GitHub Actions checks include a bounded
+failed-job log excerpt in the fix prompt. A successful agent exit is not
+enough to suppress feedback: the listener requires a pushed head change or
+the originally actionable items to be observably resolved.
+
+A push to `staging` performs a lightweight scan of open staging PRs and starts
+the fixer only for PRs GitHub reports as conflicting. It does not otherwise
+reprocess dormant PRs.

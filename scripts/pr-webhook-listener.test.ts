@@ -4,12 +4,23 @@ import {
   readRequestBody,
   shouldHandleEvent,
   summariseEvent,
+  isStagingPush,
   verifySignature,
 } from "./pr-webhook-listener.ts";
 
 describe("PR webhook listener", () => {
+  it("recognises pushes to staging as conflict-reconciliation triggers", () => {
+    expect(isStagingPush("push", { ref: "refs/heads/staging" })).toBe(true);
+    expect(isStagingPush("push", { ref: "refs/heads/main" })).toBe(false);
+    expect(isStagingPush("pull_request", { ref: "refs/heads/staging" })).toBe(
+      false,
+    );
+  });
+
   it("accepts only relevant PR event actions", () => {
-    expect(shouldHandleEvent("pull_request_review_comment", "created")).toBe(true);
+    expect(shouldHandleEvent("pull_request_review_comment", "created")).toBe(
+      true,
+    );
     expect(shouldHandleEvent("check_run", "completed")).toBe(true);
     expect(shouldHandleEvent("pull_request", "closed")).toBe(false);
     expect(shouldHandleEvent("push", "created")).toBe(false);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getUnseenFeedback,
+  hasFixEvidence,
   isAutoMergeEligible,
   markFeedbackHandled,
   type PrAutomationState,
@@ -45,6 +46,7 @@ describe("PR review automation state", () => {
       comments: [],
       reviews: [],
       checks: [],
+      hasMergeConflict: false,
       hasActionableFeedback: false,
     });
   });
@@ -70,6 +72,71 @@ describe("PR review automation state", () => {
         (comment) => comment.id,
       ),
     ).toEqual([11]);
+  });
+
+  it("requires observable resolution for review feedback", () => {
+    expect(hasFixEvidence(feedback, feedback)).toBe(false);
+    expect(
+      hasFixEvidence(feedback, {
+        ...feedback,
+        prMeta: { ...feedback.prMeta, headRefOid: "head-2" },
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts a new head as evidence for a conflict-only run", () => {
+    const conflictOnly: PrFeedback = {
+      ...feedback,
+      unresolvedComments: [],
+      reviews: [],
+      failingChecks: [],
+      hasActionableFeedback: true,
+      prMeta: { ...feedback.prMeta, mergeable: "CONFLICTING" },
+    };
+
+    expect(
+      hasFixEvidence(conflictOnly, {
+        ...conflictOnly,
+        prMeta: { ...conflictOnly.prMeta, headRefOid: "head-2" },
+      }),
+    ).toBe(true);
+  });
+
+  it("does not make a commented review actionable by itself", () => {
+    const withCommentedReview: PrFeedback = {
+      ...feedback,
+      unresolvedComments: [],
+      reviews: [
+        {
+          id: "review-commented",
+          state: "COMMENTED",
+          author: "copilot",
+          body: "Overview only",
+        },
+      ],
+      hasActionableFeedback: false,
+    };
+
+    expect(
+      getUnseenFeedback(withCommentedReview, emptyState())
+        .hasActionableFeedback,
+    ).toBe(false);
+  });
+
+  it("treats a merge conflict as actionable even without a reviewer comment", () => {
+    const conflicted: PrFeedback = {
+      ...feedback,
+      unresolvedComments: [],
+      hasActionableFeedback: true,
+      prMeta: { ...feedback.prMeta, mergeable: "CONFLICTING" },
+    };
+
+    expect(getUnseenFeedback(conflicted, emptyState()).hasMergeConflict).toBe(
+      true,
+    );
+    expect(
+      getUnseenFeedback(conflicted, emptyState()).hasActionableFeedback,
+    ).toBe(true);
   });
 
   it("only permits auto-merge for a settled staging PR", () => {

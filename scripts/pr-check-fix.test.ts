@@ -71,6 +71,7 @@ describe("pr-check-fix", () => {
       expect(prompt).toContain("bun run lint");
       expect(prompt).toContain("--no-verify");
       expect(prompt).toContain("♻️ refactor: address PR #1234 review comments");
+      expect(prompt).toContain("HEAD:curator/degod-sample-1234");
     });
 
     it("handles feedback with no failing checks or reviews gracefully", () => {
@@ -90,6 +91,28 @@ describe("pr-check-fix", () => {
       expect(prompt).toContain("GENERAL REVIEWS:\n_None_");
       expect(prompt).toContain("Guard out-of-bounds index");
     });
+  });
+
+  it("includes staging conflict paths and bounded failed-check details", () => {
+    const prompt = buildPrFixPrompt(
+      {
+        ...sampleFeedback,
+        failingChecks: [
+          {
+            ...sampleFeedback.failingChecks[0],
+            failureDetails: "Type error at src/example.ts:12",
+          },
+        ],
+      },
+      "curator/degod-sample-1234",
+      "staging",
+      ["apps/web/src/example.ts"],
+    );
+
+    expect(prompt).toContain("STAGING MERGE CONFLICTS");
+    expect(prompt).toContain("apps/web/src/example.ts");
+    expect(prompt).toContain("Type error at src/example.ts:12");
+    expect(prompt).toContain("Reply to each addressed inline review comment");
   });
 
   describe("getRepoSlug", () => {
