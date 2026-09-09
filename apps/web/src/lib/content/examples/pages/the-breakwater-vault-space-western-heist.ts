@@ -7,7 +7,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theBreakwaterVault: ExampleConfigInput = {
   slug: "the-breakwater-vault-space-western-heist",
-  labels: ["space-western"],
+  labels: ["space-western", "heist"],
   name: "The Breakwater Vault",
   title: "Space Western heist example: The Breakwater Vault",
   kind: "heist",

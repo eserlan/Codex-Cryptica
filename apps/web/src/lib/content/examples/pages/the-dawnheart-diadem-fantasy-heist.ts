@@ -8,6 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theDawnheartDiadem: ExampleConfigInput = {
   slug: "the-dawnheart-diadem-fantasy-heist",
+  labels: ["fantasy", "heist"],
   name: "The Dawnheart Diadem",
   title: "Classic Fantasy heist example: The Dawnheart Diadem",
   kind: "heist",

@@ -8,7 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theEelWyrm: ExampleConfigInput = {
   slug: "the-eel-wyrm-classic-fantasy-constellation",
-  labels: ["fantasy"],
+  labels: ["fantasy", "religion"],
   name: "The Eel-Wyrm",
   title: "Classic Fantasy constellation example: The Eel-Wyrm",
   kind: "location",

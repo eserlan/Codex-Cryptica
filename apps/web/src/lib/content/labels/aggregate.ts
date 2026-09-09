@@ -29,7 +29,10 @@ export function getPublicContentByLabel(label: string): PublicLabelResult[] {
   const results: PublicLabelResult[] = [];
 
   for (const answer of getAllAnswers()) {
-    if (!(answer.labels as string[]).includes(label)) continue;
+    const matches =
+      (answer.labels as string[]).includes(label) ||
+      (answer.discovery?.clusters ?? []).includes(label);
+    if (!matches) continue;
     results.push({
       kind: "answer",
       title: answer.question,
@@ -49,7 +52,9 @@ export function getPublicContentByLabel(label: string): PublicLabelResult[] {
   }
 
   for (const example of getAllExamples()) {
-    if (!(example.labels as string[]).includes(label)) continue;
+    const matches =
+      (example.labels as string[]).includes(label) || example.kind === label;
+    if (!matches) continue;
     results.push({
       kind: "example",
       title: example.title,
