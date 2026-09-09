@@ -43,7 +43,10 @@ describe("compressMonsterLabsDescription", () => {
     expect(runModel).toHaveBeenCalledTimes(1);
     const [system, user] = runModel.mock.calls[0];
     expect(system).toContain("compress");
-    expect(user).toContain("1000 characters");
+    // Asks for less than the real 1000-char limit (85%) — models routinely
+    // overshoot an exact target, and undershooting the ask leaves headroom
+    // so an overshoot still lands under the real limit.
+    expect(user).toContain("850 characters");
     expect(user).toContain(longDescription);
   });
 

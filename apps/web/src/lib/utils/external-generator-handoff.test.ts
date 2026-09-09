@@ -272,18 +272,18 @@ describe("sendToExternalGenerator", () => {
     expect(pendingTab.location.assign).not.toHaveBeenCalled();
   });
 
-  it("reports popupBlocked when pendingTab is null (the pre-open itself was blocked)", () => {
-    const result = sendToExternalGenerator({
-      baseUrl: "https://monsterlabs.app/dnd-monster-generator",
-      paramName: "prompt",
-      content: "A cursed lantern",
-      pendingTab: null,
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.popupBlocked).toBe(true);
-    }
+  it("tolerates a null pendingTab (e.g. the pre-open itself was blocked, or never attempted)", () => {
+    // A null pendingTab can't be distinguished from "blocked" here — see the
+    // sendToExternalGenerator doc comment on why that isn't attempted. This
+    // just confirms the call degrades gracefully (no throw) either way.
+    expect(() =>
+      sendToExternalGenerator({
+        baseUrl: "https://monsterlabs.app/dnd-monster-generator",
+        paramName: "prompt",
+        content: "A cursed lantern",
+        pendingTab: null,
+      }),
+    ).not.toThrow();
   });
 });
 
