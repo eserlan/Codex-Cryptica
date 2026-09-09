@@ -307,6 +307,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-secret-society-for-an-rpg-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-create-quest-hooks-without-railroading</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -317,7 +322,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-generate-useful-rpg-rumours</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -338,6 +353,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-manage-a-campaign-timeline-in-an-rpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -377,6 +397,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-an-rpg-campaign-in-one-city</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-run-factions-in-a-sandbox-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -387,12 +412,27 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-track-faction-turns-between-rpg-sessions</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-use-player-backstories-in-an-rpg-campaign-world</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-write-a-one-shot-adventure</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-many-npcs-does-an-rpg-town-need</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -403,6 +443,16 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-to-create-a-sci-fi-star-system-for-an-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-to-create-rumours-for-a-fantasy-town</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -513,6 +563,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-breakwater-vault-space-western-heist</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/lowmere-six-words-rumour-table</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

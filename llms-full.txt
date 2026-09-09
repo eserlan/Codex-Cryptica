@@ -215,7 +215,7 @@ When reading an entity's content or lore, names of other vault entities are auto
 Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears (read-only, with a link back) under that character's own Chat tab.
 
 ### Campaign Generators
-Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving; nothing is written until you confirm.
+Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Use Refine on a generated result or a Session Hub entry to ask for a focused change, review the new version, refine it again, or use it. Confirming replaces the source draft with the accepted revision while keeping its lineage.
 
 ### Secret Societies & Cults
 Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.
@@ -1944,7 +1944,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
 
-**Direct answer:** Write what adherents do, not what they believe. A religion becomes believable through practice: the rites people perform, the days they cannot work, the money the institution collects, the questions it will not permit, because that is how religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
+**Direct answer:** Start with what adherents do, and let belief follow from that. A religion becomes believable through practice: the rites people perform, the days they cannot work, who pays for it, the questions it will not permit, because that is how a religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
 
 ### [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction)
 
@@ -1962,6 +1962,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build the relationships between the gods first and their portfolios second. A pantheon is interesting because of how its members disagree: who was betrayed, who was replaced, whose worship displaced whose, and a list of deities with one domain each produces none of that. Start with three or four gods who are entangled, and let the rest of the roster grow out of the gaps that leaves.
 
+### [How do you create a secret society for an RPG campaign?](https://codexcryptica.com/answers/how-do-you-create-a-secret-society-for-an-rpg-campaign)
+
+**Direct answer:** Write a secret society as a faction with two extra layers: a public face that lies about what the group is for, and a set of clues that let the party discover the truth at a pace you control. Define the hidden goal, the methods it uses to protect that goal, who it recruits and how, its internal hierarchy, and at least one crack in its unity, then decide what a curious party can actually find.
+
 ### [How do you create quest hooks without railroading?](https://codexcryptica.com/answers/how-do-you-create-quest-hooks-without-railroading)
 
 **Direct answer:** Create quest hooks without railroading by framing every hook as a visible situation with clear information, tangible stakes, and an actionable choice rather than an assignment from an untouchable authority. Offer at least three distinct entry points to any major scenario, ensure players can decline or approach the problem on their own terms, and attach an escalating world consequence to inaction so the situation develops dynamically whether the party intervenes or walks away.
@@ -1970,9 +1974,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Give the puzzle more than one solution and make failure cost something other than time. A puzzle stalls when there is exactly one intended answer and no way forward until someone says it out loud: the table stops, guesses, and waits. If the party can make partial progress, buy information, or take a worse route through, the puzzle becomes a pressure point rather than a locked door.
 
+### [How do you generate useful RPG rumours?](https://codexcryptica.com/answers/how-do-you-generate-useful-rpg-rumours)
+
+**Direct answer:** Generate useful RPG rumours as a six-entry table: four are essentially true, one exaggerates a real situation, and one is a dangerous misconception. Give every entry a named source, a specific site, NPC, faction, or item to pursue, and a consequence if the party follows, repeats, or ignores it. Keep each rumour lighter than a quest hook so players choose what matters.
+
 ### [How do you handle character death in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg)
 
 **Direct answer:** Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
+
+### [How do you improvise NPCs on the spot?](https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot)
+
+**Direct answer:** Improvise an NPC on the spot by fixing five things in the order the table will notice them: role, immediate want, attitude toward the party, one distinguishing behaviour you can repeat every time they speak, and one connection to something already in the campaign. Say the role out loud first so the scene has a name to react to, then let the rest surface through dialogue instead of description.
 
 ### [How do you keep track of time in a tabletop campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-time-in-a-tabletop-campaign)
 
@@ -1989,6 +2001,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you make travel interesting in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg)
 
 **Direct answer:** Travel becomes interesting when a journey is structured around genuine decisions rather than random combat interruptions. Rather than rolling for wandering monsters or hand-waving the trip in a single check, give players competing routes with distinct hazards, active travel roles that grant agency, tangible resource trade-offs, and environmental discoveries that reveal the world they are crossing.
+
+### [How do you manage a campaign timeline in an RPG?](https://codexcryptica.com/answers/how-do-you-manage-a-campaign-timeline-in-an-rpg)
+
+**Direct answer:** Log every event with the most precise date you actually know, not the date you wish you knew: exact when a session pins it down, a season or a year when it does not, and a relative marker such as 'three days after the fire' when there is no calendar yet at all. Attach each entry to the entities it involves rather than burying it in a prose recap, and the timeline answers 'what happened, and when' without you rereading six sessions of notes.
 
 ### [How do you organise NPC relationships?](https://codexcryptica.com/answers/how-do-you-organise-npc-relationships)
 
@@ -2018,6 +2034,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Apply the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses, so no single missed roll or wrong turn can stall the whole plot. Don't lock essential clues behind binary failure checks; if a player searches a crime scene, they find the evidence automatically, while the dice decide speed, thoroughness, or stealth instead. And give the culprit an active agenda that keeps moving whenever the investigators hesitate.
 
+### [How do you run an RPG campaign in one city?](https://codexcryptica.com/answers/how-do-you-run-an-rpg-campaign-in-one-city)
+
+**Direct answer:** Run a campaign in one city by trading breadth for depth: prepare a handful of districts instead of a whole map, build a small recurring cast the party keeps running into, let locations change permanently when the party acts, and layer secrets so each one implicates people the table already knows. A city campaign works when the same names, streets, and debts keep resurfacing rather than when new ones get introduced every session.
+
 ### [How do you run factions in a sandbox campaign?](https://codexcryptica.com/answers/how-do-you-run-factions-in-a-sandbox-campaign)
 
 **Direct answer:** Running factions in a sandbox means giving each one a goal, a resource it defends, a rival it is losing ground to, and a scheduled move it makes whether or not the party is watching, then surfacing that move through a visible consequence the players can react to. Treat every faction as a clock that keeps advancing between sessions rather than a paragraph of static lore, and the sandbox starts to feel like it moves on its own.
@@ -2026,13 +2046,25 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Start small and bottom-up: build one functional settlement, three competing local factions, two adventure locations within a half-day trek, and an immediate crisis. Expand the broader continent and ancient history only once player exploration actually calls for it.
 
+### [How do you track faction turns between RPG sessions?](https://codexcryptica.com/answers/how-do-you-track-faction-turns-between-rpg-sessions)
+
+**Direct answer:** Track between-session faction turns with a five-step record for each active organisation: define its immediate intent, select a single action against a target entity, resolve the outcome, translate that outcome into a visible consequence in the game world, and log the change on your campaign timeline. Limiting each organisation to one concrete action per downtime cycle keeps the world moving without turning prep into spreadsheet bookkeeping.
+
 ### [How do you track unresolved plot hooks in an RPG campaign?](https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign)
 
 **Direct answer:** Unresolved plot hooks are tracked by treating them as living status states attached to existing campaign entities rather than entries on an endless quest checklist. Record each hook with five lightweight attributes: the origin source, the affected faction or NPC, current lifecycle status (dormant, simmering, active, or rotting), its urgency clock, and the concrete consequence that manifests in the world if the players choose to ignore it.
 
+### [How do you use player backstories in an RPG campaign world?](https://codexcryptica.com/answers/how-do-you-use-player-backstories-in-an-rpg-campaign-world)
+
+**Direct answer:** Break each backstory into reusable pieces (specific people, places, debts and goals) and wire them into the world you already run, rather than building a subplot around one character. Bring those pieces back through consequences that surface naturally in play, not through sessions engineered to spotlight a single backstory, and every player gets material without any one of them owning the campaign.
+
 ### [How do you write a one-shot adventure?](https://codexcryptica.com/answers/how-do-you-write-a-one-shot-adventure)
 
 **Direct answer:** Design backward from a strict session time limit, using a four-beat structure: an immediate inciting incident, an investigative exploration scene, a high-stakes complication, and a decisive final confrontation. Build in at least one elastic middle encounter that can be expanded or cut entirely depending on the clock, so the party reaches the climax before the session ends.
+
+### [How many NPCs does an RPG town need?](https://codexcryptica.com/answers/how-many-npcs-does-an-rpg-town-need)
+
+**Direct answer:** A town needs roughly three to five named NPCs for a single visit, six to ten for a settlement the party returns to across a campaign, and no fixed number for the background population, which stays unnamed until a player addresses someone directly. Scale by how many roles the party will interact with, not by the town's population figure, and add named NPCs only when the story creates a reason for one.
 
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
@@ -2041,6 +2073,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
 
 **Direct answer:** Create a cyberpunk district by deciding what work it does for the city, who extracts value from that work, and what daily cost residents pay for staying there. Give it one stressed piece of infrastructure, a visible social divide, a local authority with limits, and a problem that forces people into difficult bargains. Then prepare a few places where that pressure can meet the crew.
+
+### [How do you create a sci-fi star system for an RPG?](https://codexcryptica.com/answers/how-to-create-a-sci-fi-star-system-for-an-rpg)
+
+**Direct answer:** Create a sci-fi star system for an RPG by giving each major body a job in the local economy, then placing travel limits, competing factions, hazards, and a current dispute between those places. Start with three to five destinations the crew can reach, decide what moves between them, and make at least one route or resource worth fighting over. The system becomes playable when a journey changes who can act, what supplies cost, or which problem reaches the crew first.
+
+### [How do you create rumours for a fantasy town?](https://codexcryptica.com/answers/how-to-create-rumours-for-a-fantasy-town)
+
+**Direct answer:** Create fantasy-town rumours by tying each one to a named source, a local tension, and a consequence the party can discover or change. Write a small mix of true, distorted, and false reports, but make every one point towards a person, place, object, or event the players can pursue. The useful question is not whether a rumour is accurate, but why this speaker believes it and what changes if the party repeats, tests, or ignores it.
 
 ### [How do you write an in-world newspaper for an RPG?](https://codexcryptica.com/answers/how-to-write-an-in-world-newspaper-for-an-rpg)
 
@@ -2156,6 +2196,12 @@ Real, unedited output from the Codex Cryptica generators, indexed at https://cod
 **Genre:** Space Western
 
 **Summary:** An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost, holding seized pitch-cobalt specie behind pneumatic vacuum seals, rotating patrols, and a compromised getaway.
+
+### [RPG rumour table example: Six Words from Lowmere](https://codexcryptica.com/examples/lowmere-six-words-rumour-table)
+
+**Genre:** Classic Fantasy
+
+**Summary:** A six-entry local rumour table about a midnight ferry, a submerged bell, and the evidence moving through Lowmere on a black barge.
 
 
 ## TTRPG System & Genre Campaign Management
