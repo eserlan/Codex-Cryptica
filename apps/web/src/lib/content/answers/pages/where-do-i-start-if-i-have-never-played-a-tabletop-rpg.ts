@@ -126,6 +126,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-should-a-new-dnd-player-learn-first",
     "what-rpg-system-should-we-try-instead-of-dnd",
     "how-do-i-run-a-successful-session-0",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",

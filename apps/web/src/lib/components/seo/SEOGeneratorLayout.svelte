@@ -69,6 +69,7 @@
     clipboardService as defaultClipboardService,
     type ClipboardService,
   } from "$lib/services/ClipboardService";
+  import { sendEntityToMonsterLabs } from "$lib/services/seo/monsterlabs-handoff";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -731,6 +732,42 @@
     }
   }
 
+  let isSendingToMonsterLabs = $state(false);
+
+  // A description over MonsterLabs' own prompt budget is compressed by the
+  // Oracle first, which is why this awaits — the draft action shows a busy
+  // state for that gap rather than appearing inert.
+  async function handleSendToMonsterLabs(data: GeneratorOutput) {
+    if (isSendingToMonsterLabs) return;
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "monsterlabs",
+    });
+
+    isSendingToMonsterLabs = true;
+    try {
+      const result = await sendEntityToMonsterLabs({
+        name: data.title,
+        type: data.type,
+        description: [documentLayout.content, documentLayout.lore]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join("\n\n"),
+      });
+
+      if (!result.ok) {
+        errorMessage =
+          result.reason === "url-too-long"
+            ? "This draft is too long to send to MonsterLabs."
+            : "Add some content before sending to MonsterLabs.";
+        return;
+      }
+
+      errorMessage = null;
+    } finally {
+      isSendingToMonsterLabs = false;
+    }
+  }
+
   async function handleCopySection(sectionId: string, markdown: string) {
     trackPublicGeneratorAction("copy", {
       generator_type: generatorType,
@@ -1128,6 +1165,10 @@
           ? onGenerateRoster
           : undefined}
         {onOpenMemberAsCharacter}
+        onSendToMonsterLabs={userGenerationSucceeded
+          ? handleSendToMonsterLabs
+          : undefined}
+        {isSendingToMonsterLabs}
       />
     </div>
 

@@ -325,3 +325,124 @@ describe("DetailHeader stature badge", () => {
     }
   });
 });
+
+describe("DetailHeader MonsterLabs handoff", () => {
+  const renderEntity = (entity: Record<string, unknown>) =>
+    render(DetailHeader, {
+      entity: { id: "entity-1", title: "Test Entity", ...entity } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  it("offers to send characters to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "character",
+      content: "A disgraced noble.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers to send creatures to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "creature",
+      content: "A soot-caked horror.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers to send items to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("does not offer the handoff for other entity types", () => {
+    const { queryByTestId } = renderEntity({
+      type: "location",
+      content: "A ruined watchtower.",
+    });
+
+    expect(queryByTestId("send-to-monsterlabs-button")).toBeNull();
+  });
+
+  it("labels the item action as a magic item handoff", () => {
+    const { getAllByLabelText } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet.",
+    });
+
+    expect(
+      getAllByLabelText("Create D&D magic item in MonsterLabs").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("opens the magic item generator for an item entity", async () => {
+    // The handoff opens a blank tab synchronously (inside the click), then
+    // redirects it once the (possibly AI-compressed) prompt is ready — so
+    // the destination URL shows up via that tab's location.assign, not a
+    // second window.open call.
+    const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(pendingTab as any);
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      title: "Crown of the Last Ember",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(pendingTab.location.assign).toHaveBeenCalledTimes(1);
+    const [url] = pendingTab.location.assign.mock.calls[0];
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-magic-item-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Crown of the Last Ember\nType: Item\n\nA tarnished circlet that hums when a fire is near.",
+    );
+
+    openSpy.mockRestore();
+  });
+
+  it("opens MonsterLabs with the entity's name, type, and content", async () => {
+    const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(pendingTab as any);
+    const { getAllByTestId } = renderEntity({
+      type: "creature",
+      title: "Ash-Eater Varkesh",
+      content: "A soot-caked horror.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [, target, features] = openSpy.mock.calls[0];
+    expect(target).toBe("_blank");
+    expect(features).toBe("noopener,noreferrer");
+    expect(pendingTab.location.assign).toHaveBeenCalledTimes(1);
+    const [url] = pendingTab.location.assign.mock.calls[0];
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-monster-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
+    );
+
+    openSpy.mockRestore();
+  });
+});

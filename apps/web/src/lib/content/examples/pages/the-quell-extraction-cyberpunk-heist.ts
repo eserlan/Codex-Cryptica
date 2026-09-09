@@ -10,6 +10,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theQuellExtraction: ExampleConfigInput = {
   slug: "the-quell-extraction-cyberpunk-heist",
+  labels: ["cyberpunk", "heist"],
   name: "The Quell Extraction",
   title: "Cyberpunk heist example: The Quell Extraction",
   kind: "heist",

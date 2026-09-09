@@ -32,7 +32,8 @@ In the repository settings, add a webhook with:
 - Content type: `application/json`
 - Secret: the value of `GITHUB_WEBHOOK_SECRET`
 - Events: pull request reviews, pull request review comments, pull requests,
-  and check runs
+  check runs, and pushes (needed to detect pushes to `staging` and rescan open
+  PRs for merge conflicts)
 
 The listener ignores pull requests targeting anything other than `staging`.
 It keeps its handled-feedback state in
