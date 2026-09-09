@@ -27,6 +27,7 @@ import {
   MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
 } from "./monsterlabs-handoff";
 import { compressMonsterLabsDescription } from "./monsterlabs-description-compression";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 /**
  * A `window.open` stub that returns a fake pre-opened tab, mirroring the
@@ -202,6 +203,36 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
     expect(url!.searchParams.get("prompt")).toBe(
       "Name: Wall of Text\nType: Creature\n\nA much shorter horror description.",
     );
+  });
+
+  it("tells the compressor not to call the Oracle when the user has disabled AI", async () => {
+    const { open, pendingTab } = stubWindow();
+    const longDescription = "a".repeat(1500);
+    const compressMock = vi.mocked(compressMonsterLabsDescription);
+    compressMock.mockClear();
+    compressMock.mockResolvedValueOnce("Hard-truncated fallback description.");
+    discoveryPolicyStore.aiDisabled = true;
+
+    try {
+      const result = await sendToMonsterLabsMonsterGenerator(
+        {
+          name: "Wall of Text",
+          type: "creature",
+          description: longDescription,
+        },
+        { open },
+      );
+
+      expect(result.ok).toBe(true);
+      expect(compressMock).toHaveBeenCalledTimes(1);
+      expect(compressMock.mock.calls[0][3]).toBe(false);
+      const url = sentUrl(pendingTab);
+      expect(url!.searchParams.get("prompt")).toBe(
+        "Name: Wall of Text\nType: Creature\n\nHard-truncated fallback description.",
+      );
+    } finally {
+      discoveryPolicyStore.aiDisabled = false;
+    }
   });
 
   it("does not compress a description already within the limit", async () => {

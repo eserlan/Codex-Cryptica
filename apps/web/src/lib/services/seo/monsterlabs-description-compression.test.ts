@@ -100,6 +100,35 @@ describe("compressMonsterLabsDescription", () => {
     expect(result.endsWith("…")).toBe(true);
   });
 
+  it("returns an empty string for a zero limit without calling the model", async () => {
+    const runModel = vi.fn();
+
+    const result = await compressMonsterLabsDescription(
+      "a".repeat(1500),
+      0,
+      runModel,
+    );
+
+    expect(result).toBe("");
+    expect(runModel).not.toHaveBeenCalled();
+  });
+
+  it("skips the model entirely when allowAi is false, falling back to hard truncation", async () => {
+    const runModel = vi.fn();
+    const longDescription = "word ".repeat(400).trim();
+
+    const result = await compressMonsterLabsDescription(
+      longDescription,
+      1000,
+      runModel,
+      false,
+    );
+
+    expect(runModel).not.toHaveBeenCalled();
+    expect(result.length).toBeLessThanOrEqual(1000);
+    expect(result.endsWith("…")).toBe(true);
+  });
+
   it("truncates at a word boundary rather than mid-word", async () => {
     const runModel = vi.fn().mockRejectedValue(new Error("offline"));
     const longDescription = "word ".repeat(400).trim();

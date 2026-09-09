@@ -13,6 +13,7 @@ import {
   compressMonsterLabsDescription,
   MONSTERLABS_PROMPT_CHAR_LIMIT,
 } from "./monsterlabs-description-compression";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 export const MONSTERLABS_MONSTER_GENERATOR_URL =
   "https://monsterlabs.app/dnd-monster-generator";
@@ -80,7 +81,9 @@ export function buildMonsterLabsPrompt(
  * truncates/rejects longer submissions on its end, independent of Codex's
  * own much larger URL-length guard). The Name/Type header is preserved
  * exactly; only the description is compressed, and only by as much as
- * needed to fit the remaining budget.
+ * needed to fit the remaining budget. Respects the user's global AI
+ * opt-out: if AI is disabled, the description is hard-truncated to fit
+ * instead of being sent to the Oracle.
  */
 async function buildMonsterLabsPromptWithinLimit(
   source: MonsterLabsHandoffSource,
@@ -95,6 +98,8 @@ async function buildMonsterLabsPromptWithinLimit(
   const compressedDescription = await compressMonsterLabsDescription(
     description,
     descriptionBudget,
+    undefined,
+    !discoveryPolicyStore.aiDisabled,
   );
   return header + compressedDescription;
 }

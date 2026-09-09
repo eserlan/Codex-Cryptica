@@ -19,8 +19,9 @@ function buildUserPrompt(description: string, limit: number): string {
   return `Rewrite the following description so it fits within ${limit} characters while staying useful for a D&D stat block generator. Output only the rewritten description, nothing else.\n\n${description}`;
 }
 
-/** Cuts at the nearest earlier word boundary rather than mid-word. Reserves one character for the trailing ellipsis so the result never exceeds `limit`. */
+/** Cuts at the nearest earlier word boundary rather than mid-word. Reserves one character for the trailing ellipsis so the result never exceeds `limit`. A `limit` of 0 leaves no room for even the ellipsis, so it returns an empty string. */
 function hardTruncate(text: string, limit: number): string {
+  if (limit <= 0) return "";
   if (text.length <= limit) return text;
   const budget = Math.max(0, limit - 1);
   const cut = text.slice(0, budget);
@@ -42,13 +43,19 @@ const defaultRunModel = (system: string, user: string) =>
  *
  * `runModel` is injectable (defaults to the shared Oracle transport) so
  * tests can supply a stub instead of exercising the real AI client.
+ *
+ * `allowAi` lets a caller skip the Oracle entirely (e.g. when the user has
+ * disabled AI) and fall straight through to hard truncation.
  */
 export async function compressMonsterLabsDescription(
   description: string,
   limit: number = MONSTERLABS_PROMPT_CHAR_LIMIT,
   runModel: (system: string, user: string) => Promise<string> = defaultRunModel,
+  allowAi: boolean = true,
 ): Promise<string> {
+  if (limit <= 0) return "";
   if (description.length <= limit) return description;
+  if (!allowAi) return hardTruncate(description, limit);
 
   try {
     const compressed = (
