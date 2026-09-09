@@ -21,8 +21,15 @@ describe("ZenHeader MonsterLabs handoff action", () => {
   });
 
   it("guards the handoff handler against a missing entity", () => {
-    expect(source).toContain("const handleSendToMonsterLabs = () => {");
-    expect(source).toContain("if (!entity) return;");
+    expect(source).toContain("const handleSendToMonsterLabs = async () => {");
+    expect(source).toContain("if (!entity || isSendingToMonsterLabs) return;");
+  });
+
+  it("tracks a busy state while the (possibly AI-compressed) send is in flight", () => {
+    expect(source).toContain("let isSendingToMonsterLabs = $state(false);");
+    expect(source).toContain("isSendingToMonsterLabs = true;");
+    expect(source).toContain("isSendingToMonsterLabs = false;");
+    expect(source).toContain("disabled={isSendingToMonsterLabs}");
   });
 
   it("sends the entity's title, type, and content/lore", () => {

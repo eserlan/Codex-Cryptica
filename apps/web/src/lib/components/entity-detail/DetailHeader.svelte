@@ -92,26 +92,36 @@
     setTimeout(() => (shelvedJustNow = false), 2000);
   };
 
+  let isSendingToMonsterLabs = $state(false);
+
   /**
    * Hands this entity's content off to MonsterLabs' D&D monster or magic
    * item generator in a new tab (#2871, #2872). Read-only against this
-   * vault, like Send to Shelf.
+   * vault, like Send to Shelf. A description over MonsterLabs' own prompt
+   * budget is compressed by the Oracle first, which is why this awaits —
+   * the button shows a busy state for that gap rather than appearing inert.
    */
-  const handleSendToMonsterLabs = () => {
-    const result = sendEntityToMonsterLabs({
-      name: entity.title,
-      type: entity.type,
-      description: [entity.content, entity.lore]
-        .filter((part): part is string => Boolean(part?.trim()))
-        .join("\n\n"),
-    });
-    if (!result.ok) {
-      notificationStore.notify(
-        result.reason === "url-too-long"
-          ? "This entity is too long to send to MonsterLabs."
-          : "Add some content before sending to MonsterLabs.",
-        "error",
-      );
+  const handleSendToMonsterLabs = async () => {
+    if (isSendingToMonsterLabs) return;
+    isSendingToMonsterLabs = true;
+    try {
+      const result = await sendEntityToMonsterLabs({
+        name: entity.title,
+        type: entity.type,
+        description: [entity.content, entity.lore]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join("\n\n"),
+      });
+      if (!result.ok) {
+        notificationStore.notify(
+          result.reason === "url-too-long"
+            ? "This entity is too long to send to MonsterLabs."
+            : "Add some content before sending to MonsterLabs.",
+          "error",
+        );
+      }
+    } finally {
+      isSendingToMonsterLabs = false;
     }
   };
 
@@ -278,14 +288,20 @@
       <button
         type="button"
         onclick={handleSendToMonsterLabs}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        disabled={isSendingToMonsterLabs}
+        aria-busy={isSendingToMonsterLabs}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50"
         aria-label={getMonsterLabsActionLabel(entity.type)}
         title="{getMonsterLabsActionLabel(
           entity.type,
         )} — opens monsterlabs.app in a new tab"
         data-testid="send-to-monsterlabs-button"
       >
-        <span aria-hidden="true" class="icon-[lucide--external-link] w-5 h-5"
+        <span
+          aria-hidden="true"
+          class="{isSendingToMonsterLabs
+            ? 'icon-[lucide--loader-2] animate-spin'
+            : 'icon-[lucide--external-link]'} w-5 h-5"
         ></span>
       </button>
     {/if}

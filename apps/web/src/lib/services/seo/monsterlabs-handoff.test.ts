@@ -1,4 +1,19 @@
 import { describe, it, expect, vi } from "vitest";
+
+// Isolate these wiring tests from the real Oracle/AI client (network calls,
+// API keys) — compression itself is fully covered by
+// monsterlabs-description-compression.test.ts. Default behaviour here
+// mirrors what a working compressor does: pass through under the limit,
+// truncate over it, so tests that never exceed the limit are unaffected.
+vi.mock("./monsterlabs-description-compression", () => ({
+  MONSTERLABS_PROMPT_CHAR_LIMIT: 1000,
+  compressMonsterLabsDescription: vi.fn((description: string, limit = 1000) =>
+    Promise.resolve(
+      description.length <= limit ? description : description.slice(0, limit),
+    ),
+  ),
+}));
+
 import {
   buildMonsterLabsPrompt,
   isMonsterLabsEligibleType,
@@ -11,6 +26,26 @@ import {
   MONSTERLABS_MONSTER_GENERATOR_URL,
   MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
 } from "./monsterlabs-handoff";
+import { compressMonsterLabsDescription } from "./monsterlabs-description-compression";
+
+/**
+ * A `window.open` stub that returns a fake pre-opened tab, mirroring the
+ * real pending-tab flow: the handoff opens a blank tab synchronously, then
+ * redirects it via `location.assign` once the (possibly AI-compressed)
+ * prompt is ready.
+ */
+function stubWindow() {
+  const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
+  const open = vi.fn().mockReturnValue(pendingTab);
+  return { open, pendingTab };
+}
+
+function sentUrl(pendingTab: {
+  location: { assign: ReturnType<typeof vi.fn> };
+}) {
+  const call = pendingTab.location.assign.mock.calls[0];
+  return call ? new URL(call[0] as string) : null;
+}
 
 describe("isMonsterLabsEligibleType", () => {
   it("accepts character and creature entity types", () => {
@@ -82,10 +117,10 @@ describe("buildMonsterLabsPrompt", () => {
 });
 
 describe("sendToMonsterLabsMonsterGenerator", () => {
-  it("opens the monster generator with the prompt and attribution params", () => {
-    const open = vi.fn();
+  it("opens the monster generator with the prompt and attribution params", async () => {
+    const { open, pendingTab } = stubWindow();
 
-    const result = sendToMonsterLabsMonsterGenerator(
+    const result = await sendToMonsterLabsMonsterGenerator(
       {
         name: "Ash-Eater Varkesh",
         type: "creature",
@@ -96,40 +131,38 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
 
     expect(result.ok).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
-    if (result.ok) {
-      const url = new URL(result.url);
-      expect(url.origin + url.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
-      expect(url.searchParams.get("prompt")).toBe(
-        "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
-      );
-      expect(url.searchParams.get("utm_source")).toBe("codexcryptica");
-    }
+    const url = sentUrl(pendingTab);
+    expect(url).not.toBeNull();
+    expect(url!.origin + url!.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
+    expect(url!.searchParams.get("prompt")).toBe(
+      "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
+    );
+    expect(url!.searchParams.get("utm_source")).toBe("codexcryptica");
   });
 
-  it("survives markdown, unicode, and special characters in the description", () => {
+  it("survives markdown, unicode, and special characters in the description", async () => {
     const description =
       "# Notes\n\n*Cunning & ruthless* — wields a +2 blade\nHP: 120 | 世界";
-    const result = sendToMonsterLabsMonsterGenerator(
+    const { open, pendingTab } = stubWindow();
+    const result = await sendToMonsterLabsMonsterGenerator(
       {
         name: "Grand Vizier",
         type: "character",
         description,
       },
-      { open: vi.fn() },
+      { open },
     );
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const url = new URL(result.url);
-      expect(url.searchParams.get("prompt")).toBe(
-        `Name: Grand Vizier\nType: Character\n\n${description}`,
-      );
-    }
+    const url = sentUrl(pendingTab);
+    expect(url!.searchParams.get("prompt")).toBe(
+      `Name: Grand Vizier\nType: Character\n\n${description}`,
+    );
   });
 
-  it("reports an explicit failure instead of opening a tab for a blank description", () => {
-    const open = vi.fn();
-    const result = sendToMonsterLabsMonsterGenerator(
+  it("reports an explicit failure instead of opening a tab for a blank description", async () => {
+    const { open, pendingTab } = stubWindow();
+    const result = await sendToMonsterLabsMonsterGenerator(
       {
         name: "Empty Shell",
         type: "creature",
@@ -140,35 +173,79 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
 
     expect(result.ok).toBe(false);
     expect(open).not.toHaveBeenCalled();
+    expect(pendingTab.location.assign).not.toHaveBeenCalled();
     if (!result.ok) {
       expect(result.reason).toBe("empty-content");
     }
   });
 
-  it("reports an explicit failure instead of opening a tab for an oversized entity", () => {
-    const open = vi.fn();
-    const result = sendToMonsterLabsMonsterGenerator(
+  it("compresses a description over MonsterLabs' own ~1000-char budget before sending it", async () => {
+    const { open, pendingTab } = stubWindow();
+    const longDescription = "a".repeat(1500);
+    const compressMock = vi.mocked(compressMonsterLabsDescription);
+    compressMock.mockClear();
+    compressMock.mockResolvedValueOnce("A much shorter horror description.");
+
+    const result = await sendToMonsterLabsMonsterGenerator(
       {
         name: "Wall of Text",
         type: "creature",
-        description: "a".repeat(9000),
+        description: longDescription,
+      },
+      { open },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(compressMock).toHaveBeenCalledTimes(1);
+    expect(compressMock.mock.calls[0][0]).toBe(longDescription);
+    const url = sentUrl(pendingTab);
+    expect(url!.searchParams.get("prompt")).toBe(
+      "Name: Wall of Text\nType: Creature\n\nA much shorter horror description.",
+    );
+  });
+
+  it("does not compress a description already within the limit", async () => {
+    const { open } = stubWindow();
+    const compressMock = vi.mocked(compressMonsterLabsDescription);
+    compressMock.mockClear();
+
+    await sendToMonsterLabsMonsterGenerator(
+      { name: "Short One", type: "creature", description: "Brief." },
+      { open },
+    );
+
+    expect(compressMock).not.toHaveBeenCalled();
+  });
+
+  it("still reports url-too-long as a defence-in-depth guard even if compression somehow returns an oversized result", async () => {
+    const { open, pendingTab } = stubWindow();
+    const compressMock = vi.mocked(compressMonsterLabsDescription);
+    compressMock.mockClear();
+    compressMock.mockResolvedValueOnce("b".repeat(9000));
+
+    const result = await sendToMonsterLabsMonsterGenerator(
+      {
+        name: "Wall of Text",
+        type: "creature",
+        description: "a".repeat(1500),
       },
       { open },
     );
 
     expect(result.ok).toBe(false);
-    expect(open).not.toHaveBeenCalled();
     if (!result.ok) {
       expect(result.reason).toBe("url-too-long");
     }
+    expect(pendingTab.close).toHaveBeenCalledTimes(1);
+    expect(pendingTab.location.assign).not.toHaveBeenCalled();
   });
 });
 
 describe("sendToMonsterLabsMagicItemGenerator", () => {
-  it("opens the magic item generator with the prompt and attribution params", () => {
-    const open = vi.fn();
+  it("opens the magic item generator with the prompt and attribution params", async () => {
+    const { open, pendingTab } = stubWindow();
 
-    const result = sendToMonsterLabsMagicItemGenerator(
+    const result = await sendToMonsterLabsMagicItemGenerator(
       {
         name: "Crown of the Last Ember",
         type: "item",
@@ -179,42 +256,39 @@ describe("sendToMonsterLabsMagicItemGenerator", () => {
 
     expect(result.ok).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
-    if (result.ok) {
-      const url = new URL(result.url);
-      expect(url.origin + url.pathname).toBe(
-        MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
-      );
-      expect(url.searchParams.get("prompt")).toBe(
-        "Name: Crown of the Last Ember\nType: Item\n\nA tarnished circlet that hums when a fire is near.",
-      );
-      expect(url.searchParams.get("utm_source")).toBe("codexcryptica");
-    }
+    const url = sentUrl(pendingTab);
+    expect(url!.origin + url!.pathname).toBe(
+      MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
+    );
+    expect(url!.searchParams.get("prompt")).toBe(
+      "Name: Crown of the Last Ember\nType: Item\n\nA tarnished circlet that hums when a fire is near.",
+    );
+    expect(url!.searchParams.get("utm_source")).toBe("codexcryptica");
   });
 
-  it("survives markdown, unicode, and special characters in the description", () => {
+  it("survives markdown, unicode, and special characters in the description", async () => {
     const description =
       "# Notes\n\n*Cursed & coveted* — grants +2 to fire saves\nWeight: 1 lb | 世界";
-    const result = sendToMonsterLabsMagicItemGenerator(
+    const { open, pendingTab } = stubWindow();
+    const result = await sendToMonsterLabsMagicItemGenerator(
       {
         name: "Crown of the Last Ember",
         type: "item",
         description,
       },
-      { open: vi.fn() },
+      { open },
     );
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const url = new URL(result.url);
-      expect(url.searchParams.get("prompt")).toBe(
-        `Name: Crown of the Last Ember\nType: Item\n\n${description}`,
-      );
-    }
+    const url = sentUrl(pendingTab);
+    expect(url!.searchParams.get("prompt")).toBe(
+      `Name: Crown of the Last Ember\nType: Item\n\n${description}`,
+    );
   });
 
-  it("reports an explicit failure instead of opening a tab for a blank description", () => {
-    const open = vi.fn();
-    const result = sendToMonsterLabsMagicItemGenerator(
+  it("reports an explicit failure instead of opening a tab for a blank description", async () => {
+    const { open } = stubWindow();
+    const result = await sendToMonsterLabsMagicItemGenerator(
       {
         name: "Empty Shell",
         type: "item",
@@ -227,24 +301,6 @@ describe("sendToMonsterLabsMagicItemGenerator", () => {
     expect(open).not.toHaveBeenCalled();
     if (!result.ok) {
       expect(result.reason).toBe("empty-content");
-    }
-  });
-
-  it("reports an explicit failure instead of opening a tab for an oversized item", () => {
-    const open = vi.fn();
-    const result = sendToMonsterLabsMagicItemGenerator(
-      {
-        name: "Wall of Text",
-        type: "item",
-        description: "a".repeat(9000),
-      },
-      { open },
-    );
-
-    expect(result.ok).toBe(false);
-    expect(open).not.toHaveBeenCalled();
-    if (!result.ok) {
-      expect(result.reason).toBe("url-too-long");
     }
   });
 });
@@ -281,9 +337,9 @@ describe("getMonsterLabsActionLabel", () => {
 });
 
 describe("sendEntityToMonsterLabs", () => {
-  it("routes an item to the magic item generator", () => {
-    const open = vi.fn();
-    const result = sendEntityToMonsterLabs(
+  it("routes an item to the magic item generator", async () => {
+    const { open, pendingTab } = stubWindow();
+    const result = await sendEntityToMonsterLabs(
       {
         name: "Crown of the Last Ember",
         type: "item",
@@ -293,17 +349,15 @@ describe("sendEntityToMonsterLabs", () => {
     );
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const url = new URL(result.url);
-      expect(url.origin + url.pathname).toBe(
-        MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
-      );
-    }
+    const url = sentUrl(pendingTab);
+    expect(url!.origin + url!.pathname).toBe(
+      MONSTERLABS_MAGIC_ITEM_GENERATOR_URL,
+    );
   });
 
-  it("routes a character or creature to the monster generator", () => {
-    const open = vi.fn();
-    const result = sendEntityToMonsterLabs(
+  it("routes a character or creature to the monster generator", async () => {
+    const { open, pendingTab } = stubWindow();
+    const result = await sendEntityToMonsterLabs(
       {
         name: "Ash-Eater Varkesh",
         type: "creature",
@@ -313,27 +367,25 @@ describe("sendEntityToMonsterLabs", () => {
     );
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const url = new URL(result.url);
-      expect(url.origin + url.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
-    }
+    const url = sentUrl(pendingTab);
+    expect(url!.origin + url!.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
   });
 
-  it("reports empty-content for a name-only entity regardless of destination", () => {
-    const open = vi.fn();
+  it("reports empty-content for a name-only entity regardless of destination, without opening a tab", async () => {
+    const { open } = stubWindow();
 
-    expect(
+    await expect(
       sendEntityToMonsterLabs(
         { name: "Nameless", type: "creature", description: "" },
         { open },
       ),
-    ).toEqual({ ok: false, reason: "empty-content" });
-    expect(
+    ).resolves.toEqual({ ok: false, reason: "empty-content" });
+    await expect(
       sendEntityToMonsterLabs(
         { name: "Nameless", type: "item", description: "" },
         { open },
       ),
-    ).toEqual({ ok: false, reason: "empty-content" });
+    ).resolves.toEqual({ ok: false, reason: "empty-content" });
     expect(open).not.toHaveBeenCalled();
   });
 });
