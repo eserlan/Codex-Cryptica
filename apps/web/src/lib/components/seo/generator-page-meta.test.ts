@@ -91,4 +91,25 @@ describe("generator-page-meta completeness and social preview tags", () => {
       });
     });
   }
+
+  describe("heist and puzzle cluster-link integrity (#2850)", () => {
+    it("heist generator links to its answer guide and its worked example", () => {
+      const hrefs = slugMeta.heist.relatedLinks?.map((link) => link.href) ?? [];
+      expect(hrefs).toContain(
+        "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+      );
+      expect(hrefs).toContain(
+        "/examples/the-breakwater-vault-space-western-heist",
+      );
+    });
+
+    it("puzzle generator links to its answer guide and its worked example", () => {
+      const hrefs =
+        slugMeta.puzzle.relatedLinks?.map((link) => link.href) ?? [];
+      expect(hrefs).toContain(
+        "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+      );
+      expect(hrefs).toContain("/examples/the-venting-helix-derelict-hazard");
+    });
+  });
 });

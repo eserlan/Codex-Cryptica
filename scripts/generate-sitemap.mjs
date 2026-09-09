@@ -12,6 +12,7 @@ import {
   getAllExamples,
   examplePath,
 } from "../apps/web/src/lib/content/examples/registry.ts";
+import { GENERATOR_SLUGS } from "../apps/web/src/params/generator_slug.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -127,14 +128,13 @@ const buildXml = async (entries) => {
     priority: "0.8",
   }));
 
-  // Generator pages
-  const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
-    (slug) => ({
-      path: `/generators/${slug}`,
-      changefreq: "monthly",
-      priority: "0.8",
-    }),
-  );
+  // Generator pages — derived from GENERATOR_SLUGS so this stops drifting
+  // from the route matcher's own slug list (see #2850).
+  const generatorRoutes = GENERATOR_SLUGS.map((slug) => ({
+    path: `/generators/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
 
   // Landing pages (/for/[slug])
   let landingPageRoutes = [
