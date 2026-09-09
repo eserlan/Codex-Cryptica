@@ -2094,6 +2094,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
 
+### [What makes a good heist target in a tabletop RPG?](https://codexcryptica.com/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg)
+
+**Direct answer:** Pick a prize with a practical weight, size, or upkeep cost that makes it awkward to steal and move, give it a specific owner with a plausible reason to want it back, and let its nature suggest the security and complications around it. A vague prize such as 'gold' or 'a magic sword' produces a generic vault; a prize such as a two-hundred-pound crystallised memory core that hums audibly within thirty feet of its ward produces its own security, its own getaway problem, and its own complications for free.
+
 ### [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter)
 
 **Direct answer:** A good random encounter presents a situation the party can respond to in more than one way, and it tells them something about where they are. A wandering monster with no context and no options is a dice-rolling interruption; the same creature, given a reason for being there and something it currently wants, becomes a scene. The test is whether "fight it" is one option among several rather than the only one.
@@ -2208,6 +2212,18 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 **Genre:** Classic Fantasy
 
 **Summary:** A serpent-shaped constellation the fishers of a coastal eel-harvesting culture read as a rising and setting timer for their autumn migration season, complete with an origin myth, a set of omens, and a hook about a star that has gone missing.
+
+### [Classic Fantasy heist example: The Dawnheart Diadem](https://codexcryptica.com/examples/the-dawnheart-diadem-fantasy-heist)
+
+**Genre:** Classic Fantasy
+
+**Summary:** A sun-gold circlet holding a captive phoenix ember, warded to its cradle by three anchoring runes beneath the Argent Ledger Guild, with a hidden verification scribe and a fifteen-minute dawn countdown.
+
+### [Cyberpunk heist example: The Quell Extraction](https://codexcryptica.com/examples/the-quell-extraction-cyberpunk-heist)
+
+**Genre:** Cyberpunk / Corporate
+
+**Summary:** Extracting an injured whistleblower compliance architect from a corporate penthouse before a twelve-minute custody roll call, with a cancelled ambulance transponder and two crew members forced to support her every step.
 
 
 ## TTRPG System & Genre Campaign Management
