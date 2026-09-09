@@ -13,6 +13,8 @@ import { siloZeroSeven } from "./silo-zero-seven-fallout-repository";
 import { nkiruOkafor } from "./nkiru-okafor-cyberpunk-npc-table-card";
 import { theBreakwaterVault } from "./the-breakwater-vault-space-western-heist";
 import { theEelWyrm } from "./the-eel-wyrm-classic-fantasy-constellation";
+import { theDawnheartDiadem } from "./the-dawnheart-diadem-fantasy-heist";
+import { theQuellExtraction } from "./the-quell-extraction-cyberpunk-heist";
 
 /**
  * The published example library.
@@ -41,6 +43,8 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     nkiruOkafor,
     theBreakwaterVault,
     theEelWyrm,
+    theDawnheartDiadem,
+    theQuellExtraction,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
