@@ -16,6 +16,7 @@
     fadeDuration = 200,
     scaleDuration = 200,
     scaleStart = 0.95,
+    dismissible = true,
     children,
     ...dialogAttrs
   }: {
@@ -31,12 +32,14 @@
     fadeDuration?: number;
     scaleDuration?: number;
     scaleStart?: number;
+    /** When false, the backdrop is non-interactive and Escape is disabled — for status dialogs that can't be dismissed. */
+    dismissible?: boolean;
     children: Snippet;
     [key: string]: unknown;
   } = $props();
 
   const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
+    if (dismissible && e.key === "Escape") onClose();
   };
 </script>
 
@@ -47,12 +50,16 @@
     class="fixed inset-0 {zIndexClass} flex items-center justify-center p-4"
     transition:fade={{ duration: fadeDuration }}
   >
-    <button
-      type="button"
-      class="absolute inset-0 h-full w-full {backdropClass} cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary"
-      aria-label={closeAriaLabel}
-      onclick={onClose}
-    ></button>
+    {#if dismissible}
+      <button
+        type="button"
+        class="absolute inset-0 h-full w-full {backdropClass} cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary"
+        aria-label={closeAriaLabel}
+        onclick={onClose}
+      ></button>
+    {:else}
+      <div class="absolute inset-0 h-full w-full {backdropClass}" aria-hidden="true"></div>
+    {/if}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
       role="dialog"
