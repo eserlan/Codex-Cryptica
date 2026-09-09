@@ -25,7 +25,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
       items: [
         {
           term: "The d20 check",
-          text: "Roll a twenty-sided die, add the ability or skill modifier the DM names, and meet or beat the target number when the roll is higher. The DM can explain which modifier to use.",
+          text: "Roll a twenty-sided die, add the ability or skill modifier the DM names, and succeed when the total meets or beats the target number. The DM can explain which modifier to use.",
         },
         {
           term: "Advantage and disadvantage",
