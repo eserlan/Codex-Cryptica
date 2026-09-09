@@ -23,7 +23,7 @@ A worldbuilding tool that only works if you abandon everything else is asking fo
 
 ## Generate here. Use it anywhere.
 
-Every generator on the site, NPCs, factions, quests, settlements, items, produces content that is useful the moment it exists, not after you have created an account and moved your campaign in. You do not need a Vault to get a usable result out of Codex Cryptica. You need it if you want the connected, searchable version of your world; you do not need it to walk away with a good NPC.
+Every generator on the site — NPCs, factions, quests, settlements, items — produces content that is useful the moment it exists, not after you have created an account and moved your campaign in. You do not need a Vault to get a usable result out of Codex Cryptica. You need it if you want the connected, searchable version of your world; you do not need it to walk away with a good NPC.
 
 That distinction runs through everything below.
 
@@ -51,7 +51,7 @@ What Codex Cryptica does not yet do is export directly into a third-party VTT's 
 
 The clearest example of interoperability as a design choice, rather than an accident of clipboard support, is the MonsterLabs collaboration. Codex Cryptica is a fiction-first tool: it is good at the creature's name, its history, why it is guarding this particular ruin, what it wants. It is not trying to be a D&D 5e rules engine, and pretending otherwise would mean doing a worse job of both halves.
 
-MonsterLabs is a D&D 5e rules engine. So a Character or Creature entity or draft in Codex Cryptica now carries a "Create D&D monster in MonsterLabs" action, and an Item gets the matching "Create D&D magic item in MonsterLabs" action, that hands your name, type, and description straight to MonsterLabs' generator in a new tab, ready to become a real stat block. Codex stays open behind it. Nothing is deleted or moved, just sent.
+MonsterLabs is a D&D 5e rules engine. So a Character or Creature entity or draft in Codex Cryptica now carries a "Create D&D monster in MonsterLabs" action that hands your name, type, and description straight to MonsterLabs' generator in a new tab, ready to become a real stat block. Codex stays open behind it. Nothing is deleted or moved, just sent. A matching handoff for Items, to send a magic item straight into a MonsterLabs item generator, is a natural next step but is not shipped yet.
 
 The reverse trip, pulling a finished MonsterLabs stat block back into a Codex stat sheet automatically, is on the roadmap and not shipped yet. Today the handoff runs one direction: your fiction out to a tool built specifically to turn it into mechanics. That is still the point. Codex does not need to reproduce what a specialised tool already does well; it needs to hand off to it cleanly.
 
