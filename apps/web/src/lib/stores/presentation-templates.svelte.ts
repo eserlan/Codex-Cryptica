@@ -1,8 +1,12 @@
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  systemIdGenerator,
+  type Clock,
+  type IdGenerator,
+} from "$lib/utils/runtime-deps";
 import { getDB } from "../utils/idb";
 import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import {
   getBuiltInPresentationTemplates,
   exportPresentationTemplate,
