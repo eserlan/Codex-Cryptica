@@ -37,6 +37,8 @@
     "sync:answers": "bun scripts/sync-answers.ts",
     "check:answer-mesh": "bun scripts/check-answer-mesh.ts",
     "check:crawler-access": "bun scripts/crawler-access-check.mjs",
+    "report:crawler-activity": "bun scripts/crawler-activity-report.ts",
+    "update:crawler-ips": "bun scripts/update-crawler-ip-ranges.ts",
     "analyze:god-files": "bun scripts/god-file-analysis.ts",
     "eval:heist": "bun scripts/heist-eval.ts",
     "degodify": "bun scripts/auto-degodify.ts",

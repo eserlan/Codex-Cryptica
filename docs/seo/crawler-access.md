@@ -1,7 +1,8 @@
 # Search-crawler access
 
-Tracking issues: [#2567](https://github.com/eserlan/Codex-Cryptica/issues/2567), [#2568](https://github.com/eserlan/Codex-Cryptica/issues/2568), [#2844](https://github.com/eserlan/Codex-Cryptica/issues/2844).
-Parent: #1225. Related: #291, #1228, #1083, #1155.
+Tracking issues: [#2567](https://github.com/eserlan/Codex-Cryptica/issues/2567), [#2568](https://github.com/eserlan/Codex-Cryptica/issues/2568), [#2844](https://github.com/eserlan/Codex-Cryptica/issues/2844), [#2861](https://github.com/eserlan/Codex-Cryptica/issues/2861), [#2864](https://github.com/eserlan/Codex-Cryptica/issues/2864).
+Parent: #1225. Related: #291, #1228, #1083, #1155, [#2858](https://github.com/eserlan/Codex-Cryptica/issues/2858).
+See also: [Server-Side Crawler Observability](./crawler-observability.md) for live Cloudflare provider tracking.
 
 `robots.txt` saying `Allow` is only half of crawler eligibility. A request also
 has to survive the CDN/WAF stack and come back as the intended public HTML.
@@ -140,7 +141,8 @@ released content clusters:
 > **Notice**: Passing crawler readiness verifies that discovery routes are
 > reachable, allowed by robots.txt, structurally complete, indexable, and linked.
 > It does **not** guarantee actual search-engine crawling, indexing, ranking,
-> citations, or referral traffic.
+> citations, or referral traffic. Real provider access is logged and verified
+> at the Cloudflare edge via [Server-Side Crawler Observability](./crawler-observability.md) (#2864).
 
 ## 3. Cloudflare Crawler Hints / IndexNow
 
