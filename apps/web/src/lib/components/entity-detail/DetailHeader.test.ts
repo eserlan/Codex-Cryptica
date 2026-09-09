@@ -406,12 +406,10 @@ describe("DetailHeader MonsterLabs handoff", () => {
   });
 
   it("opens the magic item generator for an item entity", async () => {
-    // The handoff opens a blank tab synchronously (inside the click), then
-    // redirects it once the (possibly AI-compressed) prompt is ready — so
-    // the destination URL shows up via that tab's location.assign, not a
-    // second window.open call.
-    const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
-    const openSpy = vi.spyOn(window, "open").mockReturnValue(pendingTab as any);
+    // The handoff no longer pre-opens a blank tab — it shows the "preparing"
+    // modal in this tab while building the (possibly AI-compressed) prompt,
+    // then opens MonsterLabs fresh with the final URL in one window.open call.
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
     const { getAllByTestId } = renderEntity({
       type: "item",
       title: "Crown of the Last Ember",
@@ -421,8 +419,7 @@ describe("DetailHeader MonsterLabs handoff", () => {
     await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
 
     expect(openSpy).toHaveBeenCalledTimes(1);
-    expect(pendingTab.location.assign).toHaveBeenCalledTimes(1);
-    const [url] = pendingTab.location.assign.mock.calls[0];
+    const [url] = openSpy.mock.calls[0];
     const parsed = new URL(url as string);
     expect(parsed.origin + parsed.pathname).toBe(
       "https://monsterlabs.app/dnd-magic-item-generator",
@@ -435,8 +432,7 @@ describe("DetailHeader MonsterLabs handoff", () => {
   });
 
   it("opens MonsterLabs with the entity's name, type, and content", async () => {
-    const pendingTab = { location: { assign: vi.fn() }, close: vi.fn() };
-    const openSpy = vi.spyOn(window, "open").mockReturnValue(pendingTab as any);
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
     const { getAllByTestId } = renderEntity({
       type: "creature",
       title: "Ash-Eater Varkesh",
@@ -446,17 +442,33 @@ describe("DetailHeader MonsterLabs handoff", () => {
     await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
 
     expect(openSpy).toHaveBeenCalledTimes(1);
-    const [, target, features] = openSpy.mock.calls[0];
+    const [url, target, features] = openSpy.mock.calls[0];
     expect(target).toBe("_blank");
     expect(features).toBe("noopener,noreferrer");
-    expect(pendingTab.location.assign).toHaveBeenCalledTimes(1);
-    const [url] = pendingTab.location.assign.mock.calls[0];
     const parsed = new URL(url as string);
     expect(parsed.origin + parsed.pathname).toBe(
       "https://monsterlabs.app/dnd-monster-generator",
     );
     expect(parsed.searchParams.get("prompt")).toBe(
       "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
+    );
+
+    openSpy.mockRestore();
+  });
+
+  it("keeps the modal open with a manual link when the deferred window.open is blocked", async () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    const { getAllByTestId, findByText } = renderEntity({
+      type: "creature",
+      title: "Ash-Eater Varkesh",
+      content: "A soot-caked horror.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+
+    const link = (await findByText("Open MonsterLabs")) as HTMLAnchorElement;
+    expect(link.href).toContain(
+      "https://monsterlabs.app/dnd-monster-generator",
     );
 
     openSpy.mockRestore();

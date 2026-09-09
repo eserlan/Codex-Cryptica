@@ -6,7 +6,6 @@
  */
 import {
   sendToExternalGenerator,
-  openPendingExternalGeneratorTab,
   type ExternalGeneratorHandoffResult,
 } from "$lib/utils/external-generator-handoff";
 import {
@@ -113,12 +112,13 @@ async function sendMonsterLabsHandoff(
     return { ok: false, reason: "empty-content" };
   }
 
-  // Opened synchronously (still inside the caller's click handler, before
-  // this function's first `await`) so the browser attributes it to the
-  // user gesture instead of blocking it as a popup once the async
-  // compression pass below has run.
-  const pendingTab = openPendingExternalGeneratorTab(windowRef);
-
+  // No pre-opened blank tab here: the caller shows its own "preparing…"
+  // modal in the current tab while this awaits, then opens MonsterLabs
+  // fresh once the (possibly compressed) prompt is ready — better UX than a
+  // blank tab stealing focus for the whole gap. The tradeoff is that a
+  // user-gesture window.open crossing an `await` is not guaranteed to
+  // succeed in every browser, which is why the result can carry
+  // `popupBlocked: true` for the caller to show a manual retry link.
   const content = await buildMonsterLabsPromptWithinLimit(source);
   return sendToExternalGenerator({
     baseUrl,
@@ -126,7 +126,6 @@ async function sendMonsterLabsHandoff(
     content,
     extraParams: ATTRIBUTION_PARAMS,
     windowRef,
-    pendingTab,
   });
 }
 

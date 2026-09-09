@@ -734,10 +734,12 @@
   }
 
   let isSendingToMonsterLabs = $state(false);
+  let monsterLabsBlockedUrl = $state<string | null>(null);
 
   // A description over MonsterLabs' own prompt budget is compressed by the
-  // Oracle first, which is why this awaits — the draft action shows a busy
-  // state for that gap rather than appearing inert.
+  // Oracle first, which is why this awaits — the modal shows a "preparing"
+  // state for that gap in this tab rather than a blank placeholder tab
+  // stealing focus for the duration.
   async function handleSendToMonsterLabs(data: GeneratorOutput) {
     if (isSendingToMonsterLabs) return;
     trackPublicGeneratorAction("copy", {
@@ -746,27 +748,35 @@
     });
 
     isSendingToMonsterLabs = true;
-    try {
-      const result = await sendEntityToMonsterLabs({
-        name: data.title,
-        type: data.type,
-        description: [documentLayout.content, documentLayout.lore]
-          .filter((part): part is string => Boolean(part?.trim()))
-          .join("\n\n"),
-      });
+    monsterLabsBlockedUrl = null;
+    const result = await sendEntityToMonsterLabs({
+      name: data.title,
+      type: data.type,
+      description: [documentLayout.content, documentLayout.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
 
-      if (!result.ok) {
-        errorMessage =
-          result.reason === "url-too-long"
-            ? "This draft is too long to send to MonsterLabs."
-            : "Add some content before sending to MonsterLabs.";
-        return;
-      }
-
-      errorMessage = null;
-    } finally {
+    if (!result.ok) {
+      errorMessage =
+        result.reason === "url-too-long"
+          ? "This draft is too long to send to MonsterLabs."
+          : "Add some content before sending to MonsterLabs.";
       isSendingToMonsterLabs = false;
+      return;
     }
+
+    errorMessage = null;
+    if (result.popupBlocked) {
+      monsterLabsBlockedUrl = result.url;
+      return;
+    }
+    isSendingToMonsterLabs = false;
+  }
+
+  function handleOpenBlockedMonsterLabsTab() {
+    isSendingToMonsterLabs = false;
+    monsterLabsBlockedUrl = null;
   }
 
   async function handleCopySection(sectionId: string, markdown: string) {
@@ -1250,6 +1260,8 @@
   <MonsterLabsSendingModal
     open={isSendingToMonsterLabs}
     entityLabel={generatedData?.title}
+    blockedUrl={monsterLabsBlockedUrl}
+    onOpenBlocked={handleOpenBlockedMonsterLabsTab}
   />
 </div>
 
