@@ -188,3 +188,9 @@
 
 **Learning:** UI components that rely on `localStorage` for visual state (like dismissing hints) should accept `storage` as an injected prop rather than hard-coding `localStorage`. This allows tests to simulate various state scenarios without wiping or leaking into the global `window.localStorage`.
 **Action:** When adding state persistence to a Svelte 5 component, use `$props()` to inject an optional `storage` dependency that defaults to `browserStorage` from `$lib/utils/runtime-deps`.
+
+## 2024-05-18 - System Clock Injection
+
+**Learning:** When injecting the shared runtime `Clock` interface (`@codex/runtime`), `clock.now()` correctly returns a UNIX epoch timestamp (a `number`, similar to `Date.now()`). To replace a hardcoded `new Date().toISOString()`, the correct pattern is `new Date(this.clock.now()).toISOString()` to format the injected timestamp properly.
+
+**Action:** When injecting `systemClock` into classes that generate string dates, always explicitly wrap the output of `clock.now()` in a `Date` object before calling `.toISOString()`.

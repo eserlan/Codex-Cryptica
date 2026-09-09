@@ -1,3 +1,4 @@
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { getDB } from "../utils/idb";
 import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
@@ -77,9 +78,14 @@ export class PresentationTemplateStore {
   templates = $state<PresentationTemplate[]>([]);
   private _initPromise: Promise<void> | null = null;
   private idGenerator: IdGenerator;
+  private clock: Clock;
 
-  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+  constructor(
+    idGenerator: IdGenerator = systemIdGenerator,
+    clock: Clock = systemClock,
+  ) {
     this.idGenerator = idGenerator;
+    this.clock = clock;
     if (typeof window !== "undefined") void this.init();
   }
 
@@ -179,7 +185,7 @@ export class PresentationTemplateStore {
   }): Promise<PresentationTemplate | null> {
     const vaultId = vaultRegistry.activeVaultId;
     if (!vaultId) return null;
-    const now = new Date().toISOString();
+    const now = new Date(this.clock.now()).toISOString();
     const existing = input.id
       ? this.templates.find((t) => t.id === input.id)
       : undefined;

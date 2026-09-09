@@ -34,9 +34,10 @@ vi.mock("../utils/idb", () => {
 import { PresentationTemplateStore } from "./presentation-templates.svelte";
 
 function makeStore() {
-  return new PresentationTemplateStore({
-    uuid: vi.fn(() => `id-${Math.random()}`),
-  });
+  return new PresentationTemplateStore(
+    { uuid: vi.fn(() => `id-${Math.random()}`) },
+    { now: () => new Date("2024-01-01T00:00:00.000Z").getTime() }
+  );
 }
 
 describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
@@ -158,6 +159,8 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     expect(resaved?.id).toBe(created?.id);
     expect(resaved?.name).toBe("My Layout");
     expect(resaved?.source).toBe("two");
+    expect(resaved?.createdAt).toBe("2024-01-01T00:00:00.000Z");
+    expect(resaved?.updatedAt).toBe("2024-01-01T00:00:00.000Z");
   });
 
   it("copies a template from one schema to another with unique naming", async () => {
