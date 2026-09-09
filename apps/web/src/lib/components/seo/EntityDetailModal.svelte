@@ -84,7 +84,7 @@
       </div>
 
       <div
-        class="p-6 overflow-y-auto seo-md text-base leading-relaxed text-theme-text/90"
+        class="seo-md break-words overflow-y-auto p-6 text-lg leading-relaxed text-theme-text/90"
       >
         <!-- content already leads with the italicized summary, so no separate
              summary block here (would duplicate it). -->

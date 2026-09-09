@@ -19,6 +19,18 @@ const entity = {
 };
 
 describe("EntityDetailModal", () => {
+  it("uses readable, wrapping long-form typography", () => {
+    const { container } = render(EntityDetailModal, {
+      props: { entity, onClose: vi.fn() },
+    });
+
+    const content = container.querySelector(".seo-md");
+    expect(content?.classList.contains("text-lg")).toBe(true);
+    expect(content?.classList.contains("leading-relaxed")).toBe(true);
+    expect(content?.classList.contains("break-words")).toBe(true);
+    expect(content?.classList.contains("text-base")).toBe(false);
+  });
+
   it("copies a historical result and shows success feedback", async () => {
     const onCopy = vi.fn().mockResolvedValue(true);
 

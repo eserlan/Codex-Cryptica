@@ -41,7 +41,7 @@ describe("GeneratorOutputCard", () => {
     },
   ];
 
-  it("renders generated title, summary, and text-base typography container", () => {
+  it("uses 18px, relaxed typography for generated long-form copy", () => {
     const { container } = render(GeneratorOutputCard, {
       props: {
         generatedData: sampleData,
@@ -77,8 +77,10 @@ describe("GeneratorOutputCard", () => {
 
     const seoMdContainer = container.querySelector(".seo-md");
     expect(seoMdContainer).toBeTruthy();
-    expect(seoMdContainer?.classList.contains("text-base")).toBe(true);
-    expect(seoMdContainer?.classList.contains("text-sm")).toBe(false);
+    expect(seoMdContainer?.classList.contains("text-lg")).toBe(true);
+    expect(seoMdContainer?.classList.contains("leading-relaxed")).toBe(true);
+    expect(seoMdContainer?.classList.contains("break-words")).toBe(true);
+    expect(seoMdContainer?.classList.contains("text-base")).toBe(false);
   });
 
   it("renders Generate Roster and per-member Open as Character with interpolated aria-labels (#2808)", () => {
