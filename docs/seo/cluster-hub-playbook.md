@@ -135,9 +135,9 @@ Two rules that keep this safe:
   in a cluster stops counting as a collision signal, but with only two
   answers, shared distinctive words like "design" between two genuinely
   different pages will trip `same-job-same-vocabulary`).
-- **Always add `acknowledgedOverlap` in both directions is not required**,
-  but add the reciprocal `relatedIntents` entry on the _existing_ page too,
-  and add the new slug to the existing page's `relatedAnswers` array.
+- **`acknowledgedOverlap` does not need to be added in both directions**,
+  but do add the reciprocal `relatedIntents` entry on the _existing_ page
+  too, and add the new slug to the existing page's `relatedAnswers` array.
 
 Run `bun scripts/discovery-audit.mjs` after adding the entry. Zero new
 warnings is the bar — if you see `same-job-same-vocabulary` naming your new
@@ -172,11 +172,12 @@ bun run dev:proxy          # wrangler dev on the oracle-proxy worker, :8787
 ```
 
 ```ts
-import { generateViaProxy } from "/absolute/path/to/scripts/heist-eval"; // or the
-// equivalent exported generation function for the generator you're targeting —
-// check apps/web/src/lib/services/seo/generator-engine.ts for the DefaultGeneratorEngine
-// method, and the matching packages/generator-engine/src/public-<name>.ts /
-// <name>-generation.ts pair for its prompt builder + audit/repair pipeline.
+import { generateViaProxy } from "/absolute/path/to/scripts/heist-eval"; // heist-specific.
+// For any other generator, there is no reusable generateViaProxy — instead find its
+// DefaultGeneratorEngine.generateX(...) method in
+// apps/web/src/lib/services/seo/generator-engine.ts, then follow its imports to the
+// matching prompt builder (e.g. packages/generator-engine/src/public-<name>.ts's
+// buildXPrompt) and response parser, and drive that same pair against the proxy.
 
 const draft = await generateViaProxy(
   "http://localhost:8787",
@@ -324,11 +325,13 @@ bunx tsc --noEmit -p .
 ```
 
 The `registry.test.ts` suites for answers and examples are strict on
-purpose: British spelling, mandatory `example`/`checklist` sections on
-answers, mandatory R2 image + `sourceUrl` on examples, no duplicate
-titles/descriptions, no self-referential or dangling links, minimum word
-counts. Treat every failure as a real defect, not friction — it is catching
-exactly the kind of thin or dishonest content this playbook exists to avoid.
+purpose: British spelling, a mandatory `example` section on every answer (a
+`checklist` section is expected for framework-style answers specifically,
+not enforced site-wide), mandatory R2 image + `sourceUrl` on examples, no
+duplicate titles/descriptions, no self-referential or dangling links,
+minimum word counts. Treat every failure as a real defect, not friction — it
+is catching exactly the kind of thin or dishonest content this playbook
+exists to avoid.
 
 ## What this playbook will not do for you
 
