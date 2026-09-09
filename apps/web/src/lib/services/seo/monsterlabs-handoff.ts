@@ -70,6 +70,14 @@ function sendMonsterLabsHandoff(
   source: MonsterLabsHandoffSource,
   windowRef?: Pick<Window, "open">,
 ): ExternalGeneratorHandoffResult {
+  // buildMonsterLabsPrompt always includes the Name/Type header, so the
+  // built content is never actually empty — check the caller's own
+  // description here instead, otherwise a name-only entity would silently
+  // succeed rather than surface the "add some content" error callers show
+  // for this reason.
+  if (!source.description.trim()) {
+    return { ok: false, reason: "empty-content" };
+  }
   return sendToExternalGenerator({
     baseUrl,
     paramName: PROMPT_PARAM_NAME,

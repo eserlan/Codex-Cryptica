@@ -144,6 +144,40 @@ describe("sendToMonsterLabsMonsterGenerator", () => {
       expect(result.reason).toBe("url-too-long");
     }
   });
+
+  it("reports empty-content and does not open a tab for a name-only entity with no body/lore", () => {
+    // buildMonsterLabsPrompt always includes the Name/Type header, so the
+    // built prompt is never literally empty — this guards against that
+    // masking the empty-content failure callers rely on to block
+    // name-only handoffs (spotted in PR #2879 review).
+    const open = vi.fn();
+    const result = sendToMonsterLabsMonsterGenerator(
+      {
+        name: "Ash-Eater Varkesh",
+        type: "creature",
+        description: "",
+      },
+      { open },
+    );
+
+    expect(result).toEqual({ ok: false, reason: "empty-content" });
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("reports empty-content for a description that is only whitespace", () => {
+    const open = vi.fn();
+    const result = sendToMonsterLabsMonsterGenerator(
+      {
+        name: "Ash-Eater Varkesh",
+        type: "creature",
+        description: "   \n  ",
+      },
+      { open },
+    );
+
+    expect(result).toEqual({ ok: false, reason: "empty-content" });
+    expect(open).not.toHaveBeenCalled();
+  });
 });
 
 describe("sendToMonsterLabsMagicItemGenerator", () => {
@@ -210,6 +244,21 @@ describe("sendToMonsterLabsMagicItemGenerator", () => {
     if (!result.ok) {
       expect(result.reason).toBe("url-too-long");
     }
+  });
+
+  it("reports empty-content and does not open a tab for a name-only item with no body/lore", () => {
+    const open = vi.fn();
+    const result = sendToMonsterLabsMagicItemGenerator(
+      {
+        name: "Crown of the Last Ember",
+        type: "item",
+        description: "",
+      },
+      { open },
+    );
+
+    expect(result).toEqual({ ok: false, reason: "empty-content" });
+    expect(open).not.toHaveBeenCalled();
   });
 });
 
@@ -281,5 +330,23 @@ describe("sendEntityToMonsterLabs", () => {
       const url = new URL(result.url);
       expect(url.origin + url.pathname).toBe(MONSTERLABS_MONSTER_GENERATOR_URL);
     }
+  });
+
+  it("reports empty-content for a name-only entity regardless of destination", () => {
+    const open = vi.fn();
+
+    expect(
+      sendEntityToMonsterLabs(
+        { name: "Nameless", type: "creature", description: "" },
+        { open },
+      ),
+    ).toEqual({ ok: false, reason: "empty-content" });
+    expect(
+      sendEntityToMonsterLabs(
+        { name: "Nameless", type: "item", description: "" },
+        { open },
+      ),
+    ).toEqual({ ok: false, reason: "empty-content" });
+    expect(open).not.toHaveBeenCalled();
   });
 });
