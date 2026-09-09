@@ -3,6 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const whatMakesAGoodHeistTargetInATabletopRpg: AnswerConfigInput = {
   slug: "what-makes-a-good-heist-target-in-a-tabletop-rpg",
   category: "session-prep",
+  labels: ["heist"],
   publishedAt: "2026-09-09",
   question: "What makes a good heist target in a tabletop RPG?",
   kind: "framework",
