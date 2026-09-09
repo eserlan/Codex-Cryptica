@@ -7,7 +7,7 @@ import PresentationSyntaxHelpModal from "./PresentationSyntaxHelpModal.svelte";
 
 describe("PresentationSyntaxHelpModal", () => {
   it("renders the syntax guide content", () => {
-    render(PresentationSyntaxHelpModal, { onClose: vi.fn() });
+    render(PresentationSyntaxHelpModal, { props: { onClose: vi.fn() } });
 
     expect(
       screen.getByTestId("presentation-syntax-help-modal"),
@@ -21,7 +21,7 @@ describe("PresentationSyntaxHelpModal", () => {
 
   it("calls onClose when the close button is clicked", async () => {
     const onClose = vi.fn();
-    render(PresentationSyntaxHelpModal, { onClose });
+    render(PresentationSyntaxHelpModal, { props: { onClose } });
 
     await fireEvent.click(screen.getByLabelText("Close syntax guide"));
 
@@ -30,7 +30,7 @@ describe("PresentationSyntaxHelpModal", () => {
 
   it("calls onClose when the 'Got it' button is clicked", async () => {
     const onClose = vi.fn();
-    render(PresentationSyntaxHelpModal, { onClose });
+    render(PresentationSyntaxHelpModal, { props: { onClose } });
 
     await fireEvent.click(screen.getByText("Got it"));
 
@@ -39,7 +39,7 @@ describe("PresentationSyntaxHelpModal", () => {
 
   it("does not call onClose when clicking inside the dialog content", async () => {
     const onClose = vi.fn();
-    render(PresentationSyntaxHelpModal, { onClose });
+    render(PresentationSyntaxHelpModal, { props: { onClose } });
 
     await fireEvent.click(screen.getByTestId("presentation-syntax-help-modal"));
 
