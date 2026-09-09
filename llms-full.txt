@@ -2117,7 +2117,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ## Curated Generator Examples
 
-Real, unedited output from the Codex Cryptica generators, indexed at https://codexcryptica.com/examples. Each page shows the full artefact, the settings that produced it, and a short editorial note on what makes it usable at the table.
+Curated raw or lightly edited output from the Codex Cryptica generators, indexed at https://codexcryptica.com/examples. Each page states its provenance, shows the full artefact and the settings that produced it, and includes a short editorial note on what makes it usable at the table.
 
 ### [Fantasy settlement example: Gull's Roost](https://codexcryptica.com/examples/gulls-roost-coastal-smuggling-town)
 
@@ -2202,6 +2202,12 @@ Real, unedited output from the Codex Cryptica generators, indexed at https://cod
 **Genre:** Classic Fantasy
 
 **Summary:** A six-entry local rumour table about a midnight ferry, a submerged bell, and the evidence moving through Lowmere on a black barge.
+
+### [Classic Fantasy constellation example: The Eel-Wyrm](https://codexcryptica.com/examples/the-eel-wyrm-classic-fantasy-constellation)
+
+**Genre:** Classic Fantasy
+
+**Summary:** A serpent-shaped constellation the fishers of a coastal eel-harvesting culture read as a rising and setting timer for their autumn migration season, complete with an origin myth, a set of omens, and a hook about a star that has gone missing.
 
 
 ## TTRPG System & Genre Campaign Management
