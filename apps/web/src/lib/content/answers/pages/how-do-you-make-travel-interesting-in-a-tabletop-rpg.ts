@@ -140,6 +140,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "point-crawl-vs-hex-crawl",
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
+    "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
   ],
   discovery: {
     id: "answer-travel-interesting",
