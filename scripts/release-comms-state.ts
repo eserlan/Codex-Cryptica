@@ -53,8 +53,12 @@ export function recordEvaluation(
 ): ReleaseCommsState {
   return {
     version: 1,
-    lastEvaluatedSha: entry.sha,
-    history: [entry, ...state.history].slice(0, MAX_HISTORY),
+    lastEvaluatedSha:
+      entry.completed === false ? state.lastEvaluatedSha : entry.sha,
+    history: [
+      entry,
+      ...state.history.filter((item) => item.sha !== entry.sha),
+    ].slice(0, MAX_HISTORY),
   };
 }
 
@@ -104,9 +108,23 @@ export function isWriterResult(value: unknown): value is WriterResult {
   const record = value as Record<string, unknown>;
   return (
     Array.isArray(record.bluesky) &&
-    record.bluesky.every((post) => typeof post === "string") &&
+    record.bluesky.every(
+      (post) =>
+        !!post &&
+        typeof post === "object" &&
+        typeof (post as Record<string, unknown>).pageUrl === "string" &&
+        typeof (post as Record<string, unknown>).text === "string",
+    ) &&
     (record.discord === undefined || typeof record.discord === "string") &&
     typeof record.reddit === "string" &&
-    typeof record.github_discussion === "string"
+    Array.isArray(record.github_discussions) &&
+    record.github_discussions.every(
+      (post) =>
+        !!post &&
+        typeof post === "object" &&
+        typeof (post as Record<string, unknown>).pageUrl === "string" &&
+        typeof (post as Record<string, unknown>).title === "string" &&
+        typeof (post as Record<string, unknown>).body === "string",
+    )
   );
 }

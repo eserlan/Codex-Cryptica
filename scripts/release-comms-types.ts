@@ -20,11 +20,21 @@ export interface EvaluatorResult {
 
 export interface WriterResult {
   /** One short standalone post per feature with bluesky_worthy: true. */
-  bluesky: string[];
+  bluesky: Array<{ pageUrl: string; text: string }>;
   /** Derived automatically from Bluesky copy with hashtags stripped. */
   discord?: string;
   reddit: string;
-  github_discussion: string;
+  /** A long-form Discussion for a specific public page, when it clears the higher bar. */
+  github_discussions: Array<{
+    pageUrl: string;
+    title: string;
+    body: string;
+  }>;
+}
+
+export interface ReleaseCommsPublications {
+  bluesky: Array<{ pageUrl: string; url: string }>;
+  githubDiscussions: Array<{ pageUrl: string; url: string }>;
 }
 
 export interface ReleaseCommsHistoryEntry {
@@ -37,6 +47,9 @@ export interface ReleaseCommsHistoryEntry {
   recommendedChannels?: string[];
   reason: string;
   drafts?: WriterResult;
+  publications?: ReleaseCommsPublications;
+  /** False while an external publish is resumable; omitted for older completed entries. */
+  completed?: boolean;
 }
 
 export interface ReleaseCommsState {

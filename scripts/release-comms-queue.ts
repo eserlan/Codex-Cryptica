@@ -283,6 +283,87 @@ export async function queueBlueskyDrafts(
 }
 
 /**
+ * Insert a new row into the Cross-Platform Posting Tracker, pushing the
+ * change directly to `staging` via an isolated worktree. Must run before any
+ * `updateTrackerPlatformStatus` call for the same row's identifier, since
+ * that function only ticks a cell on an existing row and never creates one.
+ */
+export async function insertTrackerRow(
+  row: TrackerRow,
+  repositoryRoot: string,
+): Promise<{ success: boolean; error?: string }> {
+  const worktreeDir = await mkdtemp(join(tmpdir(), "release-comms-tracker-"));
+  try {
+    execFileSync("git", ["fetch", "origin", "staging"], {
+      cwd: repositoryRoot,
+      stdio: "ignore",
+    });
+    execFileSync(
+      "git",
+      ["worktree", "add", "--detach", worktreeDir, "origin/staging"],
+      { cwd: repositoryRoot, stdio: "ignore" },
+    );
+
+    const logPath = resolve(worktreeDir, BLUESKY_LOG_PATH);
+    const original = await readFile(logPath, "utf8");
+    const updated = insertTrackerTableRow(original, formatTrackerTableRow(row));
+    if (updated === original) {
+      return {
+        success: false,
+        error: `Could not find "${TRACKER_HEADER}" table to insert a row into`,
+      };
+    }
+    await writeFile(logPath, updated, "utf8");
+
+    execFileSync("git", ["add", BLUESKY_LOG_PATH], {
+      cwd: worktreeDir,
+      stdio: "ignore",
+    });
+    execFileSync(
+      "git",
+      ["commit", "-m", `chore(social): track release comms for ${row.topic}`],
+      { cwd: worktreeDir, stdio: "ignore" },
+    );
+
+    try {
+      execFileSync("git", ["push", "origin", "HEAD:staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+    } catch {
+      execFileSync("git", ["fetch", "origin", "staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["rebase", "origin/staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["push", "origin", "HEAD:staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  } finally {
+    try {
+      execFileSync("git", ["worktree", "remove", worktreeDir, "--force"], {
+        cwd: repositoryRoot,
+        stdio: "ignore",
+      });
+    } catch {
+      await rm(worktreeDir, { recursive: true, force: true });
+    }
+  }
+}
+
+/**
  * Tick a platform's status cell in the Cross-Platform Posting Tracker for the
  * row matching `identifier` (e.g. a short SHA), pushing the change directly to
  * `staging` via an isolated worktree, mirroring queueBlueskyDrafts.
