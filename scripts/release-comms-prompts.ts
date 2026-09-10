@@ -11,8 +11,8 @@ export const ALL_CHANNELS = [
   "github_discussion",
 ];
 
-/** The subset of ALL_CHANNELS driven by the release-level recommended_channels, not per-feature bluesky_worthy. */
-const WHOLE_RELEASE_CHANNELS = ["discord", "reddit", "github_discussion"];
+/** The subset of ALL_CHANNELS driven by the release-level recommended_channels, not per-feature bluesky_worthy. Discord is derived directly from bluesky. */
+const WHOLE_RELEASE_CHANNELS = ["reddit", "github_discussion"];
 
 export function buildEvaluatorPrompt(input: {
   previousSha: string;
@@ -109,10 +109,11 @@ Public pages that may be promoted, with the only permitted URLs:
 ${publicContent.map((item) => `- ${item.kind}: ${item.title} (${item.url})`).join("\n") || "(none: return empty Bluesky and GitHub Discussion arrays)"}
 
 Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above; never combine multiple features into one post. Every post MUST be a complete thought of 220 characters or fewer before its direct URL and hashtags are added, so it remains complete within Bluesky's 300-character limit. If no feature is bluesky_worthy, return an empty array for "bluesky".
+Discord announcements are derived automatically from the Bluesky drafts with hashtags stripped; no separate Discord draft is required.
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
 - .agent/skills/bsky-note/SKILL.md (Bluesky: short, "I needed X so I built Y" arc, no emojis, no em dashes, 200-250 characters, hashtags, direct link)
-- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
+- .agent/skills/cc-announcer/SKILL.md (Reddit: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
 
 github_discussion is a post to this repository's own GitHub Discussions "Announcements" category: it can be as long as Reddit, should read as a maintainer update to people who already use or watch the project (no need to introduce what Codex Cryptica is), and may use Markdown headings/lists.
 
@@ -122,7 +123,7 @@ gh api graphql -f query='query{repository(owner:"eserlan",name:"Codex-Cryptica")
 
 Match their established shape: open with the concrete need/problem that prompted the feature (not the feature name), one or two short paragraphs describing what it does and how it fits into an existing workflow, a plain "You can:" bullet list of capabilities (no adjective-stacking), and close with one genuine open-ended question inviting a reply — not a generic call to action. Typical length is roughly 150-220 words (about 1000-1400 characters) for github_discussion; reddit follows cc-announcer's own length guidance instead. Where the real examples include a screenshot, leave an explicit placeholder like [Image: short description of what it should show] rather than inventing an image URL.
 
-Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of discord/reddit NOT in that list, still return an empty string for it rather than omitting the key.
+Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of reddit/github_discussion NOT in that list, still return an empty string for it rather than omitting the key.
 
 For every Bluesky post, return its exact pageUrl and its text. Choose only a URL from the public-pages list, and make no more than one Bluesky post per URL. For GitHub Discussions, independently decide whether that public page supports a useful long-form announcement. Return one object per worthy page only when github_discussion is a recommended channel; use its exact pageUrl, a title, and a complete Markdown body. It is normal for the two arrays to differ: a small public page may merit Bluesky only; a substantial answer, example, blog, landing page, generator, or tool may merit both. Never use a placeholder URL.
 
@@ -132,7 +133,6 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
 
 {
   "bluesky": [{ "pageUrl": "an exact URL from the public-pages list", "text": "one standalone post" }],
-  "discord": "draft text or empty string",
   "reddit": "draft text or empty string",
   "github_discussions": [{ "pageUrl": "an exact URL from the public-pages list", "title": "Discussion title", "body": "long-form Markdown body" }]
 }`;

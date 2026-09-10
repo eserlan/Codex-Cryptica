@@ -115,7 +115,7 @@ export function isWriterResult(value: unknown): value is WriterResult {
         typeof (post as Record<string, unknown>).pageUrl === "string" &&
         typeof (post as Record<string, unknown>).text === "string",
     ) &&
-    typeof record.discord === "string" &&
+    (record.discord === undefined || typeof record.discord === "string") &&
     typeof record.reddit === "string" &&
     Array.isArray(record.github_discussions) &&
     record.github_discussions.every(
