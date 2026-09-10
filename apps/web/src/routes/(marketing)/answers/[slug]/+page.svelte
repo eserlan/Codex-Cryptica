@@ -264,6 +264,41 @@
       </section>
     {/each}
 
+    {#if answer.systemsThatSupportThis && answer.systemsThatSupportThis.length > 0}
+      <section class="mb-12 border-t border-theme-border pt-8">
+        <h2
+          class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+        >
+          Systems built for this
+        </h2>
+        <ul class="flex list-none flex-col gap-4">
+          {#each answer.systemsThatSupportThis as ref}
+            <li class="border-l border-theme-border pl-5">
+              <a
+                href={ref.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group inline-flex items-center gap-1.5 font-header text-base font-bold text-theme-text transition-colors hover:text-theme-primary"
+                use:trackDiscoveryClick={{
+                  sourceKind: "answer",
+                  sourceId: answer.slug,
+                  placement: "system_reference",
+                  ...classifyDiscoveryTarget(ref.href),
+                }}
+              >
+                {ref.system}
+                <span
+                  class="icon-[lucide--external-link] h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
+                  aria-hidden="true"
+                ></span>
+              </a>
+              <p class="leading-relaxed text-theme-muted">{ref.rationale}</p>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+
     {#if answer.codexConnection}
       <section class="mb-12 border-t border-theme-border pt-8">
         <h2

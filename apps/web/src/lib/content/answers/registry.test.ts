@@ -228,6 +228,79 @@ describe("answer schema", () => {
       }),
     ).toThrow();
   });
+
+  describe("systemsThatSupportThis", () => {
+    it("accepts a valid list of system references", () => {
+      const answer = makeAnswer({
+        slug: "with-systems",
+        systemsThatSupportThis: [
+          {
+            system: "Blades in the Dark",
+            rationale: "Clocks give the mechanic a ready-made procedure.",
+            href: "https://bladesinthedark.com/",
+          },
+        ],
+      });
+      expect(answer.systemsThatSupportThis).toHaveLength(1);
+      expect(answer.systemsThatSupportThis?.[0].system).toBe(
+        "Blades in the Dark",
+      );
+    });
+
+    it("rejects an empty systemsThatSupportThis array", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "empty-systems",
+          systemsThatSupportThis: [],
+        }),
+      ).toThrow();
+    });
+
+    it("rejects an entry missing a rationale", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "missing-rationale",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "",
+              href: "https://bladesinthedark.com/",
+            } as never,
+          ],
+        }),
+      ).toThrow();
+    });
+
+    it("rejects a non-http(s) href such as javascript:", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "unsafe-href",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "Clocks give the mechanic a ready-made procedure.",
+              href: "javascript:alert(1)",
+            },
+          ],
+        }),
+      ).toThrow();
+    });
+
+    it("rejects a mailto: href", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "mailto-href",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "Clocks give the mechanic a ready-made procedure.",
+              href: "mailto:test@example.com",
+            },
+          ],
+        }),
+      ).toThrow();
+    });
+  });
 });
 
 describe("published answers", () => {
@@ -430,6 +503,21 @@ describe("published answers", () => {
     expect(npcAnswer.relatedAnswers).toContain(
       "how-do-you-organise-npc-relationships",
     );
+  });
+
+  it("publishes the heist answer with the expected system references", () => {
+    const heistAnswer =
+      answers["how-do-you-run-a-heist-in-a-tabletop-rpg"];
+    expect(heistAnswer).toBeDefined();
+    expect(heistAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Blades in the Dark",
+      "Scum & Villainy",
+      "Leverage: The Roleplaying Game",
+    ]);
+    for (const ref of heistAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
   });
 });
 
