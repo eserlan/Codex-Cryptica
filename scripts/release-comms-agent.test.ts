@@ -65,6 +65,43 @@ describe("release-comms-agent", () => {
         isEvaluatorResult({ postworthy: true, reason: "x", features: "no" }),
       ).toBe(false);
     });
+
+    it("rejects an invalid importance value", () => {
+      expect(
+        isEvaluatorResult({
+          postworthy: true,
+          reason: "x",
+          importance: "cat",
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects recommended_channels with non-string elements", () => {
+      expect(
+        isEvaluatorResult({
+          postworthy: true,
+          reason: "x",
+          recommended_channels: [123],
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects features with malformed elements", () => {
+      expect(
+        isEvaluatorResult({
+          postworthy: true,
+          reason: "x",
+          features: [{}],
+        }),
+      ).toBe(false);
+      expect(
+        isEvaluatorResult({
+          postworthy: true,
+          reason: "x",
+          features: [{ name: "X", why_users_care: "Y" }],
+        }),
+      ).toBe(true);
+    });
   });
 
   describe("pickPreviousSha", () => {
@@ -81,6 +118,14 @@ describe("release-comms-agent", () => {
       expect(
         pickPreviousSha([{ databaseId: 1, headSha: "aaa" }], 1),
       ).toBeNull();
+    });
+
+    it("returns the most recent run when excludeRunId is not present in runs", () => {
+      const runs = [
+        { databaseId: 3, headSha: "ccc" },
+        { databaseId: 2, headSha: "bbb" },
+      ];
+      expect(pickPreviousSha(runs, 999)).toBe("ccc");
     });
   });
 
@@ -106,6 +151,18 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain("Add faction generator");
       expect(prompt).toContain('"postworthy"');
       expect(prompt).toContain("```json");
+    });
+
+    it("labels the merged-PRs section as best-effort, not range-filtered", () => {
+      const prompt = buildEvaluatorPrompt({
+        previousSha: "abc1234",
+        newSha: "def5678",
+        commitLog: "",
+        mergedPrs: "#100 Add faction generator",
+        changelogDiff: "",
+      });
+      expect(prompt).not.toContain("Merged pull requests in this range");
+      expect(prompt).toContain("best-effort context");
     });
   });
 

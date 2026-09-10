@@ -118,19 +118,44 @@ export function extractJsonBlock(output: string): unknown | null {
   }
 }
 
+const VALID_IMPORTANCE_VALUES = new Set(["low", "medium", "high"]);
+
+function isReleaseFeature(value: unknown): value is ReleaseFeature {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.name === "string" &&
+    typeof record.why_users_care === "string"
+  );
+}
+
 export function isEvaluatorResult(value: unknown): value is EvaluatorResult {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
   return (
     typeof record.postworthy === "boolean" &&
     typeof record.reason === "string" &&
-    (record.features === undefined || Array.isArray(record.features)) &&
+    (record.importance === undefined ||
+      VALID_IMPORTANCE_VALUES.has(record.importance as string)) &&
+    (record.features === undefined ||
+      (Array.isArray(record.features) &&
+        record.features.every(isReleaseFeature))) &&
     (record.recommended_channels === undefined ||
-      Array.isArray(record.recommended_channels))
+      (Array.isArray(record.recommended_channels) &&
+        record.recommended_channels.every(
+          (channel) => typeof channel === "string",
+        )))
   );
 }
 
-/** Pick the head SHA of the successful promote run immediately before `excludeRunId`. */
+/**
+ * Pick the head SHA of the most recent successful promote run other than
+ * `excludeRunId` (typically the currently-running promote), from `runs`
+ * ordered most-recent-first. This is NOT "the run immediately before
+ * `excludeRunId` in that ordering" — it's simply the first remaining entry
+ * after filtering `excludeRunId` out, so if `excludeRunId` isn't present in
+ * `runs` at all, this just returns the most recent run.
+ */
 export function pickPreviousSha(
   runs: Array<{ databaseId: number; headSha: string }>,
   excludeRunId: number,
@@ -157,7 +182,7 @@ Not postworthy: dependency bumps, refactors, internal logging/analytics changes,
 Commits in this range:
 ${input.commitLog || "(none)"}
 
-Merged pull requests in this range:
+Recently merged pull requests (best-effort context; not filtered to this exact SHA range):
 ${input.mergedPrs || "(none)"}
 
 Changelog (releases.json) diff for this range, if any (this is the most reliable signal of genuinely user-facing work):

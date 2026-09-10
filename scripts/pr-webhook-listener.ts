@@ -481,10 +481,6 @@ if (import.meta.main) {
             403,
           );
         }
-        const commsBody = await readRequestBody(request);
-        if (commsBody === null) {
-          return response(JSON.stringify({ error: "payload too large" }), 413);
-        }
         if (
           !(await verifySharedSecret(
             request.headers.get("x-release-comms-secret"),
@@ -492,6 +488,10 @@ if (import.meta.main) {
           ))
         ) {
           return response(JSON.stringify({ error: "invalid secret" }), 401);
+        }
+        const commsBody = await readRequestBody(request);
+        if (commsBody === null) {
+          return response(JSON.stringify({ error: "payload too large" }), 413);
         }
         let commsPayload: Record<string, unknown>;
         try {
