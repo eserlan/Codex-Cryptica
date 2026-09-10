@@ -17,7 +17,10 @@ import {
   loadDiscordConfig,
   publishToDiscord,
 } from "./release-comms-discord.ts";
-import { queueBlueskyDrafts } from "./release-comms-queue.ts";
+import {
+  queueBlueskyDrafts,
+  updateTrackerPlatformStatus,
+} from "./release-comms-queue.ts";
 import {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -448,7 +451,8 @@ export async function main(promoteRunId: string): Promise<void> {
       const isDiscordRecommended =
         result.recommended_channels?.includes("discord") ?? false;
       if (
-        (isDiscordRecommended || discordConfig.enabled) &&
+        discordConfig.enabled &&
+        isDiscordRecommended &&
         drafts.bluesky &&
         drafts.bluesky.length > 0
       ) {
@@ -488,6 +492,7 @@ export async function main(promoteRunId: string): Promise<void> {
   if (result.postworthy && drafts?.discord) {
     const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
     if (discordConfig.enabled) {
+      let publishedToDiscord = false;
       for (const dest of discordConfig.destinations) {
         if (dest.auto_publish) {
           const pubResult = await publishToDiscord({
@@ -495,6 +500,7 @@ export async function main(promoteRunId: string): Promise<void> {
             destination: dest,
           });
           if (pubResult.success) {
+            publishedToDiscord = true;
             console.log(
               `[release-comms] published announcement to Discord destination '${dest.id}'`,
             );
@@ -503,6 +509,20 @@ export async function main(promoteRunId: string): Promise<void> {
               `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
             );
           }
+        }
+      }
+
+      if (publishedToDiscord) {
+        const trackerResult = await updateTrackerPlatformStatus(
+          newSha.slice(0, 7),
+          "Discord",
+          true,
+          REPOSITORY_ROOT,
+        );
+        if (!trackerResult.success) {
+          console.error(
+            `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
+          );
         }
       }
     }

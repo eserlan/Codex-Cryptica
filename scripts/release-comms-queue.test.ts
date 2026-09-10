@@ -124,6 +124,26 @@ describe("release-comms-queue", () => {
       expect(lines[6]).toBe(newRow);
       expect(lines[7]).toContain("Heist Generator");
     });
+
+    it("inserts a row when the separator is several lines below the header, as in the real log", () => {
+      const contentWithDescription = [
+        "# Social Post Log",
+        "",
+        "## Cross-Platform Posting Tracker",
+        "",
+        "Tracks whether each post has been published across current and planned platforms (Bluesky, Discord, Instagram, Patreon).",
+        "",
+        "| Date | Topic | Copy / reference | Bluesky | Discord | Instagram | Patreon |",
+        "|------|-------|------------------|:-------:|:-------:|:---------:|:-------:|",
+        "| 2026-09-06 | Heist Generator | ... | [x] | [ ] | [ ] | [ ] |",
+      ].join("\n");
+      const newRow =
+        "| 2026-09-10 | Faction Rosters | ... | [ ] | [ ] | [ ] | [ ] |";
+      const updated = insertTrackerTableRow(contentWithDescription, newRow);
+      const lines = updated.split("\n");
+      expect(lines[8]).toBe(newRow);
+      expect(lines[9]).toContain("Heist Generator");
+    });
   });
 
   describe("updatePlatformStatus", () => {

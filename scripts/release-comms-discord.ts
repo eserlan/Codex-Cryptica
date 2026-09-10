@@ -46,20 +46,24 @@ export function stripHashtags(text: string): string {
   // - '# ' (Markdown headings, since space is not a letter)
   // - '#123' (Issue/PR references, since digits are not letters)
   // - 'url#anchor' (Preceded by non-whitespace)
-  const pattern = /(^|[\s([{])#[a-zA-Z][\w-]*(?=[\s.,!?:;)\]}]|$)/g;
+  const pattern = /(^|[\s([{])#([a-zA-Z][\w-]*)(?=[\s.,!?:;)\]}]|$)/g;
+  const hexColorPattern = /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/;
 
-  const cleaned = text.replace(pattern, (match, prefix) => {
-    // Preserve newlines if prefix is a newline
-    return prefix === "\n" || prefix === "\r\n" ? prefix : "";
+  const cleaned = text.replace(pattern, (match, prefix, tag) => {
+    // Preserve hex colours like #fff / #ffffff
+    if (hexColorPattern.test(tag)) return match;
+    // Keep the prefix (whitespace/bracket/newline) so words don't run together
+    return prefix;
   });
 
   // Clean up whitespace:
-  // 1. Remove trailing spaces on each line
-  // 2. Collapse 3 or more consecutive newlines into 2
-  // 3. Trim leading/trailing whitespace
+  // 1. Collapse repeated horizontal whitespace left behind by removed hashtags
+  // 2. Remove trailing spaces on each line
+  // 3. Collapse 3 or more consecutive newlines into 2
+  // 4. Trim leading/trailing whitespace
   return cleaned
     .split("\n")
-    .map((line) => line.replace(/[ \t]+$/, ""))
+    .map((line) => line.replace(/[ \t]{2,}/g, " ").replace(/[ \t]+$/, ""))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -119,7 +123,8 @@ export function loadDiscordConfig(
     rawConfig &&
     typeof rawConfig === "object" &&
     "discord" in rawConfig &&
-    typeof (rawConfig as { discord: unknown }).discord === "object"
+    typeof (rawConfig as { discord: unknown }).discord === "object" &&
+    (rawConfig as { discord: unknown }).discord !== null
   ) {
     const discord = (rawConfig as { discord: Record<string, unknown> }).discord;
     const destinations = Array.isArray(discord.destinations)

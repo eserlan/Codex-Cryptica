@@ -46,7 +46,8 @@ export function insertTrackerTableRow(
   if (headerIdx === -1) return fileContent;
 
   let sepIdx = -1;
-  for (let i = headerIdx + 1; i < lines.length && i < headerIdx + 5; i++) {
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    if (lines[i].startsWith("##")) break;
     if (lines[i].includes("|") && lines[i].includes("---")) {
       sepIdx = i;
       break;
@@ -75,7 +76,8 @@ export function updatePlatformStatus(
   if (headerIdx === -1) return fileContent;
 
   let tableHeaderIdx = -1;
-  for (let i = headerIdx + 1; i < lines.length && i < headerIdx + 5; i++) {
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    if (lines[i].startsWith("##")) break;
     if (lines[i].includes("|") && !lines[i].includes("---")) {
       tableHeaderIdx = i;
       break;
@@ -266,6 +268,89 @@ export async function queueBlueskyDrafts(
   } catch (error) {
     return {
       queued: 0,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  } finally {
+    try {
+      execFileSync("git", ["worktree", "remove", worktreeDir, "--force"], {
+        cwd: repositoryRoot,
+        stdio: "ignore",
+      });
+    } catch {
+      await rm(worktreeDir, { recursive: true, force: true });
+    }
+  }
+}
+
+/**
+ * Tick a platform's status cell in the Cross-Platform Posting Tracker for the
+ * row matching `identifier` (e.g. a short SHA), pushing the change directly to
+ * `staging` via an isolated worktree, mirroring queueBlueskyDrafts.
+ */
+export async function updateTrackerPlatformStatus(
+  identifier: string,
+  platform: string,
+  status: boolean,
+  repositoryRoot: string,
+): Promise<{ success: boolean; error?: string }> {
+  const worktreeDir = await mkdtemp(join(tmpdir(), "release-comms-tracker-"));
+  try {
+    execFileSync("git", ["fetch", "origin", "staging"], {
+      cwd: repositoryRoot,
+      stdio: "ignore",
+    });
+    execFileSync(
+      "git",
+      ["worktree", "add", "--detach", worktreeDir, "origin/staging"],
+      { cwd: repositoryRoot, stdio: "ignore" },
+    );
+
+    const logPath = resolve(worktreeDir, BLUESKY_LOG_PATH);
+    const original = await readFile(logPath, "utf8");
+    const updated = updatePlatformStatus(original, identifier, platform, status);
+    if (updated === original) {
+      return { success: false, error: `No tracker row found for '${identifier}'` };
+    }
+    await writeFile(logPath, updated, "utf8");
+
+    execFileSync("git", ["add", BLUESKY_LOG_PATH], {
+      cwd: worktreeDir,
+      stdio: "ignore",
+    });
+    execFileSync(
+      "git",
+      [
+        "commit",
+        "-m",
+        `chore(social): mark ${platform} posted for ${identifier}`,
+      ],
+      { cwd: worktreeDir, stdio: "ignore" },
+    );
+
+    try {
+      execFileSync("git", ["push", "origin", "HEAD:staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+    } catch {
+      execFileSync("git", ["fetch", "origin", "staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["rebase", "origin/staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+      execFileSync("git", ["push", "origin", "HEAD:staging"], {
+        cwd: worktreeDir,
+        stdio: "ignore",
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
       error: error instanceof Error ? error.message : String(error),
     };
   } finally {

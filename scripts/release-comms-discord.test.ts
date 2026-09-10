@@ -86,6 +86,22 @@ describe("release-comms-discord", () => {
       expect(stripHashtags("")).toBe("");
       expect(stripHashtags("#ttrpg #worldbuilding")).toBe("");
     });
+
+    it("preserves hex colours like #fff and #ffffff", () => {
+      expect(stripHashtags("Border colour is #fff for now.")).toBe(
+        "Border colour is #fff for now.",
+      );
+      expect(stripHashtags("Accent: #ffffff and #a1b2c3.")).toBe(
+        "Accent: #ffffff and #a1b2c3.",
+      );
+    });
+
+    it("does not concatenate words when stripping a mid-sentence hashtag", () => {
+      const input = "Check out the #ttrpg generator for your table.";
+      expect(stripHashtags(input)).toBe(
+        "Check out the generator for your table.",
+      );
+    });
   });
 
   describe("deriveDiscordFromBluesky", () => {
@@ -161,6 +177,26 @@ describe("release-comms-discord", () => {
         expect(config.destinations[0].webhookEnvVar).toBe(
           "DISCORD_WEBHOOK_DEV",
         );
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("falls back to default config when discord key is null", async () => {
+      const tempDir = await mkdtemp(join(tmpdir(), "discord-cfg-"));
+      try {
+        const socialDir = join(tempDir, ".social");
+        const { mkdir } = await import("node:fs/promises");
+        await mkdir(socialDir);
+        await writeFile(
+          join(socialDir, "discord-destinations.yaml"),
+          `discord: null\n`,
+        );
+
+        const config = loadDiscordConfig(tempDir);
+        expect(config.enabled).toBe(true);
+        expect(config.destinations.length).toBe(1);
+        expect(config.destinations[0].id).toBe("main-community");
       } finally {
         await rm(tempDir, { recursive: true, force: true });
       }
