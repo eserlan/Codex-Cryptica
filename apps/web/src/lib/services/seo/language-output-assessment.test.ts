@@ -26,7 +26,7 @@ describe("assessLanguageOutput", () => {
     expect(result.blockingIssues).toEqual([]);
   });
 
-  it("reports a blocking issue and no output for structurally invalid JSON", () => {
+  it("reports a blocking issue and no output for schema-invalid JSON", () => {
     const result = assessLanguageOutput("{}", expected, []);
 
     expect(result.output).toBeUndefined();
