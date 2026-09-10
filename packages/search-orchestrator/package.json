@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "typescript": "^6.0.3",
-    "eslint": "^10.9.1"
+    "eslint": "^10.10.0"
   },
   "dependencies": {
     "@codex/events": "workspace:*",
