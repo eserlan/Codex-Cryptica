@@ -23,10 +23,15 @@ interface CliArgs {
   dryRun: boolean;
 }
 
+const VALUE_FLAGS = new Set(["--title", "--body", "--file", "--category"]);
+
 export function parseArgs(argv: string[]): CliArgs {
   const result: CliArgs = { category: "Announcements", dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+    if (VALUE_FLAGS.has(arg) && argv[i + 1] === undefined) {
+      throw new Error(`${arg} requires a value`);
+    }
     switch (arg) {
       case "--title":
         result.title = argv[++i];

@@ -32,6 +32,12 @@ describe("post-to-github-discussion", () => {
     it("rejects an unknown flag", () => {
       expect(() => parseArgs(["--nope"])).toThrow("Unknown argument: --nope");
     });
+
+    it("rejects a value flag with no value", () => {
+      expect(() => parseArgs(["--title", "Hello", "--category"])).toThrow(
+        "--category requires a value",
+      );
+    });
   });
 
   describe("findCategoryId", () => {
