@@ -16,6 +16,8 @@ import { lowmereSixWordsRumourTable } from "./lowmere-six-words-rumour-table";
 import { theEelWyrm } from "./the-eel-wyrm-classic-fantasy-constellation";
 import { theDawnheartDiadem } from "./the-dawnheart-diadem-fantasy-heist";
 import { theQuellExtraction } from "./the-quell-extraction-cyberpunk-heist";
+import { theBellBeneathBlackglass } from "./the-bell-beneath-blackglass-fantasy-puzzle";
+import { theNullKeyReliquary } from "./the-null-key-reliquary-cyberpunk-puzzle";
 
 /**
  * The published example library.
@@ -47,6 +49,8 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     theEelWyrm,
     theDawnheartDiadem,
     theQuellExtraction,
+    theBellBeneathBlackglass,
+    theNullKeyReliquary,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),

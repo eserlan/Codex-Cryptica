@@ -40,21 +40,53 @@ llms-full.txt representation, matching every other generator.
 
 ## Puzzle cluster
 
-Unchanged in this pass beyond the aliasing/FAQ treatment below — see the
-"explicitly out of scope" section for why it wasn't expanded further.
+Expanded to heist-level depth in #2895. The Puzzle Generator was already
+seeing good usage per that issue, so this pass strengthens the surrounding
+content graph around the existing foothold rather than retargeting anything
+that was already working: the original design answer's URL, canonical, and
+title are untouched.
 
-| Intent                                                                                             | Canonical page                                                      | Notes                                                                                                                                                                             |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tool ("best RPG puzzle generator")                                                                 | `/generators/puzzle`                                                | `slugMeta.puzzle`. "Best RPG puzzle generator" added as a discovery intent alias plus a dedicated FAQ entry, not a separate page.                                                 |
-| Informational ("how do you design RPG puzzles that do not stall the game?" / "multiple solutions") | `/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game` | **This page already receives organic traffic per the issue** — its URL and canonical are untouched by this pass.                                                                  |
-| Worked example                                                                                     | `/examples/the-venting-helix-derelict-hazard`                       | Provenance: `raw` (GitHub discussion #2553). Filed under `kind: "encounter"` (the examples schema has no separate `puzzle` kind), generator field points at `/generators/puzzle`. |
+The cluster now has one generator, **two answers** (design framework + a
+distinct hints-without-spoiling answer), and **three worked examples** across
+three genres (Space opera, Classic Fantasy, Cyberpunk).
 
-Links: generator → answer and generator → example were **missing** before
-the first pass (`puzzle.relatedLinks` only pointed at Quest and Dungeon
-generators) and have been added. answer → generator, answer → example,
-example → generator, and example → answer already existed.
+| Intent                                                                                                     | Canonical page                                                                    | Notes                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tool ("best RPG puzzle generator")                                                                         | `/generators/puzzle`                                                              | `slugMeta.puzzle`. "Best RPG puzzle generator" is a discovery intent alias plus a dedicated FAQ entry, not a separate page. `relatedLinks` now includes both answers and all three examples.                                                               |
+| Informational, design ("how do you design RPG puzzles that do not stall the game?" / "multiple solutions") | `/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game`               | **Already receives organic traffic per the issue** — URL, canonical, and title untouched. `userJob: understand`.                                                                                                                                           |
+| Informational, hints ("how do you give players hints for an RPG puzzle without giving away the answer?")   | `/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer` | New. `userJob: adopt-workflow`, deliberately distinct from the design answer: this owns the narrower problem of what a GM says out loud mid-session once a puzzle has stalled. `acknowledgedOverlap` records the distinction against `answer-rpg-puzzles`. |
+| Worked example, Space opera                                                                                | `/examples/the-venting-helix-derelict-hazard`                                     | Provenance: `raw` (GitHub discussion #2553). Filed under `kind: "encounter"` (the examples schema has no separate `puzzle` kind).                                                                                                                          |
+| Worked example, Classic Fantasy                                                                            | `/examples/the-bell-beneath-blackglass-fantasy-puzzle`                            | New. Provenance: `lightly-edited` (generated directly through the production puzzle generator for this content pass; text unaltered, only reformatted into page blocks). `sourceUrl` points at issue #2895.                                                |
+| Worked example, Cyberpunk                                                                                  | `/examples/the-null-key-reliquary-cyberpunk-puzzle`                               | New. Same provenance basis as the fantasy example. A mechanical-lock puzzle under a countdown, where every wrong attempt reveals information rather than resetting progress.                                                                               |
 
-Sitemap / llms-full.txt: same status as the heist cluster.
+Links (all bidirectional):
+
+- generator → both answers, generator → all three examples (`puzzle.relatedLinks`)
+- each answer → generator, each answer → the other answer (`relatedAnswers`, reciprocal, verified via `bun run check:answer-mesh`)
+- each example → generator, → both answers, and the two new examples → each other and → the space-opera example (`relatedGenerators`, `relatedAnswers`, `relatedExamples`)
+
+Hero images for the two new examples and the new answer's OG card were
+generated with the in-app Cloudflare Workers AI image pipeline (via the local
+oracle-proxy, the same path `scripts/heist-eval.ts --mode ai` uses for text)
+and uploaded to `codex-cryptica-statics` (see `docs/deployment/r2-asset-db.md`).
+Example hero images use the `announcements/` prefix (matching the existing
+example convention); the answer's OG card uses `og/` (matching the existing
+answer convention) — these differ from each other and from the heist pass's
+uniform choice, so check the schema-enforced test (`gives every published
+example a hero image on Cloudflare R2`) rather than assuming one prefix.
+
+`puzzle` was added to the controlled content-cluster vocabulary
+(`CONTENT_CLUSTER_SLUGS` in `apps/web/src/lib/content/labels.ts`, alongside
+`heist`/`rumour`/`religion`) and to crawler-readiness coverage
+(`CLUSTER_TARGETS` in `apps/web/src/lib/seo/crawler-access-clusters.ts`).
+Every puzzle-cluster discovery entry (generator, both answers, all three
+examples) now carries `clusters: ["puzzle"]` so both systems pick the cluster
+up automatically from the discovery registry rather than needing a
+hand-maintained route list.
+
+Sitemap / llms-full.txt: same status as the heist cluster — pulled dynamically
+from the answers/examples registries and `GENERATOR_SLUGS`, so no hand-edit
+was needed.
 
 ## Sitemap fix
 
