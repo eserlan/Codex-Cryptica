@@ -206,7 +206,7 @@ export function formatIssueComment(
     "",
     "Bluesky (one post per feature, queued separately):",
     blueskySection,
-    queueLine,
+    ...(queueLine ? [queueLine] : []),
     "",
     "Discord:",
     drafts.discord || "(not recommended for this release)",
@@ -225,7 +225,5 @@ export function formatIssueComment(
     JSON.stringify({ evaluation: result, drafts, queueResult }, null, 2),
     "```",
     "</details>",
-  ]
-    .filter((line) => line !== "")
-    .join("\n");
+  ].join("\n");
 }
