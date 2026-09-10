@@ -8,7 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theNullKeyReliquary: ExampleConfigInput = {
   slug: "the-null-key-reliquary-cyberpunk-puzzle",
-  labels: ["cyberpunk"],
+  labels: ["cyberpunk", "puzzle"],
   name: "The Null-Key Reliquary",
   title: "Cyberpunk puzzle example: The Null-Key Reliquary",
   kind: "encounter",

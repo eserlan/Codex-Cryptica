@@ -8,7 +8,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theBellBeneathBlackglass: ExampleConfigInput = {
   slug: "the-bell-beneath-blackglass-fantasy-puzzle",
-  labels: ["fantasy"],
+  labels: ["fantasy", "puzzle"],
   name: "The Bell Beneath Blackglass",
   title: "Classic Fantasy puzzle example: The Bell Beneath Blackglass",
   kind: "encounter",

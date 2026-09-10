@@ -6,7 +6,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theVentingHelix: ExampleConfigInput = {
   slug: "the-venting-helix-derelict-hazard",
-  labels: ["space-opera-resistance"],
+  labels: ["space-opera-resistance", "puzzle"],
   name: "The Venting Helix",
   title: "Sci-fi encounter example: The Venting Helix",
   kind: "encounter",

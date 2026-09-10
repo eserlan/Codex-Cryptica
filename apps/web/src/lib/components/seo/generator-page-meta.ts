@@ -346,6 +346,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "tabletop encounter puzzle",
       "gm puzzle builder",
     ],
+    labels: ["puzzle"],
     faqs: [
       {
         question: "Does this puzzle generator require a specific RPG system?",
