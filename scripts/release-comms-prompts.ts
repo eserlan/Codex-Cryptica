@@ -11,8 +11,8 @@ export const ALL_CHANNELS = [
   "github_discussion",
 ];
 
-/** The subset of ALL_CHANNELS driven by the release-level recommended_channels, not per-feature bluesky_worthy. */
-const WHOLE_RELEASE_CHANNELS = ["discord", "reddit", "github_discussion"];
+/** The subset of ALL_CHANNELS driven by the release-level recommended_channels, not per-feature bluesky_worthy. Discord is derived directly from bluesky. */
+const WHOLE_RELEASE_CHANNELS = ["reddit", "github_discussion"];
 
 export function buildEvaluatorPrompt(input: {
   previousSha: string;
@@ -98,11 +98,12 @@ ${featureList || "(no features listed)"}
 
 Whole-release channels to draft a combined post for: ${wholeReleaseChannels.join(", ")}
 
-Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above — never combine multiple features into a single Bluesky post, even if they shipped in the same deploy. If no feature is bluesky_worthy, return an empty array for "bluesky". These will be queued individually into the Bluesky posting backlog and posted on separate days, so each one must stand alone and make sense without the others.
+Bluesky is different from the other channels: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above — never combine multiple features into a single Bluesky post, even if they shipped in the same deploy. If no feature is bluesky_worthy, return an empty array for "bluesky". These will be queued individually into the Bluesky posting backlog and posted on separate days, so each one must stand alone and make sense without the others.
+Discord announcements are derived automatically from the Bluesky drafts with hashtags stripped; no separate Discord draft is required.
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
 - .agent/skills/bsky-note/SKILL.md (Bluesky: short, "I needed X so I built Y" arc, no emojis, no em dashes, 200-250 characters, hashtags, direct link)
-- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
+- .agent/skills/cc-announcer/SKILL.md (Reddit: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
 
 github_discussion is a post to this repository's own GitHub Discussions "Announcements" category: it can be as long as Reddit, should read as a maintainer update to people who already use or watch the project (no need to introduce what Codex Cryptica is), and may use Markdown headings/lists.
 
@@ -112,7 +113,7 @@ gh api graphql -f query='query{repository(owner:"eserlan",name:"Codex-Cryptica")
 
 Match their established shape: open with the concrete need/problem that prompted the feature (not the feature name), one or two short paragraphs describing what it does and how it fits into an existing workflow, a plain "You can:" bullet list of capabilities (no adjective-stacking), and close with one genuine open-ended question inviting a reply — not a generic call to action. Typical length is roughly 150-220 words (about 1000-1400 characters) for github_discussion; reddit follows cc-announcer's own length guidance instead. Where the real examples include a screenshot, leave an explicit placeholder like [Image: short description of what it should show] rather than inventing an image URL.
 
-Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of discord/reddit/github_discussion NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
+Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of reddit/github_discussion NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
 
 There ${blueskyFeatures.length === 1 ? "is 1 bluesky_worthy feature" : `are ${blueskyFeatures.length} bluesky_worthy features`} above.
 
@@ -120,7 +121,6 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
 
 {
   "bluesky": ["one standalone post per bluesky_worthy feature, in the same order, or [] if none"],
-  "discord": "draft text or empty string",
   "reddit": "draft text or empty string",
   "github_discussion": "draft text or empty string"
 }`;

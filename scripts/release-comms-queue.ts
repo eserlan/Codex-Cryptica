@@ -5,8 +5,121 @@ import { join, resolve } from "node:path";
 import type { QueueResult } from "./release-comms-prompts.ts";
 import type { ReleaseCommsHistoryEntry } from "./release-comms-types.ts";
 
-const BLUESKY_LOG_PATH = ".social/bluesky-posts.md";
-const DRAFTED_HEADER = "## Drafted (not yet posted)";
+export const BLUESKY_LOG_PATH = ".social/bluesky-posts.md";
+export const DRAFTED_HEADER = "## Drafted (not yet posted)";
+export const TRACKER_HEADER = "## Cross-Platform Posting Tracker";
+export const DEFAULT_PLATFORM_COLUMNS = [
+  "Bluesky",
+  "Discord",
+  "Instagram",
+  "Patreon",
+];
+
+export interface TrackerRow {
+  date: string;
+  topic: string;
+  reference: string;
+  platforms?: Record<string, boolean>;
+}
+
+export function formatTrackerTableRow(
+  row: TrackerRow,
+  columns: string[] = DEFAULT_PLATFORM_COLUMNS,
+): string {
+  const platformCells = columns.map((col) => {
+    const isTicked = row.platforms?.[col.toLowerCase()] ?? false;
+    return isTicked ? "[x]" : "[ ]";
+  });
+  return `| ${row.date} | ${row.topic} | ${row.reference} | ${platformCells.join(" | ")} |`;
+}
+
+/**
+ * Insert a new row into the Cross-Platform Posting Tracker table right below
+ * the header and separator. If the table doesn't exist, returns content unchanged.
+ */
+export function insertTrackerTableRow(
+  fileContent: string,
+  rowString: string,
+): string {
+  const lines = fileContent.split("\n");
+  const headerIdx = lines.findIndex((line) => line.trim() === TRACKER_HEADER);
+  if (headerIdx === -1) return fileContent;
+
+  let sepIdx = -1;
+  for (let i = headerIdx + 1; i < lines.length && i < headerIdx + 5; i++) {
+    if (lines[i].includes("|") && lines[i].includes("---")) {
+      sepIdx = i;
+      break;
+    }
+  }
+  if (sepIdx === -1) return fileContent;
+
+  lines.splice(sepIdx + 1, 0, rowString);
+  return lines.join("\n");
+}
+
+/**
+ * Update the platform status checkbox ([ ] -> [x] or [x] -> [ ]) for a matching row
+ * in the Cross-Platform Posting Tracker table.
+ * Dynamically looks up the platform column index so new platforms can be added without
+ * modifying this function.
+ */
+export function updatePlatformStatus(
+  fileContent: string,
+  identifier: string,
+  platform: string,
+  status: boolean,
+): string {
+  const lines = fileContent.split("\n");
+  const headerIdx = lines.findIndex((line) => line.trim() === TRACKER_HEADER);
+  if (headerIdx === -1) return fileContent;
+
+  let tableHeaderIdx = -1;
+  for (let i = headerIdx + 1; i < lines.length && i < headerIdx + 5; i++) {
+    if (lines[i].includes("|") && !lines[i].includes("---")) {
+      tableHeaderIdx = i;
+      break;
+    }
+  }
+  if (tableHeaderIdx === -1) return fileContent;
+
+  const headerLine = lines[tableHeaderIdx];
+  const headerCols = headerLine
+    .split("|")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const platformColIdx = headerCols.findIndex(
+    (c) => c.toLowerCase() === platform.toLowerCase(),
+  );
+  if (platformColIdx === -1) return fileContent;
+
+  for (let i = tableHeaderIdx + 2; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.startsWith("|")) break;
+
+    if (line.toLowerCase().includes(identifier.toLowerCase())) {
+      const cells = line.split("|");
+      const targetCellIdx = platformColIdx + 1;
+      if (targetCellIdx < cells.length) {
+        const currentCell = cells[targetCellIdx];
+        const isEmoji =
+          currentCell.includes("✅") || currentCell.includes("⬜");
+        const newStatus = isEmoji
+          ? status
+            ? " ✅ "
+            : " ⬜ "
+          : status
+            ? " [x] "
+            : " [ ] ";
+        cells[targetCellIdx] = newStatus;
+        lines[i] = cells.join("|");
+        break;
+      }
+    }
+  }
+
+  return lines.join("\n");
+}
 
 /** Format one auto-drafted Bluesky post as an entry matching the log's existing "Drafted" shape. */
 export function formatBlueskyDraftEntry(
@@ -79,7 +192,26 @@ export async function queueBlueskyDrafts(
     const newEntries = drafts.map((draft) =>
       formatBlueskyDraftEntry(draft, entry),
     );
-    const updated = insertDraftsIntoBlueskyLog(original, newEntries);
+    let updated = insertDraftsIntoBlueskyLog(original, newEntries);
+
+    for (const draft of drafts) {
+      const shortSha = entry.sha.slice(0, 7);
+      const dateOnly = entry.date.slice(0, 10);
+      const snippet = draft.replace(/\n+/g, " ").slice(0, 60) + "...";
+      const row = formatTrackerTableRow({
+        date: dateOnly,
+        topic: `Release comms auto-draft (\`${shortSha}\`)`,
+        reference: snippet,
+        platforms: {
+          bluesky: false,
+          discord: false,
+          instagram: false,
+          patreon: false,
+        },
+      });
+      updated = insertTrackerTableRow(updated, row);
+    }
+
     await writeFile(logPath, updated, "utf8");
 
     execFileSync("git", ["add", BLUESKY_LOG_PATH], {

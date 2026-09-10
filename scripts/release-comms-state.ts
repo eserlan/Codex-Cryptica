@@ -105,7 +105,7 @@ export function isWriterResult(value: unknown): value is WriterResult {
   return (
     Array.isArray(record.bluesky) &&
     record.bluesky.every((post) => typeof post === "string") &&
-    typeof record.discord === "string" &&
+    (record.discord === undefined || typeof record.discord === "string") &&
     typeof record.reddit === "string" &&
     typeof record.github_discussion === "string"
   );

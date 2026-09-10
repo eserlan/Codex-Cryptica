@@ -21,7 +21,8 @@ export interface EvaluatorResult {
 export interface WriterResult {
   /** One short standalone post per feature with bluesky_worthy: true. */
   bluesky: string[];
-  discord: string;
+  /** Derived automatically from Bluesky copy with hashtags stripped. */
+  discord?: string;
   reddit: string;
   github_discussion: string;
 }

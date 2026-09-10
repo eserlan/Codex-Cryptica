@@ -12,6 +12,11 @@ import {
   buildWriterPrompt,
   formatIssueComment,
 } from "./release-comms-prompts.ts";
+import {
+  deriveDiscordFromBluesky,
+  loadDiscordConfig,
+  publishToDiscord,
+} from "./release-comms-discord.ts";
 import { queueBlueskyDrafts } from "./release-comms-queue.ts";
 import {
   getReleaseCommsLogPath,
@@ -30,6 +35,12 @@ export {
   buildEvaluatorPrompt,
   buildWriterPrompt,
 } from "./release-comms-prompts.ts";
+export {
+  deriveDiscordFromBluesky,
+  loadDiscordConfig,
+  publishToDiscord,
+  stripHashtags,
+} from "./release-comms-discord.ts";
 export { queueBlueskyDrafts } from "./release-comms-queue.ts";
 export {
   getReleaseCommsLogPath,
@@ -234,6 +245,7 @@ export function fetchPromotionCommits(
 
     throw new Error(
       `[release-comms] git fetch failed for ${previousSha}..${newSha}: ${message}${details}`,
+      { cause: error },
     );
   }
 }
@@ -431,6 +443,17 @@ export async function main(promoteRunId: string): Promise<void> {
       console.error(
         `[release-comms] writer produced no usable drafts; see ${logPath}`,
       );
+    } else {
+      const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+      const isDiscordRecommended =
+        result.recommended_channels?.includes("discord") ?? false;
+      if (
+        (isDiscordRecommended || discordConfig.enabled) &&
+        drafts.bluesky &&
+        drafts.bluesky.length > 0
+      ) {
+        drafts.discord = deriveDiscordFromBluesky(drafts.bluesky);
+      }
     }
   }
 
@@ -459,6 +482,30 @@ export async function main(promoteRunId: string): Promise<void> {
     console.log(
       `[release-comms] queued ${queueResult.queued} Bluesky draft(s): ${queueResult.commitUrl}`,
     );
+  }
+
+  // Auto-publish to configured Discord destinations if enabled
+  if (result.postworthy && drafts?.discord) {
+    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+    if (discordConfig.enabled) {
+      for (const dest of discordConfig.destinations) {
+        if (dest.auto_publish) {
+          const pubResult = await publishToDiscord({
+            message: drafts.discord,
+            destination: dest,
+          });
+          if (pubResult.success) {
+            console.log(
+              `[release-comms] published announcement to Discord destination '${dest.id}'`,
+            );
+          } else {
+            console.error(
+              `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
+            );
+          }
+        }
+      }
+    }
   }
 
   try {
