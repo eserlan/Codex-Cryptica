@@ -101,6 +101,26 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
     linkText: "Try the Star System Generator",
     href: "/generators/star-system",
   },
+  systemsThatSupportThis: [
+    {
+      system: "Traveller",
+      rationale:
+        "The Universal World Profile procedure in the Traveller Core Rulebook generates star and world characteristics — size, atmosphere, hydrographics, population, government, law level, and tech level — using a standardised dice method, giving GMs a concrete physical and economic profile for every body in a subsector.",
+      href: "https://www.mongoosepublishing.com/products/traveller-core-rulebook",
+    },
+    {
+      system: "Stars Without Number",
+      rationale:
+        "The free core rulebook includes a full sector-generation procedure: roll for star systems, assign world tags (pairs of thematic pressures), create trade routes, and place factions with their own assets and goals, producing an interconnected sandbox with built-in conflict drivers.",
+      href: "https://www.drivethrurpg.com/product/230009/Stars-Without-Number-Revised-Edition-Free-Version",
+    },
+    {
+      system: "Coriolis: The Third Horizon",
+      rationale:
+        "The GM chapter includes a star-system creation procedure that assigns system type, world characteristics, and portal network connections, then layers in faction control and trade goods — yielding a ready-to-navigate system with built-in political pressure.",
+      href: "https://frialigan.se/en/games/coriolis/",
+    },
+  ],
   relatedTools: [
     {
       title: "Star system generator",
