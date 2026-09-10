@@ -500,7 +500,7 @@
           >
             <SilhouetteAvatar
               entity={entity ?? undefined}
-              size="lg"
+              size="3xl"
               class="border-theme-border/60 shadow-lg group-hover/sil:border-theme-primary transition-colors"
             />
             <span
