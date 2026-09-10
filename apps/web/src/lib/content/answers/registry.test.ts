@@ -519,6 +519,23 @@ describe("published answers", () => {
       expect(ref.rationale.length).toBeGreaterThan(0);
     }
   });
+
+  it("publishes the sci-fi star system answer with the expected system references", () => {
+    const starSystemAnswer =
+      answers["how-to-create-a-sci-fi-star-system-for-an-rpg"];
+    expect(starSystemAnswer).toBeDefined();
+    expect(
+      starSystemAnswer.systemsThatSupportThis?.map((s) => s.system),
+    ).toEqual([
+      "Traveller",
+      "Stars Without Number",
+      "Coriolis: The Third Horizon",
+    ]);
+    for (const ref of starSystemAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe("answer structured data", () => {
