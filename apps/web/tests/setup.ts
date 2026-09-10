@@ -91,11 +91,11 @@ if (typeof window !== "undefined") {
       delete (instance as any).key;
       delete (instance as any).length;
     }
-    // Always (re)define as writable/configurable: newer jsdom versions
-    // provide a real Storage instance for window.localStorage/sessionStorage
-    // as a getter-only accessor, which the plain assignment below would
-    // otherwise throw on ("Cannot set property ... which has only a
-    // getter") once that branch is reused instead of created fresh.
+    // Always (re)define via Object.defineProperty rather than a plain
+    // assignment: newer jsdom versions provide a real Storage instance for
+    // window.localStorage/sessionStorage as a getter-only accessor, and a
+    // plain assignment would throw ("Cannot set property ... which has only
+    // a getter") once that branch is reused instead of created fresh.
     Object.defineProperty(window, name, {
       value: instance,
       writable: true,
