@@ -19,9 +19,10 @@ export interface EvaluatorResult {
 }
 
 export interface WriterResult {
-  /** One short standalone post for a specific public page. */
+  /** One short standalone post per feature with bluesky_worthy: true. */
   bluesky: Array<{ pageUrl: string; text: string }>;
-  discord: string;
+  /** Derived automatically from Bluesky copy with hashtags stripped. */
+  discord?: string;
   reddit: string;
   /** A long-form Discussion for a specific public page, when it clears the higher bar. */
   github_discussions: Array<{
