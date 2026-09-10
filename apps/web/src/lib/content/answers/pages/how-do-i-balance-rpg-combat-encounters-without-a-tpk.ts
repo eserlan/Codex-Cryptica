@@ -89,6 +89,26 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Pathfinder 2e",
+      rationale:
+        "The XP Budget system assigns every creature a numeric cost and rates the whole fight Trivial, Low, Moderate, Severe, or Extreme against the party, the closest thing to a formal encounter-difficulty rating in the hobby.",
+      href: "https://2e.aonprd.com/Rules.aspx?ID=2715",
+    },
+    {
+      system: "D&D 5e (2024 rules)",
+      rationale:
+        "The 2024 Dungeon Master's Guide replaced challenge rating with a per-character XP budget and three difficulty bands (Low, Moderate, High); the table and worked example are free in the SRD 5.2.",
+      href: "https://www.dndbeyond.com/posts/1901-creating-combat-encounters-using-the-new-dungeon",
+    },
+    {
+      system: "13th Age",
+      rationale:
+        "Building Battles gives explicit monster-count and level targets per party tier, plus a mook-equivalence table for folding weaker or stronger monsters into the same budget.",
+      href: "https://www.13thagesrd.com/running-the-game/",
+    },
+  ],
   codexConnection: {
     heading: "How Codex Cryptica handles this",
     paragraphs: [
