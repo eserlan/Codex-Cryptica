@@ -126,6 +126,7 @@ export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
     "how-do-you-create-quest-hooks-without-railroading",
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-you-run-factions-in-a-sandbox-campaign",
+    "how-much-rule-of-cool-should-a-dm-allow",
   ],
   discovery: {
     id: "answer-players-going-off-script",
@@ -144,12 +145,18 @@ export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
       "answer-npcs-improvise-on-the-spot",
       "answer-quest-hooks-without-railroading",
       "for-sandbox-campaigns",
+      "answer-how-much-rule-of-cool-should-a-dm-allow",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-quest-hooks-without-railroading",
         reason:
           "The quest hooks page covers designing open-ended hooks before the session; this page covers the live, in-the-moment response once the party has already gone somewhere unplanned.",
+      },
+      {
+        with: "answer-how-much-rule-of-cool-should-a-dm-allow",
+        reason:
+          "This page covers broad narrative direction and repositioning prep when players ignore hooks; the Rule of Cool page focuses specifically on resolving tactical and mechanical stunts without breaking game balance.",
       },
     ],
   },
