@@ -195,7 +195,7 @@
 
 **Action:** When injecting `systemClock` into classes that generate string dates, always explicitly wrap the output of `clock.now()` in a `Date` object before calling `.toISOString()`.
 
-## 2026-09-10 - Inject IdGenerator into UI Components
+## $(date +%Y-%m-%d) - Inject IdGenerator into UI Components
 
 **Learning:** Svelte 5 components using `$props()` can accept dependency injection boundaries with optional typed dependencies and production defaults (like `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps.ts`). Relying heavily on hardcoded `crypto.randomUUID()` within UI components forces tests to implement flaky random UUID mocks. Injecting `idGenerator` avoids Vitest global pollution and creates a deterministic test boundary without requiring complicated DI framework constructs.
 

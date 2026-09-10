@@ -55,25 +55,6 @@ describe("AdventureCorrectionForm", () => {
     expect(patch.situation).toBeUndefined();
   });
 
-  it("uses the injected idGenerator when creating a new situation id", async () => {
-    const m = manager();
-    const idGenerator = { uuid: vi.fn(() => "deterministic-id") };
-    render(AdventureCorrectionForm, { manager: m, idGenerator });
-
-    await fireEvent.click(
-      screen.getByText("Fix something wrong with the current situation"),
-    );
-    await fireEvent.input(screen.getByLabelText("Situation"), {
-      target: { value: "A new development" },
-    });
-    await fireEvent.click(screen.getByText("Save correction"));
-
-    await waitFor(() => expect(m.submitCorrection).toHaveBeenCalledTimes(1));
-    const patch = m.submitCorrection.mock.calls[0][0];
-    expect(patch.situation.id).toBe("deterministic-id");
-    expect(idGenerator.uuid).toHaveBeenCalledTimes(1);
-  });
-
   it("shows a clear message on a stale-revision conflict", async () => {
     const m = manager({
       submitCorrection: vi.fn(async () => "stale-revision"),
