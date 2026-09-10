@@ -82,9 +82,15 @@ Recommended channels: ${channels.join(", ")}
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
 - .agent/skills/bsky-note/SKILL.md (Bluesky: short, "I needed X so I built Y" arc, no emojis, no em dashes, 200-250 characters, hashtags, direct link)
-- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord and github_discussion: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
+- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
 
 github_discussion is a post to this repository's own GitHub Discussions "Announcements" category: it can be as long as Reddit, should read as a maintainer update to people who already use or watch the project (no need to introduce what Codex Cryptica is), and may use Markdown headings/lists.
+
+For the github_discussion and reddit drafts specifically, calibrate detail level, structure, and length against this repository's own recent Announcements discussions — they are the real, human-approved bar for what belongs at that depth, not a lower/generic version of it. Fetch a few with:
+
+gh api graphql -f query='query{repository(owner:"eserlan",name:"Codex-Cryptica"){discussions(first:3, categoryId:"DIC_kwDOQ_4bts4C-hhd", orderBy:{field:CREATED_AT,direction:DESC}){nodes{title bodyText}}}}'
+
+Match their established shape: open with the concrete need/problem that prompted the feature (not the feature name), one or two short paragraphs describing what it does and how it fits into an existing workflow, a plain "You can:" bullet list of capabilities (no adjective-stacking), and close with one genuine open-ended question inviting a reply — not a generic call to action. Typical length is roughly 150-220 words (about 1000-1400 characters) for github_discussion; reddit follows cc-announcer's own length guidance instead. Where the real examples include a screenshot, leave an explicit placeholder like [Image: short description of what it should show] rather than inventing an image URL.
 
 Write one draft per channel in "${channels.join('", "')}". For any channel NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
 

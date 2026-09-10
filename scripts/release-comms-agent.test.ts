@@ -157,6 +157,25 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain('"github_discussion"');
     });
 
+    it("tells the writer to calibrate reddit/github_discussion depth against real recent Discussions", () => {
+      const prompt = buildWriterPrompt({
+        postworthy: true,
+        importance: "medium",
+        features: [
+          {
+            name: "Faction Roster Generator",
+            why_users_care: "Fast NPC groups.",
+          },
+        ],
+        recommended_channels: ["reddit", "github_discussion"],
+        reason: "new generator",
+      });
+      expect(prompt).toContain("real, human-approved bar");
+      expect(prompt).toContain('categoryId:"DIC_kwDOQ_4bts4C-hhd"');
+      expect(prompt).toContain("open-ended question");
+      expect(prompt).toContain("[Image:");
+    });
+
     it("defaults to all four channels when recommended_channels is empty", () => {
       const prompt = buildWriterPrompt({
         postworthy: true,
