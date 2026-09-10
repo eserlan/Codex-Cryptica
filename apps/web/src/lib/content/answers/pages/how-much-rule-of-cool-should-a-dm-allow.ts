@@ -15,6 +15,7 @@ export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
       paragraphs: [
         "The Rule of Cool exists to prevent rigid rules from stifling player imagination. When a barbarian asks to slice a chandelier rope and ride the counterweight up to a balcony, or an illusionist asks to project smoke into a sentry's eyes, saying no simply because the core rulebook lacks a dedicated chapter for that specific stunt makes combat sterile. Tabletop roleplaying games thrive because players can declare actions outside a pre-programmed action menu.",
         "The risk arises when a Dungeon Master rewards a cool idea by inventing a new, strictly superior mechanical outcome on the fly. If swinging from a chandelier automatically deals triple damage and knocks an ogre prone without a saving throw, every player will spend subsequent encounters looking for chandeliers. The moment a creative improvisation outperforms specialised class abilities, spells, and magic items, tactical choice collapses. The fundamental guideline is simple: the narrative fiction determines what can be attempted, but existing game mechanics determine the outcome.",
+        "This is why Rule of Cool is not a substitute for rules-as-written (RAW): it never overrides an existing mechanic, it only interprets or reskins one. Rule of Cool answers the question of what a character may attempt and how the fiction describes it, while RAW still answers the question of what actually happens once dice are rolled. A DM using Rule of Cool correctly is translating a creative pitch into the closest RAW mechanic, not writing a new rule that beats it.",
       ],
     },
     {
@@ -67,6 +68,22 @@ export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
         {
           term: "Why it works",
           text: "The player's creative idea changes the sensory reality of the table, but the underlying encounter maths remain stable. No player at the table feels that their specialised gear or martial training has been cheapened.",
+        },
+        {
+          term: "The heating construct armour pitch",
+          text: "A fire-themed sorcerer asks to channel a fire cantrip through an animated construct's metal plating so the armour glows red-hot, hoping to sear anyone who grapples it.",
+        },
+        {
+          term: "The flawed ruling",
+          text: "The DM rules that anyone who touches the construct automatically takes ongoing fire damage every round with no save, effectively granting the construct a free legendary trait that no published statblock offers at this tier.",
+        },
+        {
+          term: "The framework ruling",
+          text: "The DM allows the armour to glow and narrates the heat, but resolves it as an existing reaction: the construct gains the reskinned effect of a known spell or feature, such as dealing the cantrip's normal damage only when a creature starts its turn grappling the construct, using the cantrip's existing damage and save DC.",
+        },
+        {
+          term: "Why it works",
+          text: "The visual and thematic payoff lands immediately, but the damage output still traces back to a mechanic already balanced against the sorcerer's level and spell slots, so the construct never outperforms an actual monster feature.",
         },
       ],
     },
