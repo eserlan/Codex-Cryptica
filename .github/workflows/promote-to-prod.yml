@@ -127,5 +127,5 @@ jobs:
           curl -fsS -m 10 -X POST https://pr-webhook.codexcryptica.com/release-comms \
             -H "X-Release-Comms-Secret: $RELEASE_COMMS_SECRET" \
             -H "Content-Type: application/json" \
-            -d "{\"promoteRunId\": \"${{ needs.find-staging-build.outputs.run_id }}\"}" \
+            -d "{\"promoteRunId\": \"${{ github.run_id }}\"}" \
             || echo "release-comms trigger failed (non-blocking)"
