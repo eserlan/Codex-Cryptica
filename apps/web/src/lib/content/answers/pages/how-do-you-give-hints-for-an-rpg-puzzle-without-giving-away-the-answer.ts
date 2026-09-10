@@ -82,6 +82,7 @@ export const howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer: AnswerCo
       },
       {
         kind: "prose",
+        heading: "See the same ladder under time pressure",
         paragraphs: [
           "A cyberpunk example under time pressure works the same way: the escalating hints move from naming that the plates and rails form one dispatch machine, to pointing out which relay just warmed up, to stating the route's start and end without giving the exact path.",
         ],
