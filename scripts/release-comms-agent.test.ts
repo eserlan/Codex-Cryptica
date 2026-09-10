@@ -280,6 +280,20 @@ describe("release-comms-agent", () => {
       expect(prompt).not.toContain("Merged pull requests in this range");
       expect(prompt).toContain("best-effort context");
     });
+
+    it("gives Bluesky a lower postworthy bar than Reddit/GitHub Discussion", () => {
+      const prompt = buildEvaluatorPrompt({
+        previousSha: "abc1234",
+        newSha: "def5678",
+        commitLog: "",
+        mergedPrs: "",
+        changelogDiff: "",
+      });
+      expect(prompt).toContain("post early and often");
+      expect(prompt).toContain("Bluesky (low bar)");
+      expect(prompt).toContain("Reddit and GitHub Discussion (higher bar)");
+      expect(prompt).toContain("prefer postworthy=true");
+    });
   });
 
   describe("state persistence", () => {

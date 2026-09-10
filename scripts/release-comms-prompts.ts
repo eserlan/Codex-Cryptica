@@ -4,7 +4,12 @@ import type {
   WriterResult,
 } from "./release-comms-types.ts";
 
-export const ALL_CHANNELS = ["bluesky", "discord", "reddit", "github_discussion"];
+export const ALL_CHANNELS = [
+  "bluesky",
+  "discord",
+  "reddit",
+  "github_discussion",
+];
 
 export function buildEvaluatorPrompt(input: {
   previousSha: string;
@@ -15,11 +20,17 @@ export function buildEvaluatorPrompt(input: {
 }): string {
   return `You are the postworthiness evaluator for Codex Cryptica's release communications agent.
 
-A production deploy just shipped everything between ${input.previousSha} and ${input.newSha}. Decide whether this release contains anything worth announcing publicly, and if so, group the changes into coherent user-facing features.
+A production deploy just shipped everything between ${input.previousSha} and ${input.newSha}. Decide whether this release contains anything worth telling people about, and if so, group the changes into coherent user-facing features.
 
-Postworthy examples: new generator, major generator enhancement, significant Vault capability, new interoperability/export/import feature, major public-facing UX improvement, new workflow that materially changes what users can do.
+This project deploys to production far more often than it does a big versioned "release," and the goal is to post early and often, not to save everything up for a rare big announcement. Bluesky in particular has a deliberately low bar (per .agent/skills/bsky-note/SKILL.md, this account aims for roughly one post a day whenever there's any real, concrete feature or use case to show, however small) — a single small-but-genuine improvement is enough to be postworthy for Bluesky even if it would not carry a whole Reddit post or Discussion update on its own. Use the channel bars below rather than one uniform bar for everything:
 
-Not postworthy: dependency bumps, refactors, internal logging/analytics changes, CI/deployment plumbing, minor bug fixes users are unlikely to notice, tiny visual tweaks.
+- Bluesky (low bar): any single generator, workflow, or UX change a GM/worldbuilder would notice and could actually use, even a small one — a new option on an existing generator, a genuinely useful export/import tweak, a small but real quality-of-life improvement. Do not hold this back waiting for something bigger.
+- Discord (low-to-medium bar): similar to Bluesky, informal, fine for the same small wins.
+- Reddit and GitHub Discussion (higher bar): reserve for something substantial on its own, or several related small wins from recent deploys that together tell one coherent story (do not write a Reddit/Discussion post for a single minor tweak).
+
+Not postworthy on any channel: dependency bumps, pure refactors with no user-visible effect, internal logging/analytics/CI/deployment plumbing, invisible bug fixes, and tiny visual tweaks nobody would notice or care about.
+
+When in doubt between postworthy and not, for a real (if small) user-facing change, prefer postworthy=true with bluesky-only (or bluesky+discord) recommended_channels over marking it not postworthy — the writer pass and the human reviewing the draft can still decide not to post it.
 
 Commits in this range:
 ${input.commitLog || "(none)"}
