@@ -74,6 +74,10 @@ describe("pr-check-fix", () => {
       expect(prompt).toContain("--no-verify");
       expect(prompt).toContain("♻️ refactor: address PR #1234 review comments");
       expect(prompt).toContain("HEAD:curator/degod-sample-1234");
+      expect(prompt).toContain("running ONLY targeted test files");
+      expect(prompt).toContain(
+        "NEVER run bare `bun test` across the monorepo root",
+      );
     });
 
     it("handles feedback with no failing checks or reviews gracefully", () => {
@@ -117,6 +121,7 @@ describe("pr-check-fix", () => {
     // Even with no findings, a pre-merge staging merge commit must still be pushed.
     expect(prompt).toContain(sampleFeedback.prMeta.headRefOid);
     expect(prompt).toContain("you MUST still push that commit");
+    expect(prompt).toContain("NEVER bare `bun test`");
   });
 
   it("includes staging conflict paths and bounded failed-check details", () => {

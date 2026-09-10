@@ -758,7 +758,13 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
                 cwd: worktreePath,
                 encoding: "utf-8",
               }).trim();
-              for (const comment of feedback.unresolvedComments) {
+              // Re-fetch feedback so comments the agent already replied to
+              // during this run aren't double-replied here.
+              const refreshedFeedback = fetchPrFeedback(
+                feedback.prMeta.number,
+                worktreePath,
+              );
+              for (const comment of refreshedFeedback.unresolvedComments) {
                 replyToPrComment(
                   worktreePath,
                   feedback.prMeta.number,
