@@ -105,7 +105,7 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
     {
       system: "Traveller",
       rationale:
-        "The Universal World Profile procedure in the Traveller Core Rulebook generates star and world characteristics — size, atmosphere, hydrographics, population, government, law level, and tech level — using a standardised dice method, giving GMs a concrete physical and economic profile for every body in a subsector.",
+        "The Universal World Profile procedure in the Traveller Core Rulebook generates one world's UWP and its physical, social, and technological characteristics (size, atmosphere, hydrographics, population, government, law level, and tech level) using a standardised dice method.",
       href: "https://www.mongoosepublishing.com/products/traveller-core-rulebook",
     },
     {
@@ -117,7 +117,7 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
     {
       system: "Coriolis: The Third Horizon",
       rationale:
-        "The GM chapter includes a star-system creation procedure that assigns system type, world characteristics, and portal network connections, then layers in faction control and trade goods — yielding a ready-to-navigate system with built-in political pressure.",
+        "The GM chapter includes a star-system creation procedure that assigns system type, world characteristics, and portal network connections, then layers in faction control and trade goods, yielding a ready-to-navigate system with built-in political pressure.",
       href: "https://frialigan.se/en/games/coriolis/",
     },
   ],
