@@ -50,9 +50,13 @@ gh run list --workflow "Promote Staging to Production" --status success --limit 
   --json databaseId,headSha,createdAt
 ```
 
-Run the evaluator and writer directly against one of those run ids:
+Run the evaluator and writer directly against one of those run ids without
+publishing anything. This uses a throwaway state file, records `dry-run://`
+publication URLs, and skips the tracking-issue comment:
 
 ```sh
+RELEASE_COMMS_DRY_RUN=1 \
+RELEASE_COMMS_STATE_FILE="$(mktemp /tmp/release-comms-dry-state.XXXXXX.json)" \
 bun run comms:evaluate <promote-to-prod run id>
 ```
 
@@ -67,9 +71,15 @@ re-process the same SHA. Try this against two or three different past
 promotions with genuinely different content (a postworthy one, a boring
 one) to get a feel for whether the postworthy/importance calls are sane.
 
-Dry-run the Discussions poster (no network call, just prints what it would
-send). This needs [#2911](https://github.com/eserlan/Codex-Cryptica/pull/2911)
-merged first — `post:discussion` doesn't exist on `staging` until then:
+The same dry-run setting reaches the agent's full publisher branch only when
+the chosen release is postworthy. Use a known public-page promotion, or seed
+a resumable draft in a throwaway state file when checking the publisher path.
+The log must show both `[release-comms] published ... dry-run://...` lines and
+`dry run: skipped tracking issue comment`; rerun it with the same state file
+to confirm `already evaluated; skipping`.
+
+Dry-run the Discussions poster directly (no network call, just prints what it
+would send):
 
 ```sh
 bun run post:discussion --dry-run --title "Test" --body "Test body"

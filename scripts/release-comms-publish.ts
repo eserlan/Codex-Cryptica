@@ -15,8 +15,20 @@ export interface DiscussionPublication {
   url: string;
 }
 
+/** Avoid every external write while still exercising the production flow. */
+export function isReleaseCommsDryRun(): boolean {
+  return process.env.RELEASE_COMMS_DRY_RUN === "1";
+}
+
+function withVerifiedPageUrl(draft: string, pageUrl: string): string {
+  const resolved = draft
+    .replaceAll("https://codexcryptica.com/[relevant page]", pageUrl)
+    .replaceAll("codexcryptica.com/[relevant page]", pageUrl);
+  return resolved.includes(pageUrl) ? resolved : `${resolved}\n\n${pageUrl}`;
+}
+
 export function prepareBlueskyText(draft: string, pageUrl: string): string {
-  const resolved = draft.replace("codexcryptica.com/[relevant page]", pageUrl);
+  const resolved = withVerifiedPageUrl(draft, pageUrl);
   if ([...resolved].length <= 300) return resolved;
   throw new Error(
     "Bluesky draft exceeds 300 characters; request a shorter complete rewrite instead of truncating it",
@@ -33,6 +45,12 @@ export function publishBlueskyPost(
     throw new Error(
       "Bluesky draft still contains an unresolved page placeholder",
     );
+  }
+  if (isReleaseCommsDryRun()) {
+    return {
+      text,
+      url: `dry-run://bluesky/${encodeURIComponent(asset.pageUrl)}`,
+    };
   }
   const output = run(
     "bun",
@@ -58,7 +76,12 @@ export function publishDiscussion(
   asset: BlueskyAsset,
   run: typeof execFileSync = execFileSync,
 ): DiscussionPublication {
-  const body = `${draft.replaceAll("codexcryptica.com/[relevant page]", asset.pageUrl)}\n\n![${asset.imageAlt}](${asset.imageUrl})`;
+  const body = `${withVerifiedPageUrl(draft, asset.pageUrl)}\n\n![${asset.imageAlt}](${asset.imageUrl})`;
+  if (isReleaseCommsDryRun()) {
+    return {
+      url: `dry-run://github-discussion/${encodeURIComponent(asset.pageUrl)}`,
+    };
+  }
   const output = run(
     "bun",
     ["scripts/post-to-github-discussion.ts", "--title", title, "--body", body],

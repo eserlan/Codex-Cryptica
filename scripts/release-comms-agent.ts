@@ -13,6 +13,7 @@ import {
   formatIssueComment,
 } from "./release-comms-prompts.ts";
 import {
+  isReleaseCommsDryRun,
   publishBlueskyPost,
   publishDiscussion,
   type BlueskyAsset,
@@ -608,6 +609,11 @@ export async function main(promoteRunId: string): Promise<void> {
   }
   entry = { ...entry, completed: true };
   await saveReleaseCommsState(recordEvaluation(state, entry));
+
+  if (isReleaseCommsDryRun()) {
+    console.log("[release-comms] dry run: skipped tracking issue comment");
+    return;
+  }
 
   try {
     execFileSync(
