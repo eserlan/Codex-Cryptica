@@ -45,6 +45,7 @@
     "pr:fix": "bun scripts/pr-check-fix.ts",
     "pr:webhook": "bun scripts/pr-webhook-listener.ts",
     "comms:evaluate": "bun scripts/release-comms-agent.ts",
+    "post:discussion": "bun scripts/post-to-github-discussion.ts",
     "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },

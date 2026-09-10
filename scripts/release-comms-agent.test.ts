@@ -108,17 +108,29 @@ describe("release-comms-agent", () => {
   });
 
   describe("isWriterResult", () => {
-    it("accepts drafts with all three channel keys, empty strings allowed", () => {
-      expect(isWriterResult({ bluesky: "", discord: "text", reddit: "" })).toBe(
-        true,
-      );
+    it("accepts drafts with all four channel keys, empty strings allowed", () => {
+      expect(
+        isWriterResult({
+          bluesky: "",
+          discord: "text",
+          reddit: "",
+          github_discussion: "",
+        }),
+      ).toBe(true);
     });
 
     it("rejects a missing channel key or wrong type", () => {
-      expect(isWriterResult({ bluesky: "x", discord: "y" })).toBe(false);
-      expect(isWriterResult({ bluesky: "x", discord: "y", reddit: 5 })).toBe(
+      expect(isWriterResult({ bluesky: "x", discord: "y", reddit: "z" })).toBe(
         false,
       );
+      expect(
+        isWriterResult({
+          bluesky: "x",
+          discord: "y",
+          reddit: 5,
+          github_discussion: "z",
+        }),
+      ).toBe(false);
       expect(isWriterResult(null)).toBe(false);
     });
   });
@@ -142,9 +154,10 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain(".agent/skills/bsky-note/SKILL.md");
       expect(prompt).toContain(".agent/skills/cc-announcer/SKILL.md");
       expect(prompt).toContain('"bluesky"');
+      expect(prompt).toContain('"github_discussion"');
     });
 
-    it("defaults to all three channels when recommended_channels is empty", () => {
+    it("defaults to all four channels when recommended_channels is empty", () => {
       const prompt = buildWriterPrompt({
         postworthy: true,
         importance: "medium",
@@ -157,18 +170,42 @@ describe("release-comms-agent", () => {
         recommended_channels: [],
         reason: "new generator",
       });
-      expect(prompt).toContain("bluesky, discord, reddit");
+      expect(prompt).toContain("bluesky, discord, reddit, github_discussion");
       expect(prompt).not.toContain("Recommended channels: (none)");
     });
 
-    it("defaults to all three channels when recommended_channels is undefined", () => {
+    it("defaults to all four channels when recommended_channels is undefined", () => {
       const prompt = buildWriterPrompt({
         postworthy: true,
         importance: "medium",
         features: [],
         reason: "new generator",
       } as EvaluatorResult);
-      expect(prompt).toContain("bluesky, discord, reddit");
+      expect(prompt).toContain("bluesky, discord, reddit, github_discussion");
+    });
+
+    it("filters out unknown recommended channels", () => {
+      const prompt = buildWriterPrompt({
+        postworthy: true,
+        importance: "medium",
+        features: [],
+        recommended_channels: ["bluesky", "mastodon"],
+        reason: "new generator",
+      });
+      expect(prompt).toContain("Recommended channels: bluesky");
+      expect(prompt).not.toContain("mastodon");
+    });
+
+    it("defaults to all four channels when every recommended channel is unknown", () => {
+      const prompt = buildWriterPrompt({
+        postworthy: true,
+        importance: "medium",
+        features: [],
+        recommended_channels: ["mastodon"],
+        reason: "new generator",
+      });
+      expect(prompt).toContain("bluesky, discord, reddit, github_discussion");
+      expect(prompt).not.toContain("mastodon");
     });
 
     it("treats evaluator output as untrusted data", () => {
@@ -263,7 +300,12 @@ describe("release-comms-agent", () => {
           promoteRunId: "42",
           postworthy: true,
           reason: "new generator",
-          drafts: { bluesky: "post text", discord: "", reddit: "" },
+          drafts: {
+            bluesky: "post text",
+            discord: "",
+            reddit: "",
+            github_discussion: "",
+          },
         });
         await saveReleaseCommsState(withEntry, path);
 
