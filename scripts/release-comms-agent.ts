@@ -31,6 +31,7 @@ export interface WriterResult {
   bluesky: string;
   discord: string;
   reddit: string;
+  github_discussion: string;
 }
 
 export interface ReleaseCommsHistoryEntry {
@@ -160,7 +161,8 @@ export function isWriterResult(value: unknown): value is WriterResult {
   return (
     typeof record.bluesky === "string" &&
     typeof record.discord === "string" &&
-    typeof record.reddit === "string"
+    typeof record.reddit === "string" &&
+    typeof record.github_discussion === "string"
   );
 }
 
@@ -212,21 +214,22 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
   "features": [
     { "name": "Feature Name", "why_users_care": "One sentence on why a GM/worldbuilder cares." }
   ],
-  "recommended_channels": ["bluesky", "discord", "reddit"],
+  "recommended_channels": ["bluesky", "discord", "reddit", "github_discussion"],
   "reason": "One or two sentences explaining the decision."
 }
 
 If nothing is postworthy, still return the object with "postworthy": false, an empty "features" array, an empty "recommended_channels" array, and a "reason" explaining why (e.g. "only dependency bumps and refactors").`;
 }
 
-const ALL_CHANNELS = ["bluesky", "discord", "reddit"];
+const ALL_CHANNELS = ["bluesky", "discord", "reddit", "github_discussion"];
 
 export function buildWriterPrompt(evaluation: EvaluatorResult): string {
   const featureList = (evaluation.features ?? [])
     .map((feature) => `- ${feature.name}: ${feature.why_users_care}`)
     .join("\n");
   const channels =
-    evaluation.recommended_channels && evaluation.recommended_channels.length > 0
+    evaluation.recommended_channels &&
+    evaluation.recommended_channels.length > 0
       ? evaluation.recommended_channels
       : ALL_CHANNELS;
 
@@ -241,7 +244,9 @@ Recommended channels: ${channels.join(", ")}
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
 - .agent/skills/bsky-note/SKILL.md (Bluesky: short, "I needed X so I built Y" arc, no emojis, no em dashes, 200-250 characters, hashtags, direct link)
-- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
+- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord and github_discussion: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
+
+github_discussion is a post to this repository's own GitHub Discussions "Announcements" category: it can be as long as Reddit, should read as a maintainer update to people who already use or watch the project (no need to introduce what Codex Cryptica is), and may use Markdown headings/lists.
 
 Write one draft per channel in "${channels.join('", "')}". For any channel NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
 
@@ -250,7 +255,8 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
 {
   "bluesky": "draft text or empty string",
   "discord": "draft text or empty string",
-  "reddit": "draft text or empty string"
+  "reddit": "draft text or empty string",
+  "github_discussion": "draft text or empty string"
 }`;
 }
 
@@ -533,7 +539,10 @@ function formatIssueComment(
     "Reddit:",
     drafts.reddit || "(not recommended for this release)",
     "",
-    'Reply "approve" or "skip" on this comment to record a decision. Posting itself still goes through the normal bsky-note / cc-announcer workflows by hand for now — this phase is drafts only, no auto-publish.',
+    "GitHub Discussion:",
+    drafts.github_discussion || "(not recommended for this release)",
+    "",
+    'Reply "approve" or "skip" on this comment to record a decision. Posting itself still goes through the normal bsky-note / post-to-reddit / post-to-github-discussion tools by hand for now — this phase is drafts only, no auto-publish.',
     "",
     "<details><summary>Raw evaluator + writer output</summary>",
     "",

@@ -92,20 +92,23 @@ output plus periodic heartbeat messages, so a quiet journal can be diagnosed by
 checking the active process and its per-run log.
 
 For the release comms agent specifically: when a release is postworthy, a
-second "writer" agent pass drafts channel-specific Bluesky/Discord/Reddit
-copy (consulting `.agent/skills/bsky-note/SKILL.md` and
-`.agent/skills/cc-announcer/SKILL.md` for voice/format rules — cc-announcer
-is also mirrored under `.codex/skills/`), and the
-evaluator verdict plus drafts are posted as one comment on
-[issue #2906](https://github.com/eserlan/Codex-Cryptica/issues/2906),
+second "writer" agent pass drafts channel-specific copy for Bluesky,
+Discord, Reddit, and a GitHub Discussion post (consulting
+`.agent/skills/bsky-note/SKILL.md` and `.agent/skills/cc-announcer/SKILL.md`
+for voice/format rules — cc-announcer is also mirrored under
+`.codex/skills/`), and the evaluator verdict plus drafts are posted as one
+comment on [issue #2906](https://github.com/eserlan/Codex-Cryptica/issues/2906),
 matching the "Approve / Skip" template requested there. Nothing is
 auto-published — actually posting still goes through the normal
-`bsky-note`/`cc-announcer` workflows by hand, using the drafted text as a
-starting point. This is deliberate: the point of this phase is to watch
-whether the evaluator's and writer's judgment are sane over several real
-deploys before wiring up an approval-triggered auto-publish path. To
-dry-run the whole pass against a real past production promotion without
-waiting for the next deploy:
+`bsky-note`/`post-to-reddit`/`post-to-github-discussion` tools by hand,
+using the drafted text as a starting point (`post-to-github-discussion.ts`
+posts to this repo's own "Announcements" discussion category via
+`gh api graphql`; run `bun run post:discussion --dry-run --title "..."
+--body "..."` to preview one). This is deliberate: the point of this phase
+is to watch whether the evaluator's and writer's judgment are sane over
+several real deploys before wiring up an approval-triggered auto-publish
+path. To dry-run the whole evaluate+write pass against a real past
+production promotion without waiting for the next deploy:
 
 ```sh
 bun run comms:evaluate <promote-to-prod run id>
