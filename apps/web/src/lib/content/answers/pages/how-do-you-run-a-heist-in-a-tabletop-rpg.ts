@@ -124,7 +124,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     heading: "Tracking heist contacts in Codex Cryptica",
     paragraphs: [
       "The generator doesn't build any of this for you automatically, but once you have named guards, fences, and rival crews, Codex Cryptica lets you save them as entities and link them with typed relationships — which corrupt guard owes a debt to which underworld contact, held once and shown on both sides.",
-      "That means a flashback token can spend an existing campaign relationship instead of an ad-hoc contact invented on the spot, because the connection is already on record from a previous session.",
+      "That means a flashback token can spend an existing campaign relationship instead of an ad hoc contact invented on the spot, because the connection is already on record from a previous session.",
     ],
     linkText: "Explore the RPG knowledge graph",
     href: "/solutions/rpg-knowledge-graph",

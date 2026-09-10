@@ -1333,7 +1333,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What should I look for in a heist generator?",
         answer:
-          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. This one is built around all three — see the example scores linked below and judge for yourself.",
+          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. See the example scores linked below and judge for yourself.",
       },
     ],
     relatedLinks: [
