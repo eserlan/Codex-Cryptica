@@ -244,6 +244,18 @@ The remaining topics from #2086, resequenced to satisfy its own cadence rule ("r
 
 ## Drafted (not yet posted)
 
+### Release comms auto-draft, 2026-09-10 (`10440ab`)
+
+- **Text:** I needed a quick reference for making a fantasy city feel lived-in instead of just a market square and a tavern. So I built the Living Fantasy City Guide: districts, economy, power structures, and daily life, ready to use at the table or in prep.
+
+codexcryptica.com/[relevant page]
+
+#TTRPG #Worldbuilding
+
+- **Image:** _TODO — needs a screenshot before this can be posted (see bsky-note SKILL.md Step 2 for sourcing one)._
+- **Alt:** _TODO_
+- **Note:** Auto-queued by the release comms agent from production release `10440ab`; text not yet human-reviewed.
+
 ### Random Tables & Interactive Decks (spec #157)
 
 - **Text:** I needed quick random encounter tables and card draws without leaving my campaign notes.
