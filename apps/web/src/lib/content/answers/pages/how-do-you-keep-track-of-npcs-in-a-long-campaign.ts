@@ -7,7 +7,7 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
   question: "How do you keep track of NPCs in a long campaign?",
   kind: "how-to",
   shortAnswer:
-    "Give every NPC who might return a short, standing record: name and role, what they want, where and when the party last saw them, their current status, and one open thread with them. Update it the moment something changes rather than reconstructing it later, and only most minor NPCs ever need more than that one line. The record's job is to answer 'who is this again?' in five seconds mid-session, not to be a biography.",
+    "Give every NPC who might return a short, standing record: name and role, what they want, where and when the party last saw them, their current status, and one open thread with them. Update it the moment something changes rather than reconstructing it later, and most minor NPCs never need more than that one line. The record's job is to answer 'who is this again?' in five seconds mid-session, not to be a biography.",
   sections: [
     {
       kind: "prose",
@@ -112,9 +112,9 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
   ],
   relatedForPages: [
     {
-      title: "Codex Cryptica for long-running campaigns",
+      title: "Codex Cryptica for D&D",
       description:
-        "Recurring characters, changing status, and open threads kept current across dozens of sessions.",
+        "Recurring characters, changing status, and open threads kept current across a long Dungeons & Dragons campaign.",
       href: "/for/dungeons-and-dragons",
     },
   ],
