@@ -488,7 +488,7 @@ jobs:
             local expect="$2"
             local url="${BASE_URL}${path}"
             local code
-            code=$(curl -s -o /tmp/smoke-body.html -w "%{http_code}" --retry 3 --retry-delay 5 --retry-connrefused "$url")
+            code=$(curl -sS -L --connect-timeout 10 --max-time 30 -o /tmp/smoke-body.html -w "%{http_code}" --retry 3 --retry-delay 5 --retry-connrefused "$url")
             if [ "$code" != "$expect" ]; then
               echo "::error::$url returned $code, expected $expect"
               exit 1
@@ -502,7 +502,7 @@ jobs:
 
           # App shell / homepage.
           check "/" "200"
-          # A representative public SEO route (no login, server-rendered content).
+          # A representative public SEO route (no login, prerendered content).
           check "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg" "200"
           # A representative generator landing page.
           check "/generators/heist" "200"

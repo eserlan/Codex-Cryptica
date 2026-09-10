@@ -111,7 +111,7 @@ The following secrets must be configured in GitHub repository settings:
 | `VITE_SHARED_GEMINI_KEY`           | Shared API key for the basic/lite model tier                                 |
 | `CLOUDFLARE_ACCOUNT_ID`            | Cloudflare account ID                                                        |
 | `CLOUDFLARE_API_TOKEN`             | Cloudflare API token with Pages deploy permissions                           |
-| `DISCORD_WEBHOOK_URL_PROD_DEPLOY`  | Webhook URL for the prod-deployment Discord channel                          |
+| `VITE_DISCORD_WEBHOOK_URL_PROD`    | Webhook URL for the prod-deployment Discord channel                          |
 | `VITE_DISCORD_WEBHOOK_URL_RELEASE` | Webhook URL for the release Discord channel (used for staging notifications) |
 
 ## Concurrency
@@ -139,7 +139,7 @@ The `promote-to-prod.yml` workflow does **not** cancel in-progress promotions to
 **Staging notification went to the wrong Discord channel:**
 
 - Staging notifications use `VITE_DISCORD_WEBHOOK_URL_RELEASE`
-- Production notifications use `DISCORD_WEBHOOK_URL_PROD_DEPLOY`
+- Production notifications use `VITE_DISCORD_WEBHOOK_URL_PROD`
 
 **Smoke test failed after a staging or production deploy:**
 
