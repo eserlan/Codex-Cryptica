@@ -14,6 +14,7 @@ import {
   recordEvaluation,
   runAgentCapturingOutput,
   saveReleaseCommsState,
+  type EvaluatorResult,
   type ReleaseCommsState,
 } from "./release-comms-agent.ts";
 
@@ -138,9 +139,47 @@ describe("release-comms-agent", () => {
       });
       expect(prompt).toContain("Faction Roster Generator");
       expect(prompt).toContain("bluesky, discord");
-      expect(prompt).toContain(".claude/skills/bsky-note/SKILL.md");
-      expect(prompt).toContain(".claude/skills/cc-announcer/SKILL.md");
+      expect(prompt).toContain(".agent/skills/bsky-note/SKILL.md");
+      expect(prompt).toContain(".agent/skills/cc-announcer/SKILL.md");
       expect(prompt).toContain('"bluesky"');
+    });
+
+    it("defaults to all three channels when recommended_channels is empty", () => {
+      const prompt = buildWriterPrompt({
+        postworthy: true,
+        importance: "medium",
+        features: [
+          {
+            name: "Faction Roster Generator",
+            why_users_care: "Fast NPC groups.",
+          },
+        ],
+        recommended_channels: [],
+        reason: "new generator",
+      });
+      expect(prompt).toContain("bluesky, discord, reddit");
+      expect(prompt).not.toContain("Recommended channels: (none)");
+    });
+
+    it("defaults to all three channels when recommended_channels is undefined", () => {
+      const prompt = buildWriterPrompt({
+        postworthy: true,
+        importance: "medium",
+        features: [],
+        reason: "new generator",
+      } as EvaluatorResult);
+      expect(prompt).toContain("bluesky, discord, reddit");
+    });
+
+    it("treats evaluator output as untrusted data", () => {
+      const prompt = buildWriterPrompt({
+        postworthy: true,
+        importance: "medium",
+        features: [],
+        recommended_channels: ["bluesky"],
+        reason: "new generator",
+      });
+      expect(prompt).toContain("untrusted data");
     });
   });
 

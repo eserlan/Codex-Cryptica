@@ -93,8 +93,9 @@ checking the active process and its per-run log.
 
 For the release comms agent specifically: when a release is postworthy, a
 second "writer" agent pass drafts channel-specific Bluesky/Discord/Reddit
-copy (consulting `.claude/skills/bsky-note/SKILL.md` and
-`.claude/skills/cc-announcer/SKILL.md` for voice/format rules), and the
+copy (consulting `.agent/skills/bsky-note/SKILL.md` and
+`.agent/skills/cc-announcer/SKILL.md` for voice/format rules — cc-announcer
+is also mirrored under `.codex/skills/`), and the
 evaluator verdict plus drafts are posted as one comment on
 [issue #2906](https://github.com/eserlan/Codex-Cryptica/issues/2906),
 matching the "Approve / Skip" template requested there. Nothing is
