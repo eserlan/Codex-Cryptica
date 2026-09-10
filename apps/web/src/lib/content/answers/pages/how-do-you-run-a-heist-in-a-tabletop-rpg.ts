@@ -15,7 +15,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       heading: "The fatal planning paralysis trap",
       paragraphs: [
         "Traditional tabletop heists frequently stall because players spend two to three real-world hours arguing over theoretical contingencies. They debate guard shift rotations, buy fifty feet of silk rope, and plan escape routes for scenarios that will never happen. The moment the first stealth roll fails in room two, that exhaustive plan collapses, leaving players frustrated and the Game Master scrambling.",
-        "Borrowing the flashback structure pioneered by narrative systems like Blades in the Dark solves this friction completely. By assuming the characters are competent scoundrels who planned off-screen, you can drop the party straight onto the rooftop or into the ventilation duct, shifting table energy from anxiety-driven contingency debates to immediate, reactive problem-solving.",
+        "Borrowing the flashback structure from narrative systems like Blades in the Dark cuts most of that debate out. By assuming the characters are competent scoundrels who planned off-screen, you can drop the party straight onto the rooftop or into the ventilation duct, and deal with obstacles as they come up instead of arguing about them in advance.",
       ],
       cta: {
         text: "Generate a heist",
@@ -60,11 +60,11 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
         },
         {
           term: "Engagement with flashback tokens",
-          text: "Grant each player one or two flashback tokens. When a locked reinforced door or unexpected patrol appears, a player spends a token to declare how their character prepared for this obstacle hours earlier.",
+          text: "Grant each player two flashback tokens. When a locked reinforced door or unexpected patrol appears, a player spends a token to declare how their character prepared for this obstacle hours earlier.",
         },
         {
           term: "The escalating alarm track",
-          text: "Track discovery with a four-stage or six-stage alarm track visible on the table. Failed skill checks or loud spells tick the counter forward, triggering reinforcements, lockdown gates, or ward dispels.",
+          text: "Track discovery with a five-state alarm track visible on the table: Quiet, Suspicion, Alert, Lockdown, and Lethal Response. Failed skill checks or loud spells tick the counter forward, triggering reinforcements, lockdown gates, or ward dispels.",
         },
         {
           term: "The compromised getaway",
@@ -72,7 +72,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
         },
       ],
       outro:
-        "This cadence keeps the pace brisk while rewarding tactical cleverness over tedious logistics.",
+        "The structure keeps the table moving: players react to what is actually in front of them instead of debating hypotheticals.",
     },
     {
       kind: "example",
@@ -114,17 +114,37 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       items: [
         "A clear target prize with a tangible physical weight, size, or volatile magical aura.",
         "Three distinct security rings: perimeter patrol, access barrier, and inner vault lock.",
-        "A visual alarm track with four defined thresholds: Suspicion, Alert, Lockdown, and Lethal Response.",
-        "Two predetermined flashback tokens allocated to each player character.",
+        "A visual alarm track with five states: Quiet, Suspicion, Alert, Lockdown, and Lethal Response.",
+        "Two flashback tokens allocated to each player character.",
         "One unexpected wildcard complication that triggers automatically when the prize is lifted.",
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Blades in the Dark",
+      rationale:
+        "Flashbacks let a player establish a preparation retroactively, and its clocks give the alarm track a ready-made mechanic rather than a house rule.",
+      href: "https://bladesinthedark.com/",
+    },
+    {
+      system: "Scum & Villainy",
+      rationale:
+        "The same flashback and clock engine as Blades in the Dark, reskinned for a starship crew running jobs across a sector.",
+      href: "https://www.evilhat.com/home/scum-villainy/",
+    },
+    {
+      system: "Leverage: The Roleplaying Game",
+      rationale:
+        "Built around a heist's planning montage: players narrate flashback preparations during the job itself, and complications create reversals rather than dead ends.",
+      href: "https://www.evilhat.com/home/leverage/",
+    },
+  ],
   codexConnection: {
-    heading: "Mapping complex heist scores in Codex Cryptica",
+    heading: "Tracking heist contacts in Codex Cryptica",
     paragraphs: [
-      "Codex Cryptica makes running intricate heists easier through spatial relationship mapping. You can plot your target compound on a canvas, linking floorplan nodes directly to security patrols, faction keys, and alarm triggers.",
-      "Using the entity graph, you can track which corrupt guards owe debts to the party underworld contacts, allowing players to spend their flashback tokens on existing campaign relationships rather than inventing ad-hoc contacts on the spot.",
+      "The generator doesn't build any of this for you automatically, but once you have named guards, fences, and rival crews, Codex Cryptica lets you save them as entities and link them with typed relationships — which corrupt guard owes a debt to which underworld contact, held once and shown on both sides.",
+      "That means a flashback token can spend an existing campaign relationship instead of an ad hoc contact invented on the spot, because the connection is already on record from a previous session.",
     ],
     linkText: "Explore the RPG knowledge graph",
     href: "/solutions/rpg-knowledge-graph",

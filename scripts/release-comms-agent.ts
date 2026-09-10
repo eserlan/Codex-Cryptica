@@ -204,6 +204,40 @@ function resolvePromoteShas(promoteRunId: string): {
   return { newSha, previousSha };
 }
 
+/**
+ * Promotion webhooks provide commit SHAs, but the listener's checkout may not
+ * have fetched the production ref that contains them. Fetch both endpoints
+ * before deriving a range so a newly promoted release can always be evaluated.
+ */
+export function fetchPromotionCommits(
+  previousSha: string,
+  newSha: string,
+  run: typeof execFileSync = execFileSync,
+): void {
+  if (previousSha.startsWith("-") || newSha.startsWith("-")) {
+    throw new Error(
+      `[release-comms] invalid promotion SHA(s): previous=${previousSha} new=${newSha}`,
+    );
+  }
+
+  try {
+    run("git", ["fetch", "--no-tags", "origin", previousSha, newSha], {
+      cwd: REPOSITORY_ROOT,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stderr =
+      error && typeof error === "object" && "stderr" in error
+        ? String((error as { stderr?: Buffer | string }).stderr ?? "").trim()
+        : "";
+    const details = stderr ? `\n${stderr}` : "";
+
+    throw new Error(
+      `[release-comms] git fetch failed for ${previousSha}..${newSha}: ${message}${details}`,
+    );
+  }
+}
+
 function gatherDelta(previousSha: string, newSha: string) {
   const commitLog = execFileSync(
     "git",
@@ -360,6 +394,7 @@ export async function main(promoteRunId: string): Promise<void> {
   }
 
   const logPath = getReleaseCommsLogPath(promoteRunId);
+  fetchPromotionCommits(previousSha, newSha);
   const delta = gatherDelta(previousSha, newSha);
   const evaluatorPrompt = buildEvaluatorPrompt({
     previousSha,

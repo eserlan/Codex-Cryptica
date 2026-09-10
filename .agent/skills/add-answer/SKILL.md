@@ -41,6 +41,10 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
 6. **Clean List Item Titles (No Redundant Numbering)**:
    - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
+7. **Optional `systemsThatSupportThis` (#2769)**:
+   - Only add an entry when a named RPG system has an actual rule or procedure for this topic (a named mechanic, not a matching genre or vibe). "Blades in the Dark" belongs on a heist answer because of its flashback/clock rules; a generic fantasy heartbreaker that merely permits heists does not.
+   - Each entry needs `system`, one-sentence `rationale` naming the specific mechanic, and an external `href` to the system's own site or its publisher.
+   - Roughly 2 to 4 entries where genuinely applicable. Omit the field entirely rather than padding it with a loosely-related system.
 
 ---
 
@@ -153,6 +157,13 @@ export const <camelCaseName>: AnswerConfigInput = {
         "<Actionable item 2>",
         "<Actionable item 3>",
       ],
+    },
+  ],
+  systemsThatSupportThis: [ // Optional. Only if a system has real mechanical support for this topic (#2769).
+    {
+      system: "<System Name>",
+      rationale: "<One sentence naming the specific mechanic that supports this topic.>",
+      href: "<https://external-system-site.example>",
     },
   ],
   codexConnection: {

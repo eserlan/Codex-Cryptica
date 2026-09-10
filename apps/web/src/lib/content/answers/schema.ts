@@ -135,6 +135,26 @@ export const AnswerBlockSchema = z.discriminatedUnion("kind", [
 ]);
 export type AnswerBlock = z.infer<typeof AnswerBlockSchema>;
 
+/**
+ * An RPG system called out because its rules give actual mechanical support
+ * to the answer's topic, not merely a matching genre or theme (#2769). E.g.
+ * Blades in the Dark for a heist answer because of its flashback/clock rules,
+ * not because it is "also about crime".
+ */
+export const AnswerSystemReferenceSchema = z.object({
+  system: z.string().min(1),
+  /** One sentence: which specific mechanic supports this topic, and how. */
+  rationale: z.string().min(1),
+  href: z
+    .string()
+    .url()
+    .refine(
+      (value) => /^https?:\/\//.test(value),
+      "href must be an http(s) URL",
+    ),
+});
+export type AnswerSystemReference = z.infer<typeof AnswerSystemReferenceSchema>;
+
 /** An internal link out to a live Codex surface or another answer. */
 export const AnswerLinkSchema = z.object({
   title: z.string().min(1),
@@ -174,6 +194,16 @@ export const AnswerConfigSchema = z.object({
       linkText: z.string().min(1),
       href: z.string().startsWith("/"),
     })
+    .optional(),
+  /**
+   * Optional pointer to RPG systems whose rules give real mechanical support
+   * to this topic. Omit rather than pad: only include a system here when it
+   * has an actual procedure for this, not just a fitting genre. Roughly 2-4
+   * entries where appropriate. See #2769.
+   */
+  systemsThatSupportThis: z
+    .array(AnswerSystemReferenceSchema)
+    .min(1)
     .optional(),
   /** The category this answer belongs to for browsing and index organisation. */
   category: AnswerCategoryIdSchema,

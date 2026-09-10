@@ -6,6 +6,7 @@ import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
   extractJsonBlock,
+  fetchPromotionCommits,
   getReleaseCommsLogPath,
   isEvaluatorResult,
   isWriterResult,
@@ -335,6 +336,35 @@ describe("release-comms-agent", () => {
         { databaseId: 2, headSha: "bbb" },
       ];
       expect(pickPreviousSha(runs, 999)).toBe("ccc");
+    });
+  });
+
+  describe("fetchPromotionCommits", () => {
+    it("fetches both promotion range endpoints before deriving the delta", () => {
+      const calls: Array<{ file: string; args: readonly string[] }> = [];
+      const run = ((file: string, args: readonly string[]) => {
+        calls.push({ file, args });
+        return Buffer.from("");
+      }) as typeof import("node:child_process").execFileSync;
+
+      fetchPromotionCommits("before-sha", "after-sha", run);
+
+      expect(calls).toEqual([
+        {
+          file: "git",
+          args: ["fetch", "--no-tags", "origin", "before-sha", "after-sha"],
+        },
+      ]);
+    });
+
+    it("surfaces a fetch failure instead of calculating a misleading partial range", () => {
+      const run = (() => {
+        throw new Error("remote unavailable");
+      }) as typeof import("node:child_process").execFileSync;
+
+      expect(() =>
+        fetchPromotionCommits("before-sha", "after-sha", run),
+      ).toThrow("remote unavailable");
     });
   });
 
