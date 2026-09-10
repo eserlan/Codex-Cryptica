@@ -214,10 +214,23 @@ export function fetchPromotionCommits(
   newSha: string,
   run: typeof execFileSync = execFileSync,
 ): void {
-  run("git", ["fetch", "--no-tags", "origin", previousSha, newSha], {
-    cwd: REPOSITORY_ROOT,
-    stdio: "ignore",
-  });
+  try {
+    run("git", ["fetch", "--no-tags", "origin", previousSha, newSha], {
+      cwd: REPOSITORY_ROOT,
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+  } catch (error) {
+    const stderr =
+      error && typeof error === "object" && "stderr" in error
+        ? String((error as { stderr?: Buffer | string }).stderr ?? "").trim()
+        : "";
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `git fetch failed for promotion range ${previousSha}..${newSha}: ${
+        stderr || message
+      }`,
+    );
+  }
 }
 
 function gatherDelta(previousSha: string, newSha: string) {

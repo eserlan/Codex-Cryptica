@@ -366,6 +366,22 @@ describe("release-comms-agent", () => {
         fetchPromotionCommits("before-sha", "after-sha", run),
       ).toThrow("remote unavailable");
     });
+
+    it("rethrows with the captured stderr so auth/remote errors stay actionable", () => {
+      const run = (() => {
+        const error = new Error(
+          "Command failed: git fetch --no-tags origin before-sha after-sha",
+        ) as Error & { stderr?: Buffer };
+        error.stderr = Buffer.from(
+          "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n",
+        );
+        throw error;
+      }) as typeof import("node:child_process").execFileSync;
+
+      expect(() =>
+        fetchPromotionCommits("before-sha", "after-sha", run),
+      ).toThrow(/could not read Username/);
+    });
   });
 
   describe("getReleaseCommsLogPath", () => {
