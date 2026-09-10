@@ -14,6 +14,7 @@ import {
 
 const PORT = Number(process.env.PR_WEBHOOK_PORT ?? 8788);
 const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
+const RELEASE_COMMS_SECRET = process.env.RELEASE_COMMS_SECRET;
 const EXPECTED_REPOSITORY =
   process.env.GITHUB_REPOSITORY ?? "eserlan/Codex-Cryptica";
 const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
@@ -24,6 +25,7 @@ const AUTO_MERGE_QUIET_MS = 60_000;
 const activeJobs = new Map<number, ReturnType<typeof spawn>>();
 const claimedJobs = new Set<number>();
 const scheduledMerges = new Map<number, ReturnType<typeof setTimeout>>();
+const activeCommsJobs = new Map<string, ReturnType<typeof spawn>>();
 
 const EVENT_ACTIONS: Record<string, readonly string[]> = {
   pull_request: ["opened", "reopened", "synchronize", "ready_for_review"],
@@ -109,6 +111,25 @@ export async function verifySignature(
   const [actualDigest, expectedDigest] = await Promise.all([
     crypto.subtle.digest("SHA-256", new TextEncoder().encode(header)),
     crypto.subtle.digest("SHA-256", new TextEncoder().encode(expected)),
+  ]);
+  const actualBytes = new Uint8Array(actualDigest);
+  const expectedBytes = new Uint8Array(expectedDigest);
+  let difference = 0;
+  for (let index = 0; index < expectedBytes.length; index++) {
+    difference |= actualBytes[index] ^ expectedBytes[index];
+  }
+  return difference === 0;
+}
+
+/** Constant-time-ish comparison of a shared-secret header against the expected value. */
+export async function verifySharedSecret(
+  header: string | null,
+  secret: string,
+): Promise<boolean> {
+  if (!header) return false;
+  const [actualDigest, expectedDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(header)),
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret)),
   ]);
   const actualBytes = new Uint8Array(actualDigest);
   const expectedBytes = new Uint8Array(expectedDigest);
@@ -307,6 +328,32 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
   }
 }
 
+export function launchReleaseComms(promoteRunId: string): boolean {
+  if (activeCommsJobs.has(promoteRunId)) {
+    console.log(
+      `[webhook] release-comms already running for promote run ${promoteRunId}; ignoring duplicate`,
+    );
+    return false;
+  }
+
+  const child = spawn("bun", ["scripts/release-comms-agent.ts", promoteRunId], {
+    cwd: REPOSITORY_ROOT,
+    env: { ...process.env, HUSKY: "0" },
+    stdio: "inherit",
+  });
+  activeCommsJobs.set(promoteRunId, child);
+  child.on("exit", (code, signal) => {
+    activeCommsJobs.delete(promoteRunId);
+    console.log(
+      `[webhook] release-comms for promote run ${promoteRunId} exited with ${signal ?? code ?? "unknown"}`,
+    );
+  });
+  console.log(
+    `[webhook] started release-comms agent for promote run ${promoteRunId}`,
+  );
+  return true;
+}
+
 async function launchStagingConflictFixes(): Promise<number> {
   let prNumbers: number[];
   try {
@@ -415,18 +462,55 @@ if (import.meta.main) {
   Bun.serve({
     port: PORT,
     async fetch(request) {
-      if (
-        request.method === "GET" &&
-        new URL(request.url).pathname === "/health"
-      ) {
+      const pathname = new URL(request.url).pathname;
+
+      if (request.method === "GET" && pathname === "/health") {
         return response(
-          JSON.stringify({ ok: true, activeJobs: activeJobs.size }),
+          JSON.stringify({
+            ok: true,
+            activeJobs: activeJobs.size,
+            activeCommsJobs: activeCommsJobs.size,
+          }),
         );
       }
-      if (
-        request.method !== "POST" ||
-        new URL(request.url).pathname !== "/github"
-      ) {
+
+      if (request.method === "POST" && pathname === "/release-comms") {
+        if (!RELEASE_COMMS_SECRET) {
+          return response(
+            JSON.stringify({ error: "release comms not configured" }),
+            403,
+          );
+        }
+        const commsBody = await readRequestBody(request);
+        if (commsBody === null) {
+          return response(JSON.stringify({ error: "payload too large" }), 413);
+        }
+        if (
+          !(await verifySharedSecret(
+            request.headers.get("x-release-comms-secret"),
+            RELEASE_COMMS_SECRET,
+          ))
+        ) {
+          return response(JSON.stringify({ error: "invalid secret" }), 401);
+        }
+        let commsPayload: Record<string, unknown>;
+        try {
+          commsPayload = JSON.parse(commsBody);
+        } catch {
+          return response(JSON.stringify({ error: "invalid JSON" }), 400);
+        }
+        const promoteRunId = String(commsPayload.promoteRunId ?? "");
+        if (!promoteRunId) {
+          return response(
+            JSON.stringify({ error: "promoteRunId required" }),
+            400,
+          );
+        }
+        const started = launchReleaseComms(promoteRunId);
+        return response(JSON.stringify({ accepted: started }), 202);
+      }
+
+      if (request.method !== "POST" || pathname !== "/github") {
         return response(JSON.stringify({ error: "not found" }), 404);
       }
 
