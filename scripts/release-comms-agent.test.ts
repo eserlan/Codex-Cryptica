@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
+  assetForPublicPage,
   extractJsonBlock,
   fetchPromotionCommits,
   getReleaseCommsLogPath,
@@ -126,21 +127,32 @@ describe("release-comms-agent", () => {
   });
 
   describe("isWriterResult", () => {
-    it("accepts a bluesky array plus the three whole-release channel strings", () => {
+    it("accepts page-addressed Bluesky and Discussion drafts", () => {
       expect(
         isWriterResult({
           bluesky: [],
           discord: "text",
           reddit: "",
-          github_discussion: "",
+          github_discussions: [],
         }),
       ).toBe(true);
       expect(
         isWriterResult({
-          bluesky: ["post one", "post two"],
+          bluesky: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/x",
+              text: "post one",
+            },
+          ],
           discord: "",
           reddit: "",
-          github_discussion: "",
+          github_discussions: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/x",
+              title: "Title",
+              body: "Body",
+            },
+          ],
         }),
       ).toBe(true);
     });
@@ -151,7 +163,7 @@ describe("release-comms-agent", () => {
           bluesky: "x",
           discord: "y",
           reddit: "z",
-          github_discussion: "",
+          github_discussions: [],
         }),
       ).toBe(false);
       expect(isWriterResult({ bluesky: [], discord: "y", reddit: "z" })).toBe(
@@ -162,7 +174,7 @@ describe("release-comms-agent", () => {
           bluesky: [1],
           discord: "y",
           reddit: "z",
-          github_discussion: "",
+          github_discussions: [],
         }),
       ).toBe(false);
       expect(isWriterResult(null)).toBe(false);
@@ -201,7 +213,7 @@ describe("release-comms-agent", () => {
       );
       expect(prompt).toContain(".agent/skills/bsky-note/SKILL.md");
       expect(prompt).toContain(".agent/skills/cc-announcer/SKILL.md");
-      expect(prompt).toContain('"github_discussion"');
+      expect(prompt).toContain('"github_discussions"');
     });
 
     it("tells the writer to draft one standalone Bluesky post per bluesky_worthy feature, never combined", () => {
@@ -311,6 +323,34 @@ describe("release-comms-agent", () => {
         reason: "new generator",
       });
       expect(prompt).toContain("untrusted data");
+    });
+  });
+
+  describe("assetForPublicPage", () => {
+    const item = {
+      kind: "answer" as const,
+      title: "A page",
+      url: "https://codexcryptica.com/answers/a-page",
+      imageUrl: "https://assets.codexcryptica.com/og/a-page.jpg",
+      imageAlt: "A page card",
+      sourcePath: "answer.ts",
+    };
+
+    it("uses only the social asset matched to the writer's exact page URL", () => {
+      expect(assetForPublicPage([item], item.url)).toEqual({
+        pageUrl: item.url,
+        imageUrl: item.imageUrl,
+        imageAlt: item.imageAlt,
+      });
+    });
+
+    it("rejects unknown pages and pages without a verified image", () => {
+      expect(() =>
+        assetForPublicPage([item], "https://codexcryptica.com/answers/other"),
+      ).toThrow("outside this release");
+      expect(() =>
+        assetForPublicPage([{ ...item, imageUrl: undefined }], item.url),
+      ).toThrow("no verified social image");
     });
   });
 
@@ -479,10 +519,15 @@ describe("release-comms-agent", () => {
           postworthy: true,
           reason: "new generator",
           drafts: {
-            bluesky: ["post text"],
+            bluesky: [
+              {
+                pageUrl: "https://codexcryptica.com/answers/x",
+                text: "post text",
+              },
+            ],
             discord: "",
             reddit: "",
-            github_discussion: "",
+            github_discussions: [],
           },
         });
         await saveReleaseCommsState(withEntry, path);
@@ -491,7 +536,9 @@ describe("release-comms-agent", () => {
         expect(reloaded.lastEvaluatedSha).toBe("abc1234");
         expect(reloaded.history).toHaveLength(1);
         expect(reloaded.history[0].reason).toBe("new generator");
-        expect(reloaded.history[0].drafts?.bluesky).toEqual(["post text"]);
+        expect(reloaded.history[0].drafts?.bluesky).toEqual([
+          { pageUrl: "https://codexcryptica.com/answers/x", text: "post text" },
+        ]);
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

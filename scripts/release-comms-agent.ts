@@ -12,7 +12,16 @@ import {
   buildWriterPrompt,
   formatIssueComment,
 } from "./release-comms-prompts.ts";
-import { queueBlueskyDrafts } from "./release-comms-queue.ts";
+import {
+  publishBlueskyPost,
+  publishDiscussion,
+  type BlueskyAsset,
+} from "./release-comms-publish.ts";
+import {
+  discoverGeneratorPublicContent,
+  discoverPublicContent,
+  type PublicContentItem,
+} from "./release-comms-content.ts";
 import {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -30,7 +39,6 @@ export {
   buildEvaluatorPrompt,
   buildWriterPrompt,
 } from "./release-comms-prompts.ts";
-export { queueBlueskyDrafts } from "./release-comms-queue.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -234,6 +242,7 @@ export function fetchPromotionCommits(
 
     throw new Error(
       `[release-comms] git fetch failed for ${previousSha}..${newSha}: ${message}${details}`,
+      { cause: error },
     );
   }
 }
@@ -287,6 +296,79 @@ function gatherDelta(previousSha: string, newSha: string) {
   }
 
   return { commitLog, mergedPrs, changelogDiff };
+}
+
+export function findPublicContent(
+  previousSha: string,
+  newSha: string,
+): PublicContentItem[] {
+  const changedFiles = execFileSync(
+    "git",
+    [
+      "diff",
+      "--name-status",
+      previousSha,
+      newSha,
+      "--",
+      "apps/web/src/lib/content",
+      "apps/web/src/routes/(marketing)/tools",
+      "apps/web/src/lib/components/seo/generator-page-meta.ts",
+    ],
+    { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
+  )
+    .trim()
+    .split("\n")
+    .flatMap((line) => {
+      const [status, path] = line.split("\t");
+      return status && path && !status.startsWith("D") ? [path] : [];
+    });
+  return changedFiles.flatMap((path) => {
+    try {
+      const source = execFileSync("git", ["show", `${newSha}:${path}`], {
+        cwd: REPOSITORY_ROOT,
+        encoding: "utf-8",
+      });
+      if (path.endsWith("/generator-page-meta.ts")) {
+        const changedGeneratorSlugs =
+          execFileSync(
+            "git",
+            ["diff", "--unified=0", previousSha, newSha, "--", path],
+            { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
+          )
+            .match(/^\+ {2}([a-z0-9-]+): \{$/gm)
+            ?.map((line) => line.slice(3, -3)) ?? [];
+        return changedGeneratorSlugs.flatMap((slug) => {
+          const item = discoverGeneratorPublicContent(source, slug, path);
+          return item ? [item] : [];
+        });
+      }
+      const item = discoverPublicContent(path, source);
+      return item ? [item] : [];
+    } catch {
+      // A renamed/deleted path can disappear between name-status and show.
+      return [];
+    }
+  });
+}
+
+export function assetForPublicPage(
+  items: PublicContentItem[],
+  pageUrl: string,
+): BlueskyAsset {
+  const item = items.find((candidate) => candidate.url === pageUrl);
+  if (!item) {
+    throw new Error(
+      `Writer referenced a public page outside this release: ${pageUrl}`,
+    );
+  }
+  if (!item.imageUrl || !item.imageAlt) {
+    throw new Error(`Public page has no verified social image: ${pageUrl}`);
+  }
+  return {
+    pageUrl: item.url,
+    imageUrl: item.imageUrl,
+    imageAlt: item.imageAlt,
+  };
 }
 
 /** Recent Announcements titles, used to calibrate the Reddit/Discussion bar against real history. */
@@ -396,21 +478,34 @@ export async function main(promoteRunId: string): Promise<void> {
   const logPath = getReleaseCommsLogPath(promoteRunId);
   fetchPromotionCommits(previousSha, newSha);
   const delta = gatherDelta(previousSha, newSha);
-  const evaluatorPrompt = buildEvaluatorPrompt({
-    previousSha,
-    newSha,
-    ...delta,
-    recentDiscussionTitles: fetchRecentDiscussionTitles(),
-    recentBlueskyTitles: fetchRecentBlueskyTitles(),
-  });
-
-  const result = await runJsonAgentPass(
-    evaluatorPrompt,
-    logPath,
-    promoteRunId,
-    isEvaluatorResult,
-    "evaluate",
+  const publicContent = findPublicContent(previousSha, newSha);
+  const resumable = state.history.find(
+    (entry) =>
+      entry.sha === newSha && entry.completed === false && entry.drafts,
   );
+  const result: import("./release-comms-types.ts").EvaluatorResult = resumable
+    ? {
+        postworthy: resumable.postworthy,
+        importance: resumable.importance as
+          "low" | "medium" | "high" | undefined,
+        features: resumable.features,
+        recommended_channels: resumable.recommendedChannels,
+        reason: resumable.reason,
+      }
+    : await runJsonAgentPass(
+        buildEvaluatorPrompt({
+          previousSha,
+          newSha,
+          ...delta,
+          publicContent,
+          recentDiscussionTitles: fetchRecentDiscussionTitles(),
+          recentBlueskyTitles: fetchRecentBlueskyTitles(),
+        }),
+        logPath,
+        promoteRunId,
+        isEvaluatorResult,
+        "evaluate",
+      );
   if (!result) {
     console.error(
       `[release-comms] evaluator produced no usable result; see ${logPath}`,
@@ -418,23 +513,25 @@ export async function main(promoteRunId: string): Promise<void> {
     return;
   }
 
-  let drafts: WriterResult | null = null;
-  if (result.postworthy) {
-    drafts = await runJsonAgentPass(
-      buildWriterPrompt(result),
-      logPath,
-      promoteRunId,
-      isWriterResult,
-      "write",
+  const drafts: WriterResult | null =
+    resumable?.drafts ??
+    (result.postworthy
+      ? await runJsonAgentPass(
+          buildWriterPrompt(result, publicContent),
+          logPath,
+          promoteRunId,
+          isWriterResult,
+          "write",
+        )
+      : null);
+  if (result.postworthy && !drafts) {
+    console.error(
+      `[release-comms] writer produced no usable drafts; see ${logPath}`,
     );
-    if (!drafts) {
-      console.error(
-        `[release-comms] writer produced no usable drafts; see ${logPath}`,
-      );
-    }
+    return;
   }
 
-  const entry: ReleaseCommsHistoryEntry = {
+  let entry: ReleaseCommsHistoryEntry = {
     sha: newSha,
     date: new Date().toISOString(),
     promoteRunId,
@@ -444,22 +541,74 @@ export async function main(promoteRunId: string): Promise<void> {
     recommendedChannels: result.recommended_channels,
     reason: result.reason,
     drafts: drafts ?? undefined,
+    publications: resumable?.publications ?? {
+      bluesky: [],
+      githubDiscussions: [],
+    },
+    completed: false,
   };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 
-  const queueResult =
-    drafts && drafts.bluesky.length > 0
-      ? await queueBlueskyDrafts(drafts.bluesky, entry, REPOSITORY_ROOT)
-      : null;
-  if (queueResult?.error) {
-    console.error(
-      `[release-comms] could not queue Bluesky drafts: ${queueResult.error}`,
-    );
-  } else if (queueResult?.commitUrl) {
-    console.log(
-      `[release-comms] queued ${queueResult.queued} Bluesky draft(s): ${queueResult.commitUrl}`,
-    );
+  if (drafts) {
+    const publishedBluesky = entry.publications?.bluesky ?? [];
+    for (const draft of drafts.bluesky.filter(
+      (draft) =>
+        !publishedBluesky.some(
+          (publication) => publication.pageUrl === draft.pageUrl,
+        ),
+    )) {
+      const publication = publishBlueskyPost(
+        draft.text,
+        assetForPublicPage(publicContent, draft.pageUrl),
+      );
+      console.log(`[release-comms] published Bluesky post: ${publication.url}`);
+      entry = {
+        ...entry,
+        publications: {
+          ...entry.publications!,
+          bluesky: [
+            ...publishedBluesky,
+            { pageUrl: draft.pageUrl, url: publication.url },
+          ],
+        },
+      };
+      publishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
+      await saveReleaseCommsState(recordEvaluation(state, entry));
+    }
+    const publishedDiscussions = entry.publications?.githubDiscussions ?? [];
+    for (const draft of drafts.github_discussions.filter(
+      (draft) =>
+        !publishedDiscussions.some(
+          (publication) => publication.pageUrl === draft.pageUrl,
+        ),
+    )) {
+      const publication = publishDiscussion(
+        draft.title,
+        draft.body,
+        assetForPublicPage(publicContent, draft.pageUrl),
+      );
+      console.log(
+        `[release-comms] published GitHub Discussion: ${publication.url}`,
+      );
+      entry = {
+        ...entry,
+        publications: {
+          ...entry.publications!,
+          githubDiscussions: [
+            ...publishedDiscussions,
+            { pageUrl: draft.pageUrl, url: publication.url },
+          ],
+        },
+      };
+      publishedDiscussions.push({
+        pageUrl: draft.pageUrl,
+        url: publication.url,
+      });
+      await saveReleaseCommsState(recordEvaluation(state, entry));
+    }
   }
+  entry = { ...entry, completed: true };
+  await saveReleaseCommsState(recordEvaluation(state, entry));
 
   try {
     execFileSync(
@@ -469,7 +618,7 @@ export async function main(promoteRunId: string): Promise<void> {
         "comment",
         String(TRACKING_ISSUE),
         "--body",
-        formatIssueComment(entry, result, drafts, queueResult),
+        formatIssueComment(entry, result, drafts),
       ],
       { cwd: REPOSITORY_ROOT, stdio: "inherit" },
     );

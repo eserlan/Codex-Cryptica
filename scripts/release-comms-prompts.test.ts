@@ -16,10 +16,15 @@ describe("formatIssueComment", () => {
     reason: "new generator",
   };
   const drafts: WriterResult = {
-    bluesky: ["post one"],
+    bluesky: [
+      {
+        pageUrl: "https://codexcryptica.com/answers/faction-roster",
+        text: "post one",
+      },
+    ],
     discord: "discord draft",
     reddit: "",
-    github_discussion: "",
+    github_discussions: [],
   };
 
   it("keeps blank-line separators between sections", () => {
@@ -33,17 +38,32 @@ describe("formatIssueComment", () => {
     expect(comment).toContain("Discord:\ndiscord draft\n\nReddit:");
   });
 
-  it("omits the queue line without collapsing surrounding blank lines when there is no queueResult", () => {
+  it("lists the exact public page for each Bluesky draft", () => {
     const comment = formatIssueComment(entry as never, result, drafts, null);
-    expect(comment).toContain("1. post one\n\nDiscord:");
+    expect(comment).toContain(
+      "1. post one (https://codexcryptica.com/answers/faction-roster)\n\nDiscord:",
+    );
   });
 
-  it("includes an error line when queueing failed", () => {
-    const comment = formatIssueComment(entry as never, result, drafts, {
-      queued: 0,
-      error: "push rejected",
-    });
-    expect(comment).toContain("Could not auto-queue the Bluesky draft(s)");
+  it("lists durable publication URLs", () => {
+    const comment = formatIssueComment(
+      {
+        ...entry,
+        publications: {
+          bluesky: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/faction-roster",
+              url: "https://bsky.app/profile/test/post/1",
+            },
+          ],
+          githubDiscussions: [],
+        },
+      } as never,
+      result,
+      drafts,
+      null,
+    );
+    expect(comment).toContain("https://bsky.app/profile/test/post/1");
   });
 
   it("omits the queue line entirely when there are no bluesky drafts", () => {

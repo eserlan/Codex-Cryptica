@@ -20,6 +20,7 @@ export function buildEvaluatorPrompt(input: {
   commitLog: string;
   mergedPrs: string;
   changelogDiff: string;
+  publicContent?: Array<{ kind: string; title: string; url: string }>;
   recentDiscussionTitles: string;
   recentBlueskyTitles: string;
 }): string {
@@ -52,6 +53,9 @@ ${input.mergedPrs || "(none)"}
 Changelog (releases.json) diff for this range, if any (this is the most reliable signal of genuinely user-facing work):
 ${input.changelogDiff || "(no changelog entry added in this range)"}
 
+Public pages detected directly from the promoted diff. Use these exact URLs when you discuss an item; do not invent another page:
+${input.publicContent?.map((item) => `- ${item.kind}: ${item.title} (${item.url})`).join("\n") || "(none detected)"}
+
 Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose. "recommended_channels" must be the actual subset of ["discord", "reddit", "github_discussion"] that clears that channel's higher bar above — most releases will have an empty "recommended_channels" with only some features marked "bluesky_worthy", not all three whole-release channels:
 
 {
@@ -73,7 +77,10 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
  * writer prompt — an unknown/typo'd channel would ask the writer to draft
  * for a key that isn't in the required JSON shape and fail `isWriterResult`.
  */
-export function buildWriterPrompt(evaluation: EvaluatorResult): string {
+export function buildWriterPrompt(
+  evaluation: EvaluatorResult,
+  publicContent: Array<{ kind: string; title: string; url: string }> = [],
+): string {
   const blueskyFeatures = (evaluation.features ?? []).filter(
     (feature) => feature.bluesky_worthy,
   );
@@ -98,7 +105,10 @@ ${featureList || "(no features listed)"}
 
 Whole-release channels to draft a combined post for: ${wholeReleaseChannels.join(", ")}
 
-Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above — never combine multiple features into a single Bluesky post, even if they shipped in the same deploy. If no feature is bluesky_worthy, return an empty array for "bluesky". These will be queued individually into the Bluesky posting backlog and posted on separate days, so each one must stand alone and make sense without the others.
+Public pages that may be promoted, with the only permitted URLs:
+${publicContent.map((item) => `- ${item.kind}: ${item.title} (${item.url})`).join("\n") || "(none: return empty Bluesky and GitHub Discussion arrays)"}
+
+Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above; never combine multiple features into one post. Every post MUST be a complete thought of 220 characters or fewer before its direct URL and hashtags are added, so it remains complete within Bluesky's 300-character limit. If no feature is bluesky_worthy, return an empty array for "bluesky".
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
 - .agent/skills/bsky-note/SKILL.md (Bluesky: short, "I needed X so I built Y" arc, no emojis, no em dashes, 200-250 characters, hashtags, direct link)
@@ -112,17 +122,19 @@ gh api graphql -f query='query{repository(owner:"eserlan",name:"Codex-Cryptica")
 
 Match their established shape: open with the concrete need/problem that prompted the feature (not the feature name), one or two short paragraphs describing what it does and how it fits into an existing workflow, a plain "You can:" bullet list of capabilities (no adjective-stacking), and close with one genuine open-ended question inviting a reply — not a generic call to action. Typical length is roughly 150-220 words (about 1000-1400 characters) for github_discussion; reddit follows cc-announcer's own length guidance instead. Where the real examples include a screenshot, leave an explicit placeholder like [Image: short description of what it should show] rather than inventing an image URL.
 
-Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of discord/reddit/github_discussion NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
+Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of discord/reddit NOT in that list, still return an empty string for it rather than omitting the key.
+
+For every Bluesky post, return its exact pageUrl and its text. Choose only a URL from the public-pages list, and make no more than one Bluesky post per URL. For GitHub Discussions, independently decide whether that public page supports a useful long-form announcement. Return one object per worthy page only when github_discussion is a recommended channel; use its exact pageUrl, a title, and a complete Markdown body. It is normal for the two arrays to differ: a small public page may merit Bluesky only; a substantial answer, example, blog, landing page, generator, or tool may merit both. Never use a placeholder URL.
 
 There ${blueskyFeatures.length === 1 ? "is 1 bluesky_worthy feature" : `are ${blueskyFeatures.length} bluesky_worthy features`} above.
 
 Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose:
 
 {
-  "bluesky": ["one standalone post per bluesky_worthy feature, in the same order, or [] if none"],
+  "bluesky": [{ "pageUrl": "an exact URL from the public-pages list", "text": "one standalone post" }],
   "discord": "draft text or empty string",
   "reddit": "draft text or empty string",
-  "github_discussion": "draft text or empty string"
+  "github_discussions": [{ "pageUrl": "an exact URL from the public-pages list", "title": "Discussion title", "body": "long-form Markdown body" }]
 }`;
 }
 
@@ -184,18 +196,20 @@ export function formatIssueComment(
   const blueskySection =
     drafts.bluesky.length > 0
       ? drafts.bluesky
-          .map((post, index) => `${index + 1}. ${post}`)
+          .map((post, index) => `${index + 1}. ${post.text} (${post.pageUrl})`)
           .join("\n\n")
       : "(no feature in this release was marked bluesky_worthy)";
 
-  const queueLine =
-    drafts.bluesky.length === 0
-      ? ""
-      : queueResult?.commitUrl
-        ? `Queued ${queueResult.queued} Bluesky draft(s) into .social/bluesky-posts.md: ${queueResult.commitUrl}`
-        : queueResult?.error
-          ? `Could not auto-queue the Bluesky draft(s) (${queueResult.error}) — add them to .social/bluesky-posts.md by hand from the list above.`
-          : "";
+  const publicationLines = entry.publications
+    ? [
+        ...entry.publications.bluesky.map(
+          (post) => `- Bluesky: ${post.url} (${post.pageUrl})`,
+        ),
+        ...entry.publications.githubDiscussions.map(
+          (post) => `- GitHub Discussion: ${post.url} (${post.pageUrl})`,
+        ),
+      ]
+    : [];
 
   // Matches the approval-surface template requested in issue #2906.
   return [
@@ -204,9 +218,9 @@ export function formatIssueComment(
     "Why it is worth posting:",
     result.reason,
     "",
-    "Bluesky (one post per feature, queued separately):",
+    "Bluesky (published):",
     blueskySection,
-    ...(queueLine ? [queueLine] : []),
+    ...(publicationLines.length ? ["", "Published:", ...publicationLines] : []),
     "",
     "Discord:",
     drafts.discord || "(not recommended for this release)",
@@ -214,10 +228,12 @@ export function formatIssueComment(
     "Reddit:",
     drafts.reddit || "(not recommended for this release)",
     "",
-    "GitHub Discussion:",
-    drafts.github_discussion || "(not recommended for this release)",
+    "GitHub Discussions:",
+    drafts.github_discussions
+      .map((post) => `- ${post.title} (${post.pageUrl})`)
+      .join("\n") || "(not recommended for this release)",
     "",
-    'Reply "approve" or "skip" on this comment to record a decision. Discord/Reddit/GitHub Discussion posting still goes through the normal post-to-reddit / post-to-github-discussion tools by hand for now — this phase is drafts only, no auto-publish for those channels.',
+    "Bluesky and GitHub Discussions are published automatically for validated public-page drafts. Discord and Reddit remain drafts because this repository has no configured publisher for them.",
     "",
     "<details><summary>Raw evaluator + writer output</summary>",
     "",
