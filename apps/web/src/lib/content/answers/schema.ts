@@ -145,7 +145,13 @@ export const AnswerSystemReferenceSchema = z.object({
   system: z.string().min(1),
   /** One sentence: which specific mechanic supports this topic, and how. */
   rationale: z.string().min(1),
-  href: z.string().url(),
+  href: z
+    .string()
+    .url()
+    .refine(
+      (value) => /^https?:\/\//.test(value),
+      "href must be an http(s) URL",
+    ),
 });
 export type AnswerSystemReference = z.infer<typeof AnswerSystemReferenceSchema>;
 

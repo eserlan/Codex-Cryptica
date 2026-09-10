@@ -264,7 +264,7 @@
       </section>
     {/each}
 
-    {#if answer.systemsThatSupportThis}
+    {#if answer.systemsThatSupportThis && answer.systemsThatSupportThis.length > 0}
       <section class="mb-12 border-t border-theme-border pt-8">
         <h2
           class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
@@ -272,7 +272,7 @@
           Systems built for this
         </h2>
         <ul class="flex list-none flex-col gap-4">
-          {#each answer.systemsThatSupportThis as ref (ref.href)}
+          {#each answer.systemsThatSupportThis as ref}
             <li class="border-l border-theme-border pl-5">
               <a
                 href={ref.href}
