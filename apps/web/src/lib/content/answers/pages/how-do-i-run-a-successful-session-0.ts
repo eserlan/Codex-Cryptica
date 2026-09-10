@@ -147,6 +147,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
+    "how-much-rule-of-cool-should-a-dm-allow",
   ],
   discovery: {
     id: "answer-session-zero",
