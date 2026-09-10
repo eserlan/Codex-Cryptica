@@ -235,7 +235,10 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "A full adventure arc with a real clock, physical clues, a non-combat social complication, and three genuinely different resolution paths rather than a single scene.",
     parentCluster: "adventure-design",
-    relatedIntents: ["generator-adventure-generator"],
+    relatedIntents: [
+      "generator-adventure-generator",
+      "answer-starter-ship-pirate",
+    ],
     indexable: true,
     status: "live",
   },

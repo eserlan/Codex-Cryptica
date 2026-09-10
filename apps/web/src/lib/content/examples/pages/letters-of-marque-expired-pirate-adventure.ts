@@ -192,7 +192,14 @@ export const lettersOfMarqueExpired: ExampleConfigInput = {
       href: "/generators/adventure-idea-generator",
     },
   ],
-  relatedAnswers: [],
+  relatedAnswers: [
+    {
+      title: "What kind of ship should a pirate crew start with?",
+      description:
+        "Choose a starter hull, crew size, ownership trouble, and upgrades that create useful pirate-campaign pressure.",
+      href: "/answers/what-kind-of-ship-should-a-pirate-crew-start-with",
+    },
+  ],
   relatedForPages: [],
   relatedExamples: [],
   sourceUrl: "https://github.com/eserlan/Codex-Cryptica/discussions/2664",
