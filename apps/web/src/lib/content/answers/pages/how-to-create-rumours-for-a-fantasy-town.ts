@@ -137,6 +137,7 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
   ],
   relatedAnswers: [
     "what-should-an-rpg-settlement-contain",
+    "how-do-you-create-a-fantasy-city-that-feels-alive",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",

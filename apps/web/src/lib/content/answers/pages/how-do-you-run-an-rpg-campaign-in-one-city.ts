@@ -122,6 +122,7 @@ export const howDoYouRunAnRpgCampaignInOneCity: AnswerConfigInput = {
   ],
   relatedAnswers: [
     "what-should-an-rpg-settlement-contain",
+    "how-do-you-create-a-fantasy-city-that-feels-alive",
     "how-to-create-a-cyberpunk-city-district",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-organise-npc-relationships",
