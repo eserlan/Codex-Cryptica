@@ -49,7 +49,8 @@ Their local definitions are:
 ```
 
 The listener environment file is private and contains the GitHub webhook
-secret, plus the release-comms shared secret:
+secret, the release-comms shared secret, and the Bluesky publishing
+credentials:
 
 ```text
 ~/.config/codex-pr-review/webhook.env
@@ -58,7 +59,8 @@ secret, plus the release-comms shared secret:
 It must stay mode `600`. `GITHUB_WEBHOOK_SECRET` is shared only with the
 GitHub repository webhook configuration; `RELEASE_COMMS_SECRET` is shared
 only with the `RELEASE_COMMS_SECRET` GitHub Actions secret on this repo.
-Neither is stored in this repository.
+`BLUESKY_IDENTIFIER` and `BLUESKY_APP_PASSWORD` are used only by the local
+release-comms publisher. None is stored in this repository.
 
 The same private environment file enables squash auto-merge with
 `PR_AUTO_MERGE=true`. The listener persists handled feedback under
@@ -93,21 +95,16 @@ checking the active process and its per-run log.
 
 For the release comms agent specifically: when a release is postworthy, a
 second "writer" agent pass drafts channel-specific copy for Bluesky,
-Discord, Reddit, and a GitHub Discussion post (consulting
+Discord, Reddit, and GitHub Discussions (consulting
 `.agent/skills/bsky-note/SKILL.md` and `.agent/skills/cc-announcer/SKILL.md`
 for voice/format rules — cc-announcer is also mirrored under
-`.codex/skills/`), and the evaluator verdict plus drafts are posted as one
-comment on [issue #2906](https://github.com/eserlan/Codex-Cryptica/issues/2906),
-matching the "Approve / Skip" template requested there. Nothing is
-auto-published — actually posting still goes through the normal
-`bsky-note`/`post-to-reddit`/`post-to-github-discussion` tools by hand,
-using the drafted text as a starting point (`post-to-github-discussion.ts`
-posts to this repo's own "Announcements" discussion category via
-`gh api graphql`; run `bun run post:discussion --dry-run --title "..."
---body "..."` to preview one). This is deliberate: the point of this phase
-is to watch whether the evaluator's and writer's judgment are sane over
-several real deploys before wiring up an approval-triggered auto-publish
-path. To dry-run the whole evaluate+write pass against a real past
+`.codex/skills/`), and the evaluator verdict, drafts, and returned publication
+URLs are posted as one comment on
+[issue #2906](https://github.com/eserlan/Codex-Cryptica/issues/2906). For
+validated public-page drafts, Bluesky and GitHub Discussions publish
+automatically with the page's R2 social image. The agent checkpoints each URL
+so retrying a partial failure does not repost it. Discord deployment notices
+remain in GitHub Actions. To replay the whole flow against a real past
 production promotion without waiting for the next deploy:
 
 ```sh

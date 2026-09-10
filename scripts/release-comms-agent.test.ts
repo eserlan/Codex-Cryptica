@@ -1,10 +1,12 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { execFileSync as execFileSyncNode } from "node:child_process";
+import { mkdir as mkdirNode, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
+  publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
   getReleaseCommsLogPath,
@@ -126,21 +128,32 @@ describe("release-comms-agent", () => {
   });
 
   describe("isWriterResult", () => {
-    it("accepts a bluesky array plus the three whole-release channel strings", () => {
+    it("accepts page-addressed Bluesky and Discussion drafts", () => {
       expect(
         isWriterResult({
           bluesky: [],
           discord: "text",
           reddit: "",
-          github_discussion: "",
+          github_discussions: [],
         }),
       ).toBe(true);
       expect(
         isWriterResult({
-          bluesky: ["post one", "post two"],
+          bluesky: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/x",
+              text: "post one",
+            },
+          ],
           discord: "",
           reddit: "",
-          github_discussion: "",
+          github_discussions: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/x",
+              title: "Title",
+              body: "Body",
+            },
+          ],
         }),
       ).toBe(true);
     });
@@ -151,7 +164,7 @@ describe("release-comms-agent", () => {
           bluesky: "x",
           discord: "y",
           reddit: "z",
-          github_discussion: "",
+          github_discussions: [],
         }),
       ).toBe(false);
       expect(isWriterResult({ bluesky: [], discord: "y", reddit: "z" })).toBe(
@@ -162,7 +175,7 @@ describe("release-comms-agent", () => {
           bluesky: [1],
           discord: "y",
           reddit: "z",
-          github_discussion: "",
+          github_discussions: [],
         }),
       ).toBe(false);
       expect(isWriterResult(null)).toBe(false);
@@ -201,7 +214,7 @@ describe("release-comms-agent", () => {
       );
       expect(prompt).toContain(".agent/skills/bsky-note/SKILL.md");
       expect(prompt).toContain(".agent/skills/cc-announcer/SKILL.md");
-      expect(prompt).toContain('"github_discussion"');
+      expect(prompt).toContain('"github_discussions"');
     });
 
     it("tells the writer to draft one standalone Bluesky post per bluesky_worthy feature, never combined", () => {
@@ -311,6 +324,33 @@ describe("release-comms-agent", () => {
         reason: "new generator",
       });
       expect(prompt).toContain("untrusted data");
+    });
+  });
+
+  describe("publicPageFor", () => {
+    const item = {
+      kind: "answer" as const,
+      title: "A page",
+      url: "https://codexcryptica.com/answers/a-page",
+      imageUrl: "https://assets.codexcryptica.com/og/a-page.jpg",
+      imageAlt: "A page card",
+      sourcePath: "answer.ts",
+    };
+
+    it("uses only the public page matched to the writer's exact URL", () => {
+      expect(publicPageFor([item], item.url)).toEqual(item);
+    });
+
+    it("rejects an unknown page but permits the image resolver to generate a missing card", () => {
+      expect(() =>
+        publicPageFor([item], "https://codexcryptica.com/answers/other"),
+      ).toThrow("outside this release");
+      expect(
+        publicPageFor([{ ...item, imageUrl: undefined }], item.url),
+      ).toEqual({
+        ...item,
+        imageUrl: undefined,
+      });
     });
   });
 
@@ -460,6 +500,68 @@ describe("release-comms-agent", () => {
     });
   });
 
+  describe("findPublicContent", () => {
+    it("discovers a public page that was renamed between the two SHAs", async () => {
+      const dir = await mkdtemp(join(tmpdir(), "release-comms-repo-"));
+      try {
+        const git = (args: string[]) =>
+          execFileSyncNode("git", args, { cwd: dir, encoding: "utf-8" });
+        git(["init", "-q"]);
+        git(["config", "user.email", "test@example.com"]);
+        git(["config", "user.name", "Test"]);
+        const pagesDir = join(
+          dir,
+          "apps/web/src/lib/content/answers/pages",
+        );
+        await mkdirNode(pagesDir, { recursive: true });
+        const oldPath = join(pagesDir, "old-slug.ts");
+        const newPath = join(pagesDir, "new-slug.ts");
+        const contents = [
+          `export const page = {`,
+          `  slug: "new-slug",`,
+          `  question: "How?",`,
+          `  image: "https://assets.codexcryptica.com/og/new-slug.jpg",`,
+          `  imageAlt: "New slug card",`,
+          `};`,
+          "",
+        ].join("\n");
+        await (await import("node:fs/promises")).writeFile(
+          oldPath,
+          contents,
+        );
+        git(["add", "-A"]);
+        git(["commit", "-q", "-m", "add page"]);
+        const before = git(["rev-parse", "HEAD"]).trim();
+
+        const { rename } = await import("node:fs/promises");
+        await rename(oldPath, newPath);
+        git(["add", "-A"]);
+        git(["commit", "-q", "-m", "rename page"]);
+        const after = git(["rev-parse", "HEAD"]).trim();
+
+        const previous = process.env.PR_FIX_ROOT;
+        process.env.PR_FIX_ROOT = dir;
+        try {
+          const { findPublicContent: freshFindPublicContent } = await import(
+            `./release-comms-agent.ts?bust=${Date.now()}-${Math.random()}`
+          );
+          const items = freshFindPublicContent(before, after);
+          expect(items).toContainEqual(
+            expect.objectContaining({
+              kind: "answer",
+              url: "https://codexcryptica.com/answers/new-slug",
+            }),
+          );
+        } finally {
+          if (previous === undefined) delete process.env.PR_FIX_ROOT;
+          else process.env.PR_FIX_ROOT = previous;
+        }
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe("state persistence", () => {
     it("round-trips through an atomic write and falls back to empty state when missing", async () => {
       const dir = await mkdtemp(join(tmpdir(), "release-comms-test-"));
@@ -479,10 +581,15 @@ describe("release-comms-agent", () => {
           postworthy: true,
           reason: "new generator",
           drafts: {
-            bluesky: ["post text"],
+            bluesky: [
+              {
+                pageUrl: "https://codexcryptica.com/answers/x",
+                text: "post text",
+              },
+            ],
             discord: "",
             reddit: "",
-            github_discussion: "",
+            github_discussions: [],
           },
         });
         await saveReleaseCommsState(withEntry, path);
@@ -491,7 +598,9 @@ describe("release-comms-agent", () => {
         expect(reloaded.lastEvaluatedSha).toBe("abc1234");
         expect(reloaded.history).toHaveLength(1);
         expect(reloaded.history[0].reason).toBe("new generator");
-        expect(reloaded.history[0].drafts?.bluesky).toEqual(["post text"]);
+        expect(reloaded.history[0].drafts?.bluesky).toEqual([
+          { pageUrl: "https://codexcryptica.com/answers/x", text: "post text" },
+        ]);
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

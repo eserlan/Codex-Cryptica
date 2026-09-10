@@ -50,9 +50,13 @@ gh run list --workflow "Promote Staging to Production" --status success --limit 
   --json databaseId,headSha,createdAt
 ```
 
-Run the evaluator and writer directly against one of those run ids:
+Run the evaluator and writer directly against one of those run ids without
+publishing anything. This uses a throwaway state file, records `dry-run://`
+publication URLs, and skips the tracking-issue comment:
 
 ```sh
+RELEASE_COMMS_DRY_RUN=1 \
+RELEASE_COMMS_STATE_FILE="$(mktemp /tmp/release-comms-dry-state.XXXXXX.json)" \
 bun run comms:evaluate <promote-to-prod run id>
 ```
 
@@ -67,9 +71,15 @@ re-process the same SHA. Try this against two or three different past
 promotions with genuinely different content (a postworthy one, a boring
 one) to get a feel for whether the postworthy/importance calls are sane.
 
-Dry-run the Discussions poster (no network call, just prints what it would
-send). This needs [#2911](https://github.com/eserlan/Codex-Cryptica/pull/2911)
-merged first — `post:discussion` doesn't exist on `staging` until then:
+The same dry-run setting reaches the agent's full publisher branch only when
+the chosen release is postworthy. Use a known public-page promotion, or seed
+a resumable draft in a throwaway state file when checking the publisher path.
+The log must show both `[release-comms] published ... dry-run://...` lines and
+`dry run: skipped tracking issue comment`; rerun it with the same state file
+to confirm `already evaluated; skipping`.
+
+Dry-run the Discussions poster directly (no network call, just prints what it
+would send):
 
 ```sh
 bun run post:discussion --dry-run --title "Test" --body "Test body"
@@ -121,34 +131,46 @@ what the agent itself does — `continue-on-error: true` means a failure
 here must never show up as a failed deploy — and that a comment appears on
 #2906 shortly after.
 
-## Bluesky auto-queueing (direct commit to staging)
+## Automated public-page publishing
 
-Per feature (not per release), the evaluator can mark a feature
-`bluesky_worthy`, and the writer drafts one standalone post for each. Those
-drafts are queued automatically into `.social/bluesky-posts.md`'s "Drafted
-(not yet posted)" section, and the agent commits and pushes that change
-**directly to `staging`, unattended, no PR** — an isolated `git worktree`
-is used so this never disturbs whatever branch state the main checkout is
-in. This is the mechanism for the "post early and often" cadence: small
-wins get queued as they ship, so `bsky-note`'s daily posting flow always
-has fresh drafts to pull from instead of waiting for a big release.
+For each promoted public answer, example, blog, landing page, newly
+registered generator, or dedicated tool route, the evaluator decides whether
+it warrants a short Bluesky post, a long-form GitHub Discussion, both, or
+neither. Every draft includes the exact public-page URL. The agent rejects
+invented URLs, missing image/alt text, unresolved placeholders, and Bluesky
+copy over 300 characters rather than publishing a broken post.
 
-Verify this works: after a postworthy run (local dry run or real), check
-that `.social/bluesky-posts.md` on `origin/staging` actually gained a new
-entry, and that the #2906 comment includes a commit URL rather than a
-"could not auto-queue" error. If it fails, the most likely cause is push
-access from this machine's `git`/SSH auth — the same auth already used for
-other automation here should suffice, but confirm with a manual
-`git push origin HEAD:staging` test from a throwaway worktree if needed.
+When an item clears its channel's bar, it publishes immediately:
 
-## Known gaps (tracked separately, not blocking this checklist)
+- Bluesky uses the page's verified R2 social image and records the returned
+  post URL.
+- GitHub Discussions publishes the long-form Markdown body with that same
+  image and direct page link, then records its Discussion URL.
 
-- No automated parsing of "approve"/"skip" replies on the #2906 comment
-  yet — a human still decides on Discord/Reddit/GitHub Discussion posts,
-  and still supplies a screenshot before posting any auto-queued Bluesky
-  draft (the queue entry leaves the image/alt fields as `_TODO_`).
-- Discord has a drafted channel but no publish script yet (only the
-  existing deploy-notification webhooks exist, which are a different
-  thing) — not yet filed as its own issue.
-- Instagram: [#2909](https://github.com/eserlan/Codex-Cryptica/issues/2909).
-- Facebook group: [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910).
+Each external URL is checkpointed in
+`~/.local/state/codex-release-comms/state.json` before the next channel runs.
+Replaying a partial failure resumes only the missing publication; it does not
+duplicate a successful one. The tracking issue comment lists the drafts and
+durable publication URLs.
+
+The listener environment needs `BLUESKY_IDENTIFIER` and
+`BLUESKY_APP_PASSWORD` in addition to the webhook secrets. Keep the env file
+mode `600`. GitHub Discussions uses the authenticated local `gh` session.
+
+When a public page has no source social card, the agent first checks its
+deterministic `https://assets.codexcryptica.com/og/<slug>.jpg` location. If it
+is absent, it requests a 16:9 card from the deployed Oracle image endpoint,
+converts it to JPEG, uploads it to R2 with the authenticated local Wrangler
+session, and uses that card for the publication. Temporary image files are
+removed immediately; generated assets are never committed to git. If image
+generation or upload fails, publishing remains resumable and no text-only
+post is sent.
+
+## Other channels
+
+Discord deployment and formal-release notifications are already posted by
+GitHub Actions through `scripts/discord-deploy.sh`. The release-comms writer
+also creates a Discord draft, but does not send a duplicate content-specific
+deployment message. Instagram [#2909](https://github.com/eserlan/Codex-Cryptica/issues/2909)
+and the Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
+remain separate, unconfigured channels.
