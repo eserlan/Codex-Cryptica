@@ -308,6 +308,14 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "Puzzles built with layered clues and multiple solutions, which is the property that keeps a table moving.",
     parentCluster: "puzzle-design",
+    clusters: ["puzzle"],
+    relatedIntents: [
+      "answer-rpg-puzzles",
+      "answer-rpg-puzzle-hints",
+      "example-venting-helix",
+      "example-bell-beneath-blackglass",
+      "example-null-key-reliquary",
+    ],
     indexable: true,
     status: "live",
   },

@@ -144,15 +144,30 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-run-a-heist-in-a-tabletop-rpg",
       "how-do-you-run-a-mystery-without-railroading",
+      "how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
     ],
     discovery: {
       id: "answer-rpg-puzzles",
       parentCluster: "puzzle-design",
+      clusters: ["puzzle"],
       primaryIntent: "how do you design rpg puzzles that do not stall the game",
       intentAliases: ["rpg puzzle design", "stop puzzles stalling the table"],
       uniqueValue:
         "Names the single cause of stalling, gives four properties that prevent it, redesigns a vault door, and lists safety valves to prepare.",
-      relatedIntents: ["generator-puzzle"],
+      relatedIntents: [
+        "generator-puzzle",
+        "answer-rpg-puzzle-hints",
+        "example-venting-helix",
+        "example-bell-beneath-blackglass",
+        "example-null-key-reliquary",
+      ],
+      acknowledgedOverlap: [
+        {
+          with: "answer-rpg-puzzle-hints",
+          reason:
+            "This answer owns designing a puzzle with multiple solutions and cheap failure; the hints answer owns the narrower, distinct problem of what a GM says out loud mid-session once a puzzle has already stalled.",
+        },
+      ],
     },
 
     seo: {
