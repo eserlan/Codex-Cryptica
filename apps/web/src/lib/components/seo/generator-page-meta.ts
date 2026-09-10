@@ -1331,10 +1331,9 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
           "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
       },
       {
-        question:
-          "What makes this the best heist generator for a tabletop campaign?",
+        question: "What should I look for in a heist generator?",
         answer:
-          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. This generator is built around all three, with a prize specific enough to create its own complications rather than a generic MacGuffin.",
+          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. This one is built around all three — see the example scores linked below and judge for yourself.",
       },
     ],
     relatedLinks: [
