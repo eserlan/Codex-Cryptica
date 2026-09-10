@@ -408,9 +408,10 @@ describe("release-comms-agent", () => {
       expect(prompt).not.toContain(
         '"recommended_channels": ["bluesky", "discord", "reddit", "github_discussion"]',
       );
-      expect(prompt).toContain(
+      expect(prompt).not.toContain(
         '"recommended_channels": ["discord", "reddit", "github_discussion"]',
       );
+      expect(prompt).toContain('"recommended_channels": []');
       expect(prompt).toContain('omit "bluesky" from it');
     });
 

@@ -60,7 +60,7 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
   "features": [
     { "name": "Feature Name", "why_users_care": "One sentence on why a GM/worldbuilder cares.", "bluesky_worthy": true | false }
   ],
-  "recommended_channels": ["discord", "reddit", "github_discussion"],
+  "recommended_channels": [],
   "reason": "One or two sentences explaining the decision."
 }
 
