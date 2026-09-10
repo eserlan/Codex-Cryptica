@@ -46,6 +46,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
+import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
 import { whatKindOfShipShouldASciFiRpgPartyStartWith } from "./what-kind-of-ship-should-a-sci-fi-rpg-party-start-with";
 import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-heist-target-in-a-tabletop-rpg";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
@@ -110,6 +111,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     pointCrawlVsHexCrawl,
     whatIsAPointCrawl,
+    whatKindOfShipShouldAPirateCrewStartWith,
     whatKindOfShipShouldASciFiRpgPartyStartWith,
     whatMakesAGoodHeistTargetInATabletopRpg,
     whatMakesAGoodRandomEncounter,

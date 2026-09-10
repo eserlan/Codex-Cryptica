@@ -179,6 +179,7 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-i-run-a-successful-session-0",
+    "what-kind-of-ship-should-a-pirate-crew-start-with",
   ],
   labels: ["sci-fi"],
   discovery: {
@@ -203,6 +204,11 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
       "example-cinder-wren",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-starter-ship-pirate",
+        reason:
+          "Both pages help a party choose a starting vessel, but this page addresses starships and spacefaring campaign pressures, while the pirate page addresses sailing-era hulls, crews, coastal sailing limits, and prize-taking.",
+      },
       {
         with: "answer-create-sci-fi-star-system",
         reason:
