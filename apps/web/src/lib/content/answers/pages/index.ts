@@ -5,6 +5,7 @@ import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-play
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
+import { howDoYouCreateAFantasyCityThatFeelsAlive } from "./how-do-you-create-a-fantasy-city-that-feels-alive";
 import { howDoYouCreateAFantasyFaction } from "./how-do-you-create-a-fantasy-faction";
 import { howDoYouCreateAFictionalLanguageForAnRpg } from "./how-do-you-create-a-fictional-language-for-an-rpg";
 import { howDoYouCreateAMagicSystem } from "./how-do-you-create-a-magic-system";
@@ -70,6 +71,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunASuccessfulSessionZero,
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
+    howDoYouCreateAFantasyCityThatFeelsAlive,
     howDoYouCreateAFantasyFaction,
     howDoYouCreateAFictionalLanguageForAnRpg,
     howDoYouCreateAMagicSystem,

@@ -152,6 +152,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-to-create-a-cyberpunk-city-district",
     "how-do-you-run-an-rpg-campaign-in-one-city",
+    "how-do-you-create-a-fantasy-city-that-feels-alive",
     "how-many-npcs-does-an-rpg-town-need",
     "how-to-create-rumours-for-a-fantasy-town",
     "how-do-you-generate-useful-rpg-rumours",
