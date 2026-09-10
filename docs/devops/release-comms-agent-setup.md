@@ -68,7 +68,8 @@ promotions with genuinely different content (a postworthy one, a boring
 one) to get a feel for whether the postworthy/importance calls are sane.
 
 Dry-run the Discussions poster (no network call, just prints what it would
-send):
+send). This needs [#2911](https://github.com/eserlan/Codex-Cryptica/pull/2911)
+merged first — `post:discussion` doesn't exist on `staging` until then:
 
 ```sh
 bun run post:discussion --dry-run --title "Test" --body "Test body"
