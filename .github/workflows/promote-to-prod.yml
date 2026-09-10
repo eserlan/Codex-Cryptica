@@ -97,6 +97,32 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=main
 
+      # This promotes an artifact already built and tested on staging (#2952)
+      # rather than rebuilding, so a smoke test here is the only check that
+      # the production deploy itself came out healthy.
+      - name: Smoke test production
+        run: |
+          sleep 10
+          check() {
+            local path="$1"
+            local url="https://codexcryptica.com${path}"
+            local code
+            code=$(curl -s -o /tmp/smoke-body.html -w "%{http_code}" --retry 3 --retry-delay 5 --retry-connrefused "$url")
+            if [ "$code" != "200" ]; then
+              echo "::error::$url returned $code, expected 200"
+              exit 1
+            fi
+            if ! grep -qi "Codex Cryptica" /tmp/smoke-body.html; then
+              echo "::error::$url did not contain expected app shell content"
+              exit 1
+            fi
+            echo "OK ($code): $url"
+          }
+
+          check "/"
+          check "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg"
+          check "/generators/heist"
+
       - name: Notify Discord on Production Deploy
         if: success()
         env:
