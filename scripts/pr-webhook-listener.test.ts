@@ -6,6 +6,7 @@ import {
   summariseEvent,
   isStagingPush,
   verifySignature,
+  verifySharedSecret,
 } from "./pr-webhook-listener.ts";
 
 describe("PR webhook listener", () => {
@@ -105,6 +106,16 @@ describe("PR webhook listener", () => {
         }),
       ),
     ).toBe("{}");
+  });
+
+  it("accepts a matching shared secret and rejects a wrong or missing one", async () => {
+    expect(await verifySharedSecret("correct-secret", "correct-secret")).toBe(
+      true,
+    );
+    expect(await verifySharedSecret("wrong-secret", "correct-secret")).toBe(
+      false,
+    );
+    expect(await verifySharedSecret(null, "correct-secret")).toBe(false);
   });
 
   it("resets the debounce timer on repeated auto-merge scheduling instead of skipping it", async () => {

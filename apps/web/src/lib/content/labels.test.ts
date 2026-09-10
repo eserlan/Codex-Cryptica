@@ -98,11 +98,14 @@ describe("public label content aggregation (#2762, #2863)", () => {
     expect(paths).toContain(
       "/answers/how-to-create-rumours-for-a-fantasy-town",
     );
+    expect(paths).toContain(
+      "/answers/how-do-you-create-a-fantasy-city-that-feels-alive",
+    );
     expect(paths).toContain("/examples/lowmere-six-words-rumour-table");
 
     const groups = groupPublicLabelResults(results);
     expect(groups.get("generator")?.length).toBe(1);
-    expect(groups.get("answer")?.length).toBe(2);
+    expect(groups.get("answer")?.length).toBe(3);
     expect(groups.get("example")?.length).toBe(1);
   });
 

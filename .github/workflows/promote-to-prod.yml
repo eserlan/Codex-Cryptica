@@ -109,7 +109,23 @@ jobs:
           RUN_ID="${{ needs.find-staging-build.outputs.run_id }}"
           ACTOR="${{ github.actor }}"
           SUMMARY="🔁 **Promotion Successful**: Staging run #$RUN_ID was promoted to production by $ACTOR."
-          
+
           # Send the summary
           PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
           curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+
+      - name: Trigger Release Communications Agent
+        if: success()
+        continue-on-error: true
+        env:
+          RELEASE_COMMS_SECRET: ${{ secrets.RELEASE_COMMS_SECRET }}
+        run: |
+          # Fire-and-forget: this evaluates whether the release is worth
+          # announcing and only comments on issue #2906 with its findings.
+          # It must never affect the outcome of this deploy job, hence
+          # continue-on-error plus the fallback `|| echo` below.
+          curl -fsS -m 10 -X POST https://pr-webhook.codexcryptica.com/release-comms \
+            -H "X-Release-Comms-Secret: $RELEASE_COMMS_SECRET" \
+            -H "Content-Type: application/json" \
+            -d "{\"promoteRunId\": \"${{ github.run_id }}\"}" \
+            || echo "release-comms trigger failed (non-blocking)"

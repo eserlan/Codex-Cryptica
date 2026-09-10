@@ -44,6 +44,8 @@
     "degodify": "bun scripts/auto-degodify.ts",
     "pr:fix": "bun scripts/pr-check-fix.ts",
     "pr:webhook": "bun scripts/pr-webhook-listener.ts",
+    "comms:evaluate": "bun scripts/release-comms-agent.ts",
+    "post:discussion": "bun scripts/post-to-github-discussion.ts",
     "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },
@@ -67,7 +69,7 @@
     "commitlint-config-gitmoji": "^2.3.1",
     "deepmerge": "^4.3.1",
     "esbuild": "^0.28.0",
-    "eslint": "10.9.1",
+    "eslint": "10.10.0",
     "eslint-plugin-svelte": "^3.17.1",
     "gitmoji-cli": "^9.7.0",
     "globals": "^17.6.0",
