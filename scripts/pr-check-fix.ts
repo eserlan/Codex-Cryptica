@@ -529,7 +529,8 @@ STRICT INSTRUCTIONS & CONSTRAINTS (Constitution Principles I, II, XIV):
    - Do NOT rewrite unrelated logic.
 2. MANDATORY TESTING (Principle II):
    - Add or update test cases covering every fix (especially invalid/out-of-bounds inputs or edge cases pointed out in the reviews).
-   - Ensure all affected tests pass: \`bun test <test-file>\`.
+   - Ensure all affected tests pass by running ONLY targeted test files: \`bun test <path/to/test-file>\` or \`bunx vitest run <path/to/test-file>\`.
+   - NEVER run bare \`bun test\` across the monorepo root (apps/web requires Vitest and will hang or fail under bare bun test).
 3. QUALITY GATES:
    - Run typecheck: \`bun run lint:types\` (must pass with 0 errors).
    - Run linter: \`bun run lint\` (must pass with 0 errors).
@@ -567,7 +568,7 @@ If both passes find no actionable defect: check \`git rev-parse HEAD\` against t
 If either pass finds a concrete defect:
 - Make the smallest correct fix; do not refactor unrelated code.
 - Add or update focused tests for each changed behaviour, including a meaningful negative or failure case.
-- Run the affected tests, \`bun run lint:types\`, and \`bun run lint\`.
+- Run the affected tests (e.g. \`bun test <file>\` or \`bunx vitest run <file>\`, NEVER bare \`bun test\`), \`bun run lint:types\`, and \`bun run lint\`.
 - Stage only your changes, commit with a gitmoji message such as \`🐛 fix: address internal PR review findings\`, and push with \`git push origin HEAD:${branchName} --no-verify\`.
 - Do not close or merge the PR. GitHub checks and the webhook will handle that after your push.
 ${mergeConflictPaths.length > 0 ? buildConflictResolutionInstructions(mergeConflictPaths) : ""}`;
@@ -751,6 +752,24 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
               ? `✅ ${providerName} found no actionable internal review findings.`
               : `✅ ${providerName} completed successfully.`,
           );
+          if (pushed && feedback.unresolvedComments.length > 0) {
+            try {
+              const newHeadSha = execSync("git rev-parse --short HEAD", {
+                cwd: worktreePath,
+                encoding: "utf-8",
+              }).trim();
+              for (const comment of feedback.unresolvedComments) {
+                replyToPrComment(
+                  worktreePath,
+                  feedback.prMeta.number,
+                  comment.id,
+                  `Fixed in ${newHeadSha}: addressed review comment.`,
+                );
+              }
+            } catch {
+              // Best-effort comment replies
+            }
+          }
           passSucceeded = true;
           break;
         }
