@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
   resolveSocialAsset,
@@ -57,6 +58,7 @@ describe("resolveSocialAsset", () => {
       resolveSocialAsset(item, {
         fetch: fetch as never,
         run: run as never,
+        resolveAgentExecutable: () => null,
       } satisfies Partial<ImageDependencies>),
     ).resolves.toMatchObject({
       imageUrl: "https://assets.codexcryptica.com/og/encounter-balance.jpg",
@@ -69,13 +71,71 @@ describe("resolveSocialAsset", () => {
     );
   });
 
-  it("refuses to publish when image generation fails", async () => {
+  it("refuses to publish when no agent produces a card and image generation fails", async () => {
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(new Response("no", { status: 429 }));
     await expect(
-      resolveSocialAsset(item, { fetch: fetch as never }),
+      resolveSocialAsset(item, {
+        fetch: fetch as never,
+        resolveAgentExecutable: () => null,
+      } satisfies Partial<ImageDependencies>),
     ).rejects.toThrow("Could not generate social image");
+  });
+
+  it("prefers agy over codex and Oracle when it produces the card", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+    const run = vi.fn((_bin: string, args: readonly string[]) => {
+      const targetPath = args.join(" ").match(/(\S+agy-social\.jpg)/)?.[1];
+      if (targetPath) writeFileSync(targetPath, "jpg");
+      return "";
+    });
+    const resolveAgentExecutable = vi.fn((provider: string) =>
+      provider === "agy" || provider === "codex" ? `/bin/${provider}` : null,
+    );
+    await expect(
+      resolveSocialAsset(item, {
+        fetch: fetch as never,
+        run: run as never,
+        resolveAgentExecutable: resolveAgentExecutable as never,
+      } satisfies Partial<ImageDependencies>),
+    ).resolves.toMatchObject({
+      imageUrl: "https://assets.codexcryptica.com/og/encounter-balance.jpg",
+    });
+    // agy succeeded, so codex was never tried and Oracle was never fetched.
+    expect(resolveAgentExecutable).toHaveBeenCalledWith("agy");
+    expect(resolveAgentExecutable).not.toHaveBeenCalledWith("codex");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(run.mock.calls.at(-2)?.[0]).toBe("magick");
+    expect(run.mock.calls.at(-1)?.[0]).toBe("bunx");
+  });
+
+  it("falls back to codex when agy fails to produce a card", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+    const run = vi.fn((_bin: string, args: readonly string[]) => {
+      const targetPath = args.join(" ").match(/(\S+codex-social\.jpg)/)?.[1];
+      if (targetPath) writeFileSync(targetPath, "jpg");
+      return "";
+    });
+    const resolveAgentExecutable = vi.fn(
+      (provider: string) => `/bin/${provider}`,
+    );
+    await expect(
+      resolveSocialAsset(item, {
+        fetch: fetch as never,
+        run: run as never,
+        resolveAgentExecutable: resolveAgentExecutable as never,
+      } satisfies Partial<ImageDependencies>),
+    ).resolves.toMatchObject({
+      imageUrl: "https://assets.codexcryptica.com/og/encounter-balance.jpg",
+    });
+    expect(resolveAgentExecutable).toHaveBeenCalledWith("agy");
+    expect(resolveAgentExecutable).toHaveBeenCalledWith("codex");
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
