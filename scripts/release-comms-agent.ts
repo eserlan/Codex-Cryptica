@@ -528,7 +528,6 @@ export async function main(promoteRunId: string): Promise<void> {
     console.error(
       `[release-comms] writer produced no usable drafts; see ${logPath}`,
     );
-    return;
   }
 
   let entry: ReleaseCommsHistoryEntry = {

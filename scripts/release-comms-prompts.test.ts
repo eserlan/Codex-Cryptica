@@ -66,6 +66,14 @@ describe("formatIssueComment", () => {
     expect(comment).toContain("https://bsky.app/profile/test/post/1");
   });
 
+  it("reports drafts as unavailable when the writer pass fails on a postworthy release", () => {
+    const comment = formatIssueComment(entry as never, result, null, null);
+    expect(comment).toContain("drafts unavailable");
+    expect(comment).toContain(
+      "The evaluator marked this postworthy, but the writer pass failed to produce drafts.",
+    );
+  });
+
   it("omits the queue line entirely when there are no bluesky drafts", () => {
     const noBluesky: WriterResult = { ...drafts, bluesky: [] };
     const comment = formatIssueComment(entry as never, result, noBluesky, {
