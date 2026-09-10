@@ -82,11 +82,6 @@ if (typeof window !== "undefined") {
     let instance = (window as any)[name];
     if (!instance || !(instance instanceof Storage)) {
       instance = Object.create(Storage.prototype);
-      Object.defineProperty(window, name, {
-        value: instance,
-        writable: true,
-        configurable: true,
-      });
     } else {
       // Remove own properties that might shadow the prototype
       delete (instance as any).getItem;
@@ -96,6 +91,16 @@ if (typeof window !== "undefined") {
       delete (instance as any).key;
       delete (instance as any).length;
     }
+    // Always (re)define as writable/configurable: newer jsdom versions
+    // provide a real Storage instance for window.localStorage/sessionStorage
+    // as a getter-only accessor, which the plain assignment below would
+    // otherwise throw on ("Cannot set property ... which has only a
+    // getter") once that branch is reused instead of created fresh.
+    Object.defineProperty(window, name, {
+      value: instance,
+      writable: true,
+      configurable: true,
+    });
     return instance;
   };
 
