@@ -13,6 +13,15 @@ import {
   formatIssueComment,
 } from "./release-comms-prompts.ts";
 import {
+  deriveDiscordFromBluesky,
+  loadDiscordConfig,
+  publishToDiscord,
+} from "./release-comms-discord.ts";
+import {
+  insertTrackerRow,
+  updateTrackerPlatformStatus,
+} from "./release-comms-queue.ts";
+import {
   isReleaseCommsDryRun,
   publishBlueskyPost,
   publishDiscussion,
@@ -40,6 +49,12 @@ export {
   buildEvaluatorPrompt,
   buildWriterPrompt,
 } from "./release-comms-prompts.ts";
+export {
+  deriveDiscordFromBluesky,
+  loadDiscordConfig,
+  publishToDiscord,
+  stripHashtags,
+} from "./release-comms-discord.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -527,6 +542,20 @@ export async function main(promoteRunId: string): Promise<void> {
     console.error(
       `[release-comms] writer produced no usable drafts; see ${logPath}`,
     );
+  } else if (drafts) {
+    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+    const isDiscordRecommended =
+      result.recommended_channels?.includes("discord") ?? false;
+    if (
+      discordConfig.enabled &&
+      isDiscordRecommended &&
+      drafts.bluesky &&
+      drafts.bluesky.length > 0
+    ) {
+      drafts.discord = deriveDiscordFromBluesky(
+        drafts.bluesky.map((post) => post.text),
+      );
+    }
   }
 
   let entry: ReleaseCommsHistoryEntry = {
@@ -547,6 +576,7 @@ export async function main(promoteRunId: string): Promise<void> {
   };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 
+  const newlyPublishedBluesky: Array<{ pageUrl: string; url: string }> = [];
   if (drafts) {
     const publishedBluesky = entry.publications?.bluesky ?? [];
     for (const draft of drafts.bluesky.filter(
@@ -571,6 +601,7 @@ export async function main(promoteRunId: string): Promise<void> {
         },
       };
       publishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
+      newlyPublishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
     const publishedDiscussions = entry.publications?.githubDiscussions ?? [];
@@ -611,6 +642,71 @@ export async function main(promoteRunId: string): Promise<void> {
   if (isReleaseCommsDryRun()) {
     console.log("[release-comms] dry run: skipped tracking issue comment");
     return;
+  }
+
+  // A tracker row must exist before any later updateTrackerPlatformStatus
+  // call can tick a platform cell for this release.
+  if (newlyPublishedBluesky.length > 0) {
+    const shortSha = newSha.slice(0, 7);
+    const trackerRowResult = await insertTrackerRow(
+      {
+        date: entry.date.slice(0, 10),
+        topic: `Release comms auto-draft (\`${shortSha}\`)`,
+        reference: newlyPublishedBluesky.map((post) => post.url).join(", "),
+        platforms: {
+          bluesky: true,
+          discord: false,
+          instagram: false,
+          patreon: false,
+        },
+      },
+      REPOSITORY_ROOT,
+    );
+    if (!trackerRowResult.success) {
+      console.error(
+        `[release-comms] could not insert tracker row: ${trackerRowResult.error}`,
+      );
+    }
+  }
+
+  // Auto-publish to configured Discord destinations if enabled
+  if (result.postworthy && drafts?.discord) {
+    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+    if (discordConfig.enabled) {
+      let publishedToDiscord = false;
+      for (const dest of discordConfig.destinations) {
+        if (dest.auto_publish) {
+          const pubResult = await publishToDiscord({
+            message: drafts.discord,
+            destination: dest,
+          });
+          if (pubResult.success) {
+            publishedToDiscord = true;
+            console.log(
+              `[release-comms] published announcement to Discord destination '${dest.id}'`,
+            );
+          } else {
+            console.error(
+              `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
+            );
+          }
+        }
+      }
+
+      if (publishedToDiscord) {
+        const trackerResult = await updateTrackerPlatformStatus(
+          newSha.slice(0, 7),
+          "Discord",
+          true,
+          REPOSITORY_ROOT,
+        );
+        if (!trackerResult.success) {
+          console.error(
+            `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
+          );
+        }
+      }
+    }
   }
 
   try {

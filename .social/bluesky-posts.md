@@ -4,6 +4,35 @@ Tracks concrete posts for `@codexcryptica.bsky.social` — what's been published
 
 The topic backlog, message-format template, and posting rules live in GitHub issue [#2086](https://github.com/eserlan/Codex-Cryptica/issues/2086) — this file is the actual history, not a duplicate of that plan. Cross-reference queue item numbers where relevant.
 
+## Cross-Platform Posting Tracker
+
+Tracks whether each post has been published across current and planned platforms (Bluesky, Discord, Instagram, Patreon).
+
+|    Date    | Topic                                         | Copy / reference                                                      | Bluesky | Discord | Instagram | Patreon |
+| :--------: | :-------------------------------------------- | :-------------------------------------------------------------------- | :-----: | :-----: | :-------: | :-----: |
+| 2026-09-10 | Living Fantasy City Guide (`10440ab`)         | I needed a quick reference for making a fantasy city feel lived-in... |   [ ]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-09-06 | Heist Generator (ad hoc)                      | I needed heists that didn't fall apart on the first bad roll...       |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-09-05 | Nkiru Okafor NPC Table Card example (ad hoc)  | Meet Nkiru Okafor, a ruthless street fixer...                         |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-26 | Encounter Generator (ad hoc)                  | Rolling a random encounter gave me a monster and a number...          |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-16 | Vaults (ad hoc)                               | I run a few campaigns, and I never want an NPC from one bleeding...   |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-15 | Faction Generator (queue #4)                  | I needed factions that gave players something to push against...      |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-14 | Spatial Canvas (queue #10)                    | I needed a place to lay out a conspiracy before it became a pile...   |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-14 | The Shelf (ad hoc)                            | I built the Shelf because I kept recreating NPCs and monsters...      |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-13 | Alien Race Generator prompt (reconciled)      | Do you have an idea about an alien for your #scifi #ttrpg...          |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-13 | Alien Race Generator release (reconciled)     | The alien race generator is now ready for all to use...               |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-12 | Plot Twist Generator preview (reconciled)     | Was in such a good flow with the generators, so a plot twist...       |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-11 | Alien Race Generator preview (reconciled)     | Working on a alien race generator now...                              |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-10 | Guided micro-settings reply (reconciled)      | This gave me a great idea for making a guided generator...            |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-10 | Plot Twist Generator idea (reconciled)        | Reading this great article bsky.app/profile/worl...                   |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-10 | Plot Twist Generator reply (reconciled)       | This gave me a great idea about making a plot twist generator...      |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-09 | Secret Society Generator release (reconciled) | The Secret Society Generator is now out and available for all...      |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-09 | Secret Society Generator preview (reconciled) | Instead of the alien race generator, I did the secret society...      |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-09 | Alien Race Generator idea (reconciled)        | Now that we have a star system generator and a world generator...     |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-08 | World Generator (queue #3)                    | I wanted a world I could start running tonight...                     |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-08 | Star System Generator (queue #1)              | I wanted a star system that gives players a reason to go somewhere... |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-07 | Knowledge Graph (queue #6), redone            | I kept losing track of how NPCs, factions, and locations connected... |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+| 2026-08-07 | Welcome / intro (ad hoc, not from queue)      | Codex Cryptica is a worldbuilding and campaign tool for TTRPGs...     |   [x]   |   [ ]   |    [ ]    |   [ ]   |
+
 ## Posted
 
 ### 2026-09-06 — Heist Generator (ad hoc)

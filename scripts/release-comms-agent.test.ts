@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
+  deriveDiscordFromBluesky,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
@@ -20,6 +21,7 @@ import {
   type EvaluatorResult,
   type ReleaseCommsState,
 } from "./release-comms-agent.ts";
+import { formatIssueComment } from "./release-comms-prompts.ts";
 
 describe("release-comms-agent", () => {
   describe("extractJsonBlock", () => {
@@ -199,7 +201,7 @@ describe("release-comms-agent", () => {
             bluesky_worthy: false,
           },
         ],
-        recommended_channels: ["discord", "reddit"],
+        recommended_channels: ["reddit"],
         reason: "new generator",
       });
       expect(prompt).toContain(
@@ -210,7 +212,7 @@ describe("release-comms-agent", () => {
         "Internal cache tweak: Faster page loads. (bluesky_worthy)",
       );
       expect(prompt).toContain(
-        "Whole-release channels to draft a combined post for: discord, reddit",
+        "Whole-release channels to draft a combined post for: reddit",
       );
       expect(prompt).toContain(".agent/skills/bsky-note/SKILL.md");
       expect(prompt).toContain(".agent/skills/cc-announcer/SKILL.md");
@@ -263,7 +265,7 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain("[Image:");
     });
 
-    it("defaults to all three whole-release channels when recommended_channels is empty", () => {
+    it("defaults to remaining whole-release channels when recommended_channels is empty", () => {
       const prompt = buildWriterPrompt({
         postworthy: true,
         importance: "medium",
@@ -272,11 +274,11 @@ describe("release-comms-agent", () => {
         reason: "new generator",
       });
       expect(prompt).toContain(
-        "Whole-release channels to draft a combined post for: discord, reddit, github_discussion",
+        "Whole-release channels to draft a combined post for: reddit, github_discussion",
       );
     });
 
-    it("defaults to all three whole-release channels when recommended_channels is undefined", () => {
+    it("defaults to remaining whole-release channels when recommended_channels is undefined", () => {
       const prompt = buildWriterPrompt({
         postworthy: true,
         importance: "medium",
@@ -284,7 +286,7 @@ describe("release-comms-agent", () => {
         reason: "new generator",
       } as EvaluatorResult);
       expect(prompt).toContain(
-        "Whole-release channels to draft a combined post for: discord, reddit, github_discussion",
+        "Whole-release channels to draft a combined post for: reddit, github_discussion",
       );
     });
 
@@ -293,16 +295,16 @@ describe("release-comms-agent", () => {
         postworthy: true,
         importance: "medium",
         features: [],
-        recommended_channels: ["discord", "mastodon"],
+        recommended_channels: ["reddit", "mastodon"],
         reason: "new generator",
       });
       expect(prompt).toContain(
-        "Whole-release channels to draft a combined post for: discord",
+        "Whole-release channels to draft a combined post for: reddit",
       );
       expect(prompt).not.toContain("mastodon");
     });
 
-    it("defaults to all three whole-release channels when bluesky (feature-level now) or an unknown value is the only recommendation", () => {
+    it("defaults to remaining whole-release channels when bluesky (feature-level now) or an unknown value is the only recommendation", () => {
       const prompt = buildWriterPrompt({
         postworthy: true,
         importance: "medium",
@@ -311,7 +313,7 @@ describe("release-comms-agent", () => {
         reason: "new generator",
       });
       expect(prompt).toContain(
-        "Whole-release channels to draft a combined post for: discord, reddit, github_discussion",
+        "Whole-release channels to draft a combined post for: reddit, github_discussion",
       );
     });
 
@@ -680,6 +682,64 @@ describe("release-comms-agent", () => {
       } finally {
         await rm(logDir, { recursive: true, force: true });
       }
+    });
+  });
+
+  describe("discord integration", () => {
+    it("derives discord copy from bluesky drafts stripping hashtags and preserving links", () => {
+      const blueskyDrafts = [
+        "New in Codex Cryptica: Faction Rosters 👥\n\nGenerate faction members with their own motives.\n\nhttps://codexcryptica.com/generators/faction\n\n#ttrpg #worldbuilding",
+      ];
+      const discord = deriveDiscordFromBluesky(blueskyDrafts);
+      expect(discord).toBe(
+        "New in Codex Cryptica: Faction Rosters 👥\n\nGenerate faction members with their own motives.\n\nhttps://codexcryptica.com/generators/faction",
+      );
+      expect(discord).not.toContain("#ttrpg");
+      expect(discord).not.toContain("#worldbuilding");
+      expect(discord).toContain("https://codexcryptica.com/generators/faction");
+    });
+
+    it("produces no discord text when bluesky drafts are empty or undefined", () => {
+      expect(deriveDiscordFromBluesky([])).toBe("");
+      expect(deriveDiscordFromBluesky(undefined)).toBe("");
+    });
+
+    it("includes derived discord copy in the formatted issue comment", () => {
+      const comment = formatIssueComment(
+        {
+          sha: "1234567890abcdef",
+          date: "2026-09-10T12:00:00.000Z",
+          promoteRunId: "999",
+          postworthy: true,
+          reason: "New generators",
+        },
+        {
+          postworthy: true,
+          reason: "New generators",
+          features: [
+            {
+              name: "Faction Rosters",
+              why_users_care: "Quick NPC groups",
+              bluesky_worthy: true,
+            },
+          ],
+          recommended_channels: ["discord"],
+        },
+        {
+          bluesky: [
+            {
+              pageUrl: "https://codexcryptica.com",
+              text: "Generate faction members!\n\nhttps://codexcryptica.com\n\n#TTRPG",
+            },
+          ],
+          discord: "Generate faction members!\n\nhttps://codexcryptica.com",
+          reddit: "Reddit text",
+          github_discussions: [],
+        },
+      );
+      expect(comment).toContain(
+        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nReddit:",
+      );
     });
   });
 });
