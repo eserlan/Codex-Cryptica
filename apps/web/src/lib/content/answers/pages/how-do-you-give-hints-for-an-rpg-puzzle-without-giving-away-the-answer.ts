@@ -70,6 +70,27 @@ export const howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer: AnswerCo
         ],
       },
       {
+        kind: "prose",
+        heading: "See the ladder written into a real puzzle",
+        paragraphs: [
+          "Every generated puzzle carries its own three-step ladder in the GM reference rail, built on this exact shape. A fantasy example: the bell's escalating hints move from repeating an image already seen, to naming the ring that just changed, to stating that the mechanism wants three things offered to it, in some order, without ever naming the order itself.",
+        ],
+        cta: {
+          text: "Read the Bell Beneath Blackglass puzzle example",
+          href: "/examples/the-bell-beneath-blackglass-fantasy-puzzle",
+        },
+      },
+      {
+        kind: "prose",
+        paragraphs: [
+          "A cyberpunk example under time pressure works the same way: the escalating hints move from naming that the plates and rails form one dispatch machine, to pointing out which relay just warmed up, to stating the route's start and end without giving the exact path.",
+        ],
+        cta: {
+          text: "Read the Null-Key Reliquary puzzle example",
+          href: "/examples/the-null-key-reliquary-cyberpunk-puzzle",
+        },
+      },
+      {
         kind: "checklist",
         heading: "Before the puzzle reaches the table",
         items: [
