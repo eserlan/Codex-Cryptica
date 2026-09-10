@@ -14,7 +14,7 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
       heading: "The ship's job is to create problems, not remove them",
       paragraphs: [
         "A starting ship that can outrun anything, out-arm anything, and never needs fuel or repairs takes an entire category of story away from the table: nobody has to choose between fixing the engine and paying the crew, nobody gets caught by a faster patrol boat, nobody has to decide whether a job is worth the wear on the hull. The ship stops being a source of decisions and becomes furniture.",
-        "The fix is not to make the ship weak for its own sake. It is to give the ship exactly enough capability to do its intended job and no more, so that every situation outside that job is a genuine problem. A freighter should be good at hauling cargo and bad at combat. A scout ship should be good at surveying and bad at carrying anything heavy. The gap between what the ship can do and what the situation demands is where play happens.",
+        "Give the ship exactly enough capability to do its intended job and no more, so that every situation outside that job is a genuine problem. A freighter should be good at hauling cargo and bad at combat. A scout ship should be good at surveying and bad at carrying anything heavy. The gap between what the ship can do and what the situation demands is where play happens.",
       ],
     },
     {
