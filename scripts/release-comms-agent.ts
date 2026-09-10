@@ -320,7 +320,10 @@ export function findPublicContent(
     .trim()
     .split("\n")
     .flatMap((line) => {
-      const [status, path] = line.split("\t");
+      const [status, ...paths] = line.split("\t");
+      // Renames/copies report three columns (e.g. "R100\told\tnew"); the
+      // destination path is always the last column.
+      const path = paths.at(-1);
       return status && path && !status.startsWith("D") ? [path] : [];
     });
   return changedFiles.flatMap((path) => {
@@ -336,8 +339,10 @@ export function findPublicContent(
             ["diff", "--unified=0", previousSha, newSha, "--", path],
             { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
           )
-            .match(/^\+ {2}([a-z0-9-]+): \{$/gm)
-            ?.map((line) => line.slice(3, -3)) ?? [];
+            .match(/^\+ {2}["']?([a-z0-9-]+)["']?: \{$/gm)
+            ?.map(
+              (line) => line.match(/^\+ {2}["']?([a-z0-9-]+)["']?: \{$/)![1],
+            ) ?? [];
         return changedGeneratorSlugs.flatMap((slug) => {
           const item = discoverGeneratorPublicContent(source, slug, path);
           return item ? [item] : [];

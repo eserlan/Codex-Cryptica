@@ -76,7 +76,13 @@ export function publishDiscussion(
   asset: BlueskyAsset,
   run: typeof execFileSync = execFileSync,
 ): DiscussionPublication {
-  const body = `${withVerifiedPageUrl(draft, asset.pageUrl)}\n\n![${asset.imageAlt}](${asset.imageUrl})`;
+  const resolvedDraft = withVerifiedPageUrl(draft, asset.pageUrl);
+  if (resolvedDraft.includes("[relevant page]")) {
+    throw new Error(
+      "Discussion draft still contains an unresolved page placeholder",
+    );
+  }
+  const body = `${resolvedDraft}\n\n![${asset.imageAlt}](${asset.imageUrl})`;
   if (isReleaseCommsDryRun()) {
     return {
       url: `dry-run://github-discussion/${encodeURIComponent(asset.pageUrl)}`,

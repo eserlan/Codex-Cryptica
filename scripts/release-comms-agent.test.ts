@@ -1,4 +1,5 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { execFileSync as execFileSyncNode } from "node:child_process";
+import { mkdir as mkdirNode, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
@@ -496,6 +497,68 @@ describe("release-comms-agent", () => {
       });
       expect(prompt).toContain("Constellation generator");
       expect(prompt).toContain("Heist Generator");
+    });
+  });
+
+  describe("findPublicContent", () => {
+    it("discovers a public page that was renamed between the two SHAs", async () => {
+      const dir = await mkdtemp(join(tmpdir(), "release-comms-repo-"));
+      try {
+        const git = (args: string[]) =>
+          execFileSyncNode("git", args, { cwd: dir, encoding: "utf-8" });
+        git(["init", "-q"]);
+        git(["config", "user.email", "test@example.com"]);
+        git(["config", "user.name", "Test"]);
+        const pagesDir = join(
+          dir,
+          "apps/web/src/lib/content/answers/pages",
+        );
+        await mkdirNode(pagesDir, { recursive: true });
+        const oldPath = join(pagesDir, "old-slug.ts");
+        const newPath = join(pagesDir, "new-slug.ts");
+        const contents = [
+          `export const page = {`,
+          `  slug: "new-slug",`,
+          `  question: "How?",`,
+          `  image: "https://assets.codexcryptica.com/og/new-slug.jpg",`,
+          `  imageAlt: "New slug card",`,
+          `};`,
+          "",
+        ].join("\n");
+        await (await import("node:fs/promises")).writeFile(
+          oldPath,
+          contents,
+        );
+        git(["add", "-A"]);
+        git(["commit", "-q", "-m", "add page"]);
+        const before = git(["rev-parse", "HEAD"]).trim();
+
+        const { rename } = await import("node:fs/promises");
+        await rename(oldPath, newPath);
+        git(["add", "-A"]);
+        git(["commit", "-q", "-m", "rename page"]);
+        const after = git(["rev-parse", "HEAD"]).trim();
+
+        const previous = process.env.PR_FIX_ROOT;
+        process.env.PR_FIX_ROOT = dir;
+        try {
+          const { findPublicContent: freshFindPublicContent } = await import(
+            `./release-comms-agent.ts?bust=${Date.now()}-${Math.random()}`
+          );
+          const items = freshFindPublicContent(before, after);
+          expect(items).toContainEqual(
+            expect.objectContaining({
+              kind: "answer",
+              url: "https://codexcryptica.com/answers/new-slug",
+            }),
+          );
+        } finally {
+          if (previous === undefined) delete process.env.PR_FIX_ROOT;
+          else process.env.PR_FIX_ROOT = previous;
+        }
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
     });
   });
 

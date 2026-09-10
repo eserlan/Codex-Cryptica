@@ -39,7 +39,7 @@ export function discoverGeneratorPublicContent(
   const escapedSlug = slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const section = source.match(
     new RegExp(
-      `^  ${escapedSlug}: \\{([\\s\\S]*?)(?=^  [a-z0-9-]+: \\{|^};)`,
+      `^  ["']?${escapedSlug}["']?: \\{([\\s\\S]*?)(?=^  ["']?[a-z0-9-]+["']?: \\{|^};)`,
       "m",
     ),
   )?.[1];

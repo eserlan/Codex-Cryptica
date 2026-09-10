@@ -165,4 +165,21 @@ describe("prepareBlueskyText", () => {
     );
     expect(body).toContain("https://codexcryptica.com/answers/living-city");
   });
+
+  it("refuses to publish a Discussion draft with an unresolved page placeholder", () => {
+    expect(() =>
+      publishDiscussion(
+        "Living cities",
+        "Read it at [relevant page] for more.",
+        {
+          pageUrl: "https://codexcryptica.com/answers/living-city",
+          imageUrl: "https://assets.codexcryptica.com/og/living-city.jpg",
+          imageAlt: "A living city map",
+        },
+        (() => {
+          throw new Error("publisher must not be called");
+        }) as never,
+      ),
+    ).toThrow("unresolved page placeholder");
+  });
 });
