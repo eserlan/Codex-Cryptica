@@ -214,10 +214,28 @@ export function fetchPromotionCommits(
   newSha: string,
   run: typeof execFileSync = execFileSync,
 ): void {
-  run("git", ["fetch", "--no-tags", "origin", previousSha, newSha], {
-    cwd: REPOSITORY_ROOT,
-    stdio: "ignore",
-  });
+  if (previousSha.startsWith("-") || newSha.startsWith("-")) {
+    throw new Error(
+      `[release-comms] invalid promotion SHA(s): previous=${previousSha} new=${newSha}`,
+    );
+  }
+
+  try {
+    run("git", ["fetch", "--no-tags", "origin", previousSha, newSha], {
+      cwd: REPOSITORY_ROOT,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stderr =
+      error && typeof error === "object" && "stderr" in error
+        ? String((error as { stderr?: Buffer | string }).stderr ?? "").trim()
+        : "";
+    const details = stderr ? `\n${stderr}` : "";
+
+    throw new Error(
+      `[release-comms] git fetch failed for ${previousSha}..${newSha}: ${message}${details}`,
+    );
+  }
 }
 
 function gatherDelta(previousSha: string, newSha: string) {
