@@ -120,6 +120,26 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Blades in the Dark",
+      rationale:
+        "Flashbacks let a player establish a preparation retroactively, and its clocks give the alarm track a ready-made mechanic rather than a house rule.",
+      href: "https://bladesinthedark.com/",
+    },
+    {
+      system: "Scum & Villainy",
+      rationale:
+        "The same flashback and clock engine as Blades in the Dark, reskinned for a starship crew running jobs across a sector.",
+      href: "https://www.evilhat.com/home/scum-villainy/",
+    },
+    {
+      system: "Leverage: The Roleplaying Game",
+      rationale:
+        "Built around a heist's planning montage: players narrate flashback preparations during the job itself, and complications create reversals rather than dead ends.",
+      href: "https://www.evilhat.com/home/leverage/",
+    },
+  ],
   codexConnection: {
     heading: "Tracking heist contacts in Codex Cryptica",
     paragraphs: [
