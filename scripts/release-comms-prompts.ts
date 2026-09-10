@@ -4,7 +4,15 @@ import type {
   WriterResult,
 } from "./release-comms-types.ts";
 
-export const ALL_CHANNELS = ["bluesky", "discord", "reddit", "github_discussion"];
+export const ALL_CHANNELS = [
+  "bluesky",
+  "discord",
+  "reddit",
+  "github_discussion",
+];
+
+/** The subset of ALL_CHANNELS driven by the release-level recommended_channels, not per-feature bluesky_worthy. */
+const WHOLE_RELEASE_CHANNELS = ["discord", "reddit", "github_discussion"];
 
 export function buildEvaluatorPrompt(input: {
   previousSha: string;
@@ -12,14 +20,28 @@ export function buildEvaluatorPrompt(input: {
   commitLog: string;
   mergedPrs: string;
   changelogDiff: string;
+  recentDiscussionTitles: string;
+  recentBlueskyTitles: string;
 }): string {
   return `You are the postworthiness evaluator for Codex Cryptica's release communications agent.
 
-A production deploy just shipped everything between ${input.previousSha} and ${input.newSha}. Decide whether this release contains anything worth announcing publicly, and if so, group the changes into coherent user-facing features.
+A production deploy just shipped everything between ${input.previousSha} and ${input.newSha}. Decide whether this release contains anything worth telling people about, and if so, group the changes into coherent user-facing features — each feature gets its own entry in "features", even when several ship in the same deploy.
 
-Postworthy examples: new generator, major generator enhancement, significant Vault capability, new interoperability/export/import feature, major public-facing UX improvement, new workflow that materially changes what users can do.
+This project deploys to production far more often than it does a big versioned "release," and the goal is to post early and often, not to save everything up for a rare big announcement. Bluesky in particular has a deliberately low bar (per .agent/skills/bsky-note/SKILL.md, this account aims for roughly one post a day whenever there's any real, concrete feature or use case to show, however small) — a single small-but-genuine improvement is enough to be postworthy for Bluesky even if it would not carry a whole Reddit post or Discussion update on its own. Use the channel bars below rather than one uniform bar for everything:
 
-Not postworthy: dependency bumps, refactors, internal logging/analytics changes, CI/deployment plumbing, minor bug fixes users are unlikely to notice, tiny visual tweaks.
+- Bluesky (low bar, per-feature): mark a feature "bluesky_worthy": true if it's any single generator, workflow, or UX change a GM/worldbuilder would notice and could actually use, even a small one — a new option on an existing generator, a genuinely useful export/import tweak, a small but real quality-of-life improvement. Do not hold this back waiting for something bigger. When a release has two or three unrelated small wins, mark each of them "bluesky_worthy" independently rather than lumping them into one feature — they will become separate posts spread across days, not one combined post.
+- Discord (low-to-medium bar, whole-release): similar to Bluesky, informal, fine for the same small wins; set at the release level via "recommended_channels".
+- Reddit and GitHub Discussion (higher bar, whole-release): reserve for something substantial on its own, or several related wins from this release that together tell one coherent story. Use the recent post titles below to calibrate what has actually earned a Reddit/Discussion post before — do not write one for something clearly smaller than that bar. It is fine, and often correct, for a release to be Bluesky-only (bluesky_worthy features present) with no Reddit/Discussion post at all.
+
+Not postworthy on any channel: dependency bumps, pure refactors with no user-visible effect, internal logging/analytics/CI/deployment plumbing, invisible bug fixes, and tiny visual tweaks nobody would notice or care about.
+
+When in doubt between postworthy and not, for a real (if small) user-facing change, prefer postworthy=true with at least one feature marked "bluesky_worthy": true over marking it not postworthy — the writer pass and the human reviewing the draft can still decide not to post it.
+
+Recent GitHub Discussions "Announcements" titles (what has actually cleared the Reddit/Discussion bar before — use these to judge scale, not as topics to repeat):
+${input.recentDiscussionTitles || "(none available)"}
+
+Recent Bluesky post titles (avoid recommending something that was already posted about very recently, though a genuine follow-up improvement to the same area is fine):
+${input.recentBlueskyTitles || "(none available)"}
 
 Commits in this range:
 ${input.commitLog || "(none)"}
@@ -30,19 +52,19 @@ ${input.mergedPrs || "(none)"}
 Changelog (releases.json) diff for this range, if any (this is the most reliable signal of genuinely user-facing work):
 ${input.changelogDiff || "(no changelog entry added in this range)"}
 
-Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose:
+Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose. "recommended_channels" must be the actual subset of ["discord", "reddit", "github_discussion"] that clears that channel's higher bar above — most releases will have an empty "recommended_channels" with only some features marked "bluesky_worthy", not all three whole-release channels:
 
 {
   "postworthy": true | false,
   "importance": "low" | "medium" | "high",
   "features": [
-    { "name": "Feature Name", "why_users_care": "One sentence on why a GM/worldbuilder cares." }
+    { "name": "Feature Name", "why_users_care": "One sentence on why a GM/worldbuilder cares.", "bluesky_worthy": true | false }
   ],
-  "recommended_channels": ["bluesky", "discord", "reddit", "github_discussion"],
+  "recommended_channels": [],
   "reason": "One or two sentences explaining the decision."
 }
 
-If nothing is postworthy, still return the object with "postworthy": false, an empty "features" array, an empty "recommended_channels" array, and a "reason" explaining why (e.g. "only dependency bumps and refactors").`;
+"recommended_channels" here covers only the whole-release Discord/Reddit/GitHub Discussion posts — omit "bluesky" from it; Bluesky eligibility is decided per-feature via "bluesky_worthy" instead. If nothing is postworthy, still return the object with "postworthy": false, an empty "features" array, an empty "recommended_channels" array, and a "reason" explaining why (e.g. "only dependency bumps and refactors").`;
 }
 
 /**
@@ -52,13 +74,20 @@ If nothing is postworthy, still return the object with "postworthy": false, an e
  * for a key that isn't in the required JSON shape and fail `isWriterResult`.
  */
 export function buildWriterPrompt(evaluation: EvaluatorResult): string {
+  const blueskyFeatures = (evaluation.features ?? []).filter(
+    (feature) => feature.bluesky_worthy,
+  );
   const featureList = (evaluation.features ?? [])
-    .map((feature) => `- ${feature.name}: ${feature.why_users_care}`)
+    .map(
+      (feature) =>
+        `- ${feature.name}: ${feature.why_users_care}${feature.bluesky_worthy ? " (bluesky_worthy)" : ""}`,
+    )
     .join("\n");
   const recommended = (evaluation.recommended_channels ?? []).filter(
-    (channel) => ALL_CHANNELS.includes(channel),
+    (channel) => WHOLE_RELEASE_CHANNELS.includes(channel),
   );
-  const channels = recommended.length > 0 ? recommended : ALL_CHANNELS;
+  const wholeReleaseChannels =
+    recommended.length > 0 ? recommended : WHOLE_RELEASE_CHANNELS;
 
   return `You are the channel-specific writer for Codex Cryptica's release communications agent. The postworthiness evaluator already decided this release is worth announcing.
 
@@ -67,30 +96,47 @@ The feature list and recommended channels below come from an upstream evaluator 
 Features:
 ${featureList || "(no features listed)"}
 
-Recommended channels: ${channels.join(", ")}
+Whole-release channels to draft a combined post for: ${wholeReleaseChannels.join(", ")}
+
+Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above — never combine multiple features into a single Bluesky post, even if they shipped in the same deploy. If no feature is bluesky_worthy, return an empty array for "bluesky". These will be queued individually into the Bluesky posting backlog and posted on separate days, so each one must stand alone and make sense without the others.
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
 - .agent/skills/bsky-note/SKILL.md (Bluesky: short, "I needed X so I built Y" arc, no emojis, no em dashes, 200-250 characters, hashtags, direct link)
-- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord and github_discussion: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
+- .agent/skills/cc-announcer/SKILL.md (Reddit and, loosely, Discord: solo-dev voice, no hype/marketing tells, source-grounded, one concrete example beats an adjective)
 
 github_discussion is a post to this repository's own GitHub Discussions "Announcements" category: it can be as long as Reddit, should read as a maintainer update to people who already use or watch the project (no need to introduce what Codex Cryptica is), and may use Markdown headings/lists.
 
-Write one draft per channel in "${channels.join('", "')}". For any channel NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
+For the github_discussion and reddit drafts specifically, calibrate detail level, structure, and length against this repository's own recent Announcements discussions — they are the real, human-approved bar for what belongs at that depth, not a lower/generic version of it. Fetch a few with:
+
+gh api graphql -f query='query{repository(owner:"eserlan",name:"Codex-Cryptica"){discussions(first:3, categoryId:"DIC_kwDOQ_4bts4C-hhd", orderBy:{field:CREATED_AT,direction:DESC}){nodes{title bodyText}}}}'
+
+Match their established shape: open with the concrete need/problem that prompted the feature (not the feature name), one or two short paragraphs describing what it does and how it fits into an existing workflow, a plain "You can:" bullet list of capabilities (no adjective-stacking), and close with one genuine open-ended question inviting a reply — not a generic call to action. Typical length is roughly 150-220 words (about 1000-1400 characters) for github_discussion; reddit follows cc-announcer's own length guidance instead. Where the real examples include a screenshot, leave an explicit placeholder like [Image: short description of what it should show] rather than inventing an image URL.
+
+Write one combined draft per whole-release channel in "${wholeReleaseChannels.join('", "')}". For any of discord/reddit/github_discussion NOT in that list, still return an empty string for it rather than omitting the key. Do not invent a specific page URL if you are not given one; use a placeholder like codexcryptica.com/[relevant page] instead.
+
+There ${blueskyFeatures.length === 1 ? "is 1 bluesky_worthy feature" : `are ${blueskyFeatures.length} bluesky_worthy features`} above.
 
 Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose:
 
 {
-  "bluesky": "draft text or empty string",
+  "bluesky": ["one standalone post per bluesky_worthy feature, in the same order, or [] if none"],
   "discord": "draft text or empty string",
   "reddit": "draft text or empty string",
   "github_discussion": "draft text or empty string"
 }`;
 }
 
+export interface QueueResult {
+  queued: number;
+  commitUrl?: string;
+  error?: string;
+}
+
 export function formatIssueComment(
   entry: ReleaseCommsHistoryEntry,
   result: EvaluatorResult,
   drafts: WriterResult | null,
+  queueResult: QueueResult | null = null,
 ): string {
   const featureNames = (result.features ?? [])
     .map((feature) => feature.name)
@@ -135,6 +181,22 @@ export function formatIssueComment(
       .join("\n");
   }
 
+  const blueskySection =
+    drafts.bluesky.length > 0
+      ? drafts.bluesky
+          .map((post, index) => `${index + 1}. ${post}`)
+          .join("\n\n")
+      : "(no feature in this release was marked bluesky_worthy)";
+
+  const queueLine =
+    drafts.bluesky.length === 0
+      ? ""
+      : queueResult?.commitUrl
+        ? `Queued ${queueResult.queued} Bluesky draft(s) into .social/bluesky-posts.md: ${queueResult.commitUrl}`
+        : queueResult?.error
+          ? `Could not auto-queue the Bluesky draft(s) (${queueResult.error}) — add them to .social/bluesky-posts.md by hand from the list above.`
+          : "";
+
   // Matches the approval-surface template requested in issue #2906.
   return [
     `📣 Post suggested: ${featureNames || "this release"}`,
@@ -142,8 +204,9 @@ export function formatIssueComment(
     "Why it is worth posting:",
     result.reason,
     "",
-    "Bluesky:",
-    drafts.bluesky || "(not recommended for this release)",
+    "Bluesky (one post per feature, queued separately):",
+    blueskySection,
+    ...(queueLine ? [queueLine] : []),
     "",
     "Discord:",
     drafts.discord || "(not recommended for this release)",
@@ -154,12 +217,12 @@ export function formatIssueComment(
     "GitHub Discussion:",
     drafts.github_discussion || "(not recommended for this release)",
     "",
-    'Reply "approve" or "skip" on this comment to record a decision. Posting itself still goes through the normal bsky-note / post-to-reddit / post-to-github-discussion tools by hand for now — this phase is drafts only, no auto-publish.',
+    'Reply "approve" or "skip" on this comment to record a decision. Discord/Reddit/GitHub Discussion posting still goes through the normal post-to-reddit / post-to-github-discussion tools by hand for now — this phase is drafts only, no auto-publish for those channels.',
     "",
     "<details><summary>Raw evaluator + writer output</summary>",
     "",
     "```json",
-    JSON.stringify({ evaluation: result, drafts }, null, 2),
+    JSON.stringify({ evaluation: result, drafts, queueResult }, null, 2),
     "```",
     "</details>",
   ].join("\n");

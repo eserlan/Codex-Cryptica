@@ -1,6 +1,13 @@
 export interface ReleaseFeature {
   name: string;
   why_users_care: string;
+  /**
+   * Whether this individual feature is worth its own standalone Bluesky
+   * post, separate from the release's overall recommended_channels. Lets
+   * one release surface several small, separately-postable wins instead of
+   * forcing them into a single combined draft.
+   */
+  bluesky_worthy?: boolean;
 }
 
 export interface EvaluatorResult {
@@ -12,7 +19,8 @@ export interface EvaluatorResult {
 }
 
 export interface WriterResult {
-  bluesky: string;
+  /** One short standalone post per feature with bluesky_worthy: true. */
+  bluesky: string[];
   discord: string;
   reddit: string;
   github_discussion: string;

@@ -73,7 +73,10 @@ function isReleaseFeature(value: unknown): value is ReleaseFeature {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
   return (
-    typeof record.name === "string" && typeof record.why_users_care === "string"
+    typeof record.name === "string" &&
+    typeof record.why_users_care === "string" &&
+    (record.bluesky_worthy === undefined ||
+      typeof record.bluesky_worthy === "boolean")
   );
 }
 
@@ -100,7 +103,8 @@ export function isWriterResult(value: unknown): value is WriterResult {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
   return (
-    typeof record.bluesky === "string" &&
+    Array.isArray(record.bluesky) &&
+    record.bluesky.every((post) => typeof post === "string") &&
     typeof record.discord === "string" &&
     typeof record.reddit === "string" &&
     typeof record.github_discussion === "string"

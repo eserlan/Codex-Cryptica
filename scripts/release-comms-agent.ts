@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
-import { createWriteStream } from "node:fs";
+import { createWriteStream, readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
@@ -12,6 +12,7 @@ import {
   buildWriterPrompt,
   formatIssueComment,
 } from "./release-comms-prompts.ts";
+import { queueBlueskyDrafts } from "./release-comms-queue.ts";
 import {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -25,7 +26,11 @@ import type {
   WriterResult,
 } from "./release-comms-types.ts";
 
-export { buildEvaluatorPrompt, buildWriterPrompt } from "./release-comms-prompts.ts";
+export {
+  buildEvaluatorPrompt,
+  buildWriterPrompt,
+} from "./release-comms-prompts.ts";
+export { queueBlueskyDrafts } from "./release-comms-queue.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -250,6 +255,47 @@ function gatherDelta(previousSha: string, newSha: string) {
   return { commitLog, mergedPrs, changelogDiff };
 }
 
+/** Recent Announcements titles, used to calibrate the Reddit/Discussion bar against real history. */
+function fetchRecentDiscussionTitles(): string {
+  try {
+    const raw = execFileSync(
+      "gh",
+      [
+        "api",
+        "graphql",
+        "-f",
+        'query=query{repository(owner:"eserlan",name:"Codex-Cryptica"){discussions(first:8, categoryId:"DIC_kwDOQ_4bts4C-hhd", orderBy:{field:CREATED_AT,direction:DESC}){nodes{title createdAt}}}}',
+      ],
+      { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
+    );
+    const parsed = JSON.parse(raw) as {
+      data: {
+        repository: {
+          discussions: { nodes: Array<{ title: string; createdAt: string }> };
+        };
+      };
+    };
+    return parsed.data.repository.discussions.nodes
+      .map((node) => `- ${node.createdAt.slice(0, 10)}: ${node.title}`)
+      .join("\n");
+  } catch {
+    return "";
+  }
+}
+
+/** Recent Bluesky post/draft headers, used to avoid recommending something already just posted. */
+function fetchRecentBlueskyTitles(): string {
+  try {
+    const content = readFileSync(
+      resolve(REPOSITORY_ROOT, ".social/bluesky-posts.md"),
+      "utf8",
+    );
+    return (content.match(/^### .+$/gm) ?? []).slice(0, 15).join("\n");
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Run a prompt through the provider fallback chain until one returns a
  * parseable, schema-valid JSON result. Shared by the evaluator and writer
@@ -319,6 +365,8 @@ export async function main(promoteRunId: string): Promise<void> {
     previousSha,
     newSha,
     ...delta,
+    recentDiscussionTitles: fetchRecentDiscussionTitles(),
+    recentBlueskyTitles: fetchRecentBlueskyTitles(),
   });
 
   const result = await runJsonAgentPass(
@@ -364,6 +412,20 @@ export async function main(promoteRunId: string): Promise<void> {
   };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 
+  const queueResult =
+    drafts && drafts.bluesky.length > 0
+      ? await queueBlueskyDrafts(drafts.bluesky, entry, REPOSITORY_ROOT)
+      : null;
+  if (queueResult?.error) {
+    console.error(
+      `[release-comms] could not queue Bluesky drafts: ${queueResult.error}`,
+    );
+  } else if (queueResult?.commitUrl) {
+    console.log(
+      `[release-comms] queued ${queueResult.queued} Bluesky draft(s): ${queueResult.commitUrl}`,
+    );
+  }
+
   try {
     execFileSync(
       "gh",
@@ -372,7 +434,7 @@ export async function main(promoteRunId: string): Promise<void> {
         "comment",
         String(TRACKING_ISSUE),
         "--body",
-        formatIssueComment(entry, result, drafts),
+        formatIssueComment(entry, result, drafts, queueResult),
       ],
       { cwd: REPOSITORY_ROOT, stdio: "inherit" },
     );

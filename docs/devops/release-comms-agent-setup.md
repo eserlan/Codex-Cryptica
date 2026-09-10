@@ -121,10 +121,32 @@ what the agent itself does — `continue-on-error: true` means a failure
 here must never show up as a failed deploy — and that a comment appears on
 #2906 shortly after.
 
+## Bluesky auto-queueing (direct commit to staging)
+
+Per feature (not per release), the evaluator can mark a feature
+`bluesky_worthy`, and the writer drafts one standalone post for each. Those
+drafts are queued automatically into `.social/bluesky-posts.md`'s "Drafted
+(not yet posted)" section, and the agent commits and pushes that change
+**directly to `staging`, unattended, no PR** — an isolated `git worktree`
+is used so this never disturbs whatever branch state the main checkout is
+in. This is the mechanism for the "post early and often" cadence: small
+wins get queued as they ship, so `bsky-note`'s daily posting flow always
+has fresh drafts to pull from instead of waiting for a big release.
+
+Verify this works: after a postworthy run (local dry run or real), check
+that `.social/bluesky-posts.md` on `origin/staging` actually gained a new
+entry, and that the #2906 comment includes a commit URL rather than a
+"could not auto-queue" error. If it fails, the most likely cause is push
+access from this machine's `git`/SSH auth — the same auth already used for
+other automation here should suffice, but confirm with a manual
+`git push origin HEAD:staging` test from a throwaway worktree if needed.
+
 ## Known gaps (tracked separately, not blocking this checklist)
 
 - No automated parsing of "approve"/"skip" replies on the #2906 comment
-  yet — a human still decides and posts manually.
+  yet — a human still decides on Discord/Reddit/GitHub Discussion posts,
+  and still supplies a screenshot before posting any auto-queued Bluesky
+  draft (the queue entry leaves the image/alt fields as `_TODO_`).
 - Discord has a drafted channel but no publish script yet (only the
   existing deploy-notification webhooks exist, which are a different
   thing) — not yet filed as its own issue.
