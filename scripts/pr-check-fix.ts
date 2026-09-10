@@ -577,6 +577,20 @@ ${mergeConflictPaths.length > 0 ? buildConflictResolutionInstructions(mergeConfl
 /**
  * Post a reply to a specific review comment on GitHub.
  */
+/**
+ * Comments eligible for an automated "fixed" reply after a push: only those
+ * the agent actually saw in its prompt (the original snapshot), minus any it
+ * already replied to itself during the run. Comments posted after the prompt
+ * was built were never addressed and must not be told they were fixed.
+ */
+export function selectCommentsForFixedReply(
+  originalUnresolved: PrReviewComment[],
+  refreshedUnresolved: PrReviewComment[],
+): PrReviewComment[] {
+  const refreshedIds = new Set(refreshedUnresolved.map((c) => c.id));
+  return originalUnresolved.filter((c) => refreshedIds.has(c.id));
+}
+
 export function replyToPrComment(
   repoDir: string,
   prNumber: number,
@@ -759,12 +773,18 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
                 encoding: "utf-8",
               }).trim();
               // Re-fetch feedback so comments the agent already replied to
-              // during this run aren't double-replied here.
+              // during this run aren't double-replied here, and so comments
+              // posted after the prompt was built (which the agent never
+              // saw) aren't falsely told they were fixed.
               const refreshedFeedback = fetchPrFeedback(
                 feedback.prMeta.number,
                 worktreePath,
               );
-              for (const comment of refreshedFeedback.unresolvedComments) {
+              const commentsToReply = selectCommentsForFixedReply(
+                feedback.unresolvedComments,
+                refreshedFeedback.unresolvedComments,
+              );
+              for (const comment of commentsToReply) {
                 replyToPrComment(
                   worktreePath,
                   feedback.prMeta.number,
