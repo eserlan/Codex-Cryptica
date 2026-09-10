@@ -445,6 +445,15 @@ describe("the committed registry", () => {
     );
   });
 
+  it("gives tactical mecha campaigns their own operation-level workflow intent", () => {
+    expect(findIntentOwner("mecha rpg campaign manager", registry)?.id).toBe(
+      "for-mecha-rpgs",
+    );
+    expect(getEntryByPath("/for/mecha-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+  });
+
   it("seeds every major discovery family", () => {
     const kinds = new Set(registry.map((entry) => entry.pageKind));
     for (const kind of [

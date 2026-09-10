@@ -204,6 +204,21 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-mecha-rpgs",
+    pageKind: "for",
+    canonicalPath: "/for/mecha-rpgs",
+    primaryIntent: "mecha rpg campaign manager",
+    intentAliases: ["tactical mecha campaign organiser", "mech rpg gm notes"],
+    audience: "Game masters running tactical mecha RPG campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Organises the operation-level links between pilots, frames, contracts, military factions and warzones that tactical mecha campaigns accumulate.",
+    parentCluster: "genre-guides",
+    relatedIntents: ["hub-lancer", "for-space-opera", "for-dystopian-sci-fi"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-space-western",
     pageKind: "for",
     canonicalPath: "/for/space-western",
