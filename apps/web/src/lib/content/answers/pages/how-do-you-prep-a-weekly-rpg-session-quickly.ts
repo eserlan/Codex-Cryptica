@@ -164,6 +164,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
     "how-do-you-start-worldbuilding-from-scratch",
     "how-do-you-write-a-one-shot-adventure",
     "how-do-you-improvise-npcs-on-the-spot",
+    "how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
   ],
   discovery: {
     id: "answer-prep-weekly-session-quickly",

@@ -910,6 +910,44 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Tactical Mecha RPG Pack", () => {
+    it("is registered as a Lancer-themed genre guide", () => {
+      const mecha = getLandingPage("mecha-rpgs");
+
+      expect(mecha).toBeDefined();
+      expect(mecha?.kind).toBe("genre");
+      expect(mecha?.theme).toBe("lancer");
+      expect(mecha?.hub).toBe("lancer");
+      expect(mecha?.surfaceStyle).toBe("sharp");
+      expect(mecha?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/lancer" }),
+          expect.objectContaining({ href: "/generators/npc" }),
+          expect.objectContaining({ href: "/generators/faction" }),
+          expect.objectContaining({ href: "/tools/quest-hook-generator" }),
+        ]),
+      );
+    });
+
+    it("uses a hub-and-spoke operation graph for the squad, its frame, and its warzone", () => {
+      const graph = getLandingPage("mecha-rpgs")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.label).toBe("Harrow Squadron");
+      expect(hub.category).toBe("faction");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("event");
+    });
+  });
+
   describe("Conspiracy Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const conspiracy = getLandingPage("conspiracy");

@@ -214,6 +214,21 @@ Reference answers must form an interconnected web, never dead ends. When publish
    - If an existing broader answer in your cluster currently carries an `intentAlias` that your new, specialized page now directly answers, prune that alias from the existing answer's `intentAliases`.
 3. **Mutual Overlap Acknowledgment**:
    - If your answer shares significant vocabulary or cluster scope with an existing answer, ensure both answers acknowledge each other via `acknowledgedOverlap: [{ with: "<other-intent-id>", reason: "<distinct-role-rationale>" }]`.
+4. **Link to worked examples, reader-facing, not just in the discovery registry**:
+   - If a relevant `/examples/<slug>` page exists (or is being added alongside this answer), link to it from within a `prose` section using that block's optional `cta` field:
+     ```ts
+     {
+       kind: "prose",
+       heading: "<Framing sentence for the example>",
+       paragraphs: ["<One sentence setting up what the example shows.>"],
+       cta: {
+         text: "Read the <Example Name> example",
+         href: "/examples/<example-slug>",
+       },
+     },
+     ```
+   - See `how-do-you-run-a-heist-in-a-tabletop-rpg.ts`'s "See a table-ready score in action" block for the precedent.
+   - **This step is easy to miss**: adding the example to `discovery.relatedIntents`, or linking the example's own `relatedAnswers` back to this page, does not put a link on the rendered answer page itself. `check:answer-mesh` and the discovery audit only check answer-to-answer reciprocity and intent-registry consistency — neither one catches a missing answer-to-example link, so this has to be done by hand and verified by reading the finished page, not by a green test run.
 
 ---
 

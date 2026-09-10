@@ -551,7 +551,7 @@ describe("PRIVATE_ROUTE_FAMILIES and PRIVATE_ROUTE_SAMPLES", () => {
 
 describe("CLUSTER_TARGETS and CRAWLER_READINESS_DISCLAIMER", () => {
   it("defines the targeted content clusters", () => {
-    expect(CLUSTER_TARGETS).toEqual(["heist", "rumour", "religion"]);
+    expect(CLUSTER_TARGETS).toEqual(["heist", "rumour", "religion", "puzzle"]);
   });
 
   it("enforces explicit boundary statement on crawler readiness vs search outcomes", () => {

@@ -151,6 +151,7 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "what-is-a-point-crawl",
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+    "how-do-you-keep-track-of-npcs-in-a-long-campaign",
   ],
   discovery: {
     id: "answer-campaign-notes",

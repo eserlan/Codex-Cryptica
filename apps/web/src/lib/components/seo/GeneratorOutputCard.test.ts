@@ -41,7 +41,7 @@ describe("GeneratorOutputCard", () => {
     },
   ];
 
-  it("renders generated title, summary, and text-base typography container", () => {
+  it("uses 18px, relaxed typography for generated long-form copy", () => {
     const { container } = render(GeneratorOutputCard, {
       props: {
         generatedData: sampleData,
@@ -77,8 +77,62 @@ describe("GeneratorOutputCard", () => {
 
     const seoMdContainer = container.querySelector(".seo-md");
     expect(seoMdContainer).toBeTruthy();
-    expect(seoMdContainer?.classList.contains("text-base")).toBe(true);
-    expect(seoMdContainer?.classList.contains("text-sm")).toBe(false);
+    expect(seoMdContainer?.classList.contains("text-lg")).toBe(true);
+    expect(seoMdContainer?.classList.contains("leading-relaxed")).toBe(true);
+    expect(seoMdContainer?.classList.contains("break-words")).toBe(true);
+    expect(seoMdContainer?.classList.contains("text-base")).toBe(false);
+    expect(
+      seoMdContainer?.classList.contains("[&_pre]:overflow-x-auto"),
+    ).toBe(true);
+    expect(seoMdContainer?.classList.contains("[&_pre]:max-w-full")).toBe(
+      true,
+    );
+  });
+
+  it("keeps fenced code blocks from overflowing the card on mobile", () => {
+    const { container } = render(GeneratorOutputCard, {
+      props: {
+        generatedData: {
+          ...sampleData,
+          content:
+            "```\nA very long unbroken line of preformatted code that would otherwise overflow the card on narrow screens\n```",
+        },
+        aiFallbackDismissed: false,
+        isBusy: false,
+        isExampleDraft: false,
+        generatedSingular: "Faction",
+        variant: "default",
+        worldTheme: "Classic Fantasy",
+        documentContent:
+          "```\nA very long unbroken line of preformatted code that would otherwise overflow the card on narrow screens\n```",
+        documentSections: [
+          {
+            id: "sec-1",
+            heading: "What they control",
+            markdown:
+              "```\nA very long unbroken line of preformatted code that would otherwise overflow the card on narrow screens\n```",
+            body: "```\nA very long unbroken line of preformatted code that would otherwise overflow the card on narrow screens\n```",
+          },
+        ],
+        copied: false,
+        copiedSectionId: null,
+        contextTrimmed: false,
+        onDismissAiFallback: vi.fn(),
+        onSaveToCodex: vi.fn(),
+        onCopyMarkdown: vi.fn(),
+        onCopySection: vi.fn(),
+        onContainerClick: vi.fn(),
+        onContainerKeydown: vi.fn(),
+        onSelectHubEntity: vi.fn(),
+        onSaveHubToCodex: vi.fn(),
+      },
+    });
+
+    const pre = container.querySelector(".seo-md pre");
+    expect(pre).toBeTruthy();
+    expect(
+      pre?.closest(".seo-md")?.classList.contains("[&_pre]:overflow-x-auto"),
+    ).toBe(true);
   });
 
   it("renders Generate Roster and per-member Open as Character with interpolated aria-labels (#2808)", () => {

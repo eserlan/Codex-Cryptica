@@ -69,7 +69,9 @@
   class="bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <article class="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-20">
+  <article
+    class="mx-auto max-w-2xl break-words px-4 py-12 text-lg leading-relaxed sm:px-6 sm:py-20"
+  >
     <nav aria-label="Breadcrumb" class="mb-8">
       <a
         href="{cleanBase}/answers"

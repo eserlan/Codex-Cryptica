@@ -5,6 +5,7 @@
  * Built on the generic outbound handoff in `$lib/utils/external-generator-handoff`.
  */
 import {
+  buildExternalGeneratorUrl,
   sendToExternalGenerator,
   type ExternalGeneratorHandoffResult,
 } from "$lib/utils/external-generator-handoff";
@@ -117,8 +118,8 @@ async function sendMonsterLabsHandoff(
   // fresh once the (possibly compressed) prompt is ready — better UX than a
   // blank tab stealing focus for the whole gap. The tradeoff is that a
   // user-gesture window.open crossing an `await` is not guaranteed to
-  // succeed in every browser, which is why the result can carry
-  // `popupBlocked: true` for the caller to show a manual retry link.
+  // succeed in every browser; see `sendToExternalGenerator`'s doc comment
+  // for why that can't be reliably detected here.
   const content = await buildMonsterLabsPromptWithinLimit(source);
   return sendToExternalGenerator({
     baseUrl,
@@ -193,4 +194,29 @@ export async function sendEntityToMonsterLabs(
   return isMonsterLabsItemEligibleType(source.type)
     ? sendToMonsterLabsMagicItemGenerator(source, windowRef)
     : sendToMonsterLabsMonsterGenerator(source, windowRef);
+}
+
+/**
+ * Builds the MonsterLabs handoff URL for a Codex entity — compressing the
+ * description with the Oracle first if needed — without opening any window.
+ * Used by the confirm-first sending flow: the caller shows a modal asking
+ * the user to confirm before the Oracle call runs, then opens the returned
+ * URL itself once this resolves (see `MonsterLabsSendingModal`).
+ */
+export async function buildMonsterLabsHandoffUrl(
+  source: MonsterLabsHandoffSource,
+): Promise<ExternalGeneratorHandoffResult> {
+  if (!source.description.trim()) {
+    return { ok: false, reason: "empty-content" };
+  }
+  const baseUrl = isMonsterLabsItemEligibleType(source.type)
+    ? MONSTERLABS_MAGIC_ITEM_GENERATOR_URL
+    : MONSTERLABS_MONSTER_GENERATOR_URL;
+  const content = await buildMonsterLabsPromptWithinLimit(source);
+  return buildExternalGeneratorUrl({
+    baseUrl,
+    paramName: PROMPT_PARAM_NAME,
+    content,
+    extraParams: ATTRIBUTION_PARAMS,
+  });
 }

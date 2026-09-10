@@ -7,10 +7,13 @@ describe("ZenHeader MonsterLabs handoff action", () => {
     "utf8",
   );
 
-  it("imports the shared MonsterLabs handoff service", () => {
+  it("imports the shared MonsterLabs handoff service and confirm-first flow", () => {
     expect(source).toContain('from "$lib/services/seo/monsterlabs-handoff"');
     expect(source).toContain("isMonsterLabsHandoffEligibleType");
-    expect(source).toContain("sendEntityToMonsterLabs");
+    expect(source).toContain(
+      'from "$lib/services/seo/monsterlabs-handoff-flow.svelte"',
+    );
+    expect(source).toContain("createMonsterLabsHandoffFlow");
   });
 
   it("exposes a send to MonsterLabs button for eligible entity types", () => {
@@ -21,25 +24,24 @@ describe("ZenHeader MonsterLabs handoff action", () => {
   });
 
   it("guards the handoff handler against a missing entity", () => {
-    expect(source).toContain("const handleSendToMonsterLabs = async () => {");
-    expect(source).toContain("if (!entity || isSendingToMonsterLabs) return;");
+    expect(source).toContain("const handleSendToMonsterLabs = () => {");
+    expect(source).toContain("if (!entity) return;");
   });
 
-  it("tracks a busy state while the (possibly AI-compressed) send is in flight", () => {
-    expect(source).toContain("let isSendingToMonsterLabs = $state(false);");
-    expect(source).toContain("isSendingToMonsterLabs = true;");
-    expect(source).toContain("isSendingToMonsterLabs = false;");
-    expect(source).toContain("disabled={isSendingToMonsterLabs}");
+  it("only starts the confirm flow — no sending happens until confirmed in the modal", () => {
+    expect(source).toContain("monsterLabsFlow.start({");
+    expect(source).toContain("disabled={monsterLabsFlow.open}");
+    expect(source).toContain('aria-busy={monsterLabsFlow.state === "loading"}');
   });
 
   it("sends the entity's title, type, and content/lore", () => {
-    expect(source).toContain("sendEntityToMonsterLabs({");
     expect(source).toContain("name: entity.title");
     expect(source).toContain("type: entity.type");
   });
 
-  it("surfaces a notification when the handoff fails", () => {
-    expect(source).toContain("if (!result.ok) {");
-    expect(source).toContain("notificationStore.notify(");
+  it("wires the modal to the flow's confirm/open/close callbacks", () => {
+    expect(source).toContain("onConfirm={monsterLabsFlow.confirm}");
+    expect(source).toContain("onOpen={monsterLabsFlow.close}");
+    expect(source).toContain("onClose={monsterLabsFlow.close}");
   });
 });

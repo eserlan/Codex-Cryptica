@@ -18,12 +18,14 @@ describe("public label vocabulary (#2762, #2863)", () => {
     expect(CONTENT_CLUSTER_SLUGS).toContain("heist");
     expect(CONTENT_CLUSTER_SLUGS).toContain("rumour");
     expect(CONTENT_CLUSTER_SLUGS).toContain("religion");
+    expect(CONTENT_CLUSTER_SLUGS).toContain("puzzle");
   });
 
   it("validates content cluster slugs with isContentClusterSlug", () => {
     expect(isContentClusterSlug("heist")).toBe(true);
     expect(isContentClusterSlug("rumour")).toBe(true);
     expect(isContentClusterSlug("religion")).toBe(true);
+    expect(isContentClusterSlug("puzzle")).toBe(true);
     expect(isContentClusterSlug("cyberpunk")).toBe(false);
     expect(isContentClusterSlug("arbitrary-tag")).toBe(false);
   });
@@ -121,6 +123,32 @@ describe("public label content aggregation (#2762, #2863)", () => {
     expect(groups.get("generator")?.length).toBe(1);
     expect(groups.get("answer")?.length).toBe(1);
     expect(groups.get("example")?.length).toBe(1);
+  });
+
+  it("aggregates all puzzle cluster resources", () => {
+    const results = getPublicContentByLabel("puzzle");
+    expect(results.length).toBeGreaterThanOrEqual(5);
+
+    const paths = results.map((r) => r.href);
+    expect(paths).toContain("/generators/puzzle");
+    expect(paths).toContain(
+      "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+    );
+    expect(paths).toContain(
+      "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+    );
+    expect(paths).toContain(
+      "/examples/the-bell-beneath-blackglass-fantasy-puzzle",
+    );
+    expect(paths).toContain(
+      "/examples/the-null-key-reliquary-cyberpunk-puzzle",
+    );
+    expect(paths).toContain("/examples/the-venting-helix-derelict-hazard");
+
+    const groups = groupPublicLabelResults(results);
+    expect(groups.get("generator")?.length).toBe(1);
+    expect(groups.get("answer")?.length).toBe(2);
+    expect(groups.get("example")?.length).toBe(3);
   });
 
   it("aggregates genre theme content", () => {

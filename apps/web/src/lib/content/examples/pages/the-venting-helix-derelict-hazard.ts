@@ -6,7 +6,7 @@ import type { ExampleConfigInput } from "../schema";
  */
 export const theVentingHelix: ExampleConfigInput = {
   slug: "the-venting-helix-derelict-hazard",
-  labels: ["space-opera-resistance"],
+  labels: ["space-opera-resistance", "puzzle"],
   name: "The Venting Helix",
   title: "Sci-fi encounter example: The Venting Helix",
   kind: "encounter",
@@ -183,6 +183,13 @@ export const theVentingHelix: ExampleConfigInput = {
       href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     },
     {
+      title:
+        "How do you give players hints for an RPG puzzle without giving away the answer?",
+      description:
+        "The escalating-hint ladder for when a table stalls on a puzzle like this one.",
+      href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+    },
+    {
       title: "What makes a good random encounter?",
       description: "Why a situation in progress beats a stat block.",
       href: "/answers/what-makes-a-good-random-encounter",
@@ -196,7 +203,11 @@ export const theVentingHelix: ExampleConfigInput = {
       href: "/for/space-opera",
     },
   ],
-  relatedExamples: ["arc-hub-augmentation-slum"],
+  relatedExamples: [
+    "arc-hub-augmentation-slum",
+    "the-bell-beneath-blackglass-fantasy-puzzle",
+    "the-null-key-reliquary-cyberpunk-puzzle",
+  ],
   sourceUrl: "https://github.com/eserlan/Codex-Cryptica/discussions/2553",
   seo: {
     title: "Sci-fi encounter example: The Venting Helix | Codex Cryptica",
