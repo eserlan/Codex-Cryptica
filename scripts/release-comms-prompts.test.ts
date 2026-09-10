@@ -28,10 +28,7 @@ describe("formatIssueComment", () => {
   };
 
   it("keeps blank-line separators between sections", () => {
-    const comment = formatIssueComment(entry as never, result, drafts, {
-      queued: 1,
-      commitUrl: "https://example.com/commit/abc",
-    });
+    const comment = formatIssueComment(entry as never, result, drafts);
     expect(comment).toContain(
       "Why it is worth posting:\nnew generator\n\nBluesky",
     );
@@ -39,7 +36,7 @@ describe("formatIssueComment", () => {
   });
 
   it("lists the exact public page for each Bluesky draft", () => {
-    const comment = formatIssueComment(entry as never, result, drafts, null);
+    const comment = formatIssueComment(entry as never, result, drafts);
     expect(comment).toContain(
       "1. post one (https://codexcryptica.com/answers/faction-roster)\n\nDiscord:",
     );
@@ -61,13 +58,12 @@ describe("formatIssueComment", () => {
       } as never,
       result,
       drafts,
-      null,
     );
     expect(comment).toContain("https://bsky.app/profile/test/post/1");
   });
 
   it("reports drafts as unavailable when the writer pass fails on a postworthy release", () => {
-    const comment = formatIssueComment(entry as never, result, null, null);
+    const comment = formatIssueComment(entry as never, result, null);
     expect(comment).toContain("drafts unavailable");
     expect(comment).toContain(
       "The evaluator marked this postworthy, but the writer pass failed to produce drafts.",
@@ -76,10 +72,7 @@ describe("formatIssueComment", () => {
 
   it("omits the queue line entirely when there are no bluesky drafts", () => {
     const noBluesky: WriterResult = { ...drafts, bluesky: [] };
-    const comment = formatIssueComment(entry as never, result, noBluesky, {
-      queued: 0,
-      error: "should not appear",
-    });
+    const comment = formatIssueComment(entry as never, result, noBluesky);
     expect(comment).toContain(
       "(no feature in this release was marked bluesky_worthy)\n\nDiscord:",
     );

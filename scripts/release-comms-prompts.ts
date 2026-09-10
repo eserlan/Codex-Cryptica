@@ -138,17 +138,10 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
 }`;
 }
 
-export interface QueueResult {
-  queued: number;
-  commitUrl?: string;
-  error?: string;
-}
-
 export function formatIssueComment(
   entry: ReleaseCommsHistoryEntry,
   result: EvaluatorResult,
   drafts: WriterResult | null,
-  queueResult: QueueResult | null = null,
 ): string {
   const featureNames = (result.features ?? [])
     .map((feature) => feature.name)
@@ -238,7 +231,7 @@ export function formatIssueComment(
     "<details><summary>Raw evaluator + writer output</summary>",
     "",
     "```json",
-    JSON.stringify({ evaluation: result, drafts, queueResult }, null, 2),
+    JSON.stringify({ evaluation: result, drafts }, null, 2),
     "```",
     "</details>",
   ].join("\n");
