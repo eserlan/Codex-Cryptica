@@ -41,7 +41,7 @@ ${input.mergedPrs || "(none)"}
 Changelog (releases.json) diff for this range, if any (this is the most reliable signal of genuinely user-facing work):
 ${input.changelogDiff || "(no changelog entry added in this range)"}
 
-Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose:
+Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose. "recommended_channels" must be the actual subset of ["bluesky", "discord", "reddit", "github_discussion"] that clears each channel's bar above (per the example below, a single small win typically means bluesky-only, not all four):
 
 {
   "postworthy": true | false,
@@ -49,7 +49,7 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
   "features": [
     { "name": "Feature Name", "why_users_care": "One sentence on why a GM/worldbuilder cares." }
   ],
-  "recommended_channels": ["bluesky", "discord", "reddit", "github_discussion"],
+  "recommended_channels": ["bluesky"],
   "reason": "One or two sentences explaining the decision."
 }
 

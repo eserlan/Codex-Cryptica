@@ -313,6 +313,20 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain("Reddit and GitHub Discussion (higher bar)");
       expect(prompt).toContain("prefer postworthy=true");
     });
+
+    it("shows a channel subset in the JSON example, not all four channels", () => {
+      const prompt = buildEvaluatorPrompt({
+        previousSha: "abc1234",
+        newSha: "def5678",
+        commitLog: "",
+        mergedPrs: "",
+        changelogDiff: "",
+      });
+      expect(prompt).not.toContain(
+        '"recommended_channels": ["bluesky", "discord", "reddit", "github_discussion"]',
+      );
+      expect(prompt).toContain('"recommended_channels": ["bluesky"]');
+    });
   });
 
   describe("state persistence", () => {
