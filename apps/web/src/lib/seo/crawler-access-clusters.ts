@@ -28,7 +28,12 @@ import {
 /**
  * Clusters covered by crawler readiness verification (#2861).
  */
-export const CLUSTER_TARGETS = ["heist", "rumour", "religion"] as const;
+export const CLUSTER_TARGETS = [
+  "heist",
+  "rumour",
+  "religion",
+  "puzzle",
+] as const;
 export type ClusterTarget = (typeof CLUSTER_TARGETS)[number];
 
 /**

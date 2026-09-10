@@ -6,7 +6,12 @@ export { HUB_THEME_SLUGS, type HubThemeSlug };
  * The content clusters supported as public labels (#2863).
  * Sourced from the discovery intent registry's curated cluster taxonomy.
  */
-export const CONTENT_CLUSTER_SLUGS = ["heist", "rumour", "religion"] as const;
+export const CONTENT_CLUSTER_SLUGS = [
+  "heist",
+  "rumour",
+  "religion",
+  "puzzle",
+] as const;
 
 export type ContentClusterSlug = (typeof CONTENT_CLUSTER_SLUGS)[number];
 

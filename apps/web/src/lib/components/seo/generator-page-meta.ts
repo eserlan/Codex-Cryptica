@@ -374,8 +374,20 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         label: "How to Design RPG Puzzles (Guide)",
       },
       {
+        href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+        label: "How to Give Puzzle Hints Without Spoiling It (Guide)",
+      },
+      {
         href: "/examples/the-venting-helix-derelict-hazard",
         label: "Derelict Hazard Puzzle Example",
+      },
+      {
+        href: "/examples/the-bell-beneath-blackglass-fantasy-puzzle",
+        label: "Classic Fantasy Puzzle Example",
+      },
+      {
+        href: "/examples/the-null-key-reliquary-cyberpunk-puzzle",
+        label: "Cyberpunk Puzzle Example",
       },
       { href: "/generators/quest", label: "Quest Hook Generator" },
       {
