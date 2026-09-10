@@ -1,8 +1,15 @@
 <script lang="ts">
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
-  let { manager }: { manager: AdventureManager } = $props();
+  let {
+    manager,
+    idGenerator = systemIdGenerator,
+  }: {
+    manager: AdventureManager;
+    idGenerator?: IdGenerator;
+  } = $props();
 
   let expanded = $state(false);
   let location = $state("");
@@ -45,7 +52,7 @@
       if (trimmedLocation !== (current.location?.text ?? "")) {
         patch.location = trimmedLocation
           ? {
-              id: current.location?.id ?? crypto.randomUUID(),
+              id: current.location?.id ?? idGenerator.uuid(),
               text: trimmedLocation,
               source: "provisional",
             }
@@ -56,7 +63,7 @@
       if (trimmedSituation !== (current.situation?.text ?? "")) {
         patch.situation = trimmedSituation
           ? {
-              id: current.situation?.id ?? crypto.randomUUID(),
+              id: current.situation?.id ?? idGenerator.uuid(),
               text: trimmedSituation,
               source: "provisional",
             }

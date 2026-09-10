@@ -55,6 +55,48 @@ describe("AdventureCorrectionForm", () => {
     expect(patch.situation).toBeUndefined();
   });
 
+  it("uses the injected idGenerator to id a new field", async () => {
+    const m = manager({
+      session: {
+        visibleState: { location: undefined, situation: undefined },
+      },
+    });
+    const idGenerator = { uuid: vi.fn().mockReturnValue("fixed-id") };
+    render(AdventureCorrectionForm, { manager: m, idGenerator });
+
+    await fireEvent.click(
+      screen.getByText("Fix something wrong with the current situation"),
+    );
+    await fireEvent.input(screen.getByLabelText("Location"), {
+      target: { value: "The east crossing" },
+    });
+    await fireEvent.click(screen.getByText("Save correction"));
+
+    await waitFor(() => expect(m.submitCorrection).toHaveBeenCalledTimes(1));
+    expect(idGenerator.uuid).toHaveBeenCalled();
+    const patch = m.submitCorrection.mock.calls[0][0];
+    expect(patch.location.id).toBe("fixed-id");
+  });
+
+  it("does not generate a new id when correcting an existing field", async () => {
+    const m = manager();
+    const idGenerator = { uuid: vi.fn().mockReturnValue("fixed-id") };
+    render(AdventureCorrectionForm, { manager: m, idGenerator });
+
+    await fireEvent.click(
+      screen.getByText("Fix something wrong with the current situation"),
+    );
+    await fireEvent.input(screen.getByLabelText("Location"), {
+      target: { value: "The east crossing" },
+    });
+    await fireEvent.click(screen.getByText("Save correction"));
+
+    await waitFor(() => expect(m.submitCorrection).toHaveBeenCalledTimes(1));
+    expect(idGenerator.uuid).not.toHaveBeenCalled();
+    const patch = m.submitCorrection.mock.calls[0][0];
+    expect(patch.location.id).toBe("loc-1");
+  });
+
   it("shows a clear message on a stale-revision conflict", async () => {
     const m = manager({
       submitCorrection: vi.fn(async () => "stale-revision"),

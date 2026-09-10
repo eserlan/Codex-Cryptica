@@ -160,6 +160,8 @@ Total: 890 objects, ~163 MB. The tables below cover everything **except** `publi
 | [`og/how-do-you-start-worldbuilding-from-scratch.jpg`](https://assets.codexcryptica.com/og/how-do-you-start-worldbuilding-from-scratch.jpg)                   | TBD     | image/jpeg | pending    | Reference answer OG card (needed / pending generation) |
 | [`og/how-do-you-keep-track-of-time-in-a-tabletop-campaign.jpg`](https://assets.codexcryptica.com/og/how-do-you-keep-track-of-time-in-a-tabletop-campaign.jpg) | TBD     | image/jpeg | pending    | Reference answer OG card (needed / pending generation) |
 
+| [`og/how-do-i-balance-rpg-combat-encounters-without-a-tpk.jpg`](https://assets.codexcryptica.com/og/how-do-i-balance-rpg-combat-encounters-without-a-tpk.jpg) | 377 KB | image/jpeg | 2026-09-10 | Reference answer OG card, AI-generated |
+
 ## `screenshots/` — `/generators` + `/tools` page cards and og:image
 
 | Key                                                                                                                                         | Size   | Type       | Modified   | Purpose                                           |
