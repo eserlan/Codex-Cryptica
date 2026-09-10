@@ -8,6 +8,7 @@ import {
   assetForPublicPage,
   extractJsonBlock,
   fetchPromotionCommits,
+  findPublicContent,
   getReleaseCommsLogPath,
   isEvaluatorResult,
   isWriterResult,
@@ -405,6 +406,26 @@ describe("release-comms-agent", () => {
       expect(() =>
         fetchPromotionCommits("before-sha", "after-sha", run),
       ).toThrow("remote unavailable");
+    });
+  });
+
+  describe("findPublicContent", () => {
+    it("follows the destination path of a renamed public page instead of dropping it", () => {
+      const renamedPath =
+        "apps/web/src/lib/content/answers/pages/renamed-city.ts";
+      const run = ((_file: string, args: readonly string[]) => {
+        if (args[0] === "diff") {
+          return `R100\tapps/web/src/lib/content/answers/pages/old-city.ts\t${renamedPath}\n`;
+        }
+        return `slug: "renamed-city"\nquestion: "How?"\nimage: "https://assets.codexcryptica.com/og/city.jpg"\nimageAlt: "City card"`;
+      }) as typeof import("node:child_process").execFileSync;
+
+      expect(findPublicContent("before-sha", "after-sha", run)).toEqual([
+        expect.objectContaining({
+          kind: "answer",
+          url: "https://codexcryptica.com/answers/renamed-city",
+        }),
+      ]);
     });
   });
 

@@ -89,4 +89,28 @@ describe("discoverPublicContent", () => {
       ),
     ).toBeNull();
   });
+
+  it("discovers a generator registered under a quoted hyphenated slug", () => {
+    const source = `export const slugMeta = {
+  npc: { canonicalPath: "/generators/npc" },
+  "magic-item": {
+    introTitle: "Magic Item Generator",
+    canonicalPath: "/generators/magic-item",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-magic-item.jpg",
+    ogImageAlt: "A magic item generator",
+  },
+};`;
+    expect(
+      discoverGeneratorPublicContent(
+        source,
+        "magic-item",
+        "apps/web/src/lib/components/seo/generator-page-meta.ts",
+      ),
+    ).toMatchObject({
+      kind: "generator",
+      url: "https://codexcryptica.com/generators/magic-item",
+      imageUrl:
+        "https://assets.codexcryptica.com/screenshots/generator-magic-item.jpg",
+    });
+  });
 });

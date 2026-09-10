@@ -1,4 +1,11 @@
 import { execFileSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const REPOSITORY_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 
 export interface BlueskyAsset {
   pageUrl: string;
@@ -62,7 +69,7 @@ export function publishBlueskyPost(
       asset.imageAlt,
       text,
     ],
-    { encoding: "utf-8" },
+    { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
   ).trim();
   const url = output.match(/https:\/\/bsky\.app\/profile\/\S+/)?.[0];
   if (!url)
@@ -85,7 +92,7 @@ export function publishDiscussion(
   const output = run(
     "bun",
     ["scripts/post-to-github-discussion.ts", "--title", title, "--body", body],
-    { encoding: "utf-8" },
+    { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
   ).trim();
   const url = output.match(
     /https:\/\/github\.com\/eserlan\/Codex-Cryptica\/discussions\/\d+/,

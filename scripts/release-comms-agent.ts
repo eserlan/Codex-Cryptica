@@ -302,8 +302,9 @@ function gatherDelta(previousSha: string, newSha: string) {
 export function findPublicContent(
   previousSha: string,
   newSha: string,
+  run: typeof execFileSync = execFileSync,
 ): PublicContentItem[] {
-  const changedFiles = execFileSync(
+  const changedFiles = run(
     "git",
     [
       "diff",
@@ -320,24 +321,26 @@ export function findPublicContent(
     .trim()
     .split("\n")
     .flatMap((line) => {
-      const [status, path] = line.split("\t");
+      const columns = line.split("\t");
+      const status = columns[0];
+      // R*/C* records are "R100\told\tnew"; the destination is always the last column.
+      const path = columns[columns.length - 1];
       return status && path && !status.startsWith("D") ? [path] : [];
     });
   return changedFiles.flatMap((path) => {
     try {
-      const source = execFileSync("git", ["show", `${newSha}:${path}`], {
+      const source = run("git", ["show", `${newSha}:${path}`], {
         cwd: REPOSITORY_ROOT,
         encoding: "utf-8",
       });
       if (path.endsWith("/generator-page-meta.ts")) {
-        const changedGeneratorSlugs =
-          execFileSync(
+        const changedGeneratorSlugs = [
+          ...run(
             "git",
             ["diff", "--unified=0", previousSha, newSha, "--", path],
             { cwd: REPOSITORY_ROOT, encoding: "utf-8" },
-          )
-            .match(/^\+ {2}([a-z0-9-]+): \{$/gm)
-            ?.map((line) => line.slice(3, -3)) ?? [];
+          ).matchAll(/^\+ {2}["']?([a-z0-9-]+)["']?: \{$/gm),
+        ].map((match) => match[1]);
         return changedGeneratorSlugs.flatMap((slug) => {
           const item = discoverGeneratorPublicContent(source, slug, path);
           return item ? [item] : [];
@@ -551,12 +554,12 @@ export async function main(promoteRunId: string): Promise<void> {
 
   if (drafts) {
     const publishedBluesky = entry.publications?.bluesky ?? [];
-    for (const draft of drafts.bluesky.filter(
-      (draft) =>
-        !publishedBluesky.some(
-          (publication) => publication.pageUrl === draft.pageUrl,
-        ),
-    )) {
+    const seenBlueskyPageUrls = new Set(
+      publishedBluesky.map((publication) => publication.pageUrl),
+    );
+    for (const draft of drafts.bluesky) {
+      if (seenBlueskyPageUrls.has(draft.pageUrl)) continue;
+      seenBlueskyPageUrls.add(draft.pageUrl);
       const publication = publishBlueskyPost(
         draft.text,
         assetForPublicPage(publicContent, draft.pageUrl),
@@ -576,12 +579,12 @@ export async function main(promoteRunId: string): Promise<void> {
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
     const publishedDiscussions = entry.publications?.githubDiscussions ?? [];
-    for (const draft of drafts.github_discussions.filter(
-      (draft) =>
-        !publishedDiscussions.some(
-          (publication) => publication.pageUrl === draft.pageUrl,
-        ),
-    )) {
+    const seenDiscussionPageUrls = new Set(
+      publishedDiscussions.map((publication) => publication.pageUrl),
+    );
+    for (const draft of drafts.github_discussions) {
+      if (seenDiscussionPageUrls.has(draft.pageUrl)) continue;
+      seenDiscussionPageUrls.add(draft.pageUrl);
       const publication = publishDiscussion(
         draft.title,
         draft.body,

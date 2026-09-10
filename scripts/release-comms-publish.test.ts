@@ -1,3 +1,5 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   isReleaseCommsDryRun,
@@ -5,6 +7,8 @@ import {
   publishBlueskyPost,
   publishDiscussion,
 } from "./release-comms-publish.ts";
+
+const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("prepareBlueskyText", () => {
   it("uses explicitly enabled dry-run URLs without invoking either external publisher", () => {
@@ -108,6 +112,23 @@ describe("prepareBlueskyText", () => {
       "A useful answer https://codexcryptica.com/answers/living-city",
     ]);
     expect(publication.url).toContain("/post/abc");
+  });
+
+  it("runs the Bluesky publisher from the repository root regardless of daemon cwd", () => {
+    let options: Record<string, unknown> = {};
+    publishBlueskyPost(
+      "A useful answer https://codexcryptica.com/answers/living-city",
+      {
+        pageUrl: "https://codexcryptica.com/answers/living-city",
+        imageUrl: "https://assets.codexcryptica.com/og/living-city.jpg",
+        imageAlt: "A living city map",
+      },
+      ((_bin: string, _args: string[], opts: Record<string, unknown>) => {
+        options = opts;
+        return "Published: https://bsky.app/profile/codexcryptica.bsky.social/post/abc";
+      }) as never,
+    );
+    expect(options.cwd).toBe(REPOSITORY_ROOT);
   });
 
   it("refuses publisher output without a durable Bluesky URL", () => {
