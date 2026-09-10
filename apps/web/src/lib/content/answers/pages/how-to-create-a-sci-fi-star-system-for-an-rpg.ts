@@ -139,6 +139,7 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
     "how-do-you-make-an-alien-species-feel-believable",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-you-start-worldbuilding-from-scratch",
+    "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
   ],
   labels: ["sci-fi"],
   discovery: {
