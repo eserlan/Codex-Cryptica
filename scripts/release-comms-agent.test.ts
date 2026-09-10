@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
-  assetForPublicPage,
+  publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
   getReleaseCommsLogPath,
@@ -326,7 +326,7 @@ describe("release-comms-agent", () => {
     });
   });
 
-  describe("assetForPublicPage", () => {
+  describe("publicPageFor", () => {
     const item = {
       kind: "answer" as const,
       title: "A page",
@@ -336,21 +336,20 @@ describe("release-comms-agent", () => {
       sourcePath: "answer.ts",
     };
 
-    it("uses only the social asset matched to the writer's exact page URL", () => {
-      expect(assetForPublicPage([item], item.url)).toEqual({
-        pageUrl: item.url,
-        imageUrl: item.imageUrl,
-        imageAlt: item.imageAlt,
-      });
+    it("uses only the public page matched to the writer's exact URL", () => {
+      expect(publicPageFor([item], item.url)).toEqual(item);
     });
 
-    it("rejects unknown pages and pages without a verified image", () => {
+    it("rejects an unknown page but permits the image resolver to generate a missing card", () => {
       expect(() =>
-        assetForPublicPage([item], "https://codexcryptica.com/answers/other"),
+        publicPageFor([item], "https://codexcryptica.com/answers/other"),
       ).toThrow("outside this release");
-      expect(() =>
-        assetForPublicPage([{ ...item, imageUrl: undefined }], item.url),
-      ).toThrow("no verified social image");
+      expect(
+        publicPageFor([{ ...item, imageUrl: undefined }], item.url),
+      ).toEqual({
+        ...item,
+        imageUrl: undefined,
+      });
     });
   });
 

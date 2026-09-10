@@ -16,8 +16,8 @@ import {
   isReleaseCommsDryRun,
   publishBlueskyPost,
   publishDiscussion,
-  type BlueskyAsset,
 } from "./release-comms-publish.ts";
+import { resolveSocialAsset } from "./release-comms-image.ts";
 import {
   discoverGeneratorPublicContent,
   discoverPublicContent,
@@ -352,24 +352,17 @@ export function findPublicContent(
   });
 }
 
-export function assetForPublicPage(
+export function publicPageFor(
   items: PublicContentItem[],
   pageUrl: string,
-): BlueskyAsset {
+): PublicContentItem {
   const item = items.find((candidate) => candidate.url === pageUrl);
   if (!item) {
     throw new Error(
       `Writer referenced a public page outside this release: ${pageUrl}`,
     );
   }
-  if (!item.imageUrl || !item.imageAlt) {
-    throw new Error(`Public page has no verified social image: ${pageUrl}`);
-  }
-  return {
-    pageUrl: item.url,
-    imageUrl: item.imageUrl,
-    imageAlt: item.imageAlt,
-  };
+  return item;
 }
 
 /** Recent Announcements titles, used to calibrate the Reddit/Discussion bar against real history. */
@@ -559,7 +552,7 @@ export async function main(promoteRunId: string): Promise<void> {
     )) {
       const publication = publishBlueskyPost(
         draft.text,
-        assetForPublicPage(publicContent, draft.pageUrl),
+        await resolveSocialAsset(publicPageFor(publicContent, draft.pageUrl)),
       );
       console.log(`[release-comms] published Bluesky post: ${publication.url}`);
       entry = {
@@ -585,7 +578,7 @@ export async function main(promoteRunId: string): Promise<void> {
       const publication = publishDiscussion(
         draft.title,
         draft.body,
-        assetForPublicPage(publicContent, draft.pageUrl),
+        await resolveSocialAsset(publicPageFor(publicContent, draft.pageUrl)),
       );
       console.log(
         `[release-comms] published GitHub Discussion: ${publication.url}`,

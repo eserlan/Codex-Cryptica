@@ -157,6 +157,15 @@ The listener environment needs `BLUESKY_IDENTIFIER` and
 `BLUESKY_APP_PASSWORD` in addition to the webhook secrets. Keep the env file
 mode `600`. GitHub Discussions uses the authenticated local `gh` session.
 
+When a public page has no source social card, the agent first checks its
+deterministic `https://assets.codexcryptica.com/og/<slug>.jpg` location. If it
+is absent, it requests a 16:9 card from the deployed Oracle image endpoint,
+converts it to JPEG, uploads it to R2 with the authenticated local Wrangler
+session, and uses that card for the publication. Temporary image files are
+removed immediately; generated assets are never committed to git. If image
+generation or upload fails, publishing remains resumable and no text-only
+post is sent.
+
 ## Other channels
 
 Discord deployment and formal-release notifications are already posted by

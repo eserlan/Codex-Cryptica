@@ -140,5 +140,9 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
       "How do I balance RPG combat encounters without a TPK? | Codex Cryptica",
     description:
       "Encounter balance is more than a CR formula: action economy, party condition, telegraphing, objectives and built-in pressure valves. A worked example included.",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-balance-rpg-combat-encounters-without-a-tpk.jpg",
+    imageAlt:
+      "Adventurers planning a route across a stone bridge, with a map, signal horn and safe retreat path visible at dawn",
   },
 };
