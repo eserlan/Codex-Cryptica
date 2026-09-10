@@ -17,6 +17,7 @@ import { howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer } from "./how
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
 import { howDoYouHandlePlayersGoingOffScriptAsAGm } from "./how-do-you-handle-players-going-off-script-as-a-gm";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
+import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
 import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
@@ -81,6 +82,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouHandleCharacterDeathInATabletopRpg,
     howDoYouHandlePlayersGoingOffScriptAsAGm,
     howDoYouImproviseNpcsOnTheSpot,
+    howDoYouKeepTrackOfNpcsInALongCampaign,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
     howDoYouMakeAnAlienSpeciesFeelBelievable,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
