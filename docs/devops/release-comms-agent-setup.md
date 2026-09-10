@@ -4,9 +4,9 @@ Tracking issue: [#2906](https://github.com/eserlan/Codex-Cryptica/issues/2906).
 Shipped in PRs [#2907](https://github.com/eserlan/Codex-Cryptica/pull/2907)
 (evaluator), [#2908](https://github.com/eserlan/Codex-Cryptica/pull/2908)
 (writer pass), and [#2911](https://github.com/eserlan/Codex-Cryptica/pull/2911)
-(GitHub Discussions channel). This doc is the runbook for the one-time setup
-this needed on Espen's Omarchy PC, and how to verify it actually works
-before trusting it on a real production deploy.
+(GitHub Discussions channel). This doc is the runbook for the one-time
+setup this agent needed on Espen's Omarchy PC, and how to verify it
+actually works before trusting it on a real production deploy.
 
 Background reading: `docs/pr-review-webhook-local-setup.md` covers the
 shared webhook listener/tunnel/systemd setup this agent reuses — read that
@@ -56,9 +56,10 @@ Run the evaluator and writer directly against one of those run ids:
 bun run comms:evaluate <promote-to-prod run id>
 ```
 
-Watch `~/.local/state/codex-release-comms/eval-<run id>-evaluate.log` and
-the matching `...-write.log` for the raw agent output, and confirm a
-comment lands on [#2906](https://github.com/eserlan/Codex-Cryptica/issues/2906)
+Watch `~/.local/state/codex-release-comms/eval-<run id>.log` for the raw
+agent output (both the evaluator and writer passes append to this single
+durable log file), and confirm a comment lands on
+[#2906](https://github.com/eserlan/Codex-Cryptica/issues/2906)
 matching the "📣 Post suggested / Approve / Skip" template (or the "not
 postworthy" summary, if that's the correct call). It remembers the last SHA
 it evaluated in `~/.local/state/codex-release-comms/state.json` — delete or
@@ -67,27 +68,13 @@ re-process the same SHA. Try this against two or three different past
 promotions with genuinely different content (a postworthy one, a boring
 one) to get a feel for whether the postworthy/importance calls are sane.
 
-Dry-run the Discussions poster (no network call, just prints what it would
-send). This needs [#2911](https://github.com/eserlan/Codex-Cryptica/pull/2911)
-merged first — `post:discussion` doesn't exist on `staging` until then:
-
-```sh
-bun run post:discussion --dry-run --title "Test" --body "Test body"
-```
-
-Then do one real Discussions test post, since the dry run above never
-touches the network:
-
-```sh
-bun run post:discussion --category "General" \
-  --title "release-comms test post (safe to delete)" \
-  --body "Testing gh auth scope for Discussions posting -- delete me."
-```
-
-Confirm it prints a discussion URL. If it fails with a permissions error,
-`gh auth refresh` with the needed scope, or check whether the posting
-account needs write access on the repo. Delete the test post afterwards
-from the GitHub UI (Discussions → the post → "Delete discussion").
+There is no standalone Discussions poster script or `post:discussion`
+command in this branch yet — posting is only exercised indirectly, via the
+evaluator/writer pass above landing a comment on
+[#2906](https://github.com/eserlan/Codex-Cryptica/issues/2906). A dedicated
+dry-run/test-post CLI for Discussions is tracked as follow-up work in
+[#2911](https://github.com/eserlan/Codex-Cryptica/pull/2911); update this
+section with the real command once that lands.
 
 ## 3. End-to-end webhook test (uses the real secret and tunnel)
 
@@ -101,8 +88,11 @@ curl -fsS -m 10 -X POST https://pr-webhook.codexcryptica.com/release-comms \
   -d '{"promoteRunId": "<a real promote-to-prod run id>"}'
 ```
 
-Expect `{"accepted":true}` back immediately (the agent itself runs async in
-the background). Tail the journal while that runs:
+Expect a 202 response with `{"accepted":true}` back immediately (the agent
+itself runs async in the background). If a job for the same
+`promoteRunId` is already in progress, you'll get `{"accepted":false}`
+instead (still 202) — that just means the duplicate was ignored, not that
+the request failed. Tail the journal while that runs:
 
 ```sh
 journalctl --user -u codex-pr-review-webhook.service -f
