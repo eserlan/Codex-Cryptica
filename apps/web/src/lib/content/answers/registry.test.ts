@@ -520,6 +520,19 @@ describe("published answers", () => {
     }
   });
 
+  it("publishes the Rule of Cool answer with the expected system references", () => {
+    const ruleOfCoolAnswer =
+      answers["how-much-rule-of-cool-should-a-dm-allow"];
+    expect(ruleOfCoolAnswer).toBeDefined();
+    expect(
+      ruleOfCoolAnswer.systemsThatSupportThis?.map((s) => s.system),
+    ).toEqual(["Exalted", "Wushu", "Feng Shui 2"]);
+    for (const ref of ruleOfCoolAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
   it("publishes the sci-fi star system answer with the expected system references", () => {
     const starSystemAnswer =
       answers["how-to-create-a-sci-fi-star-system-for-an-rpg"];

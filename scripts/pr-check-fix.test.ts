@@ -9,7 +9,9 @@ import {
   getRepoSlug,
   getPrFixLogPath,
   runAgentWithLogging,
+  selectCommentsForFixedReply,
   type PrFeedback,
+  type PrReviewComment,
 } from "./pr-check-fix.ts";
 
 describe("pr-check-fix", () => {
@@ -74,6 +76,10 @@ describe("pr-check-fix", () => {
       expect(prompt).toContain("--no-verify");
       expect(prompt).toContain("♻️ refactor: address PR #1234 review comments");
       expect(prompt).toContain("HEAD:curator/degod-sample-1234");
+      expect(prompt).toContain("running ONLY targeted test files");
+      expect(prompt).toContain(
+        "NEVER run bare `bun test` across the monorepo root",
+      );
     });
 
     it("handles feedback with no failing checks or reviews gracefully", () => {
@@ -117,6 +123,7 @@ describe("pr-check-fix", () => {
     // Even with no findings, a pre-merge staging merge commit must still be pushed.
     expect(prompt).toContain(sampleFeedback.prMeta.headRefOid);
     expect(prompt).toContain("you MUST still push that commit");
+    expect(prompt).toContain("NEVER bare `bun test`");
   });
 
   it("includes staging conflict paths and bounded failed-check details", () => {
@@ -244,6 +251,38 @@ describe("pr-check-fix", () => {
       } finally {
         await rm(logDir, { recursive: true, force: true });
       }
+    });
+  });
+
+  describe("selectCommentsForFixedReply", () => {
+    const makeComment = (id: number): PrReviewComment => ({
+      id,
+      path: "apps/web/src/sample.ts",
+      line: 10,
+      body: `comment ${id}`,
+      author: "reviewer",
+    });
+
+    it("keeps only comments still unresolved that the agent originally saw", () => {
+      const original = [makeComment(1), makeComment(2)];
+      // Comment 1 was replied to by the agent during the run (no longer
+      // unresolved), comment 2 remains unresolved.
+      const refreshed = [makeComment(2)];
+
+      expect(selectCommentsForFixedReply(original, refreshed)).toEqual([
+        makeComment(2),
+      ]);
+    });
+
+    it("never claims a comment was fixed if the agent never saw it", () => {
+      const original = [makeComment(1)];
+      // Comment 3 was posted after the prompt was built (e.g. by a reviewer
+      // mid-run) and must not be told it was addressed.
+      const refreshed = [makeComment(1), makeComment(3)];
+
+      const result = selectCommentsForFixedReply(original, refreshed);
+      expect(result).toEqual([makeComment(1)]);
+      expect(result.some((c) => c.id === 3)).toBe(false);
     });
   });
 });

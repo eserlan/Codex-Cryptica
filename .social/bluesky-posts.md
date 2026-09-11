@@ -10,6 +10,8 @@ Tracks whether each post has been published across current and planned platforms
 
 |    Date    | Topic                                         | Copy / reference                                                      | Bluesky | Discord | Instagram | Patreon |
 | :--------: | :-------------------------------------------- | :-------------------------------------------------------------------- | :-----: | :-----: | :-------: | :-----: |
+| 2026-09-11 | Sci-Fi Star System Guide (`65325c3`)          | GMs building sci-fi star systems needed more than generic advice...   |   [x]   |   [x]   |    [ ]    |   [ ]   |
+| 2026-09-10 | Release comms auto-draft (`65325c3`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mv73y66l2r2s |   [x]   |   [ ]   |    [ ]    |   [ ]   |
 | 2026-09-10 | Living Fantasy City Guide (`10440ab`)         | I needed a quick reference for making a fantasy city feel lived-in... |   [ ]   |   [ ]   |    [ ]    |   [ ]   |
 | 2026-09-06 | Heist Generator (ad hoc)                      | I needed heists that didn't fall apart on the first bad roll...       |   [x]   |   [ ]   |    [ ]    |   [ ]   |
 | 2026-09-05 | Nkiru Okafor NPC Table Card example (ad hoc)  | Meet Nkiru Okafor, a ruthless street fixer...                         |   [x]   |   [ ]   |    [ ]    |   [ ]   |
