@@ -1,3 +1,75 @@
+<script module lang="ts">
+  import type { GeneratorId } from "generator-engine";
+
+  export const GENERATOR_SECTION_CATEGORIES = [
+    { id: "people-factions", label: "People & Factions" },
+    { id: "locations-worlds", label: "Locations & Worlds" },
+    { id: "adventures-encounters", label: "Adventures & Encounters" },
+    { id: "loot-lore", label: "Loot & Lore" },
+  ] as const;
+
+  export type GeneratorSectionId =
+    (typeof GENERATOR_SECTION_CATEGORIES)[number]["id"];
+
+  export const GENERATOR_SECTION_MAP: Record<GeneratorId, GeneratorSectionId> =
+    {
+      // People & Factions
+      npc: "people-factions",
+      villain: "people-factions",
+      faction: "people-factions",
+      "secret-society": "people-factions",
+      "faction-roster": "people-factions",
+      creature: "people-factions",
+      "alien-race": "people-factions",
+
+      // Locations & Worlds
+      settlement: "locations-worlds",
+      dungeon: "locations-worlds",
+      ship: "locations-worlds",
+      world: "locations-worlds",
+      "star-system": "locations-worlds",
+      constellation: "locations-worlds",
+
+      // Adventures & Encounters
+      adventure: "adventures-encounters",
+      quest: "adventures-encounters",
+      encounter: "adventures-encounters",
+      heist: "adventures-encounters",
+      event: "adventures-encounters",
+      "plot-twist": "adventures-encounters",
+      puzzle: "adventures-encounters",
+      rumour: "adventures-encounters",
+      "council-vote": "adventures-encounters",
+
+      // Loot & Lore
+      "magic-item": "loot-lore",
+      "minor-magic-item": "loot-lore",
+      artifact: "loot-lore",
+      language: "loot-lore",
+      "news-sheet": "loot-lore",
+      "random-table": "loot-lore",
+    };
+
+  export function resolveGeneratorSection(gen: {
+    id: GeneratorId;
+    entityType: string;
+  }): GeneratorSectionId {
+    if (GENERATOR_SECTION_MAP[gen.id]) {
+      return GENERATOR_SECTION_MAP[gen.id];
+    }
+    if (["character", "faction", "creature"].includes(gen.entityType)) {
+      return "people-factions";
+    }
+    if (["location"].includes(gen.entityType)) {
+      return "locations-worlds";
+    }
+    if (["event"].includes(gen.entityType)) {
+      return "adventures-encounters";
+    }
+    return "loot-lore";
+  }
+</script>
+
 <script lang="ts">
   import {
     dungeonConfig,
@@ -11,11 +83,7 @@
     themeIdToLabel,
     worldConfig,
   } from "generator-engine";
-  import type {
-    AIPolicy,
-    GeneratorId,
-    GeneratorRunRequest,
-  } from "generator-engine";
+  import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import type { DetectedVaultLanguage } from "$lib/services/generators/generator-vault-context";
@@ -97,14 +165,27 @@
 
   const normalizedQuery = $derived(searchQuery.trim().toLowerCase());
 
+  function getSectionLabel(gen: {
+    id: GeneratorId;
+    entityType: string;
+  }): string {
+    const sectionId = resolveGeneratorSection(gen);
+    return (
+      GENERATOR_SECTION_CATEGORIES.find((c) => c.id === sectionId)?.label ??
+      "Loot & Lore"
+    );
+  }
+
   function matchesQuery(gen: (typeof generators)[number]): boolean {
     if (!normalizedQuery) return true;
     const labelMatch = gen.label.toLowerCase().includes(normalizedQuery);
     const descMatch = gen.description.toLowerCase().includes(normalizedQuery);
     const typeLabel = resolveEntityTypeLabel(gen).toLowerCase();
+    const sectionLabel = getSectionLabel(gen).toLowerCase();
     const typeMatch =
       typeLabel.includes(normalizedQuery) ||
-      gen.entityType.toLowerCase().includes(normalizedQuery);
+      gen.entityType.toLowerCase().includes(normalizedQuery) ||
+      sectionLabel.includes(normalizedQuery);
     return labelMatch || descMatch || typeMatch;
   }
 
@@ -112,34 +193,28 @@
   const favoriteGenerators = $derived(
     filteredGenerators.filter((g) => favoritesStore.isFavorite(g.id)),
   );
-  const allFilteredGenerators = $derived(
-    filteredGenerators.filter((g) => !favoritesStore.isFavorite(g.id)),
-  );
 
-  // Group generators by category/entityType
+  // Group all generators into the four condensed categories
+  // Pre-favourited generators remain present in their category
   interface GeneratorGroup {
-    id: string;
+    id: GeneratorSectionId;
     label: string;
     generators: typeof generators;
   }
 
   const generatorGroups = $derived.by(() => {
-    const map = new Map<string, { label: string; items: typeof generators }>();
-    for (const gen of allFilteredGenerators) {
-      const typeLabel = resolveEntityTypeLabel(gen);
-      const groupKey = gen.entityType;
-      if (!map.has(groupKey)) {
-        map.set(groupKey, { label: typeLabel, items: [] });
-      }
-      map.get(groupKey)!.items.push(gen);
-    }
     const groups: GeneratorGroup[] = [];
-    for (const [id, data] of map.entries()) {
-      groups.push({
-        id,
-        label: data.label,
-        generators: data.items,
-      });
+    for (const section of GENERATOR_SECTION_CATEGORIES) {
+      const items = filteredGenerators.filter(
+        (gen) => resolveGeneratorSection(gen) === section.id,
+      );
+      if (items.length > 0) {
+        groups.push({
+          id: section.id,
+          label: section.label,
+          generators: items,
+        });
+      }
     }
     return groups;
   });
@@ -466,7 +541,7 @@
         All Generators
       </span>
     </div>
-    {#if allFilteredGenerators.length === 0}
+    {#if filteredGenerators.length === 0}
       <p
         class="rounded-lg border border-chrome-border/60 bg-chrome-bg/20 px-3 py-4 text-center text-xs text-chrome-muted"
       >

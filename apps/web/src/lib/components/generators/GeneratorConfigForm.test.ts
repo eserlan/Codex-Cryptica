@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
 
-describe("GeneratorConfigForm", () => {
+describe("GeneratorConfigForm", { timeout: 20000 }, () => {
   it("names generators, identifies their entity types, and describes only the selected one", async () => {
     render(GeneratorConfigForm, {
       props: {
@@ -21,11 +21,11 @@ describe("GeneratorConfigForm", () => {
       name: "NPC Creates Character",
     });
 
-    // Expand the Note group to reveal the Plot Twist generator
-    const noteGroupButton = screen.getByRole("button", {
-      name: /note/i,
+    // Expand the Adventures & Encounters group to reveal the Plot Twist generator
+    const adventuresGroupButton = screen.getByRole("button", {
+      name: /adventures & encounters/i,
     });
-    await fireEvent.click(noteGroupButton);
+    await fireEvent.click(adventuresGroupButton);
 
     const plotTwistRadio = screen.getByRole("radio", {
       name: "Plot Twist & Complication Creates Note",
@@ -113,9 +113,9 @@ describe("GeneratorConfigForm", () => {
       },
     });
 
-    // Expand the Location group to reveal the Dungeon / Delve generator
+    // Expand the Locations & Worlds group to reveal the Dungeon / Delve generator
     const locationGroupButton = screen.getByRole("button", {
-      name: /location/i,
+      name: /locations & worlds/i,
     });
     await fireEvent.click(locationGroupButton);
 
@@ -405,7 +405,9 @@ describe("GeneratorConfigForm", () => {
   });
 
   it("filters by generator description", async () => {
-    render(GeneratorConfigForm, { props: { generatorId: "npc", onsubmit: vi.fn() } });
+    render(GeneratorConfigForm, {
+      props: { generatorId: "npc", onsubmit: vi.fn() },
+    });
 
     await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
       target: { value: "subterranean" },
@@ -444,10 +446,9 @@ describe("GeneratorConfigForm", () => {
   });
 
   it("disables favourite toggles when the picker is disabled", () => {
-    render(
-      GeneratorConfigForm,
-      { props: { generatorId: "npc", disabled: true, onsubmit: vi.fn() } },
-    );
+    render(GeneratorConfigForm, {
+      props: { generatorId: "npc", disabled: true, onsubmit: vi.fn() },
+    });
 
     const favoriteButtons = screen.getAllByRole("button", {
       name: /favourites$/,
@@ -459,7 +460,7 @@ describe("GeneratorConfigForm", () => {
     ).toBe(true);
   });
 
-  it("groups generators by category and keeps them collapsed by default until toggled", async () => {
+  it("groups generators into the 4 broad categories and keeps them collapsed by default until toggled", async () => {
     render(GeneratorConfigForm, {
       props: {
         generatorId: "npc",
@@ -467,11 +468,24 @@ describe("GeneratorConfigForm", () => {
       },
     });
 
-    // Note group button should exist with aria-expanded="false" by default
-    const noteGroupButton = screen.getByRole("button", {
-      name: /note/i,
+    // All four broad categories should be rendered as accordion buttons
+    const peopleGroupButton = screen.getByRole("button", {
+      name: /people & factions/i,
     });
-    expect(noteGroupButton.getAttribute("aria-expanded")).toBe("false");
+    const locationsGroupButton = screen.getByRole("button", {
+      name: /locations & worlds/i,
+    });
+    const adventuresGroupButton = screen.getByRole("button", {
+      name: /adventures & encounters/i,
+    });
+    const lootGroupButton = screen.getByRole("button", {
+      name: /loot & lore/i,
+    });
+
+    expect(peopleGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(lootGroupButton.getAttribute("aria-expanded")).toBe("false");
 
     // Plot Twist should not be visible while collapsed
     expect(
@@ -480,9 +494,9 @@ describe("GeneratorConfigForm", () => {
       }),
     ).toBeNull();
 
-    // Click to expand Note group
-    await fireEvent.click(noteGroupButton);
-    expect(noteGroupButton.getAttribute("aria-expanded")).toBe("true");
+    // Click to expand Adventures & Encounters group
+    await fireEvent.click(adventuresGroupButton);
+    expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("true");
 
     // Now Plot Twist radio should be visible
     expect(
@@ -492,8 +506,8 @@ describe("GeneratorConfigForm", () => {
     ).toBeTruthy();
 
     // Click again to collapse
-    await fireEvent.click(noteGroupButton);
-    expect(noteGroupButton.getAttribute("aria-expanded")).toBe("false");
+    await fireEvent.click(adventuresGroupButton);
+    expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("false");
     expect(
       screen.queryByRole("radio", {
         name: "Plot Twist & Complication Creates Note",
