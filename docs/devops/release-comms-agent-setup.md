@@ -171,6 +171,42 @@ post is sent.
 Discord deployment and formal-release notifications are already posted by
 GitHub Actions through `scripts/discord-deploy.sh`. The release-comms writer
 also creates a Discord draft, but does not send a duplicate content-specific
-deployment message. Instagram [#2909](https://github.com/eserlan/Codex-Cryptica/issues/2909)
-and the Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
-remain separate, unconfigured channels.
+deployment message.
+
+### Manual Instagram publishing
+
+Instagram is intentionally never posted by the deploy agent. Every
+Bluesky-qualified item also qualifies for Instagram, using the exact same
+final caption and verified R2 social image. This keeps the two posts aligned
+without asking the writer to invent a second version.
+
+Configure the local, mode-`600` webhook environment with the connected
+Instagram professional account ID, a Meta access token authorised for content
+publishing, and the Graph API base URL configured for the current Meta app:
+
+```sh
+INSTAGRAM_ACCOUNT_ID=<Instagram professional account ID>
+INSTAGRAM_ACCESS_TOKEN=<Meta access token>
+INSTAGRAM_GRAPH_API_URL=https://graph.facebook.com/v<your configured version>
+```
+
+The account must be a Meta-supported professional Instagram account connected
+to the relevant Facebook Page. Confirm the current app permissions and API
+version in Meta's dashboard before its first real post.
+
+First exercise the command without a network write:
+
+```sh
+bun run post:instagram -- --dry-run \
+  --image https://assets.codexcryptica.com/og/example.jpg \
+  --alt "Example social card" \
+  "The exact final Bluesky caption, unchanged"
+```
+
+For a real post, remove `--dry-run` and paste the exact resolved Bluesky
+caption plus its R2 image URL. Run once for each Bluesky post; do not combine
+separate Bluesky drafts into one Instagram caption. After it returns the
+permalink, mark the matching Instagram cell in the release tracker.
+
+The Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
+remains a separate, unconfigured channel.

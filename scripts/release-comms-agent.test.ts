@@ -9,6 +9,7 @@ import {
   buildWriterRetryPrompt,
   deriveDiscordFromBluesky,
   deriveDiscordQualification,
+  deriveInstagramQualification,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
@@ -488,7 +489,10 @@ describe("release-comms-agent", () => {
         "if something qualifies for Bluesky, it also qualifies for Discord",
       );
       expect(prompt).toContain(
-        'include "discord" whenever any feature is marked "bluesky_worthy": true',
+        'always include "discord" in "recommended_channels"',
+      );
+      expect(prompt).toContain(
+        'always include "instagram" in "recommended_channels"',
       );
     });
 
@@ -757,7 +761,7 @@ describe("release-comms-agent", () => {
         },
       );
       expect(comment).toContain(
-        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nReddit:",
+        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (manual):",
       );
     });
 
@@ -822,6 +826,30 @@ describe("release-comms-agent", () => {
 
       expect(recommendedChannels).toContain("discord");
       expect(discordCopy).toBeUndefined();
+    });
+  });
+
+  describe("instagram integration", () => {
+    it("qualifies Instagram whenever Bluesky has a publishable draft", () => {
+      const result: EvaluatorResult = {
+        postworthy: true,
+        reason: "A small but useful feature",
+        recommended_channels: ["discord"],
+      };
+      const drafts: WriterResult = {
+        bluesky: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/example",
+            text: "Exact Bluesky caption",
+          },
+        ],
+        reddit: "",
+        github_discussions: [],
+      };
+
+      expect(
+        deriveInstagramQualification(result, drafts).recommendedChannels,
+      ).toContain("instagram");
     });
   });
 
