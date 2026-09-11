@@ -24,6 +24,7 @@
     "format:changed": "node scripts/lint-changed.mjs --fix",
     "test": "bun run --filter '*' test",
     "test:affected": "bun run --filter '*' test -- --changed",
+    "test:changed": "node scripts/test-changed.mjs",
     "test:coverage": "bun run --filter '*' test:coverage",
     "validate:full": "bun run lint:types && bun run lint && bun run test:coverage && bun run build",
     "validate:affected": "bun scripts/affected-workspaces.mjs --run",
