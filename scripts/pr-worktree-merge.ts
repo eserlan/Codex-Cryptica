@@ -27,7 +27,7 @@ export function mergeStagingIntoWorktree(
     ["merge", `origin/${baseBranch}`, "--no-edit"],
     {
       cwd: worktreePath,
-      stdio: "inherit",
+      stdio: ["ignore", "pipe", "pipe"],
       env: { ...process.env, GIT_EDITOR: "true" },
     },
   );
