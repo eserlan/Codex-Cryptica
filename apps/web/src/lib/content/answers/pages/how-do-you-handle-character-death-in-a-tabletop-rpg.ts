@@ -82,6 +82,26 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     linkText: "Manage your campaign knowledge in Codex Cryptica",
     href: "/solutions/campaign-manager",
   },
+  systemsThatSupportThis: [
+    {
+      system: "Dungeon World",
+      rationale:
+        "The Last Breath move turns dying into a negotiation with Death itself: roll with no modifiers, a 10+ cheats death outright, a 7-9 means Death offers a genuine bargain the player can accept or refuse, and a miss seals the character's fate on the GM's timing rather than immediately.",
+      href: "https://www.dungeonworldsrd.com/moves/",
+    },
+    {
+      system: "D&D (2024 rules)",
+      rationale:
+        "Death saving throws give a downed character three rolls of DC 10 or higher before three failures kill them outright, a natural 20 restores 1 hit point, and a natural 1 counts as two failures, an explicit recovery window this page's protocol assumes rather than replaces.",
+      href: "https://www.dndbeyond.com/srd",
+    },
+    {
+      system: "Mörk Borg",
+      rationale:
+        "There are no death saves: hitting exactly 0 hit points forces a d4 roll with a real chance of instant death, and the game ships tear-off character sheets on the expectation that PCs die often and get replaced in minutes, a deliberate structural contrast to the negotiated, ceremonial death this page describes.",
+      href: "https://morkborg.com/",
+    },
+  ],
   relatedTools: [
     {
       title: "NPC generator",
