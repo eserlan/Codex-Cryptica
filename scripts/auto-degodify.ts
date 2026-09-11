@@ -169,10 +169,10 @@ export function hasOpenPrForBranch(
 export function resetWorktree(
   worktreeDir: string,
   baseBranch: string,
-  branchName: string,
+  _branchName?: string,
 ): void {
   try {
-    execSync(`git checkout -B ${branchName} origin/${baseBranch}`, {
+    execSync(`git reset --hard origin/${baseBranch}`, {
       cwd: worktreeDir,
       stdio: "ignore",
     });

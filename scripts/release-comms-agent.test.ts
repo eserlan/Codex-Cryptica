@@ -16,7 +16,6 @@ import {
   findOversizedBlueskyDrafts,
   getReleaseCommsLogPath,
   isEvaluatorResult,
-  isInstagramPublishingEnabled,
   isWriterResult,
   loadReleaseCommsState,
   mergeBlueskyRetry,
@@ -932,12 +931,16 @@ describe("release-comms-agent", () => {
 
       const publishFn = async (options: { asset: { pageUrl: string } }) => {
         publishCalls.push(options.asset.pageUrl);
-        if (options.asset.pageUrl === "https://codexcryptica.com/answers/second") {
+        if (
+          options.asset.pageUrl === "https://codexcryptica.com/answers/second"
+        ) {
           // When publishing the second handoff, verify the first handoff's permalink
           // was already checkpointed into state via saveStateFn!
           expect(savedStates.length).toBeGreaterThanOrEqual(1);
           const lastSaved = savedStates[savedStates.length - 1];
-          const entryInState = lastSaved.history.find((e) => e.sha === "abc1234");
+          const entryInState = lastSaved.history.find(
+            (e) => e.sha === "abc1234",
+          );
           expect(entryInState?.publications?.instagram).toEqual([
             {
               pageUrl: "https://codexcryptica.com/answers/first",
@@ -1011,9 +1014,13 @@ describe("release-comms-agent", () => {
 
       // Pass 1: First handoff succeeds, second handoff fails (e.g. Meta rate limit)
       const firstPassCalls: string[] = [];
-      const publishFnPass1 = async (options: { asset: { pageUrl: string } }) => {
+      const publishFnPass1 = async (options: {
+        asset: { pageUrl: string };
+      }) => {
         firstPassCalls.push(options.asset.pageUrl);
-        if (options.asset.pageUrl === "https://codexcryptica.com/answers/fail") {
+        if (
+          options.asset.pageUrl === "https://codexcryptica.com/answers/fail"
+        ) {
           throw new Error("Meta API rate limit exceeded");
         }
         return {
@@ -1054,11 +1061,15 @@ describe("release-comms-agent", () => {
       // State recorded with completed=false does not advance lastEvaluatedSha
       const stateAfterPass1 = recordEvaluation(state, entry);
       expect(stateAfterPass1.lastEvaluatedSha).toBeNull();
-      expect(shouldUpdateInstagramTracker(entry, pass1.instagramPublishFailed)).toBe(false);
+      expect(
+        shouldUpdateInstagramTracker(entry, pass1.instagramPublishFailed),
+      ).toBe(false);
 
       // Pass 2: Retry run with the state/entry from Pass 1
       const secondPassCalls: string[] = [];
-      const publishFnPass2 = async (options: { asset: { pageUrl: string } }) => {
+      const publishFnPass2 = async (options: {
+        asset: { pageUrl: string };
+      }) => {
         secondPassCalls.push(options.asset.pageUrl);
         return {
           id: "media-fail-fixed",
@@ -1076,7 +1087,9 @@ describe("release-comms-agent", () => {
 
       expect(pass2.instagramPublishFailed).toBe(false);
       // Only the missing handoff was retried!
-      expect(secondPassCalls).toEqual(["https://codexcryptica.com/answers/fail"]);
+      expect(secondPassCalls).toEqual([
+        "https://codexcryptica.com/answers/fail",
+      ]);
       expect(pass2.entry.publications?.instagram).toHaveLength(2);
 
       // On successful retry, release completes and tracker is updated
@@ -1087,7 +1100,9 @@ describe("release-comms-agent", () => {
       expect(entry.completed).toBe(true);
       const finalState = recordEvaluation(stateAfterPass1, entry);
       expect(finalState.lastEvaluatedSha).toBe("def5678");
-      expect(shouldUpdateInstagramTracker(entry, pass2.instagramPublishFailed)).toBe(true);
+      expect(
+        shouldUpdateInstagramTracker(entry, pass2.instagramPublishFailed),
+      ).toBe(true);
     });
 
     it("preserves publishedMediaId across retries when permalink lookup fails after media_publish", async () => {
