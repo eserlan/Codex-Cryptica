@@ -519,6 +519,20 @@ describe("published answers", () => {
     }
   });
 
+  it("publishes the conspiracy campaign answer with structural investigation references", () => {
+    const conspiracyAnswer = answers["how-do-you-run-a-conspiracy-campaign"];
+    expect(conspiracyAnswer).toBeDefined();
+    expect(
+      conspiracyAnswer.systemsThatSupportThis?.map(
+        (reference) => reference.system,
+      ),
+    ).toEqual(["Night's Black Agents", "GUMSHOE"]);
+    for (const reference of conspiracyAnswer.systemsThatSupportThis ?? []) {
+      expect(reference.href).toMatch(/^https:\/\//);
+      expect(reference.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
   it("publishes the Rule of Cool answer with the expected system references", () => {
     const ruleOfCoolAnswer = answers["how-much-rule-of-cool-should-a-dm-allow"];
     expect(ruleOfCoolAnswer).toBeDefined();
