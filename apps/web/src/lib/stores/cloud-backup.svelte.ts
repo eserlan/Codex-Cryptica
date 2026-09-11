@@ -87,6 +87,12 @@ export class CloudBackupStore {
    * would read as a hang.
    */
   uploadProgress = $state<{ uploaded: number; total: number } | null>(null);
+  /**
+   * Assets restored so far in the current restore, and how many there are.
+   * Restoring pulls media back down one file at a time, so a large vault
+   * needs the same "still working" signal the upload side already has.
+   */
+  restoreProgress = $state<{ restored: number; total: number } | null>(null);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
 
@@ -249,23 +255,32 @@ export class CloudBackupStore {
       const importAsset = this.deps.restore.importAsset;
       let missingAssets = 0;
 
-      if (importAsset) {
-        for (const asset of manifest) {
-          const bytes = await fetchCloudBackupAsset(
-            this.deps.runtime,
-            { backupId, ownerCode },
-            asset.assetId,
-          );
-          if (!bytes.ok) {
-            // One unreadable image must not undo an otherwise good restore.
-            missingAssets += 1;
-            continue;
+      if (importAsset && manifest.length > 0) {
+        this.restoreProgress = { restored: 0, total: manifest.length };
+        try {
+          for (const asset of manifest) {
+            const bytes = await fetchCloudBackupAsset(
+              this.deps.runtime,
+              { backupId, ownerCode },
+              asset.assetId,
+            );
+            if (!bytes.ok) {
+              // One unreadable image must not undo an otherwise good restore.
+              missingAssets += 1;
+            } else {
+              try {
+                await importAsset(asset.path, bytes.value, asset.mimeType);
+              } catch {
+                missingAssets += 1;
+              }
+            }
+            this.restoreProgress = {
+              restored: this.restoreProgress.restored + 1,
+              total: manifest.length,
+            };
           }
-          try {
-            await importAsset(asset.path, bytes.value, asset.mimeType);
-          } catch {
-            missingAssets += 1;
-          }
+        } finally {
+          this.restoreProgress = null;
         }
       } else if (manifest.length > 0) {
         missingAssets = manifest.length;

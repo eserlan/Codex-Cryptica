@@ -94,11 +94,47 @@ describe("AssetManager", () => {
         mockHandle,
         "images/test.webp",
       );
-      expect(mockIO.readOpfsBlob).toHaveBeenCalledWith(
-        ["images", "test.webp"],
+      // The parent directory is resolved (and cached) separately, then the
+      // file is read directly from that handle — see getCachedDirHandle.
+      expect(mockIO.getDirectoryHandle).toHaveBeenCalledWith(
         mockHandle,
+        ["images"],
+        false,
       );
+      expect(mockIO.readOpfsBlob).toHaveBeenCalledWith(["test.webp"], {});
       expect(result).toBe("blob:mock-url");
+    });
+
+    it("caches the parent directory handle across sibling images (perf: avoid N redundant walks for one shared folder)", async () => {
+      const mockHandle = {} as FileSystemDirectoryHandle;
+      await assetManager.resolveImageUrl(mockHandle, "images/a.webp");
+      await assetManager.resolveImageUrl(mockHandle, "images/b.webp");
+      await assetManager.resolveImageUrl(mockHandle, "images/c.webp");
+
+      // One directory walk for the shared "images" folder, not three.
+      expect(mockIO.getDirectoryHandle).toHaveBeenCalledTimes(1);
+      expect(mockIO.readOpfsBlob).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not share a cached directory handle across different vault roots", async () => {
+      const vaultA = { name: "a" } as FileSystemDirectoryHandle;
+      const vaultB = { name: "b" } as FileSystemDirectoryHandle;
+      await assetManager.resolveImageUrl(vaultA, "images/a.webp");
+      await assetManager.resolveImageUrl(vaultB, "images/b.webp");
+
+      expect(mockIO.getDirectoryHandle).toHaveBeenCalledTimes(2);
+      expect(mockIO.getDirectoryHandle).toHaveBeenNthCalledWith(
+        1,
+        vaultA,
+        ["images"],
+        false,
+      );
+      expect(mockIO.getDirectoryHandle).toHaveBeenNthCalledWith(
+        2,
+        vaultB,
+        ["images"],
+        false,
+      );
     });
 
     it("should debounce concurrent resolutions for the same path", async () => {
@@ -156,10 +192,12 @@ describe("AssetManager", () => {
       );
 
       expect(mockIO.readOpfsBlob).toHaveBeenCalledTimes(2);
-      expect(mockIO.readOpfsBlob).toHaveBeenLastCalledWith(
-        ["images", "missing.png"],
+      expect(mockIO.getDirectoryHandle).toHaveBeenCalledWith(
         fallbackHandle,
+        ["images"],
+        false,
       );
+      expect(mockIO.readOpfsBlob).toHaveBeenLastCalledWith(["missing.png"], {});
       expect(result).toBe("blob:mock-url");
     });
 
@@ -217,6 +255,22 @@ describe("AssetManager", () => {
         expect(result).toBe("blob:mock-url");
       });
 
+      it("thumbnails external images even with no vaultHandle (Demo Mode)", async () => {
+        const rawBlob = new Blob(["remote-demo-full-res"]);
+        (global.fetch as any).mockResolvedValueOnce({
+          ok: true,
+          blob: () => Promise.resolve(rawBlob),
+        });
+        await assetManager.resolveImageUrl(
+          undefined,
+          "https://example.com/demo-big.png",
+        );
+        expect(mockImageProcessor.generateThumbnail).toHaveBeenCalledWith(
+          rawBlob,
+          200,
+        );
+      });
+
       it("should return original URL if no vaultHandle and fetch fails (Demo Mode)", async () => {
         (global.fetch as any).mockResolvedValueOnce({ ok: false });
         const result = await assetManager.resolveImageUrl(
@@ -241,6 +295,59 @@ describe("AssetManager", () => {
 
         expect(global.fetch).toHaveBeenCalled();
         expect(mockIO.writeOpfsFile).toHaveBeenCalled();
+        expect(result).toBe("blob:mock-url");
+      });
+
+      it("thumbnails a freshly-fetched external image before caching it (perf: avoid decoding full-res hotlinked art for a graph-node icon)", async () => {
+        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
+        const rawBlob = new Blob(["full-resolution-remote-art"]);
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(rawBlob),
+        });
+
+        const vaultHandle = { name: "v1" } as any;
+        await assetManager.resolveImageUrl(
+          vaultHandle,
+          "https://example.com/big.png",
+        );
+
+        expect(mockImageProcessor.generateThumbnail).toHaveBeenCalledWith(
+          rawBlob,
+          200,
+        );
+        // The thumbnailed blob, not the raw fetch, is what gets persisted.
+        expect(mockIO.writeOpfsFile).toHaveBeenCalledWith(
+          [".cache", "external_images", expect.any(String)],
+          await mockImageProcessor.generateThumbnail.mock.results[0].value,
+          vaultHandle,
+          vaultHandle.name,
+        );
+      });
+
+      it("falls back to the original blob if thumbnailing an external image fails", async () => {
+        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
+        const rawBlob = new Blob(["unthumbnail-able"]);
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(rawBlob),
+        });
+        mockImageProcessor.generateThumbnail.mockRejectedValueOnce(
+          new Error("Unsupported format"),
+        );
+
+        const vaultHandle = { name: "v1" } as any;
+        const result = await assetManager.resolveImageUrl(
+          vaultHandle,
+          "https://example.com/weird.avif",
+        );
+
+        expect(mockIO.writeOpfsFile).toHaveBeenCalledWith(
+          [".cache", "external_images", expect.any(String)],
+          rawBlob,
+          vaultHandle,
+          vaultHandle.name,
+        );
         expect(result).toBe("blob:mock-url");
       });
 

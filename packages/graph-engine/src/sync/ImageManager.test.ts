@@ -54,6 +54,58 @@ describe("GraphImageManager", () => {
     expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url");
   });
 
+  it("caps how many image resolutions run at once (perf: avoid thundering-herd OPFS reads)", async () => {
+    const nodeCount = 60;
+    const limit = 5;
+    const nodes = Array.from({ length: nodeCount }, (_, i) => ({
+      id: vi.fn().mockReturnValue(`node${i}`),
+      data: vi.fn((key: string) => {
+        if (key === "image") return `path/${i}.png`;
+        if (key === "resolvedImage") return null;
+        return null;
+      }),
+      removeData: vi.fn(),
+    }));
+    const manyCy = {
+      destroyed: vi.fn().mockReturnValue(false),
+      nodes: vi
+        .fn()
+        .mockReturnValue({ filter: vi.fn().mockReturnValue(nodes) }),
+      batch: vi.fn((fn: () => void) => fn()),
+      style: vi.fn().mockReturnValue(mockStyle),
+    };
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const resolveImageUrl = vi.fn(async () => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight--;
+      return "blob:url";
+    });
+
+    const manager = new GraphImageManager(manyCy as any);
+    let notifyDone: () => void;
+    const done = new Promise<void>((resolve) => {
+      notifyDone = resolve;
+    });
+
+    manager.sync({
+      showImages: true,
+      resolveImageUrl,
+      releaseImageUrl: vi.fn(),
+      resolveConcurrency: limit,
+      onBatchApplied: () => notifyDone(),
+    });
+
+    await done;
+
+    expect(resolveImageUrl).toHaveBeenCalledTimes(nodeCount);
+    expect(maxInFlight).toBeLessThanOrEqual(limit);
+    expect(maxInFlight).toBeGreaterThan(1); // actually ran concurrently, not serially
+  });
+
   it("should clear the local urlCache when clearImages is called", async () => {
     const manager = new GraphImageManager(mockCy);
     const resolveImageUrl = vi.fn().mockResolvedValue("blob:url1");

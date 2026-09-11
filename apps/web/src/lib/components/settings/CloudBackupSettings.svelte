@@ -19,6 +19,7 @@
   let restoreKey = $state("");
   let busy = $state(false);
   let isSaving = $state(false);
+  let isRestoring = $state(false);
   let codeVisible = $state(false);
 
   const status = $derived(cloudBackupStore.status);
@@ -74,6 +75,19 @@
       ? new Date(cloudBackupStore.lastPushedAt).toLocaleString()
       : null,
   );
+
+  /**
+   * Restoring downloads the whole vault (entities, maps, canvases, media)
+   * before anything appears, so a large vault needs its own "still working"
+   * text — greying out the button alone reads as broken, not busy.
+   */
+  const restoreStatusText = $derived.by(() => {
+    if (!isRestoring) return null;
+    const progress = cloudBackupStore.restoreProgress;
+    return progress
+      ? `Restoring ${progress.restored} of ${progress.total} files…`
+      : "Loading vault from the cloud…";
+  });
 
   async function confirmConsent() {
     if (!vaultId) return;
@@ -205,6 +219,7 @@
       return;
     }
     busy = true;
+    isRestoring = true;
     // Lands in a new vault, so whatever is open is never silently replaced
     // (FR-006a). Nothing is created until the download has succeeded.
     let restored: Awaited<
@@ -217,6 +232,7 @@
       );
     } finally {
       busy = false;
+      isRestoring = false;
     }
 
     if (!restored) {
@@ -386,14 +402,25 @@
           class="border border-theme-border bg-theme-bg px-3 py-2 font-mono text-sm text-theme-text"
         />
       </label>
-      <button
-        type="button"
-        onclick={runRestore}
-        disabled={busy || !restoreKey.trim()}
-        class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
-      >
-        Load from cloud
-      </button>
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          onclick={runRestore}
+          disabled={busy || !restoreKey.trim()}
+          aria-busy={isRestoring}
+          class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
+        >
+          {isRestoring ? "Loading…" : "Load from cloud"}
+        </button>
+        {#if restoreStatusText}
+          <span
+            class="font-mono text-[10px] uppercase tracking-wider text-theme-primary"
+            aria-live="polite"
+          >
+            {restoreStatusText}
+          </span>
+        {/if}
+      </div>
     </div>
   {/if}
 </section>
@@ -469,9 +496,10 @@
           type="button"
           onclick={confirmConsent}
           disabled={busy}
+          aria-busy={busy}
           class="bg-theme-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
         >
-          I understand — turn it on
+          {busy ? "Setting up…" : "I understand — turn it on"}
         </button>
       </div>
     </div>

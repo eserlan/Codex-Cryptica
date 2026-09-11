@@ -1,5 +1,36 @@
 import type { Core } from "cytoscape";
 
+/** Default cap on simultaneous image/silhouette resolutions per sync pass. */
+const DEFAULT_RESOLVE_CONCURRENCY = 24;
+
+/**
+ * Like `Promise.all(items.map(fn))`, but runs at most `limit` calls at once.
+ * Firing hundreds of `resolveImageUrl` calls in one `Promise.all` (the old
+ * behaviour) thunder-herds the OPFS/File System Access layer — capping
+ * concurrency keeps a big vault's image sync from stalling the tab.
+ */
+async function mapWithConcurrency<T, R>(
+  items: ArrayLike<T> | Iterable<T>,
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  // Cytoscape collections (the caller's real input) are array-like/iterable
+  // but not a true Array, so normalize once up front.
+  const list = Array.from(items);
+  const results: R[] = new Array(list.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < list.length) {
+      const index = next++;
+      results[index] = await fn(list[index], index);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, list.length) }, worker),
+  );
+  return results;
+}
+
 export interface ImageManagerOptions {
   showImages: boolean;
   resolveImageUrl: (path: string) => Promise<string | null>;
@@ -18,6 +49,8 @@ export interface ImageManagerOptions {
    */
   silhouetteVariant?: string;
   batchSize?: number;
+  /** Max simultaneous image/silhouette resolutions. Default 24. */
+  resolveConcurrency?: number;
   onBatchApplied?: (count: number) => void;
   onLog?: (message: string) => void;
   onError?: (error: any) => void;
@@ -77,8 +110,10 @@ export class GraphImageManager {
     void (async () => {
       try {
         const start = performance.now();
-        const results = await Promise.all(
-          nodesNeedingVisuals.map(async (node) => {
+        const results = await mapWithConcurrency(
+          nodesNeedingVisuals,
+          options.resolveConcurrency ?? DEFAULT_RESOLVE_CONCURRENCY,
+          async (node) => {
             const imagePath = node.data("thumbnail") || node.data("image");
             if (imagePath) {
               let url = this.urlCache.get(imagePath);
@@ -118,7 +153,7 @@ export class GraphImageManager {
               skip: false,
               oldUrl: node.data("resolvedImage") as string | undefined,
             };
-          }),
+          },
         );
 
         if (this.cy.destroyed() || !options.showImages) {

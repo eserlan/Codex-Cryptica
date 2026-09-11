@@ -24,6 +24,45 @@ export interface IAssetIOAdapter {
 export class AssetManager {
   private urlCache = new Map<string, { url: string; refs: number }>();
   private resolving = new Map<string, Promise<string>>();
+  /**
+   * Resolved parent directory handles, keyed by vault root then joined
+   * directory path. Images are saved flat under a shared `images/` folder
+   * (see `saveImageToVault`), so without this every node in a large graph
+   * re-walks the same directory from the vault root on every image sync —
+   * hundreds of redundant `getDirectoryHandle` round-trips for one folder.
+   * Keyed off the root handle via WeakMap so switching vaults (a new handle)
+   * naturally starts a fresh cache with no manual invalidation.
+   */
+  private dirHandleCache = new WeakMap<
+    FileSystemDirectoryHandle,
+    Map<string, FileSystemDirectoryHandle>
+  >();
+
+  private async getCachedDirHandle(
+    root: FileSystemDirectoryHandle,
+    dirPath: string[],
+    create = false,
+  ): Promise<FileSystemDirectoryHandle> {
+    if (dirPath.length === 0) return root;
+
+    let cache = this.dirHandleCache.get(root);
+    if (!cache) {
+      cache = new Map();
+      this.dirHandleCache.set(root, cache);
+    }
+
+    const key = dirPath.join("/");
+    const cached = cache.get(key);
+    if (cached) return cached;
+
+    const handle = await this.ioAdapter.getDirectoryHandle(
+      root,
+      dirPath,
+      create,
+    );
+    cache.set(key, handle);
+    return handle;
+  }
 
   constructor(
     private ioAdapter: IAssetIOAdapter,
@@ -115,7 +154,8 @@ export class AssetManager {
             try {
               const response = await this.fetcher(cleanPath, { mode: "cors" });
               if (!response.ok) return cleanPath;
-              const blob = await response.blob();
+              const rawBlob = await response.blob();
+              const blob = await this.toGraphThumbnail(rawBlob);
               url = URL.createObjectURL(blob);
               this.urlCache.set(cleanPath, { url, refs: 1 });
               return url;
@@ -125,14 +165,9 @@ export class AssetManager {
           }
 
           try {
-            const cacheDir = await this.ioAdapter.getDirectoryHandle(
+            const externalDir = await this.getCachedDirHandle(
               vaultHandle,
-              [".cache"],
-              true,
-            );
-            const externalDir = await this.ioAdapter.getDirectoryHandle(
-              cacheDir,
-              ["external_images"],
+              [".cache", "external_images"],
               true,
             );
 
@@ -156,7 +191,8 @@ export class AssetManager {
                 });
                 if (!response.ok)
                   throw new Error(`Fetch failed: ${response.status}`);
-                blob = await response.blob();
+                const rawBlob = await response.blob();
+                blob = await this.toGraphThumbnail(rawBlob);
               } catch {
                 return cleanPath;
               }
@@ -187,13 +223,21 @@ export class AssetManager {
               .replace(/^(\.\/|\/)/, "")
               .split("/")
               .filter((s) => s && s !== ".");
+            const fileName = segments[segments.length - 1];
+            const dirSegments = segments.slice(0, -1);
 
             let blob: Blob | undefined;
 
-            // Try primary storage (OPFS)
+            // Try primary storage (OPFS). The parent directory handle is
+            // cached (see getCachedDirHandle) so 500 nodes sharing one
+            // images/ folder pay for the walk once, not 500 times.
             if (vaultHandle) {
               try {
-                blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
+                const dirHandle = await this.getCachedDirHandle(
+                  vaultHandle,
+                  dirSegments,
+                );
+                blob = await this.ioAdapter.readOpfsBlob([fileName], dirHandle);
               } catch (err) {
                 // If not found and we have a fallback, keep going
                 if (!fallbackHandle) throw err;
@@ -202,10 +246,11 @@ export class AssetManager {
 
             // Try fallback storage (Local FS)
             if (!blob && fallbackHandle) {
-              blob = await this.ioAdapter.readOpfsBlob(
-                segments,
+              const dirHandle = await this.getCachedDirHandle(
                 fallbackHandle,
+                dirSegments,
               );
+              blob = await this.ioAdapter.readOpfsBlob([fileName], dirHandle);
             }
 
             if (blob) {
@@ -239,6 +284,22 @@ export class AssetManager {
 
     this.resolving.set(cleanPath, resolutionPromise);
     return resolutionPromise;
+  }
+
+  /**
+   * Shrinks a freshly-fetched external image before it is cached/displayed.
+   * Hotlinked images (AI-art CDNs, stock-photo hosts) are routinely several
+   * MB at full resolution despite being drawn as a ~60px graph node icon —
+   * unlike locally-uploaded images (`saveImageToVault`), nothing thumbnails
+   * them today. Best-effort: if the processor can't handle the format, cache
+   * the original rather than losing the image.
+   */
+  private async toGraphThumbnail(blob: Blob): Promise<Blob> {
+    try {
+      return await this.imageProcessor.generateThumbnail(blob, 200);
+    } catch {
+      return blob;
+    }
   }
 
   releaseImageUrl(path: string) {
