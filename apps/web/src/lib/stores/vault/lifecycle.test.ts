@@ -161,6 +161,7 @@ describe("VaultLifecycleManager", () => {
       await manager.switchVault("v2");
 
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("loading");
+      expect(deps.setInitialized).toHaveBeenNthCalledWith(1, false);
       expect(deps.flushPendingSaves).toHaveBeenCalled();
       expect(deps.repository.clear).toHaveBeenCalled();
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
@@ -168,6 +169,7 @@ describe("VaultLifecycleManager", () => {
       expect(deps.loadFiles).toHaveBeenCalled();
       expect(deps.themeStore.loadForVault).toHaveBeenCalledWith("v2");
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
+      expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
     });
 
     it("should return early if already on the target vault", async () => {

@@ -6,11 +6,16 @@ import { isToolActive, isViewActive, matchesPath, navItems } from "./nav-items";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 
 describe("nav items", () => {
   beforeEach(() => {
     sessionModeStore.isGuestMode = false;
     discoveryPolicyStore.aiDisabled = false;
+    vault.isInitialized = true;
+    vaultRegistry.activeVaultId = "vault-1";
+    vault.status = "idle";
   });
 
   const byId = (id: string) => navItems().find((i) => i.id === id);
@@ -76,6 +81,28 @@ describe("nav items", () => {
       expect(ids).not.toContain("generators");
       expect(ids).not.toContain("shelf");
       expect(ids).not.toContain("quicknote");
+    });
+
+    it("drops generators when no vault is initialized", () => {
+      vault.isInitialized = false;
+
+      const ids = navItems().map((i) => i.id);
+
+      expect(ids).not.toContain("generators");
+      expect(ids).toContain("shelf");
+      expect(ids).toContain("quicknote");
+    });
+
+    it("drops generators while the active vault is loading", () => {
+      vault.status = "loading";
+
+      expect(navItems().map((item) => item.id)).not.toContain("generators");
+    });
+
+    it("drops generators when there is no active vault", () => {
+      vaultRegistry.activeVaultId = null;
+
+      expect(navItems().map((item) => item.id)).not.toContain("generators");
     });
   });
 

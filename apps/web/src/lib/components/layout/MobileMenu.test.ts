@@ -7,6 +7,8 @@ import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 
 // jsdom has no Web Animations API, which Svelte's transitions drive. The
 // drawer's open and close behaviour is the subject here, not its animation.
@@ -40,6 +42,9 @@ describe("MobileMenu", () => {
   beforeEach(() => {
     guidedModeStore.setGuidedMode(true);
     sessionModeStore.isGuestMode = false;
+    vault.isInitialized = true;
+    vaultRegistry.activeVaultId = "vault-1";
+    vault.status = "idle";
     layoutUIStore.activeSidebarTool = "none";
     layoutUIStore.toggleSidebarTool = vi.fn();
   });
@@ -55,6 +60,30 @@ describe("MobileMenu", () => {
         expect(screen.getByTestId(`mobile-menu-${id}`)).toBeTruthy();
       },
     );
+
+    it("hides the Generators shortcut when no vault is initialized", () => {
+      vault.isInitialized = false;
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
+    it("hides the Generators shortcut while the active vault is loading", () => {
+      vault.status = "loading";
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
+    it("hides the Generators shortcut when there is no active vault", () => {
+      vaultRegistry.activeVaultId = null;
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
 
     // This list was four hardcoded links and had fallen behind the bar.
     it("lists every view, including the ones added after it was written", () => {
