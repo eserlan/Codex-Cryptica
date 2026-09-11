@@ -10,6 +10,7 @@ Tracks whether each post has been published across current and planned platforms
 
 |    Date    | Topic                                         | Copy / reference                                                      | Bluesky | Discord | Instagram | Patreon |
 | :--------: | :-------------------------------------------- | :-------------------------------------------------------------------- | :-----: | :-----: | :-------: | :-----: |
+| 2026-09-11 | Release comms auto-draft (`09231a3`) | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvah6aamem2t | [x] | [x] | [x] | [ ] |
 | 2026-09-11 | Release comms auto-draft (`b345b3a`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mva2azfeb22u |   [x]   |   [x]   |    [ ]    |   [ ]   |
 | 2026-09-11 | Release comms auto-draft (`0fcd00e`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mv7ksb36lr2u |   [x]   |   [x]   |    [ ]    |   [ ]   |
 | 2026-09-11 | Sci-Fi Star System Guide (`65325c3`)          | GMs building sci-fi star systems needed more than generic advice...   |   [x]   |   [x]   |    [ ]    |   [ ]   |
