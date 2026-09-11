@@ -57,13 +57,7 @@ describe("ImagePromptReviewModal stature", () => {
     } as unknown as Animation);
     (vault as any).isGuest = false;
     modalUIStore.closeImagePromptReview();
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
   });
-});
 
   it("offers to keep a stature the Oracle read from the lore", async () => {
     (oracle.regenerateEntityPrompt as any).mockResolvedValue({
@@ -71,13 +65,7 @@ describe("ImagePromptReviewModal stature", () => {
       negativeTerms: [],
       statureId: "divine",
       statureSource: "inferred",
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
+    });
 
     const { getByTestId } = await openAndRevise();
 
@@ -86,32 +74,14 @@ describe("ImagePromptReviewModal stature", () => {
         getByTestId("image-prompt-resolved-stature").textContent,
       ).toContain("Divine");
       expect(getByTestId("image-prompt-pin-stature")).toBeTruthy();
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
+    });
 
     await fireEvent.click(getByTestId("image-prompt-pin-stature"));
 
     await waitFor(() => {
       expect(vault.addLabel).toHaveBeenCalledWith("entity-1", "divine");
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
+    });
   });
-});
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
 
   it("does not offer to pin a stature that is already a label", async () => {
     // Nothing to fix: it is already the user's, stable, and on the entity.
@@ -120,33 +90,15 @@ describe("ImagePromptReviewModal stature", () => {
       negativeTerms: [],
       statureId: "divine",
       statureSource: "labels",
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
+    });
 
     const { getByTestId, queryByTestId } = await openAndRevise();
 
     await waitFor(() => {
       expect(getByTestId("image-prompt-resolved-stature")).toBeTruthy();
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
+    });
     expect(queryByTestId("image-prompt-pin-stature")).toBeNull();
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
   });
-});
 
   it("never writes to a vault the viewer does not own", async () => {
     (vault as any).isGuest = true;
@@ -155,37 +107,84 @@ describe("ImagePromptReviewModal stature", () => {
       negativeTerms: [],
       statureId: "divine",
       statureSource: "inferred",
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
+    });
 
     const { getByTestId, queryByTestId } = await openAndRevise();
 
     await waitFor(() => {
       expect(getByTestId("image-prompt-resolved-stature")).toBeTruthy();
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
-  });
-});
+    });
     expect(queryByTestId("image-prompt-pin-stature")).toBeNull();
-
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
   });
 });
 
-  it("asserts copy/revise/generate icons are aria-hidden", () => {
-    render(ImagePromptReviewModal, { props: { open: true } });
-    const copyIcon = document.querySelector(".icon-\\[lucide--copy\\]");
-    if (copyIcon) expect(copyIcon.getAttribute("aria-hidden")).toBe("true");
+describe("ImagePromptReviewModal decorative icons", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // jsdom has no Web Animations API; Svelte transitions need one.
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      cancel: vi.fn(),
+      finished: Promise.resolve(),
+      onfinish: null,
+      oncancel: null,
+      pause: vi.fn(),
+      play: vi.fn(),
+      reverse: vi.fn(),
+    } as unknown as Animation);
+    (vault as any).isGuest = false;
+    (oracle.isVisualizingEntity as any) = vi.fn(() => false);
+    modalUIStore.closeImagePromptReview();
+  });
+
+  const iconOf = (button: HTMLElement) =>
+    button.querySelector('[class*="icon-"]');
+
+  it("hides the Copy and Revise icons from screen readers", async () => {
+    openDialog();
+    const { getByText } = render(ImagePromptReviewModal);
+
+    const copyButton = getByText("Copy").closest("button")!;
+    const reviseButton = getByText("Revise Prompt").closest("button")!;
+
+    expect(iconOf(copyButton)?.getAttribute("aria-hidden")).toBe("true");
+    expect(iconOf(reviseButton)?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("hides the Generate icon from screen readers", async () => {
+    openDialog();
+    const { getByText } = render(ImagePromptReviewModal);
+
+    const generateButton = getByText("Generate").closest("button")!;
+
+    expect(iconOf(generateButton)?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("hides the loading spinner icon while revising the prompt", async () => {
+    let resolveRevise!: (value: unknown) => void;
+    (oracle.regenerateEntityPrompt as any).mockReturnValue(
+      new Promise((resolve) => {
+        resolveRevise = resolve;
+      }),
+    );
+
+    openDialog();
+    const { getByText } = render(ImagePromptReviewModal);
+    await fireEvent.click(getByText(/advanced art direction/i));
+    await fireEvent.click(getByText("Revise Prompt"));
+
+    const revisingButton = getByText("Revising").closest("button")!;
+    expect(iconOf(revisingButton)?.getAttribute("aria-hidden")).toBe("true");
+
+    resolveRevise({ prompt: "", negativeTerms: [] });
+    await waitFor(() => {});
+  });
+
+  it("hides the loading spinner icon while generating", async () => {
+    (oracle.isVisualizingEntity as any) = vi.fn(() => true);
+    openDialog();
+    const { getByText } = render(ImagePromptReviewModal);
+
+    const generatingButton = getByText("Generating").closest("button")!;
+    expect(iconOf(generatingButton)?.getAttribute("aria-hidden")).toBe("true");
   });
 });

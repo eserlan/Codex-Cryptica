@@ -115,11 +115,7 @@ describe("SearchModal", () => {
     mockVault.selectedEntityId = null;
     mockPage.url = new URL("http://localhost/");
     mockModalUIStore.openZenMode.mockReset();
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("anchors to the main area when the left sidebar is open", () => {
     layoutUIStore.leftSidebarOpen = true;
@@ -133,11 +129,7 @@ describe("SearchModal", () => {
     expect(modal.className).toContain("justify-center");
     expect(modal.className).toContain("pt-[12vh]");
     expect(container.querySelector(".rounded-lg")).toBeTruthy();
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("keeps clear of the entity detail panel when it is open", () => {
     mockVault.selectedEntityId = "entity-1";
@@ -148,11 +140,7 @@ describe("SearchModal", () => {
     expect(modal.getAttribute("data-layout")).toBe("main");
     expect(modal.className).toContain("md:right-[400px]");
     expect(modal.className).toContain("lg:right-[450px]");
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("uses the global centered layout when no sidebar is open", () => {
     render(SearchModal);
@@ -162,11 +150,7 @@ describe("SearchModal", () => {
     expect(modal.className).toContain("md:left-0");
     expect(modal.className).toContain("md:right-0");
     expect(modal.className).toContain("justify-center");
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("shows partial indexing progress counts", () => {
     mockSearchStore.indexProgress = {
@@ -186,11 +170,7 @@ describe("SearchModal", () => {
     const progress = screen.getByTestId("search-index-progress");
     expect(progress.textContent).toContain("Search is still indexing.");
     expect(progress.textContent).toContain("42/100");
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("shows retry action when indexing failed", () => {
     mockSearchStore.indexProgress = {
@@ -208,11 +188,7 @@ describe("SearchModal", () => {
     render(SearchModal);
 
     expect(screen.getByRole("button", { name: "Retry indexing" })).toBeTruthy();
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("opens zen mode for table selections triggered by Enter", async () => {
     mockPage.url = new URL("http://localhost/table");
@@ -233,20 +209,12 @@ describe("SearchModal", () => {
 
     await fireEvent.keyDown(screen.getByTestId("search-modal-input"), {
       key: "Enter",
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
-  });
-});
+    });
 
     expect(mockVault.selectedEntityId).toBe("entity-1");
     expect(mockModalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
     expect(mockSearchStore.close).toHaveBeenCalled();
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("increments selectedIndex by 1 per ArrowDown keydown", async () => {
     mockSearchStore.results = [
@@ -272,19 +240,11 @@ describe("SearchModal", () => {
     render(SearchModal);
 
     const input = screen.getByTestId("search-modal-input");
-    await fireEvent.keyDown(input, { key: "ArrowDown"
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
-  });
-});
+    await fireEvent.keyDown(input, { key: "ArrowDown" });
 
     expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledTimes(1);
     expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledWith(1);
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("decrements selectedIndex by 1 per ArrowUp keydown", async () => {
     mockSearchStore.results = [
@@ -310,19 +270,11 @@ describe("SearchModal", () => {
     render(SearchModal);
 
     const input = screen.getByTestId("search-modal-input");
-    await fireEvent.keyDown(input, { key: "ArrowUp"
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
-  });
-});
+    await fireEvent.keyDown(input, { key: "ArrowUp" });
 
     expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledTimes(1);
     expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledWith(0);
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
   it("closes modal when header close button or backdrop button is clicked", async () => {
     const { container } = render(SearchModal);
@@ -347,13 +299,18 @@ describe("SearchModal", () => {
 
     expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
     expect(mockSearchStore.isOpen).toBe(false);
-
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
   });
-});
 
-  it("asserts status icon is aria-hidden", () => {
-    // This is purely additive to satisfy the PR comments for testing
+  it("hides the no-results status icon from screen readers", () => {
+    mockSearchStore.query = "nonexistent";
+    mockSearchStore.results = [];
+
+    const { container } = render(SearchModal);
+
+    expect(screen.getByText(/couldn't find any notes/i)).toBeTruthy();
+    const icon = container.querySelector(
+      ".icon-\\[heroicons--magnifying-glass-minus\\]",
+    );
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
   });
 });

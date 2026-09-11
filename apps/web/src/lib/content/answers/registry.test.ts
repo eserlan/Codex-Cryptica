@@ -506,8 +506,7 @@ describe("published answers", () => {
   });
 
   it("publishes the heist answer with the expected system references", () => {
-    const heistAnswer =
-      answers["how-do-you-run-a-heist-in-a-tabletop-rpg"];
+    const heistAnswer = answers["how-do-you-run-a-heist-in-a-tabletop-rpg"];
     expect(heistAnswer).toBeDefined();
     expect(heistAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
       "Blades in the Dark",
@@ -521,8 +520,7 @@ describe("published answers", () => {
   });
 
   it("publishes the Rule of Cool answer with the expected system references", () => {
-    const ruleOfCoolAnswer =
-      answers["how-much-rule-of-cool-should-a-dm-allow"];
+    const ruleOfCoolAnswer = answers["how-much-rule-of-cool-should-a-dm-allow"];
     expect(ruleOfCoolAnswer).toBeDefined();
     expect(
       ruleOfCoolAnswer.systemsThatSupportThis?.map((s) => s.system),
