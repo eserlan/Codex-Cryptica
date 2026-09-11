@@ -278,6 +278,7 @@
           {#if isCreating}
             <span
               class="icon-[lucide--loader-2] w-4 h-4 animate-spin inline-block mr-2"
+              aria-hidden="true"
             ></span>
             ADDING...
           {:else}
