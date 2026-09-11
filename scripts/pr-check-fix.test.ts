@@ -4,10 +4,12 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   buildPrFixPrompt,
-  buildInternalPrReviewPrompt,
+  execWithPrefixedStderr,
   fetchFailedCheckLog,
   getRepoSlug,
   getPrFixLogPath,
+  isPrPaused,
+  resolveFixProviders,
   runAgentWithLogging,
   selectCommentsForFixedReply,
   type PrFeedback,
@@ -99,31 +101,6 @@ describe("pr-check-fix", () => {
       expect(prompt).toContain("GENERAL REVIEWS:\n_None_");
       expect(prompt).toContain("Guard out-of-bounds index");
     });
-  });
-
-  it("builds a two-pass internal review prompt that permits a clean no-op", () => {
-    const prompt = buildInternalPrReviewPrompt(
-      {
-        ...sampleFeedback,
-        unresolvedComments: [],
-        reviews: [],
-        failingChecks: [],
-        hasActionableFeedback: false,
-      },
-      "curator/degod-sample-1234",
-      "staging",
-    );
-
-    expect(prompt).toContain("GENERAL DEFECT REVIEW");
-    expect(prompt).toContain("CODEX-CRYPTICA REVIEW");
-    expect(prompt).toContain(".codex/skills/codex-review/SKILL.md");
-    expect(prompt).toContain("make no changes and exit successfully");
-    expect(prompt).toContain("bun run lint:types");
-    expect(prompt).toContain("HEAD:curator/degod-sample-1234");
-    // Even with no findings, a pre-merge staging merge commit must still be pushed.
-    expect(prompt).toContain(sampleFeedback.prMeta.headRefOid);
-    expect(prompt).toContain("you MUST still push that commit");
-    expect(prompt).toContain("NEVER bare `bun test`");
   });
 
   it("includes staging conflict paths and bounded failed-check details", () => {
@@ -252,6 +229,69 @@ describe("pr-check-fix", () => {
         await rm(logDir, { recursive: true, force: true });
       }
     });
+
+    it("includes prNumber in log and stdout prefixes when provided", async () => {
+      const logDir = await mkdtemp(join(tmpdir(), "pr-fix-test-"));
+      const logPath = getPrFixLogPath(2977, "prtag", logDir);
+      const originalStdoutWrite = process.stdout.write;
+      let stdoutCaptured = "";
+      process.stdout.write = ((chunk: any) => {
+        stdoutCaptured += chunk.toString();
+        return true;
+      }) as any;
+
+      try {
+        await runAgentWithLogging(
+          "/bin/sh",
+          ["-c", "printf hello-from-agent"],
+          {
+            cwd: process.cwd(),
+            env: process.env,
+            timeoutMs: 2_000,
+            logPath,
+            runId: "prtag",
+            prNumber: 2977,
+          },
+        );
+
+        expect(stdoutCaptured).toContain(
+          "[agent:#2977:stdout] hello-from-agent",
+        );
+        expect(await readFile(logPath, "utf8")).toContain(
+          "[agent:#2977:stdout] hello-from-agent",
+        );
+      } finally {
+        process.stdout.write = originalStdoutWrite;
+        await rm(logDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("execWithPrefixedStderr", () => {
+    it("surfaces the command's stderr with the PR prefix instead of discarding it", () => {
+      const originalConsoleError = console.error;
+      let captured = "";
+      console.error = ((message: string) => {
+        captured += message;
+      }) as typeof console.error;
+
+      try {
+        expect(() =>
+          execWithPrefixedStderr(
+            "node -e \"process.stderr.write('boom'); process.exit(1)\"",
+            process.cwd(),
+            2980,
+            "test command",
+          ),
+        ).toThrow();
+
+        expect(captured).toContain("[pr-fix:#2980]");
+        expect(captured).toContain("test command failed");
+        expect(captured).toContain("boom");
+      } finally {
+        console.error = originalConsoleError;
+      }
+    });
   });
 
   describe("selectCommentsForFixedReply", () => {
@@ -283,6 +323,70 @@ describe("pr-check-fix", () => {
       const result = selectCommentsForFixedReply(original, refreshed);
       expect(result).toEqual([makeComment(1)]);
       expect(result.some((c) => c.id === 3)).toBe(false);
+    });
+  });
+
+  describe("isPrPaused", () => {
+    it("returns true when a 'paused' label is present", () => {
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [{ name: "enhancement" }, { name: "paused" }],
+        }),
+      ).toBe(true);
+
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [{ name: "  PAUSED  " }],
+        }),
+      ).toBe(true);
+    });
+
+    it("returns false when 'paused' label is absent", () => {
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [{ name: "enhancement" }],
+        }),
+      ).toBe(false);
+
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [],
+        }),
+      ).toBe(false);
+
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: undefined,
+        }),
+      ).toBe(false);
+    });
+  });
+
+  describe("resolveFixProviders", () => {
+    it("falls back to default providers when no overrides are given", () => {
+      expect(resolveFixProviders(undefined, undefined)).toEqual([
+        "codex",
+        "claude",
+        "agy",
+      ]);
+    });
+
+    it("validates and parses PR_FIX_PROVIDERS", () => {
+      expect(resolveFixProviders(undefined, "codex,agy")).toEqual([
+        "codex",
+        "agy",
+      ]);
+    });
+
+    it("throws on invalid provider names in PR_FIX_PROVIDERS", () => {
+      expect(() => resolveFixProviders(undefined, "codexx")).toThrow(
+        /Invalid agent provider "codexx"/,
+      );
     });
   });
 });
