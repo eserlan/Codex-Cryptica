@@ -49,6 +49,7 @@ jobs:
       test_coverage: ${{ steps.select.outputs.test_coverage }}
       lint_types: ${{ steps.select.outputs.lint_types }}
       web: ${{ steps.select.outputs.web }}
+      full: ${{ steps.select.outputs.full }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -179,10 +180,16 @@ jobs:
       - name: Lint
         env:
           WORKSPACES: ${{ needs.select-validation.outputs.lint }}
+          FULL: ${{ needs.select-validation.outputs.full }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          for workspace in $WORKSPACES; do
-            bun run --filter "$workspace" lint -- --cache --cache-location .eslintcache
-          done
+          if [ "$FULL" = "true" ] || [ -z "$BASE_SHA" ]; then
+            for workspace in $WORKSPACES; do
+              bun run --filter "$workspace" lint -- --cache --cache-location .eslintcache
+            done
+          else
+            bun scripts/lint-changed.mjs --base "$BASE_SHA"
+          fi
 
   test:
     # Skipped on push for the same reason as type-check above (#2952).
@@ -235,10 +242,16 @@ jobs:
       - name: Test
         env:
           WORKSPACES: ${{ needs.select-validation.outputs.test_coverage }}
+          FULL: ${{ needs.select-validation.outputs.full }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          for workspace in $WORKSPACES; do
-            bun run --filter "$workspace" test
-          done
+          if [ "$FULL" = "true" ] || [ -z "$BASE_SHA" ]; then
+            for workspace in $WORKSPACES; do
+              bun run --filter "$workspace" test
+            done
+          else
+            bun scripts/test-changed.mjs --base "$BASE_SHA"
+          fi
 
   build:
     name: Build
