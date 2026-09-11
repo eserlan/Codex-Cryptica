@@ -340,7 +340,8 @@ describe("GeneratorConfigForm", () => {
     const removeNpcButtons = screen.getAllByRole("button", {
       name: "Remove NPC from favourites",
     });
-    expect(removeNpcButtons.length).toBeGreaterThanOrEqual(1);
+    expect(removeNpcButtons).toHaveLength(1);
+    expect(removeNpcButtons[0].getAttribute("aria-pressed")).toBe("true");
 
     // Click to unstar NPC
     await fireEvent.click(removeNpcButtons[0]);
@@ -388,5 +389,60 @@ describe("GeneratorConfigForm", () => {
     expect(
       screen.getByText('No generators match "xyznonexistent".'),
     ).toBeTruthy();
+  });
+
+  it("filters by generator description", async () => {
+    render(GeneratorConfigForm, { props: { generatorId: "npc", onsubmit: vi.fn() } });
+
+    await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
+      target: { value: "subterranean" },
+    });
+
+    expect(screen.getByText("Dungeon / Delve")).toBeTruthy();
+    expect(screen.queryByText("NPC")).toBeNull();
+  });
+
+  it("filters by the resolved entity category label", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [{ id: "character", label: "Character" }],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
+      target: { value: "character" },
+    });
+
+    expect(screen.getByText("NPC")).toBeTruthy();
+    expect(screen.queryByText("Settlement")).toBeNull();
+  });
+
+  it("does not submit when Enter is pressed in generator search", async () => {
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, { props: { generatorId: "npc", onsubmit } });
+
+    await fireEvent.keyDown(screen.getByPlaceholderText(/Search generators/), {
+      key: "Enter",
+    });
+
+    expect(onsubmit).not.toHaveBeenCalled();
+  });
+
+  it("disables favourite toggles when the picker is disabled", () => {
+    render(
+      GeneratorConfigForm,
+      { props: { generatorId: "npc", disabled: true, onsubmit: vi.fn() } },
+    );
+
+    const favoriteButtons = screen.getAllByRole("button", {
+      name: /favourites$/,
+      hidden: true,
+    });
+    expect(favoriteButtons.length).toBeGreaterThan(0);
+    expect(
+      favoriteButtons.every((button) => (button as HTMLButtonElement).disabled),
+    ).toBe(true);
   });
 });

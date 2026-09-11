@@ -1,4 +1,8 @@
 import { describe, expect, it, beforeEach } from "vitest";
+
+// Stub $state before importing the module-level store singleton.
+(global as any).$state = (value: any) => value;
+
 import { GeneratorFavoritesStore } from "./generator-favorites.svelte";
 import { UIPersistence, UI_STORAGE_KEYS } from "./persistence";
 

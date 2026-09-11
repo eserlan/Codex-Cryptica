@@ -112,7 +112,9 @@
   const favoriteGenerators = $derived(
     filteredGenerators.filter((g) => favoritesStore.isFavorite(g.id)),
   );
-  const allFilteredGenerators = $derived(filteredGenerators);
+  const allFilteredGenerators = $derived(
+    filteredGenerators.filter((g) => !favoritesStore.isFavorite(g.id)),
+  );
 
   const selectedGenerator = $derived(getGenerator(selectedId));
   const supportsPrimaryLanguage = $derived(
@@ -297,6 +299,9 @@
         id="generator-search-input"
         type="search"
         bind:value={searchQuery}
+        onkeydown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
         placeholder="Search generators by name, category, or description..."
         class="w-full rounded-lg border border-chrome-border bg-chrome-bg/50 py-2 pl-9 pr-8 text-sm text-chrome-text placeholder:text-chrome-muted focus:border-chrome-accent focus:outline-none focus:ring-1 focus:ring-chrome-accent"
         {disabled}
@@ -385,6 +390,8 @@
             aria-label={isFav
               ? `Remove ${gen.label} from favourites`
               : `Add ${gen.label} to favourites`}
+            aria-pressed={isFav}
+            {disabled}
             title={isFav ? "Remove from favourites" : "Add to favourites"}
           >
             <span
@@ -412,13 +419,13 @@
     >
       All Generators
     </legend>
-    {#if allFilteredGenerators.length === 0}
+    {#if filteredGenerators.length === 0}
       <p
         class="rounded-lg border border-chrome-border/60 bg-chrome-bg/20 px-3 py-4 text-center text-xs text-chrome-muted"
       >
         No generators match "{searchQuery}".
       </p>
-    {:else}
+    {:else if allFilteredGenerators.length > 0}
       {#each allFilteredGenerators as gen (gen.id)}
         {@const entityTypeLabel = resolveEntityTypeLabel(gen)}
         {@const isFav = favoritesStore.isFavorite(gen.id)}
@@ -479,6 +486,8 @@
             aria-label={isFav
               ? `Remove ${gen.label} from favourites`
               : `Add ${gen.label} to favourites`}
+            aria-pressed={isFav}
+            {disabled}
             title={isFav ? "Remove from favourites" : "Add to favourites"}
           >
             <span
