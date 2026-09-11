@@ -141,3 +141,155 @@ test("skips label writes when GitHub denies integration write access", async () 
     await rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test("retries transient 503 errors and succeeds on subsequent attempt", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "pr-labeler-503-"));
+  const eventPath = path.join(tempDir, "event.json");
+
+  await writeFile(
+    eventPath,
+    JSON.stringify({
+      pull_request: {
+        number: 43,
+        title: "✨ feat: add new feature",
+      },
+    }),
+  );
+
+  const originalEnv = {
+    GITHUB_EVENT_PATH: process.env.GITHUB_EVENT_PATH,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+  };
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+
+  try {
+    process.env.GITHUB_EVENT_PATH = eventPath;
+    process.env.GITHUB_REPOSITORY = "owner/repo";
+    process.env.GITHUB_TOKEN = "token";
+
+    globalThis.fetch = async (input, init = {}) => {
+      const url = new URL(String(input));
+      const method = (init.method ?? "GET").toUpperCase();
+
+      if (method === "GET" && url.pathname === "/repos/owner/repo/pulls/43/files") {
+        attempts++;
+        if (attempts === 1) {
+          return new Response(JSON.stringify({ message: "No server available" }), {
+            status: 503,
+            headers: { "content-type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify([{ filename: "src/feature.ts" }]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      if (method === "GET" && url.pathname === "/repos/owner/repo/issues/43/labels") {
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      if (method === "POST" && url.pathname === "/repos/owner/repo/issues/43/labels") {
+        return new Response(JSON.stringify([{ name: "enhancement" }]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url.pathname}${url.search}`);
+    };
+
+    await main();
+    assert.equal(attempts, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.GITHUB_EVENT_PATH = originalEnv.GITHUB_EVENT_PATH;
+    process.env.GITHUB_REPOSITORY = originalEnv.GITHUB_REPOSITORY;
+    process.env.GITHUB_TOKEN = originalEnv.GITHUB_TOKEN;
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("retries transient 422 node resolution lag and succeeds on subsequent attempt", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "pr-labeler-422-"));
+  const eventPath = path.join(tempDir, "event.json");
+
+  await writeFile(
+    eventPath,
+    JSON.stringify({
+      pull_request: {
+        number: 44,
+        title: "🐛 fix: bug",
+      },
+    }),
+  );
+
+  const originalEnv = {
+    GITHUB_EVENT_PATH: process.env.GITHUB_EVENT_PATH,
+    GITHUB_REPOSITORY: process.env.GITHUB_REPOSITORY,
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+  };
+  const originalFetch = globalThis.fetch;
+  let labelAttempts = 0;
+
+  try {
+    process.env.GITHUB_EVENT_PATH = eventPath;
+    process.env.GITHUB_REPOSITORY = "owner/repo";
+    process.env.GITHUB_TOKEN = "token";
+
+    globalThis.fetch = async (input, init = {}) => {
+      const url = new URL(String(input));
+      const method = (init.method ?? "GET").toUpperCase();
+
+      if (method === "GET" && url.pathname === "/repos/owner/repo/pulls/44/files") {
+        return new Response(JSON.stringify([{ filename: "src/fix.ts" }]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      if (method === "GET" && url.pathname === "/repos/owner/repo/issues/44/labels") {
+        labelAttempts++;
+        if (labelAttempts === 1) {
+          return new Response(
+            JSON.stringify({
+              message: "Validation Failed",
+              errors: [{ message: "Could not resolve to a node with the global id of 'PR_123'." }],
+            }),
+            {
+              status: 422,
+              headers: { "content-type": "application/json" },
+            },
+          );
+        }
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      if (method === "POST" && url.pathname === "/repos/owner/repo/issues/44/labels") {
+        return new Response(JSON.stringify([{ name: "bug" }]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url.pathname}${url.search}`);
+    };
+
+    await main();
+    assert.equal(labelAttempts, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.GITHUB_EVENT_PATH = originalEnv.GITHUB_EVENT_PATH;
+    process.env.GITHUB_REPOSITORY = originalEnv.GITHUB_REPOSITORY;
+    process.env.GITHUB_TOKEN = originalEnv.GITHUB_TOKEN;
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});

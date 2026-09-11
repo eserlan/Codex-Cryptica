@@ -3,10 +3,25 @@ import { getContextSelection } from "generator-engine";
 
 export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
 
-export function getSessionContext(): string {
+export function getSessionContext(
+  options: { excludeLanguageDrafts?: boolean } = {},
+): string {
   if (typeof window === "undefined") return "";
 
-  const selection = getContextSelection(sessionHubStore.entities);
+  // A generated public-page draft is reusable session context by default.
+  // Feeding a prior language back into the next language request made the
+  // model preserve its identity across changed controls (#1910). Callers can
+  // exclude only language drafts while retaining other campaign continuity.
+  const candidates = options.excludeLanguageDrafts
+    ? sessionHubStore.entities.filter(
+        (entity) =>
+          entity.kind !== "language" &&
+          !entity.labels.some(
+            (label) => label.toLocaleLowerCase() === "language",
+          ),
+      )
+    : sessionHubStore.entities;
+  const selection = getContextSelection(candidates);
   if (selection.entities.length === 0) return "";
 
   const lines = selection.entities.map((d) => {

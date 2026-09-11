@@ -39,7 +39,9 @@ describe("EntityExplorerWorkspace", () => {
   });
 
   it("returns to the empty state when the embedded reader closes while Explorer stays open", async () => {
-    const { rerender } = render(EntityExplorerWorkspace, { entityId: "entity-1" });
+    const { rerender } = render(EntityExplorerWorkspace, {
+      entityId: "entity-1",
+    });
 
     await fireEvent.click(screen.getByTestId("embedded-close"));
     expect(focusEntity).toHaveBeenCalledWith(null);

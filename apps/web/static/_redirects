@@ -1,2 +1,5 @@
+# Retired blog post: consolidated into the Stat Sheet guide (issue 2392).
+/blog/presentation-templates /blog/custom-stat-sheet-templates 301
+
 # Serve the Svelte SPA for direct application and guest-share links.
 /* /index.html 200

@@ -14,7 +14,6 @@ function entity(
     type: "note",
     status: "active",
     labels: [],
-    tags: [],
     aliases: [],
     connections: [],
     content: "",

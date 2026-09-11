@@ -17,8 +17,8 @@ const MAX_EXCERPT_CHARS = 300;
  * user's instruction.
  */
 const MAX_SOURCE_CHARS = 1500;
-/** Cap on language profiles included as naming grounding in prompts. */
-const MAX_LANGUAGES = 5;
+/** Cap the selector list so unusually large vaults remain responsive. */
+const MAX_LANGUAGE_CHOICES = 50;
 /** Vault category id for events (included as grounding for any new entity). */
 const EVENT_TYPE = "event";
 /** Vault category id for notes (lowest-priority grounding). */
@@ -48,6 +48,41 @@ export function latestTemporalYear(
 }
 
 /**
+ * Returns the sole quest-generator entry in memory, when there is exactly
+ * one. Quest drafts carry these labels so ordinary event entities are not
+ * accidentally treated as quest hooks.
+ */
+export function findSingleQuestHook(
+  entities: Record<string, Entity>,
+): Entity | undefined {
+  // ⚡ Bolt Optimization: Replace Object.values().filter() and Set mapping with
+  // an imperative loop and early return to reduce GC pressure and O(N) allocations.
+  let questHook: Entity | undefined;
+  for (const id in entities) {
+    if (!Object.hasOwn(entities, id)) continue;
+
+    const entity = entities[id];
+    if (!entity.labels) continue;
+
+    let isHook = false;
+    for (const label of entity.labels) {
+      const lower = label.toLocaleLowerCase();
+      if (lower === "quest-generator" || lower === "rpg-quest") {
+        isHook = true;
+        break;
+      }
+    }
+
+    if (isHook) {
+      if (questHook !== undefined) return undefined; // Multiple found, abort early
+      questHook = entity;
+    }
+  }
+
+  return questHook;
+}
+
+/**
  * Flatten markdown into a single clean line: drop heading markers (so a source
  * entity's "## Summary" can't collide with the generator template's headings)
  * and collapse newlines/whitespace (so each entity stays on one context line).
@@ -60,9 +95,37 @@ function flatten(text: string | undefined): string {
     .trim();
 }
 
+/**
+ * Truncates at the last complete sentence boundary within `max` chars, so an
+ * excerpt handed to the model never stops mid-sentence (which reads as a
+ * broken/garbled fact rather than an intentionally-trimmed excerpt). Falls
+ * back to a word boundary — and only as a last resort a hard character cut —
+ * when the text has no usable sentence break within the limit (e.g. one long
+ * run-on sentence, or no punctuation at all).
+ */
+/** Below this, a "sentence boundary" is more likely a false positive (an abbreviation like "Dr.") than a real one, so it isn't worth trusting over a plain word-boundary cut. */
+const MIN_SENTENCE_EXCERPT_CHARS = 20;
+
 function clampFlat(text: string | undefined, max: number): string {
   const flattened = flatten(text);
-  return flattened.length > max ? flattened.slice(0, max) + "…" : flattened;
+  if (flattened.length <= max) return flattened;
+  const truncated = flattened.slice(0, max);
+  const lastSentenceEnd = Math.max(
+    truncated.lastIndexOf(". "),
+    truncated.lastIndexOf("! "),
+    truncated.lastIndexOf("? "),
+  );
+  // Prefer the sentence boundary whenever one exists in range, however early
+  // — a short-but-complete excerpt beats a longer one truncated mid-sentence.
+  // The only reason not to trust it is a near-zero-length result, which is
+  // more likely a false positive (an abbreviation like "Dr.") than a real,
+  // useful sentence break.
+  if (lastSentenceEnd > MIN_SENTENCE_EXCERPT_CHARS) {
+    return truncated.slice(0, lastSentenceEnd + 1);
+  }
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeCut = lastSpace > max * 0.6 ? lastSpace : truncated.length;
+  return truncated.slice(0, safeCut).trimEnd() + "…";
 }
 
 function excerpt(text: string | undefined): string {
@@ -116,6 +179,72 @@ export interface BuildVaultContextOptions {
    * backfilling with same-type entities. Order is significant.
    */
   relevantIds?: string[];
+  /** Explicit user choice; absent means no authoritative saved language. */
+  primaryLanguageId?: string;
+}
+
+export interface DetectedVaultLanguage {
+  id: string;
+  title: string;
+  structured: boolean;
+  legacy: boolean;
+}
+
+function languageCategoryIds(
+  categoryLabels: Array<{ id: string; label: string }>,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const category of categoryLabels) {
+    if (
+      category.label.toLocaleLowerCase() === "language" ||
+      category.id.toLocaleLowerCase() === "language"
+    ) {
+      ids.add(category.id);
+    }
+  }
+  return ids;
+}
+
+function isLanguageEntity(entity: Entity, categoryIds: Set<string>): boolean {
+  return entity.kind === "language" || categoryIds.has(entity.type);
+}
+
+export function detectVaultLanguages(
+  allEntities: Record<string, Entity>,
+  categoryLabels: Array<{ id: string; label: string }>,
+): DetectedVaultLanguage[] {
+  const categoryIds = languageCategoryIds(categoryLabels);
+  const languages: DetectedVaultLanguage[] = [];
+  for (const id in allEntities) {
+    if (languages.length >= MAX_LANGUAGE_CHOICES) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const entity = allEntities[id];
+    if (!isLanguageEntity(entity, categoryIds)) continue;
+    const structured =
+      entity.languageProfileVersion === 1 && !!entity.languageProfile;
+    languages.push({
+      id: entity.id,
+      title: entity.title,
+      structured,
+      legacy: !structured,
+    });
+  }
+  return languages.sort((left, right) => left.title.localeCompare(right.title));
+}
+
+/** Suggest a related language without activating it; the UI must confirm it. */
+export function suggestPrimaryLanguageId(
+  languages: DetectedVaultLanguage[],
+  sourceEntity: Entity | undefined,
+  connectedIds: Set<string>,
+): string | undefined {
+  if (!sourceEntity) return undefined;
+  const available = new Set(languages.map((language) => language.id));
+  if (available.has(sourceEntity.id)) return sourceEntity.id;
+  for (const id of connectedIds) {
+    if (available.has(id)) return id;
+  }
+  return undefined;
 }
 
 /**
@@ -139,6 +268,7 @@ export function buildVaultContext(
     templateOutline,
     targetEntityType,
     relevantIds,
+    primaryLanguageId,
   } = opts;
 
   // Name ban list: only titles of the SAME type being generated. Banning a new
@@ -159,14 +289,17 @@ export function buildVaultContext(
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
-  let neighbors: VaultContextEntityExcerpt[] = [];
+  const neighbors: VaultContextEntityExcerpt[] = [];
   if (sourceEntity) {
     if (connectedIds && connectedIds.size > 0) {
-      neighbors = [...connectedIds]
-        .map((id) => allEntities[id])
-        .filter((e): e is Entity => !!e)
-        .slice(0, MAX_NEIGHBORS)
-        .map((e) => entityToExcerpt(e));
+      // ⚡ Bolt Optimization: Replace chained .map().filter().slice().map() with an imperative loop
+      for (const id of connectedIds) {
+        if (neighbors.length >= MAX_NEIGHBORS) break;
+        const e = allEntities[id];
+        if (e) {
+          neighbors.push(entityToExcerpt(e));
+        }
+      }
     } else {
       // ⚡ Bolt Optimization: Replace inline Object.values().filter().slice().map()
       // with imperative loop and early exit
@@ -234,28 +367,22 @@ export function buildVaultContext(
     // ordered is already max bounded by consider logic
     .map((e) => entityToExcerpt(e));
 
-  const languages: VaultContextEntityExcerpt[] = [];
-  const languageCategoryIds = new Set<string>();
-  for (const c of categoryLabels) {
-    if (
-      c.label.toLowerCase() === "language" ||
-      c.id.toLowerCase() === "language"
-    ) {
-      languageCategoryIds.add(c.id);
-    }
-  }
-
-  for (const id in allEntities) {
-    if (languages.length >= MAX_LANGUAGES) break;
-    if (!Object.hasOwn(allEntities, id)) continue;
-    const e = allEntities[id];
-    if (e.kind === "language" || languageCategoryIds.has(e.type)) {
-      // Languages ground naming conventions across every other generator, so
-      // carry the generous excerpt — the 300-char clamp would cut the naming
-      // rules and glossary that make the grounding useful.
-      languages.push(entityToExcerpt(e, undefined, true));
-    }
-  }
+  const languageEntity = primaryLanguageId
+    ? allEntities[primaryLanguageId]
+    : undefined;
+  const languageCategories = languageCategoryIds(categoryLabels);
+  const selectedLanguage =
+    languageEntity && isLanguageEntity(languageEntity, languageCategories)
+      ? {
+          ...entityToExcerpt(languageEntity, undefined, true),
+          languageProfile: languageEntity.languageProfile,
+          languageProfileVersion: languageEntity.languageProfileVersion,
+          legacy: !(
+            languageEntity.languageProfileVersion === 1 &&
+            languageEntity.languageProfile
+          ),
+        }
+      : undefined;
 
   const includedContext: GeneratorVaultContext["includedContext"] = [
     "categories",
@@ -266,7 +393,7 @@ export function buildVaultContext(
   if (worldSample.length) includedContext.push("world");
   if (existingTitles.length) includedContext.push("titles");
   if (labelSuggestions.length) includedContext.push("labels");
-  if (languages.length) includedContext.push("languages");
+  if (selectedLanguage) includedContext.push("languages");
 
   return {
     themeId,
@@ -285,6 +412,6 @@ export function buildVaultContext(
     applyTemplate,
     templateOutline,
     includedContext,
-    languages,
+    selectedLanguage,
   };
 }

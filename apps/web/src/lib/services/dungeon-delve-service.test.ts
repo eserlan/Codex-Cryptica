@@ -62,6 +62,20 @@ describe("DungeonDelveService", () => {
     expect(canvasDoc.nodes.length).toBeGreaterThan(0);
   });
 
+  it("uses the injected clock for fallback conceptId generation", () => {
+    const mockTime = 1600000000000;
+    const service = new DungeonDelveService({
+      clock: { now: () => mockTime },
+    });
+
+    const entityWithoutId = {
+      name: "Nameless Dungeon",
+    };
+
+    const canvasDoc = service.buildDelveCanvasFromConcept(entityWithoutId);
+    expect(canvasDoc.conceptId).toBe(`dungeon-${mockTime}`);
+  });
+
   it("extracts generated sector headings stored in entity lore", () => {
     const service = new DungeonDelveService();
     const canvasDoc = service.buildDelveCanvasFromConcept({

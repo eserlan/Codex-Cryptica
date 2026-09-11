@@ -8,3 +8,4 @@ export * from "./persistence";
 export * from "./utils";
 export * from "./cc";
 export * from "./cif";
+export * from "./vault-files";

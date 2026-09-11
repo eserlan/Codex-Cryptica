@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   trackEvent,
+  trackPublicGeneratorAction,
   initCodexAnalyticsBridge,
   resetCodexAnalyticsBridge,
 } from "./zaraz-analytics";
@@ -54,6 +55,66 @@ describe("trackEvent", () => {
     );
   });
 
+  it("adds flat AI acquisition fields for destination-tool segmentation", () => {
+    attributionStore.captureIfAttributed(
+      new URL("https://codexcryptica.com/answers/example"),
+      "https://perplexity.ai/search/example",
+    );
+    const track = vi.fn();
+
+    trackEvent(
+      "generator_completed",
+      { generator_type: "npc" },
+      { zaraz: { track } },
+    );
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).toEqual(
+      expect.objectContaining({
+        acquisition_channel: "ai_referral",
+        acquisition_provider: "perplexity",
+        acquisition_source: "perplexity",
+        acquisition_landing_path: "/answers/example",
+      }),
+    );
+  });
+
+  it("does not add AI acquisition fields for an unclassified visit", () => {
+    attributionStore.captureIfAttributed(
+      new URL("https://codexcryptica.com/answers/example"),
+      "https://www.google.com/search?q=campaign",
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).not.toHaveProperty("acquisition_channel");
+    expect(properties).not.toHaveProperty("acquisition_provider");
+  });
+
+  it("does not add AI acquisition fields for malformed persisted attribution", () => {
+    localStorage.setItem(
+      "codex-cryptica-attribution-latest",
+      JSON.stringify({
+        channel: "ai_referral",
+        provider: 42,
+        source: null,
+        landing_path: undefined,
+        at: Date.now(),
+      }),
+    );
+    const track = vi.fn();
+
+    trackEvent("seo_entry", {}, { zaraz: { track } });
+
+    const [, properties] = track.mock.calls[0];
+    expect(properties).not.toHaveProperty("acquisition_channel");
+    expect(properties).not.toHaveProperty("acquisition_provider");
+    expect(properties).not.toHaveProperty("acquisition_source");
+    expect(properties).not.toHaveProperty("acquisition_landing_path");
+  });
+
   it("omits attribution properties entirely when none is on record", () => {
     const track = vi.fn();
     trackEvent("seo_entry", {}, { zaraz: { track } });
@@ -71,6 +132,42 @@ describe("trackEvent", () => {
     expect(() =>
       trackEvent("seo_entry", {}, { zaraz: { track } }),
     ).not.toThrow();
+  });
+});
+
+describe("trackPublicGeneratorAction", () => {
+  it("emits the action with public-generator metadata", () => {
+    const track = vi.fn();
+
+    trackPublicGeneratorAction(
+      "copy",
+      { generator_type: "npc", copy_target: "markdown" },
+      { zaraz: { track } },
+    );
+
+    expect(track).toHaveBeenCalledWith(
+      "public_generator_action_clicked",
+      expect.objectContaining({
+        action: "copy",
+        generator_type: "npc",
+        copy_target: "markdown",
+      }),
+    );
+  });
+
+  it("does not allow metadata to override the action", () => {
+    const track = vi.fn();
+
+    trackPublicGeneratorAction(
+      "copy",
+      { action: "open_codex", generator_type: "npc" },
+      { zaraz: { track } },
+    );
+
+    expect(track).toHaveBeenCalledWith(
+      "public_generator_action_clicked",
+      expect.objectContaining({ action: "copy" }),
+    );
   });
 });
 

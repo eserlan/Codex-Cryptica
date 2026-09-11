@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { ConnectionSchema } from "./connection";
+import { LanguageProfileV1Schema } from "./language-profile";
+import { StatSheetSchema } from "./stat-sheet";
+import { IMAGE_FOCUS_VALUES } from "./image-focus";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -120,6 +123,7 @@ export const GuestChatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
   content: z.string(),
+  cue: z.string().optional(),
   timestamp: z.number(),
 });
 
@@ -127,6 +131,7 @@ export const GuestChatTranscriptSchema = z.object({
   id: z.string(),
   guestId: z.string(),
   guestName: z.string(),
+  speakerCharacterId: z.string().optional(),
   characterId: z.string(),
   characterTitle: z.string(),
   messages: z.array(GuestChatMessageSchema),
@@ -168,7 +173,6 @@ export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
   title: z.string().min(1),
-  tags: z.array(z.string()).default([]),
   labels: z.array(z.string()).default([]),
   aliases: z.array(z.string().trim().min(1)).default([]),
   connections: z.array(ConnectionSchema).default([]),
@@ -177,7 +181,11 @@ export const EntitySchema = z.object({
   lore: z.string().optional(), // Extended lore & rich notes
   artDirection: z.string().optional(),
   image: z.string().optional(),
+  silhouette: z.string().optional(),
   thumbnail: z.string().optional(),
+  /** Which part of `image` to keep in view when it's cropped to a shape
+   * (graph node, VTT token) that doesn't match its aspect ratio. */
+  imageFocus: z.enum(IMAGE_FOCUS_VALUES).optional(),
   /**
    * Art Direction inputs and composed prompts for the current image, kept so a
    * generation can be reproduced or explained. Absent on images generated
@@ -209,6 +217,9 @@ export const EntitySchema = z.object({
   guestChatConfig: GuestChatConfigSchema.optional(),
   visibility: z.enum(["visible", "hidden"]).optional(),
   kind: z.string().optional(),
+  languageProfileVersion: z.literal(1).optional(),
+  languageProfile: LanguageProfileV1Schema.optional(),
+  statSheet: StatSheetSchema.optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

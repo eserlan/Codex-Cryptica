@@ -1,3 +1,87 @@
+const COSMIC_HORROR_SETTLEMENT = {
+  sizes: [
+    { name: "Survey Camp", range: "12–60 residents", pointsOfInterestCount: 3 },
+    {
+      name: "Remote Village",
+      range: "60–500 residents",
+      pointsOfInterestCount: 4,
+    },
+    {
+      name: "Coastal Town",
+      range: "500–4,000 residents",
+      pointsOfInterestCount: 5,
+    },
+    {
+      name: "University District",
+      range: "4,000–18,000 residents",
+      pointsOfInterestCount: 6,
+    },
+  ],
+  environments: [
+    "Fog-bound coastline",
+    "Highland observatory plateau",
+    "Flooded river valley",
+    "Windswept island",
+    "Forest around an old excavation",
+    "Industrial university quarter",
+  ],
+  primaryFunctions: [
+    "Astronomical observation post",
+    "Expedition supply town",
+    "University research district",
+    "Quarantine checkpoint",
+    "Archive and rare-book centre",
+    "Deep-water fishing community",
+  ],
+  tones: [
+    "Methodical but uneasy",
+    "Outwardly ordinary, quietly strained",
+    "Fog-muted and watchful",
+    "Scholarly and secretive",
+    "Remote and underprepared",
+  ],
+  mainTensions: [
+    "A survey team returned with one member missing from every photograph",
+    "The town's tide tables now predict events on land",
+    "A sealed archive has begun issuing requests for materials",
+    "Residents disagree about whether last week's eclipse happened",
+    "A quarantine order is hiding an anomaly rather than an illness",
+  ],
+  authorityTypes: [
+    "University field director",
+    "Harbour and quarantine board",
+    "Inherited town council",
+    "Expedition sponsor's representative",
+    "Archive custodian with emergency powers",
+  ],
+  notableLocations: [
+    "The tidal observatory with its lenses covered at noon",
+    "A reading room whose catalogue omits one entire floor",
+    "The weather station that no longer records wind",
+    "A boarding house used by every expedition since the first survey",
+    "The sealed pier where unregistered boats arrive at dawn",
+    "A civic hall built over an excavation nobody discusses",
+  ],
+  factions: [
+    "The Miskatonic field office",
+    "The harbour quarantine committee",
+    "A discreet antiquarian society",
+    "The families who financed the first expedition",
+    "The volunteer coast-watch service",
+  ],
+  namePrefixes: ["Dun", "Inn", "Lorn", "Morrow", "Nant", "Orra", "Pel", "Rill"],
+  nameSuffixes: [
+    "mouth",
+    "reach",
+    "field",
+    "haven",
+    "point",
+    "mere",
+    "watch",
+    "cairn",
+  ],
+};
+
 export const settlementConfig = {
   genres: [
     "Fantasy",
@@ -8,227 +92,257 @@ export const settlementConfig = {
     "Post-Apocalyptic",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Western",
     "Steampunk",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
 
   sizesByGenre: {
     Fantasy: [
-      { name: "Hamlet", range: "50–100 inhabitants", pointsOfInterestCount: 1 },
+      { name: "Hamlet", range: "50–100 inhabitants", pointsOfInterestCount: 3 },
       {
         name: "Village",
         range: "100–500 inhabitants",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Town",
         range: "500–5,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "City",
         range: "5,000–20,000 inhabitants",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     Pirate: [
       {
         name: "Hidden Cove",
         range: "20–100 residents",
-        pointsOfInterestCount: 1,
+        pointsOfInterestCount: 3,
       },
       {
         name: "Free Port",
         range: "100–1,000 residents",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Harbour Town",
         range: "1,000–8,000 residents",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Island Capital",
         range: "8,000+ residents",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     "Dark Fantasy": [
       {
         name: "Forsaken Village",
         range: "50–300 survivors",
-        pointsOfInterestCount: 1,
+        pointsOfInterestCount: 3,
       },
       {
         name: "Blighted Town",
         range: "300–2,000 inhabitants",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Corrupted City",
         range: "2,000–10,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Ruined Stronghold",
         range: "10,000+ inhabitants",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     Cyberpunk: [
-      { name: "Block", range: "200–1,000 residents", pointsOfInterestCount: 1 },
+      { name: "Block", range: "200–1,000 residents", pointsOfInterestCount: 3 },
       {
         name: "District",
         range: "1,000–10,000 residents",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Borough",
         range: "10,000–50,000 residents",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
-      { name: "Sector", range: "50,000+ residents", pointsOfInterestCount: 4 },
+      { name: "Sector", range: "50,000+ residents", pointsOfInterestCount: 6 },
     ],
     "Sci-Fi": [
-      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 1 },
+      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 3 },
       {
         name: "Station",
         range: "200–2,000 personnel",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Colony",
         range: "2,000–20,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Habitat",
         range: "20,000+ inhabitants",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     "Post-Apocalyptic": [
-      { name: "Camp", range: "20–100 survivors", pointsOfInterestCount: 1 },
-      { name: "Outpost", range: "100–500 survivors", pointsOfInterestCount: 2 },
+      { name: "Camp", range: "20–100 survivors", pointsOfInterestCount: 3 },
+      { name: "Outpost", range: "100–500 survivors", pointsOfInterestCount: 4 },
       {
         name: "Settlement",
         range: "500–3,000 survivors",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Stronghold",
         range: "3,000+ survivors",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     Modern: [
-      { name: "Hamlet", range: "50–200 residents", pointsOfInterestCount: 1 },
+      { name: "Hamlet", range: "50–200 residents", pointsOfInterestCount: 3 },
       {
         name: "Village",
         range: "200–2,000 residents",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Town",
         range: "2,000–20,000 residents",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
-      { name: "City", range: "20,000+ residents", pointsOfInterestCount: 4 },
+      { name: "City", range: "20,000+ residents", pointsOfInterestCount: 6 },
     ],
     Horror: [
       {
         name: "Isolated Community",
         range: "50–300 inhabitants",
-        pointsOfInterestCount: 1,
+        pointsOfInterestCount: 3,
       },
       {
         name: "Village",
         range: "300–1,000 inhabitants",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Town",
         range: "1,000–5,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "City Quarter",
         range: "5,000–15,000 inhabitants",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.sizes,
     Western: [
-      { name: "Homestead", range: "10–50 residents", pointsOfInterestCount: 1 },
+      { name: "Homestead", range: "10–50 residents", pointsOfInterestCount: 3 },
       {
         name: "Settlement",
         range: "50–500 residents",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
-      { name: "Town", range: "500–3,000 residents", pointsOfInterestCount: 3 },
+      { name: "Town", range: "500–3,000 residents", pointsOfInterestCount: 5 },
       {
         name: "Boom Town",
         range: "3,000+ residents",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     Steampunk: [
       {
         name: "Village",
         range: "100–500 inhabitants",
-        pointsOfInterestCount: 1,
+        pointsOfInterestCount: 3,
       },
       {
         name: "Mill Town",
         range: "500–5,000 inhabitants",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Industrial City",
         range: "5,000–50,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Metropolis",
         range: "50,000+ inhabitants",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     "Space Opera Resistance": [
-      { name: "Hidden Base", range: "50–500 rebels", pointsOfInterestCount: 1 },
+      { name: "Hidden Base", range: "50–500 rebels", pointsOfInterestCount: 3 },
       {
         name: "Colony",
         range: "500–5,000 inhabitants",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Spaceport City",
         range: "5,000–50,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Imperial Capital",
         range: "50,000+ inhabitants",
-        pointsOfInterestCount: 4,
+        pointsOfInterestCount: 6,
       },
     ],
     "Optimistic Exploration Sci-Fi": [
-      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 1 },
+      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 3 },
       {
         name: "Station",
         range: "200–2,000 personnel",
-        pointsOfInterestCount: 2,
+        pointsOfInterestCount: 4,
       },
       {
         name: "Colony",
         range: "2,000–20,000 inhabitants",
-        pointsOfInterestCount: 3,
+        pointsOfInterestCount: 5,
       },
       {
         name: "Core World City",
         range: "50,000+ inhabitants",
+        pointsOfInterestCount: 6,
+      },
+    ],
+    "Space Western": [
+      {
+        name: "Prospector Camp",
+        range: "10–50 belters",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Boomtown Outpost",
+        range: "50–500 residents",
         pointsOfInterestCount: 4,
+      },
+      {
+        name: "Moonbase Settlement",
+        range: "500–5,000 inhabitants",
+        pointsOfInterestCount: 5,
+      },
+      {
+        name: "Orbital Hub",
+        range: "5,000–20,000 residents",
+        pointsOfInterestCount: 5,
+      },
+      {
+        name: "Frontier Free-Port",
+        range: "20,000+ spacers",
+        pointsOfInterestCount: 6,
       },
     ],
   } as Record<
@@ -303,6 +417,7 @@ export const settlementConfig = {
       "Underground catacombs",
       "Decaying city district",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.environments,
     Western: [
       "Desert plains",
       "Canyon river crossing",
@@ -333,6 +448,14 @@ export const settlementConfig = {
       "Gas Giant Atmosphere",
       "Binary Star System",
       "Nebula Edge",
+    ],
+    "Space Western": [
+      "Arid Dust Basin",
+      "Hollowed Asteroid Cavity",
+      "Canyon Fault Line",
+      "Orbital Scrapyard Cluster",
+      "Volcanic Moon Caldera",
+      "Toxic Salt Flats",
     ],
   } as Record<string, string[]>,
 
@@ -409,6 +532,7 @@ export const settlementConfig = {
       "Research facility",
       "Crumbling estate settlement",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.primaryFunctions,
     Western: [
       "Railroad depot",
       "Mining claim town",
@@ -440,6 +564,14 @@ export const settlementConfig = {
       "Fleet Resupply",
       "Agricultural Breadbasket",
       "First Contact Staging Area",
+    ],
+    "Space Western": [
+      "Ore Smelting Depot",
+      "Black-Market Trading Hub",
+      "Sub-Light Refuelling Station",
+      "Salvage Scrapyard",
+      "Smuggler Way-Station",
+      "Agricultural Hydroponics Dome",
     ],
   } as Record<string, string[]>,
 
@@ -501,6 +633,7 @@ export const settlementConfig = {
       "Desperate and hunted",
       "Ancient and unknowable",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.tones,
     Western: [
       "Lawless and dangerous",
       "Dusty and hardscrabble",
@@ -528,6 +661,13 @@ export const settlementConfig = {
       "Bureaucratic",
       "Pioneering",
       "Tense",
+    ],
+    "Space Western": [
+      "Lawless and volatile",
+      "Gritty and debt-ridden",
+      "Rowdy and boomtown-busy",
+      "Desolate and resource-strapped",
+      "Tense under corrupt oversight",
     ],
   } as Record<string, string[]>,
 
@@ -602,6 +742,7 @@ export const settlementConfig = {
       "Forbidden ritual",
       "Hidden monster in plain sight",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.mainTensions,
     Western: [
       "Range war",
       "Railroad company pressure",
@@ -632,6 +773,13 @@ export const settlementConfig = {
       "A diplomatic breakdown between two alien delegations",
       "A mysterious viral outbreak in the medical bay",
       "Sabotage of the main warp reactor",
+    ],
+    "Space Western": [
+      "A greedy mining consortium is attempting a hostile takeover of independent claims.",
+      "The local water purification condensers are failing, and the repair parts are locked in customs.",
+      "A bounty hunter syndicate has set up blockades to trap an elusive fugitive.",
+      "Wildcat strikers have shut down the main ore conveyor, demanding fair fuel rations.",
+      "A syndicate enforcer boss is demanding protection money from every docked vessel.",
     ],
   } as Record<string, string[]>,
 
@@ -700,6 +848,7 @@ export const settlementConfig = {
       "Corrupt official",
       "Religious authority",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.authorityTypes,
     Western: [
       "Sheriff",
       "Railroad company agent",
@@ -730,6 +879,14 @@ export const settlementConfig = {
       "Science Director",
       "Fleet Admiral",
       "Ambassador",
+    ],
+    "Space Western": [
+      "Under-resourced Outpost Marshal",
+      "Corrupt Station Factor",
+      "Mining Claim Council",
+      "Syndicate Enforcer Boss",
+      "Elected Saloon Proprietor",
+      "None / Lawless Anarchy",
     ],
   } as Record<string, string[]>,
 
@@ -810,6 +967,7 @@ export const settlementConfig = {
       "Witchwood Gate",
       "Ruined Mill",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.notableLocations,
     Western: [
       "The Saloon",
       "Sheriff's Office",
@@ -847,6 +1005,14 @@ export const settlementConfig = {
       "Diplomatic Quarters",
       "The Arboretum",
       "Shuttlebay",
+    ],
+    "Space Western": [
+      "The Dust-Well Cantina & Exchange",
+      "Automated Atmospheric Recycler Station",
+      "Gantry 4 Drydock & Repair Crane",
+      "Assay Office & Claim Registry",
+      "Pressurised Hydroponics Greenhouse",
+      "The Boneyard Scrap Heap",
     ],
   } as Record<string, string[]>,
 
@@ -908,6 +1074,7 @@ export const settlementConfig = {
       "The Whispering Circle",
       "The Fallen Church",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.factions,
     Western: [
       "The Railroad Company",
       "The Cattle Baron's Men",
@@ -936,6 +1103,13 @@ export const settlementConfig = {
       "Maquis equivalent",
       "Section 31 equivalent",
       "Orion Syndicate equivalent",
+    ],
+    "Space Western": [
+      "Independent Belters' League",
+      "Rust-Star Smuggling Ring",
+      "Consortium Security Enforcers",
+      "The Scrappers' Mutual Union",
+      "Frontier Marshals' Posse",
     ],
   } as Record<string, string[]>,
 
@@ -1002,6 +1176,7 @@ export const settlementConfig = {
       "Dunmere",
       "Wraithgate",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.namePrefixes,
     Western: [
       "Dusty",
       "Rattler",
@@ -1039,6 +1214,17 @@ export const settlementConfig = {
       "Sirius",
       "Orion",
       "Vega",
+    ],
+    "Space Western": [
+      "Dust",
+      "Rust",
+      "Deadstone",
+      "Copper",
+      "Dry",
+      "Red",
+      "Broken",
+      "Ochre",
+      "Iron",
     ],
   } as Record<string, string[]>,
 
@@ -1114,6 +1300,7 @@ export const settlementConfig = {
       " Falls",
       " Vale",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.nameSuffixes,
     Western: [
       " Creek",
       " Flats",
@@ -1151,6 +1338,17 @@ export const settlementConfig = {
       " Outpost",
       " Colony",
       " Hub",
+    ],
+    "Space Western": [
+      " Reach",
+      " Basin",
+      " Well",
+      " Ridge",
+      " Gulch",
+      " Rock",
+      " Landing",
+      " Flats",
+      " Station",
     ],
   } as Record<string, string[]>,
 

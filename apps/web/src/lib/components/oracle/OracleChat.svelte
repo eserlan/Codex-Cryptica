@@ -8,6 +8,11 @@
   import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import {
+    ORACLE_CHAT_INPUT_EVENT,
+    getOracleChatDraft,
+    clearOracleChatDraft,
+  } from "./oracle-chat-input";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -198,6 +203,34 @@
     if (!scrollContainer) return;
     wasNearBottom = isChatNearBottom(scrollContainer);
   };
+
+  $effect(() => {
+    const draft = getOracleChatDraft();
+    if (draft) {
+      input = input.trim() ? `${input}\n${draft}` : draft;
+      clearOracleChatDraft();
+      tick().then(() => {
+        adjustHeight();
+      });
+    }
+
+    const addResultToInput = (event: Event) => {
+      const text = (event as CustomEvent<string>).detail?.trim();
+      if (!text) return;
+
+      input = input.trim() ? `${input}\n${text}` : text;
+      clearOracleChatDraft();
+      event.preventDefault();
+      tick().then(() => {
+        adjustHeight();
+        textArea?.focus();
+      });
+    };
+
+    window.addEventListener(ORACLE_CHAT_INPUT_EVENT, addResultToInput);
+    return () =>
+      window.removeEventListener(ORACLE_CHAT_INPUT_EVENT, addResultToInput);
+  });
 </script>
 
 {#if !oracle.isEnabled}
@@ -216,7 +249,7 @@
     </h3>
     <p class="text-xs text-theme-muted leading-relaxed max-w-[280px]">
       To consult the archives, please provide a <strong
-        class="text-theme-primary">Google Gemini API Key</strong
+        class="text-theme-primary">OpenAI/Luna API Key</strong
       >
       in the Settings panel.
       {#if !import.meta.env.VITE_SHARED_GEMINI_KEY}

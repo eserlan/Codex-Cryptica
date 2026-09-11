@@ -8,7 +8,9 @@ test.describe("Label Toggle", () => {
 
   test("toggles node labels via shortcut", async ({ page }) => {
     // Create a node first so we can check label style
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByPlaceholder(/Title.../i).fill("Test Node");
     await page.getByRole("button", { name: "ADD" }).click();
 

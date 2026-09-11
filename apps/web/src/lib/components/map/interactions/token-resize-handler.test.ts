@@ -60,9 +60,152 @@ describe("TokenResizeHandler", () => {
     expect(updateToken).not.toHaveBeenCalled();
   });
 
+  it("does not resize a locked token", () => {
+    tokens = [token({ id: "token-a", x: 10, y: 10, locked: true })];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(false);
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
   it("does not update when the token is already at the minimum scale", () => {
     expect(handler.resizeAt({ x: 20, y: 20 }, 100)).toBe(true);
 
     expect(updateToken).not.toHaveBeenCalled();
+  });
+
+  it("caps a regular token's grow at 4x grid (Gargantuan)", () => {
+    tokens = [token({ id: "token-a", x: 10, y: 10, width: 200, height: 200 })];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
+  it("allows a placed tile to grow well past the 4x character-token cap", () => {
+    tokens = [
+      token({
+        id: "tile-a",
+        x: 10,
+        y: 10,
+        width: 200,
+        height: 200,
+        kind: "tile",
+      }),
+    ];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
+    expect(updateToken).toHaveBeenCalledWith("tile-a", {
+      width: 250,
+      height: 250,
+    });
+  });
+
+  it("caps a tile's grow at 20x grid", () => {
+    tokens = [
+      token({
+        id: "tile-a",
+        x: 10,
+        y: 10,
+        width: 1000,
+        height: 1000,
+        kind: "tile",
+      }),
+    ];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
+  describe("notes", () => {
+    it("resizes in half-grid steps rather than whole cells", () => {
+      tokens = [
+        token({
+          id: "note-a",
+          x: 10,
+          y: 10,
+          width: 75,
+          height: 75,
+          kind: "note",
+        }),
+      ];
+
+      expect(handler.resizeAt({ x: 20, y: 20 }, -1)).toBe(true);
+
+      expect(updateToken).toHaveBeenCalledWith("note-a", {
+        width: 100,
+        height: 100,
+        noteCollapsedFrom: undefined,
+      });
+    });
+
+    it("shrinks a note below one whole cell, where a token has a floor", () => {
+      tokens = [
+        token({
+          id: "note-a",
+          x: 10,
+          y: 10,
+          width: 50,
+          height: 50,
+          kind: "note",
+        }),
+      ];
+
+      handler.resizeAt({ x: 20, y: 20 }, 1);
+
+      expect(updateToken).toHaveBeenCalledWith("note-a", {
+        width: 25,
+        height: 25,
+        noteCollapsedFrom: undefined,
+      });
+    });
+
+    it("stops at the marker floor and the full-page ceiling", () => {
+      tokens = [
+        token({
+          id: "small",
+          x: 10,
+          y: 10,
+          width: 25,
+          height: 25,
+          kind: "note",
+        }),
+      ];
+      handler.resizeAt({ x: 20, y: 20 }, 1);
+      expect(updateToken).not.toHaveBeenCalled();
+
+      tokens = [
+        token({
+          id: "big",
+          x: 10,
+          y: 10,
+          width: 400,
+          height: 400,
+          kind: "note",
+        }),
+      ];
+      handler.resizeAt({ x: 20, y: 20 }, -1);
+      expect(updateToken).not.toHaveBeenCalled();
+    });
+
+    it("expands a folded-away note rather than resizing it while collapsed", () => {
+      tokens = [
+        token({
+          id: "note-a",
+          x: 10,
+          y: 10,
+          width: 25,
+          height: 25,
+          kind: "note",
+          noteCollapsedFrom: { width: 120, height: 120 },
+        }),
+      ];
+
+      handler.resizeAt({ x: 20, y: 20 }, -1);
+
+      expect(updateToken).toHaveBeenCalledWith("note-a", {
+        width: 50,
+        height: 50,
+        noteCollapsedFrom: undefined,
+      });
+    });
   });
 });

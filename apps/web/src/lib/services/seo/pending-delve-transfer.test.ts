@@ -210,4 +210,66 @@ describe("PendingDelveTransferService", () => {
     expect(pending.sourceEntityId).toBe("location-bruneth");
     expect(storage.removeItem).not.toHaveBeenCalled();
   });
+
+  it("handles adventure canvas and Event entity handoff", async () => {
+    const adventureSource = {
+      type: "event" as const,
+      kind: "adventure",
+      title: "The Charter of Hollow Veins",
+      content: "A generated adventure.",
+      lore: "## Initial Situation",
+      labels: ["event", "adventure"],
+      status: "active" as const,
+    };
+    const adventureCanvas = {
+      id: "adventure-canvas-charter",
+      name: adventureSource.title,
+      nodes: [
+        {
+          id: "situation-1",
+          type: "situation",
+          position: { x: 0, y: 0 },
+          data: { label: "Martial Curfew", role: "Start" },
+        },
+      ],
+      edges: [],
+      metadata: { kind: "adventure" },
+    };
+
+    const transfer = createPendingDelveTransfer(
+      adventureCanvas,
+      adventureSource,
+    );
+    const storage = createMemoryStorage(transfer);
+    const entityStore = {
+      allEntities: [],
+      createEntity: vi.fn().mockResolvedValue("event-charter"),
+    };
+    const canvasImporter = {
+      importCanvas: vi.fn().mockResolvedValue("charter-canvas"),
+    };
+    const service = new PendingDelveTransferService(
+      entityStore as never,
+      canvasImporter,
+      storage,
+    );
+
+    await expect(service.importPending()).resolves.toBe("charter-canvas");
+    expect(entityStore.createEntity).toHaveBeenCalledWith(
+      "event",
+      adventureSource.title,
+      expect.objectContaining({
+        content: adventureSource.content,
+        kind: "adventure",
+      }),
+    );
+    expect(canvasImporter.importCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          kind: "adventure",
+          sourceEntityId: "event-charter",
+        }),
+      }),
+    );
+  });
 });

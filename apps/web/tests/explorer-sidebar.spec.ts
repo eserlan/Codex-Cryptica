@@ -51,12 +51,6 @@ test.describe("Entity Explorer Sidebar", () => {
   });
 
   test("should focus entity and show embedded view", async ({ page }) => {
-    // 1. Open Explorer
-    await page.getByTestId("activity-bar-explorer").click();
-
-    // Ensure explorer is loaded
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
-
     await seedEntity(page, {
       id: "test-entry",
       title: "Test Entry",
@@ -67,6 +61,12 @@ test.describe("Entity Explorer Sidebar", () => {
         labels: ["test"],
       },
     });
+
+    // 1. Open Explorer
+    await page.getByTestId("activity-bar-explorer").click();
+
+    // Ensure explorer is loaded
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
 
     // 2. Click the seeded entity
     const entityRow = page.getByTestId("entity-list-item").first();
@@ -80,16 +80,19 @@ test.describe("Entity Explorer Sidebar", () => {
     }
 
     await expect(entityRow).toBeVisible({ timeout: 10000 });
-    await entityRow.click();
+    // The row is a layout container; selection is handled by its title button.
+    await entityRow
+      .getByRole("button", { name: "Test Entry", exact: true })
+      .click();
 
-    // 3. Verify Zen Mode dialog is visible
-    const dialog = page.getByRole("dialog", { name: "Test Entry" });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByText("Test content")).toBeVisible();
+    // 3. Explorer opens the entity in its embedded reader workspace.
+    const embeddedView = page.getByTestId("embedded-entity-view");
+    await expect(embeddedView).toBeVisible();
+    await expect(embeddedView.getByText("Test content")).toBeVisible();
 
     // 4. Close Zen Mode
-    await dialog.getByLabel("Close").click();
-    await expect(dialog).not.toBeVisible();
+    await embeddedView.getByLabel("Close").click();
+    await expect(embeddedView).not.toBeVisible();
     await expect(page.getByTestId("graph-canvas")).toBeVisible();
   });
 });

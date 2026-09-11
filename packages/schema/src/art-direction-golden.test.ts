@@ -112,6 +112,15 @@ const GOLDEN_CASES: Array<{ name: string; input: ComposeImagePromptInput }> = [
     },
   },
   {
+    name: "location / cosmic horror",
+    input: {
+      subject:
+        "weathered coastal observatory above black tidal rock, a survey tripod aimed at a fog-obscured horizon where the sea bends upward",
+      category: "location",
+      theme: "cosmic_horror",
+    },
+  },
+  {
     name: "cover / steampunk",
     input: {
       subject:

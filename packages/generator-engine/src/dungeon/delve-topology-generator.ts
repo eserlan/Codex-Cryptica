@@ -8,6 +8,7 @@ import type {
   PassageType,
   DelveRoomStocking,
 } from "./delve-builder-types";
+import { type Clock, systemClock } from "@codex/runtime";
 
 export interface DelveConceptInput {
   conceptId: string;
@@ -31,7 +32,10 @@ const roomCountRanges = {
 } as const;
 
 export class DelveTopologyGenerator {
-  constructor(private readonly random: () => number = Math.random) {}
+  constructor(
+    private readonly random: () => number = Math.random,
+    private readonly clock: Clock = systemClock,
+  ) {}
 
   public generateFromConcept(input: DelveConceptInput): DelveCanvasDocument {
     const size =
@@ -297,7 +301,7 @@ export class DelveTopologyGenerator {
       });
     }
 
-    const now = Date.now();
+    const now = this.clock.now();
 
     return {
       id: `delve-canvas-${input.conceptId}`,

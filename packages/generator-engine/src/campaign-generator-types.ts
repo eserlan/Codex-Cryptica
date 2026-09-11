@@ -5,28 +5,73 @@
  * app builds the bounded {@link GeneratorVaultContext} and injects vault
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
+import type { LanguageProfileV1 } from "schema";
+import type { StarSystemBody } from "./public-star-system";
+import type {
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "./public-constellation";
 
 export type GeneratorId =
   | "npc"
   | "faction"
+  | "faction-roster"
   | "settlement"
   | "magic-item"
+  | "minor-magic-item"
+  | "artifact"
   | "event"
   | "ship"
   | "language"
   | "news-sheet"
-  | "dungeon";
+  | "dungeon"
+  | "adventure"
+  | "quest"
+  | "rumour"
+  | "puzzle"
+  | "plot-twist"
+  | "villain"
+  | "world"
+  | "council-vote"
+  | "secret-society"
+  | "star-system"
+  | "constellation"
+  | "alien-race"
+  | "creature"
+  | "random-table"
+  | "encounter"
+  | "heist";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
   "faction",
+  "faction-roster",
   "settlement",
   "magic-item",
+  "minor-magic-item",
+  "artifact",
   "event",
   "ship",
   "language",
   "news-sheet",
   "dungeon",
+  "adventure",
+  "quest",
+  "rumour",
+  "puzzle",
+  "plot-twist",
+  "villain",
+  "world",
+  "council-vote",
+  "secret-society",
+  "star-system",
+  "constellation",
+  "alien-race",
+  "creature",
+  "random-table",
+  "encounter",
+  "heist",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -38,6 +83,11 @@ export interface GeneratorOptionDefinition {
   choices?: Array<{ value: string; label: string }>;
   required?: boolean;
   defaultValue?: unknown;
+  visibleWhen?: {
+    optionId: string;
+    values?: string[];
+    notValues?: string[];
+  };
 }
 
 /**
@@ -68,6 +118,25 @@ export interface GeneratorOutput {
   connections?: SuggestedConnection[];
   /** Generated details that do not map onto a known template heading. */
   unmappedDetails?: string;
+  /** Canonical rules for language generators; markdown fields are derived. */
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  /**
+   * Structured major-body data for the star-system generator, driving its
+   * orbital diagram. Absent for every other generator.
+   */
+  bodies?: StarSystemBody[];
+  /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
+  starType?: string;
+  /**
+   * Structured star-pattern data for the constellation generator, driving a
+   * future star-chart diagram. Absent for every other generator.
+   */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -79,6 +148,13 @@ export interface VaultContextEntityExcerpt {
   contentExcerpt: string;
   loreExcerpt?: string;
   labels?: string[];
+}
+
+/** One explicitly selected saved language, structured or legacy-readable. */
+export interface SelectedLanguageContext extends VaultContextEntityExcerpt {
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  legacy: boolean;
 }
 
 export type IncludedContextCategory =
@@ -116,7 +192,8 @@ export interface GeneratorVaultContext {
   bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
-  languages?: VaultContextEntityExcerpt[];
+  /** Authoritative only after an explicit user selection. */
+  selectedLanguage?: SelectedLanguageContext;
 }
 
 export type LaunchMode = "workspace" | "contextual";
@@ -136,6 +213,8 @@ export interface GeneratorRunRequest {
   launchMode?: LaunchMode;
   sourceEntityId?: string;
   relationshipLabel?: string;
+  /** Explicit primary language choice; absent means no authoritative profile. */
+  primaryLanguageId?: string;
   vaultContext?: GeneratorVaultContext;
   interaction?: GeneratorInteractionRequest;
 }
@@ -157,6 +236,26 @@ export interface GeneratedDraft {
   templateOutline?: string;
   templateApplied: boolean;
   unmappedDetails?: string;
+  /** Canonical language rules carried unchanged through review and save. */
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  primaryLanguageId?: string;
+  primaryLanguageTitle?: string;
+  /** Carried through from {@link GeneratorOutput.bodies} for the star-system generator's orbital diagram. */
+  bodies?: StarSystemBody[];
+  /** Carried through from {@link GeneratorOutput.starType}. */
+  starType?: string;
+  /** Carried through from {@link GeneratorOutput.pattern}. */
+  pattern?: ConstellationPattern;
+  /** Carried through from {@link GeneratorOutput.interpretations}. */
+  interpretations?: ConstellationInterpretation[];
+  /** Carried through from {@link GeneratorOutput.nightSky}. */
+  nightSky?: NightSkyData;
+  /**
+   * Source and direct neighbor entity references supplied from the vault context
+   * that grounded this generation.
+   */
+  contextProvenance?: Array<{ id: string; title: string }>;
 }
 
 /** The user's explicit decision to save a reviewed draft. */
@@ -197,6 +296,40 @@ export interface CampaignGeneratorDefinition {
 }
 
 /**
+ * Provider-neutral streaming event contract (#2423), mirrored by hand from
+ * oracle-proxy's `GenerationEvent` (apps/workers/oracle-proxy/src/llm/types.ts)
+ * and ai-engine's copy (packages/ai-engine/src/client-manager.ts) — no shared
+ * package crosses the Worker/client/generator-engine boundary, so this stays
+ * a structural match kept in sync by hand, same as every other type on this
+ * wire contract (`AIGeneratorCompleteOptions` mirrors oracle-proxy's request
+ * shape the same way). `field` is generator-engine's own addition on top of
+ * the wire contract: a caller-side incremental-JSON-scanner result, not
+ * something the Worker or ai-engine ever produce themselves.
+ */
+export type GenerationEvent =
+  | { type: "started" }
+  | { type: "delta"; text: string }
+  | { type: "field"; key: string; value: unknown }
+  | {
+      type: "complete";
+      text: string;
+      interactionId?: string;
+      usage?: { promptTokens: number; completionTokens: number };
+      /**
+       * True when this result came from replaying the full prompt after the
+       * server-side interaction id expired (see `AIGeneratorCompleteResult`).
+       * Another generator-engine-only addition on top of the wire contract,
+       * same rationale as `field` above — the interaction-degrade branch of
+       * `completeStream` needs to report this so callers (e.g.
+       * `generateDraftStream`) don't have to assume `false`.
+       */
+      replayed?: boolean;
+    }
+  | { type: "error"; error: string }
+  /** A new pass is starting in a multi-pass generator workflow. */
+  | { type: "phase"; label: string };
+
+/**
  * AI generation boundary injected by the web app. The package sends a prompt
  * string and receives a raw JSON string; all AI client details stay in the app.
  */
@@ -206,6 +339,44 @@ export interface AIGeneratorGateway {
     systemInstruction: string,
     options?: AIGeneratorCompleteOptions,
   ): Promise<string | AIGeneratorCompleteResult>;
+  /**
+   * Opens a real multi-turn chat session (#2033/#2034/#2035): each `send()`
+   * on the returned session is a turn on the same underlying conversation, so
+   * a later pass sees an earlier pass's actual output as history rather than
+   * a hand-summarized re-injection of it. Distinct from `complete()`'s
+   * `interaction`/`previousInteractionId` option, which is server-side state
+   * scoped to continuity across separate `generateDraft()` calls (e.g. UI
+   * re-rolls) — this is in-process state for chaining passes within a single
+   * generation, and the two should not be mixed. Optional so existing
+   * `complete()`-only gateway implementations and test doubles keep working;
+   * generators requiring a chat session should treat its absence the same as
+   * `aiGateway` being unset (AI path unavailable, fall back to local tables).
+   */
+  startChat?(systemInstruction: string): Promise<AIGeneratorChatSession>;
+  /**
+   * Streaming counterpart to `complete()` (#2423): re-emits provider text as
+   * it arrives instead of resolving once at the end. Optional — same
+   * fallback contract as `startChat?` above; a caller should treat its
+   * absence as "streaming unavailable, use `complete()`" rather than an
+   * error. Implementations degrade to a single `started`→`complete` pair
+   * (no real `delta`s) for any request they can't actually stream (e.g. an
+   * interaction-backed request in this v1) rather than omitting the method.
+   */
+  completeStream?(
+    prompt: string,
+    systemInstruction: string,
+    options?: AIGeneratorCompleteOptions,
+  ): AsyncGenerator<GenerationEvent>;
+}
+
+export interface AIGeneratorChatSession {
+  /** Sends one turn and returns its text, awaiting the full response. */
+  send(userMessage: string): Promise<string>;
+  /** Streams one chat turn when the backing provider supports it. */
+  sendStream?(
+    userMessage: string,
+    signal?: AbortSignal,
+  ): AsyncGenerator<GenerationEvent>;
 }
 
 export interface GeneratorInteractionRequest {
@@ -221,6 +392,19 @@ export interface GeneratorInteractionRequest {
 
 export interface AIGeneratorCompleteOptions {
   interaction?: GeneratorInteractionRequest;
+  generationConfig?: {
+    temperature?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+    responseMimeType?: string;
+  };
+  /**
+   * Cancels an in-flight `completeStream()` call (#2423) — a user closing
+   * the generator modal or clicking Cancel mid-generation. Only meaningful
+   * for `completeStream`; `complete()` implementations may ignore it, since
+   * a buffered call has no partial UI state worth tearing down early.
+   */
+  signal?: AbortSignal;
 }
 
 export interface AIGeneratorCompleteResult {
@@ -259,4 +443,59 @@ export class UnsupportedGeneratorError extends Error {
     super(`That generator ("${generatorId}") is not available.`);
     this.name = "UnsupportedGeneratorError";
   }
+}
+
+/**
+ * Context provided to the random table generator.
+ */
+export interface RandomTableGenerationContext {
+  /** The theme or topic of the table (e.g. "Docklands Encounters", "Smuggler Rumors") */
+  topic: string;
+  /** Number of entries to generate (2-50, defaults to standard dice sizes like 6, 8, 10, 12, 20) */
+  count?: number;
+  /** Freeform user instructions or campaign notes taking highest priority */
+  campaignContext?: string;
+  /** Names of existing tables and decks available for sub-table reference emission */
+  availableTables?: string[];
+  /** Relevant entities retrieved from the active vault for lore grounding */
+  worldEntities?: Array<{
+    title: string;
+    category?: string;
+    summary?: string;
+  }>;
+  /** The active visual/genre theme for stylistic tone matching */
+  theme?: string;
+}
+
+/**
+ * A generated candidate entry awaiting user review.
+ */
+export interface CandidateTableEntry {
+  /** Unique transient client ID for UI selection & editing tracking */
+  id: string;
+  /** Generated entry text (may contain {table_name} nested references) */
+  text: string;
+  /** Inferred default weight (usually 1) */
+  weight: number;
+  /** Discovered entity names referenced in the text */
+  matchedEntities?: string[];
+  /** Discovered sub-table names referenced in the text */
+  matchedSubTables?: string[];
+  /** Selection status in the review preview (defaults to true) */
+  selected: boolean;
+}
+
+/**
+ * Structured output schema from the AI model.
+ */
+export interface GeneratedTableOutput {
+  /** Suggested table title based on the topic */
+  title: string;
+  /** Suggested short description */
+  description?: string;
+  /** List of generated row texts */
+  entries: Array<{
+    text: string;
+    weight?: number;
+  }>;
 }

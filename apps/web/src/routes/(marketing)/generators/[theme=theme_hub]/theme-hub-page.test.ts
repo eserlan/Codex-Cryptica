@@ -3,6 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
+import type { ThemeSlug } from "./+page";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -54,8 +55,118 @@ describe("Generator Theme Hub Page", () => {
       name: /pirate ship generator/i,
     });
     expect(link).toBeTruthy();
+    expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
+  });
+
+  it("shows the plot twist generator on the shared hub catalogue", () => {
+    render(Page, { props: { data: { theme: "cyberpunk" } } });
+
+    const link = screen.getByRole("link", {
+      name: /plot twist & complication generator/i,
+    });
     expect(link.getAttribute("href")).toBe(
-      "/generators/pirate/ship-generator",
+      "/generators/cyberpunk/plot-twist-generator",
     );
+  });
+
+  it.each([
+    ["sci-fi", "Sci-Fi"],
+    ["cyberpunk", "Cyberpunk"],
+    ["lancer", "Lancer"],
+    ["space-opera-resistance", "Space Opera Resistance"],
+    ["optimistic-exploration-sci-fi", "Optimistic Sci-Fi"],
+  ] satisfies readonly [ThemeSlug, string][])(
+    "shows the World Generator on the %s hub",
+    (theme, _label) => {
+      render(Page, { props: { data: { theme } } });
+
+      const link = screen.getByRole("link", { name: /world generator/i });
+      expect(link.getAttribute("href")).toBe(`/generators/${theme}/world`);
+    },
+  );
+
+  it("renders a cosmic-horror hub without vampire generator content", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "cosmic-horror",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Cosmic Horror RPG Generators",
+    );
+    expect(screen.getByText(/impossible environments/i)).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /vampire clan generator/i }),
+    ).toBeNull();
+  });
+
+  it.each([
+    "cyberpunk",
+    "sci-fi",
+    "post-apocalyptic",
+    "modern",
+    "lancer",
+    "cosmic-horror",
+    "space-opera-resistance",
+    "optimistic-exploration-sci-fi",
+    "space-western",
+  ])("offers the alien race generator on the %s hub", (theme) => {
+    render(Page, { props: { data: { theme: theme as ThemeSlug } } });
+
+    expect(
+      screen.getByRole("link", { name: /alien race generator/i }),
+    ).toBeTruthy();
+  });
+
+  it("renders a space-western hub with ship and frontier outpost generators", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "space-western",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Space Western RPG Generators",
+    );
+    expect(
+      screen.getByRole("link", { name: /frontier outpost generator/i }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: /ship generator/i })).toBeTruthy();
+  });
+
+  it.each(["fantasy", "pirate", "western", "vampire", "steampunk"])(
+    "leaves the alien race generator off the %s hub",
+    (theme) => {
+      render(Page, { props: { data: { theme: theme as ThemeSlug } } });
+
+      expect(
+        screen.queryByRole("link", { name: /alien race generator/i }),
+      ).toBeNull();
+    },
+  );
+
+  it("links to the landing pages belonging to the hub", () => {
+    render(Page, { props: { data: { theme: "vampire" } } });
+
+    const vtm = screen.getByRole("link", {
+      name: /Vampire: The Masquerade/i,
+    });
+    expect(vtm.getAttribute("href")).toBe("/for/vampire-the-masquerade");
+    expect(
+      screen
+        .getByRole("link", { name: /for Gothic Horror/i })
+        .getAttribute("href"),
+    ).toBe("/for/gothic-horror");
+  });
+
+  it("omits the guides section on a hub with no landing pages", () => {
+    render(Page, { props: { data: { theme: "steampunk" } } });
+
+    expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
   });
 });

@@ -1,0 +1,675 @@
+<script lang="ts">
+  import { tick } from "svelte";
+  import {
+    DEFAULT_ITEM_TABLE_COLUMNS,
+    type Entity,
+    type StatSheetField,
+  } from "schema";
+  import type { PresentationRenderContext } from "../types";
+  import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
+  import { vault } from "$lib/stores/vault.svelte";
+
+  const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
+
+  let {
+    field,
+    context,
+  }: {
+    field: StatSheetField;
+    context: PresentationRenderContext;
+  } = $props();
+
+  let tableContainer: HTMLDivElement | undefined = $state();
+
+  const columns = $derived(field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS);
+
+  let rows = $derived<Record<string, any>[]>(field.rows ?? []);
+
+  // Defaults to enabled for back-compat with existing weapon/item tables
+  // (which never set this flag); template authors can opt custom tables out.
+  const linkEnabled = $derived(field.linkVaultItems ?? true);
+
+  let rollStateMap = $state<
+    Record<
+      string,
+      { rolling: boolean; text?: string; success?: boolean; isError?: boolean }
+    >
+  >({});
+  let showItemPicker = $state(false);
+
+  const linkableItems = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace Object.values().filter() with an imperative loop
+    // over allEntities to avoid unnecessary intermediate array allocations
+    const items: Entity[] = [];
+    const entities = vault.allEntities;
+    const len = entities.length;
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
+      if (entity && entity.type) {
+        const type = entity.type.toLowerCase();
+        for (let j = 0; j < linkableItemTypes.length; j++) {
+          if (type.includes(linkableItemTypes[j])) {
+            items.push(entity);
+            break;
+          }
+        }
+      }
+    }
+    return items;
+  });
+
+  function linkedEntity(row: Record<string, any>) {
+    const entityId = row.entityId;
+    return typeof entityId === "string" ? vault.entities[entityId] : undefined;
+  }
+
+  function linkedValue(row: Record<string, any>, columnId: string) {
+    const entity = linkedEntity(row);
+    if (!entity) return undefined;
+    if (columnId === "name") return entity.title;
+    const sourceField = entity.statSheet?.fields?.find(
+      (candidate) => candidate.id === columnId,
+    );
+    return sourceField?.value ?? sourceField?.formula;
+  }
+
+  function updateRows(nextRows: Record<string, any>[]) {
+    context.onUpdateField(field.id, { rows: nextRows });
+  }
+
+  function handleAddRow() {
+    const newRow: Record<string, any> = {};
+    for (const col of columns) {
+      if (col.type === "counter") {
+        const max = col.max ?? 6;
+        const value = Math.max(col.min ?? 0, max);
+        newRow[col.id] = { value, max };
+      } else if (col.type === "number") {
+        newRow[col.id] = 0;
+      } else if (col.type === "dice") {
+        newRow[col.id] = col.formula || "1d6";
+      } else if (col.type === "checkbox") {
+        newRow[col.id] = false;
+      } else {
+        newRow[col.id] = "";
+      }
+    }
+    updateRows([...rows, newRow]);
+  }
+
+  function handleLinkItem(entityId: string) {
+    if (!entityId) return;
+    updateRows([...rows, { entityId }]);
+    showItemPicker = false;
+  }
+
+  function handleMoveRow(index: number, direction: -1 | 1) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= rows.length) return;
+
+    let focusSelector: string | null = null;
+    let selectionStart: number | null = null;
+    let selectionEnd: number | null = null;
+
+    const activeEl = document.activeElement as HTMLElement | null;
+    if (activeEl && tableContainer && tableContainer.contains(activeEl)) {
+      const activeRow =
+        activeEl.closest<HTMLTableRowElement>("tr[data-row-index]");
+      if (activeRow && Number(activeRow.dataset.rowIndex) === index) {
+        if (activeEl.tagName === "TR") {
+          focusSelector = `tr[data-row-index="${targetIndex}"]`;
+        } else if (activeEl.dataset.colId) {
+          const colId = activeEl.dataset.colId;
+          const counterAction = activeEl.dataset.counterAction;
+          const action = activeEl.dataset.action;
+          if (counterAction) {
+            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"][data-counter-action="${counterAction}"]`;
+          } else if (action) {
+            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"][data-action="${action}"]`;
+          } else {
+            focusSelector = `tr[data-row-index="${targetIndex}"] [data-col-id="${colId}"]`;
+          }
+          if (
+            activeEl instanceof HTMLInputElement &&
+            (activeEl.type === "text" ||
+              activeEl.type === "search" ||
+              activeEl.type === "url" ||
+              activeEl.type === "tel" ||
+              activeEl.type === "password" ||
+              activeEl.type === "number")
+          ) {
+            try {
+              selectionStart = activeEl.selectionStart;
+              selectionEnd = activeEl.selectionEnd;
+            } catch {
+              // Ignore for inputs that do not support selection
+            }
+          }
+        } else if (activeEl.dataset.action) {
+          const action = activeEl.dataset.action;
+          focusSelector = `tr[data-row-index="${targetIndex}"] [data-action="${action}"]`;
+        }
+      }
+    }
+
+    const next = [...rows];
+    const [moved] = next.splice(index, 1);
+    next.splice(targetIndex, 0, moved);
+    updateRows(next);
+
+    if (focusSelector) {
+      const selector = focusSelector;
+      const restoreFocus = () => {
+        if (!tableContainer) return;
+        let targetEl = tableContainer.querySelector<HTMLElement>(selector);
+        // If the specific target button is disabled (e.g. Move Up at index 0), fallback to alternate move or row
+        if (targetEl && (targetEl as HTMLButtonElement).disabled) {
+          targetEl =
+            tableContainer.querySelector<HTMLElement>(
+              `tr[data-row-index="${targetIndex}"] [data-action="move-down"]`,
+            ) ??
+            tableContainer.querySelector<HTMLElement>(
+              `tr[data-row-index="${targetIndex}"] [data-action="move-up"]`,
+            ) ??
+            tableContainer.querySelector<HTMLElement>(
+              `tr[data-row-index="${targetIndex}"]`,
+            );
+        }
+        if (targetEl) {
+          targetEl.focus();
+          if (
+            targetEl instanceof HTMLInputElement &&
+            selectionStart !== null &&
+            selectionEnd !== null
+          ) {
+            try {
+              targetEl.setSelectionRange(selectionStart, selectionEnd);
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      };
+
+      void tick().then(() => {
+        restoreFocus();
+        if (typeof requestAnimationFrame !== "undefined") {
+          requestAnimationFrame(restoreFocus);
+        }
+      });
+    }
+  }
+
+  function handleRowKeyDown(e: KeyboardEvent, rIdx: number) {
+    if (context.readOnly) return;
+    if ((e.ctrlKey || e.metaKey || e.altKey) && !e.shiftKey) {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleMoveRow(rIdx, -1);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleMoveRow(rIdx, 1);
+      }
+    }
+  }
+
+  function handleRemoveRow(index: number) {
+    const next = [...rows];
+    next.splice(index, 1);
+    updateRows(next);
+  }
+
+  function handleCellChange(rowIndex: number, colId: string, value: any) {
+    const next = rows.map((r, i) => {
+      if (i !== rowIndex) return r;
+      return { ...r, [colId]: value };
+    });
+    updateRows(next);
+  }
+
+  function handleCounterAdjust(rowIndex: number, colId: string, delta: number) {
+    const col = columns.find((c) => c.id === colId);
+    const min = col?.min ?? 0;
+    const next = rows.map((r, i) => {
+      if (i !== rowIndex) return r;
+      const current = r[colId];
+      const value =
+        current && typeof current === "object"
+          ? Number(current.value)
+          : Number(current);
+      const max =
+        current && typeof current === "object" ? Number(current.max) : NaN;
+      const currentValue = Number.isFinite(value) ? value : 0;
+      const adjustedValue = currentValue + delta;
+      const nextValue = Math.max(
+        min,
+        Number.isFinite(max) ? Math.min(max, adjustedValue) : adjustedValue,
+      );
+      return {
+        ...r,
+        [colId]:
+          current && typeof current === "object"
+            ? { ...current, value: nextValue }
+            : nextValue,
+      };
+    });
+    updateRows(next);
+  }
+
+  async function handleDiceRoll(
+    rowIndex: number,
+    colId: string,
+    formula: string,
+  ) {
+    const key = `${rowIndex}-${colId}`;
+    rollStateMap[key] = { rolling: true };
+
+    try {
+      const res = await rollStatSheetDiceField({
+        id: `${field.id}_${rowIndex}_${colId}`,
+        label: `${rows[rowIndex]?.name || field.label} Damage`,
+        type: "dice",
+        formula,
+      });
+      rollStateMap[key] = {
+        rolling: false,
+        text: res.text,
+        isError: res.isError,
+        success: res.success,
+      };
+    } catch {
+      rollStateMap[key] = {
+        rolling: false,
+        text: "Error",
+        isError: true,
+      };
+    }
+  }
+
+  function getColumnHeaderClass(col: { id: string; type: string }): string {
+    if (col.type === "checkbox") return "w-10 px-1 py-1 text-center";
+    if (col.type === "number")
+      return "w-16 px-1 py-1 text-center whitespace-nowrap";
+    if (col.type === "dice")
+      return "w-24 px-1.5 py-1 text-center whitespace-nowrap";
+    if (col.type === "counter")
+      return "w-24 px-1.5 py-1 text-center whitespace-nowrap";
+    if (["name", "title", "item"].includes(col.id))
+      return "min-w-[7rem] px-2 py-1 text-left";
+    if (
+      ["effects", "traits", "description", "notes", "special"].includes(col.id)
+    )
+      return "min-w-[8rem] px-2 py-1 text-left";
+    return "min-w-[4rem] px-1.5 py-1 text-center whitespace-nowrap";
+  }
+
+  function getColumnCellClass(col: { id: string; type: string }): string {
+    if (col.type === "checkbox")
+      return "w-10 px-1 py-1 text-center align-middle";
+    if (col.type === "number") return "w-16 px-1 py-1 text-center align-middle";
+    if (col.type === "dice") return "w-24 px-1.5 py-1 text-center align-middle";
+    if (col.type === "counter")
+      return "w-24 px-1.5 py-1 text-center align-middle";
+    if (
+      [
+        "name",
+        "title",
+        "item",
+        "effects",
+        "traits",
+        "description",
+        "notes",
+        "special",
+      ].includes(col.id)
+    ) {
+      return "min-w-[7rem] px-2 py-1 text-left align-middle";
+    }
+    return "min-w-[4rem] px-1.5 py-1 text-center align-middle";
+  }
+</script>
+
+<div
+  bind:this={tableContainer}
+  data-testid="item-table-node"
+  class="my-3 overflow-hidden rounded-lg border border-theme-border/60 bg-theme-bg/40 shadow-xs"
+>
+  <div
+    class="flex items-center justify-between border-b border-theme-border/60 bg-theme-surface/30 px-3 py-1.5"
+  >
+    <span
+      class="font-header text-xs font-bold uppercase tracking-wider text-theme-primary"
+    >
+      {field.label}
+    </span>
+    {#if !context.readOnly}
+      <div class="flex items-center gap-1">
+        {#if linkEnabled}
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+            onclick={() => (showItemPicker = !showItemPicker)}
+            data-testid="item-table-link-item"
+          >
+            <span class="icon-[lucide--link] h-3 w-3" aria-hidden="true"></span>
+            Link Vault Item
+          </button>
+        {/if}
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+          onclick={handleAddRow}
+          data-testid="item-table-add-row"
+        >
+          <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>
+          Add Row
+        </button>
+      </div>
+    {/if}
+  </div>
+
+  {#if showItemPicker && linkEnabled && !context.readOnly}
+    <div
+      class="flex items-center gap-2 border-b border-theme-border/60 bg-theme-surface/20 px-3 py-2"
+    >
+      <label
+        class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+        for="item-table-link-select"
+      >
+        Vault item
+      </label>
+      <select
+        id="item-table-link-select"
+        class="min-w-0 flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1 text-xs text-theme-text"
+        onchange={(event) =>
+          handleLinkItem((event.target as HTMLSelectElement).value)}
+        data-testid="item-table-link-select"
+      >
+        <option value="">Choose an item…</option>
+        {#each linkableItems as item (item.id)}
+          <option value={item.id}>{item.title}</option>
+        {/each}
+      </select>
+    </div>
+  {/if}
+
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-full border-collapse text-xs text-theme-text">
+      <thead>
+        <tr class="border-b border-theme-border/60 bg-theme-surface/20">
+          {#each columns as col (col.id)}
+            <th
+              scope="col"
+              class="{getColumnHeaderClass(
+                col,
+              )} font-bold text-theme-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+            >
+              {col.label}
+            </th>
+          {/each}
+          {#if !context.readOnly}
+            <th scope="col" class="w-12 px-1 py-1 text-center">
+              <span class="sr-only">Actions</span>
+            </th>
+          {/if}
+        </tr>
+      </thead>
+      <tbody>
+        {#if rows.length === 0}
+          <tr>
+            <td
+              colspan={columns.length + (context.readOnly ? 0 : 1)}
+              class="px-3 py-3 text-center text-xs italic text-theme-muted"
+            >
+              No rows yet. {#if !context.readOnly}Click "+ Add Row" to add one.{/if}
+            </td>
+          </tr>
+        {:else}
+          {#each rows as row, rIdx (rIdx)}
+            {@const linked = linkedEntity(row)}
+            <tr
+              class="group/row border-b border-theme-border/30 transition-colors hover:bg-theme-surface/30"
+              data-row-index={rIdx}
+              onkeydown={(e) => handleRowKeyDown(e, rIdx)}
+            >
+              {#each columns as col (col.id)}
+                {@const isTextLeft = [
+                  "name",
+                  "title",
+                  "item",
+                  "effects",
+                  "traits",
+                  "description",
+                  "notes",
+                  "special",
+                ].includes(col.id)}
+                <td class={getColumnCellClass(col)}>
+                  {#if col.type === "text"}
+                    {#if context.readOnly}
+                      <span class="font-medium text-theme-text"
+                        >{linkedValue(row, col.id) ?? row[col.id] ?? "—"}</span
+                      >
+                    {:else if linked && linkedValue(row, col.id) !== undefined}
+                      <span class="font-medium text-theme-text"
+                        >{linkedValue(row, col.id)}</span
+                      >
+                    {:else}
+                      <input
+                        type="text"
+                        data-col-id={col.id}
+                        aria-label={`${col.label} for item ${rIdx + 1}`}
+                        class="w-full rounded border border-theme-border/60 bg-theme-bg/80 px-1.5 py-0.5 {isTextLeft
+                          ? 'text-left'
+                          : 'text-center'} text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                        value={row[col.id] ?? ""}
+                        oninput={(e) =>
+                          handleCellChange(
+                            rIdx,
+                            col.id,
+                            (e.target as HTMLInputElement).value,
+                          )}
+                      />
+                    {/if}
+                  {:else if col.type === "number"}
+                    {#if context.readOnly}
+                      <span class="font-mono text-theme-text"
+                        >{linkedValue(row, col.id) ?? row[col.id] ?? "—"}</span
+                      >
+                    {:else if linked && linkedValue(row, col.id) !== undefined}
+                      <span class="font-mono text-theme-text"
+                        >{linkedValue(row, col.id)}</span
+                      >
+                    {:else}
+                      <input
+                        type="number"
+                        data-col-id={col.id}
+                        aria-label={`${col.label} for item ${rIdx + 1}`}
+                        class="w-full max-w-[4rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                        value={row[col.id] ?? 0}
+                        oninput={(e) =>
+                          handleCellChange(
+                            rIdx,
+                            col.id,
+                            Number((e.target as HTMLInputElement).value),
+                          )}
+                      />
+                    {/if}
+                  {:else if col.type === "dice"}
+                    {@const formula = row[col.id] || col.formula || "1d6"}
+                    {@const key = `${rIdx}-${col.id}`}
+                    {@const rollState = rollStateMap[key]}
+                    {#if context.mode === "view"}
+                      <button
+                        type="button"
+                        data-col-id={col.id}
+                        data-action="roll"
+                        aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
+                        class="inline-flex max-w-full items-center justify-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-1.5 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
+                        disabled={rollState?.rolling}
+                        onclick={() => handleDiceRoll(rIdx, col.id, formula)}
+                        title="Click to roll {formula}"
+                      >
+                        <span
+                          class="icon-[lucide--dice-5] h-3 w-3 shrink-0"
+                          aria-hidden="true"
+                        ></span>
+                        <span class="truncate">{formula}</span>
+                        {#if rollState?.text}
+                          <span
+                            class={rollState.isError
+                              ? "ml-0.5 font-bold text-red-400"
+                              : rollState.success === false
+                                ? "ml-0.5 font-bold text-red-400"
+                                : "ml-0.5 font-bold text-green-400"}
+                            >({rollState.text})</span
+                          >
+                        {/if}
+                      </button>
+                    {:else if context.readOnly}
+                      <span class="font-mono text-xs text-theme-muted"
+                        >{formula}</span
+                      >
+                    {:else}
+                      <input
+                        type="text"
+                        data-col-id={col.id}
+                        aria-label={`${col.label} formula for item ${rIdx + 1}`}
+                        class="w-full max-w-[5.5rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                        value={formula}
+                        oninput={(e) =>
+                          handleCellChange(
+                            rIdx,
+                            col.id,
+                            (e.target as HTMLInputElement).value,
+                          )}
+                      />
+                    {/if}
+                  {:else if col.type === "counter"}
+                    {@const val =
+                      typeof row[col.id] === "object"
+                        ? row[col.id]?.value
+                        : (row[col.id] ?? 0)}
+                    {@const max =
+                      typeof row[col.id] === "object"
+                        ? row[col.id]?.max
+                        : undefined}
+                    {#if context.readOnly}
+                      <span class="font-mono text-xs text-theme-text">
+                        {val}{max !== undefined ? ` / ${max}` : ""}
+                      </span>
+                    {:else}
+                      <div
+                        class="inline-flex items-center justify-center gap-0.5"
+                      >
+                        <button
+                          type="button"
+                          data-col-id={col.id}
+                          data-counter-action="dec"
+                          aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
+                          class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
+                          onclick={() =>
+                            handleCounterAdjust(rIdx, col.id, -(col.step ?? 1))}
+                        >
+                          —
+                        </button>
+                        <span class="font-mono text-xs text-theme-text px-0.5">
+                          {val}{max !== undefined ? ` / ${max}` : ""}
+                        </span>
+                        <button
+                          type="button"
+                          data-col-id={col.id}
+                          data-counter-action="inc"
+                          aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
+                          class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
+                          onclick={() =>
+                            handleCounterAdjust(rIdx, col.id, col.step ?? 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    {/if}
+                  {:else if col.type === "checkbox"}
+                    <input
+                      type="checkbox"
+                      data-col-id={col.id}
+                      aria-label={`${col.label} for item ${rIdx + 1}`}
+                      class="h-3.5 w-3.5 rounded border-theme-border text-theme-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                      checked={row[col.id] === true}
+                      disabled={context.readOnly}
+                      onchange={(e) =>
+                        handleCellChange(
+                          rIdx,
+                          col.id,
+                          (e.target as HTMLInputElement).checked,
+                        )}
+                    />
+                  {/if}
+                </td>
+              {/each}
+              {#if !context.readOnly}
+                {@const rowLabel =
+                  row.name ||
+                  (linked ? linked.title : undefined) ||
+                  `item ${rIdx + 1}`}
+                <td
+                  class="w-12 px-1 py-0.5 text-center align-middle whitespace-nowrap"
+                >
+                  <div
+                    class="inline-flex items-center justify-center gap-0.5 opacity-70 group-hover/row:opacity-100 transition-opacity"
+                  >
+                    <div
+                      class="flex flex-col items-center justify-center -space-y-0.5"
+                    >
+                      <button
+                        type="button"
+                        data-action="move-up"
+                        aria-label={`Move ${rowLabel} up`}
+                        class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
+                        disabled={rIdx === 0}
+                        onclick={() => handleMoveRow(rIdx, -1)}
+                        title="Move item up (Ctrl+↑)"
+                      >
+                        <span
+                          class="icon-[lucide--chevron-up] h-3 w-3"
+                          aria-hidden="true"
+                        ></span>
+                      </button>
+                      <button
+                        type="button"
+                        data-action="move-down"
+                        aria-label={`Move ${rowLabel} down`}
+                        class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
+                        disabled={rIdx === rows.length - 1}
+                        onclick={() => handleMoveRow(rIdx, 1)}
+                        title="Move item down (Ctrl+↓)"
+                      >
+                        <span
+                          class="icon-[lucide--chevron-down] h-3 w-3"
+                          aria-hidden="true"
+                        ></span>
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      data-action="remove"
+                      aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
+                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/15 hover:text-red-400 active:scale-95 transition-all"
+                      onclick={() => handleRemoveRow(rIdx)}
+                      title="Remove item"
+                    >
+                      <span
+                        class="icon-[lucide--trash-2] h-3.5 w-3.5"
+                        aria-hidden="true"
+                      ></span>
+                    </button>
+                  </div>
+                </td>
+              {/if}
+            </tr>
+          {/each}
+        {/if}
+      </tbody>
+    </table>
+  </div>
+</div>

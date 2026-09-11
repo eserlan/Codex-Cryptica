@@ -16,6 +16,8 @@ The Lore Oracle supports several interactive commands to help you manage your wo
 - `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
 - `/connect`: The primary tool for building relationships.
 - `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
+- `/table [name]`: Roll one of your own roll tables, with the result inline in the transcript. No AI involved.
+- `/deck [name] [count]`: Draw from one of your own card decks, remembering what has already been drawn. No AI involved.
 
 ## Efficient Linking with /connect
 
@@ -62,3 +64,8 @@ If you are unsure how two entities should be related or how they should be combi
 ## Art Direction
 
 Image generation uses Art Direction from your world before falling back to shipped Category Defaults, Default Art Style from the active theme, and the global Codex Cryptica default. To customize it, add normal notes or entity sections titled `Art Direction`, `Default Art Style`, or `Visual Direction`; no separate settings form is required.
+
+## Related Blog Posts
+
+- [Lore Oracle Capabilities & Commands](/blog/oracle-capabilities) — In-depth guide to slash commands, image generation, and deterministic controls.
+- [Drafts Are Not Canon](/blog/drafts-are-not-canon) — Why generated suggestions remain transient until explicit GM approval.

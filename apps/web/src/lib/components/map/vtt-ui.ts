@@ -1,5 +1,9 @@
 import type { SessionMode } from "../../../types/vtt";
 
+export const VTT_ENTITY_TYPES = ["character", "creature", "item"];
+export const ENTITY_TRANSFER_TYPE = "application/codex-entity";
+export const TILE_TRANSFER_TYPE = "application/x-codex-tile";
+
 export function shouldShowInitiativePanel(
   vttEnabled: boolean,
   mode: SessionMode,

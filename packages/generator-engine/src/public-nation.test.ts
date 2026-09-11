@@ -73,6 +73,12 @@ describe("buildNationPrompt", () => {
   it("keeps the public config data", () => {
     expect(nationConfig.genres).toContain("Cyberpunk");
     expect(nationConfig.polityTypesByGenre.Western).toContain("Territory");
+    expect(nationConfig.polityTypesByGenre["Cosmic Horror"]).toContain(
+      "Restricted Research Territory",
+    );
+    expect(nationConfig.polityTypesByGenre["Space Western"]).toContain(
+      "Frontier System Authority",
+    );
   });
 });
 

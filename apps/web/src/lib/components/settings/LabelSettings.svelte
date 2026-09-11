@@ -53,12 +53,14 @@
                   onkeydown={(e) => e.key === "Enter" && handleRename()}
                 />
                 <button
+                  type="button"
                   onclick={handleRename}
                   class="px-3 py-1 bg-theme-primary text-theme-bg text-[11px] font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
                 </button>
                 <button
+                  type="button"
                   onclick={() => (editingLabel = null)}
                   class="px-3 py-1 border border-theme-border text-theme-muted text-[11px] font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
                 >
@@ -69,6 +71,7 @@
               <div class="flex items-center gap-3">
                 <span
                   class="icon-[lucide--tag] text-theme-secondary w-3.5 h-3.5"
+                  aria-hidden="true"
                 ></span>
                 <span class="text-xs font-bold text-theme-text truncate"
                   >{label}</span
@@ -112,6 +115,7 @@
         >
           <div
             class="icon-[lucide--tag] w-8 h-8 text-theme-muted/20 mx-auto mb-3"
+            aria-hidden="true"
           ></div>
           <p
             class="text-xs text-theme-muted uppercase font-mono tracking-widest"

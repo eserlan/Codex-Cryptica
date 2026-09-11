@@ -10,10 +10,12 @@
   import DetailImage from "./entity-detail/DetailImage.svelte";
   import DetailTabs from "./entity-detail/DetailTabs.svelte";
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
+  import DetailConnectionsTab from "./entity-detail/DetailConnectionsTab.svelte";
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
   import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
+  import DetailStatsTab from "./entity-detail/DetailStatsTab.svelte";
   import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
@@ -375,7 +377,7 @@
       />
     {/if}
 
-    <div class="absolute inset-0 flex flex-col min-h-0">
+    <div class="absolute inset-0 flex flex-col min-h-0 min-w-0">
       <DetailHeader
         entity={activeEntity}
         {isEditing}
@@ -393,7 +395,7 @@
           <div
             in:fade={{ duration: 150, delay: 150 }}
             out:fade={{ duration: 150 }}
-            class="col-start-1 row-start-1 flex flex-col w-full h-full min-h-0"
+            class="col-start-1 row-start-1 flex flex-col w-full min-w-0 min-h-full"
           >
             {#if sessionModeStore.isDemoMode}
               <div
@@ -474,11 +476,19 @@
                     {isEditing}
                     {editType}
                     bind:editContent
-                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
-                    bind:editGuestChatConfig
                   />
+                {/if}
+              </div>
+              <div
+                role="tabpanel"
+                id={panelIds.connections}
+                aria-labelledby={tabIds.connections}
+                hidden={activeTab !== "connections"}
+              >
+                {#if activeTab === "connections"}
+                  <DetailConnectionsTab entity={activeEntity} />
                 {/if}
               </div>
               <div
@@ -516,7 +526,13 @@
                   activeEntity.type !== "character"}
               >
                 {#if activeTab === "chats" && activeEntity.type === "character"}
-                  <DetailChatsTab entity={activeEntity} />
+                  <DetailChatsTab
+                    entity={activeEntity}
+                    {isEditing}
+                    {editContent}
+                    bind:editLore
+                    bind:editGuestChatConfig
+                  />
                 {/if}
               </div>
 
@@ -529,6 +545,17 @@
               >
                 {#if activeTab === "family" && activeEntity.type === "character"}
                   <DetailFamilyTab entity={activeEntity} />
+                {/if}
+              </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.stats}
+                aria-labelledby={tabIds.stats}
+                hidden={activeTab !== "stats"}
+              >
+                {#if activeTab === "stats"}
+                  <DetailStatsTab entity={activeEntity} />
                 {/if}
               </div>
 

@@ -5,9 +5,13 @@
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { hubContext } from "$lib/stores/hub-context.svelte";
+  import { getLandingPagesForHub } from "$lib/content/for/registry";
   import type { ThemeSlug } from "./+page";
 
   const { data } = $props();
+
+  // The /for guides — system, genre or campaign style — that belong to this hub.
+  const landingPages = $derived(getLandingPagesForHub(data.theme));
 
   const origin = "https://codexcryptica.com";
 
@@ -47,11 +51,74 @@
       icon: "icon-[lucide--flag]",
     },
     {
+      slug: "faction-roster",
+      label: "Faction Roster Generator",
+      summary:
+        "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+      icon: "icon-[lucide--users-round]",
+    },
+    {
       slug: "quest",
       label: "Quest Generator",
       summary:
         "Create adventure hooks with goals, complications, rewards, and dramatic twists.",
       icon: "icon-[lucide--scroll]",
+    },
+    {
+      slug: "rumour",
+      label: "Rumour Generator",
+      summary:
+        "Generate a d6 table of six local rumours -- each with a concrete lead and a source -- lighter than a full quest hook.",
+      icon: "icon-[lucide--ear]",
+    },
+    {
+      slug: "encounter",
+      label: "Encounter Generator",
+      summary:
+        "Generate a playable combat, social, exploration, environmental, or mixed encounter with participants, environment, a complication, and outcomes.",
+      icon: "icon-[lucide--swords]",
+    },
+    {
+      slug: "puzzle",
+      label: "Puzzle Generator",
+      summary:
+        "Create flexible encounter puzzles with layered clues, alternate solutions, and fail-forward consequences.",
+      icon: "icon-[lucide--puzzle]",
+    },
+    {
+      slug: "plot-twist-generator",
+      label: "Plot Twist & Complication Generator",
+      summary:
+        "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+      icon: "icon-[lucide--shuffle]",
+    },
+    {
+      slug: "bbeg-generator",
+      label: "BBEG / Campaign Villain Generator",
+      summary:
+        "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
+      icon: "icon-[lucide--skull]",
+    },
+    {
+      slug: "heist",
+      label: "Heist Generator",
+      summary:
+        "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+      icon: "icon-[lucide--key-round]",
+    },
+    {
+      slug: "council-vote",
+      label: "Council Vote Generator",
+      summary:
+        "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+      icon: "icon-[lucide--gavel]",
+    },
+    {
+      slug: "secret-society",
+      label: "Secret Society Generator",
+      summary:
+        "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+      icon: "icon-[lucide--eye]",
     },
     {
       slug: "names",
@@ -73,13 +140,48 @@
         "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
       icon: "icon-[lucide--layers]",
     },
+    {
+      slug: "adventure-generator",
+      label: "Adventure Idea Generator",
+      summary:
+        "Generate campaign-ready adventure concepts with initial situation, primary pressure, key locations, threats, and non-linear outcomes.",
+      icon: "icon-[lucide--map]",
+    },
+    {
+      slug: "minor-magic-item",
+      label: "Minor Magic Item Generator",
+      summary:
+        "Generate small-scale charms, consumable potions, single-use devices, and curiosities with clear limits and quirks.",
+      icon: "icon-[lucide--sparkles]",
+    },
+    {
+      slug: "creature",
+      label: "Creature Generator",
+      summary:
+        "Generate monsters, beasts, alien fauna, and undead with ecology, signs, combat tactics, and adventure hooks.",
+      icon: "icon-[lucide--paw-print]",
+    },
+    {
+      slug: "artifact-generator",
+      label: "Artifact & Relic Generator",
+      summary:
+        "Generate unique, named major artifacts and ancient relics with multi-tier powers, curses, pursuing factions, and destruction conditions.",
+      icon: "icon-[lucide--gem]",
+    },
+    {
+      slug: "constellation",
+      label: "Constellation Generator",
+      summary:
+        "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, and an adventure hook.",
+      icon: "icon-[lucide--stars]",
+    },
   ];
 
   const surpriseMeCard: GeneratorCard = {
     slug: "random",
     label: "Surprise Me",
     summary:
-      "Not sure what to generate? Spin the machine — a random idea tuned to your active theme.",
+      "Not sure what to generate? Spin the machine: a random idea tuned to your active theme.",
     icon: "icon-[lucide--dices]",
   };
 
@@ -95,8 +197,32 @@
     slug: "ship-generator",
     label: "Ship Generator",
     summary:
-      "Generate a campaign-ready vessel — freighter, warship, scout, derelict, or colony ship — with crew, complication, secret, and hooks.",
+      "Generate a campaign-ready vessel: freighter, warship, scout, derelict, or colony ship, with crew, complication, secret, and hooks.",
     icon: "icon-[lucide--rocket]",
+  };
+
+  const worldCard: GeneratorCard = {
+    slug: "world",
+    label: "Sci-Fi World Generator",
+    summary:
+      "Generate a planet, moon, or artificial world shaped by its environment, societies, conflicts, and adventure hooks.",
+    icon: "icon-[lucide--earth]",
+  };
+
+  const starSystemCard: GeneratorCard = {
+    slug: "star-system",
+    label: "Star System Generator",
+    summary:
+      "Generate a coherent star system: star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+    icon: "icon-[lucide--orbit]",
+  };
+
+  const alienRaceCard: GeneratorCard = {
+    slug: "alien-race",
+    label: "Alien Race Generator",
+    summary:
+      "Generate a coherent alien species whose biology, homeworld, culture, and technology all follow from each other.",
+    icon: "icon-[lucide--dna]",
   };
 
   const pirateShipCard: GeneratorCard = {
@@ -120,7 +246,7 @@
     slug: "language-generator",
     label: "Language Generator",
     summary:
-      "Design a fictional language profile — pronunciation, naming rules, example names, and a starter glossary tuned to your genre.",
+      "Design a fictional language profile: pronunciation, naming rules, example names, and a starter glossary tuned to your genre.",
     icon: "icon-[lucide--languages]",
   };
 
@@ -136,7 +262,7 @@
     slug: "social-hub",
     label: "Social Hub Generator",
     summary:
-      "Generate a social venue for your genre — dive bars, cantinas, nightclubs, or underground markets.",
+      "Generate a social venue for your genre: dive bars, cantinas, nightclubs, or underground markets.",
     icon: "icon-[lucide--map-pin]",
   };
 
@@ -154,6 +280,14 @@
     summary:
       "Build cyberpunk nomad convoys with territory routes, clan codes, corporate enemies, and road-ready hooks.",
     icon: "icon-[lucide--truck]",
+  };
+
+  const darkFantasyFactionCard: GeneratorCard = {
+    slug: "dark-fantasy-faction",
+    label: "Dark Fantasy Faction Generator",
+    summary:
+      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+    icon: "icon-[lucide--skull]",
   };
 
   const fantasyOnlyCards: GeneratorCard[] = [
@@ -193,7 +327,7 @@
       localStorageId: "fantasy",
       eyebrow: "Swords, Sorcery & Myth",
       intro:
-        "Build the high-fantasy worlds your players will never forget. From legendary kingdoms and divine pantheons to morally ambiguous guilds and cursed artefacts — every generator is tuned for classic fantasy campaigns.",
+        "Build the high-fantasy worlds your players will never forget. From legendary kingdoms and divine pantheons to morally ambiguous guilds and cursed artefacts, every generator is tuned for classic fantasy campaigns.",
       metaTitle:
         "Fantasy RPG Generators — NPC, Faction, Kingdom & More | Codex Cryptica",
       metaDescription:
@@ -206,10 +340,11 @@
         tavernCard,
         shipCard,
         nationCard,
+        darkFantasyFactionCard,
         ...fantasyOnlyCards,
         newsSheetCard(
           "Broadsheet Generator",
-          "Generate a town-crier broadsheet — headlines, guild notices, market rumours, and classifieds, with GM-only hooks.",
+          "Generate a town-crier broadsheet: headlines, guild notices, market rumours, and classifieds, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -235,7 +370,7 @@
         nationCard,
         newsSheetCard(
           "Broadside Generator",
-          "Generate a shipboard broadside — harbour notices, prize claims, naval reports, and dockside rumours, with GM-only hooks.",
+          "Generate a shipboard broadside: harbour notices, prize claims, naval reports, and dockside rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -246,7 +381,7 @@
       localStorageId: "cyberpunk",
       eyebrow: "Neon, Megacorps & Chrome",
       intro:
-        "Neon-drenched streets, corporate warfare, and augmented outlaws. Generate megacorp factions, street-level fixers, and underground settlements for your cyberpunk campaign — all pre-tuned to the genre.",
+        "Neon-drenched streets, corporate warfare, and augmented outlaws. Generate megacorp factions, street-level fixers, and underground settlements for your cyberpunk campaign, all pre-tuned to the genre.",
       metaTitle:
         "Cyberpunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -257,12 +392,15 @@
           "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
         ),
         nomadClanCard,
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
         newsSheetCard(
           "Screamsheet Generator",
-          "Generate a street screamsheet — corporate spin, gang violence, fixer rumours, and product ads, with GM-only hooks.",
+          "Generate a street screamsheet: corporate spin, gang violence, fixer rumours, and product ads, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -283,12 +421,15 @@
           "Colony Generator",
           "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
         ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
         newsSheetCard(
           "Newsfeed Generator",
-          "Generate a station newsfeed — pirate alerts, megacorp claims, distress notices, and trade rumours, with GM-only hooks.",
+          "Generate a station newsfeed: pirate alerts, megacorp claims, distress notices, and trade rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -313,8 +454,9 @@
         nationCard,
         newsSheetCard(
           "Wasteland Bulletin Generator",
-          "Generate a bunker bulletin — trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
+          "Generate a bunker bulletin: trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -338,8 +480,9 @@
         nationCard,
         newsSheetCard(
           "Tabloid Generator",
-          "Generate a local tabloid — cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
+          "Generate a local tabloid: cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -349,7 +492,7 @@
       localStorageId: "lancer",
       eyebrow: "Mechs, Pilots & the Long Rim",
       intro:
-        "Bleed runs hot and the Long Rim doesn't wait. Build Union operatives, heterodox mech corps, frontier outpost factions, and NHP-adjacent NPCs for your Lancer campaign — every generator is tuned to the cockpit-terminal aesthetic and the weight of post-scarcity warfare.",
+        "Bleed runs hot and the Long Rim doesn't wait. Build Union operatives, heterodox mech corps, frontier outpost factions, and NHP-adjacent NPCs for your Lancer campaign; every generator is tuned to the cockpit-terminal aesthetic and the weight of post-scarcity warfare.",
       metaTitle:
         "Lancer RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -359,12 +502,15 @@
           "Settlement Generator",
           "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
         ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
         newsSheetCard(
           "Comms Digest Generator",
-          "Generate an outpost comms digest — Union bulletins, contractor notices, pilot rumours, and frontier alerts, with GM-only hooks.",
+          "Generate an outpost comms digest: Union bulletins, contractor notices, pilot rumours, and frontier alerts, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -375,7 +521,7 @@
       localStorageId: "steampunk",
       eyebrow: "Brass, Aether & Empire",
       intro:
-        "Gears grind, furnaces roar, and empires expand on the backs of the engine-workers. Build airship consortiums, guild conspiracies, aetheric laboratories, and desperate underclass rebels for your steampunk campaign — every generator is tuned to the smoke and brass of the industrial age.",
+        "Gears grind, furnaces roar, and empires expand on the backs of the engine-workers. Build airship consortiums, guild conspiracies, aetheric laboratories, and desperate underclass rebels for your steampunk campaign; every generator is tuned to the smoke and brass of the industrial age.",
       metaTitle:
         "Steampunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -390,7 +536,7 @@
         nationCard,
         newsSheetCard(
           "Penny Broadsheet Generator",
-          "Generate a penny broadsheet — guild scandals, patent disputes, sky-dock notices, and agitator rumours, with GM-only hooks.",
+          "Generate a penny broadsheet: guild scandals, patent disputes, sky-dock notices, and agitator rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -416,8 +562,33 @@
         nationCard,
         newsSheetCard(
           "Occult Tabloid Generator",
-          "Generate an occult tabloid — supernatural cover-ups, disappearances, ominous notices, and weird classifieds, with GM-only hooks.",
+          "Generate an occult tabloid: supernatural cover-ups, disappearances, ominous notices, and weird classifieds, with GM-only hooks.",
         ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
+    "cosmic-horror": {
+      label: "Cosmic Horror",
+      localStorageId: "cosmic_horror",
+      eyebrow: "The Unknown Beneath & Beyond",
+      intro:
+        "Build investigations shaped by impossible environments, forgotten expeditions, strange archaeology, and discoveries too large to explain away. These generators favour original eldritch mysteries, fragile certainty, and alien scale, not vampire courts or gothic-noir intrigue.",
+      metaTitle:
+        "Cosmic Horror RPG Generators — Investigators, Mysteries & More | Codex Cryptica",
+      metaDescription:
+        "Free cosmic-horror RPG generators for tabletop GMs. Create investigators, secret societies, remote outposts, impossible ruins, and unsettling adventure hooks. No login required.",
+      cards: [
+        ...sharedCards(
+          "Outpost Generator",
+          "Build remote stations, weather-beaten towns, and expedition camps with uneasy locals, evidence, and impossible surroundings.",
+        ),
+        socialHubCard,
+        newsSheetCard(
+          "Field Report Generator",
+          "Generate a field report: missing expeditions, astronomical anomalies, restricted notices, and unsettling leads, with GM-only hooks.",
+        ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -427,7 +598,7 @@
       localStorageId: "western",
       eyebrow: "Six-Guns, Trails & Dust",
       intro:
-        "Dusty borderlands, rowdy saloons, and dangerous outlaws. Generate frontier settlements, bounty quests, gunslinger NPCs, and rail-baron factions for your Western campaign — all pre-tuned to the genre.",
+        "Dusty borderlands, rowdy saloons, and dangerous outlaws. Generate frontier settlements, bounty quests, gunslinger NPCs, and rail-baron factions for your Western campaign, all pre-tuned to the genre.",
       metaTitle:
         "Western RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
@@ -442,7 +613,7 @@
         nationCard,
         newsSheetCard(
           "Frontier Newspaper Generator",
-          "Generate a frontier weekly — telegraph dispatches, outlaw sightings, wanted notices, and saloon rumours, with GM-only hooks.",
+          "Generate a frontier weekly: telegraph dispatches, outlaw sightings, wanted notices, and saloon rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -463,12 +634,15 @@
           "Settlement Generator",
           "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
         ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
         newsSheetCard(
           "Underground Broadcast Generator",
-          "Generate a resistance broadcast — imperial propaganda, smuggler notices, sector alerts, and rebel rumours, with GM-only hooks.",
+          "Generate a resistance broadcast: imperial propaganda, smuggler notices, sector alerts, and rebel rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -489,12 +663,44 @@
           "Settlement Generator",
           "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
         newsSheetCard(
           "Station Newsfeed Generator",
-          "Generate a station promenade daily — survey reports, diplomatic notices, academy news, and dockside rumours, with GM-only hooks.",
+          "Generate a station promenade daily: survey reports, diplomatic notices, academy news, and dockside rumours, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
+    "space-western": {
+      label: "Space Western",
+      localStorageId: "space-western",
+      eyebrow: "Frontier Scoundrels & Asteroid Rigs",
+      intro:
+        "Battered freighters, lawless asteroid boomtowns, mining syndicates, and high-stakes smuggling runs. Generate frontier settlements, scoundrel NPCs, rust-bucket starships, and bounty contracts for your space western campaign, all free and pre-tuned.",
+      metaTitle:
+        "Space Western RPG Generators — NPC, Ship, Faction & More | Codex Cryptica",
+      metaDescription:
+        "Free Space Western and Scoundrel RPG generators for tabletop GMs. Create scoundrel NPCs, smuggling factions, asteroid boomtowns, rust-bucket freighters, and bounty quests. No login required.",
+      cards: [
+        ...sharedCards(
+          "Frontier Outpost Generator",
+          "Build asteroid claims, dusty planetary depots, and hollow-rock cantinas with mining councils, marshals, and corporate enforcers.",
+        ),
+        starSystemCard,
+        alienRaceCard,
+        worldCard,
+        shipCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Rim-World Gazette Generator",
+          "Generate a frontier news bulletin: bounty warrants, mining claim disputes, customs warnings, and cantina rumours, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,
@@ -600,19 +806,59 @@
     `ipt>`}
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{cleanBase}/generators"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        All Generators
-      </a>
+      <div class="flex items-center justify-between gap-4 mb-8">
+        <a
+          href="{cleanBase}/generators"
+          class="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
+        >
+          <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
+          All Generators
+        </a>
+
+        <div
+          class="flex items-center gap-1 rounded-lg border border-theme-border/60 bg-theme-surface/50 p-1 shadow-sm"
+          role="group"
+          aria-label="App Appearance"
+        >
+          <button
+            type="button"
+            title="Switch to Light Mode"
+            aria-label="Light mode"
+            aria-pressed={themeStore.resolvedAppAppearanceId ===
+              "neutral-light"}
+            class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+            'neutral-light'
+              ? 'bg-theme-primary text-theme-bg shadow-sm'
+              : 'text-theme-muted hover:text-theme-text'}"
+            onclick={() => themeStore.setAppAppearance("neutral-light")}
+          >
+            <span class="icon-[lucide--sun] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            <span class="hidden sm:inline">Light</span>
+          </button>
+          <button
+            type="button"
+            title="Switch to Dark Mode"
+            aria-label="Dark mode"
+            aria-pressed={themeStore.resolvedAppAppearanceId === "neutral-dark"}
+            class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+            'neutral-dark'
+              ? 'bg-theme-primary text-theme-bg shadow-sm'
+              : 'text-theme-muted hover:text-theme-text'}"
+            onclick={() => themeStore.setAppAppearance("neutral-dark")}
+          >
+            <span class="icon-[lucide--moon] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            <span class="hidden sm:inline">Dark</span>
+          </button>
+        </div>
+      </div>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -620,7 +866,7 @@
           {config.eyebrow}
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           {config.label} RPG Generators
         </h1>
@@ -631,7 +877,7 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16">
     <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {#each config.cards as card (card.slug)}
         <li>
@@ -648,16 +894,54 @@
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
             ></span>
             <span
-              class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
             >
               {card.label}
             </span>
-            <span class="block text-sm text-theme-muted leading-relaxed">
+            <span class="block text-base text-theme-muted leading-relaxed">
               {card.summary}
             </span>
           </a>
         </li>
       {/each}
     </ul>
+
+    {#if landingPages.length > 0}
+      <section class="mt-14 border-t border-theme-border/60 pt-10">
+        <h2 class="font-header text-xl font-bold mb-2">
+          Campaign guides for these worlds
+        </h2>
+        <p class="text-base text-theme-muted leading-relaxed mb-6">
+          How Codex Cryptica handles the systems, genres and campaign styles
+          these generators are built for.
+        </p>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {#each landingPages as page (page.slug)}
+            <li>
+              <a
+                href="{cleanBase}/for/{page.slug}"
+                class="group flex h-full items-start justify-between gap-4 rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
+              >
+                <span>
+                  <span
+                    class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                  >
+                    {page.hero.title}
+                  </span>
+                  <span
+                    class="block text-base text-theme-muted leading-relaxed"
+                  >
+                    {page.hero.tagline}
+                  </span>
+                </span>
+                <span
+                  class="icon-[lucide--arrow-right] h-4 w-4 shrink-0 mt-0.5 text-theme-primary transition-transform group-hover:translate-x-1"
+                ></span>
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
   </div>
-</main>
+</div>

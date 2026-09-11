@@ -6,6 +6,7 @@
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
+  import SilhouetteAvatar from "$lib/components/ui/SilhouetteAvatar.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { isEntityVisible, composeImagePrompt, type Entity } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -359,20 +360,40 @@
         aria-hidden="true"
         tabindex="-1"
       />
-      <button
-        type="button"
-        onclick={() => fileInput?.click()}
-        class="mb-2 w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
-        aria-describedby={imageUploadError
-          ? "zen-image-upload-error"
-          : undefined}
-      >
-        <span
-          class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
-          aria-hidden="true"
-        ></span>
-        {entity?.image ? "Replace image" : "Choose image"}
-      </button>
+      <div class="mb-2 flex items-center gap-2">
+        <button
+          type="button"
+          onclick={() => fileInput?.click()}
+          class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          aria-describedby={imageUploadError
+            ? "zen-image-upload-error"
+            : undefined}
+        >
+          <span
+            class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+            aria-hidden="true"
+          ></span>
+          {entity?.image ? "Replace image" : "Choose image"}
+        </button>
+
+        <!-- Zen is the whole entity view on a phone, so the silhouette picker
+             has to be reachable here too, not only in the desktop detail
+             panel's image block. -->
+        <button
+          type="button"
+          onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
+          disabled={!entity}
+          class="flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Customize vector silhouette"
+          data-testid="zen-silhouette-button"
+        >
+          <span
+            class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
+            aria-hidden="true"
+          ></span>
+          Silhouette
+        </button>
+      </div>
       {#if imageUploadError}
         <p
           id="zen-image-upload-error"
@@ -466,15 +487,32 @@
         <div
           class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
         >
-          <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
+          <!-- The entity's silhouette is what the graph will paint for it, so
+               the placeholder shows that rather than an empty frame — and
+               doubles as the way into the picker. -->
+          <button
+            type="button"
+            onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
+            disabled={!entity || vault.isGuest}
+            class="flex flex-col items-center justify-center gap-1 md:gap-2 transition-transform hover:scale-102 disabled:cursor-default disabled:hover:scale-100 group/sil"
+            title="Click to change silhouette"
+            data-testid="zen-silhouette-placeholder"
+          >
+            <SilhouetteAvatar
+              entity={entity ?? undefined}
+              size="3xl"
+              class="border-theme-border/60 shadow-lg group-hover/sil:border-theme-primary transition-colors"
+            />
             <span
-              class="icon-[lucide--image] w-6 h-6 md:w-12 md:h-12 opacity-30 md:opacity-50"
-            ></span>
-            <span
-              class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
-              >No Image</span
+              class="text-[9px] font-mono uppercase tracking-wider opacity-60 group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
             >
-          </div>
+              <span
+                class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
+                aria-hidden="true"
+              ></span>
+              {entity?.silhouette ? "Custom silhouette" : "No image"}
+            </span>
+          </button>
 
           {#if isVisualizing || revisionService.isRevising}
             <div
@@ -678,12 +716,20 @@
                     class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
                     <span
+                      aria-hidden="true"
                       class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
                         ? 'bg-emerald-500'
                         : conn.isOutbound
                           ? 'bg-theme-primary'
                           : 'bg-blue-500'}"
                     ></span>
+                    <span class="sr-only"
+                      >{conn.isChild
+                        ? "Child of this entity:"
+                        : conn.isOutbound
+                          ? "Outgoing connection:"
+                          : "Incoming connection:"}</span
+                    >
                     <div class="flex-1 min-w-0">
                       <div
                         class="text-xs text-theme-muted uppercase tracking-widest font-header"
@@ -705,7 +751,7 @@
                           type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Edit connection"
+                          aria-label="Edit connection to {conn.title}"
                           title="Edit connection"
                         >
                           <span
@@ -723,7 +769,7 @@
                             isAddingConnection = true;
                           }}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Establish custom connection"
+                          aria-label="Establish custom connection to {conn.title}"
                           title="Establish custom connection"
                         >
                           <span
@@ -754,7 +800,7 @@
                           }
                         }}
                         class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                        aria-label="Delete connection"
+                        aria-label="Delete connection to {conn.title}"
                         title="Delete connection"
                       >
                         <span

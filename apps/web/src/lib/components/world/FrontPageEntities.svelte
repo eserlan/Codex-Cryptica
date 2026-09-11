@@ -137,7 +137,7 @@
         <button
           type="button"
           class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
-          onclick={() => modalUIStore.requestCreateEntity()}
+          onclick={() => modalUIStore.openIntentCreateMenu()}
           data-testid="entities-create-button"
         >
           <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>

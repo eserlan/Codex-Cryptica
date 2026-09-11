@@ -33,6 +33,14 @@ export const UI_STORAGE_KEYS = {
   VTT_SIDEBAR_COLLAPSED: "codex_vtt_sidebar_collapsed",
   WORLD_PAGE_DISMISSED_AT: "codex_world_page_dismissed_at",
   MOBILE_GRAPH_COACH_MARKS_SEEN: "codex_mobile_graph_coach_marks_seen",
+  PRESENTATION_COLLAPSED_SECTIONS: "codex_presentation_collapsed_sections",
+  GUIDED_MODE_ACTIVE: "codex_guided_mode_active",
+  GUIDED_MODE_DISMISSED_RECOMMENDATIONS:
+    "codex_guided_mode_dismissed_recommendations",
+  AUTO_FULLSCREEN: "codex_auto_fullscreen",
+  TILE_DECK_CATALOG_COLLAPSED: "codex_tile_deck_catalog_collapsed",
+  TILE_DECK_GRID_EXPANDED: "codex_tile_deck_grid_expanded",
+  VTT_SIDEBAR_WIDTH: "codex_vtt_sidebar_width",
 } as const;
 
 export type UIStorageKey =

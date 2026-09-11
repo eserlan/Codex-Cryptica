@@ -209,6 +209,24 @@ describe("dungeon genre coverage", () => {
     }
   });
 
+  it("uses no faction obstacle that introduces an unestablished mystery entity", () => {
+    // "something far older that watches" or "a debt owed to a power outside
+    // these walls" hand the AI a ready-made supernatural threat as an
+    // "obstacle seed" — the model then keeps it (paraphrased), producing a
+    // faction obstacle that references a watcher/curse/power nothing else in
+    // the dungeon ever establishes. Obstacles must stay grounded: a shortage,
+    // an injury, a rival, a deadline, a debt to a named, mundane party.
+    const UNGROUNDED_MYSTERY =
+      /\bsomething (far older|beneath|lurking|unseen)\b|\ba power (outside|beyond)\b|\ba (curse|guardian|watcher|entity|presence) (that|which)?\s*(watches|stirs|lurks|waits)\b|\ba (vow|bargain) made to a thing\b/i;
+    for (const [label, tables] of Object.entries(DUNGEON_GENRE_TABLES)) {
+      for (const obstacle of tables.factionObstacles) {
+        expect(obstacle, `${label}: "${obstacle}"`).not.toMatch(
+          UNGROUNDED_MYSTERY,
+        );
+      }
+    }
+  });
+
   it("only overrides purposes the genre actually offers", () => {
     for (const [label, tables] of Object.entries(DUNGEON_GENRE_TABLES)) {
       for (const purpose of Object.keys(tables.originalUsesByPurpose ?? {})) {

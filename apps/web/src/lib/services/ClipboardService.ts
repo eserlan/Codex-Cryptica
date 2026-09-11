@@ -1,189 +1,195 @@
 import { marked as defaultMarked } from "marked";
 import defaultDOMPurify from "dompurify";
 import type { Entity } from "schema";
-import { browser } from "$app/environment";
+
+const ALLOWED_URI_REGEXP =
+  /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i;
+
+export interface SmartCopyContent {
+  markdown: string;
+  html?: string;
+  imageBlob?: Blob;
+}
+
+type ClipboardLike = Partial<Pick<Clipboard, "write" | "writeText">>;
+type ClipboardItemFactory = (data: Record<string, Blob>) => ClipboardItem;
+type DomPurifyLike = {
+  sanitize: (html: string, config?: Record<string, unknown>) => string;
+};
 
 export interface ClipboardDependencies {
-  clipboard?: Clipboard;
+  clipboard?: ClipboardLike;
+  createClipboardItem?: ClipboardItemFactory;
   fetch?: typeof fetch;
   document?: Document;
   marked?: typeof defaultMarked;
-  domPurify?: typeof defaultDOMPurify;
+  domPurify?: DomPurifyLike | typeof defaultDOMPurify;
+}
+
+function getDefaultClipboardItemFactory(): ClipboardItemFactory | undefined {
+  if (typeof ClipboardItem === "undefined") return undefined;
+  return (data) => new ClipboardItem(data);
 }
 
 export class ClipboardService {
-  private clipboard: Clipboard;
-  private fetch: typeof fetch;
-  private document: Document;
-  private marked: typeof defaultMarked;
-  private domPurify: typeof defaultDOMPurify;
+  private readonly clipboard: ClipboardLike;
+  private readonly createClipboardItem?: ClipboardItemFactory;
+  private readonly fetch: typeof fetch;
+  private readonly document: Document;
+  private readonly marked: typeof defaultMarked;
+  private readonly domPurify: DomPurifyLike;
 
   constructor(deps: ClipboardDependencies = {}) {
     this.clipboard =
       deps.clipboard ??
-      (typeof navigator !== "undefined"
-        ? navigator.clipboard
-        : ({} as Clipboard));
+      (typeof navigator !== "undefined" ? navigator.clipboard : {});
+    this.createClipboardItem =
+      deps.createClipboardItem ?? getDefaultClipboardItemFactory();
     this.fetch =
       deps.fetch ??
-      (typeof fetch !== "undefined" ? fetch.bind(window) : ({} as any));
+      (typeof globalThis.fetch === "function"
+        ? globalThis.fetch.bind(globalThis)
+        : ({} as typeof fetch));
     this.document =
       deps.document ??
       (typeof document !== "undefined" ? document : ({} as Document));
     this.marked = deps.marked ?? defaultMarked;
-    this.domPurify = deps.domPurify ?? defaultDOMPurify;
+    this.domPurify = this.resolveDomPurify(deps.domPurify ?? defaultDOMPurify);
+  }
+
+  async copyContent(content: SmartCopyContent): Promise<boolean> {
+    try {
+      if (
+        !this.createClipboardItem ||
+        typeof this.clipboard.write !== "function"
+      ) {
+        throw new Error("Rich clipboard writing is unavailable");
+      }
+
+      const rawHtml =
+        content.html ?? String(await this.marked.parse(content.markdown));
+      const html = this.sanitise(rawHtml);
+      const clipboardData: Record<string, Blob> = {
+        "text/html": new Blob([html], { type: "text/html" }),
+        "text/plain": new Blob([content.markdown], { type: "text/plain" }),
+      };
+
+      if (content.imageBlob) clipboardData["image/png"] = content.imageBlob;
+
+      await this.clipboard.write([this.createClipboardItem(clipboardData)]);
+      return true;
+    } catch (error) {
+      console.error("[ClipboardService] Failed to copy rich content", error);
+      return this.writePlainText(content.markdown);
+    }
   }
 
   async copyEntity(
     entity: Entity,
     resolvedImageUrl?: string,
   ): Promise<boolean> {
-    try {
-      const title = entity.title || "Untitled";
-      // Simple escape for HTML attributes and content
-      const escapedTitle = title
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    const title = entity.title || "Untitled";
+    const chronicle = entity.content || "";
+    const lore = entity.lore || "";
+    const markdown = [
+      title,
+      "",
+      "CHRONICLE:",
+      chronicle,
+      "",
+      ...(lore ? ["DEEP LORE:", lore] : []),
+    ].join("\n");
 
-      // Render Markdown
-      const rawChronicle = await this.marked.parse(entity.content || "");
-      const chronicleHtml = browser
-        ? this.domPurify.sanitize(rawChronicle, {
-            ALLOWED_URI_REGEXP:
-              /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-          })
-        : rawChronicle;
+    let imageHtml = "";
+    let imageBlob: Blob | undefined;
 
-      let rawLore = "";
-      if (entity.lore) {
-        rawLore = await this.marked.parse(entity.lore);
-      }
-      const loreHtml = entity.lore
-        ? browser
-          ? this.domPurify.sanitize(rawLore, {
-              ALLOWED_URI_REGEXP:
-                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-            })
-          : rawLore
-        : "";
-
-      let imageHtml = "";
-      let imageBlob: Blob | null = null;
-
-      if (resolvedImageUrl) {
-        try {
-          const response = await this.fetch(resolvedImageUrl);
-          const originalBlob = await response.blob();
-
-          const img = new Image();
-          img.src = URL.createObjectURL(originalBlob);
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-          });
-
-          const canvas = this.document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0);
-
-          // Get PNG as Blob for direct clipboard inclusion
-          imageBlob = await new Promise<Blob | null>((resolve) =>
-            canvas.toBlob(resolve, "image/png"),
-          );
-
-          // Use a placeholder src in HTML; browsers/Doc editors will resolve it
-          // from the image/png blob in the same ClipboardItem
-          imageHtml = `<img src="entity-image.png" alt="${escapedTitle}" style="max-width: 100%;" /><br/>`;
-
-          URL.revokeObjectURL(img.src);
-        } catch (e) {
-          console.warn(
-            "[ClipboardService] Could not process image for copy",
-            e,
-          );
-        }
-      }
-
-      // Construct HTML Document
-      const html = `
-                <html>
-                <body>
-                    <h1 style="font-family: serif;">${escapedTitle}</h1>
-                    ${imageHtml}
-                    <h2 style="font-family: serif; color: #166534;">Chronicle</h2>
-                    <div style="font-family: sans-serif; line-height: 1.6;">${chronicleHtml}</div>
-                    ${
-                      loreHtml
-                        ? `<h2 style="font-family: serif; color: #92400e;">Deep Lore</h2>
-                               <div style="font-family: sans-serif; line-height: 1.6; font-style: italic;">${loreHtml}</div>`
-                        : ""
-                    }
-                </body>
-                </html>
-            `;
-
-      // Construct Plain Text
-      let text = `${title}\n\n`;
-      text += `CHRONICLE:\n${entity?.content || ""}\n\n`;
-      if (entity?.lore) {
-        text += `DEEP LORE:\n${entity.lore}\n`;
-      }
-
-      const clipboardData: Record<string, Blob> = {
-        "text/html": new Blob([html], { type: "text/html" }),
-        "text/plain": new Blob([text], { type: "text/plain" }),
-      };
-
-      if (imageBlob) {
-        clipboardData["image/png"] = imageBlob;
-      }
-
-      const data = [new ClipboardItem(clipboardData)];
-
-      await this.clipboard.write(data);
-      return true;
-    } catch (err) {
-      console.error("[ClipboardService] Failed to copy", err);
-      // Fallback to plain text
+    if (resolvedImageUrl) {
       try {
-        await this.clipboard.writeText(
-          `${entity?.title || ""}\n\n${entity?.content || ""}`,
+        const response = await this.fetch(resolvedImageUrl);
+        const originalBlob = await response.blob();
+        const img = new Image();
+        img.src = URL.createObjectURL(originalBlob);
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Image could not be loaded"));
+        });
+
+        const canvas = this.document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d")?.drawImage(img, 0, 0);
+        imageBlob =
+          (await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, "image/png"),
+          )) ?? undefined;
+        imageHtml = `<img src="entity-image.png" alt="${this.escapeHtml(title)}" /><br/>`;
+        URL.revokeObjectURL(img.src);
+      } catch (error) {
+        console.warn(
+          "[ClipboardService] Could not process image for copy",
+          error,
         );
-        return true;
-      } catch (innerErr) {
-        console.error("[ClipboardService] Total copy failure", innerErr);
-        return false;
       }
+    }
+
+    const chronicleHtml = String(await this.marked.parse(chronicle));
+    const loreHtml = lore ? String(await this.marked.parse(lore)) : "";
+    const html = [
+      "<html><body>",
+      `<h1>${this.escapeHtml(title)}</h1>`,
+      imageHtml,
+      "<h2>Chronicle</h2>",
+      chronicleHtml,
+      loreHtml ? "<h2>Deep Lore</h2>" : "",
+      loreHtml,
+      "</body></html>",
+    ].join("");
+
+    return this.copyContent({ markdown, html, imageBlob });
+  }
+
+  copyHtmlAndText(html: string, text: string): Promise<boolean> {
+    return this.copyContent({ html, markdown: text });
+  }
+
+  private sanitise(html: string): string {
+    return this.domPurify.sanitize(html, {
+      ALLOWED_URI_REGEXP,
+    });
+  }
+
+  private resolveDomPurify(
+    candidate: DomPurifyLike | typeof defaultDOMPurify,
+  ): DomPurifyLike {
+    if (typeof candidate === "object" && candidate !== null) {
+      return candidate as DomPurifyLike;
+    }
+
+    const ownerDocument = this.document.defaultView;
+    if (!ownerDocument) {
+      return { sanitize: (html: string) => html };
+    }
+    return candidate(ownerDocument as Parameters<typeof candidate>[0]);
+  }
+
+  private async writePlainText(text: string): Promise<boolean> {
+    if (typeof this.clipboard.writeText !== "function") return false;
+    try {
+      await this.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      console.error("[ClipboardService] Total copy failure", error);
+      return false;
     }
   }
 
-  async copyHtmlAndText(html: string, text: string): Promise<boolean> {
-    try {
-      const data = [
-        new ClipboardItem({
-          "text/html": new Blob([html], { type: "text/html" }),
-          "text/plain": new Blob([text], { type: "text/plain" }),
-        }),
-      ];
-
-      await this.clipboard.write(data);
-      return true;
-    } catch (err) {
-      console.error("[ClipboardService] Failed to copy rich text", err);
-
-      try {
-        await this.clipboard.writeText(text);
-        return true;
-      } catch (innerErr) {
-        console.error("[ClipboardService] Total copy failure", innerErr);
-        return false;
-      }
-    }
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 }
 

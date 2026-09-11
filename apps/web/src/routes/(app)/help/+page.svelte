@@ -16,7 +16,8 @@
   onMount(() => {
     selectArticleFromHash();
     window.addEventListener("hashchange", selectArticleFromHash);
-    return () => window.removeEventListener("hashchange", selectArticleFromHash);
+    return () =>
+      window.removeEventListener("hashchange", selectArticleFromHash);
   });
 </script>
 

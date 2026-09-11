@@ -12,6 +12,7 @@ import {
 import { aiClientManager } from "@codex/ai-engine";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { z } from "zod";
 
 const EnhancedAreaSchema = z.object({
@@ -158,6 +159,7 @@ export class DelveAreaEnhancementService {
     private readonly aiClient: AreaEnhancementAIClient = aiClientManager,
     private readonly settings: AreaEnhancementSettings = oracle,
     private readonly stockingService = new DelveStockingService(),
+    private readonly clock: Clock = systemClock,
   ) {}
 
   async enhanceArea({
@@ -187,7 +189,7 @@ export class DelveAreaEnhancementService {
         return this.runModel(systemInstruction, userPrompt, 1200);
       },
     });
-    return { ...enhanced, aiEnhancedAt: Date.now() };
+    return { ...enhanced, aiEnhancedAt: this.clock.now() };
   }
 
   async populateAllAreas(
@@ -376,7 +378,7 @@ For every Area, invent a distinctive location-relevant name and write a vivid 2-
         .filter((room) => room.sectorId !== sectorId)
         .map((room) => room.name.trim().toLowerCase()),
     );
-    const now = Date.now();
+    const now = this.clock.now();
     const enhancedRooms = parsed.areas
       .filter((area) => requestedIds.has(area.id))
       .map((area) => {
@@ -459,14 +461,19 @@ For every Area, invent a distinctive location-relevant name and write a vivid 2-
 
   private async loadLocationCanon(canvas: Canvas): Promise<string> {
     const sourceEntityId = canvas.metadata?.sourceEntityId;
-    if (typeof sourceEntityId !== "string" || !sourceEntityId) {
-      throw new Error("This canvas is not linked to a source Location.");
+    let location: Entity | undefined;
+
+    if (typeof sourceEntityId === "string" && sourceEntityId) {
+      try {
+        await this.vaultGateway.loadEntityContent(sourceEntityId);
+        location = this.vaultGateway.entities[sourceEntityId];
+      } catch {
+        // Ignore load error and fall back to title/sector canon
+      }
     }
 
-    await this.vaultGateway.loadEntityContent(sourceEntityId);
-    const location = this.vaultGateway.entities[sourceEntityId];
     if (!location) {
-      throw new Error("The source Location could not be found.");
+      return this.buildFallbackCanon(canvas);
     }
 
     const locationCanon = [
@@ -484,7 +491,7 @@ For every Area, invent a distinctive location-relevant name and write a vivid 2-
       const label = connection.label ? ` (${connection.label})` : "";
       related.set(connection.target, `Relation: ${connection.type}${label}`);
     }
-    for (const entity of Object.values(this.vaultGateway.entities)) {
+    for (const entity of Object.values(this.vaultGateway.entities ?? {})) {
       if (entity.id === sourceEntityId || related.has(entity.id)) continue;
       const inbound = entity.connections?.find(
         (connection) => connection.target === sourceEntityId,
@@ -496,7 +503,7 @@ For every Area, invent a distinctive location-relevant name and write a vivid 2-
     }
 
     const relatedEntries = [...related.entries()].slice(0, 8);
-    await Promise.all(
+    await Promise.allSettled(
       relatedEntries.map(([entityId]) =>
         this.vaultGateway.loadEntityContent(entityId),
       ),
@@ -523,6 +530,26 @@ For every Area, invent a distinctive location-relevant name and write a vivid 2-
     return relatedCanon
       ? `${locationCanon}\n\nCONNECTED CANON\n${relatedCanon}`
       : locationCanon;
+  }
+
+  private buildFallbackCanon(canvas: Canvas): string {
+    const title =
+      (canvas.metadata?.title as string | undefined) ?? "Dungeon Delve";
+    const sectors = Array.from(
+      new Set(
+        canvas.nodes
+          .filter((n) => n.type === "delveRoom")
+          .map((n) => (n.data as unknown as DelveRoomNodeData).sectorName)
+          .filter(Boolean),
+      ),
+    );
+    return [
+      `Title: ${title}`,
+      sectors.length ? `Sectors: ${sectors.join(", ")}` : "",
+      "Atmosphere: Ancient subterranean structure.",
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   private async runModel(

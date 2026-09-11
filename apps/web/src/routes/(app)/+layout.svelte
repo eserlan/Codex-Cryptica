@@ -4,6 +4,8 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
+  import { shelf } from "$lib/features/shelf";
+  import { ensureRandomSourcesLoaded } from "$lib/features/random";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -16,6 +18,7 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
+  import { initAiSessionEager } from "$lib/services/ai/session-bootstrap";
   import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
   import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
@@ -44,7 +47,10 @@
     initializeGlobalListeners,
     setupWindowGlobals,
     registerServiceWorker,
+    type VaultServiceWorkerSession,
   } from "$lib/app/init/app-init";
+  import { isVaultAppPath } from "$lib/service-worker/lifecycle";
+  import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
   import {
     decideFirstRunAction,
@@ -53,6 +59,7 @@
   import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -81,13 +88,28 @@
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
   let isDocumentVisible = $state(true);
+  let serviceWorkerSession: VaultServiceWorkerSession | undefined;
+
+  const isVaultCacheSessionActive = () => {
+    const pathname =
+      base && page.url.pathname.startsWith(base)
+        ? page.url.pathname.slice(base.length) || "/"
+        : page.url.pathname;
+    return (
+      !!vault.activeVaultId &&
+      !sessionModeStore.isGuestMode &&
+      !sessionModeStore.isDemoMode &&
+      isVaultAppPath(pathname)
+    );
+  };
 
   // Derived
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
       page.url.pathname === `${base}/help` ||
       page.url.pathname.startsWith(`${base}/help/`) ||
-      page.url.pathname === `${base}/import`,
+      page.url.pathname === `${base}/import` ||
+      page.url.pathname === `${base}/dice`,
   );
   const anyModalOpen = $derived(
     modalUIStore.isAnyModalOpen ||
@@ -128,6 +150,8 @@
   }
 
   onDestroy(() => {
+    serviceWorkerSession?.destroy();
+    serviceWorkerSession = undefined;
     crossTabBroadcaster?.destroy();
     crossTabBroadcaster = null;
     vaultThemePromptStore.stopTracking();
@@ -138,6 +162,68 @@
     if (browser && !globalListenersCleanup) {
       globalListenersCleanup = initializeGlobalListeners();
     }
+  });
+
+  $effect(() => {
+    serviceWorkerSession?.setVaultSessionActive(isVaultCacheSessionActive());
+  });
+
+  onMount(() => {
+    if (!browser) return;
+    if (!layoutUIStore.autoFullscreen) return;
+    return initFullscreenOnFirstInteraction();
+  });
+
+  // Pre-solve the LLM capability token, so the first generation isn't waiting
+  // on a Turnstile handshake. Only the eager warm is scoped here — the wiring
+  // itself happens in the root layout, because the public generators under
+  // (marketing) share the same client singleton and generate without ever
+  // mounting this layout.
+  onMount(() => {
+    initAiSessionEager();
+  });
+
+  // The Shelf is shared by every vault in this browser, so it starts listening
+  // once here rather than per-vault. Any import that never finished — a crashed
+  // tab, a browser closed mid-write — is rolled back before the Shelf becomes
+  // usable, so a half-written import cannot be mistaken for real content
+  // (156-entity-shelf, FR-020).
+  onMount(() => {
+    if (!browser) return;
+    shelf.start();
+    void shelf.recoverCrashedImports().then(() => shelf.refresh());
+    return () => shelf.stop();
+  });
+
+  // `100dvh` (app.css's --app-viewport-height fallback) is supposed to track
+  // the real visible viewport as mobile browser chrome (address bar, toolbar)
+  // shows/hides, but its live-recalculation is inconsistently timed across
+  // Android browsers — it can report a taller height than what's actually
+  // visible right after the chrome expands, leaving a blank gap below the
+  // app between it and the browser UI. VisualViewport is older, more
+  // consistently supported, and reports the actual visible height directly,
+  // so once mounted we override the CSS unit with a measured pixel value.
+  onMount(() => {
+    if (!browser || !window.visualViewport) return;
+
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+
+    let lastHeight: number | null = null;
+    const setViewportHeight = () => {
+      if (lastHeight === vv.height) return;
+      lastHeight = vv.height;
+      root.style.setProperty("--app-viewport-height", `${vv.height}px`);
+    };
+
+    setViewportHeight();
+    vv.addEventListener("resize", setViewportHeight);
+    vv.addEventListener("scroll", setViewportHeight);
+
+    return () => {
+      vv.removeEventListener("resize", setViewportHeight);
+      vv.removeEventListener("scroll", setViewportHeight);
+    };
   });
 
   $effect(() => {
@@ -162,6 +248,13 @@
           console.error("Failed to lazy-load VTTSharedImageLightbox", err);
         });
     }
+  });
+
+  // Tables and decks are needed wherever /table and /deck can be typed, which
+  // is anywhere the Oracle is — not only on their own routes (#2247, FR-039).
+  $effect(() => {
+    void vault.activeVaultId;
+    void ensureRandomSourcesLoaded();
   });
 
   // Initialization Logic
@@ -224,7 +317,8 @@
       preloadCode(`${base}/canvas`).catch(() => {});
       preloadCode(`${base}/map`).catch(() => {});
 
-      registerServiceWorker();
+      serviceWorkerSession = registerServiceWorker();
+      serviceWorkerSession.setVaultSessionActive(isVaultCacheSessionActive());
 
       if (browser) {
         crossTabBroadcaster = new CrossTabBroadcaster(appEventBus);
@@ -586,6 +680,13 @@
 <svelte:document
   onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
 />
+<svelte:head>
+  <title>Codex Cryptica | AI RPG Campaign Manager</title>
+  <meta
+    name="description"
+    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with OpenAI/Luna."
+  />
+</svelte:head>
 <NavigationShortcuts />
 
 <div
@@ -609,7 +710,7 @@
     <div
       class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
     >
-      {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      {#if !isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
         <ActivityBar />
         <SidebarPanelHost />
       {/if}
@@ -618,7 +719,7 @@
         class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         <div
-          class="min-h-0 min-w-0 flex-1 overflow-y-auto"
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||
             undefined}

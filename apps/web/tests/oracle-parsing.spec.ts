@@ -1,94 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle, seedEntity } from "./test-helpers";
 
 test.describe("Oracle Response Parsing & Smart Apply", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try {
-        localStorage.setItem("oracle-hint-seen", "true");
-      } catch {
-        /* ignore */
-      }
-      // Mock browser API
-      (window as any).showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: () => [],
-        getDirectoryHandle: async () => ({
-          kind: "directory",
-          getFileHandle: async () => ({
-            kind: "file",
-            createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
-            }),
-          }),
-        }),
-        getFileHandle: async () => ({
-          kind: "file",
-          name: "test.md",
-          getFile: async () => new File([""], "test.md"),
-          createWritable: async () => ({
-            write: async () => {},
-            close: async () => {},
-          }),
-        }),
-        removeEntry: async () => {},
-      });
-    });
-    await page.goto("/");
-
-    // Wait for app to be ready
-    await page.waitForFunction(
-      () =>
-        (window as any).vault?.isInitialized &&
-        (window as any).oracle?.isInitialized &&
-        (window as any).textGeneration !== undefined,
-      { timeout: 15000 },
-    );
-
-    // After load, apply the vault handle mock
-    await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      vault.rootHandle = {
-        kind: "directory",
-        name: "mock-vault",
-        getFileHandle: async () => ({
-          kind: "file",
-          createWritable: async () => ({
-            write: async () => {},
-            close: async () => {},
-          }),
-          getFile: async () => new File([""], "test.md"),
-        }),
-        getDirectoryHandle: async () => ({
-          kind: "directory",
-          getFileHandle: async () => ({
-            kind: "file",
-            createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
-            }),
-          }),
-        }),
-        removeEntry: async () => {},
-      };
-      vault.isAuthorized = true;
-    });
+    await setupVaultPage(page);
   });
 
   test("should show 'Smart Apply' button for structured Oracle response", async ({
     page,
   }) => {
     // 1. Open Oracle
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
 
     // 2. Inject a structured message into the store
     await page.evaluate(async () => {
@@ -110,11 +32,14 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     );
 
     // 3. Select a dummy node to enable 'Apply'
-    await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      const id = await vault.createEntity("npc", "Test Entity");
-      vault.selectedEntityId = id;
+    const entityId = await seedEntity(page, {
+      title: "Test Entity",
+      type: "npc",
     });
+    await page.evaluate((id) => {
+      const vault = (window as any).vault;
+      vault.selectedEntityId = id;
+    }, entityId);
 
     // 4. Verify Smart Apply button is visible
     const smartApplyBtn = page.getByRole("button", { name: /SMART APPLY/i });

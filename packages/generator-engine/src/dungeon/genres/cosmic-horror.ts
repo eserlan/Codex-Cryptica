@@ -1,0 +1,186 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const cosmicHorrorTables: DungeonGenreTables = {
+  hint: "Focus on investigations into places built for observation, containment, or contact rather than conquest. The horror comes from scale, unreliable evidence, and the cost of knowing too much—not gothic bloodlines, medieval curses, or generic fantasy ruins. Keep discoveries concrete enough for players to investigate: altered records, impossible measurements, failed expeditions, and systems obeying an inhuman logic.",
+  purposes: [
+    "Research Facility",
+    "Data Vault & Archive",
+    "Bio-Containment Wing",
+    "Natural Cavern Network",
+    "Planar Anomaly",
+    "Tomb & Catacomb",
+  ],
+  currentStates: [
+    "Abandoned Ruins",
+    "Sealed Vault",
+    "Still Operational",
+    "Arcane / Tech Anomaly",
+    "Buried & Forgotten",
+    "Occupied Stronghold",
+  ],
+  sampleTitles: [
+    "The Meridian Survey Annex",
+    "Archive Forty-Nine",
+    "The Night-Signal Station",
+    "The Submerged Listening Rooms",
+    "The Latitude That Moved",
+  ],
+  builders: [
+    "a university expedition funded by a donor who never attended its meetings",
+    "a coastal survey office assigned to chart an impossible current",
+    "an astronomy department that quietly changed its field notes after every eclipse",
+    "a quarantine board given authority by an emergency nobody remembers declaring",
+    "a lost research vessel's crew, working inland long after the ship vanished",
+  ],
+  originalUses: [
+    "a long-baseline observatory measuring a star that should not be visible",
+    "a records vault for field reports too dangerous to circulate",
+    "a specimen wing built to study organisms that do not remain the same shape",
+    "a sounding station mapping the coastline below the known bedrock",
+    "a translation archive cataloguing a language heard only in dreams",
+  ],
+  entrances: [
+    "a survey hatch beneath a lighthouse's unused fuel cellar",
+    "a reading-room door that appears only when the catalogue is opened to a blank page",
+    "a low tunnel exposed at the wrong phase of the tide",
+    "an observatory lift whose counterweight descends before anyone enters",
+    "a service stair behind a quarantine notice dated next month",
+  ],
+  compositions: [
+    "poured concrete marked with measurements in several incompatible scales",
+    "salt-glazed brick that is warm despite the surrounding cold",
+    "brass fittings too finely machined for their supposed construction date",
+    "timber supports growing in a spiral rather than with the grain",
+    "pale ceramic tiles that reflect a sky different from the one overhead",
+  ],
+  conditions: [
+    "dry, orderly, and maintained by a schedule no living caretaker follows",
+    "flooded to the ceiling except for a chain of perfectly air-filled rooms",
+    "silent until a visitor speaks a name recorded in the logbook",
+    "partly collapsed around an intact central instrument",
+    "lit by lamps whose fuel reservoirs have been empty for decades",
+  ],
+  causes: [
+    "the staff agreed to erase their own final report before leaving",
+    "a calibration experiment began producing results before it was run",
+    "the sea withdrew far enough to reveal the facility and then returned",
+    "the archive's index started filing people as specimens",
+    "the site was sealed after an expedition came back with incompatible accounts",
+  ],
+  sectors: [
+    {
+      name: "The Intake Gallery",
+      description:
+        "A tiled corridor where every visitor is asked to sign the same arrival ledger in their own handwriting.",
+    },
+    {
+      name: "The Instrument Well",
+      description:
+        "A vertical shaft of brass scopes and cables aimed downward through bedrock.",
+    },
+    {
+      name: "The Redacted Stacks",
+      description:
+        "Shelves of field reports with whole expeditions excised from their indexes.",
+    },
+    {
+      name: "The Tidal Laboratory",
+      description:
+        "A flooded testing room where water levels follow an unseen moon.",
+    },
+    {
+      name: "The Sleep Chamber",
+      description:
+        "Rows of cots fitted with recording horns pointed at each sleeper's mouth.",
+    },
+    {
+      name: "The Last Calibration Room",
+      description:
+        "A circular workspace whose instruments all insist the room is elsewhere.",
+    },
+  ],
+  inhabitants: [
+    "A field team that believes it is still on its first day underground.",
+    "Quarantine volunteers keeping a cordon around evidence they cannot describe.",
+    "An antiquarian circle preserving the archive by destroying every copy made outside it.",
+    "A salvager crew that has learned which rooms return them to the surface.",
+    "A research society split between publishing the findings and sealing them forever.",
+  ],
+  factionNames: [
+    "the Meridian Survey Team",
+    "the Quarantine Volunteers",
+    "the Ninth Catalogue Committee",
+    "the Low-Tide Salvagers",
+    "the Observatory Custodians",
+    "the Disputed Witnesses",
+    "the Archive Preservation Circle",
+    "the Inland Expedition",
+    "the Station Maintenance Crew",
+    "the Silent Correspondents",
+  ],
+  factionObstacles: [
+    "a logbook that changes whenever two members agree on what happened",
+    "an evacuation route that is open only during a short tidal window",
+    "a missing instrument lens needed to read the site's warning signs",
+    "a funding deadline that will bring inspectors before the work is contained",
+    "a damaged radio that receives only the team's own earlier transmissions",
+    "a rival group withholding the one page that explains the floor plan",
+    "exhaustion from keeping watch through nights that do not end on schedule",
+    "a supply cache labelled for a team that has not arrived yet",
+  ],
+  loreFinds: [
+    "A field photograph in which the expedition's tents stand beneath an unfamiliar constellation.",
+    "A visitor register signed by one party member in ink that has fully dried.",
+    "A sound recording labelled with tomorrow's date and a warning in the listener's voice.",
+    "A tide chart that marks a sixth daily high water occurring inside the building.",
+    "A translation key whose final symbol is a precise map coordinate.",
+  ],
+  roomEncounters: [
+    "A soaked surveyor repeating measurements until someone gives a different answer.",
+    "A cluster of translucent specimens arranging themselves around a warm lantern.",
+    "A sleep-deprived archivist defending a file they insist has not been written yet.",
+    "A maintenance automaton following orders from a supervisor who died years ago.",
+    "A mirrored silhouette that imitates the last person to leave the room.",
+  ],
+  secrets: [
+    "The facility is not measuring the anomaly; its measurements are teaching the anomaly how to arrive.",
+    "The expedition's missing members are alive in a version of the site one survey line away.",
+    "Every sealed report is accurate, but each describes a different coastline.",
+    "The quarantine was imposed to keep the town's residents from remembering a recurring event.",
+    "The archive's blank pages are written by visitors after they leave.",
+    "The lowest chamber is a receiver, and the signal has been answered for years.",
+    "The party's arrival was recorded because the original staff deliberately arranged it.",
+    "The maps are not wrong: the surrounding landscape is slowly matching them.",
+  ],
+  hazards: [
+    "A pressure door that seals rooms according to an unknown tide schedule.",
+    "A corridor whose distances change whenever its lamps are switched off.",
+    "Fine dust that causes observers to misread labels, maps, and faces.",
+    "A resonant floor that repeats the last spoken instruction as a physical vibration.",
+    "Condensation that preserves footprints and leads them back toward their owners.",
+  ],
+  treasures: [
+    "A calibrated compass that points toward the nearest inconsistency in a map.",
+    "A waterproof case containing the unedited journal of the first expedition.",
+    "A brass astrolabe that identifies a star no chart has named.",
+    "A film reel that shows a missing person alive and waiting at a specific location.",
+    "A sealed sample vial whose label gives safe handling instructions in plain language.",
+    "A portable recorder that captures a room's hidden ambient signal.",
+    "A library card granting access to an archive that does not appear in public records.",
+    "A survey token that opens any door marked with the original station emblem.",
+  ],
+  hooks: [
+    "A university clerk asks the party to locate an overdue field team, but the team's report is already on the clerk's desk.",
+    "The harbour master offers payment for proof that a closed pier is safe to reopen before the fishing season.",
+    "A survivor sends the party a map of a place they insist they have never visited.",
+    "A local archive has received books catalogued in the handwriting of people who vanished last week.",
+    "The party is asked to inspect a lighthouse whose beam has begun illuminating inland windows.",
+  ],
+  signatureFeatures: [
+    "The Orrery Below: A brass model of the sky that adds a new moving body whenever someone learns a secret.",
+    "The Witness Window: A pane of black glass that shows the room as another observer remembers it.",
+    "The Tidal Index: A filing cabinet that rearranges itself according to the moon.",
+    "The Listening Basin: A shallow pool that repeats distant conversations one hour before they occur.",
+    "The Survey Line: A painted stripe running through every room, always pointing toward a place no map contains.",
+  ],
+};

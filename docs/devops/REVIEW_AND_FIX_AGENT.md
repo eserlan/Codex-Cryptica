@@ -4,7 +4,7 @@ A standalone final-review pass for branches/PRs you've already implemented and t
 
 ## Why this exists
 
-The dev process here is agent-orchestrated end to end: issues → branches → PRs, mostly agent-authored. But PRs aren't opened or merged unsupervised — a human tests and corrects the feature first. The remaining gap was that the *final* review pass (lint, logic, style, race conditions, etc.) was still manual busywork that didn't actually need human judgment, except for the subset of findings that touch product/UX intent.
+The dev process here is agent-orchestrated end to end: issues → branches → PRs, mostly agent-authored. But PRs aren't opened or merged unsupervised — a human tests and corrects the feature first. The remaining gap was that the _final_ review pass (lint, logic, style, race conditions, etc.) was still manual busywork that didn't actually need human judgment, except for the subset of findings that touch product/UX intent.
 
 Design principle: **automate the mechanical part, escalate the judgment part.**
 
@@ -38,7 +38,7 @@ Run this after you've replied to a `needs-input` PR comment. Reads your answer, 
 
 The actual review logic `review-and-fix` calls into: a Codex-Cryptica-specific checklist (Svelte 5 rune/worker safety, `isCommitting` race guards, accessibility, `??` vs `||`, worker proxy wiring, constitution check against `.specify/memory/constitution.md`) layered on top of the general `code-review:code-review` pass.
 
-**Token budget**: defaults to `code-review:code-review` at **low effort**, run **inline** in the current agent context — it does *not* spawn parallel Agent-tool subagents (finder angles + verifiers) for a standard run. That fan-out (used at `high`/`xhigh`/`max`/`ultra`) means every subagent re-reads the diff and surrounding files cold, which multiplies token cost for what's meant to be a fast safety net on a branch you've already tested by hand, not an exhaustive audit. Only step up to a heavier effort level if you explicitly ask for a deeper pass.
+**Token budget**: defaults to `code-review:code-review` at **low effort**, run **inline** in the current agent context — it does _not_ spawn parallel Agent-tool subagents (finder angles + verifiers) for a standard run. That fan-out (used at `high`/`xhigh`/`max`/`ultra`) means every subagent re-reads the diff and surrounding files cold, which multiplies token cost for what's meant to be a fast safety net on a branch you've already tested by hand, not an exhaustive audit. Only step up to a heavier effort level if you explicitly ask for a deeper pass.
 
 ## How a PR gets the `needs-input` label
 
@@ -66,7 +66,7 @@ cp /path/to/main/repo/.env ~/proj/Codex-Arcana-cron/.env   # gitignored, worktre
 
 Every 5 minutes. Requires a cron daemon running locally (`systemctl is-active crond`) — the loop stops the moment this machine is off or the daemon isn't running; there's no cloud fallback for this piece (see [Known gaps](#known-gaps)).
 
-**Unattended execution**: the escalation runs `claude -p "/resume-review" --dangerously-skip-permissions` — no per-tool-call approval, since cron has no TTY. This is intentional and was explicitly confirmed: `resume-review`'s own logic already bounds the blast radius (only touches PRs already labeled `needs-input`, never merges or opens PRs), so unattended execution doesn't expand what the flow is allowed to do — it just removes the human-in-the-loop *approval step* for actions that were already scoped narrow.
+**Unattended execution**: the escalation runs `claude -p "/resume-review" --dangerously-skip-permissions` — no per-tool-call approval, since cron has no TTY. This is intentional and was explicitly confirmed: `resume-review`'s own logic already bounds the blast radius (only touches PRs already labeled `needs-input`, never merges or opens PRs), so unattended execution doesn't expand what the flow is allowed to do — it just removes the human-in-the-loop _approval step_ for actions that were already scoped narrow.
 
 ### Checking cron is actually running
 
@@ -110,7 +110,7 @@ When it does find new input, you'll see:
 
 This is intentionally narrow-scoped right now so the "confident fix vs. escalate" triage behavior can be observed in practice before adding more autonomy:
 
-- **`review-and-fix` itself is not triggered automatically.** The cron gate only automates the *second half* of the loop (noticing you replied to a `needs-input` comment) — nothing currently runs `review-and-fix` automatically when a branch/PR is ready for its first pass. That's still a manual `/review-and-fix` invocation.
+- **`review-and-fix` itself is not triggered automatically.** The cron gate only automates the _second half_ of the loop (noticing you replied to a `needs-input` comment) — nothing currently runs `review-and-fix` automatically when a branch/PR is ready for its first pass. That's still a manual `/review-and-fix` invocation.
 - **No cloud fallback.** The cron gate is local-machine-only; it stops if this machine is off. A cloud-scheduled routine (`/schedule`) was considered but rejected for now — cloud routines run in an isolated checkout with no access to local `.env` or `gh` auth, which would mean provisioning secrets in a second place.
 - **No auto-triggering on PR-ready events.** E.g. running `review-and-fix` automatically when an agent marks a PR ready-for-review is a plausible next step, but hasn't been set up.
 

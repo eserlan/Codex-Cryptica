@@ -1,73 +1,26 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntity } from "./test-helpers";
 
 test.describe("Mobile UX Fixes", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock init
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-    await page.goto("/");
-
-    // Wait for app load
-    await page.waitForSelector(".app-layout", { timeout: 10000 });
-
-    // Dismiss any landing or world page overlays on load
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
   });
 
   test("Entity Detail Panel should have solid background and high z-index", async ({
     page,
   }) => {
-    await page.waitForFunction(
-      () => {
-        const v = (window as any).vault;
-        return v && v.isInitialized && v.status === "idle";
-      },
-      { timeout: 15000 },
-    );
-
-    // Dismiss any landing or world page overlays after vault is ready
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
+    const entityId = await seedEntity(page, {
+      type: "npc",
+      title: "Test Entity",
+      content: "Content",
     });
 
-    const entityId = await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      vault.isInitialized = true;
-      vault.rootHandle = {};
-      return await vault.createEntity("npc", "Test Entity", {
-        content: "Content",
-      });
-    });
     await page.evaluate((id) => {
       (window as any).vault.selectedEntityId = id;
     }, entityId);
 
-    await page.waitForFunction(
-      (id) => (window as any).vault?.selectedEntityId === id,
-      entityId,
-    );
-    await page.waitForFunction(
-      (id) => !!(window as any).vault?.entities?.[id],
-      entityId,
-    );
-
     const panel = page.getByTestId("entity-detail-panel");
-    await expect(panel).toBeVisible({ timeout: 5000 });
+    await expect(panel).toBeVisible({ timeout: 10000 });
     await expect(panel).toHaveCSS("z-index", "50");
 
     const bg = await panel.evaluate((el) => {
@@ -83,38 +36,13 @@ test.describe("Mobile UX Fixes", () => {
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await page.waitForFunction(
-      () => {
-        const v = (window as any).vault;
-        return v && v.isInitialized && v.status === "idle";
-      },
-      { timeout: 15000 },
-    );
-
-    // Dismiss any landing or world page overlays after vault is ready
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
+    const entityId = await seedEntity(page, {
+      type: "npc",
+      title: "Scrollable Entity",
+      content: Array.from({ length: 80 }, (_, i) => `Line ${i + 1}`).join(
+        "\n\n",
+      ),
     });
-
-    const entityId = await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      vault.isInitialized = true;
-      vault.rootHandle = {};
-      return await vault.createEntity("npc", "Scrollable Entity", {
-        content: Array.from({ length: 80 }, (_, i) => `Line ${i + 1}`).join(
-          "\n\n",
-        ),
-      });
-    });
-
-    await page.waitForFunction(
-      (id) => !!(window as any).vault?.entities?.[id],
-      entityId,
-    );
 
     await page.evaluate((id) => {
       const layout = (window as any).layoutUIStore;

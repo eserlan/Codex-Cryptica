@@ -1,79 +1,43 @@
-## 2025-06-16 - SEOGeneratorLayout Markdown Rendering Extraction
+## 2025-02-15 - Extract Interfaces from God-File Config
 
-**Learning:** Pure string transformation and mapping rules (like `replaceEmojisWithIcons`, `labelValueHtml`) are often mixed directly into the `script` tags of Svelte components because they close over reactive state (like `variant`). Extracting them early makes components lighter, more testable, and strictly separates view logic from string generation logic.
-**Action:** When finding complex formatting or view-model prep logic in `.svelte` files, look to extract them to adjacent `.ts` helper files, converting closed-over state into explicit function arguments.
+**Learning:** When dealing with large configuration files (like `seo-pages.ts`) that mix massive object dictionaries with type definitions, the type interfaces (e.g., `SEOPageData`, `SEOImportPageData`) can be safely extracted to a dedicated `seo-types.ts` sibling file. This isolates the type definitions from the raw data and improves readability without altering runtime behavior. The original file can simply import and re-export the types to preserve backward compatibility across the codebase.
+**Action:** Extract large or central type definitions out of data-heavy configuration files into dedicated sibling `*-types.ts` files, and re-export them from the original location to ensure safety.
 
-## 2025-06-16 - Markdown Formatter Extraction
+## 2025-02-14 - Extract Pure Transformation Functions
 
-**Learning:** Svelte UI component files (like `DetailStatusTab.svelte`) can bloat rapidly by keeping pure logic functions that don't depend on component scope, like formatting markdown sections (`upsertMarkdownSection`), within the `<script>` tag. Since they act on isolated strings, they should be immediately moved to utility modules.
-**Action:** Always scan for generic pure text/formatting functions in overgrown Svelte scripts and extract them to `src/lib/utils/` to improve Svelte file readability and simplify tests.
+**Learning:** When a large Svelte or component controller file (`import-settings-controller.svelte.ts`) contains pure transformation functions (`mapThemeToGenre`) alongside stateful class/component logic, these functions can safely be extracted to sibling `.ts` files to reduce the god file's size and improve component scanability. Also if there are duplicate implementations of this pure function in test files (`ImportSettings.pack.test.ts`), they can be removed and all places updated to import from the newly created reusable file (`theme-mapper.ts`).
+**Action:** Extract pure transformation functions into sibling `.ts` files and deduplicate them in tests.
 
-## 2024-06-18 - Extract Pronoun Resolution Logic
+## 2024-05-18 - Extract Presentation Template Parser
 
-**Learning:** AI service files (like `text-generation.service.svelte.ts`) can grow rapidly by accumulating pure text-processing logic (like NLP pronoun resolution) alongside stateful AI integration logic.
-**Action:** When a pure text-processing helper function grows large (>100 lines) and relies on dynamic imports (`compromise`), it should be extracted to its own file (e.g., `resolve-pronouns.ts`) in the same directory to improve readability of the main service file without breaking testing conventions.
+**Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant inline parsing and AST walking logic (`parseCardsFromSource`) that maps data to a visual builder, this pure parsing logic can be safely extracted to a sibling `.ts` file (`visual-card-parser.ts`) to dramatically reduce the god file's size and improve component scanability. State dependencies (like `schema.fields`) should be refactored into function parameters.
+**Action:** Extract AST walking and parsing functions into sibling `.ts` files, passing any component state as explicit parameters.
 
-## 2025-06-22 - Extracted State-dependent Prompts
+## 2025-02-15 - Extract Exemplars from Generator Registry
 
-**Learning:** When extracting logic from a Svelte component that relies on reactive `$state` (e.g. `editLore` being updated while an async AI generation streams in), be careful not to create state closure traps. Passing the raw string value creates a snapshot.
-**Action:** When extracting async generation functions from UI components, pass reactive state getters (`getEditLore: () => string`) rather than static snapshot variables (`editLore: string`) to preserve the component's original closure-updating behavior.
+**Learning:** The `campaign-generator-registry.ts` file contains a massive `EXEMPLARS` constant (large raw JSON string constants) that pollutes the business logic of the registry. This is a clear case for extraction to a dedicated `-constants.ts` file to improve readability of the core registry logic, adhering to the "God-File Config" pattern.
+**Action:** Extract large constants like `EXEMPLARS` from `campaign-generator-registry.ts` to a separate file (e.g., `campaign-generator-exemplars.ts`) and import them.
 
-## 2025-06-28 - Extracted Presentational UI with Bounded State
+## 2025-02-22 - Extracting types that are still used in the source file
 
-**Learning:** Svelte UI component files (like `DetailStatusTab.svelte`, `ZenContent.svelte`, and `ZenSidebar.svelte`) often bloat by inlining presentational UI that manages its own distinct internal state (like creating a new entity connection). This violates the Single Responsibility Principle and causes widespread code duplication.
-**Action:** When you encounter a repeated block of presentational UI that requires its own distinct internal state (e.g. `isConnecting`, `addConnectionError`, form fields) and lifecycle methods (`handleAddConnection`), extract it into a small presentational subcomponent. Let the parent only control whether the component is visible (e.g., `isAddingConnection`).
+**Learning:** When extracting types from a file into a separate file, if the original file still uses those types internally, you must explicitly import them (`import type { X } from './types';`) before re-exporting them (`export type { X };`). Using `export type { X } from './types';` alone will cause a TypeScript compilation error because it does not make the types available within the local file's scope.
 
-## 2025-05-24 - Extracting theme presets from the schema definition
+**Action:** Ensure both an `import` and an `export` are used when extracting and re-exporting types that are still utilized in the original file.
 
-**Learning:** When dealing with god files that contain both structural type definitions/Zod schemas and a massive amount of hardcoded reference data (like the 1,112 line `packages/schema/src/theme.ts` which exported 26+ huge static objects), extracting the pure data payload into a dedicated constants file (e.g. `theme-templates.ts`) makes the core schema far easier to read and test, without modifying any upstream runtime logic.
+## 2025-03-01 - Extract Visual Card Serializer
 
-**Action:** Future agents should look for modules in `packages/schema/` or configuration directories where huge static object definitions bloat the file. Split the definitions into `-templates.ts` or `-constants.ts` and use `export * from "./..."` in index files to prevent widespread import refactoring.
+**Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant string generation and formatting logic (`syncSourceFromVisualCards`) to serialize internal visual structures into a source string, this serialization logic can be cleanly extracted to a sibling `.ts` file (`visual-card-serializer.ts`). State dependencies (like `schema.fields` and `fieldDisplayOverrides`) should be refactored into function parameters, returning the final string which the component then assigns to its local state. This drastically improves the readability of the component, and also makes the serialization logic fully unit-testable.
 
-## 2024-10-24 - Extracting pure presentational logic from page components
+**Action:** Extract large serialization or string-formatting functions into sibling `.ts` files, passing any component state as explicit parameters.
 
-**Learning:** Svelte routing components (`+page.svelte`) can easily become bloated with large, complex inline SVG graphics or mock data panels that are purely presentational and only used once.
-**Action:** Extract these isolated UI blocks into dedicated components within feature-specific directories (e.g., `lib/components/welcome/`) to drastically reduce the footprint of the routing files and improve scanability, even if the component is only used in one place.
+## 2025-02-28 - Extract Entity List Empty States
 
-## 2025-02-24 - Extracting DateSelection Logic from TemporalPicker.svelte
+**Learning:** Extracted multiple EmptyState conditionals from `EntityList.svelte` (a massive ~900 line component mixing grouping, tree building, sorting, and UI) into dedicated `EntityEmptyState.svelte` and `EntitySearchEmptyState.svelte` presentational components. This reduces JSX verbosity, especially since the "create" intent handler involves fetching global modal states. It keeps the core explorer list rendering cleaner and makes empty state behavior easier to read at a glance.
 
-**Learning:** Svelte files containing pure logic (like converting raw date values to `DateSelection`) mixed with state and UI (`TemporalPicker.svelte`) can be made cleaner and testable by extracting the pure mapping logic into a separate `-utils` file (e.g., `utils/toDateSelection.ts`). This function only requires a config object to remove dependencies from Svelte's global stores.
+**Action:** Look for heavy conditional `EmptyState` blocks inside large list components (like `EntityList` or `SourceWorkspace`), particularly those that handle conditional logic based on permissions (like `vault.isGuest`) or dispatch complex UI intents, and extract them into narrow-purpose subcomponents.
 
-**Action:** Look for Svelte components containing complex data structure conversions or data normalizations. Extract these pure helper functions into sibling `utils/` or `-helpers` files, passing down only the required plain dependencies (like config objects) rather than relying on reactive closure scope. Add Vitest coverage for the extracted logic.
+## 2026-09-05 - Extract Canvas Workspace Drawing State
 
-## 2025-07-07 - Extracting configuration constants from massive files
+**Learning:** Svelte 5 components with overly complex local view state handling multiple disparate interaction contexts (e.g., node interaction vs freehand drawing vs modal states) can cause god-files that are extremely large.
 
-**Learning:** When dealing with god files that contain both logic/interfaces and a massive amount of hardcoded configuration/reference data (like the 1,100+ line `settlementConfig` in `public-settlement.ts`), extracting the pure data payload into a dedicated constants file (e.g. `public-settlement-constants.ts`) makes the core file far easier to read and scan, without modifying any upstream runtime logic.
-**Action:** Future agents should look for modules where huge static object definitions bloat the file. Split the definitions into `-constants.ts` and use `import` then `export` in the original file to prevent widespread import refactoring and maintain the public API.
-
-## 2024-05-24 - Extract configuration blobs from generator engine files
-
-**Learning:** Large modules that are composed of both functional logic (like prompt generators and local fallbacks) and huge static data objects (like lists of naming conventions, text descriptions for every genre, etc) make it hard to navigate. By extracting the pure static data into `<module>-constants.ts`, the original file shrinks significantly, is much easier to read, and the behavior remains identical since imports/exports can be structured to present the exact same API.
-**Action:** When working on large files in `@codex/generator-engine` or similar packages that combine functions with huge data arrays/objects, prefer extracting the data objects to a sibling `-constants.ts` file, and keep the main file focused on logic. Ensure to keep exports aligned.
-
-## 2026-07-14 - Extract Content Groups from God-Files
-
-**Learning:** When marketing or configuration files like `seo-pages.ts` grow large because they combine disparate content (solutions, features, comparisons), extracting distinct record objects (like `comparisons`) into sibling files following the same naming convention significantly reduces file size and improves navigation without needing architectural changes.
-
-**Action:** Favor grouping large static content records by their domain (e.g., `seo-comparisons.ts`) rather than dumping all page metadata into one god file.
-
-## 2026-07-15 - Extracted SEO Marketing configurations
-
-**Learning:** When marketing configuration files grow huge by combining disparate static content (like solutions, comparisons, features, and imports in `seo-pages.ts`), extracting distinct record objects into sibling files (`seo-comparisons.ts`, `seo-features.ts`, `seo-imports.ts`) drastically reduces file size and improves navigation without breaking any upstream imports (thanks to re-exporting them in the root file).
-
-**Action:** When finding massive static configurations, extract distinct structural sections into sibling files, then export them all from the primary index to keep public APIs stable.
-
-## 2026-07-19 - Extract Theme Constants from Public Generator
-
-**Learning:** Large feature generator files (like `public-npc.ts`) often bundle extensive configuration, theme options, and prompt constants directly above the logic. This creates massive scrolling distance (1000+ lines) between related functional components.
-**Action:** Always extract static configuration objects, string pools, and constants into a cohesive `-constants.ts` file, leaving behind a focused module that only contains the execution logic, re-exporting the constants to maintain API contracts.
-
-## 2025-07-24 - Extracting huge template dictionaries from core business logic
-
-**Learning:** `packages/schema/src/art-direction.ts` contained its own core logic (`resolveArtDirection`) alongside hundreds of lines of static template configurations (e.g., `FACTION_THEME_TEMPLATES`, `CATEGORY_ART_DIRECTION_DEFAULTS`). Extracting these static blocks into `art-direction-templates.ts` significantly improved file readability without touching logic.
-
-**Action:** Look out for files defining core types/logic that are drowned out by their own default configuration maps. Extract the static maps to a `-templates.ts` or `-constants.ts` file, and re-export them from the original file to keep imports clean.
-
-## 2024-07-26 - Extract config object from public names file
-
-**Learning:** Large feature files like `public-names.ts` often bundle extensive configuration and theme constants (e.g., `nameGeneratorConfig` with large arrays of cultures, prefixes, and suffixes) directly alongside the logic. This bloats the file to nearly 1000 lines.
-**Action:** Extract the static configuration object (`nameGeneratorConfig`) into a sibling `-constants.ts` file (`public-names-constants.ts`), leaving behind a focused module that only contains the execution logic, and re-export the config to maintain API contracts.
+**Action:** Extract interaction-specific sub-features (like CanvasDrawing pointer state management) into custom `use-*` hooks, delegating access and updates to the `logic` store or exposing handlers which simplifies the parent component significantly without changing runtime behaviour.

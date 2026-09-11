@@ -1,21 +1,28 @@
 import {
   buildCampaignDungeonPrompt,
+  councilVoteFoundationPrompt,
+  councilVoteFoundationRepairPrompt,
+  councilVotePathsPrompt,
+  councilVotePathsRepairPrompt,
   getGenerator,
   isTitleBanned,
 } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import {
+  buildDungeonCoherencePrompt,
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
 } from "./public-dungeon";
 import {
   type AIGeneratorGateway,
+  type AIGeneratorChatSession,
   type AIGeneratorCompleteResult,
   type AIPolicy,
   type CampaignGeneratorDefinition,
   type DraftSaveRequest,
   type DraftSaveResult,
   type GeneratedDraft,
+  type GenerationEvent,
   type GeneratorPromptMetrics,
   type GeneratorOutput,
   type GeneratorRunRequest,
@@ -23,6 +30,32 @@ import {
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { StarSystemBody } from "./public-star-system";
+import { parseLanguageResponse } from "./public-language";
+import {
+  buildLanguageRepairPrompt,
+  classifyAILanguageQuality,
+  validateLanguageInputFidelity,
+  validateLanguageNameBans,
+} from "./language-profile";
+import {
+  generateCampaignHeist,
+  streamCampaignHeist,
+} from "./campaign-heist-generation";
+import type { LanguageGenerationResultV1 } from "schema";
+import {
+  LANGUAGE_GENERATION_CONFIG,
+  LanguageGenerationError,
+  assertValidLanguageFallback,
+  languageGeneratorOutput,
+  languageOptions,
+  languageResultFromOutput,
+} from "./campaign-generator-language";
+
+export {
+  LanguageGenerationError,
+  assertValidLanguageFallback,
+} from "./campaign-generator-language";
 
 function completeText(result: string | AIGeneratorCompleteResult): string {
   return typeof result === "string" ? result : result.text;
@@ -75,7 +108,8 @@ export function composeDraftVaultFields(draft: GeneratedDraft): {
   return {
     content: draft.summary || "",
     lore:
-      draft.sourceGeneratorId === "dungeon"
+      draft.sourceGeneratorId === "dungeon" ||
+      draft.sourceGeneratorId === "heist"
         ? [draft.content, draft.lore].filter(Boolean).join("\n\n")
         : draft.lore || "",
   };
@@ -131,6 +165,130 @@ function parseConnections(value: unknown): SuggestedConnection[] | undefined {
 }
 
 /**
+ * Parses and validates a generic (non-dungeon/language/council-vote)
+ * generator's raw AI response into a `GeneratorOutput`, shared by
+ * `generateDraft`'s buffered generic branch and `generateDraftStream`'s
+ * streaming counterpart so the two never silently diverge on what counts as
+ * a valid response. Returns `null` for invalid JSON or a response missing
+ * required fields — the caller decides what "invalid" means next (retry,
+ * fall through to local generation, etc.), this function only classifies.
+ */
+function parseGenericGeneratorOutput(
+  raw: string,
+  generatorId: string,
+): GeneratorOutput | null {
+  let parsed: Partial<GeneratorOutput>;
+  try {
+    parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+  } catch {
+    return null;
+  }
+
+  const requiresCompleteSocietyDossier = generatorId === "secret-society";
+  const isValidShape =
+    typeof parsed.title === "string" &&
+    typeof parsed.summary === "string" &&
+    typeof parsed.lore === "string" &&
+    (!requiresCompleteSocietyDossier ||
+      (parsed.lore.trim().length > 0 &&
+        typeof parsed.content === "string" &&
+        parsed.content.trim().length > 0));
+  if (!isValidShape) return null;
+
+  return {
+    title: parsed.title as string,
+    summary: parsed.summary as string,
+    lore: parsed.lore as string,
+    content: typeof parsed.content === "string" ? parsed.content : undefined,
+    labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+    connections: parseConnections(parsed.connections),
+    // Only the star-system generator's schema asks for these; every other
+    // generator's response simply won't include them.
+    bodies: Array.isArray(parsed.bodies)
+      ? parsed.bodies.filter(
+          (b): b is StarSystemBody =>
+            typeof (b as { name?: unknown })?.name === "string" &&
+            typeof (b as { type?: unknown })?.type === "string",
+        )
+      : undefined,
+    starType: typeof parsed.starType === "string" ? parsed.starType : undefined,
+  };
+}
+
+/**
+ * Builds the full prompt and (when the request carries one) the delta-lore
+ * interaction turn for a generic single-call generator — shared by
+ * `generateDraft`'s generic branch and `generateDraftStream` so the two
+ * can't silently diverge on what prompt/interaction shape actually gets
+ * sent to the model, same rationale as `parseGenericGeneratorOutput` above.
+ */
+function buildGenericGeneratorPrompt(
+  generator: CampaignGeneratorDefinition,
+  mergedRequest: GeneratorRunRequest,
+): {
+  fullPrompt: string;
+  interaction: GeneratorRunRequest["interaction"];
+} {
+  const fullPrompt = generator.buildPrompt({
+    ...mergedRequest,
+    interaction: undefined,
+  });
+  const prompt = mergedRequest.interaction
+    ? generator.buildPrompt(mergedRequest)
+    : fullPrompt;
+  const interaction = mergedRequest.interaction
+    ? {
+        ...mergedRequest.interaction,
+        input: withGeneratorRequest(mergedRequest.interaction.input, prompt),
+        replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
+      }
+    : undefined;
+
+  return { fullPrompt, interaction };
+}
+
+type CouncilVoteFoundation = Partial<GeneratorOutput> & {
+  title: string;
+  summary: string;
+  lore: string;
+};
+type CouncilVotePaths = { possiblePaths?: unknown; followUpHooks?: unknown };
+
+function isUsableCouncilVoteFoundation(
+  value: Partial<GeneratorOutput>,
+): value is CouncilVoteFoundation {
+  return (
+    typeof value.title === "string" &&
+    typeof value.summary === "string" &&
+    typeof value.lore === "string"
+  );
+}
+
+function isUsableCouncilVotePaths(value: CouncilVotePaths): boolean {
+  return (
+    typeof value.possiblePaths === "string" &&
+    typeof value.followUpHooks === "string"
+  );
+}
+
+function buildCouncilVoteOutput(
+  foundation: CouncilVoteFoundation,
+  paths: CouncilVotePaths,
+): GeneratorOutput {
+  return {
+    title: foundation.title,
+    summary: foundation.summary,
+    lore: [foundation.lore, paths.possiblePaths, paths.followUpHooks]
+      .filter((value): value is string => typeof value === "string" && !!value)
+      .join("\n\n"),
+    content:
+      typeof foundation.content === "string" ? foundation.content : undefined,
+    labels: Array.isArray(foundation.labels) ? foundation.labels : [],
+    connections: parseConnections(foundation.connections),
+  };
+}
+
+/**
  * Vault persistence boundary injected by the web app. The package never imports
  * vault stores directly; the host wires real implementations and tests pass
  * mocks. Mirrors the existing `vault.createEntity` / `vault.addConnection`.
@@ -148,6 +306,9 @@ export interface GeneratorVaultGateway {
       lore?: string;
       labels?: string[];
       kind?: string;
+      languageProfile?: LanguageGenerationResultV1["profile"];
+      languageProfileVersion?: 1;
+      start_date?: { year: number; month: number; day: number };
     },
   ): Promise<string>;
   /** Creates a relationship from source to target. */
@@ -212,6 +373,142 @@ export class CampaignGeneratorService {
     this.onPromptMetrics = deps.onPromptMetrics;
   }
 
+  private assessLanguageResponse(
+    raw: string,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ):
+    | {
+        output: GeneratorOutput;
+        blockingIssues: string[];
+        advisoryIssues: string[];
+        issues: string[];
+      }
+    | {
+        output?: undefined;
+        blockingIssues: string[];
+        advisoryIssues: string[];
+        issues: string[];
+      } {
+    try {
+      const publicOutput = parseLanguageResponse(raw);
+      const result = languageResultFromOutput(publicOutput);
+      const expected = languageOptions(request);
+      const quality = classifyAILanguageQuality(result);
+      const blockingIssues = [
+        ...quality.blockingIssues,
+        ...validateLanguageInputFidelity(result, expected).issues,
+        ...validateLanguageNameBans(result, bannedNames).issues,
+      ];
+      const advisoryIssues = quality.advisoryIssues;
+      return {
+        output: languageGeneratorOutput(publicOutput),
+        blockingIssues,
+        advisoryIssues,
+        issues: [...blockingIssues, ...advisoryIssues],
+      };
+    } catch (error) {
+      const blockingIssues = [
+        error instanceof Error
+          ? `Structural validation failed: ${error.message}`
+          : "Structural validation failed.",
+      ];
+      return {
+        blockingIssues,
+        advisoryIssues: [],
+        issues: blockingIssues,
+      };
+    }
+  }
+
+  private async generateLanguageWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): Promise<GeneratedDraft | null> {
+    if (!this.aiGateway) return null;
+    // Language profiles are independent concepts, not conversational revisions.
+    // Passing the previous interaction id caused a changed-role request to keep
+    // the prior title and summary verbatim (#1910), so this path always sends
+    // the complete resolved request as a stateless call. Targeted repairs
+    // below are stateless for the same reason.
+    const fullPrompt = generator.buildPrompt({
+      ...request,
+      interaction: undefined,
+    });
+
+    try {
+      const initial = await this.aiGateway.complete(
+        fullPrompt,
+        SYSTEM_INSTRUCTION,
+        { generationConfig: LANGUAGE_GENERATION_CONFIG },
+      );
+      const first = this.assessLanguageResponse(
+        completeText(initial),
+        request,
+        bannedNames,
+      );
+      if (first.output && first.issues.length === 0) {
+        this.onPromptMetrics?.(
+          promptMetrics({
+            request,
+            fullPrompt,
+            sentPrompt: fullPrompt,
+            usedInteraction: false,
+            replayed: false,
+          }),
+        );
+        return generator.mapOutputToDraft(first.output, request);
+      }
+
+      let candidateRaw = completeText(initial);
+      let candidate = first;
+      let lastAcceptableOutput =
+        first.output && first.blockingIssues.length === 0
+          ? first.output
+          : undefined;
+      const repairBudget = first.blockingIssues.length ? 2 : 1;
+      for (
+        let repairAttempt = 0;
+        repairAttempt < repairBudget;
+        repairAttempt += 1
+      ) {
+        try {
+          const repair = await this.aiGateway.complete(
+            buildLanguageRepairPrompt(
+              candidateRaw,
+              candidate.issues,
+              fullPrompt,
+            ),
+            SYSTEM_INSTRUCTION,
+            { generationConfig: LANGUAGE_GENERATION_CONFIG },
+          );
+          candidateRaw = completeText(repair);
+          candidate = this.assessLanguageResponse(
+            candidateRaw,
+            request,
+            bannedNames,
+          );
+          if (candidate.output && candidate.issues.length === 0) {
+            return generator.mapOutputToDraft(candidate.output, request);
+          }
+          if (candidate.output && candidate.blockingIssues.length === 0) {
+            lastAcceptableOutput = candidate.output;
+            break;
+          }
+        } catch {
+          // Preserve the last parseable candidate for the remaining repair.
+        }
+      }
+      if (lastAcceptableOutput) {
+        return generator.mapOutputToDraft(lastAcceptableOutput, request);
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   private async generateDungeonWithAI(
     generator: CampaignGeneratorDefinition,
     request: GeneratorRunRequest,
@@ -248,7 +545,9 @@ export class CampaignGeneratorService {
           ? result
           : undefined;
 
-      if (first.problems.length > 0) {
+      if (first.rejected) {
+        // Structurally unusable — nothing to repair it into, so ask for a
+        // fresh attempt against the original prompt plus what went wrong.
         const retry = await this.aiGateway.complete(
           buildDungeonRetryMessage(prompt.userMessage, first.problems),
           prompt.systemInstruction,
@@ -263,6 +562,35 @@ export class CampaignGeneratorService {
           output = second.output;
           // The corrective retry is stateless. Do not advance the interaction
           // from the rejected response that it replaced.
+          acceptedInteractionResult = undefined;
+        }
+      } else if (first.structured) {
+        // Passed hard validation, but hard validation only catches what code
+        // can check (sector ids, required fields, placeholder names) — the
+        // failures that actually recur (an item placed in a sector whose own
+        // Lore never names it, a self-siege goal, an invented obstacle) are
+        // semantic and produce zero `problems`. Gating this pass behind
+        // `problems.length > 0` meant it never ran for exactly the responses
+        // most likely to need it, so it always runs once: a targeted
+        // proofread/repair pass, not a full regenerate, so the parts that
+        // already work are left alone.
+        const coherence = buildDungeonCoherencePrompt(
+          first.structured,
+          prompt.resolved,
+        );
+        const repair = await this.aiGateway.complete(
+          coherence.userMessage,
+          coherence.systemInstruction,
+        );
+        const repaired = parseDungeonResponseDetailed(
+          completeText(repair),
+          prompt.options,
+          undefined,
+          prompt.resolved,
+        );
+        if (!repaired.rejected) {
+          output = repaired.output;
+          // The repair pass is stateless, same reasoning as the retry above.
           acceptedInteractionResult = undefined;
         }
       }
@@ -288,6 +616,221 @@ export class CampaignGeneratorService {
       );
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Four-pass AI generation for council-vote (#2033/#2034): foundation,
+   * foundation-repair, paths, paths-repair, run as four turns on one real
+   * chat session so each pass sees every prior pass's actual output as
+   * conversation history rather than a hand-summarized re-injection of it —
+   * this is what fixed the repeated contradictions (reversed/invented
+   * dependencies, persuasion conditions swapped for unrelated evidence,
+   * amendments introduced despite an immutable objective) that kept
+   * surviving single-shot prompt tightening. Each repair turn proofreads the
+   * pass immediately before it — before the next pass builds on it — since a
+   * defect in an earlier pass otherwise gets faithfully inherited by a later
+   * one that's correctly following its own rules. Requires
+   * `aiGateway.startChat` (optional on the interface); if the injected
+   * gateway doesn't implement it, falls through to local generation the same
+   * as `aiGateway` being unset.
+   */
+  private async generateCouncilVoteWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+  ): Promise<GeneratedDraft | null> {
+    if (!this.aiGateway?.startChat) return null;
+
+    try {
+      const chat = await this.aiGateway.startChat(SYSTEM_INSTRUCTION);
+
+      const isUsableFoundation = (
+        value: Partial<GeneratorOutput>,
+      ): value is Partial<GeneratorOutput> & {
+        title: string;
+        summary: string;
+        lore: string;
+      } =>
+        typeof value.title === "string" &&
+        typeof value.summary === "string" &&
+        typeof value.lore === "string";
+
+      const foundationRaw = await chat.send(
+        councilVoteFoundationPrompt(request),
+      );
+      const foundationParsed = JSON.parse(
+        foundationRaw,
+      ) as Partial<GeneratorOutput>;
+      if (!isUsableFoundation(foundationParsed)) return null;
+      let foundation = foundationParsed;
+
+      // Proofread/repair before the paths pass ever sees the foundation —
+      // fixing it after would let paths inherit whatever the repair fixed.
+      // A malformed repair reply keeps the original, unrepaired foundation
+      // rather than failing the whole generation over a cleanup step.
+      try {
+        const repairedRaw = await chat.send(
+          councilVoteFoundationRepairPrompt(),
+        );
+        const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
+        if (isUsableFoundation(repaired)) foundation = repaired;
+      } catch {
+        // Keep the unrepaired foundation.
+      }
+
+      type ParsedPaths = { possiblePaths?: unknown; followUpHooks?: unknown };
+      const isUsablePaths = (value: ParsedPaths): boolean =>
+        typeof value.possiblePaths === "string" &&
+        typeof value.followUpHooks === "string";
+
+      const pathsRaw = await chat.send(councilVotePathsPrompt());
+      let paths = JSON.parse(pathsRaw) as ParsedPaths;
+
+      // Same rationale as the foundation repair above, one pass later: fix
+      // the paths before they're used, and keep the unrepaired paths if the
+      // repair reply itself is unusable.
+      try {
+        const pathsRepairedRaw = await chat.send(
+          councilVotePathsRepairPrompt(),
+        );
+        const pathsRepaired = JSON.parse(pathsRepairedRaw) as ParsedPaths;
+        if (isUsablePaths(pathsRepaired)) paths = pathsRepaired;
+      } catch {
+        // Keep the unrepaired paths.
+      }
+
+      const lore = [
+        foundation.lore,
+        typeof paths.possiblePaths === "string" ? paths.possiblePaths : "",
+        typeof paths.followUpHooks === "string" ? paths.followUpHooks : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const output: GeneratorOutput = {
+        title: foundation.title,
+        summary: foundation.summary,
+        lore,
+        content:
+          typeof foundation.content === "string"
+            ? foundation.content
+            : undefined,
+        labels: Array.isArray(foundation.labels) ? foundation.labels : [],
+        connections: parseConnections(foundation.connections),
+      };
+      return generator.mapOutputToDraft(output, request);
+    } catch {
+      return null;
+    }
+  }
+
+  private async *generateCouncilVoteWithAIStream(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    const generator = getGenerator(request.generatorId);
+    const mergedRequest: GeneratorRunRequest = {
+      ...request,
+      options: {
+        ...getThemeDefaults(request.themeId, request.generatorId),
+        ...request.options,
+      },
+    };
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      !!this.aiGateway?.startChat;
+
+    if (!canUseAI) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    async function* sendTurn(
+      chat: AIGeneratorChatSession,
+      label: string,
+      message: string,
+    ): AsyncGenerator<GenerationEvent, string> {
+      yield { type: "phase", label };
+      if (!chat.sendStream) {
+        yield { type: "started" };
+        const text = await chat.send(message);
+        yield { type: "complete", text };
+        return text;
+      }
+      let text = "";
+      for await (const event of chat.sendStream(message, signal)) {
+        if (event.type === "complete") text = event.text;
+        yield event;
+      }
+      return text;
+    }
+
+    try {
+      const chat = await this.aiGateway!.startChat!(SYSTEM_INSTRUCTION);
+      const foundationRaw = yield* sendTurn(
+        chat,
+        "Drafting the council's founding stance…",
+        councilVoteFoundationPrompt(mergedRequest),
+      );
+      if (signal?.aborted) return;
+      const parsedFoundation = JSON.parse(
+        foundationRaw,
+      ) as Partial<GeneratorOutput>;
+      if (!isUsableCouncilVoteFoundation(parsedFoundation)) {
+        yield { type: "draft", draft: await this.generateDraft(request) };
+        return;
+      }
+      let foundation = parsedFoundation;
+
+      try {
+        const repairedRaw = yield* sendTurn(
+          chat,
+          "Checking the council's stance for consistency…",
+          councilVoteFoundationRepairPrompt(),
+        );
+        if (signal?.aborted) return;
+        const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
+        if (isUsableCouncilVoteFoundation(repaired)) foundation = repaired;
+      } catch {
+        // A repair failure retains the usable foundation from the prior turn.
+      }
+
+      const pathsRaw = yield* sendTurn(
+        chat,
+        "Charting possible paths…",
+        councilVotePathsPrompt(),
+      );
+      if (signal?.aborted) return;
+      let paths = JSON.parse(pathsRaw) as CouncilVotePaths;
+      try {
+        const repairedRaw = yield* sendTurn(
+          chat,
+          "Refining the possible paths…",
+          councilVotePathsRepairPrompt(),
+        );
+        if (signal?.aborted) return;
+        const repaired = JSON.parse(repairedRaw) as CouncilVotePaths;
+        if (isUsableCouncilVotePaths(repaired)) paths = repaired;
+      } catch {
+        // A repair failure retains the usable paths from the prior turn.
+      }
+
+      yield {
+        type: "draft",
+        draft: generator.mapOutputToDraft(
+          buildCouncilVoteOutput(foundation, paths),
+          mergedRequest,
+        ),
+      };
+    } catch {
+      if (!signal?.aborted) {
+        yield { type: "draft", draft: await this.generateDraft(request) };
+      }
     }
   }
 
@@ -323,6 +866,21 @@ export class CampaignGeneratorService {
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
+    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "heist") {
+      try {
+        const output = await generateCampaignHeist(
+          mergedRequest,
+          this.aiGateway,
+        );
+        return generator.mapOutputToDraft(
+          { ...output, summary: output.summary ?? "" },
+          mergedRequest,
+        );
+      } catch {
+        // Initial generation failed; use the local heist below.
+      }
+    }
+
     if (canUseAI && this.aiGateway && mergedRequest.generatorId === "dungeon") {
       const dungeonDraft = await this.generateDungeonWithAI(
         generator,
@@ -331,24 +889,43 @@ export class CampaignGeneratorService {
       if (dungeonDraft) return dungeonDraft;
     }
 
-    if (canUseAI && this.aiGateway && mergedRequest.generatorId !== "dungeon") {
-      const fullPrompt = generator.buildPrompt({
-        ...mergedRequest,
-        interaction: undefined,
-      });
-      const prompt = mergedRequest.interaction
-        ? generator.buildPrompt(mergedRequest)
-        : fullPrompt;
-      const interaction = mergedRequest.interaction
-        ? {
-            ...mergedRequest.interaction,
-            input: withGeneratorRequest(
-              mergedRequest.interaction.input,
-              prompt,
-            ),
-            replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
-          }
-        : undefined;
+    if (
+      canUseAI &&
+      this.aiGateway &&
+      mergedRequest.generatorId === "language"
+    ) {
+      const languageDraft = await this.generateLanguageWithAI(
+        generator,
+        mergedRequest,
+        bannedNames,
+      );
+      if (languageDraft) return languageDraft;
+    }
+
+    if (
+      canUseAI &&
+      this.aiGateway &&
+      mergedRequest.generatorId === "council-vote"
+    ) {
+      const councilVoteDraft = await this.generateCouncilVoteWithAI(
+        generator,
+        mergedRequest,
+      );
+      if (councilVoteDraft) return councilVoteDraft;
+    }
+
+    if (
+      canUseAI &&
+      this.aiGateway &&
+      mergedRequest.generatorId !== "dungeon" &&
+      mergedRequest.generatorId !== "language" &&
+      mergedRequest.generatorId !== "heist" &&
+      mergedRequest.generatorId !== "council-vote"
+    ) {
+      const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+        generator,
+        mergedRequest,
+      );
       // Retry a few times if the model returns a banned name (including
       // derivatives like "Vane-Smithe"); fall through to local generation if it
       // keeps doing so.
@@ -362,22 +939,12 @@ export class CampaignGeneratorService {
             },
           );
           const raw = completeText(result);
-          const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
-          if (
-            typeof parsed.title === "string" &&
-            typeof parsed.summary === "string" &&
-            typeof parsed.lore === "string"
-          ) {
-            if (isTitleBanned(parsed.title, bannedNames)) continue;
-            const output: GeneratorOutput = {
-              title: parsed.title,
-              summary: parsed.summary,
-              lore: parsed.lore,
-              content:
-                typeof parsed.content === "string" ? parsed.content : undefined,
-              labels: Array.isArray(parsed.labels) ? parsed.labels : [],
-              connections: parseConnections(parsed.connections),
-            };
+          const output = parseGenericGeneratorOutput(
+            raw,
+            mergedRequest.generatorId,
+          );
+          if (output) {
+            if (isTitleBanned(output.title, bannedNames)) continue;
             if (typeof result !== "string" && result.usedInteraction) {
               this.onInteractionResult?.(result);
             }
@@ -403,12 +970,204 @@ export class CampaignGeneratorService {
       }
     }
 
-    let output = generator.generate(mergedRequest);
+    let output: GeneratorOutput;
+    try {
+      output = generator.generate(mergedRequest);
+    } catch (error) {
+      if (mergedRequest.generatorId === "language") {
+        throw new LanguageGenerationError(
+          "The local language generator could not produce a valid profile. Please try again.",
+        );
+      }
+      throw error;
+    }
+    if (mergedRequest.generatorId === "language") {
+      assertValidLanguageFallback(output, bannedNames);
+      return generator.mapOutputToDraft(output, mergedRequest);
+    }
     // Retry up to 5× if the generated title collides with a banned name.
     for (let i = 0; i < 5 && isTitleBanned(output.title, bannedNames); i++) {
       output = generator.generate(mergedRequest);
     }
     return generator.mapOutputToDraft(output, mergedRequest);
+  }
+
+  /**
+   * Streaming counterpart to `generateDraft` (#2423), for the *generic*
+   * single-call generator branch only (every generator except dungeon,
+   * language, and council-vote, which use multi-pass repair loops or a chat
+   * session that this v1 doesn't stream). Yields `GenerationEvent`s
+   * (`started`/`delta`/`field`/`complete`/`error`) as they arrive so the UI
+   * can render progressively, then exactly one final `{ type: "draft" }`
+   * event carrying the fully validated `GeneratedDraft` — mirroring
+   * `generateDraft`'s exact validation/retry/local-fallback behavior, just
+   * reached incrementally instead of after one full await. Falls back to
+   * calling `generateDraft` itself (yielding only `started` then `draft`)
+   * whenever streaming isn't actually available or applicable, so a caller
+   * can always use this method uniformly rather than branching on generator
+   * type or gateway capability itself.
+   */
+  async *generateDraftStream(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    if (request.generatorId === "heist") {
+      if (signal?.aborted) return;
+      yield { type: "started" };
+      const mergedRequest = {
+        ...request,
+        options: {
+          ...getThemeDefaults(request.themeId, "heist"),
+          ...request.options,
+        },
+      };
+      const generator = getGenerator("heist");
+      if (
+        request.useAI &&
+        this.aiPolicy.isEnabled &&
+        this.aiPolicy.isAvailable &&
+        this.aiGateway
+      ) {
+        try {
+          const output = yield* streamCampaignHeist(
+            mergedRequest,
+            this.aiGateway,
+            signal,
+          );
+          if (!signal?.aborted)
+            yield {
+              type: "draft",
+              draft: generator.mapOutputToDraft(
+                { ...output, summary: output.summary ?? "" },
+                mergedRequest,
+              ),
+            };
+          return;
+        } catch {
+          if (signal?.aborted) return;
+        }
+      }
+      if (!signal?.aborted)
+        yield {
+          type: "draft",
+          draft: await this.generateDraft({ ...mergedRequest, useAI: false }),
+        };
+      return;
+    }
+    if (request.generatorId === "council-vote") {
+      yield* this.generateCouncilVoteWithAIStream(request, signal);
+      return;
+    }
+
+    const isStreamableGenericGenerator =
+      request.generatorId !== "dungeon" && request.generatorId !== "language";
+
+    if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    const generator = getGenerator(request.generatorId);
+    const themeDefaults = getThemeDefaults(
+      request.themeId,
+      request.generatorId,
+    );
+    const mergedRequest: GeneratorRunRequest = {
+      ...request,
+      options: { ...themeDefaults, ...request.options },
+    };
+
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      !!this.aiGateway;
+    mergedRequest.useAI = canUseAI;
+
+    if (!canUseAI) {
+      yield { type: "started" };
+      yield { type: "draft", draft: await this.generateDraft(request) };
+      return;
+    }
+
+    const bannedNames = new Set([
+      ...(mergedRequest.vaultContext?.bannedNames ?? []),
+      ...(mergedRequest.vaultContext?.existingTitles ?? []),
+    ]);
+
+    const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+      generator,
+      mergedRequest,
+    );
+
+    // Same retry-on-banned-name policy as generateDraft's generic branch —
+    // each attempt is a fresh stream, since a name-ban rejection can only be
+    // known after the model's response is fully parsed.
+    for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
+      let raw = "";
+      let interactionId: string | undefined;
+      let replayed = false;
+      let sawComplete = false;
+
+      try {
+        for await (const event of this.aiGateway.completeStream(
+          fullPrompt,
+          SYSTEM_INSTRUCTION,
+          { interaction, signal },
+        )) {
+          if (event.type === "complete") {
+            raw = event.text;
+            interactionId = event.interactionId;
+            replayed = !!event.replayed;
+            sawComplete = true;
+          }
+          yield event;
+        }
+      } catch {
+        if (signal?.aborted) return; // User cancelled — no fallback draft.
+        break; // Network/stream failure — fall through to local.
+      }
+
+      if (signal?.aborted) return; // User cancelled — no fallback draft.
+      if (!sawComplete) break; // Adaptor reported an `error` event — fall through to local.
+
+      const output = parseGenericGeneratorOutput(
+        raw,
+        mergedRequest.generatorId,
+      );
+      if (!output) break; // Valid stream, wrong shape — fall through to local.
+      if (isTitleBanned(output.title, bannedNames)) continue;
+
+      if (interaction && interactionId) {
+        this.onInteractionResult?.({
+          text: raw,
+          interactionId,
+          usedInteraction: true,
+          replayed,
+        });
+      }
+      this.onPromptMetrics?.(
+        promptMetrics({
+          request: mergedRequest,
+          fullPrompt,
+          sentPrompt: replayed
+            ? (interaction?.replayPrompt ?? fullPrompt)
+            : (interaction?.input ?? fullPrompt),
+          usedInteraction: !!interaction,
+          replayed,
+        }),
+      );
+      yield {
+        type: "draft",
+        draft: generator.mapOutputToDraft(output, mergedRequest),
+      };
+      return;
+    }
+
+    yield { type: "draft", draft: await this.generateDraft(request) };
   }
 
   /**
@@ -446,6 +1205,8 @@ export class CampaignGeneratorService {
           draft.sourceGeneratorId === "dungeon"
             ? draft.sourceGeneratorId
             : undefined,
+        languageProfile: draft.languageProfile,
+        languageProfileVersion: draft.languageProfileVersion,
         ...(request.start_date ? { start_date: request.start_date } : {}),
       },
     );

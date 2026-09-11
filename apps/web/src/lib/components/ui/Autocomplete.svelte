@@ -207,6 +207,7 @@
     >
       {#each results as result, i}
         <button
+          type="button"
           id="{finalId}-option-{i}"
           role="option"
           tabindex="-1"
@@ -224,6 +225,7 @@
                 categories.getCategory(result.type)?.icon,
               )} w-3.5 h-3.5 shrink-0"
               style="color: {categories.getColor(result.type)}"
+              aria-hidden="true"
             ></span>
           {/if}
           <span class="truncate text-xs">{result.title}</span>

@@ -1,9 +1,16 @@
-import { type CanvasNode, type CanvasEdge, type Canvas } from "./types";
+import {
+  type CanvasNode,
+  type CanvasEdge,
+  type Canvas,
+  type CanvasFile,
+  type CanvasDrawing,
+} from "./types";
 import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 
 export class CanvasStore {
   nodes = $state<CanvasNode[]>([]);
   edges = $state<CanvasEdge[]>([]);
+  drawings = $state<CanvasDrawing[]>([]);
   private readonly idGenerator: IdGenerator;
 
   constructor(initialData?: Canvas, deps: { idGenerator?: IdGenerator } = {}) {
@@ -16,6 +23,7 @@ export class CanvasStore {
   loadData(data: Canvas) {
     this.nodes = data.nodes;
     this.edges = data.edges;
+    this.drawings = data.drawings ?? [];
   }
 
   async load(json: string) {
@@ -33,6 +41,28 @@ export class CanvasStore {
       type: "entity",
       entityId,
       position,
+    };
+    this.nodes = [...this.nodes, newNode];
+    return newNode.id;
+  }
+
+  addFileNode(file: CanvasFile, position: { x: number; y: number }) {
+    const newNode: CanvasNode = {
+      id: `file-${this.idGenerator.uuid()}`,
+      type: "file",
+      file,
+      position,
+    };
+    this.nodes = [...this.nodes, newNode];
+    return newNode.id;
+  }
+
+  addTextNode(text: string, position: { x: number; y: number }) {
+    const newNode: CanvasNode = {
+      id: `text-${this.idGenerator.uuid()}`,
+      type: "text",
+      position,
+      data: { text },
     };
     this.nodes = [...this.nodes, newNode];
     return newNode.id;
@@ -89,6 +119,18 @@ export class CanvasStore {
     this.edges = this.edges.filter((e) => e.id !== edgeId);
   }
 
+  addDrawing(drawing: CanvasDrawing) {
+    this.drawings = [...this.drawings, drawing];
+  }
+
+  removeDrawing(drawingId: string) {
+    this.drawings = this.drawings.filter((drawing) => drawing.id !== drawingId);
+  }
+
+  clearDrawings() {
+    this.drawings = [];
+  }
+
   undo() {
     console.warn("Undo not implemented");
   }
@@ -101,6 +143,7 @@ export class CanvasStore {
     return {
       nodes: $state.snapshot(this.nodes),
       edges: $state.snapshot(this.edges),
+      drawings: $state.snapshot(this.drawings),
     };
   }
 }

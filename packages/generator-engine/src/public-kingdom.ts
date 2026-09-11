@@ -18,6 +18,7 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { buildRealmName, buildCapitalName } from "./realm-names";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export const kingdomConfig = {
   polityTypes: [
@@ -165,7 +166,7 @@ ${sessionContext}`;
 - Geography: ${resolved.geography}
 - Scale: ${resolved.scale}
 - Conflict Level: ${resolved.conflictLevel}
-- Magic Level: ${resolved.magicLevel}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}
+- Magic Level: ${resolved.magicLevel}${formatCampaignContextBlock(resolved.campaignContext)}
 - Naming Directive: ${resolved.namingDirective}`;
 
   return { systemInstruction, userMessage, resolved };

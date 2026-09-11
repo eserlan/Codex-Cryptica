@@ -2,6 +2,7 @@
   import { slide, fade } from "svelte/transition";
   import CCImportReview from "$lib/features/importer/CCImportReview.svelte";
   import CCImportReport from "$lib/features/importer/CCImportReport.svelte";
+  import MissingImageResolver from "$lib/features/importer/MissingImageResolver.svelte";
   import ImportProgress from "../import/ImportProgress.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import ImportSourcePicker from "./ImportSourcePicker.svelte";
@@ -56,6 +57,7 @@
         showResumeToast={controller.showResumeToast}
         onRestart={controller.handleRestart}
         onFileSelect={controller.handleFiles}
+        onVaultFilesSelect={controller.handleVaultFiles}
         rejectedFiles={controller.rejectedFiles}
         masterPacks={controller.masterPacks}
         getSubpacks={controller.getSubpacks}
@@ -163,6 +165,14 @@
         </div>
       {/if}
 
+      {#if controller.ccSession?.sourceSystem === "vault-files"}
+        <MissingImageResolver
+          refs={controller.missingImageRefs}
+          onAddFile={controller.handleAddMissingImageFile}
+          onUseFolder={controller.handleResolveMissingImageFromFolder}
+        />
+      {/if}
+
       {#if controller.ccSession}
         <section
           class="mb-4 rounded border border-theme-primary/30 bg-theme-primary/10 p-3"
@@ -182,6 +192,8 @@
                   Chronica import ready
                 {:else if controller.ccSession.sourceSystem === "cif"}
                   CIF import ready
+                {:else if controller.ccSession.sourceSystem === "vault-files"}
+                  Import Files ready
                 {:else}
                   Oracle import ready
                 {/if}

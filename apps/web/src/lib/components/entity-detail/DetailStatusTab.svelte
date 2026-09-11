@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { Entity, GuestChatConfig } from "schema";
+  import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
@@ -15,7 +14,11 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
-  import { generatePersonality } from "./generate-personality";
+  import {
+    buildConnectionNeighbors,
+    toConnectionRows,
+    vaultConnectionContext,
+  } from "./entity-connections";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import {
     dungeonDelveService,
@@ -25,50 +28,20 @@
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
-  let isGeneratingPersonality = $state(false);
-  let personalityError = $state<string | null>(null);
-
-  const hasPersonalitySection = $derived.by(() => {
-    const lore = isEditing ? editLore || entity.lore || "" : entity.lore || "";
-    return /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore);
-  });
-
-  async function handleGeneratePersonality() {
-    if (isGeneratingPersonality) return false;
-    return generatePersonality({
-      entity,
-      editContent,
-      getEditLore: () => editLore,
-      setEditLore: (lore: string) => {
-        editLore = lore;
-      },
-      setGenerating: (generating: boolean) => {
-        isGeneratingPersonality = generating;
-      },
-      setError: (error: string | null) => {
-        personalityError = error;
-      },
-    });
-  }
-
   let {
     entity,
     isEditing,
     editType,
     editContent = $bindable(),
-    editLore = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
-    editGuestChatConfig = $bindable(),
   } = $props<{
     entity: Entity;
     isEditing: boolean;
     editType: string;
     editContent: string;
-    editLore?: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
-    editGuestChatConfig?: GuestChatConfig;
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
@@ -76,6 +49,15 @@
   let isAddingConnection = $state(false);
   let prefillConnectionTargetId = $state<string | null>(null);
   let prefillConnectionTargetName = $state("");
+
+  // The "*" suffix on a name marks a past-labelled entity. It's a purely
+  // visual footnote with no legend anywhere in the app, so the `sr-only`
+  // spans below pair it with text. Other surfaces rendering the same marker
+  // (DetailHeader, NodeReadModal, EntityListItem, MapPinPopover, PinLinker,
+  // TokenAddDialog) do the same.
+  const entityIsPast = $derived(
+    entity?.labels?.some((l: string) => l.toLowerCase() === "past") ?? false,
+  );
 
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
@@ -86,84 +68,15 @@
     });
   });
 
+  // The Status list and the Connections tab (issue #2350) read the same
+  // 1-hop set from `entity-connections`, so a rule added to one surface can't
+  // silently skip the other. `toConnectionRows` keeps the per-relationship
+  // row shape this list edits (and hands to ConnectionEditor).
   let allConnections = $derived.by(() => {
     if (!entity) return [];
-
-    const checkVisibility = (targetId: string) => {
-      const targetEntity = vault.entities[targetId];
-      if (!targetEntity) return false;
-      if (!vault.isGuest) return true;
-      return isEntityVisible(targetEntity, {
-        sharedMode: vault.isGuest,
-        defaultVisibility: vault.defaultVisibility,
-      });
-    };
-
-    // ⚡ Bolt Optimization: Replace multiple .map() calls and array spread
-    // with imperative loops using .push() to eliminate intermediate array
-    // allocations and reduce GC overhead on reactive updates.
-    const result = [];
-
-    for (const c of entity.connections) {
-      if (checkVisibility(c.target)) {
-        result.push({
-          ...c,
-          isOutbound: true,
-          displayTitle: vault.entities[c.target]?.title || c.target,
-          targetId: c.target,
-          hasPastLabel:
-            vault.entities[c.target]?.labels?.some(
-              (l) => l.toLowerCase() === "past",
-            ) ?? false,
-        });
-      }
-    }
-
-    const inboundList = vault.inboundConnections[entity.id];
-    if (inboundList) {
-      for (const item of inboundList) {
-        if (checkVisibility(item.sourceId)) {
-          result.push({
-            ...item.connection,
-            isOutbound: false,
-            displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
-            targetId: item.sourceId,
-            hasPastLabel:
-              vault.entities[item.sourceId]?.labels?.some(
-                (l) => l.toLowerCase() === "past",
-              ) ?? false,
-          });
-        }
-      }
-    }
-
-    // Add children if exist
-    const entityId = entity.id.toLowerCase();
-    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
-    const allEntities = vault.allEntities || [];
-
-    for (let i = 0; i < allEntities.length; i++) {
-      const child = allEntities[i];
-      if (child.parent && child.parent.toLowerCase() === entityId) {
-        if (checkVisibility(child.id)) {
-          const alreadyConnected = result.some((c) => c.targetId === child.id);
-          if (!alreadyConnected) {
-            result.push({
-              targetId: child.id,
-              type: "child",
-              label: "Child",
-              isOutbound: false,
-              isChild: true,
-              displayTitle: child.title,
-              hasPastLabel:
-                child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
-            });
-          }
-        }
-      }
-    }
-
-    return result;
+    return toConnectionRows(
+      buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
+    );
   });
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
@@ -207,18 +120,6 @@
         >
           <span class="icon-[lucide--sparkles] w-4 h-4"></span>
           Generate Related
-        </button>
-      </div>
-    {:else if entity.type === "character" && entity.guestChatConfig?.isEnabled && hasPersonalitySection}
-      <div class="flex justify-end">
-        <button
-          type="button"
-          onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-          data-testid="status-tab-guest-chat-button"
-        >
-          <span class="icon-[lucide--messages-square] w-4 h-4"></span>
-          Chat with {entity.title}
         </button>
       </div>
     {/if}
@@ -418,6 +319,7 @@
         {:else}
           <li class="flex gap-3 text-sm text-theme-muted items-start group">
             <span
+              aria-hidden="true"
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
                 ? 'icon-[lucide--chevron-down]'
                 : conn.isOutbound
@@ -429,6 +331,13 @@
                   ? "var(--theme-icon-active)"
                   : "var(--theme-icon-default)"}
             ></span>
+            <span class="sr-only"
+              >{conn.isChild
+                ? "Child of this entity:"
+                : conn.isOutbound
+                  ? "Outgoing connection:"
+                  : "Incoming connection:"}</span
+            >
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
                 onclick={(e) => {
@@ -442,51 +351,72 @@
               >
                 {#if conn.isChild}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >Child</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else if conn.isOutbound}
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {/if}
               </button>
@@ -498,7 +428,7 @@
                       type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => (editingConnectionTarget = conn.targetId)}
-                      aria-label="Edit connection"
+                      aria-label="Edit connection to {conn.displayTitle}"
                       title="Edit connection"
                     >
                       <span
@@ -516,7 +446,7 @@
                         prefillConnectionTargetName = conn.displayTitle;
                         isAddingConnection = true;
                       }}
-                      aria-label="Establish custom connection"
+                      aria-label="Establish custom connection to {conn.displayTitle}"
                       title="Establish custom connection"
                     >
                       <span
@@ -547,7 +477,7 @@
                         );
                       }
                     }}
-                    aria-label="Delete connection"
+                    aria-label="Delete connection to {conn.displayTitle}"
                     title="Delete connection"
                   >
                     <span
@@ -566,230 +496,6 @@
       {/if}
     </ul>
   </div>
-
-  <!-- Guest Character Chat Settings (Host Only, Type must be character) -->
-  {#if !vault.isGuest && (editType === "character" || entity.type === "character")}
-    <div
-      class="border border-theme-border rounded-xl p-4 bg-theme-surface/5 space-y-4"
-    >
-      <div
-        class="flex items-center justify-between border-b border-theme-border pb-2"
-      >
-        <h4
-          class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
-        >
-          <span
-            class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
-          ></span>
-          Guest Character Chat
-        </h4>
-        {#if !isEditing}
-          <span
-            class="text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider {entity
-              .guestChatConfig?.isEnabled
-              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-              : 'bg-theme-muted/10 text-theme-muted border border-theme-border'}"
-          >
-            {entity.guestChatConfig?.isEnabled ? "Enabled" : "Disabled"}
-          </span>
-        {/if}
-      </div>
-
-      {#if isEditing}
-        <div class="space-y-4 text-sm">
-          <!-- Toggle Availability -->
-          <label class="flex items-center gap-3 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={!!editGuestChatConfig?.isEnabled}
-              onchange={(e) => {
-                if (editGuestChatConfig) {
-                  editGuestChatConfig.isEnabled = e.currentTarget.checked;
-                  editGuestChatConfig = { ...editGuestChatConfig };
-                  if (editGuestChatConfig.isEnabled && !hasPersonalitySection) {
-                    void handleGeneratePersonality();
-                  }
-                }
-              }}
-              class="w-4 h-4 accent-theme-primary rounded border-theme-border bg-theme-bg"
-            />
-            <span class="font-bold text-theme-text"
-              >Enable Guest Character Chat</span
-            >
-          </label>
-
-          {#if editGuestChatConfig?.isEnabled}
-            <div
-              class="pl-7 space-y-4 border-l-2 border-theme-border/50 transition-all"
-            >
-              <!-- Context Scope Option -->
-              <div class="space-y-1">
-                <span
-                  class="block text-xs font-bold uppercase tracking-wider text-theme-muted"
-                  >Context & Knowledge Scope</span
-                >
-                <div class="flex gap-4">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="contextScope"
-                      value="public"
-                      checked={editGuestChatConfig?.contextScope === "public"}
-                      onchange={() => {
-                        if (editGuestChatConfig) {
-                          editGuestChatConfig.contextScope = "public";
-                          editGuestChatConfig = { ...editGuestChatConfig };
-                        }
-                      }}
-                      class="accent-theme-primary"
-                    />
-                    <span>Public Lore Only</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="contextScope"
-                      value="hybrid"
-                      checked={editGuestChatConfig?.contextScope === "hybrid"}
-                      onchange={() => {
-                        if (editGuestChatConfig) {
-                          editGuestChatConfig.contextScope = "hybrid";
-                          editGuestChatConfig = { ...editGuestChatConfig };
-                        }
-                      }}
-                      class="accent-theme-primary"
-                    />
-                    <span>Public + Private Context</span>
-                  </label>
-                </div>
-                <p class="text-xs text-theme-muted mt-1 leading-normal">
-                  {editGuestChatConfig?.contextScope === "public"
-                    ? "Guests can only query this character using their public description and tags/labels."
-                    : "Allows the AI to guide hints/responses using hidden GM notes, but strictly prohibits repeating them directly."}
-                </p>
-              </div>
-
-              <!-- Personality & Voice section status -->
-              <div class="flex items-center justify-between text-xs">
-                <span
-                  class="font-bold uppercase tracking-wider text-theme-muted"
-                  >Personality & Voice</span
-                >
-                {#if hasPersonalitySection}
-                  <span
-                    class="flex items-center gap-1 text-emerald-500 font-semibold"
-                  >
-                    <span class="icon-[lucide--check-circle] w-3.5 h-3.5"
-                    ></span>
-                    Found in character lore
-                  </span>
-                {:else}
-                  <div class="flex items-center gap-2">
-                    <span
-                      class="flex items-center gap-1 text-amber-500 font-semibold"
-                    >
-                      <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
-                      ></span>
-                      Missing from lore
-                    </span>
-                    <button
-                      type="button"
-                      onclick={handleGeneratePersonality}
-                      disabled={isGeneratingPersonality}
-                      aria-busy={isGeneratingPersonality}
-                      class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
-                    >
-                      <span
-                        class={isGeneratingPersonality
-                          ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
-                          : "icon-[lucide--sparkles] w-3 h-3"}
-                      ></span>
-                      {isGeneratingPersonality ? "Generating..." : "Generate"}
-                    </button>
-                  </div>
-                {/if}
-              </div>
-              {#if personalityError}
-                <p
-                  class="text-[10px] text-theme-danger flex items-center gap-1 font-semibold"
-                >
-                  <span class="icon-[lucide--circle-alert] w-3.5 h-3.5"></span>
-                  {personalityError}
-                </p>
-              {/if}
-
-              <!-- Additional Settings -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <label
-                  class="flex items-center gap-2 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!editGuestChatConfig?.isHostReviewable}
-                    onchange={(e) => {
-                      if (editGuestChatConfig) {
-                        editGuestChatConfig.isHostReviewable =
-                          e.currentTarget.checked;
-                        editGuestChatConfig = { ...editGuestChatConfig };
-                      }
-                    }}
-                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
-                  />
-                  <span class="text-xs text-theme-text"
-                    >Host can review logs (P2P Sync)</span
-                  >
-                </label>
-
-                <label
-                  class="flex items-center gap-2 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!editGuestChatConfig?.keepMemory}
-                    onchange={(e) => {
-                      if (editGuestChatConfig) {
-                        editGuestChatConfig.keepMemory =
-                          e.currentTarget.checked;
-                        editGuestChatConfig = { ...editGuestChatConfig };
-                      }
-                    }}
-                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
-                  />
-                  <span class="text-xs text-theme-text"
-                    >Retain memory between guest visits</span
-                  >
-                </label>
-              </div>
-            </div>
-          {/if}
-        </div>
-      {:else if entity.guestChatConfig?.isEnabled}
-        <!-- Read-only Info for Host -->
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <span class="text-theme-muted block">Context Scope:</span>
-            <span class="font-bold text-theme-text capitalize"
-              >{entity.guestChatConfig.contextScope} Lore</span
-            >
-          </div>
-          <div>
-            <span class="text-theme-muted block">Synced Review:</span>
-            <span class="font-bold text-theme-text"
-              >{entity.guestChatConfig.isHostReviewable
-                ? "Active"
-                : "Disabled"}</span
-            >
-          </div>
-        </div>
-      {:else}
-        <p class="text-xs text-theme-muted italic">
-          Guest Character Chat is disabled. Click the "EDIT" button at the top
-          of this panel to enable it and let invited players chat with this
-          character.
-        </p>
-      {/if}
-    </div>
-  {/if}
 
   <DetailProposals {isEditing} />
   <EntityProposals

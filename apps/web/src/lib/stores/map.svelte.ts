@@ -1,6 +1,11 @@
 import { vault } from "./vault.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
-import { imageToViewport, viewportToImage } from "map-engine";
+import {
+  imageToViewport,
+  viewportToImage,
+  MAP_LAYER_ORDER,
+  type MapLayer,
+} from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -12,8 +17,13 @@ import {
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
 
+/** Fixed canvas size for a blank map, which has no image to derive size from. */
+export const BLANK_MAP_SIZE = 4000;
+
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
+export type TokenVisionMode = "party" | "selected";
+
 type PersistedMapSettings = {
   showFog: boolean;
   showGrid: boolean;
@@ -23,7 +33,21 @@ type PersistedMapSettings = {
   gridOffsetY: number;
   gridColor: string | null;
   showLabels: boolean;
+  visionMode: TokenVisionMode;
+  /** Vision distance in grid units (e.g. feet), not pixels — converted to
+   * pixels using the map's gridSize/gridDistance at reveal time. */
+  visionRange: number;
+  /** Per-layer view toggle and edit-lock. GM-local, not synced to guests —
+   * same tier as showFog/showGrid. */
+  layerVisibility: Record<MapLayer, boolean>;
+  layerLocked: Record<MapLayer, boolean>;
 };
+
+function layerRecord<T>(value: T): Record<MapLayer, T> {
+  return Object.fromEntries(
+    MAP_LAYER_ORDER.map((layer) => [layer, value]),
+  ) as Record<MapLayer, T>;
+}
 
 type PersistedMapPageState = {
   activeMapId: string | null;
@@ -39,6 +63,10 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   gridOffsetY: 0,
   gridColor: null,
   showLabels: true,
+  visionMode: "party",
+  visionRange: 60,
+  layerVisibility: layerRecord(true),
+  layerLocked: layerRecord(false),
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -65,9 +93,14 @@ export class MapStore {
   gridOffsetX = $state(0);
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
+  visionMode = $state<TokenVisionMode>("party");
+  visionRange = $state(60);
+  layerVisibility = $state<Record<MapLayer, boolean>>(layerRecord(true));
+  layerLocked = $state<Record<MapLayer, boolean>>(layerRecord(false));
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private _viewportPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private static _vaultSwitchHandler: (() => void) | null = null;
   private storage: StorageLike;
   private idGenerator: IdGenerator;
@@ -115,6 +148,14 @@ export class MapStore {
             this.gridOffsetY,
             this.gridColor,
             this.showLabels,
+            this.visionMode,
+            this.visionRange,
+            // Individual properties, not the object references — Svelte's
+            // $state proxy only tracks reads at property-access granularity,
+            // so reading the Record itself wouldn't re-run this effect when
+            // a single layer's flag toggles.
+            ...MAP_LAYER_ORDER.map((layer) => this.layerVisibility[layer]),
+            ...MAP_LAYER_ORDER.map((layer) => this.layerLocked[layer]),
           ];
           void tracked;
           this.schedulePersistSettings();
@@ -156,12 +197,8 @@ export class MapStore {
               this.selectMap(this.worldMap.id);
             } else if (
               hasLoadedMaps &&
-              sessionModeStore.isGuestMode &&
-              guestVault.publishId
+              (!sessionModeStore.isGuestMode || guestVault.publishId)
             ) {
-              // Published-vault readers browse on their own — there's no
-              // live host to pick a map for them, so fall back to the first
-              // published map rather than leaving the view empty.
               this.selectMap(Object.keys(maps)[0]);
             }
           }
@@ -214,6 +251,28 @@ export class MapStore {
           typeof parsed.showLabels === "boolean"
             ? parsed.showLabels
             : DEFAULT_MAP_SETTINGS.showLabels,
+        visionMode:
+          parsed.visionMode === "party" || parsed.visionMode === "selected"
+            ? parsed.visionMode
+            : DEFAULT_MAP_SETTINGS.visionMode,
+        visionRange:
+          typeof parsed.visionRange === "number"
+            ? parsed.visionRange
+            : DEFAULT_MAP_SETTINGS.visionRange,
+        // Spread-merged over defaults (not a bare typeof check) so an old
+        // persisted blob missing a since-added layer doesn't produce
+        // `undefined` for it.
+        layerVisibility:
+          parsed.layerVisibility && typeof parsed.layerVisibility === "object"
+            ? {
+                ...DEFAULT_MAP_SETTINGS.layerVisibility,
+                ...parsed.layerVisibility,
+              }
+            : DEFAULT_MAP_SETTINGS.layerVisibility,
+        layerLocked:
+          parsed.layerLocked && typeof parsed.layerLocked === "object"
+            ? { ...DEFAULT_MAP_SETTINGS.layerLocked, ...parsed.layerLocked }
+            : DEFAULT_MAP_SETTINGS.layerLocked,
       };
     } catch {
       return null;
@@ -246,6 +305,10 @@ export class MapStore {
       gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
       showLabels: this.showLabels,
+      visionMode: this.visionMode,
+      visionRange: this.visionRange,
+      layerVisibility: this.layerVisibility,
+      layerLocked: this.layerLocked,
     };
 
     try {
@@ -365,6 +428,10 @@ export class MapStore {
       this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
       this.showLabels = next.showLabels;
+      this.visionMode = next.visionMode;
+      this.visionRange = next.visionRange;
+      this.layerVisibility = next.layerVisibility;
+      this.layerLocked = next.layerLocked;
     } finally {
       this.isRestoringSettings = false;
     }
@@ -421,7 +488,22 @@ export class MapStore {
 
   updateViewport(pan: Point, zoom: number) {
     this.viewport = { pan, zoom };
-    this.persistPageState();
+    // Called on every pointermove while panning/dragging (including a map
+    // being nudged under a fixed grid for fine-tuning) — persisting
+    // synchronously here does a blocking localStorage read+write per frame,
+    // which was dropping frames badly enough to look like the drag was
+    // snapping to grid increments. Debounce it like schedulePersistSettings.
+    this.schedulePersistPageState();
+  }
+
+  private schedulePersistPageState() {
+    if (this._viewportPersistTimer !== null) {
+      clearTimeout(this._viewportPersistTimer);
+    }
+    this._viewportPersistTimer = setTimeout(() => {
+      this._viewportPersistTimer = null;
+      this.persistPageState();
+    }, 250);
   }
 
   setCanvasSize(width: number, height: number) {
@@ -465,6 +547,34 @@ export class MapStore {
       name,
       assetPath: `maps/${storageName}`,
       dimensions: { width: 0, height: 0 }, // Will be updated on first load
+      pins: [],
+      fogOfWar: {
+        maskPath: `maps/${id}_mask.png`,
+      },
+    };
+
+    vault.maps[id] = map;
+    await vault.saveMaps();
+    this.selectMap(id);
+    return id;
+  }
+
+  /**
+   * Creates a map with no background image — a fixed-size blank canvas meant
+   * to be built up entirely from placed tile-deck tiles.
+   */
+  async createBlankMap(name: string): Promise<string | undefined> {
+    const vaultDir = await vault.getActiveVaultHandle();
+    if (!vaultDir) {
+      return undefined;
+    }
+
+    const id = this.idGenerator.uuid();
+    const map: Map = {
+      id,
+      name,
+      assetPath: "",
+      dimensions: { width: BLANK_MAP_SIZE, height: BLANK_MAP_SIZE },
       pins: [],
       fogOfWar: {
         maskPath: `maps/${id}_mask.png`,

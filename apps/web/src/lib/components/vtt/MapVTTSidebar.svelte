@@ -4,8 +4,14 @@
   import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
   import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
   import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
-  import { VTT_ENTITY_TYPES } from "$lib/stores/map/map-page-controller.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import TileDeckPanel from "$lib/components/vtt/TileDeckPanel.svelte";
+  import ResizerHandle from "$lib/components/layout/ResizerHandle.svelte";
+  import { VTT_ENTITY_TYPES } from "$lib/components/map/vtt-ui";
+  import {
+    layoutUIStore,
+    MIN_VTT_SIDEBAR_WIDTH,
+    MAX_SIDEBAR_VW,
+  } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { Entity } from "schema";
@@ -39,12 +45,27 @@
 />
 
 <aside
-  class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {layoutUIStore.vttSidebarCollapsed
-    ? 'w-12'
-    : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
+  class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur pointer-events-auto"
+  class:w-12={layoutUIStore.vttSidebarCollapsed}
+  style:width={layoutUIStore.vttSidebarCollapsed
+    ? "3rem"
+    : layoutUIStore.isMobile
+      ? "100%"
+      : `${layoutUIStore.vttSidebarWidth}px`}
+  style:max-width="calc(100vw - 3rem)"
+  data-testid="vtt-sidebar"
   aria-label="VTT Sidebar"
   onwheel={(e) => e.stopPropagation()}
 >
+  {#if !layoutUIStore.vttSidebarCollapsed && !layoutUIStore.isMobile}
+    <ResizerHandle
+      side="right"
+      minWidth={MIN_VTT_SIDEBAR_WIDTH}
+      maxWidthVW={MAX_SIDEBAR_VW}
+      currentWidth={layoutUIStore.vttSidebarWidth}
+      onResize={(w) => layoutUIStore.setVttSidebarWidth(w)}
+    />
+  {/if}
   {#if layoutUIStore.vttSidebarCollapsed}
     <div
       class="flex h-full w-full flex-col items-center justify-between p-2"
@@ -88,7 +109,7 @@
       ></div>
 
       <div
-        class="flex items-center justify-between gap-3 border-b border-theme-primary/20 px-3 py-3"
+        class="flex items-center justify-between gap-3 border-b border-theme-primary/20 px-3 py-2.5 shrink-0"
       >
         <div>
           <div
@@ -112,18 +133,26 @@
         </button>
       </div>
 
-      <div class="border-b border-theme-primary/20 px-3 py-3">
+      <div class="border-b border-theme-primary/20 px-3 py-2.5 shrink-0">
         <VTTControls />
       </div>
 
-      <div
-        class="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-3 p-3 pr-2"
-      >
-        {#if showInitiativePanel}
+      {#if showInitiativePanel}
+        <div
+          class="border-b border-theme-primary/20 bg-theme-bg/60 p-3 max-h-48 overflow-y-auto shrink-0 shadow-xs custom-scrollbar"
+          data-testid="vtt-sticky-initiative"
+        >
           <InitiativePanel />
-        {/if}
+        </div>
+      {/if}
 
+      <div
+        class="flex-1 min-h-[240px] overflow-y-auto custom-scrollbar space-y-3 p-3 pr-2"
+        data-testid="vtt-middle-workspace"
+      >
         {#if !sessionModeStore.isGuestMode}
+          <TileDeckPanel />
+
           <section
             class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
             data-testid="vtt-entity-list-section"
@@ -165,7 +194,7 @@
             {#if !layoutUIStore.vttEntityListCollapsed}
               <div
                 id="vtt-entity-list"
-                class="border-t border-theme-primary/20 flex flex-col max-h-[50vh]"
+                class="border-t border-theme-primary/20 flex flex-col max-h-[40vh]"
                 role="presentation"
                 onmousedown={(event) => event.stopPropagation()}
               >
@@ -180,26 +209,25 @@
             {/if}
           </section>
         {/if}
-
-        <TokenDetail />
-
-        {#if !showInitiativePanel && !hasSelectedToken}
-          <div
-            class="rounded-xl border border-dashed border-theme-primary/20 bg-theme-bg/50 p-4 text-sm text-theme-muted"
-          >
-            Select a token to view its details.
-          </div>
-        {/if}
       </div>
+
+      {#if hasSelectedToken}
+        <div
+          class="border-t border-theme-primary/30 bg-theme-surface/95 shadow-xl max-h-[45%] min-h-[160px] overflow-y-auto custom-scrollbar p-3 shrink-0"
+          data-testid="vtt-pinned-inspector"
+        >
+          <TokenDetail />
+        </div>
+      {/if}
 
       {#if !sessionModeStore.isGuestMode}
         <div
-          class="relative z-20 border-t border-theme-primary/20 p-3 flex justify-end pointer-events-auto"
+          class="relative z-20 border-t border-theme-primary/20 p-2.5 flex justify-end shrink-0 pointer-events-auto"
           role="presentation"
           onmousedown={(e) => e.stopPropagation()}
         >
           <button
-            class="w-8 h-8 flex flex-shrink-0 items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-muted transition hover:text-theme-primary"
+            class="w-8 h-8 flex flex-shrink-0 items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-muted transition hover:text-theme-primary rounded-md"
             onclick={onShare}
             type="button"
             title="Share Campaign"

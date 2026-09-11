@@ -7,12 +7,14 @@
     role = $bindable(npcConfig.roles[0]),
     alignment = $bindable(npcConfig.alignments[0]),
     campaignContext = $bindable(""),
+    mode = $bindable("table-card"),
     onSurprise = undefined,
   }: {
     race: string;
     role: string;
     alignment: string;
     campaignContext: string;
+    mode?: "dossier" | "table-card";
     onSurprise?: () => void;
   } = $props();
 
@@ -29,7 +31,7 @@
   bind:value={race}
   choices={npcConfig.races.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom ancestry"
 />
@@ -41,7 +43,7 @@
   bind:value={role}
   choices={npcConfig.roles.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom role"
 />
@@ -53,10 +55,27 @@
   bind:value={alignment}
   choices={npcConfig.alignments.map((a: string) => ({ value: a, label: a }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom morality"
 />
+
+<div class="flex flex-col gap-1.5">
+  <label for="npc-mode-select" class={labelClass}>Prep style</label>
+  <select
+    id="npc-mode-select"
+    name="npc_mode"
+    bind:value={mode}
+    class={selectClass}
+  >
+    <option value="table-card">Table Card (5-Element 60-Second Prep)</option>
+    <option value="dossier">Full Dossier (Detailed Background)</option>
+  </select>
+  <p class="text-[10px] text-theme-text/60 leading-relaxed">
+    Table cards provide immediate want, mannerism, contradiction, relationship
+    hook, and sensory tag.
+  </p>
+</div>
 
 <div class="flex flex-col gap-1.5">
   <label for="npc-campaign-context" class={labelClass}
@@ -66,7 +85,7 @@
     id="npc-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="npc-campaign-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
@@ -97,7 +116,7 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
-    <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
     Surprise Me
   </button>
 </div>

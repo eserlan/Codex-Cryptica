@@ -45,6 +45,23 @@ export class OracleRevisionManager {
       label: c.label,
     }));
 
+    const isExistingEmpty =
+      !(existing.content || "").trim() && !(existing.lore || "").trim();
+    const isIncomingEmpty =
+      !(incoming.chronicle || "").trim() && !(incoming.lore || "").trim();
+    const isInstructionEmpty = !(options.instructions || "").trim();
+
+    if (
+      isExistingEmpty &&
+      isIncomingEmpty &&
+      isInstructionEmpty &&
+      snapContext.length === 0
+    ) {
+      throw new Error(
+        "Insufficient information available to generate meaningful content. Please add a description or connect this entity to related lore first.",
+      );
+    }
+
     return s.textGeneration.reviseEntityUpdate(
       s.effectiveApiKey || "",
       s.modelName,
@@ -96,7 +113,13 @@ export class OracleRevisionManager {
         lore: revised.lore || emptyResultFallback.lore,
         categoryId: revised.categoryId,
       };
-    } catch {
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message.includes("Insufficient information available")
+      ) {
+        throw err;
+      }
       return fallback();
     }
   }

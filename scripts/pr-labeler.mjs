@@ -119,35 +119,68 @@ export function labelsForPullRequest({ title, files }) {
   return [];
 }
 
-async function githubRequest(method, url, token, body) {
-  const response = await fetch(url, {
-    method,
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+function isRetryableStatus(status, text = "") {
+  if (status >= 500 && status <= 599) return true;
+  if (status === 429) return true;
+  if (status === 422 && text.includes("Could not resolve to a node")) return true;
+  return false;
+}
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`GitHub API request failed (${response.status}): ${text}`);
+export async function githubRequest(method, url, token, body, maxRetries = 3) {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      if (response.ok) {
+        if (response.status === 204) {
+          return null;
+        }
+        return await response.json();
+      }
+
+      const text = await response.text();
+      const error = new Error(`GitHub API request failed (${response.status}): ${text}`);
+      error.status = response.status;
+      lastError = error;
+
+      if (attempt < maxRetries && isRetryableStatus(response.status, text)) {
+        const delayMs = Math.min(500 * Math.pow(2, attempt), 4000);
+        console.warn(`GitHub API returned ${response.status}. Retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+
+      throw error;
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries && (!err.status || isRetryableStatus(err.status, err.message))) {
+        const delayMs = Math.min(500 * Math.pow(2, attempt), 4000);
+        console.warn(`GitHub API request failed: ${err.message}. Retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
+  throw lastError;
 }
 
 function isLabelWritePermissionError(error) {
   return (
     error instanceof Error &&
     (error.message.includes("Resource not accessible by integration") ||
-      error.message.includes("(403)"))
+      error.message.includes("(403)") ||
+      error.message.includes("(401)"))
   );
 }
 
@@ -216,15 +249,18 @@ export async function main() {
   const repo = process.env.GITHUB_REPOSITORY;
 
   if (!token) {
-    throw new Error("GITHUB_TOKEN or GH_TOKEN is required");
+    console.warn("GITHUB_TOKEN or GH_TOKEN is required. Skipping label sync.");
+    return;
   }
 
   if (!eventPath) {
-    throw new Error("GITHUB_EVENT_PATH is required");
+    console.warn("GITHUB_EVENT_PATH is required. Skipping label sync.");
+    return;
   }
 
   if (!repo) {
-    throw new Error("GITHUB_REPOSITORY is required");
+    console.warn("GITHUB_REPOSITORY is required. Skipping label sync.");
+    return;
   }
 
   const event = JSON.parse(await fs.readFile(eventPath, "utf8"));
@@ -235,49 +271,49 @@ export async function main() {
     return;
   }
 
-  const desiredLabels = labelsForPullRequest({
-    title: pullRequest.title || "",
-    files: await listPullRequestFiles(repo, pullRequest.number, token),
-  });
+  try {
+    const files = await listPullRequestFiles(repo, pullRequest.number, token);
+    const desiredLabels = labelsForPullRequest({
+      title: pullRequest.title || "",
+      files,
+    });
 
-  const currentLabels = await listIssueLabels(repo, pullRequest.number, token);
-  const managedCurrentLabels = currentLabels.filter((label) => MANAGED_LABELS.includes(label));
-  const currentSet = new Set(currentLabels);
-  let labelWritesSkipped = false;
+    const currentLabels = await listIssueLabels(repo, pullRequest.number, token);
+    const managedCurrentLabels = currentLabels.filter((label) => MANAGED_LABELS.includes(label));
+    const currentSet = new Set(currentLabels);
+    let labelWritesSkipped = false;
 
-  for (const label of managedCurrentLabels) {
-    if (!desiredLabels.includes(label)) {
-      const removed = await removeLabel(repo, pullRequest.number, label, token);
-      labelWritesSkipped ||= !removed;
+    for (const label of managedCurrentLabels) {
+      if (!desiredLabels.includes(label)) {
+        const removed = await removeLabel(repo, pullRequest.number, label, token);
+        labelWritesSkipped ||= !removed;
+      }
     }
-  }
 
-  const labelsToAdd = desiredLabels.filter((label) => !currentSet.has(label));
-  const added = await addLabels(repo, pullRequest.number, labelsToAdd, token);
-  labelWritesSkipped ||= !added;
+    const labelsToAdd = desiredLabels.filter((label) => !currentSet.has(label));
+    const added = await addLabels(repo, pullRequest.number, labelsToAdd, token);
+    labelWritesSkipped ||= !added;
 
-  if (labelWritesSkipped) {
-    console.warn(
-      `Label sync skipped for #${pullRequest.number} because the workflow token cannot mutate labels.`,
+    if (labelWritesSkipped) {
+      console.warn(
+        `Label sync skipped for #${pullRequest.number} because the workflow token cannot mutate labels.`,
+      );
+      return;
+    }
+
+    console.log(
+      desiredLabels.length > 0
+        ? `Applied labels to #${pullRequest.number}: ${desiredLabels.join(", ")}`
+        : `No managed labels matched PR #${pullRequest.number}`,
     );
-    return;
+  } catch (error) {
+    console.warn(`Label sync skipped for #${pullRequest.number} due to GitHub API error: ${error.message}`);
   }
-
-  console.log(
-    desiredLabels.length > 0
-      ? `Applied labels to #${pullRequest.number}: ${desiredLabels.join(", ")}`
-      : `No managed labels matched PR #${pullRequest.number}`,
-  );
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
-    if (error.message.includes('(401)')) {
-      console.warn(error.message);
-      console.warn("Skipping labeler due to 401 Bad Credentials.");
-      process.exit(0);
-    }
-    console.error(error);
-    process.exit(1);
+    console.warn(`Skipping labeler due to unexpected error: ${error?.message || error}`);
+    process.exit(0);
   });
 }

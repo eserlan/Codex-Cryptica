@@ -1,10 +1,13 @@
 <script lang="ts">
+  import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
   import MapHUD from "$lib/components/map/MapHUD.svelte";
   import MapUploadOverlay from "$lib/components/map/MapUploadOverlay.svelte";
   import MapView from "$lib/components/map/MapView.svelte";
   import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
   import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
+  import VTTGridSettings from "$lib/components/map/VTTGridSettings.svelte";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
+  import NoteAddDialog from "$lib/components/vtt/NoteAddDialog.svelte";
   import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
   import {
     MapPageController,
@@ -35,6 +38,11 @@
     sessionModeStore.isGuestMode && !!guestVault.publishId,
   );
 
+  const selectedEntity = $derived.by(() => {
+    const id = vault.selectedEntityId;
+    return id ? vault.entities[id] : null;
+  });
+
   function handleEntitySelect(entity: Entity) {
     modalUIStore.openZenMode(entity.id);
   }
@@ -44,7 +52,17 @@
   });
 </script>
 
-<div class="flex-1 flex flex-col bg-theme-bg overflow-hidden relative">
+<svelte:head>
+  <title>Battle Map | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="Interactive battle maps, fog of war, and tactical token management for tabletop RPGs."
+  />
+</svelte:head>
+
+<div
+  class="w-full h-full min-h-0 flex-1 flex flex-col bg-theme-bg overflow-hidden relative"
+>
   {#if mapStore.activeMap}
     <MapView
       onMapDragOver={(event) => controller.onDragOver(event)}
@@ -73,9 +91,13 @@
       />
       <MapVTTControlsHUD chatSidebarOffset={controller.chatSidebarOffset} />
       <TokenAddDialog />
+      <NoteAddDialog />
     </MapView>
 
     <VTTGridColorMenu />
+    {#if !sessionModeStore.isGuestMode && mapSession.showGridSettings}
+      <VTTGridSettings close={() => (mapSession.showGridSettings = false)} />
+    {/if}
   {:else if isPublishedVaultReader}
     <div
       class="flex-1 flex flex-col items-center justify-center p-8 text-center"
@@ -159,7 +181,15 @@
       onDragLeave={(event) => controller.onDragLeave(event)}
       onDrop={(event) => controller.onDrop(event)}
       onUpload={() => controller.handleUpload()}
+      onCreateBlank={() => controller.handleCreateBlank()}
       onCancel={() => controller.cancelUpload()}
+    />
+  {/if}
+
+  {#if selectedEntity}
+    <EntityDetailPanel
+      entity={selectedEntity}
+      onClose={() => (vault.selectedEntityId = null)}
     />
   {/if}
 </div>

@@ -1,4 +1,5 @@
 export * from "./entity";
+export * from "./image-focus";
 export * from "./connection";
 export * from "./graph";
 export * from "./search";
@@ -18,6 +19,11 @@ export * from "./art-direction-stature";
 export * from "./art-direction-subject";
 export * from "./migrations";
 export * from "./publishing";
+export * from "./language-profile";
 
 export * from "./theme-templates";
 export * from "./entity-templates";
+export * from "./stat-sheet";
+export * from "./template-guidance";
+export * from "./silhouettes";
+export * from "./entity-palette";

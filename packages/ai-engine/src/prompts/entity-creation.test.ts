@@ -17,6 +17,12 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("Old World Context");
       expect(result).toContain("Canonical Synthesis Summary");
     });
+
+    it("asks the synthesizer to surface an established culture's naming convention", () => {
+      const result = buildCreationLoreSynthesisPrompt("New NPC", "Context");
+      expect(result).toContain("naming convention");
+      expect(result).toContain("state it explicitly in the summary");
+    });
   });
 
   it("wraps vault context and query in USER_CONTENT delimiters", () => {
@@ -44,7 +50,37 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("## Personality & Voice");
       expect(result).toContain("temperament");
       expect(result).toContain("speech rhythm");
-      expect(result).toContain("generic fantasy cliché placeholders");
+      expect(result).toContain("generic fantasy clichés");
+    });
+
+    it("states the banned-names rule as a hard constraint before the format spec", () => {
+      const result = buildStructuredDraftingPrompt("Syn", "Req");
+      expect(result).toContain("BANNED NAMES");
+      expect(result).toContain("hard constraint, not a preference");
+      expect(result).toContain("Vance");
+      expect(result).toContain("hyphenated/compound variation");
+      // The ban must appear before the drafting requirements, not buried
+      // after them, so the model reads it before it starts drafting a name.
+      expect(result.indexOf("BANNED NAMES")).toBeLessThan(
+        result.indexOf("DRAFTING REQUIREMENTS"),
+      );
+    });
+
+    it("instructs the model to self-verify and correct before outputting", () => {
+      const result = buildStructuredDraftingPrompt("Syn", "Req");
+      expect(result).toContain("BEFORE YOU OUTPUT");
+      expect(result).toContain("Banned names:");
+      expect(result).toContain("Internal consistency:");
+      expect(result).toContain("Fix anything that fails these checks");
+      expect(result).toContain("never show your verification work");
+    });
+
+    it("requires the name to follow a vault-established naming convention when the synthesis states one", () => {
+      const result = buildStructuredDraftingPrompt("Syn", "Req");
+      expect(result).toContain("Naming style:");
+      expect(result).toContain("MUST follow it");
+      // Verification pass must re-check it too, not just the drafting guideline.
+      expect(result).toContain("Naming style: if the Canonical Synthesis");
     });
 
     it("should handle custom categories correctly", () => {

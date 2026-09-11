@@ -21,12 +21,12 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@types/js-yaml": "^4.0.9",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^5.0.0",
     "fake-indexeddb": "^6.2.5",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "svelte": "^5.55.9",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0"
   }
 }

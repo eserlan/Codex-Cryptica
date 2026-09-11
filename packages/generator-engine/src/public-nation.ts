@@ -18,6 +18,7 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { buildRealmName, buildCapitalName } from "./realm-names";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export const nationConfig = {
   genres: [
@@ -28,12 +29,14 @@ export const nationConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
     "Lancer",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -88,6 +91,13 @@ export const nationConfig = {
       "Shadow Government",
       "Quarantine Zone",
     ],
+    "Cosmic Horror": [
+      "Restricted Research Territory",
+      "Quarantined Expedition Zone",
+      "Remote Survey Protectorate",
+      "Submerged Archive District",
+      "Astronomical Observation Enclave",
+    ],
     "Post-Apocalyptic": [
       "Warlord Territory",
       "Survivor Settlement",
@@ -129,6 +139,13 @@ export const nationConfig = {
       "Scientific Directorate",
       "Allied Worlds Council",
       "Neutral System Alliance",
+    ],
+    "Space Western": [
+      "Frontier System Authority",
+      "Corporate Mining Concession",
+      "Independent Belt Coalition",
+      "Marshal's Protectorate",
+      "Freeport Compact",
     ],
   } as Record<string, string[]>,
   governmentStyles: [
@@ -244,7 +261,7 @@ ${sessionContext}`;
 - Polity Type: ${resolved.polityType}
 - Government Style: ${resolved.governmentStyle}
 - Scale: ${resolved.scale}
-- Conflict Level: ${resolved.conflictLevel}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Conflict Level: ${resolved.conflictLevel}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }

@@ -176,3 +176,98 @@
 
 **Learning:** When navigating connections or locating children nodes, invoking `.filter()` on the large `vault.allEntities` array triggers full O(N) traversal and allocates a new intermediate array on every evaluation (such as in `DetailStatusTab` and `ZenContent`). This places pressure on the garbage collector during rendering.
 **Action:** Replace `allEntities.filter(...)` with an imperative `for...of` (or traditional `for`) loop that checks conditions and constructs the necessary subsets or result shapes directly in a single pass.
+
+## 2026-07-02 - [Performance Insight: Replace chained array methods (Array.from().map().filter()) with imperative loops]
+
+**Learning:** In `apps/web/src/lib/services/dungeon-delve-service.ts`, using `Array.from(narrative.matchAll(...)).filter()` allocates multiple intermediate arrays for the regex matches, the mapped strings, and the filtered results. In hot paths or large narratives, this creates unnecessary GC pressure.
+**Action:** Replace chained array generation methods over iterators with imperative `for...of` loops that push valid results directly into the final array.
+
+## 2026-08-08 - [Verify Production Code Before Modifying Test Mocks]
+
+**Learning:** Replacing an expensive `.filter()` operation on `Object.values(entities)` with an imperative loop on `allEntities` is a good performance pattern. However, you must first verify that `allEntities` actually exists on the production object being modified (e.g. `vault`). If it does exist in production, it is correct to update the test mock to include it. If it does not exist, adding it only to the test mock will cause a `TypeError: Cannot read properties of undefined` in production, leading to a crash.
+**Action:** When refactoring to use a pre-calculated property (like `allEntities`), explicitly verify its existence in the real production code (not just the mock) before changing the test. Do not artificially mask errors by adding missing properties to test mocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing inline array .filter().length with imperative counting in Svelte derived states
+
+**Learning:** In Svelte `$derived` blocks, chaining `.filter(...).length` on potentially large arrays creates an entirely new intermediate array in memory just to count its elements. This causes unnecessary garbage collection pressure and CPU overhead on every reactive update.
+**Action:** Replace inline `.filter(...).length` derivations with `$derived.by()` utilizing an imperative `for` loop that iterates over the original array and increments a counter based on the filter logic. This reduces the memory complexity of the count from O(N) to O(1).
+
+## 2026-08-14 - Replacing chained array methods with imperative early-exit loops
+
+**Learning:** When acting as the 'Bolt' persona, do not replace single native array methods like `array.filter()` or `array.every()` with verbose imperative loops, as this is a micro-optimization that degrades readability. Reserve imperative loop optimizations for replacing chained array methods (e.g., `.map().filter().slice()`), eliminating unnecessary allocations (e.g., `[...set].map()`), or introducing early exits to reduce algorithmic complexity (e.g., O(N) to O(K)).
+**Action:** When working with large datasets, replace chains of array mapping and filtering (like `[...set].map().filter().slice()`) with a single imperative `for...of` loop and an early `break` condition to avoid massive intermediate array allocations.
+
+## 2026-08-14 - Limit imperative array optimizations to high-impact bulk paths
+
+**Learning:** While it is beneficial to avoid allocating intermediate arrays in Svelte reactive blocks for truly massive state arrays or bulk processing logic (like in `apps/web/src/lib/stores/vault/bulk-results.ts`), replacing simple, concise 1-line statements like `array.filter(...).length` with verbose 10-line imperative loops inside standard UI components (like `ImportWizard.svelte`) violates the 'never sacrifice code readability for micro-optimizations' rule.
+**Action:** When acting as the 'Bolt' persona, only refactor array pipelines to imperative loops in non-UI modules (e.g. stores, workers, data-processing pipelines) or when specifically querying massive global arrays (e.g. `vault.allEntities`). Do not optimize small, ephemeral arrays inside UI components unless profiling shows they are an active bottleneck.
+
+## 2026-08-18 - Replacing chained array generation methods over iterators with imperative loops
+
+**Learning:** In markdown parsing components (like `generator-document-layout.ts` and `markdown-sections.ts`), using `Array.from(markdown.matchAll(...)).map()` forces the JavaScript engine to eagerly evaluate the entire iterator into an intermediate array of match objects, only to immediately throw it away after mapping it into another array. For large generator documents, this spikes unnecessary garbage collection pressure during formatting.
+**Action:** Replace `Array.from(iterator).map()` with a single imperative `for...of` loop over the iterator. This processes the matches lazily, avoids the intermediate `.map` array allocation, and pushes directly into the final array.
+
+## 2025-02-24 - Avoid allocating unused objects by replacing map().filter() with a loop
+
+**Learning:** When chained array methods like `.map().filter()` create new objects in the `.map()` phase (e.g., `images.map(f => ({ file: f, index })).filter(...)`), they instantiate objects that are immediately thrown away by the subsequent filter. This creates unnecessary garbage collection pressure beyond just the intermediate array allocation.
+**Action:** Replace `.map(x => ({...})).filter(...)` chains with a single imperative loop. Only instantiate the new object if the condition passes, pushing it directly into the result array.
+
+## 2025-02-27 - Object.values + filter optimization
+
+**Learning:** Calling `Object.values(obj).filter(...)` repeatedly inside reactive/derived blocks creates multiple intermediate arrays and adds heavy garbage collection pressure. This is particularly harmful in hot paths like VTT (Virtual TableTop) tile snapping/placing, which evaluates on every mouse movement.
+**Action:** Replace `Object.values(obj).filter(...)` chains with an imperative `for...in` loop that uses `Object.prototype.hasOwnProperty.call(obj, key)` to safely iterate the object keys and conditionally push to a single result array.
+
+## 2024-05-18 - Replacing Object.fromEntries(array.map(...)) with imperative loops for performance
+
+**Learning:** When building an object/record from an array of keys (such as `entityDetailTabs`), using `Object.fromEntries(array.map(...))` creates two intermediate arrays: one from `.map()` for the `[key, value]` tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure and garbage collection overhead, especially in hot paths.
+**Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop. Initialize an empty Record and assign the properties directly within the loop to avoid intermediate array allocations.
+
+## 2025-02-28 - Optimize derived block collection filters
+
+**Learning:** Chaining array methods like `Object.values(obj).filter(...)` inside Svelte `$derived` or `$derived.by` blocks creates intermediate arrays that add to garbage collection pressure, particularly in frequently updated components. Using pre-derived arrays (like `allTokens`) and filtering them via imperative loops is more efficient for larger datasets.
+**Action:** When extracting data from objects in reactive blocks, use a single imperative `for...in` loop with `hasOwnProperty` check, or if a flat derived array already exists, use an imperative `for` loop to filter results instead of chaining `.filter()`.
+
+## 2026-08-30 - Focus on eliminating intermediate arrays, avoid pure syntax rewrites
+
+**Learning:** When acting as the 'Bolt' persona, avoid refactoring simple object iterations like `Object.keys(obj).filter(...)` into traditional `for...in` loops unless operating on massive data structures, as it's often rejected in code review as an unmeasurable micro-optimization that harms readability.
+**Action:** Focus instead on chained array methods like `.map().filter()` that explicitly allocate unused intermediate objects or arrays (e.g., mapping strings to trim them before filtering out empty ones), as replacing these with a single imperative loop offers a clearer memory optimization without sacrificing readability.
+
+## 2024-08-30 - Eliminate chained array allocations in SettlementFormFields
+
+**Learning:** Replacing chained array allocations (`Object.entries().filter().map()`) followed by `Object.fromEntries()` with a single imperative loop over object properties reduces object instantiation overhead and intermediate array generation. This is especially useful for logic run frequently (like reactive declarations and effects).
+**Action:** When extracting data or building objects in frequent/reactive paths, utilize imperative `for...in` or `for...of` loops rather than chaining high-level JS array methods if array allocations become a bottleneck. Ensure the component remains readable.
+
+## 2026-10-25 - [Performance Insight: Avoid intermediate array allocation when translating Map values]
+
+**Learning:** When using `Map.get(id)` over an array of IDs to build a new array of matching values, chaining `.map(id => map.get(id)).filter(Boolean)` forces the creation of an intermediate array containing potentially undefined values, only to immediately traverse and filter it into a second array.
+**Action:** Replace `array.map().filter()` when querying Maps (like `byId.get(id)`) with a single imperative `for...of` loop over the IDs. This allows pushing valid resolved values directly into the final array in a single O(N) pass, completely eliminating the intermediate array allocation and reducing garbage collection pressure.
+
+## 2026-10-25 - [Performance Insight: Avoid intermediate array allocation when parsing and mapping lists]
+
+**Learning:** In data parsing functions, like those normalising lists in generator responses (`public-plot-twist.ts`), using `Array.isArray(value) ? value.map(text).filter(Boolean) : ...` forces the creation of an intermediate mapped array that might contain empty strings, only to traverse it again to filter them out. This causes unnecessary garbage collection pressure on frequently-called parsing code paths.
+**Action:** Replace `array.map().filter()` when processing parsed values with an imperative `for...of` loop over the elements, checking and pushing the transformed values directly into the result array.
+
+## 2025-05-18 - Avoid array allocation when mapping iterables
+
+**Learning:** When using `[...iterable].filter(...).map(...)` on collections like Maps, it creates multiple intermediate arrays, causing unnecessary allocations.
+**Action:** Replace chained array methods on iterables with a single imperative `for...of` loop to avoid intermediate allocations and reduce GC pressure.
+
+## 2024-05-23 - Avoid Object.fromEntries(Object.entries().map()) in Hot Paths
+
+**Learning:** Using Object.fromEntries with a mapped Object.entries array creates two intermediate arrays, increasing garbage collection pressure. This is especially impactful in serialization paths like index compression where object counts can be large.
+**Action:** Use an imperative loop to populate a new object or Record when transforming object values instead of chaining Object.entries().map() into Object.fromEntries.
+
+## 2026-09-07 - Avoid Object.fromEntries(array.map(...)) in UI Components and Hot Paths
+
+**Learning:** Constructing objects using `Object.fromEntries(array.map(...))` or `Object.fromEntries(Object.entries(...).map(...))` allocates multiple intermediate arrays that are immediately discarded, increasing garbage collection pressure. This is especially prevalent when transforming arrays of items into lookup records or updating object state in UI handlers.
+**Action:** Use an imperative `for...of` or `for` loop to instantiate and populate a `Record` directly (e.g., `const result: Record<string, Item> = Object.create(null); for (let i = 0; i < items.length; i++) { result[items[i].id] = items[i]; }`). Use `Object.create(null)` for ID-keyed records to prevent prototype pollution from special keys like `__proto__`. This avoids temporary array allocations and is measurably faster for large objects or frequent UI updates. Avoid this optimization in cold paths like tests or static data initialization where readability outweighs unmeasurable micro-optimizations.

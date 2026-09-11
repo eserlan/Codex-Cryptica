@@ -1,3 +1,10 @@
+import type {
+  StarSystemBody,
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "generator-engine";
+
 export const nameTable = {
   prefixes: [
     "Ael",
@@ -459,6 +466,18 @@ export interface GeneratorOutput {
    * local tables, so the layout can show a friendly notice (#1494).
    */
   aiFallback?: boolean;
+  /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
+  bodies?: StarSystemBody[];
+  /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
+  starType?: string;
+  /** Structured star-pattern data for constellations, for the star-chart diagram. */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
+  /** Dominant conflict domain of a generated BBEG villain (e.g. "Cult Ritual"), tracked for session variety. */
+  conflictDomain?: string;
 }
 
 /**
@@ -469,12 +488,12 @@ export interface GeneratorOutput {
 export type Rng = () => number;
 export const defaultRng: Rng = () => Math.random();
 
-export function pickFrom<T>(arr: T[], rng: Rng = defaultRng): T {
+export function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
   return arr[Math.floor(rng() * arr.length)];
 }
 
 export function getRandomItems<T>(
-  arr: T[],
+  arr: readonly T[],
   count: number,
   rng: Rng = defaultRng,
 ): T[] {

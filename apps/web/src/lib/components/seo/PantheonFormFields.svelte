@@ -41,11 +41,7 @@
 
 <div class="flex flex-col gap-1.5">
   <label for="pantheon-mode-select" class={labelClass}>Generate target</label>
-  <select
-    id="pantheon-mode-select"
-    bind:value={mode}
-    class={selectClass}
-  >
+  <select id="pantheon-mode-select" bind:value={mode} class={selectClass}>
     {#each modeChoices as choice (choice.value)}
       <option value={choice.value}>{choice.label}</option>
     {/each}
@@ -57,12 +53,14 @@
     id="pantheon-size-select"
     label="Pantheon Size"
     bind:value={size}
-    choices={pantheonConfig.sizes.map((s: { value: string; label: string }) => ({
-      value: s.value,
-      label: s.label,
-    }))}
+    choices={pantheonConfig.sizes.map(
+      (s: { value: string; label: string }) => ({
+        value: s.value,
+        label: s.label,
+      }),
+    )}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom pantheon size"
   />
@@ -71,12 +69,14 @@
     id="pantheon-width-select"
     label="Pantheon Focus / Width"
     bind:value={width}
-    choices={pantheonConfig.widths.map((w: { value: string; label: string }) => ({
-      value: w.value,
-      label: w.label,
-    }))}
+    choices={pantheonConfig.widths.map(
+      (w: { value: string; label: string }) => ({
+        value: w.value,
+        label: w.label,
+      }),
+    )}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom pantheon width"
   />
@@ -88,7 +88,7 @@
   bind:value={genre}
   choices={pantheonConfig.genres.map((g: string) => ({ value: g, label: g }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre or theme"
 />
@@ -98,9 +98,12 @@
     id="pantheon-type-select"
     label="Divine Type"
     bind:value={divineType}
-    choices={pantheonConfig.divineTypes.map((t: string) => ({ value: t, label: t }))}
+    choices={pantheonConfig.divineTypes.map((t: string) => ({
+      value: t,
+      label: t,
+    }))}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom divine type"
   />
@@ -112,7 +115,7 @@
   bind:value={domain}
   choices={pantheonConfig.domains.map((d: string) => ({ value: d, label: d }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom primary domain"
 />
@@ -123,7 +126,7 @@
   bind:value={tone}
   choices={pantheonConfig.tones.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom tone"
 />
@@ -132,9 +135,12 @@
   id="pantheon-worshippers-select"
   label="Worshippers"
   bind:value={worshippers}
-  choices={pantheonConfig.worshippers.map((w: string) => ({ value: w, label: w }))}
+  choices={pantheonConfig.worshippers.map((w: string) => ({
+    value: w,
+    label: w,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter custom worshippers"
 />
@@ -144,9 +150,12 @@
     id="pantheon-conflict-select"
     label="Conflict Theme"
     bind:value={conflictTheme}
-    choices={pantheonConfig.conflictThemes.map((c: string) => ({ value: c, label: c }))}
+    choices={pantheonConfig.conflictThemes.map((c: string) => ({
+      value: c,
+      label: c,
+    }))}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom conflict theme"
   />
@@ -159,7 +168,7 @@
   <textarea
     id="pantheon-context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="pantheon-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockOpfs } from "../../../tests/mocks/storage";
 import { cacheService } from "../../services/cache.svelte";
 import { SyncStore } from "./sync-store.svelte";
@@ -19,6 +19,8 @@ vi.mock("../../services/cache.svelte", () => ({
     set: vi.fn(),
     remove: vi.fn(),
     clear: vi.fn(),
+    clearVault: vi.fn(),
+    invalidatePreload: vi.fn(),
   },
 }));
 
@@ -82,6 +84,16 @@ describe("SyncStore", () => {
     store.setStatus("error");
 
     expect(store.status).toBe("error");
+  });
+
+  it("automatically transitions from saved back to idle after timeout", () => {
+    vi.useFakeTimers();
+    store.setStatus("saved");
+    expect(store.status).toBe("saved");
+
+    vi.advanceTimersByTime(2600);
+    expect(store.status).toBe("idle");
+    vi.useRealTimers();
   });
 
   it("triggers safety gate on pull() when dirty", async () => {
@@ -209,6 +221,31 @@ describe("SyncStore", () => {
 
     expect(updateEntityCount).toHaveBeenCalledWith("vault-1", 5);
     expect((store as any).status).toBe("idle");
+  });
+
+  it("emits only changed entities for each sync chunk", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+    repository.loadFiles.mockImplementation(
+      async (_vId, _handle, onProgress) => {
+        repository.entities = {
+          cached: { id: "cached" },
+          changed: { id: "changed" },
+        };
+        await onProgress(repository.entities, 2, 2, {
+          changed: repository.entities.changed,
+        });
+      },
+    );
+    const emitSpy = vi.spyOn(vaultEventBus, "emit");
+
+    await store.loadFiles(false);
+
+    expect(emitSpy).toHaveBeenCalledWith({
+      type: "SYNC_CHUNK_READY",
+      vaultId: "vault-1",
+      entities: { changed: { id: "changed" } },
+      newOrChangedIds: ["changed"],
+    });
   });
 
   it("detects conflict files in the vault", async () => {
@@ -903,5 +940,119 @@ describe("SyncStore", () => {
 
       await expect(testStore.loadFiles(false)).resolves.toBeUndefined();
     });
+  });
+});
+
+/**
+ * #2619 — a warm cache used to short-circuit the vault load entirely, so OPFS
+ * was never consulted and a cache row that failed to write stranded the user on
+ * stale data on every launch, permanently and silently.
+ */
+describe("SyncStore warm-cache reconcile (#2619)", () => {
+  const opfsHandle = createMockOpfs();
+
+  const makeStore = (overrides: Record<string, any> = {}) =>
+    new SyncStore({
+      activeVaultId: () => "vault-1",
+      activeVaultRecord: () =>
+        ({ lastInternalChange: 0, lastSavedToFolder: 0 }) as any,
+      repository: {
+        entities: {},
+        loadFiles: vi.fn().mockResolvedValue(undefined),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      } as any,
+      getSyncCoordinator: vi.fn().mockResolvedValue(null),
+      getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
+      ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+      loadMaps: vi.fn().mockResolvedValue(undefined),
+      loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      flushPendingSaves: vi.fn().mockResolvedValue(undefined),
+      ...overrides,
+    });
+
+  const warmCache = () =>
+    vi
+      .mocked(cacheService.preloadVault)
+      .mockResolvedValue(
+        new Map([
+          [
+            "vault-1:hero.md",
+            { lastModified: 1, entity: { id: "hero", title: "Hero" } },
+          ],
+        ]) as any,
+      );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("re-reads from OPFS after painting a warm cache", async () => {
+    warmCache();
+    const store = makeStore();
+    const reload = vi.spyOn(store, "loadFiles");
+
+    await store.loadFiles();
+    // The warm paint returns immediately — that is the point of the cache.
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    // ...and the cold path follows, so the cache cannot mask the disk.
+    expect(reload).toHaveBeenCalledWith(false);
+  });
+
+  it("does not reconcile when the load was already cold", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map() as any);
+    const store = makeStore();
+    const reload = vi.spyOn(store, "loadFiles");
+
+    await store.loadFiles(false);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    // A cold load already read OPFS; reconciling again would loop.
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("abandons a pending reconcile when the vault changed underneath it", async () => {
+    warmCache();
+    let active = "vault-1";
+    const store = makeStore({ activeVaultId: () => active });
+    const reload = vi.spyOn(store, "loadFiles");
+
+    await store.loadFiles();
+    active = "vault-2";
+    await vi.advanceTimersByTimeAsync(2000);
+
+    // Reconciling vault-1's cache into vault-2 is worse than not reconciling.
+    expect(reload).not.toHaveBeenCalledWith(false);
+  });
+
+  it("cancels a pending reconcile when a newer load starts", async () => {
+    warmCache();
+    const store = makeStore();
+    await store.loadFiles();
+
+    const reload = vi.spyOn(store, "loadFiles");
+    await store.loadFiles(false);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    // Only the explicit cold load, never a stale reconcile stacked behind it.
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the cache before reloading so reloadFromDisk cannot show it again", async () => {
+    warmCache();
+    const store = makeStore();
+
+    await store.reloadFromDisk();
+
+    expect(cacheService.clearVault).toHaveBeenCalledWith("vault-1");
   });
 });

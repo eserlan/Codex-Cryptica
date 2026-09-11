@@ -217,7 +217,7 @@ describe("image-processing", () => {
       expect(mockCanvas.toBlob).toHaveBeenCalled();
     });
 
-    it("should reject if toBlob fails", async () => {
+    it("should reject if toBlob fails for both webp and png", async () => {
       vi.stubGlobal("OffscreenCanvas", undefined);
       mockCanvas.toBlob.mockImplementation(
         (callback: (blob: Blob | null) => void) => callback(null),
@@ -231,6 +231,27 @@ describe("image-processing", () => {
       }
 
       await expect(promise).rejects.toThrow("Canvas toBlob failed");
+    });
+
+    it("should fall back to PNG if webp toBlob returns null", async () => {
+      vi.stubGlobal("OffscreenCanvas", undefined);
+      mockCanvas.toBlob.mockImplementation(
+        (callback: (blob: Blob | null) => void, type: string) => {
+          if (type === "image/webp") callback(null);
+          else callback(new Blob(["mock-image-data"], { type }));
+        },
+      );
+
+      const inputBlob = new Blob(["input"], { type: "image/jpeg" });
+      const promise = generateThumbnail(inputBlob, 100);
+
+      if (mockImage.onload) {
+        mockImage.onload();
+      }
+
+      const result = await promise;
+      expect(result).toBeInstanceOf(Blob);
+      expect(result.type).toBe("image/png");
     });
   });
 
@@ -287,7 +308,7 @@ describe("image-processing", () => {
       );
     });
 
-    it("should reject if toBlob fails during WebP conversion", async () => {
+    it("should reject if toBlob fails for both webp and png", async () => {
       vi.stubGlobal("OffscreenCanvas", undefined);
       mockCanvas.toBlob.mockImplementation(
         (callback: (blob: Blob | null) => void) => callback(null),
@@ -300,9 +321,28 @@ describe("image-processing", () => {
         mockImage.onload();
       }
 
-      await expect(promise).rejects.toThrow(
-        "Canvas toBlob failed during WebP conversion",
+      await expect(promise).rejects.toThrow("Canvas toBlob failed");
+    });
+
+    it("should fall back to PNG if webp toBlob returns null", async () => {
+      vi.stubGlobal("OffscreenCanvas", undefined);
+      mockCanvas.toBlob.mockImplementation(
+        (callback: (blob: Blob | null) => void, type: string) => {
+          if (type === "image/webp") callback(null);
+          else callback(new Blob(["mock-image-data"], { type }));
+        },
       );
+
+      const inputBlob = new Blob(["input"], { type: "image/png" });
+      const promise = convertToWebP(inputBlob);
+
+      if (mockImage.onload) {
+        mockImage.onload();
+      }
+
+      const result = await promise;
+      expect(result).toBeInstanceOf(Blob);
+      expect(result.type).toBe("image/png");
     });
   });
 });

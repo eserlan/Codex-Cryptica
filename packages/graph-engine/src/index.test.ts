@@ -85,6 +85,56 @@ describe("initGraph adaptive zoom", () => {
   });
 });
 
+describe("initGraph overrides", () => {
+  it("lets a caller override the render/interaction knobs the world graph hardcodes", async () => {
+    const cy = await initGraph({
+      headless: true,
+      elements: [{ group: "nodes", data: { id: "1" } }] as any,
+      hideLabelsOnViewport: false,
+      motionBlur: true,
+      minZoom: 0.2,
+      maxZoom: 4,
+      wheelSensitivity: 0.15,
+    });
+
+    expect((cy as any)._private?.options?.hideLabelsOnViewport).toBe(false);
+    expect((cy as any)._private?.options?.motionBlur).toBe(true);
+    expect(cy.minZoom()).toBe(0.2);
+    expect(cy.maxZoom()).toBe(4);
+    expect((cy as any)._private?.options?.wheelSensitivity).toBe(0.15);
+  });
+
+  it("runs a caller-supplied layout instead of the preset no-op", async () => {
+    const cy = await initGraph({
+      headless: true,
+      elements: [
+        { group: "nodes", data: { id: "centre" } },
+        { group: "nodes", data: { id: "a" } },
+        { group: "edges", data: { id: "e1", source: "centre", target: "a" } },
+      ] as any,
+      layout: { name: "concentric", fit: false },
+    });
+
+    // A concentric layout places nodes; the preset layout (the default)
+    // would leave every node at its unset (0,0) position instead.
+    const positions = cy.nodes().map((n) => n.position());
+    expect(positions[0]).not.toEqual(positions[1]);
+  });
+
+  it("defaults every override to the existing world-graph behavior", async () => {
+    const withDefaults = await initGraph({
+      headless: true,
+      elements: [{ group: "nodes", data: { id: "1" } }] as any,
+    });
+
+    expect((withDefaults as any)._private?.options?.hideLabelsOnViewport).toBe(
+      true,
+    );
+    expect((withDefaults as any)._private?.options?.wheelSensitivity).toBe(1.0);
+    expect(withDefaults.maxZoom()).toBe(9.0);
+  });
+});
+
 describe("isLargeGraphSize", () => {
   it("flags graphs above the node threshold", () => {
     expect(isLargeGraphSize(701, 0)).toBe(true);

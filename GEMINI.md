@@ -1,8 +1,31 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-26
+Auto-generated from all feature plans. Last updated: 2026-08-15
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai` (159-ai-world-aware-tables)
+- OPFS (Vault Files) & IndexedDB (via existing vault and random source stores; zero new database stores or schema flags) (159-ai-world-aware-tables)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator` (1515-table-missing-filters)
+- Transient client-side reactive state (persisted preset views deferred to #1518) (1515-table-missing-filters)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
+- N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
+
+- TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API (154-llm-session-ratelimit)
+- Cloudflare Rate Limiting binding, client-side `sessionStorage` (154-llm-session-ratelimit)
+
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, `@codex/generator-engine`, `@google/generative-ai` (148-guided-mode-quickstart)
+- OPFS (Vault notes), IndexedDB (via vault stores), `localStorage` (`codex_guided_mode_active` preference) (148-guided-mode-quickstart)
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine` (145-dungeon-structural-builder)
 - OPFS & IndexedDB (via Vault Repository storing `.canvas` JSON documents and linked Concept notes) (145-dungeon-structural-builder)
@@ -216,13 +239,20 @@ TypeScript: Follow standard conventions
 - **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
 - **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
+- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. `bun run lint:types` passes with 0 errors.
+  2. `bun run lint` passes with 0 errors.
+  3. The changes pass the `codex-review` specialist review.
 
 ## Recent Changes
 
-- 145-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
-- 1843-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
+- 159-ai-world-aware-tables: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai`
 
-- 141-language-generator: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
+- 1515-table-missing-filters: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator`
+
+- 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
 
 <!-- MANUAL ADDITIONS START -->
 

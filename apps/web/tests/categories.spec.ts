@@ -139,7 +139,9 @@ test.describe("Category Architecture Modal", () => {
     page,
   }) => {
     // 1. Create an entity first so we have a node in the graph
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByPlaceholder(/Title\.\.\./).fill("Color Test");
     await page.getByRole("button", { name: "ADD" }).click();
 

@@ -8,6 +8,7 @@ import type {
 } from "./types";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
+import { ASPECT_RATIO_DIMENSIONS, type AspectRatio } from "schema";
 
 export class OracleActionManager {
   constructor(private store: IOracleStore) {}
@@ -45,10 +46,34 @@ export class OracleActionManager {
       const entity = this.store.vault.entities[entityId];
       if (!entity) return;
 
-      // Saved art direction no longer short-circuits composition. Under Art
-      // Direction v2 it is a style override layer, so it must go through the
-      // composer to pick up the subject, category framing, camera, and
-      // negatives rather than being sent to the provider on its own.
+      // Opening the review reuses the last composed prompt as-is when one is
+      // saved, instead of re-running the (AI-call-backed) subject distiller +
+      // composer on every click. "Revise Prompt" in the modal
+      // (regenerateEntityPrompt below) is the explicit way to force a fresh
+      // recompute when the entity's lore/category/camera has actually changed.
+      const saved = entity.imageArtDirection;
+      if (saved?.prompt) {
+        const negativeTerms = saved.negativePrompt
+          ? saved.negativePrompt
+              .split(/[\n,]+/)
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+          : [];
+
+        const validAspectRatio: AspectRatio | undefined =
+          saved.aspectRatio && saved.aspectRatio in ASPECT_RATIO_DIMENSIONS
+            ? (saved.aspectRatio as AspectRatio)
+            : undefined;
+
+        modalUIStore.openImagePromptReview(
+          { kind: "entity", id: entityId, title: entity.title },
+          saved.prompt,
+          negativeTerms,
+          validAspectRatio,
+        );
+        return;
+      }
+
       const result = await this.store.executor.prepareEntityPrompt(
         entityId,
         this.store.getExecutionContext(),

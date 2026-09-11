@@ -12,6 +12,7 @@ export const shipConfig = {
     "Steampunk",
     "Dark Fantasy",
     "Western (River & Rail)",
+    "Space Western",
   ],
 
   rolesByGenre: {
@@ -127,6 +128,16 @@ export const shipConfig = {
       "Federal Gunboat",
       "Outlaw Ferryboat",
     ],
+    "Space Western": [
+      "Patched Light Freighter",
+      "Converted Patrol Gunship",
+      "Asteroid Ore Hauler",
+      "Smuggler Blockade Runner",
+      "Scrap Scavenger Scow",
+      "Bounty Hunter Transport",
+      "Discreet Courier Runner",
+      "Derelict Drift Hulk",
+    ],
   } as Record<string, string[]>,
 
   scales: [
@@ -171,6 +182,12 @@ export const shipConfig = {
       "Riverboat (30–100 crew)",
       "Federal gunboat (100–250 crew)",
     ],
+    "Space Western": [
+      "Small Runner / Courier (2–6 crew)",
+      "Light Freighter / Gunship (6–18 crew)",
+      "Medium Ore Hauler / Bulk Carrier (18–60 crew)",
+      "Converted Drift Hulk / Heavy Rig (60–150 crew)",
+    ],
   } as Record<string, string[]>,
 
   conditions: [
@@ -207,6 +224,7 @@ export const shipConfig = {
     Steampunk: ["HMA", "IAS", ""],
     "Dark Fantasy": ["The", ""],
     "Western (River & Rail)": ["The", ""],
+    "Space Western": ["SS", "RCS", "F/V", "W/S", ""],
   } as Record<string, string[]>,
 
   nameWordsByGenre: {
@@ -372,6 +390,22 @@ export const shipConfig = {
       "Sovereign",
       "Lucky Star",
     ],
+    "Space Western": [
+      "Drifter",
+      "Rust-Star",
+      "Badlands",
+      "Coyote",
+      "Wanderer",
+      "Gambler",
+      "Dust-Devil",
+      "Outlaw",
+      "Sundown",
+      "Maverick",
+      "Iron Horse",
+      "Silver Spur",
+      "Desperado",
+      "Reckoning",
+    ],
   } as Record<string, string[]>,
 
   crewTypesByGenre: {
@@ -462,6 +496,14 @@ export const shipConfig = {
       "Outlaw gang",
       "Merchant traders",
     ],
+    "Space Western": [
+      "Battered scoundrel crew bound by debts and shared survival",
+      "Hard-bitten salvage scrappers with grease under their nails",
+      "Licensed bounty hunters with loaded weapons and expired permits",
+      "Independent asteroid prospectors defending a wildcat claim",
+      "Smuggler blockade runners keeping off official sensor logs",
+      "Drifter mercenaries looking for the next honest or dishonest payday",
+    ],
   } as Record<string, string[]>,
 
   captainNamesByGenre: {
@@ -489,6 +531,13 @@ export const shipConfig = {
       "Captain Odo Brasshook",
       "Captain Kessa Gullknife",
     ],
+    "Space Western": [
+      "Captain Silas 'Doc' Vance",
+      "Captain Callie 'Rook' Malone",
+      "Captain Jebediah Cross",
+      "Captain Vera Sterling",
+      "Captain Burl 'Wrench' O'Connell",
+    ],
   } as Record<string, string[]>,
 
   captainDetailsByGenre: {
@@ -511,6 +560,12 @@ export const shipConfig = {
       "keeps the crew free by staying one step ahead of the navy, the creditors, and a former lover in every port",
       "commands with charm until the guns speak, then becomes frighteningly calm and precise",
     ],
+    "Space Western": [
+      "keeps the freighter flying on borrowed parts and unpaid loans, never turning down a high-paying run regardless of risk",
+      "enforces a strict scoundrel's code: fair cuts for the crew, no questions about passengers, and shoot first if drawn upon",
+      "hides an old military court-martial conviction behind an easy frontier grin and a quick draw",
+      "treats the ship like a living partner and knows every rattle, leak, and loose bolt in the hull",
+    ],
   } as Record<string, string[]>,
 
   crewProfilesByGenre: {
@@ -530,6 +585,11 @@ export const shipConfig = {
       "specialists recruited from rival ports, each carrying a different grudge against the navy",
       "a tight family of free sailors whose loyalty is to one another before it is to the captain",
       "hard-bitten privateers quietly debating whether the crown's commission is worth the next battle",
+    ],
+    "Space Western": [
+      "a ragtag crew of outcasts, grease-monkeys, and ex-convicts who quarrel constantly over cards but would die for each other in a dogfight",
+      "independent belters and drifters who take turns in the galley and know how to jury-rig any system with scrap metal",
+      "hardscrabble spacers who have survived two ship repossessions and a customs shakedown together",
     ],
   } as Record<string, string[]>,
 
@@ -558,6 +618,13 @@ export const shipConfig = {
       "Boatswain Kessa Redwake",
       "Navigator Jory Saltglass",
     ],
+    "Space Western": [
+      "Chief Engineer Hattie Moss",
+      "First Mate Zeke Walker",
+      "Pilot Rory Delgado",
+      "Gunner Mose Calder",
+      "Purser Lula Bennett",
+    ],
   } as Record<string, string[]>,
 
   officerDetailsByGenre: {
@@ -584,6 +651,12 @@ export const shipConfig = {
       "serves as surgeon and patches bodies and reputations with equal skill, for a price never named aloud",
       "commands the deck and reads the crew's mood from bootsteps, quietly counting sides",
       "handles signals and claims to hate the navy, but still salutes when an old flag rises on the horizon",
+    ],
+    "Space Western": [
+      "keeps the sub-light manifold from overheating with a calibrated blowtorch and sheer stubbornness",
+      "maintains the crew manifest and contraband stash, keeping one ledger for the captain and one for themselves",
+      "can thread an asteroid field blindfolded while complaining about the price of decent tea",
+      "cleans their projectile rifle at the mess table whenever uninvited guests board",
     ],
   } as Record<string, string[]>,
 
@@ -666,6 +739,13 @@ export const shipConfig = {
       "Federal marshals boarded at the last stop; they have not said what they are looking for",
       "The gambling tables have been running short — someone is cheating, and the wrong person is about to be accused",
     ],
+    "Space Western": [
+      "The secondary cooling coil is cracked and will vent toxic vapour if pushed beyond cruising speed",
+      "A syndicate loan shark's tracking beacon is welded underneath the starboard landing strut",
+      "The planetary customs marshal is holding an arrest warrant for a passenger currently aboard",
+      "The fuel injectors are fouled with contaminated low-grade kerosene",
+      "Rival scrappers have staked a legal claim on the ship's salvage cargo",
+    ],
   } as Record<string, string[]>,
 
   secretsByGenre: {
@@ -734,6 +814,12 @@ export const shipConfig = {
       "The captain owes the boat's real owner a debt they cannot repay",
       "A previous passenger left something aboard that has not been found yet",
       "The safe in the captain's cabin contains documents that would ruin three prominent families",
+    ],
+    "Space Western": [
+      "A false floor in the cargo hold contains a military-grade AI core stolen from a core system",
+      "The ship's transponder ID was cloned from a vessel destroyed in a pirate raid three years ago",
+      "The captain holds an outstanding bounty contract against one of the crew members and hasn't cashed it in",
+      "An unrecorded debt to a crime cartel comes due at the next refuelling station",
     ],
   } as Record<string, string[]>,
 
@@ -885,6 +971,14 @@ export const shipConfig = {
       "Federal government contract",
       "Gambling syndicate",
       "Disputed — two parties claim title",
+    ],
+    "Space Western": [
+      "Independent captain-owner with an underwater mortgage",
+      "Free Belters' Prospecting League",
+      "Rust-Star Smuggling Syndicate",
+      "Bounty Hunter Guild Contractor",
+      "Wildcat Salvage Collective",
+      "Disputed — corporate repossession warrant active",
     ],
   } as Record<string, string[]>,
 };

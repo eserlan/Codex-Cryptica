@@ -12,6 +12,8 @@ describe("VTTHandler", () => {
       mapSession: {
         addToken: vi.fn(),
         moveToken: vi.fn(),
+        rotateToken: vi.fn(),
+        tokens: { t1: { rotation: 90 } },
         canMoveToken: vi.fn().mockReturnValue(true),
         remoteSelection: {},
         handleRemoteChatMessage: vi.fn(),
@@ -50,5 +52,48 @@ describe("VTTHandler", () => {
       expect.objectContaining({ type: "MAP_PING" }),
       "g1",
     );
+  });
+
+  it("validates and broadcasts guest token rotation", async () => {
+    const msg = { type: "TOKEN_ROTATE", tokenId: "t1", rotation: 90 } as any;
+    await handler.handle(msg, mockConn, mockContext);
+
+    expect(mockContext.mapSession.rotateToken).toHaveBeenCalledWith(
+      "t1",
+      90,
+      true,
+    );
+    expect(mockContext.transport.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TOKEN_STATE_UPDATE",
+        tokenId: "t1",
+        delta: { rotation: 90 },
+      }),
+      "g1",
+    );
+  });
+
+  it("rejects malformed guest token rotation", async () => {
+    await handler.handle(
+      { type: "TOKEN_ROTATE", tokenId: "t1", rotation: "90" } as any,
+      mockConn,
+      mockContext,
+    );
+
+    expect(mockContext.mapSession.rotateToken).not.toHaveBeenCalled();
+    expect(mockContext.transport.broadcast).not.toHaveBeenCalled();
+  });
+
+  it("rejects rotation for a token the guest does not own", async () => {
+    mockContext.mapSession.canMoveToken.mockReturnValue(false);
+
+    await handler.handle(
+      { type: "TOKEN_ROTATE", tokenId: "t1", rotation: 90 } as any,
+      mockConn,
+      mockContext,
+    );
+
+    expect(mockContext.mapSession.rotateToken).not.toHaveBeenCalled();
+    expect(mockContext.transport.broadcast).not.toHaveBeenCalled();
   });
 });

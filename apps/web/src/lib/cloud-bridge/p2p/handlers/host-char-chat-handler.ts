@@ -35,7 +35,8 @@ export class HostCharChatHandler extends BaseHandler {
   ): Promise<void> {
     if (message.type !== "GUEST_CHAR_CHAT_REQUEST") return;
 
-    const { requestId, characterId, guestUsername, query, history } = message;
+    const { requestId, characterId, guestUsername, query, cue, history } =
+      message;
 
     const entity = context.vault.entities?.[characterId];
     if (
@@ -154,6 +155,7 @@ export class HostCharChatHandler extends BaseHandler {
         {
           type: "guest-chat",
           query,
+          cue,
           entityId: characterId,
           data: guestCharacterId ? { guestCharacterId } : undefined,
         },

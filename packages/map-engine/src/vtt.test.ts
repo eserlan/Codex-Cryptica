@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { normalizeEncounterSession, normalizeToken } from "./vtt";
+import {
+  isNoteCollapsed,
+  normalizeEncounterSession,
+  normalizeToken,
+} from "./vtt";
+import type { EncounterSession } from "./vtt";
 
 const token = {
   id: "token-1",
@@ -31,6 +36,32 @@ describe("VTT domain normalization", () => {
     expect(normalized.visibleTo).toBe("all");
     expect(normalized.ownerPeerId).toBeNull();
     expect(normalized.ownerGuestName).toBeNull();
+    expect(normalized.baseShape).toBe("circle");
+    expect(normalized.facingIndicator).toBe(false);
+
+    const invalid = normalizeToken({
+      ...token,
+      baseShape: "hex" as any,
+      facingIndicator: 1 as any,
+    });
+    expect(invalid.baseShape).toBe("circle");
+    expect(invalid.facingIndicator).toBe(false);
+  });
+
+  it("normalizes imageFocus, rejecting unknown values", () => {
+    expect(normalizeToken({ ...token, imageFocus: "top" }).imageFocus).toBe(
+      "top",
+    );
+    expect(normalizeToken(token).imageFocus).toBeUndefined();
+    expect(
+      normalizeToken({ ...token, imageFocus: "diagonal" as any }).imageFocus,
+    ).toBeUndefined();
+  });
+
+  it("defaults legacy tokens' layer from kind, and passes through a valid layer", () => {
+    expect(normalizeToken(token).layer).toBe("token");
+    expect(normalizeToken({ ...token, kind: "tile" }).layer).toBe("terrain");
+    expect(normalizeToken({ ...token, layer: "object" }).layer).toBe("object");
   });
 
   it("clones a session and repairs invalid selection and turn state", () => {
@@ -79,5 +110,179 @@ describe("VTT domain normalization", () => {
     expect(normalized.chatMessages[0].roll?.parts[0].rolls).not.toBe(
       session.chatMessages[0].roll?.parts[0].rolls,
     );
+  });
+
+  it("keeps a note's kind and body through normalization", () => {
+    const note = normalizeToken({
+      ...token,
+      kind: "note",
+      noteBody: "2 goblins arguing over a map",
+    });
+
+    expect(note.kind).toBe("note");
+    expect(note.noteBody).toBe("2 goblins arguing over a map");
+    // Notes annotate the terrain below them, so they ride the token layer.
+    expect(note.layer).toBe("token");
+  });
+
+  it("gives a note without a body an empty one", () => {
+    expect(normalizeToken({ ...token, kind: "note" }).noteBody).toBe("");
+  });
+
+  it("does not attach a note body to other kinds", () => {
+    expect(
+      normalizeToken({ ...token, kind: "token" }).noteBody,
+    ).toBeUndefined();
+    expect(normalizeToken({ ...token, kind: "tile" }).noteBody).toBeUndefined();
+  });
+
+  it("falls back to a plain token for an unrecognized kind", () => {
+    expect(normalizeToken({ ...token, kind: "sticker" as never }).kind).toBe(
+      "token",
+    );
+  });
+
+  it("treats a stored fallback size as the note's collapsed state", () => {
+    const collapsed = normalizeToken({
+      ...token,
+      kind: "note",
+      noteCollapsedFrom: { width: 120, height: 120 },
+    });
+
+    expect(isNoteCollapsed(collapsed)).toBe(true);
+    expect(collapsed.noteCollapsedFrom).toEqual({ width: 120, height: 120 });
+    // Cloned, so a normalized token never shares the caller's object.
+    expect(collapsed.noteCollapsedFrom).not.toBe(token.noteCollapsedFrom);
+  });
+
+  it("treats a note with no fallback size as expanded", () => {
+    expect(isNoteCollapsed(normalizeToken({ ...token, kind: "note" }))).toBe(
+      false,
+    );
+  });
+
+  it("rejects a malformed or non-positive fallback size", () => {
+    for (const bad of [
+      { width: 0, height: 10 },
+      { width: 10, height: -5 },
+      { width: "80", height: 80 },
+      {},
+      null,
+    ]) {
+      const result = normalizeToken({
+        ...token,
+        kind: "note",
+        noteCollapsedFrom: bad as never,
+      });
+      expect(result.noteCollapsedFrom).toBeUndefined();
+      expect(isNoteCollapsed(result)).toBe(false);
+    }
+  });
+
+  it("never collapses a kind that is not a note", () => {
+    const tile = normalizeToken({
+      ...token,
+      kind: "tile",
+      noteCollapsedFrom: { width: 120, height: 120 },
+    });
+
+    expect(tile.noteCollapsedFrom).toBeUndefined();
+    expect(isNoteCollapsed(tile)).toBe(false);
+  });
+
+  it("normalizes optional tile decks without mutating their entries", () => {
+    const session = {
+      id: "session-tiles",
+      name: "Tiles",
+      mapId: "map-1",
+      mode: "exploration" as const,
+      tokens: {},
+      initiativeOrder: [],
+      initiativeValues: {},
+      round: 1,
+      turnIndex: 0,
+      selection: null,
+      sessionFogMask: null,
+      lastPing: null,
+      measurement: { active: false, start: null, end: null },
+      createdAt: 1,
+      savedAt: null,
+      chatMessages: [],
+      tileDecks: [
+        {
+          id: "deck-1",
+          name: "Rooms",
+          starterDeckId: "kenney-scribble-dungeons",
+          hardEdges: true,
+          tiles: [
+            {
+              id: "tile-1",
+              name: "Crypt",
+              imagePath: "crypt.png",
+              category: "Rooms & walls",
+            },
+          ],
+        },
+      ],
+    };
+    const normalized = normalizeEncounterSession(session);
+    expect(normalized.tileDecks).toEqual(session.tileDecks);
+    expect(normalized.tileDecks?.[0]).not.toBe(session.tileDecks[0]);
+    expect(normalized.tileDecks?.[0].tiles[0]).not.toBe(
+      session.tileDecks[0].tiles[0],
+    );
+  });
+
+  it("keeps a deck's table stocking and drops an unrecognised one", () => {
+    const deck = (stocking: unknown) => ({
+      id: "deck-1",
+      name: "Rooms",
+      hardEdges: false,
+      tiles: [],
+      stocking,
+    });
+    const session = (stocking: unknown) =>
+      ({
+        mapId: "map-1",
+        mode: "solo",
+        tokens: {},
+        initiativeOrder: [],
+        initiativeValues: {},
+        turnIndex: 0,
+        selection: null,
+        lastPing: null,
+        measurement: { active: false, start: null, end: null },
+        createdAt: 1,
+        savedAt: null,
+        chatMessages: [],
+        tileDecks: [deck(stocking)],
+      }) as unknown as EncounterSession;
+
+    expect(
+      normalizeEncounterSession(session({ mode: "table", tableId: "t-1" }))
+        .tileDecks?.[0].stocking,
+    ).toEqual({ mode: "table", tableId: "t-1", frequency: 1 });
+    expect(
+      normalizeEncounterSession(session({ mode: "encounter", frequency: 3 }))
+        .tileDecks?.[0].stocking,
+    ).toEqual({ mode: "encounter", frequency: 3 });
+    // A frequency that would stock nothing, or nothing at all, reads as
+    // "every drawn tile" — "none" is how a GM turns stocking off.
+    expect(
+      normalizeEncounterSession(session({ mode: "encounter", frequency: 0 }))
+        .tileDecks?.[0].stocking?.frequency,
+    ).toBe(1);
+    expect(
+      normalizeEncounterSession(session({ mode: "encounter", frequency: 2.6 }))
+        .tileDecks?.[0].stocking?.frequency,
+    ).toBe(3);
+    expect(
+      normalizeEncounterSession(session({ mode: "none" })).tileDecks?.[0]
+        .stocking,
+    ).toBeUndefined();
+    expect(
+      normalizeEncounterSession(session({ mode: "wat" })).tileDecks?.[0]
+        .stocking,
+    ).toBeUndefined();
   });
 });

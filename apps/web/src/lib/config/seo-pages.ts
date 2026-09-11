@@ -1,45 +1,17 @@
-export interface SEOPageData {
-  slug: string;
-  title: string;
-  description: string;
-  h1: string;
-  subheading: string;
-  introText: string;
-  faq: Array<{
-    question: string;
-    answer: string;
-  }>;
-  ctaText: string;
-  keywords: string[];
-  features: Array<{
-    title: string;
-    description: string;
-    icon: string;
-  }>;
-  /** Hero badge text. Defaults to "100% Local-First Campaign Wiki". */
-  eyebrow?: string;
-  /** Large emotional tagline rendered between h1 and subheading. Use \n to split lines. */
-  tagline?: string;
-  /** Optional second button in the hero. */
-  secondaryCtaText?: string;
-  secondaryCtaHref?: string;
-  /** Links shown in a "Related pages" section above the FAQ. */
-  relatedLinks?: Array<{ href: string; label: string }>;
-  /** Show the Responsible AI trust banner before the FAQ section. */
-  aiTrustSection?: boolean;
-}
+import type { SEOPageData } from "./seo-types";
+export type { SEOPageData };
 
 export const solutions: Record<string, SEOPageData> = {
   "campaign-manager": {
     slug: "campaign-manager",
     title: "How to Manage RPG Campaigns with Codex Cryptica | Features & Setup",
     description:
-      "A feature-by-feature guide to managing TTRPG campaigns in Codex Cryptica: linked lore graphs, private Markdown notes, timelines, and offline prep — all local-first.",
+      "A feature-by-feature guide to managing TTRPG campaigns in Codex Cryptica: linked lore graphs, private Markdown notes, timelines, and offline prep, all local-first.",
     h1: "RPG Campaign Manager Features & Setup Guide",
     subheading:
-      "Everything you need to plan, run, and track campaigns — no cloud account required.",
+      "Everything you need to plan, run, and track campaigns, no cloud account required.",
     introText:
-      "Codex Cryptica is a local-first RPG campaign manager built for GMs who want power without complexity. This guide walks through the core features: bidirectional wiki links, interactive lore graphs, timeline tracking, and offline-first storage. Your campaign data lives on your device and loads in milliseconds — even at the table without Wi-Fi.",
+      "Codex Cryptica is a local-first RPG campaign manager built for GMs who want power without complexity. This guide walks through the core features: bidirectional wiki links, interactive lore graphs, timeline tracking, and offline-first storage. Your campaign data lives on your device and loads in milliseconds, even at the table without Wi-Fi.",
     ctaText: "Explore Campaign Manager",
     keywords: [
       "rpg campaign manager features",
@@ -72,7 +44,7 @@ export const solutions: Record<string, SEOPageData> = {
         question:
           "What makes Codex Cryptica different from other RPG campaign managers?",
         answer:
-          "Codex Cryptica is fully local-first: your notes are stored on your own device, not a remote server. That means instant load times, complete privacy, and full offline support — features most cloud-based campaign managers can't offer.",
+          "Codex Cryptica is fully local-first: your notes are stored on your own device, not a remote server. That means instant load times, complete privacy, and full offline support: features most cloud-based campaign managers can't offer.",
       },
       {
         question: "Can I use Codex Cryptica offline?",
@@ -155,7 +127,7 @@ export const solutions: Record<string, SEOPageData> = {
     subheading:
       "Prompt, synthesize, and create structured character and quest records with a local AI partner.",
     introText:
-      "Supercharge your worldbuilding using Codex Cryptica's integrated Lore Oracle. Generate consistent NPC details, settlement layouts, or plot hooks directly inside your workspace using secure, private AI models that respect your campaign context.",
+      "Codex Cryptica's integrated Lore Oracle helps with worldbuilding directly inside your workspace. Generate consistent NPC details, settlement layouts, or plot hooks using secure, private AI models that respect your campaign context.",
     ctaText: "Meet the AI Assistant",
     keywords: [
       "ai gm assistant",
@@ -187,7 +159,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Do I need a paid AI subscription?",
         answer:
-          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own Gemini API key for unlimited usage.",
+          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own API key for unlimited usage.",
       },
       {
         question: "Is my campaign prompt context secure?",
@@ -231,7 +203,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "OPFS Performance",
         description:
-          "Utilizes browser-native Origin Private File System for database-like speed and robust local indexing.",
+          "Uses the browser-native Origin Private File System for database-like speed and reliable local indexing.",
         icon: "icon-[lucide--gauge]",
       },
       {
@@ -271,12 +243,12 @@ export const solutions: Record<string, SEOPageData> = {
     eyebrow: "AI-Assisted Game Mastering",
     title: "AI DM Assistant | AI Game Master Helper for TTRPG | Codex Cryptica",
     description:
-      "Use Codex Cryptica's built-in AI DM assistant to draft lore, generate NPCs, revise session notes, and answer campaign questions — all without leaving your vault.",
+      "Use Codex Cryptica's built-in AI DM assistant to draft lore, generate NPCs, revise session notes, and answer campaign questions, all without leaving your vault.",
     h1: "AI DM Assistant for Tabletop GMs",
     subheading:
       "Draft, revise, and expand your campaign lore with a built-in AI co-author.",
     introText:
-      "Codex Cryptica includes an AI-assisted writing layer called the Lore Oracle. It reads your campaign context, answers questions about your world, helps you draft NPC descriptions and faction goals, and suggests revisions to existing entries — all running locally with your own API key.",
+      "Codex Cryptica includes an AI-assisted writing layer called the Lore Oracle. It reads your campaign context, answers questions about your world, helps you draft NPC descriptions and faction goals, and suggests revisions to existing entries, all running locally with your own API key.",
     ctaText: "Try the Lore Oracle",
     secondaryCtaText: "See AI generators",
     secondaryCtaHref: "/tools/dnd-npc-generator",
@@ -303,7 +275,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Bring Your Own API Key",
         description:
-          "Connect your Gemini or OpenAI key for full AI generation — no subscription or data sent to Codex servers.",
+          "Connect your OpenAI/Luna key for full AI generation, no subscription or data sent to Codex servers.",
         icon: "icon-[lucide--key]",
       },
     ],
@@ -316,7 +288,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Does the AI DM assistant require a subscription?",
         answer:
-          "No. You bring your own API key (Gemini or OpenAI). Codex never charges for AI usage — you pay only your API provider's standard rates.",
+          "No. You bring your own API key (OpenAI/Luna). Codex never charges for AI usage; you pay only your API provider's standard rates.",
       },
       {
         question: "Does the AI see my campaign notes?",
@@ -461,7 +433,7 @@ export const solutions: Record<string, SEOPageData> = {
       "Run your TTRPG campaign manager completely offline. Codex Cryptica stores all notes locally in your browser, works without internet, and never requires a server.",
     h1: "Offline RPG Campaign Manager",
     subheading:
-      "Prep your sessions anywhere — no internet, no server, no problem.",
+      "Prep your sessions anywhere: no internet, no server, no problem.",
     introText:
       "Codex Cryptica is built on the browser's Origin Private File System, which means it runs entirely on your device. Open your campaign at the table, on a train, or at a remote cabin. Your notes load instantly and every edit saves locally without a network call.",
     ctaText: "Open Offline App",
@@ -482,13 +454,13 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Instant Local Loading",
         description:
-          "Notes load from your device's file system in milliseconds — no server round-trip or CDN dependency.",
+          "Notes load from your device's file system in milliseconds, no server round-trip or CDN dependency.",
         icon: "icon-[lucide--zap]",
       },
       {
         title: "Optional Cloud Sync",
         description:
-          "When you want a backup, sync your vault to Google Drive or a local folder — on your terms.",
+          "When you want a backup, sync your vault to Google Drive or a local folder, on your terms.",
         icon: "icon-[lucide--cloud]",
       },
     ],
@@ -585,13 +557,7 @@ export const solutions: Record<string, SEOPageData> = {
 };
 
 export { featuresConfig } from "./seo-features";
-
-export interface SEOImportPageData extends SEOPageData {
-  competitorName: string;
-  /** Optional outbound link to the source tool, shown as a small credit line in the hero (e.g. a companion generator, not a competitor). */
-  toolUrl?: string;
-  toolLabel?: string;
-}
+export type { SEOImportPageData } from "./seo-types";
 
 export { importsConfig } from "./seo-imports";
 

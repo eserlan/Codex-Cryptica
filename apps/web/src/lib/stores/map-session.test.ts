@@ -14,7 +14,7 @@ vi.mock("./map.svelte", () => ({
     activeMapId: "map-1",
     activeMap: {
       id: "map-1",
-      dimensions: { width: 300, height: 300 },
+      dimensions: { width: 1000, height: 1000 },
     },
     gridSize: 50,
     showGrid: true,
@@ -116,11 +116,37 @@ describe("MapSessionStore", () => {
 
     expect(token?.x).toBe(50);
     expect(token?.y).toBe(150);
+    expect(token).toMatchObject({
+      baseShape: "circle",
+      facingIndicator: true,
+    });
     expect(store.tokens[token!.id]).toBeDefined();
 
     const moved = store.moveToken(token!.id, 99, 101, true);
     expect(moved?.x).toBe(100);
     expect(moved?.y).toBe(100);
+  });
+
+  it("allows token movement across the centered map origin", () => {
+    const token = store.addToken({
+      name: "Centered Token",
+      x: 0,
+      y: 0,
+      width: 50,
+      height: 50,
+    });
+
+    const moved = store.moveToken(token!.id, -600, -600, true);
+
+    expect(moved).toMatchObject({ x: -500, y: -500 });
+  });
+
+  it("normalizes token rotation updates", () => {
+    const token = store.addToken({ name: "Facing Token", x: 0, y: 0 });
+
+    const updated = store.rotateToken(token!.id, -90, true);
+
+    expect(updated?.rotation).toBe(270);
   });
 
   it("clones a token with an offset and preserved state", () => {
@@ -843,6 +869,8 @@ describe("MapSessionStore", () => {
       gridUnit: "ft",
       gridDistance: 5,
     });
+
+    expect(mapStore.selectMap).toHaveBeenCalledWith("map-1");
   });
 
   it("syncs from a remote session and updates mapStore", () => {
@@ -854,7 +882,12 @@ describe("MapSessionStore", () => {
 
     store.syncFromRemoteSession(snapshot);
 
-    expect(mapStore.selectMap).toHaveBeenCalledWith("map-1");
+    // mapStore.activeMapId is already "map-1" from beforeEach, so
+    // syncFromRemoteSession's own guard correctly skips re-selecting a map
+    // that's already active — gridSize/gridUnit/gridDistance still apply
+    // because applySnapshot's own gating only requires the snapshot's
+    // mapId to match the (already-matching) active map.
+    expect(mapStore.selectMap).not.toHaveBeenCalled();
     expect(store.mapId).toBe("map-1");
     expect(store.vttEnabled).toBe(true);
     expect(mapStore.gridSize).toBe(75);

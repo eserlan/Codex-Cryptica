@@ -96,6 +96,20 @@ describe("ProposerBridge", () => {
     expect(result).toEqual([]);
   });
 
+  it("relays a session token to the worker via postMessage", () => {
+    const bridge = new ProposerBridge({ worker: mockWorker });
+    bridge.setSessionToken({ token: "abc", expiresAt: 123 });
+    expect(mockWorker.postMessage).toHaveBeenCalledWith({
+      type: "SESSION_TOKEN",
+      payload: { token: "abc", expiresAt: 123 },
+    });
+  });
+
+  it("does not throw when relaying a session token before the worker is ready", () => {
+    const bridge = new ProposerBridge({ worker: null });
+    expect(() => bridge.setSessionToken(null)).not.toThrow();
+  });
+
   it("rejects pending requests when terminated", async () => {
     const mockIdGen = { uuid: vi.fn().mockReturnValue("req-term") };
     const bridge = new ProposerBridge({

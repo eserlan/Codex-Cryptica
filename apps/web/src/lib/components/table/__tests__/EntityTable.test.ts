@@ -67,6 +67,24 @@ describe("EntityTable", () => {
     expect(link?.getAttribute("href")).toBe("/vault/v1/entity/e1");
   });
 
+  it("colors each row's left border by its entity type, so types stay scannable across the table (#2329)", () => {
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        connectionCounts,
+        onSort: vi.fn(),
+      },
+    });
+
+    const renderedRows = screen.getAllByTestId("entity-table-row");
+    // character -> #60a5fa, location -> #4ade80 (DEFAULT_CATEGORIES).
+    expect(renderedRows[0].style.borderLeftColor).toBe("rgb(96, 165, 250)");
+    expect(renderedRows[1].style.borderLeftColor).toBe("rgb(74, 222, 128)");
+    expect(renderedRows[0].style.borderLeftWidth).toBe("3px");
+  });
+
   it("renders combined inbound and outbound connection counts, including zero", () => {
     render(EntityTable, {
       props: {
@@ -110,7 +128,7 @@ describe("EntityTable", () => {
         },
       });
 
-      await fireEvent.click(screen.getByText("hero"));
+      await fireEvent.click(screen.getByText(/hero/i));
       expect(onFilterLabel).toHaveBeenCalledWith("hero");
 
       await fireEvent.click(
@@ -126,7 +144,7 @@ describe("EntityTable", () => {
         props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
       });
 
-      expect(screen.getByText("hero").closest("button")).toBeNull();
+      expect(screen.getByText(/hero/i).closest("button")).toBeNull();
     });
   });
 
@@ -205,6 +223,63 @@ describe("EntityTable", () => {
 
     expect(screen.getByTestId("entity-table-select-all")).toBeTruthy();
     expect(screen.getAllByTestId("entity-table-row-select")).toHaveLength(2);
+  });
+
+  it("bounds large vault rendering and exposes accessible page navigation", async () => {
+    const manyRows = Array.from({ length: 1600 }, (_, index) =>
+      entity({ id: `entity-${index}`, title: `Entity ${index}` }),
+    );
+
+    render(EntityTable, {
+      props: { entities: manyRows, vaultId: "v1", sort, onSort: vi.fn() },
+    });
+
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    expect(
+      screen.getByTestId("entity-table-pagination").getAttribute("aria-label"),
+    ).toBe("Entity table pages");
+    expect(screen.getByText("Page 1 of 32")).toBeTruthy();
+    expect(
+      screen.getByText("Showing 1–50 of 1600 filtered entities"),
+    ).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    expect(screen.getByText("Page 2 of 32")).toBeTruthy();
+    expect(screen.getByText("Entity 50")).toBeTruthy();
+    expect(screen.queryByText("Entity 0")).toBeNull();
+  });
+
+  it("keeps pagination usable when session storage is unavailable", () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+
+    try {
+      const manyRows = Array.from({ length: 100 }, (_, index) =>
+        entity({ id: `storage-${index}`, title: `Storage ${index}` }),
+      );
+      render(EntityTable, {
+        props: {
+          entities: manyRows,
+          vaultId: "storage-v1",
+          sort,
+          onSort: vi.fn(),
+        },
+      });
+
+      expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
   });
 
   it("reflects the selected set and toggles a row without navigating", async () => {
@@ -305,6 +380,46 @@ describe("EntityTable", () => {
     expect(onToggleRow).toHaveBeenCalledWith("e1", {
       shift: false,
       ctrl: true,
+    });
+  });
+
+  describe("missing-data mode & column filtering", () => {
+    it("highlights missing summary and connections when showIncompleteOnly is true", () => {
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          showIncompleteOnly: true,
+          onSort: vi.fn(),
+        },
+      });
+
+      // e2 is missing summary, labels, and connections
+      expect(screen.getByText("Missing summary")).toBeTruthy();
+      expect(screen.getByText("No labels")).toBeTruthy();
+      expect(screen.getByText("0 connections")).toBeTruthy();
+    });
+
+    it("opens column filter menu on clicking filter trigger", async () => {
+      const onUpdateColumnFilters = vi.fn();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          onSort: vi.fn(),
+          onUpdateColumnFilters,
+        },
+      });
+
+      const filterBtn = screen.getByTestId("column-filter-btn-connections");
+      await fireEvent.click(filterBtn);
+
+      expect(screen.getByTestId("column-filter-menu-connections")).toBeTruthy();
+      expect(screen.getByText("Zero connections (0)")).toBeTruthy();
     });
   });
 });

@@ -3,6 +3,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { textGenerationService } from "@codex/ai-engine";
@@ -202,7 +203,14 @@
         neighbors,
         categories.list.map((c) => ({ id: c.id, label: c.label })),
         templateOutline,
-        { isGuest: vault.isGuest, aiDisabled: discoveryPolicyStore.aiDisabled },
+        {
+          isGuest: vault.isGuest,
+          aiDisabled: discoveryPolicyStore.aiDisabled,
+          worldThemeName:
+            themeStore.worldThemeId !== "workspace"
+              ? themeStore.activeTheme?.name
+              : undefined,
+        },
       );
 
       // Populate draft preview form

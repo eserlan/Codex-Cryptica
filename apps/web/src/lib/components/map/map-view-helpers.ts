@@ -1,4 +1,4 @@
-import type { MapPin, Point, ViewportTransform } from "schema";
+import type { MapPin, Point, StatSheetField, ViewportTransform } from "schema";
 
 export interface PanZoomUpdate {
   pan: Point;
@@ -15,6 +15,52 @@ export interface ZoomViewportInput {
   zoomSpeed?: number;
   minZoom?: number;
   maxZoom?: number;
+}
+
+// Small pre-drawn map tiles (e.g. geomorph line-art) are often authored at a
+// native resolution that makes each grid square only a handful of pixels
+// once "fit grid to map" divides it up. Below this size (larger dimension,
+// in px) the map is displayed at 2x — the source file is untouched, only
+// its on-canvas draw/grid/pin coordinate space is scaled up.
+export const SMALL_MAP_DISPLAY_SCALE_THRESHOLD = 1000;
+export const SMALL_MAP_DISPLAY_SCALE_FACTOR = 2;
+
+// Computes the image-space size a map should be displayed/interacted with
+// at, given its background image's native pixel size. Called once, when a
+// map's dimensions are first recorded (see MapView.svelte), so the result
+// becomes the single source of truth for grid size, pin coordinates, fog
+// mask sizing, and drag bounds clamping from then on.
+export function getMapDisplayDimensions(
+  nativeWidth: number,
+  nativeHeight: number,
+): { width: number; height: number } {
+  const scale =
+    Math.max(nativeWidth, nativeHeight) < SMALL_MAP_DISPLAY_SCALE_THRESHOLD
+      ? SMALL_MAP_DISPLAY_SCALE_FACTOR
+      : 1;
+  return { width: nativeWidth * scale, height: nativeHeight * scale };
+}
+
+// Explains why a token under the cursor refused to be dragged, so pressing
+// a locked piece says so instead of silently doing nothing (or, worse,
+// panning the map out from under the press).
+export function describeMoveBlocked(
+  token: { name?: string; locked?: boolean; layer?: string | null },
+  isLayerLocked: boolean,
+  isHost: boolean,
+): string {
+  const name = token.name?.trim() || "That piece";
+
+  if (token.locked) {
+    return `${name} is locked — unlock it to move it`;
+  }
+  if (isLayerLocked) {
+    return `The ${token.layer ?? "token"} layer is locked — unlock the layer to move ${name}`;
+  }
+  if (!isHost) {
+    return `${name} belongs to someone else — only its owner or the GM can move it`;
+  }
+  return `${name} can't be moved`;
 }
 
 export function findClickedPin(
@@ -125,6 +171,60 @@ export function shouldIgnoreMapKeyboardEvent(target: EventTarget | null) {
   return tagName === "input" || tagName === "textarea" || tagName === "select";
 }
 
+// A token shows at most one health bar, driven by whichever counter field
+// on its linked entity has been designated via the stat sheet's bar toggle.
+export function resolveHealthBar(
+  fields: StatSheetField[] | undefined,
+): { value: number; max: number } | null {
+  const barField = fields?.find((f) => f.type === "counter" && f.barField);
+  if (!barField) return null;
+  const max = barField.max ?? 1;
+  if (max <= 0) return null;
+  return {
+    value: typeof barField.value === "number" ? barField.value : 0,
+    max,
+  };
+}
+
+export interface ZoomAtPointInput {
+  point: Point;
+  canvasSize: { width: number; height: number };
+  viewport: ViewportTransform;
+  nextZoom: number;
+  minZoom?: number;
+  maxZoom?: number;
+}
+
+// Zooms the viewport to `nextZoom` while keeping the image-space location
+// under `point` fixed on screen. Shared by wheel zoom and pinch-to-zoom so
+// both anchor the same way.
+export function getZoomAtPointUpdate({
+  point,
+  canvasSize,
+  viewport,
+  nextZoom,
+  minZoom = 0.1,
+  maxZoom = 10,
+}: ZoomAtPointInput): PanZoomUpdate {
+  const clampedZoom = Math.max(minZoom, Math.min(maxZoom, nextZoom));
+  const oldZoom = viewport.zoom;
+
+  const panX = point.x - canvasSize.width / 2;
+  const panY = point.y - canvasSize.height / 2;
+
+  const relX = (panX - viewport.pan.x) / oldZoom;
+  const relY = (panY - viewport.pan.y) / oldZoom;
+
+  return {
+    pan: {
+      x: panX - relX * clampedZoom,
+      y: panY - relY * clampedZoom,
+    },
+    zoom: clampedZoom,
+    announcement: `Zoom level ${clampedZoom.toFixed(2)}`,
+  };
+}
+
 export function getZoomViewportUpdate({
   mouse,
   canvasSize,
@@ -135,26 +235,31 @@ export function getZoomViewportUpdate({
   minZoom = 0.1,
   maxZoom = 10,
 }: ZoomViewportInput): PanZoomUpdate {
-  const delta = -deltaY * zoomSpeed;
-  const oldZoom = viewport.zoom;
-  const nextZoom = Math.max(minZoom, Math.min(maxZoom, oldZoom + delta));
+  const nextZoom = viewport.zoom - deltaY * zoomSpeed;
 
-  const panX = mouse.x - canvasSize.width / 2;
-  const panY = mouse.y - canvasSize.height / 2;
+  if (altHeld) {
+    const clampedZoom = Math.max(minZoom, Math.min(maxZoom, nextZoom));
+    return {
+      pan: viewport.pan,
+      zoom: clampedZoom,
+      announcement: `Zoom level ${clampedZoom.toFixed(2)}`,
+    };
+  }
 
-  const relX = (panX - viewport.pan.x) / oldZoom;
-  const relY = (panY - viewport.pan.y) / oldZoom;
+  return getZoomAtPointUpdate({
+    point: mouse,
+    canvasSize,
+    viewport,
+    nextZoom,
+    minZoom,
+    maxZoom,
+  });
+}
 
-  const nextPan = altHeld
-    ? viewport.pan
-    : {
-        x: panX - relX * nextZoom,
-        y: panY - relY * nextZoom,
-      };
+export function getPinchDistance(a: Point, b: Point): number {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
 
-  return {
-    pan: nextPan,
-    zoom: nextZoom,
-    announcement: `Zoom level ${nextZoom.toFixed(2)}`,
-  };
+export function getPinchMidpoint(a: Point, b: Point): Point {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }

@@ -7,6 +7,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
+  import { clipboardService } from "$lib/services/ClipboardService";
 
   const close = () => modalUIStore.closeReadMode();
 
@@ -117,21 +118,12 @@
     if (!entity || !renderedContent) return;
 
     try {
-      const typeHtml = "text/html";
-      const typeText = "text/plain";
-
-      const blobHtml = new Blob([renderedContent], { type: typeHtml });
-      const blobText = new Blob([entity.content || ""], { type: typeText });
-
-      const data = [
-        new ClipboardItem({
-          [typeHtml]: blobHtml,
-          [typeText]: blobText,
-        }),
-      ];
-
-      await navigator.clipboard.write(data);
-      copyStatus = "success";
+      copyStatus = (await clipboardService.copyContent({
+        html: renderedContent,
+        markdown: entity.content || "",
+      }))
+        ? "success"
+        : "error";
       setTimeout(() => (copyStatus = "idle"), 2000);
     } catch (err) {
       console.error("Failed to copy", err);
@@ -183,8 +175,8 @@
               class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
               {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                  >*</sup
-                >{/if}
+                  aria-hidden="true">*</sup
+                ><span class="sr-only"> (past)</span>{/if}
             </h2>
           {:else}
             <h2 id="read-mode-title" class="text-2xl text-red-500 font-mono">
@@ -299,8 +291,9 @@
                       <div
                         class="text-sm font-bold text-gray-200 group-hover:text-green-400 transition truncate"
                       >
-                        {conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                          >{/if}
+                        {conn.displayTitle}{#if conn.hasPastLabel}<sup
+                            aria-hidden="true">*</sup
+                          ><span class="sr-only"> (past)</span>{/if}
                       </div>
                       <div class="text-xs text-gray-500 truncate">
                         {conn.label || conn.type}

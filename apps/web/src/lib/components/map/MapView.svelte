@@ -1,17 +1,26 @@
 <script lang="ts">
   import { type Snippet } from "svelte";
   import { fade } from "svelte/transition";
+  import { isNoteCollapsed, mapLayerRank } from "map-engine";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
+  import { TokenVisionRevealer } from "./token-vision-revealer";
+  import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
+  import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
-  import { measureDistance } from "$lib/utils/vtt-helpers";
+  import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
+  import {
+    resolveHealthBar,
+    getMapDisplayDimensions,
+  } from "./map-view-helpers";
 
   function hashToColor(input: string) {
     let hash = 0;
@@ -52,6 +61,12 @@
     getContainer: () => container,
   });
 
+  const visionRevealer = new TokenVisionRevealer({
+    mapStore,
+    getMaskCanvas: () => maskCanvas,
+    getMapImage: () => mapImage,
+  });
+
   const mapAssets = new MapViewAssetLoader({
     vault,
     mapStore,
@@ -74,10 +89,10 @@
         mapStore.activeMapId === activeMap.id &&
         activeMap.dimensions.width === 0
       ) {
-        vault.maps[activeMap.id].dimensions = {
+        vault.maps[activeMap.id].dimensions = getMapDisplayDimensions(
           width,
           height,
-        };
+        );
         await vault.saveMaps();
       }
     },
@@ -134,27 +149,71 @@
   let tokenImageCache = $state<Record<string, HTMLImageElement | null>>({});
   let tokenImageSourceCache = $state<Record<string, string>>({});
 
+  const visionSourceTokens = $derived.by(() =>
+    resolveVisionSourceTokens(
+      mapSession.allTokens,
+      mapStore.visionMode,
+      mapSession.selection,
+    ),
+  );
+  const visionSourceSignature = $derived(
+    visionSourceTokens
+      .map((token) => `${token.id}:${token.x}:${token.y}`)
+      .join("|"),
+  );
+  const visionRadiusPx = $derived(
+    visionRangeToPixels(
+      mapStore.visionRange,
+      mapSession.gridDistance,
+      mapStore.gridSize,
+    ),
+  );
+
   const vttTokens = $derived.by(() => {
     const isHost = mapStore.isGMMode;
     const peerId = mapSession.myPeerId;
     const selected = mapSession.selectedTokens;
     const tokens = mapSession.allTokens;
+    const visionSourceIds = new Set(
+      mapStore.visionMode === "selected"
+        ? visionSourceTokens.map((token) => token.id)
+        : [],
+    );
     const result = [];
 
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      if (mapSession.canViewToken(token.id, peerId, isHost)) {
+      const layer = token.layer ?? "token";
+      if (
+        mapSession.canViewToken(token.id, peerId, isHost) &&
+        mapStore.layerVisibility[layer] !== false
+      ) {
         result.push({
           ...token,
-          label: token.name,
+          // Tiles are terrain/room pieces, not combatants — no name label.
+          label: token.kind === "tile" ? "" : token.name,
+          // A collapsed note keeps its label: the name is all there is to
+          // tell one folded-away note from another.
+          noteCollapsed: isNoteCollapsed(token),
           image: tokenImageCache[token.id] ?? null,
           selected: mapSession.selection === token.id || selected.has(token.id),
+          primarySelected: mapSession.selection === token.id,
           active: mapSession.activeTokenId === token.id,
           visible: true,
+          visionActive: visionSourceIds.has(token.id),
+          healthBar: resolveHealthBar(
+            token.entityId
+              ? vault.entities[token.entityId]?.statSheet?.fields
+              : undefined,
+          ),
         });
       }
     }
-    return result;
+    return result.sort(
+      (first, second) =>
+        mapLayerRank(first.layer ?? "token") -
+          mapLayerRank(second.layer ?? "token") || first.zIndex - second.zIndex,
+    );
   });
   const vttDragPreview = $derived.by(() => {
     const preview = mapSession.dragPreview;
@@ -164,11 +223,13 @@
     }
 
     const dimensions = activeMap.dimensions;
-    const valid =
-      preview.x >= 0 &&
-      preview.y >= 0 &&
-      preview.x <= dimensions.width &&
-      preview.y <= dimensions.height;
+    const tokenSize = mapStore.gridSize || 50;
+    const bounded = clampPointToBounds(
+      { x: preview.x, y: preview.y },
+      dimensions,
+      { width: tokenSize, height: tokenSize },
+    );
+    const valid = bounded.x === preview.x && bounded.y === preview.y;
 
     return {
       ...preview,
@@ -176,6 +237,31 @@
       valid,
     };
   });
+  const tilePlacementPreview = $derived(
+    mapSession.tileDeckManager.pendingPlacement,
+  );
+  // A separate primitive-valued derived: pendingPlacement is replaced with a
+  // new object on every mousemove during placement (x/y/valid churn), but
+  // this string only actually changes when the tile itself changes — so the
+  // image-loading effect below (keyed off this) doesn't get its in-flight
+  // load cancelled by every mousemove tick.
+  const pendingPlacementImagePath = $derived(
+    tilePlacementPreview?.tile.imagePath ?? null,
+  );
+  let tilePlacementImage = $state<HTMLImageElement | null>(null);
+  // Plain (non-reactive) on purpose: the loading effect below both reads and
+  // writes this to track "have we already started loading this path", and if
+  // it were $state, that write would make the effect depend on its own
+  // output — Svelte schedules a self-triggered re-run to settle, whose
+  // cleanup cancels the in-flight load before it can ever resolve. Nothing
+  // needs to *react* to this changing, both read sites just need the current
+  // value at the time some other trigger reruns them.
+  let tilePlacementImagePath: string | null = null;
+  const enrichedTilePlacementPreview = $derived.by(() =>
+    tilePlacementPreview
+      ? { ...tilePlacementPreview, image: tilePlacementImage }
+      : null,
+  );
 
   $effect(() => {
     const currentTokens = mapSession.allTokens;
@@ -191,6 +277,19 @@
         tokenImageSourceCache[token.id] === source &&
         tokenImageCache[token.id]
       ) {
+        continue;
+      }
+
+      // A tile just placed from the pending-placement preview already has
+      // its image decoded — reuse it instead of re-fetching/re-decoding,
+      // which otherwise causes a visible blank flash on the new tile.
+      if (
+        token.kind === "tile" &&
+        source === tilePlacementImagePath &&
+        tilePlacementImage
+      ) {
+        tokenImageSourceCache[token.id] = source;
+        tokenImageCache[token.id] = tilePlacementImage;
         continue;
       }
 
@@ -214,6 +313,32 @@
   });
 
   $effect(() => {
+    const path = pendingPlacementImagePath;
+    if (!path || path === tilePlacementImagePath) return;
+    tilePlacementImagePath = path;
+    tilePlacementImage = null;
+    let cancelled = false;
+    void vault
+      .resolveImageUrl(path)
+      .then((source) => {
+        const image = new Image();
+        image.onload = () => {
+          if (!cancelled) tilePlacementImage = image;
+        };
+        image.onerror = () => {
+          if (!cancelled) tilePlacementImage = null;
+        };
+        image.src = source;
+      })
+      .catch(() => {
+        if (!cancelled) tilePlacementImage = null;
+      });
+    return () => {
+      cancelled = true;
+    };
+  });
+
+  $effect(() => {
     if (activeMapSignature === lastMapSignature) {
       return;
     }
@@ -224,9 +349,8 @@
   $effect(() => {
     const activeMap = mapStore.activeMap;
     const fogMaskPath = activeMap?.fogOfWar?.maskPath ?? null;
-    const image = mapImage;
 
-    if (!activeMap || !fogMaskPath || !image) {
+    if (!activeMap || !fogMaskPath) {
       loadedMaskPath = null;
       return;
     }
@@ -236,15 +360,32 @@
     }
 
     let cancelled = false;
-    void mapStore.loadMask(image.width, image.height).then((mask) => {
-      if (cancelled) return;
-      maskCanvas = mask;
-      loadedMaskPath = fogMaskPath;
-    });
+    void mapStore
+      .loadMask(activeMap.dimensions.width, activeMap.dimensions.height)
+      .then((mask) => {
+        if (cancelled) return;
+        maskCanvas = mask;
+        loadedMaskPath = fogMaskPath;
+      });
 
     return () => {
       cancelled = true;
     };
+  });
+
+  const hasBackgroundImage = $derived(Boolean(mapStore.activeMap?.assetPath));
+
+  $effect(() => {
+    const signature = visionSourceSignature;
+    const radius = visionRadiusPx;
+    const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
+    if (!canAutoReveal || !signature) return;
+
+    void visionRevealer.reveal(visionSourceTokens, radius).then((revealed) => {
+      if (revealed && mapSession.vttEnabled) {
+        void broadcastActiveMapFogSync();
+      }
+    });
   });
 </script>
 
@@ -254,15 +395,17 @@
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
   style:background-image="var(--bg-texture)"
+  style:touch-action="none"
   role="application"
   aria-roledescription="map"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="0"
   onmouseenter={interactions.onMouseEnter}
   onmouseleave={interactions.onMouseLeave}
-  onmousedown={interactions.onMouseDown}
-  onmousemove={interactions.onMouseMove}
-  onmouseup={interactions.onMouseUp}
+  onpointerdown={interactions.onPointerDown}
+  onpointermove={interactions.onPointerMove}
+  onpointerup={interactions.onPointerUp}
+  onpointercancel={interactions.onPointerCancel}
   ondblclick={interactions.onDoubleClick}
   oncontextmenu={interactions.onContextMenu}
   onwheel={interactions.onWheel}
@@ -280,10 +423,11 @@
     {remoteMeasurement}
     {vttPings}
     {vttDragPreview}
+    tilePlacementPreview={enrichedTilePlacementPreview}
     {interactions}
   />
 
-  {#if !mapImage}
+  {#if hasBackgroundImage && !mapImage}
     <div
       class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50 pointer-events-none"
       transition:fade

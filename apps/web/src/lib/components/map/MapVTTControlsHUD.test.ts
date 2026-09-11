@@ -1,6 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import {
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mapStoreMock = vi.hoisted(() => ({
@@ -9,11 +14,14 @@ const mapStoreMock = vi.hoisted(() => ({
   showGrid: false,
   brushRadius: 50,
   showLabels: true,
+  layerVisibility: { terrain: true, object: true, token: true },
+  layerLocked: { terrain: false, object: false, token: false },
 }));
 
 const mapSessionMock = vi.hoisted(() => ({
   vttEnabled: true,
   showGridSettings: false,
+  activeLayer: "terrain",
   measurement: {
     active: false,
   },
@@ -57,7 +65,11 @@ describe("MapVTTControlsHUD", () => {
     mapStoreMock.showGrid = false;
     mapStoreMock.showLabels = true;
     mapSessionMock.vttEnabled = true;
+    mapSessionMock.showGridSettings = false;
     mapSessionMock.measurement.active = false;
+    mapSessionMock.activeLayer = "terrain";
+    mapStoreMock.layerVisibility = { terrain: true, object: true, token: true };
+    mapStoreMock.layerLocked = { terrain: false, object: false, token: false };
   });
 
   it("renders GM controls and toggles fog", async () => {
@@ -85,6 +97,25 @@ describe("MapVTTControlsHUD", () => {
     expect(mapStoreMock.showLabels).toBe(false);
   });
 
+  it("opens grid settings without opening the map context menu", async () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const gridButton = screen.getByRole("button", { name: "GRID: OFF" });
+    const event = createEvent.contextMenu(gridButton);
+    const preventDefault = vi.spyOn(event, "preventDefault");
+    const stopPropagation = vi.spyOn(event, "stopPropagation");
+
+    await fireEvent(gridButton, event);
+
+    expect(mapSessionMock.showGridSettings).toBe(true);
+    expect(preventDefault).toHaveBeenCalled();
+    expect(stopPropagation).toHaveBeenCalled();
+  });
+
   it("toggles the measurement tool", async () => {
     render(MapVTTControlsHUD, {
       props: {
@@ -97,6 +128,26 @@ describe("MapVTTControlsHUD", () => {
     );
 
     expect(mapSessionMock.setMeasurementActive).toHaveBeenCalledWith(true);
+  });
+
+  it("shows the active layer in the button label and switches it", async () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const layerButton = screen.getByRole("button", {
+      name: "Layer: Terrain",
+    });
+    await fireEvent.click(layerButton);
+    expect(screen.getByRole("menu", { name: "Map layers" })).not.toBeNull();
+
+    await fireEvent.click(
+      screen.getByRole("menuitemradio", { name: /Furniture/ }),
+    );
+
+    expect(mapSessionMock.activeLayer).toBe("object");
   });
 
   it("hides controls for guests", () => {

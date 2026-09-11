@@ -1,0 +1,186 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const spaceWesternDungeonTables: DungeonGenreTables = {
+  hint: "Focus on hollowed-out asteroid redoubts, derelict bulk haulers, abandoned planetary refineries, pirate docking nests, and high-pressure salvage sites deep in disputed space.",
+  purposes: [
+    "Mine & Shafts",
+    "Research Facility",
+    "Fortress & Citadel",
+    "Prison & Vault",
+    "Data Vault & Archive",
+    "Natural Cavern Network",
+  ],
+  currentStates: [
+    "Abandoned Ruins",
+    "Occupied Stronghold",
+    "Overrun by Squatters",
+    "Sealed Vault",
+    "Still Operational",
+    "Buried & Forgotten",
+  ],
+  sampleTitles: [
+    "Refinery Station Iron-Creek",
+    "The Hulk of the Wayward Star",
+    "Smuggler's Notch Asteroid Redoubt",
+    "Borehole Nine, Rust-Valley",
+    "The Drift-Barge at Dead Man's Reach",
+  ],
+  builders: [
+    "a defunct megacorp mining consortium that abandoned the rig overnight",
+    "a wildcat prospecting outfit that struck a pocket and dug in",
+    "a notorious smuggler cartel building a fortified dead-drop hub",
+    "colonial settlers carving emergency storm shelters into the moon bedrock",
+    "salvagers who welded three gutted freighters into a makeshift habitat",
+  ],
+  originalUses: [
+    "high-volume smelting of toxic heavy metal asteroid ores",
+    "long-haul transport of volatile refined starship propellant",
+    "clandestine off-grid drydock for scrubbing ship transponders",
+    "deep-crater groundwater extraction and bottling depot",
+    "unlicensed casino and bounty-hunter bunkhouse outside sector law",
+  ],
+  entrances: [
+    "a manual airlock emergency wheel sealed with rusted magnetic clamps",
+    "a jagged hull breach caused by an old kinetic torpedo strike",
+    "a pressurised cargo elevator shaft with snapped suspension cables",
+    "a natural volcanic fissure lined with improvised ladder rungs",
+    "an unlit secondary docking collar hidden in the asteroid's shadow cone",
+  ],
+  compositions: [
+    "corrugated blast shielding bolted over pitted asteroid rock",
+    "reinforced bulkhead plating scavenged from decommissioned ore scows",
+    "fused volcanic basalt lined with vibrating oxygen conduits",
+    "riveted industrial steel covered in decades of greasy exhaust residue",
+    "modular pressurized hab-containers stacked inside a hollowed crater",
+  ],
+  conditions: [
+    "flickering emergency lighting powered by a sputtering diesel-fusion gen-set",
+    "sub-zero interior freeze with frozen condensation covering every display",
+    "half-depressurised with intermittent sirens blaring venting warnings",
+    "stinking of stale recycled air, spilled coolant, and grease fires",
+    "silent and dead-stick on battery reserve, drifting slowly in orbit",
+  ],
+  causes: [
+    "a sudden solar flare storm that fried the primary life-support bus",
+    "a mutiny over withheld water rations that ended in a fatal firefight",
+    "a rival claim-jumping syndicate that boarded and cleared the station",
+    "a corporate foreclosure order carried out by private strike teams",
+    "an ore vein exhaustion that rendered the facility economically unviable",
+  ],
+  sectors: [
+    {
+      name: "The Gantry & Receiving Bay",
+      description:
+        "A cavernous hangar bay with rusted cargo cranes and oil-slicked magnetic deck pads.",
+    },
+    {
+      name: "The Smelting Core",
+      description:
+        "Massive crucible vats and slag runnels, thick with caustic heavy-metal soot.",
+    },
+    {
+      name: "The Bunkhouse & Galley",
+      description:
+        "Cramped tier berths, overturned card tables, and empty tins of synth-protein rations.",
+    },
+    {
+      name: "The Reactor Annex",
+      description:
+        "A humming magnetic bottle containment unit showing multiple amber fault codes.",
+    },
+    {
+      name: "The Secure Strongroom",
+      description:
+        "A reinforced vault door with three blown explosive entry points around the hinges.",
+    },
+    {
+      name: "The Atmospheric Scrubber Trench",
+      description:
+        "Narrow maintenance crawlways clogged with damp filtration moss and leaking pipework.",
+    },
+  ],
+  inhabitants: [
+    "A desperate crew of wildcat salvagers who claim prior salvage rights.",
+    "The surviving night-shift miners, barricaded in the life-support annex.",
+    "A predatory pack of feral scavenger droids reprogrammed to strip meat and metal.",
+    "A fugitive syndicate enforcer hiding out with a locked hostage container.",
+    "A private security sweep team sent to sanitize the corporation's paper trail.",
+  ],
+  factionNames: [
+    "the Iron-Creek Salvage Guild",
+    "the Rust-Belt Wildcatters",
+    "the Syndicate Recovery Crew",
+    "the Holdout Night-Shift",
+    "the Sector Marshal's Boarding Party",
+    "the Scavenger Flotilla",
+    "the Company Clean-Up Squad",
+    "the Free Asteroid League",
+    "the Fuel Syndicate Enforcers",
+    "the Void-Dredger Union",
+  ],
+  factionObstacles: [
+    "a rapidly decaying orbital trajectory pulling the site into high atmosphere",
+    "a sealed blast door requiring a dead executive's retina pattern",
+    "a competing salvage crew holding the primary exit gantry with heavy repeaters",
+    "a critical life-support scrubber failure giving thirty minutes of breathable air",
+    "an armed self-destruct countdown triggered by a cornered squad leader",
+    "a leaking radiation conduit that renders the central spine impassable without shielding",
+    "a corrupted security mainframe cycling lockouts every four minutes",
+    "an automated defense drone patrol responding to weapons discharge",
+  ],
+  loreFinds: [
+    "A shift foreman's audio log documenting unauthorized corporate shipments.",
+    "A handwritten debt ledger listing local officials receiving monthly bribes.",
+    "A star-chart slate showing coordinates to an unchartered asteroid with pure platinum veins.",
+    "A discarded bounty notice with the target's face circled in blood.",
+    "A maintenance report detailing that the reactor coolant was deliberately poisoned.",
+  ],
+  roomEncounters: [
+    "Two rival prospectors aiming heavy rivet guns at each other over a crate of fuel rods.",
+    "An automated sentry turret firing in erratic blind bursts due to sensor dust.",
+    "A wounded mechanic trapped under a collapsed gantry beam begging for a med-stim.",
+    "A pressurized steam pipe rupturing with a deafening roar across the primary catwalk.",
+    "A cornered bounty fugitive offering a high-grade security keycard in exchange for silence.",
+  ],
+  secrets: [
+    "The vault doesn't contain ore — it holds three stasis pods marked with erased government serials.",
+    "The station's distress beacon is actually a syndicate ambush transponder.",
+    "The derelict reactor can be safely restarted, doubling the salvage value of the hull.",
+    "The previous captain didn't die; they escaped in the single auxiliary launch pod with the payroll.",
+    "A second, unlisted level exists below the slag trench, built as a secret smuggler dock.",
+    "The corporate cleanup squad has orders to execute everyone, including the original crew.",
+    "A cache of forged bearer bonds is hidden inside the false wall of the captain's locker.",
+    "The mine broke into a pre-human crystalline ruin that corrupts navigational instruments.",
+  ],
+  hazards: [
+    "Micro-meteorite puncturing a viewport, triggering sudden localized decompression.",
+    "A live high-voltage power rail sparking across a flooded drainage deck.",
+    "Caustic coolant vapour that dissolves standard filter masks within minutes.",
+    "A floor grating giving way into a 50-metre gravity drop down an empty smelting chute.",
+    "A magnetic cargo clamp spontaneously releasing a 20-ton freight container.",
+  ],
+  treasures: [
+    "Three sealed canisters of high-grade, unrefined antimatter stabilizer fluid.",
+    "A pristine military-grade sensor-scrambler module with intact bypass keys.",
+    "A lockbox filled with untraceable trade bullion and gold sovereign coins.",
+    "A crate of pre-war projectile sidearms and armor-piercing ammunition drums.",
+    "An intact flight computer containing ten years of unencrypted smuggler jump routes.",
+    "A complete set of titanium repair tools and a portable plasma welding rig.",
+    "A registered ship ownership deed with the owner field left blank.",
+    "A military telemetry decoder able to eavesdrop on private corporate channels.",
+  ],
+  hooks: [
+    "A desperate prospector in the cantina offers half the haul if the crew can tow his claimed hulk.",
+    "An insurance adjuster pays upfront for proof that the refinery was destroyed by sabotage.",
+    "The crew detects an old family distress transponder echoing from an off-limits asteroid sector.",
+    "A syndicate boss demands the crew retrieve a specific locked chest from a sunken mining habitat.",
+    "A local marshal deputises the crew to clear a nest of claim-jumpers before the convoy arrives.",
+  ],
+  signatureFeatures: [
+    "The Gantry Overlook: A towering observation bridge with cracked plasteel looking out over the silent debris field.",
+    "The Crucible Basin: A massive hanging vat suspended by massive chains over an abyss of frozen slag.",
+    "The Scrappers' Graffito Wall: A bulkhead covered in carved ship callsigns and eulogies for fallen crewmates.",
+    "The Sparking Transformer Bank: An exposed dynamo spitting arcs of blue electricity across the only dry crossing.",
+    "The Dead Captain's Quarters: A paneled cabin preserved in vacuum, a game of solitaire still laid out on the desk.",
+  ],
+};

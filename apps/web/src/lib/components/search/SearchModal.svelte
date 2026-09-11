@@ -295,7 +295,7 @@
       type="button"
       aria-label="Close search"
       class="absolute inset-0 w-full h-full bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
-      onclick={searchStore.close}
+      onclick={() => searchStore.close()}
       onkeydown={(e) => e.key === "Escape" && searchStore.close()}
       tabindex="-1"
     ></button>
@@ -372,7 +372,7 @@
         <button
           type="button"
           class="p-2 rounded-md text-chrome-muted hover:text-chrome-text hover:bg-chrome-bg transition-colors flex items-center justify-center shrink-0"
-          onclick={searchStore.close}
+          onclick={() => searchStore.close()}
           aria-label="Close search"
           data-testid="search-modal-close"
         >

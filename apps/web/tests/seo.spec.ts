@@ -220,7 +220,7 @@ test.describe("SEO and Prerendering", () => {
 
       // 5. Click Save to Codex
       await page.click("#save-to-codex-btn");
-      await page.click("button:has-text('Open Codex')");
+      await page.getByRole("link", { name: "Open Codex" }).click();
 
       // 6. Verify redirection to workspace app root
       await expect(page).toHaveURL(/\/$/);
@@ -296,7 +296,7 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.click("button:has-text('Open Codex')");
+      await page.getByRole("link", { name: "Open Codex" }).click();
       await expect(page).toHaveURL(/\/$/);
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
@@ -341,7 +341,7 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.click("button:has-text('Open Codex')");
+      await page.getByRole("link", { name: "Open Codex" }).click();
       await expect(page).toHaveURL(/\/$/);
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),

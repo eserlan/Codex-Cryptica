@@ -64,6 +64,11 @@ describe("GeneratorSwitcherMenu", () => {
     expect(
       screen.getByText("Faction Generator", { selector: "a" }),
     ).toBeTruthy();
+    expect(
+      screen.getByText("Plot Twist & Complication Generator", {
+        selector: "a",
+      }),
+    ).toBeTruthy();
   });
 
   it("hides the nomad clan generator in Pirate mode", async () => {
@@ -79,6 +84,34 @@ describe("GeneratorSwitcherMenu", () => {
 
     expect(screen.queryByText("Nomad Clan Generator")).toBeNull();
     expect(screen.getByText("Ship Generator")).toBeTruthy();
+  });
+
+  it("hides the nomad clan generator in Cosmic Horror mode", async () => {
+    themeStore.worldThemeId = "cosmic_horror";
+    render(GeneratorSwitcherMenu, {
+      props: {
+        canonicalPath: "/generators/faction",
+        eyebrow: "Faction Generator",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.queryByText("Nomad Clan Generator")).toBeNull();
+  });
+
+  it("keeps the nomad clan generator in Cyberpunk mode", async () => {
+    themeStore.worldThemeId = "cyberpunk";
+    render(GeneratorSwitcherMenu, {
+      props: {
+        canonicalPath: "/generators/faction",
+        eyebrow: "Faction Generator",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.getByText("Nomad Clan Generator")).toBeTruthy();
   });
 
   it("shows horror-only generators when the world theme is horror", async () => {

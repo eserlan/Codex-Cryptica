@@ -273,6 +273,23 @@ export const CONDITION_BY_STATE: Record<string, string[]> = {
 };
 
 /**
+ * What kind of faction this is, in plain language — deliberately genre-agnostic
+ * so the same pool works whether the name that follows is a cult, a crew, or a
+ * corporate strike team. Written with no proper names of its own, since it
+ * always introduces a faction that already has one.
+ */
+export const FACTION_IDENTITIES: string[] = [
+  "Displaced scavengers turned makeshift militia.",
+  "A militant order fallen into extremism.",
+  "Escaped laborers who never found a way out.",
+  "A splinter cell of soldiers who refuse to stand down.",
+  "Opportunists who arrived looking for loot and got trapped.",
+  "The last remnant of the original garrison, still on duty.",
+  "A criminal syndicate that claimed the ruins as new territory.",
+  "True believers guarding what they think is sacred.",
+];
+
+/**
  * Generic, theme-agnostic faction traits — deliberately abstract so they hold
  * up for any genre, including ones without dedicated flavor tables above.
  */
@@ -298,7 +315,8 @@ export const FACTION_VICES: string[] = [
   "Wrathful",
 ];
 
-export const FACTION_GOALS: string[] = [
+/** Underlying motivation a faction's concrete goal serves — why they act, not what they're doing right now. */
+export const FACTION_DRIVES: string[] = [
   "Survival",
   "Dominion",
   "Knowledge",
@@ -307,17 +325,155 @@ export const FACTION_GOALS: string[] = [
   "Ascension",
   "Redemption",
   "Destruction",
+  "Escape",
 ];
 
-export const FACTION_OBSTACLES: string[] = [
-  "a dwindling food and resource supply",
-  "a rival faction sharing these halls",
-  "an ancient guardian bound to stop them",
-  "their own internal discord and mistrust",
-  "a slow curse eating away at their numbers",
-  "the watchful eyes of something far older",
-  "a debt owed to a power outside these walls",
-  "time — whatever they're planning, it's nearly too late",
+/**
+ * Concrete, present-tense objectives inside this dungeon, keyed by drive.
+ * Written as lowercase verb phrases so they can be embedded mid-sentence
+ * ("want to X") or capitalized standalone for the Goal field.
+ */
+export const FACTION_GOALS_BY_DRIVE: Record<string, string[]> = {
+  Survival: [
+    "secure a defensible foothold before their supplies run out",
+    "find a way out before whatever is hunting them closes in",
+    "hold this ground long enough for reinforcements that may never come",
+  ],
+  Dominion: [
+    "seize control of the routes leading to the dungeon's heart",
+    "force every other faction here to answer to them",
+    "claim this place as an unassailable seat of power",
+  ],
+  Knowledge: [
+    "recover the records this place was built to protect",
+    "decode the secret at the center of the dungeon before anyone else does",
+    "map what lies beneath before it is lost again",
+  ],
+  Vengeance: [
+    "settle a debt owed by whoever built this place",
+    "destroy what remains of those who wronged them here",
+    "expose a betrayal buried in this dungeon's history",
+  ],
+  Wealth: [
+    "strip this place of everything valuable before rivals do",
+    "secure a monopoly on whatever this dungeon still produces",
+    "recover a specific fortune rumoured to be hidden here",
+  ],
+  Ascension: [
+    "complete a transformation only this place makes possible",
+    "claim a power left behind by whoever built this dungeon",
+    "prove themselves worthy of what lies at the dungeon's heart",
+  ],
+  Redemption: [
+    "complete an old rite of atonement buried in the deepest chamber",
+    "recover what their bloodline abandoned generations ago",
+    "cleanse this place of the failure that first drove them here",
+  ],
+  Destruction: [
+    "collapse this place before its contents can be used again",
+    "unmake whatever was sealed here before it wakes",
+    "burn out anything of value so no one else can claim it",
+  ],
+  Escape: [
+    "find a way out that does not require crossing hostile territory",
+    "buy enough time to slip away before the situation collapses further",
+    "smuggle something out before the dungeon is sealed again",
+  ],
+};
+
+/**
+ * Generic, theme-agnostic descriptor for a faction's leader — paired with a
+ * placeholder name to give the faction a face without a per-genre table.
+ */
+export const FACTION_LEADER_DESCRIPTORS: string[] = [
+  "a scarred veteran who trusts no orders from above",
+  "a silver-tongued zealot who believes their own sermons",
+  "an aging strategist playing a longer game than anyone realizes",
+  "a ruthless upstart who clawed their way to the front",
+  "a reluctant inheritor of a title they never wanted",
+  "a true believer who has never once doubted the cause",
+  "an exile making a new name in a place no one else wanted",
+  "a self-made leader who answers to no council or creed",
+];
+
+/** A second, distinct named faction NPC — deliberately not a leader, so the faction has more than one face. */
+export const FACTION_NOTABLE_DESCRIPTORS: string[] = [
+  "a meticulous record-keeper who no longer fully trusts the leadership",
+  "a young scout who knows every hidden route in and out",
+  "an aging healer quietly rationing supplies no one else knows are running low",
+  "a devoted believer who still holds to the founding cause completely",
+  "a hardened enforcer who keeps the rank and file in line through fear",
+  "a quiet go-between secretly passing word to the other faction",
+  "a former outsider who joined recently and still questions the mission",
+  "an old-timer who remembers why this all started and wishes they didn't",
+];
+
+/** Generic, theme-agnostic strategic advantage for a faction — deliberately not just a headcount. */
+export const FACTION_STRENGTHS: string[] = [
+  "a wide network of informants, more eyes than fists",
+  "a strong defensive position, held by relatively few",
+  "deep resources and hired muscle, thin on true believers",
+  "detailed knowledge of routes no other faction has mapped",
+  "functioning old-world equipment nobody else knows how to use",
+  "a legitimacy the others lack, at least in name",
+  "total command of the only safe way in or out",
+  "unmatched mobility through ground the others cannot cross safely",
+];
+
+/**
+ * What a faction believes it must do soon, or fears will happen if it
+ * doesn't — the reason the current standoff cannot simply continue
+ * indefinitely. Composed into the shared Faction Situation paragraph.
+ */
+export const FACTION_INSTABILITY_HOOKS: string[] = [
+  "that balance will not hold once either side's obstacle breaks first",
+  "a third party moving into the dungeon could collapse the standoff overnight",
+  "whichever faction resolves its obstacle first will move on the other immediately",
+  "neither side has the strength to end this outright, so the standoff persists by exhaustion alone",
+  "a single misstep by either leader could turn the standoff into open war",
+  "the balance holds only because both sides fear what victory would actually cost them",
+];
+
+/** Context a local origin/belief template can draw on to stay dungeon-specific. */
+export interface FactionLoreContext {
+  builder: string;
+  cause: string;
+  originalUse: string;
+}
+
+/** Why the faction exists and how it became connected to this dungeon — composed from the dungeon's own history seeds. */
+export const FACTION_ORIGIN_TEMPLATES: Array<
+  (ctx: FactionLoreContext) => string
+> = [
+  (ctx) =>
+    `Descendants of ${ctx.builder}, drawn back by what was left unfinished here.`,
+  (ctx) => `Survivors of ${ctx.cause}, who never found anywhere better to go.`,
+  (ctx) =>
+    `Outsiders who broke in through the damage left by ${ctx.cause}, and chose to stay.`,
+  (ctx) =>
+    `A splinter group who once served ${ctx.builder}, until they saw what this place was truly for.`,
+  (ctx) =>
+    `Later arrivals who repurposed ${ctx.originalUse} for their own ends.`,
+  (ctx) =>
+    `A faction that only formed after this place stopped serving ${ctx.originalUse}.`,
+];
+
+/** What the faction believes about the dungeon or the current conflict — composed from the same history seeds. */
+export const FACTION_BELIEF_TEMPLATES: Array<
+  (ctx: FactionLoreContext) => string
+> = [
+  (ctx) =>
+    `They believe finishing what ${ctx.builder} started here will settle an old debt.`,
+  (ctx) =>
+    `They believe ${ctx.cause} was no accident, and that the truth is still buried somewhere close.`,
+  (ctx) =>
+    `They believe this place was never meant to become ${ctx.originalUse}, and that its true purpose is theirs to reclaim.`,
+  (ctx) =>
+    `They believe whoever controls this place controls what caused ${ctx.cause}.`,
+  (ctx) =>
+    `They believe leaving this place to rot would insult everything ${ctx.builder} built.`,
+  () =>
+    `They believe the other faction here fundamentally misunderstands what this place actually requires of them.`,
 ];
 
 /** Generic connector flavor for non-linear pointcrawl routes between sectors. */

@@ -36,9 +36,60 @@ wrangler secret put GEMINI_API_KEY
 
 wrangler secret put TURNSTILE_SECRET_KEY
 # Paste the secret for the Turnstile widget used to create guest snapshots
+
+wrangler secret put SESSION_TOKEN_SECRET
+# Any high-entropy random string, e.g. `openssl rand -base64 32`.
+# HMAC signing key for LLM session capability tokens.
+
+wrangler secret put CODEX_AUTOMATION_KEY
+# Secret key for trusted automation/agent workflows (can be comma-separated for rotation).
 ```
 
 For widget creation, web environment configuration, quotas, and testing, see [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md).
+
+#### About `SESSION_TOKEN_SECRET`
+
+Clients solve an invisible Turnstile challenge on app load, exchange it at
+`POST /api/session` for a short-lived signed token, and present that token on
+every text LLM request. The proxy verifies the signature locally and rate
+limits per token id.
+
+Two properties worth knowing before you deploy:
+
+- **Until the secret is set, the guard fails open** and generation behaves
+  exactly as it did before. That's deliberate — the worker can ship ahead of
+  the secret without an outage. Enforcement begins the moment it's set.
+- **Rotating the secret invalidates every live token at once.** Clients
+  recover on their own: they get a 401, re-solve the challenge, and replay.
+  Expect a burst of Turnstile solves right after a rotation.
+
+#### About `CODEX_AUTOMATION_KEY`
+
+For trusted server-side scripts and agent workflows, you can obtain generation session
+tokens directly without solving Turnstile:
+
+1. **Mint session token**:
+   ```bash
+   curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev/api/session \
+     -H "X-Codex-Automation-Key: <your-automation-key>"
+   # Returns: { "token": "...", "expiresAt": 1700000000, "scope": "automation" }
+   ```
+2. **Execute generation requests**:
+   ```bash
+   curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev/ \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <token>" \
+     -d '{
+       "operation": "generate",
+       "prompt": "Describe an ancient crypt",
+       "model": "gemini-3.5-flash-lite"
+     }'
+   ```
+
+Key rotation supports comma-separated keys (`key-v2,key-v1`) in the `CODEX_AUTOMATION_KEY` secret.
+
+Image generation (`/v1/images/generations`) is not covered by this guard — it
+keeps its own per-IP daily limit.
 
 ### Step 5: Verify Deployment
 
@@ -168,6 +219,16 @@ Then update the URL in all references.
 ```bash
 wrangler tail
 ```
+
+### View Historical/Queryable Logs
+
+Cloudflare dashboard → Workers & Pages → `oracle-proxy` → **Logs** tab.
+This is where the LLM pipeline's `ResolutionLogEntry` metadata (model key,
+provider, operation type, latency, outcome, token usage/cost, retry/fallback
+info) is queryable after the fact — filter by `outcome`, `modelKey`,
+`operation`, etc. Entries are metadata only; no prompt or response content
+is ever logged, so this tab is safe to view or share without redaction.
+Requires `[observability] enabled = true` in `wrangler.toml` (already set).
 
 ### Check Worker Status
 

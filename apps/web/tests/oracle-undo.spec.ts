@@ -1,92 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle } from "./test-helpers";
 
 test.describe("Oracle Undo", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      try {
-        localStorage.setItem("oracle-hint-seen", "true");
-      } catch {
-        /* ignore */
-      }
-
-      // Mock File System Access API
-      (window as any).showDirectoryPicker = async () => {
-        return {
-          name: "mock-vault",
-          kind: "directory",
-          getDirectoryHandle: async () => ({
-            getFileHandle: async () => ({
-              getFile: async () => ({
-                lastModified: Date.now(),
-                text: async () => "",
-              }),
-              createWritable: async () => ({
-                write: async () => {},
-                close: async () => {},
-              }),
-            }),
-          }),
-          getFileHandle: async () => ({
-            getFile: async () => ({
-              lastModified: Date.now(),
-              text: async () => "",
-            }),
-            createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
-            }),
-          }),
-          values: async function* () {},
-          queryPermission: async () => "granted",
-          requestPermission: async () => "granted",
-        };
-      };
-    });
-
-    await page.goto("/");
-
-    // Wait for the app to initialize
-    await page.waitForFunction(
-      () => {
-        const oracle = (window as any).oracle;
-        return oracle && oracle.isInitialized;
-      },
-      { timeout: 15000 },
-    );
-
-    await expect(page.getByTestId("activity-bar-oracle")).toBeVisible();
-
-    // Set a mock API key to enable Oracle using the app's oracle API
-    await page.evaluate(async () => {
-      const oracle = (window as any).oracle;
-      if (oracle && typeof oracle.setKey === "function") {
-        await oracle.setKey("test-key");
-      } else if (oracle) {
-        oracle.apiKey = "test-key";
-      }
-    });
-
-    // Initialize vault
-    await page.evaluate(async () => {
-      const v = (window as any).vault;
-      if (v.status !== "ready" && !v.activeVaultId) {
-        await v.importFromFolder();
-      }
-    });
-
-    // Ensure vault is ready
-    await page.waitForFunction(
-      () => {
-        const v = (window as any).vault;
-        return v && v.status === "idle";
-      },
-      { timeout: 15000 },
-    );
+    await setupVaultPage(page);
   });
 
   // TODO(#1168): smart-apply undo flow needs investigation — revisionService.undo() path unclear after refactor
@@ -162,7 +79,7 @@ test.describe("Oracle Undo", () => {
 
   test("can undo a create node action", async ({ page }) => {
     // 1. Open Oracle and simulate a /create message
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
 
     await page.evaluate(async () => {
       const oracle = (window as any).oracle;

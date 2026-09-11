@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 /**
  * Tests for Feature 009 - Mobile UX Refinement & Sync Feedback
@@ -7,88 +8,8 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Mobile UX - 009 Feature Requirements", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock File System Access API for vault
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      const files = [
-        {
-          name: "TestEntity.md",
-          kind: "file",
-          content:
-            "---\nid: test-entity\ntitle: Test Entity\ntype: npc\n---\n# Test Entity\n\nThis is a test entity for mobile viewport testing.",
-        },
-      ];
-
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: () => files,
-        entries: async function* () {
-          for (const f of files)
-            yield [
-              f.name,
-              {
-                kind: "file",
-                name: f.name,
-                getFile: async () => new File([f.content], f.name),
-              },
-            ];
-        },
-        getFileHandle: async (name: string) => ({
-          kind: "file",
-          name,
-          getFile: async () => new File([""], name),
-        }),
-        getDirectoryHandle: async () => ({}),
-      });
-
-      // Mock IndexedDB to avoid DataCloneError
-      const originalPut = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (
-        ...args: [unknown, IDBValidKey?]
-      ) {
-        try {
-          return originalPut.apply(this, args);
-        } catch (e: any) {
-          if (e.name === "DataCloneError") {
-            const req: any = {
-              onsuccess: null,
-              onerror: null,
-              result: args[1],
-              readyState: "done",
-              addEventListener: function (type: string, listener: any) {
-                if (type === "success") this.onsuccess = listener;
-              },
-            };
-            setTimeout(() => {
-              if (req.onsuccess) req.onsuccess({ target: req });
-            }, 0);
-            return req;
-          }
-          throw e;
-        }
-      };
-    });
-
-    // Set mobile viewport early
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto("/");
-
-    // Wait for hydration and state stabilization (stores ready, landing page dismissed)
-    await page.waitForFunction(() => {
-      const uiStore = (window as any).uiStore;
-      const helpStore = (window as any).helpStore;
-      return (
-        uiStore && !uiStore.isLandingPageVisible && helpStore?.isInitialized
-      );
-    });
+    await setupVaultPage(page);
   });
 
   test.describe("FR-004: Entity detail full-width on mobile", () => {

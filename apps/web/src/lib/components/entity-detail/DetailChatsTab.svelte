@@ -1,38 +1,84 @@
 <script lang="ts">
-  import type { Entity, GuestChatTranscript, GuestChatMessage } from "schema";
+  import type {
+    Entity,
+    GuestChatConfig,
+    GuestChatTranscript,
+    GuestChatMessage,
+  } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { systemClock } from "$lib/utils/runtime-deps";
+  import { characterChatExportService } from "$lib/services/character-chat-export";
+  import CharacterChat from "./CharacterChat.svelte";
+  import GuestChatSettings from "./GuestChatSettings.svelte";
 
-  let { entity } = $props<{
+  let {
+    entity,
+    isEditing = false,
+    editContent = "",
+    editLore = $bindable(),
+    editGuestChatConfig = $bindable(),
+  } = $props<{
     entity: Entity;
+    isEditing?: boolean;
+    editContent?: string;
+    editLore?: string;
+    editGuestChatConfig?: GuestChatConfig;
   }>();
 
   // Host state
   let transcripts = $state<GuestChatTranscript[]>([]);
   let isLoadingTranscripts = $state(false);
+  // Local self-chat sessions (guest_chat_transcripts IDB store) where this
+  // entity was the human's speaker character rather than the AI-voiced one.
+  let speakerLocalSessions = $state<GuestChatTranscript[]>([]);
 
-  // Editing state (shared for both host and guest view)
+  // Editing state for synced guest transcript logs.
   let editingMessageId = $state<string | null>(null);
-  let editContent = $state("");
+  let messageEditContent = $state("");
 
   // Guest Chat State
   let messageInput = $state("");
   let chatContainer = $state<HTMLElement | null>(null);
   let isSending = $state(false);
 
+  // Transcripts where this entity is the AI-voiced character (full CRUD,
+  // rendered in "Guest Conversation Logs" below).
+  const primaryTranscripts = $derived(
+    transcripts.filter((t) => t.characterId === entity.id),
+  );
+  // Transcripts synced from a guest where this entity was instead the
+  // human's speaker character — a shared conversation cross-listed here
+  // read-only, per #2302.
+  const speakerSyncedSessions = $derived(
+    transcripts.filter((t) => t.characterId !== entity.id),
+  );
+  const speakerSessions = $derived(
+    [...speakerSyncedSessions, ...speakerLocalSessions].sort(
+      (a, b) => b.lastUpdated - a.lastUpdated,
+    ),
+  );
+
   // Load Host transcripts
   const loadHostTranscripts = async () => {
     if (vault.isGuest || entity.type !== "character") return;
+    const requestedId = entity.id;
     isLoadingTranscripts = true;
     try {
-      transcripts = await vault.loadTranscriptsForCharacter(entity.id);
+      const [synced, asSpeaker] = await Promise.all([
+        vault.loadTranscriptsForCharacter(entity.id),
+        guestChatStore.listSessionsAsSpeaker(entity.id),
+      ]);
+      // Guard against a stale response landing after the entity changed.
+      if (entity.id !== requestedId) return;
+      transcripts = synced;
+      speakerLocalSessions = asSpeaker;
     } catch (err) {
       console.error("[DetailChatsTab] Failed to load transcripts:", err);
     } finally {
-      isLoadingTranscripts = false;
+      if (entity.id === requestedId) isLoadingTranscripts = false;
     }
   };
 
@@ -43,7 +89,10 @@
     }
   });
 
-  // Guest Chat transcript access
+  function viewConversation(transcript: GuestChatTranscript) {
+    vault.selectedEntityId = transcript.characterId;
+  }
+
   let guestTranscript = $derived(
     vault.isGuest ? guestChatStore.transcripts[entity.id] || null : null,
   );
@@ -83,7 +132,6 @@
     }
   }
 
-  // Scroll to bottom when guest messages arrive
   $effect(() => {
     if (guestTranscript?.messages?.length) {
       void scrollToBottom();
@@ -93,7 +141,7 @@
   // Message Actions: Edit & Delete (Host)
   function startEditMessage(msg: GuestChatMessage) {
     editingMessageId = msg.id;
-    editContent = msg.content;
+    messageEditContent = msg.content;
   }
 
   async function saveHostMessageEdit(
@@ -102,7 +150,7 @@
   ) {
     const msg = transcript.messages.find((m) => m.id === messageId);
     if (msg) {
-      msg.content = editContent.trim();
+      msg.content = messageEditContent.trim();
       transcript.lastUpdated = systemClock.now();
       await vault.saveTranscript(transcript);
       await loadHostTranscripts();
@@ -130,14 +178,17 @@
         `Delete the entire conversation session with ${transcript.guestName}?`,
       )
     ) {
-      await vault.deleteTranscript(transcript.guestId, entity.id);
+      await vault.deleteTranscript(transcript.guestId, transcript.characterId);
       await loadHostTranscripts();
     }
   }
 
-  // Message Actions: Edit & Delete (Guest)
   async function saveGuestMessageEdit(messageId: string) {
-    await guestChatStore.saveMessageEdit(entity.id, messageId, editContent);
+    await guestChatStore.saveMessageEdit(
+      entity.id,
+      messageId,
+      messageEditContent,
+    );
     editingMessageId = null;
   }
 
@@ -150,12 +201,86 @@
       await guestChatStore.deleteMessage(entity.id, messageId);
     }
   }
+
+  let isCopying = $state(false);
+  let isSavingJournal = $state(false);
+
+  async function copyHostTranscript(transcript: GuestChatTranscript) {
+    if (isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(transcript, {
+        speakerName: transcript.guestName,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
+
+  async function sendHostTranscriptToJournal(transcript: GuestChatTranscript) {
+    if (isSavingJournal) return;
+    isSavingJournal = true;
+    try {
+      await characterChatExportService.sendConversationToJournal(transcript, {
+        speakerName: transcript.guestName,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isSavingJournal = false;
+    }
+  }
+
+  async function copyGuestTranscript() {
+    if (!guestTranscript || isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(guestTranscript, {
+        speakerName: guestTranscript.guestName || "You",
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
 </script>
 
 <div class="space-y-4">
   {#if !vault.isGuest}
     <!-- HOST VIEW: Synced Guest Transcripts -->
     <div class="space-y-4">
+      <GuestChatSettings
+        {entity}
+        {isEditing}
+        {editContent}
+        bind:editLore
+        bind:editGuestChatConfig
+      />
+
+      <section class="space-y-2" aria-labelledby="host-character-chat-title">
+        <div
+          class="flex items-center justify-between border-b border-theme-border pb-2"
+        >
+          <div>
+            <h4
+              id="host-character-chat-title"
+              class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--message-circle] w-4 h-4 text-theme-primary"
+              ></span>
+              Character Chat
+            </h4>
+            <p class="mt-1 text-xs text-theme-muted">
+              Try this character yourself. Your conversation stays in this
+              browser and is not added to guest logs.
+            </p>
+          </div>
+        </div>
+        <CharacterChat {entity} />
+      </section>
+
       <div
         class="flex items-center justify-between border-b border-theme-border pb-2"
       >
@@ -167,7 +292,7 @@
           Guest Conversation Logs
         </h4>
         <span class="text-xs text-theme-muted"
-          >{transcripts.length} Session(s)</span
+          >{primaryTranscripts.length} Session(s)</span
         >
       </div>
 
@@ -178,7 +303,7 @@
           <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
           Loading transcripts...
         </div>
-      {:else if transcripts.length === 0}
+      {:else if primaryTranscripts.length === 0}
         <p class="text-xs text-theme-muted italic py-4">
           No synced guest transcripts found for this character yet.
         </p>
@@ -186,7 +311,7 @@
         <div
           class="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-2"
         >
-          {#each transcripts as transcript (transcript.id || transcript.guestId)}
+          {#each primaryTranscripts as transcript (transcript.id || transcript.guestId)}
             <div
               class="border border-theme-border/60 rounded-xl p-3 bg-theme-bg/25 space-y-3 relative group/session"
             >
@@ -204,17 +329,47 @@
                     >({transcript.guestId.slice(0, 6)})</span
                   >
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <span class="text-[10px] text-theme-muted">
                     {new Date(transcript.lastUpdated).toLocaleString()}
                   </span>
                   <button
                     type="button"
-                    onclick={() => deleteHostTranscript(transcript)}
-                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100"
-                    title="Delete entire session logs"
+                    onclick={() => copyHostTranscript(transcript)}
+                    disabled={isCopying}
+                    class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer disabled:opacity-50"
+                    title="Copy conversation"
+                    aria-label="Copy conversation"
                   >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                    <span
+                      class="icon-[lucide--copy] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick={() => sendHostTranscriptToJournal(transcript)}
+                    disabled={isSavingJournal}
+                    class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer disabled:opacity-50"
+                    title="Send to Journal"
+                    aria-label="Send to Journal"
+                  >
+                    <span
+                      class="icon-[lucide--book-marked] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick={() => deleteHostTranscript(transcript)}
+                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer"
+                    title="Delete entire session logs"
+                    aria-label="Delete entire session logs"
+                  >
+                    <span
+                      class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
                   </button>
                 </div>
               </div>
@@ -243,8 +398,12 @@
                             onclick={() => startEditMessage(msg)}
                             class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition"
                             title="Edit message"
+                            aria-label="Edit message"
                           >
-                            <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                            <span
+                              class="icon-[lucide--pencil] w-3 h-3"
+                              aria-hidden="true"
+                            ></span>
                           </button>
                           <button
                             type="button"
@@ -252,8 +411,12 @@
                               deleteHostMessage(transcript, msg.id)}
                             class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition"
                             title="Delete message"
+                            aria-label="Delete message"
                           >
-                            <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                            <span
+                              class="icon-[lucide--trash-2] w-3 h-3"
+                              aria-hidden="true"
+                            ></span>
                           </button>
                         {/if}
                         {#if msg.role === "assistant"}
@@ -264,7 +427,9 @@
                             class="text-[9px] font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
                             title="Promote this response to a rumor draft"
                           >
-                            <span class="icon-[lucide--sparkles] w-3 h-3"
+                            <span
+                              class="icon-[lucide--sparkles] w-3 h-3"
+                              aria-hidden="true"
                             ></span>
                             Promote
                           </button>
@@ -277,7 +442,7 @@
                         class="space-y-1.5 pl-2 border-l-2 border-theme-primary/50 py-1"
                       >
                         <textarea
-                          bind:value={editContent}
+                          bind:value={messageEditContent}
                           class="w-full text-xs bg-theme-bg border border-theme-border rounded p-1.5 text-theme-text focus:ring-1 focus:ring-theme-primary outline-none"
                           rows="2"
                         ></textarea>
@@ -301,7 +466,7 @@
                       </div>
                     {:else}
                       <p
-                        class="text-xs text-theme-text pl-2 border-l-2 border-theme-primary/30 py-1 whitespace-pre-wrap"
+                        class="text-xs text-theme-text pl-2 border-l-2 border-theme-primary/30 py-1 whitespace-pre-wrap break-words"
                       >
                         {msg.content}
                       </p>
@@ -313,13 +478,61 @@
           {/each}
         </div>
       {/if}
+
+      {#if speakerSessions.length > 0}
+        <div
+          class="flex items-center justify-between border-b border-theme-border pb-2 mt-6"
+        >
+          <h4
+            class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+          >
+            <span class="icon-[lucide--user-round] w-4 h-4 text-theme-primary"
+            ></span>
+            Conversations as {entity.title}
+          </h4>
+          <span class="text-xs text-theme-muted"
+            >{speakerSessions.length} Session(s)</span
+          >
+        </div>
+        <p class="text-xs text-theme-muted italic">
+          Conversations where someone chatted using {entity.title} as their voice.
+          View and manage them from the other character's Chat tab.
+        </p>
+        <div class="space-y-2">
+          {#each speakerSessions as session (session.id || `${session.guestId}_${session.characterId}`)}
+            <button
+              type="button"
+              onclick={() => viewConversation(session)}
+              class="w-full flex items-center justify-between gap-2 rounded-lg border border-theme-border/60 bg-theme-bg/25 px-3 py-2.5 text-left transition hover:border-theme-primary cursor-pointer"
+            >
+              <span class="min-w-0">
+                <span class="block text-xs font-bold text-theme-text">
+                  With {session.characterTitle}
+                </span>
+                <span class="block text-[10px] text-theme-muted">
+                  {session.messages.length} message{session.messages.length ===
+                  1
+                    ? ""
+                    : "s"} · {new Date(
+                    session.lastUpdated,
+                  ).toLocaleDateString()}
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--chevron-right] w-4 h-4 shrink-0 text-theme-muted"
+              ></span>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
   {:else}
     <!-- GUEST VIEW: Active Chat Panel -->
-    <div class="space-y-4 flex flex-col h-[500px]">
+    <div class="space-y-4 flex flex-col sm:h-[500px]">
       {#if !entity.guestChatConfig?.isEnabled}
         <div
-          class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50"
+          class="min-h-52 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50 sm:flex-1"
         >
           <span class="icon-[lucide--messages-square] w-12 h-12 mb-3 opacity-30"
           ></span>
@@ -332,7 +545,7 @@
         </div>
       {:else if !guestTranscript}
         <div
-          class="flex-1 flex flex-col items-center justify-center text-center p-6 bg-theme-surface/10 rounded-xl border border-theme-border/50"
+          class="min-h-52 flex flex-col items-center justify-center text-center p-6 bg-theme-surface/10 rounded-xl border border-theme-border/50 sm:flex-1"
         >
           <span
             class="icon-[lucide--messages-square] w-12 h-12 mb-3 text-theme-primary opacity-50"
@@ -356,9 +569,29 @@
         </div>
       {:else}
         <!-- Active Chat Window -->
+        <div class="flex justify-between items-center px-1 text-xs">
+          <span
+            class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+          >
+            Conversation
+          </span>
+          {#if guestTranscript?.messages?.length}
+            <button
+              type="button"
+              onclick={copyGuestTranscript}
+              class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+              title="Copy conversation"
+              aria-label="Copy conversation"
+            >
+              <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"
+              ></span>
+              Copy
+            </button>
+          {/if}
+        </div>
         <div
           bind:this={chatContainer}
-          class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10"
+          class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 sm:min-h-0 sm:max-h-none sm:flex-1"
         >
           {#each guestTranscript.messages as msg (msg.id)}
             <div
@@ -380,16 +613,24 @@
                       onclick={() => startEditMessage(msg)}
                       class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition"
                       title="Edit message"
+                      aria-label="Edit message"
                     >
-                      <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                      <span
+                        class="icon-[lucide--pencil] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                     </button>
                     <button
                       type="button"
                       onclick={() => deleteGuestMessage(msg.id)}
                       class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition"
                       title="Delete message"
+                      aria-label="Delete message"
                     >
-                      <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                      <span
+                        class="icon-[lucide--trash-2] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                     </button>
                   </div>
                 {/if}
@@ -400,7 +641,7 @@
                   class="w-full space-y-1.5 p-2 rounded-xl border border-theme-border bg-theme-surface"
                 >
                   <textarea
-                    bind:value={editContent}
+                    bind:value={messageEditContent}
                     class="w-full text-xs bg-theme-bg border border-theme-border rounded p-1.5 text-theme-text focus:ring-1 focus:ring-theme-primary outline-none"
                     rows="2"
                   ></textarea>
@@ -423,12 +664,12 @@
                 </div>
               {:else}
                 <div
-                  class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
+                  class="w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
                   {msg.role === 'user'
                     ? 'bg-theme-primary/10 border-theme-primary/20 text-theme-text rounded-tr-none shadow-[0_2px_8px_rgba(var(--color-theme-primary-rgb),0.05)]'
                     : 'bg-theme-surface border-theme-border text-theme-text rounded-tl-none shadow-[0_2px_8px_rgba(0,0,0,0.02)]'}"
                 >
-                  <p class="whitespace-pre-wrap">{msg.content}</p>
+                  <p class="whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
               {/if}
 
@@ -468,9 +709,10 @@
           <textarea
             bind:value={messageInput}
             onkeydown={handleGuestKeydown}
-            placeholder="Type a message to {entity.title}..."
+            placeholder="Type a message..."
+            aria-label="Message {entity.title}"
             disabled={guestChatStore.isGenerating}
-            class="flex-1 text-xs bg-theme-surface/50 border border-theme-border focus:border-theme-primary rounded-xl px-3 py-2.5 outline-none resize-none custom-scrollbar text-theme-text"
+            class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
             rows="2"
           ></textarea>
           <button
@@ -479,7 +721,7 @@
             disabled={!messageInput.trim() ||
               guestChatStore.isGenerating ||
               isSending}
-            class="p-2.5 bg-theme-primary hover:bg-theme-secondary disabled:bg-theme-surface disabled:text-theme-muted disabled:border-theme-border text-theme-bg rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
+            class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
             aria-label="Send Message"
           >
             <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"

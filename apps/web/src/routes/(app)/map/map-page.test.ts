@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const controllerState = vi.hoisted(() => ({
@@ -25,6 +25,8 @@ const controllerState = vi.hoisted(() => ({
   syncActiveVault: vi.fn(),
   setVttChatSidebarCollapsed: vi.fn(),
 }));
+
+const gridSettingsMock = vi.hoisted(() => vi.fn(() => ({})));
 
 vi.mock("$lib/stores/map/map-page-controller.svelte", () => ({
   MapPageController: class MapPageControllerMock {
@@ -81,6 +83,10 @@ vi.mock("$lib/components/map/VTTGridColorMenu.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/components/map/VTTGridSettings.svelte", () => ({
+  default: gridSettingsMock,
+}));
+
 vi.mock("$lib/components/vtt/TokenAddDialog.svelte", () => ({
   default: function TokenAddDialogMock() {
     return {};
@@ -91,6 +97,11 @@ vi.mock("$lib/components/vtt/MapVTTSidebar.svelte", () => ({
   default: function MapVTTSidebarMock() {
     return {};
   },
+}));
+
+vi.mock("$lib/components/EntityDetailPanel.svelte", async () => ({
+  default: (await import("$lib/components/modals/__tests__/ModalStub.svelte"))
+    .default,
 }));
 
 vi.mock("$lib/components/ShareModal.svelte", async () => ({
@@ -106,17 +117,24 @@ vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: mapStoreMock,
 }));
 
+const mapSessionMock = vi.hoisted(() => ({
+  vttEnabled: true,
+  showGridSettings: false,
+}));
+
 vi.mock("$lib/stores/map-session.svelte", () => ({
-  mapSession: {
-    vttEnabled: true,
+  mapSession: mapSessionMock,
+}));
+
+const vaultMock = vi.hoisted(() => ({
+  activeVaultId: "vault-1",
+  selectedEntityId: null as string | null,
+  entities: {
+    "entity-1": { id: "entity-1", title: "Map entity" },
   },
 }));
 
-vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: {
-    activeVaultId: "vault-1",
-  },
-}));
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
 
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
@@ -152,12 +170,28 @@ describe("map/+page", () => {
     mapStoreMock.activeMap = { id: "map-1" };
     sessionModeStoreMock.isGuestMode = false;
     guestVaultMock.publishId = null;
+    mapSessionMock.showGridSettings = false;
+    vaultMock.selectedEntityId = null;
+    gridSettingsMock.mockClear();
   });
 
   it("does not mount ShareModal locally even if a controller-local share flag exists", () => {
     render(MapPage);
 
     expect(screen.queryByTestId("modal-stub")).toBeNull();
+  });
+
+  it("mounts grid settings independently of the VTT sidebar", () => {
+    mapSessionMock.showGridSettings = true;
+
+    render(MapPage);
+
+    expect(gridSettingsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        close: expect.any(Function),
+      }),
+    );
   });
 
   it("shows a 'no maps published' message for a published-vault reader with no maps", () => {
@@ -180,5 +214,13 @@ describe("map/+page", () => {
 
     expect(screen.getByText("Waiting for host")).not.toBeNull();
     expect(screen.queryByText("No maps published")).toBeNull();
+  });
+
+  it("opens the linked entity detail panel when a map entity is selected", async () => {
+    vaultMock.selectedEntityId = "entity-1";
+
+    render(MapPage);
+
+    await waitFor(() => expect(screen.getByTestId("modal-stub")).toBeTruthy());
   });
 });

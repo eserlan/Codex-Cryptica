@@ -218,4 +218,15 @@ describe("HelpStore", () => {
       helpStore.searchResults.some((a) => a.id === "in-app-generators"),
     ).toBe(true);
   });
+
+  it("vtt-session help article is present in HELP_ARTICLES", () => {
+    expect(HELP_ARTICLES.some((a) => a.id === "vtt-session")).toBe(true);
+  });
+
+  it("vtt-session article is discoverable by search", () => {
+    helpStore.setSearchQuery("vtt session");
+    expect(helpStore.searchResults.some((a) => a.id === "vtt-session")).toBe(
+      true,
+    );
+  });
 });

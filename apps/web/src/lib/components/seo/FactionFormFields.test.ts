@@ -110,4 +110,21 @@ describe("FactionFormFields Theme Swapping", () => {
       screen.getByLabelText("Choose what they are (Own option)"),
     ).toBeTruthy();
   });
+
+  it("allows up to 4000 characters of campaign context", () => {
+    render(FactionFormFields, {
+      props: {
+        theme: "Classic Fantasy",
+        type: "Arcane Circle",
+        scope: "Single city",
+        alignment: "Pragmatic and profit-driven",
+        campaignContext: "",
+      },
+    });
+
+    const context = screen.getByLabelText(
+      "Add campaign context",
+    ) as HTMLTextAreaElement;
+    expect(context.maxLength).toBe(4000);
+  });
 });

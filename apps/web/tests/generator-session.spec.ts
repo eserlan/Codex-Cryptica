@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { dismissFrontPage, seedEntity, setupVaultPage } from "./test-helpers";
 
-const ORACLE_PROXY = "https://oracle-proxy.espen-erlandsen.workers.dev";
+const ORACLE_PROXY =
+  /^https?:\/\/(?:localhost:8787|oracle-proxy\.espen-erlandsen\.workers\.dev)(?:\/|$)/;
 
 test.describe("In-app generator sessions", () => {
   test.beforeEach(async ({ page }) => {

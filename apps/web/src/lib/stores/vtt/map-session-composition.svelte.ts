@@ -2,6 +2,7 @@ import type { MapSessionStore } from "../map-session.svelte";
 import { VTTChatManager } from "./vtt-chat-manager.svelte";
 import { VTTEncounterManager } from "./vtt-encounter-manager.svelte";
 import { VTTGridManager } from "./vtt-grid-manager.svelte";
+import { VTTLayerManager } from "./vtt-layer-manager.svelte";
 import { VTTInitiativeManager } from "./vtt-initiative-manager.svelte";
 import { VTTMeasurementManager } from "./vtt-measurement-manager.svelte";
 import { VTTMediaManager } from "./vtt-media-manager.svelte";
@@ -10,7 +11,10 @@ import { VTTPersistenceManager } from "./vtt-persistence-manager.svelte";
 import { VTTSessionLifecycleManager } from "./vtt-session-lifecycle-manager.svelte";
 import { VTTSessionSnapshotManager } from "./vtt-session-snapshot-manager";
 import { VTTTokenManager } from "./vtt-token-manager.svelte";
+import { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
 import type { VTTSessionService } from "$lib/services/vtt-session";
+import { randomSources } from "$lib/features/random";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import type { EncounterSession } from "../../../types/vtt";
 
 function initializeStorageEffects(store: MapSessionStore) {
@@ -126,6 +130,8 @@ export function initializeMapSessionComposition(
     getVault: () => store.deps.vault,
   });
 
+  store.layerManager = new VTTLayerManager();
+
   store.tokenManager = new VTTTokenManager({
     emit: (message) => store.networkManager.emit(message),
     getMapStore: () => store.deps.mapStore,
@@ -144,6 +150,49 @@ export function initializeMapSessionComposition(
     cloneInitiativeState: (sourceId, cloneId) =>
       store.initiativeManager.cloneInitiativeState(sourceId, cloneId),
     isInitiativeOrdered: (tokenId) => store.initiativeOrder.includes(tokenId),
+    getActiveLayer: () => store.layerManager.activeLayer,
+    isLayerLocked: (layer) => store.deps.mapStore.layerLocked[layer],
+  });
+
+  store.tileDeckManager = new VTTTileDeckManager({
+    getTokens: () => store.tokenManager.tokens,
+    addToken: (input, silent) => store.tokenManager.addToken(input, silent),
+    persistDraft: () => store.persistenceManager.persistDraft(),
+    normalizePlacement: (point, size) =>
+      store.tokenManager.clampAndSnapPosition(point, size),
+    getActiveLayer: () => store.layerManager.activeLayer,
+    setActiveLayer: (layer) => store.layerManager.setActiveLayer(layer),
+    rollStockingTable: (tableId) => {
+      const source = randomSources.findById(tableId);
+      if (!source) {
+        // The table was renamed, deleted, or lives in another vault. Placing
+        // the tile bare is right, but doing it silently would look like the
+        // deck's setting had quietly stopped working.
+        notificationStore.notify(
+          "That deck's stocking table is no longer in this vault, so the tile was placed with no note.",
+          "error",
+        );
+        return null;
+      }
+      return { name: source.name, text: randomSources.roll(source).finalText };
+    },
+    pinTileNote: (input) => {
+      const note = store.addNote({
+        name: input.name,
+        body: input.body,
+        x: input.x,
+        y: input.y,
+      });
+      // A note is created at its own default size, so it can only be centred
+      // on the tile once it exists and that size is known.
+      if (note) {
+        store.moveToken(
+          note.id,
+          input.x - note.width / 2,
+          input.y - note.height / 2,
+        );
+      }
+    },
   });
 
   store.encounterManager = new VTTEncounterManager({
@@ -301,6 +350,9 @@ export function initializeMapSessionComposition(
     setGridDistance: (value) => {
       store.gridManager.gridDistance = value;
     },
+    getTileDecks: () => store.tileDeckManager.decks,
+    setTileDeckSnapshotData: (decks) =>
+      store.tileDeckManager.setSnapshotData(decks),
     getActiveMapId: () => store.deps.mapStore.activeMapId,
     clearPendingSessionSnapshotBroadcast: () =>
       store.persistenceManager.clearPendingSessionSnapshotBroadcast(),

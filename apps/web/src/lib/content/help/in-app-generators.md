@@ -38,3 +38,8 @@ When the generator is opened from an entity's detail panel, it automatically inc
 ### Privacy
 
 When AI generation is enabled, your instruction plus a small, bounded slice of relevant lore (the source entity and its immediate neighbours) is sent to the Lore Oracle to write the draft — your **full vault is never sent**. If you use the free system proxy, that chat context is briefly retained server-side to power Oracle Memory and then expires (see the Oracle Memory help). Prefer to keep everything on your device? Turn AI off (or use a custom API key): generators then run entirely locally from built-in templates, and no content leaves your device.
+
+### Related Blog Posts
+
+- [AI Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice) — How to use generators to accelerate prep while keeping full creative control.
+- [Drafts Are Not Canon](/blog/drafts-are-not-canon) — Why previewing drafts before saving maintains lore integrity.

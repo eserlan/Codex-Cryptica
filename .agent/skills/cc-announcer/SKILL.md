@@ -1,0 +1,395 @@
+---
+name: cc-announcer
+description: Drafts and polishes authentic Reddit posts, devlogs, release notes, feature updates, technical write-ups, and lessons-learned posts about Codex Cryptica. Subreddit-aware (r/codexcryptica, r/rpg, r/worldbuilding, r/SvelteJS), anti-hype, grounded in actual repo material, and rule-aware about self-promotion. Use this skill whenever the user mentions writing, drafting, polishing, or "making less marketing-ish" any Reddit post, comment, devlog, release announcement, or community update related to Codex Cryptica — even when they don't explicitly name a target subreddit.
+---
+
+# Reddit Post Generation & Polishing Skill
+
+Use this skill when preparing, writing, formatting, or refining Reddit posts about Codex Cryptica — release notes, devlogs, architecture write-ups, design experiments, or lessons learned.
+
+The goal is not marketing copy. The goal is posts that feel like they were written by a real builder sharing real progress, that respect each subreddit's culture and self-promotion rules, and that don't fabricate features or implementation details.
+
+---
+
+## Step 1 — Pre-flight Checklist (run before drafting)
+
+Before writing anything, confirm these. If two or more are missing or unclear, **ask the user** instead of guessing.
+
+1. **Target subreddit.** Which sub is this for? Each has different rules and tolerance for self-promo. If unspecified, ask.
+2. **Source material.** Is there a changelog, release note, spec file, screenshot, code excerpt, or repo reference grounding the post? Without this, the post will either be vague or invented. Ask for context.
+3. **The one concrete thing.** What is the single most useful change, lesson, or question driving the post? If there isn't one, the post probably shouldn't exist (see "When NOT to Post" below).
+4. **Account standing.** For r/rpg and r/worldbuilding especially: has the user recently participated in the sub in non-promotional ways? If not, flag that the post may be removed regardless of how well-written it is, and suggest the sub's weekly self-promotion thread or showcase thread as an alternative.
+5. **Affiliation disclosure.** Confirm the post will disclose that Codex Cryptica is the user's own project. This is mandatory for every sub except r/codexcryptica.
+
+---
+
+## Step 2 — Pick an Output Mode
+
+Adapt output to what the user actually asked for. Don't return the full four-section package for a small polish request.
+
+### Mode A — Full draft (new post from scratch)
+
+Use when the user says "draft a post about X," "write a release post," "turn this changelog into a Reddit post," etc.
+
+Output:
+
+1. **Title options** — 3 to 5 subreddit-appropriate titles, mixing "I built/changed/learned" framing with at least one problem-first framing.
+2. **Recommended post** — the full body.
+3. **Optional first comment** — links, changelog, screenshots, repo references that would clutter the main post.
+4. **Notes** — subreddit-specific risks, disclosure placement, or rule-of-thumb timing.
+
+### Mode B — Polish (user provided existing draft)
+
+Use when the user pastes their own draft and asks to clean it up, tighten it, or make it less marketing-ish.
+
+Output:
+
+1. **Polished version** — full revised post.
+2. **Diff summary** — 3 to 6 bullets describing what changed and why (cut hype phrase X, restructured opener, moved link to first comment, added disclosure, etc.).
+
+No title options unless the user's original title also needs work.
+
+### Mode C — Quick (single targeted edit)
+
+Use when the user asks for a single edit like "rewrite this paragraph" or "give me a better closing question."
+
+Output: just the requested fragment. No structure, no notes.
+
+---
+
+## Step 3 — Source Grounding (hard rule)
+
+**Do not invent features, implementation details, version numbers, or claims that aren't present in the provided context.**
+
+When repo files, changelogs, release notes, spec files, or code excerpts are available, treat them as the source of truth. If the user asks for a post about a feature and hasn't given context for it, ask for the changelog or commit reference before drafting.
+
+Specifically:
+
+- Don't claim a feature exists in a release unless the changelog or release notes confirm it.
+- Don't describe an implementation approach (e.g., "uses OPFS for persistence") unless that approach is documented in the repo or provided by the user.
+- Don't invent version numbers. If the user doesn't supply one, use a placeholder like `vX.Y.Z` and flag it in the notes.
+- Don't invent screenshots, demos, or links. If the post references them, the user must supply or confirm them.
+
+Verifiable feature surface area for Codex Cryptica (use these as safe examples when illustrating; check the repo for current state before specific claims):
+
+- SvelteKit + Tailwind frontend
+- Local-first via OPFS / File System Access API
+- Cytoscape.js graph engine for the node view
+- Tiptap rich text editor
+- Bidirectional text-to-graph sync
+- Lore Oracle (Google Gemini, BYOK or shared Lite tier)
+- Offline capability
+
+If the user references a feature outside this list (VTT, maps, timelines, dice roller, etc.), ask whether it's actually shipped before writing about it.
+
+---
+
+## Core Style Rules
+
+- **Espen's Authentic Voice (Solo Dev Framing).** Write as a solo developer showing off a tool built for their own table (**"I wanted something that felt more like..."**, **"I built a..."**, **"I'd love to know whether..."**). Keep prose loose, natural, and low-adjective.
+- **Formulaic Product-Copy Rhythms.** Challenge marketing phrases like:
+  - _"Instead of a bare astronomical inventory..."_
+  - _"system-wide stakes making the system worth visiting"_
+  - _"It supports several genres, from..."_
+  - _"integrates into the in-app Campaign Generator to pull context directly..."_
+    Instead, state what it does plainly (_"It generates the system itself..."_, _"It can generate..."_, _"There are several genre options..."_, _"It is also available inside Codex Cryptica..."_).
+- **Human List Rhythms.** Keep feature lists loose and unadorned without heavy adjective pairing on every bullet point. Use simple bullet points under clear introductory headers (`It can generate:`).
+- **Plain Punctuation and No Emojis.** Do not use emojis in drafts. Prefer commas, colons, parentheses, or ordinary hyphens to em dashes, especially when a sentence uses a polished contrast construction.
+- **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
+- **Scannable but clean formatting.** Short paragraphs and light bullet points. Add a heading only when it genuinely improves scanning; a short announcement usually does not need one.
+- **Visuals and Image Support.** Include image placeholders or embedded screenshots where relevant (e.g. `![Character Chat Mobile View](...)` or `[Image: Cosmic Horror Hub Theme preview]`). Show direct interface/visual proof of changes.
+- **Concrete over abstract.** A specific example or screenshot beats a paragraph of adjectives every time.
+- **One question at the end.** A genuine question that invites discussion. Not a CTA, not "what do you think?" — something the reader could actually answer.
+- **Always link to the feature.** If you are announcing a new tool, generator, or page on the live site, include a direct link to it so people can easily find it.
+- **Links: one or two in the post body, max.** Everything else goes in the first comment (or direct link with `👉` omitted; use plain text/links like `Explore the Cosmic Horror Hub: codexcryptica.com/...`).
+
+### Better language, not safer language
+
+There are two failure modes here, not one. Prose that reads as machine-produced fails, and so does prose that has been sanded down until it says nothing. Cutting every adjective and hedging every claim is not a fix, it is the same problem wearing a different coat. The target is writing with more specificity and an actual point of view, minus the habits that give generated copy away.
+
+"LLM tells" are recurring writing habits that make copy feel generated or interchangeable with generic SaaS marketing. Treat them as disqualifying in a finished draft. They are listed as heuristics rather than a word blacklist because the same word can be earned or empty depending on what it is doing in the sentence: keep it when it carries a concrete claim, rewrite it when it is only adding polish or hype. That is a license to write better, not a license to let tells through.
+
+Common tells include:
+
+- Generic contrast formulas such as "X isn't just Y, it's Z," "not just ... but ...," and "It's more than just ..."
+- Broad audience openers such as "Whether you're a beginner or an expert..."
+- Filler openings such as "At its core..." and "In today's fast-paced world..."
+- Empty transitions such as "Here's where X comes in"
+- Unsupported adjectives and adverbs such as _seamlessly, effortlessly, powerful,_ and _robust_
+- Marketing verbs and labels such as _unlock, supercharge, elevate, revolutionise,_ and _game-changer_
+- Repeated em-dash contrast constructions
+- Tidy three-part hype lists when a direct sentence or looser list would be clearer
+- Paragraphs with nearly identical length, rhythm, or sentence shape
+- Over-polished transitions that add no information and conclusions that merely restate the post
+
+What better language actually looks like here:
+
+- Concrete nouns, real numbers, and named specifics instead of category words
+- One surprising detail that happens to be true, rather than three adjectives
+- Sentence lengths that vary because the ideas vary, not for decoration
+- A stated opinion, tradeoff, or open uncertainty, since generated copy rarely commits to one
+- Plain verbs carrying the sentence, so no adverb has to prop them up
+
+When a tell appears, do not just delete it. Ask what that sentence was supposed to claim and write that instead. Removing a transition should leave the paragraph stronger; if it leaves a hole, the hole was the missing content all along. Keep an unusual phrase when it is accurate and sounds natural in context.
+
+### Phrases and formatting to avoid
+
+- **House style:** No emojis (✨, 🪐, 👉, 🚀, etc.). Prefer plain punctuation over em dashes.
+- **Marketing filler to challenge:** _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
+
+### Cadence to avoid
+
+LLM-generated posts often share a recognizable rhythm: paragraphs of similar length, every section opening with a transition word, and a closing paragraph that restates the post. Break the cadence. Vary paragraph lengths, let some sentences run short, and don't write a conclusion that summarizes what was just said.
+
+---
+
+## Short Announcement Default
+
+For GitHub Discussions and small feature announcements, default to this lean shape unless the user asks for a devlog or detailed release note:
+
+1. Open with one specific GM, player, or builder problem in plain language.
+2. State the feature's single distinct idea in one sentence.
+3. Put one desktop screenshot immediately after that opening.
+4. Use one direct link and a loose list of three to five concrete outputs or benefits. Do not repeat the same value in prose, captions, or a second image.
+5. End with one specific question readers can answer from their own table or workflow.
+
+Cut secondary detail by default: exhaustive input lists, implementation notes, extra screenshots, and a closing recap. Keep only what helps someone understand the feature before they click.
+
+---
+
+## Image & Asset Workflow (Cloudflare R2)
+
+When preparing screenshots and visual assets for announcements, devlogs, or discussions:
+
+1. **Bucket Name**: `codex-cryptica-statics`
+2. **Public CDN Domain / Path**: `https://assets.codexcryptica.com/<key>`. Use `announcements/<feature-name>-<version>.png` for announcement images. See `docs/deployment/assets.md` for the current asset policy.
+3. **Capture via Playwright or Chrome DevTools MCP**:
+   - Playwright is the reliable path. Run a short script from the repo root so `node` resolves `playwright` out of the root `node_modules`, launch chromium, and use `deviceScaleFactor: 2` for a crisp capture.
+   - Chrome DevTools MCP often fails here: port 9222 is regularly held by an existing Chrome whose `/json/version` returns 404, so the MCP server cannot attach. Try it if you like, but fall back to Playwright rather than debugging the port.
+   - Capture a clean, high-resolution desktop viewport of the live feature or local dev server (`http://localhost:5173`) first. Capture mobile only when the announcement is specifically about mobile behavior.
+   - **Headless cannot produce AI output.** Cloudflare Turnstile rejects automated browsers (`Error: 600010`), the `oracle-proxy` handshake 401s, and the page falls back to local tables while logging "AI generation unavailable (verification), falling back to local tables." Screenshots are fine, but never quote captured text as an example of AI generation, and never present fallback template text as representative output. Ask the user to paste a real sample instead.
+4. **Upload via Wrangler to Cloudflare R2**:
+   - Use `bunx wrangler r2 object put` to upload captured image assets directly to the R2 bucket:
+     ```bash
+     bunx wrangler r2 object put codex-cryptica-statics/announcements/<feature-name>-v1.png --file <local-path> --content-type=image/png --remote
+     ```
+   - Alternatively, place images in the appropriate directory and execute an upload helper script using `bunx wrangler r2 object put`.
+5. **Reference in Drafts**:
+   - Insert direct markdown image links pointing to the R2 CDN or relative repo assets:
+     `![Feature Title](https://assets.codexcryptica.com/announcements/<feature-name>-v1.png)`
+6. **Verify the URL actually resolves** before putting it in a draft:
+   `curl -sI https://assets.codexcryptica.com/<key> | head -1`
+   If you checked the URL before uploading, Cloudflare caches that 404 for a while. Re-check with a cache buster (`?v=$(date +%s)`) to confirm the object is really there.
+
+### Also check the page's OG image
+
+Announcing a generator or public page is the moment to confirm its social preview image exists. These are declared in `apps/web/src/lib/components/seo/generator-page-meta.ts` as `ogImage`, and nothing in CI verifies the file behind the URL is present, so a declared path can point at nothing for months. The Encounter Generator shipped that way: correct `ogImage` and `ogImageAlt`, 404 on the asset.
+
+- Check it: `curl -so /dev/null -w '%{http_code}' https://assets.codexcryptica.com/screenshots/generator-<slug>.jpg`
+- If it 404s, derive one from the announcement screenshot you already captured. The convention is **1600x1000 JPEG** at roughly 150 to 200KB, matching siblings like `generator-npc.jpg`:
+  ```bash
+  magick <capture>.png -resize 1600x1000 -quality 85 -strip generator-<slug>.jpg
+  bunx wrangler r2 object put codex-cryptica-statics/screenshots/generator-<slug>.jpg --file generator-<slug>.jpg --content-type=image/jpeg --remote
+  ```
+- A 1440x900 capture at `deviceScaleFactor: 2` gives 2880x1800, the same 8:5 ratio as 1600x1000, so it downscales with no cropping.
+- Usually no code change is needed. The meta entry generally already declares the path; only the file is missing. Confirm before editing anything.
+
+---
+
+## Title Guidance
+
+Avoid default launch-style titles:
+
+- ❌ `[Update] v0.21.0 is LIVE!`
+- ❌ `Codex Cryptica: The Ultimate Worldbuilding Tool`
+
+Prefer titles that sound native to Reddit. Mix patterns rather than defaulting to one:
+
+**"I built / I changed / I learned" (familiar but solid):**
+
+- `I rebuilt the campaign graph UI around focus and context`
+- `What I learned building a local-first worldbuilding tool in Svelte`
+
+**Problem-first (often stronger):**
+
+- `My graph view kept feeling cluttered until I removed the auto-layout`
+- `OPFS persistence broke every time I refactored. Here's what finally worked`
+
+**Devlog framing (good for r/codexcryptica and r/SvelteJS):**
+
+- `Devlog: cleaner player view, Oracle sidebar, and graph polish`
+- `A small devlog on making lore notes feel runnable at the table`
+
+---
+
+## Long-Form Post Structure Template
+
+Use this structure only when the user asks for a devlog, technical write-up, or detailed release note. Use the Short Announcement Default above for routine feature announcements.
+
+### Title
+
+Clean, punchy summary of what changed or what was added. Do NOT use emojis in the title.
+
+- Preferred format: `[Feature / Area Name]: [Primary benefit or action phrase]`
+- Example: `Better Character Chat: switch speakers, keep sessions, chat comfortably on mobile`
+- Example: `New: Cosmic Horror Hub and Theme`
+
+### Opening (1 to 3 sentences)
+
+Immediate summary hook. What's new, what problem it solves for the host/GM/player, and why it was updated. Disclosure of affiliation belongs here for posts outside r/codexcryptica.
+
+- Example: `Character Chat has received a focused usability upgrade for hosts. It is now much easier to test and roleplay conversations with the characters in your world.`
+
+### Hero Image / Visual Screenshot
+
+Embed or place an image directly after the intro paragraph showing the feature in action:
+
+- `![Feature Preview](path/to/screenshot.png)`
+
+### Key Breakdown Sections (Pick 1 or 2 clear subheadings)
+
+Use clear H3 subheadings matching the feature type (e.g. `### What's improved`, `### What you can create`, `### Where to find it`):
+
+- **Bullet lists with bold lead-ins**: Each bullet starts with a short 2-5 word bold phrase summarizing the benefit, followed by 1-2 concise sentences.
+- **No emojis or em dashes anywhere in bullets**. Use standard hyphens and colons.
+
+Example (`### What's improved`):
+
+- **Choose who you chat as**: Start a conversation as yourself or as one of your campaign characters, so the reply can reflect that character's role and relationships.
+- **Switch speakers without losing history**: Change the speaking character or return to any previous conversation with that character without overwriting existing logs.
+- **Smoother mobile experience**: The chat layout, message bubbles, controls, and settings now use space more effectively on small screens.
+
+Example (`### Where to find it`):
+
+- Open a Character, select the Chats tab, enable Guest Character Chat, then use the Character Chat panel to begin. Host Character Chat stays local to your browser and separate from guest logs.
+
+### Closing & Discussion Question
+
+Wrap up with a short invitation to test in a session and ask one concrete question (no emojis, no hyphens/em-dashes as dividers).
+
+- Example: `Try it in your next session and let me know how the conversation flow feels!`
+
+---
+
+## Subreddit-Specific Guidance
+
+### r/codexcryptica (project's own sub)
+
+Direct release/devlog framing is welcome. Mention version numbers, screenshots, GitHub releases, changelogs, roadmap items freely. Disclosure not required (it's the project sub).
+
+If the sub is small or being seeded, lean more demo-heavy and roadmap-focused: posts should give visitors a reason to subscribe, not just announce.
+
+Structure: what shipped → why it matters → screenshots/links → what's next → question.
+
+### r/rpg
+
+**Strict self-promotion rules.** The 9:1 rule applies (roughly nine non-promotional contributions for every promotional one), and mods remove product posts from accounts without standing. Before drafting, confirm:
+
+- The account has recent, real participation in r/rpg.
+- The post leads with a GM problem, not a product.
+- If account standing is thin, route the post to the sub's weekly self-promotion thread instead of a standalone post.
+
+Focus on: prep friction, session flow, lore recall during play, tactical clarity, reducing tool-switching, running lore-heavy campaigns. One link maximum, near the end. Disclosure mandatory in the opening.
+
+### r/worldbuilding
+
+Even more cautious than r/rpg about product posts. Lead with **process, creative workflow, or lessons learned** — never with the product. The product can appear as the context for the lesson, not the subject of the post.
+
+Topics that land: organizing lore at scale, connecting places/factions/events/characters, graph-based thinking for worldbuilding, structural patterns for campaign-ready worlds, creative workflow tradeoffs.
+
+Avoid entirely: "try my tool," "check out my app," feature lists, multiple links, product-first framing.
+
+Disclosure mandatory and ideally in the first two sentences. If the user has no participation history in r/worldbuilding, suggest posting to r/codexcryptica or r/rpg instead, or to the worldbuilding sub's monthly showcase if one exists.
+
+### r/SvelteJS
+
+Lead with the technical problem and the implementation. The product is context, not subject.
+
+Focus on: architecture decisions, Svelte-specific patterns (especially Svelte 5 runes if applicable — check which version `apps/web` is on before writing), state management approaches, browser storage tradeoffs (OPFS vs IndexedDB vs localStorage), Cytoscape integration patterns, Tiptap extension authoring, performance work, real tradeoffs and what didn't work.
+
+Code snippets welcome. Mention Codex Cryptica as project context. Disclosure mandatory but can be brief ("for context, I'm building [Codex Cryptica], a local-first RPG campaign manager — here's the Svelte-specific problem I hit…").
+
+---
+
+## Posting via Chrome (when the user asks you to actually submit)
+
+Drafting and posting are usually one request. When asked to post (not just draft), use the `mcp__claude-in-chrome__*` tools directly against `reddit.com` — no Reddit API access exists, and the user is already logged in via their browser session. Known gotchas, hit repeatedly in practice:
+
+- **Go to the submit page directly**: `https://www.reddit.com/r/<sub>/submit?type=TEXT`. This lands with the target sub pre-selected.
+- **Title/body click-order trap**: after typing the title, a screenshot or `find`/`read_page` check before clicking into the body field is not optional. If the title field has wrapped to multiple lines (long titles do), the "Body text" placeholder sits lower than a fixed y-coordinate guess expects, and a click aimed at "the body" can land back inside the still-expanded title field instead — silently absorbing the whole post body as title text until the title's ~300-char limit truncates it. Always screenshot after typing the title and locate the body field fresh (via `find` or by eye) before clicking into it, rather than chaining a fixed coordinate.
+- **The post image is almost always already hosted**, not a local file: an OG image, a `/screenshots/` asset, or an R2-generated illustration under `assets.codexcryptica.com`. The user's own habit is to drag-and-drop that hosted image straight into the composer. The automation equivalent is to `curl` the asset URL down to a local file first (scratchpad directory), then feed that local path into the upload flow below — `file_upload` takes a local path, not a URL, so there's no way to hand it the R2 URL directly. Fetching the bytes in-page via `javascript_tool` and constructing a `File`/`DataTransfer` to simulate a real drop is possible in principle but depends on the R2 bucket sending CORS headers permissive enough for `reddit.com` to read the response as a blob, which is not guaranteed — `curl` + `file_upload` sidesteps that entirely and has been the reliable path.
+- **Image upload does not go through the visible toolbar button.** Clicking the image icon in the composer toolbar opens a native OS file picker, which is invisible to `computer` (screenshot/click) and to `read_page`/`find` (both only see the page's accessibility tree, not OS chrome). Pressing the toolbar button and then trying to interact with a "file dialog" will hang or silently fail. Instead:
+  1. Press `Escape` to close whatever native dialog opened (harmless if none did).
+  2. Locate the actual `<input type="file">` with a shadow-DOM-piercing query via `javascript_tool` — Reddit's composer is built from web components (`r-post-media-input`, `post-composer-toolbar-button-image`, `post-composer-standalone-toolbar`, etc.), so `document.querySelectorAll('input[type=file]')` on the light DOM returns nothing. A recursive shadow-root walk is required:
+     ```js
+     function findFileInputs(root, path) {
+       let results = [];
+       root
+         .querySelectorAll("input[type=file]")
+         .forEach((i) => results.push({ path, el: i }));
+       root.querySelectorAll("*").forEach((el) => {
+         if (el.shadowRoot)
+           results = results.concat(
+             findFileInputs(el.shadowRoot, path + "/" + el.tagName),
+           );
+       });
+       return results;
+     }
+     findFileInputs(document, "document");
+     ```
+  3. Get a `ref` for the matching input via `read_page` or `find` (searching inside the located shadow root context), then call `file_upload` with that `ref` and the local image path directly — do not click the input or the toolbar button first.
+- **Verify before posting**: screenshot the finished composer (title, body, image) before clicking Post. A wrong-field mistake is easy to make and easy to miss without a visual check, and posting is a one-way action on a public subreddit.
+- **After posting**, grab the permalink via `javascript_tool`: `document.querySelector('a[href*="/comments/"]')?.href` on the redirected post page, rather than guessing the URL.
+
+---
+
+## When NOT to Post
+
+Skip the Reddit post entirely if any of these apply:
+
+- **Patch release with no user-visible changes.** A bugfix-only `v0.21.1` doesn't need a thread. Save it for the next meaningful release.
+- **No screenshot, demo, or code snippet.** Visual or technical evidence carries more than prose for these communities.
+- **No concrete question for the community.** If the post doesn't invite discussion, it's an announcement, and announcements without standing get downvoted.
+- **No account standing in the target sub.** For r/rpg and r/worldbuilding especially, posting cold from a thin account will likely be removed regardless of content quality.
+- **The "change" is really a marketing milestone.** Reaching 100 stars, hitting a domain, getting a logo — these are not posts these subs want.
+
+In any of these cases, suggest the alternative: post to r/codexcryptica, batch the update into a later combined release post, or post a comment in an existing relevant thread instead.
+
+---
+
+## Safety Checks Before Final Output
+
+Before returning a draft, verify:
+
+- Does this sound like a real person posting, not an announcement?
+- Is the value clear in the first 2 to 3 sentences?
+- Is disclosure of affiliation present (or explicitly noted as not needed for r/codexcryptica)?
+- Are links used sparingly (≤2 in body)?
+- Is the closing a genuine question, not a CTA?
+- Would the post still be useful if the reader never clicked a link?
+- Are all technical claims grounded in provided changelogs, specs, code, or repo material?
+- Has the post been adapted to the target subreddit, not just dropped into a generic template?
+- Have any formulaic phrases, empty transitions, emojis, repetitive em-dash constructions, or overly regular cadence patterns slipped in?
+- Is the writing specific and committed, rather than merely inoffensive? Vague, hedged, adjective-free prose is its own failure, not a safe default.
+- Are image/screenshot placeholders included right after the opening summary?
+- Does every asset URL in the draft return 200, and if a public page is being announced, does its declared `ogImage` resolve?
+
+If any answer is "no" or "unsure," revise before returning.
+
+---
+
+## Activation Triggers
+
+Use this skill when the prompt contains text like:
+
+- "Draft a release post for v..."
+- "Turn this changelog into a Reddit announcement"
+- "Polish this for r/codexcryptica"
+- "Write a devlog for r/SvelteJS"
+- "Make this less marketing-ish" / "make this sound less like an ad"
+- "Write an update post about [feature]"
+- "Create a Reddit post from these release notes"
+- "Make this suitable for r/rpg" / "for r/worldbuilding"
+- "Turn these feature notes into a Reddit post"
+- "Write a post for the Codex Cryptica subreddit"
+- Any mention of drafting, polishing, or rewriting Reddit-bound content related to Codex Cryptica

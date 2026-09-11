@@ -2,21 +2,87 @@ import { describe, expect, it, vi } from "vitest";
 import type { Canvas } from "@codex/canvas-engine";
 import {
   buildCanvasSavePayload,
+  accumulateRotationDegrees,
   canvasEdgeToFlowEdge,
+  canvasNodeRotation,
+  canvasNodeStyle,
   canvasNodeToFlowNode,
+  canvasNodeZIndex,
+  canvasTextBackgroundStyle,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  createFlowFileNode,
+  createFlowTextNode,
+  autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
+  flowNodesToCanvasNodes,
   flowNodeToCanvasNode,
   fitDelveSectorFrames,
   hydrateCanvasGraph,
   isGenericCanvasName,
+  pointerAngleDegrees,
   pruneCanvasGraph,
+  reconnectFlowEdge,
   resolveBatchSpawnPosition,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
 
 describe("canvas-workspace-helpers", () => {
+  it("accumulates unlimited rotation without snapping at angle wraparound", () => {
+    expect(pointerAngleDegrees({ x: 0, y: 0 }, { x: 0, y: 10 })).toBe(90);
+    expect(accumulateRotationDegrees(710, 179, -179)).toBe(712);
+    expect(accumulateRotationDegrees(-710, -179, 179)).toBe(-712);
+  });
+
+  it("ignores invalid rotation data and composes rotation with node styles", () => {
+    const rotated = {
+      id: "node-1",
+      position: { x: 0, y: 0 },
+      style: "opacity:0.8",
+      data: { rotation: 405 },
+    } as any;
+    expect(canvasNodeRotation(rotated)).toBe(405);
+    expect(canvasNodeStyle(rotated)).toBe(
+      "opacity:0.8;--canvas-node-rotate:405deg;",
+    );
+    expect(
+      canvasNodeRotation({ ...rotated, data: { rotation: Number.NaN } }),
+    ).toBe(0);
+  });
+
+  it("ignores invalid z-index data and defaults to 0", () => {
+    expect(canvasNodeZIndex({ data: { zIndex: 4 } } as any)).toBe(4);
+    expect(canvasNodeZIndex({ data: { zIndex: -2 } } as any)).toBe(-2);
+    expect(canvasNodeZIndex({ data: {} } as any)).toBe(0);
+    expect(canvasNodeZIndex({ data: { zIndex: Number.NaN } } as any)).toBe(0);
+    expect(canvasNodeZIndex(undefined)).toBe(0);
+  });
+
+  it("creates a text flow node with default size and given content", () => {
+    const node = createFlowTextNode("hello", { x: 5, y: 10 }, "text-1");
+    expect(node).toMatchObject({
+      id: "text-1",
+      type: "text",
+      position: { x: 5, y: 10 },
+      width: 200,
+      height: 120,
+      data: { text: "hello" },
+    });
+  });
+
+  it("resolves text note background keys to theme-derived CSS values", () => {
+    expect(canvasTextBackgroundStyle("default")).toBe(
+      "var(--color-theme-surface)",
+    );
+    expect(canvasTextBackgroundStyle("transparent")).toBe("transparent");
+    expect(canvasTextBackgroundStyle("primary")).toContain(
+      "var(--color-theme-primary)",
+    );
+    expect(canvasTextBackgroundStyle("not-a-real-key")).toBe(
+      canvasTextBackgroundStyle("default"),
+    );
+  });
+
   it("hydrates canvas data into flow nodes and edges", () => {
     const graph = hydrateCanvasGraph({
       nodes: [
@@ -227,6 +293,56 @@ describe("canvas-workspace-helpers", () => {
       data: { entityId: "entity-1" },
     });
 
+    const fileNode = createFlowFileNode(
+      {
+        path: "files/map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 42,
+      },
+      { x: 30, y: 40 },
+      "file-1",
+    );
+    expect(flowNodeToCanvasNode(fileNode)).toMatchObject({
+      id: "file-1",
+      type: "file",
+      file: { path: "files/map.pdf", name: "map.pdf" },
+    });
+    expect(fileNode.data?.showFullImage).toBe(false);
+
+    const imageFileNode = createFlowFileNode(
+      {
+        path: "files/portrait.png",
+        name: "portrait.png",
+        mimeType: "image/png",
+        size: 42,
+      },
+      { x: 30, y: 40 },
+      "file-2",
+    );
+    expect(imageFileNode.data?.showFullImage).toBe(true);
+
+    expect(
+      flowNodeToCanvasNode({
+        id: "invalid-file",
+        type: "file",
+        position: { x: 0, y: 0 },
+        data: { file: { name: "missing metadata" } },
+      }),
+    ).toBeUndefined();
+    expect(flowNodesToCanvasNodes([fileNode])).toHaveLength(1);
+    expect(
+      flowNodesToCanvasNodes([
+        fileNode,
+        {
+          id: "invalid-file",
+          type: "file",
+          position: { x: 0, y: 0 },
+          data: { file: { name: "missing metadata" } },
+        },
+      ]),
+    ).toHaveLength(1);
+
     expect(
       createFlowEdgeFromConnection(
         {
@@ -242,6 +358,178 @@ describe("canvas-workspace-helpers", () => {
       type: "straight",
       animated: true,
     });
+  });
+
+  it("creates domain-aware Adventure and Delve connections", () => {
+    const connection = {
+      source: "room-1",
+      target: "room-2",
+      sourceHandle: "source-right",
+      targetHandle: "target-left",
+    } as any;
+
+    expect(
+      createFlowEdgeFromConnection(
+        connection,
+        "passage-1",
+        { id: "room-1", type: "delveRoom" } as any,
+        { id: "room-2", type: "delveRoom" } as any,
+      ),
+    ).toMatchObject({
+      id: "passage-1",
+      type: "delveEdge",
+      data: {
+        id: "passage-1",
+        sourceRoomId: "room-1",
+        targetRoomId: "room-2",
+        type: "standard",
+        bidirectional: true,
+      },
+    });
+
+    expect(
+      createFlowEdgeFromConnection(
+        { source: "situation", target: "clue" } as any,
+        "adventure-edge-1",
+        {
+          id: "situation",
+          type: "adventureNode",
+          data: { type: "situation" },
+        } as any,
+        {
+          id: "clue",
+          type: "adventureNode",
+          data: { type: "clue" },
+        } as any,
+      ),
+    ).toMatchObject({
+      type: "holds_clue",
+      label: "holds clue",
+      data: { relation: "holds clue" },
+    });
+  });
+
+  it("keeps Delve passage metadata aligned when reconnecting", () => {
+    const reconnected = reconnectFlowEdge(
+      {
+        id: "passage-1",
+        source: "room-1",
+        target: "room-2",
+        type: "delveEdge",
+        data: {
+          id: "passage-1",
+          sourceRoomId: "room-1",
+          targetRoomId: "room-2",
+          type: "hidden",
+          bidirectional: true,
+        },
+      } as any,
+      {
+        source: "room-3",
+        target: "room-4",
+        sourceHandle: "source-bottom",
+        targetHandle: "target-top",
+      } as any,
+    );
+
+    expect(reconnected).toMatchObject({
+      source: "room-3",
+      target: "room-4",
+      data: {
+        sourceRoomId: "room-3",
+        targetRoomId: "room-4",
+        type: "hidden",
+      },
+    });
+  });
+
+  it("auto-arranges Delve rooms through the shared canvas layout entry point", () => {
+    const clockSpy = vi.fn().mockReturnValue(1234567890);
+    const nodes = [
+      {
+        id: "sector-1",
+        type: "delveSectorGroup",
+        position: { x: 0, y: 0 },
+        data: {
+          id: "sector-1",
+          name: "Upper Halls",
+          theme: "Stone",
+          description: "",
+          order: 1,
+        },
+      },
+      ...["room-1", "room-2"].map((id, index) => ({
+        id,
+        type: "delveRoom",
+        parentId: "sector-1",
+        position: { x: 0, y: 0 },
+        data: {
+          id,
+          sectorId: "sector-1",
+          sectorName: "Upper Halls",
+          name: id,
+          role: index === 0 ? "entrance" : "encounter",
+          summary: "",
+          description: "",
+          stocking: {},
+        },
+      })),
+    ] as any;
+
+    const arranged = autoArrangeCanvasNodes({
+      canvasId: "delve-1",
+      title: "Test Delve",
+      nodes,
+      edges: [
+        {
+          id: "passage-1",
+          source: "room-1",
+          target: "room-2",
+          type: "delveEdge",
+          data: {
+            id: "passage-1",
+            sourceRoomId: "room-1",
+            targetRoomId: "room-2",
+            type: "standard",
+            bidirectional: true,
+          },
+        },
+      ] as any,
+      clock: { now: clockSpy },
+    });
+
+    expect(clockSpy).toHaveBeenCalled();
+    expect(arranged).not.toBeNull();
+    expect(arranged?.find((node) => node.id === "sector-1")).toMatchObject({
+      width: expect.any(Number),
+      height: expect.any(Number),
+    });
+    expect(
+      arranged?.find((node) => node.id === "room-2")?.position.y,
+    ).toBeGreaterThan(
+      arranged?.find((node) => node.id === "room-1")?.position.y ?? 0,
+    );
+  });
+
+  it("does not auto-arrange an ordinary entity canvas", () => {
+    const clockSpy = vi.fn().mockReturnValue(1234567890);
+    expect(
+      autoArrangeCanvasNodes({
+        canvasId: "canvas-1",
+        title: "Entity Canvas",
+        nodes: [
+          {
+            id: "entity-node",
+            type: "entity",
+            position: { x: 40, y: 80 },
+            data: { entityId: "entity-1" },
+          },
+        ] as any,
+        edges: [],
+        clock: { now: clockSpy },
+      }),
+    ).toBeNull();
+    expect(clockSpy).not.toHaveBeenCalled();
   });
 
   it("hydrates sector frames with a dedicated drag handle", () => {

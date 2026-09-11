@@ -3,9 +3,9 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
-  import VTTGridSettings from "./VTTGridSettings.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import PinNoteButton from "./PinNoteButton.svelte";
 
   let showEncounters = $state(false);
   let canManageVtt = $derived(!sessionModeStore.isGuestMode);
@@ -15,8 +15,8 @@
     const activeMap = mapStore.activeMap;
     if (!activeMap) return;
     mapSession.pendingTokenCoords = {
-      x: activeMap.dimensions.width / 2,
-      y: activeMap.dimensions.height / 2,
+      x: 0,
+      y: 0,
     };
   }
 </script>
@@ -68,6 +68,8 @@
         ></span>
       </button>
 
+      <PinNoteButton compact />
+
       <button
         class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)}`}
         onclick={() => (showEncounters = true)}
@@ -86,8 +88,4 @@
 
 {#if showEncounters}
   <EncounterManager close={() => (showEncounters = false)} />
-{/if}
-
-{#if mapSession.showGridSettings}
-  <VTTGridSettings close={() => (mapSession.showGridSettings = false)} />
 {/if}

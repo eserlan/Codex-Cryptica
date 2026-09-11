@@ -87,6 +87,35 @@ describe("getSessionContext", () => {
     expect(context).toContain("Waterdeep");
   });
 
+  it("can exclude prior language drafts while retaining other campaign context", () => {
+    sessionHubStore.addEntity({
+      type: "note",
+      kind: "language",
+      title: "Aelori",
+      summary: "A previous language identity.",
+      content: "",
+      labels: ["language", "conlang"],
+      status: "active",
+      reuseEnabled: true,
+      pinned: false,
+    });
+    sessionHubStore.addEntity({
+      type: "faction",
+      title: "River Court",
+      summary: "A useful cultural anchor.",
+      content: "",
+      labels: [],
+      status: "active",
+      reuseEnabled: true,
+      pinned: false,
+    });
+
+    const context = getSessionContext({ excludeLanguageDrafts: true });
+
+    expect(context).not.toContain("Aelori");
+    expect(context).toContain("River Court");
+  });
+
   it("enforces context budget and truncates over limit", () => {
     // Default budget is 50 in getContextSelection
     for (let i = 0; i < 55; i++) {

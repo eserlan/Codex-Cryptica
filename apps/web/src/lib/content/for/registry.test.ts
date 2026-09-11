@@ -1,0 +1,1332 @@
+import { describe, it, expect } from "vitest";
+import {
+  getLandingPage,
+  getAllLandingPages,
+  getAllLandingPageSlugs,
+  getLandingPagesForHub,
+} from "./registry";
+import { isHubThemeSlug } from "../hub-themes";
+import { LandingPageKindSchema, type LandingPageConfig } from "./schema";
+
+describe("Landing Page Registry", () => {
+  const mockRegistry: Record<string, LandingPageConfig> = {
+    "test-system": {
+      slug: "test-system",
+      kind: "system",
+      seo: { title: "SEO Title", description: "SEO Desc" },
+      hero: { title: "Hero", tagline: "Tag", problemStatement: "Prob" },
+      useCases: [],
+      recommendedTools: [],
+      cta: { title: "CTA", buttonText: "Go", buttonHref: "/go" },
+      disclaimer: "Not affiliated.",
+    },
+    "test-genre": {
+      slug: "test-genre",
+      kind: "genre",
+      seo: { title: "SEO Title", description: "SEO Desc" },
+      hero: { title: "Hero 2", tagline: "Tag 2", problemStatement: "Prob 2" },
+      useCases: [],
+      recommendedTools: [],
+      cta: { title: "CTA 2", buttonText: "Go 2", buttonHref: "/go-2" },
+    },
+  };
+
+  describe("getLandingPage", () => {
+    it("returns the page config if it exists", () => {
+      const page = getLandingPage("test-system", mockRegistry);
+      expect(page).toBeDefined();
+      expect(page?.slug).toBe("test-system");
+    });
+
+    it("returns undefined if the page config does not exist", () => {
+      const page = getLandingPage("unknown-slug", mockRegistry);
+      expect(page).toBeUndefined();
+    });
+  });
+
+  describe("getAllLandingPages", () => {
+    it("returns an array of all page configs", () => {
+      const pages = getAllLandingPages(mockRegistry);
+      expect(pages).toHaveLength(2);
+      expect(pages[0].slug).toBe("test-system");
+      expect(pages[1].slug).toBe("test-genre");
+    });
+
+    it("returns an empty array if registry is empty", () => {
+      const pages = getAllLandingPages({});
+      expect(pages).toHaveLength(0);
+    });
+  });
+
+  describe("getAllLandingPageSlugs", () => {
+    it("returns an array of slugs", () => {
+      const slugs = getAllLandingPageSlugs(mockRegistry);
+      expect(slugs).toHaveLength(2);
+      expect(slugs).toContain("test-system");
+      expect(slugs).toContain("test-genre");
+    });
+  });
+
+  describe("Vampire: The Masquerade Pack", () => {
+    it("is registered and has a disclaimer", () => {
+      const vtm = getLandingPage("vampire-the-masquerade");
+      expect(vtm).toBeDefined();
+      expect(vtm?.slug).toBe("vampire-the-masquerade");
+      expect(vtm?.disclaimer).toContain("Paradox Interactive");
+    });
+
+    it("uses authentic VtM terminology and Storyteller framing", () => {
+      const vtm = getLandingPage("vampire-the-masquerade")!;
+      const copy = JSON.stringify(vtm);
+
+      // Avoid non-native / outsider combinations
+      expect(copy).not.toMatch(/Primogen member/i);
+      expect(copy).not.toMatch(/Elysium sanctuary|Elysium sanctuaries/i);
+      expect(copy).not.toMatch(/human disguise|human disguises/i);
+      expect(copy).not.toMatch(/coterie touchstone/i);
+      expect(copy).not.toMatch(/Anarch cell/i);
+
+      // Verify authentic terminology presence
+      expect(vtm.hero.eyebrow).toBe("Edition-Agnostic Chronicle Management");
+      expect(copy).toContain("Storyteller");
+      expect(copy).toContain("Touchstones");
+      expect(copy).toContain("Humanity");
+      expect(copy).toContain("Masquerade");
+      expect(copy).toContain("Anarch Coterie");
+      expect(copy).toContain("Owes a major boon to");
+    });
+  });
+
+  describe("Fantasy Worldbuilding Pack", () => {
+    it("is registered and omits a disclaimer", () => {
+      const fantasy = getLandingPage("fantasy-worldbuilding");
+      expect(fantasy).toBeDefined();
+      expect(fantasy?.slug).toBe("fantasy-worldbuilding");
+      expect(fantasy?.disclaimer).toBeUndefined();
+    });
+
+    it("uses authentic worldbuilding terminology and concrete, system-agnostic setting concepts", () => {
+      const fantasy = getLandingPage("fantasy-worldbuilding")!;
+      const copy = JSON.stringify(fantasy);
+
+      // Verify authentic worldbuilding concepts
+      expect(fantasy.hero.eyebrow).toBe("Setting Lore & World Bible");
+      expect(copy).toContain("pantheons");
+      expect(copy).toContain("dynasties");
+      expect(copy).toContain("provinces");
+      expect(copy).toContain("schisms");
+      expect(copy).toContain("artefacts");
+      expect(copy).toContain("chronology");
+
+      // Verify graph structure
+      expect(fantasy.exampleGraph).toBeDefined();
+      expect(fantasy.exampleGraph?.steps).toHaveLength(5);
+      expect(fantasy.exampleGraph?.steps[0].label).toBe("Queen Maera II");
+      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Head of");
+      expect(fantasy.exampleGraph?.steps[2].relation).toBe("Claims");
+      expect(fantasy.exampleGraph?.steps[3].relation).toBe("Broke treaty with");
+      expect(fantasy.exampleGraph?.steps[4].relation).toBe("Controls");
+    });
+  });
+
+  describe("Dungeons & Dragons Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const dnd = getLandingPage("dungeons-and-dragons");
+      expect(dnd).toBeDefined();
+      expect(dnd?.slug).toBe("dungeons-and-dragons");
+      expect(dnd?.kind).toBe("system");
+      expect(dnd?.disclaimer).toContain("Wizards of the Coast");
+      expect(dnd?.disclaimer).toContain("Hasbro");
+      expect(dnd?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(
+        dnd?.recommendedTools.some((t) => t.href.includes("dnd-npc")),
+      ).toBe(true);
+      expect(dnd?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Pathfinder 2e Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const pf2 = getLandingPage("pathfinder-2e");
+      expect(pf2).toBeDefined();
+      expect(pf2?.slug).toBe("pathfinder-2e");
+      expect(pf2?.kind).toBe("system");
+      expect(pf2?.disclaimer).toContain("Paizo Inc.");
+      expect(pf2?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(
+        pf2?.recommendedTools.some((t) =>
+          t.href.includes("pantheon-generator"),
+        ),
+      ).toBe(true);
+      expect(pf2?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Call of Cthulhu Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const coc = getLandingPage("call-of-cthulhu");
+      expect(coc).toBeDefined();
+      expect(coc?.slug).toBe("call-of-cthulhu");
+      expect(coc?.kind).toBe("system");
+      expect(coc?.theme).toBe("horror");
+      expect(coc?.surfaceStyle).toBe("sharp");
+      expect(coc?.disclaimer).toContain("Chaosium Inc.");
+      expect(coc?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(coc?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Call of Cthulhu terminology and Keeper investigation framing", () => {
+      const coc = getLandingPage("call-of-cthulhu")!;
+      const copy = JSON.stringify(coc);
+
+      // Avoid generic fantasy, stock horror over-use, or irrelevant framing
+      expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+      expect(copy).not.toMatch(/\bloot tables?\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/Miskatonic University/i);
+
+      // Verify authentic terminology presence
+      expect(coc.hero.eyebrow).toContain("Keeper");
+      expect(copy).toContain("Keeper");
+      expect(copy).toContain("Investigators");
+      expect(copy).toContain("handouts");
+      expect(copy).toContain("clues");
+      expect(copy).toContain("scenarios");
+      expect(copy).toContain("tomes");
+      expect(copy).toContain("cults");
+      expect(copy).toContain("Dr Evelyn Mercer");
+      expect(copy).toContain("local-first");
+      expect(coc.cta.buttonText).toContain("Investigation");
+    });
+
+    it("maintains a valid hub-and-spoke investigation graph with categorized nodes", () => {
+      const coc = getLandingPage("call-of-cthulhu")!;
+      const graph = coc.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.sublabel).toContain("Investigator");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Cryptic Telegram")?.sublabel,
+      ).toBe("Handout • Telegram");
+      expect(
+        graph.steps.find((s) => s.label === "St Bartholomew's Archive")
+          ?.relation,
+      ).toBe("Researches at");
+      expect(
+        graph.steps.find((s) => s.label === "The Orne Society")?.sublabel,
+      ).toBe("Cult");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
+  });
+
+  describe("Delta Green Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const dg = getLandingPage("delta-green");
+      expect(dg).toBeDefined();
+      expect(dg?.slug).toBe("delta-green");
+      expect(dg?.kind).toBe("system");
+      expect(dg?.theme).toBe("horror");
+      expect(dg?.surfaceStyle).toBe("sharp");
+      expect(dg?.disclaimer).toContain("Arc Dream Publishing");
+      expect(dg?.disclaimer).toContain("Delta Green Partnership");
+      expect(dg?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(dg?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Delta Green terminology and Handler operations framing", () => {
+      const dg = getLandingPage("delta-green")!;
+      const copy = JSON.stringify(dg);
+
+      // Delta Green has its own vocabulary; borrowing Call of Cthulhu's or
+      // generic fantasy framing is the failure mode worth guarding against.
+      expect(copy).not.toMatch(/Investigators/);
+      expect(copy).not.toMatch(/\bKeeper\b/);
+      expect(copy).not.toMatch(/questgiver|adventuring party|dungeon crawl/i);
+      expect(copy).not.toMatch(/supernatural/i);
+      expect(copy).not.toMatch(/Majestic|Karotechia|A-Cell/i);
+
+      // Verify authentic terminology presence
+      expect(dg.hero.eyebrow).toContain("Handler");
+      expect(copy).toContain("Handler");
+      expect(copy).toContain("Agents");
+      expect(copy).toContain("Bonds");
+      expect(copy).toContain("Green Box");
+      expect(copy).toContain("cover identit");
+      expect(copy).toContain("the unnatural");
+      expect(copy).toContain("cells");
+      expect(copy).toContain("local-first");
+    });
+
+    it("maintains a valid hub-and-spoke operation graph with categorized nodes", () => {
+      const dg = getLandingPage("delta-green")!;
+      const graph = dg.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.sublabel).toContain("Agent");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      // The Bond is what separates a Delta Green web from a generic one.
+      const bond = graph.steps.find((s) => s.relation === "Bonded to");
+      expect(bond?.sublabel).toContain("Bond");
+      expect(
+        graph.steps.find((s) => s.label === "Green Box VT-4")?.relation,
+      ).toBe("Has access to");
+      expect(
+        graph.steps.find((s) => s.label === "The Ashgrove Congregation")
+          ?.sublabel,
+      ).toBe("Cult");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+      expect(categories).toContain("event");
+    });
+  });
+
+  describe("Gothic Horror Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const gothic = getLandingPage("gothic-horror");
+      expect(gothic).toBeDefined();
+      expect(gothic?.slug).toBe("gothic-horror");
+      expect(gothic?.kind).toBe("genre");
+      expect(gothic?.theme).toBe("horror");
+      expect(gothic?.surfaceStyle).toBe("sharp");
+      expect(gothic?.disclaimer).toBeUndefined();
+      expect(gothic?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(gothic?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic gothic horror terminology and avoids stock dark fantasy / cosmic horror clichés", () => {
+      const gothic = getLandingPage("gothic-horror")!;
+      const copy = JSON.stringify(gothic);
+
+      // Avoid generic fantasy, cosmic horror, or vampire-specific jargon
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/sanity check|eldritch|tentacles|sanitarium/i);
+      expect(copy).not.toMatch(/blood bond|primogen|masquerade/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/secretive parish vicar/i);
+      expect(copy).not.toMatch(/generational pacts/i);
+      expect(copy).not.toMatch(/locked lockboxes/i);
+      expect(copy).not.toMatch(/estate topography/i);
+
+      // Verify authentic gothic horror concepts and broadened non-aristocratic roles
+      expect(gothic.hero.eyebrow).toContain("Gothic Horror");
+      expect(copy).toContain("estates");
+      expect(copy).toContain("heirlooms");
+      expect(copy).toContain("parish");
+      expect(copy).toContain("transgressions");
+      expect(copy).toContain("governesses");
+      expect(copy).toContain("clergy");
+      expect(copy).toContain("Lady Elspeth Vale");
+      expect(copy).toContain("Harrowmere House");
+      expect(copy).toContain("local-first");
+
+      // Verify tool titles are not capability-inflated
+      const toolTitles = gothic.recommendedTools.map((t) => t.title);
+      expect(toolTitles).toContain("NPC Generator");
+      expect(toolTitles).toContain("Settlement Generator");
+      expect(toolTitles).toContain("Secret Society Generator");
+      expect(toolTitles).toContain("Magic Item Generator");
+    });
+
+    it("maintains a valid hub-and-spoke estate and lineage graph with categorized nodes", () => {
+      const gothic = getLandingPage("gothic-horror")!;
+      const graph = gothic.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.label).toBe("Lady Elspeth Vale");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Harrowmere House")?.relation,
+      ).toBe("Inherits");
+      expect(
+        graph.steps.find((s) => s.label === "The West Wing Journal")?.relation,
+      ).toBe("Uncovers");
+      expect(
+        graph.steps.find((s) => s.label === "The Society of the Hollow Bell")
+          ?.sublabel,
+      ).toBe("Aristocratic Society");
+      expect(
+        graph.steps.find((s) => s.label === "Sir Alaric Vale")?.relation,
+      ).toBe("Descended from");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+      expect(categories).toContain("faction");
+    });
+  });
+
+  describe("Cyberpunk RED Pack", () => {
+    it("is registered, marked as system, uses sharp styling, and includes non-affiliation disclaimer", () => {
+      const cp = getLandingPage("cyberpunk-red");
+      expect(cp).toBeDefined();
+      expect(cp?.slug).toBe("cyberpunk-red");
+      expect(cp?.kind).toBe("system");
+      expect(cp?.theme).toBe("cyberpunk");
+      expect(cp?.surfaceStyle).toBe("sharp");
+      expect(cp?.disclaimer).toContain("R. Talsorian Games");
+      expect(cp?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(cp?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic Cyberpunk RED terminology and avoids generic fantasy / automation claims", () => {
+      const cp = getLandingPage("cyberpunk-red")!;
+      const copy = JSON.stringify(cp);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+
+      // Avoid unsupported rules/automation claims
+      expect(copy).not.toMatch(
+        /character builder|rules automation|combat calculator/i,
+      );
+
+      // Verify authentic Time of the RED terminology
+      expect(cp.hero.eyebrow).toContain("Time of the RED");
+      expect(copy).toContain("Fixers");
+      expect(copy).toContain("edgerunner");
+      expect(copy).toContain("Combat Zone");
+      expect(copy).toContain("boostergang");
+      expect(copy).toContain("Nomad");
+      expect(copy).toContain("datashards");
+      expect(copy).toContain("Night Markets");
+      expect(copy).toContain("Lifepath");
+      expect(copy).toContain("choom");
+      expect(copy).toContain("Jax Vance");
+      expect(copy).toContain("Zetatech Operations");
+      expect(copy).toContain("Iron Sights");
+      expect(copy).toContain("local-first");
+      expect(cp.cta.title).toBe("Map the Street. Run the Gig.");
+    });
+
+    it("maintains a valid hub-and-spoke gig and contact graph with categorized nodes", () => {
+      const cp = getLandingPage("cyberpunk-red")!;
+      const graph = cp.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("character");
+      expect(hub.label).toBe("Jax Vance");
+      expect(hub.sublabel).toContain("Fixer");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Zetatech Operations")?.relation,
+      ).toBe("Brokers gig for");
+      expect(graph.steps.find((s) => s.label === "Iron Sights")?.relation).toBe(
+        "Has truce with",
+      );
+      expect(
+        graph.steps.find((s) => s.label === "The Docks Container Yard")
+          ?.relation,
+      ).toBe("Coordinates drop at");
+      expect(
+        graph.steps.find((s) => s.label === "Encrypted Biometric Shard")
+          ?.relation,
+      ).toBe("Fences");
+      expect(graph.steps.find((s) => s.label === "Rook")?.relation).toBe(
+        "Hires",
+      );
+      expect(graph.steps.find((s) => s.label === "Rook")?.sublabel).toContain(
+        "Solo",
+      );
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
+  });
+
+  describe("Dystopian Sci-Fi Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi");
+      expect(dystopia).toBeDefined();
+      expect(dystopia?.slug).toBe("dystopian-sci-fi");
+      expect(dystopia?.kind).toBe("genre");
+      expect(dystopia?.theme).toBe("cyberpunk");
+      expect(dystopia?.hub).toBe("cyberpunk");
+      expect(dystopia?.surfaceStyle).toBe("sharp");
+      expect(dystopia?.disclaimer).toBeUndefined();
+      expect(dystopia?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/dystopian-sci-fi.jpg",
+      );
+      expect(dystopia?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic dystopian sci-fi worldbuilding terminology and avoids street-level cyberpunk tropes", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi")!;
+      const copy = JSON.stringify(dystopia);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Avoid street-level Cyberpunk RED specific tropes
+      expect(copy).not.toMatch(/\bedgerunner\b/i);
+      expect(copy).not.toMatch(/\bboostergang\b/i);
+      expect(copy).not.toMatch(/\bchoom\b/i);
+      expect(copy).not.toMatch(/\bcyberdeck\b/i);
+      expect(copy).not.toMatch(/\bnight market\b/i);
+
+      // Verify authentic dystopian sci-fi systemic concepts
+      expect(dystopia.hero.eyebrow).toContain("Dystopian Sci-Fi");
+      expect(copy).toContain("institutions");
+      expect(copy).toContain("surveillance");
+      expect(copy).toContain("scarcity");
+      expect(copy).toContain("social hierarchy");
+      expect(copy).toContain("monopolies");
+      expect(copy).toContain("rationing");
+      expect(copy).toContain("Veyra Civic Authority");
+      expect(copy).toContain("Orison Heavy Industries");
+      expect(copy).toContain("Census Mirror Grid");
+      expect(copy).toContain("Sector 14 Industrial Ward");
+      expect(copy).toContain("The Common Assembly");
+      expect(copy).toContain("Director Sulan Vane");
+      expect(copy).toContain("local-first");
+      expect(dystopia.cta.title).toBe(
+        "Map the System. Follow the Fault Lines.",
+      );
+    });
+
+    it("maintains a valid hub-and-spoke dystopian power graph with categorized nodes", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi")!;
+      const graph = dystopia.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("Veyra Civic Authority");
+      expect(hub.sublabel).toBe("Ruling Authority");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Orison Heavy Industries")
+          ?.relation,
+      ).toBe("Contracts");
+      expect(
+        graph.steps.find((s) => s.label === "Census Mirror Grid")?.relation,
+      ).toBe("Monitors citizens via");
+      expect(
+        graph.steps.find((s) => s.label === "Sector 14 Industrial Ward")
+          ?.relation,
+      ).toBe("Enforces rationing on");
+      expect(
+        graph.steps.find((s) => s.label === "The Common Assembly")?.relation,
+      ).toBe("Suppresses");
+      expect(
+        graph.steps.find((s) => s.label === "Director Sulan Vane")?.relation,
+      ).toBe("Commands");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
+    });
+  });
+
+  describe("Scum and Villainy Pack", () => {
+    it("is registered as system, marked with space-western theme, and includes non-affiliation disclaimer", () => {
+      const sv = getLandingPage("scum-and-villainy");
+      expect(sv).toBeDefined();
+      expect(sv?.slug).toBe("scum-and-villainy");
+      expect(sv?.kind).toBe("system");
+      expect(sv?.theme).toBe("space-western");
+      expect(sv?.hub).toBe("space-western");
+      expect(sv?.disclaimer).toBeDefined();
+      expect(sv?.disclaimer).toContain("Evil Hat Productions");
+      expect(sv?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/scum-and-villainy.jpg",
+      );
+      expect(sv?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
+      expect(sv?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(sv?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic space scoundrels terminology and British spelling", () => {
+      const sv = getLandingPage("scum-and-villainy")!;
+      const copy = JSON.stringify(sv);
+
+      // System-specific scoundrel concepts
+      expect(copy).toContain("smuggling");
+      expect(copy).toContain("syndicate");
+      expect(copy).toContain("heat");
+      expect(copy).toContain("debt");
+      expect(copy).toContain("freighter");
+      expect(copy).toContain("heist");
+      expect(copy).toContain("organise");
+    });
+
+    it("maintains a valid hub-and-spoke scoundrel crew graph with categorised nodes", () => {
+      const sv = getLandingPage("scum-and-villainy")!;
+      const graph = sv.exampleGraph!;
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("item");
+      expect(hub.label).toBe("The Rusted Kestrel");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+    });
+  });
+
+  describe("Space Western Pack", () => {
+    it("is registered as a genre guide for the Space Western hub", () => {
+      const spaceWestern = getLandingPage("space-western");
+      expect(spaceWestern?.kind).toBe("genre");
+      expect(spaceWestern?.theme).toBe("space-western");
+      expect(spaceWestern?.hub).toBe("space-western");
+      expect(spaceWestern?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/ship-generator" }),
+          expect.objectContaining({
+            href: "/examples/the-cinder-wren-space-western-ship",
+          }),
+        ]),
+      );
+    });
+  });
+
+  /**
+   * A page's own pitch, without its cross-links.
+   *
+   * `recommendedTools` points at other pages and has to describe them in their
+   * own vocabulary, so a fan-language assertion run over the whole config would
+   * fail the sandbox page for the sentence that explains what the West Marches
+   * page is for.
+   */
+  const ownCopy = (page: LandingPageConfig) =>
+    JSON.stringify({
+      seo: page.seo,
+      hero: page.hero,
+      useCases: page.useCases,
+      exampleGraph: page.exampleGraph,
+      cta: page.cta,
+    });
+
+  describe("West Marches Pack", () => {
+    it("is registered as a campaign-style guide with open-table framing", () => {
+      const wm = getLandingPage("west-marches");
+      expect(wm).toBeDefined();
+      expect(wm?.slug).toBe("west-marches");
+      expect(wm?.kind).toBe("use-case");
+      expect(wm?.theme).toBe("fantasy");
+      expect(wm?.hub).toBe("fantasy");
+      expect(wm?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(wm?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses open-table language rather than a fixed-party campaign pitch", () => {
+      const copy = ownCopy(getLandingPage("west-marches")!);
+
+      // The things that actually distinguish the format at the table.
+      expect(copy).toMatch(/expedition/i);
+      expect(copy).toMatch(/base town/i);
+      expect(copy).toMatch(/rumour/i);
+      expect(copy).toMatch(/roster/i);
+      expect(copy).toMatch(/hex map|hexes/i);
+
+      // The format's premise is that there is no standing party and no plot
+      // waiting for one, so neither should appear in the pitch.
+      expect(copy).not.toMatch(/\bthe party\b/i);
+      expect(copy).not.toMatch(/\bstory arc\b/i);
+      expect(copy).not.toMatch(/\bmetaplot\b/i);
+    });
+
+    it("cross-links the sandbox guide and the point crawl answer", () => {
+      const wm = getLandingPage("west-marches")!;
+      expect(wm.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/for/sandbox-campaigns" }),
+          expect.objectContaining({ href: "/answers/what-is-a-point-crawl" }),
+          expect.objectContaining({ href: "/generators/settlement" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke expedition record with categorised nodes", () => {
+      const graph = getLandingPage("west-marches")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("event");
+      expect(hub.label).toBe("The Third Ashfall Expedition");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      // An expedition is only a useful example if it touches the base town,
+      // the people who went, the lead they chased and someone who now wants
+      // something from them.
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
+      expect(categories).toContain("note");
+      expect(categories).toContain("faction");
+    });
+  });
+
+  describe("Solo Worldbuilding Pack", () => {
+    it("is registered as a genre-neutral campaign-style guide", () => {
+      const solo = getLandingPage("solo-worldbuilding");
+      expect(solo).toBeDefined();
+      expect(solo?.slug).toBe("solo-worldbuilding");
+      expect(solo?.kind).toBe("use-case");
+      expect(solo?.theme).toBeUndefined();
+      expect(solo?.hub).toBeUndefined();
+      expect(solo?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(solo?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("turns prompts and random results into connected canon", () => {
+      const copy = ownCopy(getLandingPage("solo-worldbuilding")!);
+
+      expect(copy).toMatch(/prompt/i);
+      expect(copy).toMatch(/random[- ]table/i);
+      expect(copy).toMatch(/canon/i);
+      expect(copy).toMatch(/unanswered question/i);
+      expect(copy).toMatch(/contradict/i);
+
+      // This is a creator-facing workflow, not a group campaign pitch that
+      // quietly assumes a game master and a standing party.
+      expect(copy).not.toMatch(/game master/i);
+      expect(copy).not.toMatch(/\bthe party\b/i);
+    });
+
+    it("links generators that can answer the next solo prompt", () => {
+      const solo = getLandingPage("solo-worldbuilding")!;
+      expect(solo.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/world" }),
+          expect.objectContaining({ href: "/generators/settlement" }),
+          expect.objectContaining({ href: "/generators/faction" }),
+          expect.objectContaining({ href: "/generators/encounter" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke discovery graph", () => {
+      const graph = getLandingPage("solo-worldbuilding")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("location");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+      expect(categories).toContain("note");
+    });
+  });
+
+  describe("Sandbox Campaigns Pack", () => {
+    it("is registered as a campaign-style guide with no genre lock-in", () => {
+      const sandbox = getLandingPage("sandbox-campaigns");
+      expect(sandbox).toBeDefined();
+      expect(sandbox?.slug).toBe("sandbox-campaigns");
+      expect(sandbox?.kind).toBe("use-case");
+      // Sandbox play is not a genre, so the page deliberately ships without a
+      // theme or a theme hub rather than dressing itself as a fantasy page.
+      expect(sandbox?.theme).toBeUndefined();
+      expect(sandbox?.hub).toBeUndefined();
+      expect(sandbox?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(sandbox?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("leads with player-directed play, live hooks and consequences", () => {
+      const sandbox = getLandingPage("sandbox-campaigns")!;
+      const copy = ownCopy(sandbox);
+
+      expect(copy).toMatch(/faction/i);
+      expect(copy).toMatch(/hook/i);
+      expect(copy).toMatch(/consequence/i);
+      expect(sandbox.seo.description).toMatch(/^Organise/);
+
+      // Kept broader than the West Marches page: the open-table vocabulary
+      // stays on that page, and none of the dungeon-fantasy nouns that would
+      // narrow an urban or political sandbox out of the pitch appear here.
+      // Scoped to the page's own copy — the cross-link to /for/west-marches
+      // has to be allowed to say what that page is about.
+      expect(copy).not.toMatch(/\brotating roster\b/i);
+      expect(copy).not.toMatch(/\bexpeditions?\b/i);
+      expect(copy).not.toMatch(/\bdungeons?\b/i);
+    });
+
+    it("cross-links the West Marches guide and a settlement example", () => {
+      const sandbox = getLandingPage("sandbox-campaigns")!;
+      expect(sandbox.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/for/west-marches" }),
+          expect.objectContaining({
+            href: "/examples/gulls-roost-coastal-smuggling-town",
+          }),
+          expect.objectContaining({ href: "/generators/faction" }),
+        ]),
+      );
+    });
+
+    it("maintains a valid hub-and-spoke faction web with categorised nodes", () => {
+      const graph = getLandingPage("sandbox-campaigns")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Coldway Combine");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      // The point of the example is a faction that wants something next and
+      // already blames the players for something, so both events matter.
+      const events = graph.steps.filter((step) => step.category === "event");
+      expect(events.length).toBeGreaterThanOrEqual(2);
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("location");
+      expect(categories).toContain("character");
+    });
+  });
+
+  describe("Campaign style packs", () => {
+    const campaignStyle = getAllLandingPages().filter(
+      (page) => page.kind === "use-case",
+    );
+
+    it("keeps each campaign-style page on a distinct intent", () => {
+      expect(campaignStyle.map((page) => page.slug)).toEqual(
+        expect.arrayContaining([
+          "sandbox-campaigns",
+          "solo-worldbuilding",
+          "west-marches",
+        ]),
+      );
+
+      const titles = campaignStyle.map((page) => page.seo.title);
+      expect(new Set(titles).size).toBe(titles.length);
+
+      const taglines = campaignStyle.map((page) => page.hero.tagline);
+      expect(new Set(taglines).size).toBe(taglines.length);
+    });
+
+    it("gives the /for directory a section for every kind a page can declare", () => {
+      // The directory groups pages by kind; a kind with no section would drop
+      // its pages off the index silently.
+      const rendered = ["genre", "system", "use-case"];
+      expect([...LandingPageKindSchema.options].sort()).toEqual(rendered);
+      for (const page of getAllLandingPages()) {
+        expect(rendered, `${page.slug} -> ${page.kind}`).toContain(page.kind);
+      }
+    });
+
+    it("promises organisation rather than automation or integrations", () => {
+      for (const page of campaignStyle) {
+        const copy = ownCopy(page);
+        expect(copy, `${page.slug}`).not.toMatch(/\bautomatically\b/i);
+        expect(copy, `${page.slug}`).not.toMatch(/\bdiscord\b/i);
+        expect(copy, `${page.slug}`).not.toMatch(/\bschedul(?:e|ing)\b/i);
+      }
+    });
+  });
+
+  describe("Tactical Mecha RPG Pack", () => {
+    it("is registered as a Lancer-themed genre guide", () => {
+      const mecha = getLandingPage("mecha-rpgs");
+
+      expect(mecha).toBeDefined();
+      expect(mecha?.kind).toBe("genre");
+      expect(mecha?.theme).toBe("lancer");
+      expect(mecha?.hub).toBe("lancer");
+      expect(mecha?.surfaceStyle).toBe("sharp");
+      expect(mecha?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/lancer" }),
+          expect.objectContaining({ href: "/generators/npc" }),
+          expect.objectContaining({ href: "/generators/faction" }),
+          expect.objectContaining({ href: "/tools/quest-hook-generator" }),
+        ]),
+      );
+    });
+
+    it("uses a hub-and-spoke operation graph for the squad, its frame, and its warzone", () => {
+      const graph = getLandingPage("mecha-rpgs")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(hub.label).toBe("Harrow Squadron");
+      expect(hub.category).toBe("faction");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      const categories = new Set(graph.steps.map((step) => step.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+      expect(categories).toContain("event");
+    });
+  });
+
+  describe("Conspiracy Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const conspiracy = getLandingPage("conspiracy");
+      expect(conspiracy).toBeDefined();
+      expect(conspiracy?.slug).toBe("conspiracy");
+      expect(conspiracy?.kind).toBe("genre");
+      expect(conspiracy?.theme).toBe("modern");
+      expect(conspiracy?.hub).toBe("modern");
+      expect(conspiracy?.surfaceStyle).toBe("sharp");
+      expect(conspiracy?.disclaimer).toBeUndefined();
+      expect(conspiracy?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/conspiracy.jpg",
+      );
+      expect(conspiracy?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(conspiracy?.exampleGraph?.steps.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it("uses authentic conspiracy / intrigue terminology and avoids generic fantasy", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const copy = JSON.stringify(conspiracy);
+
+      // Avoid generic fantasy clichés
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/\bparty of heroes\b/i);
+
+      // Verify authentic conspiracy terminology
+      expect(conspiracy.hero.eyebrow).toContain("Conspiracy & Intrigue");
+      expect(copy).toContain("operatives");
+      expect(copy).toContain("fronts");
+      expect(copy).toContain("evidence");
+      expect(copy).toContain("hidden relationships");
+      expect(copy).toContain("The Meridian Group");
+      expect(copy).toContain("Calder Biomedical Holdings");
+      expect(copy).toContain("Senator Julian Vance");
+      expect(copy).toContain("Project Glasshouse");
+      expect(copy).toContain("Northfield Research Annex");
+      expect(copy).toContain("local-first");
+      expect(conspiracy.cta.title).toBe("Map the Conspiracy");
+    });
+
+    it("maintains a valid hub-and-spoke conspiracy graph with categorized nodes", () => {
+      const conspiracy = getLandingPage("conspiracy")!;
+      const graph = conspiracy.exampleGraph!;
+
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Meridian Group");
+      expect(hub.sublabel).toContain("Policy Network");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Calder Biomedical Holdings")
+          ?.relation,
+      ).toBe("Funds via");
+      expect(
+        graph.steps.find((s) => s.label === "Senator Julian Vance")?.relation,
+      ).toBe("Blackmails");
+      expect(
+        graph.steps.find((s) => s.label === "Project Glasshouse")?.relation,
+      ).toBe("Directs");
+      expect(
+        graph.steps.find((s) => s.label === "Meeting Recording, 14 March")
+          ?.relation,
+      ).toBe("Incriminated by");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("faction");
+      expect(categories).toContain("location");
+      expect(categories).toContain("item");
+    });
+  });
+
+  describe("Cosmic Horror Pack", () => {
+    it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
+      const cosmic = getLandingPage("cosmic-horror");
+      expect(cosmic).toBeDefined();
+      expect(cosmic?.slug).toBe("cosmic-horror");
+      expect(cosmic?.kind).toBe("genre");
+      expect(cosmic?.theme).toBe("horror");
+      expect(cosmic?.hub).toBe("cosmic-horror");
+      expect(cosmic?.surfaceStyle).toBe("sharp");
+      expect(cosmic?.disclaimer).toBeUndefined();
+      expect(cosmic?.seo.image).toBe(
+        "https://assets.codexcryptica.com/og/cosmic-horror.jpg",
+      );
+      expect(cosmic?.seo.imageAlt).toBeDefined();
+      expect(cosmic?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(cosmic?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+
+    it("uses authentic cosmic horror worldbuilding language without system lock-in", () => {
+      const cosmic = getLandingPage("cosmic-horror")!;
+      const copy = JSON.stringify(cosmic);
+
+      // Avoid generic fantasy or system-specific rules jargon
+      expect(copy).not.toMatch(/questgiver|dungeon crawl|loot table/i);
+      expect(copy).not.toMatch(/sanity check|blood bond|primogen/i);
+      expect(copy).not.toMatch(/complete local privacy/i);
+      expect(copy).not.toMatch(/across every stage of your campaign/i);
+
+      // Verify authentic cosmic horror worldbuilding concepts
+      expect(cosmic.hero.eyebrow).toContain("Cosmic Horror");
+      expect(copy).toContain("cults");
+      expect(copy).toContain("expedition");
+      expect(copy).toContain("archives");
+      expect(copy).toContain("anomalies");
+      expect(copy).toContain("Revelations");
+      expect(copy).toContain("Manifestations");
+      expect(copy).toContain("The Tethys Institute");
+      expect(copy).toContain("local-first");
+      expect(cosmic.cta.title).toBe("Build the Mystery. Keep the Connections.");
+
+      const toolTitles = cosmic.recommendedTools.map((t) => t.title);
+      expect(toolTitles).toContain("Artifact & Relic Generator");
+    });
+
+    it("maintains a valid hub-and-spoke cosmic anomaly graph with categorized nodes", () => {
+      const cosmic = getLandingPage("cosmic-horror")!;
+      const graph = cosmic.exampleGraph!;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("faction");
+      expect(hub.label).toBe("The Tethys Institute");
+
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+
+      expect(
+        graph.steps.find((s) => s.label === "Dr Corin Ward")?.relation,
+      ).toBe("Employs");
+      expect(
+        graph.steps.find((s) => s.label === "Acoustic Anomaly 7")?.relation,
+      ).toBe("Discovers");
+      expect(
+        graph.steps.find((s) => s.label === "The Drowned Monolith")?.relation,
+      ).toBe("Investigates");
+      expect(
+        graph.steps.find((s) => s.label === "Order of the Black Tide")
+          ?.relation,
+      ).toBe("Hounded by");
+
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("faction");
+      expect(categories).toContain("character");
+      expect(categories).toContain("event");
+      expect(categories).toContain("item");
+      expect(categories).toContain("location");
+    });
+  });
+
+  describe("Example graphs", () => {
+    const pagesWithGraphs = getAllLandingPages().filter((p) => p.exampleGraph);
+
+    it("covers every page that ships a graph", () => {
+      expect(pagesWithGraphs.length).toBeGreaterThan(0);
+    });
+
+    it("gives every node a category so colours come from config, not node text", () => {
+      for (const page of pagesWithGraphs) {
+        for (const step of page.exampleGraph!.steps) {
+          expect(step.category, `${page.slug} / ${step.label}`).toBeDefined();
+        }
+      }
+    });
+
+    it("labels every spoke with its relation to the hub, and leaves the hub unlabelled across all packs", () => {
+      for (const page of pagesWithGraphs) {
+        const [hub, ...spokes] = page.exampleGraph!.steps;
+        expect(
+          hub.relation,
+          `${page.slug} hub (${hub.label}) should not have a relation`,
+        ).toBeUndefined();
+        expect(
+          spokes.length,
+          `${page.slug} should have at least 1 spoke`,
+        ).toBeGreaterThan(0);
+        for (const spoke of spokes) {
+          expect(
+            spoke.relation,
+            `${page.slug} / ${spoke.label} is missing a spoke relation`,
+          ).toBeTruthy();
+        }
+      }
+    });
+
+    it("keeps graph badge copy per-page rather than sharing one horror label", () => {
+      const horrorBadges = getAllLandingPages()
+        .filter((p) => p.theme === "horror" && p.exampleGraph)
+        .map((p) => p.exampleGraph!.badgeLabel);
+
+      expect(horrorBadges.length).toBeGreaterThanOrEqual(3);
+      for (const badge of horrorBadges) {
+        expect(badge).toBeTruthy();
+        expect(badge).not.toMatch(/underworld/i);
+      }
+      expect(new Set(horrorBadges).size).toBeGreaterThan(1);
+    });
+  });
+
+  describe("Theme hub linking", () => {
+    it("points every system and genre guide at a hub that exists", () => {
+      for (const page of getAllLandingPages()) {
+        if (page.kind === "use-case") continue;
+        expect(page.hub, `${page.slug} has no hub`).toBeDefined();
+        expect(isHubThemeSlug(page.hub!), `${page.slug} -> ${page.hub}`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("still validates the hub on a campaign-style page that declares one", () => {
+      for (const page of getAllLandingPages()) {
+        if (!page.hub) continue;
+        expect(isHubThemeSlug(page.hub), `${page.slug} -> ${page.hub}`).toBe(
+          true,
+        );
+      }
+      // A campaign style is not a theme, so declaring a hub is optional there.
+      expect(getLandingPage("sandbox-campaigns")?.hub).toBeUndefined();
+      expect(getLandingPage("west-marches")?.hub).toBe("fantasy");
+    });
+
+    it("groups the horror systems under the hub matching their subject", () => {
+      expect(getLandingPage("vampire-the-masquerade")?.hub).toBe("vampire");
+      expect(getLandingPage("gothic-horror")?.hub).toBe("vampire");
+      // Both are theme: "horror", but they belong to different hubs.
+      expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
+      expect(getLandingPage("cosmic-horror")?.hub).toBe("cosmic-horror");
+      expect(getLandingPage("delta-green")?.hub).toBe("cosmic-horror");
+    });
+
+    it("returns the pages belonging to a hub", () => {
+      const fantasy = getLandingPagesForHub("fantasy").map((p) => p.slug);
+      expect(fantasy).toContain("dungeons-and-dragons");
+      expect(fantasy).toContain("pathfinder-2e");
+      expect(fantasy).toContain("fantasy-worldbuilding");
+      expect(fantasy).not.toContain("call-of-cthulhu");
+
+      const cosmic = getLandingPagesForHub("cosmic-horror").map((p) => p.slug);
+      expect(cosmic).toContain("call-of-cthulhu");
+      expect(cosmic).toContain("cosmic-horror");
+      expect(cosmic).toContain("delta-green");
+    });
+
+    it("returns nothing for a hub with no landing pages", () => {
+      expect(getLandingPagesForHub("steampunk")).toEqual([]);
+      expect(getLandingPagesForHub("not-a-hub")).toEqual([]);
+    });
+  });
+
+  describe("Copy consistency", () => {
+    it("uses British spellings", () => {
+      const copy = JSON.stringify(getAllLandingPages());
+      expect(copy).not.toMatch(/\bOrganiz/i);
+      expect(copy).not.toMatch(/\bHarbor\b/);
+      expect(copy).not.toMatch(/\bCatalog\b/);
+    });
+  });
+
+  describe("Vampire: The Masquerade graph", () => {
+    const vtm = getLandingPage("vampire-the-masquerade")!;
+    const graph = vtm.exampleGraph!;
+    const clanOf = (sublabel = "") => sublabel.match(/Kindred • (\w+)/)?.[1];
+
+    it("uses sharp surfaces and reveals the graph on a dark ground", () => {
+      expect(vtm.surfaceStyle).toBe("sharp");
+      expect(graph.surface).toBe("dark");
+      expect(graph.palette).toBe("oxblood");
+    });
+
+    it("names the graph without explaining the metaphor", () => {
+      const copy = `${graph.title} ${graph.description ?? ""} ${graph.badgeLabel ?? ""}`;
+      expect(copy).not.toMatch(/underworld|nocturnal|hidden/i);
+      expect(graph.title).toContain("Relationship Web");
+    });
+
+    it("labels every spoke with its relation to the hub, and leaves the hub unlabelled", () => {
+      // LandingPageGraphPreview draws step[i].relation on the edge from the
+      // hub (step 0) to step i, so a relation on the hub itself never renders.
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      for (const spoke of spokes) {
+        expect(spoke.relation, spoke.label).toBeTruthy();
+      }
+    });
+
+    it("gives a childe the same clan as their sire", () => {
+      const hub = graph.steps[0];
+      const childe = graph.steps.find((s) => s.relation === "Sire of");
+      expect(childe).toBeDefined();
+      expect(clanOf(childe!.sublabel)).toBe(clanOf(hub.sublabel));
+      expect(clanOf(hub.sublabel)).toBeTruthy();
+    });
+
+    it("only points Kindred-to-Kindred relations at Kindred", () => {
+      const kindredOnly = ["Sire of", "Blood Bond to"];
+      for (const step of graph.steps) {
+        if (step.relation && kindredOnly.includes(step.relation)) {
+          expect(step.category, step.label).toBe("character");
+          expect(step.sublabel).toContain("Kindred");
+        }
+      }
+    });
+
+    it("only lets people and factions act on other entities", () => {
+      // Blackmail, favours and control are things agents do — a domain cannot
+      // blackmail anyone, so the hub must be a character or a faction.
+      expect(["character", "faction"]).toContain(graph.steps[0].category);
+    });
+
+    it("connects Kindred, a domain, a faction and a mortal contact", () => {
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("location");
+      expect(categories).toContain("faction");
+      expect(graph.steps.some((s) => s.sublabel?.startsWith("Mortal"))).toBe(
+        true,
+      );
+    });
+  });
+
+  describe("OpenGraph & Social Share Metadata", () => {
+    it("configures a dedicated CDN OpenGraph image and alt description for every landing page", () => {
+      const allPages = getAllLandingPages();
+      expect(allPages.length).toBeGreaterThanOrEqual(13);
+
+      for (const page of allPages) {
+        expect(page.seo.image, `${page.slug} missing seo.image`).toBe(
+          `https://assets.codexcryptica.com/og/${page.slug}.jpg`,
+        );
+        expect(
+          page.seo.imageAlt,
+          `${page.slug} missing seo.imageAlt`,
+        ).toBeDefined();
+        expect(
+          page.seo.imageAlt!.length,
+          `${page.slug} has empty seo.imageAlt`,
+        ).toBeGreaterThan(15);
+      }
+    });
+  });
+
+  describe("Extensibility (US3)", () => {
+    it("allows dynamic page addition and handles optional section collapsing", () => {
+      const customConfig: LandingPageConfig = {
+        slug: "custom-system",
+        kind: "system",
+        seo: { title: "Custom", description: "Custom" },
+        hero: {
+          title: "Custom Hero",
+          tagline: "Tag",
+          problemStatement: "Prob",
+        },
+        useCases: [],
+        recommendedTools: [],
+        cta: { title: "Start", buttonText: "Go", buttonHref: "/go" },
+      };
+
+      const customRegistry = { "custom-system": customConfig };
+
+      const page = getLandingPage("custom-system", customRegistry);
+      expect(page).toBeDefined();
+      expect(page?.slug).toBe("custom-system");
+      expect(page?.exampleGraph).toBeUndefined();
+      expect(page?.disclaimer).toBeUndefined();
+    });
+  });
+});

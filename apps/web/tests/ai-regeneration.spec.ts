@@ -44,10 +44,10 @@ test.describe("AI Entity Regeneration", () => {
 
     // 2. Open the entity
     await openEntitySidepanel(page, heroId);
-    await expect(page.getByText("Initial chronicle")).toBeVisible();
+    const sidePanel = page.getByRole("complementary");
+    await expect(sidePanel.getByText("Initial chronicle")).toBeVisible();
 
     // 3. Verify AI Regen button exists
-    const sidePanel = page.getByRole("complementary");
     const regenButton = sidePanel.getByLabel("AI Revise Description").last();
     await expect(regenButton).toBeVisible();
 
@@ -83,6 +83,11 @@ test.describe("AI Entity Regeneration", () => {
 
     // 9. Accept Changes
     await page.click('button:has-text("Apply Changes")');
+
+    // 9.5 Handle Lore Merge Modal if it appears
+    const mergeDialog = page.getByRole("dialog", { name: "Review lore changes" });
+    await expect(mergeDialog).toBeVisible({ timeout: 5000 });
+    await mergeDialog.getByRole("button", { name: "Apply selection" }).click();
 
     // 10. Verify persistence
     await expect(page.locator("text=AI Suggestion Ready")).not.toBeVisible();

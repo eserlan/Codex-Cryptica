@@ -83,25 +83,38 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     );
 
     // Priority block must be present and before the source entity
-    const priorityIdx = prompt.indexOf("[HIGHEST PRIORITY — User instructions, override defaults]");
+    const priorityIdx = prompt.indexOf(
+      "[HIGHEST PRIORITY — User instructions, override defaults]",
+    );
     const sourceIdx = prompt.indexOf("SOURCE ENTITY (Origin)");
     expect(priorityIdx).toBeGreaterThanOrEqual(0);
     expect(priorityIdx).toBeLessThan(sourceIdx);
 
     // Name-lock directive must be present
-    expect(prompt).toContain("If a specific name is stated, you MUST use that exact name");
-    expect(prompt).toContain("never substitute a different subject for the one requested");
+    expect(prompt).toContain(
+      "If a specific name is stated, you MUST use that exact name",
+    );
+    expect(prompt).toContain(
+      "never substitute a different subject for the one requested",
+    );
 
     // The user's instructions content must be in the block
     expect(prompt).toContain("The Ashen Remnant");
 
     // The old soft rule must NOT appear
-    expect(prompt).not.toContain("Custom instructions from the user to incorporate");
+    expect(prompt).not.toContain(
+      "Custom instructions from the user to incorporate",
+    );
   });
 
   it("omits priority block entirely when no custom instructions are given", () => {
     const prompt = buildRelatedEntityGenerationPrompt(
-      { title: "Iron Keep", type: "location", content: "A fortress.", lore: "" },
+      {
+        title: "Iron Keep",
+        type: "location",
+        content: "A fortress.",
+        lore: "",
+      },
       "character",
       "warden",
       "",
@@ -110,6 +123,30 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     );
 
     expect(prompt).not.toContain("[HIGHEST PRIORITY");
+  });
+
+  it("treats template prose as guidance rather than generated output", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      { title: "Thornwarden", type: "faction", content: "", lore: "" },
+      "character",
+      "high marshal",
+      "",
+      [],
+      [{ id: "character", label: "Character" }],
+      `## Summary
+A brief overview of who this character is in this fantasy setting.
+
+## Lineage & Background
+Origin, heritage, species, culture, or noble house.`,
+    );
+
+    expect(prompt).toContain(
+      "<template_guidance>\n<USER_CONTENT>\n## Summary\nA brief overview of who this character is in this fantasy setting.",
+    );
+    expect(prompt).toContain("</USER_CONTENT>\n</template_guidance>");
+    expect(prompt).toContain(
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated description.",
+    );
   });
 
   it("instructs generated names to match setting, culture, and theme", () => {
@@ -144,6 +181,35 @@ describe("buildRelatedEntityGenerationPrompt", () => {
       "MUST NEVER use generic fantasy cliché placeholders or banned names",
     );
     expect(prompt).toContain("Vane");
+  });
+
+  it("includes the vault's world theme when provided", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      { title: "Elrond", type: "character", content: "", lore: "" },
+      "location",
+      "home",
+      "",
+      [],
+      [{ id: "location", label: "Location" }],
+      "",
+      "Sci-Fi Terminal",
+    );
+
+    expect(prompt).toContain("World Theme: Sci-Fi Terminal");
+    expect(prompt).toContain("MUST fit this setting");
+  });
+
+  it("omits the world theme block when none is provided", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      { title: "Elrond", type: "character", content: "", lore: "" },
+      "location",
+      "home",
+      "",
+      [],
+      [{ id: "location", label: "Location" }],
+    );
+
+    expect(prompt).not.toContain("World Theme:");
   });
 
   it("wraps user content fields in delimiters for security", () => {

@@ -1,6 +1,7 @@
 import {
   aiClientManager as defaultAiClientManager,
   InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
 } from "./client-manager";
 import { interactionSessions } from "./interaction-session";
 import {
@@ -85,6 +86,25 @@ export class TextGenerationRevisionService {
       ? { ...cleanEntity, lore: "" }
       : cleanEntity;
 
+    const isEntityEmpty =
+      !(sanitizedEntity?.content || "").trim() &&
+      !(sanitizedEntity?.lore || "").trim();
+    const isIncomingEmpty =
+      !(cleanIncoming?.chronicle || "").trim() &&
+      !(cleanIncoming?.lore || "").trim();
+    const isInstructionEmpty = !(options?.instructions || "").trim();
+
+    if (
+      isEntityEmpty &&
+      isIncomingEmpty &&
+      isInstructionEmpty &&
+      (!cleanRelatedEntities || cleanRelatedEntities.length === 0)
+    ) {
+      throw new Error(
+        "Insufficient information available to generate meaningful content. Please add a description or connect this entity to related lore first.",
+      );
+    }
+
     const loreTemplate = sanitizedEntity?.type
       ? resolveAITemplate(sanitizedEntity.type, options?.themeId) || undefined
       : undefined;
@@ -122,7 +142,6 @@ export class TextGenerationRevisionService {
         Boolean(options?.interactionsEnabled) && !apiKey && Boolean(entity?.id);
       const text = interactionsEnabled
         ? await this.reviseViaInteraction(
-            modelName,
             systemInstruction,
             entity.id,
             promptCore,
@@ -190,7 +209,6 @@ export class TextGenerationRevisionService {
   }
 
   private async reviseViaInteraction(
-    modelName: string,
     systemInstruction: string,
     entityId: string,
     promptCore: string,
@@ -201,7 +219,7 @@ export class TextGenerationRevisionService {
 
     const send = async (input: string, previousId: string | null) =>
       this.aiClientManager.sendInteraction({
-        model: modelName,
+        model: INTERACTION_MODEL_KEY,
         input,
         systemInstruction,
         previousInteractionId: previousId,

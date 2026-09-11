@@ -136,15 +136,16 @@ Ranked by impact ÷ effort. Check off as we land each one.
     `GraphTransformer` as new graph-facing fields are added. A perf E2E edit
     timing assertion is still worth adding under Task 6.
 
-- [~] **6. Strengthen the perf test** (partially done)
+- [x] **6. Strengthen the perf test** ✅
   - **Why:** `maxViewportFrameMs < 500` is <2fps — it only catches catastrophe,
     measures the pan path (the one most helped), and never asserts perf-on is
     faster than perf-off. Add an edit-resync timing assertion and a
     perf-on-vs-off comparison; tighten the frame budget.
-  - **Done:** noisy max-only assertion replaced with avg/p90/max budgets + an
-    explicit LOD warm-up sweep, so the suite is stable cold. **Still open:** an
-    edit-resync timing assertion (#5), a perf-on-vs-off comparison, and a
-    dedicated LOD-crossing measurement.
+  - **Done:** noisy max-only assertion replaced with avg/p90/max budgets;
+    content-only edit-resync timing now asserts that graph structure is reused;
+    the same 1,600-node Cytoscape instance is measured with performance styling
+    and renderer hints on and off; and each LOD threshold crossing is measured
+    before the steady-state warm-up loop.
 
 - [x] **7. (Issue area #3) Confirm search/indexing is off-main-thread** ✅ (already handled — no work needed)
   - **FlexSearch indexing:** runs in a Web Worker via Comlink (`search.worker.ts`
@@ -249,6 +250,10 @@ LOD-crossing measurement is future Task 6 scope.
 - **Noisy budget fixed (#6 partial).** Added a LOD warm-up sweep + avg/p90/max
   assertions; cold-server runs are now stable (avg ~22–29 ms vs old 529 ms max
   flake). Root cause confirmed: one-off LOD tier-crossing recompute.
+- **Task 6 completed (#1633).** The large-graph E2E now guards content-only
+  edit resync cost, compares the live performance mode against the same graph
+  with performance styling and renderer hints disabled, and records dedicated
+  LOD-crossing timings instead of warming those transitions out of coverage.
 - **#3 landed.** Auto-on focus view culls large vaults to the selection's depth-2
   neighborhood; perf degradation repointed to rendered count so focus view shows
   full detail. graph-engine 138/138, graph web tests 94/94, perf E2E 2/2

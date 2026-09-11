@@ -11,6 +11,7 @@ vi.mock("../utils/entity-db", () => ({
       where: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
+      get: vi.fn().mockResolvedValue(null),
       first: vi.fn().mockResolvedValue(null),
       put: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
@@ -23,6 +24,8 @@ vi.mock("../utils/entity-db", () => ({
       equals: vi.fn().mockReturnThis(),
       first: vi.fn().mockResolvedValue(null),
       toArray: vi.fn().mockResolvedValue([]),
+      offset: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
       count: vi.fn().mockResolvedValue(0),
     },
     searchIndex: {
@@ -73,6 +76,61 @@ describe("CacheService", () => {
 
       const hit = await service.get("v1:f1.md");
       expect(hit?.entity.title).toBe("E1");
+    });
+
+    it("does not wait for full content rows during warm preload", async () => {
+      const mockRecord = {
+        vaultId: "v1",
+        filePath: "f1.md",
+        id: "e1",
+        title: "E1",
+        contentPreview: "A bounded preview",
+        contentPreviewVersion: 1,
+        lastModified: 100,
+      };
+      vi.mocked(entityDb.graphEntities.toArray).mockResolvedValue([mockRecord]);
+      vi.mocked(entityDb.entityContent.toArray).mockImplementation(
+        () => new Promise(() => {}) as any,
+      );
+
+      const result = await service.preloadVault("v1");
+
+      expect(result.get("v1:f1.md")?.entity.content).toBe("A bounded preview");
+      expect(result.get("v1:f1.md")?.entity.contentLoaded).toBe(false);
+    });
+
+    it("backfills legacy previews in a retryable batch", async () => {
+      const graphRecord = {
+        vaultId: "v1",
+        filePath: "f1.md",
+        id: "e1",
+        title: "E1",
+        lastModified: 100,
+      };
+      vi.mocked(entityDb.graphEntities.toArray).mockResolvedValue([
+        graphRecord,
+      ]);
+      vi.mocked(entityDb.entityContent.toArray)
+        .mockResolvedValueOnce([
+          {
+            vaultId: "v1",
+            entityId: "e1",
+            content: "Legacy body",
+            lore: "Hidden lore",
+          },
+        ])
+        .mockResolvedValueOnce([]);
+      vi.mocked(entityDb.graphEntities.get).mockResolvedValue(graphRecord);
+
+      await service.preloadVault("v1");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(entityDb.graphEntities.put).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentPreview: "Legacy body",
+          contentPreviewVersion: 1,
+        }),
+      );
     });
   });
 

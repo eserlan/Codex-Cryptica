@@ -47,22 +47,28 @@
 <svelte:window onkeydown={handleWindowKeydown} />
 
 {#if editingEdge}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-theme-bg/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
-    onclick={close}
   >
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full bg-theme-bg/80 backdrop-blur-sm cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary"
+      aria-label="Close dialog"
+      onclick={close}
+      onpointerdown={(e) => e.preventDefault()}
+    ></button>
     <div
-      class="bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      class="relative bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
       transition:fly={{ y: 20, duration: 300 }}
-      onclick={(e) => e.stopPropagation()}
     >
       <h2
         class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"
       >
-        Update Connection
+        {vault.isGuest ? "Connection details" : "Update Connection"}
       </h2>
 
       <div class="space-y-4">
@@ -76,6 +82,7 @@
             id="edge-label"
             type="text"
             bind:value={edgeEditInput}
+            readonly={vault.isGuest}
             class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
             placeholder="Friend, Enemy, Leader..."
           />
@@ -87,15 +94,25 @@
             class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
             >Relationship Nature</label
           >
-          <select
-            id="edge-type"
-            bind:value={edgeEditType}
-            class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
-          >
-            <option value="friendly">Friendly</option>
-            <option value="neutral">Neutral</option>
-            <option value="enemy">Hostile</option>
-          </select>
+          {#if vault.isGuest}
+            <input
+              id="edge-type"
+              type="text"
+              value={edgeEditType}
+              readonly
+              class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs text-theme-text"
+            />
+          {:else}
+            <select
+              id="edge-type"
+              bind:value={edgeEditType}
+              class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
+            >
+              <option value="friendly">Friendly</option>
+              <option value="neutral">Neutral</option>
+              <option value="enemy">Hostile</option>
+            </select>
+          {/if}
         </div>
 
         <div class="flex justify-between items-center pt-4">

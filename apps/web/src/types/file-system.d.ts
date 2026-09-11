@@ -2,6 +2,7 @@ export {};
 
 declare global {
   interface Window {
+    __codexApplyTheme?: (theme: string) => void;
     showDirectoryPicker(options?: {
       id?: string;
       mode?: "read" | "readwrite";

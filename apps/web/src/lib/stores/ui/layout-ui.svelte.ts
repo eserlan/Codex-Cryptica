@@ -6,12 +6,18 @@ import {
 
 export const MIN_LEFT_SIDEBAR_WIDTH = 240;
 export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
+export const MIN_VTT_SIDEBAR_WIDTH = 280;
 export const MAX_SIDEBAR_VW = 40;
 
-export type SidebarTool = "oracle" | "explorer" | "none";
+export type SidebarTool = "oracle" | "explorer" | "shelf" | "none";
 
 function isSidebarTool(value: string): value is SidebarTool {
-  return value === "oracle" || value === "explorer" || value === "none";
+  return (
+    value === "oracle" ||
+    value === "explorer" ||
+    value === "shelf" ||
+    value === "none"
+  );
 }
 export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
@@ -51,6 +57,7 @@ function browserViewport(): UIViewport | null {
 export class LayoutUIStore {
   private leftSidebarSaveTimeout: number | null = null;
   private rightSidebarSaveTimeout: number | null = null;
+  private vttSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
   private cleanupWideWatch: (() => void) | null = null;
   private cleanupTabletWatch: (() => void) | null = null;
@@ -78,6 +85,7 @@ export class LayoutUIStore {
 
   leftSidebarWidth = $state(280);
   rightSidebarWidth = $state(380);
+  vttSidebarWidth = $state(352);
   mainViewMode = $state<MainViewMode>("visualization");
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
@@ -91,6 +99,7 @@ export class LayoutUIStore {
   vttSidebarCollapsed = $state(false);
   vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
+  autoFullscreen = $state(true);
   findNodeCounter = $state(0);
   lastSelectedNodePosition = $state<{ x: number; y: number } | null>(null);
 
@@ -170,6 +179,11 @@ export class LayoutUIStore {
     this.debounceWrite("right", UI_STORAGE_KEYS.RIGHT_SIDEBAR_WIDTH, width);
   }
 
+  setVttSidebarWidth(width: number) {
+    this.vttSidebarWidth = width;
+    this.debounceWrite("vtt", UI_STORAGE_KEYS.VTT_SIDEBAR_WIDTH, width);
+  }
+
   toggleVttSidebar(collapsed: boolean) {
     this.vttSidebarCollapsed = collapsed;
     this.persistence.write(
@@ -190,6 +204,11 @@ export class LayoutUIStore {
       collapsed,
       String,
     );
+  }
+
+  setAutoFullscreen(enabled: boolean) {
+    this.autoFullscreen = enabled;
+    this.persistence.write(UI_STORAGE_KEYS.AUTO_FULLSCREEN, enabled, String);
   }
 
   findInGraph() {
@@ -227,6 +246,18 @@ export class LayoutUIStore {
       );
     }
 
+    const vtt = this.persistence.read(
+      UI_STORAGE_KEYS.VTT_SIDEBAR_WIDTH,
+      (raw) => Number.parseInt(raw, 10),
+      this.vttSidebarWidth,
+    );
+    if (!Number.isNaN(vtt)) {
+      this.vttSidebarWidth = Math.max(
+        MIN_VTT_SIDEBAR_WIDTH,
+        Math.min(vtt, maxWidth),
+      );
+    }
+
     this.#leftSidebarOpen = this.persistence.read(
       UI_STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
       (raw) => raw === "true",
@@ -241,6 +272,10 @@ export class LayoutUIStore {
       ? savedSidebarTool
       : "none";
 
+    if (this.#leftSidebarOpen && this.#activeSidebarTool === "none") {
+      this.leftSidebarOpen = false;
+    }
+
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,
       (raw) => raw === "true",
@@ -250,6 +285,11 @@ export class LayoutUIStore {
       UI_STORAGE_KEYS.VTT_ENTITY_LIST_COLLAPSED,
       (raw) => raw === "true",
       false,
+    );
+    this.autoFullscreen = this.persistence.read(
+      UI_STORAGE_KEYS.AUTO_FULLSCREEN,
+      (raw) => raw === "true",
+      true,
     );
   }
 
@@ -319,21 +359,36 @@ export class LayoutUIStore {
     return null;
   }
 
-  private debounceWrite(side: "left" | "right", key: string, width: number) {
+  private debounceWrite(
+    side: "left" | "right" | "vtt",
+    key: string,
+    width: number,
+  ) {
     if (!this.viewport) return;
     const current =
       side === "left"
         ? this.leftSidebarSaveTimeout
-        : this.rightSidebarSaveTimeout;
+        : side === "right"
+          ? this.rightSidebarSaveTimeout
+          : this.vttSidebarSaveTimeout;
     if (current !== null) this.viewport.clearTimeout(current);
     const next = this.viewport.setTimeout(() => {
       this.persistence.write(key, width, String);
     }, 500);
     if (side === "left") this.leftSidebarSaveTimeout = next;
-    else this.rightSidebarSaveTimeout = next;
+    else if (side === "right") this.rightSidebarSaveTimeout = next;
+    else this.vttSidebarSaveTimeout = next;
   }
 }
 
 const KEY = "__codex_layout_ui_store__";
 export const layoutUIStore: LayoutUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new LayoutUIStore());
+
+if (
+  typeof window !== "undefined" &&
+  (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+    .__CODEX_PERFORMANCE_CAPTURE__ === true
+) {
+  (window as any).layoutUIStore = layoutUIStore;
+}

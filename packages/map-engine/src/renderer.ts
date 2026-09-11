@@ -1,5 +1,14 @@
 import type { MapPin, ViewportTransform } from "schema";
 import { imageToViewport } from "./math";
+import {
+  TOKEN_ROTATION_HANDLE_DISTANCE,
+  TOKEN_ROTATION_HANDLE_RADIUS,
+} from "./token-geometry";
+import {
+  layoutNoteMarkdown,
+  parseNoteMarkdown,
+  type NoteLayoutWord,
+} from "./note-markdown";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const m = hex.replace("#", "").match(/.{2}/g);
@@ -36,13 +45,26 @@ export interface RenderToken {
   width: number;
   height: number;
   rotation: number;
+  baseShape?: "circle" | "square";
+  facingIndicator?: boolean;
   color: string;
   label: string;
+  /** "note" renders as a dog-eared sticky instead of a portrait/art token. */
+  kind?: "token" | "tile" | "note";
+  /** Body text previewed on the face of a `kind: "note"` element. */
+  noteBody?: string;
+  /** A note folded down to a marker, showing no body. */
+  noteCollapsed?: boolean;
   image?: HTMLImageElement | null;
+  /** Which part of the image to keep in view when cropped to fit the token's shape. Defaults to centered. */
+  imageFocus?: "center" | "top" | "bottom" | "left" | "right";
   selected?: boolean;
+  primarySelected?: boolean;
   active?: boolean;
   visible?: boolean;
+  visionActive?: boolean;
   statusEffects?: string[];
+  healthBar?: { value: number; max: number } | null;
 }
 
 export interface RenderMeasurement {
@@ -56,6 +78,12 @@ export interface RenderMeasurement {
 export interface RenderOptions {
   canvas: HTMLCanvasElement;
   image: HTMLImageElement | null;
+  /** Size (in image-space px) to draw `image` at, when it differs from the
+   * image's own native pixel size — e.g. a small pre-drawn tile that's
+   * displayed at 2x so its grid squares are usable. Falls back to the
+   * image's native size when omitted. Nearest-neighbor scaling is used so
+   * pre-drawn grid/hex lines stay crisp instead of blurring. */
+  imageDisplaySize?: { width: number; height: number } | null;
   transform: ViewportTransform;
   canvasSize: { width: number; height: number };
   pins: MapPin[];
@@ -73,6 +101,12 @@ export interface RenderOptions {
     offsetX?: number;
     offsetY?: number;
     fixed?: boolean;
+    /** Pan value the fixed grid should render at (its "screen position");
+     * ignored unless `fixed` is set. Should be a snapshot of the viewport's
+     * pan taken when fixed mode began, so the grid renders exactly where it
+     * already was instead of jumping to `pan: {0,0}` — while still staying
+     * static (not tracking live pan) as the map is dragged underneath it. */
+    fixedPan?: { x: number; y: number };
   };
 }
 
@@ -104,6 +138,13 @@ const scratchStart = { x: 0, y: 0 };
 const scratchEnd = { x: 0, y: 0 };
 const originPt = { x: 0, y: 0 };
 
+/**
+ * Token labels are a small, stable set, but a note's body is measured a line
+ * fragment at a time and changes on every keystroke — without a ceiling the
+ * cache would grow for as long as the canvas lives.
+ */
+const TEXT_MEASUREMENT_CACHE_LIMIT = 500;
+
 function measureTextCached(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -118,6 +159,9 @@ function measureTextCached(
   if (!result) {
     const metrics = ctx.measureText(text);
     result = { width: metrics.width };
+    if (cache.textMeasurementCache.size >= TEXT_MEASUREMENT_CACHE_LIMIT) {
+      cache.textMeasurementCache.clear();
+    }
     cache.textMeasurementCache.set(key, result);
   }
   return result;
@@ -138,6 +182,281 @@ function drawRoundedRectPath(
   }
 
   ctx.rect(x, y, width, height);
+}
+
+/**
+ * Draws a collapsed note as a marker rather than a shrunken page. It borrows
+ * the map pin's shape deliberately — a folded-away note is doing a pin's job,
+ * so it should read like one — but keeps the note's own colour so the two
+ * stay tellable apart.
+ */
+function drawCollapsedNote(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  color: string,
+) {
+  const radius = Math.max(1, Math.min(width, height) / 2);
+
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, TAU);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.lineWidth = Math.max(1, radius * 0.18);
+  ctx.stroke();
+
+  // A turned-down corner inside the dot, so a collapsed note is not mistaken
+  // for an ordinary pin at a glance.
+  const fold = radius * 0.55;
+  ctx.beginPath();
+  ctx.moveTo(-fold, fold);
+  ctx.lineTo(fold, fold);
+  ctx.lineTo(fold, -fold);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+  ctx.fill();
+}
+
+/** How much of the note's corner is turned down, as a share of its short side. */
+const NOTE_FOLD_RATIO = 0.22;
+const NOTE_TEXT_COLOR = "rgba(28, 25, 23, 0.85)";
+/** Below this on-screen size the body text is illegible, so only the paper is drawn. */
+const NOTE_MIN_TEXT_SIZE = 44;
+/** How much larger a `#` heading line is drawn than the note's body text. */
+const HEADING_SCALE = 1.15;
+
+/**
+ * Draws a sticky note centred on the current origin. Expects the caller to
+ * have already translated, rotated and clipped to the token's shape — the
+ * dog-eared corner is deliberately left unfilled so the map shows through it.
+ */
+function drawNoteFace(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  color: string,
+  body: string,
+  cache: CanvasCache,
+) {
+  const left = -width / 2;
+  const top = -height / 2;
+  const fold = Math.min(width, height) * NOTE_FOLD_RATIO;
+
+  ctx.beginPath();
+  ctx.moveTo(left, top);
+  ctx.lineTo(left + width - fold, top);
+  ctx.lineTo(left + width, top + fold);
+  ctx.lineTo(left + width, top + height);
+  ctx.lineTo(left, top + height);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // The turned-down corner, shaded so the fold reads as a fold.
+  ctx.beginPath();
+  ctx.moveTo(left + width - fold, top);
+  ctx.lineTo(left + width, top + fold);
+  ctx.lineTo(left + width - fold, top + fold);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+  ctx.fill();
+
+  const text = body.trim();
+  if (!text || Math.min(width, height) < NOTE_MIN_TEXT_SIZE) return;
+
+  const fontSize = Math.max(8, Math.min(15, height * 0.13));
+  const lineHeight = fontSize * 1.3;
+  const padding = Math.max(4, width * 0.08);
+  const maxWidth = width - padding * 2;
+  const maxLines = Math.max(1, Math.floor((height - padding * 2) / lineHeight));
+  const bulletIndent = fontSize;
+
+  const fontFor = (word: NoteLayoutWord) => {
+    const size = Math.round(word.heading ? fontSize * HEADING_SCALE : fontSize);
+    const weight = word.bold || word.heading ? "700" : "400";
+    const slant = word.italic ? "italic " : "";
+    return `${slant}${weight} ${size}px ui-sans-serif, system-ui, sans-serif`;
+  };
+  const widthOf = (value: string, word: NoteLayoutWord) =>
+    measureTextCached(ctx, value, fontFor(word), cache).width;
+
+  const { lines, truncated } = layoutNoteMarkdown(parseNoteMarkdown(body), {
+    maxWidth,
+    maxLines,
+    bulletIndent,
+    measure: widthOf,
+  });
+  if (lines.length === 0) return;
+
+  // Anything that did not fit is signalled rather than silently dropped, so
+  // the GM knows to open the note for the rest.
+  if (truncated) {
+    const lastLine = lines[lines.length - 1];
+    const lastWord = lastLine.words[lastLine.words.length - 1];
+    if (lastWord) lastWord.text = `${lastWord.text}…`;
+  }
+
+  ctx.fillStyle = NOTE_TEXT_COLOR;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const y = top + padding + i * lineHeight;
+    let x = left + padding + (line.bullet || line.indented ? bulletIndent : 0);
+
+    if (line.bullet) {
+      ctx.beginPath();
+      ctx.arc(
+        left + padding + bulletIndent * 0.4,
+        y + fontSize * 0.6,
+        Math.max(1, fontSize * 0.13),
+        0,
+        TAU,
+      );
+      ctx.fill();
+    }
+
+    for (let w = 0; w < line.words.length; w++) {
+      const word = line.words[w];
+      ctx.font = fontFor(word);
+      if (w > 0) x += widthOf(" ", word);
+      ctx.fillText(word.text, x, y);
+      x += widthOf(word.text, word);
+    }
+  }
+}
+
+function traceTokenShape(
+  ctx: CanvasRenderingContext2D,
+  shape: "circle" | "square",
+  width: number,
+  height: number,
+) {
+  ctx.beginPath();
+  if (shape === "square") {
+    ctx.rect(-width / 2, -height / 2, width, height);
+  } else {
+    ctx.arc(0, 0, Math.min(width, height) / 2, 0, TAU);
+  }
+  ctx.closePath();
+}
+
+function drawFacingIndicator(
+  ctx: CanvasRenderingContext2D,
+  radius: number,
+  rotation: number,
+) {
+  const front = "#22c55e";
+  const side = "#f59e0b";
+  const rear = "#ef4444";
+  const ringRadius = radius + 2;
+  const ringWidth = Math.max(3, radius * 0.1);
+  const north = -Math.PI / 2;
+
+  ctx.save();
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.lineWidth = ringWidth;
+  ctx.lineCap = "butt";
+  for (const [color, start, end] of [
+    [front, north - Math.PI / 4, north + Math.PI / 4],
+    [side, north + Math.PI / 4, north + (3 * Math.PI) / 4],
+    [rear, north + (3 * Math.PI) / 4, north + (5 * Math.PI) / 4],
+    [side, north + (5 * Math.PI) / 4, north + (7 * Math.PI) / 4],
+  ] as const) {
+    ctx.beginPath();
+    ctx.arc(0, 0, ringRadius, start, end);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = front;
+  ctx.beginPath();
+  ctx.moveTo(0, -radius * 0.92);
+  ctx.lineTo(-radius * 0.13, -radius * 0.62);
+  ctx.lineTo(radius * 0.13, -radius * 0.62);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Returns the bar's height in image-space so callers can push other overlays
+// (e.g. the name label) below it and avoid overlapping.
+function drawHealthBar(
+  ctx: CanvasRenderingContext2D,
+  center: { x: number; y: number },
+  tokenWidth: number,
+  radius: number,
+  bar: { value: number; max: number },
+): number {
+  const ratio = Math.max(0, Math.min(1, bar.value / bar.max));
+  const fillColor =
+    ratio >= 0.5 ? "#22c55e" : ratio >= 0.25 ? "#facc15" : "#ef4444";
+  const barWidth = tokenWidth;
+  const barHeight = Math.max(4, Math.min(7, radius * 0.18));
+  const barX = center.x - barWidth / 2;
+  const barY = center.y + radius + 4;
+
+  ctx.save();
+  drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fill();
+  if (ratio > 0) {
+    drawRoundedRectPath(
+      ctx,
+      barX,
+      barY,
+      barWidth * ratio,
+      barHeight,
+      barHeight / 2,
+    );
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 1;
+  drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
+  ctx.stroke();
+  ctx.restore();
+
+  return barHeight;
+}
+
+function drawRotationHandle(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  width: number,
+  height: number,
+  rotation: number,
+  accentColor: string,
+  handleDistance: number,
+) {
+  const handleX = centerX;
+  const handleY = centerY - Math.max(width, height) / 2 - handleDistance;
+
+  ctx.save();
+  ctx.strokeStyle = accentColor;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - Math.max(width, height) / 2);
+  ctx.lineTo(handleX, handleY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(handleX, handleY, TOKEN_ROTATION_HANDLE_RADIUS, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(handleX, handleY);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, -Math.PI / 2, Math.PI);
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  ctx.restore();
 }
 
 function getCache(canvas: HTMLCanvasElement): CanvasCache {
@@ -170,7 +489,18 @@ export function renderMap(options: RenderOptions) {
   // Clear canvas
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-  if (!image) return;
+  const hasImage = Boolean(image && image.width > 0 && image.height > 0);
+  const displayWidth =
+    hasImage && image ? (options.imageDisplaySize?.width ?? image.width) : 0;
+  const displayHeight =
+    hasImage && image ? (options.imageDisplaySize?.height ?? image.height) : 0;
+  // The image's on-canvas bounds, also used to size the fog overlay (step 6)
+  // even when there's no image — the mask canvas is always sized to the
+  // map's intended dimensions (see MapView.svelte's mask-loading effect).
+  const boundsSize =
+    hasImage && image
+      ? { width: displayWidth, height: displayHeight }
+      : maskCanvas;
 
   const center = imageToViewport(
     originPt,
@@ -180,21 +510,22 @@ export function renderMap(options: RenderOptions) {
   );
 
   // 1. Draw background image
-  ctx.save();
-  ctx.translate(center.x, center.y);
-  ctx.scale(transform.zoom, transform.zoom);
-  ctx.drawImage(
-    image,
-    -image.width / 2,
-    -image.height / 2,
-    image.width,
-    image.height,
-  );
-  ctx.restore();
-
-  // 3. Draw Grid
-  if (grid && grid.type !== "none") {
-    drawGrid(ctx, transform, canvasSize, grid, cache);
+  if (hasImage && image) {
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.scale(transform.zoom, transform.zoom);
+    // Nearest-neighbor when displaying larger than native so pre-drawn
+    // grid/hex lines on small tile art stay crisp instead of blurring.
+    ctx.imageSmoothingEnabled =
+      displayWidth === image.width && displayHeight === image.height;
+    ctx.drawImage(
+      image,
+      -displayWidth / 2,
+      -displayHeight / 2,
+      displayWidth,
+      displayHeight,
+    );
+    ctx.restore();
   }
 
   // 4. Draw pins
@@ -265,28 +596,56 @@ export function renderMap(options: RenderOptions) {
     center.y = minY + height / 2;
     const diameter = Math.max(1, Math.min(width, height));
     const radius = diameter / 2;
+    const shape = token.baseShape ?? "circle";
 
     ctx.save();
     ctx.translate(center.x, center.y);
     ctx.rotate((token.rotation * Math.PI) / 180);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, TAU);
-    ctx.closePath();
+    traceTokenShape(ctx, shape, width, height);
     ctx.clip();
 
-    if (token.image && token.image.width > 0 && token.image.height > 0) {
+    if (token.kind === "note") {
+      if (token.noteCollapsed) {
+        drawCollapsedNote(ctx, width, height, token.color || "#f5b942");
+      } else {
+        drawNoteFace(
+          ctx,
+          width,
+          height,
+          token.color || "#f5b942",
+          token.noteBody ?? "",
+          cache,
+        );
+      }
+    } else if (token.image && token.image.width > 0 && token.image.height > 0) {
       const imageAspect = token.image.width / token.image.height;
       const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;
       const drawHeight = imageAspect > 1 ? diameter : diameter / imageAspect;
 
-      ctx.drawImage(
-        token.image,
-        -drawWidth / 2,
-        -drawHeight / 2,
-        drawWidth,
-        drawHeight,
-      );
+      // Cover-fit crops whichever axis overflows the token's diameter. By
+      // default that crop is centered (equal amounts trimmed off both
+      // sides) — imageFocus instead pins one edge of the image to the
+      // token's edge, so e.g. a portrait whose subject sits near the top
+      // doesn't get its head cropped off by a symmetric center-crop.
+      let offsetX = -drawWidth / 2;
+      let offsetY = -drawHeight / 2;
+      switch (token.imageFocus) {
+        case "left":
+          offsetX = -diameter / 2;
+          break;
+        case "right":
+          offsetX = diameter / 2 - drawWidth;
+          break;
+        case "top":
+          offsetY = -diameter / 2;
+          break;
+        case "bottom":
+          offsetY = diameter / 2 - drawHeight;
+          break;
+      }
+
+      ctx.drawImage(token.image, offsetX, offsetY, drawWidth, drawHeight);
     } else if (token.image) {
       ctx.fillStyle = token.color || "#f59e0b";
       ctx.fill();
@@ -302,38 +661,78 @@ export function renderMap(options: RenderOptions) {
       const accent = token.active
         ? options.accentColor || "#d97706"
         : "#3b82f6";
-      const borderWidth = token.active ? 8 : 5;
+      // Scale the selection ring relative to the token's own size instead of
+      // a fixed pixel width — a border sized for a typical ~100px token
+      // would visually swallow a much smaller one (e.g. a token sized to a
+      // grid fit to a tile's fine native pixel grid), making an otherwise
+      // correctly-sized token look like it oversteps its cell.
+      const baseBorderWidth = token.active ? 8 : 5;
+      const borderWidth = Math.min(baseBorderWidth, Math.max(2, radius * 0.25));
+      const highlightWidth = Math.min(2, Math.max(1, radius * 0.08));
+      const blurScale = Math.min(1, radius / 25);
 
       ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
 
       // Outer drop shadow (outside only)
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, TAU);
+      traceTokenShape(ctx, shape, width + borderWidth, height + borderWidth);
       ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       ctx.lineWidth = borderWidth + 4;
       ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-      ctx.shadowBlur = token.active ? 20 : 12;
+      ctx.shadowBlur = (token.active ? 20 : 12) * blurScale;
       ctx.stroke();
 
       // Main thick border
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, TAU);
+      traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = accent;
       ctx.lineWidth = borderWidth;
       ctx.shadowColor = accent;
-      ctx.shadowBlur = token.active ? 16 : 10;
+      ctx.shadowBlur = (token.active ? 16 : 10) * blurScale;
       ctx.stroke();
 
       // Thin bright highlight on top
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, TAU);
+      traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = highlightWidth;
       ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-      ctx.shadowBlur = 4;
+      ctx.shadowBlur = 4 * blurScale;
       ctx.stroke();
 
       ctx.restore();
+    }
+
+    if (token.visionActive) {
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
+      traceTokenShape(ctx, shape, width + 10, height + 10);
+      ctx.strokeStyle = "#22d3ee";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#22d3ee";
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (token.facingIndicator) {
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      drawFacingIndicator(ctx, radius, token.rotation);
+      ctx.restore();
+    }
+
+    if (token.primarySelected ?? token.selected) {
+      drawRotationHandle(
+        ctx,
+        center.x,
+        center.y,
+        width,
+        height,
+        token.rotation,
+        options.accentColor || "#3b82f6",
+        TOKEN_ROTATION_HANDLE_DISTANCE * transform.zoom,
+      );
     }
 
     // Draw dead status: red X ON the token + dark overlay
@@ -342,9 +741,7 @@ export function renderMap(options: RenderOptions) {
       // Dark overlay on token
       ctx.translate(center.x, center.y);
       ctx.rotate((token.rotation * Math.PI) / 180);
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, TAU);
-      ctx.closePath();
+      traceTokenShape(ctx, shape, width, height);
       ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.fill();
       // Red X
@@ -486,6 +883,17 @@ export function renderMap(options: RenderOptions) {
       }
     }
 
+    let healthBarHeight = 0;
+    if (token.healthBar && token.healthBar.max > 0) {
+      healthBarHeight = drawHealthBar(
+        ctx,
+        center,
+        width,
+        radius,
+        token.healthBar,
+      );
+    }
+
     if (token.label) {
       ctx.save();
       const font = "12px ui-sans-serif, system-ui, sans-serif";
@@ -493,7 +901,11 @@ export function renderMap(options: RenderOptions) {
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       const labelX = center.x;
-      const labelY = center.y + height / 2 + 6;
+      const labelY =
+        center.y +
+        height / 2 +
+        6 +
+        (healthBarHeight > 0 ? healthBarHeight + 4 : 0);
       const metrics = measureTextCached(ctx, token.label, font, cache);
       const paddingX = 8;
       const boxWidth = metrics.width + paddingX * 2;
@@ -517,14 +929,29 @@ export function renderMap(options: RenderOptions) {
     }
   }
 
+  // 5b. Draw Grid above tiles/tokens (translucent) so it stays visible over
+  // large tile art (e.g. geomorph packs) instead of being hidden beneath it —
+  // also makes grid-fit-by-drag usable when dragging over a placed tile.
+  if (grid && grid.type !== "none") {
+    drawGrid(ctx, transform, canvasSize, grid, cache);
+  }
+
   // 6. Draw Fog of War above pins and tokens so the reveal state masks them.
   // Applying destination-out directly on the main canvas would erase the map
   // image itself, not just the fog layer on top of it.
-  if (showFog && maskCanvas) {
+  if (
+    showFog &&
+    boundsSize &&
+    maskCanvas &&
+    maskCanvas.width > 0 &&
+    maskCanvas.height > 0 &&
+    canvasSize.width > 0 &&
+    canvasSize.height > 0
+  ) {
     const fog = getFogCanvas(canvasSize.width, canvasSize.height, cache);
     const fogCtx = fog.getContext("2d");
 
-    if (fogCtx) {
+    if (fogCtx && fog.width > 0 && fog.height > 0) {
       // 1. Clear the entire offscreen buffer so there's no stale fog outside the map
       fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
@@ -534,20 +961,20 @@ export function renderMap(options: RenderOptions) {
       fogCtx.translate(center.x, center.y);
       fogCtx.scale(transform.zoom, transform.zoom);
       fogCtx.fillRect(
-        -image.width / 2,
-        -image.height / 2,
-        image.width,
-        image.height,
+        -boundsSize.width / 2,
+        -boundsSize.height / 2,
+        boundsSize.width,
+        boundsSize.height,
       );
 
       // 3. Punch holes where map is revealed (white = revealed in mask)
       fogCtx.globalCompositeOperation = "destination-out";
       fogCtx.drawImage(
         maskCanvas,
-        -image.width / 2,
-        -image.height / 2,
-        image.width,
-        image.height,
+        -boundsSize.width / 2,
+        -boundsSize.height / 2,
+        boundsSize.width,
+        boundsSize.height,
       );
       fogCtx.restore();
       fogCtx.globalCompositeOperation = "source-over";
@@ -699,7 +1126,17 @@ function drawGrid(
     ctx.fillStyle = cache.cachedPattern.pattern;
 
     if (grid.fixed) {
-      // Fixed grid mode: ignore pan offset, draw at screen origin
+      // Fixed grid mode: stays at the pan position it had when fixed mode
+      // began (its `fixedPan` snapshot) instead of tracking the live pan —
+      // so the grid holds still on screen while the map is dragged
+      // underneath it, without jumping to a different phase on entry.
+      const fixedPan = grid.fixedPan ?? { x: 0, y: 0 };
+      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
+      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
+      const offsetX = (fixedPan.x + canvasSize.width / 2 + gridOffsetX) % size;
+      const offsetY = (fixedPan.y + canvasSize.height / 2 + gridOffsetY) % size;
+
+      ctx.translate(offsetX, offsetY);
       ctx.fillRect(
         -size,
         -size,

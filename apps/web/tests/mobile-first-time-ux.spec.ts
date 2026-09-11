@@ -277,7 +277,7 @@ test.describe("Graph coach marks (#1295)", () => {
 // #1296 — Demo graph initial zoom readable on mobile
 // ---------------------------------------------------------------------------
 test.describe("Demo graph zoom (#1296)", () => {
-  test("demo vault graph has readable zoom on mobile (≥ 0.5)", async ({
+  test("demo vault graph has a legible focused entry view on mobile", async ({
     page,
   }) => {
     await page.setViewportSize(MOBILE_VIEWPORT);
@@ -299,13 +299,67 @@ test.describe("Demo graph zoom (#1296)", () => {
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
     });
+    await page.waitForFunction(
+      () => (window as any).uiStore?.isMobile === true,
+      { timeout: 5000 },
+    );
 
     // Wait for graph nodes to appear in cytoscape
     await page.waitForFunction(() => !!(window as any).cy?.nodes().length, {
       timeout: 10000,
     });
 
-    const zoom = await page.evaluate(() => (window as any).cy?.zoom() ?? 0);
-    expect(zoom).toBeGreaterThanOrEqual(0.5);
+    await page.waitForFunction(
+      () => ((window as any).cy?.zoom() ?? 0) >= 0.75,
+      { timeout: 3000 },
+    );
+  });
+
+  test("an initially selected entity keeps the legible entry zoom", async ({
+    page,
+  }) => {
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await page.addInitScript(seedOnboardingComplete);
+
+    let releaseDemoFetch: (() => void) | undefined;
+    const demoFetchReady = new Promise<void>((resolve) => {
+      releaseDemoFetch = resolve;
+    });
+    await page.route("**/vault-samples/fantasy.json", async (route) => {
+      await demoFetchReady;
+      await route.continue();
+    });
+
+    await page.goto("/?demo=fantasy");
+    await page.waitForFunction(
+      () => (window as any).sessionModeStore?.isDemoMode === true,
+      { timeout: 10000 },
+    );
+    await page.evaluate(() => {
+      (window as any).vault.selectedEntityId = "eldrin-the-wise";
+    });
+    if (!releaseDemoFetch)
+      throw new Error("Demo fetch gate was not initialized");
+    releaseDemoFetch();
+
+    await page.waitForFunction(
+      () => (window as any).vault?.allEntities?.length > 0,
+      { timeout: 20000 },
+    );
+    await dismissFrontPage(page);
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
+    await page.waitForFunction(
+      () => (window as any).uiStore?.isMobile === true,
+      { timeout: 5000 },
+    );
+    await page.waitForFunction(() => !!(window as any).cy?.nodes().length, {
+      timeout: 10000,
+    });
+    await page.waitForFunction(
+      () => ((window as any).cy?.zoom() ?? 0) >= 0.75,
+      { timeout: 3000 },
+    );
   });
 });

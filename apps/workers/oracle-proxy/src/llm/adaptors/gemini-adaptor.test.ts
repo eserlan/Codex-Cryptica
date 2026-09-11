@@ -1,0 +1,641 @@
+import { describe, it, expect, vi } from "vitest";
+import {
+  forwardToGemini,
+  forwardInteractionToGemini,
+  callGemini,
+  streamGemini,
+} from "./gemini-adaptor";
+import type { GenerationEvent, LlmModelDefinition, LlmRequest } from "../types";
+
+/** Builds a `Response` whose body streams the given SSE `data:` payloads. */
+function sseResponse(chunks: unknown[], status = 200): Response {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const encoder = new TextEncoder();
+      for (const chunk of chunks) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`),
+        );
+      }
+      controller.close();
+    },
+  });
+  return new Response(stream, { status });
+}
+
+async function collect(
+  gen: AsyncGenerator<GenerationEvent>,
+): Promise<GenerationEvent[]> {
+  const events: GenerationEvent[] = [];
+  for await (const event of gen) events.push(event);
+  return events;
+}
+
+const env = { GEMINI_API_KEY: "test-key" };
+
+describe("forwardToGemini (legacy generateContent parity)", () => {
+  it("maps camelCase generation config to snake_case", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+
+    await forwardToGemini(
+      {
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+        generationConfig: { maxOutputTokens: 512, topP: 0.9, temperature: 0.7 },
+      },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.generation_config).toEqual({
+      max_output_tokens: 512,
+      top_p: 0.9,
+      temperature: 0.7,
+    });
+  });
+
+  it("formats a string system_instruction into the parts shape", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+
+    await forwardToGemini(
+      {
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+        system_instruction: "Be terse.",
+      },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.system_instruction).toEqual({ parts: [{ text: "Be terse." }] });
+  });
+
+  it("only writes speech_config when a concrete voice name is present", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+
+    await forwardToGemini(
+      {
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+        generationConfig: { speechConfig: { voiceConfig: {} } },
+      },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.generation_config.speech_config).toBeUndefined();
+
+    const fetcher2 = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+    await forwardToGemini(
+      {
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+        generationConfig: {
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } },
+          },
+        },
+      },
+      env,
+      fetcher2 as unknown as typeof fetch,
+    );
+    const [, init2] = fetcher2.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const sent2 = JSON.parse(init2.body as string);
+    expect(sent2.generation_config.speech_config).toEqual({
+      voice_config: { prebuilt_voice_config: { voice_name: "Kore" } },
+    });
+  });
+
+  it("propagates safety settings unchanged", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+    const safety_settings = [
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+    ];
+
+    await forwardToGemini(
+      { contents: [], safety_settings },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.safety_settings).toEqual(safety_settings);
+  });
+
+  it("reports a parse error when Gemini returns non-JSON", async () => {
+    const fetcher = vi.fn(
+      async () => new Response("not json", { status: 200 }),
+    );
+
+    const result = await forwardToGemini(
+      { contents: [] },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.parseError).toBe(true);
+  });
+});
+
+describe("forwardInteractionToGemini (legacy Interactions API parity)", () => {
+  it("threads previous_interaction_id and a string system instruction", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "v1_x", steps: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToGemini(
+      {
+        input: "continue",
+        previous_interaction_id: "v1_abc",
+        system_instruction: { parts: [{ text: "Be terse." }] },
+      },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.previous_interaction_id).toBe("v1_abc");
+    expect(sent.system_instruction).toBe("Be terse.");
+  });
+
+  it("reports a transport error without throwing", async () => {
+    const fetcher = vi.fn(async () => {
+      throw new Error("network down");
+    });
+
+    const result = await forwardInteractionToGemini(
+      { input: "hi" },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.transportError).toBe(true);
+  });
+});
+
+describe("callGemini (new provider-neutral adaptor)", () => {
+  const model: LlmModelDefinition = {
+    key: "gemini-flash-lite",
+    provider: "gemini",
+    modelId: "gemini-3.5-flash-lite",
+    displayName: "Gemini Flash Lite",
+    capabilities: {
+      structuredOutput: true,
+      freeformGeneration: true,
+      revision: true,
+    },
+    costTier: "low",
+    pricing: { inputPer1kTokens: 0, outputPer1kTokens: 0 },
+    availability: { public: true, authenticated: true, admin: true },
+    enabled: true,
+  };
+
+  const request: LlmRequest = {
+    operation: "freeform-generation",
+    messages: [{ role: "user", content: "hello" }],
+  };
+
+  it("normalizes a successful response", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "hi there" }] } }],
+            usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 3 },
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callGemini(
+      request,
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.response.content).toBe("hi there");
+      expect(result.response.modelKey).toBe("gemini-flash-lite");
+      expect(result.response.usage).toEqual({
+        promptTokens: 5,
+        completionTokens: 3,
+      });
+    }
+  });
+
+  it("forwards topP to generation_config.top_p", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+
+    await callGemini(
+      { ...request, topP: 0.8 },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.generation_config.top_p).toBe(0.8);
+  });
+
+  it("uses schema-less JSON mode for structured-generation without a schema", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [
+              { content: { parts: [{ text: '{"label":"lore"}' }] } },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callGemini(
+      { ...request, operation: "structured-generation" },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.generation_config.response_mime_type).toBe("application/json");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.response.content).toEqual({ label: "lore" });
+      expect(result.response.structuredOutputValid).toBe(true);
+    }
+  });
+
+  it("also enables JSON mode when a schema is present on a non-structured-generation operation", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [
+              { content: { parts: [{ text: '{"label":"lore"}' }] } },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callGemini(
+      { ...request, operation: "classification", schema: { type: "object" } },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.generation_config.response_mime_type).toBe("application/json");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.response.structuredOutputValid).toBe(true);
+  });
+
+  it("reports a timeout as an unavailable outcome, not an unhandled rejection", async () => {
+    // Simulate the abort wiring: fetch should reject with an AbortError once
+    // the signal is aborted, as the real fetch implementation would.
+    const realFetcher = (async (_url: any, init: any) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init.signal.addEventListener("abort", () => {
+          const err = new Error("The operation was aborted");
+          err.name = "AbortError";
+          reject(err);
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    vi.useFakeTimers();
+    const resultPromise = callGemini(request, model, env, realFetcher);
+    await vi.advanceTimersByTimeAsync(60_001);
+    const result = await resultPromise;
+    vi.useRealTimers();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("timeout");
+    }
+  });
+
+  it("still classifies the abort as a timeout when it rejects with a non-Error (e.g. DOMException-like) abort reason", async () => {
+    // Workers' fetch typically rejects an aborted request with a
+    // DOMException, which is not guaranteed to satisfy `instanceof Error`
+    // — the classification must key off `.name` alone.
+    const realFetcher = (async (_url: any, init: any) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init.signal.addEventListener("abort", () => {
+          reject({ name: "AbortError", message: "The operation was aborted" });
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    vi.useFakeTimers();
+    const resultPromise = callGemini(request, model, env, realFetcher);
+    await vi.advanceTimersByTimeAsync(60_001);
+    const result = await resultPromise;
+    vi.useRealTimers();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("timeout");
+    }
+  });
+
+  it("reports structured-output validation failure without throwing", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "not valid json" }] } }],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callGemini(
+      {
+        ...request,
+        operation: "structured-generation",
+        schema: { type: "object" },
+      },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.structuredOutputValidationFailed).toBe(true);
+    }
+  });
+
+  it("reports a validation failure when the parsed JSON does not match the requested schema", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            // Valid JSON, but missing the schema's required "ok" property.
+            candidates: [
+              { content: { parts: [{ text: '{"unexpected":true}' }] } },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callGemini(
+      {
+        ...request,
+        operation: "structured-generation",
+        schema: {
+          type: "object",
+          required: ["ok"],
+          properties: { ok: { type: "boolean" } },
+        },
+      },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.structuredOutputValidationFailed).toBe(true);
+      expect(result.reason).toBe("structured-output-schema-mismatch");
+    }
+  });
+});
+
+describe("streamGemini", () => {
+  const model: LlmModelDefinition = {
+    key: "gemini-flash-lite",
+    provider: "gemini",
+    modelId: "gemini-3.5-flash-lite",
+    displayName: "Gemini Flash Lite",
+    capabilities: {
+      structuredOutput: true,
+      freeformGeneration: true,
+      revision: true,
+    },
+    costTier: "low",
+    pricing: { inputPer1kTokens: 0, outputPer1kTokens: 0 },
+    availability: { public: true, authenticated: true, admin: true },
+    enabled: true,
+  };
+
+  const request: LlmRequest = {
+    operation: "freeform-generation",
+    messages: [{ role: "user", content: "hello" }],
+  };
+
+  it("yields started, delta chunks, then complete with the joined text", async () => {
+    const fetcher = vi.fn(async () =>
+      sseResponse([
+        { candidates: [{ content: { parts: [{ text: "Hello" }] } }] },
+        { candidates: [{ content: { parts: [{ text: ", world" }] } }] },
+        { usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 3 } },
+      ]),
+    );
+
+    const events = await collect(
+      streamGemini(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.slice(1, -1)).toEqual([
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+    ]);
+    expect(events.at(-1)).toEqual({
+      type: "complete",
+      text: "Hello, world",
+      usage: { promptTokens: 5, completionTokens: 3 },
+    });
+  });
+
+  it("hits the :streamGenerateContent endpoint with alt=sse", async () => {
+    const fetcher = vi.fn(async () => sseResponse([]));
+    await collect(
+      streamGemini(request, model, env, fetcher as unknown as typeof fetch),
+    );
+    const [url] = fetcher.mock.calls[0] as unknown as [string];
+    expect(url).toContain(":streamGenerateContent");
+    expect(url).toContain("alt=sse");
+  });
+
+  it("yields an error event without throwing on a transport failure", async () => {
+    const fetcher = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    const events = await collect(
+      streamGemini(request, model, env, fetcher as unknown as typeof fetch),
+    );
+    expect(events).toEqual([{ type: "error", error: "transport-error" }]);
+  });
+
+  it("yields an error event on a non-OK upstream status", async () => {
+    const fetcher = vi.fn(async () => new Response("", { status: 500 }));
+    const events = await collect(
+      streamGemini(request, model, env, fetcher as unknown as typeof fetch),
+    );
+    expect(events).toEqual([{ type: "error", error: "upstream-status-500" }]);
+  });
+
+  it("skips a malformed chunk instead of aborting the stream", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(encoder.encode("data: {not json}\n\n"));
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              candidates: [{ content: { parts: [{ text: "ok" }] } }],
+            })}\n\n`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    const fetcher = vi.fn(async () => new Response(stream, { status: 200 }));
+
+    const events = await collect(
+      streamGemini(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "ok" },
+      { type: "complete", text: "ok", usage: undefined },
+    ]);
+  });
+
+  it("flushes a trailing event that arrives without a final blank-line separator", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              candidates: [{ content: { parts: [{ text: "Hello" }] } }],
+            })}\n\n`,
+          ),
+        );
+        // No trailing "\n\n" — the connection just closes after this chunk.
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              candidates: [{ content: { parts: [{ text: ", world" }] } }],
+            })}`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    const fetcher = vi.fn(async () => new Response(stream, { status: 200 }));
+
+    const events = await collect(
+      streamGemini(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+      { type: "complete", text: "Hello, world", usage: undefined },
+    ]);
+  });
+
+  it("yields an error instead of complete when a structured-generation stream produces invalid JSON", async () => {
+    const structuredRequest: LlmRequest = {
+      operation: "structured-generation",
+      messages: [{ role: "user", content: "hello" }],
+    };
+    const fetcher = vi.fn(async () =>
+      sseResponse([
+        { candidates: [{ content: { parts: [{ text: "not valid json" }] } }] },
+      ]),
+    );
+
+    const events = await collect(
+      streamGemini(
+        structuredRequest,
+        model,
+        env,
+        fetcher as unknown as typeof fetch,
+      ),
+    );
+
+    expect(events.at(-1)).toEqual({
+      type: "error",
+      error: "structured-output-invalid",
+    });
+  });
+
+  it("yields an error instead of complete when structured output fails schema validation", async () => {
+    const structuredRequest: LlmRequest = {
+      operation: "structured-generation",
+      messages: [{ role: "user", content: "hello" }],
+      schema: {
+        type: "object",
+        required: ["title"],
+        properties: { title: { type: "string" } },
+      },
+    };
+    const fetcher = vi.fn(async () =>
+      sseResponse([
+        {
+          candidates: [{ content: { parts: [{ text: '{"wrong":"shape"}' }] } }],
+        },
+      ]),
+    );
+
+    const events = await collect(
+      streamGemini(
+        structuredRequest,
+        model,
+        env,
+        fetcher as unknown as typeof fetch,
+      ),
+    );
+
+    expect(events.at(-1)).toEqual({
+      type: "error",
+      error: "structured-output-schema-mismatch",
+    });
+  });
+});

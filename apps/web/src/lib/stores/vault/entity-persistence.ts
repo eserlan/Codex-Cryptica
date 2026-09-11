@@ -7,6 +7,9 @@ import type { Entity } from "schema";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { updateLastInternalChange } from "./registry";
 import { systemClock } from "$lib/utils/runtime-deps";
+import { runWithConcurrency } from "./bulk-results";
+
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export interface PersistenceDependencies {
   repository: VaultRepository;
@@ -23,6 +26,7 @@ export interface PersistenceDependencies {
     "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
+  onPermanentFailure?: (id: string, error?: unknown) => void;
   // loader delegation
   isContentLoaded: (id: string) => boolean;
   loadContent: (id: string) => Promise<void>;
@@ -35,6 +39,21 @@ export interface ScheduleSaveOptions {
    * from the cache table instead of hydrating the reactive entity store.
    */
   preserveCachedContent?: boolean;
+  /**
+   * If true, bypasses the debounce delay and persists immediately.
+   */
+  immediate?: boolean;
+}
+
+export interface ImmediateSaveEntry {
+  entity: LocalEntity;
+  options?: ScheduleSaveOptions;
+}
+
+export interface ImmediateSaveResult {
+  id: string;
+  ok: boolean;
+  error?: unknown;
 }
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -100,36 +119,44 @@ export class EntityPersistenceService {
     // Store the vault ID so flushPendingSaves uses the original context, not
     // whatever vault happens to be active at flush time.
     this._saveVaultIds.set(id, vaultIdAtStart);
-    this._saveOptions.set(
-      id,
-      mergeScheduleSaveOptions(this._saveOptions.get(id), options),
+    const mergedOpts = mergeScheduleSaveOptions(
+      this._saveOptions.get(id),
+      options,
     );
+    this._saveOptions.set(id, mergedOpts);
+
+    this.deps.setStatus("saving");
 
     if (this._savingSuspended) {
       return Promise.resolve();
     }
+
+    const delayMs = mergedOpts.immediate ? 0 : SAVE_DEBOUNCE_MS;
 
     return new Promise<void>((resolve) => {
       const resolvers = this._saveResolvers.get(id) ?? [];
       resolvers.push(resolve);
       this._saveResolvers.set(id, resolvers);
 
-      this._saveTimers.set(
-        id,
-        setTimeout(() => {
-          this._saveTimers.delete(id);
-          this._saveResolvers.delete(id);
-          this._saveVaultIds.delete(id);
-          const saveOptions = this._saveOptions.get(id) ?? {};
-          this._saveOptions.delete(id);
-          this.deps.repository
-            .enqueueSave(id, () =>
-              this._persistEntity(id, vaultIdAtStart, saveOptions),
-            )
-            .catch(() => {})
-            .finally(() => resolvers.forEach((r) => r()));
-        }, SAVE_DEBOUNCE_MS),
-      );
+      const doPersist = () => {
+        this._saveTimers.delete(id);
+        this._saveResolvers.delete(id);
+        this._saveVaultIds.delete(id);
+        const saveOptions = this._saveOptions.get(id) ?? {};
+        this._saveOptions.delete(id);
+        this.deps.repository
+          .enqueueSave(id, () =>
+            this._persistEntity(id, vaultIdAtStart, saveOptions),
+          )
+          .catch(() => {})
+          .finally(() => resolvers.forEach((r) => r()));
+      };
+
+      if (delayMs === 0) {
+        this._saveTimers.set(id, setTimeout(doPersist, 0));
+      } else {
+        this._saveTimers.set(id, setTimeout(doPersist, delayMs));
+      }
     });
   }
 
@@ -158,7 +185,8 @@ export class EntityPersistenceService {
           .catch(() => {})
           .finally(() => {
             resolvers.forEach((r) => r());
-          });
+          })
+          .then(() => undefined);
         promises.push(p);
       } else {
         resolvers.forEach((r) => r());
@@ -168,20 +196,64 @@ export class EntityPersistenceService {
     await this.deps.repository.waitForAllSaves(timeoutMs);
   }
 
+  /**
+   * Persist a finite batch immediately, bypassing the continuous-edit debounce.
+   * Per-entity repository queues still serialize writes to the same file while
+   * the worker pool prevents a large batch from flooding OPFS.
+   */
+  async persistImmediately(
+    entries: ImmediateSaveEntry[],
+    concurrency = 4,
+  ): Promise<ImmediateSaveResult[]> {
+    const vaultId = this.deps.activeVaultId();
+    if (!vaultId || sessionModeStore.isDemoMode || entries.length === 0) {
+      return entries.map(({ entity }) => ({ id: entity.id, ok: false }));
+    }
+
+    const tasks = entries.map(
+      (entry) => async (): Promise<ImmediateSaveResult> => {
+        if (this.deps.activeVaultId() !== vaultId) {
+          return { id: entry.entity.id, ok: false };
+        }
+
+        try {
+          const ok = await this.deps.repository.enqueueSave(
+            entry.entity.id,
+            () =>
+              this._persistEntity(
+                entry.entity.id,
+                vaultId,
+                entry.options ?? {},
+                entry.entity,
+                false,
+              ),
+          );
+          return { id: entry.entity.id, ok };
+        } catch (error) {
+          return { id: entry.entity.id, ok: false, error };
+        }
+      },
+    );
+
+    return runWithConcurrency(tasks, concurrency);
+  }
+
   private async _persistEntity(
     id: string,
     vaultIdAtStart: string,
     options: ScheduleSaveOptions = {},
-  ): Promise<void> {
+    entityOverride?: LocalEntity,
+    requeueOnFailure = true,
+  ): Promise<boolean> {
     if (this.deps.activeVaultId() !== vaultIdAtStart) {
       debugStore.log(
         `[EntityPersistence] Discarding save for ${id} - vault changed.`,
       );
-      return;
+      return false;
     }
 
-    let latestEntity = this.entities[id];
-    if (!latestEntity) return;
+    let latestEntity = entityOverride ?? this.entities[id];
+    if (!latestEntity) return false;
 
     let restoredCachedContent = false;
     let hydratedContent = this.deps.isContentLoaded(id);
@@ -211,8 +283,18 @@ export class EntityPersistenceService {
       const vaultHandle =
         await this.deps.getSpecificVaultHandle(vaultIdAtStart);
       if (!vaultHandle) {
-        this.deps.setStatus("idle");
-        return;
+        if (
+          this._saveTimers.size === 0 &&
+          (this.deps.repository.pendingSaveCount ?? 0) <= 1
+        ) {
+          this.deps.setStatus("saved");
+        } else {
+          this.deps.setStatus("idle");
+        }
+        // Preserve the historical no-handle behavior used by guest/test
+        // adapters: there is no durable target to write, but the in-memory
+        // mutation itself remains valid.
+        return true;
       }
 
       // Retry the disk write a few times before giving up. Bulk imports issue
@@ -231,16 +313,32 @@ export class EntityPersistenceService {
       await updateLastInternalChange(vaultIdAtStart);
 
       const path = latestEntity._path || [`${latestEntity.id}.md`];
-      await cacheService.set(
+      const cached = await cacheService.set(
         `${vaultIdAtStart}:${path.join("/")}`,
         systemClock.now(),
         latestEntity,
       );
+      // Explicitly `false`, not falsy: a cache layer that returns nothing must
+      // not be read as "every save failed" and thrash the preload.
+      if (cached === false) {
+        // The entity is on disk; only the fast-start cache row is missing. Drop
+        // the in-memory preload snapshot so nothing downstream reads a copy we
+        // know is behind OPFS (#2619).
+        cacheService.invalidatePreload();
+      }
 
       if (hydratedContent) {
         this.deps.markContentLoaded(latestEntity.id);
       }
-      this.deps.setStatus("idle");
+      if (
+        this._saveTimers.size === 0 &&
+        (this.deps.repository.pendingSaveCount ?? 0) <= 1
+      ) {
+        this.deps.setStatus("saved");
+      } else {
+        this.deps.setStatus("idle");
+      }
+      return true;
     } catch (error) {
       debugStore.error(
         "[EntityPersistence] Failed to save entity to disk",
@@ -252,7 +350,10 @@ export class EntityPersistenceService {
       // Don't silently drop the write: re-queue a bounded number of times so a
       // transient OPFS failure during a bulk import can't permanently corrupt
       // the on-disk file (which the cache would otherwise mask).
-      this._requeueFailedSave(id, vaultIdAtStart, options);
+      if (requeueOnFailure) {
+        this._requeueFailedSave(id, vaultIdAtStart, options);
+      }
+      return false;
     }
   }
 
@@ -284,6 +385,22 @@ export class EntityPersistenceService {
     const retries = this._failedSaveRetries.get(id) ?? 0;
     if (retries >= MAX_FAILED_SAVE_REQUEUES) {
       this._failedSaveRetries.delete(id);
+      this.deps.setStatus("error");
+      this.deps.setErrorMessage(
+        "Failed to save entity to storage after multiple attempts.",
+      );
+      if (this.deps.onPermanentFailure) {
+        this.deps.onPermanentFailure(id);
+      } else {
+        try {
+          notificationStore.notify(
+            "Failed to save entity to storage. Storage write error.",
+            "error",
+          );
+        } catch {
+          // Safe fallback in test environments
+        }
+      }
       return;
     }
     this._failedSaveRetries.set(id, retries + 1);
@@ -309,5 +426,6 @@ function mergeScheduleSaveOptions(
     preserveCachedContent:
       (previous?.preserveCachedContent ?? true) &&
       next.preserveCachedContent === true,
+    immediate: (previous?.immediate ?? false) || next.immediate === true,
   };
 }

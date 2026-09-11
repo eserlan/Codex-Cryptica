@@ -13,6 +13,7 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { MarkdownTablePasteExtension } from "./editor/MarkdownTablePasteExtension";
   import { protectVaultImageSource } from "./editor/vault-image";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openCanvasHref } from "$lib/stores/ui/navigation";
@@ -36,6 +37,7 @@
     entityIndex = [],
     currentEntityId = "",
     onEntityClick = () => {},
+    label = "Lore editor",
   }: {
     content: string;
     editable?: boolean;
@@ -46,7 +48,19 @@
     currentEntityId?: string;
     /** Navigation callback invoked when a detected entity link is clicked. */
     onEntityClick?: (id: string) => void;
+    /**
+     * Accessible name for the editing surface. Tiptap renders a
+     * `role="textbox"` div, which has no implicit name, so without this the
+     * editor is an anonymous input to a screen reader (axe:
+     * aria-input-field-name).
+     */
+    label?: string;
   } = $props();
+
+  // A default parameter only covers `undefined`, so an explicit "" (or
+  // whitespace) from a caller would leave the role="textbox" unnamed again,
+  // which is the exact violation the label exists to prevent.
+  const editorLabel = $derived(label?.trim() ? label.trim() : "Lore editor");
 
   // Options object shared with the EntityAutoLinkExtension closure.
   // Getters are used so the plugin reads current prop values at call-time
@@ -124,6 +138,7 @@
         TableRow,
         TableHeader,
         TableCell,
+        MarkdownTablePasteExtension,
         EmbedExtension,
         createEntityAutoLinkExtension(autoLinkOptions),
         Link.configure({
@@ -148,6 +163,7 @@
         attributes: {
           class:
             "prose max-w-none focus:outline-none min-h-[100px] font-body text-lg leading-relaxed text-theme-text",
+          "aria-label": editorLabel,
         },
       },
       content: content,
@@ -373,6 +389,14 @@
     );
     color: var(--color-theme-primary);
     border-color: var(--color-theme-border);
+  }
+
+  /* The `prose` class puts ~1.25em top/bottom margin on every <p>, even the
+     empty placeholder paragraph tiptap keeps in a blank cell. Left alone,
+     that margin makes table rows (especially empty ones) balloon in height. */
+  :global(.ProseMirror td p),
+  :global(.ProseMirror th p) {
+    margin: 0;
   }
 
   :global(.ProseMirror h1),

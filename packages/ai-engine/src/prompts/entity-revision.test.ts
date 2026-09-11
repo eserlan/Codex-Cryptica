@@ -172,6 +172,32 @@ describe("buildEntityRevisionPrompt", () => {
     );
   });
 
+  it("treats lore templates as non-output guidance", () => {
+    const prompt = buildEntityRevisionPrompt(
+      {
+        id: "test-entity",
+        title: "Test Entity",
+        type: "character",
+        content: "",
+        lore: "",
+      } as any,
+      { chronicle: "", lore: "" },
+      [],
+      [],
+      {
+        loreTemplate:
+          "## Summary\nA brief overview of this character.\n\n## Goals\nWhat they want.",
+      },
+    );
+
+    expect(prompt).toContain(
+      "<template_guidance>\n<USER_CONTENT>\n## Summary\nA brief overview of this character.",
+    );
+    expect(prompt).toContain(
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
+    );
+  });
+
   it("keeps the prompt core intact and user-wrapped without the related section", () => {
     const core = buildEntityRevisionPromptCore(
       {
@@ -197,5 +223,31 @@ describe("buildEntityRevisionPrompt", () => {
       "",
     );
     expect(stripped).not.toContain(INJECTION);
+  });
+
+  it("includes empty entity revision directive in system instructions", () => {
+    const prompt = buildEntityRevisionPrompt(
+      {
+        id: "empty-entity",
+        title: "Empty Entity",
+        type: "npc",
+        content: "",
+        lore: "",
+      } as any,
+      { chronicle: "", lore: "" },
+      [
+        {
+          id: "related-1",
+          title: "The Ember Fortress",
+          type: "location",
+          summary: "A sprawling volcanic fortress.",
+        },
+      ],
+    );
+
+    expect(prompt).toContain("EMPTY ENTITY REVISION:");
+    expect(prompt).toContain(
+      "synthesize the surrounding world details from that context to invent plausible, evocative, and grounded facts",
+    );
   });
 });

@@ -33,7 +33,6 @@ export class NodeMergeService {
         const frontmatter: Record<string, any> = {
           title: snap.title,
           type: snap.type,
-          tags: snap.tags,
           labels: snap.labels,
           lore: snap.lore,
           date: snap.date,
@@ -163,7 +162,6 @@ export class NodeMergeService {
     const updates: Partial<LocalEntity> = {
       title: suggestedFrontmatter.title || snapTarget.title,
       type: suggestedFrontmatter.type || snapTarget.type,
-      tags: suggestedFrontmatter.tags || snapTarget.tags,
       labels: suggestedFrontmatter.labels || snapTarget.labels,
       lore: Object.hasOwn(suggestedFrontmatter, "lore")
         ? suggestedFrontmatter.lore

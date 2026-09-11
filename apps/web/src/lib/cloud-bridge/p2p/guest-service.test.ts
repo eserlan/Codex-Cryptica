@@ -75,6 +75,7 @@ describe("P2PGuestService (facade)", () => {
     expect(typeof service.getFile).toBe("function");
     expect(typeof service.updateGuestStatus).toBe("function");
     expect(typeof service.requestTokenMove).toBe("function");
+    expect(typeof service.requestTokenRotation).toBe("function");
     expect(typeof service.requestTokenRemove).toBe("function");
     expect("connected" in service).toBe(true);
     expect("peerId" in service).toBe(true);
@@ -136,6 +137,19 @@ describe("P2PGuestService (facade)", () => {
     expect(transport.sent).toEqual([
       { type: "TOKEN_MOVE", tokenId: "t1", x: 3.46, y: 4.57 },
     ]);
+  });
+
+  it("sends token rotation requests to the host", async () => {
+    const noop = vi.fn();
+    await service.connectToHost("host-1", noop, noop, noop, noop, noop, "Ava");
+    transport.sent.length = 0;
+
+    expect(service.requestTokenRotation("t1", 90)).toBe(true);
+    expect(transport.sent).toContainEqual({
+      type: "TOKEN_ROTATE",
+      tokenId: "t1",
+      rotation: 90,
+    });
   });
 
   it("flushes pendingStatus on the first GUEST_STATUS after a queued update", async () => {

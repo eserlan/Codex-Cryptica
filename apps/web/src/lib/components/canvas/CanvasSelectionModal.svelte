@@ -24,6 +24,28 @@
     ),
   );
 
+  function getCanvasKind(c: any): "adventure" | "delve" | "workspace" {
+    if (c?.metadata?.kind === "adventure") return "adventure";
+    if (c?.metadata?.kind === "delve") return "delve";
+
+    const nodes = Array.isArray(c?.nodes) ? c.nodes : [];
+    if (
+      nodes.some((n: any) =>
+        ["situation", "npc", "clue", "threat", "outcome"].includes(n?.type),
+      )
+    ) {
+      return "adventure";
+    }
+    if (
+      nodes.some((n: any) =>
+        ["delveRoom", "delveSectorGroup"].includes(n?.type),
+      )
+    ) {
+      return "delve";
+    }
+    return "workspace";
+  }
+
   function close() {
     modalUIStore.closeCanvasSelection();
     isCreating = false;
@@ -271,12 +293,28 @@
             <div
               class="w-10 h-10 rounded-lg bg-theme-bg flex items-center justify-center shrink-0 border border-theme-border group-hover:border-theme-primary/30 transition-colors"
             >
-              <span
-                class="icon-[lucide--layout] w-5 h-5 {activeCanvasId ===
-                canvas.slug
-                  ? 'text-theme-primary'
-                  : 'text-theme-muted'}"
-              ></span>
+              {#if getCanvasKind(canvas) === "adventure"}
+                <span
+                  class="icon-[lucide--compass] w-5 h-5 {activeCanvasId ===
+                  canvas.slug
+                    ? 'text-amber-400'
+                    : 'text-theme-muted'}"
+                ></span>
+              {:else if getCanvasKind(canvas) === "delve"}
+                <span
+                  class="icon-[lucide--castle] w-5 h-5 {activeCanvasId ===
+                  canvas.slug
+                    ? 'text-emerald-400'
+                    : 'text-theme-muted'}"
+                ></span>
+              {:else}
+                <span
+                  class="icon-[lucide--layout] w-5 h-5 {activeCanvasId ===
+                  canvas.slug
+                    ? 'text-theme-primary'
+                    : 'text-theme-muted'}"
+                ></span>
+              {/if}
             </div>
 
             <div class="flex-1 min-w-0">
@@ -311,15 +349,30 @@
                   </button>
                 </div>
               {:else}
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span
                     class="text-sm font-bold text-theme-text truncate group-hover:text-theme-primary transition-colors"
                   >
                     {canvas.name || "Untitled Canvas"}
                   </span>
+                  {#if getCanvasKind(canvas) === "adventure"}
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[8px] font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
+                    >
+                      <span class="icon-[lucide--compass] w-2.5 h-2.5"></span>
+                      Adventure
+                    </span>
+                  {:else if getCanvasKind(canvas) === "delve"}
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[8px] font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
+                    >
+                      <span class="icon-[lucide--castle] w-2.5 h-2.5"></span>
+                      Delve
+                    </span>
+                  {/if}
                   {#if activeCanvasId === canvas.slug}
                     <span
-                      class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase font-header tracking-widest"
+                      class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase font-header tracking-widest shrink-0"
                       >Active</span
                     >
                   {/if}

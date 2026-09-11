@@ -18,13 +18,15 @@
     "/generators/pantheon-generator",
     "/generators/god-generator",
     "/generators/tavern",
+    "/generators/dark-fantasy-faction",
   ]);
 
   // Paths specific to the horror/vampire theme
   const HORROR_ONLY = new Set(["/generators/vampire-clan"]);
 
-  // Nomad clans are a cyberpunk road-faction concept, not a nautical one.
-  const PIRATE_EXCLUDED = new Set(["/generators/nomad-clan"]);
+  // Nomad clans are a cyberpunk road-faction concept, not a nautical or
+  // cosmic-horror one.
+  const NOMAD_CLAN_EXCLUDED_THEMES = new Set(["pirate", "cosmic_horror"]);
 
   const GENERATOR_GROUPS = [
     {
@@ -42,7 +44,19 @@
       label: "Worldbuilding",
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
+        {
+          label: "Faction Roster Generator",
+          path: "/generators/faction-roster",
+        },
+        {
+          label: "Dark Fantasy Faction Generator",
+          path: "/generators/dark-fantasy-faction",
+        },
         { label: "Settlement Generator", path: "/generators/settlement" },
+        { label: "Star System Generator", path: "/generators/star-system" },
+        { label: "Constellation Generator", path: "/generators/constellation" },
+        { label: "Alien Race Generator", path: "/generators/alien-race" },
+        { label: "Creature Generator", path: "/generators/creature" },
         { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",
@@ -61,8 +75,37 @@
           label: "Dungeon & Delve Generator",
           path: "/generators/dungeon-generator",
         },
+        {
+          label: "Adventure Idea Generator",
+          path: "/generators/adventure-generator",
+        },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Rumour Generator", path: "/generators/rumour" },
+        { label: "Encounter Generator", path: "/generators/encounter" },
+        { label: "Puzzle Generator", path: "/generators/puzzle" },
+        {
+          label: "Plot Twist & Complication Generator",
+          path: "/generators/plot-twist-generator",
+        },
+        {
+          label: "BBEG / Campaign Villain Generator",
+          path: "/generators/bbeg-generator",
+        },
+        { label: "Heist Generator", path: "/generators/heist" },
+        { label: "Council Vote Generator", path: "/generators/council-vote" },
+        {
+          label: "Secret Society Generator",
+          path: "/generators/secret-society",
+        },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
+        {
+          label: "Minor Magic Item & Trinket Generator",
+          path: "/generators/minor-magic-item",
+        },
+        {
+          label: "Artifact & Relic Generator",
+          path: "/generators/artifact-generator",
+        },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
         {
@@ -77,17 +120,31 @@
     const themeId = themeStore.worldThemeId;
     const isFantasy = themeId === "fantasy" || themeId === "workspace";
     const isHorror = themeId === "horror";
-    const isPirate = themeId === "pirate";
-    return GENERATOR_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        if (isFantasy) return true;
-        if (FANTASY_ONLY.has(item.path)) return false;
-        if (HORROR_ONLY.has(item.path)) return isHorror;
-        if (PIRATE_EXCLUDED.has(item.path)) return !isPirate;
-        return true;
-      }),
-    })).filter((group) => group.items.length > 0);
+
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
+    // to avoid intermediate array allocations during reactive updates.
+    const result: typeof GENERATOR_GROUPS = [];
+    for (const group of GENERATOR_GROUPS) {
+      const filteredItems: (typeof GENERATOR_GROUPS)[number]["items"] = [];
+      for (const item of group.items) {
+        let keep = true;
+        if (!isFantasy) {
+          if (FANTASY_ONLY.has(item.path)) keep = false;
+          else if (HORROR_ONLY.has(item.path)) keep = isHorror;
+          else if (
+            item.path === "/generators/nomad-clan" &&
+            NOMAD_CLAN_EXCLUDED_THEMES.has(themeId)
+          ) {
+            keep = false;
+          }
+        }
+        if (keep) filteredItems.push(item);
+      }
+      if (filteredItems.length > 0) {
+        result.push({ ...group, items: filteredItems });
+      }
+    }
+    return result;
   });
 
   let showGeneratorMenu = $state(false);

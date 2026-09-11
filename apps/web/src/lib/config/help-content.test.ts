@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
+import { loadBlogArticles, loadHelpArticles } from "$lib/content/loader";
 
 // T061: in-app generators feature hint is registered (US5)
 describe("help-content feature hints", () => {
@@ -40,5 +41,48 @@ describe("help-content feature hints", () => {
     expect(FEATURE_HINTS["delve-structural-builder"].content).toContain(
       "spatial canvas",
     );
+  });
+
+  // Constitution VII: the feature hint alone left /help silent on tables and
+  // decks, and the nav entry now sits behind the menu on a phone — so the
+  // article is the discovery path, not a nicety.
+  it("documents roll tables and card decks as a full help article", () => {
+    const article = loadHelpArticles().find(
+      (a) => a.id === "random-tables-decks",
+    );
+
+    expect(article).toBeDefined();
+    expect(article!.title).toBeTruthy();
+    // The parts a hint has no room for.
+    expect(article!.content).toContain("{creature}");
+    expect(article!.content).toContain("/table");
+    expect(article!.content).toContain("/deck");
+    expect(article!.content).toMatch(/discard pile/i);
+  });
+
+  it("lists the deterministic roll commands alongside the AI ones", () => {
+    const commands = loadHelpArticles().find((a) => a.id === "chat-commands");
+
+    expect(commands!.content).toContain("`/table [name]`");
+    expect(commands!.content).toContain("`/deck [name] [count]`");
+  });
+
+  it("all blog links in help articles correspond to valid blog post slugs", () => {
+    const blogArticles = loadBlogArticles();
+    const validSlugs = new Set(blogArticles.map((b) => b.slug));
+    const helpArticles = loadHelpArticles();
+
+    const blogLinkRegex = /\/blog\/([a-z0-9-]+)/g;
+
+    for (const article of helpArticles) {
+      const matches = [...article.content.matchAll(blogLinkRegex)];
+      for (const match of matches) {
+        const slug = match[1];
+        expect(
+          validSlugs.has(slug),
+          `Help article '${article.id}' contains broken blog link '/blog/${slug}'`,
+        ).toBe(true);
+      }
+    }
   });
 });

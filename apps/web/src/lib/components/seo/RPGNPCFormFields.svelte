@@ -12,6 +12,7 @@
     role = $bindable(""),
     alignment = $bindable(""),
     campaignContext = $bindable(""),
+    mode = $bindable("table-card"),
     onSurprise = undefined,
   }: {
     theme: string;
@@ -19,6 +20,7 @@
     role: string;
     alignment: string;
     campaignContext: string;
+    mode?: "dossier" | "table-card";
     onSurprise?: () => void;
   } = $props();
 
@@ -39,7 +41,7 @@
     Array.from(
       new Set([
         ...npcConfig.races,
-        ...((Object.values(npcThemeConfig.ancestries) as string[][]).flat()),
+        ...(Object.values(npcThemeConfig.ancestries) as string[][]).flat(),
       ]),
     ),
   );
@@ -47,7 +49,7 @@
     Array.from(
       new Set([
         ...npcConfig.roles,
-        ...((Object.values(npcThemeConfig.roles) as string[][]).flat()),
+        ...(Object.values(npcThemeConfig.roles) as string[][]).flat(),
       ]),
     ),
   );
@@ -78,7 +80,11 @@
 
   $effect(() => {
     const ids = availableMoralities.map((m: MoralityOption) => m.id);
-    if (alignment && knownMoralityIds.includes(alignment) && !ids.includes(alignment)) {
+    if (
+      alignment &&
+      knownMoralityIds.includes(alignment) &&
+      !ids.includes(alignment)
+    ) {
       alignment = ids[0] ?? "";
     }
   });
@@ -91,7 +97,7 @@
   bind:value={theme}
   choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom vibe"
 />
@@ -103,7 +109,7 @@
   bind:value={ancestry}
   choices={availableAncestries.map((a: string) => ({ value: a, label: a }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom ancestry"
 />
@@ -115,7 +121,7 @@
   bind:value={role}
   choices={availableRoles.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom role"
 />
@@ -130,10 +136,27 @@
     label: m.label,
   }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom moral stance"
 />
+
+<div class="flex flex-col gap-1.5">
+  <label for="rpgnpc-mode-select" class={labelClass}>Prep style</label>
+  <select
+    id="rpgnpc-mode-select"
+    name="npc_mode"
+    bind:value={mode}
+    class={selectClass}
+  >
+    <option value="table-card">Table Card (5-Element 60-Second Prep)</option>
+    <option value="dossier">Full Dossier (Detailed Background)</option>
+  </select>
+  <p class="text-[10px] text-theme-text/60 leading-relaxed">
+    Table cards provide immediate want, mannerism, contradiction, relationship
+    hook, and sensory tag.
+  </p>
+</div>
 
 <div class="flex flex-col gap-1.5">
   <label for="rpgnpc-campaign-context" class={labelClass}
@@ -143,7 +166,7 @@
     id="rpgnpc-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="rpgnpc-campaign-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
@@ -177,7 +200,7 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
-    <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
     Surprise Me
   </button>
 </div>

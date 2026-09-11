@@ -1,5 +1,7 @@
 <script lang="ts">
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
+  import LayerPanel from "$lib/components/map/LayerPanel.svelte";
+  import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
   import {
     getMeasurementToolButtonClass,
     getPrimaryButtonStateClass,
@@ -13,7 +15,33 @@
   }: {
     chatSidebarOffset: string;
   } = $props();
+
+  let showLayerPanel = $state(false);
+  let layerPanelContainer = $state<HTMLDivElement>();
+  const activeLayerOption = $derived(
+    LAYER_OPTIONS.find((option) => option.value === mapSession.activeLayer) ??
+      LAYER_OPTIONS[0],
+  );
+
+  function handleWindowClick(event: MouseEvent) {
+    if (!showLayerPanel) return;
+    if (
+      event.target instanceof Node &&
+      layerPanelContainer?.contains(event.target)
+    ) {
+      return;
+    }
+    showLayerPanel = false;
+  }
+
+  function openGridSettings(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    mapSession.showGridSettings = true;
+  }
 </script>
+
+<svelte:window onclick={handleWindowClick} />
 
 {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
   <div
@@ -95,6 +123,35 @@
 
         <button
           type="button"
+          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
+          onclick={() =>
+            (mapStore.visionMode =
+              mapStore.visionMode === "party" ? "selected" : "party")}
+          title="Party Vision combines all PC tokens' vision. Selected Token Vision shows only the currently selected PC's viewpoint."
+        >
+          VISION: {mapStore.visionMode === "selected" ? "SELECTED" : "PARTY"}
+        </button>
+
+        <div class="flex items-center gap-2 px-2">
+          <span
+            class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+            >Vision Range</span
+          >
+          <input
+            type="range"
+            min="5"
+            max="300"
+            step="5"
+            bind:value={mapStore.visionRange}
+            class="w-24 accent-theme-primary h-1"
+          />
+          <span class="text-[9px] text-theme-primary font-mono w-8"
+            >{mapStore.visionRange}{mapSession.gridUnit}</span
+          >
+        </div>
+
+        <button
+          type="button"
           class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
           onclick={() => (mapStore.showLabels = !mapStore.showLabels)}
           title="Toggle Pin Labels"
@@ -106,14 +163,35 @@
           type="button"
           class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
-          oncontextmenu={(e) => {
-            e.preventDefault();
-            mapSession.showGridSettings = true;
-          }}
+          oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
         >
           GRID: {mapStore.showGrid ? "ON" : "OFF"}
         </button>
+
+        <div class="relative" bind:this={layerPanelContainer}>
+          <button
+            type="button"
+            class={`px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}
+            onclick={(e) => {
+              e.stopPropagation();
+              showLayerPanel = !showLayerPanel;
+            }}
+            aria-pressed={showLayerPanel}
+            aria-label="Layer: {activeLayerOption.label}"
+            title="Layer: {activeLayerOption.label} — choose which layer you're editing, and toggle layer visibility/lock"
+          >
+            <span
+              class="{activeLayerOption.icon} w-3.5 h-3.5"
+              aria-hidden="true"
+            ></span>
+          </button>
+          {#if showLayerPanel}
+            <div class="absolute bottom-full left-0 mb-2">
+              <LayerPanel onClose={() => (showLayerPanel = false)} />
+            </div>
+          {/if}
+        </div>
 
         <VTTModeToggle />
 

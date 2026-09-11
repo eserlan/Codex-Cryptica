@@ -19,8 +19,11 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
   const connectionHint = FEATURE_HINTS["oracle-connection-modes"];
+
+  let { storage = browserStorage }: { storage?: StorageLike } = $props();
 
   let showHint = $state(false);
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
@@ -37,10 +40,10 @@
     void oracle.init();
 
     // Show hint on first open
-    const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
+    const hasSeenHint = storage.getItem(HINT_KEYS.ORACLE_CONNECTION);
     if (!hasSeenHint) {
       showHint = true;
-      localStorage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
+      storage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
     }
   });
 
@@ -98,7 +101,18 @@
           ></span>
         </button>
       {/if}
-
+      {#if activeTab === "chat" && mapSession.chatMessages.length > 0}
+        <button
+          type="button"
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
+          onclick={() => mapSession.clearChatMessages()}
+          title="Clear VTT chat"
+          aria-label="Clear VTT chat"
+        >
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+          ></span>
+        </button>
+      {/if}
       <!-- Pop out -->
       {#if activeTab === "oracle"}
         <button
@@ -127,14 +141,13 @@
     </div>
   </div>
 
-  <!-- Navigation Tabs -->
   <div
     class="flex border-b border-theme-border bg-theme-bg/10 px-0.5 pt-0.5 sm:px-1 sm:pt-1 shrink-0"
   >
     <button
       onclick={() => (activeTab = "oracle")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all
-             {activeTab === 'oracle'
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all {activeTab ===
+      'oracle'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
     >
@@ -142,8 +155,8 @@
     </button>
     <button
       onclick={() => (activeTab = "activity")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
-             {activeTab === 'activity'
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative {activeTab ===
+      'activity'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
     >
@@ -155,20 +168,24 @@
         >
       {/if}
     </button>
-    {#if mapSession.vttEnabled}
-      <button
-        onclick={() => (activeTab = "chat")}
-        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
-               {activeTab === 'chat'
-          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
-          : 'text-theme-muted hover:text-theme-text'}"
-      >
-        VTT Chat
-      </button>
-    {/if}
+    <button
+      onclick={() => (activeTab = "chat")}
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative {activeTab ===
+      'chat'
+        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+        : 'text-theme-muted hover:text-theme-text'}"
+    >
+      VTT Chat
+      {#if mapSession.chatMessages.length > 0}
+        <span
+          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+          aria-label={`${mapSession.chatMessages.length} chat messages`}
+          >{mapSession.chatMessages.length}</span
+        >
+      {/if}
+    </button>
   </div>
 
-  <!-- Chat Content -->
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
     {#if activeTab === "oracle"}
       <div class="px-3 pt-2 shrink-0">

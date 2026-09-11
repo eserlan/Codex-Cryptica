@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { filterEntities, countEntityTypes } from "./entityListFiltering";
+import {
+  filterEntities,
+  countEntityTypes,
+  createEntityTextSearchRunner,
+  parseEntitySearchQuery,
+  searchEntityText,
+  evaluateEntityMissingFields,
+  type EntityWithPreview,
+} from "./entityListFiltering";
 import type { Entity } from "schema";
 
 const mockEntities: Entity[] = [
@@ -10,7 +18,6 @@ const mockEntities: Entity[] = [
     labels: ["NPC", "Guard"],
     status: "active",
     content: "A city guard patrolling the gates.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -22,7 +29,6 @@ const mockEntities: Entity[] = [
     labels: ["Guard", "Castle"],
     status: "active",
     content: "Guard inside the castle.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -34,7 +40,6 @@ const mockEntities: Entity[] = [
     labels: ["NPC", "MerchantLabel"],
     status: "active",
     content: "Selling goods.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -46,7 +51,6 @@ const mockEntities: Entity[] = [
     labels: [],
     status: "active",
     content: "The legendary king.",
-    tags: [],
     aliases: ["Wart"],
     connections: [],
     updatedAt: 0,
@@ -58,7 +62,6 @@ const mockEntities: Entity[] = [
     labels: ["Draft"],
     status: "draft",
     content: "Work in progress.",
-    tags: [],
     aliases: [],
     connections: [],
     updatedAt: 0,
@@ -127,7 +130,7 @@ describe("entityListFiltering pure functions", () => {
     });
 
     it("matches legacy tags as labels when an entity has no labels", () => {
-      const legacy: Entity = {
+      const legacy = {
         id: "legacy",
         title: "Old Timer",
         type: "npc",
@@ -138,7 +141,7 @@ describe("entityListFiltering pure functions", () => {
         aliases: [],
         connections: [],
         updatedAt: 0,
-      } as Entity;
+      } as unknown as Entity;
       const result = filterEntities([...mockEntities, legacy], {
         searchQuery: "",
         typeFilters: new Set(),
@@ -150,7 +153,7 @@ describe("entityListFiltering pure functions", () => {
     });
 
     it("matches legacy tags as labels for #label search tokens", () => {
-      const legacy: Entity = {
+      const legacy = {
         id: "legacy",
         title: "Old Timer",
         type: "npc",
@@ -161,7 +164,7 @@ describe("entityListFiltering pure functions", () => {
         aliases: [],
         connections: [],
         updatedAt: 0,
-      } as Entity;
+      } as unknown as Entity;
       const result = filterEntities([...mockEntities, legacy], {
         searchQuery: "#Guard",
         typeFilters: new Set(),
@@ -213,6 +216,94 @@ describe("entityListFiltering pure functions", () => {
       });
       expect(result).toHaveLength(0);
     });
+
+    it("uses worker match IDs without scanning entity content", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "guard",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textMatchIds: new Set(["e3"]),
+      });
+
+      expect(result.map((entity) => entity.id)).toEqual(["e3"]);
+    });
+
+    it("falls back to metadata-only matching when the worker is unavailable", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "patrolling",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textSearchUnavailable: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it("avoids scanning content while a worker query is pending", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "patrolling",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textSearchPending: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("worker query helpers", () => {
+    it("separates structured label tokens from the text query", () => {
+      expect(parseEntitySearchQuery("Dallan #Past @npc")).toEqual({
+        labelTokens: ["past", "npc"],
+        textQuery: "dallan",
+      });
+    });
+
+    it("requests all matching worker results and returns their IDs", async () => {
+      const search = async (query: string, options?: { limit?: number }) => {
+        expect(query).toBe("guard");
+        expect(options?.limit).toBe(mockEntities.length);
+        return [{ id: "e1" }, { id: "e2" }] as any;
+      };
+
+      await expect(
+        searchEntityText("guard", mockEntities.length, { search }),
+      ).resolves.toEqual({ matchIds: new Set(["e1", "e2"]), error: null });
+    });
+
+    it("returns an explicit error result when worker search fails", async () => {
+      const search = async () => {
+        throw new Error("worker unavailable");
+      };
+
+      const result = await searchEntityText("guard", 10, { search });
+      expect(result.matchIds).toEqual(new Set());
+      expect(result.error?.message).toBe("worker unavailable");
+    });
+
+    it("ignores a stale result after a newer query starts", async () => {
+      let resolveFirst!: (value: any[]) => void;
+      const first = new Promise<any[]>((resolve) => (resolveFirst = resolve));
+      const search = (query: string) =>
+        query === "first" ? first : Promise.resolve([{ id: "new" }]);
+      const runner = createEntityTextSearchRunner({ search });
+
+      const stale = runner.search("first", 10);
+      const current = runner.search("second", 10);
+      resolveFirst([{ id: "old" }]);
+
+      await expect(current).resolves.toEqual({
+        matchIds: new Set(["new"]),
+        error: null,
+      });
+      await expect(stale).resolves.toBeNull();
+    });
   });
 
   describe("countEntityTypes", () => {
@@ -230,6 +321,165 @@ describe("entityListFiltering pure functions", () => {
         showDraftsOnly: true,
       });
       expect(counts.get("npc")).toBe(1);
+    });
+  });
+
+  describe("evaluateEntityMissingFields", () => {
+    it("identifies missing summary, labels, and connections", () => {
+      const emptyEntity: EntityWithPreview = {
+        id: "e-empty",
+        title: "Empty Node",
+        type: "npc",
+        labels: [],
+        aliases: [],
+        connections: [],
+        content: "",
+        summary: "",
+        status: "active",
+        updatedAt: 0,
+      };
+
+      const result = evaluateEntityMissingFields(emptyEntity, { total: 0 });
+      expect(result.summary).toBe(true);
+      expect(result.labels).toBe(true);
+      expect(result.connections).toBe(true);
+      expect(result.isIncomplete).toBe(true);
+    });
+
+    it("identifies complete entity when all fields are present", () => {
+      const completeEntity: EntityWithPreview = {
+        id: "e-complete",
+        title: "Complete Node",
+        type: "npc",
+        labels: ["Hero"],
+        aliases: [],
+        connections: [],
+        content: "Detailed backstory.",
+        status: "active",
+        updatedAt: 0,
+      };
+
+      const result = evaluateEntityMissingFields(completeEntity, { total: 2 });
+      expect(result.summary).toBe(false);
+      expect(result.labels).toBe(false);
+      expect(result.connections).toBe(false);
+      expect(result.isIncomplete).toBe(false);
+    });
+  });
+
+  describe("showIncompleteOnly and columnFilters", () => {
+    const testEntities: EntityWithPreview[] = [
+      {
+        id: "t1",
+        title: "Alpha",
+        type: "npc",
+        labels: ["Hero"],
+        aliases: [],
+        connections: [],
+        content: "Story of Alpha",
+        summary: "Alpha summary",
+        status: "active",
+        createdAt: 1000,
+        updatedAt: 2000,
+      },
+      {
+        id: "t2",
+        title: "Beta",
+        type: "location",
+        labels: [],
+        aliases: [],
+        connections: [],
+        content: "Story of Beta",
+        status: "active",
+        updatedAt: 2000,
+      },
+      {
+        id: "t3",
+        title: "Gamma",
+        type: "item",
+        labels: ["Relic"],
+        aliases: [],
+        connections: [],
+        content: "",
+        status: "active",
+        updatedAt: 2000,
+      },
+    ];
+
+    const connectionCounts = {
+      t1: { inbound: 1, outbound: 1, total: 2 },
+      t2: { inbound: 0, outbound: 0, total: 0 },
+      t3: { inbound: 0, outbound: 0, total: 0 },
+    };
+
+    it("filters only incomplete entities when showIncompleteOnly is true", () => {
+      const result = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        showIncompleteOnly: true,
+        connectionCounts,
+      });
+
+      // t1 is complete. t2 is missing labels and connections. t3 is missing content/summary and connections.
+      expect(result.map((e) => e.id)).toEqual(["t2", "t3"]);
+    });
+
+    it("filters by column filters (labels, connections, summary, dates)", () => {
+      // Missing labels
+      const missingLabelsResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          labelMode: "missing",
+        },
+      });
+      expect(missingLabelsResult.map((e) => e.id)).toEqual(["t2"]);
+
+      // Zero connections
+      const zeroConnectionsResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        connectionCounts,
+        columnFilters: {
+          connectionsMode: "zero",
+        },
+      });
+      expect(zeroConnectionsResult.map((e) => e.id)).toEqual(["t2", "t3"]);
+
+      // Missing summary
+      const missingSummaryResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          summaryMode: "missing_summary",
+        },
+      });
+      expect(missingSummaryResult.map((e) => e.id)).toEqual(["t3"]);
+
+      // Created date filter
+      const hasDateResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          createdMode: "has_date",
+        },
+      });
+      expect(hasDateResult.map((e) => e.id)).toEqual(["t1"]);
     });
   });
 });

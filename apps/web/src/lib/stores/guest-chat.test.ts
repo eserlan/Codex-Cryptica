@@ -6,6 +6,7 @@ import { vi } from "vitest";
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("./vault.svelte", () => ({
   vault: {
+    isGuest: true,
     entities: {
       "char-1": {
         id: "char-1",
@@ -15,6 +16,11 @@ vi.mock("./vault.svelte", () => ({
           isEnabled: true,
           contextScope: "public",
         },
+      },
+      "char-2": {
+        id: "char-2",
+        title: "Tarin the Ranger",
+        type: "character",
       },
     },
   },
@@ -65,6 +71,19 @@ vi.mock("../utils/idb", () => {
         });
         return results;
       }),
+      getAllFromIndex: vi
+        .fn()
+        .mockImplementation(async (table, indexName, indexValue) => {
+          const field =
+            indexName === "by-speaker" ? "speakerCharacterId" : "characterId";
+          const results: any[] = [];
+          (globalThis as any).mockDbStore.forEach((value: any, k: string) => {
+            if (k.startsWith(`${table}_`) && value[field] === indexValue) {
+              results.push(value);
+            }
+          });
+          return results;
+        }),
       put: vi.fn().mockImplementation(async (table, val, key) => {
         const storeKey = key ? `${table}_${key}` : `${table}_${val.id}`;
         (globalThis as any).mockDbStore.set(storeKey, val);
@@ -85,6 +104,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GuestChatStore } from "./guest-chat.svelte";
 import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
 import { oracle } from "./oracle.svelte";
+import { vault } from "./vault.svelte";
 
 describe("GuestChatStore", () => {
   let store: GuestChatStore;
@@ -92,6 +112,7 @@ describe("GuestChatStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (globalThis as any).mockDbStore.clear();
+    (vault as { isGuest: boolean }).isGuest = true;
     store = new GuestChatStore();
   });
 
@@ -147,5 +168,202 @@ describe("GuestChatStore", () => {
 
     await store.clearTranscript("char-1");
     expect(store.transcripts["char-1"].messages.length).toBe(0);
+  });
+
+  it("keeps host conversations local even when a guest connection is active", async () => {
+    (vault as { isGuest: boolean }).isGuest = false;
+
+    await store.startChat("char-1", "Blacksmith Joe");
+    await store.sendMessage("char-1", "Hello there!");
+
+    expect(p2pGuestService.sendToHost).not.toHaveBeenCalled();
+    expect(oracle.executor.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "guest-chat",
+        entityId: "char-1",
+        query: "Hello there!",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("passes the selected host identity to local character-chat generation", async () => {
+    (vault as { isGuest: boolean }).isGuest = false;
+
+    await store.startChat("char-1", "Blacksmith Joe", "char-2");
+    await store.sendMessage("char-1", "Hello there!");
+
+    expect(store.transcripts["char-1"].speakerCharacterId).toBe("char-2");
+    expect(oracle.executor.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "guest-chat",
+        entityId: "char-1",
+        data: { guestCharacterId: "char-2" },
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("startNewSession creates a fresh record without deleting prior sessions", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    const firstId = store.transcripts["char-1"].id;
+
+    const second = await store.startNewSession(
+      "char-1",
+      "Blacksmith Joe",
+      "char-2",
+    );
+
+    expect(second.id).not.toBe(firstId);
+    expect(store.transcripts["char-1"].id).toBe(second.id);
+    expect(store.transcripts["char-1"].speakerCharacterId).toBe("char-2");
+
+    const sessions = await store.listSessions("char-1");
+    expect(sessions.map((s) => s.id).sort()).toEqual(
+      [firstId, second.id].sort(),
+    );
+  });
+
+  it("listSessions orders sessions by lastUpdated, newest first", async () => {
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_older", {
+      id: "older",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      characterTitle: "Blacksmith Joe",
+      messages: [],
+      lastUpdated: 100,
+    });
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_newer", {
+      id: "newer",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      characterTitle: "Blacksmith Joe",
+      messages: [],
+      lastUpdated: 200,
+    });
+
+    const sessions = await store.listSessions("char-1");
+    expect(sessions.map((s) => s.id)).toEqual(["newer", "older"]);
+  });
+
+  it("listSessionsAsSpeaker finds sessions where the character was the human's speaker, not the AI voice", async () => {
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_cross", {
+      id: "cross",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      speakerCharacterId: "char-2",
+      characterTitle: "Blacksmith Joe",
+      messages: [],
+      lastUpdated: 100,
+    });
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_unrelated", {
+      id: "unrelated",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-3",
+      characterTitle: "Someone Else",
+      messages: [],
+      lastUpdated: 50,
+    });
+
+    const sessions = await store.listSessionsAsSpeaker("char-2");
+    expect(sessions.map((s) => s.id)).toEqual(["cross"]);
+  });
+
+  it("resumeSession swaps in the requested transcript and sets it active", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    const original = await store.startNewSession(
+      "char-1",
+      "Blacksmith Joe",
+      "char-2",
+    );
+    const other = await store.startNewSession("char-1", "Blacksmith Joe");
+    expect(store.transcripts["char-1"].id).toBe(other.id);
+
+    await store.resumeSession("char-1", original.id);
+
+    expect(store.transcripts["char-1"].id).toBe(original.id);
+    expect(store.transcripts["char-1"].speakerCharacterId).toBe("char-2");
+    expect(store.activeCharacterId).toBe("char-1");
+  });
+
+  it("resumeSession ignores a transcript that belongs to a different character", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    const currentId = store.transcripts["char-1"].id;
+
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_foreign", {
+      id: "foreign",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-2",
+      characterTitle: "Tarin the Ranger",
+      messages: [],
+      lastUpdated: 999,
+    });
+
+    await store.resumeSession("char-1", "foreign");
+
+    expect(store.transcripts["char-1"].id).toBe(currentId);
+  });
+
+  it("attaches cue to message and sends it via P2P host", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    await store.sendMessage(
+      "char-1",
+      "Will you help us?",
+      "No, and... / Hostile",
+    );
+
+    const userMsg = store.transcripts["char-1"].messages[0];
+    expect(userMsg.content).toBe("Will you help us?");
+    expect(userMsg.cue).toBe("No, and... / Hostile");
+    expect(p2pGuestService.sendToHost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "GUEST_CHAR_CHAT_REQUEST",
+        query: "Will you help us?",
+        cue: "No, and... / Hostile",
+        characterId: "char-1",
+      }),
+    );
+  });
+
+  it("extracts inline (Cue: ...) when sending message", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    await store.sendMessage(
+      "char-1",
+      "(Cue: Crown, Cushion) What did you find?",
+    );
+
+    const userMsg = store.transcripts["char-1"].messages[0];
+    expect(userMsg.content).toBe("What did you find?");
+    expect(userMsg.cue).toBe("Crown, Cushion");
+    expect(p2pGuestService.sendToHost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "GUEST_CHAR_CHAT_REQUEST",
+        query: "What did you find?",
+        cue: "Crown, Cushion",
+        characterId: "char-1",
+      }),
+    );
+  });
+
+  it("passes cue to local oracle executor when not in guest mode", async () => {
+    (vault as { isGuest: boolean }).isGuest = false;
+
+    await store.startChat("char-1", "Blacksmith Joe");
+    await store.sendMessage("char-1", "Can we enter?", "Yes, but... / Guarded");
+
+    expect(oracle.executor.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "guest-chat",
+        entityId: "char-1",
+        query: "Can we enter?",
+        cue: "Yes, but... / Guarded",
+      }),
+      expect.anything(),
+    );
   });
 });

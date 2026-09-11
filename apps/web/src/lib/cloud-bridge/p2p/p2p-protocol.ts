@@ -60,6 +60,7 @@ export type P2PMessage =
       characterId: string;
       guestUsername: string;
       query: string;
+      cue?: string;
       history: { id: string; role: string; content: string }[];
     }
   | { type: "GUEST_CHAR_CHAT_CHUNK"; requestId: string; partial: string }
@@ -140,6 +141,7 @@ export function isVTTMessage(message: any): message is VTTMessage {
       "PING",
       "TOKEN_ADD_REQUEST",
       "TOKEN_MOVE",
+      "TOKEN_ROTATE",
       "TOKEN_REMOVE",
       "TOKEN_SELECT",
       "SESSION_SAVE",
@@ -179,6 +181,7 @@ export function isGuestOnlyVTTMessage(message: VTTMessage): boolean {
   return [
     "TOKEN_ADD_REQUEST",
     "TOKEN_MOVE",
+    "TOKEN_ROTATE",
     "TOKEN_REMOVE",
     "TOKEN_SELECT",
     "PING",

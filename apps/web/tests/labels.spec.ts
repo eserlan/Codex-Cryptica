@@ -82,7 +82,7 @@ test.describe("Entity Labeling System", () => {
       timeout: 20000,
     });
     // Wait for the UI to be fully active
-    await expect(page.getByTestId("new-entity-button")).toBeVisible({
+    await expect(page.getByTestId("header-create-button")).toBeVisible({
       timeout: 10000,
     });
     await page.evaluate(() => {

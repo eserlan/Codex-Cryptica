@@ -23,6 +23,12 @@ describe("newsSheetConfig", () => {
       ).toBeGreaterThan(0);
     }
   });
+
+  it("offers a Cosmic Horror field-report format", () => {
+    expect(newsSheetConfig.publicationTypesByGenre["Cosmic Horror"]).toContain(
+      "Restricted field report",
+    );
+  });
 });
 
 describe("generateNewsSheetLocal", () => {

@@ -4,7 +4,9 @@ import { readdir, readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
-const WORKSPACE_ROOTS = ["apps", "packages"];
+// "apps/workers" is listed explicitly: the loader reads one level below each
+// root, and the workers live a level deeper than the other apps.
+const WORKSPACE_ROOTS = ["apps", "apps/workers", "packages"];
 const FULL_VALIDATION_FILES = new Set([
   "bun.lock",
   "package.json",
@@ -160,9 +162,12 @@ async function main() {
   console.log(`Affected workspaces: ${names.join(", ") || "none"}`);
   for (const name of names) console.log(`- ${name}: ${result.reasons[name]}`);
 
+  const skipTests = process.argv.includes("--skip-tests");
+
   if (runValidation) {
     for (const workspace of result.workspaces) {
-      for (const script of ["lint", "test"]) {
+      const scriptsToRun = skipTests ? ["lint"] : ["lint", "test"];
+      for (const script of scriptsToRun) {
         if (!workspace.scripts[script]) continue;
         console.log(`Running ${script} for ${workspace.name}`);
         execFileSync("bun", ["run", "--filter", workspace.name, script], {

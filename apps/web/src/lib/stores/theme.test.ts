@@ -181,6 +181,7 @@ describe("ThemeStore", () => {
         "cyberpunk",
         "apocalyptic",
         "horror",
+        "cosmic_horror",
         "fallout",
         "starwars",
         "startrek",
@@ -191,6 +192,25 @@ describe("ThemeStore", () => {
       }
     });
 
+    it("should resolve horror to horror_light with Archival Dossier tokens in neutral-light", async () => {
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("horror");
+
+      expect(store.activeTheme.id).toBe("horror_light");
+      expect(store.activeTheme.tokens.primary).toBe("#801414");
+      expect(store.activeTheme.tokens.background).toBe("#e4dfd5");
+      expect(store.activeTheme.tokens.accent).toBe("#801414");
+    });
+
+    it("keeps cosmic horror separate from the gothic-noir horror theme", async () => {
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("cosmic_horror");
+
+      expect(store.activeTheme.name).toBe("Cosmic Horror");
+      expect(store.activeTheme.description).toContain("impossible geometry");
+      expect(store.activeTheme.description).not.toContain("vampires");
+    });
+
     it("should keep natively light themes as light in neutral-light, and natively dark as dark in neutral-dark", async () => {
       store.setAppAppearance("neutral-light");
       await store.setTheme("fantasy");
@@ -199,6 +219,42 @@ describe("ThemeStore", () => {
       store.setAppAppearance("neutral-dark");
       await store.setTheme("scifi");
       expect(store.activeTheme.id).toBe("scifi");
+    });
+  });
+
+  describe("Semantic Contrast Tokens & Fantasy Dark Mode", () => {
+    it("should apply accessible metaText and semantic tokens to documentElement when in fantasy_dark", async () => {
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("fantasy");
+
+      expect(store.activeTheme.id).toBe("fantasy_dark");
+      const root = document.documentElement;
+
+      // Primary body text and muted text
+      expect(root.style.getPropertyValue("--color-text-primary")).toBe(
+        "#e8ddc4",
+      );
+      expect(root.style.getPropertyValue("--color-text-muted")).toBe("#bfa68b");
+      expect(root.style.getPropertyValue("--color-text-dim")).toBe("#bfa68b");
+
+      // Semantic tokens
+      expect(root.style.getPropertyValue("--text-primary")).toBe("#e8ddc4");
+      expect(root.style.getPropertyValue("--text-secondary")).toBe("#d4a85a");
+      expect(root.style.getPropertyValue("--text-muted")).toBe("#bfa68b");
+      expect(root.style.getPropertyValue("--link")).toBe("#d4a85a");
+      expect(root.style.getPropertyValue("--icon-interactive")).toBe("#d4a85a");
+      expect(root.style.getPropertyValue("--border-interactive")).toBe(
+        "#d4a85a",
+      );
+    });
+
+    it("should fall back to tokens.secondary for --color-text-muted when metaText is not provided", async () => {
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("workspace");
+
+      const root = document.documentElement;
+      expect(root.style.getPropertyValue("--color-text-muted")).toBe("#78716c");
+      expect(root.style.getPropertyValue("--text-muted")).toBe("#78716c");
     });
   });
 });

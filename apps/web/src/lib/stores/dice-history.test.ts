@@ -50,6 +50,16 @@ describe("DiceHistoryStore", () => {
     expect(all[0].total).toBe(15);
   });
 
+  it("persists optional roll context labels", async () => {
+    await store.addResult(createRollResult(15), "modal", { label: "Attack" });
+
+    expect(store.history[0].label).toBe("Attack");
+
+    const db = await getDB();
+    const all = await db.getAll("dice_history");
+    expect(all[0].label).toBe("Attack");
+  });
+
   it("should separate chat and modal history", async () => {
     await store.addResult(createRollResult(10), "chat");
     await store.addResult(createRollResult(20), "modal");

@@ -13,6 +13,8 @@
       imageAlt?: string;
       inlineImage?: string;
       inlineImageAlt?: string;
+      exclusiveLabel?: string;
+      inlineImageCaption?: string;
     }[];
   } = $props();
 
@@ -67,8 +69,7 @@
                 <p
                   class="text-[10px] font-bold uppercase tracking-widest font-header text-theme-primary"
                 >
-                  Codex Cryptica exclusive — generate full Delve Canvases and
-                  Dossiers inside the app
+                  {faq.exclusiveLabel ?? "Codex Cryptica exclusive"}
                 </p>
               </div>
               <button
@@ -114,7 +115,7 @@
                     <span
                       class="text-[9px] uppercase tracking-widest font-header text-theme-muted/70"
                     >
-                      The Build Delve Canvas button on any generated result
+                      {faq.inlineImageCaption ?? faq.inlineImageAlt ?? ""}
                     </span>
                   </div>
                 {/if}

@@ -7,6 +7,8 @@ import {
   deriveIdFromPath,
   upsertMarkdownSection,
 } from "./markdown";
+import { EntitySchema } from "schema";
+import { validateMarkdownFrontmatter } from "@codex/vault-engine";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -160,6 +162,147 @@ describe("markdown.ts utility", () => {
       // Line 0 is ---, Line 1 should be updatedAt
       expect(lines[1]).toContain("updatedAt: 1000");
     });
+
+    it("should omit runtime cache preview fields from frontmatter", () => {
+      const result = stringifyEntity({
+        id: "id1",
+        title: "Test",
+        type: "note",
+        content: "Body",
+        contentPreview: "Body",
+        contentLoaded: false,
+        contentPreviewVersion: 1,
+      } as any);
+
+      expect(result).not.toContain("contentPreview");
+      expect(result).not.toContain("contentLoaded");
+      expect(result).not.toContain("contentPreviewVersion");
+    });
+
+    it("should round-trip a canonical language profile through frontmatter", () => {
+      const entity = EntitySchema.parse({
+        id: "lemari",
+        type: "note",
+        title: "Lemari",
+        kind: "language",
+        languageProfileVersion: 1,
+        languageProfile: {
+          inputs: {
+            genre: "Classic Fantasy",
+            tone: "Lyrical",
+            role: "Common Speech",
+            structure: "Suffix-heavy",
+          },
+          phonology: {
+            consonants: ["l", "m"],
+            vowels: ["a", "e"],
+            phonotactics: ["CV"],
+          },
+          naming: {
+            examples: [
+              { name: "Lemari", meaning: "river guide", use: "person" },
+            ],
+          },
+          lexicon: [
+            { word: "lema", pronunciation: "LEH-mah", meaning: "river" },
+          ],
+          grammar: {
+            examples: [
+              {
+                text: "Lema nai.",
+                pronunciation: "LEH-mah nye",
+                translation: "The river guides us.",
+              },
+            ],
+          },
+          register: { role: "Common Speech" },
+          tableUseTips: ["Keep vowels open."],
+        },
+      });
+
+      const parsed = parseMarkdown(stringifyEntity(entity));
+      const reloaded = EntitySchema.parse({
+        ...parsed.metadata,
+        content: parsed.content,
+      });
+
+      expect(reloaded.languageProfileVersion).toBe(1);
+      expect(reloaded.languageProfile).toEqual(entity.languageProfile);
+    });
+  });
+
+  describe("statSheet frontmatter", () => {
+    it("should serialize and re-parse a statSheet with full field fidelity", () => {
+      const entity = EntitySchema.parse({
+        id: "goblin-scout",
+        type: "npc",
+        title: "Goblin Scout",
+        statSheet: {
+          templateId: "dnd-5e-npc",
+          fields: [
+            {
+              id: "hp",
+              label: "Hit Points",
+              type: "counter",
+              value: 24,
+              min: 0,
+              max: 50,
+            },
+            { id: "ac", label: "Armor Class", type: "number", value: 15 },
+            {
+              id: "conditions",
+              label: "Conditions",
+              type: "text",
+              value: "Prone",
+            },
+            {
+              id: "notes",
+              label: "Notes",
+              type: "longtext",
+              value: "Skittish, flees at low HP.",
+            },
+            {
+              id: "atk",
+              label: "Shortbow Attack",
+              type: "dice",
+              formula: "1d20+4",
+            },
+            {
+              id: "sec_combat",
+              label: "Combat Stats",
+              type: "heading",
+              collapsed: false,
+            },
+          ],
+        },
+      });
+
+      const parsed = parseMarkdown(stringifyEntity(entity));
+      const reloaded = EntitySchema.parse({
+        ...parsed.metadata,
+        content: parsed.content,
+      });
+
+      expect(reloaded.statSheet).toEqual(entity.statSheet);
+    });
+
+    it("should omit statSheet from frontmatter when the entity has none", () => {
+      const entity = EntitySchema.parse({
+        id: "plain-note",
+        type: "note",
+        title: "Plain Note",
+      });
+
+      const serialized = stringifyEntity(entity);
+      expect(serialized).not.toContain("statSheet");
+    });
+
+    it("should gracefully report malformed statSheet data via safeParse rather than throwing", () => {
+      const raw = `---\nid: broken-npc\ntype: npc\ntitle: Broken NPC\nstatSheet:\n  fields: "not-an-array"\n---\n`;
+      const { metadata } = parseMarkdown(raw);
+      expect(() => EntitySchema.safeParse(metadata)).not.toThrow();
+      expect(EntitySchema.safeParse(metadata).success).toBe(false);
+    });
   });
 
   describe("Vault Round-Trip Integration", () => {
@@ -168,12 +311,11 @@ describe("markdown.ts utility", () => {
         id: "eldrin-shadoweaver",
         type: "character",
         title: "Eldrin Shadoweaver",
-        tags: ["mage", "shadow", "ancient"],
         labels: ["important", "past"],
         aliases: ["The Shadow Mage", "Eldrin"],
         connections: [
           {
-            targetId: "shadow-keep",
+            target: "shadow-keep",
             type: "located_in",
             label: "Home Sanctuary",
           },
@@ -232,7 +374,6 @@ describe("markdown.ts utility", () => {
       expect(parsedResult.metadata.id).toBe(fullEntity.id);
       expect(parsedResult.metadata.type).toBe(fullEntity.type);
       expect(parsedResult.metadata.title).toBe(fullEntity.title);
-      expect(parsedResult.metadata.tags).toEqual(fullEntity.tags);
       expect(parsedResult.metadata.labels).toEqual(fullEntity.labels);
       expect(parsedResult.metadata.aliases).toEqual(fullEntity.aliases);
       expect(parsedResult.metadata.connections).toEqual(fullEntity.connections);
@@ -256,6 +397,10 @@ describe("markdown.ts utility", () => {
 
       // Verify content parses back correctly
       expect(parsedResult.content.trim()).toBe(fullEntity.content.trim());
+
+      // Verify frontmatter passes validateMarkdownFrontmatter without errors
+      const validation = validateMarkdownFrontmatter(serialized);
+      expect(validation.success).toBe(true);
     });
   });
 

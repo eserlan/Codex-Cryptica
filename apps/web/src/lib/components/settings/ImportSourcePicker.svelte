@@ -1,8 +1,10 @@
 <script lang="ts">
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
   import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
+  import VaultFilesDropzone from "$lib/features/importer/VaultFilesDropzone.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import type { CreaturePack } from "@codex/content-packs";
+  import type { DroppedItem } from "@codex/importer";
 
   interface PackImportStatus {
     importedCount: number;
@@ -17,6 +19,7 @@
     showResumeToast: boolean;
     onRestart: () => void;
     onFileSelect: (files: File[]) => void | Promise<void>;
+    onVaultFilesSelect: (items: DroppedItem[]) => void | Promise<void>;
     rejectedFiles?: { name: string; reason: string }[];
     masterPacks: CreaturePack[];
     getSubpacks: (masterId: string) => CreaturePack[];
@@ -32,6 +35,7 @@
     showResumeToast,
     onRestart,
     onFileSelect,
+    onVaultFilesSelect,
     rejectedFiles = [],
     masterPacks,
     getSubpacks,
@@ -60,8 +64,8 @@
         >
 
         <p class="text-xs text-theme-text/70 leading-tight">
-          Scabard JSON imports work without AI. Text, PDF, DOCX, and generic
-          JSON analysis still need a Gemini key in the
+          Kanka ZIP and Scabard JSON imports work without AI. Text, PDF, DOCX,
+          and generic JSON analysis still need an API key in the
           <button
             class="underline hover:text-theme-text"
             onclick={() => (modalUIStore.activeSettingsTab = "intelligence")}
@@ -130,11 +134,11 @@
         <p
           class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
         >
-          Scabard and Chronica
+          Kanka, Scabard, and Chronica
         </p>
         <p class="mt-0.5 leading-snug text-theme-muted">
-          JSON exports use a deterministic review and import flow. No AI key is
-          needed.
+          Structured exports use a deterministic review and import flow. No AI
+          key is needed.
         </p>
       </div>
     </div>
@@ -154,6 +158,20 @@
         </p>
       </div>
     </div>
+  </div>
+
+  <div class="px-1" data-testid="vault-files-section">
+    <p
+      class="text-[10px] font-bold uppercase tracking-widest text-theme-muted font-header mb-2"
+    >
+      Import Files
+    </p>
+    <p class="text-xs text-theme-text/70 leading-tight mb-2">
+      Drag files (or a whole folder) from your computer, or choose them
+      directly. Only new files are added — nothing already in this vault is ever
+      overwritten.
+    </p>
+    <VaultFilesDropzone onSelect={onVaultFilesSelect} {isStandalone} />
   </div>
 
   <ImportDropzone {onFileSelect} {isStandalone} />

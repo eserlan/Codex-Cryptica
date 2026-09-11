@@ -65,6 +65,9 @@ describe("VTTControls", () => {
     mapSession.setVttEnabled(true);
     mapSession.setMode("exploration");
     mapSession.pendingTokenCoords = null;
+    mapSession.pendingNoteCoords = null;
+    mapSession.cancelNotePlacement();
+    mapSession.bindToMap("map-1");
     sessionModeStore.isGuestMode = false;
   });
 
@@ -108,5 +111,45 @@ describe("VTTControls", () => {
     expect(screen.queryByRole("button", { name: "Add Token" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Encounters" })).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
+  });
+
+  it("opens token placement at the centered map origin", async () => {
+    render(VTTControls);
+
+    await screen.getByRole("button", { name: "Add Token" }).click();
+
+    expect(mapSession.pendingTokenCoords).toEqual({ x: 0, y: 0 });
+  });
+
+  it("arms note placement instead of dropping a note immediately", async () => {
+    render(VTTControls);
+
+    const noteButton = screen.getByRole("button", { name: "Pin Note" });
+    expect(noteButton.getAttribute("aria-pressed")).toBe("false");
+
+    await noteButton.click();
+
+    expect(mapSession.notePlacementArmed).toBe(true);
+    // Nothing is placed until the GM picks the spot.
+    expect(mapSession.pendingNoteCoords).toBeNull();
+  });
+
+  it("backs out of note placement when the button is pressed again", async () => {
+    render(VTTControls);
+
+    const noteButton = screen.getByRole("button", { name: "Pin Note" });
+    await noteButton.click();
+    await noteButton.click();
+
+    expect(mapSession.notePlacementArmed).toBe(false);
+    expect(mapSession.pendingNoteCoords).toBeNull();
+  });
+
+  it("hides note placement from guests", async () => {
+    sessionModeStore.isGuestMode = true;
+
+    render(VTTControls);
+
+    expect(screen.queryByRole("button", { name: "Pin Note" })).toBeNull();
   });
 });

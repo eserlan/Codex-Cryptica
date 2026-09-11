@@ -16,6 +16,20 @@ import {
   getConsolidatedContext,
   extractJsonFromModelResponse,
 } from "./text-generation-context";
+import { BANNED_NAMES, isTitleBanned } from "generator-engine";
+
+// Matches campaign-generator-service.ts's MAX_AI_ATTEMPTS: the drafting
+// prompt already tells the model not to use a banned name (entity-creation.ts),
+// but that's a soft instruction the model can still ignore — this is the
+// enforcement backstop, retrying a few times before giving up.
+const MAX_STRUCTURED_ENTITY_ATTEMPTS = 3;
+
+/** Extracts the "**Name:** ..." line or inline field from a structured drafting response. */
+function extractStructuredEntityTitle(text: string): string {
+  const lineMatch = text.match(/\*\*Name:\*\*\s*([^\r\n*]+)/i)?.[1]?.trim();
+  if (lineMatch) return lineMatch;
+  return text.match(/\*\*Name:\*\*\s*(.+)/i)?.[1]?.trim() ?? "";
+}
 
 /** Generates new entity content: merge proposals, plot hooks, structured drafts, and related entities. */
 export class TextGenerationCreationService {
@@ -167,8 +181,21 @@ export class TextGenerationCreationService {
     );
 
     try {
-      const result = await model.generateContent(draftingPrompt);
-      const text = result.response.text();
+      let text = "";
+      // Retry a few times if the drafted title collides with a banned name
+      // (the prompt already asks the model not to, but it's not enforced —
+      // see MAX_STRUCTURED_ENTITY_ATTEMPTS above).
+      for (
+        let attempt = 0;
+        attempt < MAX_STRUCTURED_ENTITY_ATTEMPTS;
+        attempt++
+      ) {
+        const result = await model.generateContent(draftingPrompt);
+        text = result.response.text();
+        if (!isTitleBanned(extractStructuredEntityTitle(text), BANNED_NAMES)) {
+          break;
+        }
+      }
       await onUpdate(text);
     } catch (err: any) {
       console.error("[TextGenerationService] Structured drafting failed:", err);
@@ -191,7 +218,11 @@ export class TextGenerationCreationService {
     connectedEntities: ConnectedEntityPromptContext[] = [],
     categories: { id: string; label?: string }[] = [],
     templateOutline = "",
-    options?: { isGuest?: boolean; aiDisabled?: boolean },
+    options?: {
+      isGuest?: boolean;
+      aiDisabled?: boolean;
+      worldThemeName?: string;
+    },
   ): Promise<{
     name: string;
     type: string;
@@ -226,6 +257,7 @@ export class TextGenerationCreationService {
       cleanConnected,
       cleanCategories,
       templateOutline,
+      options?.worldThemeName || "",
     );
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);

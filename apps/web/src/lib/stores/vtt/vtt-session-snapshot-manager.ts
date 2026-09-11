@@ -4,6 +4,7 @@ import type {
   MeasurementState,
   PingState,
   SessionMode,
+  TileDeck,
   Token,
   VTTMessage,
 } from "../../../types/vtt";
@@ -59,6 +60,8 @@ export interface VTTSessionSnapshotManagerDependencies {
   getGridDistance: () => number;
   setGridDistance: (value: number) => void;
   getActiveMapId: () => string | null;
+  getTileDecks: () => TileDeck[];
+  setTileDeckSnapshotData: (decks: TileDeck[]) => void;
   clearPendingSessionSnapshotBroadcast: () => void;
   emit: (message: VTTMessage) => void;
 }
@@ -96,6 +99,10 @@ export class VTTSessionSnapshotManager {
       gridSize: this.deps.getGridSize(),
       gridUnit: this.deps.getGridUnit(),
       gridDistance: this.deps.getGridDistance(),
+      tileDecks: this.deps.getTileDecks().map((deck) => ({
+        ...deck,
+        tiles: deck.tiles.map((tile) => ({ ...tile })),
+      })),
     };
   }
 
@@ -128,6 +135,7 @@ export class VTTSessionSnapshotManager {
     this.deps.setCreatedAt(normalized.createdAt);
     this.deps.setSavedAt(normalized.savedAt);
     this.deps.setChatMessages(normalized.chatMessages);
+    this.deps.setTileDeckSnapshotData(normalized.tileDecks ?? []);
 
     if (
       normalized.gridSize !== undefined &&

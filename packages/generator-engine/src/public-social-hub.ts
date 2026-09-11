@@ -2,10 +2,7 @@
  * Public Social Hub + Tavern generators — framework-free port of the SEO
  * social-hub generator (`apps/web/src/lib/services/seo/generators/social-hub.ts`).
  *
- * Per the unification plan (#1351) this stays framework-free: no AI client, no
- * sessionStorage. The web page builds prompts here, runs them through
- * aiClientManager, parses with the parse* helpers, and falls back to the
- * generate*Local helpers on failure. Session context is injected as a string.
+ * Migrated onto the smart deterministic framework (#2534).
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
@@ -17,6 +14,35 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson, asString } from "./llm-response-utils";
+import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  buildSocialHubSchema,
+  buildTavernSchema,
+} from "./public-social-hub-schema";
+import { resolveSmart, type LockedValue } from "./smart";
+
+export {
+  buildSocialHubSchema,
+  buildTavernSchema,
+  TAVERN_NAMING_STYLES,
+} from "./public-social-hub-schema";
+export {
+  SOCIAL_HUB_PRESETS,
+  TAVERN_PRESETS,
+} from "./public-social-hub-presets";
+export {
+  SOCIAL_HUB_TRAIT_VOCABULARY,
+  SOCIAL_HUB_EXTRA_TRAITS,
+  VENUE_TYPE_TRAITS,
+  ATMOSPHERE_TRAITS,
+  WEALTH_LEVEL_TRAITS,
+  CLIENTELE_TRAITS,
+  TROUBLE_TRAITS,
+  SETTLEMENT_TYPE_TRAITS,
+  SOCIAL_HUB_RULES,
+  SOCIAL_HUB_AFFINITIES,
+  type SocialHubTrait,
+} from "./public-social-hub-traits";
 
 const VENUE_ADJECTIVES = [
   "Sullen",
@@ -91,12 +117,14 @@ export const socialHubConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
     "Lancer",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -142,6 +170,13 @@ export const socialHubConfig = {
       "Blood Bar",
       "Private Lounge",
     ],
+    "Cosmic Horror": [
+      "Expedition Mess Hall",
+      "Restricted Reading Room",
+      "Weather Station Canteen",
+      "Diving Bell Lounge",
+      "Museum Staff Common Room",
+    ],
     "Post-Apocalyptic": [
       "Trade Shack",
       "Bunker Canteen",
@@ -183,6 +218,14 @@ export const socialHubConfig = {
       "Embassy Reception Hall",
       "Planetary Academy Campus",
       "Frontier Research Outpost Canteen",
+    ],
+    "Space Western": [
+      "Frontier Cantina",
+      "Dust-Well Saloon",
+      "Asteroid Refuelling Lounge",
+      "Smuggler's Speakeasy",
+      "Scrappers' Gambling Den",
+      "Hydroponic Distillery",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -252,6 +295,13 @@ export const socialHubConfig = {
       "Predators in disguise",
       "Frightened locals",
     ],
+    "Cosmic Horror": [
+      "Field researchers and survey crews",
+      "Anxious locals with half-told stories",
+      "Archive staff and visiting scholars",
+      "Divers, sailors, and salvage teams",
+      "Investigators following an unsettling lead",
+    ],
     "Post-Apocalyptic": [
       "Scavengers and traders",
       "Wasteland survivors",
@@ -294,6 +344,13 @@ export const socialHubConfig = {
       "Civilian colonists",
       "Exchange students",
       "Stellar cartographers",
+    ],
+    "Space Western": [
+      "Scoundrels, smugglers, and debt-dodgers",
+      "Grease-stained salvage scrappers and belters",
+      "Frontier marshals and bounty hunters",
+      "Wildcat prospectors and ore drillers",
+      "Displaced drifters and runaway nobles",
     ],
   } as Record<string, string[]>,
   troubles: [
@@ -340,6 +397,8 @@ export interface ResolvedSocialHub {
   clientele: string;
   campaignContext?: string;
   varianceSeed: number;
+  trouble?: string;
+  traits?: readonly string[];
 }
 
 export interface ResolvedTavern {
@@ -351,6 +410,8 @@ export interface ResolvedTavern {
   campaignContext?: string;
   namingDirective: string;
   varianceSeed: number;
+  trouble?: string;
+  traits?: readonly string[];
 }
 
 export interface SocialHubPrompt {
@@ -365,57 +426,82 @@ export interface TavernPrompt {
   resolved: ResolvedTavern;
 }
 
-const TAVERN_NAMING_STYLES = [
-  "Name it after an animal and a worn or unlikely material (e.g. 'The Tin Boar', 'The Pitted Heron').",
-  "Name it after a physical object associated with the owner's past — a weapon, trade tool, or keepsake (e.g. 'The Broken Spoke', 'The Dented Kettle').",
-  "Use a short ironic or sardonic phrase (e.g. 'The Honest Scales', 'The Fair Price', 'The Warm Welcome').",
-  "Name it after an obscure local legend, a minor battle, or a peculiar geographical feature — not a generic landmark.",
-  "Use a two-word compound that evokes the atmosphere — a worn adjective plus a mundane noun (e.g. 'The Sullen Lantern', 'The Leaning Barrel', 'The Scorched Bell').",
-];
-
-function resolveSocialHub(
-  options: SocialHubGeneratorOptions,
-  rng: Rng,
+export function resolveSocialHub(
+  options: SocialHubGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): ResolvedSocialHub {
   const genre = options.genre || pickFrom(socialHubConfig.genres, rng);
-  const venueTypes =
-    socialHubConfig.venueTypesByGenre[genre] ??
-    socialHubConfig.venueTypesByGenre["Fantasy"];
-  const clienteles =
-    socialHubConfig.clientelesByGenre[genre] ??
-    socialHubConfig.clientelesByGenre["Fantasy"];
+  const locked: Record<string, LockedValue> = {};
+
+  if (options.venueType) {
+    locked.venueType = { value: options.venueType, source: "manual" };
+  }
+  if (options.wealthLevel) {
+    locked.wealthLevel = { value: options.wealthLevel, source: "manual" };
+  }
+  if (options.atmosphere) {
+    locked.atmosphere = { value: options.atmosphere, source: "manual" };
+  }
+  if (options.clientele) {
+    locked.clientele = { value: options.clientele, source: "manual" };
+  }
+
+  const schema = buildSocialHubSchema();
+  const { values, traits } = resolveSmart(schema, { genre, locked }, rng);
 
   return {
     genre,
-    venueType: options.venueType || pickFrom(venueTypes, rng),
-    atmosphere:
-      options.atmosphere || pickFrom(socialHubConfig.atmospheres, rng),
-    wealthLevel: options.wealthLevel || socialHubConfig.wealthLevels[2],
-    clientele: options.clientele || pickFrom(clienteles, rng),
+    venueType: values.venueType,
+    atmosphere: values.atmosphere,
+    wealthLevel: values.wealthLevel,
+    clientele: values.clientele,
     campaignContext: options.campaignContext?.trim() || undefined,
     varianceSeed: Math.floor(rng() * 99991) + 10,
+    trouble: values.trouble,
+    traits,
   };
 }
 
-function resolveTavern(
-  options: TavernGeneratorOptions,
-  rng: Rng,
+export function resolveTavern(
+  options: TavernGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): ResolvedTavern {
+  const locked: Record<string, LockedValue> = {};
+
+  if (options.settlementType) {
+    locked.settlementType = { value: options.settlementType, source: "manual" };
+  }
+  if (options.type) {
+    locked.tavernType = { value: options.type, source: "manual" };
+  }
+  if (options.wealthLevel) {
+    locked.wealthLevel = { value: options.wealthLevel, source: "manual" };
+  }
+  if (options.atmosphere) {
+    locked.atmosphere = { value: options.atmosphere, source: "manual" };
+  }
+  if (options.clientele) {
+    locked.clientele = { value: options.clientele, source: "manual" };
+  }
+
+  const schema = buildTavernSchema();
+  const { values, traits } = resolveSmart(
+    schema,
+    { genre: "Fantasy", locked },
+    rng,
+  );
+
   return {
-    tavernType:
-      options.type ||
-      pickFrom(socialHubConfig.venueTypesByGenre["Fantasy"], rng),
-    atmosphere:
-      options.atmosphere || pickFrom(socialHubConfig.atmospheres, rng),
-    settlementType:
-      options.settlementType || pickFrom(socialHubConfig.settlementTypes, rng),
-    wealthLevel: options.wealthLevel || socialHubConfig.wealthLevels[2],
-    clientele:
-      options.clientele ||
-      pickFrom(socialHubConfig.clientelesByGenre["Fantasy"], rng),
+    tavernType: values.tavernType,
+    atmosphere: values.atmosphere,
+    settlementType: values.settlementType,
+    wealthLevel: values.wealthLevel,
+    clientele: values.clientele,
     campaignContext: options.campaignContext?.trim() || undefined,
-    namingDirective: pickFrom(TAVERN_NAMING_STYLES, rng),
+    namingDirective: values.namingDirective,
     varianceSeed: Math.floor(rng() * 99991) + 10,
+    trouble: values.trouble,
+    traits,
   };
 }
 
@@ -450,7 +536,7 @@ ${sessionContext}`;
 - Venue Type: ${resolved.venueType}
 - Atmosphere: ${resolved.atmosphere}
 - Wealth Level: ${resolved.wealthLevel}
-- Primary Clientele: ${resolved.clientele}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }
@@ -487,7 +573,7 @@ ${sessionContext}
 - Atmosphere: ${resolved.atmosphere}
 - Settlement Type: ${resolved.settlementType}
 - Wealth Level: ${resolved.wealthLevel}
-- Primary Clientele: ${resolved.clientele}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}
+- Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}
 - Naming Directive: ${resolved.namingDirective}`;
 
   return { systemInstruction, userMessage, resolved };
@@ -540,7 +626,7 @@ export function generateSocialHubLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveSocialHub(options, rng);
-  const trouble = pickFrom(socialHubConfig.troubles, rng);
+  const trouble = resolved.trouble || pickFrom(socialHubConfig.troubles, rng);
   const ownerName = generateName(rng);
   const patron1 = generateName(rng);
   const patron2 = generateName(rng);
@@ -633,7 +719,7 @@ export function generateTavernLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveTavern(options, rng);
-  const trouble = pickFrom(socialHubConfig.troubles, rng);
+  const trouble = resolved.trouble || pickFrom(socialHubConfig.troubles, rng);
   const ownerName = generateName(rng);
   const patron1 = generateName(rng);
   const patron2 = generateName(rng);

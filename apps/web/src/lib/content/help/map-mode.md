@@ -41,3 +41,17 @@ Dive deeper into your world:
 - In the **Entity Detail Panel**, go to the **MAP** tab to upload a sub-map.
 - Once attached, pins linked to that entity will show an **ENTER** button, allowing you to dive into the sub-map.
 - Use the breadcrumbs or "Go Back" logic to return to the parent map.
+
+### Starting a VTT Session
+
+Transform any map into a live tactical Virtual Tabletop:
+
+1. Click the **VTT OFF** button in the top-right map controls overlay to activate **VTT ON**.
+2. Drag character or monster notes from **Entity Explorer** directly onto the grid to place tokens.
+3. Track initiative, measure spell/movement ranges (`R`), drop map pings (`Shift` + `Click`), and stream live map updates to players via **Host Session**.
+4. For detailed step-by-step instructions, open the [Starting a VTT Session from Maps](/help#help/vtt-session) help article.
+
+### Related Blog Posts
+
+- [Introducing Tactical VTT Mode](/blog/vtt-introduction) — Overview of zero-overhead, Peer-to-Peer tactical map sessions.
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — Integrating geographic maps, pins, and spatial lore navigation.

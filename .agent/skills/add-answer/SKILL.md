@@ -1,0 +1,313 @@
+---
+name: add-answer
+description: Add a new Codex Cryptica reference answer page (/answers/[slug]) covering an authentic TTRPG or worldbuilding question. Enforces British English, direct snippet-first answers, table frameworks, worked before/after examples, Discovery Intent Governance (Constitution XIII), live route validation, R2-only images, and category registration.
+---
+
+# Add an Answer Page
+
+Answer pages (`/answers/[slug]`) are reference entries for real tabletop RPG and worldbuilding questions that players and Game Masters search for, not shallow SEO landing pages and not dated blog posts.
+
+One page owns one genuine user intent (Constitution XIII). The substantive answer is structured data (`AnswerConfig`), landing in crawler-visible HTML without requiring a bespoke Svelte page per question.
+
+---
+
+## Editorial & Style Rules (Mandatory)
+
+1. **British English throughout** (Constitution & Issue #2563/#2564):
+   - Use `-ise` endings (`organise`, `recognise`, `realise`, `specialise`, `characterise`).
+   - Use British spellings (`colour`, `honour`, `behaviour`, `rumour`, `favourite`, `neighbour`, `centre`, `theatre`, `catalogue`, `grey`, `cancelled`, `defence`, `offence`).
+   - **Never use American travel conjugations**: Use `travelled`, `travelling`, `traveller`, `travellers` (the test suite rejects `traveled` and `traveling`).
+2. **Direct Answer First (`shortAnswer`)**:
+   - Must be a single self-contained paragraph of $\ge 140$ characters that directly answers the question before any body prose.
+   - Forms the structured FAQPage JSON-LD snippet; it must make total sense when read in search engine results out of context.
+3. **Strict Ban on Obvious AI Writing Tells (Zero Tolerance)**:
+   Prose must read as authentic, authoritative tabletop literature written by an experienced Game Master. Obvious LLM signatures degrade credibility immediately:
+   - **Zero Em Dashes (Unicode U+2014) or En Dashes (Unicode U+2013)**: Absolutely forbid em dashes and en dashes in all fields (`shortAnswer`, section headings, prose paragraphs, list intro/terms/text, example blocks, checklist items, `codexConnection`, and SEO metadata). The em dash is the single most identifiable LLM marker. Use standard punctuation: commas, colons, semicolons, parentheses, full stops, or ordinary hyphens (Unicode U+002D) for compound adjectives (`session-long`, `step-by-step`, `tabletop-ready`).
+   - **Zero Emojis**: Never use any emoji character (decorative pictographs such as sparkles, dice, or arrow glyphs) anywhere in answer files. Answers are permanent, authoritative reference documents, not social media posts.
+   - **No Synthetic AI Buzzwords & Fluff**: Reject synthetic vocabulary that makes copy read like a boilerplate marketing brochure. Specifically avoid:
+     - Synthetic fillers: `delve`, `tapestry`, `testament`, `beacon`, `plethora`, `myriad`, `vital`, `crucial`, `paramount`, `pivotal`, `holistic`, `synergy`, `foster`, `embark`, `nestled`, `treasure trove`, `realm`, `cornerstone`.
+     - Fluffy marketing adjectives: `seamless`, `effortless`, `game-changing`, `revolutionary`, `transformative`, `robust`, `vibrant`, `richly detailed`, `meticulous`, `cutting-edge`.
+     - Inflated verbs: `elevate`, `supercharge`, `unleash`, `unlock`, `harness`, `leverage`, `navigate the intricacies of`.
+       State mechanical actions plainly (`track`, `note`, `roll`, `draft`, `sketch`, `reveal`, `constrain`).
+   - **No Throat-Clearing Openers**: Never start the `shortAnswer` or first section with broad, sweeping generalizations ("In the vast world of tabletop roleplaying...", "Whether you are a seasoned game master or running your first campaign...", "At its core...", "Every GM knows that..."). Open immediately with the mechanical constraint, table dilemma, or friction point.
+   - **No Symmetrical Contrast Cadences or Generic Contrast Formulas**: Avoid repetitive rhetorical swings like "It is not about X; it is about Y", "X isn't just Y, it's Z", "Not only does this X, but it also Y". State the point directly without artificial rhetorical symmetry.
+   - **No Formulaic Boilerplate Conclusions**: Never end sections or the answer with decorative moralizing recaps ("Ultimately, the key is...", "In conclusion...", "By keeping these principles in mind, your world will come alive..."). When the practical explanation is finished, stop.
+   - **Break the Uniform AI Cadence**: Avoid uniform 3-sentence paragraphs or lists where every bullet has the exact same grammatical shape (e.g. bold verb-noun phrase followed by 12 words of generic explanation). Vary sentence lengths and paragraph depths to match genuine human technical writing.
+4. **Substantive Framework & Structure**:
+   - At least 3 body sections (`sections.length >= 3`).
+   - **At least one worked `example` block** (`kind: "example"`): Concrete tabletop comparison (e.g. weak/strong or before/after) with a "Why it works" takeaway.
+   - **At least one actionable checklist block** (`kind: "checklist"`): Specific, practical prep items the reader can take straight to their table.
+5. **Honest Product Connection**:
+   - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
+6. **Clean List Item Titles (No Redundant Numbering)**:
+   - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
+7. **Optional `systemsThatSupportThis` (#2769)**:
+   - Only add an entry when a named RPG system has an actual rule or procedure for this topic (a named mechanic, not a matching genre or vibe). "Blades in the Dark" belongs on a heist answer because of its flashback/clock rules; a generic fantasy heartbreaker that merely permits heists does not.
+   - Each entry needs `system`, one-sentence `rationale` naming the specific mechanic, and an external `href` to the system's own site or its publisher.
+   - Roughly 2 to 4 entries where genuinely applicable. Omit the field entirely rather than padding it with a loosely-related system.
+
+---
+
+## Step-by-Step Implementation Workflow
+
+### 1. Check Discovery Intent (Constitution XIII)
+
+Every public answer page is governed by the Discovery Intent Registry:
+
+1. Run the discovery audit to check existing intents and cluster owners:
+   ```sh
+   bun scripts/discovery-audit.mjs
+   ```
+2. Verify the intent is distinct: do not create a second URL for a synonym or word-order variant of an existing answer.
+3. Identify the parent cluster (e.g. `session-prep`, `worldbuilding`, `adventure-mapping`, `npc-creation`) and search intent aliases. You will define these directly in the answer file's `discovery` object (no separate registry file edit required).
+
+---
+
+### 2. Image Asset Workflow (Cloudflare R2 Only, Mandatory)
+
+> [!IMPORTANT]
+> **Every answer page requires an R2 illustration.** `seo.image`/`seo.imageAlt` are enforced by `registry.test.ts` for every answer with `publishedAt` on or after 2026-09-07; skipping the image will fail that test. **NEVER commit image files to git.** All image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local files created temporarily during generation must be deleted immediately after upload.
+
+1. Generate or prepare a 16:9 illustration for the topic:
+   - Aspect ratio: `16:9`.
+   - Evocative, atmospheric tabletop RPG illustration matching Codex's aesthetic.
+   - **Tool fallback order:** try the `agy` CLI first. If `agy` reports its image-generation quota is exhausted, fall back to `codex`. If `codex` also fails, fall back to Claude Code's own image generation. Only move to the next tool once the current one has failed or is out of quota.
+2. Upload directly to R2 using wrangler:
+   ```sh
+   bunx wrangler r2 object put \
+     codex-cryptica-statics/og/<slug>.jpg \
+     --file=/path/to/temporary-image.jpg \
+     --content-type=image/jpeg \
+     --remote
+   ```
+3. Verify both direct and CDN responses:
+   ```sh
+   curl -sI https://assets.codexcryptica.com/og/<slug>.jpg | head -5
+   ```
+4. **Delete the local temporary image immediately**.
+5. Set `seo.image` to `https://assets.codexcryptica.com/og/<slug>.jpg` and `seo.imageAlt` to a descriptive string ($\ge 10$ characters).
+
+---
+
+### 3. Create the Answer Page File
+
+Create `apps/web/src/lib/content/answers/pages/<slug>.ts`:
+
+```ts
+import type { AnswerConfigInput } from "../schema";
+
+export const <camelCaseName>: AnswerConfigInput = {
+  slug: "<kebab-case-slug>",
+  category: "session-prep", // "getting-started" | "session-prep" | "worldbuilding" | "campaign-notes"
+  question: "<Verbatim Question Ending in ?>",
+  kind: "framework", // "definition" | "how-to" | "framework" | "comparison"
+  shortAnswer:
+    "<Self-contained direct answer >140 characters with zero introductory filler.>",
+  sections: [
+    {
+      kind: "prose",
+      heading: "<Why the problem exists / common pitfalls>",
+      paragraphs: [
+        "<Explanatory paragraph 1...>",
+        "<Explanatory paragraph 2...>",
+      ],
+    },
+    {
+      kind: "list",
+      heading: "<The Core Framework / Criteria>",
+      intro: "<Brief framing sentence:>",
+      items: [
+        {
+          term: "<Pillar 1>",
+          text: "<Actionable explanation...>",
+        },
+        {
+          term: "<Pillar 2>",
+          text: "<Actionable explanation...>",
+        },
+      ],
+    },
+    {
+      kind: "example",
+      heading: "<Worked Example Scenario: Before and After>",
+      paragraphs: [
+        "<Context for the scenario...>",
+      ],
+      items: [
+        {
+          term: "<The weak / default approach>",
+          text: "<How tables typically fumble this...>",
+        },
+        {
+          term: "<The strong framework approach>",
+          text: "<How the proposed framework transforms the scene...>",
+        },
+        {
+          term: "Why it works",
+          text: "<The mechanical and narrative reason this succeeded.>",
+        },
+      ],
+    },
+    {
+      kind: "checklist",
+      heading: "<Before You Run / Prep Checklist>",
+      intro: "<Practical check before sitting at the table:>",
+      items: [
+        "<Actionable item 1>",
+        "<Actionable item 2>",
+        "<Actionable item 3>",
+      ],
+    },
+  ],
+  systemsThatSupportThis: [ // Optional. Only if a system has real mechanical support for this topic (#2769).
+    {
+      system: "<System Name>",
+      rationale: "<One sentence naming the specific mechanic that supports this topic.>",
+      href: "<https://external-system-site.example>",
+    },
+  ],
+  codexConnection: {
+    heading: "<Connecting X to your broader campaign world>",
+    paragraphs: [
+      "<How Codex Cryptica's generator, graph, or canvas supports this workflow.>",
+    ],
+    linkText: "<Try the relevant generator / tool>",
+    href: "/generators/<slug>", // Must be a verified live route
+  },
+  relatedTools: [
+    {
+      title: "<Tool Title>",
+      description: "<Short description of utility.>",
+      href: "/generators/<live-slug>",
+    },
+  ],
+  relatedForPages: [
+    {
+      title: "<Hub Title>",
+      description: "<Short description of relevant genre or system.>",
+      href: "/for/<live-slug>",
+    },
+  ],
+  relatedAnswers: [
+    "<existing-answer-slug-1>",
+    "<existing-answer-slug-2>",
+  ],
+  discovery: {
+    parentCluster: "<cluster-id, e.g. adventure-mapping, session-prep, worldbuilding>",
+    intentAliases: ["<alias 1>", "<alias 2>"],
+    uniqueValue: "<1-2 sentences explaining the unique technique or framework>",
+    relatedIntents: ["<related-intent-id>"],
+  },
+  seo: {
+    title: "<Question>? | Codex Cryptica", // <= 75 chars
+    description:
+      "<Concise, actionable meta description under 185 chars.>", // <= 185 chars
+    image: "https://assets.codexcryptica.com/og/<slug>.jpg",
+    imageAlt: "<Descriptive alt text for the journey/scene illustration>",
+  },
+};
+```
+
+---
+
+### 4. Connect & Update the Knowledge Mesh
+
+Reference answers must form an interconnected web, never dead ends. When publishing a new answer:
+
+1. **Reciprocal Linking**:
+   - Check the answers you listed in `relatedAnswers`.
+   - Update those existing answer files (`apps/web/src/lib/content/answers/pages/<existing-slug>.ts`) to include your new answer's slug in their `relatedAnswers`.
+   - Or run the automated fixer:
+     ```sh
+     bun run check:answer-mesh --fix
+     ```
+2. **Intent Pruning & Alias Migration (Constitution XIII)**:
+   - If an existing broader answer in your cluster currently carries an `intentAlias` that your new, specialized page now directly answers, prune that alias from the existing answer's `intentAliases`.
+3. **Mutual Overlap Acknowledgment**:
+   - If your answer shares significant vocabulary or cluster scope with an existing answer, ensure both answers acknowledge each other via `acknowledgedOverlap: [{ with: "<other-intent-id>", reason: "<distinct-role-rationale>" }]`.
+4. **Link to worked examples, reader-facing, not just in the discovery registry**:
+   - If a relevant `/examples/<slug>` page exists (or is being added alongside this answer), link to it from within a `prose` section using that block's optional `cta` field:
+     ```ts
+     {
+       kind: "prose",
+       heading: "<Framing sentence for the example>",
+       paragraphs: ["<One sentence setting up what the example shows.>"],
+       cta: {
+         text: "Read the <Example Name> example",
+         href: "/examples/<example-slug>",
+       },
+     },
+     ```
+   - See `how-do-you-run-a-heist-in-a-tabletop-rpg.ts`'s "See a table-ready score in action" block for the precedent.
+   - **This step is easy to miss**: adding the example to `discovery.relatedIntents`, or linking the example's own `relatedAnswers` back to this page, does not put a link on the rendered answer page itself. `check:answer-mesh` and the discovery audit only check answer-to-answer reciprocity and intent-registry consistency — neither one catches a missing answer-to-example link, so this has to be done by hand and verified by reading the finished page, not by a green test run.
+
+---
+
+### 5. Sync Answer Registries
+
+Run the automated synchronization script to register your answer:
+
+```sh
+bun sync:answers
+```
+
+This automatically:
+
+- Registers the answer in `apps/web/src/lib/content/answers/pages/index.ts`.
+- Incorporates the answer into its category (`apps/web/src/lib/content/answers/categories.ts`).
+- Generates its Discovery Intent entry (`apps/web/src/lib/content/discovery/entries/answers.ts`).
+
+No manual editing of index, category, or discovery files is needed!
+
+---
+
+### 6. Verification Gate (Mandatory)
+
+Run all targeted tests and static analyses before committing:
+
+1. **Answer Mesh Check**:
+   ```sh
+   bun run check:answer-mesh
+   ```
+   _Audits outbound links, ensures no broken links, and verifies reciprocal cross-links._
+2. **Answer Unit Tests**:
+   ```sh
+   bun test apps/web/src/lib/content/answers/ scripts/check-answer-mesh.test.ts
+   ```
+   _Verifies schema validation, British English spelling check, slug uniqueness, link liveness, structured data, and category coverage._
+3. **Discovery Intent Audit**:
+   ```sh
+   bun scripts/discovery-audit.mjs
+   ```
+   _Ensures 0 overlap errors and verifies canonical registration._
+4. **Type & Lint Check**:
+   ```sh
+   bun run lint:types
+   bun run lint:affected
+   ```
+
+---
+
+### 7. Pull Request & Review Loop
+
+1. Create a dedicated branch off `origin/staging`:
+   ```sh
+   git checkout -b feat/<issue>-<kebab-name> origin/staging
+   ```
+2. Commit with conventional gitmoji:
+   ```sh
+   git commit -m "✨ feat(answers): add <question summary> answer page (#<issue>)"
+   ```
+3. Push to origin (`--no-verify` to bypass slow pre-push hooks):
+   ```sh
+   git push -u origin feat/<issue>-<kebab-name> --no-verify
+   ```
+4. Open the Pull Request targeting `staging`:
+   ```sh
+   gh pr create --base staging --title "..." --body "..."
+   ```
+5. Run the automated review fix loop:
+   ```sh
+   bun run pr:fix <pr-number>
+   ```
+   _The loop polls for Copilot/bot reviews and check failures, automatically dispatching an agent pass to resolve findings._

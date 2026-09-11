@@ -98,30 +98,142 @@ test.describe("Blog", () => {
     );
   });
 
+  test("should navigate to and render the introducing the canvas article", async ({
+    page,
+  }) => {
+    await page.goto("/blog");
+
+    const articleLink = page.getByRole("link", {
+      name: "Introducing the Canvas: Visual Brainstorming Meets Structured Lore",
+    });
+    await articleLink.click();
+
+    // Wait for navigation
+    await expect(page).toHaveURL(/\/blog\/introducing-the-canvas/);
+
+    // Check title and metadata
+    await expect(page).toHaveTitle(
+      /Introducing the Canvas: Visual Brainstorming Meets Structured Lore/,
+    );
+
+    // Check article content
+    const articleContent = page.locator(".blog-content");
+    await expect(articleContent).toBeVisible();
+    await expect(articleContent).toContainText("What is the Canvas?");
+    await expect(articleContent).toContainText(
+      "Five Practical Canvas Workflows",
+    );
+    await expect(articleContent).toContainText(
+      "Building an Investigation Board",
+    );
+
+    // Check CTA button
+    const ctaButton = page.getByRole("link", {
+      name: /Launch Codex Cryptica and Open Canvas/,
+      exact: false,
+    });
+    await expect(ctaButton).toBeVisible();
+  });
+
   test("should show 404 for non-existent article", async ({ page }) => {
     const response = await page.goto("/blog/non-existent-transmission");
     expect(response?.status()).toBeGreaterThanOrEqual(400);
   });
 
-  test("should navigate to blog via footer link", async ({ page }) => {
-    await page.goto("/");
+  test("should navigate to the blog from site chrome", async ({ page }) => {
+    // This used to click a "Blog" link in the footer on `/`. Two things have
+    // changed since: chunk 3 removed AppFooter from workspace routes, and the
+    // marketing footer has no Blog link either (Terms, Privacy, Tools,
+    // Sitemap, LLM Docs, Groupfinder). So the test was asserting on chrome
+    // that exists nowhere, and had been failing on staging.
+    //
+    // The intent still holds, the mechanism moved: the shared shell's nav
+    // carries "Devlog" on every public page.
+    await page.goto("/tools");
 
-    // Dismiss the first-run landing overlay if present so the footer is reachable.
     await page
-      .evaluate(() => {
-        const uiStore = (window as any).uiStore;
-        if (uiStore) uiStore.dismissedLandingPage = true;
-      })
-      .catch(() => {});
-
-    const footerBlogLink = page
-      .locator("footer")
-      .getByRole("link", { name: "Blog" });
-    await footerBlogLink.click();
+      .getByTestId("shell-nav")
+      .getByRole("link", { name: "Devlog" })
+      .click();
 
     await expect(page).toHaveURL(/\/blog/);
     await expect(
       page.getByRole("heading", { name: "The Archive" }),
     ).toBeVisible();
+  });
+});
+
+test.describe("Blog editorial structure", () => {
+  test("presents the responsible-AI batch as one series, in reading order", async ({
+    page,
+  }) => {
+    await page.goto("/blog");
+
+    // Seven posts published on one day, two hours apart, listed as seven equal
+    // standalone promotions is the "generated" signal the assessment names.
+    // Their dates are untouched; only the framing changed.
+    const series = page.getByTestId("blog-series-collection");
+    await expect(series).toBeVisible();
+
+    const items = series.locator("ol li a");
+    await expect(items).toHaveCount(7);
+
+    // Numbered by the series' own sequence, asserted by slug: RA_SERIES stores
+    // its own short titles, while the list renders each post's real one. The
+    // index sorts newest first, which would otherwise label the final part 01.
+    await expect(items.first()).toHaveAttribute(
+      "href",
+      /lore-oracle-not-the-author$/,
+    );
+    await expect(items.last()).toHaveAttribute(
+      "href",
+      /revising-your-lore-with-the-oracle$/,
+    );
+
+    // And they are no longer also listed as standalone articles.
+    const standalone = await page.locator("article h2 a").allTextContents();
+    expect(standalone.join(" ")).not.toContain("Drafts Are Not Canon");
+  });
+
+  test("shows a revision date only when a post has one", async ({ page }) => {
+    await page.goto("/blog/drafts-are-not-canon");
+
+    // No post carries `updatedAt` yet, and none should claim to: a date
+    // defaulted to publication would tell readers every post was revised the
+    // day it was written.
+    await expect(page.getByTestId("blog-updated")).toHaveCount(0);
+
+    const ld = await page
+      .locator('script[type="application/ld+json"]')
+      .allTextContents();
+    const posting = ld
+      .map((raw) => {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      })
+      .find((j) => j?.["@type"] === "BlogPosting");
+    expect(posting.dateModified).toBe(posting.datePublished);
+  });
+
+  test("renders exactly one header on mobile and desktop breakpoints for responsible-ai-worldbuilding", async ({
+    page,
+  }) => {
+    // Desktop check
+    await page.goto("/responsible-ai-worldbuilding");
+    await expect(page.locator("header")).toHaveCount(1);
+    await expect(page.getByTestId("shell-wordmark")).toBeVisible();
+    await expect(page.getByTestId("shell-cta")).toBeVisible();
+
+    // Mobile viewport check
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(page.locator("header")).toHaveCount(1);
+    const explore = page.getByTestId("shell-explore-link");
+    await expect(explore).toBeVisible();
+    await expect(explore).toHaveAttribute("href", "/explore");
+    await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
+    await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
   });
 });

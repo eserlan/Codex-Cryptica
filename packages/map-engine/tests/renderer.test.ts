@@ -85,6 +85,40 @@ describe("Map Engine Renderer", () => {
     expect(mockCtx.drawImage).not.toHaveBeenCalled();
   });
 
+  it("should return early without calling drawImage when background image has zero dimensions", () => {
+    const zeroImage = { width: 0, height: 400 } as HTMLImageElement;
+    renderMap({
+      canvas: mockCanvas,
+      image: zeroImage,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+    });
+
+    expect(mockCtx.drawImage).not.toHaveBeenCalled();
+  });
+
+  it("should not execute drawImage on zero-dimension maskCanvas when fog of war is enabled", () => {
+    const mockImage = { width: 500, height: 400 } as HTMLImageElement;
+    const zeroMaskCanvas = { width: 0, height: 0 } as HTMLCanvasElement;
+
+    renderMap({
+      canvas: mockCanvas,
+      image: mockImage,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: zeroMaskCanvas,
+      showFog: true,
+    });
+
+    // Background image is drawn, but fog/mask drawImage is safely skipped
+    expect(mockCtx.drawImage).toHaveBeenCalledTimes(1);
+    expect(offscreenCtx.drawImage).not.toHaveBeenCalled();
+  });
+
   it("should draw the background image", () => {
     const mockImage = { width: 500, height: 400 } as HTMLImageElement;
     renderMap({
@@ -415,6 +449,41 @@ describe("Map Engine Renderer", () => {
     );
   });
 
+  it("renders square bases, facing arcs, and the selected rotation handle", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      accentColor: "#22c55e",
+      tokens: [
+        {
+          id: "square-facing",
+          x: 100,
+          y: 100,
+          width: 64,
+          height: 64,
+          rotation: 45,
+          baseShape: "square",
+          facingIndicator: true,
+          color: "#f59e0b",
+          label: "Square",
+          selected: true,
+          visible: true,
+        },
+      ],
+    });
+
+    expect(mockCtx.rect).toHaveBeenCalledWith(-32, -32, 64, 64);
+    expect(mockCtx.rotate).toHaveBeenCalledWith((45 * Math.PI) / 180);
+    expect(mockCtx.arc).toHaveBeenCalledWith(632, 482, 14, 0, Math.PI * 2);
+    expect(mockCtx.arc).toHaveBeenCalled();
+    expect(mockCtx.stroke).toHaveBeenCalled();
+  });
+
   it("skips hidden and offscreen tokens", () => {
     renderMap({
       canvas: mockCanvas,
@@ -453,7 +522,7 @@ describe("Map Engine Renderer", () => {
     expect(mockCtx.fillText).not.toHaveBeenCalled();
   });
 
-  it("draws a fixed grid without translating the context", () => {
+  it("draws a fixed grid at its own phase, ignoring the live pan", () => {
     renderMap({
       canvas: mockCanvas,
       image: { width: 500, height: 400 } as HTMLImageElement,
@@ -471,7 +540,13 @@ describe("Map Engine Renderer", () => {
       },
     });
 
-    expect(mockCtx.translate).toHaveBeenCalledTimes(1);
+    // Two translates: the background image (at the live pan) and the grid.
+    // With no fixedPan snapshot the grid falls back to pan {0,0}, so its
+    // phase is (canvasSize / 2) % (size * zoom) — free of transform.pan, so
+    // the grid holds still while the map is dragged underneath it.
+    expect(mockCtx.translate).toHaveBeenNthCalledWith(1, 620, 480);
+    expect(mockCtx.translate).toHaveBeenNthCalledWith(2, 500 % 60, 400 % 60);
+    expect(mockCtx.translate).toHaveBeenCalledTimes(2);
     expect(mockCtx.fillRect).toHaveBeenCalledWith(-60, -60, 1120, 920);
   });
 

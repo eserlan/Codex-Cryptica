@@ -11,12 +11,14 @@ import {
   CYBERPUNK_LIGHT,
   APOCALYPTIC_LIGHT,
   HORROR_LIGHT,
+  COSMIC_HORROR_LIGHT,
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
   LANCER_LIGHT,
   WESTERN_DARK,
   SPACE_OPERA_RESISTANCE_DARK,
+  SPACE_WESTERN_LIGHT,
 } from "./theme-templates";
 
 describe("Theme Schema & Definitions", () => {
@@ -50,6 +52,64 @@ describe("Theme Schema & Definitions", () => {
     expect(fantasy.graph.edgeWidth).toBeLessThanOrEqual(2); // Reduced from 3
   });
 
+  it("defines FANTASY_DARK with WCAG AA compliant text contrast and complete semantic tokens", () => {
+    expect(FANTASY_DARK).toBeDefined();
+    expect(FANTASY_DARK.id).toBe("fantasy_dark");
+    expect(() => StylingTemplateSchema.parse(FANTASY_DARK)).not.toThrow();
+
+    const tokens = FANTASY_DARK.tokens;
+
+    // Helper for relative luminance according to WCAG 2.1/2.2 specs
+    function relativeLuminance(hex: string): number {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      const [cr, cg, cb] = [r, g, b].map((c) =>
+        c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
+      );
+      return 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
+    }
+
+    function contrastRatio(hex1: string, hex2: string): number {
+      const l1 = relativeLuminance(hex1);
+      const l2 = relativeLuminance(hex2);
+      const lighter = Math.max(l1, l2);
+      const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    // Backgrounds: canvas background (#1c1410), surface (#2a1e16), effective textured background (#241c18)
+    const backgrounds = [tokens.background, tokens.surface, "#241c18"];
+
+    for (const bg of backgrounds) {
+      // 1.4.3 Normal body text (>= 4.5:1)
+      expect(contrastRatio(tokens.text, bg)).toBeGreaterThanOrEqual(4.5);
+
+      // 1.4.3 Secondary / muted readable text (>= 4.5:1)
+      expect(contrastRatio(tokens.secondary, bg)).toBeGreaterThanOrEqual(4.5);
+      expect(tokens.metaText).toBeDefined();
+      expect(contrastRatio(tokens.metaText!, bg)).toBeGreaterThanOrEqual(4.5);
+
+      // Links / interactive primary text (>= 4.5:1)
+      expect(contrastRatio(tokens.primary, bg)).toBeGreaterThanOrEqual(4.5);
+
+      // 1.4.11 Non-text contrast: interactive icons and focus indicator (>= 3:1)
+      expect(tokens.iconDefault).toBeDefined();
+      expect(contrastRatio(tokens.iconDefault!, bg)).toBeGreaterThanOrEqual(
+        3.0,
+      );
+      expect(tokens.iconActive).toBeDefined();
+      expect(contrastRatio(tokens.iconActive!, bg)).toBeGreaterThanOrEqual(3.0);
+      expect(tokens.focus).toBeDefined();
+      expect(contrastRatio(tokens.focus!, bg)).toBeGreaterThanOrEqual(3.0);
+    }
+
+    // CTA Open Codex button contrast: action text against action background
+    expect(
+      contrastRatio(tokens.actionText!, tokens.actionBg!),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("defines the Pirate light and dark themes with nautical contrast tokens", () => {
     expect(THEMES.pirate.id).toBe("pirate");
     expect(PIRATE_DARK.id).toBe("pirate_dark");
@@ -59,7 +119,19 @@ describe("Theme Schema & Definitions", () => {
     expect(() => StylingTemplateSchema.parse(PIRATE_DARK)).not.toThrow();
   });
 
-  it("defines light and dark counterparts for all 12 world themes", () => {
+  it("defines HORROR_LIGHT as an Archival Dossier in cold aged ivory, charcoal, and oxblood", () => {
+    expect(HORROR_LIGHT.id).toBe("horror_light");
+    expect(HORROR_LIGHT.name).toBe("Archival Dossier");
+    expect(HORROR_LIGHT.tokens.primary).toBe("#801414");
+    expect(HORROR_LIGHT.tokens.accent).toBe("#801414");
+    expect(HORROR_LIGHT.tokens.background).toBe("#e4dfd5");
+    expect(HORROR_LIGHT.tokens.text).toBe("#1c1917");
+    expect(HORROR_LIGHT.tokens.secondary).toBe("#4a4543");
+    expect(HORROR_LIGHT.tokens.borderRadius).toBe("0px");
+    expect(() => StylingTemplateSchema.parse(HORROR_LIGHT)).not.toThrow();
+  });
+
+  it("defines light and dark counterparts for all world themes", () => {
     const counterparts: Record<string, { light: any; dark: any }> = {
       workspace: { light: THEMES.workspace, dark: WORKSPACE_DARK },
       scifi: { light: SCIFI_LIGHT, dark: THEMES.scifi },
@@ -69,11 +141,19 @@ describe("Theme Schema & Definitions", () => {
       cyberpunk: { light: CYBERPUNK_LIGHT, dark: THEMES.cyberpunk },
       apocalyptic: { light: APOCALYPTIC_LIGHT, dark: THEMES.apocalyptic },
       horror: { light: HORROR_LIGHT, dark: THEMES.horror },
+      cosmic_horror: {
+        light: COSMIC_HORROR_LIGHT,
+        dark: THEMES.cosmic_horror,
+      },
       fallout: { light: FALLOUT_LIGHT, dark: THEMES.fallout },
       starwars: { light: STARWARS_LIGHT, dark: THEMES.starwars },
       startrek: { light: STARTREK_LIGHT, dark: THEMES.startrek },
       lancer: { light: LANCER_LIGHT, dark: THEMES.lancer },
       western: { light: THEMES.western, dark: WESTERN_DARK },
+      "space-western": {
+        light: SPACE_WESTERN_LIGHT,
+        dark: THEMES["space-western"],
+      },
     };
 
     for (const [key, pair] of Object.entries(counterparts)) {
@@ -128,7 +208,11 @@ describe("Theme Schema & Definitions", () => {
       lancer_light: "tactical_hud.svg",
       "space-opera-resistance": "resistance_console.svg",
       "space-opera-resistance_dark": "resistance_console.svg",
+      "space-western": "rust.svg",
+      "space-western_light": "rust.svg",
       horror_light: "autopsy_smudge.svg",
+      cosmic_horror: "eldritch_cartography.svg",
+      cosmic_horror_light: "eldritch_cartography.svg",
       fallout_light: "vault_blueprint.svg",
     };
 
@@ -148,7 +232,11 @@ describe("Theme Schema & Definitions", () => {
       lancer_light: LANCER_LIGHT,
       "space-opera-resistance": THEMES["space-opera-resistance"],
       "space-opera-resistance_dark": SPACE_OPERA_RESISTANCE_DARK,
+      "space-western": THEMES["space-western"],
+      "space-western_light": SPACE_WESTERN_LIGHT,
       horror_light: HORROR_LIGHT,
+      cosmic_horror: THEMES.cosmic_horror,
+      cosmic_horror_light: COSMIC_HORROR_LIGHT,
       fallout_light: FALLOUT_LIGHT,
     };
 

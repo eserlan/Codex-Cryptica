@@ -1,12 +1,70 @@
 import { describe, expect, it } from "vitest";
-import type { MapPin } from "schema";
+import type { MapPin, StatSheetField } from "schema";
 import {
   findClickedPin,
+  describeMoveBlocked,
   getKeyboardViewportUpdate,
+  getMapDisplayDimensions,
   getZoomViewportUpdate,
   isClickGesture,
+  resolveHealthBar,
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
+
+describe("getMapDisplayDimensions", () => {
+  it("doubles small maps so grid cells come out usable", () => {
+    expect(getMapDisplayDimensions(300, 200)).toEqual({
+      width: 600,
+      height: 400,
+    });
+  });
+
+  it("leaves large maps at native size", () => {
+    expect(getMapDisplayDimensions(1200, 900)).toEqual({
+      width: 1200,
+      height: 900,
+    });
+  });
+
+  it("uses the larger dimension to decide, for tall/narrow maps", () => {
+    // Larger dimension (1200) is at the threshold, so no scaling — even
+    // though the smaller dimension (100) is tiny.
+    expect(getMapDisplayDimensions(100, 1200)).toEqual({
+      width: 100,
+      height: 1200,
+    });
+  });
+});
+
+describe("describeMoveBlocked", () => {
+  it("names a locked token", () => {
+    expect(
+      describeMoveBlocked({ name: "Corridor A", locked: true }, false, true),
+    ).toContain("Corridor A is locked");
+  });
+
+  it("names the locked layer, and how to unlock it", () => {
+    const message = describeMoveBlocked(
+      { name: "Corridor A", layer: "terrain" },
+      true,
+      true,
+    );
+    expect(message).toContain("terrain layer is locked");
+    expect(message).toContain("Corridor A");
+  });
+
+  it("explains ownership when not the host", () => {
+    expect(describeMoveBlocked({ name: "Goblin" }, false, false)).toContain(
+      "belongs to someone else",
+    );
+  });
+
+  it("falls back to a generic name for an unnamed piece", () => {
+    expect(describeMoveBlocked({ locked: true }, false, true)).toContain(
+      "That piece is locked",
+    );
+  });
+});
 
 describe("map-view helpers", () => {
   it("findClickedPin should return a pin within range", () => {
@@ -113,5 +171,72 @@ describe("map-view helpers", () => {
     });
 
     expect(locked.pan).toEqual({ x: 12, y: 34 });
+  });
+});
+
+describe("resolveHealthBar", () => {
+  function counterField(
+    overrides: Partial<StatSheetField> = {},
+  ): StatSheetField {
+    return {
+      id: "hp",
+      label: "Hit Points",
+      type: "counter",
+      value: 8,
+      max: 20,
+      barField: true,
+      ...overrides,
+    } as StatSheetField;
+  }
+
+  it("returns null when fields is undefined", () => {
+    expect(resolveHealthBar(undefined)).toBeNull();
+  });
+
+  it("returns null when no field is designated as the bar field", () => {
+    const fields = [counterField({ barField: false })];
+    expect(resolveHealthBar(fields)).toBeNull();
+  });
+
+  it("returns null for a non-counter field marked as the bar field", () => {
+    const fields = [
+      { id: "atk", label: "Attack", type: "dice", barField: true } as any,
+    ];
+    expect(resolveHealthBar(fields)).toBeNull();
+  });
+
+  it("returns null when the bar field's max is 0 or negative", () => {
+    expect(resolveHealthBar([counterField({ max: 0 })])).toBeNull();
+  });
+
+  it("defaults max to 1 when the field has no max set", () => {
+    expect(
+      resolveHealthBar([counterField({ max: undefined, value: 8 })]),
+    ).toEqual({ value: 8, max: 1 });
+  });
+
+  it("returns the value/max of the designated bar field", () => {
+    const fields = [
+      counterField({
+        id: "ap",
+        label: "AP",
+        value: 3,
+        max: 5,
+        barField: false,
+      }),
+      counterField({
+        id: "hp",
+        label: "HP",
+        value: 8,
+        max: 20,
+        barField: true,
+      }),
+    ];
+    expect(resolveHealthBar(fields)).toEqual({ value: 8, max: 20 });
+  });
+
+  it("treats a non-numeric value as 0", () => {
+    const fields = [counterField({ value: "unset" as any })];
+    expect(resolveHealthBar(fields)).toEqual({ value: 0, max: 20 });
   });
 });

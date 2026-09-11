@@ -5,28 +5,46 @@
     Background,
     Controls,
     MiniMap,
+    ViewportPortal,
+    NodeToolbar,
     ConnectionMode,
+    Position,
     type Node,
   } from "@xyflow/svelte";
-  import { CanvasStore, type Canvas } from "@codex/canvas-engine";
+  import {
+    DEFAULT_CANVAS_TEXT_BACKGROUND,
+    DEFAULT_CANVAS_TEXT_FONT_SIZE,
+    normalizeCanvasTextBackground,
+    normalizeCanvasTextFontSize,
+    CanvasStore,
+    type Canvas,
+  } from "@codex/canvas-engine";
+  import type { FileImportFailureReason } from "@codex/vault-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
+  import FileNode from "$lib/components/canvas/FileNode.svelte";
+  import TextNode from "$lib/components/canvas/TextNode.svelte";
   import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
   import DelveSectorNode from "$lib/components/canvas/DelveSectorNode.svelte";
+  import AdventureNode from "$lib/components/canvas/AdventureNode.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
   import DelveEdge from "$lib/components/canvas/DelveEdge.svelte";
   import EdgeAttributeModal from "$lib/components/canvas/EdgeAttributeModal.svelte";
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import RoomStockingDrawer from "$lib/components/canvas/RoomStockingDrawer.svelte";
+  import AdventureNodeDrawer from "$lib/components/canvas/AdventureNodeDrawer.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
   import { tick, untrack } from "svelte";
 
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
+  import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
+  import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
+
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { DelveEdgeData, DelveRoomNodeData } from "generator-engine";
@@ -40,12 +58,23 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
+    autoArrangeCanvasNodes,
+    canvasNodeStyle,
+    canvasNodeZIndex,
+    createFlowFileNode,
+    createFlowTextNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
-    flowNodeToCanvasNode,
+    flowNodesToCanvasNodes,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
-  import type { DelveCanvasEdge, DelveCanvasNode } from "generator-engine";
+  import { openOrCreateSourceEntity } from "./canvas-source-entity";
+
+  import type {
+    DelveCanvasEdge,
+    DelveCanvasNode,
+    AdventureNode as AdventureNodeGraph,
+  } from "generator-engine";
 
   let { engine }: { engine: CanvasStore } = $props();
 
@@ -55,7 +84,8 @@
       (c) => c.slug === canvasSlug || c.id === canvasSlug,
     ) as Canvas | undefined,
   );
-  const canvasId = $derived(canvas?.id);
+  const canvasId = $derived(canvas?.id || canvasSlug);
+  let isImportingExternalFiles = $state(false);
   const sourceEntityId = $derived.by(() => {
     const id = canvas?.metadata?.sourceEntityId;
     return typeof id === "string" && id ? id : undefined;
@@ -72,6 +102,11 @@
   });
 
   const logic = createCanvasLogic(() => engine);
+  const rotationLogic = useCanvasNodeRotation(logic, vault);
+  const drawingLogic = useCanvasDrawing(logic);
+  const isCanvasToolActive = $derived(
+    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
+  );
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
   let roomEnhancementError = $state<string | null>(null);
@@ -82,6 +117,7 @@
   let isFinalizingDossier = $state(false);
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
+    let showMinimap = $state(true);
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -91,6 +127,26 @@
     );
     return (node?.data as unknown as DelveRoomNodeData | undefined) ?? null;
   });
+
+  let selectedAdventureNodeId = $state<string | null>(null);
+  const selectedAdventureNode = $derived.by(() => {
+    if (!selectedAdventureNodeId) return null;
+    const found = logic.nodes.find(
+      (candidate) => candidate.id === selectedAdventureNodeId,
+    );
+    if (!found) return null;
+    return {
+      id: found.id,
+      type: found.type as any,
+      position: found.position,
+      data: (found.data as any) || {},
+    } as AdventureNodeGraph;
+  });
+
+  const activeAdventureNode = $derived(
+    (logic.draftAdventureNode as unknown as AdventureNodeGraph | null) ||
+      selectedAdventureNode,
+  );
 
   let edgeModal = $state<{
     isOpen: boolean;
@@ -129,30 +185,165 @@
     };
   });
 
-  const filteredNodes = $derived.by(() => {
-    if (isExportingCanvas) return logic.nodes;
-    if (logic.activeCategories.size === 0) return logic.nodes;
-    return logic.nodes.filter((n) =>
-      logic.activeCategories.has(n.data?.type as string),
+  function updateNodeData(nodeId: string, updates: Record<string, unknown>) {
+    const { width, height, ...dataUpdates } = updates;
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? {
+            ...node,
+            ...(width !== undefined ? { width: width as number } : null),
+            ...(height !== undefined ? { height: height as number } : null),
+            data: { ...node.data, ...dataUpdates },
+          }
+        : node,
     );
+  }
+
+  function toggleNodeLock(nodeId: string) {
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? {
+            ...node,
+            data: { ...node.data, locked: !(node.data as any)?.locked },
+          }
+        : node,
+    );
+  }
+
+  function stackableNodeZIndexBounds() {
+    let min = 0;
+    let max = 0;
+    for (const node of logic.nodes) {
+      if (node.type === "delveSectorGroup") continue;
+      const z = canvasNodeZIndex(node);
+      if (z > max) max = z;
+      if (z < min) min = z;
+    }
+    return { min, max };
+  }
+
+  function bringNodeToFront(nodeId: string) {
+    const { max } = stackableNodeZIndexBounds();
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? { ...node, data: { ...node.data, zIndex: max + 1 } }
+        : node,
+    );
+  }
+
+  function sendNodeToBack(nodeId: string) {
+    const { min } = stackableNodeZIndexBounds();
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? { ...node, data: { ...node.data, zIndex: min - 1 } }
+        : node,
+    );
+  }
+
+  const contextMenuNodeLocked = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return false;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return Boolean((node?.data as any)?.locked);
+  });
+
+  const contextMenuNodeStackable = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return false;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return Boolean(node) && node?.type !== "delveSectorGroup";
+  });
+
+  const contextMenuTextNode = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return undefined;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return node?.type === "text" ? node : undefined;
+  });
+
+  const filteredNodes = $derived.by(() => {
+    const base = (() => {
+      if (isExportingCanvas) return logic.nodes;
+      if (logic.activeCategories.size === 0) return logic.nodes;
+      return logic.nodes.filter((n) =>
+        logic.activeCategories.has(n.data?.type as string),
+      );
+    })();
+    return base.map((node) => {
+      const locked = Boolean((node.data as any)?.locked);
+      const withLock = {
+        ...node,
+        draggable: !locked,
+        style: canvasNodeStyle(node),
+        zIndex: node.type === "delveSectorGroup" ? 0 : canvasNodeZIndex(node),
+      };
+      if (node.type === "file") {
+        return {
+          ...withLock,
+          data: {
+            ...node.data,
+            onUpdateFile: (updates: Record<string, unknown>) =>
+              updateNodeData(node.id, updates),
+          },
+        };
+      }
+      if (node.type === "text") {
+        return {
+          ...withLock,
+          data: {
+            ...node.data,
+            onUpdateText: (updates: Record<string, unknown>) =>
+              updateNodeData(node.id, updates),
+          },
+        };
+      }
+      return withLock;
+    });
   });
 
   const nodeTypes = {
     entity: EntityNode,
+    file: FileNode,
+    text: TextNode,
     delveRoom: DelveRoomNode,
     delveSectorGroup: DelveSectorNode,
+    adventureNode: AdventureNode,
+    situation: AdventureNode,
+    location: AdventureNode,
+    npc: AdventureNode,
+    clue: AdventureNode,
+    threat: AdventureNode,
+    outcome: AdventureNode,
   };
 
   const edgeTypes = {
     straight: CustomEdge,
     smoothstep: CustomEdge,
     delveEdge: DelveEdge,
+    leads_to: CustomEdge,
+    holds_clue: CustomEdge,
+    threatens: CustomEdge,
+    resolves_to: CustomEdge,
   };
+
+
+
+
+  let arrangedCanvasId = $state<string | null>(null);
 
   // Initialization & Lifecycle
   $effect(() => {
     if (canvasId) {
       logic.initializeCanvas(canvasId);
+    }
+  });
+
+  $effect(() => {
+    if (canvasId && logic.hasInitialized && arrangedCanvasId !== canvasId) {
+      arrangedCanvasId = canvasId;
+      untrack(() => {
+        const isManual = canvas?.metadata?.layoutState === "manual";
+        if (!isManual) {
+          handleAutoArrange();
+        }
+      });
     }
   });
 
@@ -219,9 +410,26 @@
   }
 
   function onNodeClick({ node }: { node: any }) {
-    if (node.type !== "delveRoom") return;
-    roomEnhancementError = null;
-    selectedRoomId = node.id;
+    if (!vault.isGuest && rotationLogic.canRotateNode(node.id)) {
+      rotationLogic.selectedRotationNodeId = node.id;
+    }
+    if (node.type === "delveRoom") {
+      roomEnhancementError = null;
+      selectedRoomId = node.id;
+      return;
+    }
+    if (
+      ["situation", "location", "npc", "clue", "threat", "outcome"].includes(
+        node.type,
+      )
+    ) {
+      selectedAdventureNodeId = node.id;
+      return;
+    }
+  }
+
+  function onPaneClick() {
+    rotationLogic.selectedRotationNodeId = null;
   }
 
   function onNodeDragStop({
@@ -249,6 +457,13 @@
     if (movedNodes.some((movedNode) => movedNode.type === "delveRoom")) {
       logic.nodes = fitDelveSectorFrames(logic.nodes);
     }
+    if (canvas) {
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        layoutState: "manual",
+      };
+    }
+    logic.flushSave();
   }
 
   async function finalizeDossier() {
@@ -271,8 +486,8 @@
         canvas,
         sourceEntity: loadedSourceEntity,
         dossierTerm: getDelveTerm(themeStore.activeTheme.id),
-        nodes: logic.nodes.map(
-          flowNodeToCanvasNode,
+        nodes: flowNodesToCanvasNodes(
+          logic.nodes,
         ) as unknown as DelveCanvasNode[],
         edges: logic.edges.map((edge) =>
           flowEdgeToCanvasEdge(edge),
@@ -401,7 +616,7 @@
       };
       const updatedCanvas = {
         ...targetCanvas,
-        nodes: logic.nodes.map(flowNodeToCanvasNode),
+        nodes: flowNodesToCanvasNodes(logic.nodes),
         edges: logic.edges.map((edge) => flowEdgeToCanvasEdge(edge)),
         metadata,
       };
@@ -424,9 +639,14 @@
           .join(" and ");
         autoPopulationMessage = `${failures} could not be enhanced. They will retry next time this canvas opens.`;
       }
-    } catch {
-      autoPopulationMessage =
-        "Automatic AI population paused. Existing Area details were preserved and it will retry next time.";
+    } catch (err) {
+      console.error(
+        "[DelveAutoPopulation] Error during canvas auto-population:",
+        err,
+      );
+      const detail =
+        err instanceof Error && err.message ? ` (${err.message})` : "";
+      autoPopulationMessage = `Automatic AI population paused${detail}. Existing Area details were preserved and it will retry next time.`;
     } finally {
       isAutoPopulating = false;
     }
@@ -471,16 +691,37 @@
   }
 
   function onDragOver(event: DragEvent) {
-    if (vault.isGuest) return;
+    const hasFiles = (event.dataTransfer?.files.length ?? 0) > 0;
+    if (vault.isGuest) {
+      if (hasFiles) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
     event.preventDefault();
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = "move";
+      event.dataTransfer.dropEffect = hasFiles ? "copy" : "move";
     }
   }
 
-  function onDrop(event: DragEvent) {
-    if (vault.isGuest) return;
+  async function onDrop(event: DragEvent) {
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (vault.isGuest) {
+      if (files.length > 0) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
     event.preventDefault();
+    if (files.length > 0) {
+      await handleExternalFiles(files, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      return;
+    }
     const entityId = event.dataTransfer?.getData("application/codex-entity");
     if (!entityId) return;
 
@@ -491,6 +732,198 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
+  function formatFileFailure(file: File, reason: FileImportFailureReason) {
+    const descriptions: Record<FileImportFailureReason, string> = {
+      empty: "is empty",
+      too_large: "is larger than 10 MB",
+      vault_unavailable: "could not be saved because the vault is unavailable",
+      write_failed: "could not be saved to the vault",
+    };
+    return `${file.name || "A file"} ${descriptions[reason] || "could not be added"}.`;
+  }
+
+  async function handleExternalFiles(
+    files: File[],
+    screenPosition?: { x: number; y: number },
+  ) {
+    if (vault.isGuest || files.length === 0 || isImportingExternalFiles) return;
+    isImportingExternalFiles = true;
+    try {
+      const start = screenPosition
+        ? logic.screenToFlowPosition(screenPosition)
+        : {
+            x: 80 + logic.nodes.length * 24,
+            y: 80 + logic.nodes.length * 24,
+          };
+      const failures: string[] = [];
+      let added = 0;
+
+      for (const file of files) {
+        const result = await vault.importFileToVault(file);
+        if (!result.ok) {
+          failures.push(formatFileFailure(file, result.reason));
+          continue;
+        }
+        const position = { x: start.x + added * 28, y: start.y + added * 28 };
+        const nodeId = engine.addFileNode(result.file, position);
+        logic.nodes = [
+          ...logic.nodes,
+          createFlowFileNode(result.file, position, nodeId),
+        ];
+        added++;
+      }
+
+      if (added > 0 && failures.length > 0) {
+        logic.saveNow();
+        notificationStore.notify(
+          `${added} file${added === 1 ? "" : "s"} added. ${failures.join(" ")}`,
+          "info",
+        );
+      } else if (added > 0) {
+        logic.saveNow();
+        notificationStore.notify(
+          `${added} file${added === 1 ? "" : "s"} added to the vault and canvas.`,
+          "success",
+        );
+      } else if (failures.length) {
+        notificationStore.notify(failures.join(" "), "error");
+      }
+    } catch {
+      notificationStore.notify(
+        "Files could not be added. Please try again.",
+        "error",
+      );
+    } finally {
+      isImportingExternalFiles = false;
+    }
+  }
+
+  function imageFileFromBlob(blob: Blob, mimeType: string) {
+    const extension = mimeType.split("/")[1]?.split("+")[0] || "png";
+    return new File([blob], `pasted-image-${Date.now()}.${extension}`, {
+      type: mimeType,
+    });
+  }
+
+  function extractImageFilesFromClipboardData(
+    clipboardData: DataTransfer | null,
+  ) {
+    if (!clipboardData) return [];
+    const fromFiles = Array.from(clipboardData.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    if (fromFiles.length > 0) return fromFiles;
+    // Some browsers only populate `items` (with getAsFile()) for pasted
+    // images, leaving `files` empty.
+    return Array.from(clipboardData.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+  }
+
+  async function extractImageFilesFromClipboardItems(items: ClipboardItem[]) {
+    const files: File[] = [];
+    for (const item of items) {
+      const imageType = item.types.find((type) => type.startsWith("image/"));
+      if (!imageType) continue;
+      const blob = await item.getType(imageType);
+      files.push(imageFileFromBlob(blob, imageType));
+    }
+    return files;
+  }
+
+  function centerScreenPosition() {
+    return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  }
+
+  function handleAddTextNode(screenPosition?: { x: number; y: number }) {
+    if (vault.isGuest) return;
+    const position = logic.screenToFlowPosition(
+      screenPosition ?? centerScreenPosition(),
+    );
+    const nodeId = engine.addTextNode("", position);
+    const { max } = stackableNodeZIndexBounds();
+    const node = createFlowTextNode("", position, nodeId);
+    logic.nodes = [
+      ...logic.nodes,
+      { ...node, data: { ...node.data, zIndex: max + 1 } },
+    ];
+    logic.saveNow();
+  }
+
+  async function handleCanvasPaste(event: ClipboardEvent) {
+    if (vault.isGuest || drawingLogic.isEditableTarget(event.target)) return;
+    const files = extractImageFilesFromClipboardData(event.clipboardData);
+    if (files.length === 0) return;
+    event.preventDefault();
+    await handleExternalFiles(files, centerScreenPosition());
+  }
+
+  async function handlePasteFromClipboard(screenPosition: {
+    x: number;
+    y: number;
+  }) {
+    if (vault.isGuest) return;
+    if (!navigator.clipboard?.read) {
+      notificationStore.notify(
+        "Pasting from the clipboard isn't supported in this browser.",
+        "error",
+      );
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      const files = await extractImageFilesFromClipboardItems(items);
+      if (files.length === 0) {
+        notificationStore.notify("No image found in clipboard.", "info");
+        return;
+      }
+      await handleExternalFiles(files, screenPosition);
+    } catch {
+      notificationStore.notify(
+        "Couldn't read the clipboard. Your browser may need permission.",
+        "error",
+      );
+    }
+  }
+
+  let isCreatingSourceEntity = false;
+  async function handleOpenOrCreateSourceEntity() {
+    if (isCreatingSourceEntity) return;
+    isCreatingSourceEntity = true;
+    try {
+      await openOrCreateSourceEntity({
+        sourceEntityId,
+        canvas,
+        vault,
+        canvasRegistry,
+        modalUIStore,
+        nodes: logic.nodes,
+      });
+    } finally {
+      isCreatingSourceEntity = false;
+    }
+  }
+
+  function handleAutoArrange() {
+    const positionedNodes = autoArrangeCanvasNodes({
+      canvasId: canvas?.id || "temp",
+      title: canvas?.name || "Canvas",
+      nodes: logic.nodes,
+      edges: logic.edges,
+    });
+    if (!positionedNodes) return;
+
+    logic.nodes = positionedNodes;
+    if (canvas) {
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        layoutState: "auto",
+      };
+    }
+    logic.saveNow();
+  }
+
   $effect(() => {
     return () => {
       logic.flushSave();
@@ -498,17 +931,24 @@
   });
 </script>
 
+<svelte:window
+  onkeydown={drawingLogic.handleDrawingKeydown}
+  onpaste={handleCanvasPaste}
+  onpointermove={rotationLogic.handleRotationPointerMove}
+  onpointerup={rotationLogic.finishNodeRotation}
+  onpointercancel={rotationLogic.finishNodeRotation}
+/>
+
 <div
   class="canvas-container {logic.isConnecting
     ? 'is-connecting'
-    : ''} flex h-[var(--app-content-height)] w-full overflow-hidden relative"
-  tabindex="-1"
-  role="none"
+    : ''} relative w-full h-full overflow-hidden select-none flex flex-col"
 >
   <div
     class="flex-1 relative"
     ondragover={onDragOver}
     ondrop={onDrop}
+    onpointerdowncapture={(e) => rotationLogic.beginTouchRotation(e, drawingLogic.isDrawingMode, drawingLogic.isErasingMode)}
     role="region"
     aria-label="Canvas Workspace"
   >
@@ -516,12 +956,39 @@
       canvasName={canvas?.name || ""}
       {sourceEntityId}
       {sourceEntityTitle}
+      sourceEntityType={sourceEntity?.type ||
+        (canvas?.metadata?.kind === "adventure" ? "event" : "location")}
+      sourceEntityKind={sourceEntity?.kind ||
+        (canvas?.metadata?.kind as string)}
       {dossierEntityId}
       {isFinalizingDossier}
       onFinalizeDossier={!vault.isGuest &&
       sourceEntity &&
       logic.nodes.some((node) => node.type === "delveRoom")
         ? finalizeDossier
+        : undefined}
+      onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
+      onAutoArrange={handleAutoArrange}
+      {showMinimap}
+      onToggleMinimap={() => (showMinimap = !showMinimap)}
+      onUploadFiles={!vault.isGuest ? handleExternalFiles : undefined}
+      onAddTextNode={!vault.isGuest ? () => handleAddTextNode() : undefined}
+      isDrawingMode={drawingLogic.isDrawingMode}
+      isErasingMode={drawingLogic.isErasingMode}
+      drawingColor={drawingLogic.drawingColor}
+      drawingWidth={drawingLogic.drawingWidth}
+      onToggleDrawing={!vault.isGuest ? drawingLogic.toggleDrawingMode : undefined}
+      onToggleErasing={!vault.isGuest ? drawingLogic.toggleErasingMode : undefined}
+      onDrawingColorChange={!vault.isGuest
+        ? drawingLogic.handleDrawingColorChange
+        : undefined}
+      onDrawingWidthChange={!vault.isGuest
+        ? drawingLogic.handleDrawingWidthChange
+        : undefined}
+      onAddAdventureNode={canvas?.metadata?.kind === "adventure" ||
+      sourceEntity?.kind === "adventure" ||
+      logic.nodes.some((n) => n.type === "adventureNode")
+        ? (type) => logic.handleAddAdventureNode(type)
         : undefined}
       activeCategories={logic.activeCategories}
       onToggleCategory={logic.toggleCategoryFilter}
@@ -535,6 +1002,7 @@
         {nodeTypes}
         {edgeTypes}
         onconnect={!vault.isGuest ? logic.onConnect : undefined}
+        onreconnect={!vault.isGuest ? logic.onReconnect : undefined}
         onconnectstart={() => {
           if (vault.isGuest) return;
           logic.isConnecting = true;
@@ -546,6 +1014,7 @@
         }}
         onnodecontextmenu={onNodeContextMenu}
         onnodeclick={onNodeClick}
+        onpaneclick={onPaneClick}
         onnodedragstop={onNodeDragStop}
         onedgecontextmenu={onEdgeContextMenu}
         onedgeclick={onEdgeClick}
@@ -555,15 +1024,118 @@
         zoomOnDoubleClick={false}
         proOptions={{ hideAttribution: true }}
         connectionLineComponent={ConnectionLine}
+        panOnDrag={!isCanvasToolActive}
+        nodesDraggable={!isCanvasToolActive}
+        nodesConnectable={!isCanvasToolActive}
+        elementsSelectable={!isCanvasToolActive}
+        zoomOnScroll={!isCanvasToolActive}
+        zoomOnPinch={!isCanvasToolActive}
         minZoom={0.01}
         maxZoom={9}
         fitView
       >
         <Background gap={20} />
+        {#if rotationLogic.selectedRotationNodeId && rotationLogic.canRotateNode(rotationLogic.selectedRotationNodeId)}
+          <NodeToolbar
+            nodeId={rotationLogic.selectedRotationNodeId}
+            position={Position.Top}
+            offset={18}
+            isVisible
+          >
+            <button
+              type="button"
+              class="nodrag nopan touch-none flex h-9 w-9 cursor-grab items-center justify-center rounded-full border border-theme-primary/50 bg-theme-surface text-theme-primary shadow-lg transition-colors hover:bg-theme-primary/15 active:cursor-grabbing"
+              title="Drag to rotate card; use arrow keys for precise rotation"
+              aria-label="Rotate selected card"
+              onpointerdown={rotationLogic.beginDesktopRotation}
+              onkeydown={rotationLogic.rotateSelectedNodeWithKeyboard}
+            >
+              <span class="icon-[lucide--rotate-cw] h-4 w-4" aria-hidden="true"
+              ></span>
+            </button>
+          </NodeToolbar>
+        {/if}
+        <!--
+          Freehand drawing input lives here, outside ViewportPortal, so it
+          always covers the full visible pane regardless of zoom. Content
+          inside ViewportPortal is scaled/translated together with the flow
+          viewport for rendering, which means its own layout box (the thing
+          a background pointerdown needs to land inside) shrinks well below
+          the visible pane at any zoom other than 100% - fitView rarely lands
+          on exactly 100%, so drawing would only "activate" near the flow's
+          transform origin, i.e. wherever the canvas happened to be anchored
+          on screen (in practice, near the top-left HUD).
+        -->
+        <div
+          class="canvas-draw-input-layer"
+          data-testid="canvas-draw-input-layer"
+          aria-hidden="true"
+          style:pointer-events={drawingLogic.isDrawingMode ? "auto" : "none"}
+          style:cursor={drawingLogic.isDrawingMode ? "crosshair" : undefined}
+          onpointerdown={drawingLogic.handleDrawingPointerDown}
+          onpointermove={drawingLogic.handleDrawingPointerMove}
+          onpointerup={(event) => drawingLogic.finishDrawing(event)}
+          onpointercancel={(event) => drawingLogic.finishDrawing(event, true)}
+        ></div>
+        <ViewportPortal target="front">
+          <svg
+            class="canvas-drawing-layer"
+            data-testid="canvas-drawing-layer"
+            role="img"
+            aria-label="Canvas drawing strokes"
+            style:pointer-events={drawingLogic.isErasingMode ? "auto" : "none"}
+            style:cursor={drawingLogic.isErasingMode ? "pointer" : undefined}
+            onpointerdown={drawingLogic.handleEraseLayerPointerDown}
+          >
+            {#each logic.drawings as drawing (drawing.id)}
+              {#if drawingLogic.isErasingMode}
+                <path
+                  data-testid={`eraser-target-${drawing.id}`}
+                  data-drawing-id={drawing.id}
+                  d={drawingLogic.drawingPath(drawing)}
+                  fill="none"
+                  stroke="transparent"
+                  stroke-width={Math.max(drawing.width + 12, 16)}
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  vector-effect="non-scaling-stroke"
+                  pointer-events="stroke"
+                />
+              {/if}
+              <path
+                d={drawingLogic.drawingPath(drawing)}
+                fill="none"
+                stroke={drawing.color}
+                stroke-width={drawing.width}
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+                pointer-events="none"
+              />
+            {/each}
+            {#if drawingLogic.activeDrawing}
+              <path
+                d={drawingLogic.drawingPath(drawingLogic.activeDrawing)}
+                fill="none"
+                stroke={drawingLogic.activeDrawing.color}
+                stroke-width={drawingLogic.activeDrawing.width}
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+                pointer-events="none"
+              />
+            {/if}
+          </svg>
+        </ViewportPortal>
         {#if !sessionModeStore.isGuestMode}
           <Controls />
         {/if}
-        <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
+        {#if showMinimap}
+          <MiniMap
+            position="top-right"
+            nodeColor="var(--color-theme-primary)"
+          />
+        {/if}
       </SvelteFlow>
     </div>
 
@@ -598,6 +1170,19 @@
       y={logic.contextMenu.y}
       targetId={logic.contextMenu?.id}
       targetType={logic.contextMenu.type}
+      isAdventure={canvas?.metadata?.kind === "adventure" ||
+        sourceEntity?.kind === "adventure" ||
+        logic.nodes.some((n) => n.type === "adventureNode")}
+      isLocked={contextMenuNodeLocked}
+      onToggleLock={logic.contextMenu?.type === "node" && logic.contextMenu.id
+        ? () => toggleNodeLock(logic.contextMenu!.id)
+        : undefined}
+      onBringToFront={contextMenuNodeStackable
+        ? () => bringNodeToFront(logic.contextMenu!.id)
+        : undefined}
+      onSendToBack={contextMenuNodeStackable
+        ? () => sendNodeToBack(logic.contextMenu!.id)
+        : undefined}
       onDelete={logic.handleDelete}
       onRename={() => {
         const edge = logic.edges.find((e) => e.id === logic.contextMenu?.id);
@@ -609,6 +1194,46 @@
         logic.contextMenu = null;
       }}
       onCreateEntity={logic.handleCreateEntity}
+      onAddAdventureNode={(type) =>
+        logic.handleAddAdventureNode(type, {
+          x: logic.contextMenu?.x || 0,
+          y: logic.contextMenu?.y || 0,
+        })}
+      onPaste={!vault.isGuest
+        ? () =>
+            handlePasteFromClipboard({
+              x: logic.contextMenu?.x || 0,
+              y: logic.contextMenu?.y || 0,
+            })
+        : undefined}
+      onAddTextNode={!vault.isGuest
+        ? () =>
+            handleAddTextNode({
+              x: logic.contextMenu?.x || 0,
+              y: logic.contextMenu?.y || 0,
+            })
+        : undefined}
+      textNodeBackground={normalizeCanvasTextBackground(
+        (contextMenuTextNode?.data as any)?.background ?? "",
+        DEFAULT_CANVAS_TEXT_BACKGROUND,
+      )}
+      textNodeFontSize={normalizeCanvasTextFontSize(
+        (contextMenuTextNode?.data as any)?.fontSize,
+        DEFAULT_CANVAS_TEXT_FONT_SIZE,
+      )}
+      onTextNodeBackgroundChange={contextMenuTextNode && !vault.isGuest
+        ? (background: string) =>
+            updateNodeData(contextMenuTextNode!.id, {
+              background: normalizeCanvasTextBackground(
+                background,
+    DEFAULT_CANVAS_TEXT_BACKGROUND,
+              ),
+            })
+        : undefined}
+      onTextNodeFontSizeChange={contextMenuTextNode && !vault.isGuest
+        ? (fontSize: number) =>
+            updateNodeData(contextMenuTextNode!.id, { fontSize })
+        : undefined}
       onClose={() => (logic.contextMenu = null)}
     />
   {/if}
@@ -641,6 +1266,35 @@
     onSave={saveRoomData}
     onRegenerateAi={enhanceRoom}
     onClose={() => (selectedRoomId = null)}
+  />
+
+  <AdventureNodeDrawer
+    isOpen={activeAdventureNode !== null}
+    node={activeAdventureNode}
+    onClose={() => {
+      selectedAdventureNodeId = null;
+      logic.handleCancelDraftAdventureNode();
+    }}
+    onSave={(updatedNode) => {
+      if (logic.draftAdventureNode) {
+        const flowNode = {
+          ...logic.draftAdventureNode,
+          data: {
+            ...logic.draftAdventureNode.data,
+            ...updatedNode.data,
+          },
+        };
+        logic.handleSaveAdventureNode(flowNode);
+      } else {
+        logic.nodes = logic.nodes.map((n) =>
+          n.id === updatedNode.id
+            ? { ...n, data: { ...(n.data as any), ...updatedNode.data } }
+            : n,
+        );
+        logic.flushSave();
+      }
+      selectedAdventureNodeId = null;
+    }}
   />
 </div>
 
@@ -738,12 +1392,73 @@
     border: 1px solid var(--color-border-primary) !important;
     border-radius: 8px !important;
   }
+  @media (max-width: 639px) {
+    :global(.svelte-flow__minimap) {
+      display: none !important;
+    }
+  }
   :global(.svelte-flow__minimap-mask) {
     fill: var(--color-theme-primary) !important;
     fill-opacity: 0.1 !important;
   }
   :global(.svelte-flow__connectionline) {
     z-index: 20 !important;
+  }
+
+  :global(.svelte-flow__viewport-front) {
+    z-index: 30;
+  }
+
+  /*
+   * Without this, the browser treats a single-finger drag on the pane or a
+   * node as a native scroll/zoom gesture instead of handing it to SvelteFlow's
+   * own pointer-driven pan/drag, so touch dragging never starts. Same fix
+   * already applied to MapView and the family-tree PanZoomContainer.
+   */
+  :global(.svelte-flow) {
+    touch-action: none;
+  }
+
+  /*
+   * Rotation is applied here, to the node's content element, rather than to
+   * `.svelte-flow__node` itself. SvelteFlow positions that wrapper with
+   * `transform: translate(...)`, and combining that with a standalone
+   * `rotate` property on the same element breaks their shared
+   * transform-origin, making the node visually jump instead of spinning in
+   * place around its own center.
+   */
+  :global(.svelte-flow__node > *) {
+    rotate: var(--canvas-node-rotate, 0deg);
+  }
+
+  :global(.svelte-flow__panel) {
+    z-index: 40 !important;
+  }
+
+  .canvas-drawing-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    touch-action: none;
+    user-select: none;
+  }
+
+  /*
+   * Unlike .canvas-drawing-layer (inside ViewportPortal, scaled/panned with
+   * the flow viewport), this sits outside it as a plain SvelteFlow child, so
+   * it's never transformed and always spans the full visible pane. See the
+   * comment above its markup for why that matters.
+   */
+  .canvas-draw-input-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 25;
+    touch-action: none;
+    user-select: none;
   }
 
   @keyframes svelte-flow__dashdraw {

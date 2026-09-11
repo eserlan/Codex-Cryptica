@@ -8,6 +8,61 @@ This document maps the evolution of Codex Cryptica from its architectural founda
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
 
+### [IN PROGRESS] Oracle Adventure Mode
+
+- **Target Area**: Oracle, campaign context, and local-first adventure sessions
+- **Objective**: Close the loop between creating campaign material and playing with it by letting the Oracle run a system-light solo adventure grounded in the user's existing vault.
+- **Vision**: Tracked in issue [#2278](https://github.com/eserlan/Codex-Cryptica/issues/2278). The issue remains the product vision and roadmap parent; each phase below should receive its own focused specification, acceptance criteria, branch, and pull request.
+- **MVP boundaries**: The initial player is the vault owner playing solo while the Oracle acts as GM. Adventure inventions remain session-local until explicitly accepted into the vault. "Hidden" state means absent from the player-facing transcript and play surface, not encrypted from the vault owner. Multiplayer, system-specific automation, generator launch points, and saving discoveries are later phases.
+- **Status**: Phase 1 shipped to staging (PR [#2311](https://github.com/eserlan/Codex-Cryptica/pull/2311) plus follow-up fixes; v0.32.0). Phase 2 shipped (specs/2306-adventure-phase-2-play-tools; v0.32.0). Phases 3–5 remain proposals.
+
+#### Phase 1 — Solo Adventure Foundation ✅ Shipped
+
+- Start, continue, end, and archive an adventure, with one effective active adventure per vault and preserved read-only recovery conflicts after an external restore.
+- Keep normal Oracle chat and every adventure session isolated; Adventure continuity comes from bounded vault-local state supplied to stateless structured-generation calls, not retained provider conversations.
+- Ground play in pinned campaign entities plus query-relevant vault retrieval.
+- Persist the transcript, compact visible state, owner-hidden GM state, and source entity references with the vault so sessions survive refresh, backup, and restore.
+- Require each completed model turn to return player-facing narration and schema-validated state changes; failed, cancelled, partial, or invalid turns must not mutate committed adventure state.
+- Keep play-generated people, places, clues, and events provisional rather than feeding them into automatic entity discovery or canon.
+- Support a system-light roll handoff: the Oracle states the uncertainty, stakes, dice expression, and outcome bands before waiting for the player to report an outcome or use a basic Codex Cryptica roll; persist a supplied result before resolution so retry never rerolls it.
+- Keep committed active and archived sessions readable offline, preserve typed actions and recorded roll outcomes, and retry generation-dependent work after reconnection.
+
+#### Phase 2 — Play Tools & Session Control ✅ Shipped
+
+- Add richer optional dice presets, roll-history inspection, and lightweight resource tracking without turning the mode into a mandatory rules engine.
+- Add session recap, visible-state inspection, and explicit correction controls.
+- Add archive management such as rename, delete, search, duplicate, and explicit resume while keeping only one effective active adventure at a time.
+- Improve context pinning, bounded transcript summarisation, lightweight opt-in resource tracking, and hidden-information leakage checks.
+- Base further controls on friction observed in Phase 1 play rather than introducing a general rules engine.
+
+#### Phase 3 — Play Generated Content
+
+- Add reusable **Play with Oracle** entry points for adopted adventures, quests, dungeons, settlements, and locations.
+- Initialize sessions through one shared adventure-session contract rather than generator-specific play modes.
+- Pass premises and player-known material into visible context while placing adopted plot twists, secrets, and faction agendas into owner-hidden GM state.
+
+#### Phase 4 — Grow the Campaign Through Play
+
+- Detect provisional characters, locations, factions, items, quests, and lore created during play.
+- Offer an explicit review-and-save flow before anything becomes canonical vault content.
+- Link accepted entities and campaign consequences back to the originating adventure without rewriting rejected or still-hidden material.
+
+#### Phase 5 — Shared & Deeper Play
+
+- Explore human GM/co-GM workflows, player-facing guest sessions, and party or multi-character play.
+- Establish real GM/player permissions and privacy boundaries before claiming secrecy from connected players.
+- Add optional map/VTT awareness, lightweight trackers, and system-specific helpers without making a full rules engine mandatory.
+
+#### Progression Gates
+
+- Phase 1 must demonstrate a coherent scripted 30-turn session, reliable reload/backup restore, offline-readable committed state, and separation between normal Oracle and adventure context.
+- Phase 2 priorities should be driven by observed play-session friction and state-correction needs.
+- Phase 3 starts after the adventure initialization and persisted session contracts are stable.
+- Phase 4 starts after the boundary between provisional session material and canonical vault content is tested and trustworthy.
+- Phase 5 requires a separate privacy, permissions, and host-authority design.
+
+---
+
 ### [PROPOSED] Direct P2P Video Overlays
 
 - **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/cloud-bridge/p2p/`)
@@ -32,7 +87,41 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ---
 
+### [DRAFT] LLM Model Registry & Provider Resolver
+
+- **Target Area**: `oracle-proxy` Cloudflare Worker (`apps/workers/oracle-proxy/`)
+- **Objective**: Replace the Worker's hardcoded, Gemini-only forwarding with a central model registry, a provider-neutral resolver, and provider adaptors (Gemini + OpenAI-compatible), adding GPT-5.6 Luna as a selectable low-cost model.
+- **Details**: Backend-plumbing slice of issue [#2049](https://github.com/eserlan/Codex-Cryptica/issues/2049). Spec drafted in [153-llm-model-registry](./153-llm-model-registry/spec.md); implementation not started. Deliberately excludes any UI, persistence, or admin config — see the follow-up entry below.
+
+---
+
+### [PROPOSED] LLM Model Selection UI & Admin Config
+
+- **Target Area**: Generator/editor UI (`apps/web/src/lib/`) and `oracle-proxy` admin config
+- **Objective**: Let authenticated users pick a model tier (Fast/Creative/Deep) for generators and content revision, persist the choice, and let admins configure defaults and availability per tier.
+- **Details**: Follow-up slice of issue [#2049](https://github.com/eserlan/Codex-Cryptica/issues/2049), building on [153-llm-model-registry](./153-llm-model-registry/spec.md). No spec drafted yet — depends on the registry/resolver landing first.
+
+---
+
 ## 🏛️ Historical Roadmap & Release Timeline
+
+### v0.32.0 — The Solo Adventure & Cloud Backup Update (2026-09-03)
+
+- **Highlights**: Solo Adventure Mode (Oracle-run GM sessions, live transcript, dice/tools drawer), opt-in encrypted CC Cloud vault backup, an auto-matched vector silhouette library for portrait-less entities, a Random Tables & Card Decks toolset with chat-inline rolls and import/export, a VTT overhaul (tile deck restock, inline notes, adjustable sidebar, per-player Token Vision fog of war), several new offline-capable generators (BBEG/villain, star system, artifact, minor magic item, creature, encounter, social hub), reusable stat sheet presentations, and Markdown table paste/editing in entity content.
+- **Associated Specifications**:
+  - [160-solo-adventure-mode](./160-solo-adventure-mode/spec.md) (Solo Adventure Foundation)
+  - [2306-adventure-phase-2-play-tools](./2306-adventure-phase-2-play-tools/spec.md) (Play Tools & Session Control)
+  - [162-cc-cloud-backup](./162-cc-cloud-backup/spec.md) (Opt-in CC Cloud vault backup)
+  - [2672-vault-silhouette-library](./2672-vault-silhouette-library/plan.md) (Vector silhouette catalogue, R2-served)
+  - [2526-vtt-tile-deck-notes-ux](./2526-vtt-tile-deck-notes-ux/plan.md) (VTT tile deck & notes UX overhaul)
+  - [2336-smart-deterministic-generators](./2336-smart-deterministic-generators/plan.md) (Deterministic NPC/faction/social-hub generators)
+  - [152-stat-sheet-templates](./152-stat-sheet-templates/spec.md) (Reusable stat sheet presentations)
+
+### v0.31.0 — The Guided Worldbuilding Update (2026-07-30)
+
+- **Highlights**: Guided Mode workflow assistance dynamically analyzing vault state for structural recommendations and lore gaps; Quick Start onboarding wizard for campaign theme selection and seed constellation generation; Intent-Driven Entity Creator drafting grounded entities based on narrative intent; pre-connected Starter Constellations providing instant world depth; and non-intrusive workspace banners with contextual recommendations.
+- **Associated Specifications**:
+  - [148-guided-mode-quickstart](./148-guided-mode-quickstart/spec.md) (Guided Mode & Quick Start, 2026-07-30)
 
 ### v0.30.0 — The Dungeon & Delve Update (2026-07-28)
 

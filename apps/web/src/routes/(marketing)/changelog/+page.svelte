@@ -18,19 +18,11 @@
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="max-w-4xl mx-auto px-6 py-20 md:py-32">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
     <!-- Header -->
     <header class="mb-16 md:mb-24">
-      <a
-        href="{base}/?ref=changelog"
-        class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] mb-8 transition-colors"
-      >
-        <span class="icon-[lucide--arrow-left] w-3 h-3"></span>
-        Return to Workspace
-      </a>
-
       <h1
-        class="text-4xl md:text-6xl font-header font-bold uppercase tracking-[0.2em] mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
+        class="text-4xl md:text-6xl font-header font-bold mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
       >
         The Chronology
       </h1>
@@ -112,7 +104,7 @@
       <div
         class="py-20 text-center border border-dashed border-theme-border rounded-lg bg-theme-surface/5"
       >
-        <p class="text-theme-muted font-mono uppercase tracking-widest">
+        <p class="text-theme-muted font-mono">
           No records found in the chronology.
         </p>
       </div>
@@ -131,7 +123,7 @@
       </p>
       <a
         href="{base}/?ref=changelog"
-        class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
+        class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
       >
         Enter Workspace
       </a>

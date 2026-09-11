@@ -6,10 +6,12 @@
   import ZenHeader from "./ZenHeader.svelte";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
+  import DetailConnectionsTab from "$lib/components/entity-detail/DetailConnectionsTab.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
   import DetailFamilyTab from "$lib/components/entity-detail/DetailFamilyTab.svelte";
   import DetailTimelineTab from "$lib/components/entity-detail/DetailTimelineTab.svelte";
+  import DetailStatsTab from "$lib/components/entity-detail/DetailStatsTab.svelte";
   import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -56,10 +58,12 @@
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
+  let tabConnections = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
   let tabChats = $state<HTMLButtonElement>();
   let tabFamily = $state<HTMLButtonElement>();
   let tabTimeline = $state<HTMLButtonElement>();
+  let tabStats = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
@@ -172,9 +176,15 @@
   };
 
   const visibleZenTabs = $derived.by(() => {
-    const list: ("overview" | "map" | "chats" | "family" | "timeline")[] = [
-      "overview",
-    ];
+    const list: (
+      | "overview"
+      | "connections"
+      | "map"
+      | "chats"
+      | "family"
+      | "timeline"
+      | "stats"
+    )[] = ["overview", "connections"];
     if (!vault.isGuest) {
       list.push("map");
     }
@@ -182,6 +192,7 @@
       list.push("chats");
       list.push("family");
     }
+    list.push("stats");
     list.push("timeline");
     return list;
   });
@@ -199,9 +210,11 @@
       const nextTab = tabs[nextIndex];
       modalUIStore.zenModeActiveTab = nextTab;
       if (nextTab === "overview") tabOverview?.focus();
+      else if (nextTab === "connections") tabConnections?.focus();
       else if (nextTab === "map") tabMap?.focus();
       else if (nextTab === "chats") tabChats?.focus();
       else if (nextTab === "family") tabFamily?.focus();
+      else if (nextTab === "stats") tabStats?.focus();
       else if (nextTab === "timeline") tabTimeline?.focus();
     }
   };
@@ -367,6 +380,23 @@
       >
         OVERVIEW
       </button>
+      <button
+        bind:this={tabConnections}
+        type="button"
+        role="tab"
+        id="tab-connections"
+        aria-selected={activeTab === "connections"}
+        aria-controls="panel-connections"
+        tabindex={activeTab === "connections" ? 0 : -1}
+        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        'connections'
+          ? 'text-theme-primary border-theme-primary'
+          : 'text-theme-muted border-transparent hover:text-theme-text'}"
+        onclick={() => (modalUIStore.zenModeActiveTab = "connections")}
+        onkeydown={handleTabKeydown}
+      >
+        CONNECTIONS
+      </button>
       {#if !vault.isGuest}
         <button
           bind:this={tabMap}
@@ -419,6 +449,24 @@
           onkeydown={handleTabKeydown}
         >
           FAMILY
+        </button>
+      {/if}
+      {#if visibleZenTabs.includes("stats")}
+        <button
+          bind:this={tabStats}
+          role="tab"
+          id="tab-stats"
+          aria-selected={activeTab === "stats"}
+          aria-controls="panel-stats"
+          tabindex={activeTab === "stats" ? 0 : -1}
+          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          'stats'
+            ? 'text-theme-primary border-theme-primary'
+            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          onclick={() => (modalUIStore.zenModeActiveTab = "stats")}
+          onkeydown={handleTabKeydown}
+        >
+          STATS
         </button>
       {/if}
 
@@ -476,12 +524,24 @@
             {isPopout}
           />
         </div>
+      {:else if activeTab === "connections"}
+        <div
+          role="tabpanel"
+          id="panel-connections"
+          aria-labelledby="tab-connections"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <div class="max-w-4xl mx-auto h-full">
+            <DetailConnectionsTab {entity} onNavigate={navigateTo} />
+          </div>
+        </div>
       {:else if activeTab === "map"}
         <div
           role="tabpanel"
           id="panel-map"
           aria-labelledby="tab-map"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
@@ -495,11 +555,11 @@
           role="tabpanel"
           id="panel-chats"
           aria-labelledby="tab-chats"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
-            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+            class="max-w-4xl mx-auto h-full p-3 sm:p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailChatsTab {entity} />
           </div>
@@ -509,13 +569,27 @@
           role="tabpanel"
           id="panel-family"
           aria-labelledby="tab-family"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
-            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+            class="max-w-4xl mx-auto h-full p-3 sm:p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailFamilyTab {entity} onNavigate={navigateTo} />
+          </div>
+        </div>
+      {:else if activeTab === "stats"}
+        <div
+          role="tabpanel"
+          id="panel-stats"
+          aria-labelledby="tab-stats"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <div
+            class="max-w-4xl mx-auto min-h-full p-3 sm:p-6 border border-theme-border rounded bg-theme-surface/50"
+          >
+            <DetailStatsTab {entity} />
           </div>
         </div>
       {:else if activeTab === "timeline"}

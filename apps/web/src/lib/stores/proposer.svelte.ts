@@ -159,6 +159,32 @@ class ProposerStore {
     return this.service;
   }
 
+  async generateConnectionProposal(
+    apiKey: string,
+    modelName: string,
+    sourceContent: string,
+    targetContent: string,
+    sourceTitle: string,
+    targetTitle: string,
+  ) {
+    return this.getService().generateConnectionProposal(
+      apiKey,
+      modelName,
+      sourceContent,
+      targetContent,
+      sourceTitle,
+      targetTitle,
+    );
+  }
+
+  async parseConnectionIntent(
+    apiKey: string,
+    modelName: string,
+    prompt: string,
+  ) {
+    return this.getService().parseConnectionIntent(apiKey, modelName, prompt);
+  }
+
   isEntityAnalyzing(entityId: string) {
     return (this.activeAnalysisCounts.get(entityId) ?? 0) > 0;
   }

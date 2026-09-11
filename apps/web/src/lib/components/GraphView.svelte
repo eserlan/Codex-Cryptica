@@ -22,6 +22,14 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
+  import {
+    MOBILE_ENTRY_MIN_ZOOM,
+    resolveMobileEntryId,
+  } from "./graph/mobile-entry";
+  import {
+    buildGraphSummary,
+    buildSelectionAnnouncement,
+  } from "./graph/graph-a11y";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -49,9 +57,29 @@
   );
 
   let resizeObserver: ResizeObserver | undefined;
+  let visibilityObserver: IntersectionObserver | undefined;
+  let documentVisible = $state(
+    typeof document === "undefined" ? true : !document.hidden,
+  );
+  let containerIntersecting = $state(true);
   const hoverContentLoader = createHoverContentLoader((entityId) =>
     vault.loadEntityContent(entityId),
   );
+
+  const surfaceCovered = $derived(
+    onboardingStore.isLandingPageVisible ||
+      modalUIStore.isAnyModalOpen ||
+      (layoutUIStore.isEntityExplorerWorkspace &&
+        !!layoutUIStore.focusedEntityId) ||
+      (vault.isInitialized &&
+        onboardingStore.skipWelcomeScreen &&
+        !onboardingStore.dismissedWorldPage &&
+        !vault.selectedEntityId),
+  );
+
+  const handleDocumentVisibilityChange = () => {
+    documentVisible = !document.hidden;
+  };
 
   // Sync prop -> controller
   $effect(() => {
@@ -74,6 +102,7 @@
   });
 
   let container: HTMLElement;
+  let mobileEntryVaultId: string | null = null;
 
   // COACH_MARKS lives in help-content.ts (config, testable) — see its
   // docstring there for why these are scoped to isMobile, not tablets.
@@ -192,6 +221,11 @@
   };
 
   onMount(() => {
+    documentVisible = !document.hidden;
+    document.addEventListener(
+      "visibilitychange",
+      handleDocumentVisibilityChange,
+    );
     // Funnel: reaching the graph is the final onboarding milestone. Guests are
     // visitors, not first-time GMs, so they don't count.
     if (!vault.isGuest) {
@@ -201,11 +235,17 @@
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
-        if (controller.cy) {
+        if (controller.cy && !controller.isSuspended) {
           controller.cy.resize();
         }
       });
       resizeObserver.observe(container);
+    }
+    if (typeof IntersectionObserver !== "undefined") {
+      visibilityObserver = new IntersectionObserver(([entry]) => {
+        containerIntersecting = entry?.isIntersecting === true;
+      });
+      visibilityObserver.observe(container);
     }
 
     // Re-measure the coach mark's spotlighted element on resize/scroll, same
@@ -219,9 +259,31 @@
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
+    visibilityObserver?.disconnect();
+    visibilityObserver = undefined;
+    document.removeEventListener(
+      "visibilitychange",
+      handleDocumentVisibilityChange,
+    );
     window.removeEventListener("resize", updateCoachMarkTargetRect);
     window.removeEventListener("scroll", updateCoachMarkTargetRect, true);
     controller.destroy();
+  });
+
+  $effect(() => {
+    const inputs = {
+      documentVisible,
+      surfaceCovered,
+      containerIntersecting,
+    };
+    untrack(() => controller.setVisibilityInputs(inputs));
+  });
+
+  $effect(() => {
+    void controller.requiresReinitialization;
+    if (controller.consumeReinitializationRequest() && container) {
+      void controller.init(container, graphStyle);
+    }
   });
 
   // Mode change triggers
@@ -265,6 +327,7 @@
     void graph.labelFilterMode;
     void graph.activeCategories;
     void controller.cy;
+    void controller.isSuspended;
     untrack(() => controller.syncElements());
   });
 
@@ -309,10 +372,30 @@
 
   // Selection & Search Focus
   $effect(() => {
+    // Revalidate the root when graph membership changes, while a regular
+    // selection remains outside this dependency path.
+    void graph.elements;
+    if (controller.cy && graph.focusViewActive) {
+      graph.ensureFocusRoot();
+    }
+  });
+
+  $effect(() => {
     void controller.pendingSearchFocus;
+    // Re-apply focus after an explicit outside-focus navigation has synced the
+    // newly rendered node into Cytoscape.
+    void graph.focusRootId;
     const currentCy = controller.cy;
     const currentSelectedId = controller.selectedId;
     if (currentCy) {
+      if (
+        currentSelectedId &&
+        graph.focusViewActive &&
+        graph.focusRootId !== currentSelectedId &&
+        currentCy.$id(currentSelectedId).length === 0
+      ) {
+        graph.navigateFocusTo(currentSelectedId);
+      }
       controller.applyFocus(currentSelectedId);
       if (currentSelectedId) {
         const node = currentCy.$id(currentSelectedId);
@@ -392,6 +475,43 @@
     }
   });
 
+  // A phone should enter a useful local view once per vault/session, then
+  // leave the camera entirely under the user's control. This follows the
+  // selection effect so an initially selected node cannot replace the legible
+  // entry zoom with the previous full-graph fit.
+  $effect(() => {
+    const currentCy = controller.cy;
+    const vaultId = vault.activeVaultId ?? "default";
+    const isReady = controller.loadPhase === "ready";
+    const entities = vault.allEntities;
+    if (
+      !layoutUIStore.isMobile ||
+      !currentCy ||
+      !isReady ||
+      mobileEntryVaultId === vaultId
+    )
+      return;
+
+    mobileEntryVaultId = vaultId;
+    const entryId = resolveMobileEntryId(
+      entities,
+      controller.selectedId,
+      vault.inboundConnections,
+    );
+    if (!entryId) return;
+
+    const node = currentCy.$id(entryId);
+    if (node.length > 0) {
+      untrack(() =>
+        centerOnNode(
+          node,
+          true,
+          Math.max(currentCy.zoom(), MOBILE_ENTRY_MIN_ZOOM),
+        ),
+      );
+    }
+  });
+
   // When focus mode takes over from outside the graph, clear stale graph
   // selection and dimming so both views don't claim ownership simultaneously.
   $effect(() => {
@@ -431,12 +551,38 @@
   // Fit request
   $effect(() => {
     const currentCy = controller.cy;
-    if (currentCy && graph.fitRequest > 0) {
+    void controller.isSuspended;
+    if (currentCy && graph.fitRequest > 0 && !controller.isSuspended) {
       untrack(() =>
         currentCy.animate({
-          fit: { eles: currentCy.elements(), padding: 20 },
+          // Cytoscape includes edge-label bounds in fit calculations. Leave a
+          // larger rendered margin so label backplates do not sit against the
+          // graph frame or the desktop detail-panel boundary.
+          fit: { eles: currentCy.elements(), padding: 48 },
           duration: 800,
           easing: "ease-out-cubic",
+        }),
+      );
+    }
+  });
+
+  // Layout redraw request — e.g. from Quick Start after it bulk-creates
+  // entities and connections. See `graph.requestLayout` for why the
+  // incremental sync alone isn't enough here.
+  //
+  // reason MUST be exactly "UI Redraw Button": with Stable Layout on (the
+  // default), LayoutManager's force-randomize solve is gated on that literal
+  // string (see LayoutManager.applyForceLayout's `isManualRedraw` check) —
+  // anything else silently falls through to a fit-only pass that re-centers
+  // the camera without actually spreading piled-up nodes apart.
+  $effect(() => {
+    const currentCy = controller.cy;
+    if (currentCy && graph.layoutRequest > 0) {
+      untrack(() =>
+        controller.applyCurrentLayout({
+          reason: "UI Redraw Button",
+          isForced: true,
+          reseed: true,
         }),
       );
     }
@@ -448,6 +594,12 @@
     void graph.showImages;
     void graph.perfStylingActive;
     void controller.cy;
+    void controller.isSuspended;
+    // Silhouettes are tinted from the theme's entity-type palette (issue
+    // #2680), so a theme or category-colour change has to re-resolve them —
+    // otherwise already-painted glyphs keep the previous theme's colour.
+    void themeStore.activeTheme?.id;
+    void categories.list;
     untrack(() => controller.syncImages());
   });
 
@@ -457,6 +609,7 @@
   $effect(() => {
     void graph.isLargeGraph;
     void controller.cy;
+    void controller.isSuspended;
     untrack(() => controller.syncRenderHints());
   });
 
@@ -482,6 +635,29 @@
       vault.status !== "loading" &&
       vault.allEntities.length === 0,
   );
+
+  // ── Canvas text alternatives (see graph-a11y.ts) ─────────────────────────
+  let graphSummary = $derived(
+    buildGraphSummary({
+      totalEntities: graph.fullGraphSize.nodeCount,
+      totalConnections: graph.fullGraphSize.edgeCount,
+      renderedEntities: graph.stats.nodeCount,
+      focusViewActive: graph.focusViewActive,
+      filtersActive:
+        graph.activeCategories.size > 0 ||
+        graph.activeLabels.size > 0 ||
+        graph.timelineMode,
+    }),
+  );
+  let selectionAnnouncement = $derived(
+    buildSelectionAnnouncement(
+      selectedEntity,
+      (selectedEntity?.connections?.length ?? 0) +
+        (controller.selectedId
+          ? (vault.inboundConnections[controller.selectedId]?.length ?? 0)
+          : 0),
+    ),
+  );
 </script>
 
 <div
@@ -492,6 +668,30 @@
     class="absolute inset-0 pointer-events-none opacity-20"
     style="background-image: radial-gradient(var(--color-theme-secondary) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
+
+  <!-- The canvas below is aria-hidden (cytoscape paints pixels, not DOM), so
+       these two regions carry the view's meaning: a static description with
+       the operable alternatives, and the single polite announcer for
+       selection. Wording and the reasoning behind it live in graph-a11y.ts. -->
+  <section
+    class="sr-only"
+    aria-labelledby="graph-a11y-heading"
+    data-testid="graph-a11y-summary"
+  >
+    <h2 id="graph-a11y-heading">Knowledge graph</h2>
+    {#each graphSummary as line}
+      <p>{line}</p>
+    {/each}
+  </section>
+  <div
+    class="sr-only"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    data-testid="graph-a11y-announcer"
+  >
+    {selectionAnnouncement}
+  </div>
 
   <GraphHUD
     {selectedEntity}
@@ -504,6 +704,7 @@
   <GraphToolbar
     cy={controller.cy}
     isLayoutRunning={controller.isLayoutRunning}
+    isSuspended={controller.isSuspended}
     onApplyLayout={controller.applyCurrentLayout}
     selectedCount={controller.selectedCount}
   />
@@ -513,6 +714,7 @@
   <div
     bind:this={container}
     data-testid="graph-canvas"
+    aria-hidden="true"
     class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"
@@ -537,11 +739,11 @@
           body={vault.isGuest
             ? "Nothing has been shared with you yet."
             : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create your first character"}
+          cta={vault.isGuest ? undefined : "＋ Create"}
           ctaTestId={vault.isGuest ? undefined : "graph-empty-state-cta"}
           onCta={vault.isGuest
             ? undefined
-            : () => modalUIStore.requestCreateEntity()}
+            : () => modalUIStore.openIntentCreateMenu()}
           secondaryCta={vault.isGuest ? undefined : "Populate with a pack"}
           onSecondaryCta={vault.isGuest ? undefined : () => openImportWindow()}
         />
@@ -560,6 +762,23 @@
         <FeatureHint hintId="getting-started" />
       </div>
     {/if}
+  {/if}
+
+  {#if !vault.isGuest}
+    <!-- Mobile "+ Create" FAB — the header's own Create button (AppHeader,
+         `hidden lg:flex`) is desktop-only, so below lg this was previously
+         the only place in the primary Graph view without a route into the
+         Guided Mode intent-first create flow (mirrors CanvasHUD's FAB). -->
+    <button
+      type="button"
+      onclick={() => modalUIStore.openIntentCreateMenu()}
+      title="Create"
+      aria-label="Create new entity"
+      data-testid="graph-fab-create"
+      class="absolute bottom-6 right-6 z-40 flex lg:hidden items-center justify-center w-14 h-14 rounded-full bg-theme-primary text-theme-bg shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.4)] hover:brightness-110 transition-all"
+    >
+      <span class="icon-[lucide--plus] w-6 h-6" aria-hidden="true"></span>
+    </button>
   {/if}
 
   {#if showCoachMarks}

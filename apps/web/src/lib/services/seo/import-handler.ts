@@ -2,6 +2,11 @@ import { z } from "zod";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { dataUrlToFile } from "$lib/utils/svg-export";
+import {
+  entityMapLinkingService,
+  type EntityMapLinkingService,
+} from "$lib/services/entity-map-linking";
 
 export const ImportDraftSchema = z.object({
   type: z.enum([
@@ -11,6 +16,8 @@ export const ImportDraftSchema = z.object({
     "item",
     "event",
     "faction",
+    "quest",
+    "species",
     "note",
   ]),
   /** Vault entity sub-kind (e.g. "language" on notes), used by vault scans. */
@@ -21,6 +28,34 @@ export const ImportDraftSchema = z.object({
   labels: z.array(z.string()).default(["imported-draft"]),
   status: z.enum(["active", "draft"]).default("active"),
   references: z.array(z.string()).optional(),
+  relationships: z
+    .array(
+      z.object({
+        title: z.string().min(1),
+        type: z.string().optional(),
+        label: z.string().optional(),
+      }),
+    )
+    .optional(),
+  parentReference: z.string().optional(),
+  assets: z
+    .array(
+      z.object({
+        originalName: z.string().min(1),
+        mimeType: z.string().min(1),
+        dataUrl: z.string().startsWith("data:"),
+      }),
+    )
+    .optional(),
+  discoverySource: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  /**
+   * A rasterized diagram (e.g. the star-system generator's orbital diagram)
+   * as a `data:image/png` URL, linked to the created entity's Map tab on
+   * import (#1935 follow-up). localStorage can only hold strings, hence the
+   * data-URL encoding rather than passing a Blob/File directly.
+   */
+  mapImageDataUrl: z.string().startsWith("data:image/").optional(),
 });
 
 export type ImportDraft = z.infer<typeof ImportDraftSchema>;
@@ -30,6 +65,7 @@ export class SeoImportService {
     private vaultStore = vault,
     private registryStore = vaultRegistry,
     private storage: StorageLike = browserStorage,
+    private mapLinker: EntityMapLinkingService = entityMapLinkingService,
   ) {}
 
   /**
@@ -127,6 +163,10 @@ export class SeoImportService {
               labels: draft.labels,
               status: draft.status,
               ...(draft.kind ? { kind: draft.kind } : {}),
+              ...(draft.discoverySource
+                ? { discoverySource: draft.discoverySource }
+                : {}),
+              ...(draft.metadata ? { metadata: draft.metadata } : {}),
             },
           );
 
@@ -134,6 +174,39 @@ export class SeoImportService {
           // Also index by original draft title in case it was de-duped
           titleToId.set(draft.title.toLowerCase(), entityId);
           lastImportedId = entityId;
+
+          if (draft.mapImageDataUrl) {
+            try {
+              const file = dataUrlToFile(draft.mapImageDataUrl, `${title}.png`);
+              await this.mapLinker.linkImageToEntity(
+                file,
+                `${title} Map`,
+                entityId,
+              );
+            } catch (err) {
+              // Non-fatal: the entity itself already imported successfully.
+              console.error("Failed to link generated map image:", err);
+            }
+          }
+
+          if (
+            draft.assets &&
+            typeof this.vaultStore.saveImageToVault === "function"
+          ) {
+            for (const asset of draft.assets) {
+              try {
+                const file = dataUrlToFile(asset.dataUrl, asset.originalName);
+                await this.vaultStore.saveImageToVault(
+                  file,
+                  entityId,
+                  asset.originalName,
+                );
+              } catch (err) {
+                // Non-fatal: the entity itself already imported successfully.
+                console.error("Failed to save imported Kanka asset:", err);
+              }
+            }
+          }
         }
       } finally {
         // Remove only after all creates attempted — if we fail mid-loop the
@@ -142,20 +215,64 @@ export class SeoImportService {
         this.storage.removeItem("__codex_pending_import");
       }
 
+      // Resolve imported hierarchy after every entity has an ID.
+      for (const draft of drafts) {
+        if (
+          !draft.parentReference ||
+          typeof this.vaultStore.updateEntity !== "function"
+        ) {
+          continue;
+        }
+        const sourceId = titleToId.get(draft.title.toLowerCase());
+        const parentId = titleToId.get(draft.parentReference.toLowerCase());
+        if (!sourceId || !parentId || sourceId === parentId) continue;
+        try {
+          await this.vaultStore.updateEntity(sourceId, { parent: parentId });
+        } catch {
+          // Non-fatal: the entity itself already imported successfully.
+        }
+      }
+
       // Wire [[wiki links]] and explicit references between imported entities
       for (const draft of drafts) {
         const sourceId = titleToId.get(draft.title.toLowerCase());
         if (!sourceId) continue;
 
-        const targetsToConnect = new Map<string, string>(); // targetId -> label
+        const targetsToConnect = new Map<
+          string,
+          { targetId: string; type: string; label: string }
+        >();
+        const queueConnection = (
+          targetId: string,
+          type: string,
+          label: string,
+        ) => {
+          targetsToConnect.set(`${targetId}|${type}|${label}`, {
+            targetId,
+            type,
+            label,
+          });
+        };
+
+        if (draft.relationships) {
+          for (const relationship of draft.relationships) {
+            const targetId = titleToId.get(relationship.title.toLowerCase());
+            if (targetId && targetId !== sourceId) {
+              queueConnection(
+                targetId,
+                relationship.type ?? "references",
+                relationship.label ?? relationship.title,
+              );
+            }
+          }
+        }
 
         // 1. Explicit references (from provenance)
         if (draft.references) {
           for (const refTitle of draft.references) {
             const targetId = titleToId.get(refTitle.toLowerCase());
-            if (targetId && targetId !== sourceId) {
-              targetsToConnect.set(targetId, refTitle);
-            }
+            if (targetId && targetId !== sourceId)
+              queueConnection(targetId, "references", refTitle);
           }
         }
 
@@ -166,18 +283,18 @@ export class SeoImportService {
           while ((match = wikiLinkPattern.exec(draft.content)) !== null) {
             const targetId = titleToId.get(match[1].toLowerCase());
             if (targetId && targetId !== sourceId) {
-              targetsToConnect.set(targetId, match[1]);
+              queueConnection(targetId, "references", match[1]);
             }
           }
         }
 
-        for (const [targetId, label] of targetsToConnect.entries()) {
+        for (const connection of targetsToConnect.values()) {
           try {
             await this.vaultStore.addConnection(
               sourceId,
-              targetId,
-              "references",
-              label,
+              connection.targetId,
+              connection.type,
+              connection.label,
             );
           } catch {
             // Non-fatal: link wiring is best-effort

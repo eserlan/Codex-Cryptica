@@ -11,6 +11,7 @@ describe("ImportSourcePicker", () => {
     showResumeToast: false,
     onRestart: vi.fn(),
     onFileSelect: vi.fn(),
+    onVaultFilesSelect: vi.fn(),
     masterPacks: [],
     getSubpacks: vi.fn(() => []),
     getPackImportStatus: vi.fn(),
@@ -19,15 +20,23 @@ describe("ImportSourcePicker", () => {
     onPackSelect: vi.fn(),
   };
 
-  it("shows deterministic Scabard and Chronica import guidance before file selection", () => {
+  it("shows deterministic Kanka, Scabard, and Chronica guidance before file selection", () => {
     render(ImportSourcePicker, baseProps);
 
-    expect(screen.getByText("Scabard and Chronica")).toBeTruthy();
+    expect(screen.getByText("Kanka, Scabard, and Chronica")).toBeTruthy();
     expect(
       screen.getByText(
-        /JSON exports use a deterministic review and import flow/,
+        /Structured exports use a deterministic review and import flow/,
       ),
     ).toBeTruthy();
     expect(screen.getByText("Documents and notes")).toBeTruthy();
+  });
+
+  it("shows the Import Files drop area without switching the active vault (FR-001)", () => {
+    render(ImportSourcePicker, baseProps);
+
+    expect(screen.getByTestId("vault-files-section")).toBeTruthy();
+    expect(screen.getByTestId("vault-files-dropzone")).toBeTruthy();
+    expect(screen.getByText(/nothing already in this vault is/i)).toBeTruthy();
   });
 });

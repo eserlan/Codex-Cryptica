@@ -10,6 +10,7 @@ import {
   CYBERPUNK_LIGHT,
   APOCALYPTIC_LIGHT,
   HORROR_LIGHT,
+  COSMIC_HORROR_LIGHT,
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
@@ -109,6 +110,8 @@ export class ThemeStore {
           return APOCALYPTIC_LIGHT;
         case "horror":
           return HORROR_LIGHT;
+        case "cosmic_horror":
+          return COSMIC_HORROR_LIGHT;
         case "fallout":
           return FALLOUT_LIGHT;
         case "starwars":
@@ -487,8 +490,31 @@ export class ThemeStore {
     root.style.setProperty("--theme-accent-rgb", hexToRgb(tokens.accent));
 
     root.style.setProperty("--color-text-primary", tokens.text);
-    root.style.setProperty("--color-text-muted", tokens.secondary);
-    root.style.setProperty("--color-text-dim", tokens.secondary);
+    root.style.setProperty(
+      "--color-text-muted",
+      tokens.metaText ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--color-text-dim",
+      tokens.metaText ?? tokens.secondary,
+    );
+
+    // Semantic tokens for cross-surface contrast compliance
+    root.style.setProperty("--text-primary", tokens.text);
+    root.style.setProperty(
+      "--text-secondary",
+      tokens.sectionTitle ?? tokens.secondary,
+    );
+    root.style.setProperty("--text-muted", tokens.metaText ?? tokens.secondary);
+    root.style.setProperty("--link", tokens.primary);
+    root.style.setProperty(
+      "--icon-interactive",
+      tokens.iconActive ?? tokens.primary,
+    );
+    root.style.setProperty(
+      "--border-interactive",
+      tokens.selectedBorder ?? tokens.primary,
+    );
 
     root.style.setProperty("--color-theme-accent", tokens.accent);
     root.style.setProperty("--theme-title-ink", tokens.titleInk ?? tokens.text);

@@ -1,9 +1,10 @@
-import type { AspectRatio } from "schema";
+import type { AspectRatio, Entity } from "schema";
 
 export type SettingsTab =
   | "vault"
   | "intelligence"
   | "schema"
+  | "templates"
   | "theme"
   | "publishing"
   | "about"
@@ -20,6 +21,20 @@ export class ModalUIStore {
   pendingCanvasEntities = $state<string[]>([]);
   isImporting = $state(false);
   showDiceModal = $state(false);
+  activePresentationManagerSchema = $state<
+    import("schema").StatSheetTemplate | null
+  >(null);
+  presentationEditorState = $state<{
+    open: boolean;
+    schema: import("schema").StatSheetTemplate | null;
+    template: import("schema").PresentationTemplate | null;
+    duplicate: boolean;
+  }>({
+    open: false,
+    schema: null,
+    template: null,
+    duplicate: false,
+  });
 
   // Set to signal that the entity-creation form should open. A latching flag
   // (not a counter) because on mobile VaultControls mounts only after the
@@ -39,7 +54,13 @@ export class ModalUIStore {
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
   zenModeActiveTab = $state<
-    "overview" | "map" | "chats" | "family" | "timeline"
+    | "overview"
+    | "connections"
+    | "map"
+    | "chats"
+    | "family"
+    | "timeline"
+    | "stats"
   >("overview");
 
   mergeDialog = $state<{
@@ -87,6 +108,14 @@ export class ModalUIStore {
     sourceEntityId: null,
   });
 
+  parentPickerDialog = $state<{
+    open: boolean;
+    entityId: string | null;
+  }>({
+    open: false,
+    entityId: null,
+  });
+
   vaultThemePrompt = $state<{
     open: boolean;
     vaultId: string | null;
@@ -126,6 +155,14 @@ export class ModalUIStore {
     open: false,
     entityId: null,
     instructions: "",
+  });
+
+  silhouettePickerState = $state<{
+    open: boolean;
+    entity: Entity | null;
+  }>({
+    open: false,
+    entity: null,
   });
 
   // Derived properties for backwards compatibility
@@ -193,6 +230,14 @@ export class ModalUIStore {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
   }
 
+  openParentPicker(entityId: string) {
+    this.parentPickerDialog = { open: true, entityId };
+  }
+
+  closeParentPicker() {
+    this.parentPickerDialog = { open: false, entityId: null };
+  }
+
   openVaultThemePrompt(vaultId: string) {
     this.vaultThemePrompt = { open: true, vaultId };
   }
@@ -208,12 +253,16 @@ export class ModalUIStore {
     sourceEntityId: string | null;
     generatorId: string | null;
     prefillDate?: { year: number; month: number; day: number } | null;
+    autoGenerate: boolean;
+    initialPrompt?: string | null;
   }>({
     open: false,
     launchMode: "workspace",
     sourceEntityId: null,
     generatorId: null,
     prefillDate: null,
+    autoGenerate: false,
+    initialPrompt: null,
   });
 
   /** Open the unified generator workflow from the campaign workspace. */
@@ -227,6 +276,8 @@ export class ModalUIStore {
       sourceEntityId: null,
       generatorId,
       prefillDate,
+      autoGenerate: false,
+      initialPrompt: null,
     };
   }
 
@@ -241,6 +292,29 @@ export class ModalUIStore {
       sourceEntityId,
       generatorId,
       prefillDate: null,
+      autoGenerate: false,
+      initialPrompt: null,
+    };
+  }
+
+  /**
+   * Open the generator workflow from the Guided Mode intent-first `+ Create`
+   * menu: generates immediately with inferred context, default options, and
+   * optional initial prompt text from the user.
+   */
+  openIntentGeneratorWorkflow(
+    generatorId: string,
+    sourceEntityId: string | null = null,
+    initialPrompt: string | null = null,
+  ) {
+    this.generatorWorkflow = {
+      open: true,
+      launchMode: sourceEntityId ? "contextual" : "workspace",
+      sourceEntityId,
+      generatorId,
+      prefillDate: null,
+      autoGenerate: true,
+      initialPrompt,
     };
   }
 
@@ -251,7 +325,44 @@ export class ModalUIStore {
       sourceEntityId: null,
       generatorId: null,
       prefillDate: null,
+      autoGenerate: false,
+      initialPrompt: null,
     };
+  }
+
+  // Guided Mode intent-first `+ Create` menu (#1909).
+  showIntentCreateMenu = $state(false);
+
+  openIntentCreateMenu() {
+    this.showIntentCreateMenu = true;
+  }
+
+  closeIntentCreateMenu() {
+    this.showIntentCreateMenu = false;
+  }
+
+  // Guided Mode Quick Start (#1909). Tracked globally (not local component
+  // state) so the first-run orchestrator can see it via `isAnyModalOpen` and
+  // avoid stacking the "initial-onboarding" tour on top of it.
+  showQuickStartModal = $state(false);
+
+  /**
+   * Quick Start's in-progress choices, kept here rather than in the component
+   * so closing the dialog to check something doesn't silently reset them.
+   * Store state, not module state: this stays per-tab, cannot leak across a
+   * server render, and resets cleanly between tests.
+   */
+  quickStartDraft = $state<{ themeId: string | null; premise: string }>({
+    themeId: null,
+    premise: "",
+  });
+
+  openQuickStartModal() {
+    this.showQuickStartModal = true;
+  }
+
+  closeQuickStartModal() {
+    this.showQuickStartModal = false;
   }
 
   requestCreateEntity(
@@ -354,7 +465,14 @@ export class ModalUIStore {
 
   openZenMode(
     entityId: string,
-    tab: "overview" | "map" | "chats" | "family" | "timeline" = "overview",
+    tab:
+      | "overview"
+      | "connections"
+      | "map"
+      | "chats"
+      | "family"
+      | "timeline"
+      | "stats" = "overview",
   ) {
     this.zenModeEntityId = entityId;
     this.zenModeActiveTab = tab;
@@ -379,6 +497,20 @@ export class ModalUIStore {
     this.closeZenMode();
   }
 
+  openSilhouettePicker(entity: Entity) {
+    this.silhouettePickerState = {
+      open: true,
+      entity,
+    };
+  }
+
+  closeSilhouettePicker() {
+    this.silhouettePickerState = {
+      open: false,
+      entity: null,
+    };
+  }
+
   get isAnyModalOpen() {
     return (
       this.showMobileCreateSheet ||
@@ -389,13 +521,17 @@ export class ModalUIStore {
       this.mergeDialog.open ||
       this.bulkLabelDialog.open ||
       this.relatedEntityDialog.open ||
+      this.parentPickerDialog.open ||
       this.vaultThemePrompt.open ||
       this.showVaultSwitcher ||
       this.showShare ||
       this.imagePromptReview.open ||
       this.lightbox.show ||
       this.soundBite.show ||
-      this.revisionDialog.open
+      this.revisionDialog.open ||
+      this.showIntentCreateMenu ||
+      this.showQuickStartModal ||
+      this.silhouettePickerState.open
     );
   }
 }
@@ -405,6 +541,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v10__";
+const KEY = "__codex_modal_ui_store__v12__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

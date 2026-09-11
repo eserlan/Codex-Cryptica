@@ -116,8 +116,10 @@ test.describe("Interactive Demo Mode", () => {
       { timeout: 15000 },
     );
 
-    // Add a new entity
-    await page.getByTestId("new-entity-button").click();
+    // Add a new entity through the same user-facing flow as a player.
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     const input = page.locator('input[placeholder*="Title..."]');
     await expect(input).toBeVisible();
     await input.fill("New Transient Node");
@@ -140,7 +142,7 @@ test.describe("Interactive Demo Mode", () => {
     // Node should be gone
     const hasTransientNode = await page.evaluate(() =>
       Object.values((window as any).vault.entities).some(
-        (entity: any) => entity.title === "New Transient Node",
+        (e: any) => e.title === "New Transient Node",
       ),
     );
     expect(hasTransientNode).toBe(false);

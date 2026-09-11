@@ -86,7 +86,7 @@
     id="nomad-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="nomad-campaign-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
@@ -125,7 +125,7 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
-    <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
     Surprise Me
   </button>
 </div>

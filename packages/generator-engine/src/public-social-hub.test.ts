@@ -104,6 +104,9 @@ describe("buildSocialHubPrompt", () => {
   it("keeps the public config data", () => {
     expect(socialHubConfig.venueTypesByGenre.Cyberpunk).toContain("Noodle Bar");
     expect(socialHubConfig.settlementTypes).toContain("Coastal port");
+    expect(socialHubConfig.venueTypesByGenre["Cosmic Horror"]).toContain(
+      "Restricted Reading Room",
+    );
   });
 });
 

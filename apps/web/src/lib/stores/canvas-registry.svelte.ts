@@ -109,9 +109,17 @@ export class CanvasRegistryStore {
     if (!base) return id.slice(0, 8);
 
     // Check for collisions with other canvases (excluding current ID)
-    const exists = Object.values(this.canvases).some(
-      (c) => c.slug === base && c.id !== id,
-    );
+    // ⚡ Bolt Optimization: Loop over keys instead of Object.values() to avoid array allocation
+    let exists = false;
+    for (const key in this.canvases) {
+      if (Object.prototype.hasOwnProperty.call(this.canvases, key)) {
+        const c = this.canvases[key];
+        if (c.slug === base && c.id !== id) {
+          exists = true;
+          break;
+        }
+      }
+    }
 
     if (exists) {
       // Append short ID to ensure uniqueness
@@ -254,7 +262,11 @@ export class CanvasRegistryStore {
       return { canvasId, added: [], skipped: [], errors: [] };
     }
 
-    const existingEntityIds = new Set(canvas.nodes.map((n) => n.entityId));
+    const existingEntityIds = new Set(
+      canvas.nodes
+        .filter((node) => node.type === "entity")
+        .map((node) => node.entityId),
+    );
     const added: string[] = [];
     const skipped: string[] = [];
     const errors: Array<{ entityId: string; error: string }> = [];

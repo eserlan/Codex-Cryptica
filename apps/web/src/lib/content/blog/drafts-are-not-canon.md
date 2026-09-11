@@ -25,7 +25,7 @@ Canon contamination is a real problem. And it is almost always a design failure,
 
 A draft is a suggestion. A fact is something your world has committed to.
 
-When the Lore Oracle generates something — a character summary, a faction motivation, a plot thread — it produces a draft. That draft does not enter your vault automatically. It does not become a linked entity, a saved note, or a timeline event until you decide it should. Until then it has no authority over your world.
+When the Lore Oracle generates something, be it a character summary, a faction motivation, or a plot thread, it produces a draft. That draft does not enter your vault automatically. It does not become a linked entity, a saved note, or a timeline event until you decide it should. Until then it has no authority over your world.
 
 This is the distinction that matters:
 
@@ -42,13 +42,13 @@ Short campaigns can tolerate a bit of ambient AI noise. Long campaigns cannot.
 
 If you have been running the same world for two years, you have hundreds of established facts. Factions with histories. NPCs with established voices. Geography your players know. Plot threads that have been seeded and are still unresolved.
 
-An AI suggestion that contradicts any of that is not just unhelpful — it is actively confusing. A character who died in session 8 cannot appear in a generated rumour as if they are still alive. A city that was explicitly built without magic cannot have a mage's quarter suggested into existence.
+An AI suggestion that contradicts any of that is not just unhelpful; it is actively confusing. A character who died in session 8 cannot appear in a generated rumour as if they are still alive. A city that was explicitly built without magic cannot have a mage's quarter suggested into existence.
 
 The longer the campaign, the more important it is that AI output is clearly separate from settled fact, and that you are the one deciding what crosses from draft to canon.
 
 ## What AI should not do
 
-The Oracle should not silently rewrite what you have established. If your world has unusual cosmology, strange naming conventions, or factions that behave differently from genre defaults, the AI should work from those details — not smooth them out into something more familiar.
+The Oracle should not silently rewrite what you have established. If your world has unusual cosmology, strange naming conventions, or factions that behave differently from genre defaults, the AI should work from those details, not smooth them out into something more familiar.
 
 Generic fantasy is the default position of a model with no context. Structure and lore pull it away from that default. But even well-grounded suggestions should be reviewed. The Oracle can misread a relationship, overextend an inference, or propose something that technically follows from your notes but does not match the tone you are going for.
 
@@ -56,7 +56,7 @@ That review step is not a bug in the workflow. It is the workflow.
 
 ## Accepting, rejecting, keeping it clean
 
-In Codex Cryptica, accepting a draft is an explicit action. You read it, decide it belongs in your world, and it becomes part of the vault — linked, tagged, and searchable alongside everything else you have built.
+In Codex Cryptica, accepting a draft is an explicit action. You read it, decide it belongs in your world, and it becomes part of the vault: linked, tagged, and searchable alongside everything else you have built.
 
 Rejecting a draft removes it from the workflow. It does not become canon, it does not get saved into the vault, and it is not treated as world context later. The vault contains what you chose to keep.
 

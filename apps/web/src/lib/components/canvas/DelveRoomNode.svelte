@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Handle, Position } from "@xyflow/svelte";
   import type { DelveRoomNodeData } from "generator-engine";
   import { getDelveRoomCardPreview, getRoleBadgeConfig } from "./delve-helpers";
+  import CanvasCenterConnectionHandles from "./CanvasCenterConnectionHandles.svelte";
 
   let {
     data,
@@ -24,10 +24,9 @@
     ? 'border-theme-primary ring-2 ring-theme-primary/40 shadow-lg'
     : 'border-theme-border/70 hover:border-theme-border'}"
 >
-  <Handle
-    type="target"
-    position={Position.Top}
-    class="w-3 h-3 !bg-theme-primary"
+  <CanvasCenterConnectionHandles
+    legacyTargetHandleIds={["target-top", "target-left"]}
+    legacySourceHandleIds={["source-bottom", "source-right"]}
   />
 
   <div class="flex items-center justify-between gap-2 mb-1.5">
@@ -121,10 +120,4 @@
       {/if}
     </div>
   </div>
-
-  <Handle
-    type="source"
-    position={Position.Bottom}
-    class="w-3 h-3 !bg-theme-primary"
-  />
 </div>

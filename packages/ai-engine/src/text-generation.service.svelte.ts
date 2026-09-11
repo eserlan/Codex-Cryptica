@@ -167,7 +167,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
     connectedEntities: ConnectedEntityPromptContext[] = [],
     categories: { id: string; label?: string }[] = [],
     templateOutline = "",
-    options?: { isGuest?: boolean; aiDisabled?: boolean },
+    options?: {
+      isGuest?: boolean;
+      aiDisabled?: boolean;
+      worldThemeName?: string;
+    },
   ): Promise<{
     name: string;
     type: string;

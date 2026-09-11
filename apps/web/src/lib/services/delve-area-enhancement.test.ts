@@ -88,6 +88,8 @@ describe("DelveAreaEnhancementService", () => {
       vaultGateway as never,
       aiClient,
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
 
     const enhanced = await service.enhanceArea({
@@ -141,20 +143,46 @@ describe("DelveAreaEnhancementService", () => {
     expect(enhanced.stocking.secrets).toBeUndefined();
   });
 
-  it("rejects without changing the Area when the source Location is unavailable", async () => {
+  it("uses fallback canon when the source Location is unavailable or unlinked", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify({
+            name: "The Ember Tally",
+            description: "A mechanical chamber reinforced with steel.",
+            stocking: {
+              atmosphere: "Hot steam",
+              encounters: ["An Ember Compact guard"],
+            },
+          }),
+      },
+    });
+    const aiClient = {
+      getModel: vi.fn().mockResolvedValue({ generateContent }),
+    };
     const service = new DelveAreaEnhancementService(
       {
         entities: {},
         loadEntityContent: vi.fn().mockResolvedValue(undefined),
       },
-      { getModel: vi.fn() },
+      aiClient,
       { effectiveApiKey: null, modelName: "test-model" },
     );
 
-    await expect(
-      service.enhanceArea({ canvas, room, nearbyAreas: [] }),
-    ).rejects.toThrow("source Location could not be found");
-    expect(room.description).toBe("A mechanical chamber.");
+    const unlinkedCanvas = { ...canvas, metadata: {} } as Canvas;
+    const enhanced = await service.enhanceArea({
+      canvas: unlinkedCanvas,
+      room,
+      nearbyAreas: [],
+    });
+    expect(enhanced.name).toBe("The Ember Tally");
+    expect(aiClient.getModel).toHaveBeenCalledWith(
+      "",
+      "test-model",
+      expect.stringContaining("closed roster"),
+    );
+    const request = generateContent.mock.calls[0][0];
+    expect(request.contents[0].parts[0].text).toContain("Title: Dungeon Delve");
   });
 
   it("populates a whole sector in one request and reports progress", async () => {
@@ -248,6 +276,8 @@ describe("DelveAreaEnhancementService", () => {
       vaultGateway as never,
       { getModel },
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
     const onProgress = vi.fn();
 
@@ -261,7 +291,7 @@ describe("DelveAreaEnhancementService", () => {
       stocking: {
         encounters: ["An Ember Compact inspector"],
       },
-      aiEnhancedAt: expect.any(Number),
+      aiEnhancedAt: 1234,
     });
     expect(
       (result.nodes[0].data as unknown as DelveRoomNodeData).stocking.hazards,
@@ -408,6 +438,8 @@ describe("DelveAreaEnhancementService", () => {
         getModel: vi.fn().mockResolvedValue({ generateContent }),
       },
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
 
     const result = await service.populateAllAreas(passageCanvas as Canvas);
@@ -416,7 +448,7 @@ describe("DelveAreaEnhancementService", () => {
     expect(result).toMatchObject({ completed: 0, total: 0, failed: 0 });
     expect(passage.description).toContain("brass sluice bridge");
     expect(passage.condition).not.toContain("Iron Key");
-    expect(passage.aiEnhancedAt).toEqual(expect.any(Number));
+    expect(passage.aiEnhancedAt).toEqual(1234);
     expect(
       generateContent.mock.calls[0][0].contents[0].parts[0].text,
     ).toContain("PASSAGES TO ENHANCE");
@@ -558,6 +590,8 @@ describe("DelveAreaEnhancementService", () => {
       } as never,
       { getModel: vi.fn().mockResolvedValue({ generateContent }) },
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
 
     const result = await service.populateAllAreas({
@@ -580,7 +614,7 @@ describe("DelveAreaEnhancementService", () => {
       stocking: {
         encounters: ["An Ember Compact guard detail"],
       },
-      aiEnhancedAt: expect.any(Number),
+      aiEnhancedAt: 1234,
     });
   });
 });

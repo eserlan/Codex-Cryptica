@@ -7,6 +7,10 @@ import { sessionModeStore as defaultSessionModeStore } from "../../stores/ui/ses
 import { notificationStore as defaultNotificationStore } from "../../stores/ui/notification.svelte";
 import { mapSession } from "../../stores/map-session.svelte";
 import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
+import {
+  sanitizeSessionForGuestTransport,
+  sanitizeVttMessageForGuestTransport,
+} from "./p2p-helpers";
 import type {
   P2PTransport,
   P2PConnection,
@@ -286,13 +290,21 @@ export class P2PHostService {
       return;
     }
 
-    this.transport.broadcast(message, excludePeer);
+    this.transport.broadcast(
+      sanitizeVttMessageForGuestTransport(
+        message,
+        (tokenId) => mapSession.tokens[tokenId],
+      ),
+      excludePeer,
+    );
   }
 
   private async broadcastSessionSnapshot(
     session = mapSession.createSnapshot(),
   ) {
-    const payload = await encodeSessionSnapshot(session);
+    const payload = await encodeSessionSnapshot(
+      sanitizeSessionForGuestTransport(session),
+    );
     this.transport.broadcast(payload);
   }
 

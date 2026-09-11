@@ -51,7 +51,7 @@
   bind:value={genre}
   choices={nationConfig.genres.map((g: string) => ({ value: g, label: g }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre or setting"
 />
@@ -62,7 +62,7 @@
   bind:value={polityType}
   choices={polityTypes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom polity type"
 />
@@ -71,9 +71,12 @@
   id="nation-govt-select"
   label="Government style"
   bind:value={governmentStyle}
-  choices={nationConfig.governmentStyles.map((g: string) => ({ value: g, label: g }))}
+  choices={nationConfig.governmentStyles.map((g: string) => ({
+    value: g,
+    label: g,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom government style"
 />
@@ -84,7 +87,7 @@
   bind:value={scale}
   choices={nationConfig.scales.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom scale"
 />
@@ -93,9 +96,12 @@
   id="nation-conflict-select"
   label="Conflict level"
   bind:value={conflictLevel}
-  choices={nationConfig.conflictLevels.map((c: string) => ({ value: c, label: c }))}
+  choices={nationConfig.conflictLevels.map((c: string) => ({
+    value: c,
+    label: c,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom conflict level"
 />
@@ -107,7 +113,7 @@
   <textarea
     id="nation-context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="nation-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
@@ -137,7 +143,7 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
-    <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
     Surprise Me
   </button>
 </div>

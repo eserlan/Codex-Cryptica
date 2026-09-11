@@ -1,6 +1,10 @@
 import { u } from "./user-content";
 import { BANNED_NAMES } from "generator-engine";
-import type { ConnectedEntityPromptContext } from "schema";
+import {
+  templateGuidanceBlock,
+  templateGuidanceInstruction,
+  type ConnectedEntityPromptContext,
+} from "schema";
 
 export function buildRelatedEntityGenerationPrompt(
   sourceEntity: {
@@ -15,8 +19,12 @@ export function buildRelatedEntityGenerationPrompt(
   connectedEntities: ConnectedEntityPromptContext[] = [],
   categories: { id: string; label?: string }[] = [],
   templateOutline: string = "",
+  worldThemeName: string = "",
 ): string {
   const allowedCategoriesStr = categories.map((c) => c.id).join(", ");
+  const worldThemeStr = worldThemeName.trim()
+    ? `\nWorld Theme: ${worldThemeName.trim()} — the new entity's tone, naming, technology, and culture MUST fit this setting.\n`
+    : "";
   const isSurpriseMe =
     targetType.toLowerCase() === "surprise me" ||
     targetType.toLowerCase() === "surprise_me";
@@ -39,7 +47,7 @@ export function buildRelatedEntityGenerationPrompt(
       : "";
 
   const templateRule = templateOutline.trim()
-    ? `IMPORTANT: You must structure the "description" field using the following markdown outline template headings and structure:\n${u(templateOutline)}\n`
+    ? `IMPORTANT: Structure the "description" field using the template guidance below. ${templateGuidanceInstruction("description")}\n${templateGuidanceBlock(u(templateOutline))}\n`
     : "";
 
   const customInstructionsStr = customInstructions.trim()
@@ -47,7 +55,7 @@ export function buildRelatedEntityGenerationPrompt(
     : "";
 
   return `You are a Master Archivist and Lore Synthesizer. Your task is to generate a new, grounded, context-aware entity based on a source entity and its surrounding world context.
-
+${worldThemeStr}
 ${customInstructionsStr}SOURCE ENTITY (Origin):
 - Title: ${sourceEntity.title}
 - Type: ${sourceEntity.type}

@@ -362,6 +362,16 @@ export class P2PGuestService {
     return true;
   }
 
+  requestTokenRotation(tokenId: string, rotation: number): boolean {
+    if (!this.transport.connected) return false;
+    this.transport.send({
+      type: "TOKEN_ROTATE",
+      tokenId,
+      rotation,
+    });
+    return true;
+  }
+
   requestTokenRemove(tokenId: string): boolean {
     if (!this.transport.connected) return false;
     this.transport.send({ type: "TOKEN_REMOVE", tokenId });

@@ -6,6 +6,8 @@ This file is the Codex-facing instruction layer for this repository.
 
 - The Speckit command definitions in [`.gemini/commands`](./.gemini/commands) are the canonical command source for this repo.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
+- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md) and [`.codex/skills/codex-review/SKILL.md`](./.codex/skills/codex-review/SKILL.md); the extended canonical review patterns remain in [`.agent/skills/codex-review`](./.agent/skills/codex-review).
+- Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
@@ -43,6 +45,19 @@ This file is the Codex-facing instruction layer for this repository.
 - Create regular ready-for-review pull requests by default; never create draft PRs unless the user explicitly asks for a draft.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
+- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
+- **Discovery Intent Governance** (Constitution XIII): Before adding or materially repositioning any public, indexable discovery page — `/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference blog posts — consult the discovery intent registry at `apps/web/src/lib/content/discovery/`:
+  1. Check whether the intent already has an owner (`findIntentOwner`, or read the audit output).
+  2. If it does, extend that page or record the new phrasing as an **alias**. Do not create a second URL for a synonym or word-order variant.
+  3. If it does not, add an entry with a canonical path, primary intent, user job and unique-value rationale **before** building the page.
+  4. Run `bun scripts/discovery-audit.mjs`. Deterministic findings are errors; overlap warnings need a judgement call, recorded via `acknowledgedOverlap` with a reason if the overlap is intentional.
+  - The registry constrains the public surface; it is never a source for generating pages from keywords. See [docs/discovery-intent-registry.md](./docs/discovery-intent-registry.md).
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. `bun run lint:types` passes with 0 errors.
+  2. `bun run lint` passes with 0 errors.
+  3. The changes pass the `codex-review` specialist review.
+  4. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
 
 ## Maintenance Rule
 
@@ -53,14 +68,39 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/143-cif-importer/plan.md).
+shell commands, and other important information, read the [current plan](./specs/2815-smart-copy/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
+- N/A — clipboard payloads are transient and browser-local (2815-smart-copy)
+
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `@codex/oracle-engine`, `@codex/vault-engine`, `dice-engine`, `schema`/Zod, `idb`/Dexie, and `@codex/events`; no new third-party dependency (160-solo-adventure-mode)
+- One versioned JSON document per session at `.codex/adventures/<session-id>.json`; transient cross-tab lease in existing IndexedDB `appSettings`; vault records remain canonical Markdown/metadata (160-solo-adventure-mode)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
+- N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
+
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `fflate` archive parsing, `@codex/vault-engine`, Svelte 5, existing notification confirmation UI (1826-vault-file-import)
+- Browser-local OPFS vault directories and IndexedDB-backed vault registry; no new persistence format (1826-vault-file-import)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
+
 - TypeScript 6.0.3 + `schema` workspace types, existing `map-engine`, Svelte 5 (1661-extract-vtt-domain)
 - No storage changes; browser persistence remains in `apps/web` (1661-extract-vtt-domain)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + `marked` (extended with custom directive/field-ref tokenizers), `zod`, `@codex/stat-sheet-engine` (152-stat-sheet-templates)
+- New IndexedDB store `stat_sheet_presentation_templates`; schema default + entity override stored alongside existing Stat Sheet association (152-stat-sheet-templates)
+- Diverged from plan.md: no `DOMPurify` dependency — safety comes from the parser only ever emitting an allowlisted `PresentationAst` (never raw HTML/`{@html}`), not from sanitizing HTML strings (152-stat-sheet-templates)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing Cloudflare Worker runtime/wrangler, Cloudflare R2, Svelte 5, Tailwind 4 semantic tokens, Iconify utility classes, existing `schema` and `@codex/vault-engine` packages (139-public-world-directory)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for public listing records; existing R2 guest snapshot bundle/assets from `135-guest-vault-r2`; browser IndexedDB for local publish registry (139-public-world-directory)

@@ -13,6 +13,10 @@ export interface SessionEntity {
   pinned: boolean;
   /** Whether this draft is included by the session hub's selected-save action. */
   selectedForSave?: boolean;
+  /** The accepted source this draft was refined from, when applicable. */
+  derivedFromEntityId?: string;
+  /** The operation that produced this draft. */
+  derivation?: "refine";
   createdOrder: number;
 }
 

@@ -23,6 +23,7 @@
     isOrderedList: false,
     isBlockquote: false,
     isLink: false,
+    isTable: false,
   });
 
   $effect(() => {
@@ -47,6 +48,7 @@
       activeStates.isBlockquote =
         currentEditor?.isActive("blockquote") ?? false;
       activeStates.isLink = currentEditor?.isActive("link") ?? false;
+      activeStates.isTable = currentEditor?.isActive("table") ?? false;
     };
 
     // Initial update
@@ -89,6 +91,14 @@
       .run();
   };
 
+  const insertTable = () => {
+    editor
+      ?.chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
+  };
+
   const handleKeydown = (e: KeyboardEvent) => {
     // Toggle Zen Mode on Escape if active, but do not block other handlers/defaults
     if (e.key === "Escape" && isZenMode && !e.defaultPrevented) {
@@ -117,7 +127,8 @@
   >
     <!-- Basic Formatting -->
     <div class="flex gap-0.5">
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleBold().run()}
         class="toolbar-btn {activeStates.isBold ? 'active' : ''}"
         title="Bold (Cmd+B)"
@@ -126,7 +137,8 @@
       >
         <span class="icon-[lucide--bold] w-4 h-4" aria-hidden="true"></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleItalic().run()}
         class="toolbar-btn {activeStates.isItalic ? 'active' : ''}"
         title="Italic (Cmd+I)"
@@ -135,7 +147,8 @@
       >
         <span class="icon-[lucide--italic] w-4 h-4" aria-hidden="true"></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleStrike().run()}
         class="toolbar-btn {activeStates.isStrike ? 'active' : ''}"
         title="Strike"
@@ -145,7 +158,8 @@
         <span class="icon-[lucide--strikethrough] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleCode().run()}
         class="toolbar-btn {activeStates.isCode ? 'active' : ''}"
         title="Code (Cmd+E)"
@@ -160,7 +174,8 @@
 
     <!-- Headings -->
     <div class="flex gap-0.5">
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         class="toolbar-btn {activeStates.isH1 ? 'active' : ''}"
         title="Heading 1"
@@ -170,7 +185,8 @@
         <span class="icon-[lucide--heading-1] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         class="toolbar-btn {activeStates.isH2 ? 'active' : ''}"
         title="Heading 2"
@@ -180,7 +196,8 @@
         <span class="icon-[lucide--heading-2] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         class="toolbar-btn {activeStates.isH3 ? 'active' : ''}"
         title="Heading 3"
@@ -196,7 +213,8 @@
 
     <!-- Lists & Structure -->
     <div class="flex gap-0.5">
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleBulletList().run()}
         class="toolbar-btn {activeStates.isBulletList ? 'active' : ''}"
         title="Bullet List"
@@ -205,7 +223,8 @@
       >
         <span class="icon-[lucide--list] w-4 h-4" aria-hidden="true"></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleOrderedList().run()}
         class="toolbar-btn {activeStates.isOrderedList ? 'active' : ''}"
         title="Ordered List"
@@ -215,7 +234,8 @@
         <span class="icon-[lucide--list-ordered] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button type="button"
+      <button
+        type="button"
         onclick={() => editor.chain().focus().toggleBlockquote().run()}
         class="toolbar-btn {activeStates.isBlockquote ? 'active' : ''}"
         title="Blockquote"
@@ -230,7 +250,8 @@
 
     <!-- Insertions -->
     <div class="flex gap-0.5">
-      <button type="button"
+      <button
+        type="button"
         onclick={setLink}
         class="toolbar-btn {activeStates.isLink ? 'active' : ''}"
         title="Link"
@@ -239,7 +260,113 @@
       >
         <span class="icon-[lucide--link] w-4 h-4" aria-hidden="true"></span>
       </button>
+      <button
+        type="button"
+        onclick={insertTable}
+        class="toolbar-btn"
+        title="Insert Table"
+        aria-label="Insert Table"
+      >
+        <span class="icon-[lucide--table] w-4 h-4" aria-hidden="true"></span>
+      </button>
     </div>
+
+    {#if activeStates.isTable}
+      <div class="w-px bg-theme-border/50 mx-1"></div>
+
+      <!-- Table editing -->
+      <div class="flex gap-0.5">
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addRowBefore().run()}
+          class="toolbar-btn"
+          title="Add Row Above"
+          aria-label="Add Row Above"
+        >
+          <span
+            class="icon-[lucide--arrow-up-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addRowAfter().run()}
+          class="toolbar-btn"
+          title="Add Row Below"
+          aria-label="Add Row Below"
+        >
+          <span
+            class="icon-[lucide--arrow-down-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().deleteRow().run()}
+          class="toolbar-btn"
+          title="Delete Row"
+          aria-label="Delete Row"
+        >
+          <span class="icon-[lucide--rows-3] w-4 h-4" aria-hidden="true"></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addColumnBefore().run()}
+          class="toolbar-btn"
+          title="Add Column Left"
+          aria-label="Add Column Left"
+        >
+          <span
+            class="icon-[lucide--arrow-left-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().addColumnAfter().run()}
+          class="toolbar-btn"
+          title="Add Column Right"
+          aria-label="Add Column Right"
+        >
+          <span
+            class="icon-[lucide--arrow-right-to-line] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().deleteColumn().run()}
+          class="toolbar-btn"
+          title="Delete Column"
+          aria-label="Delete Column"
+        >
+          <span class="icon-[lucide--columns-3] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().toggleHeaderRow().run()}
+          class="toolbar-btn"
+          title="Toggle Header Row"
+          aria-label="Toggle Header Row"
+        >
+          <span
+            class="icon-[lucide--table-properties] w-4 h-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() => editor.chain().focus().deleteTable().run()}
+          class="toolbar-btn"
+          title="Delete Table"
+          aria-label="Delete Table"
+        >
+          <span class="icon-[lucide--trash-2] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+      </div>
+    {/if}
 
     <div class="flex-1"></div>
 
@@ -247,7 +374,8 @@
     <div class="flex gap-1">
       {#if isZenMode}
         <ZenModeRevisionAction />
-        <button type="button"
+        <button
+          type="button"
           onclick={toggleZenMode}
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase font-header tracking-widest bg-theme-accent/10 rounded"
           title="Close Zen Mode"
@@ -259,7 +387,8 @@
         <div class="w-px bg-theme-border/50 mx-1"></div>
       {/if}
 
-      <button type="button"
+      <button
+        type="button"
         onclick={toggleZenMode}
         class="toolbar-btn {isZenMode ? 'active' : ''}"
         title={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}

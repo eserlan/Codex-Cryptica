@@ -32,6 +32,8 @@ describe("SeoImportService", () => {
       init: vi.fn().mockResolvedValue(undefined),
       switchVault: vi.fn().mockResolvedValue(undefined),
       createEntity: vi.fn().mockResolvedValue("e1"),
+      updateEntity: vi.fn().mockResolvedValue(undefined),
+      saveImageToVault: vi.fn().mockResolvedValue("images/imported.png"),
       selectedEntityId: null,
     };
 
@@ -61,6 +63,8 @@ describe("SeoImportService", () => {
       content: "A brave elven warrior.",
       lore: "Strength: 18",
       labels: ["custom-label"],
+      discoverySource: "kanka:character:101",
+      metadata: { kankaEntityId: 101 },
     };
     localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
 
@@ -75,10 +79,85 @@ describe("SeoImportService", () => {
         lore: "Strength: 18",
         labels: ["custom-label"],
         status: "active",
+        discoverySource: "kanka:character:101",
+        metadata: { kankaEntityId: 101 },
       },
     );
     expect(mockVaultStore.selectedEntityId).toBe("e1");
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
+  });
+
+  it("should link a rasterized diagram image to the created entity when present", async () => {
+    const mockMapLinker = {
+      linkImageToEntity: vi.fn().mockResolvedValue("map1"),
+    };
+    const linkingService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      mockMapLinker as any,
+    );
+
+    const draft = {
+      type: "location",
+      title: "Kesh-9",
+      content: "A binary star system.",
+      mapImageDataUrl:
+        "data:image/png;base64," + btoa("fake-png-bytes-for-test"),
+    };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    await linkingService.checkAndHandlePendingImport();
+
+    expect(mockMapLinker.linkImageToEntity).toHaveBeenCalledOnce();
+    const [file, mapName, entityId] =
+      mockMapLinker.linkImageToEntity.mock.calls[0];
+    expect(file).toBeInstanceOf(File);
+    expect(file.type).toBe("image/png");
+    expect(mapName).toBe("Kesh-9 Map");
+    expect(entityId).toBe("e1");
+  });
+
+  it("should not attempt to link a map when mapImageDataUrl is absent", async () => {
+    const mockMapLinker = { linkImageToEntity: vi.fn() };
+    const linkingService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      mockMapLinker as any,
+    );
+
+    const draft = { type: "location", title: "Plain System", content: "" };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    await linkingService.checkAndHandlePendingImport();
+
+    expect(mockMapLinker.linkImageToEntity).not.toHaveBeenCalled();
+  });
+
+  it("should not fail the import if linking the map image throws", async () => {
+    const mockMapLinker = {
+      linkImageToEntity: vi.fn().mockRejectedValue(new Error("upload failed")),
+    };
+    const linkingService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      mockMapLinker as any,
+    );
+
+    const draft = {
+      type: "location",
+      title: "Kesh-9",
+      content: "",
+      mapImageDataUrl:
+        "data:image/png;base64," + btoa("fake-png-bytes-for-test"),
+    };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    const res = await linkingService.checkAndHandlePendingImport();
+
+    expect(res).toBe("e1");
   });
 
   it("should create a new vault if no vault is active", async () => {
@@ -370,6 +449,62 @@ describe("SeoImportService", () => {
       "id-king",
       "references",
       "Goblin King",
+    );
+  });
+
+  it("should preserve typed relationships, hierarchy, and imported assets", async () => {
+    mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+    mockVaultStore.createEntity = vi
+      .fn()
+      .mockResolvedValueOnce("id-parent")
+      .mockResolvedValueOnce("id-quest");
+
+    const drafts = [
+      {
+        type: "location",
+        title: "Greyharbor",
+        content: "A port city.",
+      },
+      {
+        type: "quest",
+        title: "Protect the Harbor",
+        content: "Keep the gates closed.",
+        parentReference: "Greyharbor",
+        relationships: [
+          { title: "Greyharbor", type: "related_to", label: "Protects" },
+        ],
+        assets: [
+          {
+            originalName: "harbor.png",
+            mimeType: "image/png",
+            dataUrl: "data:image/png;base64,iVBORw==",
+          },
+        ],
+      },
+    ];
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+
+    await service.checkAndHandlePendingImport();
+
+    expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
+      2,
+      "quest",
+      "Protect the Harbor",
+      expect.objectContaining({ content: "Keep the gates closed." }),
+    );
+    expect(mockVaultStore.updateEntity).toHaveBeenCalledWith("id-quest", {
+      parent: "id-parent",
+    });
+    expect(mockVaultStore.addConnection).toHaveBeenCalledWith(
+      "id-quest",
+      "id-parent",
+      "related_to",
+      "Protects",
+    );
+    expect(mockVaultStore.saveImageToVault).toHaveBeenCalledWith(
+      expect.any(File),
+      "id-quest",
+      "harbor.png",
     );
   });
 });

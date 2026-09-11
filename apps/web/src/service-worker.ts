@@ -3,27 +3,26 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
-import { build, files, version } from "$service-worker";
-import { activateBuild, precacheBuild } from "$lib/service-worker/lifecycle";
+import {
+  activateBuild,
+  getVaultSeedUrls,
+  installWorker,
+  matchCurrentThenOlderCache,
+  seedVaultCache,
+  shouldHandleVaultRequest,
+} from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "456";
-const CACHE = `cache-${version}-${CACHE_VERSION}`;
-
-const ASSETS = [
-  ...build, // the app itself
-  ...files, // everything in `static`
-];
+const CACHE_VERSION = "630";
+const appVersion =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
+const CACHE = `cache-${appVersion}-${CACHE_VERSION}`;
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(
-    precacheBuild({
-      cacheName: CACHE,
-      assets: ASSETS,
-      cacheStorage: caches,
+    installWorker({
       skipWaiting: () => sw.skipWaiting(),
-      warn: (message, error) => console.warn(message, error),
     }),
   );
 });
@@ -31,9 +30,39 @@ sw.addEventListener("install", (event) => {
 sw.addEventListener("activate", (event) => {
   event.waitUntil(
     activateBuild({
-      cacheName: CACHE,
-      cacheStorage: caches,
       claimClients: () => sw.clients.claim(),
+    }),
+  );
+});
+
+sw.addEventListener("message", (event) => {
+  const data = event.data as
+    { type?: unknown; active?: unknown; urls?: unknown } | undefined;
+  if (
+    data?.type !== "VAULT_CACHE_SESSION" ||
+    data.active !== true ||
+    !Array.isArray(data.urls) ||
+    !event.source ||
+    !("url" in event.source)
+  ) {
+    return;
+  }
+
+  const urls = getVaultSeedUrls({
+    sourceUrl: event.source.url,
+    origin: location.origin,
+    requestedUrls: data.urls.filter(
+      (url): url is string => typeof url === "string",
+    ),
+  });
+  if (urls.length === 0) return;
+
+  event.waitUntil(
+    seedVaultCache({
+      cacheName: CACHE,
+      urls,
+      cacheStorage: caches,
+      fetchResource: (url) => fetch(url),
       warn: (message, error) => console.warn(message, error),
     }),
   );
@@ -44,7 +73,6 @@ sw.addEventListener("fetch", (event) => {
 
   async function respond() {
     const url = new URL(event.request.url);
-    const cache = await caches.open(CACHE);
 
     // 1. Bypass for cross-origin requests (e.g., CDN, Google Drive, Gemini)
     // We only want to manage local app assets.
@@ -77,29 +105,85 @@ sw.addEventListener("fetch", (event) => {
       return fetch(event.request);
     }
 
-    // build/files can always be served from the cache
-    if (ASSETS.includes(url.pathname)) {
-      const response = await cache.match(event.request);
-      if (response) return response;
+    // The worker is root-scoped because app and public routes share one origin,
+    // but only the interactive vault surface should participate in offline
+    // caching. Public generators, blogs, and discovery pages stay network-only.
+    let clientPathname: string | undefined;
+    if (event.request.mode !== "navigate" && event.clientId) {
+      const client = await sw.clients.get(event.clientId);
+      if (client) {
+        clientPathname = new URL(client.url).pathname;
+      }
     }
+
+    if (
+      !shouldHandleVaultRequest({
+        pathname: url.pathname,
+        mode: event.request.mode,
+        destination: event.request.destination,
+        clientPathname,
+      })
+    ) {
+      return fetch(event.request);
+    }
+
+    const cache = await caches.open(CACHE);
 
     // for everything else, try the network first, but fall back to the cache if we're offline
     try {
       const response = await fetch(event.request);
 
+      const contentType = response.headers.get("content-type") || "";
+      const isJsOrCss =
+        url.pathname.endsWith(".js") ||
+        url.pathname.endsWith(".css") ||
+        url.pathname.includes("/_app/immutable/");
+
+      // If a JS/CSS asset request returns HTML (e.g., Cloudflare SPA 404 fallback),
+      // return a 404 text response so script error handlers fail cleanly rather than throwing syntax errors.
+      if (isJsOrCss && contentType.includes("text/html")) {
+        return new Response("Asset missing (Version Skew)", {
+          status: 404,
+          statusText: "Not Found",
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
+
       // Only cache valid successful responses from our own origin
       if (response.status === 200 && url.origin === location.origin) {
-        cache.put(event.request, response.clone());
+        event.waitUntil(
+          cache.put(event.request, response.clone()).catch((error) => {
+            console.warn(
+              `[SW] Failed to cache response: ${url.pathname}`,
+              error,
+            );
+          }),
+        );
       }
 
       return response;
     } catch (err) {
-      const response = await cache.match(event.request);
+      const response = await matchCurrentThenOlderCache({
+        request: event.request,
+        currentCache: cache,
+        matchOlderCache: (request) => caches.match(request),
+      });
       if (response) return response;
 
       // If it's a navigation request and we don't have it in cache, return index.html (fallback for SPA)
       if (event.request.mode === "navigate") {
-        return (await cache.match("/")) || (await cache.match("index.html"));
+        return (
+          (await matchCurrentThenOlderCache({
+            request: "/",
+            currentCache: cache,
+            matchOlderCache: (request) => caches.match(request),
+          })) ??
+          matchCurrentThenOlderCache({
+            request: "/index.html",
+            currentCache: cache,
+            matchOlderCache: (request) => caches.match(request),
+          })
+        );
       }
 
       // If we are in development, don't return a 503, let the error bubble

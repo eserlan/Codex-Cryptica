@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
@@ -18,9 +19,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     isGuest: false,
     status: "idle",
   },
-}));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
-  modalUIStore: { showSettings: false, showDiceModal: false },
 }));
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: { mainViewMode: "graph", focusedEntityId: null },
@@ -39,7 +37,13 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
-vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
+vi.mock("$lib/config", () => ({
+  SCHEMA_ORG: {},
+  DISCORD_URL: "https://discord.gg/5UUMCChF2u",
+  REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",
+  GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
+  PATREON_URL: "https://patreon.com/EspenE",
+}));
 
 // Stub out the lazily-imported heavy components so dynamic imports resolve instantly
 vi.mock("../../lib/components/GraphView.svelte", async () => ({
@@ -76,6 +80,9 @@ describe("root +page.svelte — front page overlay keydown", () => {
     onboardingStore.dismissedWorldPage = false;
     onboardingStore.skipWelcomeScreen = true;
     onboardingStore.dismissedLandingPage = true;
+    modalUIStore.showSettings = false;
+    modalUIStore.showDiceModal = false;
+    modalUIStore.closeQuickStartModal();
   });
 
   it("presents the root landing page as a private local-first RPG vault", () => {
@@ -90,8 +97,18 @@ describe("root +page.svelte — front page overlay keydown", () => {
         name: /private rpg lore vault/i,
       }),
     ).toBeTruthy();
-    expect(screen.getByText("Welcome to Codex Cryptica")).toBeTruthy();
-    expect(screen.getByText(/local-first campaign manager/i)).toBeTruthy();
+    // The "Welcome to Codex Cryptica" eyebrow and the
+    // "RPG Campaign Manager & Worldbuilding Tool" subheading were removed: the
+    // header wordmark already names the product, and those keywords live in
+    // <title> and the meta description rather than needing a third statement
+    // on screen.
+    expect(screen.queryByText("Welcome to Codex Cryptica")).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: /rpg campaign manager & worldbuilding tool/i,
+      }),
+    ).toBeNull();
+    expect(screen.getByText(/private markdown notes/i)).toBeTruthy();
     expect(
       screen.getByRole("heading", { level: 2, name: /living lore graph/i }),
     ).toBeTruthy();
@@ -102,12 +119,48 @@ describe("root +page.svelte — front page overlay keydown", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        /opens a prebuilt sample world instantly\. no setup required\./i,
+        /quick start generates a ready-to-explore world in seconds/i,
       ),
     ).toBeTruthy();
     expect(screen.getByText("Local-first vault")).toBeTruthy();
     expect(screen.getByText("Spatial lore graph")).toBeTruthy();
     expect(screen.getByText("Optional AI")).toBeTruthy();
+
+    // Discord/Reddit/GitHub/Features/Changelog links used to be duplicated
+    // directly on the welcome screen; they now live on /explore, and the
+    // welcome page carries only the shared lightweight footer (#2830).
+    expect(screen.getByRole("link", { name: /^explore$/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^terms$/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^privacy$/i })).toBeTruthy();
+  });
+
+  it("renders complete Open Graph and Twitter Card tags in head", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(document.title).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const description = document.querySelector('meta[name="description"]');
+    expect(description?.getAttribute("content")).toContain(
+      "free, local-first RPG campaign manager",
+    );
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    expect(ogTitle?.getAttribute("content")).toBe(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+    );
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    expect(ogImage?.getAttribute("content")).toBe(
+      "https://assets.codexcryptica.com/screenshots/living-lore-graph.png",
+    );
+
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
   });
 
   it("sizes the app route shell to its parent instead of recomputing viewport height", () => {
@@ -160,5 +213,32 @@ describe("root +page.svelte — front page overlay keydown", () => {
     render(RoutePage);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onboardingStore.dismissedWorldPage).toBe(true);
+  });
+
+  it("opens Quick Start (not the blank vault switcher) from the welcome page's primary create action", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(modalUIStore.showQuickStartModal).toBe(false);
+    await fireEvent.click(screen.getByTestId("welcome-quick-start-button"));
+
+    // Quick Start itself is mounted once, globally, via GlobalModalProvider —
+    // not by this page — so we assert the shared trigger flag here.
+    expect(modalUIStore.showQuickStartModal).toBe(true);
+    expect(onboardingStore.dismissedLandingPage).toBe(true);
+  });
+
+  it("opens Quick Start from the Living Lore Graph preview card too", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    await fireEvent.click(screen.getByTestId("welcome-preview-button"));
+
+    expect(modalUIStore.showQuickStartModal).toBe(true);
+    expect(onboardingStore.dismissedLandingPage).toBe(true);
   });
 });

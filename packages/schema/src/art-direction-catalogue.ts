@@ -375,24 +375,32 @@ export const ART_THEMES: Record<string, ArtTheme> = {
   fantasy: {
     id: "theme.fantasy",
     label: "Fantasy",
-    // No "magic as subtle material detail" clause: it is the one theme rule
-    // that can be flatly wrong for an in-theme subject — an arch-lich mid-cast
-    // or a rift opening — and the theme layer sits after the subject, so it
-    // would get the last word.
-    medium: "painterly oil rendering with visible brushwork",
+    // The medium states the genre outright ("high-fantasy world of magic and
+    // myth") rather than relying on palette and material alone — those proved
+    // indistinguishable from a plain historical genre painting on their own.
+    // Still no blanket "magic as subtle material detail" clause: that would be
+    // flatly wrong for an in-theme subject — an arch-lich mid-cast or a rift
+    // opening — and the theme layer sits after the subject, so it would get
+    // the last word.
+    medium:
+      "painterly oil rendering with visible brushwork, set in a high-fantasy world of magic, myth, and sword-and-sorcery adventure",
     palette:
       "warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow",
     lighting: "natural or firelit key",
-    craftMaterials: "worn leather, hammered iron, stained wood, oiled cloth",
+    craftMaterials:
+      "worn leather, hammered iron, rune-etched steel, carved horn and bone, oiled cloth",
     terrainMaterials:
-      "hand-cut stone, weathered timber, thatch and slate, moss and lichen over old masonry",
+      "hand-cut stone circles, weathered timber, thatch and slate, moss over ivy-choked masonry, ancient ruins reclaimed by forest",
     exaltedMaterials:
       "spun gold thread, moonlit silver, living amber, crystal that holds its own light, cloth that never frays",
     exaltedPalette:
       "cool ivory and deep shadow with one saturated accent, the metals reading as light rather than colour",
-    styleReferences: ["nineteenth-century romantic oil painting"],
+    styleReferences: [
+      "nineteenth-century romantic oil painting",
+      "golden-age fantasy book illustration",
+    ],
     nameFreeFallback:
-      "traditional oil painting on canvas, layered glazes, warm varnished tone",
+      "traditional oil painting on canvas, layered glazes, warm varnished tone, high-fantasy subject matter with mythic and magical undertones",
   },
 
   scifi: {
@@ -496,6 +504,29 @@ export const ART_THEMES: Record<string, ArtTheme> = {
     styleReferences: ["baroque tenebrist painting"],
     nameFreeFallback:
       "tenebrist painting, single practical light source, deep unresolved shadow",
+  },
+
+  cosmic_horror: {
+    id: "theme.cosmic_horror",
+    label: "Cosmic Horror",
+    aliases: ["cosmic-horror", "cosmic horror"],
+    medium:
+      "weathered scientific field illustration with precise observational detail interrupted by one physically impossible feature",
+    palette:
+      "sea-green ink, faded chart paper, deep indigo shadow, and a restrained violet anomaly",
+    lighting:
+      "overcast coastal daylight or a single practical research lamp, with the anomaly emitting no visible glow",
+    craftMaterials:
+      "salt-stained canvas, brass instruments, annotated paper, wool coats, cracked lens glass",
+    terrainMaterials:
+      "wet basalt, tidal rock, fog-softened timber, concrete observatories, exposed strata",
+    exaltedMaterials:
+      "unweathered black glass, impossible geometry in pale ceramic, star-map gold leaf, translucent mineral surfaces",
+    exaltedPalette:
+      "cold ivory and near-black blue with one sea-green and violet disruption",
+    styleReferences: ["early twentieth-century scientific field plate"],
+    nameFreeFallback:
+      "weathered scientific field illustration, coastal fog, careful survey detail, one subtle impossible geometry",
   },
 
   steampunk: {
@@ -768,6 +799,16 @@ export const FACTION_BLUEPRINTS: Record<string, FactionBlueprint> = {
     ],
     signals:
       "cult regalia, ceremonial dress, or aristocratic decay; sacred objects handled with practised familiarity; hierarchy shown by who stands closest to the centre",
+  },
+  cosmic_horror: {
+    moments: [
+      "taking measurements at a restricted dig site",
+      "sealing a sample for transport",
+      "comparing contradictory field reports",
+      "holding a quiet quarantine cordon at the shoreline",
+    ],
+    signals:
+      "weatherproof field clothing and carefully labelled instruments; repeated survey marks and archive seals; authority shown by access to records, equipment, and the person trusted to record the result",
   },
   fallout: {
     moments: [
