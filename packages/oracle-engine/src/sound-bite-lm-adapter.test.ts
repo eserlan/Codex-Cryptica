@@ -13,17 +13,24 @@ describe("callLM", () => {
     error: vi.fn(),
   });
 
+  const createMockService = (
+    generateResponse: TextGenerationService["generateResponse"],
+  ): TextGenerationService => ({
+    generateResponse,
+    expandQuery: vi.fn(),
+    generateMergeProposal: vi.fn(),
+    generatePlotAnalysis: vi.fn(),
+  });
+
   it("successfully collects streaming chunks and returns response", async () => {
     const logger = createMockLogger();
-    const mockService: TextGenerationService = {
-      generateResponse: vi.fn(
-        async (_apiKey, _prompt, _history, _system, _model, onChunk) => {
-          onChunk?.("chunk1");
-          onChunk?.("chunk1 chunk2");
-          return "chunk1 chunk2";
-        },
-      ) as unknown as TextGenerationService["generateResponse"],
-    };
+    const mockService = createMockService(
+      vi.fn(async (_apiKey, _prompt, _history, _system, _model, onChunk) => {
+        onChunk?.("chunk1");
+        onChunk?.("chunk1 chunk2");
+        return "chunk1 chunk2";
+      }) as unknown as TextGenerationService["generateResponse"],
+    );
 
     const result = await callLM(
       mockService,
@@ -42,11 +49,11 @@ describe("callLM", () => {
 
   it("throws SoundBiteGenerationError when response is empty or whitespace", async () => {
     const logger = createMockLogger();
-    const mockService: TextGenerationService = {
-      generateResponse: vi.fn(
+    const mockService = createMockService(
+      vi.fn(
         async () => "",
       ) as unknown as TextGenerationService["generateResponse"],
-    };
+    );
 
     await expect(
       callLM(
@@ -75,12 +82,12 @@ describe("callLM", () => {
 
     for (const refusal of refusalPhrases) {
       const logger = createMockLogger();
-      const mockService: TextGenerationService = {
-        generateResponse: vi.fn(async (_k, _p, _h, _s, _m, onChunk) => {
+      const mockService = createMockService(
+        vi.fn(async (_k, _p, _h, _s, _m, onChunk) => {
           onChunk?.(refusal);
           return refusal;
         }) as unknown as TextGenerationService["generateResponse"],
-      };
+      );
 
       await expect(
         callLM(
@@ -102,11 +109,11 @@ describe("callLM", () => {
   it("rethrows error when textGeneration service throws", async () => {
     const logger = createMockLogger();
     const serviceError = new Error("Network timeout");
-    const mockService: TextGenerationService = {
-      generateResponse: vi.fn(async () => {
+    const mockService = createMockService(
+      vi.fn(async () => {
         throw serviceError;
       }) as unknown as TextGenerationService["generateResponse"],
-    };
+    );
 
     await expect(
       callLM(

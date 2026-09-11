@@ -111,7 +111,10 @@ describe("parseGenerationOutput", () => {
     ).toThrow(SoundBiteGenerationError);
 
     expect(() =>
-      parseGenerationOutput(JSON.stringify({ voiceProfile: {} }), "entity"),
+      parseGenerationOutput(
+        JSON.stringify({ transcript: "Present" }),
+        "entity",
+      ),
     ).toThrow(SoundBiteGenerationError);
 
     expect(() =>
