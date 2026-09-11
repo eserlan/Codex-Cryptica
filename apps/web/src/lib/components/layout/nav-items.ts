@@ -6,6 +6,8 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "$lib/stores/guest-vault.svelte";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
 /**
  * The one list of application navigation, shared by the Activity Bar and the
@@ -72,6 +74,9 @@ export function isToolActive(item: NavItem): boolean {
     return sessionModeStore.isGuestMode
       ? guestChatStore.showChatModal
       : layoutUIStore.mainViewMode === "guest-chat";
+  }
+  if (item.id === "generators") {
+    return modalUIStore.generatorWorkflow.open;
   }
   return layoutUIStore.activeSidebarTool === item.id;
 }
@@ -177,6 +182,25 @@ export function navItems(): NavItem[] {
       placement: "bar",
     },
   ];
+
+  if (!sessionModeStore.isGuestMode && isVaultReadyForGenerators(vault)) {
+    items.push({
+      id: "generators",
+      icon: "icon-[lucide--wand-2]",
+      label: "Generators",
+      title:
+        "Generators — create characters, factions, locations, and campaign lore",
+      action: () => {
+        if (modalUIStore.generatorWorkflow.open) {
+          modalUIStore.closeGeneratorWorkflow();
+        } else {
+          modalUIStore.openGeneratorWorkflow();
+        }
+      },
+      group: "tool",
+      placement: "overflow",
+    });
+  }
 
   if (!sessionModeStore.isGuestMode) {
     items.push({

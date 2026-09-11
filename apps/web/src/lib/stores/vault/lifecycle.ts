@@ -178,6 +178,7 @@ export class VaultLifecycleManager {
         if (this.deps.activeVaultId() === id) return;
 
         this.deps.syncStore.setStatus("loading");
+        this.deps.setInitialized(false);
 
         // Flush debounced saves and drain the queue before clearing state
         try {

@@ -4,6 +4,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { resolveIntentContext } from "./contextual-intent-helper";
   import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
   let initialPrompt = $state("");
 
@@ -25,6 +26,11 @@
   }
 
   function selectIntent(category: IntentCategory) {
+    if (!isVaultReadyForGenerators(vault)) {
+      close();
+      return;
+    }
+
     const selectedId = vault.selectedEntityId;
     const activeEntity = selectedId ? vault.entities[selectedId] : null;
     const context = resolveIntentContext(category, {

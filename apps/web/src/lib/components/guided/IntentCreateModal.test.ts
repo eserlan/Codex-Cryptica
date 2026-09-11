@@ -7,6 +7,9 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     selectedEntityId: null,
     entities: {},
+    isInitialized: true,
+    activeVaultId: "vault-1",
+    status: "idle",
   },
 }));
 
@@ -28,6 +31,9 @@ describe("IntentCreateModal", () => {
     vi.clearAllMocks();
     (vault as any).selectedEntityId = null;
     (vault as any).entities = {};
+    (vault as any).isInitialized = true;
+    (vault as any).activeVaultId = "vault-1";
+    (vault as any).status = "idle";
   });
 
   it("shows all six intent categories", () => {
@@ -102,5 +108,29 @@ describe("IntentCreateModal", () => {
       null,
       "Shadow Operative",
     );
+  });
+
+  it("does not launch a generator while the vault is switching", async () => {
+    (vault as any).status = "loading";
+
+    render(IntentCreateModal);
+    await fireEvent.click(screen.getByTestId("intent-character"));
+
+    expect(modalUIStore.openIntentGeneratorWorkflow).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflow).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
+    expect(modalUIStore.closeIntentCreateMenu).toHaveBeenCalled();
+  });
+
+  it("does not launch a generator before the vault is initialized", async () => {
+    (vault as any).isInitialized = false;
+
+    render(IntentCreateModal);
+    await fireEvent.click(screen.getByTestId("intent-character"));
+
+    expect(modalUIStore.openIntentGeneratorWorkflow).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflow).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
+    expect(modalUIStore.closeIntentCreateMenu).toHaveBeenCalled();
   });
 });

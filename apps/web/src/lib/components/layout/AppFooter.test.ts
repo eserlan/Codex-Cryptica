@@ -29,6 +29,9 @@ describe("AppFooter", () => {
     expect(patreonLink.getAttribute("href")).toBe(
       "https://patreon.com/codexcryptica",
     );
+    expect(screen.getByRole("link", { name: "Generators" })).toBeTruthy();
+    const generatorsLink = screen.getByRole("link", { name: "Generators" });
+    expect(generatorsLink.getAttribute("href")).toBe("/generators");
     expect(screen.getByRole("link", { name: "Explore" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Privacy" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Terms" })).toBeTruthy();
