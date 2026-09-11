@@ -173,9 +173,9 @@ GitHub Actions through `scripts/discord-deploy.sh`. The release-comms writer
 also creates a Discord draft, but does not send a duplicate content-specific
 deployment message.
 
-### Manual Instagram publishing
+### Automated Instagram publishing
 
-Instagram is intentionally never posted by the deploy agent. Every
+Instagram is posted by the deploy agent. Every
 Bluesky-qualified item also qualifies for Instagram, using the exact same
 final caption and verified R2 social image. This keeps the two posts aligned
 without asking the writer to invent a second version.
@@ -194,7 +194,12 @@ The account must be a Meta-supported professional Instagram account connected
 to the relevant Facebook Page. Confirm the current app permissions and API
 version in Meta's dashboard before its first real post.
 
-First exercise the command without a network write:
+First exercise the full deploy-agent path without a network write using the
+dry-run command in section 2. It will produce matching `dry-run://bluesky/`
+and `dry-run://instagram/` URLs for every Bluesky-qualified draft.
+
+The standalone command remains useful for diagnosing Meta credentials without
+publishing:
 
 ```sh
 bun run post:instagram -- --dry-run \
@@ -203,10 +208,10 @@ bun run post:instagram -- --dry-run \
   "The exact final Bluesky caption, unchanged"
 ```
 
-For a real post, remove `--dry-run` and paste the exact resolved Bluesky
-caption plus its R2 image URL. Run once for each Bluesky post; do not combine
-separate Bluesky drafts into one Instagram caption. After it returns the
-permalink, mark the matching Instagram cell in the release tracker.
+On a real release the agent creates one Instagram post per Bluesky post; it
+does not combine separate Bluesky drafts. Successful Instagram permalinks and
+tracker state are checkpointed separately, so a Meta failure retries only the
+missing Instagram post and never duplicates Bluesky.
 
 The Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
 remains a separate, unconfigured channel.

@@ -9,7 +9,7 @@ export interface InstagramQualificationResult {
 
 /**
  * Instagram is deliberately coupled to Bluesky qualification. It does not
- * need its own writer output: each manual Instagram post uses the exact
+ * need its own writer output: each Instagram post uses the exact
  * resolved Bluesky caption and the same R2 social asset.
  */
 export function deriveInstagramQualification(
@@ -114,7 +114,7 @@ function form(fields: Record<string, string>): string {
   return new URLSearchParams(fields).toString();
 }
 
-/** Publish one manually-approved Instagram image post through Meta Graph API. */
+/** Publish one Instagram image post through Meta Graph API. */
 export async function publishInstagramPost(
   options: PublishInstagramOptions,
 ): Promise<InstagramPublication> {

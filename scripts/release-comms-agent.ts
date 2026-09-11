@@ -18,7 +18,10 @@ import {
   publishToDiscord,
   type DiscordDestinationConfig,
 } from "./release-comms-discord.ts";
-import { deriveInstagramQualification } from "./release-comms-instagram.ts";
+import {
+  deriveInstagramQualification,
+  publishInstagramPost,
+} from "./release-comms-instagram.ts";
 import {
   insertTrackerRow,
   updateTrackerPlatformStatus,
@@ -27,6 +30,7 @@ import {
   BLUESKY_CHARACTER_LIMIT,
   blueskyTextLength,
   isReleaseCommsDryRun,
+  prepareBlueskyText,
   publishBlueskyPost,
   publishDiscussion,
 } from "./release-comms-publish.ts";
@@ -812,6 +816,39 @@ export async function main(promoteRunId: string): Promise<void> {
       });
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
+    // Instagram mirrors Bluesky exactly, but is checkpointed separately: an
+    // Instagram failure never repeats an already-successful Bluesky post.
+    const publishedInstagram = entry.publications?.instagram ?? [];
+    for (const draft of drafts.bluesky.filter(
+      (draft) =>
+        !publishedInstagram.some(
+          (publication) => publication.pageUrl === draft.pageUrl,
+        ),
+    )) {
+      const asset = await resolveSocialAsset(
+        publicPageFor(publicContent, draft.pageUrl),
+      );
+      const publication = await publishInstagramPost({
+        asset,
+        caption: prepareBlueskyText(draft.text, asset.pageUrl),
+        dryRun: isReleaseCommsDryRun(),
+      });
+      console.log(
+        `[release-comms] published Instagram post: ${publication.url}`,
+      );
+      entry = {
+        ...entry,
+        publications: {
+          ...entry.publications!,
+          instagram: [
+            ...publishedInstagram,
+            { pageUrl: draft.pageUrl, url: publication.url },
+          ],
+        },
+      };
+      publishedInstagram.push({ pageUrl: draft.pageUrl, url: publication.url });
+      await saveReleaseCommsState(recordEvaluation(state, entry));
+    }
     const publishedDiscussions = entry.publications?.githubDiscussions ?? [];
     for (const draft of drafts.github_discussions.filter(
       (draft) =>
@@ -912,7 +949,7 @@ export async function main(promoteRunId: string): Promise<void> {
         platforms: {
           bluesky: true,
           discord: false,
-          instagram: false,
+          instagram: (entry.publications?.instagram?.length ?? 0) > 0,
           patreon: false,
         },
       },
@@ -935,6 +972,20 @@ export async function main(promoteRunId: string): Promise<void> {
     if (!trackerResult.success) {
       console.error(
         `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
+      );
+    }
+  }
+
+  if (entry.publications?.instagram) {
+    const trackerResult = await updateTrackerPlatformStatus(
+      newSha.slice(0, 7),
+      "Instagram",
+      true,
+      REPOSITORY_ROOT,
+    );
+    if (!trackerResult.success) {
+      console.error(
+        `[release-comms] could not update Instagram tracker status: ${trackerResult.error}`,
       );
     }
   }

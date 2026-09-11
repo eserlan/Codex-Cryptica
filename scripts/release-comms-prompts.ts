@@ -207,6 +207,9 @@ export function formatIssueComment(
         ...entry.publications.bluesky.map(
           (post) => `- Bluesky: ${post.url} (${post.pageUrl})`,
         ),
+        ...(entry.publications.instagram ?? []).map(
+          (post) => `- Instagram: ${post.url} (${post.pageUrl})`,
+        ),
         ...entry.publications.githubDiscussions.map(
           (post) => `- GitHub Discussion: ${post.url} (${post.pageUrl})`,
         ),
@@ -227,9 +230,9 @@ export function formatIssueComment(
     "Discord:",
     drafts.discord || "(not recommended for this release)",
     "",
-    "Instagram (manual):",
+    "Instagram (published automatically):",
     drafts.bluesky.length > 0
-      ? "Each Bluesky draft also qualifies for Instagram. Publish it manually with its exact caption and the same R2 social image."
+      ? "Each Bluesky draft is published automatically with its exact caption and the same R2 social image."
       : "(not recommended for this release)",
     "",
     "Reddit:",
@@ -240,7 +243,7 @@ export function formatIssueComment(
       .map((post) => `- ${post.title} (${post.pageUrl})`)
       .join("\n") || "(not recommended for this release)",
     "",
-    "Bluesky and GitHub Discussions are published automatically for validated public-page drafts. Discord is sent to configured webhooks. Instagram is manual-only and must reuse each exact Bluesky caption with its R2 social image; Reddit remains a draft.",
+    "Bluesky, Instagram, and GitHub Discussions are published automatically for validated public-page drafts. Instagram mirrors each exact resolved Bluesky caption and R2 social image. Discord is sent to configured webhooks; Reddit remains a draft.",
     "",
     "<details><summary>Raw evaluator + writer output</summary>",
     "",

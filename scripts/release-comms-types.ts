@@ -34,6 +34,8 @@ export interface WriterResult {
 
 export interface ReleaseCommsPublications {
   bluesky: Array<{ pageUrl: string; url: string }>;
+  /** Instagram posts mirror the exact resolved Bluesky caption and R2 asset. */
+  instagram?: Array<{ pageUrl: string; url: string }>;
   githubDiscussions: Array<{ pageUrl: string; url: string }>;
   /** IDs of Discord destinations the derived announcement has been successfully delivered to. */
   discord?: string[];

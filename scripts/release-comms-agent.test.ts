@@ -761,7 +761,7 @@ describe("release-comms-agent", () => {
         },
       );
       expect(comment).toContain(
-        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (manual):",
+        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (published automatically):",
       );
     });
 

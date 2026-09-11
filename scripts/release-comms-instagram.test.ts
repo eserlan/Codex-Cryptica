@@ -4,6 +4,7 @@ import {
   publishInstagramPost,
 } from "./release-comms-instagram.ts";
 import type { EvaluatorResult, WriterResult } from "./release-comms-types.ts";
+import { formatIssueComment } from "./release-comms-prompts.ts";
 
 const asset = {
   pageUrl: "https://codexcryptica.com/answers/example",
@@ -172,5 +173,33 @@ describe("release-comms-instagram", () => {
         }),
       ).rejects.toThrow("processing ended with ERROR");
     });
+  });
+
+  it("shows checkpointed Instagram permalinks in the release approval comment", () => {
+    const comment = formatIssueComment(
+      {
+        sha: "1234567890abcdef",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "999",
+        postworthy: true,
+        reason: "A useful improvement",
+        publications: {
+          bluesky: [],
+          instagram: [
+            {
+              pageUrl: asset.pageUrl,
+              url: "https://www.instagram.com/p/example/",
+            },
+          ],
+          githubDiscussions: [],
+        },
+      },
+      { postworthy: true, reason: "A useful improvement" },
+      { bluesky: [], reddit: "", github_discussions: [] },
+    );
+
+    expect(comment).toContain(
+      "- Instagram: https://www.instagram.com/p/example/ (https://codexcryptica.com/answers/example)",
+    );
   });
 });
