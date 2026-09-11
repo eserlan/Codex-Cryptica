@@ -118,13 +118,13 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     {
       system: "Night's Black Agents",
       rationale:
-        "The Conspyramid lays out the conspiracy as connected nodes at rising levels of importance, so agents can expose and attack their way upward; its companion Vampyramid selects the conspiracy's threat-appropriate counter-moves as that pressure builds. Together they give the GM a concrete structure for both the hidden organisation and its escalating reaction.",
+        "The Conspyramid lays out the conspiracy as connected nodes at rising levels of importance, so agents can expose and attack their way upward; its companion Vampyramid selects the conspiracy's threat-appropriate counter-moves as that pressure builds, giving the GM a concrete structure for both the hidden organisation and its escalating reaction.",
       href: "https://pelgranepress.com/2015/06/01/pyramid-linking-for-fun-and-profit/",
     },
     {
       system: "GUMSHOE",
       rationale:
-        "Each investigative scene has a designated core clue: the information required to reach the next scene. The GM supplies it when the investigators use a relevant ability or propose another plausible method, moving the challenge from whether the party finds the lead to what they infer and do with it.",
+        "Each investigative scene has a designated core clue: the information required to reach the next scene, which the GM supplies when the investigators use a relevant ability or propose another plausible method, moving the challenge from whether the party finds the lead to what they infer and do with it.",
       href: "https://pelgranepress.com/gumshoe/files/GUMSHOE%20SRD%20CC%20version.pdf",
     },
   ],

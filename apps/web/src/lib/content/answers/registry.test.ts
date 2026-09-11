@@ -530,6 +530,7 @@ describe("published answers", () => {
     for (const reference of conspiracyAnswer.systemsThatSupportThis ?? []) {
       expect(reference.href).toMatch(/^https:\/\//);
       expect(reference.rationale.length).toBeGreaterThan(0);
+      expect(reference.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
   });
 
