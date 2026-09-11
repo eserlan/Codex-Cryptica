@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  DEFAULT_RECONCILE_INTERVAL_MS,
   MAX_BODY_BYTES,
   readRequestBody,
   reconcileOpenPrs,
+  resolveReconcileIntervalMs,
   shouldHandleEvent,
   summariseEvent,
   isStagingPush,
@@ -144,6 +146,30 @@ describe("PR webhook listener", () => {
       process.env.PR_AUTO_MERGE = previousAutoMerge;
       clearSpy?.mockRestore();
     }
+  });
+
+  describe("resolveReconcileIntervalMs", () => {
+    it("uses the provided value when it is finite and positive", () => {
+      expect(resolveReconcileIntervalMs("120000")).toBe(120_000);
+    });
+
+    it("falls back to the default for undefined, malformed, zero, or negative values", () => {
+      expect(resolveReconcileIntervalMs(undefined)).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("not-a-number")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("0")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("-5000")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("Infinity")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+    });
   });
 
   describe("reconcileOpenPrs", () => {

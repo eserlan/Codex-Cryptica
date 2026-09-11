@@ -21,8 +21,19 @@ const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
 export const MAX_BODY_BYTES = 1_000_000;
 const AUTO_MERGE_ENABLED = process.env.PR_AUTO_MERGE === "true";
 const AUTO_MERGE_QUIET_MS = 60_000;
-const RECONCILE_INTERVAL_MS = Number(
-  process.env.PR_RECONCILE_INTERVAL_MS ?? 5 * 60_000,
+export const DEFAULT_RECONCILE_INTERVAL_MS = 5 * 60_000;
+
+export function resolveReconcileIntervalMs(
+  rawValue: string | undefined,
+): number {
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_RECONCILE_INTERVAL_MS;
+}
+
+const RECONCILE_INTERVAL_MS = resolveReconcileIntervalMs(
+  process.env.PR_RECONCILE_INTERVAL_MS,
 );
 
 const activeJobs = new Map<number, ReturnType<typeof spawn>>();
@@ -331,6 +342,8 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
   }
 }
 
+const RECONCILE_LIST_LIMIT = 1000;
+
 function listOpenStagingPrIds(): number[] {
   try {
     const raw = execFileSync(
@@ -342,6 +355,8 @@ function listOpenStagingPrIds(): number[] {
         "staging",
         "--state",
         "open",
+        "--limit",
+        String(RECONCILE_LIST_LIMIT),
         "--json",
         "number",
       ],
@@ -354,7 +369,10 @@ function listOpenStagingPrIds(): number[] {
     return (JSON.parse(raw) as Array<{ number: number }>).map(
       (pr) => pr.number,
     );
-  } catch {
+  } catch (error) {
+    console.error(
+      `[webhook] could not list open staging PRs for reconciliation: ${error instanceof Error ? error.message : error}`,
+    );
     return [];
   }
 }
