@@ -304,4 +304,145 @@ describe("GeneratorConfigForm", () => {
       ).value,
     ).toBe("Custody of the orbital elevator");
   });
+
+  it("renders favourite generators in a dedicated section when starred", async () => {
+    const { GeneratorFavoritesStore } =
+      await import("$lib/stores/ui/generator-favorites.svelte");
+    const { UIPersistence, UI_STORAGE_KEYS } =
+      await import("$lib/stores/ui/persistence");
+
+    const storageMap = new Map<string, string>();
+    const mockStorage = {
+      getItem: (k: string) => storageMap.get(k) ?? null,
+      setItem: (k: string, v: string) => storageMap.set(k, v),
+      removeItem: (k: string) => storageMap.delete(k),
+    };
+    storageMap.set(
+      UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
+      JSON.stringify(["npc"]),
+    );
+
+    const persistence = new UIPersistence({ storage: mockStorage as any });
+    const favoritesStore = new GeneratorFavoritesStore(persistence);
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+        favoritesStore,
+      },
+    });
+
+    // Favourites section should exist
+    expect(screen.getByText("Favourites")).toBeTruthy();
+
+    // The star button for NPC in favourites should have remove aria-label
+    const removeNpcButtons = screen.getAllByRole("button", {
+      name: "Remove NPC from favourites",
+    });
+    expect(removeNpcButtons).toHaveLength(1);
+    expect(removeNpcButtons[0].getAttribute("aria-pressed")).toBe("true");
+
+    // Click to unstar NPC
+    await fireEvent.click(removeNpcButtons[0]);
+
+    // Favourites store should now be empty and Favourites section disappears
+    expect(favoritesStore.isFavorite("npc")).toBe(false);
+    expect(screen.queryByText("Favourites")).toBeNull();
+    expect(
+      screen.getByText(
+        "Star generators you use often to keep them at the top.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("filters generators by search query and shows clear button", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const searchInput = screen.getByPlaceholderText(
+      "Search generators by name, category, or description...",
+    );
+
+    // Search for "dungeon"
+    await fireEvent.input(searchInput, { target: { value: "dungeon" } });
+
+    // Should find Dungeon generator, but not Settlement
+    expect(screen.getByText("Dungeon / Delve")).toBeTruthy();
+    expect(screen.queryByText("Settlement")).toBeNull();
+
+    // Clear search button should appear
+    const clearButton = screen.getByRole("button", {
+      name: "Clear generator search",
+    });
+    await fireEvent.click(clearButton);
+
+    // After clearing, Settlement should be visible again
+    expect(screen.getByText("Settlement")).toBeTruthy();
+
+    // Search for non-matching query
+    await fireEvent.input(searchInput, { target: { value: "xyznonexistent" } });
+    expect(
+      screen.getByText('No generators match "xyznonexistent".'),
+    ).toBeTruthy();
+  });
+
+  it("filters by generator description", async () => {
+    render(GeneratorConfigForm, { props: { generatorId: "npc", onsubmit: vi.fn() } });
+
+    await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
+      target: { value: "subterranean" },
+    });
+
+    expect(screen.getByText("Dungeon / Delve")).toBeTruthy();
+    expect(screen.queryByText("NPC")).toBeNull();
+  });
+
+  it("filters by the resolved entity category label", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [{ id: "character", label: "Character" }],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    await fireEvent.input(screen.getByPlaceholderText(/Search generators/), {
+      target: { value: "character" },
+    });
+
+    expect(screen.getByText("NPC")).toBeTruthy();
+    expect(screen.queryByText("Settlement")).toBeNull();
+  });
+
+  it("does not submit when Enter is pressed in generator search", async () => {
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, { props: { generatorId: "npc", onsubmit } });
+
+    await fireEvent.keyDown(screen.getByPlaceholderText(/Search generators/), {
+      key: "Enter",
+    });
+
+    expect(onsubmit).not.toHaveBeenCalled();
+  });
+
+  it("disables favourite toggles when the picker is disabled", () => {
+    render(
+      GeneratorConfigForm,
+      { props: { generatorId: "npc", disabled: true, onsubmit: vi.fn() } },
+    );
+
+    const favoriteButtons = screen.getAllByRole("button", {
+      name: /favourites$/,
+      hidden: true,
+    });
+    expect(favoriteButtons.length).toBeGreaterThan(0);
+    expect(
+      favoriteButtons.every((button) => (button as HTMLButtonElement).disabled),
+    ).toBe(true);
+  });
 });
