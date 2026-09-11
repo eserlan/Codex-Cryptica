@@ -117,6 +117,26 @@ export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
     linkText: "Explore Codex Cryptica Campaign Manager",
     href: "/solutions/campaign-manager",
   },
+  systemsThatSupportThis: [
+    {
+      system: "Exalted",
+      rationale:
+        "Exalted 3rd Edition rewards stunts on a three-tier scale: a one-die stunt is a solidly narrated action, a two-die stunt weaves in scene details or another character and refunds a point of Willpower, and a three-die stunt is a standout piece of narration that refunds two points of Willpower, tying descriptive quality to both bonus dice and resource recovery.",
+      href: "https://www.drivethrurpg.com/product/162759/Exalted-3rd-Edition",
+    },
+    {
+      system: "Wushu",
+      rationale:
+        "Wushu's core resolution rule is 'the more details you narrate, the more dice you roll': each descriptive detail a player adds to their action declaration grants one additional die, explicitly converting cinematic imagination into mechanical advantage on every action.",
+      href: "https://www.drivethrurpg.com/product/17044/Wushu-Open",
+    },
+    {
+      system: "Feng Shui 2",
+      rationale:
+        "Feng Shui 2 formalises stunts through its shot-cost system and explicit GM guidance: rolling 4 or more above difficulty earns a free cinematic benefit, and the rules instruct players to narrate 'awesome hijinx' rather than saying 'I hit him', making descriptive engagement structurally expected rather than optional.",
+      href: "https://www.atlas-games.com/fengshui2/",
+    },
+  ],
   relatedTools: [
     {
       title: "Combat Encounter Generator",
