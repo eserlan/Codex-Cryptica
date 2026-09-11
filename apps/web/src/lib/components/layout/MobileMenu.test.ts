@@ -69,6 +69,22 @@ describe("MobileMenu", () => {
       expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
     });
 
+    it("hides the Generators shortcut while the active vault is loading", () => {
+      vault.status = "loading";
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
+    it("hides the Generators shortcut when there is no active vault", () => {
+      vaultRegistry.activeVaultId = null;
+
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.queryByTestId("mobile-menu-generators")).toBeNull();
+    });
+
     // This list was four hardcoded links and had fallen behind the bar.
     it("lists every view, including the ones added after it was written", () => {
       render(MobileMenu, { isOpen: true });

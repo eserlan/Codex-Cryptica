@@ -11,6 +11,7 @@ import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
@@ -47,6 +48,8 @@ describe("ActivityBar", () => {
     guestChatStore.showChatModal = false;
     sessionModeStore.isGuestMode = false;
     vault.isInitialized = true;
+    vaultRegistry.activeVaultId = "vault-1";
+    vault.status = "idle";
     page.url.pathname = "/";
   });
 
@@ -250,6 +253,22 @@ describe("ActivityBar", () => {
 
   it("hides the Generators shortcut when no vault is initialized", () => {
     vault.isInitialized = false;
+
+    render(ActivityBar);
+
+    expect(screen.queryByTestId("activity-bar-generators")).toBeNull();
+  });
+
+  it("hides the Generators shortcut while the active vault is loading", () => {
+    vault.status = "loading";
+
+    render(ActivityBar);
+
+    expect(screen.queryByTestId("activity-bar-generators")).toBeNull();
+  });
+
+  it("hides the Generators shortcut when there is no active vault", () => {
+    vaultRegistry.activeVaultId = null;
 
     render(ActivityBar);
 
