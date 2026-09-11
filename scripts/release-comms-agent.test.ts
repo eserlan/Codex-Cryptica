@@ -25,6 +25,7 @@ import {
   runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
   selectPendingDiscordDestinations,
+  selectPendingInstagramHandoffs,
   type EvaluatorResult,
   type ReleaseCommsState,
   type WriterResult,
@@ -775,7 +776,7 @@ describe("release-comms-agent", () => {
         },
       );
       expect(comment).toContain(
-        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (manual):",
+        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (published automatically when recommended; shown here for reference):",
       );
     });
 
@@ -864,6 +865,30 @@ describe("release-comms-agent", () => {
       expect(
         deriveInstagramQualification(result, drafts).recommendedChannels,
       ).toContain("instagram");
+    });
+
+    it("retries only an Instagram handoff without a persisted permalink", () => {
+      const handoffs = [
+        {
+          pageUrl: "https://codexcryptica.com/answers/posted",
+          caption: "Already posted",
+          imageUrl: "https://assets.codexcryptica.com/og/posted.jpg",
+        },
+        {
+          pageUrl: "https://codexcryptica.com/answers/retry",
+          caption: "Retry this one",
+          imageUrl: "https://assets.codexcryptica.com/og/retry.jpg",
+        },
+      ];
+
+      expect(
+        selectPendingInstagramHandoffs(handoffs, [
+          {
+            pageUrl: "https://codexcryptica.com/answers/posted",
+            url: "https://www.instagram.com/p/posted/",
+          },
+        ]),
+      ).toEqual([handoffs[1]]);
     });
   });
 

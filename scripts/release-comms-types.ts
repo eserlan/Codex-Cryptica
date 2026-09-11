@@ -41,7 +41,7 @@ export interface ReleaseCommsPublications {
   discord?: string[];
 }
 
-/** The durable, operator-ready input for one manual Instagram post. */
+/** Durable input for one automatic Instagram post and its resumable retry. */
 export interface InstagramHandoff {
   pageUrl: string;
   /** The final Bluesky text after its page URL has been resolved. */
@@ -60,7 +60,7 @@ export interface ReleaseCommsHistoryEntry {
   recommendedChannels?: string[];
   reason: string;
   drafts?: WriterResult;
-  /** Resolved before publishing so a resumed run preserves manual handoff input. */
+  /** Resolved before publishing so a resumed run preserves Instagram input. */
   instagramHandoffs?: InstagramHandoff[];
   publications?: ReleaseCommsPublications;
   /** False while an external publish is resumable; omitted for older completed entries. */

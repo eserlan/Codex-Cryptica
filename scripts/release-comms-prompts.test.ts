@@ -36,7 +36,7 @@ describe("formatIssueComment", () => {
       "Why it is worth posting:\nnew generator\n\nBluesky",
     );
     expect(comment).toContain(
-      "Discord:\ndiscord draft\n\nInstagram (manual):\n(no resolved Bluesky handoff is available)\n\nReddit:",
+      "Discord:\ndiscord draft\n\nInstagram (published automatically when recommended; shown here for reference):\n(no resolved Bluesky handoff is available)\n\nReddit:",
     );
   });
 

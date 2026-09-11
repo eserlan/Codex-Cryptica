@@ -18,7 +18,10 @@ import {
   publishToDiscord,
   type DiscordDestinationConfig,
 } from "./release-comms-discord.ts";
-import { deriveInstagramQualification } from "./release-comms-instagram.ts";
+import {
+  deriveInstagramQualification,
+  publishInstagramPost,
+} from "./release-comms-instagram.ts";
 import {
   insertTrackerRow,
   updateTrackerPlatformStatus,
@@ -47,6 +50,7 @@ import {
 } from "./release-comms-state.ts";
 import type {
   EvaluatorResult,
+  InstagramHandoff,
   ReleaseCommsHistoryEntry,
   WriterResult,
 } from "./release-comms-types.ts";
@@ -673,6 +677,20 @@ export function selectPendingDiscordDestinations(
   );
 }
 
+/**
+ * Instagram handoffs that do not yet have a persisted permalink. Keeping this
+ * selection separate makes a resumed release retry only the failed post.
+ */
+export function selectPendingInstagramHandoffs(
+  handoffs: InstagramHandoff[],
+  published: Array<{ pageUrl: string; url: string }>,
+): InstagramHandoff[] {
+  return handoffs.filter(
+    (handoff) =>
+      !published.some((publication) => publication.pageUrl === handoff.pageUrl),
+  );
+}
+
 export async function main(promoteRunId: string): Promise<void> {
   const state = await loadReleaseCommsState();
   const { newSha, previousSha: resolvedPreviousSha } =
@@ -861,6 +879,56 @@ export async function main(promoteRunId: string): Promise<void> {
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
   }
+
+  // Auto-publish to Instagram using the exact resolved Bluesky caption and
+  // R2 asset for each handoff, mirroring the Bluesky/Discussions loops
+  // above. A failure here (Meta API error, rate limit, etc.) must not be
+  // swallowed: leave completed false so the next invocation retries only
+  // the missing Instagram post instead of silently dropping it.
+  let instagramPublishFailed = false;
+  if (
+    entry.instagramHandoffs?.length &&
+    result.recommended_channels?.includes("instagram")
+  ) {
+    const publishedInstagram = entry.publications?.instagram ?? [];
+    for (const handoff of selectPendingInstagramHandoffs(
+      entry.instagramHandoffs,
+      publishedInstagram,
+    )) {
+      try {
+        const publication = await publishInstagramPost({
+          asset: {
+            pageUrl: handoff.pageUrl,
+            imageUrl: handoff.imageUrl,
+            imageAlt: "",
+          },
+          caption: handoff.caption,
+          dryRun: isReleaseCommsDryRun(),
+        });
+        console.log(
+          `[release-comms] published Instagram post: ${publication.url}`,
+        );
+        publishedInstagram.push({
+          pageUrl: handoff.pageUrl,
+          url: publication.url,
+        });
+        entry = {
+          ...entry,
+          publications: {
+            ...entry.publications!,
+            instagram: [...publishedInstagram],
+          },
+        };
+        await saveReleaseCommsState(recordEvaluation(state, entry));
+      } catch (error) {
+        instagramPublishFailed = true;
+        console.error(
+          `[release-comms] failed to publish Instagram post for ${handoff.pageUrl}: ${error instanceof Error ? error.message : error}`,
+        );
+        break;
+      }
+    }
+  }
   // Auto-publish to configured Discord destinations if enabled. This runs
   // before the entry is marked completed: if the webhook fails, completed
   // stays false so the next invocation resumes and retries delivery instead
@@ -909,7 +977,10 @@ export async function main(promoteRunId: string): Promise<void> {
     }
   }
 
-  entry = { ...entry, completed: !discordPublishFailed };
+  entry = {
+    ...entry,
+    completed: !discordPublishFailed && !instagramPublishFailed,
+  };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 
   if (isReleaseCommsDryRun()) {
@@ -952,6 +1023,20 @@ export async function main(promoteRunId: string): Promise<void> {
     if (!trackerResult.success) {
       console.error(
         `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
+      );
+    }
+  }
+
+  if (entry.publications?.instagram?.length) {
+    const trackerResult = await updateTrackerPlatformStatus(
+      newSha.slice(0, 7),
+      "Instagram",
+      true,
+      REPOSITORY_ROOT,
+    );
+    if (!trackerResult.success) {
+      console.error(
+        `[release-comms] could not update Instagram tracker status: ${trackerResult.error}`,
       );
     }
   }

@@ -227,7 +227,9 @@ describe("release-comms-instagram", () => {
       { bluesky: [], reddit: "", github_discussions: [] },
     );
 
-    expect(comment).toContain("Instagram (manual):");
+    expect(comment).toContain(
+      "Instagram (published automatically when recommended; shown here for reference):",
+    );
     expect(comment).toContain(`Image: ${asset.imageUrl}`);
     expect(comment).toContain("Exact final caption");
   });
