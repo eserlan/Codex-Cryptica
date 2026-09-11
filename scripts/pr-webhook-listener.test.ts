@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  DEFAULT_RECONCILE_INTERVAL_MS,
   MAX_BODY_BYTES,
   readRequestBody,
+  reconcileOpenPrs,
+  resolveReconcileIntervalMs,
   shouldHandleEvent,
   summariseEvent,
   isStagingPush,
@@ -145,16 +148,49 @@ describe("PR webhook listener", () => {
     }
   });
 
-  it("defaults INTERNAL_REVIEW_ENABLED to false when PR_INTERNAL_REVIEW is unset", async () => {
-    const previous = process.env.PR_INTERNAL_REVIEW;
-    delete process.env.PR_INTERNAL_REVIEW;
-    try {
-      const { INTERNAL_REVIEW_ENABLED } = await import(
-        `./pr-webhook-listener.ts?review-default-test=${Date.now()}`
+  describe("resolveReconcileIntervalMs", () => {
+    it("uses the provided value when it is finite and positive", () => {
+      expect(resolveReconcileIntervalMs("120000")).toBe(120_000);
+    });
+
+    it("falls back to the default for undefined, malformed, zero, or negative values", () => {
+      expect(resolveReconcileIntervalMs(undefined)).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
       );
-      expect(INTERNAL_REVIEW_ENABLED).toBe(false);
-    } finally {
-      if (previous !== undefined) process.env.PR_INTERNAL_REVIEW = previous;
-    }
+      expect(resolveReconcileIntervalMs("not-a-number")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("0")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("-5000")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+      expect(resolveReconcileIntervalMs("Infinity")).toBe(
+        DEFAULT_RECONCILE_INTERVAL_MS,
+      );
+    });
+  });
+
+  describe("reconcileOpenPrs", () => {
+    it("re-evaluates every given PR independent of webhook delivery", async () => {
+      const processPr = vi.fn().mockResolvedValue(undefined);
+      await reconcileOpenPrs([101, 102, 103], processPr);
+      expect(processPr).toHaveBeenCalledTimes(3);
+      expect(processPr).toHaveBeenNthCalledWith(1, 101);
+      expect(processPr).toHaveBeenNthCalledWith(2, 102);
+      expect(processPr).toHaveBeenNthCalledWith(3, 103);
+    });
+
+    it("keeps sweeping the remaining PRs when one fails", async () => {
+      const processPr = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("gh flaked"))
+        .mockResolvedValueOnce(undefined);
+      await expect(
+        reconcileOpenPrs([201, 202], processPr),
+      ).resolves.toBeUndefined();
+      expect(processPr).toHaveBeenCalledTimes(2);
+    });
   });
 });

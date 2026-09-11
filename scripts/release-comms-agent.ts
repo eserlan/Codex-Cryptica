@@ -16,7 +16,9 @@ import {
   deriveDiscordFromBluesky,
   loadDiscordConfig,
   publishToDiscord,
+  type DiscordDestinationConfig,
 } from "./release-comms-discord.ts";
+import { deriveInstagramQualification } from "./release-comms-instagram.ts";
 import {
   insertTrackerRow,
   updateTrackerPlatformStatus,
@@ -25,6 +27,7 @@ import {
   BLUESKY_CHARACTER_LIMIT,
   blueskyTextLength,
   isReleaseCommsDryRun,
+  prepareBlueskyText,
   publishBlueskyPost,
   publishDiscussion,
 } from "./release-comms-publish.ts";
@@ -58,6 +61,7 @@ export {
   publishToDiscord,
   stripHashtags,
 } from "./release-comms-discord.ts";
+export { deriveInstagramQualification } from "./release-comms-instagram.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -616,6 +620,59 @@ async function runJsonAgentPass<T>(
   return null;
 }
 
+export interface DiscordQualificationResult {
+  recommendedChannels: string[] | undefined;
+  /** Derived Discord copy, or undefined if there is no Bluesky copy to derive it from. */
+  discordCopy: string | undefined;
+}
+
+/**
+ * Decide whether a release qualifies for Discord and, if so, derive its copy.
+ * A release qualifies whenever Bluesky drafts exist or any feature was
+ * marked bluesky_worthy — but copy can only be derived from actual Bluesky
+ * drafts, so a worthy-but-draftless release qualifies without copy.
+ */
+export function deriveDiscordQualification(
+  result: EvaluatorResult,
+  drafts: WriterResult,
+): DiscordQualificationResult {
+  const hasBlueskyDrafts = Boolean(drafts.bluesky && drafts.bluesky.length > 0);
+  const hasBlueskyWorthy = Boolean(
+    result.features?.some((f) => f.bluesky_worthy),
+  );
+  // If something qualifies for Bluesky, it also qualifies for Discord
+  const isDiscordRecommended =
+    (result.recommended_channels?.includes("discord") ?? false) ||
+    hasBlueskyDrafts ||
+    hasBlueskyWorthy;
+
+  const recommendedChannels = isDiscordRecommended
+    ? Array.from(new Set([...(result.recommended_channels ?? []), "discord"]))
+    : result.recommended_channels;
+
+  const discordCopy =
+    isDiscordRecommended && hasBlueskyDrafts
+      ? deriveDiscordFromBluesky(drafts.bluesky.map((post) => post.text))
+      : undefined;
+
+  return { recommendedChannels, discordCopy };
+}
+
+/**
+ * Auto-publish destinations still pending delivery for this release: enabled
+ * for auto-publish and not already recorded as successfully published, so a
+ * retry after a partial failure only re-sends to the destinations that
+ * actually failed rather than duplicate-posting to ones that already succeeded.
+ */
+export function selectPendingDiscordDestinations(
+  destinations: DiscordDestinationConfig[],
+  alreadyPublishedIds: string[],
+): DiscordDestinationConfig[] {
+  return destinations.filter(
+    (dest) => dest.auto_publish && !alreadyPublishedIds.includes(dest.id),
+  );
+}
+
 export async function main(promoteRunId: string): Promise<void> {
   const state = await loadReleaseCommsState();
   const { newSha, previousSha: resolvedPreviousSha } =
@@ -693,17 +750,17 @@ export async function main(promoteRunId: string): Promise<void> {
     );
   } else if (drafts) {
     const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
-    const isDiscordRecommended =
-      result.recommended_channels?.includes("discord") ?? false;
-    if (
-      discordConfig.enabled &&
-      isDiscordRecommended &&
-      drafts.bluesky &&
-      drafts.bluesky.length > 0
-    ) {
-      drafts.discord = deriveDiscordFromBluesky(
-        drafts.bluesky.map((post) => post.text),
-      );
+    const { recommendedChannels, discordCopy } = deriveDiscordQualification(
+      result,
+      drafts,
+    );
+    result.recommended_channels = recommendedChannels;
+    result.recommended_channels = deriveInstagramQualification(
+      result,
+      drafts,
+    ).recommendedChannels;
+    if (discordConfig.enabled && discordCopy !== undefined) {
+      drafts.discord = discordCopy;
     }
   }
 
@@ -717,6 +774,22 @@ export async function main(promoteRunId: string): Promise<void> {
     recommendedChannels: result.recommended_channels,
     reason: result.reason,
     drafts: drafts ?? undefined,
+    instagramHandoffs:
+      resumable?.instagramHandoffs ??
+      (drafts
+        ? await Promise.all(
+            drafts.bluesky.map(async (draft) => {
+              const asset = await resolveSocialAsset(
+                publicPageFor(publicContent, draft.pageUrl),
+              );
+              return {
+                pageUrl: draft.pageUrl,
+                caption: prepareBlueskyText(draft.text, asset.pageUrl),
+                imageUrl: asset.imageUrl,
+              };
+            }),
+          )
+        : undefined),
     publications: resumable?.publications ?? {
       bluesky: [],
       githubDiscussions: [],
@@ -788,7 +861,55 @@ export async function main(promoteRunId: string): Promise<void> {
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
   }
-  entry = { ...entry, completed: true };
+  // Auto-publish to configured Discord destinations if enabled. This runs
+  // before the entry is marked completed: if the webhook fails, completed
+  // stays false so the next invocation resumes and retries delivery instead
+  // of silently skipping this SHA forever (state.lastEvaluatedSha only
+  // advances once completed is true, see recordEvaluation).
+  let discordPublishFailed = false;
+  if (result.postworthy && drafts?.discord) {
+    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+    if (discordConfig.enabled) {
+      const publishedDiscordIds = entry.publications?.discord ?? [];
+      const autoPublishDestinations = selectPendingDiscordDestinations(
+        discordConfig.destinations,
+        publishedDiscordIds,
+      );
+      if (autoPublishDestinations.length > 0) {
+        const newlyPublishedIds: string[] = [];
+        for (const dest of autoPublishDestinations) {
+          const pubResult = await publishToDiscord({
+            message: drafts.discord,
+            destination: dest,
+            dryRun: isReleaseCommsDryRun(),
+          });
+          if (pubResult.success) {
+            console.log(
+              `[release-comms] published announcement to Discord destination '${dest.id}'`,
+            );
+            newlyPublishedIds.push(dest.id);
+          } else {
+            discordPublishFailed = true;
+            console.error(
+              `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
+            );
+          }
+        }
+
+        if (newlyPublishedIds.length > 0) {
+          entry = {
+            ...entry,
+            publications: {
+              ...entry.publications!,
+              discord: [...publishedDiscordIds, ...newlyPublishedIds],
+            },
+          };
+        }
+      }
+    }
+  }
+
+  entry = { ...entry, completed: !discordPublishFailed };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 
   if (isReleaseCommsDryRun()) {
@@ -821,43 +942,17 @@ export async function main(promoteRunId: string): Promise<void> {
     }
   }
 
-  // Auto-publish to configured Discord destinations if enabled
-  if (result.postworthy && drafts?.discord) {
-    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
-    if (discordConfig.enabled) {
-      let publishedToDiscord = false;
-      for (const dest of discordConfig.destinations) {
-        if (dest.auto_publish) {
-          const pubResult = await publishToDiscord({
-            message: drafts.discord,
-            destination: dest,
-          });
-          if (pubResult.success) {
-            publishedToDiscord = true;
-            console.log(
-              `[release-comms] published announcement to Discord destination '${dest.id}'`,
-            );
-          } else {
-            console.error(
-              `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
-            );
-          }
-        }
-      }
-
-      if (publishedToDiscord) {
-        const trackerResult = await updateTrackerPlatformStatus(
-          newSha.slice(0, 7),
-          "Discord",
-          true,
-          REPOSITORY_ROOT,
-        );
-        if (!trackerResult.success) {
-          console.error(
-            `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
-          );
-        }
-      }
+  if (entry.publications?.discord) {
+    const trackerResult = await updateTrackerPlatformStatus(
+      newSha.slice(0, 7),
+      "Discord",
+      true,
+      REPOSITORY_ROOT,
+    );
+    if (!trackerResult.success) {
+      console.error(
+        `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
+      );
     }
   }
 

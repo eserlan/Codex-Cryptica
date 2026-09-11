@@ -4,11 +4,9 @@ import {
   getUnseenFeedback,
   hasFixEvidence,
   isAutoMergeEligible,
-  isInternalReviewDue,
   loadPrAutomationState,
   markAutoMergeRequested,
   markFeedbackHandled,
-  markInternalReviewCompleted,
   savePrAutomationState,
 } from "./pr-review-automation-state.ts";
 
@@ -20,9 +18,21 @@ const EXPECTED_REPOSITORY =
 const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
 export const MAX_BODY_BYTES = 1_000_000;
 const AUTO_MERGE_ENABLED = process.env.PR_AUTO_MERGE === "true";
-export const INTERNAL_REVIEW_ENABLED =
-  process.env.PR_INTERNAL_REVIEW === "true";
 const AUTO_MERGE_QUIET_MS = 60_000;
+export const DEFAULT_RECONCILE_INTERVAL_MS = 5 * 60_000;
+
+export function resolveReconcileIntervalMs(
+  rawValue: string | undefined,
+): number {
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : DEFAULT_RECONCILE_INTERVAL_MS;
+}
+
+const RECONCILE_INTERVAL_MS = resolveReconcileIntervalMs(
+  process.env.PR_RECONCILE_INTERVAL_MS,
+);
 
 const activeJobs = new Map<number, ReturnType<typeof spawn>>();
 const claimedJobs = new Set<number>();
@@ -253,9 +263,7 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
     );
     const state = await loadPrAutomationState();
     const unseen = getUnseenFeedback(feedback, state);
-    const reviewIfClear =
-      INTERNAL_REVIEW_ENABLED && isInternalReviewDue(feedback, unseen, state);
-    if (!unseen.hasActionableFeedback && !reviewIfClear) {
+    if (!unseen.hasActionableFeedback) {
       console.log(
         `[webhook] PR #${summary.pullRequestNumber} has no new actionable feedback; ignoring duplicate`,
       );
@@ -265,11 +273,7 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
 
     const child = spawn(
       "bun",
-      [
-        "scripts/pr-check-fix.ts",
-        String(summary.pullRequestNumber),
-        ...(reviewIfClear ? ["--review-if-clear"] : []),
-      ],
+      ["scripts/pr-check-fix.ts", String(summary.pullRequestNumber)],
       {
         cwd: REPOSITORY_ROOT,
         env: { ...process.env, HUSKY: "0" },
@@ -288,21 +292,6 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
         summary.pullRequestNumber,
         REPOSITORY_ROOT,
       );
-      if (reviewIfClear) {
-        const completedState = await loadPrAutomationState();
-        await savePrAutomationState(
-          markInternalReviewCompleted(
-            completedState,
-            summary.pullRequestNumber,
-            refreshedFeedback.prMeta.headRefOid,
-          ),
-        );
-        console.log(
-          `[webhook] internal two-pass review completed for PR #${summary.pullRequestNumber} at ${refreshedFeedback.prMeta.headRefOid}`,
-        );
-        await scheduleAutoMerge(summary.pullRequestNumber);
-        return;
-      }
 
       if (!hasFixEvidence(feedback, refreshedFeedback)) {
         console.warn(
@@ -318,7 +307,7 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       await scheduleAutoMerge(summary.pullRequestNumber);
     });
     console.log(
-      `[webhook] started ${reviewIfClear ? "internal reviewer" : "fixer"} for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
+      `[webhook] started fixer for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
     );
     return true;
   } catch (error) {
@@ -328,6 +317,73 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
     return false;
   } finally {
     claimedJobs.delete(summary.pullRequestNumber);
+  }
+}
+
+const RECONCILE_LIST_LIMIT = 1000;
+
+function listOpenStagingPrIds(): number[] {
+  try {
+    const raw = execFileSync(
+      "gh",
+      [
+        "pr",
+        "list",
+        "--base",
+        "staging",
+        "--state",
+        "open",
+        "--limit",
+        String(RECONCILE_LIST_LIMIT),
+        "--json",
+        "number",
+      ],
+      {
+        cwd: REPOSITORY_ROOT,
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    );
+    return (JSON.parse(raw) as Array<{ number: number }>).map(
+      (pr) => pr.number,
+    );
+  } catch (error) {
+    console.error(
+      `[webhook] could not list open staging PRs for reconciliation: ${error instanceof Error ? error.message : error}`,
+    );
+    return [];
+  }
+}
+
+/**
+ * Webhook delivery is not a reliable trigger on its own: GitHub may never
+ * send a fresh event after the last check on a PR finishes, and a transient
+ * `gh` failure inside scheduleAutoMerge's timer is only logged, never
+ * retried. Periodically re-running the same eligibility check against every
+ * open PR targeting `staging` gives every PR a chance to make progress
+ * independent of whether webhook delivery actually happened.
+ */
+export async function reconcileOpenPrs(
+  pullRequestNumbers: number[] = listOpenStagingPrIds(),
+  processPr: (pullRequestNumber: number) => Promise<unknown> = (
+    pullRequestNumber,
+  ) =>
+    launchFix({
+      event: "reconcile",
+      action: "sweep",
+      repository: EXPECTED_REPOSITORY,
+      pullRequestNumber,
+      baseRef: "staging",
+    }),
+): Promise<void> {
+  for (const pullRequestNumber of pullRequestNumbers) {
+    try {
+      await processPr(pullRequestNumber);
+    } catch (error) {
+      console.error(
+        `[webhook] reconcile sweep failed for PR #${pullRequestNumber}: ${error instanceof Error ? error.message : error}`,
+      );
+    }
   }
 }
 
@@ -563,4 +619,15 @@ if (import.meta.main) {
     },
   });
   console.log(`[webhook] listening on http://127.0.0.1:${PORT}/github`);
+
+  setInterval(() => {
+    void reconcileOpenPrs().catch((error) => {
+      console.error(
+        `[webhook] reconcile sweep failed: ${error instanceof Error ? error.message : error}`,
+      );
+    });
+  }, RECONCILE_INTERVAL_MS);
+  console.log(
+    `[webhook] reconciliation sweep scheduled every ${RECONCILE_INTERVAL_MS / 1000}s`,
+  );
 }

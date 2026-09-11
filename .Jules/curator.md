@@ -41,3 +41,9 @@
 **Learning:** Svelte 5 components with overly complex local view state handling multiple disparate interaction contexts (e.g., node interaction vs freehand drawing vs modal states) can cause god-files that are extremely large.
 
 **Action:** Extract interaction-specific sub-features (like CanvasDrawing pointer state management) into custom `use-*` hooks, delegating access and updates to the `logic` store or exposing handlers which simplifies the parent component significantly without changing runtime behaviour.
+
+## 2026-09-11 - Svelte 5 hook state exposure pattern
+
+**Learning:** When extracting encapsulated `$state` from a Svelte 5 component into a separate module (as in `use-canvas-drawing.svelte.ts`), the returned object must expose that state via property getters (e.g., `get isDrawingMode() { return isDrawingMode; }`) rather than plain destructured values, or reactive read access breaks in the consuming template.
+
+**Action:** Future agents extracting logic from Svelte 5 `.svelte` files into `.svelte.ts` files must follow the pattern of internal `$state` variables combined with a returned object that exposes them via getters.

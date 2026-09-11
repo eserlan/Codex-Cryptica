@@ -85,8 +85,6 @@ export interface PrFixOptions {
   maxRounds?: number;
   worktreePath?: string;
   logDir?: string;
-  /** Review a settled PR even when GitHub has supplied no actionable feedback. */
-  reviewIfClear?: boolean;
   dryRun?: boolean;
 }
 
@@ -546,34 +544,6 @@ STRICT INSTRUCTIONS & CONSTRAINTS (Constitution Principles I, II, XIV):
 ${mergeConflictPaths.length > 0 ? buildConflictResolutionInstructions(mergeConflictPaths) : ""}`;
 }
 
-/** Construct the pre-merge review-and-fix prompt used when GitHub has no review. */
-export function buildInternalPrReviewPrompt(
-  feedback: PrFeedback,
-  branchName: string,
-  baseBranch: string,
-  mergeConflictPaths: string[] = [],
-): string {
-  return `You are the final pre-merge reviewer and fixer for Pull Request #${feedback.prMeta.number} ("${feedback.prMeta.title}").
-
-PR BRANCH: ${branchName} (based on ${baseBranch})
-URL: ${feedback.prMeta.url}
-
-GitHub has no actionable review feedback and all current checks are green. Perform TWO independent review passes before deciding whether to change code:
-
-1. GENERAL DEFECT REVIEW (your built-in reviewer): inspect the actual merge diff against \`origin/${baseBranch}\`, surrounding call sites, and relevant tests. Report only concrete regressions introduced by this PR that affect correctness, security, performance, or maintainability. Do not invent style nits or speculative findings.
-2. CODEX-CRYPTICA REVIEW: read \`.codex/skills/codex-review/SKILL.md\`, then its linked extended review guidance. Apply the project's Svelte 5, TypeScript, worker-safety, async race, privacy, accessibility, DI, test, and bounded-responsibility checks to this diff.
-
-If both passes find no actionable defect: check \`git rev-parse HEAD\` against the original PR head SHA (\`${feedback.prMeta.headRefOid}\`). If they match, make no changes and exit successfully. If HEAD has moved (e.g. a pre-merge \`git merge origin/${baseBranch}\` created a merge commit), you MUST still push that commit with \`git push origin HEAD:${branchName} --no-verify\` before exiting, even though there are no code changes to make — the merge commit needs to reach the PR branch. Do not create empty commits.
-
-If either pass finds a concrete defect:
-- Make the smallest correct fix; do not refactor unrelated code.
-- Add or update focused tests for each changed behaviour, including a meaningful negative or failure case.
-- Run the affected tests (e.g. \`bun test <file>\` or \`bunx vitest run <file>\`, NEVER bare \`bun test\`), \`bun run lint:types\`, and \`bun run lint\`.
-- Stage only your changes, commit with a gitmoji message such as \`🐛 fix: address internal PR review findings\`, and push with \`git push origin HEAD:${branchName} --no-verify\`.
-- Do not close or merge the PR. GitHub checks and the webhook will handle that after your push.
-${mergeConflictPaths.length > 0 ? buildConflictResolutionInstructions(mergeConflictPaths) : ""}`;
-}
-
 /**
  * Post a reply to a specific review comment on GitHub.
  */
@@ -632,16 +602,14 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
 
   console.log(`\n🔍 Checking feedback for PR #${prNumber} (run ${runId})...`);
   console.log(`[pr-fix:${runId}] durable log: ${logPath}`);
-  const feedback = options.reviewIfClear
-    ? fetchPrFeedback(prNumber, rootDir)
-    : await pollForPrFeedback(prNumber, rootDir, {
-        initialWaitMinutes:
-          options.initialWaitMinutes ?? options.waitMinutesForReview ?? 4,
-        pollIntervalSeconds: options.pollIntervalSeconds ?? 60,
-        maxWaitMinutes: options.maxWaitMinutes ?? 12,
-      });
+  const feedback = await pollForPrFeedback(prNumber, rootDir, {
+    initialWaitMinutes:
+      options.initialWaitMinutes ?? options.waitMinutesForReview ?? 4,
+    pollIntervalSeconds: options.pollIntervalSeconds ?? 60,
+    maxWaitMinutes: options.maxWaitMinutes ?? 12,
+  });
 
-  if (!feedback.hasActionableFeedback && !options.reviewIfClear) {
+  if (!feedback.hasActionableFeedback) {
     console.log(
       `🎉 PR #${prNumber} has no actionable review comments or failing checks. All clear!`,
     );
@@ -652,18 +620,12 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   const baseBranch = options.baseBranch || feedback.prMeta.baseRefName;
 
   console.log(
-    options.reviewIfClear
-      ? `\n🔎 PR #${prNumber} is green with no GitHub feedback; starting internal two-pass review.`
-      : `\n🛠️ PR #${prNumber} has ${feedback.unresolvedComments.length} comment(s) and ${feedback.failingChecks.length} failing check(s).`,
+    `\n🛠️ PR #${prNumber} has ${feedback.unresolvedComments.length} comment(s) and ${feedback.failingChecks.length} failing check(s).`,
   );
 
   if (options.dryRun) {
     console.log("\n[DRY RUN] Fix prompt that would be sent to agent:\n");
-    console.log(
-      options.reviewIfClear
-        ? buildInternalPrReviewPrompt(feedback, branchName, baseBranch)
-        : buildPrFixPrompt(feedback, branchName, baseBranch),
-    );
+    console.log(buildPrFixPrompt(feedback, branchName, baseBranch));
     return true;
   }
 
@@ -707,14 +669,12 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     }
     let mergeConflictPaths =
       mergeResult.kind === "conflicted" ? mergeResult.paths : [];
-    let prompt = options.reviewIfClear
-      ? buildInternalPrReviewPrompt(
-          feedback,
-          branchName,
-          baseBranch,
-          mergeConflictPaths,
-        )
-      : buildPrFixPrompt(feedback, branchName, baseBranch, mergeConflictPaths);
+    let prompt = buildPrFixPrompt(
+      feedback,
+      branchName,
+      baseBranch,
+      mergeConflictPaths,
+    );
     if (mergeConflictPaths.length > 0) {
       console.log(
         `[pr-fix:${runId}] staging merge has ${mergeConflictPaths.length} conflict(s); handing them to the agent.`,
@@ -756,22 +716,9 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           result.status === 0 &&
           unresolvedPaths.length === 0 &&
           isWorktreePushed(worktreePath, branchName);
-        const cleanNoFinding =
-          options.reviewIfClear &&
-          result.status === 0 &&
-          unresolvedPaths.length === 0 &&
-          !isWorktreePushed(worktreePath, branchName) &&
-          execSync("git rev-parse HEAD", {
-            cwd: worktreePath,
-            encoding: "utf-8",
-          }).trim() === feedback.prMeta.headRefOid;
 
-        if (pushed || cleanNoFinding) {
-          console.log(
-            cleanNoFinding
-              ? `✅ ${providerName} found no actionable internal review findings.`
-              : `✅ ${providerName} completed successfully.`,
-          );
+        if (pushed) {
+          console.log(`✅ ${providerName} completed successfully.`);
           if (pushed && feedback.unresolvedComments.length > 0) {
             try {
               const newHeadSha = execSync("git rev-parse --short HEAD", {
@@ -836,19 +783,12 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           }
           mergeConflictPaths =
             mergeResult.kind === "conflicted" ? mergeResult.paths : [];
-          prompt = options.reviewIfClear
-            ? buildInternalPrReviewPrompt(
-                feedback,
-                branchName,
-                baseBranch,
-                mergeConflictPaths,
-              )
-            : buildPrFixPrompt(
-                feedback,
-                branchName,
-                baseBranch,
-                mergeConflictPaths,
-              );
+          prompt = buildPrFixPrompt(
+            feedback,
+            branchName,
+            baseBranch,
+            mergeConflictPaths,
+          );
         }
       }
 
@@ -889,7 +829,6 @@ if (import.meta.main) {
   const args = process.argv.slice(2);
   const prArg = args.find((a) => !a.startsWith("-"));
   const dryRun = args.includes("--dry-run");
-  const reviewIfClear = args.includes("--review-if-clear");
 
   if (!prArg) {
     console.error("Usage: bun scripts/pr-check-fix.ts <pr-number> [--dry-run]");
@@ -902,7 +841,7 @@ if (import.meta.main) {
     process.exit(1);
   }
 
-  runPrFixLoop({ prNumber, dryRun, reviewIfClear }).catch((err) => {
+  runPrFixLoop({ prNumber, dryRun }).catch((err) => {
     console.error("Fatal error:", err);
     process.exit(1);
   });
