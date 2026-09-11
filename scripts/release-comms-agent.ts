@@ -493,7 +493,9 @@ export function mergeBlueskyRetry(
   previous: WriterResult,
   retry: BlueskyRetryResult,
 ): WriterResult {
-  const rewritten = new Map(retry.bluesky.map((post) => [post.pageUrl, post.text]));
+  const rewritten = new Map(
+    retry.bluesky.map((post) => [post.pageUrl, post.text]),
+  );
   return {
     ...previous,
     bluesky: previous.bluesky.map((post) =>
@@ -691,14 +693,25 @@ export async function main(promoteRunId: string): Promise<void> {
     );
   } else if (drafts) {
     const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+    const hasBlueskyDrafts = Boolean(
+      drafts.bluesky && drafts.bluesky.length > 0,
+    );
+    const hasBlueskyWorthy = Boolean(
+      result.features?.some((f) => f.bluesky_worthy),
+    );
+    // If something qualifies for Bluesky, it also qualifies for Discord
     const isDiscordRecommended =
-      result.recommended_channels?.includes("discord") ?? false;
-    if (
-      discordConfig.enabled &&
-      isDiscordRecommended &&
-      drafts.bluesky &&
-      drafts.bluesky.length > 0
-    ) {
+      (result.recommended_channels?.includes("discord") ?? false) ||
+      hasBlueskyDrafts ||
+      hasBlueskyWorthy;
+
+    if (isDiscordRecommended) {
+      result.recommended_channels = Array.from(
+        new Set([...(result.recommended_channels ?? []), "discord"]),
+      );
+    }
+
+    if (discordConfig.enabled && isDiscordRecommended && hasBlueskyDrafts) {
       drafts.discord = deriveDiscordFromBluesky(
         drafts.bluesky.map((post) => post.text),
       );
