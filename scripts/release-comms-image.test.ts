@@ -30,6 +30,23 @@ describe("resolveSocialAsset", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("normalises a source PNG to the deterministic R2 JPEG card", async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 200 }));
+    await expect(
+      resolveSocialAsset(
+        {
+          ...item,
+          imageUrl: "https://assets.codexcryptica.com/og/encounter-balance.png",
+          imageAlt: "An older PNG card",
+        },
+        { fetch: fetch as never },
+      ),
+    ).resolves.toMatchObject({
+      imageUrl: "https://assets.codexcryptica.com/og/encounter-balance.jpg",
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("reuses a generated deterministic R2 card without another generation", async () => {
     const fetch = vi.fn(async () => new Response(null, { status: 200 }));
     await expect(

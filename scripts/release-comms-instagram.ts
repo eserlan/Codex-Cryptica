@@ -20,17 +20,15 @@ export function deriveInstagramQualification(
   const hasBlueskyWorthy = Boolean(
     result.features?.some((feature) => feature.bluesky_worthy),
   );
-  const isInstagramRecommended =
-    (result.recommended_channels?.includes("instagram") ?? false) ||
-    hasBlueskyDrafts ||
-    hasBlueskyWorthy;
+  const isInstagramRecommended = hasBlueskyDrafts || hasBlueskyWorthy;
+  const channelsWithoutInstagram = (result.recommended_channels ?? []).filter(
+    (channel) => channel !== "instagram",
+  );
 
   return {
     recommendedChannels: isInstagramRecommended
-      ? Array.from(
-          new Set([...(result.recommended_channels ?? []), "instagram"]),
-        )
-      : result.recommended_channels,
+      ? Array.from(new Set([...channelsWithoutInstagram, "instagram"]))
+      : channelsWithoutInstagram,
   };
 }
 
@@ -81,6 +79,9 @@ function requireR2SocialImage(imageUrl: string): void {
     throw new Error(
       "Instagram image must be hosted at assets.codexcryptica.com",
     );
+  }
+  if (!/\.jpe?g$/i.test(url.pathname)) {
+    throw new Error("Instagram image must be a JPEG R2 social asset URL");
   }
 }
 

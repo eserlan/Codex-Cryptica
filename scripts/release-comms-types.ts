@@ -41,6 +41,15 @@ export interface ReleaseCommsPublications {
   discord?: string[];
 }
 
+/** The durable, operator-ready input for one manual Instagram post. */
+export interface InstagramHandoff {
+  pageUrl: string;
+  /** The final Bluesky text after its page URL has been resolved. */
+  caption: string;
+  /** The verified R2 JPEG used for the matching Bluesky publication. */
+  imageUrl: string;
+}
+
 export interface ReleaseCommsHistoryEntry {
   sha: string;
   date: string;
@@ -51,6 +60,8 @@ export interface ReleaseCommsHistoryEntry {
   recommendedChannels?: string[];
   reason: string;
   drafts?: WriterResult;
+  /** Resolved before publishing so a resumed run preserves manual handoff input. */
+  instagramHandoffs?: InstagramHandoff[];
   publications?: ReleaseCommsPublications;
   /** False while an external publish is resumable; omitted for older completed entries. */
   completed?: boolean;

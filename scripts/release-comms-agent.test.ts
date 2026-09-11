@@ -616,6 +616,13 @@ describe("release-comms-agent", () => {
             reddit: "",
             github_discussions: [],
           },
+          instagramHandoffs: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/x",
+              caption: "post text\n\nhttps://codexcryptica.com/answers/x",
+              imageUrl: "https://assets.codexcryptica.com/og/x.jpg",
+            },
+          ],
         });
         await saveReleaseCommsState(withEntry, path);
 
@@ -625,6 +632,13 @@ describe("release-comms-agent", () => {
         expect(reloaded.history[0].reason).toBe("new generator");
         expect(reloaded.history[0].drafts?.bluesky).toEqual([
           { pageUrl: "https://codexcryptica.com/answers/x", text: "post text" },
+        ]);
+        expect(reloaded.history[0].instagramHandoffs).toEqual([
+          {
+            pageUrl: "https://codexcryptica.com/answers/x",
+            caption: "post text\n\nhttps://codexcryptica.com/answers/x",
+            imageUrl: "https://assets.codexcryptica.com/og/x.jpg",
+          },
         ]);
       } finally {
         await rm(dir, { recursive: true, force: true });
@@ -761,7 +775,7 @@ describe("release-comms-agent", () => {
         },
       );
       expect(comment).toContain(
-        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (published automatically):",
+        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (manual):",
       );
     });
 

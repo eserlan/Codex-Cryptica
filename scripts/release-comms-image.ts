@@ -21,6 +21,19 @@ const IMAGE_PROXY =
   "https://oracle-proxy.espen-erlandsen.workers.dev";
 const R2_BUCKET = "codex-cryptica-statics";
 
+function isInstagramReadySocialImage(imageUrl: string): boolean {
+  try {
+    const url = new URL(imageUrl);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "assets.codexcryptica.com" &&
+      /\.jpe?g$/i.test(url.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export interface ImageDependencies {
   fetch: typeof fetch;
   run: typeof execFileSync;
@@ -92,7 +105,11 @@ export async function resolveSocialAsset(
   item: PublicContentItem,
   dependencies: Partial<ImageDependencies> = {},
 ): Promise<BlueskyAsset> {
-  if (item.imageUrl && item.imageAlt) {
+  if (
+    item.imageUrl &&
+    item.imageAlt &&
+    isInstagramReadySocialImage(item.imageUrl)
+  ) {
     return {
       pageUrl: item.url,
       imageUrl: item.imageUrl,

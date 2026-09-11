@@ -173,9 +173,9 @@ GitHub Actions through `scripts/discord-deploy.sh`. The release-comms writer
 also creates a Discord draft, but does not send a duplicate content-specific
 deployment message.
 
-### Automated Instagram publishing
+### Manual Instagram publishing
 
-Instagram is posted by the deploy agent. Every
+Instagram is intentionally never posted by the deploy agent. Every
 Bluesky-qualified item also qualifies for Instagram, using the exact same
 final caption and verified R2 social image. This keeps the two posts aligned
 without asking the writer to invent a second version.
@@ -185,33 +185,28 @@ Instagram professional account ID, a Meta access token authorised for content
 publishing, and the Graph API base URL configured for the current Meta app:
 
 ```sh
-INSTAGRAM_ACCOUNT_ID=<Instagram professional account ID>
-INSTAGRAM_ACCESS_TOKEN=<Meta access token>
-INSTAGRAM_GRAPH_API_URL=https://graph.facebook.com/v<your configured version>
+export INSTAGRAM_ACCOUNT_ID=<Instagram professional account ID>
+export INSTAGRAM_ACCESS_TOKEN=<Meta access token>
+export INSTAGRAM_GRAPH_API_URL=https://graph.facebook.com/v<your configured version>
 ```
 
 The account must be a Meta-supported professional Instagram account connected
 to the relevant Facebook Page. Confirm the current app permissions and API
 version in Meta's dashboard before its first real post.
 
-First exercise the full deploy-agent path without a network write using the
-dry-run command in section 2. It will produce matching `dry-run://bluesky/`
-and `dry-run://instagram/` URLs for every Bluesky-qualified draft.
-
-The standalone command remains useful for diagnosing Meta credentials without
-publishing:
+The release issue comment provides the exact final Bluesky caption and its
+verified R2 JPEG image URL for each qualifying draft. First exercise the
+manual command without a network write:
 
 ```sh
 bun run post:instagram -- --dry-run \
   --image https://assets.codexcryptica.com/og/example.jpg \
-  --alt "Example social card" \
   "The exact final Bluesky caption, unchanged"
 ```
 
-On a real release the agent creates one Instagram post per Bluesky post; it
-does not combine separate Bluesky drafts. Successful Instagram permalinks and
-tracker state are checkpointed separately, so a Meta failure retries only the
-missing Instagram post and never duplicates Bluesky.
+For a real post, remove `--dry-run` and copy one caption and image URL from
+the release issue comment. Run once for each Bluesky post; do not combine
+separate Bluesky drafts into one Instagram caption.
 
 The Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
 remains a separate, unconfigured channel.

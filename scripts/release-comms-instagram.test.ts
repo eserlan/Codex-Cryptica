@@ -83,6 +83,23 @@ describe("release-comms-instagram", () => {
         deriveInstagramQualification(result, drafts).recommendedChannels,
       ).toEqual(["reddit"]);
     });
+
+    it("does not trust an Instagram-only evaluator recommendation", () => {
+      const result: EvaluatorResult = {
+        postworthy: true,
+        reason: "No Bluesky-qualified feature",
+        recommended_channels: ["instagram"],
+      };
+      const drafts: WriterResult = {
+        bluesky: [],
+        reddit: "",
+        github_discussions: [],
+      };
+
+      expect(
+        deriveInstagramQualification(result, drafts).recommendedChannels,
+      ).toEqual([]);
+    });
   });
 
   describe("publishInstagramPost", () => {
@@ -157,6 +174,20 @@ describe("release-comms-instagram", () => {
       ).rejects.toThrow("assets.codexcryptica.com");
     });
 
+    it("rejects a non-JPEG R2 image before contacting Meta", async () => {
+      await expect(
+        publishInstagramPost({
+          asset: {
+            ...asset,
+            imageUrl: "https://assets.codexcryptica.com/og/example.png",
+          },
+          caption: "Exact Bluesky caption",
+          env,
+          fetchFn: async () => response({}),
+        }),
+      ).rejects.toThrow("JPEG");
+    });
+
     it("fails safely when Meta reports media processing failure", async () => {
       let call = 0;
       await expect(
@@ -173,6 +204,32 @@ describe("release-comms-instagram", () => {
         }),
       ).rejects.toThrow("processing ended with ERROR");
     });
+  });
+
+  it("shows the persisted exact Instagram caption and JPEG asset handoff", () => {
+    const comment = formatIssueComment(
+      {
+        sha: "1234567890abcdef",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "999",
+        postworthy: true,
+        reason: "A useful improvement",
+        instagramHandoffs: [
+          {
+            pageUrl: asset.pageUrl,
+            caption:
+              "Exact final caption\n\nhttps://codexcryptica.com/answers/example",
+            imageUrl: asset.imageUrl,
+          },
+        ],
+      },
+      { postworthy: true, reason: "A useful improvement" },
+      { bluesky: [], reddit: "", github_discussions: [] },
+    );
+
+    expect(comment).toContain("Instagram (manual):");
+    expect(comment).toContain(`Image: ${asset.imageUrl}`);
+    expect(comment).toContain("Exact final caption");
   });
 
   it("shows checkpointed Instagram permalinks in the release approval comment", () => {
