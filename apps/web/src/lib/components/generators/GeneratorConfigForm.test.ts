@@ -430,7 +430,7 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       target: { value: "character" },
     });
 
-    expect(screen.getByText("NPC")).toBeTruthy();
+    expect(screen.getAllByText("NPC")).not.toHaveLength(0);
     expect(screen.queryByText("Settlement")).toBeNull();
   });
 
