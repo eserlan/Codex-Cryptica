@@ -8,6 +8,7 @@ import {
   buildWriterPrompt,
   buildWriterRetryPrompt,
   deriveDiscordFromBluesky,
+  deriveDiscordQualification,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
@@ -22,6 +23,7 @@ import {
   runAgentCapturingOutput,
   runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
+  selectPendingDiscordDestinations,
   type EvaluatorResult,
   type ReleaseCommsState,
   type WriterResult,
@@ -472,6 +474,24 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain("prefer postworthy=true");
     });
 
+    it("instructs that any feature qualifying for Bluesky also qualifies for Discord", () => {
+      const prompt = buildEvaluatorPrompt({
+        previousSha: "abc1234",
+        newSha: "def5678",
+        commitLog: "",
+        mergedPrs: "",
+        changelogDiff: "",
+        recentDiscussionTitles: "",
+        recentBlueskyTitles: "",
+      });
+      expect(prompt).toContain(
+        "if something qualifies for Bluesky, it also qualifies for Discord",
+      );
+      expect(prompt).toContain(
+        'include "discord" whenever any feature is marked "bluesky_worthy": true',
+      );
+    });
+
     it("shows recommended_channels as a discord/reddit/github_discussion subset, never including bluesky", () => {
       const prompt = buildEvaluatorPrompt({
         previousSha: "abc1234",
@@ -740,6 +760,110 @@ describe("release-comms-agent", () => {
         "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nReddit:",
       );
     });
+
+    it("qualifies for discord and derives copy when bluesky drafts are present, even if omitted from recommended_channels", () => {
+      const result: EvaluatorResult = {
+        postworthy: true,
+        reason: "Single small win",
+        features: [
+          {
+            name: "Rule of Cool",
+            why_users_care: "System notes",
+            bluesky_worthy: false,
+          },
+        ],
+        recommended_channels: [],
+      };
+      const drafts: WriterResult = {
+        bluesky: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/rule-of-cool",
+            text: "Rule of cool!\n\nhttps://codexcryptica.com/answers/rule-of-cool\n\n#TTRPG",
+          },
+        ],
+        reddit: "",
+        github_discussions: [],
+      };
+
+      const { recommendedChannels, discordCopy } = deriveDiscordQualification(
+        result,
+        drafts,
+      );
+
+      expect(recommendedChannels).toContain("discord");
+      expect(discordCopy).toBe(
+        "Rule of cool!\n\nhttps://codexcryptica.com/answers/rule-of-cool",
+      );
+    });
+
+    it("qualifies for discord on a bluesky_worthy feature alone, but cannot derive copy without drafts", () => {
+      const result: EvaluatorResult = {
+        postworthy: true,
+        reason: "Worthy feature, writer returned no bluesky copy",
+        features: [
+          {
+            name: "Rule of Cool",
+            why_users_care: "System notes",
+            bluesky_worthy: true,
+          },
+        ],
+        recommended_channels: [],
+      };
+      const drafts: WriterResult = {
+        bluesky: [],
+        reddit: "",
+        github_discussions: [],
+      };
+
+      const { recommendedChannels, discordCopy } = deriveDiscordQualification(
+        result,
+        drafts,
+      );
+
+      expect(recommendedChannels).toContain("discord");
+      expect(discordCopy).toBeUndefined();
+    });
+  });
+
+  describe("selectPendingDiscordDestinations", () => {
+    it("only retries auto-publish destinations that have not already succeeded", () => {
+      const destinations = [
+        {
+          id: "main-community",
+          source: "bluesky" as const,
+          strip_hashtags: true,
+          auto_publish: true,
+          webhookEnvVar: "DISCORD_WEBHOOK_URL",
+        },
+        {
+          id: "overflow",
+          source: "bluesky" as const,
+          strip_hashtags: true,
+          auto_publish: true,
+          webhookEnvVar: "DISCORD_WEBHOOK_URL_2",
+        },
+      ];
+
+      const pending = selectPendingDiscordDestinations(destinations, [
+        "main-community",
+      ]);
+
+      expect(pending.map((dest) => dest.id)).toEqual(["overflow"]);
+    });
+
+    it("excludes destinations that are not configured for auto-publish", () => {
+      const destinations = [
+        {
+          id: "manual-only",
+          source: "bluesky" as const,
+          strip_hashtags: true,
+          auto_publish: false,
+          webhookEnvVar: "DISCORD_WEBHOOK_URL",
+        },
+      ];
+
+      expect(selectPendingDiscordDestinations(destinations, [])).toEqual([]);
+    });
   });
 
   describe("findOversizedBlueskyDrafts", () => {
@@ -783,7 +907,9 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain("340 characters");
       expect(prompt).toContain("REJECTED");
       expect(prompt).toContain('"bluesky"');
-      expect(prompt).toContain("Do NOT resend reddit, discord, github_discussions");
+      expect(prompt).toContain(
+        "Do NOT resend reddit, discord, github_discussions",
+      );
     });
   });
 
@@ -791,8 +917,14 @@ describe("release-comms-agent", () => {
     it("replaces only the flagged post(s), leaving everything else untouched", () => {
       const previous: WriterResult = {
         bluesky: [
-          { pageUrl: "https://codexcryptica.com/answers/short", text: "keep me" },
-          { pageUrl: "https://codexcryptica.com/answers/long-one", text: "x".repeat(340) },
+          {
+            pageUrl: "https://codexcryptica.com/answers/short",
+            text: "keep me",
+          },
+          {
+            pageUrl: "https://codexcryptica.com/answers/long-one",
+            text: "x".repeat(340),
+          },
         ],
         discord: "discord copy",
         reddit: "reddit copy",
@@ -814,7 +946,10 @@ describe("release-comms-agent", () => {
       });
       expect(merged.bluesky).toEqual([
         { pageUrl: "https://codexcryptica.com/answers/short", text: "keep me" },
-        { pageUrl: "https://codexcryptica.com/answers/long-one", text: "shortened" },
+        {
+          pageUrl: "https://codexcryptica.com/answers/long-one",
+          text: "shortened",
+        },
       ]);
       expect(merged.discord).toBe("discord copy");
       expect(merged.reddit).toBe("reddit copy");
@@ -849,7 +984,14 @@ describe("release-comms-agent", () => {
         const value =
           passName === "write"
             ? oversizedDraft
-            : { bluesky: [{ pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "short enough" }] };
+            : {
+                bluesky: [
+                  {
+                    pageUrl: oversizedDraft.bluesky[0].pageUrl,
+                    text: "short enough",
+                  },
+                ],
+              };
         return isValid(value) ? value : null;
       };
 
@@ -911,7 +1053,10 @@ describe("release-comms-agent", () => {
             ? oversizedDraft
             : {
                 bluesky: [
-                  { pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "x".repeat(340) },
+                  {
+                    pageUrl: oversizedDraft.bluesky[0].pageUrl,
+                    text: "x".repeat(340),
+                  },
                 ],
               };
         return isValid(value) ? value : null;
@@ -925,7 +1070,12 @@ describe("release-comms-agent", () => {
         runPass as never,
       );
 
-      expect(calls).toEqual(["write", "write-retry-1", "write-retry-2", "write-retry-3"]);
+      expect(calls).toEqual([
+        "write",
+        "write-retry-1",
+        "write-retry-2",
+        "write-retry-3",
+      ]);
       expect(result?.bluesky).toEqual([]);
     });
 
