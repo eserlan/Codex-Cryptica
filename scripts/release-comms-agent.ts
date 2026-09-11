@@ -18,6 +18,7 @@ import {
   publishToDiscord,
   type DiscordDestinationConfig,
 } from "./release-comms-discord.ts";
+import { deriveInstagramQualification } from "./release-comms-instagram.ts";
 import {
   insertTrackerRow,
   updateTrackerPlatformStatus,
@@ -26,6 +27,7 @@ import {
   BLUESKY_CHARACTER_LIMIT,
   blueskyTextLength,
   isReleaseCommsDryRun,
+  prepareBlueskyText,
   publishBlueskyPost,
   publishDiscussion,
 } from "./release-comms-publish.ts";
@@ -59,6 +61,7 @@ export {
   publishToDiscord,
   stripHashtags,
 } from "./release-comms-discord.ts";
+export { deriveInstagramQualification } from "./release-comms-instagram.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -633,9 +636,7 @@ export function deriveDiscordQualification(
   result: EvaluatorResult,
   drafts: WriterResult,
 ): DiscordQualificationResult {
-  const hasBlueskyDrafts = Boolean(
-    drafts.bluesky && drafts.bluesky.length > 0,
-  );
+  const hasBlueskyDrafts = Boolean(drafts.bluesky && drafts.bluesky.length > 0);
   const hasBlueskyWorthy = Boolean(
     result.features?.some((f) => f.bluesky_worthy),
   );
@@ -754,6 +755,10 @@ export async function main(promoteRunId: string): Promise<void> {
       drafts,
     );
     result.recommended_channels = recommendedChannels;
+    result.recommended_channels = deriveInstagramQualification(
+      result,
+      drafts,
+    ).recommendedChannels;
     if (discordConfig.enabled && discordCopy !== undefined) {
       drafts.discord = discordCopy;
     }
@@ -769,6 +774,22 @@ export async function main(promoteRunId: string): Promise<void> {
     recommendedChannels: result.recommended_channels,
     reason: result.reason,
     drafts: drafts ?? undefined,
+    instagramHandoffs:
+      resumable?.instagramHandoffs ??
+      (drafts
+        ? await Promise.all(
+            drafts.bluesky.map(async (draft) => {
+              const asset = await resolveSocialAsset(
+                publicPageFor(publicContent, draft.pageUrl),
+              );
+              return {
+                pageUrl: draft.pageUrl,
+                caption: prepareBlueskyText(draft.text, asset.pageUrl),
+                imageUrl: asset.imageUrl,
+              };
+            }),
+          )
+        : undefined),
     publications: resumable?.publications ?? {
       bluesky: [],
       githubDiscussions: [],

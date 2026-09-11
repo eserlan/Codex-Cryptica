@@ -34,9 +34,20 @@ export interface WriterResult {
 
 export interface ReleaseCommsPublications {
   bluesky: Array<{ pageUrl: string; url: string }>;
+  /** Instagram posts mirror the exact resolved Bluesky caption and R2 asset. */
+  instagram?: Array<{ pageUrl: string; url: string }>;
   githubDiscussions: Array<{ pageUrl: string; url: string }>;
   /** IDs of Discord destinations the derived announcement has been successfully delivered to. */
   discord?: string[];
+}
+
+/** The durable, operator-ready input for one manual Instagram post. */
+export interface InstagramHandoff {
+  pageUrl: string;
+  /** The final Bluesky text after its page URL has been resolved. */
+  caption: string;
+  /** The verified R2 JPEG used for the matching Bluesky publication. */
+  imageUrl: string;
 }
 
 export interface ReleaseCommsHistoryEntry {
@@ -49,6 +60,8 @@ export interface ReleaseCommsHistoryEntry {
   recommendedChannels?: string[];
   reason: string;
   drafts?: WriterResult;
+  /** Resolved before publishing so a resumed run preserves manual handoff input. */
+  instagramHandoffs?: InstagramHandoff[];
   publications?: ReleaseCommsPublications;
   /** False while an external publish is resumable; omitted for older completed entries. */
   completed?: boolean;
