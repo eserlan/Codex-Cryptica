@@ -16,16 +16,22 @@ import {
   findOversizedBlueskyDrafts,
   getReleaseCommsLogPath,
   isEvaluatorResult,
+  isInstagramPublishingEnabled,
   isWriterResult,
   loadReleaseCommsState,
   mergeBlueskyRetry,
   pickPreviousSha,
+  processInstagramHandoffs,
   recordEvaluation,
   runAgentCapturingOutput,
   runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
   selectPendingDiscordDestinations,
+  selectPendingInstagramHandoffs,
+  shouldUpdateInstagramTracker,
   type EvaluatorResult,
+  type InstagramHandoff,
+  type ReleaseCommsHistoryEntry,
   type ReleaseCommsState,
   type WriterResult,
 } from "./release-comms-agent.ts";
@@ -775,7 +781,7 @@ describe("release-comms-agent", () => {
         },
       );
       expect(comment).toContain(
-        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (manual):",
+        "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nInstagram (published automatically when recommended; shown here for reference):",
       );
     });
 
@@ -864,6 +870,390 @@ describe("release-comms-agent", () => {
       expect(
         deriveInstagramQualification(result, drafts).recommendedChannels,
       ).toContain("instagram");
+    });
+
+    it("retries only an Instagram handoff without a persisted permalink", () => {
+      const handoffs = [
+        {
+          pageUrl: "https://codexcryptica.com/answers/posted",
+          caption: "Already posted",
+          imageUrl: "https://assets.codexcryptica.com/og/posted.jpg",
+        },
+        {
+          pageUrl: "https://codexcryptica.com/answers/retry",
+          caption: "Retry this one",
+          imageUrl: "https://assets.codexcryptica.com/og/retry.jpg",
+        },
+      ];
+
+      expect(
+        selectPendingInstagramHandoffs(handoffs, [
+          {
+            pageUrl: "https://codexcryptica.com/answers/posted",
+            url: "https://www.instagram.com/p/posted/",
+          },
+        ]),
+      ).toEqual([handoffs[1]]);
+    });
+
+    it("proves a successful permalink is saved before attempting the next handoff", async () => {
+      const handoffs: InstagramHandoff[] = [
+        {
+          pageUrl: "https://codexcryptica.com/answers/first",
+          caption: "First post",
+          imageUrl: "https://assets.codexcryptica.com/og/first.jpg",
+        },
+        {
+          pageUrl: "https://codexcryptica.com/answers/second",
+          caption: "Second post",
+          imageUrl: "https://assets.codexcryptica.com/og/second.jpg",
+        },
+      ];
+
+      const state: ReleaseCommsState = {
+        version: 1,
+        lastEvaluatedSha: null,
+        history: [],
+      };
+
+      const entry: ReleaseCommsHistoryEntry = {
+        sha: "abc1234",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "123",
+        postworthy: true,
+        reason: "Two features",
+        instagramHandoffs: handoffs,
+        publications: { bluesky: [], githubDiscussions: [], instagram: [] },
+        completed: false,
+      };
+
+      const savedStates: ReleaseCommsState[] = [];
+      const publishCalls: string[] = [];
+
+      const publishFn = async (options: { asset: { pageUrl: string } }) => {
+        publishCalls.push(options.asset.pageUrl);
+        if (options.asset.pageUrl === "https://codexcryptica.com/answers/second") {
+          // When publishing the second handoff, verify the first handoff's permalink
+          // was already checkpointed into state via saveStateFn!
+          expect(savedStates.length).toBeGreaterThanOrEqual(1);
+          const lastSaved = savedStates[savedStates.length - 1];
+          const entryInState = lastSaved.history.find((e) => e.sha === "abc1234");
+          expect(entryInState?.publications?.instagram).toEqual([
+            {
+              pageUrl: "https://codexcryptica.com/answers/first",
+              url: "https://www.instagram.com/p/first/",
+              id: "media-first",
+            },
+          ]);
+        }
+        const slug = options.asset.pageUrl.split("/").pop();
+        return {
+          id: `media-${slug}`,
+          url: `https://www.instagram.com/p/${slug}/`,
+        };
+      };
+
+      const saveStateFn = async (saved: ReleaseCommsState) => {
+        savedStates.push(structuredClone(saved));
+      };
+
+      const result = await processInstagramHandoffs({
+        entry,
+        recommendedChannels: ["instagram"],
+        state,
+        publishFn,
+        saveStateFn,
+      });
+
+      expect(result.instagramPublishFailed).toBe(false);
+      expect(result.entry.publications?.instagram).toHaveLength(2);
+      expect(publishCalls).toEqual([
+        "https://codexcryptica.com/answers/first",
+        "https://codexcryptica.com/answers/second",
+      ]);
+    });
+
+    it("proves a partial failure leaves completed false and retries only the missing handoff", async () => {
+      const handoffs: InstagramHandoff[] = [
+        {
+          pageUrl: "https://codexcryptica.com/answers/success",
+          caption: "Will succeed",
+          imageUrl: "https://assets.codexcryptica.com/og/success.jpg",
+        },
+        {
+          pageUrl: "https://codexcryptica.com/answers/fail",
+          caption: "Will fail",
+          imageUrl: "https://assets.codexcryptica.com/og/fail.jpg",
+        },
+      ];
+
+      const state: ReleaseCommsState = {
+        version: 1,
+        lastEvaluatedSha: null,
+        history: [],
+      };
+
+      let entry: ReleaseCommsHistoryEntry = {
+        sha: "def5678",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "456",
+        postworthy: true,
+        reason: "Partial failure test",
+        instagramHandoffs: handoffs,
+        publications: { bluesky: [], githubDiscussions: [], instagram: [] },
+        completed: false,
+      };
+
+      const savedStates: ReleaseCommsState[] = [];
+      const saveStateFn = async (saved: ReleaseCommsState) => {
+        savedStates.push(structuredClone(saved));
+      };
+
+      // Pass 1: First handoff succeeds, second handoff fails (e.g. Meta rate limit)
+      const firstPassCalls: string[] = [];
+      const publishFnPass1 = async (options: { asset: { pageUrl: string } }) => {
+        firstPassCalls.push(options.asset.pageUrl);
+        if (options.asset.pageUrl === "https://codexcryptica.com/answers/fail") {
+          throw new Error("Meta API rate limit exceeded");
+        }
+        return {
+          id: "media-success",
+          url: "https://www.instagram.com/p/success/",
+        };
+      };
+
+      const pass1 = await processInstagramHandoffs({
+        entry,
+        recommendedChannels: ["instagram"],
+        state,
+        publishFn: publishFnPass1,
+        saveStateFn,
+      });
+
+      expect(pass1.instagramPublishFailed).toBe(true);
+      expect(firstPassCalls).toEqual([
+        "https://codexcryptica.com/answers/success",
+        "https://codexcryptica.com/answers/fail",
+      ]);
+      // Verify first handoff was checkpointed
+      expect(pass1.entry.publications?.instagram).toEqual([
+        {
+          pageUrl: "https://codexcryptica.com/answers/success",
+          url: "https://www.instagram.com/p/success/",
+          id: "media-success",
+        },
+      ]);
+
+      // Agent marks entry completion: since instagramPublishFailed is true, completed is false
+      entry = {
+        ...pass1.entry,
+        completed: !pass1.instagramPublishFailed,
+      };
+      expect(entry.completed).toBe(false);
+
+      // State recorded with completed=false does not advance lastEvaluatedSha
+      const stateAfterPass1 = recordEvaluation(state, entry);
+      expect(stateAfterPass1.lastEvaluatedSha).toBeNull();
+      expect(shouldUpdateInstagramTracker(entry, pass1.instagramPublishFailed)).toBe(false);
+
+      // Pass 2: Retry run with the state/entry from Pass 1
+      const secondPassCalls: string[] = [];
+      const publishFnPass2 = async (options: { asset: { pageUrl: string } }) => {
+        secondPassCalls.push(options.asset.pageUrl);
+        return {
+          id: "media-fail-fixed",
+          url: "https://www.instagram.com/p/fail-fixed/",
+        };
+      };
+
+      const pass2 = await processInstagramHandoffs({
+        entry,
+        recommendedChannels: ["instagram"],
+        state: stateAfterPass1,
+        publishFn: publishFnPass2,
+        saveStateFn,
+      });
+
+      expect(pass2.instagramPublishFailed).toBe(false);
+      // Only the missing handoff was retried!
+      expect(secondPassCalls).toEqual(["https://codexcryptica.com/answers/fail"]);
+      expect(pass2.entry.publications?.instagram).toHaveLength(2);
+
+      // On successful retry, release completes and tracker is updated
+      entry = {
+        ...pass2.entry,
+        completed: !pass2.instagramPublishFailed,
+      };
+      expect(entry.completed).toBe(true);
+      const finalState = recordEvaluation(stateAfterPass1, entry);
+      expect(finalState.lastEvaluatedSha).toBe("def5678");
+      expect(shouldUpdateInstagramTracker(entry, pass2.instagramPublishFailed)).toBe(true);
+    });
+
+    it("preserves publishedMediaId across retries when permalink lookup fails after media_publish", async () => {
+      const handoff: InstagramHandoff = {
+        pageUrl: "https://codexcryptica.com/answers/idempotent",
+        caption: "Idempotent caption",
+        imageUrl: "https://assets.codexcryptica.com/og/idempotent.jpg",
+      };
+
+      const state: ReleaseCommsState = {
+        version: 1,
+        lastEvaluatedSha: null,
+        history: [],
+      };
+
+      const entry: ReleaseCommsHistoryEntry = {
+        sha: "ghi9012",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "789",
+        postworthy: true,
+        reason: "Lookup failure test",
+        instagramHandoffs: [handoff],
+        publications: { bluesky: [], githubDiscussions: [], instagram: [] },
+        completed: false,
+      };
+
+      let checkpointedHandoffMediaId: string | undefined;
+
+      // Pass 1: media_publish succeeds (calls onMediaPublished), but permalink lookup throws
+      const pass1 = await processInstagramHandoffs({
+        entry,
+        recommendedChannels: ["instagram"],
+        state,
+        publishFn: async (options) => {
+          if (options.onMediaPublished) {
+            await options.onMediaPublished("meta-published-media-id");
+          }
+          throw new Error("Meta permalink lookup timed out");
+        },
+        saveStateFn: async (saved) => {
+          checkpointedHandoffMediaId =
+            saved.history[0].instagramHandoffs?.[0]?.publishedMediaId;
+        },
+      });
+
+      expect(pass1.instagramPublishFailed).toBe(true);
+      expect(checkpointedHandoffMediaId).toBe("meta-published-media-id");
+      expect(pass1.entry.instagramHandoffs?.[0].publishedMediaId).toBe(
+        "meta-published-media-id",
+      );
+
+      // Pass 2: Retry receives publishedMediaId so it can recover the permalink without duplicate creation
+      let receivedPublishedMediaId: string | undefined;
+      const pass2 = await processInstagramHandoffs({
+        entry: pass1.entry,
+        recommendedChannels: ["instagram"],
+        state,
+        publishFn: async (options) => {
+          receivedPublishedMediaId = options.publishedMediaId;
+          return {
+            id: options.publishedMediaId!,
+            url: "https://www.instagram.com/p/recovered-permalink/",
+          };
+        },
+      });
+
+      expect(pass2.instagramPublishFailed).toBe(false);
+      expect(receivedPublishedMediaId).toBe("meta-published-media-id");
+      expect(pass2.entry.publications?.instagram?.[0].url).toBe(
+        "https://www.instagram.com/p/recovered-permalink/",
+      );
+    });
+
+    it("skips Instagram publishing when opted out via INSTAGRAM_AUTO_PUBLISH=0 without error", async () => {
+      const handoff: InstagramHandoff = {
+        pageUrl: "https://codexcryptica.com/answers/optout",
+        caption: "Opted out caption",
+        imageUrl: "https://assets.codexcryptica.com/og/optout.jpg",
+      };
+
+      const entry: ReleaseCommsHistoryEntry = {
+        sha: "jkl3456",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "999",
+        postworthy: true,
+        reason: "Opt out test",
+        instagramHandoffs: [handoff],
+        publications: { bluesky: [], githubDiscussions: [], instagram: [] },
+        completed: false,
+      };
+
+      let publishCalled = false;
+      const result = await processInstagramHandoffs({
+        entry,
+        recommendedChannels: ["instagram"],
+        state: { version: 1, lastEvaluatedSha: null, history: [] },
+        env: { INSTAGRAM_AUTO_PUBLISH: "0" },
+        publishFn: async () => {
+          publishCalled = true;
+          return { id: "never", url: "never" };
+        },
+      });
+
+      expect(publishCalled).toBe(false);
+      expect(result.instagramPublishFailed).toBe(false);
+      expect(result.entry.publications?.instagram).toHaveLength(0);
+    });
+
+    it("gates tracker updates when Instagram publication failed or handoffs are incomplete", () => {
+      const entry: ReleaseCommsHistoryEntry = {
+        sha: "mno7890",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "111",
+        postworthy: true,
+        reason: "Tracker gate test",
+        instagramHandoffs: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/h1",
+            caption: "h1",
+            imageUrl: "https://assets.codexcryptica.com/og/h1.jpg",
+          },
+          {
+            pageUrl: "https://codexcryptica.com/answers/h2",
+            caption: "h2",
+            imageUrl: "https://assets.codexcryptica.com/og/h2.jpg",
+          },
+        ],
+        publications: {
+          bluesky: [],
+          githubDiscussions: [],
+          instagram: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/h1",
+              url: "https://www.instagram.com/p/h1/",
+            },
+          ],
+        },
+        completed: false,
+      };
+
+      // 1 of 2 published, publish failed:
+      expect(shouldUpdateInstagramTracker(entry, true)).toBe(false);
+      // 1 of 2 published, publish did not fail (incomplete):
+      expect(shouldUpdateInstagramTracker(entry, false)).toBe(false);
+
+      // Both published, but publish failed:
+      const completeEntry: ReleaseCommsHistoryEntry = {
+        ...entry,
+        publications: {
+          ...entry.publications!,
+          instagram: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/h1",
+              url: "https://www.instagram.com/p/h1/",
+            },
+            {
+              pageUrl: "https://codexcryptica.com/answers/h2",
+              url: "https://www.instagram.com/p/h2/",
+            },
+          ],
+        },
+      };
+      expect(shouldUpdateInstagramTracker(completeEntry, true)).toBe(false);
+
+      // Both published and no publish failure:
+      expect(shouldUpdateInstagramTracker(completeEntry, false)).toBe(true);
     });
   });
 

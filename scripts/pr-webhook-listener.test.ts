@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_RECONCILE_INTERVAL_MS,
   MAX_BODY_BYTES,
+  filterNonPausedPrs,
   readRequestBody,
   reconcileOpenPrs,
   resolveReconcileIntervalMs,
@@ -191,6 +192,24 @@ describe("PR webhook listener", () => {
         reconcileOpenPrs([201, 202], processPr),
       ).resolves.toBeUndefined();
       expect(processPr).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("filterNonPausedPrs", () => {
+    it("excludes PRs with a 'paused' label and retains non-paused PRs", () => {
+      const prs = [
+        { number: 2978, labels: [{ name: "enhancement" }] },
+        { number: 2977, labels: [{ name: "enhancement" }] },
+        {
+          number: 2426,
+          labels: [{ name: "enhancement" }, { name: "paused" }],
+        },
+        { number: 1893, labels: [{ name: "PAUSED" }] },
+        { number: 1000, labels: [] },
+        { number: 1001, labels: undefined },
+      ];
+
+      expect(filterNonPausedPrs(prs)).toEqual([2978, 2977, 1000, 1001]);
     });
   });
 });
