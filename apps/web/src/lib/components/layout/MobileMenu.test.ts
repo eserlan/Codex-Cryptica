@@ -8,6 +8,7 @@ import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 
 // jsdom has no Web Animations API, which Svelte's transitions drive. The
 // drawer's open and close behaviour is the subject here, not its animation.
@@ -42,6 +43,8 @@ describe("MobileMenu", () => {
     guidedModeStore.setGuidedMode(true);
     sessionModeStore.isGuestMode = false;
     vault.isInitialized = true;
+    vaultRegistry.activeVaultId = "vault-1";
+    vault.status = "idle";
     layoutUIStore.activeSidebarTool = "none";
     layoutUIStore.toggleSidebarTool = vi.fn();
   });

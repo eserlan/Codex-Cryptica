@@ -121,4 +121,16 @@ describe("IntentCreateModal", () => {
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
     expect(modalUIStore.closeIntentCreateMenu).toHaveBeenCalled();
   });
+
+  it("does not launch a generator before the vault is initialized", async () => {
+    (vault as any).isInitialized = false;
+
+    render(IntentCreateModal);
+    await fireEvent.click(screen.getByTestId("intent-character"));
+
+    expect(modalUIStore.openIntentGeneratorWorkflow).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflow).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
+    expect(modalUIStore.closeIntentCreateMenu).toHaveBeenCalled();
+  });
 });
