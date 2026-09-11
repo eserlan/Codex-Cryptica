@@ -22,6 +22,8 @@ import {
   updateTrackerPlatformStatus,
 } from "./release-comms-queue.ts";
 import {
+  BLUESKY_CHARACTER_LIMIT,
+  blueskyTextLength,
   isReleaseCommsDryRun,
   publishBlueskyPost,
   publishDiscussion,
@@ -41,6 +43,7 @@ import {
   saveReleaseCommsState,
 } from "./release-comms-state.ts";
 import type {
+  EvaluatorResult,
   ReleaseCommsHistoryEntry,
   WriterResult,
 } from "./release-comms-types.ts";
@@ -426,6 +429,104 @@ function fetchRecentBlueskyTitles(): string {
   }
 }
 
+/** Bounds the cost of re-asking a provider to shorten an over-budget Bluesky draft. */
+const MAX_BLUESKY_BUDGET_ATTEMPTS = 4;
+
+export interface OversizedBlueskyDraft {
+  pageUrl: string;
+  length: number;
+}
+
+/** Quality-assess the writer pass's Bluesky drafts against the real character budget, once the page URL is resolved in. */
+export function findOversizedBlueskyDrafts(
+  drafts: WriterResult,
+): OversizedBlueskyDraft[] {
+  return drafts.bluesky
+    .map((draft) => ({
+      pageUrl: draft.pageUrl,
+      length: blueskyTextLength(draft.text, draft.pageUrl),
+    }))
+    .filter((draft) => draft.length > BLUESKY_CHARACTER_LIMIT);
+}
+
+/** Ask the writer to resubmit the same JSON shape with only the flagged Bluesky post(s) shortened. */
+export function buildWriterRetryPrompt(
+  basePrompt: string,
+  oversized: OversizedBlueskyDraft[],
+): string {
+  const notes = oversized
+    .map(
+      (draft) =>
+        `- ${draft.pageUrl}: ${draft.length} characters (${draft.length - BLUESKY_CHARACTER_LIMIT} over the ${BLUESKY_CHARACTER_LIMIT}-character limit), counting the page URL and hashtags already appended`,
+    )
+    .join("\n");
+  return `${basePrompt}
+
+Your previous response is REJECTED: the following Bluesky post(s), once the page URL is appended, exceed Bluesky's hard ${BLUESKY_CHARACTER_LIMIT}-character limit:
+${notes}
+
+Rewrite the ENTIRE JSON response in the exact same shape. Keep every field and every other entry unchanged, but shorten ONLY the flagged Bluesky post(s) so the complete text — including its URL and hashtags — is comfortably under ${BLUESKY_CHARACTER_LIMIT} characters, aiming for 220 characters or fewer before the URL and hashtags are added, same as the original instructions. Respond with ONLY the corrected fenced \`\`\`json code block, no other prose.`;
+}
+
+/**
+ * Run the writer pass, and if it comes back with any Bluesky draft over
+ * budget, ask it to shorten just that draft and try again — up to
+ * MAX_BLUESKY_BUDGET_ATTEMPTS times — rather than letting an oversized post
+ * crash the whole run at publish time. If it still doesn't fit after every
+ * attempt, drop that one post (loudly) instead of blocking every other
+ * channel on it.
+ */
+async function runWriterPassWithBudgetRetries(
+  evaluation: EvaluatorResult,
+  publicContent: PublicContentItem[],
+  logPath: string,
+  runId: string,
+): Promise<WriterResult | null> {
+  const basePrompt = buildWriterPrompt(evaluation, publicContent);
+  let prompt = basePrompt;
+  let lastResult: WriterResult | null = null;
+
+  for (let attempt = 1; attempt <= MAX_BLUESKY_BUDGET_ATTEMPTS; attempt++) {
+    const passName = attempt === 1 ? "write" : `write-retry-${attempt - 1}`;
+    const parsed = await runJsonAgentPass(
+      prompt,
+      logPath,
+      runId,
+      isWriterResult,
+      passName,
+    );
+    if (!parsed) return lastResult;
+    lastResult = parsed;
+
+    const oversized = findOversizedBlueskyDrafts(parsed);
+    if (oversized.length === 0) return parsed;
+
+    console.warn(
+      `[release-comms] ${oversized.length} Bluesky draft(s) over the ${BLUESKY_CHARACTER_LIMIT}-character budget (attempt ${attempt}/${MAX_BLUESKY_BUDGET_ATTEMPTS}); asking for a rewrite`,
+    );
+    prompt = buildWriterRetryPrompt(basePrompt, oversized);
+  }
+
+  const stillOversized = lastResult
+    ? findOversizedBlueskyDrafts(lastResult)
+    : [];
+  if (lastResult && stillOversized.length > 0) {
+    console.error(
+      `[release-comms] giving up on ${stillOversized.length} Bluesky draft(s) still over budget after ${MAX_BLUESKY_BUDGET_ATTEMPTS} attempts; skipping them: ${stillOversized.map((draft) => draft.pageUrl).join(", ")}`,
+    );
+    return {
+      ...lastResult,
+      bluesky: lastResult.bluesky.filter(
+        (draft) =>
+          !stillOversized.some(
+            (oversize) => oversize.pageUrl === draft.pageUrl,
+          ),
+      ),
+    };
+  }
+  return lastResult;
+}
+
 /**
  * Run a prompt through the provider fallback chain until one returns a
  * parseable, schema-valid JSON result. Shared by the evaluator and writer
@@ -497,7 +598,7 @@ export async function main(promoteRunId: string): Promise<void> {
     (entry) =>
       entry.sha === newSha && entry.completed === false && entry.drafts,
   );
-  const result: import("./release-comms-types.ts").EvaluatorResult = resumable
+  const result: EvaluatorResult = resumable
     ? {
         postworthy: resumable.postworthy,
         importance: resumable.importance as
@@ -527,15 +628,19 @@ export async function main(promoteRunId: string): Promise<void> {
     return;
   }
 
+  const resumableDrafts =
+    resumable?.drafts &&
+    findOversizedBlueskyDrafts(resumable.drafts).length === 0
+      ? resumable.drafts
+      : undefined;
   const drafts: WriterResult | null =
-    resumable?.drafts ??
+    resumableDrafts ??
     (result.postworthy
-      ? await runJsonAgentPass(
-          buildWriterPrompt(result, publicContent),
+      ? await runWriterPassWithBudgetRetries(
+          result,
+          publicContent,
           logPath,
           promoteRunId,
-          isWriterResult,
-          "write",
         )
       : null);
   if (result.postworthy && !drafts) {
@@ -601,7 +706,10 @@ export async function main(promoteRunId: string): Promise<void> {
         },
       };
       publishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
-      newlyPublishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
+      newlyPublishedBluesky.push({
+        pageUrl: draft.pageUrl,
+        url: publication.url,
+      });
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
     const publishedDiscussions = entry.publications?.githubDiscussions ?? [];
