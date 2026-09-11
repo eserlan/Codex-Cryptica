@@ -225,7 +225,17 @@
   function isGroupCollapsed(groupId: string): boolean {
     // When actively searching, expand all matching groups
     if (normalizedQuery) return false;
-    return collapsedGroups[groupId] ?? true;
+    const explicitlyCollapsed = collapsedGroups[groupId];
+    if (explicitlyCollapsed !== undefined) return explicitlyCollapsed;
+
+    // Make a non-favourite generator selected by the parent visible, without
+    // overriding a category the user has explicitly collapsed. Favourites
+    // already remain visible in their dedicated section.
+    return (
+      generatorId !== selectedId ||
+      favoritesStore.isFavorite(selectedId) ||
+      resolveGeneratorSection(selectedGenerator) !== groupId
+    );
   }
 
   function toggleGroupCollapsed(groupId: string) {

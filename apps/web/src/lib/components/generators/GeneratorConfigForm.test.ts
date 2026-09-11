@@ -113,12 +113,6 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
       },
     });
 
-    // Expand the Locations & Worlds group to reveal the Dungeon / Delve generator
-    const locationGroupButton = screen.getByRole("button", {
-      name: /locations & worlds/i,
-    });
-    await fireEvent.click(locationGroupButton);
-
     expect(
       screen.getByRole("radio", {
         name: "Dungeon / Delve Creates Location (Facility)",
@@ -460,10 +454,10 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     ).toBe(true);
   });
 
-  it("groups generators into the 4 broad categories and keeps them collapsed by default until toggled", async () => {
+  it("expands the parent-selected generator's category while keeping other categories collapsed", async () => {
     render(GeneratorConfigForm, {
       props: {
-        generatorId: "npc",
+        generatorId: "dungeon",
         onsubmit: vi.fn(),
       },
     });
@@ -483,11 +477,17 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     });
 
     expect(peopleGroupButton.getAttribute("aria-expanded")).toBe("false");
-    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("true");
     expect(adventuresGroupButton.getAttribute("aria-expanded")).toBe("false");
     expect(lootGroupButton.getAttribute("aria-expanded")).toBe("false");
 
-    // Plot Twist should not be visible while collapsed
+    expect(
+      screen.getByRole("radio", {
+        name: /Dungeon \/ Delve Creates Location/,
+      }),
+    ).toBeTruthy();
+
+    // Plot Twist should not be visible while its category is collapsed
     expect(
       screen.queryByRole("radio", {
         name: "Plot Twist & Complication Creates Note",
@@ -511,6 +511,29 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     expect(
       screen.queryByRole("radio", {
         name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps a selected generator's category collapsed after the user collapses it", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "dungeon",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const locationsGroupButton = screen.getByRole("button", {
+      name: /locations & worlds/i,
+    });
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("true");
+
+    await fireEvent.click(locationsGroupButton);
+
+    expect(locationsGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      screen.queryByRole("radio", {
+        name: /Dungeon \/ Delve Creates Location/,
       }),
     ).toBeNull();
   });
