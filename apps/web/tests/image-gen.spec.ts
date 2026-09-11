@@ -1,32 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle, seedEntity } from "./test-helpers";
 
 test.describe("Oracle Image Generation", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      // Suppress Oracle onboarding overlay
-      try {
-        localStorage.setItem("codex_oracle_onboarding_dismissed", "true");
-      } catch {
-        /* ignore */
-      }
-    });
-
-    await page.goto("/?s=" + Date.now());
-    await page.waitForFunction(
-      () =>
-        (window as any).uiStore !== undefined &&
-        (window as any).oracle !== undefined,
-    );
+    await setupVaultPage(page);
 
     await page.evaluate(async () => {
-      await (window as any).oracle.setKey("fake-key");
-      if ((window as any).vault) {
-        (window as any).vault.status = "idle";
+      if ((window as any).oracle) {
+        await (window as any).oracle.setKey("fake-key");
       }
     });
   });
@@ -79,10 +60,21 @@ test.describe("Oracle Image Generation", () => {
       }
     });
 
+    await page.route("**/v1/images/generations**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          result: {
+            image:
+              "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          },
+        }),
+      });
+    });
+
     // 1. Open Oracle
-    const trigger = page.getByTestId("activity-bar-oracle");
-    await trigger.waitFor({ state: "visible", timeout: 15000 });
-    await trigger.click();
+    await openOracle(page);
 
     // 2. Type image command
     const input = page.getByTestId("oracle-input");
@@ -98,21 +90,16 @@ test.describe("Oracle Image Generation", () => {
   test("should allow dragging an image to the detail panel", async ({
     page,
   }) => {
-    // 1. Ensure we are in a state where we can create an entity
-    await page.waitForFunction(() => !!(window as any).modalUIStore);
-    await page.evaluate(() =>
-      (window as any).modalUIStore.requestCreateEntity(),
-    );
-
-    const titleInput = page.getByPlaceholder(/Title.../i);
-    await titleInput.fill("Test Drag Entity");
-
-    const addBtn = page.getByRole("button", { name: "ADD" });
-    await expect(addBtn).toBeEnabled({ timeout: 5000 });
-    await addBtn.click();
+    // 1. Create and select an entity to open detail panel
+    await seedEntity(page, {
+      title: "Test Drag Entity",
+      type: "character",
+      select: true,
+    });
 
     // Wait for detail panel to open
-    await expect(page.locator("[aria-label='Image drop zone']")).toBeVisible({
+    const dropZone = page.locator("[aria-label='Image drop zone']");
+    await expect(dropZone).toBeVisible({
       timeout: 15000,
     });
 
@@ -127,7 +114,6 @@ test.describe("Oracle Image Generation", () => {
     });
 
     // 2. Drop a synthetic image file onto the detail panel
-    const dropZone = page.locator("[aria-label='Image drop zone']");
     await dropZone.evaluate((zone) => {
       const file = new File(
         [new Uint8Array([137, 80, 78, 71])],

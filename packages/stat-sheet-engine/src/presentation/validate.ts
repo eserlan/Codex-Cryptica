@@ -24,7 +24,16 @@ function validateFieldRef(
     return missing;
   }
   const requested = node.displayMode ?? node.requestedDisplayMode;
-  const { mode, wasIncompatible } = resolveDisplayMode(field.type, requested);
+  const inferredDefault =
+    !requested &&
+    field.type === "dice" &&
+    /^1d100$/i.test(field.formula?.trim() ?? "")
+      ? "name-target"
+      : undefined;
+  const { mode, wasIncompatible } = resolveDisplayMode(
+    field.type,
+    requested ?? inferredDefault,
+  );
   const resolved: FieldReferenceNode = {
     type: "field-reference",
     fieldId: node.fieldId,

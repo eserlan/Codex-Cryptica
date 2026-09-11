@@ -14,6 +14,7 @@ import { lancerAdventureTables } from "./lancer";
 import { spaceOperaResistanceAdventureTables } from "./space-opera-resistance";
 import { optimisticSciFiAdventureTables } from "./optimistic-scifi";
 import { cosmicHorrorAdventureTables } from "./cosmic-horror";
+import { spaceWesternAdventureTables } from "./space-western";
 
 /**
  * Every genre the adventure generator can produce content for, keyed by the theme
@@ -36,6 +37,7 @@ export const ADVENTURE_GENRE_TABLES: Record<string, AdventureGenreTables> = {
   Lancer: lancerAdventureTables,
   "Space Opera Resistance": spaceOperaResistanceAdventureTables,
   "Optimistic Exploration Sci-Fi": optimisticSciFiAdventureTables,
+  "Space Western": spaceWesternAdventureTables,
   // Gothic Horror maps to the Vampire/Gothic Noir table for dungeon parity.
   "Gothic Horror": gothicHorrorAdventureTables,
   "Cosmic Horror": cosmicHorrorAdventureTables,

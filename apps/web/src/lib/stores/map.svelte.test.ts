@@ -9,6 +9,7 @@ const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
   maps: {},
   saveMaps: vi.fn(),
+  getActiveVaultHandle: vi.fn(),
 }));
 
 function makeMap(id: string, isWorldMap = false) {
@@ -114,6 +115,10 @@ describe("MapStore settings persistence", () => {
         gridOffsetY: -8,
         gridColor: "#fbbf24",
         showLabels: true,
+        visionMode: "party",
+        visionRange: 60,
+        layerVisibility: { terrain: true, object: true, token: true },
+        layerLocked: { terrain: false, object: false, token: false },
       });
     });
   });
@@ -151,6 +156,18 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(64);
     expect(store.gridColor).toBe("#3b82f6");
     expect(store.showLabels).toBe(true);
+    // Blobs saved before layers existed have neither key — falls back to
+    // "everything visible, nothing locked" rather than undefined.
+    expect(store.layerVisibility).toEqual({
+      terrain: true,
+      object: true,
+      token: true,
+    });
+    expect(store.layerLocked).toEqual({
+      terrain: false,
+      object: false,
+      token: false,
+    });
 
     store.selectMap("map-b");
     expect(store.showFog).toBe(true);
@@ -159,6 +176,55 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(80);
     expect(store.gridColor).toBe(null);
     expect(store.showLabels).toBe(false);
+  });
+
+  it("persists a layer visibility/lock toggle and restores it later", async () => {
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    store.layerVisibility.terrain = false;
+    store.layerLocked.object = true;
+
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-a");
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.layerVisibility).toEqual({
+        terrain: false,
+        object: true,
+        token: true,
+      });
+      expect(parsed.layerLocked).toEqual({
+        terrain: false,
+        object: true,
+        token: false,
+      });
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-a");
+    expect(restored.layerVisibility.terrain).toBe(false);
+    expect(restored.layerLocked.object).toBe(true);
+  });
+
+  it("merges a persisted blob missing a since-added layer over the defaults", async () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-a",
+      JSON.stringify({
+        showFog: false,
+        showGrid: false,
+        layerVisibility: { terrain: false },
+      }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-a");
+
+    expect(store.layerVisibility).toEqual({
+      terrain: false,
+      object: true,
+      token: true,
+    });
   });
 
   it("restores the last selected map and viewport on reload", async () => {
@@ -230,6 +296,41 @@ describe("MapStore settings persistence", () => {
     });
   });
 
+  it("debounces viewport persistence so rapid drag updates don't do synchronous storage I/O per frame", async () => {
+    vi.useFakeTimers();
+    try {
+      vaultMock.maps = { "map-a": makeMap("map-a", true) };
+      const store = new MapStore();
+      await vi.waitFor(() => expect(store.activeMapId).toBe("map-a"));
+
+      // Simulate several pointermove updates in a fast drag.
+      store.updateViewport({ x: 1, y: 1 }, 1);
+      store.updateViewport({ x: 5, y: 5 }, 1);
+      store.updateViewport({ x: 12, y: 12 }, 1);
+
+      // None of those should have hit storage synchronously yet.
+      const midDrag = window.localStorage.getItem(
+        "codex-map-page-state:vault-a",
+      );
+      const midDragViewport = midDrag
+        ? JSON.parse(midDrag).viewports?.["map-a"]
+        : undefined;
+      expect(midDragViewport).not.toEqual({ pan: { x: 12, y: 12 }, zoom: 1 });
+
+      await vi.advanceTimersByTimeAsync(250);
+
+      const settled = JSON.parse(
+        window.localStorage.getItem("codex-map-page-state:vault-a")!,
+      );
+      expect(settled.viewports["map-a"]).toEqual({
+        pan: { x: 12, y: 12 },
+        zoom: 1,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("uses an injected storage instead of window.localStorage", async () => {
     const mem = new Map<string, string>();
     const storage = {
@@ -294,5 +395,45 @@ describe("MapStore settings persistence", () => {
     expect(mask).toBeTruthy();
     expect(fetch).toHaveBeenCalledWith("blob:mask-url");
     expect(drawImage).toHaveBeenCalled();
+  });
+});
+
+describe("MapStore.createBlankMap", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vaultMock.activeVaultId = "vault-a";
+    vaultMock.maps = {};
+    vaultMock.getActiveVaultHandle.mockReset();
+  });
+
+  it("creates a map with no background image at the fixed blank-map size", async () => {
+    vaultMock.getActiveVaultHandle.mockResolvedValue({ name: "vault-a" });
+    const store = new MapStore(undefined, { uuid: () => "blank-map-id" });
+
+    const id = await store.createBlankMap("New Map");
+
+    expect(id).toBe("blank-map-id");
+    expect(
+      (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
+    ).toMatchObject({
+      name: "New Map",
+      assetPath: "",
+      dimensions: { width: 4000, height: 4000 },
+      fogOfWar: { maskPath: "maps/blank-map-id_mask.png" },
+    });
+    expect(vaultMock.saveMaps).toHaveBeenCalled();
+    expect(store.activeMapId).toBe("blank-map-id");
+  });
+
+  it("fails gracefully with no active vault", async () => {
+    vaultMock.getActiveVaultHandle.mockResolvedValue(undefined);
+    const store = new MapStore(undefined, { uuid: () => "blank-map-id" });
+
+    const id = await store.createBlankMap("New Map");
+
+    expect(id).toBeUndefined();
+    expect(
+      (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
+    ).toBeUndefined();
   });
 });

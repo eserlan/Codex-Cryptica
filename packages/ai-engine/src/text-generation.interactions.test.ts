@@ -5,7 +5,10 @@ vi.mock("./capability-guard", () => ({
 }));
 
 import { DefaultTextGenerationService } from "./text-generation.service.svelte";
-import { InteractionExpiredError } from "./client-manager";
+import {
+  InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
+} from "./client-manager";
 import { interactionSessions } from "./interaction-session";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 
@@ -72,6 +75,9 @@ describe("generateResponse — Interactions API path", () => {
     expect(onUpdate).toHaveBeenCalledWith("First answer");
     expect(send.mock.calls[0][0].input).toContain("A knight.");
     expect(send.mock.calls[0][0].previousInteractionId).toBeNull();
+    // The Interactions path is provider-neutral: it always threads the
+    // registry key, never the caller's Gemini modelName ("gemini-3-flash-preview" above).
+    expect(send.mock.calls[0][0].model).toBe(INTERACTION_MODEL_KEY);
 
     // Second turn: same lore unchanged -> stripped; previous id threaded.
     await svc.generateResponse(
@@ -243,6 +249,9 @@ describe("reviseEntityUpdate — Interactions API path", () => {
     expect(send.mock.calls[0][0].input).toContain(
       "<USER_CONTENT>\nSzass Tam (npc) [rules]: The lich-regent of Thay.\n</USER_CONTENT>",
     );
+    // Provider-neutral: always the registry key, never the caller's
+    // Gemini modelName ("m" above).
+    expect(send.mock.calls[0][0].model).toBe(INTERACTION_MODEL_KEY);
     expect(send.mock.calls[1][0].previousInteractionId).toBe("r1");
     expect(send.mock.calls[1][0].input).not.toContain(
       "The lich-regent of Thay.",

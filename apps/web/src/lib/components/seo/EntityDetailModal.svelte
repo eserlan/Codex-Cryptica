@@ -9,13 +9,39 @@
   let {
     entity,
     onClose,
+    onCopy,
+    onRefine,
   }: {
     entity: SessionEntity | null;
     onClose: () => void;
+    onCopy?: (entity: SessionEntity) => Promise<boolean>;
+    onRefine?: (entity: SessionEntity) => void;
   } = $props();
+
+  let copyState = $state<"idle" | "success" | "error">("idle");
+  let copyInFlight = $state(false);
+  let copyTimeout: ReturnType<typeof setTimeout> | undefined;
 
   function handleKeydown(e: KeyboardEvent) {
     if (entity && e.key === "Escape") onClose();
+  }
+
+  async function handleCopy() {
+    if (!entity || !onCopy) return;
+    if (copyInFlight) return;
+    clearTimeout(copyTimeout);
+    copyInFlight = true;
+    copyState = "idle";
+    try {
+      const success = await onCopy(entity);
+      copyState = success ? "success" : "error";
+    } catch (error) {
+      console.error("Failed to copy Session Hub entity", error);
+      copyState = "error";
+    } finally {
+      copyInFlight = false;
+      copyTimeout = setTimeout(() => (copyState = "idle"), 2000);
+    }
   }
 </script>
 
@@ -57,7 +83,9 @@
         </button>
       </div>
 
-      <div class="p-6 overflow-y-auto seo-md">
+      <div
+        class="seo-md break-words overflow-y-auto p-6 text-lg leading-relaxed text-theme-text/90 [&_pre]:overflow-x-auto [&_pre]:max-w-full"
+      >
         <!-- content already leads with the italicized summary, so no separate
              summary block here (would duplicate it). -->
         {@html renderGeneratorMarkdown(entity.content, "default")}
@@ -75,8 +103,36 @@
       </div>
 
       <div
-        class="px-6 py-4 border-t border-theme-border/60 bg-theme-surface/40 flex justify-end"
+        class="px-6 py-4 border-t border-theme-border/60 bg-theme-surface/40 flex items-center justify-end gap-2"
       >
+        {#if copyState !== "idle"}
+          <span
+            class="mr-auto text-xs {copyState === 'success'
+              ? 'text-theme-primary'
+              : 'text-theme-danger'}"
+            role="status"
+            aria-live="polite"
+          >
+            {copyState === "success" ? "Copied!" : "Could not copy."}
+          </span>
+        {/if}
+        {#if onRefine}
+          <button
+            type="button"
+            onclick={() => entity && onRefine(entity)}
+            class="rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase font-header tracking-widest text-theme-primary hover:bg-theme-primary/20 transition-all"
+          >
+            Refine
+          </button>
+        {/if}
+        <button
+          type="button"
+          onclick={handleCopy}
+          disabled={!onCopy || copyInFlight || copyState === "success"}
+          class="px-4 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-primary/20 transition-all disabled:opacity-50"
+        >
+          {copyState === "success" ? "Copied!" : "Copy"}
+        </button>
         <button
           type="button"
           onclick={onClose}
@@ -93,7 +149,7 @@
   .seo-md :global(h2) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     margin: 1.5rem 0 0.75rem;
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-border) 40%, transparent);
@@ -102,14 +158,14 @@
   .seo-md :global(h3) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.125rem;
     margin: 1rem 0 0.5rem;
     color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
   }
   .seo-md :global(h4) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     margin: 0.85rem 0 0.35rem;
     color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
   }

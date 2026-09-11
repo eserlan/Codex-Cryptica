@@ -54,3 +54,8 @@ Don't worry about adding the same entity twice. The system automatically detects
 ### Finding Other Canvases
 
 If the canvas you need isn't in the "Recents" list, select **Choose Canvas...** to open a searchable modal containing every board in your vault.
+
+### Related Blog Posts
+
+- [Introducing the Canvas: Visual Brainstorming Meets Structured Lore](/blog/introducing-the-canvas) — Practical workflows, worked examples, and tips for organizing freeform visual workspaces.
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — How spatial layouts reduce cognitive load and reveal hidden lore connections.

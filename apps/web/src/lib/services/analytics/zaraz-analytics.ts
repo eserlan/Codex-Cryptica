@@ -25,6 +25,37 @@ interface ZarazLike {
   track: (eventName: string, properties?: Record<string, unknown>) => void;
 }
 
+export type PublicGeneratorAction = "save_to_codex" | "copy" | "open_codex";
+
+function flatAcquisitionProperties(
+  attribution: ReturnType<typeof attributionStore.getLatestTouch>,
+): Record<string, string> {
+  if (
+    attribution?.channel !== "ai_referral" ||
+    typeof attribution.provider !== "string" ||
+    typeof attribution.source !== "string" ||
+    typeof attribution.landing_path !== "string"
+  ) {
+    return {};
+  }
+
+  return {
+    acquisition_channel: attribution.channel,
+    acquisition_provider: attribution.provider,
+    acquisition_source: attribution.source,
+    acquisition_landing_path: attribution.landing_path,
+  };
+}
+
+/** Tracks a public-generator action without coupling UI code to Zaraz. */
+export function trackPublicGeneratorAction(
+  action: PublicGeneratorAction,
+  properties: Record<string, unknown> = {},
+  win: any = typeof window !== "undefined" ? window : undefined,
+): void {
+  trackEvent("public_generator_action_clicked", { ...properties, action }, win);
+}
+
 function getZaraz(win: any): ZarazLike | undefined {
   return win?.zaraz;
 }
@@ -49,6 +80,7 @@ export function trackEvent(
       ...properties,
       ...(firstTouch ? { first_touch: firstTouch } : {}),
       ...(latestTouch ? { latest_touch: latestTouch } : {}),
+      ...flatAcquisitionProperties(latestTouch),
     });
   } catch {
     // tracking must never break the page

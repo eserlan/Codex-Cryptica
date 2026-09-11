@@ -14,7 +14,8 @@ function context(): GeneratorVaultContext {
     targetEntityType: "faction",
     categoryLabels: [{ id: "faction", label: "Faction" }],
     applyTemplate: true,
-    templateOutline: "## Summary\n## Goals",
+    templateOutline:
+      "## Summary\nA short entity overview.\n\n## Goals\nWhat the entity wants.",
     sourceEntity: {
       id: "src",
       title: "Ash Market",
@@ -67,6 +68,11 @@ describe("GeneratorSession", () => {
     expect(first.input).toContain("[GENERATOR VAULT CONTEXT]");
     expect(first.input).toContain("Low Myth");
     expect(first.input).toContain("Salt Concord");
+    expect(first.input).toContain("<template_guidance>");
+    expect(first.input).toContain("A short entity overview.");
+    expect(first.input).toContain(
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated lore.",
+    );
     expect(first.sentLoreCount).toBe(loreEntries.length);
 
     session.commitTurn("interaction-1", loreEntries);

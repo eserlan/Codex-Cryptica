@@ -26,13 +26,31 @@
     isStandalone = false,
   }: Props = $props();
 
-  let actionableCount = $derived(
-    session.items.filter((item) => {
-      if (item.decision === "ignore") return false;
-      if (!item.match) return true;
-      return (item.matchDecision ?? "skip") !== "skip";
-    }).length,
-  );
+  // ⚡ Bolt Optimization: Replace .filter().length with an imperative loop
+  let actionableCount = $derived.by(() => {
+    let count = 0;
+    const len = session.items.length;
+    for (let i = 0; i < len; i++) {
+      const item = session.items[i];
+      if (item.decision === "ignore") continue;
+      if (!item.match || (item.matchDecision ?? "skip") !== "skip") {
+        count++;
+      }
+    }
+    return count;
+  });
+
+  // ⚡ Bolt Optimization: Replace inline .filter().length with an imperative loop
+  let matchCount = $derived.by(() => {
+    let count = 0;
+    const len = session.items.length;
+    for (let i = 0; i < len; i++) {
+      if (session.items[i].match) {
+        count++;
+      }
+    }
+    return count;
+  });
 
   // This source's assets always ride along with an entity and never
   // resolves relationships (relationshipDrafts is always empty), so an
@@ -134,7 +152,7 @@
         <span
           class="px-2 py-1 border border-theme-border bg-theme-bg text-theme-text rounded"
         >
-          {session.items.filter((item) => item.match).length} Matches
+          {matchCount} Matches
         </span>
         <span
           class="px-2 py-1 border border-theme-border bg-theme-bg text-theme-text rounded"

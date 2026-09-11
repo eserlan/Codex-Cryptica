@@ -1,0 +1,186 @@
+/** @vitest-environment jsdom */
+
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
+import type { RandomSource, RollOutcome } from "random-source-engine";
+import {
+  getOracleChatDraft,
+  clearOracleChatDraft,
+} from "$lib/components/oracle/oracle-chat-input";
+
+import TableRoller from "./TableRoller.svelte";
+
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () =>
+    ({ finished: Promise.resolve(), cancel: () => {} }) as unknown as Animation;
+}
+
+const source: RandomSource = {
+  id: "table-1",
+  name: "Complications",
+  kind: "table",
+  labels: [],
+  selection: { mode: "ranged", die: { sides: 6 } },
+  entries: [
+    { id: "entry-1", text: "The bridge collapses", range: { min: 1, max: 6 } },
+  ],
+};
+
+const outcome: RollOutcome = {
+  finalText: "The bridge collapses",
+  chain: [
+    {
+      sourceName: source.name,
+      sourceKind: "table",
+      dieValue: 3,
+      text: "The bridge collapses",
+      children: [],
+      status: "ok",
+    },
+  ],
+  notices: [],
+};
+
+function renderRoller(overrides: Record<string, unknown> = {}) {
+  return render(TableRoller, {
+    props: {
+      source,
+      sources: {
+        roll: vi.fn(() => outcome),
+        rerollFragment: vi.fn(),
+      },
+      history: { addResult: vi.fn() },
+      ...overrides,
+    } as never,
+  });
+}
+
+describe("TableRoller result actions", () => {
+  it("sends a rolled result to chat and copies its plain text", async () => {
+    const addToChat = vi.fn(async () => {});
+    const copyText = vi.fn(async () => {});
+    renderRoller({ addToChat, copyText });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+    await fireEvent.click(screen.getByTestId("add-roll-result-to-chat"));
+    await fireEvent.click(screen.getByTestId("copy-roll-result"));
+
+    await waitFor(() =>
+      expect(addToChat).toHaveBeenCalledWith("The bridge collapses"),
+    );
+    expect(copyText).toHaveBeenCalledWith("The bridge collapses");
+    await waitFor(() =>
+      expect(screen.getByTestId("copy-roll-result").textContent).toContain(
+        "Copied",
+      ),
+    );
+  });
+
+  it("dispatches to both VTT chat and Oracle chat by default on add to chat", async () => {
+    clearOracleChatDraft();
+    const sendChatMessage = vi.fn();
+    const session = {
+      vttEnabled: false,
+      sendChatMessage,
+    };
+    renderRoller({ session });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+    await fireEvent.click(screen.getByTestId("add-roll-result-to-chat"));
+
+    await waitFor(() =>
+      expect(sendChatMessage).toHaveBeenCalledWith("The bridge collapses"),
+    );
+    expect(getOracleChatDraft()).toBe("The bridge collapses");
+  });
+
+  it("keeps the copy action available when clipboard access fails", async () => {
+    const copyText = vi.fn(async () => {
+      throw new Error("Permission denied");
+    });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    renderRoller({ copyText });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+    await fireEvent.click(screen.getByTestId("copy-roll-result"));
+
+    await waitFor(() => expect(copyText).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId("copy-roll-result").textContent).toContain(
+      "Copy",
+    );
+    consoleError.mockRestore();
+  });
+
+  it("records roll history with deterministic timestamp from injected clock", async () => {
+    const addResult = vi.fn(async () => {});
+    const clock = { now: () => 1700000000123 };
+    renderRoller({ history: { addResult }, clock });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    await waitFor(() =>
+      expect(addResult).toHaveBeenCalledWith(
+        expect.objectContaining({
+          total: 3,
+          formula: "d6",
+          timestamp: 1700000000123,
+        }),
+        "table",
+        expect.objectContaining({
+          label: "Complications",
+          source: expect.objectContaining({
+            sourceId: "table-1",
+            sourceName: "Complications",
+            finalText: "The bridge collapses",
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("pins a rolled result to the map as a note titled after the table", async () => {
+    const addNote = vi.fn(() => ({ id: "token-1" }));
+    const session = { mapId: "map-1", vttEnabled: true, addNote };
+    renderRoller({ session });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+    await fireEvent.click(screen.getByTestId("pin-roll-result-to-map"));
+
+    await waitFor(() =>
+      expect(addNote).toHaveBeenCalledWith({
+        name: "Complications",
+        body: "The bridge collapses",
+      }),
+    );
+  });
+
+  it("disables pinning while no map is open", async () => {
+    const session = { mapId: null, vttEnabled: false, addNote: vi.fn() };
+    renderRoller({ session });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    const pinButton = screen.getByTestId(
+      "pin-roll-result-to-map",
+    ) as HTMLButtonElement;
+    expect(pinButton.disabled).toBe(true);
+    expect(session.addNote).not.toHaveBeenCalled();
+  });
+
+  it("does not record roll history when table has no entries", async () => {
+    const addResult = vi.fn(async () => {});
+    const emptySource: RandomSource = {
+      ...source,
+      entries: [],
+    };
+    renderRoller({ source: emptySource, history: { addResult } });
+
+    const rollButton = screen.getByTestId("roll-table") as HTMLButtonElement;
+    expect(rollButton.disabled).toBe(true);
+
+    await fireEvent.click(rollButton);
+    expect(addResult).not.toHaveBeenCalled();
+  });
+});

@@ -6,6 +6,7 @@ import {
   injectDndNpcQuickStats,
   npcThemeConfig,
   NAME_BAN_PROMPT,
+  resolveNpc,
 } from "./public-npc";
 
 // Deterministic rng (LCG) so prompt/local output is stable across runs.
@@ -164,5 +165,188 @@ describe("injectDndNpcQuickStats", () => {
       "Mage",
     );
     expect(injectDndNpcQuickStats(once, "Mage")).toBe(once);
+  });
+});
+
+describe("Delve Boss / Key NPC contextual generation", () => {
+  it("generates local delve boss output with lair sector, alert response, and secret tie", () => {
+    const out = generateNpcLocal(
+      {
+        role: "Dungeon Mastermind",
+        theme: "Classic Fantasy",
+        delveContext: {
+          delveTitle: "The Sunken Vault",
+          conflict: "Goblins vs Kobold miners",
+          secret: "Houses an active planar core",
+          sectors: ["Guarded Gateway", "Deep Arcana Vault"],
+        },
+      },
+      seededRng(42),
+    );
+
+    expect(out.lore).toContain("- **Delve Sector / Lair**:");
+    expect(out.lore).toContain("- **Relation to Inhabitants**:");
+    expect(out.lore).toContain("- **Tie to Central Secret**:");
+    expect(out.lore).toContain("### Alert & Lair Response");
+    expect(out.lore).toContain("Stage 1 (Unaware)");
+    expect(out.lore).toContain("Stage 2 (Alerted)");
+    expect(out.lore).toContain("Stage 3 (Lair Defense / Confrontation)");
+    expect(out.labels).toContain("delve-boss");
+    expect(out.labels).toContain("dungeon-npc");
+  });
+
+  it("builds an AI prompt with delve instructions and structured delve context block", () => {
+    const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
+      {
+        role: "Bound Vault Guardian",
+        delveContext: {
+          delveTitle: "Submerged Crypt",
+          theme: "Gothic Horror",
+          conflict: "Vampire spawn feasting on trapped ghouls",
+          secret: "A silver sarcophagus contains a star beast",
+          sectors: ["Flooded Nave", "Inner Crypt"],
+        },
+      },
+      "",
+      seededRng(10),
+    );
+
+    expect(resolved.isDelve).toBe(true);
+    expect(systemInstruction).toContain("DELVE / DUNGEON CONTEXT ACTIVE");
+    expect(systemInstruction).toContain("Alert & Lair Response");
+    expect(userMessage).toContain("[Delve Source Context]");
+    expect(userMessage).toContain("- Dungeon Location: Submerged Crypt");
+    expect(userMessage).toContain(
+      "- Central Secret / Mystery: A silver sarcophagus contains a star beast",
+    );
+    expect(userMessage).toContain("- Key Sectors: Flooded Nave, Inner Crypt");
+  });
+
+  it("parses AI response and injects delve-boss and dungeon-npc labels", () => {
+    const { resolved } = buildNpcPrompt(
+      {
+        role: "Dungeon Mastermind",
+        delveContext: "Ancient Necropolis",
+      },
+      "",
+      seededRng(15),
+    );
+
+    const json =
+      '{"title":"Xalvador","summary":"Lair master.","content":"### Who they are\\nXalvador.","lore":"### At a Glance\\n- **Role**: Dungeon Mastermind","labels":["rpg-character"]}';
+    const out = parseNpcResponse(json, {}, resolved);
+    expect(out.labels).toContain("delve-boss");
+    expect(out.labels).toContain("dungeon-npc");
+  });
+});
+
+describe("Table Card (5-Element) NPC mode", () => {
+  it("generates 5-element table card locally with want, mannerism, contradiction, relationship, and sensory tag", () => {
+    const out = generateNpcLocal(
+      {
+        role: "Blacksmith",
+        theme: "Classic Fantasy",
+        mode: "table-card",
+      },
+      seededRng(42),
+    );
+
+    expect(out.content).toContain("### The Five Elements");
+    expect(out.content).toContain("- **Immediate Want**:");
+    expect(out.content).toContain("- **Physical Mannerism**:");
+    expect(out.content).toContain("- **Sharp Contradiction**:");
+    expect(out.content).toContain("- **Relationship Hook**:");
+    expect(out.content).toContain("- **Sensory Tag**:");
+    expect(out.content).toContain("### Table Delivery");
+
+    expect(out.lore).toContain("- **Immediate Want**:");
+    expect(out.lore).toContain("- **Contradiction**:");
+    expect(out.lore).toContain("- **Relationship Hook**:");
+    expect(out.lore).toContain("- **Sensory Tag**:");
+
+    expect(out.labels).toContain("table-card");
+  });
+
+  it("supports mode: 'short' as an alias for table-card", () => {
+    const out = generateNpcLocal(
+      {
+        role: "Guard",
+        mode: "short",
+      },
+      seededRng(7),
+    );
+
+    expect(out.content).toContain("### The Five Elements");
+    expect(out.labels).toContain("table-card");
+  });
+
+  it("builds an AI prompt tailored for the 5-element memorable NPC anatomy", () => {
+    const { systemInstruction, resolved } = buildNpcPrompt(
+      {
+        role: "Merchant",
+        mode: "table-card",
+      },
+      "",
+      seededRng(9),
+    );
+
+    expect(resolved.mode).toBe("table-card");
+    expect(systemInstruction).toContain("5-element memorable NPC anatomy");
+    expect(systemInstruction).toContain("### The Five Elements");
+    expect(systemInstruction).toContain("### Table Delivery");
+    expect(systemInstruction).toContain("Immediate Want");
+    expect(systemInstruction).toContain("Sharp Contradiction");
+    expect(systemInstruction).toContain("Sensory Tag");
+  });
+
+  it("parses AI response and injects table-card label in table-card mode", () => {
+    const { resolved } = buildNpcPrompt(
+      {
+        role: "Scholar",
+        mode: "table-card",
+      },
+      "",
+      seededRng(12),
+    );
+
+    const json =
+      '{"title":"Master Eldon","summary":"Scholastic fence.","content":"### The Five Elements\\n- **Immediate Want**: Needs ink.","lore":"### At a Glance\\n- **Role**: Scholar","labels":["rpg-character"]}';
+    const out = parseNpcResponse(json, {}, resolved);
+    expect(out.labels).toContain("table-card");
+  });
+
+  it("does not consume table-card RNG picks in dossier mode", () => {
+    const resolved = resolveNpc({ role: "Guard" }, seededRng(42));
+
+    expect(resolved.mode).toBe("dossier");
+    expect(resolved.immediateWant).toBeUndefined();
+    expect(resolved.contradiction).toBeUndefined();
+    expect(resolved.relationshipHook).toBeUndefined();
+    expect(resolved.sensoryTag).toBeUndefined();
+  });
+
+  it("consumes exactly 4 fewer RNG calls in dossier mode than table-card mode", () => {
+    function countRngCalls(mode: "dossier" | "table-card"): number {
+      let calls = 0;
+      const base = seededRng(42);
+      const counting = () => {
+        calls++;
+        return base();
+      };
+      resolveNpc({ role: "Guard", mode }, counting);
+      return calls;
+    }
+
+    expect(countRngCalls("table-card") - countRngCalls("dossier")).toBe(4);
+  });
+
+  it("produces grammatically sound summaries for every immediate-want variant", () => {
+    for (let seed = 0; seed < 30; seed++) {
+      const out = generateNpcLocal(
+        { role: "Guard", mode: "table-card" },
+        seededRng(seed),
+      );
+      expect(out.summary).not.toMatch(/who urgently (needs|desperate|seeking|searching|wants|looking)/i);
+    }
   });
 });

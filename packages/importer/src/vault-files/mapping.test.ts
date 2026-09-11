@@ -8,7 +8,7 @@ function draft(overrides: Partial<EntityDraft> = {}): EntityDraft {
     sourcePath: "entities/x.md",
     title: "X",
     content: "",
-    tags: [],
+    labels: [],
     ...overrides,
   };
 }

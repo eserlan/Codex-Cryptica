@@ -5,6 +5,7 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
@@ -27,6 +28,14 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import { shelf } from "$lib/features/shelf";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -61,6 +70,38 @@
   }>();
 
   let linkCopied = $state(false);
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    if (!entity) return;
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf. The user confirms in a modal first; only
+   * after that confirm does the Oracle compression call run (shown as its
+   * own "loading" state), and MonsterLabs opens once the URL is ready.
+   */
+  const monsterLabsFlow = createMonsterLabsHandoffFlow();
+  const handleSendToMonsterLabs = () => {
+    if (!entity) return;
+    monsterLabsFlow.start({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
+  };
 
   const handleCopyGuestLink = async () => {
     if (!guestVault.publishId || !entity) return;
@@ -100,6 +141,9 @@
     entity?.parent ? vault.entities[entity.parent] : null,
   );
 
+  // Guests read the hierarchy but never rearrange it.
+  const canEditParent = $derived(!vault.isGuest);
+
   const existingCanvas = $derived.by(() => {
     if (!entity) return undefined;
     return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
@@ -119,52 +163,55 @@
     class="flex items-center gap-3 md:gap-4 flex-1 min-w-0 w-full md:w-auto order-2 md:order-1"
   >
     <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-3 mb-0.5 md:mb-1">
-        <span
-          class="{getIconClass(
-            categories.getCategory(
-              editState.isEditing ? editState.type : entity?.type || '',
-            )?.icon,
-          )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
-        ></span>
-        {#if editState.isEditing}
-          <select
+      {#if editState.isEditing}
+        <div class="mb-1.5">
+          <CategoryRadioGroup
             bind:value={editState.type}
-            aria-label="Entity Type"
-            class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] md:text-xs font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-1 md:ml-2"
-          >
-            {#each categories.list as cat (cat.id)}
-              <option value={cat.id}>{cat.label || cat.id.toUpperCase()}</option
-              >
-            {/each}
-          </select>
-        {:else}
+            ariaLabel="Entity Type"
+            showLabel={false}
+            compact
+            idPrefix="zen-entity-type"
+          />
+        </div>
+      {:else}
+        <div class="flex items-center gap-2 mb-0.5 md:mb-1">
+          <span
+            class="{getIconClass(
+              categories.getCategory(entity?.type || '')?.icon,
+            )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
+          ></span>
           <span
             class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
             >{entity?.type || ""}</span
           >
-        {/if}
-      </div>
+        </div>
+      {/if}
       {#if editState.isEditing}
         <div class="space-y-2">
-          <input
-            type="text"
-            bind:value={editState.title}
-            aria-label="Entity Title"
-            class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editState.title}
+              aria-label="Entity Title"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl md:text-3xl w-full placeholder-theme-muted rounded"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editState.aliases} />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5">
-          <h1
-            id="entity-modal-title"
-            data-testid="entity-title"
-            class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
-          >
-            {entity?.title || ""}
-          </h1>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1
+              id="entity-modal-title"
+              data-testid="entity-title"
+              class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
+            >
+              {entity?.title || ""}
+            </h1>
+            <SaveStatusIndicator />
+          </div>
           {#if entity?.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5">
               <span
@@ -195,6 +242,35 @@
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
                 {parentEntity.title}
+              </button>
+              {#if canEditParent}
+                <button
+                  type="button"
+                  onclick={() => modalUIStore.openParentPicker(entity.id)}
+                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
+                  aria-label="Change parent"
+                  title="Change parent"
+                  data-testid="zen-change-parent-button"
+                >
+                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+          {:else if canEditParent}
+            <div class="mt-1.5">
+              <button
+                type="button"
+                onclick={() => modalUIStore.openParentPicker(entity.id)}
+                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                title="Nest this under another entity"
+                data-testid="zen-set-parent-button"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
+                ></span>
+                <span>Set parent</span>
               </button>
             </div>
           {/if}
@@ -267,6 +343,48 @@
             data-testid="zen-find-in-graph-button"
           >
             <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && !vault.isGuest}
+          <button
+            type="button"
+            onclick={handleSendToShelf}
+            class="px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
+              ? 'text-theme-primary'
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title={shelvedJustNow
+              ? "On the Shelf"
+              : "Send to Shelf — to bring into another vault"}
+            aria-label="Send to Shelf"
+            data-testid="zen-send-to-shelf-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{shelvedJustNow
+                ? 'icon-[lucide--check]'
+                : 'icon-[lucide--library]'} w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if entity && isMonsterLabsHandoffEligibleType(entity.type)}
+          <button
+            type="button"
+            onclick={handleSendToMonsterLabs}
+            disabled={monsterLabsFlow.open}
+            aria-busy={monsterLabsFlow.state === "loading"}
+            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest disabled:opacity-50"
+            title="{getMonsterLabsActionLabel(
+              entity.type,
+            )} — opens monsterlabs.app in a new tab"
+            aria-label={getMonsterLabsActionLabel(entity.type)}
+            data-testid="zen-send-to-monsterlabs-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{monsterLabsFlow.state === 'loading'
+                ? 'icon-[lucide--loader-2] animate-spin'
+                : 'icon-[lucide--external-link]'} w-4 h-4"
             ></span>
           </button>
         {/if}
@@ -450,3 +568,13 @@
     </div>
   </div>
 </header>
+
+<MonsterLabsSendingModal
+  open={monsterLabsFlow.open}
+  state={monsterLabsFlow.state}
+  entityLabel={monsterLabsFlow.entityLabel}
+  url={monsterLabsFlow.url}
+  onConfirm={monsterLabsFlow.confirm}
+  onOpen={monsterLabsFlow.close}
+  onClose={monsterLabsFlow.close}
+/>

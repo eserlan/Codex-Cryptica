@@ -153,7 +153,7 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     });
 
     // Verify edit button is present
-    const editBtn = getByLabelText("Edit connection");
+    const editBtn = getByLabelText(/^Edit connection to /);
     expect(editBtn).toBeTruthy();
 
     // ConnectionEditor select/input should NOT be in the document initially
@@ -210,7 +210,7 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     if (!container) throw new Error("Could not find connection container");
 
     const deleteBtn = within(container as HTMLElement).getByLabelText(
-      "Delete connection",
+      /^Delete connection to /,
     );
     await fireEvent.click(deleteBtn);
 
@@ -256,7 +256,7 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     });
 
     const establishButtons = screen.getAllByLabelText(
-      "Establish custom connection",
+      /^Establish custom connection to /,
     );
     expect(establishButtons.length).toBeGreaterThan(0);
 

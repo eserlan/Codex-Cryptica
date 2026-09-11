@@ -11,10 +11,10 @@
 </script>
 
 <div
-  class="inline-flex items-center gap-1 px-2 py-0.5 bg-theme-accent/10 border border-theme-accent/30 rounded text-[10px] font-bold text-theme-accent uppercase font-header tracking-wider whitespace-nowrap group"
+  class="group inline-flex max-w-full min-w-0 items-start gap-1 rounded border border-theme-accent/30 bg-theme-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-accent font-header"
   data-testid="label-badge"
 >
-  <span>{label}</span>
+  <span class="min-w-0 break-words">{label}</span>
   {#if removable}
     <button
       type="button"
@@ -22,7 +22,7 @@
         e.stopPropagation();
         onRemove();
       }}
-      class="hover:text-theme-primary transition-colors flex items-center justify-center -mr-1 p-0.5"
+      class="-mr-1 flex shrink-0 items-center justify-center p-0.5 transition-colors hover:text-theme-primary"
       aria-label="Remove label {label}"
     >
       <span aria-hidden="true" class="icon-[heroicons--x-mark] w-3 h-3"></span>

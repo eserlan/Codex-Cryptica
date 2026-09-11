@@ -3,6 +3,23 @@ import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import DetailHeader from "./DetailHeader.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+
+// Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
+// (MonsterLabsSendingModal's ModalShell uses fade/scale transitions).
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () => {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      pause: () => {},
+      play: () => {},
+      reverse: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any;
+  };
+}
 
 // Mock stores
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
@@ -14,6 +31,7 @@ vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openZenMode: vi.fn(),
+    openParentPicker: vi.fn(),
   },
 }));
 
@@ -23,12 +41,21 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     selectedEntityId: "entity-1",
     addLabel: vi.fn(),
     removeLabel: vi.fn(),
+    updateEntity: vi.fn(),
     entities: {
+      "entity-1": {
+        id: "entity-1",
+        title: "Test Entity",
+      },
       "parent-id": {
         id: "parent-id",
         title: "Mock Parent Entity",
       },
     },
+    allEntities: [
+      { id: "entity-1", title: "Test Entity", type: "note" },
+      { id: "parent-id", title: "Mock Parent Entity", type: "location" },
+    ],
   },
 }));
 
@@ -167,6 +194,72 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
   });
 });
 
+describe("DetailHeader parent selection", () => {
+  const renderEntity = (entity: Record<string, unknown>) =>
+    render(DetailHeader, {
+      entity: {
+        id: "entity-1",
+        title: "Test Entity",
+        aliases: [],
+        labels: [],
+        ...entity,
+      } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  it("offers to set a parent where the indicator would otherwise sit", () => {
+    // Without an entry point here, nesting is reachable only by dragging in the
+    // explorer — invisible to anyone working from the detail panel.
+    const { getByTestId, queryByTestId } = renderEntity({});
+
+    expect(getByTestId("set-parent-button")).toBeTruthy();
+    expect(queryByTestId("sidebar-parent-indicator")).toBeNull();
+  });
+
+  it("offers to change the parent an entity already has", () => {
+    const { getByTestId, queryByTestId } = renderEntity({
+      parent: "parent-id",
+    });
+
+    expect(getByTestId("change-parent-button")).toBeTruthy();
+    expect(queryByTestId("set-parent-button")).toBeNull();
+  });
+
+  it("asks the global modal host to open the picker", async () => {
+    // Hosting it here instead would trap the dialog in the detail panel's
+    // stacking context, and leave isAnyModalOpen blind to it.
+    const { getByTestId } = renderEntity({});
+
+    await fireEvent.click(getByTestId("set-parent-button"));
+
+    expect(modalUIStore.openParentPicker).toHaveBeenCalledWith("entity-1");
+  });
+
+  it("opens the picker on the same entity when changing an existing parent", async () => {
+    const { getByTestId } = renderEntity({ parent: "parent-id" });
+
+    await fireEvent.click(getByTestId("change-parent-button"));
+
+    expect(modalUIStore.openParentPicker).toHaveBeenCalledWith("entity-1");
+  });
+
+  it("never offers to rearrange a vault the viewer does not own", () => {
+    (vault as any).isGuest = true;
+    try {
+      const { queryByTestId } = renderEntity({ parent: "parent-id" });
+      expect(queryByTestId("set-parent-button")).toBeNull();
+      expect(queryByTestId("change-parent-button")).toBeNull();
+      // The parent itself still reads, guests just cannot move it.
+      expect(queryByTestId("sidebar-parent-indicator")).toBeTruthy();
+    } finally {
+      (vault as any).isGuest = false;
+    }
+  });
+});
+
 describe("DetailHeader stature badge", () => {
   const renderEntity = (entity: Record<string, unknown>) =>
     render(DetailHeader, {
@@ -234,5 +327,161 @@ describe("DetailHeader stature badge", () => {
     } finally {
       (vault as any).isGuest = false;
     }
+  });
+
+  it("surfaces save state indicator when vault is saving", () => {
+    (vault as any).status = "saving";
+    try {
+      const { getByTestId } = renderEntity({
+        labels: [],
+      });
+      expect(getByTestId("save-indicator-saving")).toBeTruthy();
+    } finally {
+      (vault as any).status = "idle";
+    }
+  });
+});
+
+describe("DetailHeader MonsterLabs handoff", () => {
+  const renderEntity = (entity: Record<string, unknown>) =>
+    render(DetailHeader, {
+      entity: { id: "entity-1", title: "Test Entity", ...entity } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  it("offers to send characters to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "character",
+      content: "A disgraced noble.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers to send creatures to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "creature",
+      content: "A soot-caked horror.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers to send items to MonsterLabs", () => {
+    const { getAllByTestId } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    expect(getAllByTestId("send-to-monsterlabs-button").length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("does not offer the handoff for other entity types", () => {
+    const { queryByTestId } = renderEntity({
+      type: "location",
+      content: "A ruined watchtower.",
+    });
+
+    expect(queryByTestId("send-to-monsterlabs-button")).toBeNull();
+  });
+
+  it("labels the item action as a magic item handoff", () => {
+    const { getAllByLabelText } = renderEntity({
+      type: "item",
+      content: "A tarnished circlet.",
+    });
+
+    expect(
+      getAllByLabelText("Create D&D magic item in MonsterLabs").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("opens the magic item generator for an item entity, only after confirming in the modal", async () => {
+    // Clicking the header button no longer sends anything immediately — it
+    // opens a confirm modal. Only clicking "Go to MonsterLabs" inside that
+    // modal builds the (possibly AI-compressed) prompt and opens the tab.
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    const { getAllByTestId, findByTestId } = renderEntity({
+      type: "item",
+      title: "Crown of the Last Ember",
+      content: "A tarnished circlet that hums when a fire is near.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+    expect(openSpy).not.toHaveBeenCalled();
+
+    await fireEvent.click(await findByTestId("monsterlabs-confirm-button"));
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [url] = openSpy.mock.calls[0];
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-magic-item-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Crown of the Last Ember\nType: Item\n\nA tarnished circlet that hums when a fire is near.",
+    );
+
+    openSpy.mockRestore();
+  });
+
+  it("opens MonsterLabs with the entity's name, type, and content after confirming", async () => {
+    const openSpy = vi.spyOn(window, "open").mockReturnValue({} as Window);
+    const { getAllByTestId, findByTestId } = renderEntity({
+      type: "creature",
+      title: "Ash-Eater Varkesh",
+      content: "A soot-caked horror.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+    await fireEvent.click(await findByTestId("monsterlabs-confirm-button"));
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const [url, target, features] = openSpy.mock.calls[0];
+    expect(target).toBe("_blank");
+    expect(features).toBe("noopener,noreferrer");
+    const parsed = new URL(url as string);
+    expect(parsed.origin + parsed.pathname).toBe(
+      "https://monsterlabs.app/dnd-monster-generator",
+    );
+    expect(parsed.searchParams.get("prompt")).toBe(
+      "Name: Ash-Eater Varkesh\nType: Creature\n\nA soot-caked horror.",
+    );
+
+    openSpy.mockRestore();
+  });
+
+  it("clears the busy state even when window.open returns null (noopener always returns null)", async () => {
+    // window.open's return value is not a success/failure signal once
+    // "noopener" is passed — treating a null return as "blocked" would
+    // report every successful send as a failure. See
+    // external-generator-handoff.ts for the full explanation. The "ready"
+    // state's own open link is the real fallback for a genuinely blocked
+    // popup, not busy-state detection.
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    const { getAllByTestId, findByTestId, findAllByTestId } = renderEntity({
+      type: "creature",
+      title: "Ash-Eater Varkesh",
+      content: "A soot-caked horror.",
+    });
+
+    await fireEvent.click(getAllByTestId("send-to-monsterlabs-button")[0]);
+    await fireEvent.click(await findByTestId("monsterlabs-confirm-button"));
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(await findByTestId("monsterlabs-open-link")).toBeTruthy();
+    const [button] = await findAllByTestId("send-to-monsterlabs-button");
+    expect(button.getAttribute("aria-busy")).toBe("false");
+
+    openSpy.mockRestore();
   });
 });

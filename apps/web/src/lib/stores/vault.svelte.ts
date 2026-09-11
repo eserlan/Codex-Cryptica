@@ -6,6 +6,7 @@ import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
 import type { Entity, GuestChatTranscript } from "schema";
+import type { BulkMutationResult } from "./vault/bulk-results";
 import {
   saveTranscriptToDisk,
   loadTranscriptsForCharacterFromDisk,
@@ -54,6 +55,7 @@ import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
+import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
   // Reactive State
@@ -99,10 +101,13 @@ export class VaultStore {
   }
   get allEntities() {
     if (sessionModeStore.isGuestMode) {
-      const extraEntities = Object.values(this.entityStore.entities).filter(
-        (e) => !guestVault.entitiesMap[e.id],
-      );
-      return [...guestVault.entities, ...extraEntities];
+      const allEnts = this.entityStore.allEntities;
+      const extraEntities: typeof allEnts = [];
+      for (let i = 0; i < allEnts.length; i++) {
+        const e = allEnts[i];
+        if (!guestVault.entitiesMap[e.id]) extraEntities.push(e);
+      }
+      return guestVault.entities.concat(extraEntities);
     }
     return this.entityStore.allEntities;
   }
@@ -379,6 +384,7 @@ export class VaultStore {
     });
 
     const mutations = new EntityMutationService({
+      performanceRecorder: browserPerformanceRecorder,
       repository: this.repository,
       persistence,
       loader,
@@ -541,6 +547,11 @@ export class VaultStore {
     return this.syncStore.loadFromFolder();
   }
 
+  /** Discards the fast-start cache and re-reads the vault from OPFS (#2619). */
+  async reloadFromDisk() {
+    return this.syncStore.reloadFromDisk();
+  }
+
   async saveToFolder() {
     return this.syncStore.saveToFolder();
   }
@@ -560,6 +571,16 @@ export class VaultStore {
       return Promise.resolve();
     }
     return this.entityStore.loadEntityContent(id);
+  }
+
+  /**
+   * Whether an entity's full markdown body is in memory. Callers that persist
+   * or transmit a vault need this: until it is true, `content` may only be the
+   * cached preview.
+   */
+  isContentLoaded(id: string): boolean {
+    if (sessionModeStore.isGuestMode) return true;
+    return this.entityStore.isContentLoaded(id);
   }
   createEntity(
     type: Entity["type"],
@@ -587,8 +608,16 @@ export class VaultStore {
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
   }
+  bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    return this.entityStore.bulkUpdate(updates);
+  }
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
+  }
+  bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    return this.entityStore.bulkDelete(ids);
   }
   /**
    * Freeform relationship phrases like "Mother of" are redirected to a real
@@ -816,7 +845,12 @@ export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());
 
-if (typeof window !== "undefined" && import.meta.env.DEV) {
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV ||
+    (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+      .__CODEX_PERFORMANCE_CAPTURE__ === true)
+) {
   (window as any).vault = vault;
   debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

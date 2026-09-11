@@ -8,6 +8,7 @@ import {
   upsertMarkdownSection,
 } from "./markdown";
 import { EntitySchema } from "schema";
+import { validateMarkdownFrontmatter } from "@codex/vault-engine";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -162,6 +163,22 @@ describe("markdown.ts utility", () => {
       expect(lines[1]).toContain("updatedAt: 1000");
     });
 
+    it("should omit runtime cache preview fields from frontmatter", () => {
+      const result = stringifyEntity({
+        id: "id1",
+        title: "Test",
+        type: "note",
+        content: "Body",
+        contentPreview: "Body",
+        contentLoaded: false,
+        contentPreviewVersion: 1,
+      } as any);
+
+      expect(result).not.toContain("contentPreview");
+      expect(result).not.toContain("contentLoaded");
+      expect(result).not.toContain("contentPreviewVersion");
+    });
+
     it("should round-trip a canonical language profile through frontmatter", () => {
       const entity = EntitySchema.parse({
         id: "lemari",
@@ -294,12 +311,11 @@ describe("markdown.ts utility", () => {
         id: "eldrin-shadoweaver",
         type: "character",
         title: "Eldrin Shadoweaver",
-        tags: ["mage", "shadow", "ancient"],
         labels: ["important", "past"],
         aliases: ["The Shadow Mage", "Eldrin"],
         connections: [
           {
-            targetId: "shadow-keep",
+            target: "shadow-keep",
             type: "located_in",
             label: "Home Sanctuary",
           },
@@ -358,7 +374,6 @@ describe("markdown.ts utility", () => {
       expect(parsedResult.metadata.id).toBe(fullEntity.id);
       expect(parsedResult.metadata.type).toBe(fullEntity.type);
       expect(parsedResult.metadata.title).toBe(fullEntity.title);
-      expect(parsedResult.metadata.tags).toEqual(fullEntity.tags);
       expect(parsedResult.metadata.labels).toEqual(fullEntity.labels);
       expect(parsedResult.metadata.aliases).toEqual(fullEntity.aliases);
       expect(parsedResult.metadata.connections).toEqual(fullEntity.connections);
@@ -382,6 +397,10 @@ describe("markdown.ts utility", () => {
 
       // Verify content parses back correctly
       expect(parsedResult.content.trim()).toBe(fullEntity.content.trim());
+
+      // Verify frontmatter passes validateMarkdownFrontmatter without errors
+      const validation = validateMarkdownFrontmatter(serialized);
+      expect(validation.success).toBe(true);
     });
   });
 

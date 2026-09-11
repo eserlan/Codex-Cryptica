@@ -1,4 +1,9 @@
-import type { StarSystemBody } from "generator-engine";
+import type {
+  StarSystemBody,
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "generator-engine";
 
 export const nameTable = {
   prefixes: [
@@ -465,6 +470,14 @@ export interface GeneratorOutput {
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
   starType?: string;
+  /** Structured star-pattern data for constellations, for the star-chart diagram. */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
+  /** Dominant conflict domain of a generated BBEG villain (e.g. "Cult Ritual"), tracked for session variety. */
+  conflictDomain?: string;
 }
 
 /**

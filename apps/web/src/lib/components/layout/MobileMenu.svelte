@@ -7,9 +7,27 @@
   import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { isToolActive, isViewActive, navItems } from "./nav-items";
 
   let { isOpen = $bindable(false) } = $props();
+
+  /**
+   * The full index of the app's navigation, including the items the Activity
+   * Bar leaves out on a phone for want of width. Generated from the same list
+   * the bar uses — this section was four hardcoded links and had already
+   * drifted a feature and a half behind it.
+   */
+  const items = $derived(navItems());
+  const views = $derived(items.filter((i) => i.group === "view"));
+  const tools = $derived(items.filter((i) => i.group === "tool"));
+
+  const entryClass = (active: boolean) =>
+    `flex items-center gap-3 p-3 rounded border transition-all min-h-[44px] hover:border-theme-primary hover:bg-theme-primary/10 ${
+      active
+        ? "border-theme-primary bg-theme-primary/5 text-theme-primary"
+        : "border-theme-border text-theme-text"
+    }`;
 
   let closeButton = $state<HTMLButtonElement | null>(null);
   let lastFocusedElement = $state<HTMLElement | null>(null);
@@ -64,7 +82,7 @@
       <h2
         class="text-lg font-bold text-theme-text font-mono flex items-center gap-2"
       >
-        <span class="icon-[lucide--menu] text-theme-primary"></span>
+        <span class="icon-[lucide--menu] text-theme-primary" aria-hidden="true"></span>
         MENU
       </h2>
       <button
@@ -99,65 +117,57 @@
           Views
         </h3>
         <div class="grid grid-cols-1 gap-2">
-          <a
-            href="{base}/"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page
-              .url.pathname === `${base}/`
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--share-2] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Graph</span
+          {#each views as view}
+            <a
+              href={view.href}
+              class={entryClass(isViewActive(view, page.url.pathname))}
+              title={view.title ?? view.label}
+              data-testid="mobile-menu-{view.id}"
+              onclick={close}
             >
-          </a>
-          <a
-            href="{base}/map"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
-              `${base}/map`,
-            )
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--map] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Map</span
+              <span class="{view.icon} w-5 h-5" aria-hidden="true"></span>
+              <span
+                class="font-mono text-sm font-bold uppercase font-header tracking-wider"
+                >{view.label}</span
+              >
+            </a>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Sidecar Tools -->
+      <div class="flex flex-col gap-2">
+        <h3
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
+        >
+          Tools
+        </h3>
+        <div class="grid grid-cols-1 gap-2">
+          {#each tools as tool}
+            <button
+              type="button"
+              class={entryClass(isToolActive(tool))}
+              title={tool.title ?? tool.label}
+              data-testid="mobile-menu-{tool.id}"
+              onclick={() => {
+                tool.action?.();
+                close();
+              }}
             >
-          </a>
-          <a
-            href="{base}/canvas"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
-              `${base}/canvas`,
-            )
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--layout] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Canvas</span
-            >
-          </a>
-          <a
-            href="{base}/table"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
-              `${base}/table`,
-            )
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--table] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Table</span
-            >
-          </a>
+              <span class="{tool.icon} w-5 h-5" aria-hidden="true"></span>
+              <span
+                class="font-mono text-sm font-bold uppercase font-header tracking-wider"
+                >{tool.label}</span
+              >
+              {#if tool.id === "quicknote" && quickNoteStore.count > 0}
+                <span
+                  class="ml-auto rounded-full bg-theme-primary px-1.5 text-[10px] font-bold text-theme-bg"
+                >
+                  {quickNoteStore.count}
+                </span>
+              {/if}
+            </button>
+          {/each}
         </div>
       </div>
 
@@ -179,6 +189,7 @@
           Application
         </h3>
         <button
+          type="button"
           class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-theme-primary min-h-[44px]"
           onclick={() => {
             modalUIStore.toggleSettings("vault");
@@ -209,52 +220,27 @@
             rel="noopener noreferrer"
             class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           >
-            <span class="icon-[lucide--heart] w-4 h-4"></span>
+            <span class="icon-[lucide--heart] w-4 h-4" aria-hidden="true"></span>
             Support on Patreon
           </a>
         {/if}
         <a
-          href="{base}/features"
+          href="{base}/explore"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--zap] w-4 h-4"></span>
-          Features
-        </a>
-        <a
-          href="{base}/blog"
-          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-          onclick={close}
-        >
-          <span class="icon-[lucide--newspaper] w-4 h-4"></span>
-          Blog
-        </a>
-        {#if !guidedModeStore.isGuidedMode}
-          <a
-            href="{base}/worlds"
-            class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-            onclick={close}
-          >
-            <span class="icon-[lucide--compass] w-4 h-4"></span>
-            Explore Worlds
-          </a>
-        {/if}
-        <a
-          href="{base}/responsible-ai-worldbuilding"
-          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-          onclick={close}
-        >
-          <span class="icon-[lucide--shield-alert] w-4 h-4"></span>
-          Responsible AI
+          <span class="icon-[lucide--compass] w-4 h-4" aria-hidden="true"></span>
+          Explore
         </a>
         <button
+          type="button"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
           onclick={() => {
             modalUIStore.openSettings("help");
             close();
           }}
         >
-          <span class="icon-[lucide--help-circle] w-4 h-4"></span>
+          <span class="icon-[lucide--help-circle] w-4 h-4" aria-hidden="true"></span>
           Help
         </button>
         <a
@@ -263,8 +249,8 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--shield] w-4 h-4"></span>
-          Privacy Policy
+          <span class="icon-[lucide--shield] w-4 h-4" aria-hidden="true"></span>
+          Privacy
         </a>
         <a
           href="{base}/terms"
@@ -272,8 +258,8 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--file-text] w-4 h-4"></span>
-          Terms of Service
+          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
+          Terms
         </a>
       </div>
     </div>

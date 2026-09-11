@@ -48,6 +48,41 @@ export function latestTemporalYear(
 }
 
 /**
+ * Returns the sole quest-generator entry in memory, when there is exactly
+ * one. Quest drafts carry these labels so ordinary event entities are not
+ * accidentally treated as quest hooks.
+ */
+export function findSingleQuestHook(
+  entities: Record<string, Entity>,
+): Entity | undefined {
+  // ⚡ Bolt Optimization: Replace Object.values().filter() and Set mapping with
+  // an imperative loop and early return to reduce GC pressure and O(N) allocations.
+  let questHook: Entity | undefined;
+  for (const id in entities) {
+    if (!Object.hasOwn(entities, id)) continue;
+
+    const entity = entities[id];
+    if (!entity.labels) continue;
+
+    let isHook = false;
+    for (const label of entity.labels) {
+      const lower = label.toLocaleLowerCase();
+      if (lower === "quest-generator" || lower === "rpg-quest") {
+        isHook = true;
+        break;
+      }
+    }
+
+    if (isHook) {
+      if (questHook !== undefined) return undefined; // Multiple found, abort early
+      questHook = entity;
+    }
+  }
+
+  return questHook;
+}
+
+/**
  * Flatten markdown into a single clean line: drop heading markers (so a source
  * entity's "## Summary" can't collide with the generator template's headings)
  * and collapse newlines/whitespace (so each entity stays on one context line).
@@ -254,14 +289,17 @@ export function buildVaultContext(
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
-  let neighbors: VaultContextEntityExcerpt[] = [];
+  const neighbors: VaultContextEntityExcerpt[] = [];
   if (sourceEntity) {
     if (connectedIds && connectedIds.size > 0) {
-      neighbors = [...connectedIds]
-        .map((id) => allEntities[id])
-        .filter((e): e is Entity => !!e)
-        .slice(0, MAX_NEIGHBORS)
-        .map((e) => entityToExcerpt(e));
+      // ⚡ Bolt Optimization: Replace chained .map().filter().slice().map() with an imperative loop
+      for (const id of connectedIds) {
+        if (neighbors.length >= MAX_NEIGHBORS) break;
+        const e = allEntities[id];
+        if (e) {
+          neighbors.push(entityToExcerpt(e));
+        }
+      }
     } else {
       // ⚡ Bolt Optimization: Replace inline Object.values().filter().slice().map()
       // with imperative loop and early exit

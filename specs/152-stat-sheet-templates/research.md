@@ -7,24 +7,28 @@
 **Rationale**: `marked` is already the canonical Markdown engine for the main entity document, blog articles, and Oracle chat rendering. `marked.use({ extensions: [...] })` supports registering custom block-level tokenizers (for `:::stat-group ... :::` fenced directives) and inline tokenizers (for `{{stat.field ...}}` placeholders) without forking the library. Constitution Principle III (Simplicity & YAGNI) directs reuse of established libraries over custom solutions.
 
 **Alternatives considered**:
+
 - **remark/unified**: More powerful plugin/AST ecosystem, but introduces a second Markdown stack alongside `marked`/`tiptap-markdown` already in the repo — rejected for duplication (Constitution III).
 - **Hand-rolled parser**: Full control over the AST shape, but reimplements solved problems (list/table/heading parsing) that `marked` already handles correctly — rejected.
 
 ## 2. Directive/placeholder syntax
 
 **Decision**: Adopt the syntax already illustrated in issue #1992 as the concrete grammar:
+
 - Field binding: `{{stat.<fieldId> [display="<mode>"] [label="<text>"]}}` — inline token.
 - Layout grouping: fenced container `:::stat-group [columns=N] ... :::` (and a small closed set of sibling containers: `:::section`, `:::card`, `:::row`) — block token, parsed as a marked "fenced directive" extension (`:::name key=value` … `:::`), modeled on the CommonMark "generic directives" convention (already a common, well-understood pattern for Markdown extensions) since no prior art exists in this codebase (confirmed: no `:::` containers or custom `marked` extensions currently present).
 
 **Rationale**: Reusing the syntax already given in the issue avoids re-litigating a bikeshed and keeps the spec's examples valid. The `:::name ... :::` fenced-directive convention is widely recognized (e.g. Pandoc, remark-directive) so authors/tools outside this repo can reason about it even though this repo has no prior directive syntax to match.
 
 **Alternatives considered**:
+
 - Custom `<StatGroup columns={2}>`-style pseudo-JSX: rejected — reads as executable syntax and risks confusion with the "no arbitrary HTML" rule.
 - YAML frontmatter per section: rejected — doesn't compose with inline Markdown flow the way fenced directives do.
 
 ## 3. Parse → validate → render pipeline
 
 **Decision**: Three-stage pipeline, all client-side:
+
 1. **Parse**: `marked.lexer()` with the CC extensions produces a token stream including directive/placeholder tokens.
 2. **Build & validate AST**: A new pure-TS pass (no `marked` renderer involved) walks the token stream and produces a `PresentationAst` of strictly-typed nodes (heading, paragraph, list, table, blockquote, hr, image, section/group/card containers, field-reference nodes). Any raw-HTML token type emitted by `marked` (`html`, inline `html`) is dropped, never passed through — this is the enforcement point for "no arbitrary HTML/CSS/JS", not `DOMPurify`. Field references are validated against the template's declared schema at this stage (existence + type/display-mode compatibility); unknown directive names become a typed `UnknownDirective` node (rendered later as a visible flagged placeholder per FR-011) instead of a parse error.
 3. **Render**: A Svelte component walks `PresentationAst` and renders native Svelte elements/components per node type (one small component per node kind) bound reactively to the entity's live Stat Sheet data — not via `{@html}`. Because rendering never re-serializes to raw HTML from user content, `DOMPurify` is not needed on the template-authored text; it stays reserved for the free-text/notes field content mirrored from the existing Stat Sheet renderer, consistent with the existing `renderMarkdown` sanitize step.
@@ -32,6 +36,7 @@
 **Rationale**: Producing a typed AST (rather than sanitized HTML) is what makes FR-005 (validate field refs before treating a template as usable), FR-009 (surface missing/incompatible refs), and FR-011 (visible unknown-directive handling) implementable and testable as pure functions, independent of the DOM. Rendering via native Svelte components (not `{@html}`) is a stronger safety boundary than sanitizing HTML strings, and matches how `StatSheetView.svelte` already renders fields today (typed `{#if}` branches, not HTML injection).
 
 **Alternatives considered**:
+
 - Render straight to sanitized HTML string via `DOMPurify` (like the main document renderer): rejected as the primary mechanism — field binding needs to stay reactive to live entity data and needs structured validation, which an HTML-string pipeline doesn't give for free; note the notes/long-text display mode still borrows `renderMarkdown` for its own content since that's plain prose, not directive-bearing.
 
 ## 4. Storage model

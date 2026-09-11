@@ -31,7 +31,7 @@ They always share _content design_ (pools of options, per-councillor/per-NPC str
 
 3. **`campaign-generator-registry.ts`**:
    - `GENERATOR_ENTITY_TYPE[id]` — the vault category this generator writes to (`"note"` for adventure/quest-shaped content, `"character"` for NPCs, etc.)
-   - Add an entry to `EXEMPLARS` (the few-shot JSON example) — every generator needs one; several tests assert this.
+   - Add an entry to `EXEMPLARS` in `packages/generator-engine/src/campaign-generator-exemplars.ts` (the few-shot JSON example) — every generator needs one; several tests assert this.
    - Write the prompt-builder function using the shared helpers: `contextChain(request)`, `OUTPUT_SCHEMA`, `exemplarBlock(id)`, `groundingNote(request)`, `loreGuidance(request, checklist)`. Don't hand-roll context assembly.
    - Write the `generate*` local-fallback function (simple tier: inline with `pick()`/`optionString()`/`generateName()`; rich tier: wraps the imported `generateXLocal`).
    - Add the `REGISTRY` block: `id`, `label`, `description`, `entityType`, `defaultInstruction`, `icon` (a plain `lucide:name` string, no build-time validation — verify the icon exists via the `@iconify-json/lucide` icons.json before assuming), `options` (`GeneratorOptionDefinition[]`), `defaults`, `generate`, `mapOutputToDraft: mapOutputToDraft(id)`, `buildPrompt`.

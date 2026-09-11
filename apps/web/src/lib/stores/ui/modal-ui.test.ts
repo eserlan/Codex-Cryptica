@@ -227,6 +227,26 @@ describe("ModalUIStore", () => {
     expect(store.isAnyModalOpen).toBe(false);
   });
 
+  it("tracks the parent picker so the page yields Escape and the graph pauses", () => {
+    // Both this store's isAnyModalOpen and the app page's Escape handler read
+    // this flag; without it, Escape closes the picker and deselects the entity
+    // behind it, and the graph keeps rendering underneath.
+    const store = new ModalUIStore();
+    expect(store.parentPickerDialog).toEqual({ open: false, entityId: null });
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openParentPicker("entity-1");
+    expect(store.parentPickerDialog).toEqual({
+      open: true,
+      entityId: "entity-1",
+    });
+    expect(store.isAnyModalOpen).toBe(true);
+
+    store.closeParentPicker();
+    expect(store.parentPickerDialog).toEqual({ open: false, entityId: null });
+    expect(store.isAnyModalOpen).toBe(false);
+  });
+
   it("requestCreateEntity sets pendingCreateEntity and clears date when none given", () => {
     const store = new ModalUIStore();
     store.requestCreateEntity();

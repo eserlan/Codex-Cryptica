@@ -24,6 +24,7 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson, asString } from "./llm-response-utils";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export const newsSheetConfig = {
   genres: [
@@ -253,7 +254,7 @@ ${sessionContext}`;
 - Editorial Tone: ${resolved.tone}
 - Ownership / Bias: ${resolved.bias}
 - Censor Level: ${resolved.censorLevel}
-- Hook Density: ${resolved.hookDensity}${resolved.placeName ? `\n- Settlement / Region / Publication Name: ${resolved.placeName}` : ""}${resolved.headlineEvent ? `\n- Current Crisis or Headline Event (lead with this): ${resolved.headlineEvent}` : ""}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Hook Density: ${resolved.hookDensity}${resolved.placeName ? `\n- Settlement / Region / Publication Name: ${resolved.placeName}` : ""}${resolved.headlineEvent ? `\n- Current Crisis or Headline Event (lead with this): ${resolved.headlineEvent}` : ""}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }

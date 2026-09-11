@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -37,6 +38,8 @@ describe("AppHeader", () => {
     sessionModeStore.isStaging = false;
     sessionModeStore.isGuestMode = false;
     guidedModeStore.setGuidedMode(true);
+    modalUIStore.showSettings = false;
+    modalUIStore.activeSettingsTab = "vault";
   });
 
   it("renders a staging banner when the staging flag is enabled", () => {
@@ -71,6 +74,37 @@ describe("AppHeader", () => {
 
     expect(screen.getByTestId("search-input")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
+  });
+
+  it("opens Help and legal information from the guest header", async () => {
+    sessionModeStore.isGuestMode = true;
+
+    render(AppHeader);
+
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open Help and legal information",
+      }),
+    );
+
+    expect(modalUIStore.showSettings).toBe(true);
+    expect(modalUIStore.activeSettingsTab).toBe("help");
+  });
+
+  it("keeps Help open when the guest entry is used again", async () => {
+    sessionModeStore.isGuestMode = true;
+    modalUIStore.openSettings("help");
+
+    render(AppHeader);
+
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open Help and legal information",
+      }),
+    );
+
+    expect(modalUIStore.showSettings).toBe(true);
+    expect(modalUIStore.activeSettingsTab).toBe("help");
   });
 
   it("hides advanced toolbar utilities in Guided Mode", () => {

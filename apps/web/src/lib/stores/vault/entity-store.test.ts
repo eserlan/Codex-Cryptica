@@ -23,6 +23,8 @@ vi.mock("./entities", () => ({
   createEntity: vi.fn(),
   updateEntity: vi.fn(),
   deleteEntity: vi.fn(),
+  deleteEntityFiles: vi.fn(),
+  applyBatchDelete: vi.fn(),
   addConnection: vi.fn(),
   updateConnection: vi.fn(),
   removeConnection: vi.fn(),
@@ -265,6 +267,39 @@ describe("EntityStore", () => {
     expect(repository.saveQueue.enqueue).toHaveBeenCalled();
   });
 
+  it("returns per-entity bulk update results and commits successful deltas", async () => {
+    repository.saveToDisk!.mockImplementation(
+      async (_handle: unknown, _vaultId: string, entity: LocalEntity) => {
+        if (entity.id === "place") throw new Error("write failed");
+      },
+    );
+
+    const result = await store.bulkUpdate({
+      hero: { type: "npc" },
+      place: { type: "landmark" },
+      missing: { type: "note" },
+    });
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.failedIds).toEqual(["place"]);
+    expect(result.skippedIds).toEqual(["missing"]);
+    expect(store.entities.hero.type).toBe("npc");
+    expect(store.entities.place.type).toBe("location");
+  });
+
+  it("handles null-prototype update dictionaries safely", async () => {
+    const updates: Record<string, Partial<LocalEntity>> = Object.create(null);
+    updates["hero"] = { type: "faction" };
+    updates["__proto__"] = { type: "item" };
+
+    const result = await store.bulkUpdate(updates);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["__proto__"]);
+    expect(store.entities.hero.type).toBe("faction");
+    expect(({} as any).type).toBeUndefined();
+  });
+
   it("deletes an entity", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
       entities: { place: repository.entities.place },
@@ -282,6 +317,27 @@ describe("EntityStore", () => {
         type: "ENTITY_DELETED",
         entityId: "hero",
       }),
+    );
+  });
+
+  it("uses one batch delete path and reports missing IDs", async () => {
+    vi.mocked(vaultEntities.deleteEntityFiles).mockResolvedValue(undefined);
+    vi.mocked(vaultEntities.applyBatchDelete).mockReturnValue({
+      entities: { place: repository.entities.place },
+      deletedIds: ["hero"],
+      modified: {},
+    });
+
+    const result = await store.bulkDelete(["hero", "missing"]);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["missing"]);
+    expect(vaultEntities.deleteEntityFiles).toHaveBeenCalledTimes(1);
+    expect(vaultEntities.applyBatchDelete).toHaveBeenCalledWith(
+      expect.anything(),
+      ["hero"],
+      expect.anything(),
+      expect.anything(),
     );
   });
 
@@ -435,9 +491,9 @@ describe("EntityStore", () => {
 
       await storeWithNoHandle.scheduleSave(repository.entities.hero);
 
-      // Status should be set to "saving" first, then reset to "idle"
+      // Status should be set to "saving" first, then transition to "saved"
       expect(setStatus).toHaveBeenCalledWith("saving");
-      expect(setStatus).toHaveBeenCalledWith("idle");
+      expect(setStatus).toHaveBeenCalledWith("saved");
     });
 
     it("should set status to error on save failure", async () => {
@@ -525,8 +581,9 @@ describe("EntityStore", () => {
 
     it("should return early when entity does not exist in repository", async () => {
       const setStatus = vi.fn();
+      const saveToDisk = vi.fn();
       const store = new EntityStore({
-        repository: { ...repository, entities: {} } as any,
+        repository: { ...repository, entities: {}, saveToDisk } as any,
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
@@ -541,7 +598,7 @@ describe("EntityStore", () => {
 
       await store.scheduleSave({ id: "nonexistent" } as LocalEntity);
 
-      expect(setStatus).not.toHaveBeenCalledWith("saving");
+      expect(saveToDisk).not.toHaveBeenCalled();
     });
 
     it("should call onEntityUpdate callback", async () => {

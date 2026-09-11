@@ -64,6 +64,11 @@ describe("GeneratorSwitcherMenu", () => {
     expect(
       screen.getByText("Faction Generator", { selector: "a" }),
     ).toBeTruthy();
+    expect(
+      screen.getByText("Plot Twist & Complication Generator", {
+        selector: "a",
+      }),
+    ).toBeTruthy();
   });
 
   it("hides the nomad clan generator in Pirate mode", async () => {

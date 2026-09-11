@@ -113,9 +113,8 @@ const DND_CHARACTER_SHEET_SOURCE = `:::row
 const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::card
 ### Pools & Derived Attributes
-:::stat-group columns=4
+:::stat-group columns=3
 {{stat.ap display="counter" label="AP"}}
-{{stat.lp display="counter" label="Luck"}}
 {{stat.mp display="counter" label="MP"}}
 {{stat.hp display="counter" label="Total HP"}}
 :::
@@ -127,30 +126,10 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::
 :::
 
-### Characteristics (d100 / BRP)
-:::stat-group columns=4
-:::card
-{{stat.str display="prominent" label="STR"}}
-:::
-:::card
-{{stat.con display="prominent" label="CON"}}
-:::
-:::card
-{{stat.siz display="prominent" label="SIZ"}}
-:::
-:::card
-{{stat.dex display="prominent" label="DEX"}}
-:::
-:::card
-{{stat.int display="prominent" label="INT"}}
-:::
-:::card
-{{stat.pow display="prominent" label="POW"}}
-:::
-:::card
-{{stat.cha display="prominent" label="CHA"}}
-:::
-:::
+### Characteristics & Luck Points
+| STR | CON | SIZ | DEX | INT | POW | CHA | Luck |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| {{stat.str hide-label}} | {{stat.con hide-label}} | {{stat.siz hide-label}} | {{stat.dex hide-label}} | {{stat.int hide-label}} | {{stat.pow hide-label}} | {{stat.cha hide-label}} | {{stat.lp display="counter" hide-label}} |
 
 :::card
 ### Hit Locations & Armor
@@ -169,14 +148,14 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::card
 ### Standard Skills & Rolls
 :::stat-group columns=2
-{{stat.d100_check display="plain" label="d100 Roll"}}
-{{stat.athletics display="plain" label="Athletics"}}
-{{stat.brawn display="plain" label="Brawn"}}
-{{stat.evade display="plain" label="Evade"}}
-{{stat.insight display="plain" label="Insight"}}
-{{stat.perception display="plain" label="Perception"}}
-{{stat.stealth display="plain" label="Stealth"}}
-{{stat.willpower display="plain" label="Willpower"}}
+{{stat.d100_check label="d100 Roll"}}
+{{stat.athletics label="Athletics"}}
+{{stat.brawn label="Brawn"}}
+{{stat.evade label="Evade"}}
+{{stat.insight label="Insight"}}
+{{stat.perception label="Perception"}}
+{{stat.stealth label="Stealth"}}
+{{stat.willpower label="Willpower"}}
 :::
 :::
 :::card
@@ -184,7 +163,9 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 [weapons_table]
 :::
 :::card
-### Passions & Cults
+### Combat, Specializations & Passions
+{{stat.combat_styles display="plain" label="Combat Styles"}}
+{{stat.professional_skills display="plain" label="Professional Skills"}}
 {{stat.passions_cults display="plain" label="Passions & Cults"}}
 :::
 :::

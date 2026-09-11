@@ -114,7 +114,7 @@
               class="px-2.5 py-1.5 border border-theme-border hover:border-theme-primary hover:text-theme-primary text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
               title="Copy public link"
             >
-              <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
+              <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"></span>
               Link
             </button>
             <button
@@ -123,7 +123,7 @@
               class="px-2.5 py-1.5 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/5 text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
               title="Delete snapshot from cloud"
             >
-              <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+              <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
               Unpublish
             </button>
           </div>

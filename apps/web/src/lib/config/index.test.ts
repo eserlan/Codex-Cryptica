@@ -93,16 +93,18 @@ describe("shared schema.org metadata", () => {
   });
 
   it("links official public community and project profiles", async () => {
-    const { DISCORD_URL, PATREON_URL, SCHEMA_ORG } = await import("./index");
+    const { DISCORD_URL, PATREON_URL, GITHUB_URL, REDDIT_URL, SCHEMA_ORG } =
+      await import("./index");
     const organization = SCHEMA_ORG["@graph"].find(
       (entry) => entry["@id"] === "https://codexcryptica.com/#organization",
     );
 
     expect(organization?.sameAs).toEqual(
       expect.arrayContaining([
-        "https://github.com/eserlan/Codex-Cryptica",
+        GITHUB_URL,
         DISCORD_URL,
         PATREON_URL,
+        REDDIT_URL,
       ]),
     );
   });

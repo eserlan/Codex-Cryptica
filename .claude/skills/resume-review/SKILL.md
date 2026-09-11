@@ -36,7 +36,7 @@ question the review-and-fix pass left on a PR, to pick that item back up.
      `needs-input` label (don't remove it), and notify with a direct link to
      the new comment — don't loop indefinitely guessing:
      `⚠️ resume-review on PR #<n>: your answer raised a new question — https://github.com/<owner>/<repo>/pull/<n>#issuecomment-<id>`
-   - Otherwise (your reply fully resolved it): check whether any *other*
+   - Otherwise (your reply fully resolved it): check whether any _other_
      judgment-call findings are still open on this PR (other unanswered
      `needs-input` comments from the same `review-and-fix` pass). If none
      remain: `gh pr edit <n> --remove-label needs-input` and post

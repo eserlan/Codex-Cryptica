@@ -10,10 +10,17 @@ export interface RandomIdeaCategory {
     | "nation"
     | "npc"
     | "quest"
+    | "villain"
+    | "minor-magic-item"
+    | "artifact"
     | "council-vote"
+    | "heist"
+    | "secret-society"
     | "social-hub"
     | "pantheon"
-    | "deity";
+    | "deity"
+    | "creature"
+    | "encounter";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -38,6 +45,7 @@ export const themeToHubGenre: Record<string, string> = {
   Lancer: "Lancer",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Opera Resistance": "Space Opera Resistance",
+  "Space Western": "Space Western",
 };
 
 export function pickRandomIdeaTheme(
@@ -85,9 +93,39 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
       engine.generateQuestHook({ genre: themeToQuestGenre[theme], useAI }),
   },
   {
+    key: "villain",
+    label: "BBEG / Campaign Villain",
+    generate: (engine, useAI, theme) =>
+      engine.generateVillain({ genre: theme, useAI }),
+  },
+  {
+    key: "minor-magic-item",
+    label: "Minor Magic Item",
+    generate: (engine, useAI, theme) =>
+      engine.generateMinorMagicItem({ genre: theme, useAI }),
+  },
+  {
+    key: "artifact",
+    label: "Artifact / Relic",
+    generate: (engine, useAI, theme) =>
+      engine.generateArtifact({ genre: theme, useAI }),
+  },
+  {
     key: "council-vote",
     label: "Council Vote",
     generate: (engine, useAI) => engine.generateCouncilVote({ useAI }),
+  },
+  {
+    key: "heist",
+    label: "Heist",
+    generate: (engine, useAI, theme) =>
+      engine.generateHeist({ genre: theme, useAI }),
+  },
+  {
+    key: "secret-society",
+    label: "Secret Society",
+    generate: (engine, useAI, theme) =>
+      engine.generateSecretSociety({ theme, useAI }),
   },
   {
     key: "social-hub",
@@ -106,6 +144,18 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Deity",
     generate: (engine, useAI, theme) =>
       engine.generatePantheon({ genre: theme, mode: "single", useAI }),
+  },
+  {
+    key: "creature",
+    label: "Creature",
+    generate: (engine, useAI, theme) =>
+      engine.generateCreature({ genre: theme, useAI }),
+  },
+  {
+    key: "encounter",
+    label: "Encounter",
+    generate: (engine, useAI, theme) =>
+      engine.generateEncounter({ genre: theme, useAI }),
   },
 ];
 

@@ -11,6 +11,7 @@ import type {
   ConstellationEntity,
   ConstellationRelationship,
   StarterConstellationConfig,
+  StarterConstellationPreview,
   StarterConstellationResult,
 } from "./starter-constellation-types";
 
@@ -439,6 +440,36 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
     ],
     flavor: "occupation, quiet rebellion, and the cost of resisting",
   },
+  "space-western": {
+    themeName: "Space Western",
+    regionLabel: "Frontier Sector",
+    regionNames: [
+      "The Cinderbelt",
+      "Far Lantern Reach",
+      "The Prospector's Run",
+    ],
+    settlementLabel: "Frontier Port",
+    settlementNames: ["Redwater Station", "Cinder Dock", "Last Light Outpost"],
+    factionLabel: "Outfit",
+    factionNames: [
+      "The Cinderbelt Salvage Union",
+      "Redwater Freight Combine",
+      "The Last Light Marshal Service",
+    ],
+    characterRoles: [
+      "debt-bound freighter captain",
+      "independent salvage broker",
+      "frontier mechanic with a dangerous favour to call in",
+    ],
+    threatLabel: "Pressure",
+    threatNames: [
+      "a creditor closing in on a missed payment",
+      "a disputed salvage claim drawing armed crews",
+      "a customs blockade strangling the port's supply line",
+    ],
+    flavor:
+      "small crews, precarious jobs, debts, and hard choices at the edge of settled space",
+  },
   workspace: {
     themeName: "Neutral Workspace",
     regionLabel: "Region",
@@ -466,8 +497,19 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
   },
 };
 
+/**
+ * `in` and a bare lookup both accept inherited keys, so "toString" or
+ * "constructor" would resolve to a Function rather than falling back. These ids
+ * come from user-facing input, so check own properties only.
+ */
+function isKnownThemeId(themeId: string): boolean {
+  return Object.hasOwn(THEME_ARCHETYPES, themeId);
+}
+
 function getArchetypes(themeId: string): ThemeArchetypeSet {
-  return THEME_ARCHETYPES[themeId] ?? THEME_ARCHETYPES[DEFAULT_THEME_ID];
+  return isKnownThemeId(themeId)
+    ? THEME_ARCHETYPES[themeId]
+    : THEME_ARCHETYPES[DEFAULT_THEME_ID];
 }
 
 function premiseFragment(premise?: string): string {
@@ -485,8 +527,9 @@ export function generateStarterConstellationLocal(
   config: StarterConstellationConfig,
   rng: Rng = defaultRng,
 ): StarterConstellationResult {
-  const themeId =
-    config.themeId in THEME_ARCHETYPES ? config.themeId : DEFAULT_THEME_ID;
+  const themeId = isKnownThemeId(config.themeId)
+    ? config.themeId
+    : DEFAULT_THEME_ID;
   const archetypes = getArchetypes(themeId);
   const premiseNote = premiseFragment(config.premise);
 
@@ -688,3 +731,33 @@ export function parseStarterConstellationResponse(
 
 export const STARTER_CONSTELLATION_THEME_IDS: readonly string[] =
   Object.keys(THEME_ARCHETYPES);
+
+/**
+ * What choosing `themeId` will actually generate, so the Quick Start dialog can
+ * show the consequences instead of asking the user to infer a genre from a
+ * visual theme name (#2107, assessment finding M6).
+ *
+ * Examples are the *first* candidate for each slot rather than a random pick:
+ * a preview that reshuffles on every keystroke reads as noise, and the point is
+ * to convey the kind of thing produced, not to predict the exact result.
+ * Unknown ids fall back to the default theme, matching the generator.
+ */
+export function getStarterConstellationPreview(
+  themeId: string,
+): StarterConstellationPreview {
+  const resolvedId = isKnownThemeId(themeId) ? themeId : DEFAULT_THEME_ID;
+  const a = getArchetypes(resolvedId);
+
+  return {
+    themeId: resolvedId,
+    genreName: a.themeName,
+    flavor: a.flavor,
+    slots: [
+      { label: a.regionLabel, example: a.regionNames[0] },
+      { label: a.settlementLabel, example: a.settlementNames[0] },
+      { label: a.factionLabel, example: a.factionNames[0] },
+      { label: "Character", example: a.characterRoles[0] },
+      { label: a.threatLabel, example: a.threatNames[0] },
+    ],
+  };
+}

@@ -5,6 +5,14 @@
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import type { SessionEntity } from "generator-engine";
   import SessionHubWidget from "./SessionHubWidget.svelte";
+  import {
+    isFactionDraft,
+    isFactionRosterDraft,
+  } from "$lib/services/seo/generator-handoffs";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    isMonsterLabsItemEligibleType,
+  } from "$lib/services/seo/monsterlabs-handoff";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -38,6 +46,7 @@
     contextTrimmed,
     onDismissAiFallback,
     onSaveToCodex,
+    onRefine,
     onCopyMarkdown,
     onCopySection,
     onContainerClick,
@@ -46,6 +55,11 @@
     onSaveHubToCodex,
     onBuildDelveCanvas,
     onBuildAdventureCanvas,
+    onGeneratePlotTwist,
+    onGenerateRoster,
+    onOpenMemberAsCharacter,
+    onSendToMonsterLabs,
+    isSendingToMonsterLabs = false,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -61,6 +75,7 @@
     contextTrimmed: boolean;
     onDismissAiFallback: () => void;
     onSaveToCodex: () => void;
+    onRefine?: (data: GeneratorOutput) => void;
     onCopyMarkdown: () => void;
     onCopySection: (sectionId: string, markdown: string) => void;
     onContainerClick: (event: MouseEvent) => void;
@@ -69,6 +84,14 @@
     onSaveHubToCodex: (entities: SessionEntity[]) => void;
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
     onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
+    onGeneratePlotTwist?: (data: GeneratorOutput) => void;
+    onGenerateRoster?: (data: GeneratorOutput) => void;
+    onOpenMemberAsCharacter?: (
+      section: MarkdownSectionForCopy,
+      data: GeneratorOutput,
+    ) => void;
+    onSendToMonsterLabs?: (data: GeneratorOutput) => void;
+    isSendingToMonsterLabs?: boolean;
   } = $props();
 
   import { getThemeLoadingMessages } from "generator-engine";
@@ -123,7 +146,7 @@
   {#if isBusy}
     <div
       in:fade={{ duration: 150 }}
-      class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
+      class="absolute inset-0 z-10 flex flex-col items-center justify-start pt-12 sm:pt-16 gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
       role="status"
       aria-live="polite"
     >
@@ -190,6 +213,21 @@
                 Save to Codex
               </button>
             {/if}
+            {#if onRefine && generatedData}
+              <button
+                type="button"
+                onclick={() => onRefine(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                id="refine-draft-btn"
+                title="Refine this draft with an instruction"
+              >
+                <span
+                  class="icon-[lucide--wand-sparkles] h-3.5 w-3.5"
+                  aria-hidden="true"
+                ></span>
+                Refine
+              </button>
+            {/if}
             {#if ((generatedData?.kind as string) === "dungeon" || generatedData?.labels?.includes("dungeon")) && onBuildDelveCanvas}
               <button
                 type="button"
@@ -216,6 +254,62 @@
                 Open Adventure Canvas
               </button>
             {/if}
+            {#if onGeneratePlotTwist}
+              <button
+                type="button"
+                onclick={() => onGeneratePlotTwist(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
+                id="generate-plot-twist-btn"
+                title="Generate a Plot Twist from this quest hook"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--shuffle] mr-1.5 inline-block h-3.5 w-3.5 align-[-0.15em]"
+                ></span>
+                Generate Plot Twist
+              </button>
+            {/if}
+            {#if onGenerateRoster && isFactionDraft(generatedData?.labels)}
+              <button
+                type="button"
+                onclick={() => onGenerateRoster(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                id="generate-roster-btn"
+                title="Generate notable members of this faction"
+              >
+                <span
+                  class="icon-[lucide--users-round] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                Generate Roster
+              </button>
+            {/if}
+            {#if onSendToMonsterLabs && isMonsterLabsHandoffEligibleType(generatedData?.type)}
+              {@const isItem = isMonsterLabsItemEligibleType(
+                generatedData?.type,
+              )}
+              <button
+                type="button"
+                onclick={() => onSendToMonsterLabs(generatedData!)}
+                disabled={isSendingToMonsterLabs}
+                aria-busy={isSendingToMonsterLabs}
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                id="send-to-monsterlabs-btn"
+                title="Create a D&D {isItem
+                  ? 'magic item'
+                  : 'monster'} from this draft in MonsterLabs (opens in a new tab)"
+              >
+                <span
+                  class="{isSendingToMonsterLabs
+                    ? 'icon-[lucide--loader-2] animate-spin'
+                    : 'icon-[lucide--external-link]'} w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                {isSendingToMonsterLabs
+                  ? "Sending…"
+                  : `Create D&D ${isItem ? "Magic Item" : "Monster"}`}
+              </button>
+            {/if}
             <button
               type="button"
               onclick={onCopyMarkdown}
@@ -233,7 +327,7 @@
 
       <div
         role="none"
-        class="seo-md text-sm leading-relaxed text-theme-text/90 flex-grow {variant ===
+        class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
         'names'
           ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
           : 'space-y-4'}"
@@ -253,25 +347,44 @@
                   class="mb-2 flex items-center justify-between gap-3 border-b border-theme-border/35 pb-2"
                 >
                   <h3
-                    class="font-header text-base font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
+                    class="font-header text-base md:text-lg font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
                   >
                     {section.heading}
                   </h3>
-                  <button
-                    type="button"
-                    onclick={() => onCopySection(section.id, section.markdown)}
-                    class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
-                    aria-label="Copy {section.heading} as Markdown"
-                    title="Copy this section as Markdown"
-                  >
-                    <span
-                      class={copiedSectionId === section.id
-                        ? "icon-[lucide--check] h-3.5 w-3.5"
-                        : "icon-[lucide--copy] h-3.5 w-3.5"}
-                      aria-hidden="true"
-                    ></span>
-                    {copiedSectionId === section.id ? "Copied" : "Copy MD"}
-                  </button>
+                  <div class="flex items-center gap-1.5">
+                    {#if onOpenMemberAsCharacter && isFactionRosterDraft(generatedData?.labels)}
+                      <button
+                        type="button"
+                        onclick={() =>
+                          onOpenMemberAsCharacter(section, generatedData!)}
+                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                        aria-label="Open {section.heading} as a Character"
+                        title="Continue this member in the NPC generator"
+                      >
+                        <span
+                          class="icon-[lucide--user-round-plus] h-3.5 w-3.5"
+                          aria-hidden="true"
+                        ></span>
+                        Open as Character
+                      </button>
+                    {/if}
+                    <button
+                      type="button"
+                      onclick={() =>
+                        onCopySection(section.id, section.markdown)}
+                      class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                      aria-label="Copy {section.heading} as Markdown"
+                      title="Copy this section as Markdown"
+                    >
+                      <span
+                        class={copiedSectionId === section.id
+                          ? "icon-[lucide--check] h-3.5 w-3.5"
+                          : "icon-[lucide--copy] h-3.5 w-3.5"}
+                        aria-hidden="true"
+                      ></span>
+                      {copiedSectionId === section.id ? "Copied" : "Copy MD"}
+                    </button>
+                  </div>
                 </div>
               {/if}
               <div>
@@ -323,7 +436,7 @@
   .seo-md :global(h2) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     margin: 1.5rem 0 0.75rem;
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-border) 40%, transparent);
@@ -333,7 +446,7 @@
   .seo-md :global(h3) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.125rem;
     margin: 1rem 0 0.5rem;
     color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
   }
@@ -341,7 +454,7 @@
   .seo-md :global(h4) {
     font-family: var(--font-header);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     margin: 0.85rem 0 0.35rem;
     color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
   }

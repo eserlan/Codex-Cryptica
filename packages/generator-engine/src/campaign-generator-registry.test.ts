@@ -15,8 +15,11 @@ import {
 import {
   type GeneratorRunRequest,
   type GeneratorVaultContext,
+  SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import { EXEMPLARS } from "./campaign-generator-exemplars";
+import { factionConfig } from "./public-faction-constants";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -42,18 +45,113 @@ describe("registry lookup", () => {
     expect(listGenerators().map((g) => g.id)).toEqual([
       "npc",
       "faction",
+      "faction-roster",
       "settlement",
       "magic-item",
+      "minor-magic-item",
+      "artifact",
       "event",
       "ship",
       "language",
       "news-sheet",
       "dungeon",
       "adventure",
+      "quest",
+      "rumour",
+      "puzzle",
+      "plot-twist",
+      "villain",
       "world",
       "council-vote",
+      "secret-society",
       "star-system",
+      "constellation",
+      "alien-race",
+      "creature",
+      "random-table",
+      "encounter",
+      "heist",
     ]);
+  });
+
+  it("offers Space Western in the Ship generator's genre selector", () => {
+    const genre = getGenerator("ship").options.find(
+      (option) => option.id === "genre",
+    );
+    expect(genre?.choices).toContainEqual({
+      value: "Space Western",
+      label: "Space Western",
+    });
+  });
+
+  it("builds and generates a minor magic item as an item draft", () => {
+    const generator = getGenerator("minor-magic-item");
+    const request = run("minor-magic-item", {
+      options: {
+        genre: "Classic Fantasy",
+        form: "Charm / Talisman",
+        usageLimit: "Single Use (Breaks / Consumed on Activation)",
+        utility:
+          "Sensory & Detection (Finding water, detecting lies, seeing warmth, hearing whispers)",
+        activation: "Snapping / Crushing in hand",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE["minor-magic-item"]).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("minor, single-use or limited-use magic item");
+    expect(prompt).toContain("- Item Form: Charm / Talisman");
+    expect(prompt).toContain(
+      "- Usage Limit / Charges: Single Use (Breaks / Consumed on Activation)",
+    );
+    expect(prompt).toContain("Low Impact & Creative Utility");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["minor-magic-item", "imported-draft"]),
+    );
+    expect(output.lore).toContain("### Quick Reference");
+    expect(output.lore).toContain("### Magical Effect & Mechanics");
+    expect(draft).toMatchObject({
+      entityType: "item",
+      sourceGeneratorId: "minor-magic-item",
+    });
+  });
+
+  it("builds and generates an artifact as an item draft", () => {
+    const generator = getGenerator("artifact");
+    const request = run("artifact", {
+      options: {
+        genre: "Classic Fantasy",
+        form: "Crown / Regalia of Rule",
+        originEra: "Primordial / Mythic Age",
+        powerTier: "Heroic Wonder (Alters individuals & skirmishes)",
+        currentStatus: "Sealed in Royal / High-Security Vault",
+        curseCost: "Sacrificial Price (Requires vital tribute/blood)",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.artifact).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Major Artifact or Ancient Relic");
+    expect(prompt).toContain("- Item Form: Crown / Regalia of Rule");
+    expect(prompt).toContain("- Origin Era: Primordial / Mythic Age");
+    expect(prompt).toContain("### Quick Reference");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["artifact", "relic", "imported-draft"]),
+    );
+    expect(output.lore).toContain("### Quick Reference");
+    expect(output.lore).toContain("### Artifact Powers & Manifestations");
+    expect(draft).toMatchObject({
+      entityType: "item",
+      sourceGeneratorId: "artifact",
+    });
   });
 
   it("maps the event generator to the event vault category", () => {
@@ -66,6 +164,192 @@ describe("registry lookup", () => {
     expect(prompt).toContain("Generate a campaign event");
     const draft = getGenerator("event").generate(run("event"));
     expect(draft.title.length).toBeGreaterThan(0);
+  });
+
+  it("builds and generates a quest hook as an event draft", () => {
+    const generator = getGenerator("quest");
+    const request = run("quest", {
+      options: {
+        genre: "Classic Fantasy",
+        tone: "Heroic",
+        scope: "Local",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.quest).toBe("event");
+    expect(generator.buildPrompt(request)).toContain(
+      "Generate a detailed RPG quest hook",
+    );
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["rpg-quest", "quest-generator"]),
+    );
+    expect(draft).toMatchObject({
+      entityType: "event",
+      sourceGeneratorId: "quest",
+    });
+  });
+
+  it("builds and generates a d6 rumour table as a note draft", () => {
+    const generator = getGenerator("rumour");
+    const request = run("rumour", {
+      options: {
+        genre: "Classic Fantasy",
+        tone: "Gossipy",
+        dangerLevel: "Moderate",
+        subjectFocus: "Balanced Mix",
+        locationContext: "Greywick Landing",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.rumour).toBe("note");
+    expect(generator.buildPrompt(request)).toContain(
+      "Generate a d6 table of 6 local rumours",
+    );
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["rumour-generator", "local-rumours"]),
+    );
+    for (let i = 1; i <= 6; i++) {
+      expect(output.content).toContain(`### Rumour ${i}`);
+      expect(output.lore).toContain(`### GM Notes — Rumour ${i}`);
+    }
+    // Player-facing content must never leak truth status.
+    expect(output.content).not.toMatch(
+      /reality|essentially true|misconception/i,
+    );
+    expect(draft).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "rumour",
+    });
+  });
+
+  it("builds a non-gated puzzle and maps it to a note draft", () => {
+    const generator = getGenerator("puzzle");
+    const request = run("puzzle", {
+      options: {
+        genre: "Lancer",
+        purpose: "Destroy relic or organ",
+        style: "Magical",
+        capabilities: "Earth elemental sorcerer",
+        downstreamConsequence: "The boss loses its shield.",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.puzzle).toBe("note");
+    expect(generator.buildPrompt(request)).toContain(
+      "Never make progress depend",
+    );
+    expect(generator.buildPrompt(request)).toContain(
+      "Earth elemental sorcerer",
+    );
+    expect(generator.buildPrompt(request)).toContain("Lancer");
+    const genreOption = generator.options.find(({ id }) => id === "genre");
+    expect(genreOption?.choices?.map(({ value }) => value)).toEqual(
+      factionConfig.themes,
+    );
+    const output = generator.generate(request);
+    expect(output.content).toContain("## Alternate Solutions");
+    expect(output.content).toContain("## Downstream Consequences");
+    // Main document material stays out of the compact GM reference rail.
+    expect(output.lore).not.toContain("Alternate Solutions");
+    expect(output.lore).not.toContain("Downstream Consequences");
+    expect(generator.mapOutputToDraft(output, request)).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "puzzle",
+    });
+  });
+
+  it("builds and generates a BBEG villain as a character draft", () => {
+    const generator = getGenerator("villain");
+    const request = run("villain", {
+      options: {
+        genre: "Classic Fantasy",
+        threatScale: "Regional",
+        archetype: "Corrupt Ruler",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.villain).toBe("character");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("campaign-scale BBEG / campaign villain");
+    expect(prompt).toContain("- Threat Scale: Regional");
+    expect(prompt).toContain("- Villain Archetype: Corrupt Ruler");
+    expect(prompt).toContain("escalate logically stage-to-stage");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["villain", "bbeg-generator"]),
+    );
+    expect(output.lore).toContain("### The Villain's Plan");
+    expect(draft).toMatchObject({
+      entityType: "character",
+      sourceGeneratorId: "villain",
+    });
+  });
+
+  it("builds and generates an encounter as a note draft", () => {
+    const generator = getGenerator("encounter");
+    const request = run("encounter", {
+      themeId: "fantasy",
+      options: {
+        encounterType: "Social",
+        environment: "Market Town",
+        threat: "Dangerous",
+        tone: "Tense",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.encounter).toBe("note");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("- Encounter Type: Social");
+    expect(prompt).toContain("- Environment: Market Town");
+    expect(prompt).toContain("- Threat: Dangerous");
+    expect(prompt).toContain("consistency pass");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["encounter", "encounter-generator"]),
+    );
+    expect(output.lore).toContain("### At a Glance");
+    expect(draft).toMatchObject({
+      entityType: "note",
+      sourceGeneratorId: "encounter",
+    });
+  });
+
+  it("registers plot twists as note drafts with continuity guidance", () => {
+    const generator = getGenerator("plot-twist");
+    const prompt = generator.buildPrompt(
+      run("plot-twist", {
+        options: {
+          premise: "The peace treaty is about to fail.",
+          constraints: "Do not change the villain.",
+        },
+      }),
+    );
+
+    expect(generator.entityType).toBe("note");
+    expect(prompt).toContain("The peace treaty is about to fail.");
+    expect(prompt).toContain("Do not change the villain.");
+    expect(prompt).toContain("without contradicting known facts");
+    expect(prompt).toContain("do not invalidate witnessed events");
+    expect(prompt).toContain("matching this schema");
+    expect(prompt).toContain("Example (illustrative only");
+    expect(prompt).toContain(
+      'The complete six-section player-facing document belongs in the "content" field',
+    );
+    expect(generator.generate(run("plot-twist")).content).toContain(
+      "## New Choices",
+    );
   });
 
   it("builds a system-aware prompt and maps worlds to locations", () => {
@@ -107,13 +391,134 @@ describe("registry lookup", () => {
     expect(draft.lore).toContain("## System-Wide Conflict or Mystery");
   });
 
+  it("builds a genre-aware constellation prompt and maps constellations to notes", () => {
+    const prompt = getGenerator("constellation").buildPrompt(
+      run("constellation", {
+        options: {
+          genre: "Cyberpunk / Corporate",
+          visualImpression: "Weapon",
+        },
+      }),
+    );
+    expect(prompt).toContain("Cyberpunk / Corporate");
+    expect(prompt).toContain("Weapon");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+    expect(GENERATOR_ENTITY_TYPE["constellation"]).toBe("note");
+    const draft = getGenerator("constellation").generate(run("constellation"));
+    expect(draft.lore).toContain("## Adventure Hook");
+    expect(draft.content).toContain("## Origin Myth");
+    expect(draft.pattern?.stars.length).toBeGreaterThanOrEqual(4);
+    expect(draft.interpretations?.length).toBe(1);
+  });
+
+  it("carries constellation pattern/interpretations through mapOutputToDraft", () => {
+    const output = getGenerator("constellation").generate(run("constellation"));
+    const draft = getGenerator("constellation").mapOutputToDraft(
+      output,
+      run("constellation"),
+    );
+    expect(draft.entityType).toBe("note");
+    expect(draft.pattern?.lines.length).toBeGreaterThan(0);
+    expect(draft.interpretations?.[0]?.culture).toBeTruthy();
+  });
+
+  it("switches to night-sky mode and carries nightSky through mapOutputToDraft", () => {
+    const request = run("constellation", { options: { mode: "night-sky" } });
+    const prompt = getGenerator("constellation").buildPrompt(request);
+    expect(prompt).toContain("8 to 15");
+    const output = getGenerator("constellation").generate(request);
+    expect(output.nightSky?.constellations.length).toBeGreaterThanOrEqual(8);
+    expect(output.pattern).toBeUndefined();
+    const draft = getGenerator("constellation").mapOutputToDraft(
+      output,
+      request,
+    );
+    expect(draft.nightSky?.culture).toBeTruthy();
+    expect(draft.nightSky?.constellations.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("builds a context-aware alien-race prompt and maps species to creatures", () => {
+    const prompt = getGenerator("alien-race").buildPrompt(
+      run("alien-race", {
+        options: {
+          genre: "Cosmic Horror",
+          bodyPlan: "Radially symmetric",
+          homeEnvironment: "Ocean world",
+        },
+      }),
+    );
+    expect(prompt).toContain("Cosmic Horror");
+    expect(prompt).toContain("Radially symmetric");
+    expect(prompt).toContain("Ocean world");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+    // The generator's defining rule has to survive into the in-app prompt,
+    // not just the public one.
+    expect(prompt).toContain(
+      "must have consequences elsewhere in the species design",
+    );
+    // A species is a creature, not an individual character.
+    expect(GENERATOR_ENTITY_TYPE["alien-race"]).toBe("creature");
+    const draft = getGenerator("alien-race").generate(run("alien-race"));
+    expect(draft.content).toContain("## Biology & Lifecycle");
+    expect(draft.lore).toContain("## Adventure Hooks");
+  });
+
+  it("folds the alien-race document into a single lore field when saving", () => {
+    const generator = getGenerator("alien-race");
+    const request = run("alien-race");
+    const draft = generator.mapOutputToDraft(
+      generator.generate(request),
+      request,
+    );
+    expect(draft.entityType).toBe("creature");
+    expect(draft.lore).toContain("## Overview");
+    expect(draft.lore).toContain("## Weaknesses & Constraints");
+  });
+
+  it("builds a context-aware creature prompt and maps to creature entityType", () => {
+    const generator = getGenerator("creature");
+    const request = run("creature", {
+      options: {
+        genre: "Classic Fantasy",
+        category: "Magical Beast / Chimera",
+        threatLevel: "Dangerous / Predator",
+        habitat: "Dense Forest / Deep Jungle",
+        ecologicalRole: "Ambush Hunter",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE["creature"]).toBe("creature");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Classic Fantasy");
+    expect(prompt).toContain("Magical Beast / Chimera");
+    expect(prompt).toContain("Ambush Hunter");
+    expect(prompt).toContain("consistency pass");
+
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+    expect(draft.entityType).toBe("creature");
+    expect(draft.labels).toContain("creature");
+    expect(draft.content).toContain("### Core Concept & Ecology");
+    expect(draft.content).toContain("### Observable Abilities & Defences");
+    expect(draft.lore).toContain("### True Origin & Hidden Ecology");
+    expect(draft.lore).toContain("### Hidden Abilities & Surprises");
+  });
+
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
     expect(() => getGenerator("dragon")).toThrow(UnsupportedGeneratorError);
     expect(() => getGenerator("dragon")).toThrow(/not available/);
   });
 
   it("provides a non-empty default instruction for every generator", () => {
-    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+    for (const id of [
+      "npc",
+      "faction",
+      "settlement",
+      "magic-item",
+      "ship",
+    ] as const) {
       expect(getDefaultInstruction(id).trim().length).toBeGreaterThan(0);
       expect(getDefaultInstruction(id)).toBe(
         getGenerator(id).defaultInstruction,
@@ -124,6 +529,102 @@ describe("registry lookup", () => {
   it("isSupportedGenerator narrows known ids", () => {
     expect(isSupportedGenerator("npc")).toBe(true);
     expect(isSupportedGenerator("dragon")).toBe(false);
+  });
+});
+
+describe("secret-society generator", () => {
+  it("maps to factions and provides a vault-grounded society prompt", () => {
+    expect(GENERATOR_ENTITY_TYPE["secret-society"]).toBe("faction");
+    const prompt = getGenerator("secret-society").buildPrompt(
+      run("secret-society", { options: { publicFace: "Church" } }),
+    );
+    expect(prompt).toContain("public face: Church");
+    expect(prompt).toContain("secret truth");
+    expect(
+      getGenerator("secret-society").generate(run("secret-society")).lore,
+    ).toContain("Follow-Up Suggestions");
+  });
+});
+
+describe("heist generator", () => {
+  it("maps to the note vault category", () => {
+    expect(GENERATOR_ENTITY_TYPE.heist).toBe("note");
+    expect(getGenerator("heist").entityType).toBe("note");
+  });
+
+  it("builds a prompt carrying the vault context chain and the full heist framework", () => {
+    const prompt = getGenerator("heist").buildPrompt(
+      run("heist", {
+        instructions: "the crew owes the Ashgrove syndicate a favour",
+        options: { heistType: "Sabotage", targetScale: "Legendary" },
+      }),
+    );
+    // Context chain (the in-app surface's reason for existing) …
+    expect(prompt).toContain("the crew owes the Ashgrove syndicate a favour");
+    // … followed by the shared public framework.
+    expect(prompt).toContain("- Heist Type: Sabotage");
+    expect(prompt).toContain("- Target Scale: Legendary");
+    expect(prompt).toContain("### GM Quick Reference");
+    // The objective heading is heist-type driven, so it is asserted separately.
+    expect(prompt).toContain("### The System");
+    for (const heading of [
+      "### The Score",
+      "### Casing the Target",
+      "### Security Rings",
+      "### Alarm Track",
+      "### Complications",
+      // Sabotage: the point of no return is named for the deed, not a prize.
+      "### When the Sabotage Is Committed",
+      "### The Getaway",
+      "### Flashback Opportunities",
+    ]) {
+      expect(prompt).toContain(heading);
+    }
+    expect(prompt).toContain("run a consistency pass");
+  });
+
+  it("generates a local fallback with layered security and an escalating alarm track", () => {
+    const draft = getGenerator("heist").generate(
+      run("heist", { options: { heistType: "Theft", targetScale: "Major" } }),
+    );
+    expect(draft.content).toContain("### The Score");
+    expect(draft.lore).toContain("- **Perimeter**");
+    expect(draft.lore).toContain("- **Access**");
+    expect(draft.lore).toContain("- **Inner Vault**");
+    expect(draft.lore).toContain("**0 — Quiet**");
+    expect(draft.lore).toContain("**4 — Lethal Response**");
+    expect(draft.lore).toContain("### GM Quick Reference");
+    expect(draft.lore).toContain("### When the Prize Is Taken");
+    expect(draft.labels).toContain("heist");
+    expect(draft.labels).toContain("Theft");
+  });
+
+  // The exemplar drifted out of sync with the schema once already (a rewrite
+  // dropped Flashback Opportunities), which a reader of the prompt alone
+  // cannot catch — pin every section the schema asks for.
+  it("ships an exemplar carrying every section its own schema requires", () => {
+    const exemplar = JSON.parse(EXEMPLARS.heist);
+    for (const heading of [
+      "### The Score",
+      "### The Prize",
+      "### Casing the Target",
+    ]) {
+      expect(exemplar.content, `exemplar missing ${heading}`).toContain(
+        heading,
+      );
+    }
+    for (const heading of [
+      "### GM Quick Reference",
+      "### The Hidden Factor",
+      "### Security Rings",
+      "### Alarm Track",
+      "### Complications",
+      "### When the Prize Is Taken",
+      "### The Getaway",
+      "### Flashback Opportunities",
+    ]) {
+      expect(exemplar.lore, `exemplar missing ${heading}`).toContain(heading);
+    }
   });
 });
 
@@ -517,13 +1018,64 @@ describe("draft mapping", () => {
     );
     expect(draft.unmappedDetails).toBe("extra");
   });
+
+  it("extracts and deduplicates contextProvenance from vaultContext", () => {
+    const gen = getGenerator("npc");
+    const draft = gen.mapOutputToDraft(
+      { title: "X", summary: "s", lore: "l", labels: [] },
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          sourceEntity: {
+            id: "source-1",
+            title: "Silver Keep",
+            type: "location",
+            contentExcerpt: "",
+          },
+          neighbors: [
+            {
+              id: "neighbor-1",
+              title: "Lord Varis",
+              type: "character",
+              contentExcerpt: "",
+            },
+            {
+              id: "source-1",
+              title: "Silver Keep",
+              type: "location",
+              contentExcerpt: "",
+            },
+          ],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(draft.contextProvenance).toEqual([
+      { id: "source-1", title: "Silver Keep" },
+      { id: "neighbor-1", title: "Lord Varis" },
+    ]);
+  });
+
+  it("leaves contextProvenance undefined when vaultContext has no sourceEntity or neighbors", () => {
+    const gen = getGenerator("npc");
+    const draft = gen.mapOutputToDraft(
+      { title: "X", summary: "s", lore: "l", labels: [] },
+      run("npc"),
+    );
+    expect(draft.contextProvenance).toBeUndefined();
+  });
 });
 
 describe("buildPrompt template injection", () => {
   const ctxWithTemplate = (applyTemplate: boolean) => ({
     categoryLabels: [],
     applyTemplate,
-    templateOutline: "## Overview\n## Secrets",
+    templateOutline:
+      "## Overview\nA short explanation of this section.\n\n## Secrets\nHidden details for the GM.",
     neighbors: [],
     worldSample: [],
     existingTitles: [],
@@ -537,9 +1089,13 @@ describe("buildPrompt template injection", () => {
         run(id, { vaultContext: ctxWithTemplate(true) }),
       );
       expect(prompt).toContain(
-        'Structure the "lore" field to follow this template',
+        'Structure the "lore" field using the template guidance below',
       );
-      expect(prompt).toContain("## Overview");
+      expect(prompt).toContain("<template_guidance>\n## Overview");
+      expect(prompt).toContain("A short explanation of this section.");
+      expect(prompt).toContain(
+        "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated lore.",
+      );
     }
   });
 
@@ -615,6 +1171,13 @@ describe("buildPrompt quality + schema", () => {
     ] as const) {
       const prompt = getGenerator(id).buildPrompt(run(id));
       expect(prompt).toContain("Example (illustrative only");
+    }
+  });
+
+  it("defines a parseable JSON exemplar for every supported generator id", () => {
+    for (const id of SUPPORTED_GENERATOR_IDS) {
+      expect(EXEMPLARS[id]).toBeDefined();
+      expect(() => JSON.parse(EXEMPLARS[id])).not.toThrow();
     }
   });
 
@@ -852,6 +1415,36 @@ describe("buildPrompt campaign date", () => {
   });
 });
 
+describe("plot twist source context", () => {
+  it("uses the contextual source entity as the premise when no premise is supplied", () => {
+    const prompt = getGenerator("plot-twist").buildPrompt(
+      run("plot-twist", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          sourceEntity: {
+            id: "quest-1",
+            title: "The Silent Bell",
+            type: "event",
+            contentExcerpt:
+              "The bell rings only when someone is about to vanish.",
+            loreExcerpt: "A forgotten watchtower keeps the village awake.",
+          },
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: ["source"],
+        },
+      }),
+    );
+
+    expect(prompt).toContain(
+      "Current situation / premise: The Silent Bell: The bell rings only when someone is about to vanish.",
+    );
+  });
+});
+
 describe("buildPrompt source entity", () => {
   it("includes both the content and lore of the source entity for every generator", () => {
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
@@ -1015,17 +1608,32 @@ describe("generator id -> vault category mapping (FR-041)", () => {
     expect(GENERATOR_ENTITY_TYPE).toEqual({
       npc: "character",
       faction: "faction",
+      "faction-roster": "note",
       settlement: "location",
       "magic-item": "item",
+      "minor-magic-item": "item",
+      artifact: "item",
       event: "event",
       ship: "location",
       language: "note",
       "news-sheet": "note",
       dungeon: "location",
       adventure: "note",
+      quest: "event",
+      rumour: "note",
+      puzzle: "note",
+      "plot-twist": "note",
+      villain: "character",
       world: "location",
       "council-vote": "note",
+      "secret-society": "faction",
       "star-system": "location",
+      constellation: "note",
+      "alien-race": "creature",
+      creature: "creature",
+      "random-table": "table",
+      encounter: "note",
+      heist: "note",
     });
   });
 

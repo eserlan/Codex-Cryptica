@@ -19,6 +19,23 @@
     {isUser ? "You" : characterTitle}
   </span>
 
+  {#if message.cue}
+    <div
+      class="flex items-center gap-1 text-[10px] font-semibold text-amber-400/90 mb-0.5 {isUser
+        ? 'justify-end'
+        : 'justify-start'}"
+    >
+      <span
+        class="icon-[lucide--sparkles] w-3 h-3 text-amber-400 shrink-0"
+        aria-hidden="true"
+      ></span>
+      <span
+        class="font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px]"
+        >Cue: {message.cue}</span
+      >
+    </div>
+  {/if}
+
   <div
     class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
     {isUser

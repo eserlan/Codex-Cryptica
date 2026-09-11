@@ -7,6 +7,7 @@
  * Issue #1881.
  */
 
+import { type Clock, systemClock } from "@codex/runtime";
 import { AdventureFlowLayout } from "./adventure-flow-layout";
 import type { PublicGeneratorOutput } from "../public-generator-adapters";
 import type {
@@ -73,9 +74,11 @@ function extractTitleAndDesc(
  */
 export function generateAdventureGraphTopology(
   output: PublicGeneratorOutput,
+  clock: Clock = systemClock,
 ): AdventureCanvasDocument {
-  const documentId = `adv-canvas-${Date.now()}`;
-  const now = new Date().toISOString();
+  const timestamp = clock.now();
+  const documentId = `adv-canvas-${timestamp}`;
+  const now = new Date(timestamp).toISOString();
 
   const nodes: AdventureNode[] = [];
   const edges: AdventureEdge[] = [];

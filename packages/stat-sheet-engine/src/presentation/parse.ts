@@ -272,6 +272,40 @@ function directiveNode(tok: DirectiveToken): BlockNode {
   }
 }
 
+/**
+ * Markdown headings already act as visual section headers in presentation
+ * templates. Promote them to the same section node used by `:::section` so
+ * existing and visual-builder-authored layouts gain the viewer-only collapse
+ * control without requiring a source migration.
+ */
+function groupHeadingSections(nodes: BlockNode[]): BlockNode[] {
+  const grouped: BlockNode[] = [];
+
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
+    if (node.type !== "heading") {
+      grouped.push(node);
+      continue;
+    }
+
+    const children: BlockNode[] = [];
+    while (index + 1 < nodes.length) {
+      const next = nodes[index + 1];
+      if (next.type === "heading" && next.level <= node.level) break;
+      children.push(next);
+      index++;
+    }
+
+    grouped.push({
+      type: "section",
+      heading: node,
+      children: groupHeadingSections(children),
+    });
+  }
+
+  return grouped;
+}
+
 function walkBlock(tokens: Token[]): BlockNode[] {
   const out: BlockNode[] = [];
   for (const tok of tokens) {
@@ -338,7 +372,7 @@ function walkBlock(tokens: Token[]): BlockNode[] {
         break;
     }
   }
-  return out;
+  return groupHeadingSections(out);
 }
 
 const SCRIPT_BLOCK_REGEXP = /<script[^>]*>[\s\S]*?<\/script\s*>/gi;
@@ -348,7 +382,7 @@ const HANDLEBARS_REGEXP = /\{\{[^}]*\}\}/g;
 // Mirrors fieldRefExtension's tokenizer regexp above, anchored full-match:
 // the only `{{...}}` form this contract allows through (directive-syntax.md).
 const VALID_FIELD_REF_REGEXP =
-  /^\{\{stat\.[a-zA-Z0-9_-]+(?:\s+[a-zA-Z]+="[^"]*")*\s*\}\}$/;
+  /^\{\{stat\.[a-zA-Z0-9_-]+((?:\s+[a-zA-Z0-9_-]+(?:="[^"]*"|=\S+)?)*)\s*\}\}$/;
 
 export interface SanitizeResult {
   source: string;

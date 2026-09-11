@@ -10,10 +10,15 @@ const { releaseProxySymbol } = vi.hoisted(() => ({
   releaseProxySymbol: Symbol("releaseProxy"),
 }));
 
+const { setSessionTokenMock } = vi.hoisted(() => ({
+  setSessionTokenMock: vi.fn(),
+}));
+
 vi.mock("comlink", () => ({
   wrap: vi.fn().mockReturnValue({
     generateResponse: vi.fn(),
     expandQuery: vi.fn(),
+    setSessionToken: setSessionTokenMock,
     [releaseProxySymbol]: vi.fn(),
   }),
   releaseProxy: releaseProxySymbol,
@@ -71,6 +76,19 @@ describe("OracleBridge", () => {
     expect(() => bridge.draftingEngine).toThrow(
       "[OracleBridge] Worker not initialized",
     );
+  });
+
+  it("should relay a session token to the worker via Comlink", () => {
+    bridge.setSessionToken({ token: "abc", expiresAt: 123 });
+    expect(setSessionTokenMock).toHaveBeenCalledWith({
+      token: "abc",
+      expiresAt: 123,
+    });
+  });
+
+  it("should not throw when relaying a session token before the worker is ready", () => {
+    (bridge as any).api = null;
+    expect(() => bridge.setSessionToken(null)).not.toThrow();
   });
 
   it("should handle worker initialization failure", () => {

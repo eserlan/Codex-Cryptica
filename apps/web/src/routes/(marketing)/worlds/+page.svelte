@@ -3,8 +3,12 @@
   import { marked } from "marked";
   import DOMPurify from "dompurify";
   import { browser } from "$app/environment";
+  import { browserStorage } from "$lib/utils/runtime-deps";
   import WorldsProvenanceNotice from "$lib/components/publishing/WorldsProvenanceNotice.svelte";
   import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+
+  const VIEW_MODE_KEY = "cc_directory_view_mode";
 
   interface DirectoryResult {
     publishId: string;
@@ -34,19 +38,15 @@
   let showReportModal = $state(false);
 
   $effect(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("cc_directory_view_mode");
-      if (saved === "grid" || saved === "list") {
-        viewMode = saved;
-      }
+    const saved = browserStorage.getItem(VIEW_MODE_KEY);
+    if (saved === "grid" || saved === "list") {
+      viewMode = saved;
     }
   });
 
   function setViewMode(mode: "grid" | "list") {
     viewMode = mode;
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("cc_directory_view_mode", mode);
-    }
+    browserStorage.setItem(VIEW_MODE_KEY, mode);
   }
 
   function renderInlineMarkdown(text: string): string {
@@ -72,7 +72,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-theme-bg text-theme-text">
-  <div class="mx-auto max-w-6xl px-6 py-12 space-y-8">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 space-y-8">
     <header class="space-y-3">
       <p
         class="text-xs font-header uppercase tracking-widest text-theme-primary"
@@ -82,7 +82,7 @@
       <h1 class="text-4xl font-header font-bold text-theme-text">
         Browse shared guest worlds
       </h1>
-      <p class="max-w-2xl text-sm leading-relaxed text-theme-text/70">
+      <p class="max-w-2xl text-base leading-relaxed text-theme-text/70">
         Every result opens the read-only guest view. Private notes, editor
         state, and write access stay out of this directory.
       </p>
@@ -120,13 +120,13 @@
       <div class="flex items-end gap-2">
         <button
           type="submit"
-          class="min-h-12 rounded bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-white"
+          class="min-h-12 rounded bg-theme-primary px-4 py-2 text-xs font-bold text-white"
         >
           Search
         </button>
         <a
           href={resolve("/worlds")}
-          class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-text inline-flex items-center"
+          class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold text-theme-text inline-flex items-center"
         >
           Clear
         </a>
@@ -141,9 +141,7 @@
       <div
         class="flex items-center justify-between border-b border-theme-border pb-4"
       >
-        <p
-          class="text-xs font-header uppercase tracking-wider text-theme-text/60"
-        >
+        <p class="text-xs font-header text-theme-text/60">
           Found {data.page.results.length} world{data.page.results.length === 1
             ? ""
             : "s"}
@@ -190,48 +188,56 @@
     {:else if viewMode === "grid"}
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {#each data.page.results as result (result.publishId)}
-          <a
-            href={resolve(result.guestUrl as any)}
-            class="flex h-full flex-col overflow-hidden rounded border border-theme-border bg-theme-surface/40 transition hover:border-theme-primary/50"
+          <div
+            class="relative flex h-full flex-col overflow-hidden rounded border border-theme-border bg-theme-surface/40 transition hover:border-theme-primary/50"
             data-testid="world-directory-card"
           >
+            <!--
+              A "stretched link" overlay makes the whole card clickable while
+              still letting the label chips below stay independently
+              clickable — they're real links to /explore, not a filter on
+              this page, so they can't be nested inside this anchor.
+            -->
+            <a
+              href={resolve(result.guestUrl as any)}
+              class="absolute inset-0 z-0"
+              aria-label={result.title}
+            ></a>
+
             {#if result.coverImageUrl}
               <img
                 src={result.coverImageUrl}
                 alt={result.coverImageAlt || ""}
-                class="aspect-[16/9] w-full object-cover"
+                class="pointer-events-none aspect-[16/9] w-full object-cover"
               />
             {:else}
               <div
-                class="flex aspect-[16/9] items-center justify-center bg-theme-bg/40 text-theme-text/40"
+                class="pointer-events-none flex aspect-[16/9] items-center justify-center bg-theme-bg/40 text-theme-text/40"
               >
                 <span class="icon-[lucide--image] h-8 w-8"></span>
               </div>
             {/if}
 
             <div class="flex flex-1 flex-col gap-3 p-4">
-              <div class="space-y-1">
+              <div class="pointer-events-none space-y-1">
                 <h2 class="text-lg font-header font-bold text-theme-text">
                   {result.title}
                 </h2>
-                <p class="text-sm leading-relaxed text-theme-text/70">
+                <p class="text-base leading-relaxed text-theme-text/70">
                   {@html renderInlineMarkdown(result.description)}
                 </p>
               </div>
 
               {#if result.labels.length}
-                <div class="flex flex-wrap gap-2">
+                <div class="relative z-10 flex flex-wrap gap-2">
                   {#each result.labels as label (label)}
-                    <span
-                      class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-primary"
-                      >{label}</span
-                    >
+                    <PublicLabelChip {label} />
                   {/each}
                 </div>
               {/if}
 
               <div
-                class="mt-auto flex items-center justify-between gap-3 text-xs text-theme-text/60"
+                class="pointer-events-none mt-auto flex items-center justify-between gap-3 text-xs text-theme-text/60"
               >
                 <span>
                   {result.ownerDisplayName || "Guest-safe world"}
@@ -239,29 +245,35 @@
                 <span>{result.visibleEntityCount} entries</span>
               </div>
             </div>
-          </a>
+          </div>
         {/each}
       </div>
     {:else}
       <div class="flex flex-col gap-3">
         {#each data.page.results as result (result.publishId)}
-          <a
-            href={resolve(result.guestUrl as any)}
-            class="flex items-center justify-between gap-4 rounded border border-theme-border bg-theme-surface/40 p-4 transition hover:border-theme-primary/50"
+          <div
+            class="relative flex items-center justify-between gap-4 rounded border border-theme-border bg-theme-surface/40 p-4 transition hover:border-theme-primary/50"
             data-testid="world-directory-list-row"
           >
-            <div class="min-w-0 flex-1 space-y-1">
+            <!-- See the grid card above: stretched-link overlay so the label
+                 chips can stay independently clickable rather than nested. -->
+            <a
+              href={resolve(result.guestUrl as any)}
+              class="absolute inset-0 z-0"
+              aria-label={result.title}
+            ></a>
+
+            <div class="pointer-events-none min-w-0 flex-1 space-y-1">
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h2 class="text-base font-header font-bold text-theme-text">
                   {result.title}
                 </h2>
                 {#if result.labels.length}
-                  <div class="flex flex-wrap gap-1.5">
+                  <div
+                    class="pointer-events-auto relative z-10 flex flex-wrap gap-1.5"
+                  >
                     {#each result.labels as label (label)}
-                      <span
-                        class="rounded border border-theme-primary/20 bg-theme-primary/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-theme-primary"
-                        >{label}</span
-                      >
+                      <PublicLabelChip {label} size="sm" />
                     {/each}
                   </div>
                 {/if}
@@ -274,7 +286,7 @@
             </div>
 
             <div
-              class="flex flex-shrink-0 items-center gap-6 text-xs text-theme-text/60"
+              class="pointer-events-none flex flex-shrink-0 items-center gap-6 text-xs text-theme-text/60"
             >
               <span class="hidden sm:inline">
                 {result.ownerDisplayName || "Guest-safe world"}
@@ -288,7 +300,7 @@
                 class="icon-[lucide--chevron-right] h-4 w-4 text-theme-text/40"
               ></span>
             </div>
-          </a>
+          </div>
         {/each}
       </div>
     {/if}

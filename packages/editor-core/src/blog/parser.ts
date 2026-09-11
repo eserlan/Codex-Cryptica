@@ -1,6 +1,16 @@
 import { load } from "js-yaml";
 import type { BlogArticle } from "./types";
 
+function isValidAbsoluteUrl(value: unknown): value is string {
+  if (typeof value !== "string" || !value.trim()) return false;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function parseBlogArticle(
   path: string,
   rawContent: string,
@@ -34,7 +44,16 @@ export function parseBlogArticle(
       return null;
     }
 
-    const { title, description, keywords, publishedAt } = metadata;
+    const {
+      title,
+      description,
+      keywords,
+      publishedAt,
+      author,
+      topic,
+      image,
+      imageAlt,
+    } = metadata;
 
     if (typeof title !== "string" || title.trim() === "") {
       console.error(
@@ -82,6 +101,17 @@ export function parseBlogArticle(
 
     const finalPublishedAt = publishedAtDate.toISOString();
 
+    const rawUpdatedAt = metadata.updatedAt;
+    let updatedAtIso: string | undefined;
+    if (rawUpdatedAt) {
+      const parsed = new Date(rawUpdatedAt as string | Date);
+      if (Number.isNaN(parsed.getTime())) {
+        console.error(`Invalid 'updatedAt' in frontmatter for: ${path}`);
+      } else {
+        updatedAtIso = parsed.toISOString();
+      }
+    }
+
     return {
       id: String(metadata.id),
       slug: String(metadata.slug),
@@ -89,6 +119,31 @@ export function parseBlogArticle(
       description,
       keywords,
       publishedAt: finalPublishedAt,
+      // Deliberately not required: omitting it means "the site's own author",
+      // resolved at render time, so a new post doesn't have to repeat it and
+      // changing the name is a one-line edit rather than 22.
+      ...(typeof author === "string" && author.trim()
+        ? { author: author.trim() }
+        : {}),
+      // Same treatment as `author`: absent stays absent. An updatedAt silently
+      // defaulted to the publication date would tell every reader that every
+      // post was revised today it was written, which is worse than silence.
+      ...(updatedAtIso ? { updatedAt: updatedAtIso } : {}),
+      ...(typeof topic === "string" && topic.trim()
+        ? { topic: topic.trim() }
+        : {}),
+      // A post without its own card image gets the site's default rather than a
+      // broken one, so an absent, invalid, or non-absolute value stays absent.
+      // Alt text without an image would describe nothing, so it only survives
+      // alongside a valid absolute image URL.
+      ...(isValidAbsoluteUrl(image)
+        ? {
+            image: image.trim(),
+            ...(typeof imageAlt === "string" && imageAlt.trim()
+              ? { imageAlt: imageAlt.trim() }
+              : {}),
+          }
+        : {}),
       content,
     };
   } catch (e) {

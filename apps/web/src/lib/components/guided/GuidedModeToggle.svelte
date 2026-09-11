@@ -28,7 +28,9 @@
         : "text-theme-muted",
     ]}
   >
-    <span class="icon-[lucide--compass] w-3 h-3 mr-1 inline-block align-[-2px]"
+    <span
+      aria-hidden="true"
+      class="icon-[lucide--compass] w-3 h-3 mr-1 inline-block align-[-2px]"
     ></span>Guided
   </span>
   <span
@@ -40,6 +42,7 @@
     ]}
   >
     <span
+      aria-hidden="true"
       class="icon-[lucide--layout-grid] w-3 h-3 mr-1 inline-block align-[-2px]"
     ></span>Full Toolbox
   </span>

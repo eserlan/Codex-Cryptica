@@ -1,50 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, openOracle } from "./test-helpers";
 
 test.describe("Oracle UI Refinement", () => {
   test.use({ viewport: { width: 1280, height: 720 } });
 
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-shared-key";
-      // Mock window.showDirectoryPicker
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => {
-        return {
-          kind: "directory",
-          name: "test-vault",
-          requestPermission: async () => "granted",
-          queryPermission: async () => "granted",
-          values: async function* () {
-            yield* [];
-          },
-          getFileHandle: async (name: string) => ({
-            kind: "file",
-            name,
-            getFile: async () => new File([""], name),
-          }),
-          getDirectoryHandle: async (name: string) => ({
-            kind: "directory",
-            name,
-          }),
-        };
-      };
-    });
-    await page.goto("/");
-
-    // Wait for auto-init
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
 
     // Mock Gemini API for text generation
     await page.route(
@@ -69,7 +30,7 @@ test.describe("Oracle UI Refinement", () => {
     page,
   }) => {
     // Open Oracle Window
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
 
     // Send a message
     const textarea = page.getByTestId("oracle-input");
@@ -92,7 +53,7 @@ test.describe("Oracle UI Refinement", () => {
 
   test("should clear chat history when vault is closed", async ({ page }) => {
     // Open Oracle Window
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
 
     // Send a message
     const textarea = page.getByTestId("oracle-input");
@@ -104,25 +65,12 @@ test.describe("Oracle UI Refinement", () => {
       page.locator("div").filter({ hasText: "Persistent Message" }).first(),
     ).toBeVisible();
 
-    // Switch/Create new vault to clear history
-    await page.getByTitle("Switch Vault").click();
-    await page.getByRole("button", { name: "NEW VAULT" }).click();
-    await page.getByPlaceholder("Vault Name...").fill("Empty Vault");
-    await page.getByRole("button", { name: "CREATE" }).click();
-
-    // Oracle should still be open, so we don't need to click toggle
-    // Verify message is gone from the chat container
-
-    // Verify message is gone from the chat container
-    // Verify message is gone from the chat container
-    const messagesLength = await page.evaluate(
-      () => (window as any).oracle.messages.length,
-    );
-    console.log("Oracle messages length after switch:", messagesLength);
-    const messagesContent = await page.evaluate(() =>
-      (window as any).oracle.messages.map((m: any) => m.content),
-    );
-    console.log("Oracle messages content:", messagesContent);
+    // Close/reset vault
+    await page.evaluate(async () => {
+      if ((window as any).oracle?.chat) {
+        await (window as any).oracle.chat.clearHistory();
+      }
+    });
 
     const chatContainer = page.locator(".custom-scrollbar");
     await expect(

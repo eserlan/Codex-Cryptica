@@ -23,7 +23,6 @@
     }
 
     modalUIStore.openZenMode(entity.id);
-    if (layoutUIStore.isMobile) layoutUIStore.closeSidebar();
   }
 
   function onDragStart(event: DragEvent, entityId: string) {

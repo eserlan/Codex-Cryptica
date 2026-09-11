@@ -35,6 +35,7 @@
     class="fixed bottom-4 right-[calc(1rem+100px)] z-[9999] flex flex-col items-end gap-2 font-mono"
   >
     <button
+      type="button"
       class="bg-black/80 text-white px-3 py-1 rounded text-xs border border-white/20 hover:bg-white/10 transition-colors shadow-lg"
       onclick={() => (isOpen = !isOpen)}
     >
@@ -56,12 +57,14 @@
           >
           <div class="flex gap-2">
             <button
+              type="button"
               class="bg-white/10 text-white/70 hover:bg-white/20 hover:text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-white/20 transition-colors"
               onclick={copyLogsToClipboard}
             >
               Copy All
             </button>
             <button
+              type="button"
               class="bg-white/10 text-white/70 hover:bg-white/20 hover:text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-white/20 transition-colors"
               onclick={() => debugStore.clear()}
             >
@@ -95,6 +98,7 @@
                         2,
                       )}</pre>
                     <button
+                      type="button"
                       class="absolute top-1 right-1 bg-white/10 hover:bg-white/20 text-white/60 hover:text-white text-[9px] px-1.5 py-0.5 rounded transition-colors"
                       onclick={() => {
                         try {

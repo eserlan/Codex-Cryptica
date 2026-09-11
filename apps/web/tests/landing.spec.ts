@@ -3,7 +3,6 @@ import { test, expect } from "@playwright/test";
 test.describe("Landing Page", () => {
   test("should have a link to the features page", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible();
     await expect(
       page.getByRole("heading", { level: 1, name: "Private RPG Lore Vault" }),
     ).toBeVisible();
@@ -17,7 +16,7 @@ test.describe("Landing Page", () => {
     ).toBeVisible();
     await expect(
       page.getByText(
-        "Opens a prebuilt sample world instantly. No setup required.",
+        "Quick Start generates a ready-to-explore world in seconds — pick a theme, add an optional premise, done. Optional AI is available when you want it; your vault works fully without it.",
       ),
     ).toBeVisible();
     await expect(

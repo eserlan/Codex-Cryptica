@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildVaultContext,
   detectVaultLanguages,
+  findSingleQuestHook,
   latestTemporalYear,
   suggestPrimaryLanguageId,
 } from "./generator-vault-context";
@@ -43,6 +44,40 @@ describe("latestTemporalYear", () => {
     const a = entity({ id: "a", title: "A", type: "character" });
     expect(latestTemporalYear({ a })).toBeUndefined();
     expect(latestTemporalYear({})).toBeUndefined();
+  });
+});
+
+describe("findSingleQuestHook", () => {
+  it("returns the only quest-generator entry in memory", () => {
+    const hook = entity({
+      id: "quest-1",
+      title: "The Silent Bell",
+      type: "event",
+      labels: ["rpg-quest", "quest-generator"],
+    });
+    expect(findSingleQuestHook({ hook })).toBe(hook);
+  });
+
+  it("returns undefined when there are zero or multiple quest hooks", () => {
+    const first = entity({
+      id: "quest-1",
+      title: "First",
+      type: "event",
+      labels: ["quest-generator"],
+    });
+    const second = entity({
+      id: "quest-2",
+      title: "Second",
+      type: "event",
+      labels: ["rpg-quest"],
+    });
+    expect(findSingleQuestHook({})).toBeUndefined();
+    expect(findSingleQuestHook({ first, second })).toBeUndefined();
+  });
+
+  it("does not classify an ordinary event as a quest hook", () => {
+    const event = entity({ id: "event-1", title: "Festival", type: "event" });
+    expect(findSingleQuestHook({ event })).toBeUndefined();
   });
 });
 
@@ -268,6 +303,45 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     expect(ctx.neighbors.map((n) => n.id)).toContain("c1");
     expect(ctx.neighbors.map((n) => n.id)).not.toContain("u1");
+  });
+
+  it("caps neighbors from connectedIds at 5 and skips missing entity IDs", () => {
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const entities: Record<string, Entity> = { src };
+    for (let i = 0; i < 7; i++) {
+      entities[`c${i}`] = entity({
+        id: `c${i}`,
+        title: `Connected ${i}`,
+        type: "character",
+      });
+    }
+    const connectedIds = new Set([
+      "missing-1",
+      "c0",
+      "missing-2",
+      "c1",
+      "c2",
+      "c3",
+      "missing-3",
+      "c4",
+      "c5",
+      "c6",
+    ]);
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: entities,
+      connectedIds,
+    });
+    expect(ctx.neighbors).toHaveLength(5);
+    expect(ctx.neighbors.map((n) => n.id)).toEqual([
+      "c0",
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+    ]);
   });
 
   it("falls back to same-type selection when connectedIds is empty", () => {

@@ -8,7 +8,6 @@
     pullVaultFromDrive,
     listDriveVaults,
     importVaultFromDrive,
-    joinSharedVault,
   } from "@codex/gdrive-sync";
   import { onMount } from "svelte";
   import { getDB } from "$lib/utils/idb";
@@ -27,10 +26,6 @@
   let driveVaults = $state<Array<{ id: string; name: string }> | null>(null);
   let isImporting = $state(false);
 
-  // Join shared vault state
-  let shareLink = $state("");
-  let isJoining = $state(false);
-
   const hasClientId = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   async function loadMetadata() {
@@ -38,6 +33,9 @@
     const db = await getDB();
     const ms = new CloudSyncMetadataService(new SyncRegistry(db));
     metadata = await ms.getMetadata(vault.activeVaultId);
+    // Mirrored onto the store so the destination picker can tell whether this
+    // vault is on Drive without repeating the lookup.
+    driveStore.metadata = metadata;
     if (metadata) {
       driveStore.status = "connected";
     }
@@ -93,6 +91,7 @@
     if (confirmed) {
       await disconnectVaultFromDrive(vault.activeVaultId);
       metadata = null;
+      driveStore.metadata = null;
       notificationStore.notify("Google Drive disconnected", "info");
     }
   }
@@ -173,26 +172,6 @@
       notificationStore.notify(e.message || "Failed to import vault", "error");
     } finally {
       isImporting = false;
-    }
-  }
-
-  async function handleJoinSharedVault() {
-    const link = shareLink.trim();
-    if (!link) return;
-    isJoining = true;
-    notificationStore.notify("Connecting to shared vault…", "info");
-    try {
-      await joinSharedVault(link);
-      shareLink = "";
-      await loadMetadata();
-      notificationStore.notify("Shared vault loaded successfully", "success");
-    } catch (e: any) {
-      notificationStore.notify(
-        e.message || "Failed to join shared vault",
-        "error",
-      );
-    } finally {
-      isJoining = false;
     }
   }
 </script>
@@ -396,38 +375,6 @@
           </div>
         {/if}
       {/if}
-    </div>
-  {/if}
-
-  <!-- Join a shared vault (co-GM flow) -->
-  {#if hasClientId}
-    <div class="border-t border-theme-border pt-4 space-y-3">
-      <div>
-        <h4 class="text-xs font-bold text-theme-text uppercase tracking-widest">
-          Join a Shared Vault
-        </h4>
-        <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
-          Paste a Drive share link from your GM to load their vault. Google will
-          ask you to grant access.
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <input
-          type="url"
-          bind:value={shareLink}
-          placeholder="https://drive.google.com/drive/folders/..."
-          disabled={isJoining}
-          onkeydown={(e) => e.key === "Enter" && handleJoinSharedVault()}
-          class="flex-1 px-3 py-2 bg-theme-bg border border-theme-border rounded-md text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-theme-primary/50 font-mono placeholder-theme-muted disabled:opacity-50"
-        />
-        <button
-          onclick={handleJoinSharedVault}
-          disabled={isJoining || !shareLink.trim()}
-          class="px-3 py-2 bg-theme-primary text-theme-bg text-xs font-bold rounded-md hover:bg-theme-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          {isJoining ? "Joining…" : "Join"}
-        </button>
-      </div>
     </div>
   {/if}
 

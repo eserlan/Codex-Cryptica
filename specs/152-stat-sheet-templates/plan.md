@@ -23,20 +23,20 @@ Add a presentation layer on top of the existing Stat Sheet feature (#149): users
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Assessment |
-|---|---|
-| I. Library-First | New parsing/validation logic lives in a package (extending `@codex/stat-sheet-engine` or a new sibling package — decided during implementation based on size), not inline in `apps/web`. `apps/web` stays a thin UI layer (editor, renderer components, stores) over it. **Pass.** |
-| II. TDD | `contracts/presentation-engine-api.md` defines pure, headless functions (`parseTemplate`, `validateAst`, `isTemplateUsable`) specifically so they can be unit-tested Red-Green-Refactor before any Svelte UI exists. **Pass, must be enforced in tasks.md ordering.** |
-| III. Simplicity & YAGNI | Reuses `marked` (extension API) instead of a new Markdown library; reuses `@codex/stat-sheet-engine`'s versioned-package pattern instead of a new one; explicitly rejects adding a code-editor dependency (research.md §6) in favor of a plain textarea + autocomplete. **Pass.** |
-| IV. AI-First Extraction | Not applicable — this feature is user-authored presentation, not Oracle/Gemini extraction. |
-| V. Privacy & Client-Side | All storage is IndexedDB/OPFS as today; no new server dependency for authoring/rendering (only export/import is a local file, no network call). **Pass.** |
-| VI. Clean Implementation | Follows `@docs/STYLE_GUIDE.md` (Svelte 5 Runes, Tailwind 4 tokens); `lint`/`test` gates apply as usual. |
-| VII. User Documentation | New `help-content.ts` entry required for the Presentation Template editor; `FeatureHint` recommended given the directive syntax is new to users — tracked as a task. |
-| VIII. DI | New `PresentationTemplateStore` follows the existing `StatSheetTemplateStore` DI-singleton pattern (constructor injection, class + default singleton export). **Pass.** |
-| IX. Natural Language | Editor diagnostics/flags (missing field, unknown directive) must use plain language, not internal node-kind names verbatim — a UX-copy task, not a gate blocker. |
-| X. Coverage | New package/logic must hit the 70% "new code" goal on introduction; parser/validator being pure functions makes this straightforward. |
-| XI. Karpathy Rules | This plan scopes strictly to spec.md's FRs; no speculative interactivity/cross-schema features are being built now (both explicitly deferred per Clarifications). |
-| XII. Labels over Tags | No tagging/categorization surface introduced by this feature; N/A. |
+| Principle                | Assessment                                                                                                                                                                                                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| I. Library-First         | New parsing/validation logic lives in a package (extending `@codex/stat-sheet-engine` or a new sibling package — decided during implementation based on size), not inline in `apps/web`. `apps/web` stays a thin UI layer (editor, renderer components, stores) over it. **Pass.** |
+| II. TDD                  | `contracts/presentation-engine-api.md` defines pure, headless functions (`parseTemplate`, `validateAst`, `isTemplateUsable`) specifically so they can be unit-tested Red-Green-Refactor before any Svelte UI exists. **Pass, must be enforced in tasks.md ordering.**              |
+| III. Simplicity & YAGNI  | Reuses `marked` (extension API) instead of a new Markdown library; reuses `@codex/stat-sheet-engine`'s versioned-package pattern instead of a new one; explicitly rejects adding a code-editor dependency (research.md §6) in favor of a plain textarea + autocomplete. **Pass.**  |
+| IV. AI-First Extraction  | Not applicable — this feature is user-authored presentation, not Oracle/Gemini extraction.                                                                                                                                                                                         |
+| V. Privacy & Client-Side | All storage is IndexedDB/OPFS as today; no new server dependency for authoring/rendering (only export/import is a local file, no network call). **Pass.**                                                                                                                          |
+| VI. Clean Implementation | Follows `@docs/STYLE_GUIDE.md` (Svelte 5 Runes, Tailwind 4 tokens); `lint`/`test` gates apply as usual.                                                                                                                                                                            |
+| VII. User Documentation  | New `help-content.ts` entry required for the Presentation Template editor; `FeatureHint` recommended given the directive syntax is new to users — tracked as a task.                                                                                                               |
+| VIII. DI                 | New `PresentationTemplateStore` follows the existing `StatSheetTemplateStore` DI-singleton pattern (constructor injection, class + default singleton export). **Pass.**                                                                                                            |
+| IX. Natural Language     | Editor diagnostics/flags (missing field, unknown directive) must use plain language, not internal node-kind names verbatim — a UX-copy task, not a gate blocker.                                                                                                                   |
+| X. Coverage              | New package/logic must hit the 70% "new code" goal on introduction; parser/validator being pure functions makes this straightforward.                                                                                                                                              |
+| XI. Karpathy Rules       | This plan scopes strictly to spec.md's FRs; no speculative interactivity/cross-schema features are being built now (both explicitly deferred per Clarifications).                                                                                                                  |
+| XII. Labels over Tags    | No tagging/categorization surface introduced by this feature; N/A.                                                                                                                                                                                                                 |
 
 **No violations requiring Complexity Tracking justification.**
 

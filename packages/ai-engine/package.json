@@ -11,6 +11,7 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/adventure-engine": "workspace:*",
     "@codex/oracle-engine": "workspace:*",
     "@google/generative-ai": "^0.24.1",
     "compromise": "^14.15.0",
@@ -20,12 +21,12 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@testing-library/svelte": "^5.3.1",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^5.0.0",
     "@types/node": "^26.1.0",
     "jsdom": "^30.0.1",
     "svelte": "^5.55.9",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0"
   }
 }

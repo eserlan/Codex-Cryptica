@@ -57,7 +57,10 @@ describe("SessionHubStore", () => {
     expect(store.entities[0].selectedForSave).toBe(true);
     expect(store.nextOrder).toBe(2);
 
-    expect(mockStorage.setItem).toHaveBeenCalledWith(SESSION_DRAFTS_KEY, expect.any(String));
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      SESSION_DRAFTS_KEY,
+      expect.any(String),
+    );
   });
 
   it("updates an entity", () => {
@@ -107,7 +110,14 @@ describe("SessionHubStore", () => {
     const mockState = {
       version: 2,
       entities: [
-        { id: "1", title: "Test", createdOrder: 1, reuseEnabled: true },
+        {
+          id: "1",
+          title: "Test",
+          createdOrder: 1,
+          reuseEnabled: true,
+          derivedFromEntityId: "ancestor",
+          derivation: "refine",
+        },
       ],
       provenance: {
         "1": {
@@ -127,8 +137,46 @@ describe("SessionHubStore", () => {
     expect(newStore.entities).toHaveLength(1);
     expect(newStore.entities[0].title).toBe("Test");
     expect(newStore.entities[0].selectedForSave).toBe(true);
+    expect(newStore.entities[0].derivedFromEntityId).toBe("ancestor");
+    expect(newStore.entities[0].derivation).toBe("refine");
     expect(newStore.provenance["1"]).toBeDefined();
     expect(newStore.nextOrder).toBe(2);
+  });
+
+  it("preserves refinement lineage and descendants when an ancestor is removed", () => {
+    const ancestorId = store.addEntity({
+      type: "character",
+      title: "Original",
+      content: "The first draft",
+      labels: [],
+      status: "draft",
+      reuseEnabled: true,
+      pinned: false,
+    });
+    const descendantId = store.addEntity({
+      type: "character",
+      title: "Refined",
+      content: "The revised draft",
+      labels: [],
+      status: "draft",
+      reuseEnabled: true,
+      pinned: false,
+      derivedFromEntityId: ancestorId,
+      derivation: "refine",
+    });
+
+    store.removeEntity(ancestorId);
+
+    expect(store.entities.map((entity) => entity.id)).toEqual([descendantId]);
+    expect(store.entities[0]).toMatchObject({
+      derivedFromEntityId: ancestorId,
+      derivation: "refine",
+    });
+    const persisted = JSON.parse(
+      mockStorage.setItem.mock.calls.at(-1)?.[1] as string,
+    );
+    expect(persisted.version).toBe(2);
+    expect(persisted.entities[0].derivedFromEntityId).toBe(ancestorId);
   });
 
   it("migrates from v1 SessionDraft format", () => {
@@ -153,7 +201,10 @@ describe("SessionHubStore", () => {
     expect(newStore.nextOrder).toBe(2);
 
     // Should have saved the migrated state
-    expect(mockStorage.setItem).toHaveBeenCalledWith(SESSION_DRAFTS_KEY, expect.any(String));
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      SESSION_DRAFTS_KEY,
+      expect.any(String),
+    );
   });
 
   it("clears all state", () => {

@@ -160,6 +160,13 @@ describe("StatSheetTemplateSettings", () => {
     expect(row.textContent).toContain("Applicable");
   });
 
+  it("lists the generated character and NPC presentation layouts", () => {
+    render(StatSheetTemplateSettings);
+
+    expect(screen.getByText("Standard Character Sheet")).toBeTruthy();
+    expect(screen.getByText("Standard NPC / Monster Sheet")).toBeTruthy();
+  });
+
   it("saves a built-in template as an editable vault copy", async () => {
     render(StatSheetTemplateSettings);
 

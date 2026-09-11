@@ -14,6 +14,11 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
+  import {
+    buildConnectionNeighbors,
+    toConnectionRows,
+    vaultConnectionContext,
+  } from "./entity-connections";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import {
     dungeonDelveService,
@@ -45,6 +50,15 @@
   let prefillConnectionTargetId = $state<string | null>(null);
   let prefillConnectionTargetName = $state("");
 
+  // The "*" suffix on a name marks a past-labelled entity. It's a purely
+  // visual footnote with no legend anywhere in the app, so the `sr-only`
+  // spans below pair it with text. Other surfaces rendering the same marker
+  // (DetailHeader, NodeReadModal, EntityListItem, MapPinPopover, PinLinker,
+  // TokenAddDialog) do the same.
+  const entityIsPast = $derived(
+    entity?.labels?.some((l: string) => l.toLowerCase() === "past") ?? false,
+  );
+
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
     if (!vault.isGuest) return true;
@@ -54,84 +68,15 @@
     });
   });
 
+  // The Status list and the Connections tab (issue #2350) read the same
+  // 1-hop set from `entity-connections`, so a rule added to one surface can't
+  // silently skip the other. `toConnectionRows` keeps the per-relationship
+  // row shape this list edits (and hands to ConnectionEditor).
   let allConnections = $derived.by(() => {
     if (!entity) return [];
-
-    const checkVisibility = (targetId: string) => {
-      const targetEntity = vault.entities[targetId];
-      if (!targetEntity) return false;
-      if (!vault.isGuest) return true;
-      return isEntityVisible(targetEntity, {
-        sharedMode: vault.isGuest,
-        defaultVisibility: vault.defaultVisibility,
-      });
-    };
-
-    // ⚡ Bolt Optimization: Replace multiple .map() calls and array spread
-    // with imperative loops using .push() to eliminate intermediate array
-    // allocations and reduce GC overhead on reactive updates.
-    const result = [];
-
-    for (const c of entity.connections) {
-      if (checkVisibility(c.target)) {
-        result.push({
-          ...c,
-          isOutbound: true,
-          displayTitle: vault.entities[c.target]?.title || c.target,
-          targetId: c.target,
-          hasPastLabel:
-            vault.entities[c.target]?.labels?.some(
-              (l) => l.toLowerCase() === "past",
-            ) ?? false,
-        });
-      }
-    }
-
-    const inboundList = vault.inboundConnections[entity.id];
-    if (inboundList) {
-      for (const item of inboundList) {
-        if (checkVisibility(item.sourceId)) {
-          result.push({
-            ...item.connection,
-            isOutbound: false,
-            displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
-            targetId: item.sourceId,
-            hasPastLabel:
-              vault.entities[item.sourceId]?.labels?.some(
-                (l) => l.toLowerCase() === "past",
-              ) ?? false,
-          });
-        }
-      }
-    }
-
-    // Add children if exist
-    const entityId = entity.id.toLowerCase();
-    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
-    const allEntities = vault.allEntities || [];
-
-    for (let i = 0; i < allEntities.length; i++) {
-      const child = allEntities[i];
-      if (child.parent && child.parent.toLowerCase() === entityId) {
-        if (checkVisibility(child.id)) {
-          const alreadyConnected = result.some((c) => c.targetId === child.id);
-          if (!alreadyConnected) {
-            result.push({
-              targetId: child.id,
-              type: "child",
-              label: "Child",
-              isOutbound: false,
-              isChild: true,
-              displayTitle: child.title,
-              hasPastLabel:
-                child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
-            });
-          }
-        }
-      }
-    }
-
-    return result;
+    return toConnectionRows(
+      buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
+    );
   });
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
@@ -374,6 +319,7 @@
         {:else}
           <li class="flex gap-3 text-sm text-theme-muted items-start group">
             <span
+              aria-hidden="true"
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
                 ? 'icon-[lucide--chevron-down]'
                 : conn.isOutbound
@@ -385,6 +331,13 @@
                   ? "var(--theme-icon-active)"
                   : "var(--theme-icon-default)"}
             ></span>
+            <span class="sr-only"
+              >{conn.isChild
+                ? "Child of this entity:"
+                : conn.isOutbound
+                  ? "Outgoing connection:"
+                  : "Incoming connection:"}</span
+            >
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
                 onclick={(e) => {
@@ -398,51 +351,72 @@
               >
                 {#if conn.isChild}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >Child</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else if conn.isOutbound}
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {/if}
               </button>
@@ -454,7 +428,7 @@
                       type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => (editingConnectionTarget = conn.targetId)}
-                      aria-label="Edit connection"
+                      aria-label="Edit connection to {conn.displayTitle}"
                       title="Edit connection"
                     >
                       <span
@@ -472,7 +446,7 @@
                         prefillConnectionTargetName = conn.displayTitle;
                         isAddingConnection = true;
                       }}
-                      aria-label="Establish custom connection"
+                      aria-label="Establish custom connection to {conn.displayTitle}"
                       title="Establish custom connection"
                     >
                       <span
@@ -503,7 +477,7 @@
                         );
                       }
                     }}
-                    aria-label="Delete connection"
+                    aria-label="Delete connection to {conn.displayTitle}"
                     title="Delete connection"
                   >
                     <span

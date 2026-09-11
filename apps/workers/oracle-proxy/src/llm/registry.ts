@@ -43,6 +43,12 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
     capabilities: {
       structuredOutput: true,
       freeformGeneration: true,
+      // Describes only the stateless operation-pipeline's "revision"
+      // LlmOperation (unused today, no caller/default wired to it). Luna IS
+      // used for entity revision via the separate Interactions path
+      // (text-generation-revision.service.ts / handleInteraction in
+      // index.ts), which never reads this flag — don't take `false` here as
+      // "Luna can't do revision."
       revision: false,
     },
     costTier: "low",
@@ -55,34 +61,53 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
 
 export const OPERATION_DEFAULTS: OperationDefaults[] = [
   {
-    // Luna as the primary default for structured-generation (2026-08-05,
-    // verified live against real app traffic) — deliberate choice, not a
-    // leftover from testing. Gemini is the fallback.
+    // Luna is the primary model for structured generation. Gemini remains the
+    // fallback for local/dev environments that do not have an OpenAI key.
+    // reasoningEffort applies to the Luna primary and any future fallback:
+    // entity/NPC/faction drafting is constrained creative generation
+    // following an already-detailed prompt (schema, naming rules,
+    // banned-name list) — it needs enough depth to honor those constraints
+    // coherently, not genuine multi-step reasoning.
     operation: "structured-generation",
     context: "public",
     defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "low",
   },
   {
+    // This is the operation the public generators actually use: the client
+    // only sends "structured-generation" when it asks for a JSON mime type,
+    // which today is the language generator alone.
+    // reasoningEffort "low" applies when Luna serves as fallback: creative
+    // synthesis and drafting stages are conversational, not deep reasoning.
     operation: "freeform-generation",
     context: "public",
-    defaultModelKey: "gemini-flash-lite",
-    fallbackModelKey: "luna-fast",
+    defaultModelKey: "luna-fast",
+    fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "low",
   },
   {
     // Luna as the primary default (not just fallback) for classification —
     // demonstrates SC-003: enabled purely through registry config, no
     // resolver/adaptor/caller changes required.
+    // reasoningEffort "minimal": pure categorization/confidence-scoring
+    // against an already-supplied candidate list — no deduction happening.
     operation: "classification",
     context: "public",
     defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "minimal",
   },
   {
+    // Luna as the primary default (2026-08-07) — no caller uses this
+    // operation today, but keep it consistent with the rest of the registry.
+    // reasoningEffort "minimal": no live caller, so this just keeps cost/
+    // latency low by default rather than expressing a real workload need.
     operation: "utility",
     context: "public",
-    defaultModelKey: "gemini-flash-lite",
+    defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "minimal",
   },
   // "revision" intentionally has no default yet — no caller uses it this
   // slice (spec Scope §4, out of scope).

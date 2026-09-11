@@ -100,6 +100,68 @@ describe("resolver: context-default selection", () => {
   });
 });
 
+describe("resolver: reasoning effort merge", () => {
+  it("fills in the operation's configured reasoningEffort when the caller doesn't set one", async () => {
+    const model = makeModel();
+    const defaults: OperationDefaults = {
+      operation: "classification",
+      context: "public",
+      defaultModelKey: "model-a",
+      fallbackModelKey: "model-a",
+      reasoningEffort: "minimal",
+    };
+    const adaptorCall = vi.fn(
+      async (_req: LlmRequest, m: LlmModelDefinition) => ({
+        ok: true as const,
+        response: { content: "ok", modelKey: m.key },
+      }),
+    );
+
+    const resolver = createResolver({
+      getModel: (k) => (k === "model-a" ? model : undefined),
+      getOperationDefaults: () => defaults,
+      adaptors: { gemini: adaptorCall },
+    });
+
+    await resolver.resolve(
+      { ...baseRequest, operation: "classification" },
+      "public",
+    );
+
+    expect(adaptorCall.mock.calls[0][0].reasoningEffort).toBe("minimal");
+  });
+
+  it("never overrides a caller-supplied reasoningEffort with the operation's default", async () => {
+    const model = makeModel();
+    const defaults: OperationDefaults = {
+      operation: "classification",
+      context: "public",
+      defaultModelKey: "model-a",
+      fallbackModelKey: "model-a",
+      reasoningEffort: "minimal",
+    };
+    const adaptorCall = vi.fn(
+      async (_req: LlmRequest, m: LlmModelDefinition) => ({
+        ok: true as const,
+        response: { content: "ok", modelKey: m.key },
+      }),
+    );
+
+    const resolver = createResolver({
+      getModel: (k) => (k === "model-a" ? model : undefined),
+      getOperationDefaults: () => defaults,
+      adaptors: { gemini: adaptorCall },
+    });
+
+    await resolver.resolve(
+      { ...baseRequest, operation: "classification", reasoningEffort: "high" },
+      "public",
+    );
+
+    expect(adaptorCall.mock.calls[0][0].reasoningEffort).toBe("high");
+  });
+});
+
 describe("resolver: explicit override with fallthrough", () => {
   it("uses the override when viable", async () => {
     const override = makeModel({ key: "override-model" });

@@ -56,6 +56,16 @@ class VaultRegistryStore {
         : null;
       this.vaultName = vaultRecord?.name || "Local Vault";
 
+      // Startup restores the active vault straight from settings rather than
+      // through `setActiveVault`, so this was the one open path that never
+      // stamped the field. "Last opened" therefore showed the last explicit
+      // switch, which read as "the app has not opened this vault since then"
+      // and sent a user chasing a data-loss bug in the wrong direction
+      // (#2619). It is a diagnostic; it has to be true.
+      if (this.activeVaultId) {
+        await registry.updateLastOpened(this.activeVaultId);
+      }
+
       await this.listVaults();
       this.isInitialized = true;
     } catch (err) {

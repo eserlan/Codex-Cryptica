@@ -3,7 +3,9 @@ import type {
   TemporalMetadata,
   Category,
   StylingTemplate,
+  ImageFocus,
 } from "schema";
+import { deriveEntityTypePalette, imageFocusBackgroundPosition } from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
 
@@ -17,6 +19,7 @@ export interface GraphNode {
     status?: "active" | "draft";
     image?: string;
     thumbnail?: string;
+    imageFocus?: ImageFocus;
     labels?: string[];
     isImportant?: boolean;
     isPast?: boolean;
@@ -97,6 +100,7 @@ export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
     validIds?: Set<string>,
+    maxEdges = Number.POSITIVE_INFINITY,
   ): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
     if (!validIds) {
@@ -114,6 +118,9 @@ export class GraphTransformer {
 
     // Precompute rendered degree so node sizing matches the graph after
     // connections to hidden or missing targets have been filtered out.
+    // Keep weight calculation aligned with the edges that are actually
+    // rendered when a caller applies an edge budget.
+    let weightedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
@@ -122,11 +129,13 @@ export class GraphTransformer {
       if (!connections) continue;
 
       for (let j = 0; j < connections.length; j++) {
+        if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
         if (!validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
+        weightedEdgeCount++;
       }
     }
 
@@ -137,6 +146,7 @@ export class GraphTransformer {
     // solves cleanly. This keeps the bad coordinates from flashing on screen
     // during the load before the heal runs.
     const savedPositions: { x: number; y: number }[] = [];
+    let renderedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const c = entities[i]?.metadata?.coordinates;
       if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
@@ -160,11 +170,11 @@ export class GraphTransformer {
 
       // Visibility markers for Admin visual cues
       let isRevealed = false;
-      const tags = entity.tags;
-      if (tags) {
-        for (let j = 0; j < tags.length; j++) {
-          const t = tags[j].toLowerCase();
-          if (t === "revealed" || t === "visible") {
+      const labels = entity.labels;
+      if (labels) {
+        for (let k = 0; k < labels.length; k++) {
+          const l = labels[k].toLowerCase();
+          if (l === "revealed" || l === "visible") {
             isRevealed = true;
             break;
           }
@@ -172,11 +182,11 @@ export class GraphTransformer {
       }
 
       if (!isRevealed) {
-        const labels = entity.labels;
-        if (labels) {
-          for (let k = 0; k < labels.length; k++) {
-            const l = labels[k].toLowerCase();
-            if (l === "revealed" || l === "visible") {
+        const legacyTags = (entity as { tags?: string[] }).tags;
+        if (legacyTags) {
+          for (let j = 0; j < legacyTags.length; j++) {
+            const t = legacyTags[j].toLowerCase();
+            if (t === "revealed" || t === "visible") {
               isRevealed = true;
               break;
             }
@@ -205,6 +215,15 @@ export class GraphTransformer {
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
+      if (entity.silhouette) (nodeData as any).silhouette = entity.silhouette;
+      (nodeData as any).entity = {
+        id: entity.id,
+        title: entity.title,
+        type: entity.type,
+        labels: entity.labels,
+        silhouette: entity.silhouette,
+      };
       if ((entity as any).guestChatConfig?.isEnabled)
         nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -246,6 +265,7 @@ export class GraphTransformer {
       const connections = entity.connections;
       if (connections) {
         for (let l = 0; l < connections.length; l++) {
+          if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
           // Skip edges to non-existent targets
           if (!validIds.has(conn.target)) continue;
@@ -264,6 +284,7 @@ export class GraphTransformer {
               strength: conn.strength,
             },
           });
+          renderedEdgeCount++;
         }
       }
     }
@@ -490,6 +511,40 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
+        "background-opacity": 1,
+        "border-color": tokens.primary,
+      },
+    });
+
+    baseStyle.push({
+      selector: "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
+      style: {
+        // `none`, not `contain`: cytoscape applies background-width/height
+        // first and then, for `contain`, rescales the image to fill the node
+        // box — which cancelled the 72% and let the glyph spill outside
+        // non-rectangular nodes (the fantasy shield especially), since
+        // background-clip is none. With `none` the 72% stands and
+        // background-position 50% centres what is left.
+        "background-fit": "none",
+        // The fantasy shield is the one non-rectangular node shape: it tapers
+        // to a point, so a glyph sized and centred for the bounding box hangs
+        // over the sides. A smaller box, sat slightly high, lands in the part
+        // of the shield that is actually wide.
+        "background-width": isFantasy ? "64%" : "72%",
+        "background-height": isFantasy ? "64%" : "72%",
+        "background-clip": "none",
+        "background-image": "data(resolvedImage)",
+        "background-image-crossorigin": "null",
+        "background-position-x": "50%",
+        "background-position-y": isFantasy ? "44%" : "50%",
+        // Opaque, not 0.95: the silhouette's fill colour is contrast-checked
+        // against the node tone itself (issue #2680), so the tone has to be
+        // what is actually painted rather than a near-miss blend with the
+        // canvas behind it.
         "background-opacity": 1,
         "border-color": tokens.primary,
       },
@@ -523,15 +578,20 @@ export const getGraphStyle = (
         // hit this default path, so keep base opacity high enough to read.
         opacity: 0.6,
         label: "data(label)",
-        "text-rotation": "autorotate",
-        "font-size": 8,
+        // Keep relationship labels horizontal. Autorotation turns labels on
+        // steep or reciprocal edges into hard-to-scan text and makes crowded
+        // clusters look denser than they are.
+        "text-rotation": "none",
+        "font-size": 9,
         "min-zoomed-font-size": 8,
         "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         color: tokens.text,
         "text-background-color": tokens.background,
-        "text-background-opacity": 0.8,
-        "text-background-padding": "2px",
-        "text-margin-y": -8,
+        "text-background-opacity": 0.92,
+        "text-background-padding": "3px",
+        "text-margin-y": -10,
+        "text-max-width": 120,
+        "text-wrap": "ellipsis",
         "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
         ...getFantasyEdgeStyle(template),
@@ -567,6 +627,16 @@ export const getGraphStyle = (
       },
     },
     {
+      // When an entity is selected, retain labels for its immediate
+      // neighbourhood and remove the dimmed background labels. This avoids
+      // labels competing with the entity-detail panel without trying to route
+      // canvas text around a DOM overlay.
+      selector: "edge.dimmed",
+      style: {
+        label: "",
+      },
+    },
+    {
       selector: ".neighborhood",
       style: {
         opacity: 0.75,
@@ -584,18 +654,28 @@ export const getGraphStyle = (
     },
   );
 
-  const categoryStyles = categories.map((cat) => ({
-    selector: `node[type="${cat.id}"]`,
-    style: {
-      "border-color": cat.color,
-      "border-width": isFantasy
-        ? graph.nodeBorderWidth + 1
-        : graph.nodeBorderWidth + 4,
-      // For fantasy, we want the category color to overlay the parchment background
-      "background-color": cat.color,
-      "background-opacity": isFantasy ? 0.58 : 0.55,
-    },
-  }));
+  // Entity types are painted from theme-derived tones rather than the raw
+  // category colour (issue #2680): the seed hue survives, but saturation and
+  // lightness come from the active theme, so a mixed graph reads as one
+  // palette instead of neon blue/orange/green blocks. The tone is already
+  // blended against the theme surface, so it is applied at full opacity —
+  // that is what makes the icon-vs-fill contrast the palette guarantees hold
+  // on canvas.
+  const palette = deriveEntityTypePalette(template, categories);
+  const categoryStyles = categories.map((cat) => {
+    const tone = palette[cat.id];
+    return {
+      selector: `node[type="${cat.id}"]`,
+      style: {
+        "border-color": tone?.border ?? cat.color,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 1
+          : graph.nodeBorderWidth + 4,
+        "background-color": tone?.fill ?? cat.color,
+        "background-opacity": 1,
+      },
+    };
+  });
 
   const importantStyles: any[] = [
     {
@@ -649,7 +729,10 @@ export const getGraphStyle = (
         "background-image": "data(resolvedImage)",
         "background-clip": "node",
         "background-fit": "cover",
-        "background-position-y": "50%",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
         "border-width": isFantasy
           ? graph.nodeBorderWidth + 2
           : graph.nodeBorderWidth + 10,

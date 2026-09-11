@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { render, fireEvent } from "@testing-library/svelte";
+import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
+import { runShellCtaHandler } from "./marketing-shell";
 
 const noopSnippet = (() => {}) as unknown as Snippet;
 
@@ -14,11 +15,14 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  resolve: (path: string) => path,
 }));
 
 const trackEventMock = vi.hoisted(() => vi.fn());
+const trackPublicGeneratorActionMock = vi.hoisted(() => vi.fn());
 vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackEvent: trackEventMock,
+  trackPublicGeneratorAction: trackPublicGeneratorActionMock,
 }));
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
@@ -120,7 +124,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       document.head.innerHTML = "";
     });
 
-    it("generates and injects correct SoftwareApplication and BreadcrumbList schemas", () => {
+    it("generates and injects correct SoftwareApplication, BreadcrumbList, and FAQPage schemas (FAQPage emitted once, not duplicated in SoftwareApplication)", () => {
       const mockGenerate = vi.fn().mockResolvedValue({});
 
       render(SEOGeneratorLayout, {
@@ -139,6 +143,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
       let softwareAppFound = false;
       let breadcrumbFound = false;
+      let faqPageCount = 0;
 
       scripts.forEach((script) => {
         try {
@@ -146,13 +151,15 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           if (json["@type"] === "SoftwareApplication") {
             softwareAppFound = true;
             expect(json.name).toBe("Codex Cryptica");
-            expect(json.mainEntity["@type"]).toBe("FAQPage");
-            expect(json.mainEntity.mainEntity[0].name).toBe("FAQ Q1?");
+            expect(json.mainEntity).toBeUndefined();
           } else if (json["@type"] === "BreadcrumbList") {
             breadcrumbFound = true;
             expect(json.itemListElement).toHaveLength(3);
             expect(json.itemListElement[1].name).toBe("Generators");
             expect(json.itemListElement[2].name).toBe("RPG NPC Generator");
+          } else if (json["@type"] === "FAQPage") {
+            faqPageCount += 1;
+            expect(json.mainEntity[0].name).toBe("FAQ Q1?");
           }
         } catch {
           // ignore
@@ -161,6 +168,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
 
       expect(softwareAppFound).toBe(true);
       expect(breadcrumbFound).toBe(true);
+      expect(faqPageCount).toBe(1);
     });
 
     it("generates and injects correct Person/Place schemas when generatedData is set", async () => {
@@ -213,6 +221,198 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       });
 
       expect(personSchemaFound).toBe(true);
+    });
+  });
+
+  describe("Open Graph & Twitter Card Meta Tags", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("renders default OG and Twitter meta tags with fallback image and alt", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const ogWidth = document.querySelector('meta[property="og:image:width"]');
+      const ogHeight = document.querySelector(
+        'meta[property="og:image:height"]',
+      );
+      const twitterCard = document.querySelector('meta[name="twitter:card"]');
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+      );
+      expect(ogImageAlt?.getAttribute("content")).toBe(
+        "A Codex Cryptica campaign vault showing an entity graph beside an open character record",
+      );
+      expect(ogWidth?.getAttribute("content")).toBe("1600");
+      expect(ogHeight?.getAttribute("content")).toBe("1000");
+      expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+      );
+      expect(twitterImageAlt?.getAttribute("content")).toBe(
+        "A Codex Cryptica campaign vault showing an entity graph beside an open character record",
+      );
+    });
+
+    it("renders custom OG and Twitter image and alt text when provided", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Alien Race Generator | Codex Cryptica",
+          metaDescription: "Build unique non-human species.",
+          canonicalPath: "/generators/alien-race",
+          ogImage:
+            "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+          ogImageAlt: "Alien race generator preview",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+      );
+      expect(ogImageAlt?.getAttribute("content")).toBe(
+        "Alien race generator preview",
+      );
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+      );
+      expect(twitterImageAlt?.getAttribute("content")).toBe(
+        "Alien race generator preview",
+      );
+    });
+
+    it("omits image alt tags when custom ogImage is provided without ogImageAlt to prevent mismatched descriptions", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Custom Generator | Codex Cryptica",
+          metaDescription: "Custom description.",
+          canonicalPath: "/generators/custom",
+          ogImage:
+            "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+      );
+      expect(ogImageAlt).toBeNull();
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+      );
+      expect(twitterImageAlt).toBeNull();
+    });
+  });
+
+  describe("Smart copy integration", () => {
+    it("passes full and section Markdown through the injected clipboard service", async () => {
+      const copyContent = vi.fn().mockResolvedValue(true);
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Chronicle\nA useful NPC.",
+        lore: "### Secret\nA hidden truth.",
+        labels: ["ally"],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          clipboardService: { copyContent } as never,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy Chronicle as Markdown" }),
+      );
+
+      expect(copyContent).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          markdown: expect.stringContaining("# Seed"),
+        }),
+      );
+      expect(copyContent).toHaveBeenNthCalledWith(2, {
+        markdown: "### Chronicle\nA useful NPC.",
+      });
+    });
+
+    it("shows error feedback when the injected service reports total failure", async () => {
+      const copyContent = vi.fn().mockResolvedValue(false);
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        content: "A useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          clipboardService: { copyContent } as never,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+
+      expect(screen.getByText("Could not copy")).toBeTruthy();
+      expect(screen.queryByText("Copied!")).toBeNull();
     });
   });
 
@@ -369,51 +569,10 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
   });
 
-  describe("UTM Referral Attribution Links", () => {
-    it("renders header logo and CTA links with generator UTM params", () => {
-      const mockGenerate = vi.fn().mockResolvedValue({});
-
-      const { container } = render(SEOGeneratorLayout, {
-        props: {
-          pageTitle: "RPG NPC Generator | Codex Cryptica",
-          metaDescription: "Generate awesome characters.",
-          canonicalPath: "/generators/npc",
-          generate: mockGenerate,
-          formFields: noopSnippet,
-        },
-      });
-
-      const logoLink = container.querySelector(
-        "#logo-link",
-      ) as HTMLAnchorElement;
-      const navCtaBtn = container.querySelector(
-        "#nav-cta-btn",
-      ) as HTMLAnchorElement;
-
-      expect(logoLink).toBeTruthy();
-      expect(logoLink.getAttribute("href")).toContain(
-        "utm_source=generator-logo",
-      );
-      expect(logoLink.getAttribute("href")).toContain("utm_medium=nav");
-      expect(logoLink.getAttribute("href")).toContain(
-        "utm_campaign=seo-funnel",
-      );
-
-      expect(navCtaBtn).toBeTruthy();
-      expect(navCtaBtn.getAttribute("href")).toContain(
-        "utm_source=generator-header-cta",
-      );
-      expect(navCtaBtn.getAttribute("href")).toContain("utm_medium=nav");
-
-      // Negative path check: verify links are not bare root links lacking UTM params
-      expect(logoLink.getAttribute("href")).not.toBe("/");
-      expect(navCtaBtn.getAttribute("href")).not.toBe("/");
-    });
-  });
-
   describe("Generator funnel tracking (#1796)", () => {
     beforeEach(() => {
       trackEventMock.mockClear();
+      trackPublicGeneratorActionMock.mockClear();
     });
 
     it("does not fire generator_started/generator_completed for the silent on-mount auto-draft", async () => {
@@ -444,6 +603,127 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         "generator_completed",
         expect.anything(),
       );
+    });
+
+    it("auto-drafts at most once per canonicalPath even if the component re-renders (regression, #2808 review)", async () => {
+      // A handoff-arrival page (initialDraft resolving to null so the page
+      // seeds itself from handed-over context, e.g. Faction -> Roster) drove
+      // this effect and the generatedData=initialDraft sync effect into a
+      // runaway loop that hung the tab, because SEOGeneratorLayout is reused
+      // across client-side navigations rather than remounted. The guard is
+      // keyed by canonicalPath precisely so it survives spurious re-renders
+      // of the same page without re-arming for a genuinely new one.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { rerender } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+        },
+      });
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+
+      await rerender({
+        canonicalPath: "/generators/faction-roster",
+        generate: mockGenerate,
+        formFields: noopSnippet,
+        initialDraft: null,
+      });
+      await tick();
+      await tick();
+
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
+    });
+
+    it("autoGenerateExplicit=true suppresses the passive on-mount example — nothing fires until the parent calls triggerExplicitAutoGenerate()", async () => {
+      // The parent (GeneratorPageContent) owns the handoff-arrival timing —
+      // see triggerExplicitAutoGenerate()'s doc comment for why this can't
+      // safely be decided reactively inside this component alone.
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+          autoGenerateExplicit: true,
+        },
+      });
+
+      // Give any (incorrect) passive auto-draft a chance to fire before
+      // asserting it didn't.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it("triggerExplicitAutoGenerate() fires a real (AI-on-by-default) generation, not a throwaway example", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Roster",
+        content: "roster",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      const { component } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/faction-roster",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: null,
+          autoGenerateExplicit: true,
+        },
+      });
+
+      (
+        component as unknown as { triggerExplicitAutoGenerate: () => void }
+      ).triggerExplicitAutoGenerate();
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalledTimes(1));
+      // useAI defaults to true — this goes through the same handleGenerate()
+      // path an explicit click uses, unlike the passive example-seed path,
+      // which is hardcoded to useAI:false.
+      expect(mockGenerate).toHaveBeenCalledWith(
+        expect.objectContaining({ useAI: true }),
+      );
+      // Real generation, not a throwaway example: fires the normal funnel
+      // tracking and unlocks onward handoffs the same way an explicit click does.
+      await vi.waitFor(() => {
+        expect(trackEventMock).toHaveBeenCalledWith(
+          "generator_started",
+          expect.anything(),
+        );
+        expect(trackEventMock).toHaveBeenCalledWith(
+          "generator_completed",
+          expect.anything(),
+        );
+      });
+
+      // Calling it again for the same page must not double-fire.
+      (
+        component as unknown as { triggerExplicitAutoGenerate: () => void }
+      ).triggerExplicitAutoGenerate();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockGenerate).toHaveBeenCalledTimes(1);
     });
 
     it("fires generator_started then generator_completed on an explicit Generate click", async () => {
@@ -482,6 +762,184 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(trackEventMock).toHaveBeenCalledWith("generator_completed", {
         generator_type: "npc",
       });
+    });
+
+    it("offers a Plot Twist only after the user generates a Quest Hook", async () => {
+      const seedDraft = {
+        type: "event" as const,
+        title: "Example Quest",
+        content: "An example quest hook.",
+        lore: "",
+        labels: ["rpg-quest"],
+        status: "draft" as const,
+      };
+      const generatedQuest = {
+        ...seedDraft,
+        title: "The Bell Beneath Blackwater",
+        content: "The newly generated quest hook.",
+      };
+      const onGeneratePlotTwist = vi.fn();
+      const mockGenerate = vi.fn().mockResolvedValue(generatedQuest);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/quest",
+          eyebrow: "Quest Hook Generator",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          onGeneratePlotTwist,
+        },
+      });
+
+      expect(
+        screen.queryByRole("button", { name: "Generate Plot Twist" }),
+      ).toBeNull();
+
+      await fireEvent.click(
+        container.querySelector("#generate-button") as HTMLButtonElement,
+      );
+
+      const plotTwistButton = await screen.findByRole("button", {
+        name: "Generate Plot Twist",
+      });
+      await fireEvent.click(plotTwistButton);
+
+      expect(onGeneratePlotTwist).toHaveBeenCalledWith(generatedQuest);
+    });
+
+    it("keeps the Quest Hook example and hides Plot Twist after generation fails", async () => {
+      const seedDraft = {
+        type: "event" as const,
+        title: "Example Quest",
+        content: "An example quest hook.",
+        lore: "",
+        labels: ["rpg-quest"],
+        status: "draft" as const,
+      };
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/quest",
+          eyebrow: "Quest Hook Generator",
+          generate: vi.fn().mockRejectedValue(new Error("Generation failed")),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          onGeneratePlotTwist: vi.fn(),
+        },
+      });
+
+      await fireEvent.click(
+        container.querySelector("#generate-button") as HTMLButtonElement,
+      );
+      await screen.findByText("Failed to generate: Generation failed");
+
+      expect(screen.getByText("Example")).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Generate Plot Twist" }),
+      ).toBeNull();
+    });
+
+    it("tracks public Save, Copy, and Open Codex actions", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "### Secret\nA secret.",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "copy",
+        expect.objectContaining({
+          generator_type: "npc",
+          copy_target: "markdown",
+        }),
+      );
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "save_to_codex",
+        expect.objectContaining({ generator_type: "npc" }),
+      );
+
+      // The header CTA is the shell's button now, so this layout registers its
+      // tracking instead of binding it. Running the registered handler is what
+      // the shell's onclick does.
+      runShellCtaHandler();
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "open_codex",
+        expect.objectContaining({
+          generator_type: "npc",
+          source: "header",
+        }),
+      );
+    });
+
+    it("navigates in the same tab to Codex for the saved draft", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      const openCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(openCodexLink).not.toBeUndefined();
+      expect(openCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
+
+      await fireEvent.click(openCodexLink!);
+
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "open_codex",
+        expect.objectContaining({
+          generator_type: "npc",
+          source: "save_confirmation",
+        }),
+      );
+
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+      const secondOpenCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(secondOpenCodexLink).not.toBeUndefined();
+      expect(secondOpenCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
+
+      await fireEvent.click(secondOpenCodexLink!);
     });
   });
 });

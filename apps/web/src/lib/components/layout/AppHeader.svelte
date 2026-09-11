@@ -41,7 +41,7 @@
 
 <header
   bind:this={headerEl}
-  class="px-4 md:px-6 py-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
+  class="px-4 md:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
 >
   {#if isStaging}
     <div
@@ -49,7 +49,7 @@
       data-testid="staging-banner"
       aria-label="Staging preview banner"
     >
-      <span class="icon-[lucide--flask-conical] h-4 w-4 text-amber-200"></span>
+      <span class="icon-[lucide--flask-conical] h-4 w-4 text-amber-200" aria-hidden="true"></span>
       <span>STAGING PREVIEW</span>
       <span class="hidden sm:inline text-amber-100/80 tracking-normal">
         Changes here do not affect production.
@@ -153,7 +153,7 @@
         <span
           class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5"
         >
-          <span class="icon-[lucide--eye] h-3.5 w-3.5"></span>
+          <span class="icon-[lucide--eye] h-3.5 w-3.5" aria-hidden="true"></span>
           READ-ONLY GUEST
         </span>
         <VoiceChatControls />
@@ -161,7 +161,7 @@
           href="{base}/worlds"
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
         >
-          <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+          <span class="icon-[lucide--compass] h-3.5 w-3.5" aria-hidden="true"></span>
           Explore Worlds
         </a>
         <button
@@ -173,6 +173,17 @@
           }}
         >
           Exit Guest Mode
+        </button>
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
+          onclick={() => modalUIStore.openSettings("help")}
+          title="Help and legal information"
+          aria-label="Open Help and legal information"
+          data-testid="guest-settings-button"
+        >
+          <span class="icon-[lucide--circle-help] h-5 w-5" aria-hidden="true"
+          ></span>
         </button>
       {:else}
         <button

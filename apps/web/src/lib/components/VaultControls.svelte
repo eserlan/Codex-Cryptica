@@ -11,7 +11,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import { openImportWindow } from "$lib/stores/ui/navigation";
+  import VaultActionsMenu from "./layout/VaultActionsMenu.svelte";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
@@ -75,9 +75,6 @@
 
   const btnPrimary = $derived(
     `${btnBase} bg-chrome-accent text-chrome-bg hover:bg-chrome-accent/90`,
-  );
-  const btnSecondary = $derived(
-    `${btnBase} border border-chrome-border text-chrome-muted hover:text-chrome-text hover:border-chrome-accent`,
   );
   const btnAccent = $derived(
     `${btnBase} border border-chrome-border text-chrome-accent hover:text-chrome-accent/85 hover:border-chrome-accent`,
@@ -414,23 +411,7 @@
              cluster was showing two ways to do the same thing. The inline
              form itself stays — it's still opened via drafts
              (proposerStore.draftEntity) and pendingCreateEntity. -->
-        <div class="relative flex items-center">
-          <button
-            class={isVertical
-              ? `${btnGhost} py-3 text-sm justify-center gap-2 w-full`
-              : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
-            onclick={() => openImportWindow()}
-            data-testid="import-vault-button"
-            title="Import markdown notes or JSON data into your archive."
-            aria-label="Import Data"
-          >
-            <span
-              class="icon-[lucide--folder-input] w-3.5 h-3.5"
-              aria-hidden="true"
-            ></span>
-            IMPORT
-          </button>
-        </div>
+        <VaultActionsMenu {orientation} />
 
         <div
           class="flex {isVertical
@@ -519,20 +500,6 @@
             ></span>
             {#if isVertical}<span class="font-bold tracking-widest"
                 >GENERATE</span
-              >{/if}
-          </button>
-
-          <button
-            class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
-            onclick={() => modalUIStore.openShare()}
-            title="Share Campaign"
-            aria-label={isVertical
-              ? "SHARE - Share Campaign"
-              : "Share Campaign"}
-          >
-            <span class="icon-[lucide--share-2] w-3.5 h-3.5" aria-hidden="true"
-            ></span>
-            {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
               >{/if}
           </button>
         </div>

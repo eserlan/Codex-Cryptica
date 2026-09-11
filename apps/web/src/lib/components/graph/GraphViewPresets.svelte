@@ -83,7 +83,8 @@
     onclick={() => (isOpen = !isOpen)}
     title="Saved Views"
     aria-label="Saved Views"
-    aria-pressed={isOpen}
+    aria-haspopup="dialog"
+    aria-expanded={isOpen}
     data-testid="view-presets-toggle"
     ><span aria-hidden="true" class="icon-[lucide--bookmark] w-4 h-4"
     ></span></button
@@ -91,14 +92,14 @@
 
   {#if isOpen}
     <div
-      class="absolute bottom-full mb-2 left-0 w-64 rounded-lg border border-theme-border bg-theme-surface/95 p-2 text-xs text-theme-text shadow-xl backdrop-blur z-30"
+      class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-0 w-72 max-w-[calc(100vw-2.5rem)] rounded-lg border border-theme-border bg-theme-surface/95 p-2.5 text-xs text-theme-text shadow-xl backdrop-blur z-30"
       data-testid="view-presets-panel"
       transition:fade={{ duration: 100 }}
     >
       <div
         class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px] mb-2"
       >
-        <span class="icon-[lucide--bookmark] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--bookmark] w-3 h-3"></span>
         Saved Views
       </div>
 

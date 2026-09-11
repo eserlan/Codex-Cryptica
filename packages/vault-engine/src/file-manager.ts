@@ -1,5 +1,6 @@
 import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 import type { IAssetIOAdapter } from "./asset-manager";
+import { FILES_DIR } from "./types";
 
 export const MAX_VAULT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -49,7 +50,7 @@ export class FileManager {
       return { ok: false, reason: "too_large" };
     }
 
-    const path = `files/${this.idGenerator.uuid()}-${safeFileName(file.name)}`;
+    const path = `${FILES_DIR}/${this.idGenerator.uuid()}-${safeFileName(file.name)}`;
     try {
       await this.deps.ioAdapter.writeOpfsFile(
         path.split("/"),

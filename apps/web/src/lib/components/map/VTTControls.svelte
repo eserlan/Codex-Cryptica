@@ -5,6 +5,7 @@
   import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import PinNoteButton from "./PinNoteButton.svelte";
 
   let showEncounters = $state(false);
   let canManageVtt = $derived(!sessionModeStore.isGuestMode);
@@ -66,6 +67,8 @@
         <span class="icon-[lucide--user-plus] h-4 w-4" aria-hidden="true"
         ></span>
       </button>
+
+      <PinNoteButton compact />
 
       <button
         class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)}`}

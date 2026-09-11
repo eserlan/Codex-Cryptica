@@ -5,6 +5,7 @@ import type { VTTChatManager } from "./vtt-chat-manager.svelte";
 import type { VTTEncounterManager } from "./vtt-encounter-manager.svelte";
 import type { VTTGridManager } from "./vtt-grid-manager.svelte";
 import type { VTTInitiativeManager } from "./vtt-initiative-manager.svelte";
+import type { VTTLayerManager } from "./vtt-layer-manager.svelte";
 import type { VTTMeasurementManager } from "./vtt-measurement-manager.svelte";
 import type { VTTMediaManager } from "./vtt-media-manager.svelte";
 import type { VTTNetworkManager } from "./vtt-network-manager.svelte";
@@ -12,11 +13,14 @@ import type { VTTPersistenceManager } from "./vtt-persistence-manager.svelte";
 import type { VTTSessionLifecycleManager } from "./vtt-session-lifecycle-manager.svelte";
 import type { VTTSessionSnapshotManager } from "./vtt-session-snapshot-manager";
 import type { VTTTokenManager } from "./vtt-token-manager.svelte";
+import type { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
 import type {
+  ChatCardPayload,
   ChatMessagePayload,
   DragPreview,
   EncounterSession,
   SessionMode,
+  TileDeckStocking,
   Token,
   TokenCreationInput,
   TokenStateUpdateInput,
@@ -36,11 +40,13 @@ export abstract class MapSessionFacade {
   initiativeManager!: VTTInitiativeManager;
   tokenManager!: VTTTokenManager;
   gridManager!: VTTGridManager;
+  layerManager!: VTTLayerManager;
   measurementManager!: VTTMeasurementManager;
   persistenceManager!: VTTPersistenceManager;
   networkManager!: VTTNetworkManager;
   snapshotManager!: VTTSessionSnapshotManager;
   lifecycleManager!: VTTSessionLifecycleManager;
+  tileDeckManager!: VTTTileDeckManager;
 
   get sessionId() {
     return this.encounterManager.sessionId;
@@ -96,6 +102,18 @@ export abstract class MapSessionFacade {
   }
   set pendingTokenCoords(value) {
     this.tokenManager.pendingTokenCoords = value;
+  }
+  get pendingNoteCoords() {
+    return this.tokenManager.pendingNoteCoords;
+  }
+  set pendingNoteCoords(value) {
+    this.tokenManager.pendingNoteCoords = value;
+  }
+  get notePlacementArmed() {
+    return this.tokenManager.notePlacementArmed;
+  }
+  set notePlacementArmed(value) {
+    this.tokenManager.notePlacementArmed = value;
   }
   get draggingTokenId() {
     return this.tokenManager.draggingTokenId;
@@ -169,9 +187,97 @@ export abstract class MapSessionFacade {
   set gridMoveMode(value) {
     this.gridManager.gridMoveMode = value;
   }
+  get gridFixedPan() {
+    return this.gridManager.gridFixedPan;
+  }
+  get activeLayer() {
+    return this.layerManager.activeLayer;
+  }
+  set activeLayer(value) {
+    this.layerManager.activeLayer = value;
+  }
 
   get allTokens() {
     return this.tokenManager.allTokens;
+  }
+  get tileDecks() {
+    return this.tileDeckManager.decks;
+  }
+  createTileDeck(
+    name: string,
+    tiles: Array<{ name: string; imagePath: string; category?: string }>,
+    starterDeckId?: string,
+    license?: string,
+    sourceUrl?: string,
+  ) {
+    return this.tileDeckManager.createDeck(
+      name,
+      tiles,
+      starterDeckId,
+      license,
+      sourceUrl,
+    );
+  }
+  beginStarterTileDeck(
+    name: string,
+    starterDeckId?: string,
+    license?: string,
+    sourceUrl?: string,
+  ) {
+    return this.tileDeckManager.beginDeck(
+      name,
+      starterDeckId,
+      license,
+      sourceUrl,
+    );
+  }
+  addTileToDeck(
+    deckId: string,
+    tile: { name: string; imagePath: string; category?: string },
+  ) {
+    this.tileDeckManager.addTile(deckId, tile);
+  }
+  persistTileDecks() {
+    this.tileDeckManager.persist();
+  }
+  removeTileDeck(deckId: string) {
+    return this.tileDeckManager.removeDeck(deckId);
+  }
+  setTileDeckHardEdges(deckId: string, hardEdges: boolean) {
+    this.tileDeckManager.setHardEdges(deckId, hardEdges);
+  }
+  setTileDeckStocking(deckId: string, stocking: TileDeckStocking) {
+    this.tileDeckManager.setStocking(deckId, stocking);
+  }
+  drawTile(deckId: string, size = 150) {
+    return this.tileDeckManager.draw(deckId, size);
+  }
+  drawAnyTile(size = 150) {
+    return this.tileDeckManager.drawAny(size);
+  }
+  selectTile(deckId: string, tileId: string, size = 150) {
+    return this.tileDeckManager.select(deckId, tileId, size);
+  }
+  updatePendingTilePlacement(x: number, y: number) {
+    this.tileDeckManager.updatePendingPlacement(x, y);
+  }
+  placePendingTile() {
+    return this.tileDeckManager.placePending();
+  }
+  cancelPendingTilePlacement() {
+    this.tileDeckManager.cancelPendingPlacement();
+  }
+  get armedTile() {
+    const pending = this.tileDeckManager.pendingPlacement;
+    if (!pending) return null;
+    return {
+      deckId: pending.deckId,
+      tileId: pending.tile.id,
+      name: pending.tile.name,
+    };
+  }
+  clearArmedTile() {
+    this.cancelPendingTilePlacement();
   }
   get selectedToken() {
     return this.tokenManager.selectedToken;
@@ -232,6 +338,10 @@ export abstract class MapSessionFacade {
     result: Pick<RollResult, "total" | "parts">,
   ) {
     this.chatManager.sendResolvedRollMessage(formula, result, this.vttEnabled);
+  }
+
+  sendCardDrawMessage(deckName: string, cards: ChatCardPayload[]) {
+    this.chatManager.sendCardDrawMessage(deckName, cards, this.vttEnabled);
   }
 
   clearChatMessages() {
@@ -305,6 +415,14 @@ export abstract class MapSessionFacade {
     return this.tokenManager.toggleTokenVisibility(tokenId);
   }
 
+  toggleNoteCollapsed(tokenId: string) {
+    return this.tokenManager.toggleNoteCollapsed(tokenId);
+  }
+
+  setVisionSource(tokenId: string, isVisionSource: boolean) {
+    return this.tokenManager.setVisionSource(tokenId, isVisionSource);
+  }
+
   isTokenVisible(
     tokenId: string,
     peerId: string | null,
@@ -343,17 +461,86 @@ export abstract class MapSessionFacade {
     return this.tokenManager.addToken(input, silent);
   }
 
+  /**
+   * Arms note placement, so the next click on the map chooses where the note
+   * goes. Returns false when there is no map to place one on.
+   */
+  armNotePlacement() {
+    if (!this.mapId) return false;
+    this.tokenManager.notePlacementArmed = true;
+    return true;
+  }
+
+  cancelNotePlacement() {
+    this.tokenManager.notePlacementArmed = false;
+  }
+
+  /** Map coordinates at the middle of the current view. */
+  viewportCenterPoint() {
+    return this.tokenManager.viewportCenterPoint();
+  }
+
+  /**
+   * Drops a note on the map at `point`, or at the middle of the current view
+   * when no position is given (a table roll has no click position of its own).
+   * Returns null when no map is bound, which callers surface as "open a map
+   * first" rather than failing silently.
+   */
+  addNote(
+    input: {
+      name: string;
+      body?: string;
+      x?: number;
+      y?: number;
+      parentTokenId?: string;
+    },
+    silent = false,
+  ) {
+    if (!this.mapId) return null;
+    const position =
+      input.x !== undefined && input.y !== undefined
+        ? { x: input.x, y: input.y }
+        : this.tokenManager.viewportCenterPoint();
+    return this.tokenManager.addToken(
+      {
+        name: input.name.trim() || "Note",
+        x: position.x,
+        y: position.y,
+        kind: "note",
+        noteBody: input.body ?? "",
+        parentTokenId: input.parentTokenId,
+        // Always the token layer, whatever the GM has active — a note pinned
+        // onto the terrain layer would render underneath the tiles it annotates.
+        layer: "token",
+      },
+      silent,
+    );
+  }
+
+  getChildNotes(parentTokenId: string) {
+    return this.tokenManager.getChildNotes(parentTokenId);
+  }
+
+  linkTokens(childTokenId: string, parentTokenId: string) {
+    return this.tokenManager.linkTokens(childTokenId, parentTokenId);
+  }
+
+  unlinkToken(childTokenId: string) {
+    return this.tokenManager.unlinkToken(childTokenId);
+  }
+
   requestTokenAdd(input: TokenCreationInput) {
     if (!this.mapId || !this.networkManager.hasBroadcaster) return false;
     return this.tokenManager.requestTokenAdd(input);
   }
 
   updateToken(tokenId: string, updates: TokenStateUpdateInput, silent = false) {
+    if (!this.tileDeckManager.canTransform(tokenId, updates)) return null;
     return this.tokenManager.updateToken(tokenId, updates, silent);
   }
 
   moveToken(tokenId: string, x: number, y: number, silent = false) {
-    return this.tokenManager.moveToken(tokenId, x, y, silent);
+    return this.updateToken(tokenId, { x, y }, silent);
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -362,6 +549,18 @@ export abstract class MapSessionFacade {
 
   rotateToken(tokenId: string, rotation: number, silent = false) {
     return this.tokenManager.rotateToken(tokenId, rotation, silent);
+  }
+
+  toggleTokenLock(tokenId: string) {
+    return this.tokenManager.toggleTokenLock(tokenId);
+  }
+
+  bringTokenToFront(tokenId: string) {
+    return this.tokenManager.bringTokenToFront(tokenId);
+  }
+
+  sendTokenToBack(tokenId: string) {
+    return this.tokenManager.sendTokenToBack(tokenId);
   }
 
   requestTokenRotation(tokenId: string, rotation: number, persistent = false) {

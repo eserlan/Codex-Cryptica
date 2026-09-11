@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen } from "@testing-library/svelte";
+import { fireEvent } from "@testing-library/dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GraphHUD from "./GraphHUD.svelte";
 
@@ -13,6 +14,7 @@ const mockGraph = vi.hoisted(() => ({
   isLargeGraph: false,
   focusViewActive: false,
   focusDepth: 2,
+  canIncreaseFocusDetail: true,
   stats: { nodeCount: 3, edgeCount: 2 },
   fullGraphSize: { nodeCount: 3, edgeCount: 2 },
   toggleCategoryFilter: vi.fn(),
@@ -21,6 +23,7 @@ const mockGraph = vi.hoisted(() => ({
   toggleLabelFilterMode: vi.fn(),
   clearLabelFilters: vi.fn(),
   toggleFullGraph: vi.fn(),
+  increaseFocusDetail: vi.fn(),
 }));
 
 vi.mock("svelte/transition", () => ({
@@ -36,6 +39,8 @@ vi.mock("$lib/stores/theme.svelte", () => ({
 }));
 
 vi.mock("$lib/stores/graph.svelte", () => ({
+  FOCUS_DETAIL_STEP: 150,
+  FOCUS_EDGE_CAP: 2_000,
   graph: mockGraph,
 }));
 
@@ -89,9 +94,11 @@ describe("GraphHUD", () => {
     mockGraph.timelineMode = false;
     mockGraph.isLargeGraph = false;
     mockGraph.focusViewActive = false;
+    mockGraph.canIncreaseFocusDetail = true;
     mockGraph.stats = { nodeCount: 3, edgeCount: 2 };
     mockGraph.fullGraphSize = { nodeCount: 3, edgeCount: 2 };
     mockGraph.toggleFullGraph.mockClear();
+    mockGraph.increaseFocusDetail.mockClear();
   });
 
   it("shows the focus-view notice with a 'Show full graph' action by default", () => {
@@ -116,6 +123,28 @@ describe("GraphHUD", () => {
     expect(
       screen.getByRole("button", { name: "Show full graph" }),
     ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Show more detail" }),
+    ).toBeTruthy();
+  });
+
+  it("reveals more focus detail only through the explicit control", async () => {
+    mockGraph.isLargeGraph = true;
+    mockGraph.focusViewActive = true;
+
+    render(GraphHUD, {
+      selectedEntity: null,
+      parentEntity: null,
+      selectedId: null,
+      isLayoutRunning: false,
+      cy: undefined,
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Show more detail" }),
+    );
+
+    expect(mockGraph.increaseFocusDetail).toHaveBeenCalledOnce();
   });
 
   it("shows the full-graph performance notice when focus view is off", () => {

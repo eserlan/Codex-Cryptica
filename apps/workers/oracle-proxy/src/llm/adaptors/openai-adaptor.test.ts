@@ -1,6 +1,36 @@
 import { describe, it, expect, vi } from "vitest";
-import { callOpenAi } from "./openai-adaptor";
-import type { LlmModelDefinition, LlmRequest } from "../types";
+import {
+  callOpenAi,
+  forwardInteractionToOpenAi,
+  extractOpenAiResponseText,
+  streamOpenAi,
+} from "./openai-adaptor";
+import type { GenerationEvent, LlmModelDefinition, LlmRequest } from "../types";
+
+/** Builds a `Response` whose body streams the given SSE `data:` payloads. */
+function sseResponse(chunks: unknown[], status = 200): Response {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const encoder = new TextEncoder();
+      for (const chunk of chunks) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`),
+        );
+      }
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    },
+  });
+  return new Response(stream, { status });
+}
+
+async function collect(
+  gen: AsyncGenerator<GenerationEvent>,
+): Promise<GenerationEvent[]> {
+  const events: GenerationEvent[] = [];
+  for await (const event of gen) events.push(event);
+  return events;
+}
 
 const env = { OPENAI_API_KEY: "test-openai-key" };
 
@@ -118,6 +148,43 @@ describe("callOpenAi", () => {
     expect(sent.temperature).toBeUndefined();
   });
 
+  it("forwards reasoningEffort as reasoning_effort when set", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(
+      { ...request, reasoningEffort: "minimal" },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.reasoning_effort).toBe("minimal");
+  });
+
+  it("omits reasoning_effort entirely when unset", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(request, model, env, fetcher as unknown as typeof fetch);
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.reasoning_effort).toBeUndefined();
+  });
+
   it("sends response_format for structured-generation requests", async () => {
     const fetcher = vi.fn(
       async () =>
@@ -178,6 +245,50 @@ describe("callOpenAi", () => {
       expect(result.response.content).toEqual({ label: "lore" });
       expect(result.response.structuredOutputValid).toBe(true);
     }
+  });
+
+  it("uses JSON mode for schemas with an unsupported root oneOf", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"kind":"complete"}' } }],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callOpenAi(
+      {
+        ...request,
+        operation: "structured-generation",
+        schema: {
+          oneOf: [
+            {
+              type: "object",
+              properties: { kind: { enum: ["complete"] } },
+            },
+            {
+              type: "object",
+              properties: { kind: { enum: ["roll-required"] } },
+            },
+          ],
+        },
+      },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.response_format).toEqual({ type: "json_object" });
+    expect(
+      sent.messages.some((message: { content: string }) =>
+        message.content.toLowerCase().includes("json"),
+      ),
+    ).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
   it("also enables JSON mode when a schema is present on a non-structured-generation operation", async () => {
@@ -245,7 +356,7 @@ describe("callOpenAi", () => {
 
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(15_001);
+    await vi.advanceTimersByTimeAsync(60_001);
     const result = await resultPromise;
     vi.useRealTimers();
 
@@ -264,7 +375,7 @@ describe("callOpenAi", () => {
 
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(15_001);
+    await vi.advanceTimersByTimeAsync(60_001);
     const result = await resultPromise;
     vi.useRealTimers();
 
@@ -340,5 +451,345 @@ describe("callOpenAi", () => {
     );
     expect(result.ok).toBe(false);
     expect(fetcher).not.toHaveBeenCalled();
+  });
+});
+
+describe("extractOpenAiResponseText", () => {
+  it("joins output_text blocks from message-typed output items", () => {
+    const text = extractOpenAiResponseText({
+      output: [
+        { type: "reasoning", content: [] },
+        {
+          type: "message",
+          role: "assistant",
+          content: [
+            { type: "output_text", text: "Hello" },
+            { type: "output_text", text: ", world." },
+          ],
+        },
+      ],
+    });
+    expect(text).toBe("Hello, world.");
+  });
+
+  it("returns an empty string for a missing/malformed output array", () => {
+    expect(extractOpenAiResponseText({})).toBe("");
+    expect(extractOpenAiResponseText({ output: null })).toBe("");
+  });
+});
+
+describe("forwardInteractionToOpenAi", () => {
+  it("translates previous_interaction_id into previous_response_id and posts to /v1/responses", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    const result = await forwardInteractionToOpenAi(
+      {
+        input: "continue the scene",
+        previous_interaction_id: "resp_0",
+        system_instruction: "Be a helpful oracle.",
+      },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe(200);
+
+    const [calledUrl, init] = fetcher.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1/responses");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gpt-5.6-luna");
+    expect(sent.input).toBe("continue the scene");
+    expect(sent.previous_response_id).toBe("resp_0");
+    expect(sent.instructions).toBe("Be a helpful oracle.");
+    expect(sent.store).toBe(true);
+  });
+
+  it("sends a low reasoning effort (no per-operation registry hook on this path)", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToOpenAi(
+      { input: "hi" },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.reasoning).toEqual({ effort: "low" });
+  });
+
+  it("fails clearly when the API key is missing rather than sending an unauthenticated request", async () => {
+    const fetcher = vi.fn();
+    const result = await forwardInteractionToOpenAi(
+      { input: "hi" },
+      "gpt-5.6-luna",
+      {},
+      fetcher as unknown as typeof fetch,
+    );
+    expect(result.ok).toBe(false);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('requests json_object mode and guarantees "json" appears in the input when responseMimeType is application/json', async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToOpenAi(
+      {
+        input: "generate a settlement",
+        system_instruction: "Be a helpful oracle.",
+        generationConfig: { responseMimeType: "application/json" },
+      },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.text).toEqual({ format: { type: "json_object" } });
+    expect(sent.instructions).toBe(
+      "Be a helpful oracle.\n\nRespond with valid JSON.",
+    );
+    expect(sent.input).toBe(
+      "Respond with valid JSON.\n\ngenerate a settlement",
+    );
+  });
+
+  it("still guarantees the json instruction when no system instruction was provided", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToOpenAi(
+      {
+        input: "generate a settlement",
+        generationConfig: { responseMimeType: "application/json" },
+      },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.instructions).toBe("Respond with valid JSON.");
+  });
+
+  it("reports a transport error without throwing", async () => {
+    const fetcher = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    const result = await forwardInteractionToOpenAi(
+      { input: "hi" },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+    expect(result.ok).toBe(false);
+    expect(result.transportError).toBe(true);
+  });
+});
+
+describe("streamOpenAi", () => {
+  it("yields started, delta chunks, then complete with the joined text", async () => {
+    const fetcher = vi.fn(async () =>
+      sseResponse([
+        { choices: [{ delta: { content: "Hello" } }] },
+        { choices: [{ delta: { content: ", world" } }] },
+        {
+          choices: [{ delta: {} }],
+          usage: { prompt_tokens: 5, completion_tokens: 3 },
+        },
+      ]),
+    );
+
+    const events = await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.slice(1, -1)).toEqual([
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+    ]);
+    expect(events.at(-1)).toEqual({
+      type: "complete",
+      text: "Hello, world",
+      usage: { promptTokens: 5, completionTokens: 3 },
+    });
+  });
+
+  it("sets stream:true and stream_options on the request body", async () => {
+    const fetcher = vi.fn(async () => sseResponse([]));
+    await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.stream).toBe(true);
+    expect(sent.stream_options).toEqual({ include_usage: true });
+  });
+
+  it("yields an error event without throwing on a transport failure", async () => {
+    const fetcher = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    const events = await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+    expect(events).toEqual([{ type: "error", error: "transport-error" }]);
+  });
+
+  it("yields an error event on a non-OK upstream status", async () => {
+    const fetcher = vi.fn(async () => new Response("", { status: 500 }));
+    const events = await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+    expect(events).toEqual([{ type: "error", error: "upstream-status-500" }]);
+  });
+
+  it("yields an error event when the API key is missing", async () => {
+    const events = await collect(
+      streamOpenAi(request, model, {}, vi.fn() as unknown as typeof fetch),
+    );
+    expect(events).toEqual([
+      { type: "error", error: "missing-openai-api-key" },
+    ]);
+  });
+
+  it("skips a malformed chunk instead of aborting the stream", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(encoder.encode("data: {not json}\n\n"));
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: "ok" } }] })}\n\n`,
+          ),
+        );
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      },
+    });
+    const fetcher = vi.fn(async () => new Response(stream, { status: 200 }));
+
+    const events = await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "ok" },
+      { type: "complete", text: "ok", usage: undefined },
+    ]);
+  });
+
+  it("flushes a trailing event that arrives without a final blank-line separator", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: "Hello" } }] })}\n\n`,
+          ),
+        );
+        // No trailing "\n\n" — the connection just closes after this chunk.
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: ", world" } }] })}`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    const fetcher = vi.fn(async () => new Response(stream, { status: 200 }));
+
+    const events = await collect(
+      streamOpenAi(request, model, env, fetcher as unknown as typeof fetch),
+    );
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+      { type: "complete", text: "Hello, world", usage: undefined },
+    ]);
+  });
+
+  it("yields an error instead of complete when a structured-generation stream produces invalid JSON", async () => {
+    const structuredRequest: LlmRequest = {
+      operation: "structured-generation",
+      messages: [{ role: "user", content: "hello" }],
+    };
+    const fetcher = vi.fn(async () =>
+      sseResponse([{ choices: [{ delta: { content: "not valid json" } }] }]),
+    );
+
+    const events = await collect(
+      streamOpenAi(
+        structuredRequest,
+        model,
+        env,
+        fetcher as unknown as typeof fetch,
+      ),
+    );
+
+    expect(events.at(-1)).toEqual({
+      type: "error",
+      error: "structured-output-invalid",
+    });
+  });
+
+  it("yields an error instead of complete when structured output fails schema validation", async () => {
+    const structuredRequest: LlmRequest = {
+      operation: "structured-generation",
+      messages: [{ role: "user", content: "hello" }],
+      schema: {
+        type: "object",
+        required: ["title"],
+        properties: { title: { type: "string" } },
+      },
+    };
+    const fetcher = vi.fn(async () =>
+      sseResponse([{ choices: [{ delta: { content: '{"wrong":"shape"}' } }] }]),
+    );
+
+    const events = await collect(
+      streamOpenAi(
+        structuredRequest,
+        model,
+        env,
+        fetcher as unknown as typeof fetch,
+      ),
+    );
+
+    expect(events.at(-1)).toEqual({
+      type: "error",
+      error: "structured-output-schema-mismatch",
+    });
   });
 });

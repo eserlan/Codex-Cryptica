@@ -50,6 +50,7 @@ description: "Task list template for feature implementation"
 - [ ] T001 Create project structure per implementation plan
 - [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
+- [ ] T003a **If this feature adds any public, indexable discovery page**: register its intent in `apps/web/src/lib/content/discovery/entries/` — canonical path, primary intent, user job, unique value — **before** building the page, having first checked that no existing entry already owns the intent (Constitution XIII). Omit this task entirely for features with no discovery surface.
 
 ---
 

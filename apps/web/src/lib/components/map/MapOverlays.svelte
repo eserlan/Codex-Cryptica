@@ -36,6 +36,31 @@
   );
 </script>
 
+{#if mapSession.armedTile}
+  <div
+    class="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-theme-primary/40 bg-theme-surface/95 px-4 py-1.5 shadow-xl backdrop-blur select-none"
+    data-testid="map-armed-tile-banner"
+  >
+    <span
+      class="h-2 w-2 rounded-full bg-theme-primary animate-pulse"
+      aria-hidden="true"
+    ></span>
+    <span class="text-xs font-medium text-theme-text">
+      Click map to place <strong>{mapSession.armedTile.name}</strong>
+    </span>
+    <span class="text-[10px] text-theme-muted">· [Esc] to cancel</span>
+    <button
+      type="button"
+      onclick={() => mapSession.clearArmedTile()}
+      class="ml-1 rounded-full p-0.5 text-theme-muted hover:text-theme-text transition-colors"
+      aria-label="Cancel tile placement"
+      title="Cancel tile placement (Esc)"
+    >
+      <span class="icon-[lucide--x] h-3.5 w-3.5" aria-hidden="true"></span>
+    </button>
+  </div>
+{/if}
+
 {#if mapStore.pendingPinCoords}
   <PinLinker
     onSelect={(id) => {
@@ -112,6 +137,14 @@
       style:width={`${Math.abs(interactions.gridFitEnd.x - interactions.gridFitStart.x)}px`}
       style:height={`${Math.abs(interactions.gridFitEnd.y - interactions.gridFitStart.y)}px`}
     ></div>
+    <div
+      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-[11px] font-bold text-theme-primary shadow"
+      style:left={`${Math.min(interactions.gridFitStart.x, interactions.gridFitEnd.x)}px`}
+      style:top={`${Math.min(interactions.gridFitStart.y, interactions.gridFitEnd.y) - 28}px`}
+    >
+      {interactions.gridFitSpan}×{interactions.gridFitSpan} squares · Shift+Scroll
+      to change
+    </div>
   </div>
 {/if}
 

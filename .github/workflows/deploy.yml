@@ -11,8 +11,13 @@ on:
       - "docs/**"
   pull_request:
     branches: [main, staging]
-    paths-ignore:
-      - "docs/**"
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig*.json"
   workflow_dispatch:
     inputs:
       full_validation:
@@ -79,9 +84,12 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   type-check:
+    # Skipped on push: this is the staging merge gate re-running the same
+    # check the PR already ran on the same diff (#2952). PRs into
+    # staging/main still get it; only the post-merge push to staging skips.
     name: Type Check
     needs: select-validation
-    if: needs.select-validation.outputs.lint_types != ''
+    if: needs.select-validation.outputs.lint_types != '' && github.event_name != 'push'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -121,9 +129,10 @@ jobs:
           done
 
   lint:
+    # Skipped on push for the same reason as type-check above (#2952).
     name: Lint
     needs: select-validation
-    if: needs.select-validation.outputs.lint != ''
+    if: needs.select-validation.outputs.lint != '' && github.event_name != 'push'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -176,9 +185,10 @@ jobs:
           done
 
   test:
+    # Skipped on push for the same reason as type-check above (#2952).
     name: Test
     needs: select-validation
-    if: needs.select-validation.outputs.test_coverage != ''
+    if: needs.select-validation.outputs.test_coverage != '' && github.event_name != 'push'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -452,3 +462,47 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"
+
+  smoke-test:
+    # Replaces the full test/lint/type-check rerun this workflow used to do
+    # on every push to staging (#2952): the PR that merged already ran those
+    # checks against this diff. What a rerun of the same suite can't catch,
+    # and this can, is the deployed build itself misbehaving (bad env var,
+    # asset that failed to upload, a route that 404s in the real CDN but not
+    # in local dev). Cloudflare Pages deploys are usually live within
+    # seconds, but this polls briefly rather than assuming that.
+    name: Staging Smoke Test
+    needs: deploy
+    if: github.ref_name == 'staging' && github.event_name == 'push' && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment to propagate
+        run: sleep 10
+
+      - name: Check representative routes respond
+        env:
+          BASE_URL: https://staging.codexcryptica.com
+        run: |
+          check() {
+            local path="$1"
+            local expect="$2"
+            local url="${BASE_URL}${path}"
+            local code
+            code=$(curl -sS -L --connect-timeout 10 --max-time 30 -o /tmp/smoke-body.html -w "%{http_code}" --retry 3 --retry-delay 5 --retry-connrefused "$url")
+            if [ "$code" != "$expect" ]; then
+              echo "::error::$url returned $code, expected $expect"
+              exit 1
+            fi
+            if ! grep -qi "Codex Cryptica" /tmp/smoke-body.html; then
+              echo "::error::$url did not contain expected app shell content"
+              exit 1
+            fi
+            echo "OK ($code): $url"
+          }
+
+          # App shell / homepage.
+          check "/" "200"
+          # A representative public SEO route (no login, prerendered content).
+          check "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg" "200"
+          # A representative generator landing page.
+          check "/generators/heist" "200"

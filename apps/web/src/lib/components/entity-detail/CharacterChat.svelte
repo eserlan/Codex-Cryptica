@@ -2,6 +2,14 @@
   import type { Entity, GuestChatMessage, GuestChatTranscript } from "schema";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { characterChatExportService } from "$lib/services/character-chat-export";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import {
+    rollOracleOutcome,
+    rollPbtAMove,
+    rollD20,
+    rollActionSpark,
+  } from "@codex/oracle-engine";
   import { tick } from "svelte";
 
   let { entity } = $props<{ entity: Entity }>();
@@ -9,6 +17,8 @@
   let editingMessageId = $state<string | null>(null);
   let messageEditContent = $state("");
   let messageInput = $state("");
+  let cueInput = $state("");
+  let showCueInput = $state(false);
   let chatContainer = $state<HTMLElement | null>(null);
   let isStarting = $state(false);
   let isSending = $state(false);
@@ -16,6 +26,8 @@
   let showSpeakerSwitcher = $state(false);
   let pendingSpeakerId = $state("");
   let isSwitchingSpeaker = $state(false);
+  let isCopying = $state(false);
+  let isSavingJournal = $state(false);
   let sessions = $state<GuestChatTranscript[]>([]);
   let isResuming = $state<string | null>(null);
 
@@ -43,6 +55,14 @@
   const otherSessions = $derived(
     sessions.filter((session) => session.id !== transcript?.id),
   );
+
+  const hasPersonality = $derived.by(() => {
+    const lore = entity.lore || "";
+    return (
+      /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore) ||
+      Boolean(entity.guestChatConfig?.extraInstructions?.trim())
+    );
+  });
 
   function speakerLabel(forSpeakerId?: string) {
     if (!forSpeakerId) return "Yourself";
@@ -116,6 +136,32 @@
     }
   }
 
+  async function copyChat() {
+    if (!transcript || isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(transcript, {
+        speakerName: speakerName ?? undefined,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
+
+  async function sendToJournal() {
+    if (!transcript || isSavingJournal) return;
+    isSavingJournal = true;
+    try {
+      await characterChatExportService.sendConversationToJournal(transcript, {
+        speakerName: speakerName ?? undefined,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isSavingJournal = false;
+    }
+  }
+
   async function sendMessage() {
     if (!messageInput.trim() || guestChatStore.isGenerating || isSending)
       return;
@@ -123,8 +169,11 @@
     isSending = true;
     try {
       const message = messageInput;
+      const cue = cueInput.trim() || undefined;
       messageInput = "";
-      await guestChatStore.sendMessage(entity.id, message);
+      cueInput = "";
+      showCueInput = false;
+      await guestChatStore.sendMessage(entity.id, message, cue);
       await scrollToBottom();
     } finally {
       isSending = false;
@@ -153,11 +202,15 @@
   }
 
   async function deleteMessage(messageId: string) {
-    if (
-      confirm(
+    const confirmed = await notificationStore.confirm({
+      title: "Delete Message",
+      message:
         "Are you sure you want to delete this message from your chat history?",
-      )
-    ) {
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+    if (confirmed) {
       await guestChatStore.deleteMessage(entity.id, messageId);
     }
   }
@@ -209,6 +262,27 @@
         Chat with {entity.title}. The AI will respond in character using the
         configured scope.
       </p>
+      {#if !hasPersonality}
+        <div
+          class="mb-4 w-full max-w-sm rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-left text-xs text-amber-400"
+          role="alert"
+        >
+          <div class="flex items-center gap-1.5 font-bold">
+            <span
+              class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0"
+              aria-hidden="true"
+            ></span>
+            Voice Guidance Missing
+          </div>
+          <p class="mt-1 text-[11px] leading-relaxed text-amber-300/90">
+            This character lacks a <code
+              class="rounded bg-black/30 px-1 py-0.5 font-mono text-[10px]"
+              >## Personality & Voice</code
+            > section in GM Lore. Edit this character or add the section so the AI
+            knows how to respond.
+          </p>
+        </div>
+      {/if}
       <div class="mb-4 w-full max-w-sm text-left">
         <label
           for="character-chat-speaker"
@@ -251,22 +325,53 @@
           >{speakerName ?? "Yourself"}</span
         >
       </p>
-      <button
-        type="button"
-        onclick={openSpeakerSwitcher}
-        class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
-      >
-        <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
-        ></span>
-        Sessions
-        {#if otherSessions.length > 0}
-          <span
-            class="rounded-full bg-theme-primary/20 px-1.5 text-theme-primary"
+      <div class="flex items-center gap-2">
+        {#if transcript?.messages?.length}
+          <button
+            type="button"
+            onclick={copyChat}
+            disabled={isCopying}
+            class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
+            title="Copy conversation"
+            aria-label="Copy conversation"
           >
-            {otherSessions.length}
-          </span>
+            <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"></span>
+            Copy
+          </button>
+          {#if !vault.isGuest}
+            <button
+              type="button"
+              onclick={sendToJournal}
+              disabled={isSavingJournal}
+              class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
+              title="Send to Journal"
+              aria-label="Send to Journal"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--book-marked] w-3 h-3"
+              ></span>
+              Journal
+            </button>
+          {/if}
         {/if}
-      </button>
+        <button
+          type="button"
+          onclick={openSpeakerSwitcher}
+          class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+        >
+          <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
+          ></span>
+          Sessions
+          {#if otherSessions.length > 0}
+            <span
+              class="rounded-full bg-theme-primary/20 px-1.5 text-theme-primary"
+            >
+              {otherSessions.length}
+            </span>
+          {/if}
+        </button>
+      </div>
     </div>
 
     {#if showSpeakerSwitcher}
@@ -348,6 +453,24 @@
         </div>
       </div>
     {/if}
+
+    {#if !hasPersonality}
+      <div
+        class="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-400"
+        role="alert"
+      >
+        <span
+          class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0"
+          aria-hidden="true"
+        ></span>
+        <span>
+          <strong>Voice Guidance Missing:</strong> Add a
+          <code class="rounded bg-black/30 px-1 py-0.5 font-mono text-[11px]"
+            >## Personality & Voice</code
+          > section in GM Lore or edit this character to generate one.
+        </span>
+      </div>
+    {/if}
     <div
       bind:this={chatContainer}
       class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 p-3 sm:min-h-0 sm:max-h-none sm:flex-1"
@@ -421,6 +544,23 @@
               </div>
             </div>
           {:else}
+            {#if message.cue}
+              <div
+                class="flex items-center gap-1 text-[10px] font-semibold text-amber-400/90 mb-0.5 {message.role ===
+                'user'
+                  ? 'justify-end'
+                  : 'justify-start'}"
+              >
+                <span
+                  class="icon-[lucide--sparkles] w-3 h-3 text-amber-400 shrink-0"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px]"
+                  >Cue: {message.cue}</span
+                >
+              </div>
+            {/if}
             <div
               class="w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
               {message.role === 'user'
@@ -462,31 +602,157 @@
     </div>
 
     <div
-      class="flex gap-2 items-end border-t border-theme-border/50 pt-2 shrink-0"
+      class="flex flex-col gap-1.5 border-t border-theme-border/50 pt-2 shrink-0"
     >
-      <label class="sr-only" for="character-chat-message"
-        >Message {entity.title}</label
-      >
-      <textarea
-        id="character-chat-message"
-        bind:value={messageInput}
-        onkeydown={handleKeydown}
-        placeholder="Type a message..."
-        disabled={guestChatStore.isGenerating}
-        class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
-        rows="2"
-      ></textarea>
-      <button
-        type="button"
-        onclick={sendMessage}
-        disabled={!messageInput.trim() ||
-          guestChatStore.isGenerating ||
-          isSending}
-        class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
-        aria-label="Send message to {entity.title}"
-      >
-        <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"></span>
-      </button>
+      {#if showCueInput}
+        <div
+          class="flex flex-col gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-xs"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              class="icon-[lucide--sparkles] w-3.5 h-3.5 text-amber-400 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <label for="character-chat-cue" class="sr-only"
+              >Oracle / Director Cue</label
+            >
+            <input
+              id="character-chat-cue"
+              type="text"
+              bind:value={cueInput}
+              placeholder="Oracle / Director Cue (e.g. Yes, but... / 2d6 = 10 / Angry refusal)"
+              class="flex-1 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
+            />
+            {#if cueInput}
+              <button
+                type="button"
+                onclick={() => (cueInput = "")}
+                class="text-theme-muted hover:text-theme-text p-0.5 cursor-pointer"
+                aria-label="Clear cue"
+              >
+                <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"
+                ></span>
+              </button>
+            {/if}
+          </div>
+
+          <!-- Quick Oracle & Roll Shortcuts -->
+          <div
+            class="flex flex-wrap items-center gap-1 pt-1.5 border-t border-amber-500/10 text-[10px]"
+          >
+            <span
+              class="text-amber-400/70 font-mono text-[9px] uppercase tracking-wider select-none mr-0.5"
+              >Quick Roll:</span
+            >
+            <button
+              type="button"
+              onclick={() =>
+                (cueInput = rollOracleOutcome("even").formattedCue)}
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+              title="Roll 50/50 Yes/No Oracle"
+              data-testid="quick-oracle-btn"
+            >
+              <span
+                class="icon-[lucide--help-circle] w-2.5 h-2.5"
+                aria-hidden="true"
+              ></span>
+              Oracle 50/50
+            </button>
+            <button
+              type="button"
+              onclick={() =>
+                (cueInput = rollOracleOutcome("likely").formattedCue)}
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+              title="Roll Likely (+odds) Oracle"
+              data-testid="quick-oracle-likely-btn"
+            >
+              Likely
+            </button>
+            <button
+              type="button"
+              onclick={() =>
+                (cueInput = rollOracleOutcome("unlikely").formattedCue)}
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+              title="Roll Unlikely (-odds) Oracle"
+              data-testid="quick-oracle-unlikely-btn"
+            >
+              Unlikely
+            </button>
+            <button
+              type="button"
+              onclick={() => (cueInput = rollPbtAMove().formattedCue)}
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+              title="Roll 2d6 (Strong Hit, Weak Hit, Miss)"
+              data-testid="quick-pbta-btn"
+            >
+              <span class="icon-[lucide--dices] w-2.5 h-2.5" aria-hidden="true"
+              ></span>
+              2d6
+            </button>
+            <button
+              type="button"
+              onclick={() => (cueInput = rollD20().formattedCue)}
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+              title="Roll d20"
+              data-testid="quick-d20-btn"
+            >
+              d20
+            </button>
+            <button
+              type="button"
+              onclick={() => (cueInput = rollActionSpark().formattedCue)}
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 transition cursor-pointer font-mono"
+              title="Roll Action & Theme Spark"
+              data-testid="quick-spark-btn"
+            >
+              <span class="icon-[lucide--zap] w-2.5 h-2.5" aria-hidden="true"
+              ></span>
+              Spark
+            </button>
+          </div>
+        </div>
+      {/if}
+
+      <div class="flex gap-2 items-end">
+        <button
+          type="button"
+          onclick={() => (showCueInput = !showCueInput)}
+          class="flex min-h-12 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition p-2.5 {showCueInput ||
+          cueInput
+            ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+            : 'border-theme-border bg-theme-surface/50 text-theme-muted hover:text-theme-text'}"
+          title="Toggle Oracle / Director Cue"
+          aria-label="Toggle Oracle / Director Cue"
+          aria-pressed={showCueInput}
+        >
+          <span aria-hidden="true" class="icon-[lucide--sparkles] w-4.5 h-4.5"
+          ></span>
+        </button>
+        <label class="sr-only" for="character-chat-message"
+          >Message {entity.title}</label
+        >
+        <textarea
+          id="character-chat-message"
+          bind:value={messageInput}
+          onkeydown={handleKeydown}
+          placeholder="Type a message or (Cue: ...) to steer..."
+          disabled={guestChatStore.isGenerating}
+          class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
+          rows="2"
+        ></textarea>
+        <button
+          type="button"
+          onclick={sendMessage}
+          disabled={!messageInput.trim() ||
+            guestChatStore.isGenerating ||
+            isSending}
+          class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
+          aria-label="Send message to {entity.title}"
+        >
+          <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"
+          ></span>
+        </button>
+      </div>
     </div>
   {/if}
 </div>

@@ -102,6 +102,7 @@
       data-testid="voice-toggle"
     >
       <span
+        aria-hidden="true"
         class="h-4 w-4 {busy
           ? 'icon-[lucide--loader-circle] animate-spin'
           : 'icon-[lucide--headphones]'}"
@@ -132,6 +133,7 @@
         data-testid="voice-mute"
       >
         <span
+          aria-hidden="true"
           class="h-3.5 w-3.5 {vState.muted
             ? 'icon-[lucide--mic-off]'
             : 'icon-[lucide--mic]'}"

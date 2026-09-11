@@ -1,6 +1,7 @@
 import {
   aiClientManager as defaultAiClientManager,
   InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
 } from "./client-manager";
 import { interactionSessions } from "./interaction-session";
 import { buildInteractionInput, type LoreEntry } from "@codex/oracle-engine";
@@ -51,7 +52,6 @@ export class TextGenerationChatService {
       await this.generateViaInteraction(
         query,
         cleanHistory,
-        modelName,
         systemInstruction,
         _options.conversationId,
         _options.loreEntries,
@@ -162,7 +162,6 @@ export class TextGenerationChatService {
   private async generateViaInteraction(
     query: string,
     history: any[],
-    modelName: string,
     systemInstruction: string,
     conversationId: string,
     loreEntries: LoreEntry[],
@@ -172,7 +171,7 @@ export class TextGenerationChatService {
 
     const send = async (input: string, previousId: string | null) => {
       const result = await this.aiClientManager.sendInteraction({
-        model: modelName,
+        model: INTERACTION_MODEL_KEY,
         input,
         systemInstruction,
         previousInteractionId: previousId,

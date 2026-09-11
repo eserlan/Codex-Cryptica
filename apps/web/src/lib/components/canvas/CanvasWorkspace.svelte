@@ -16,7 +16,6 @@
     DEFAULT_CANVAS_TEXT_FONT_SIZE,
     normalizeCanvasTextBackground,
     normalizeCanvasTextFontSize,
-    type CanvasDrawingPoint,
     CanvasStore,
     type Canvas,
   } from "@codex/canvas-engine";
@@ -40,10 +39,12 @@
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
   import { tick, untrack } from "svelte";
-  import { SvelteMap } from "svelte/reactivity";
 
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
+  import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
+  import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
+
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { DelveEdgeData, DelveRoomNodeData } from "generator-engine";
@@ -58,8 +59,6 @@
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
     autoArrangeCanvasNodes,
-    accumulateRotationDegrees,
-    canvasNodeRotation,
     canvasNodeStyle,
     canvasNodeZIndex,
     createFlowFileNode,
@@ -67,10 +66,10 @@
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodesToCanvasNodes,
-    pointerAngleDegrees,
   } from "./canvas-workspace-helpers";
-  import { createDrawingLogic } from "./drawing/use-drawing-logic.svelte";
   import { exportCanvasImage } from "./canvas-image-export";
+  import { openOrCreateSourceEntity } from "./canvas-source-entity";
+
   import type {
     DelveCanvasEdge,
     DelveCanvasNode,
@@ -103,6 +102,11 @@
   });
 
   const logic = createCanvasLogic(() => engine);
+  const rotationLogic = useCanvasNodeRotation(logic, vault);
+  const drawingLogic = useCanvasDrawing(logic);
+  const isCanvasToolActive = $derived(
+    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
+  );
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
   let roomEnhancementError = $state<string | null>(null);
@@ -113,37 +117,7 @@
   let isFinalizingDossier = $state(false);
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
-  let showMinimap = $state(true);
-  let selectedRotationNodeId = $state<string | null>(null);
-  let isRotatingNode = $state(false);
-  const touchRotationPointers = new SvelteMap<
-    number,
-    { nodeId: string; x: number; y: number }
-  >();
-  let touchRotationGesture: {
-    nodeId: string;
-    pointerIds: [number, number];
-    previousAngle: number;
-    rotation: number;
-  } | null = null;
-  let desktopRotationGesture: {
-    nodeId: string;
-    pointerId: number;
-    center: CanvasDrawingPoint;
-    previousAngle: number;
-    rotation: number;
-  } | null = null;
-
-  const drawingLogic = createDrawingLogic(
-    () => logic.drawings,
-    (drawing) => logic.addDrawing(drawing),
-    (id) => logic.removeDrawing(id),
-    () => logic.screenToFlowPosition,
-  );
-
-  const isCanvasToolActive = $derived(
-    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || isRotatingNode,
-  );
+    let showMinimap = $state(true);
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -349,186 +323,8 @@
     resolves_to: CustomEdge,
   };
 
-  function nodeIdFromPointerTarget(target: EventTarget | null) {
-    if (!(target instanceof Element)) return null;
-    return (
-      target.closest<HTMLElement>(".svelte-flow__node")?.dataset.id ?? null
-    );
-  }
 
-  function canRotateNode(nodeId: string) {
-    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
-    return Boolean(
-      node &&
-      node.type !== "delveSectorGroup" &&
-      !(node.data as Record<string, unknown> | undefined)?.locked,
-    );
-  }
 
-  function beginTouchRotation(event: PointerEvent) {
-    if (
-      event.pointerType !== "touch" ||
-      vault.isGuest ||
-      drawingLogic.isDrawingMode ||
-      drawingLogic.isErasingMode
-    ) {
-      return;
-    }
-    const nodeId = nodeIdFromPointerTarget(event.target);
-    if (!nodeId || !canRotateNode(nodeId)) return;
-
-    touchRotationPointers.set(event.pointerId, {
-      nodeId,
-      x: event.clientX,
-      y: event.clientY,
-    });
-    const matching = [...touchRotationPointers.entries()].filter(
-      ([, pointer]) => pointer.nodeId === nodeId,
-    );
-    if (matching.length !== 2 || touchRotationGesture) return;
-
-    const [[firstId, first], [secondId, second]] = matching;
-    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
-    touchRotationGesture = {
-      nodeId,
-      pointerIds: [firstId, secondId],
-      previousAngle: pointerAngleDegrees(first, second),
-      rotation: canvasNodeRotation(node),
-    };
-    selectedRotationNodeId = nodeId;
-    isRotatingNode = true;
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  function beginDesktopRotation(event: PointerEvent) {
-    const nodeId = selectedRotationNodeId;
-    if (
-      !nodeId ||
-      vault.isGuest ||
-      event.pointerType === "touch" ||
-      event.button !== 0 ||
-      !canRotateNode(nodeId)
-    ) {
-      return;
-    }
-    const nodeElement = [
-      ...document.querySelectorAll<HTMLElement>(".svelte-flow__node"),
-    ].find((element) => element.dataset.id === nodeId);
-    if (!nodeElement) return;
-    const bounds = nodeElement.getBoundingClientRect();
-    const center = {
-      x: bounds.left + bounds.width / 2,
-      y: bounds.top + bounds.height / 2,
-    };
-    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
-    desktopRotationGesture = {
-      nodeId,
-      pointerId: event.pointerId,
-      center,
-      previousAngle: pointerAngleDegrees(center, {
-        x: event.clientX,
-        y: event.clientY,
-      }),
-      rotation: canvasNodeRotation(node),
-    };
-    isRotatingNode = true;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  function rotateSelectedNodeWithKeyboard(event: KeyboardEvent) {
-    if (
-      !selectedRotationNodeId ||
-      (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
-    ) {
-      return;
-    }
-    const node = logic.nodes.find(
-      (candidate) => candidate.id === selectedRotationNodeId,
-    );
-    if (!node || !canRotateNode(node.id)) return;
-    const step = event.shiftKey ? 45 : 15;
-    const rotation =
-      canvasNodeRotation(node) + (event.key === "ArrowRight" ? step : -step);
-    logic.updateNodeRotation(node.id, rotation);
-    logic.saveNow();
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  function handleRotationPointerMove(event: PointerEvent) {
-    if (touchRotationPointers.has(event.pointerId)) {
-      const current = touchRotationPointers.get(event.pointerId)!;
-      touchRotationPointers.set(event.pointerId, {
-        ...current,
-        x: event.clientX,
-        y: event.clientY,
-      });
-    }
-
-    if (touchRotationGesture) {
-      const [firstId, secondId] = touchRotationGesture.pointerIds;
-      const first = touchRotationPointers.get(firstId);
-      const second = touchRotationPointers.get(secondId);
-      if (
-        first &&
-        second &&
-        touchRotationGesture.pointerIds.includes(event.pointerId)
-      ) {
-        const angle = pointerAngleDegrees(first, second);
-        const rotation = accumulateRotationDegrees(
-          touchRotationGesture.rotation,
-          touchRotationGesture.previousAngle,
-          angle,
-        );
-        touchRotationGesture.rotation = rotation;
-        touchRotationGesture.previousAngle = angle;
-        logic.updateNodeRotation(touchRotationGesture.nodeId, rotation);
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      return;
-    }
-
-    if (
-      desktopRotationGesture &&
-      desktopRotationGesture.pointerId === event.pointerId
-    ) {
-      const angle = pointerAngleDegrees(desktopRotationGesture.center, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-      const rotation = accumulateRotationDegrees(
-        desktopRotationGesture.rotation,
-        desktopRotationGesture.previousAngle,
-        angle,
-      );
-      desktopRotationGesture.rotation = rotation;
-      desktopRotationGesture.previousAngle = angle;
-      logic.updateNodeRotation(desktopRotationGesture.nodeId, rotation);
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }
-
-  function finishNodeRotation(event: PointerEvent) {
-    const completedTouchGesture = Boolean(
-      touchRotationGesture?.pointerIds.includes(event.pointerId),
-    );
-    const completedDesktopGesture =
-      desktopRotationGesture?.pointerId === event.pointerId;
-    touchRotationPointers.delete(event.pointerId);
-    if (!completedTouchGesture && !completedDesktopGesture) return;
-
-    touchRotationGesture = null;
-    desktopRotationGesture = null;
-    isRotatingNode = false;
-    logic.saveNow();
-    event.preventDefault();
-    event.stopPropagation();
-  }
 
   let arrangedCanvasId = $state<string | null>(null);
 
@@ -614,8 +410,8 @@
   }
 
   function onNodeClick({ node }: { node: any }) {
-    if (!vault.isGuest && canRotateNode(node.id)) {
-      selectedRotationNodeId = node.id;
+    if (!vault.isGuest && rotationLogic.canRotateNode(node.id)) {
+      rotationLogic.selectedRotationNodeId = node.id;
     }
     if (node.type === "delveRoom") {
       roomEnhancementError = null;
@@ -633,7 +429,7 @@
   }
 
   function onPaneClick() {
-    selectedRotationNodeId = null;
+    rotationLogic.selectedRotationNodeId = null;
   }
 
   function onNodeDragStop({
@@ -1091,156 +887,22 @@
     }
   }
 
+  let isCreatingSourceEntity = false;
   async function handleOpenOrCreateSourceEntity() {
-    if (sourceEntityId && vault.entities[sourceEntityId]) {
-      modalUIStore.openZenMode(sourceEntityId);
-      return;
+    if (isCreatingSourceEntity) return;
+    isCreatingSourceEntity = true;
+    try {
+      await openOrCreateSourceEntity({
+        sourceEntityId,
+        canvas,
+        vault,
+        canvasRegistry,
+        modalUIStore,
+        nodes: logic.nodes,
+      });
+    } finally {
+      isCreatingSourceEntity = false;
     }
-
-    const title = canvas?.name || "Untitled Adventure";
-    const existing = vault.allEntities.find(
-      (e) =>
-        e.title.trim().toLowerCase() === title.trim().toLowerCase() &&
-        e.type === "event",
-    );
-
-    let targetId = existing?.id;
-    if (!targetId) {
-      const sourceLore = (canvas?.metadata as any)?.sourceLore as
-        string | undefined;
-      const situationNode = logic.nodes.find((n) => n.type === "situation");
-      const situationData = situationNode?.data as any;
-      const canvasSummary = (canvas?.metadata as any)?.summary as
-        string | undefined;
-      const situationSummary =
-        situationData?.summary ||
-        situationData?.description ||
-        canvasSummary ||
-        "";
-      const situationHook =
-        situationData?.hook || situationData?.startingHook || "";
-      const situationGoal =
-        situationData?.goal || situationData?.objective || "";
-
-      if (sourceLore && sourceLore.trim()) {
-        targetId = await vault.createEntity("note", title, {
-          content: situationSummary ? `*${situationSummary}*` : "",
-          lore: sourceLore.trim(),
-          kind: "adventure",
-          labels: ["adventure"],
-        });
-      } else {
-        let markdown = `# ${title}\n\n`;
-        if (situationSummary) markdown += `*${situationSummary}*\n\n`;
-
-        if (situationHook || situationGoal) {
-          markdown += `## Situation & Hook\n`;
-          if (situationHook)
-            markdown += `**Starting Hook:** ${situationHook}\n\n`;
-          if (situationGoal) markdown += `**Objective:** ${situationGoal}\n\n`;
-        }
-
-        const locations = logic.nodes.filter((n) => n.type === "location");
-        if (locations.length > 0) {
-          markdown += `## Key Locations\n`;
-          for (const loc of locations) {
-            const d = loc.data as any;
-            const name =
-              (loc as any).label || d?.title || d?.name || "Location";
-            const desc = d?.description || d?.summary || "";
-            const role = d?.role || "";
-            const relation = d?.relation || "";
-            const leverage = d?.leverage || "";
-            const dilemma = d?.dilemma || "";
-            const hazard = d?.hazard || d?.danger || "";
-            markdown += `### ${name}\n`;
-            if (desc) markdown += `${desc}\n\n`;
-            if (role) markdown += `- **Role:** ${role}\n`;
-            if (relation) markdown += `- **Relation:** ${relation}\n`;
-            if (leverage) markdown += `- **Leverage:** ${leverage}\n`;
-            if (dilemma) markdown += `- **Dilemma:** ${dilemma}\n`;
-            if (hazard) markdown += `- **Hazard/Danger:** ${hazard}\n`;
-            markdown += `\n`;
-          }
-        }
-
-        const npcs = logic.nodes.filter((n) => n.type === "npc");
-        if (npcs.length > 0) {
-          markdown += `## Important NPCs & Factions\n`;
-          for (const npc of npcs) {
-            const d = npc.data as any;
-            const name = (npc as any).label || d?.title || d?.name || "NPC";
-            const role = d?.role || "";
-            const desc = d?.description || d?.summary || "";
-            const relation = d?.relation || "";
-            const wants = d?.wants || d?.motivation || "";
-            const secret = d?.secret || "";
-            const leverage = d?.leverage || "";
-            const dilemma = d?.dilemma || "";
-            markdown += `### ${name}${role ? ` (${role})` : ""}\n`;
-            if (desc) markdown += `${desc}\n\n`;
-            if (relation) markdown += `- **Relation:** ${relation}\n`;
-            if (wants) markdown += `- **Wants:** ${wants}\n`;
-            if (secret) markdown += `- **Secret:** ${secret}\n`;
-            if (leverage) markdown += `- **Leverage:** ${leverage}\n`;
-            if (dilemma) markdown += `- **Dilemma:** ${dilemma}\n`;
-            markdown += `\n`;
-          }
-        }
-
-        const clues = logic.nodes.filter((n) => n.type === "clue");
-        const threats = logic.nodes.filter((n) => n.type === "threat");
-        if (clues.length > 0 || threats.length > 0) {
-          markdown += `## Clues & Threats\n`;
-          for (const clue of clues) {
-            const d = clue.data as any;
-            const name = (clue as any).label || d?.title || d?.name || "Clue";
-            const desc = d?.description || d?.summary || "";
-            const leadsTo = d?.leadsTo || "";
-            markdown += `- **${name}:** ${desc}${leadsTo ? ` *(Leads to: ${leadsTo})*` : ""}\n`;
-          }
-          if (clues.length > 0 && threats.length > 0) markdown += `\n`;
-          for (const threat of threats) {
-            const d = threat.data as any;
-            const name =
-              (threat as any).label || d?.title || d?.name || "Threat";
-            const desc = d?.description || d?.summary || "";
-            const trigger = d?.trigger || "";
-            markdown += `- **${name}:** ${desc}${trigger ? ` *(Trigger: ${trigger})*` : ""}\n`;
-          }
-          markdown += `\n`;
-        }
-
-        const outcomes = logic.nodes.filter((n) => n.type === "outcome");
-        if (outcomes.length > 0) {
-          markdown += `## Possible Outcomes\n`;
-          for (const outcome of outcomes) {
-            const d = outcome.data as any;
-            const name =
-              (outcome as any).label || d?.title || d?.name || "Outcome";
-            const desc = d?.description || d?.summary || "";
-            markdown += `### ${name}\n${desc}\n\n`;
-          }
-        }
-
-        targetId = await vault.createEntity("note", title, {
-          content: situationSummary ? `*${situationSummary}*` : "",
-          lore: markdown.trim(),
-          kind: "adventure",
-          labels: ["adventure"],
-        });
-      }
-    }
-
-    if (canvas?.id) {
-      canvas.metadata = {
-        ...(canvas.metadata || {}),
-        sourceEntityId: targetId,
-      };
-      await canvasRegistry.saveCanvas(canvas.id);
-    }
-
-    modalUIStore.openZenMode(targetId);
   }
 
   function handleAutoArrange() {
@@ -1272,9 +934,9 @@
 <svelte:window
   onkeydown={drawingLogic.handleDrawingKeydown}
   onpaste={handleCanvasPaste}
-  onpointermove={handleRotationPointerMove}
-  onpointerup={finishNodeRotation}
-  onpointercancel={finishNodeRotation}
+  onpointermove={rotationLogic.handleRotationPointerMove}
+  onpointerup={rotationLogic.finishNodeRotation}
+  onpointercancel={rotationLogic.finishNodeRotation}
 />
 
 <div
@@ -1286,7 +948,7 @@
     class="flex-1 relative"
     ondragover={onDragOver}
     ondrop={onDrop}
-    onpointerdowncapture={beginTouchRotation}
+    onpointerdowncapture={(e) => rotationLogic.beginTouchRotation(e, drawingLogic.isDrawingMode, drawingLogic.isErasingMode)}
     role="region"
     aria-label="Canvas Workspace"
   >
@@ -1373,9 +1035,9 @@
         fitView
       >
         <Background gap={20} />
-        {#if selectedRotationNodeId && canRotateNode(selectedRotationNodeId)}
+        {#if rotationLogic.selectedRotationNodeId && rotationLogic.canRotateNode(rotationLogic.selectedRotationNodeId)}
           <NodeToolbar
-            nodeId={selectedRotationNodeId}
+            nodeId={rotationLogic.selectedRotationNodeId}
             position={Position.Top}
             offset={18}
             isVisible
@@ -1385,8 +1047,8 @@
               class="nodrag nopan touch-none flex h-9 w-9 cursor-grab items-center justify-center rounded-full border border-theme-primary/50 bg-theme-surface text-theme-primary shadow-lg transition-colors hover:bg-theme-primary/15 active:cursor-grabbing"
               title="Drag to rotate card; use arrow keys for precise rotation"
               aria-label="Rotate selected card"
-              onpointerdown={beginDesktopRotation}
-              onkeydown={rotateSelectedNodeWithKeyboard}
+              onpointerdown={rotationLogic.beginDesktopRotation}
+              onkeydown={rotationLogic.rotateSelectedNodeWithKeyboard}
             >
               <span class="icon-[lucide--rotate-cw] h-4 w-4" aria-hidden="true"
               ></span>
@@ -1564,7 +1226,7 @@
             updateNodeData(contextMenuTextNode!.id, {
               background: normalizeCanvasTextBackground(
                 background,
-                DEFAULT_CANVAS_TEXT_BACKGROUND,
+    DEFAULT_CANVAS_TEXT_BACKGROUND,
               ),
             })
         : undefined}

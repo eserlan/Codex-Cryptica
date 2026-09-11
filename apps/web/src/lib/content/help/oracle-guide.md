@@ -7,7 +7,7 @@ rank: 5
 
 ## AI Intelligence
 
-The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
+The Oracle is powered by **OpenAI/Luna**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
 
 ### Features
 

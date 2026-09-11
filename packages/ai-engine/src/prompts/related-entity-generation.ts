@@ -1,6 +1,10 @@
 import { u } from "./user-content";
 import { BANNED_NAMES } from "generator-engine";
-import type { ConnectedEntityPromptContext } from "schema";
+import {
+  templateGuidanceBlock,
+  templateGuidanceInstruction,
+  type ConnectedEntityPromptContext,
+} from "schema";
 
 export function buildRelatedEntityGenerationPrompt(
   sourceEntity: {
@@ -43,7 +47,7 @@ export function buildRelatedEntityGenerationPrompt(
       : "";
 
   const templateRule = templateOutline.trim()
-    ? `IMPORTANT: You must structure the "description" field using the following markdown outline template headings and structure:\n${u(templateOutline)}\n`
+    ? `IMPORTANT: Structure the "description" field using the template guidance below. ${templateGuidanceInstruction("description")}\n${templateGuidanceBlock(u(templateOutline))}\n`
     : "";
 
   const customInstructionsStr = customInstructions.trim()

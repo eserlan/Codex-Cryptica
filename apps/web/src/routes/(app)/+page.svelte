@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
-  import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
@@ -16,12 +15,26 @@
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { seoImportService } from "$lib/services/seo/import-handler";
   import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
+  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
+  import {
+    trackWelcomeFirstClick,
+    type WelcomeAction,
+  } from "$lib/services/analytics/welcome-first-click";
 
   // "Open Existing Vault" dismisses the landing page and opens the vault
   // switcher with the matching intent.
   const openVaultFromWelcome = (intent: "open") => {
+    trackWelcomeFirstClick("open_vault");
     onboardingStore.dismissLandingPage();
     modalUIStore.openVaultSwitcher(intent);
+  };
+
+  // Which of the five things on this screen a visitor picks first, once per
+  // visitor, and nothing after it. See welcome-first-click.ts for why this one
+  // surface is instrumented when the rest of the app is not.
+  const startDemoFromWelcome = (theme: string, action: WelcomeAction) => {
+    trackWelcomeFirstClick(action);
+    demoService.startDemo(theme);
   };
 
   // Guided Mode (#1909): the primary "create" path leans into Quick Start
@@ -29,7 +42,8 @@
   // fully empty vault is still reachable via "Open Existing Vault" → NEW VAULT.
   // Tracked on modalUIStore (not local state) so the first-run orchestrator
   // sees it and doesn't stack the onboarding tour on top of Quick Start.
-  const openQuickStartFromWelcome = () => {
+  const openQuickStartFromWelcome = (action: WelcomeAction = "quick_start") => {
+    trackWelcomeFirstClick(action);
     onboardingStore.dismissLandingPage();
     modalUIStore.openQuickStartModal();
   };
@@ -133,8 +147,13 @@
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      // 0. If settings or dice modal is open, let them handle Escape
-      if (modalUIStore.showSettings || modalUIStore.showDiceModal) return;
+      // 0. Any open modal owns Escape. Modals attach their own window-level
+      // listeners, and stopPropagation cannot help — every listener sits on
+      // window — so this handler has to stand down, or it deselects the entity
+      // behind whichever modal the user was actually dismissing. Reading the
+      // store's own aggregate rather than naming modals keeps that true for
+      // ones added later.
+      if (modalUIStore.isAnyModalOpen) return;
 
       // 1. If an entity is focused (EmbeddedEntityView), close it
       if (layoutUIStore.mainViewMode === "focus") {
@@ -230,6 +249,44 @@
       content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
     />
     <link rel="canonical" href="https://codexcryptica.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Codex Cryptica" />
+    <meta
+      property="og:title"
+      content="Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool"
+    />
+    <meta
+      property="og:description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <meta property="og:url" content="https://codexcryptica.com/" />
+    <meta
+      property="og:image"
+      content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="Codex Cryptica campaign vault showing an interactive knowledge graph and note editor"
+    />
+    <meta property="og:image:width" content="1600" />
+    <meta property="og:image:height" content="1000" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool"
+    />
+    <meta
+      name="twitter:description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <meta
+      name="twitter:image"
+      content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Codex Cryptica campaign vault showing an interactive knowledge graph and note editor"
+    />
   {/if}
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -347,27 +404,16 @@
               ></span>
               Local-first RPG campaign manager • Private by default
             </div>
-            <p
-              class="mb-2 text-sm md:text-base font-mono font-semibold uppercase tracking-[0.2em] text-theme-primary/90"
-            >
-              Welcome to Codex Cryptica
-            </p>
             <h1
               class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
             >
               Private RPG Lore Vault
             </h1>
-            <h2
-              class="text-xs sm:text-sm font-mono uppercase tracking-widest text-theme-primary/60 mb-3"
-            >
-              RPG Campaign Manager &amp; Worldbuilding Tool
-            </h2>
             <p
               class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
-              A free, local-first campaign manager for GMs: private Markdown
-              notes, visual lore graphs, timelines, offline prep, and optional
-              AI in one browser workspace.
+              Private Markdown notes, visual lore graphs, and timelines for GMs.
+              Free, offline-capable, no account.
             </p>
           </div>
 
@@ -377,7 +423,7 @@
           >
             <button
               type="button"
-              onclick={openQuickStartFromWelcome}
+              onclick={() => openQuickStartFromWelcome("graph_preview")}
               class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-primary/50 bg-theme-surface/60 shadow-2xl shadow-theme-primary/10 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary hover:shadow-theme-primary/30 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
               aria-labelledby="living-lore-graph"
               aria-describedby="living-lore-graph-copy living-lore-graph-preview"
@@ -397,24 +443,48 @@
                     id="living-lore-graph-copy"
                     class="mt-1 text-[11px] text-theme-muted"
                   >
-                    See how characters, factions, secrets, and places connect —
-                    Quick Start builds one like this for you in seconds.
+                    See how characters, factions, secrets, and places connect.
+                    Click the graph and Quick Start builds one like this for you
+                    in seconds.
                   </p>
                 </div>
                 <span
-                  class="ml-auto flex shrink-0 items-center gap-1 text-[10px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
+                  class="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg border border-theme-primary/60 bg-theme-primary/10 px-3 py-2 text-xs font-bold font-header text-theme-primary transition-colors group-hover:bg-theme-primary group-hover:text-theme-bg"
+                  data-testid="welcome-preview-cue"
                 >
-                  Quick Start
+                  <span
+                    class="icon-[lucide--sparkles] h-3.5 w-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Build one like this
                   <span
                     class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
                   ></span>
                 </span>
               </div>
               <div id="living-lore-graph-preview" class="sr-only">
-                Interactive lore graph preview showing Captain Veyra connected
-                to factions, secrets, places, and unresolved plot threads.
+                Interactive lore graph preview showing Eldrin the Wise connected
+                to the Gilded Hand, the Black Iron Tavern, an ancient forest
+                dragon, and a prophecy he is studying. Activates Quick Start,
+                which builds a world like this one.
               </div>
-              <WelcomeGraphPreview />
+              <div class="relative">
+                <WelcomeGraphPreview />
+                <!-- The whole card has always been clickable and nothing said
+                     so. Decorative: the button's own accessible name and
+                     description already carry this for screen readers. -->
+                <div
+                  aria-hidden="true"
+                  class="pointer-events-none absolute inset-0 flex items-center justify-center bg-theme-bg/50 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  <span
+                    class="rounded-lg bg-theme-primary px-5 py-3 text-sm font-bold font-header text-theme-bg shadow-lg"
+                  >
+                    Build a world like this
+                  </span>
+                </div>
+              </div>
             </button>
 
             <div
@@ -422,7 +492,7 @@
             >
               <button
                 type="button"
-                onclick={openQuickStartFromWelcome}
+                onclick={() => openQuickStartFromWelcome("quick_start")}
                 class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
                 data-testid="welcome-quick-start-button"
               >
@@ -431,7 +501,7 @@
               </button>
               <button
                 type="button"
-                onclick={() => demoService.startDemo("fantasy")}
+                onclick={() => startDemoFromWelcome("fantasy", "demo")}
                 class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
                 data-testid="welcome-demo-button"
               >
@@ -489,7 +559,7 @@
           <div class="flex flex-wrap justify-center gap-4">
             {#each demoThemes as theme (theme)}
               <button
-                onclick={() => demoService.startDemo(theme)}
+                onclick={() => startDemoFromWelcome(theme, "themed_demo")}
                 class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
               >
                 {theme}
@@ -499,58 +569,7 @@
         </section>
 
         <!-- Footer actions & settings -->
-        <footer class="flex flex-col items-center gap-4 w-full">
-          <div class="flex flex-wrap items-center justify-center gap-6">
-            <a
-              href="{base}/free-rpg-campaign-manager"
-              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--castle] w-3 h-3" aria-hidden="true"
-              ></span>
-              Free RPG campaign manager
-            </a>
-            <a
-              href="{base}/worldbuilding-tool"
-              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--globe] w-3 h-3" aria-hidden="true"
-              ></span>
-              worldbuilding tool
-            </a>
-            <a
-              href="{base}/features"
-              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--zap] w-3 h-3" aria-hidden="true"
-              ></span>
-              Features
-            </a>
-            <a
-              href="{base}/changelog"
-              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--history] w-3 h-3" aria-hidden="true"
-              ></span>
-              Changelog
-            </a>
-            <a
-              href="https://groupfinder.gg/library/codex-cryptica"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center opacity-70 hover:opacity-100 transition-opacity"
-              aria-label="Codex Cryptica on Groupfinder"
-            >
-              <img
-                src="https://groupfinder.gg/images/badges/gf-badge-light.svg"
-                alt="Codex Cryptica on Groupfinder"
-                width="164"
-                height="45"
-                loading="lazy"
-                class="h-5 w-auto"
-              />
-            </a>
-          </div>
-
+        <div class="flex flex-col items-center gap-4 w-full">
           <div
             class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
           >
@@ -569,7 +588,8 @@
               Hide welcome screen on startup
             </label>
           </div>
-        </footer>
+          <MarketingFooter />
+        </div>
       </div>
     </div>
   {/if}

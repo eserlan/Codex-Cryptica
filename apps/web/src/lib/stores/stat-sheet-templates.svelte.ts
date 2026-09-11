@@ -1,9 +1,35 @@
 import { getDB } from "../utils/idb";
-import type { StatSheetTemplate, StatSheetField } from "schema";
+import {
+  DEFAULT_ITEM_TABLE_COLUMNS,
+  type StatSheetTemplate,
+  type StatSheetField,
+} from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import { importTemplatePackage } from "@codex/stat-sheet-engine";
 import type { PublicTemplatePackage } from "schema";
+
+/**
+ * Shared row shape for D&D 5e Actions/Bonus Actions/Reactions (#2873): a
+ * name, an optional attack-roll or save DC, an optional damage roll, and a
+ * free-text description — so each entry can keep its dice formula rollable
+ * instead of collapsing into a single notes field.
+ */
+const DND5E_ACTION_TABLE_COLUMNS: NonNullable<StatSheetField["columns"]> = [
+  { id: "name", label: "Name", type: "text" },
+  { id: "attack", label: "Attack / Save", type: "dice", formula: "1d20+0" },
+  { id: "damage", label: "Damage", type: "dice", formula: "1d6+0" },
+  { id: "description", label: "Description", type: "text" },
+];
+
+/** Row shape for Legendary Actions (#2873): name, action-point cost, description. */
+const DND5E_LEGENDARY_ACTION_TABLE_COLUMNS: NonNullable<
+  StatSheetField["columns"]
+> = [
+  { id: "name", label: "Name", type: "text" },
+  { id: "cost", label: "Cost", type: "number" },
+  { id: "description", label: "Description", type: "text" },
+];
 
 export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
   {
@@ -110,6 +136,222 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 100 },
       { id: "ac", label: "Armor Class", type: "number" },
       { id: "atk", label: "Attack Roll", type: "dice", formula: "1d20+3" },
+    ],
+  },
+  {
+    id: "builtin-dnd5e-monster",
+    name: "D&D 5e Monster",
+    description:
+      "Full 5e stat block for bosses, imported monsters, and generated creatures — identity, defences, ability scores, saves/skills, resistances, and structured actions. See docs/DND5E_MONSTER_TEMPLATE_FIELDS.md for the stable field id reference (#2873).",
+    category: "npc",
+    isBuiltIn: true,
+    fields: [
+      { id: "sec_identity", label: "Identity", type: "heading" },
+      { id: "size", label: "Size", type: "text" },
+      { id: "creature_type", label: "Creature Type", type: "text" },
+      { id: "subtype", label: "Subtype / Qualifiers", type: "text" },
+      { id: "alignment", label: "Alignment", type: "text" },
+      { id: "cr", label: "Challenge Rating", type: "text" },
+      { id: "proficiency_bonus", label: "Proficiency Bonus", type: "number" },
+
+      { id: "sec_defence", label: "Defence & Movement", type: "heading" },
+      { id: "ac", label: "Armor Class", type: "number" },
+      { id: "ac_details", label: "AC Source / Details", type: "text" },
+      { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 200 },
+      {
+        id: "hit_dice",
+        label: "Hit Point Maximum / Hit Dice",
+        type: "text",
+      },
+      { id: "speed", label: "Speed", type: "text" },
+      {
+        id: "speed_modes",
+        label: "Additional Movement (fly/swim/climb/burrow)",
+        type: "text",
+      },
+
+      { id: "sec_scores", label: "Ability Scores", type: "heading" },
+      { id: "str_score", label: "STR", type: "number" },
+      { id: "dex_score", label: "DEX", type: "number" },
+      { id: "con_score", label: "CON", type: "number" },
+      { id: "int_score", label: "INT", type: "number" },
+      { id: "wis_score", label: "WIS", type: "number" },
+      { id: "cha_score", label: "CHA", type: "number" },
+
+      { id: "sec_saves", label: "Saving Throws", type: "heading" },
+      {
+        id: "str_save",
+        label: "STR Save",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "str_score",
+      },
+      {
+        id: "dex_save",
+        label: "DEX Save",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "dex_score",
+      },
+      {
+        id: "con_save",
+        label: "CON Save",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "con_score",
+      },
+      {
+        id: "int_save",
+        label: "INT Save",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "int_score",
+      },
+      {
+        id: "wis_save",
+        label: "WIS Save",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "wis_score",
+      },
+      {
+        id: "cha_save",
+        label: "CHA Save",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "cha_score",
+      },
+
+      { id: "sec_skills", label: "Skills", type: "heading" },
+      {
+        id: "perception",
+        label: "Perception",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "wis_score",
+      },
+      {
+        id: "stealth",
+        label: "Stealth",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "dex_score",
+      },
+      {
+        id: "athletics",
+        label: "Athletics",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "str_score",
+      },
+      {
+        id: "arcana",
+        label: "Arcana",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "int_score",
+      },
+      {
+        id: "insight",
+        label: "Insight",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "wis_score",
+      },
+      {
+        id: "persuasion",
+        label: "Persuasion",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "cha_score",
+      },
+      { id: "other_skills", label: "Other Skills", type: "text" },
+      { id: "passive_perception", label: "Passive Perception", type: "number" },
+
+      {
+        id: "sec_defences_senses",
+        label: "Defences, Senses & Languages",
+        type: "heading",
+      },
+      {
+        id: "damage_vulnerabilities",
+        label: "Damage Vulnerabilities",
+        type: "text",
+      },
+      { id: "damage_resistances", label: "Damage Resistances", type: "text" },
+      { id: "damage_immunities", label: "Damage Immunities", type: "text" },
+      {
+        id: "condition_immunities",
+        label: "Condition Immunities",
+        type: "text",
+      },
+      { id: "senses", label: "Senses", type: "text" },
+      { id: "languages", label: "Languages", type: "text" },
+
+      { id: "sec_traits", label: "Traits & Spellcasting", type: "heading" },
+      { id: "traits", label: "Traits / Special Abilities", type: "longtext" },
+      {
+        id: "spellcasting",
+        label: "Spellcasting / Innate Spellcasting",
+        type: "longtext",
+      },
+
+      { id: "sec_actions", label: "Actions", type: "heading" },
+      { id: "multiattack", label: "Multiattack", type: "text" },
+      {
+        id: "actions",
+        label: "Actions",
+        type: "item-table",
+        columns: DND5E_ACTION_TABLE_COLUMNS,
+        rows: [],
+        linkVaultItems: false,
+      },
+
+      {
+        id: "sec_bonus_reactions",
+        label: "Bonus Actions & Reactions",
+        type: "heading",
+      },
+      {
+        id: "bonus_actions",
+        label: "Bonus Actions",
+        type: "item-table",
+        columns: DND5E_ACTION_TABLE_COLUMNS,
+        rows: [],
+        linkVaultItems: false,
+      },
+      {
+        id: "reactions",
+        label: "Reactions",
+        type: "item-table",
+        columns: DND5E_ACTION_TABLE_COLUMNS,
+        rows: [],
+        linkVaultItems: false,
+      },
+
+      {
+        id: "sec_legendary",
+        label: "Legendary & Lair Actions",
+        type: "heading",
+      },
+      {
+        id: "legendary_actions_intro",
+        label: "Legendary Action Usage",
+        type: "text",
+      },
+      {
+        id: "legendary_actions",
+        label: "Legendary Actions",
+        type: "item-table",
+        columns: DND5E_LEGENDARY_ACTION_TABLE_COLUMNS,
+        rows: [],
+        linkVaultItems: false,
+      },
+      {
+        id: "lair_actions",
+        label: "Lair Actions / Regional Effects",
+        type: "longtext",
+      },
     ],
   },
   {
@@ -307,7 +549,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "lp", label: "Luck Points", type: "counter", min: 0, max: 10 },
       { id: "mp", label: "Magic Points", type: "counter", min: 0, max: 30 },
       { id: "hp", label: "Total Hit Points", type: "counter", min: 0, max: 50 },
-      { id: "damage_mod", label: "Damage Modifier", type: "text" },
+      { id: "damage_mod", label: "Damage Modifier", type: "number" },
       { id: "initiative", label: "Initiative Bonus", type: "number" },
       { id: "move", label: "Movement (m)", type: "number" },
       { id: "healing_rate", label: "Healing Rate", type: "number" },
@@ -379,75 +621,49 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "d100_check", label: "d100 Check", type: "dice", formula: "1d100" },
       {
         id: "athletics",
-        label: "Athletics (d100)",
+        label: "Athletics",
         type: "dice",
         formula: "1d100",
       },
-      { id: "brawn", label: "Brawn (d100)", type: "dice", formula: "1d100" },
-      { id: "evade", label: "Evade (d100)", type: "dice", formula: "1d100" },
+      { id: "brawn", label: "Brawn", type: "dice", formula: "1d100" },
+      { id: "evade", label: "Evade", type: "dice", formula: "1d100" },
       {
         id: "insight",
-        label: "Insight (d100)",
+        label: "Insight",
         type: "dice",
         formula: "1d100",
       },
       {
         id: "perception",
-        label: "Perception (d100)",
+        label: "Perception",
         type: "dice",
         formula: "1d100",
       },
       {
         id: "stealth",
-        label: "Stealth (d100)",
+        label: "Stealth",
         type: "dice",
         formula: "1d100",
       },
       {
         id: "willpower",
-        label: "Willpower (d100)",
+        label: "Willpower",
         type: "dice",
         formula: "1d100",
+      },
+      { id: "combat_styles", label: "Combat Styles", type: "longtext" },
+      {
+        id: "professional_skills",
+        label: "Professional & Magic Skills",
+        type: "longtext",
       },
       { id: "passions_cults", label: "Passions & Cults", type: "longtext" },
       {
         id: "weapons_table",
         label: "Weapons & Equipment",
         type: "item-table",
-        columns: [
-          { id: "name", label: "Weapon", type: "text" },
-          { id: "size", label: "Size/Force", type: "text" },
-          { id: "reach", label: "Reach", type: "text" },
-          { id: "damage", label: "Damage", type: "dice" },
-          { id: "ap", label: "AP", type: "number" },
-          { id: "hp", label: "HP", type: "counter" },
-        ],
-        rows: [
-          {
-            name: "War Hammer",
-            size: "M",
-            reach: "S",
-            damage: "1d6+2+1d2",
-            ap: 6,
-            hp: { value: 8, max: 8 },
-          },
-          {
-            name: "Heater Shield",
-            size: "L",
-            reach: "S",
-            damage: "1d4+1d2",
-            ap: 6,
-            hp: { value: 12, max: 12 },
-          },
-          {
-            name: "Unarmed",
-            size: "S",
-            reach: "T",
-            damage: "1d3+1d2",
-            ap: 0,
-            hp: { value: 0, max: 0 },
-          },
-        ],
+        columns: DEFAULT_ITEM_TABLE_COLUMNS,
+        rows: [],
       },
     ],
   },
@@ -462,7 +678,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "ap", label: "Action Points", type: "counter", min: 0, max: 5 },
       { id: "mp", label: "Magic Points", type: "counter", min: 0, max: 30 },
       { id: "hp", label: "Total Hit Points", type: "counter", min: 0, max: 50 },
-      { id: "damage_mod", label: "Damage Modifier", type: "text" },
+      { id: "damage_mod", label: "Damage Modifier", type: "number" },
       { id: "initiative", label: "Initiative Bonus", type: "number" },
       { id: "move", label: "Movement (m)", type: "number" },
       { id: "sec_characteristics", label: "Characteristics", type: "heading" },
@@ -546,10 +762,10 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       },
       { id: "sec_combat", label: "Attacks & Creature Traits", type: "heading" },
       { id: "d100_check", label: "d100 Check", type: "dice", formula: "1d100" },
-      { id: "evade", label: "Evade (d100)", type: "dice", formula: "1d100" },
+      { id: "evade", label: "Evade", type: "dice", formula: "1d100" },
       {
         id: "perception",
-        label: "Perception (d100)",
+        label: "Perception",
         type: "dice",
         formula: "1d100",
       },
@@ -879,6 +1095,24 @@ export class StatSheetTemplateStore {
       console.error("[StatSheetTemplateStore] Failed to import template:", e);
       return null;
     }
+  }
+
+  /**
+   * Writes a template exactly as given, id and all.
+   *
+   * Distinct from `saveTemplate`, which is the authoring path and mints its
+   * own id: an imported template has to land under the identifier the import
+   * planned for, because that is what its rollback journal names (156-entity-shelf).
+   */
+  async putTemplateRecord(template: StatSheetTemplate): Promise<void> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+    const db = await getDB();
+    await db.put("stat_sheet_templates", { ...template, vaultId });
+    this.templates = [
+      ...this.templates.filter((t) => t.id !== template.id),
+      template,
+    ];
   }
 
   async deleteTemplate(id: string): Promise<boolean> {

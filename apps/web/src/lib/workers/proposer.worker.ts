@@ -1,7 +1,16 @@
 /// <reference lib="webworker" />
-import { aiClientManager } from "@codex/ai-engine";
+import { aiClientManager, RelayedSessionToken } from "@codex/ai-engine";
+import type { CachedToken } from "@codex/ai-engine";
 import type { Proposal } from "@codex/proposer";
 import { systemClock } from "$lib/utils/runtime-deps";
+
+// This worker has its own isolated aiClientManager instance (Workers don't
+// share module state with the main thread) and no DOM, so it can't solve a
+// Turnstile challenge itself. The main thread's real session manager relays
+// its token here via a "SESSION_TOKEN" message — see session-bootstrap.ts
+// and ProposerBridge.setSessionToken().
+const sessionToken = new RelayedSessionToken();
+aiClientManager.setSessionManager(sessionToken);
 
 function normalizeTargetId(value: string): string {
   return value
@@ -188,6 +197,14 @@ ${targetsList}`;
 
 self.onmessage = async (e: MessageEvent) => {
   const { type, payload, id } = e.data || {};
+
+  // Fire-and-forget push from the main thread's session manager — has no
+  // request id to correlate a response to, so it's handled before the
+  // id-required guard below.
+  if (type === "SESSION_TOKEN") {
+    sessionToken.setToken((payload as CachedToken | null) ?? null);
+    return;
+  }
 
   if (!type || !id) {
     console.warn("ProposerWorker: Received malformed message", e.data);

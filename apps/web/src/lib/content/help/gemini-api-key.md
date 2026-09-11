@@ -1,13 +1,13 @@
 ---
 id: gemini-api-key
-title: Acquiring a Gemini API Key
+title: Acquiring a OpenAI/Luna API Key
 tags: [ai, gemini, setup]
 rank: 6
 ---
 
-## How to get your Gemini API Key
+## How to get your OpenAI/Luna API Key
 
-Codex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps to get a free key:
+Codex Cryptica uses OpenAI/Luna to power the Lore Oracle. Follow these steps to get a free key:
 
 1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).
 2. **Sign In**: Use your standard Google Account.
@@ -21,4 +21,4 @@ Using your own key ensures higher availability, faster response times, and acces
 ### Related Blog Posts
 
 - [Worldbuilding Tool Without Mandatory AI](/blog/worldbuilding-tool-without-ai) — How Codex Cryptica remains fully functional offline and without AI keys.
-- [Why AI Slop is a Context Failure](/blog/ai-slop-is-context-failure) — How structured vault retrieval ensures Gemini produces rich, setting-accurate lore.
+- [Why AI Slop is a Context Failure](/blog/ai-slop-is-context-failure) — How structured vault retrieval ensures OpenAI/Luna produces rich, setting-accurate lore.

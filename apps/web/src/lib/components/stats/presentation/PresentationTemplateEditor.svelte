@@ -5,6 +5,28 @@
     type StatSheetField,
     type PresentationTemplate,
   } from "schema";
+  import {
+    type VisualCard,
+    getUnusedFields,
+    parseCardsFromSource,
+  } from "./visual-card-parser";
+  import {
+    addVisualCard as addVisualCardOp,
+    updateCardColumns as updateCardColumnsOp,
+    updateTableHeader as updateTableHeaderOp,
+    removeVisualCard as removeVisualCardOp,
+    addRowToCard as addRowToCardOp,
+    removeRowFromCard as removeRowFromCardOp,
+    addFieldToCardRow as addFieldToCardRowOp,
+    removeFieldFromCardRow as removeFieldFromCardRowOp,
+    addValueToTableRow as addValueToTableRowOp,
+    updateValueInTableRow as updateValueInTableRowOp,
+    removeValueFromTableRow as removeValueFromTableRowOp,
+    moveCard as moveCardOp,
+    reorderCards as reorderCardsOp,
+    moveFieldBetweenRows as moveFieldBetweenRowsOp,
+  } from "./visual-card-operations";
+  import { syncSourceFromVisualCards } from "./visual-card-serializer";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
@@ -12,6 +34,9 @@
     validateAst,
     exportPresentationTemplate,
     sanitizeSource,
+    walkPresentationNodes,
+    computeSectionKeys,
+    DISPLAY_MODES_BY_FIELD_TYPE,
   } from "@codex/stat-sheet-engine";
   import type {
     MissingFieldNode,
@@ -19,7 +44,21 @@
     FieldReferenceNode,
   } from "@codex/stat-sheet-engine";
   import PresentationRenderer from "./PresentationRenderer.svelte";
+  import PresentationSyntaxHelpModal from "./PresentationSyntaxHelpModal.svelte";
   import type { PresentationRenderContext } from "./types";
+
+  const DISPLAY_MODE_OPTIONS = [
+    { mode: undefined, label: "Default" },
+    { mode: "plain", label: "Plain Inline" },
+    { mode: "prominent", label: "Prominent Badge" },
+    { mode: "current-max", label: "Current / Max Counter" },
+    { mode: "counter", label: "Interactive Stepper" },
+    { mode: "progress", label: "Progress Bar" },
+    { mode: "tag-list", label: "Tag List" },
+    { mode: "notes", label: "Notes Area" },
+    { mode: "table", label: "Item Table" },
+    { mode: "name-target", label: "Name & Target" },
+  ] as const;
 
   let {
     schema,
@@ -60,253 +99,51 @@
   let editorMode = $state<"visual" | "code">("visual");
 
   // Visual layout builder state derived from AST or built interactively
-  interface VisualCard {
-    id: string;
-    title: string;
-    columns: number;
-    mode?: "grid" | "table";
-    tableHeaders?: string[];
-    rows: string[][];
-  }
 
-  function getUnusedFields(cards: VisualCard[]): StatSheetField[] {
-    const used = new Set(cards.flatMap((c) => c.rows.flat()));
-    return (schema?.fields ?? []).filter(
-      (f) => f.type !== "heading" && !used.has(f.id),
+  let visualCards = $state<VisualCard[]>(
+    parseCardsFromSource(source, schema?.fields),
+  );
+
+  function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
+    source = syncSourceFromVisualCards(
+      cards,
+      schema?.fields ?? [],
+      fieldDisplayOverrides,
     );
-  }
-
-  function parseCardsFromSource(src: string): VisualCard[] {
-    const cards: VisualCard[] = [];
-    const res = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
-    if (!res.ok) return cards;
-
-    function extractFieldIdsFromNode(node: any): string[] {
-      const fieldIds: string[] = [];
-      if (!node) return fieldIds;
-      if (node.type === "field-reference") {
-        fieldIds.push(node.fieldId);
-      } else if (node.children && Array.isArray(node.children)) {
-        for (const child of node.children) {
-          fieldIds.push(...extractFieldIdsFromNode(child));
-        }
-      }
-      return fieldIds;
-    }
-
-    function processBlockNode(node: any, currentHeadingTitle: string): string {
-      let activeTitle = currentHeadingTitle;
-      if (node.type === "heading") {
-        const textNode = node.children?.find((c: any) => c.type === "text");
-        if (textNode && "text" in textNode) {
-          activeTitle = textNode.text;
-        }
-      } else if (node.type === "table") {
-        const rows: string[][] = [];
-        const headers = (node.header ?? []).map((cellNodes: any[]) => {
-          const t = cellNodes.find((c) => c.type === "text");
-          return t && "text" in t ? t.text : "Col";
-        });
-        for (const rowCells of node.rows ?? []) {
-          const rFields: string[] = [];
-          for (const cellNodes of rowCells) {
-            for (const c of cellNodes) {
-              if (c.type === "field-reference") {
-                rFields.push(c.fieldId);
-              }
-            }
-          }
-          if (rFields.length > 0) rows.push(rFields);
-        }
-        cards.push({
-          id: Math.random().toString(36).slice(2, 9),
-          title: activeTitle || `Table ${cards.length + 1}`,
-          columns: headers.length || 2,
-          mode: "table",
-          tableHeaders: headers.length > 0 ? headers : ["Field", "Value"],
-          rows: rows.length > 0 ? rows : [[]],
-        });
-        activeTitle = "";
-      } else if (node.type === "card") {
-        const rows: string[][] = [];
-        for (const child of node.children ?? []) {
-          const fIds = extractFieldIdsFromNode(child);
-          if (fIds.length > 0) rows.push(fIds);
-        }
-        cards.push({
-          id: Math.random().toString(36).slice(2, 9),
-          title: activeTitle || `Card ${cards.length + 1}`,
-          columns: 2,
-          mode: "grid",
-          rows: rows.length > 0 ? rows : [[]],
-        });
-        activeTitle = "";
-      } else if (node.type === "group") {
-        const cols = node.columns ?? 2;
-        for (const child of node.children ?? []) {
-          if (child.type === "card") {
-            const rows: string[][] = [];
-            for (const cNode of child.children ?? []) {
-              const fIds = extractFieldIdsFromNode(cNode);
-              if (fIds.length > 0) rows.push(fIds);
-            }
-            cards.push({
-              id: Math.random().toString(36).slice(2, 9),
-              title: activeTitle || `Card ${cards.length + 1}`,
-              columns: cols,
-              mode: "grid",
-              rows: rows.length > 0 ? rows : [[]],
-            });
-            activeTitle = "";
-          } else {
-            const fIds = extractFieldIdsFromNode(child);
-            if (fIds.length > 0) {
-              cards.push({
-                id: Math.random().toString(36).slice(2, 9),
-                title: activeTitle || `Group ${cards.length + 1}`,
-                columns: cols,
-                mode: "grid",
-                rows: [fIds],
-              });
-              activeTitle = "";
-            }
-          }
-        }
-      } else if (node.type === "section" || node.type === "row") {
-        for (const child of node.children ?? []) {
-          activeTitle = processBlockNode(child, activeTitle);
-        }
-      }
-      return activeTitle;
-    }
-
-    let titleState = "";
-    for (const node of res.ast) {
-      titleState = processBlockNode(node, titleState);
-    }
-    const fields = schema?.fields ?? [];
-    if (cards.length === 0 && fields.length > 0) {
-      let currentCard: VisualCard = {
-        id: "c1",
-        title: "Overview",
-        columns: 2,
-        mode: "grid",
-        rows: [[]],
-      };
-      for (const f of fields) {
-        if (f.type === "heading") {
-          if (currentCard.rows.some((r) => r.length > 0)) {
-            cards.push(currentCard);
-          }
-          currentCard = {
-            id: Math.random().toString(36).slice(2, 9),
-            title: f.label,
-            columns: 2,
-            mode: "grid",
-            rows: [[]],
-          };
-        } else {
-          currentCard.rows[0].push(f.id);
-        }
-      }
-      if (currentCard.rows.some((r) => r.length > 0)) {
-        cards.push(currentCard);
-      }
-    }
-    return cards;
-  }
-
-  let visualCards = $state<VisualCard[]>(parseCardsFromSource(source));
-
-  function syncSourceFromVisualCards(cards: VisualCard[]) {
-    let out = "";
-    const fields = schema?.fields ?? [];
-    for (const card of cards) {
-      if (card.title) {
-        out += `### ${card.title}\n`;
-      }
-      if (card.mode === "table") {
-        const headers =
-          card.tableHeaders && card.tableHeaders.length > 0
-            ? card.tableHeaders
-            : ["Field", "Value"];
-        out += `| ${headers.join(" | ")} |\n`;
-        out += `| ${headers.map(() => "---").join(" | ")} |\n`;
-        for (const row of card.rows) {
-          if (row.length === 0) continue;
-          const cells = row.map((fid) => {
-            const f = fields.find((x) => x.id === fid);
-            if (!f) return `[${fid}]`;
-            if (f.type === "counter") return `[${fid}:current-max]`;
-            if (f.type === "number") return `[${fid}:prominent]`;
-            return `[${fid}]`;
-          });
-          while (cells.length < headers.length) {
-            cells.push("-");
-          }
-          out += `| ${cells.join(" | ")} |\n`;
-        }
-        out += `\n`;
-      } else {
-        out += `:::card\n`;
-        for (const row of card.rows) {
-          if (row.length === 0) continue;
-          out += `:::stat-group columns=${card.columns}\n`;
-          for (const fid of row) {
-            const f = fields.find((x) => x.id === fid);
-            if (f) {
-              if (f.type === "counter") {
-                out += `[${fid}:current-max]\n`;
-              } else if (f.type === "number") {
-                out += `[${fid}:prominent]\n`;
-              } else {
-                out += `[${fid}]\n`;
-              }
-            }
-          }
-          out += `:::\n`;
-        }
-        out += `:::\n\n`;
-      }
-    }
-    source = out.trim();
   }
 
   function addVisualCard(mode: "grid" | "table" = "grid") {
-    visualCards.push({
-      id: Math.random().toString(36).slice(2, 9),
-      title:
-        mode === "table"
-          ? `Table ${visualCards.length + 1}`
-          : `Section ${visualCards.length + 1}`,
-      columns: 2,
-      mode,
-      tableHeaders:
-        mode === "table" ? ["Stat / Item", "Value / Dice"] : undefined,
-      rows: [[]],
-    });
-    syncSourceFromVisualCards(visualCards);
+    visualCards = addVisualCardOp(visualCards, mode);
+    handleSyncSourceFromVisualCards(visualCards);
+  }
+
+  function updateCardColumns(cardId: string, value: number) {
+    visualCards = updateCardColumnsOp(visualCards, cardId, value);
+    handleSyncSourceFromVisualCards(visualCards);
+  }
+
+  function updateTableHeader(
+    cardId: string,
+    headerIndex: number,
+    value: string,
+  ) {
+    visualCards = updateTableHeaderOp(visualCards, cardId, headerIndex, value);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeVisualCard(cardId: string) {
-    visualCards = visualCards.filter((c) => c.id !== cardId);
-    syncSourceFromVisualCards(visualCards);
+    visualCards = removeVisualCardOp(visualCards, cardId);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addRowToCard(cardId: string) {
-    visualCards = visualCards.map((c) =>
-      c.id === cardId ? { ...c, rows: [...c.rows, []] } : c,
-    );
-    syncSourceFromVisualCards(visualCards);
+    visualCards = addRowToCardOp(visualCards, cardId);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeRowFromCard(cardId: string, rowIndex: number) {
-    visualCards = visualCards.map((c) => {
-      if (c.id !== cardId) return c;
-      const nextRows = c.rows.filter((_, idx) => idx !== rowIndex);
-      return { ...c, rows: nextRows.length > 0 ? nextRows : [[]] };
-    });
-    syncSourceFromVisualCards(visualCards);
+    visualCards = removeRowFromCardOp(visualCards, cardId, rowIndex);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function addFieldToCardRow(
@@ -314,14 +151,43 @@
     rowIndex: number,
     fieldId: string,
   ) {
-    visualCards = visualCards.map((c) => {
-      if (c.id !== cardId) return c;
-      const nextRows = c.rows.map((r, idx) =>
-        idx === rowIndex ? [...r, fieldId] : r,
-      );
-      return { ...c, rows: nextRows };
-    });
-    syncSourceFromVisualCards(visualCards);
+    visualCards = addFieldToCardRowOp(visualCards, cardId, rowIndex, fieldId);
+    handleSyncSourceFromVisualCards(visualCards);
+  }
+
+  function addValueToTableRow(cardId: string, rowIndex: number) {
+    visualCards = addValueToTableRowOp(visualCards, cardId, rowIndex);
+    handleSyncSourceFromVisualCards(visualCards);
+  }
+
+  function updateValueInTableRow(
+    cardId: string,
+    rowIndex: number,
+    cellIndex: number,
+    value: string,
+  ) {
+    visualCards = updateValueInTableRowOp(
+      visualCards,
+      cardId,
+      rowIndex,
+      cellIndex,
+      value,
+    );
+    handleSyncSourceFromVisualCards(visualCards);
+  }
+
+  function removeValueFromTableRow(
+    cardId: string,
+    rowIndex: number,
+    cellIndex: number,
+  ) {
+    visualCards = removeValueFromTableRowOp(
+      visualCards,
+      cardId,
+      rowIndex,
+      cellIndex,
+    );
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function removeFieldFromCardRow(
@@ -329,25 +195,18 @@
     rowIndex: number,
     fieldId: string,
   ) {
-    visualCards = visualCards.map((c) => {
-      if (c.id !== cardId) return c;
-      const nextRows = c.rows.map((r, idx) =>
-        idx === rowIndex ? r.filter((id) => id !== fieldId) : r,
-      );
-      return { ...c, rows: nextRows };
-    });
-    syncSourceFromVisualCards(visualCards);
+    visualCards = removeFieldFromCardRowOp(
+      visualCards,
+      cardId,
+      rowIndex,
+      fieldId,
+    );
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   function moveCard(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= visualCards.length) return;
-    const copy = [...visualCards];
-    const temp = copy[index];
-    copy[index] = copy[target];
-    copy[target] = temp;
-    visualCards = copy;
-    syncSourceFromVisualCards(visualCards);
+    visualCards = moveCardOp(visualCards, index, direction);
+    handleSyncSourceFromVisualCards(visualCards);
   }
 
   let draggedCardIndex = $state<number | null>(null);
@@ -358,12 +217,9 @@
   function handleCardDragOver(e: DragEvent, index: number) {
     if (draggedCardIndex === null || draggedCardIndex === index) return;
     e.preventDefault();
-    const copy = [...visualCards];
-    const item = copy.splice(draggedCardIndex, 1)[0];
-    copy.splice(index, 0, item);
+    visualCards = reorderCardsOp(visualCards, draggedCardIndex, index);
     draggedCardIndex = index;
-    visualCards = copy;
-    syncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(visualCards);
   }
   function handleCardDragEnd() {
     draggedCardIndex = null;
@@ -409,21 +265,15 @@
     const { cardId: srcCardId, rowIndex: srcRowIndex, fieldId } = draggedField;
     draggedField = null;
 
-    visualCards = visualCards.map((c) => {
-      let nextRows = c.rows;
-      if (c.id === srcCardId) {
-        nextRows = nextRows.map((r, idx) =>
-          idx === srcRowIndex ? r.filter((id) => id !== fieldId) : r,
-        );
-      }
-      if (c.id === targetCardId) {
-        nextRows = nextRows.map((r, idx) =>
-          idx === targetRowIndex ? [...r, fieldId] : r,
-        );
-      }
-      return { ...c, rows: nextRows };
-    });
-    syncSourceFromVisualCards(visualCards);
+    visualCards = moveFieldBetweenRowsOp(
+      visualCards,
+      srcCardId,
+      srcRowIndex,
+      fieldId,
+      targetCardId,
+      targetRowIndex,
+    );
+    handleSyncSourceFromVisualCards(visualCards);
   }
   let isSaving = $state(false);
   let saveError = $state("");
@@ -431,6 +281,104 @@
   let showSyntaxHelp = $state(false);
   let autocompleteFilter = $state("");
   let textareaEl: HTMLTextAreaElement | undefined = $state();
+
+  // Reconstructs per-field overrides (hide-label, non-default display mode)
+  // from the raw saved source so reopening the visual editor doesn't start
+  // from a blank slate — handleSyncSourceFromVisualCards() regenerates the whole
+  // template from this map, so a stale/empty seed silently drops previously
+  // saved overrides on the next visual edit.
+  function deriveFieldDisplayOverrides(
+    src: string,
+  ): Record<string, { displayMode?: string; hideLabel?: boolean }> {
+    const result = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
+    if (!result.ok) return {};
+    const overrides: Record<
+      string,
+      { displayMode?: string; hideLabel?: boolean }
+    > = {};
+    walkPresentationNodes(result.ast, (node) => {
+      if (node.type !== "field-reference") return;
+      const fieldId = node.fieldId as string;
+      const displayMode = node.displayMode as string | undefined;
+      const hideLabel = node.hideLabel as boolean | undefined;
+      if (displayMode || hideLabel) {
+        overrides[fieldId] = {
+          ...(displayMode ? { displayMode } : {}),
+          ...(hideLabel ? { hideLabel: true } : {}),
+        };
+      }
+    });
+    return overrides;
+  }
+
+  let fieldDisplayOverrides = $state<
+    Record<string, { displayMode?: string; hideLabel?: boolean }>
+  >(deriveFieldDisplayOverrides(source));
+  let chipContextMenu = $state<{
+    x: number;
+    y: number;
+    cardId: string;
+    rowIndex: number;
+    fieldId: string;
+  } | null>(null);
+
+  function openChipContextMenu(
+    e: MouseEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    chipContextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      cardId,
+      rowIndex,
+      fieldId,
+    };
+  }
+
+  function openChipContextMenuFromKeyboard(
+    e: KeyboardEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
+    if (e.key !== "ContextMenu" && !(e.shiftKey && e.key === "F10")) return;
+    e.preventDefault();
+    const bounds = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    chipContextMenu = {
+      x: bounds.left,
+      y: bounds.bottom,
+      cardId,
+      rowIndex,
+      fieldId,
+    };
+  }
+
+  function closeChipContextMenu() {
+    chipContextMenu = null;
+  }
+
+  function setFieldDisplayMode(fieldId: string, displayMode?: string) {
+    fieldDisplayOverrides[fieldId] = {
+      ...fieldDisplayOverrides[fieldId],
+      displayMode,
+    };
+    handleSyncSourceFromVisualCards(visualCards);
+    closeChipContextMenu();
+  }
+
+  function toggleFieldHideLabel(fieldId: string) {
+    const current = fieldDisplayOverrides[fieldId]?.hideLabel ?? false;
+    fieldDisplayOverrides[fieldId] = {
+      ...fieldDisplayOverrides[fieldId],
+      hideLabel: !current,
+    };
+    handleSyncSourceFromVisualCards(visualCards);
+    closeChipContextMenu();
+  }
 
   // Sample values for live preview (contract: preview mode reads through
   // the same field-value accessor as real rendering, just backed by
@@ -446,7 +394,7 @@
       case "longtext":
         return "Sample notes go here.";
       case "dice":
-        return undefined;
+        return 45;
       default:
         return undefined;
     }
@@ -461,6 +409,12 @@
   const previewAst = $derived(
     parsed.ok ? validateAst(parsed.ast, schema) : null,
   );
+  const previewSectionKeys = $derived(
+    previewAst ? computeSectionKeys(previewAst) : new Map(),
+  );
+  // Collapse state in the editor preview is scratch-only: it doesn't
+  // represent any real entity, so it's never persisted (#2331).
+  let previewCollapsedSections = $state<Set<string>>(new Set());
 
   function collectDiagnostics(nodes: unknown[]): {
     missing: MissingFieldNode[];
@@ -470,24 +424,14 @@
     const missing: MissingFieldNode[] = [];
     const unknown: UnknownDirectiveNode[] = [];
     const mismatched: FieldReferenceNode[] = [];
-    function walk(list: unknown[]) {
-      for (const n of list) {
-        const node = n as Record<string, unknown>;
-        if (node.type === "missing-field")
-          missing.push(node as unknown as MissingFieldNode);
-        if (node.type === "unknown-directive")
-          unknown.push(node as unknown as UnknownDirectiveNode);
-        if (node.type === "field-reference" && node.requestedDisplayMode)
-          mismatched.push(node as unknown as FieldReferenceNode);
-        for (const key of ["children", "items", "header", "rows"]) {
-          const val = node[key];
-          if (Array.isArray(val)) {
-            walk((val as unknown[]).flat(2));
-          }
-        }
-      }
-    }
-    walk(nodes);
+    walkPresentationNodes(nodes, (node) => {
+      if (node.type === "missing-field")
+        missing.push(node as unknown as MissingFieldNode);
+      if (node.type === "unknown-directive")
+        unknown.push(node as unknown as UnknownDirectiveNode);
+      if (node.type === "field-reference" && node.requestedDisplayMode)
+        mismatched.push(node as unknown as FieldReferenceNode);
+    });
     return { missing, unknown, mismatched };
   }
 
@@ -503,7 +447,22 @@
     },
     readOnly: true,
     mode: "preview",
+    get sectionKeys() {
+      return previewSectionKeys;
+    },
+    isSectionCollapsed: (sectionKey) =>
+      previewCollapsedSections.has(sectionKey),
+    onToggleSection: (sectionKey) => {
+      const next = new Set(previewCollapsedSections);
+      if (next.has(sectionKey)) {
+        next.delete(sectionKey);
+      } else {
+        next.add(sectionKey);
+      }
+      previewCollapsedSections = next;
+    },
     onUpdateFieldValue: () => {},
+    onUpdateField: () => {},
     onAdjustCounter: () => {},
   };
 
@@ -627,12 +586,11 @@
 </script>
 
 <div
-  class="fixed inset-0 z-[110] flex items-center justify-center bg-theme-bg/80 p-3 sm:p-6"
+  class="fixed inset-0 z-[200] flex flex-col bg-theme-bg font-body overflow-hidden"
   role="presentation"
-  onclick={(event) => event.target === event.currentTarget && onClose()}
 >
   <div
-    class="flex h-[94vh] max-h-[96vh] w-full max-w-[96vw] 2xl:max-w-[94vw] flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
+    class="flex h-full w-full flex-col overflow-hidden bg-theme-surface shadow-2xl"
     role="dialog"
     aria-modal="true"
     aria-labelledby="presentation-editor-title"
@@ -673,8 +631,8 @@
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-4">
-      <div class="grid gap-3 sm:grid-cols-2">
+    <div class="flex-1 min-h-0 flex flex-col p-4 overflow-hidden">
+      <div class="grid shrink-0 gap-3 sm:grid-cols-2">
         <div>
           <label
             class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
@@ -704,8 +662,8 @@
         </div>
       </div>
 
-      <div class="mt-4 grid gap-4 lg:grid-cols-2">
-        <div class="flex flex-col gap-1.5">
+      <div class="mt-4 flex-1 min-h-0 grid gap-4 lg:grid-cols-2">
+        <div class="flex flex-1 min-h-0 flex-col gap-1.5">
           <div class="flex flex-wrap items-center justify-between gap-1.5">
             <div class="flex items-center gap-1">
               <button
@@ -715,7 +673,7 @@
                   : "rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
                 onclick={() => {
                   if (editorMode !== "visual") {
-                    visualCards = parseCardsFromSource(source);
+                    visualCards = parseCardsFromSource(source, schema?.fields);
                     editorMode = "visual";
                   }
                 }}
@@ -840,7 +798,7 @@
             >
               <!-- Left Sidebar: Available Schema Fields Palette -->
               <div
-                class="flex w-52 shrink-0 flex-col gap-2 overflow-y-auto rounded border border-theme-border bg-theme-surface/80 p-2.5 shadow-inner"
+                class="flex w-64 md:w-72 shrink-0 flex-col gap-2 overflow-y-auto rounded border border-theme-border bg-theme-surface/80 p-2.5 shadow-inner"
               >
                 <div
                   class="flex items-center justify-between border-b border-theme-border pb-1.5"
@@ -903,17 +861,32 @@
                           aria-hidden="true"
                         ></span>
                         <span
-                          class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
-                          >Card</span
+                          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider {card.mode ===
+                          'table'
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                            : 'bg-theme-primary/15 text-theme-primary border border-theme-primary/30'}"
                         >
+                          <span
+                            class="{card.mode === 'table'
+                              ? 'icon-[lucide--table]'
+                              : 'icon-[lucide--layout-grid]'} h-3 w-3"
+                            aria-hidden="true"
+                          ></span>
+                          {card.mode === "table" ? "Table" : "Card"}
+                        </span>
                         <input
                           type="text"
                           class="rounded border border-theme-border bg-theme-bg px-2 py-0.5 text-xs font-bold text-theme-text"
                           value={card.title}
-                          placeholder="Card Title"
+                          placeholder={card.mode === "table"
+                            ? "Table Title (optional)"
+                            : "Section Title (optional)"}
+                          aria-label={card.mode === "table"
+                            ? "Table Title"
+                            : "Section Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
-                            syncSourceFromVisualCards(visualCards);
+                            handleSyncSourceFromVisualCards(visualCards);
                           }}
                         />
                       </div>
@@ -922,23 +895,24 @@
                           class="flex items-center gap-1 text-[10px] text-theme-muted"
                         >
                           Cols:
-                          <select
-                            class="rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+                          <input
+                            type="number"
+                            min="1"
+                            max="6"
+                            step="1"
+                            inputmode="numeric"
+                            aria-label={`Columns for ${card.title || (card.mode === "table" ? "table" : "card")}`}
+                            class="w-12 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
                             value={card.columns}
-                            onchange={(e) => {
-                              card.columns = Number(
-                                (e.target as HTMLSelectElement).value,
+                            oninput={(event) => {
+                              updateCardColumns(
+                                card.id,
+                                Number(
+                                  (event.target as HTMLInputElement).value,
+                                ),
                               );
-                              syncSourceFromVisualCards(visualCards);
                             }}
-                          >
-                            <option value={1}>1</option>
-                            <option value={2}>2</option>
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                            <option value={5}>5</option>
-                            <option value={6}>6</option>
-                          </select>
+                          />
                         </label>
                         <button
                           type="button"
@@ -969,8 +943,38 @@
                       </div>
                     </div>
 
+                    {#if card.mode === "table"}
+                      <div
+                        class="flex flex-wrap items-center gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 p-1.5"
+                      >
+                        <span
+                          class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+                        >
+                          Headers
+                        </span>
+                        {#each card.tableHeaders ?? [] as header, headerIndex (`${card.id}-header-${headerIndex}`)}
+                          <input
+                            type="text"
+                            class="min-w-20 flex-1 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+                            value={header}
+                            aria-label={`Header ${headerIndex + 1} for ${card.title || "table"}`}
+                            placeholder={`Column ${headerIndex + 1}`}
+                            oninput={(event) =>
+                              updateTableHeader(
+                                card.id,
+                                headerIndex,
+                                (event.target as HTMLInputElement).value,
+                              )}
+                          />
+                        {/each}
+                      </div>
+                    {/if}
+
                     <div class="flex flex-col gap-2">
                       {#each card.rows as rowFields, rIdx (rIdx)}
+                        {@const hasTableCapacity =
+                          card.mode !== "table" ||
+                          rowFields.length < card.columns}
                         <div class="flex items-center gap-1.5">
                           <span
                             class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
@@ -981,33 +985,128 @@
                             ondragover={(e) => e.preventDefault()}
                             ondrop={(e) => handleFieldDropRow(e, card.id, rIdx)}
                           >
-                            {#each rowFields as fid (fid)}
-                              {@const f = schema?.fields?.find(
-                                (x) => x.id === fid,
-                              )}
-                              <span
-                                draggable="true"
-                                ondragstart={(e) =>
-                                  handleFieldDragStart(e, card.id, rIdx, fid)}
-                                class="inline-flex items-center gap-1 rounded bg-theme-primary/10 border border-theme-primary/20 px-2 py-0.5 text-xs text-theme-text font-medium cursor-grab active:cursor-grabbing hover:border-theme-primary"
-                              >
-                                <span
-                                  class="icon-[lucide--grip-vertical] h-3 w-3 text-theme-muted"
-                                  aria-hidden="true"
-                                ></span>
-                                {f?.label ?? fid}
-                                <button
-                                  type="button"
-                                  class="ml-0.5 text-[10px] text-theme-muted hover:text-red-400"
-                                  onclick={() =>
-                                    removeFieldFromCardRow(card.id, rIdx, fid)}
-                                  title="Remove field"
+                            {#each rowFields as cell, cIdx (`${cell.kind}-${cIdx}`)}
+                              {#if cell.kind === "field"}
+                                {@const fid = cell.fieldId}
+                                {@const f = schema?.fields?.find(
+                                  (x) => x.id === fid,
+                                )}
+                                {@const override = fieldDisplayOverrides[fid]}
+                                <div
+                                  class="inline-flex items-center gap-1 rounded {f
+                                    ? 'bg-theme-primary/10 border border-theme-primary/20 text-theme-text hover:border-theme-primary'
+                                    : 'bg-amber-500/10 border border-dashed border-amber-500/50 text-amber-600 dark:text-amber-400 hover:border-amber-500'} px-2 py-0.5 text-xs font-medium transition-colors select-none"
                                 >
-                                  ✕
-                                </button>
-                              </span>
+                                  <button
+                                    type="button"
+                                    draggable="true"
+                                    ondragstart={(e) =>
+                                      handleFieldDragStart(
+                                        e,
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
+                                    oncontextmenu={(e) =>
+                                      openChipContextMenu(
+                                        e,
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
+                                    onkeydown={(e) =>
+                                      openChipContextMenuFromKeyboard(
+                                        e,
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
+                                    class="inline-flex items-center gap-1 cursor-grab active:cursor-grabbing"
+                                    aria-label={`${f?.label ?? fid} field options`}
+                                    title={f
+                                      ? "Right-click for display options"
+                                      : "Field no longer exists in schema"}
+                                  >
+                                    <span
+                                      class="icon-[lucide--grip-vertical] h-3 w-3 text-theme-muted"
+                                      aria-hidden="true"
+                                    ></span>
+                                    {#if !f}
+                                      <span
+                                        class="icon-[lucide--alert-triangle] h-3 w-3 text-amber-500 shrink-0"
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span class="italic">{fid} (missing)</span
+                                      >
+                                    {:else}
+                                      {f.label}
+                                    {/if}
+                                    {#if override?.displayMode && override.displayMode !== "plain"}
+                                      <span
+                                        class="rounded bg-theme-primary/20 px-1 py-0.2 text-[9px] font-mono text-theme-primary font-bold"
+                                      >
+                                        {override.displayMode}
+                                      </span>
+                                    {/if}
+                                    {#if override?.hideLabel}
+                                      <span
+                                        class="rounded bg-theme-muted/20 px-1 py-0.2 text-[9px] font-mono text-theme-muted"
+                                        title="Label hidden"
+                                      >
+                                        no-lbl
+                                      </span>
+                                    {/if}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    class="ml-0.5 text-[10px] text-theme-muted hover:text-red-400"
+                                    onclick={() =>
+                                      removeFieldFromCardRow(
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
+                                    title="Remove field"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              {:else}
+                                <div
+                                  class="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5"
+                                >
+                                  <input
+                                    type="text"
+                                    class="w-24 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
+                                    value={cell.value}
+                                    aria-label={`Value for table row ${rIdx + 1}`}
+                                    placeholder="Table value"
+                                    oninput={(event) =>
+                                      updateValueInTableRow(
+                                        card.id,
+                                        rIdx,
+                                        cIdx,
+                                        (event.target as HTMLInputElement)
+                                          .value,
+                                      )}
+                                  />
+                                  <button
+                                    type="button"
+                                    class="text-[10px] text-theme-muted hover:text-red-400"
+                                    onclick={() =>
+                                      removeValueFromTableRow(
+                                        card.id,
+                                        rIdx,
+                                        cIdx,
+                                      )}
+                                    aria-label={`Remove value from table row ${rIdx + 1}`}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              {/if}
                             {/each}
-                            {#if getUnusedFields(visualCards).length > 0}
+                            {#if hasTableCapacity && getUnusedFields(visualCards, schema?.fields).length > 0}
                               <select
                                 class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-muted hover:text-theme-text"
                                 value=""
@@ -1022,10 +1121,21 @@
                                 <option value="" disabled selected
                                   >+ Add Field...</option
                                 >
-                                {#each getUnusedFields(visualCards) as uf (uf.id)}
+                                {#each getUnusedFields(visualCards, schema?.fields) as uf (uf.id)}
                                   <option value={uf.id}>{uf.label}</option>
                                 {/each}
                               </select>
+                            {/if}
+                            {#if card.mode === "table" && hasTableCapacity}
+                              <button
+                                type="button"
+                                class="rounded border border-dashed border-amber-500/40 px-1.5 py-0.5 text-xs text-amber-700 hover:border-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+                                onclick={() =>
+                                  addValueToTableRow(card.id, rIdx)}
+                                data-testid="presentation-editor-add-table-value"
+                              >
+                                + Add Value
+                              </button>
                             {/if}
                           </div>
                           {#if card.rows.length > 1}
@@ -1045,7 +1155,7 @@
                         class="self-start rounded border border-theme-border/60 px-2 py-0.5 text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                         onclick={() => addRowToCard(card.id)}
                       >
-                        + Add Row to Card
+                        + Add Row to {card.mode === "table" ? "Table" : "Card"}
                       </button>
                     </div>
                   </div>
@@ -1118,7 +1228,7 @@
           {/if}
         </div>
 
-        <div class="flex flex-col gap-1.5 min-h-0">
+        <div class="flex flex-1 flex-col gap-1.5 min-h-0">
           <span
             class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
             >Preview</span
@@ -1180,264 +1290,80 @@
 </div>
 
 {#if showSyntaxHelp}
+  <PresentationSyntaxHelpModal onClose={() => (showSyntaxHelp = false)} />
+{/if}
+
+{#if chipContextMenu}
+  {@const targetField = schema?.fields?.find(
+    (field) => field.id === chipContextMenu?.fieldId,
+  )}
+  {@const currentOverride = fieldDisplayOverrides[chipContextMenu.fieldId]}
+  <button
+    type="button"
+    class="fixed inset-0 z-[220]"
+    onclick={closeChipContextMenu}
+    oncontextmenu={(e) => {
+      e.preventDefault();
+      closeChipContextMenu();
+    }}
+    aria-label="Close field display options"
+  ></button>
   <div
-    class="fixed inset-0 z-[120] flex items-center justify-center bg-theme-bg/85 p-4 backdrop-blur-xs"
-    role="presentation"
-    onclick={(e) => e.target === e.currentTarget && (showSyntaxHelp = false)}
+    class="fixed z-[230] min-w-[180px] rounded-lg border border-theme-border bg-theme-surface p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+    style:left="{chipContextMenu.x}px"
+    style:top="{chipContextMenu.y}px"
+    role="menu"
+    tabindex="0"
+    aria-label="Field Display Options"
+    onclick={(e) => e.stopPropagation()}
+    onkeydown={(e) => e.key === "Escape" && closeChipContextMenu()}
   >
     <div
-      class="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="syntax-help-title"
-      data-testid="presentation-syntax-help-modal"
+      class="border-b border-theme-border/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted"
     >
+      Display Options — {targetField?.label ?? chipContextMenu.fieldId}
+    </div>
+
+    <div class="py-1">
       <div
-        class="flex items-center justify-between border-b border-theme-border bg-theme-bg/50 p-3.5"
+        class="px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary"
       >
-        <div class="flex items-center gap-2">
+        Display Mode
+      </div>
+      {#each DISPLAY_MODE_OPTIONS.filter((option) => option.mode === undefined || !targetField || DISPLAY_MODES_BY_FIELD_TYPE[targetField.type].allowed.includes(option.mode)) as opt (opt.mode ?? "default")}
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center justify-between rounded px-2.5 py-1 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition-colors text-left"
+          onclick={() =>
+            setFieldDisplayMode(chipContextMenu!.fieldId, opt.mode)}
+        >
+          <span>{opt.label}</span>
+          {#if currentOverride?.displayMode === opt.mode || (!currentOverride?.displayMode && opt.mode === undefined)}
+            <span
+              class="icon-[lucide--check] h-3.5 w-3.5 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+
+    <div class="border-t border-theme-border/40 pt-1">
+      <button
+        type="button"
+        role="menuitem"
+        class="flex w-full items-center justify-between rounded px-2.5 py-1 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition-colors text-left"
+        onclick={() => toggleFieldHideLabel(chipContextMenu!.fieldId)}
+      >
+        <span>Hide Label</span>
+        {#if currentOverride?.hideLabel}
           <span
-            class="icon-[lucide--book-open] h-4 w-4 text-theme-primary"
+            class="icon-[lucide--check] h-3.5 w-3.5 text-theme-primary"
             aria-hidden="true"
           ></span>
-          <h3
-            id="syntax-help-title"
-            class="font-header text-xs font-bold uppercase tracking-widest text-theme-text"
-          >
-            Presentation Template Syntax Guide
-          </h3>
-        </div>
-        <button
-          type="button"
-          class="text-theme-muted hover:text-theme-text"
-          onclick={() => (showSyntaxHelp = false)}
-          aria-label="Close syntax guide"
-        >
-          <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto p-4 space-y-4 text-xs text-theme-text">
-        <div
-          class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
-        >
-          <h4
-            class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
-          >
-            1. Field References
-          </h4>
-          <p class="text-theme-muted text-[11px]">
-            Reference stat fields using simple brackets <code
-              class="rounded bg-theme-bg px-1 font-mono text-theme-primary"
-              >[field_id]</code
-            >
-            or mustache syntax
-            <code class="rounded bg-theme-bg px-1 font-mono text-theme-primary"
-              >&#123;&#123;stat.field_id&#125;&#125;</code
-            >.
-          </p>
-          <div
-            class="font-mono text-[11px] space-y-1 bg-theme-bg p-2 rounded border border-theme-border"
-          >
-            <div>
-              <span class="text-theme-primary">[hp]</span>
-              <span class="text-theme-muted">→ Standard field display</span>
-            </div>
-            <div>
-              <span class="text-theme-primary">[ac:prominent]</span>
-              <span class="text-theme-muted"
-                >→ Prominent / large score badge</span
-              >
-            </div>
-            <div>
-              <span class="text-theme-primary">[hp:current-max]</span>
-              <span class="text-theme-muted">→ Counter with max value</span>
-            </div>
-            <div>
-              <span class="text-theme-primary"
-                >&#123;&#123;stat.speed label=""&#125;&#125;</span
-              >
-              <span class="text-theme-muted"
-                >→ Hide field label (value only)</span
-              >
-            </div>
-            <div>
-              <span class="text-theme-primary"
-                >&#123;&#123;stat.str label="Strength"&#125;&#125;</span
-              >
-              <span class="text-theme-muted">→ Custom label override</span>
-            </div>
-          </div>
-        </div>
-
-        <div
-          class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
-        >
-          <h4
-            class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
-          >
-            2. Available Display Modes
-          </h4>
-          <div class="overflow-x-auto">
-            <table class="w-full text-[11px] border-collapse text-left">
-              <thead>
-                <tr class="border-b border-theme-border/60 text-theme-primary">
-                  <th class="py-1 px-1">Mode</th>
-                  <th class="py-1 px-1">Supported Types</th>
-                  <th class="py-1 px-1">Effect</th>
-                </tr>
-              </thead>
-              <tbody
-                class="divide-y divide-theme-border/40 text-theme-text font-mono text-[10px]"
-              >
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold">plain</td>
-                  <td class="py-1 px-1 text-theme-muted">All types</td>
-                  <td class="py-1 px-1 font-sans"
-                    >Standard inline label & input</td
-                  >
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold"
-                    >prominent</td
-                  >
-                  <td class="py-1 px-1 text-theme-muted"
-                    >number, dice, counter</td
-                  >
-                  <td class="py-1 px-1 font-sans">Big, bold stat score</td>
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold"
-                    >current-max</td
-                  >
-                  <td class="py-1 px-1 text-theme-muted">counter</td>
-                  <td class="py-1 px-1 font-sans"
-                    >Counter badge (e.g. 12 / 20)</td
-                  >
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold">counter</td
-                  >
-                  <td class="py-1 px-1 text-theme-muted">counter</td>
-                  <td class="py-1 px-1 font-sans"
-                    >Interactive stepper (— / +)</td
-                  >
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold"
-                    >progress</td
-                  >
-                  <td class="py-1 px-1 text-theme-muted">counter</td>
-                  <td class="py-1 px-1 font-sans">Resource progress bar</td>
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold"
-                    >checkbox</td
-                  >
-                  <td class="py-1 px-1 text-theme-muted">text</td>
-                  <td class="py-1 px-1 font-sans">Checkable toggle box</td>
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold"
-                    >tag-list</td
-                  >
-                  <td class="py-1 px-1 text-theme-muted">text</td>
-                  <td class="py-1 px-1 font-sans">Comma-separated pill tags</td>
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold">notes</td>
-                  <td class="py-1 px-1 text-theme-muted">longtext</td>
-                  <td class="py-1 px-1 font-sans">Multi-line text area</td>
-                </tr>
-                <tr>
-                  <td class="py-1 px-1 text-theme-primary font-bold">table</td>
-                  <td class="py-1 px-1 text-theme-muted">item-table</td>
-                  <td class="py-1 px-1 font-sans"
-                    >Interactive equipment table</td
-                  >
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div
-          class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
-        >
-          <h4
-            class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
-          >
-            3. Card Containers (<code class="font-mono text-theme-primary"
-              >:::card</code
-            >)
-          </h4>
-          <p class="text-theme-muted text-[11px]">
-            Wrap layout content inside card borders with fenced directives.
-          </p>
-          <pre
-            class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
-:::card
-### Section Title
-[field_1]
-:::
-          </pre>
-        </div>
-
-        <div
-          class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
-        >
-          <h4
-            class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
-          >
-            4. Multi-Column Grids (<code class="font-mono text-theme-primary"
-              >:::stat-group columns=N</code
-            >)
-          </h4>
-          <p class="text-theme-muted text-[11px]">
-            Arrange stat fields into 1 to 6 responsive grid columns.
-          </p>
-          <pre
-            class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
-:::card
-:::stat-group columns=3
-[str:prominent]
-[dex:prominent]
-[con:prominent]
-:::
-:::
-          </pre>
-        </div>
-
-        <div
-          class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
-        >
-          <h4
-            class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
-          >
-            5. Markdown Tables
-          </h4>
-          <p class="text-theme-muted text-[11px]">
-            Use standard GFM Markdown tables to embed rollable attacks or stats
-            in table rows.
-          </p>
-          <pre
-            class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
-| Attack | Bonus | Damage |
-| --- | --- | --- |
-| Shortsword | [atk_bonus] | [damage] |
-          </pre>
-        </div>
-      </div>
-
-      <div class="border-t border-theme-border p-3 flex justify-end">
-        <button
-          type="button"
-          class="rounded bg-theme-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-bg hover:opacity-90"
-          onclick={() => (showSyntaxHelp = false)}
-        >
-          Got it
-        </button>
-      </div>
+        {/if}
+      </button>
     </div>
   </div>
 {/if}

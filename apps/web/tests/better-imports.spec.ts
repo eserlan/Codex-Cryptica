@@ -67,7 +67,7 @@ test.describe("Better Imports E2E", () => {
                 {
                   title: "Existing Dragon",
                   type: "Character",
-                  chronicle: "New lore that should be ignored",
+                  chronicle: "New lore from import",
                   detectedLinks: [{ target: "New Kingdom", label: "lives in" }],
                 },
                 {
@@ -146,70 +146,31 @@ test.describe("Better Imports E2E", () => {
       await (window as any).oracle.setKey("fake-key");
       const vault = (window as any).vault;
 
-      // Mock batch operations
-      vault.batchCreateEntities = async (data: any[]) => {
-        data.forEach((item) => {
-          const id = item.title.toLowerCase().replace(/\s+/g, "-");
-          vault.entities[id] = {
-            id,
-            title: item.title,
-            type: item.type,
-            content: item.initialData.content,
-            lore: item.initialData.lore,
-            labels: item.initialData.labels,
-            tags: item.initialData.tags || [],
-            connections: item.initialData.connections || [],
-          };
-        });
-        return Promise.resolve();
-      };
-
-      vault.addConnection = (
-        sourceId: string,
-        targetId: string,
-        type: string,
-        label?: string,
-      ) => {
-        const source = vault.entities[sourceId];
-        if (source) {
-          source.connections.push({
-            target: targetId,
-            type,
-            label,
-            strength: 1,
-          });
-          return true;
-        }
-        return false;
-      };
+      // Keep this importer scenario isolated from entities left in the
+      // browser-local default vault by an earlier E2E test or local run.
+      for (const id of Object.keys(vault.entities)) {
+        await vault.deleteEntity(id);
+      }
     });
   });
 
   test("should identify existing entities and handle connections", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with an entity via evaluate (fast & reliable)
-    await page.evaluate(() => {
+    // 1. Pre-populate vault with an entity via createEntity
+    await page.evaluate(async () => {
       const vault = (window as any).vault;
-      vault.entities["existing-dragon"] = {
+      await vault.createEntity("Character", "Existing Dragon", {
         id: "existing-dragon",
-        title: "Existing Dragon",
-        type: "Character",
         content: "Already here",
         connections: [],
         labels: [],
         tags: [],
-      };
-      if (
-        vault.entityStore &&
-        typeof vault.entityStore.rebuildIndexes === "function"
-      ) {
-        vault.entityStore.rebuildIndexes();
-      }
+      });
     });
 
     // 3. Upload a file to trigger the importer
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await expect(fileInput).toBeAttached();
 
     await fileInput.setInputFiles({
@@ -220,32 +181,41 @@ test.describe("Better Imports E2E", () => {
 
     // 4. Verify Review step
     await expect(
-      page.locator('h3:has-text("Review Identified Entities")'),
+      page.locator('h3:has-text("Review Import Package")'),
     ).toBeVisible({ timeout: 20000 });
 
-    // Check for Existing Dragon
-    const existingCard = page.locator(".entity-card").filter({
-      has: page.locator("strong", { hasText: "Existing Dragon" }),
-    });
-    await expect(existingCard).toBeVisible();
-    await expect(existingCard.locator(".existing-badge")).toBeVisible();
+    // Check for Existing Dragon — matched items get an "Existing" badge and
+    // per-row skip/update/create buttons; row found by walking up from the
+    // item's own checkbox, since rows have no stable class/testid.
+    const existingCheckbox = page.getByLabel("Include Existing Dragon");
+    const existingRow = existingCheckbox.locator(
+      "xpath=ancestor::div[contains(@class,'grid-cols-')]",
+    );
+    await expect(existingRow).toBeVisible();
+    await expect(
+      existingRow.getByText("Existing", { exact: true }),
+    ).toBeVisible();
 
-    // Force select Existing Dragon to trigger the "Connect to it" logic
-    await existingCard.locator('input[type="checkbox"]').check();
+    // Select the matched entity so its incoming relationship is resolved to
+    // the existing record.
+    await existingCheckbox.check();
 
-    // Check for New Kingdom
-    const newCard = page.locator(".entity-card").filter({
-      has: page.locator("strong", { hasText: "New Kingdom" }),
-    });
-    await expect(newCard).toBeVisible();
-    await expect(newCard.locator(".existing-badge")).not.toBeVisible();
-    await expect(newCard.locator('input[type="checkbox"]')).toBeChecked();
+    // Check for New Kingdom — unmatched items get a "New" badge and a plain
+    // "Create" label instead of skip/update/create buttons.
+    const newCheckbox = page.getByLabel("Include New Kingdom");
+    const newRow = newCheckbox.locator(
+      "xpath=ancestor::div[contains(@class,'grid-cols-')]",
+    );
+    await expect(newRow).toBeVisible();
+    await expect(newRow.getByText("New", { exact: true })).toBeVisible();
+    await expect(newCheckbox).toBeChecked();
 
-    // 5. Click Import (should import 2 items: 1 create, 1 update)
-    await page.click('button:has-text("Import 2 Items")');
+    // 5. Click Import (the selected existing match is updated in-memory while
+    // the new item is created; the importer reports both actionable items).
+    await page.getByRole("button", { name: /Import 2/ }).click();
 
     // 6. Verify Success
-    await expect(page.locator("text=Import Successful")).toBeVisible();
+    await expect(page.locator('h3:has-text("Import Report")')).toBeVisible();
 
     // 7. Verify Vault Content
     const entities = await page.evaluate(() => {
@@ -253,7 +223,7 @@ test.describe("Better Imports E2E", () => {
     });
 
     expect(entities["new-kingdom"]).toBeDefined();
-    expect(entities["existing-dragon"].content).toBe("Already here"); // Should NOT have been overwritten
+    expect(entities["existing-dragon"].content).toBe("New lore from import");
 
     // Verify connection was added to existing entity
     const conn = entities["existing-dragon"].connections.find(
@@ -266,28 +236,20 @@ test.describe("Better Imports E2E", () => {
   test("should identify existing entities leniency (fuzzy match)", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with "Eldrin" via evaluate
-    await page.evaluate(() => {
+    // 1. Pre-populate vault with "Eldrin" via createEntity
+    await page.evaluate(async () => {
       const vault = (window as any).vault;
-      vault.entities["eldrin"] = {
+      await vault.createEntity("Character", "Eldrin", {
         id: "eldrin",
-        title: "Eldrin",
-        type: "Character",
         content: "Wizard",
         connections: [],
         labels: [],
         tags: [],
-      };
-      if (
-        vault.entityStore &&
-        typeof vault.entityStore.rebuildIndexes === "function"
-      ) {
-        vault.entityStore.rebuildIndexes();
-      }
+      });
     });
 
     // 3. Upload a file
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("import-dropzone-file-input");
     await expect(fileInput).toBeAttached();
 
     await fileInput.setInputFiles({
@@ -298,18 +260,17 @@ test.describe("Better Imports E2E", () => {
 
     // 4. Verify Review step identifies the match
     await expect(
-      page.locator('h3:has-text("Review Identified Entities")'),
+      page.locator('h3:has-text("Review Import Package")'),
     ).toBeVisible({ timeout: 20000 });
 
-    const card = page.locator(".entity-card").filter({
-      has: page.locator("strong", { hasText: "Eldrin the Wise" }),
-    });
-    await expect(card).toBeVisible();
-
-    // It should have the "Already in Vault" badge because of the fuzzy match
-    await expect(card.locator(".existing-badge")).toContainText(
-      "Already in Vault: Eldrin",
+    const checkbox = page.getByLabel("Include Eldrin the Wise");
+    const row = checkbox.locator(
+      "xpath=ancestor::div[contains(@class,'grid-cols-')]",
     );
-    await expect(card.locator('input[type="checkbox"]')).not.toBeChecked();
+    await expect(row).toBeVisible();
+
+    // It should have the "Existing" match badge because of the fuzzy match
+    await expect(row.getByText("Existing", { exact: true })).toBeVisible();
+    await expect(checkbox).toBeChecked();
   });
 });

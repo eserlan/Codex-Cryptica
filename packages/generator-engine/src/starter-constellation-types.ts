@@ -64,3 +64,34 @@ export interface ContextualRecommendation {
   relationType: string;
   actionLabel: string;
 }
+
+/** One slot in the starter constellation, for describing it before generating. */
+export interface StarterConstellationSlot {
+  /** The genre's word for this slot, e.g. "Sector" rather than "Region". */
+  label: string;
+  /** A representative name the generator can produce for this slot. */
+  example: string;
+}
+
+/**
+ * A description of what picking a given theme will actually produce, used to
+ * show the user the consequences of the choice before they commit to it.
+ *
+ * The dropdown label and the generated genre are not the same words: the theme
+ * "LCARS Interface" produces a Space Exploration world, "Ancient Parchment"
+ * produces Classic Fantasy. Anything user-facing needs both names.
+ */
+export interface StarterConstellationPreview {
+  themeId: string;
+  /** Genre of the generated content, e.g. "Classic Fantasy". */
+  genreName: string;
+  /** One line on the genre's tone, reused from the generator's own flavor text. */
+  flavor: string;
+  /**
+   * The five archetype slots the offline generator always fills, in creation
+   * order, and the shape the AI prompt is told to mirror. The AI path may
+   * return 4 to 6 entities, so treat these as the shape of a starter world
+   * rather than an exact manifest.
+   */
+  slots: StarterConstellationSlot[];
+}

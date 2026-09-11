@@ -13,7 +13,6 @@ const sourceEntity = {
   content: "A contested sanctuary.",
   lore: "## Secret\nA star sleeps below.",
   labels: ["dungeon"],
-  tags: [],
   aliases: [],
   connections: [],
   status: "active",

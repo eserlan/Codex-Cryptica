@@ -1,22 +1,28 @@
 import type { Core } from "cytoscape";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 import type { GraphNode, GraphEdge } from "../transformer";
 import type { LayoutRequest } from "../LayoutManager";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
   vaultStatus:
-    | "loading"
-    | "idle"
-    | "error"
-    | "saving"
-    | "saved"
-    | "needs-permission";
+    "loading" | "idle" | "error" | "saving" | "saved" | "needs-permission";
   initialLoaded: boolean;
   isTemporalMetadataEqual: (a: any, b: any) => boolean;
   activeLabels?: Set<string>;
   labelFilterMode?: "AND" | "OR";
   activeCategories?: Set<string>;
+  /**
+   * The caller has established that only a large-graph focus set changed.
+   * Retained elements are therefore known to have unchanged data and filter
+   * state, so reconciliation may limit work to the membership delta.
+   */
+  focusMembershipOnly?: boolean;
   skipRenderedWeightSync?: boolean;
+  performanceRecorder?: PerformanceRecorder;
   onFirstElements?: () => void;
   onLayoutUpdate?: (req: LayoutRequest) => void;
 }
@@ -71,7 +77,8 @@ const syncRenderedWeights = (
 /**
  * Pass 1 — Reconcile existing elements against the target set.
  * Partitions current cy elements into a reusable `elementMap` (kept) and
- * `elementsToRemove` (stale), removing the stale ones in a single batch.
+ * `elementsToRemove` (stale). The caller removes stale elements inside its
+ * outer renderer batch so every reconciliation phase is atomic.
  */
 function reconcileElements(
   cy: Core,
@@ -87,9 +94,17 @@ function reconcileElements(
     else elementMap.set(id, el);
   });
 
-  if (elementsToRemove.length > 0) cy.remove(cy.collection(elementsToRemove));
-
   return { elementMap, elementsToRemove };
+}
+
+/** Guarantees every renderer batch is closed, even if a Cytoscape call fails. */
+function runInRendererBatch(cy: Core, work: () => void) {
+  cy.startBatch();
+  try {
+    work();
+  } finally {
+    cy.endBatch();
+  }
 }
 
 /**
@@ -102,7 +117,7 @@ function addNewElements(
   cy: Core,
   elements: (GraphNode | GraphEdge)[],
   elementMap: Map<string, any>,
-): { newNodes: GraphNode[] } {
+): { newNodes: GraphNode[]; addedEdgeCount: number } {
   const newNodes: GraphNode[] = [];
   const newEdges: GraphEdge[] = [];
   elements.forEach((el) => {
@@ -115,6 +130,7 @@ function addNewElements(
     }
   });
 
+  let addedEdgeCount = 0;
   if (newNodes.length > 0 || newEdges.length > 0) {
     if (newNodes.length > 0) {
       // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
@@ -146,10 +162,11 @@ function addNewElements(
       cy.add(validEdges).forEach((e) => {
         elementMap.set(e.id(), e);
       });
+      addedEdgeCount = validEdges.length;
     }
   }
 
-  return { newNodes };
+  return { newNodes, addedEdgeCount };
 }
 
 /**
@@ -308,12 +325,12 @@ function applyFilterClasses(
 }
 
 /**
- * Pass 3 — Incremental data sync + filtering, in one cy.batch.
+ * Pass 3 — Incremental data sync + filtering.
  * Patches changed data and (re)applies visibility classes per element, then
- * recomputes rendered edge weights from the now-filtered graph.
+ * recomputes rendered edge weights from the now-filtered graph. The caller
+ * owns the outer Cytoscape batch.
  */
 function syncDataAndFilters(
-  cy: Core,
   elements: (GraphNode | GraphEdge)[],
   elementMap: Map<string, any>,
   options: SyncOptions,
@@ -325,28 +342,59 @@ function syncDataAndFilters(
     activeCategories,
   } = options;
 
-  cy.batch(() => {
-    const ctx: FilterContext = {
-      labels: activeLabels
-        ? Array.from(activeLabels).map((l) => l.toLowerCase())
-        : [],
-      labelFilterMode,
-      activeCategories,
-      lowerScratch: [],
-    };
+  const ctx: FilterContext = {
+    labels: activeLabels
+      ? Array.from(activeLabels).map((l) => l.toLowerCase())
+      : [],
+    labelFilterMode,
+    activeCategories,
+    lowerScratch: [],
+  };
 
-    elements.forEach((el) => {
-      const node = elementMap.get(el.data.id);
-      if (!node) return;
+  elements.forEach((el) => {
+    const node = elementMap.get(el.data.id);
+    if (!node) return;
 
-      patchElementData(node, el, isTemporalMetadataEqual);
-      applyFilterClasses(node, el, ctx);
-    });
-
-    if (!options.skipRenderedWeightSync) {
-      syncRenderedWeights(elementMap, elements);
-    }
+    patchElementData(node, el, isTemporalMetadataEqual);
+    applyFilterClasses(node, el, ctx);
   });
+
+  if (!options.skipRenderedWeightSync) {
+    syncRenderedWeights(elementMap, elements);
+  }
+}
+
+/**
+ * Focus-set transitions retain data and filters for their shared membership.
+ * Apply visibility classes only to newly added nodes; weight reconciliation is
+ * deliberately global because retained nodes can gain or lose visible edges.
+ */
+function syncFocusMembershipDelta(
+  elements: (GraphNode | GraphEdge)[],
+  elementMap: Map<string, any>,
+  addedNodeIds: Set<string>,
+  options: SyncOptions,
+) {
+  const ctx: FilterContext = {
+    labels: options.activeLabels
+      ? Array.from(options.activeLabels).map((label) => label.toLowerCase())
+      : [],
+    labelFilterMode: options.labelFilterMode,
+    activeCategories: options.activeCategories,
+    lowerScratch: [],
+  };
+
+  for (let i = 0; i < elements.length; i++) {
+    const element = elements[i];
+    if (element.group !== "nodes" || !addedNodeIds.has(element.data.id))
+      continue;
+    const node = elementMap.get(element.data.id);
+    if (node) applyFilterClasses(node, element, ctx);
+  }
+
+  if (!options.skipRenderedWeightSync) {
+    syncRenderedWeights(elementMap, elements);
+  }
 }
 
 export function resolveLayoutTrigger(
@@ -372,12 +420,55 @@ export function resolveLayoutTrigger(
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const { elements, vaultStatus, initialLoaded } = options;
   const isVaultLoading = vaultStatus === "loading";
+  const recorder = options.performanceRecorder ?? performanceRecorder;
+  const reconcileSpan = recorder.start("graph_sync_reconcile");
 
   try {
-    // Pass 1: reconcile + remove stale. Pass 2: add new. Pass 3: patch data + filters.
+    // Reconcile the target once, then perform every renderer mutation in one
+    // batch so Cytoscape does not redraw between remove/add/filter phases.
     const { elementMap, elementsToRemove } = reconcileElements(cy, elements);
-    const { newNodes } = addNewElements(cy, elements, elementMap);
-    syncDataAndFilters(cy, elements, elementMap, options);
+    let newNodes: GraphNode[] = [];
+    let addedEdgeCount = 0;
+    runInRendererBatch(cy, () => {
+      const removeSpan = recorder.start("graph_sync_remove");
+      if (elementsToRemove.length > 0) {
+        cy.remove(cy.collection(elementsToRemove));
+      }
+      removeSpan.complete(() => ({
+        removedNodeCount: elementsToRemove.filter((element) => element.isNode())
+          .length,
+        removedEdgeCount: elementsToRemove.filter(
+          (element) => !element.isNode(),
+        ).length,
+      }));
+
+      const addSpan = recorder.start("graph_sync_add");
+      ({ newNodes, addedEdgeCount } = addNewElements(cy, elements, elementMap));
+      addSpan.complete(() => ({
+        addedNodeCount: newNodes.length,
+        addedEdgeCount,
+      }));
+
+      const patchSpan = recorder.start("graph_sync_patch_filter");
+      if (options.focusMembershipOnly) {
+        syncFocusMembershipDelta(
+          elements,
+          elementMap,
+          new Set(newNodes.map((node) => node.data.id)),
+          options,
+        );
+      } else {
+        syncDataAndFilters(elements, elementMap, options);
+      }
+      patchSpan.complete(() => ({
+        renderedNodeCount: elements.filter(
+          (element) => element.group === "nodes",
+        ).length,
+        renderedEdgeCount: elements.filter(
+          (element) => element.group === "edges",
+        ).length,
+      }));
+    });
 
     const isFirstElements = !initialLoaded && elements.length > 0;
     const hasDeletions = elementsToRemove.length > 0;
@@ -399,7 +490,14 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         if (req) options.onLayoutUpdate?.(req);
       }
     }
+    reconcileSpan.complete(() => ({
+      renderedNodeCount: elements.filter((element) => element.group === "nodes")
+        .length,
+      renderedEdgeCount: elements.filter((element) => element.group === "edges")
+        .length,
+    }));
   } catch (err) {
+    reconcileSpan.fail("unexpected");
     console.error("[GraphSync] Error syncing elements", err);
   }
 }

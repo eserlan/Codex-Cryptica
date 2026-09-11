@@ -61,13 +61,33 @@ describe("getModel", () => {
 describe("getOperationDefaults", () => {
   it("returns the matching operation/context pair", () => {
     const defaults = getOperationDefaults("freeform-generation", "public");
-    expect(defaults?.defaultModelKey).toBe("gemini-flash-lite");
-  });
-
-  it("returns luna-fast as structured-generation's current default (2026-08-05, verified live)", () => {
-    const defaults = getOperationDefaults("structured-generation", "public");
     expect(defaults?.defaultModelKey).toBe("luna-fast");
     expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
+  });
+
+  it("returns luna-fast as utility's default, with gemini-flash-lite fallback", () => {
+    const defaults = getOperationDefaults("utility", "public");
+    expect(defaults?.defaultModelKey).toBe("luna-fast");
+    expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
+  });
+
+  it("serves the generator operations from Luna, with Gemini as fallback", () => {
+    for (const operation of [
+      "structured-generation",
+      "freeform-generation",
+    ] as const) {
+      const defaults = getOperationDefaults(operation, "public");
+      expect(defaults?.defaultModelKey, operation).toBe("luna-fast");
+      expect(defaults?.fallbackModelKey, operation).toBe("gemini-flash-lite");
+    }
+  });
+
+  it("keeps classification and utility on Luna", () => {
+    for (const operation of ["classification", "utility"] as const) {
+      expect(getOperationDefaults(operation, "public")?.defaultModelKey).toBe(
+        "luna-fast",
+      );
+    }
   });
 
   it("returns undefined for an operation with no configured defaults (e.g. revision)", () => {

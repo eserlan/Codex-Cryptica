@@ -6,6 +6,10 @@ import {
 import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
+import { GENERATOR_SLUGS } from "../../params/generator_slug";
+import { getAllLandingPageSlugs } from "$lib/content/for/registry";
+import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
+import { getAllExamples, examplePath } from "$lib/content/examples/registry";
 
 export const prerender = true;
 
@@ -25,6 +29,10 @@ export async function GET() {
   const staticRoutes = [
     { path: "/", changefreq: "weekly", priority: "1.0" },
     { path: "/blog", changefreq: "weekly", priority: "0.9" },
+    { path: "/for", changefreq: "weekly", priority: "0.9" },
+    { path: "/answers", changefreq: "weekly", priority: "0.8" },
+    { path: "/examples", changefreq: "weekly", priority: "0.8" },
+    { path: "/explore", changefreq: "monthly", priority: "0.5" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
     { path: "/migrations", changefreq: "weekly", priority: "0.9" },
@@ -44,6 +52,11 @@ export async function GET() {
       path: "/responsible-ai-worldbuilding",
       changefreq: "monthly",
       priority: "0.8",
+    },
+    {
+      path: "/resources/castle-floorplans",
+      changefreq: "monthly",
+      priority: "0.6",
     },
 
     {
@@ -88,31 +101,10 @@ export async function GET() {
     priority: "0.8",
   }));
 
-  // Generator pages
-  const generatorRoutes = [
-    "npc",
-    "settlement",
-    "magic-item",
-    "faction",
-    "tavern",
-    "social-hub",
-    "kingdom",
-    "nation",
-    "quest",
-    "item",
-    "vampire-clan",
-    "names",
-    "fantasy-names",
-    "dnd-npc",
-    "pantheon-generator",
-    "god-generator",
-    "ship-generator",
-    "language-generator",
-    "news-sheet-generator",
-    "dungeon-generator",
-    "adventure-generator",
-    "random",
-  ].map((slug) => ({
+  // Generator pages — derived from GENERATOR_SLUGS (the route matcher's own
+  // slug list) rather than a hand-maintained copy, so a new generator can't
+  // silently go missing from the sitemap the way /generators/puzzle did (#2850).
+  const generatorRoutes = GENERATOR_SLUGS.map((slug) => ({
     path: `/generators/${slug}`,
     changefreq: "monthly",
     priority: "0.8",
@@ -132,6 +124,29 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Landing pages (/for/[slug])
+  const landingPageRoutes = getAllLandingPageSlugs().map((slug) => ({
+    path: `/for/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Answer pages (/answers/[slug]). Keyed off answerPath rather than the slug
+  // so a page that canonicalises to another URL is never listed under one its
+  // own <link rel="canonical"> disowns.
+  const answerRoutes = getAllAnswers().map((answer) => ({
+    path: answerPath(answer),
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Curated example pages (/examples/[slug]), keyed off the canonical path.
+  const exampleRoutes = getAllExamples().map((example) => ({
+    path: examplePath(example),
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
@@ -140,6 +155,9 @@ export async function GET() {
     ...generatorRoutes,
     ...themeHubRoutes,
     ...importRoutes,
+    ...landingPageRoutes,
+    ...answerRoutes,
+    ...exampleRoutes,
   ];
 
   const staticUrls = allStatic

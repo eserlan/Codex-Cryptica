@@ -38,7 +38,35 @@ const builtIn = {
   updatedAt: "2026-01-01",
 };
 
+const longTextSchema: StatSheetTemplate = {
+  id: "schema-notes",
+  name: "Notes Schema",
+  isBuiltIn: true,
+  fields: [{ id: "notes", label: "Notes", type: "longtext" }],
+};
+
+const diceSchema: StatSheetTemplate = {
+  id: "schema-dice",
+  name: "Dice Schema",
+  isBuiltIn: true,
+  fields: [
+    { id: "perception", label: "Perception", type: "dice", formula: "1d100" },
+  ],
+};
+
 describe("PresentationTemplateEditor", () => {
+  it("explains the visual-builder field options in Syntax Help", async () => {
+    render(PresentationTemplateEditor, { schema });
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-help-btn"));
+
+    expect(
+      screen.getByText(
+        "In the Visual Builder, right-click a field chip to choose a compatible display mode or hide its label.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("flags an unresolved field reference before save via diagnostics", async () => {
     render(PresentationTemplateEditor, { schema });
 
@@ -119,5 +147,327 @@ describe("PresentationTemplateEditor", () => {
     expect(saveTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ source: "{{stat.hp}}" }),
     );
+  });
+
+  it("only offers compatible display modes and saves the selected mode from the visual builder", async () => {
+    const saved = {
+      ...builtIn,
+      id: "presentation-notes",
+      schemaTemplateId: longTextSchema.id,
+      isBuiltIn: false,
+    };
+    saveTemplate.mockResolvedValueOnce(saved);
+    render(PresentationTemplateEditor, {
+      schema: longTextSchema,
+      template: {
+        ...saved,
+        source: ":::card\n[notes]\n:::",
+      },
+    });
+
+    await fireEvent.contextMenu(
+      screen.getByTitle("Right-click for display options"),
+    );
+
+    expect(screen.getByRole("menuitem", { name: "Notes Area" })).toBeTruthy();
+    expect(
+      screen.queryByRole("menuitem", { name: "Current / Max Counter" }),
+    ).toBeNull();
+
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Notes Area" }));
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining('{{stat.notes display="notes"}}'),
+      }),
+    );
+  });
+
+  it("offers the compact name-and-target mode for dice rolls", async () => {
+    const saved = {
+      ...builtIn,
+      id: "presentation-dice",
+      schemaTemplateId: diceSchema.id,
+      isBuiltIn: false,
+    };
+    saveTemplate.mockResolvedValueOnce(saved);
+    render(PresentationTemplateEditor, {
+      schema: diceSchema,
+      template: { ...saved, source: "[perception]" },
+    });
+
+    await fireEvent.contextMenu(
+      screen.getByTitle("Right-click for display options"),
+    );
+
+    expect(
+      screen.getByRole("menuitem", { name: "Name & Target" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Notes Area" })).toBeNull();
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Name & Target" }),
+    );
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining(
+          '{{stat.perception display="name-target"}}',
+        ),
+      }),
+    );
+  });
+
+  it("adds a literal value to a visual table row without creating a stat field", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-table",
+      isBuiltIn: false,
+      source: "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    await fireEvent.click(
+      screen.getByTestId("presentation-editor-add-table-value"),
+    );
+    const valueInput = screen.getByRole("textbox", {
+      name: "Value for table row 1",
+    });
+    await fireEvent.input(valueInput, { target: { value: "Steel" } });
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("Steel"),
+      }),
+    );
+  });
+
+  it("uses the column stepper to resize table headers and cells", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-table-columns",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    await fireEvent.input(
+      screen.getByRole("spinbutton", { name: "Columns for Equipment" }),
+      { target: { value: "1" } },
+    );
+
+    expect(
+      screen.queryByTestId("presentation-editor-add-table-value"),
+    ).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("| Item |"),
+      }),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ source: expect.not.stringContaining("Steel") }),
+    );
+  });
+
+  it("edits visual table headers and saves them to Markdown", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-table-headers",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    await fireEvent.input(
+      screen.getByRole("textbox", { name: "Header 2 for Equipment" }),
+      { target: { value: "Material" } },
+    );
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("| Item | Material |"),
+      }),
+    );
+  });
+
+  it("reflects added and renamed schema fields in the available fields list and excludes deleted fields", () => {
+    const updatedSchema: StatSheetTemplate = {
+      id: "schema-reconciled",
+      name: "Reconciled Schema",
+      isBuiltIn: false,
+      fields: [
+        { id: "str", label: "Might", type: "number" }, // renamed
+        { id: "mana", label: "Mana Points", type: "counter" }, // added
+      ],
+    };
+
+    render(PresentationTemplateEditor, { schema: updatedSchema });
+
+    // Available fields sidebar and visual cards show Might [str] and Mana Points [mana]
+    expect(screen.getAllByText("Might").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("[str]")).toBeTruthy();
+    expect(screen.getAllByText("Mana Points").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("[mana]")).toBeTruthy();
+    // Deleted field (e.g. hp) does not appear in sidebar or canvas
+    expect(screen.queryByText("Hit Points")).toBeNull();
+    expect(screen.queryByText("[hp]")).toBeNull();
+  });
+
+  it("preserves a previously saved hide-label field across an unrelated visual edit and reload", async () => {
+    const twoFieldSchema: StatSheetTemplate = {
+      id: "schema-two-fields",
+      name: "Two Field Schema",
+      isBuiltIn: true,
+      fields: [
+        { id: "hp", label: "Hit Points", type: "text" },
+        { id: "mp", label: "Mana", type: "text" },
+      ],
+    };
+    const hideLabelTemplate = {
+      ...builtIn,
+      id: "presentation-hide-label",
+      schemaTemplateId: twoFieldSchema.id,
+      isBuiltIn: false,
+      source: ":::card\n{{stat.hp hide-label}}\n[mp]\n:::",
+    };
+    saveTemplate.mockResolvedValueOnce(hideLabelTemplate);
+    render(PresentationTemplateEditor, {
+      schema: twoFieldSchema,
+      template: hideLabelTemplate,
+    });
+
+    // Perform an unrelated visual edit (toggle hide-label on the *other*
+    // field) which regenerates the whole source from fieldDisplayOverrides.
+    await fireEvent.contextMenu(screen.getByLabelText("Mana field options"));
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Hide Label" }));
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("{{stat.hp hide-label}}"),
+      }),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("{{stat.mp hide-label}}"),
+      }),
+    );
+  });
+
+  it("renders an explicit missing indicator on visual card chips referencing a deleted field", () => {
+    const customTemplate = {
+      ...builtIn,
+      id: "presentation-with-deleted-field",
+      isBuiltIn: false,
+      source: ":::card\n[deleted_field]\n:::",
+    };
+
+    render(PresentationTemplateEditor, {
+      schema,
+      template: customTemplate,
+    });
+
+    expect(screen.getByText(/deleted_field \(missing\)/i)).toBeTruthy();
+  });
+
+  it("allows clearing a table title and saves without a heading line", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-untitled-table",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    const titleInput = screen.getByDisplayValue("Equipment");
+    await fireEvent.input(titleInput, { target: { value: "" } });
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.not.stringContaining("### Equipment"),
+      }),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("| Item | Notes |"),
+      }),
+    );
+  });
+
+  it("preserves intentionally untitled tables/sections when reopened and does not restore default titles", async () => {
+    const untitledTemplate = {
+      ...builtIn,
+      id: "presentation-untitled-reopen",
+      isBuiltIn: false,
+      source: "| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(untitledTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: untitledTemplate,
+    });
+
+    // The title input should be empty (not "Table 1")
+    const titleInput = screen.getByPlaceholderText(
+      "Table Title (optional)",
+    ) as HTMLInputElement;
+    expect(titleInput.value).toBe("");
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.not.stringContaining("###"),
+      }),
+    );
+  });
+
+  it("gives newly added sections sensible initial titles in the visual builder", async () => {
+    render(PresentationTemplateEditor, {
+      schema,
+      template: {
+        ...builtIn,
+        id: "presentation-blank",
+        isBuiltIn: false,
+        source: "",
+      },
+    });
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-add-table"));
+    expect(
+      screen.getAllByDisplayValue(/Table \d+/).length,
+    ).toBeGreaterThanOrEqual(1);
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-add-card"));
+    expect(
+      screen.getAllByDisplayValue(/Section \d+/).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 });

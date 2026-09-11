@@ -24,10 +24,10 @@
   "devDependencies": {
     "@sveltejs/kit": "^2.60.1",
     "@types/node": "^26.1.0",
-    "@vitest/coverage-v8": "^4.1.7",
-    "eslint": "^10.8.0",
+    "@vitest/coverage-v8": "^5.0.0",
+    "eslint": "^10.10.0",
     "schema": "workspace:*",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0"
   }
 }

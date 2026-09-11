@@ -7,8 +7,13 @@ import {
   ListingDraftSchema,
   PUBLISH_LIMITS,
   PublicListingSchema,
+  PublicTemplatePackageSchema,
   PublishedNoticeSchema,
   SuspensionMarkerSchema,
+  CloudBackupManifestSchema,
+  LocalCloudBackupRecordSchema,
+  SupportLookupResultSchema,
+  CLOUD_BACKUP_LIMITS,
 } from "./publishing";
 
 describe("publishing directory schemas", () => {
@@ -223,6 +228,188 @@ describe("publishing directory schemas", () => {
           mode: "invalid-mode",
         }).success,
       ).toBe(false);
+    });
+  });
+
+  describe("template package schemas", () => {
+    const validPackage = {
+      schemaVersion: 1 as const,
+      template: {
+        name: "Mythras Warrior",
+        description: "Standard Mythras combatant layout.",
+        system: "Mythras",
+        labels: ["npc", "combat"],
+        fields: [
+          {
+            id: "str_check",
+            label: "STR Check",
+            type: "dice" as const,
+            formula: "1d20+2",
+            modifierSource: "str_score",
+          },
+          {
+            id: "weapons",
+            label: "Weapons",
+            type: "item-table" as const,
+            linkVaultItems: true,
+            columns: [
+              { id: "weapon", label: "Weapon", type: "text" as const },
+              { id: "damage", label: "Damage", type: "dice" as const },
+            ],
+          },
+        ],
+      },
+    };
+
+    it("accepts valid template package with item-table and modifierSource", () => {
+      expect(PublicTemplatePackageSchema.parse(validPackage)).toEqual(
+        validPackage,
+      );
+    });
+
+    it("rejects template without system or category", () => {
+      const invalid = {
+        ...validPackage,
+        template: {
+          ...validPackage.template,
+          system: undefined,
+          category: undefined,
+        },
+      };
+      expect(PublicTemplatePackageSchema.safeParse(invalid).success).toBe(
+        false,
+      );
+    });
+
+    it("rejects template with field min > max", () => {
+      const invalid = {
+        ...validPackage,
+        template: {
+          ...validPackage.template,
+          fields: [
+            {
+              id: "hp",
+              label: "HP",
+              type: "counter" as const,
+              min: 20,
+              max: 10,
+            },
+          ],
+        },
+      };
+      const result = PublicTemplatePackageSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(["template", "fields", 0]);
+      }
+    });
+  });
+});
+
+describe("CC Cloud Backup schemas (spec 162)", () => {
+  const manifest = {
+    schemaVersion: 1,
+    backupId: "b-1",
+    vaultTitle: "The Saltmere Fens",
+    sizeBytes: 1024,
+    createdAt: "2026-08-31T10:00:00.000Z",
+    lastPushedAt: "2026-08-31T10:05:00.000Z",
+  };
+
+  describe("CloudBackupManifestSchema", () => {
+    it("accepts a well-formed manifest", () => {
+      expect(CloudBackupManifestSchema.safeParse(manifest).success).toBe(true);
+    });
+
+    it("rejects an empty vault title", () => {
+      // An empty title would make every vault ambiguous to the support lookup.
+      expect(
+        CloudBackupManifestSchema.safeParse({ ...manifest, vaultTitle: "" })
+          .success,
+      ).toBe(false);
+    });
+
+    it("rejects a negative size", () => {
+      expect(
+        CloudBackupManifestSchema.safeParse({ ...manifest, sizeBytes: -1 })
+          .success,
+      ).toBe(false);
+    });
+
+    it("treats entityCount as optional", () => {
+      expect(
+        CloudBackupManifestSchema.safeParse({ ...manifest, entityCount: 42 })
+          .success,
+      ).toBe(true);
+    });
+  });
+
+  describe("LocalCloudBackupRecordSchema", () => {
+    const record = {
+      vaultId: "v-1",
+      backupId: "b-1",
+      ownerCode: "code-1",
+      enabled: true,
+      status: "idle" as const,
+      lastPushedAt: null,
+      consentedAt: "2026-08-31T10:00:00.000Z",
+    };
+
+    it("accepts a well-formed record with a null lastPushedAt", () => {
+      expect(LocalCloudBackupRecordSchema.safeParse(record).success).toBe(true);
+    });
+
+    it("rejects an unknown status", () => {
+      expect(
+        LocalCloudBackupRecordSchema.safeParse({ ...record, status: "done" })
+          .success,
+      ).toBe(false);
+    });
+
+    it("requires an ownership code", () => {
+      expect(
+        LocalCloudBackupRecordSchema.safeParse({ ...record, ownerCode: "" })
+          .success,
+      ).toBe(false);
+    });
+
+    it("keeps consentedAt when disabled, so re-enabling does not re-prompt", () => {
+      const disabled = { ...record, enabled: false };
+      const parsed = LocalCloudBackupRecordSchema.safeParse(disabled);
+      expect(parsed.success).toBe(true);
+      if (parsed.success)
+        expect(parsed.data.consentedAt).toBe(record.consentedAt);
+    });
+  });
+
+  describe("SupportLookupResultSchema", () => {
+    it("accepts a bare negative result with no metadata", () => {
+      // Zero matches and several matches share this shape on purpose.
+      expect(
+        SupportLookupResultSchema.safeParse({ matched: false }).success,
+      ).toBe(true);
+    });
+
+    it("accepts a positive result carrying metadata", () => {
+      expect(
+        SupportLookupResultSchema.safeParse({
+          matched: true,
+          backupId: "b-1",
+          vaultTitle: "The Saltmere Fens",
+          sizeBytes: 1024,
+          lastPushedAt: "2026-08-31T10:05:00.000Z",
+        }).success,
+      ).toBe(true);
+    });
+  });
+
+  describe("CLOUD_BACKUP_LIMITS", () => {
+    it("caps a whole vault at 50 MB", () => {
+      expect(CLOUD_BACKUP_LIMITS.maxVaultBytes).toBe(50 * 1024 * 1024);
+    });
+
+    it("bounds the admin lookup scan", () => {
+      expect(CLOUD_BACKUP_LIMITS.maxLookupScanKeys).toBe(1_000);
     });
   });
 });

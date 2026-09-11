@@ -45,7 +45,7 @@ export function isFrontpageEntity(entity: {
     }
     return false;
   };
-  return check(entity.tags) || check(entity.labels);
+  return check(entity.labels) || check(entity.tags);
 }
 
 /**

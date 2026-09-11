@@ -869,6 +869,8 @@ describe("MapSessionStore", () => {
       gridUnit: "ft",
       gridDistance: 5,
     });
+
+    expect(mapStore.selectMap).toHaveBeenCalledWith("map-1");
   });
 
   it("syncs from a remote session and updates mapStore", () => {
@@ -880,7 +882,12 @@ describe("MapSessionStore", () => {
 
     store.syncFromRemoteSession(snapshot);
 
-    expect(mapStore.selectMap).toHaveBeenCalledWith("map-1");
+    // mapStore.activeMapId is already "map-1" from beforeEach, so
+    // syncFromRemoteSession's own guard correctly skips re-selecting a map
+    // that's already active — gridSize/gridUnit/gridDistance still apply
+    // because applySnapshot's own gating only requires the snapshot's
+    // mapId to match the (already-matching) active map.
+    expect(mapStore.selectMap).not.toHaveBeenCalled();
     expect(store.mapId).toBe("map-1");
     expect(store.vttEnabled).toBe(true);
     expect(mapStore.gridSize).toBe(75);

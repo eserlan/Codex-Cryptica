@@ -9,6 +9,18 @@ import type { VaultRecord } from "../../utils/idb";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
+import type { PerformanceOperationHandle } from "@codex/performance-observability";
+
+/**
+ * How long the post-paint OPFS reconcile waits (#2619). Long enough to stay
+ * clear of first paint and hydration, short enough that a user cannot get far
+ * into editing stale data before it is corrected.
+ */
+const WARM_RECONCILE_DELAY_MS = 1500;
 
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
@@ -69,6 +81,7 @@ export class SyncStore {
   }
 
   private syncAbortController: AbortController | null = null;
+  private warmReconcileTimer: ReturnType<typeof setTimeout> | null = null;
   private savedTimer: any = null;
   /**
    * The vault whose entities are currently seeded in memory. Used to tell a
@@ -81,6 +94,7 @@ export class SyncStore {
   private unsubscribe: (() => void) | null = null;
 
   constructor(private deps: SyncStoreDependencies) {
+    browserPerformanceCapture.start();
     this.unsubscribe = appEventBus.subscribe(
       "SYNC:DRIVE_PULL_COMPLETE",
       async (event) => {
@@ -142,6 +156,7 @@ export class SyncStore {
 
   destroy() {
     this.clearSavedTimer();
+    this.cancelWarmReconcile();
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
@@ -154,11 +169,41 @@ export class SyncStore {
     );
   }
 
+  /**
+   * Re-reads the vault from OPFS after a warm-cache paint (#2619).
+   *
+   * Deferred rather than awaited so the instant load the cache exists for is
+   * unaffected: the user already has their vault on screen before this starts.
+   * `loadFiles(false)` takes the cold path, which reads OPFS and syncs the
+   * local folder, so anything the cache was missing or holding stale is
+   * corrected — and because it is the cold path, it cannot re-enter this.
+   */
+  private scheduleWarmReconcile(vaultIdAtStart: string): void {
+    if (this.warmReconcileTimer) return;
+    this.warmReconcileTimer = setTimeout(() => {
+      this.warmReconcileTimer = null;
+      // The user may have switched vaults while we waited; reconciling the
+      // wrong vault would be worse than not reconciling at all.
+      if (this.isStale(vaultIdAtStart)) return;
+      void this.loadFiles(false).catch((err) => {
+        debugStore.warn("[SyncStore] Warm-cache reconcile failed:", err);
+      });
+    }, WARM_RECONCILE_DELAY_MS);
+  }
+
+  private cancelWarmReconcile(): void {
+    if (!this.warmReconcileTimer) return;
+    clearTimeout(this.warmReconcileTimer);
+    this.warmReconcileTimer = null;
+  }
+
   async loadFiles(skipSyncIfWarm = true) {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;
 
+    // A load starting now supersedes any reconcile still waiting to fire.
+    this.cancelWarmReconcile();
     if (this.syncAbortController) {
       this.syncAbortController.abort();
     }
@@ -177,6 +222,31 @@ export class SyncStore {
       progress: 0,
     };
     this.failedFiles = [];
+    let vaultOpenSpan: PerformanceOperationHandle | null = null;
+    let vaultOpenRecorded = false;
+    let vaultOpenCacheState: "warm" | "cold" | null = null;
+    const completeVaultOpen = () => {
+      if (!vaultOpenSpan || vaultOpenRecorded) return;
+      vaultOpenRecorded = true;
+      vaultOpenSpan.complete(() => ({
+        cacheState: vaultOpenCacheState ?? "not_applicable",
+        entityCount: Object.keys(this.deps.repository.entities).length,
+      }));
+    };
+    const staleVaultOpen = () => {
+      if (!vaultOpenSpan || vaultOpenRecorded) return;
+      vaultOpenRecorded = true;
+      vaultOpenSpan.stale(() => ({
+        cacheState: vaultOpenCacheState ?? "not_applicable",
+      }));
+    };
+    const failVaultOpen = () => {
+      if (!vaultOpenSpan || vaultOpenRecorded) return;
+      vaultOpenRecorded = true;
+      vaultOpenSpan.fail("unexpected", () => ({
+        cacheState: vaultOpenCacheState ?? "not_applicable",
+      }));
+    };
 
     try {
       vaultEventBus.reset();
@@ -202,7 +272,14 @@ export class SyncStore {
         ? await cacheService.preloadVault(vaultIdAtStart)
         : new Map();
 
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      vaultOpenCacheState = cachedMap.size > 0 ? "warm" : "cold";
+      vaultOpenSpan = browserPerformanceRecorder.start(
+        cachedMap.size > 0 ? "vault_open_warm" : "vault_open_cold",
+      );
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       if (cachedMap.size > 0) {
         // Read the LIVE map at seed time (not a pre-await snapshot): on a
@@ -265,26 +342,43 @@ export class SyncStore {
 
       if (cachedMap.size > 0 && skipSyncIfWarm) {
         debugStore.log(
-          "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
+          "[SyncStore] Cache is warm. Painting from cache, reconciling after.",
         );
         await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
         await this.deps.loadMaps(vaultIdAtStart);
         await this.deps.loadCanvases(vaultIdAtStart);
         void this.deps.getActiveVaultHandle();
+        completeVaultOpen();
+        // The cache is a cache. Returning here made it the source of truth at
+        // startup, with no validation and no expiry — so a cache write that
+        // failed (its error is swallowed on the grounds that "the OPFS file is
+        // the source of truth") left the app showing stale data on every
+        // launch, forever, while the real entity sat on disk and synced
+        // correctly to the user's folder. That is #2619. The warm paint still
+        // happens first, so this costs nothing the user can perceive; it just
+        // stops the cache being able to mask the disk.
+        this.scheduleWarmReconcile(vaultIdAtStart);
         return;
       }
 
       const vaultDir = await this.deps.getActiveVaultHandle();
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       if (!vaultDir) {
         if (!isDemo) {
           this.setStatus(cachedMap.size > 0 ? "idle" : "error");
           if ((this._status as string) === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
+            failVaultOpen();
+          } else {
+            completeVaultOpen();
           }
         } else {
           this.setStatus("idle");
+          completeVaultOpen();
         }
         return;
       }
@@ -332,7 +426,10 @@ export class SyncStore {
                 },
               },
             );
-            if (signal.aborted) return;
+            if (signal.aborted) {
+              staleVaultOpen();
+              return;
+            }
             debugStore.log("[SyncStore] Local sync complete.");
 
             appEventBus.emit({
@@ -350,7 +447,10 @@ export class SyncStore {
         }
       }
 
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       if (cachedMap.size > 0) {
         this._status = "idle";
@@ -370,12 +470,21 @@ export class SyncStore {
 
             const changedIds = Object.keys(newOrChanged);
             if (changedIds.length > 0) {
+              const chunkSpan =
+                browserPerformanceRecorder.start("vault_sync_chunk");
               vaultEventBus.emit({
                 type: "SYNC_CHUNK_READY",
                 vaultId: vaultIdAtStart,
-                entities: this.deps.repository.entities,
+                // Keep chunk events proportional to changed files. The repository
+                // still owns the complete accumulated map; consumers only need the
+                // parsed records from this chunk.
+                entities: newOrChanged,
                 newOrChangedIds: changedIds,
               });
+              chunkSpan.complete(() => ({
+                changedEntityCount: changedIds.length,
+                entityCount: Object.keys(this.deps.repository.entities).length,
+              }));
             }
           },
         )
@@ -392,7 +501,10 @@ export class SyncStore {
 
       await syncPromise;
 
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       await Promise.all([
         this.deps.loadMaps(vaultIdAtStart),
@@ -410,8 +522,13 @@ export class SyncStore {
         type: "SYNC_COMPLETE",
         vaultId: vaultIdAtStart,
       });
+      completeVaultOpen();
     } catch (err: any) {
-      if (err.name === "AbortError" || err.message === "AbortError") return;
+      if (err.name === "AbortError" || err.message === "AbortError") {
+        staleVaultOpen();
+        return;
+      }
+      failVaultOpen();
       debugStore.error("[SyncStore] Load failed", err);
       this.setStatus("error");
       this.errorMessage = err.message;
@@ -427,6 +544,13 @@ export class SyncStore {
       }
       if (this._status === "loading" && !signal.aborted) {
         this.setStatus("idle");
+      }
+      if (!vaultOpenRecorded && vaultOpenSpan) {
+        if (signal.aborted || this.isStale(vaultIdAtStart, signal)) {
+          staleVaultOpen();
+        } else {
+          completeVaultOpen();
+        }
       }
     }
   }
@@ -482,11 +606,6 @@ export class SyncStore {
         });
 
         this.setStatus("saved");
-        this.savedTimer = setTimeout(() => {
-          if (this._status === "saved") {
-            this.setStatus("idle");
-          }
-        }, 3000);
       }
     } finally {
       // Fix C4: if vault switched mid-save the onStateChange vault-ID guard
@@ -496,6 +615,25 @@ export class SyncStore {
         this.setStatus("idle");
       }
     }
+  }
+
+  /**
+   * Discards the fast-start cache and re-reads the vault from OPFS (#2619).
+   *
+   * The recovery action that did not exist. Every other path that clears the
+   * cache is reached only by a Google Drive pull, so a local-only user whose
+   * cache had drifted from disk had no way back — switching vaults does not do
+   * it either, since `invalidatePreload()` drops the in-memory snapshot without
+   * touching Dexie. Needs no linked folder: OPFS is the source of truth.
+   */
+  async reloadFromDisk(): Promise<void> {
+    const activeVaultId = this.deps.activeVaultId();
+    if (!activeVaultId) return;
+
+    // Anything still sitting in the debounce would be lost by the reseed.
+    await this.waitForSaves();
+    await cacheService.clearVault(activeVaultId);
+    await this.loadFiles(false);
   }
 
   async loadFromFolder() {
@@ -556,7 +694,12 @@ export class SyncStore {
           metadata: { timestamp: systemClock.now(), vaultId: vaultIdAtStart },
         });
 
-        await this.loadFiles();
+        // Clear the cache before reloading, exactly as the Drive pull does.
+        // Without this the pull lands in OPFS and `loadFiles()` then takes the
+        // warm path and re-displays the pre-pull cache — the user asks to load
+        // from their folder and is shown the stale copy anyway (#2619).
+        await cacheService.clearVault(vaultIdAtStart);
+        await this.loadFiles(false);
       }
     } finally {
       // Fix C4: mirror of saveToFolder — reset stuck transitional status
@@ -607,10 +750,15 @@ export class SyncStore {
   setStatus(
     s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
-    if (s !== "saved") {
-      this.clearSavedTimer();
-    }
+    this.clearSavedTimer();
     this._status = s;
+    if (s === "saved") {
+      this.savedTimer = setTimeout(() => {
+        if (this._status === "saved") {
+          this._status = "idle";
+        }
+      }, 2500);
+    }
   }
 
   setErrorMessage(m: string | null) {

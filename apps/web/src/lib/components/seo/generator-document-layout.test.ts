@@ -85,7 +85,7 @@ The clan needs a relic recovered before dawn.`,
       type: "faction",
       title: "The Argent Loom",
       content: "### What they control\nThe canal gates.",
-      lore: `### At the Table
+      lore: `### At a Glance
 - **Base**: The old mint
 - **Resource**: Canal tolls
 - **Secret**: The founding charter is forged.
@@ -108,7 +108,7 @@ The dockside cells want to stop paying tribute to the founding families, and the
     expect(layout.content).toContain("### Secrets & Hooks");
     expect(layout.content).toContain("**Secret**: The founding charter");
     expect(layout.content).toContain("**Immediate Hook**: A loom has started");
-    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).toContain("**Base**");
     expect(layout.lore).toContain("### Notable NPCs");
     expect(layout.lore).toContain("### Rival Faction");
@@ -150,6 +150,31 @@ The chapel reliquary, and leverage over the patron.`,
     expect(layout.lore).not.toContain("### Reward");
   });
 
+  it("keeps only compact puzzle reference in the rail", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "note",
+      title: "The Ember Choir",
+      content:
+        "## Player-Facing Setup\nThree braziers block the vault.\n\n## Clues\n- The frescoes show the colours in order.",
+      lore: "### At a Glance\n- **Complexity:** Moderate\n\n### GM-Only Solution\nThe sequence opens the vault.\n\n### Character Spotlight Opportunities\nObservation and force both help.\n\n### Alternate Solutions\nBreak a brazier at a cost.\n\n### Failure & Escalation\nThe guardian wakes.\n\n### Escalating Hints\n1. Follow the mural.\n\n### Running the Puzzle\nDescribe every brazier freely.\n\n### Scaling\nUse two braziers for a simpler version.",
+      labels: ["puzzle-generator"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## Player-Facing Setup");
+    expect(layout.content).toContain("## Clues");
+    expect(layout.content).toContain("### Character Spotlight Opportunities");
+    expect(layout.content).toContain("### Alternate Solutions");
+    expect(layout.content).toContain("### Failure & Escalation");
+    expect(layout.content).toContain("### Running the Puzzle");
+    expect(layout.content).toContain("### Scaling");
+    expect(layout.lore).toContain("### GM-Only Solution");
+    expect(layout.lore).toContain("### Escalating Hints");
+    expect(layout.lore).not.toContain("### Alternate Solutions");
+    expect(layout.lore).not.toContain("### Scaling");
+    expect(layout.lore).not.toContain("## Player-Facing Setup");
+  });
+
   it("moves magic item lore & history into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "item",
@@ -179,7 +204,7 @@ Forged for a king who trusted no counsel, it outlived four dynasties.`,
       type: "faction",
       title: "The Argent Loom",
       content: "### What they control\nThe canal gates.",
-      lore: `### At the Table
+      lore: `### At a Glance
 - **Base**: The old mint
 
 ### Whispered Origins
@@ -189,7 +214,7 @@ They say the first loom was strung with hair from a drowned saint.`,
     });
 
     expect(layout.content).toContain("### Whispered Origins");
-    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).not.toContain("### Whispered Origins");
   });
 
@@ -200,14 +225,14 @@ They say the first loom was strung with hair from a drowned saint.`,
       content: "### What they control\nThe canal gates.",
       lore: `A guild older than the city charter.
 
-### At the Table
+### At a Glance
 - **Base**: The old mint`,
       labels: ["rpg-faction", "faction-generator", "imported-draft"],
       status: "active",
     });
 
     expect(layout.content).toContain("A guild older than the city charter.");
-    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).not.toContain("A guild older than the city charter.");
   });
 
@@ -434,5 +459,87 @@ Yeva will remember who paid better.`,
     expect(layout.content).toContain("### Investigation Leads");
     expect(layout.content).toContain("### Possible Paths");
     expect(layout.content).toContain("### Follow-Up Hooks");
+  });
+});
+
+describe("section uniqueness invariant (#2768)", () => {
+  const heist = (content: string, lore: string) =>
+    ({
+      type: "event",
+      title: "T",
+      summary: "",
+      status: "active",
+      labels: ["heist", "heist-generator"],
+      content,
+      lore,
+    }) as unknown as Parameters<typeof getGeneratorDocumentLayout>[0];
+
+  it("renders a heading once when lore restates one the content already used", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist(
+        "### The Score\nSteal it.\n\n### The Prize\nA diadem.",
+        "### The Prize\n\n### The Hidden Factor\nPellanor is asleep downstairs.",
+      ),
+    );
+    expect(layout.content.match(/### The Prize/g)).toHaveLength(1);
+    // The real one survives; the empty restatement does not.
+    expect(layout.content).toContain("A diadem.");
+    expect(layout.content).toContain("Pellanor is asleep downstairs.");
+  });
+
+  it("drops a repeated section even when both copies have a body", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist(
+        "### The Score\nSteal it.",
+        "### Security Rings\n- **Perimeter**: first\n\n### Security Rings\n- **Perimeter**: second",
+      ),
+    );
+    expect(layout.content.match(/### Security Rings/g)).toHaveLength(1);
+    expect(layout.content).toContain("first");
+    expect(layout.content).not.toContain("second");
+  });
+
+  it("deduplicates rail sections too", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist(
+        "### The Score\nSteal it.",
+        "### Alarm Track\n- **0 — Quiet**: calm\n\n### Alarm Track\n- **0 — Quiet**: calm again",
+      ),
+    );
+    expect(layout.lore.match(/### Alarm Track/g)).toHaveLength(1);
+    expect(layout.lore).not.toContain("calm again");
+  });
+
+  it("drops heading-only sections rather than rendering an empty one", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist("### The Score\nSteal it.\n\n### The Prize\n", "### The Getaway\n"),
+    );
+    expect(layout.content).not.toContain("### The Prize");
+    expect(layout.content).not.toContain("### The Getaway");
+    expect(layout.content).toContain("### The Score");
+  });
+
+  it("applies the invariant to generators with no layout rule", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "note",
+      title: "T",
+      summary: "",
+      status: "active",
+      labels: ["no-rule-for-this"],
+      content: "### A\none\n\n### A\ntwo",
+      lore: "### B\nthree\n\n### B\nfour",
+    } as unknown as Parameters<typeof getGeneratorDocumentLayout>[0]);
+    expect(layout.content.match(/### A/g)).toHaveLength(1);
+    expect(layout.content).not.toContain("two");
+    expect(layout.lore.match(/### B/g)).toHaveLength(1);
+    expect(layout.lore).not.toContain("four");
+  });
+
+  it("leaves untitled preamble text alone", () => {
+    const layout = getGeneratorDocumentLayout(
+      heist("A line before any heading.\n\n### The Score\nSteal it.", ""),
+    );
+    expect(layout.content).toContain("A line before any heading.");
+    expect(layout.content).toContain("### The Score");
   });
 });

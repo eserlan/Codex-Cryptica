@@ -52,6 +52,7 @@ import {
   initializeGlobalListeners,
   setupWindowGlobals,
   registerServiceWorker,
+  collectVaultShellUrls,
 } from "./app-init";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { calendarStore } from "$lib/stores/calendar.svelte";
@@ -282,6 +283,26 @@ describe("app-init", () => {
   });
 
   describe("registerServiceWorker", () => {
+    it("collects only the current document and same-origin immutable assets", () => {
+      expect(
+        collectVaultShellUrls(
+          "https://codex.test/vault/world-1?view=graph#entity",
+          [
+            { name: "https://codex.test/_app/immutable/app.js" },
+            { name: "https://codex.test/api/entities" },
+            { name: "https://cdn.test/_app/immutable/vendor.js" },
+          ],
+        ),
+      ).toEqual([
+        "https://codex.test/vault/world-1?view=graph",
+        "https://codex.test/_app/immutable/app.js",
+      ]);
+    });
+
+    it("returns no shell URLs for an invalid document URL", () => {
+      expect(collectVaultShellUrls("not a url", [])).toEqual([]);
+    });
+
     it("should not register if in DEV mode (default in Vitest)", async () => {
       const registerSpy = vi.fn();
       const mockDocument = {
@@ -334,6 +355,63 @@ describe("app-init", () => {
       });
 
       expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
+    });
+
+    it("seeds the loaded vault shell only after the session becomes active", async () => {
+      const postMessage = vi.fn();
+      const registerSpy = vi.fn().mockResolvedValue({
+        active: { postMessage },
+        update: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const session = registerServiceWorker({
+        document: {
+          readyState: "complete",
+          visibilityState: "visible",
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        navigator: {
+          serviceWorker: {
+            controller: null,
+            register: registerSpy,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          },
+        } as any,
+        window: {
+          location: {
+            href: "https://codex.test/vault/world-1#entity",
+            reload: vi.fn(),
+          },
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        performance: {
+          getEntriesByType: vi.fn(
+            () =>
+              [
+                { name: "https://codex.test/_app/immutable/app.js" },
+                { name: "https://codex.test/blog/post" },
+              ] as PerformanceEntry[],
+          ),
+        },
+        isDev: false,
+      });
+
+      session.setVaultSessionActive(true);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(postMessage).toHaveBeenCalledOnce();
+      expect(postMessage).toHaveBeenCalledWith({
+        type: "VAULT_CACHE_SESSION",
+        active: true,
+        urls: [
+          "https://codex.test/vault/world-1",
+          "https://codex.test/_app/immutable/app.js",
+        ],
+      });
     });
 
     it("should prompt user and reload once when a new worker takes control and user confirms", async () => {
@@ -565,6 +643,85 @@ describe("app-init", () => {
         expect.any(Error),
       );
       warnSpy.mockRestore();
+    });
+
+    /**
+     * Builds a registered worker plus the visibilitychange handler the
+     * registration installs, with a clock the test drives by hand.
+     */
+    async function setupUpdateChecks(startTime = 1_000_000) {
+      const update = vi.fn().mockResolvedValue(undefined);
+      const visibilityHandlers: EventListener[] = [];
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn((event: string, handler: EventListener) => {
+          if (event === "visibilitychange") visibilityHandlers.push(handler);
+        }),
+        removeEventListener: vi.fn(),
+      } as any;
+      const clock = { now: startTime };
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: { register: vi.fn().mockResolvedValue({ update }) },
+        } as any,
+        window: {
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        isDev: false,
+        now: () => clock.now,
+      });
+
+      await Promise.resolve();
+
+      const onVisible = visibilityHandlers.at(-1);
+      expect(onVisible).toBeDefined();
+      return { update, clock, mockDocument, onVisible: onVisible! };
+    }
+
+    it("should check for an update once on registration", async () => {
+      const { update } = await setupUpdateChecks();
+
+      expect(update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throttle update checks when the tab is refocused rapidly", async () => {
+      const { update, clock, onVisible } = await setupUpdateChecks();
+
+      clock.now += 60_000;
+      onVisible(new Event("visibilitychange"));
+      clock.now += 60_000;
+      onVisible(new Event("visibilitychange"));
+
+      // Still just the check from registration itself.
+      expect(update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should check again once the throttle interval has elapsed", async () => {
+      const { update, clock, onVisible } = await setupUpdateChecks();
+
+      clock.now += 15 * 60 * 1000;
+      onVisible(new Event("visibilitychange"));
+      expect(update).toHaveBeenCalledTimes(2);
+
+      // That check restarts the window rather than leaving it open.
+      clock.now += 60_000;
+      onVisible(new Event("visibilitychange"));
+      expect(update).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not check for updates when the tab becomes hidden", async () => {
+      const { update, clock, mockDocument, onVisible } =
+        await setupUpdateChecks();
+
+      mockDocument.visibilityState = "hidden";
+      clock.now += 60 * 60 * 1000;
+      onVisible(new Event("visibilitychange"));
+
+      expect(update).toHaveBeenCalledTimes(1);
     });
   });
 });

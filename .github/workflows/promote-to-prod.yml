@@ -97,6 +97,32 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=main
 
+      # This promotes an artifact already built and tested on staging (#2952)
+      # rather than rebuilding, so a smoke test here is the only check that
+      # the production deploy itself came out healthy.
+      - name: Smoke test production
+        run: |
+          sleep 10
+          check() {
+            local path="$1"
+            local url="https://codexcryptica.com${path}"
+            local code
+            code=$(curl -sS -L --connect-timeout 10 --max-time 30 -o /tmp/smoke-body.html -w "%{http_code}" --retry 3 --retry-delay 5 --retry-connrefused "$url")
+            if [ "$code" != "200" ]; then
+              echo "::error::$url returned $code, expected 200"
+              exit 1
+            fi
+            if ! grep -qi "Codex Cryptica" /tmp/smoke-body.html; then
+              echo "::error::$url did not contain expected app shell content"
+              exit 1
+            fi
+            echo "OK ($code): $url"
+          }
+
+          check "/"
+          check "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg"
+          check "/generators/heist"
+
       - name: Notify Discord on Production Deploy
         if: success()
         env:
@@ -109,7 +135,23 @@ jobs:
           RUN_ID="${{ needs.find-staging-build.outputs.run_id }}"
           ACTOR="${{ github.actor }}"
           SUMMARY="🔁 **Promotion Successful**: Staging run #$RUN_ID was promoted to production by $ACTOR."
-          
+
           # Send the summary
           PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
           curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+
+      - name: Trigger Release Communications Agent
+        if: success()
+        continue-on-error: true
+        env:
+          RELEASE_COMMS_SECRET: ${{ secrets.RELEASE_COMMS_SECRET }}
+        run: |
+          # Fire-and-forget: this evaluates whether the release is worth
+          # announcing and only comments on issue #2906 with its findings.
+          # It must never affect the outcome of this deploy job, hence
+          # continue-on-error plus the fallback `|| echo` below.
+          curl -fsS -m 10 -X POST https://pr-webhook.codexcryptica.com/release-comms \
+            -H "X-Release-Comms-Secret: $RELEASE_COMMS_SECRET" \
+            -H "Content-Type: application/json" \
+            -d "{\"promoteRunId\": \"${{ github.run_id }}\"}" \
+            || echo "release-comms trigger failed (non-blocking)"

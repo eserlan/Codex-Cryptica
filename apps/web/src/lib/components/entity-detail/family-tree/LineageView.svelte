@@ -5,7 +5,7 @@
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import FamilyMemberCard from "./FamilyMemberCard.svelte";
   import PanZoomContainer from "./PanZoomContainer.svelte";
-  import { PanZoomState } from "./pan-zoom.svelte";
+  import { PanZoomState } from "../pan-zoom.svelte";
 
   let { focusId, entities, onOpen, onRecenter } = $props<{
     focusId: string;

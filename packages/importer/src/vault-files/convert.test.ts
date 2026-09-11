@@ -10,7 +10,7 @@ function md(
     id: "thistle",
     type: "Character",
     title: "Thistle",
-    tags: [],
+    labels: [],
     ...overrides,
   };
   const yaml = Object.entries(fields)
@@ -42,6 +42,19 @@ describe("droppedItemsToPackage", () => {
     expect(pkg.assetDrafts).toHaveLength(0);
     expect(missingImageRefs).toHaveLength(0);
     expect(pkg.warnings).toHaveLength(0);
+  });
+
+  it("folds legacy tags into labels when labels is empty or missing", async () => {
+    const items: DroppedItem[] = [
+      {
+        relativePath: "entities/legacy.md",
+        file: md({ labels: [], tags: ["hero", "adventurer"] }),
+      },
+    ];
+    const { pkg } = await droppedItemsToPackage(items);
+
+    expect(pkg.entityDrafts).toHaveLength(1);
+    expect(pkg.entityDrafts[0].labels).toEqual(["hero", "adventurer"]);
   });
 
   it("matches an entity's image reference to a dropped image file by path", async () => {

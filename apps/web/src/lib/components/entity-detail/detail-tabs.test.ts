@@ -23,7 +23,8 @@ describe("entity detail tab ids", () => {
   });
 
   it("wraps keyboard navigation across the tab list", () => {
-    expect(getNextEntityDetailTab("status", "ArrowRight")).toBe("lore");
+    expect(getNextEntityDetailTab("status", "ArrowRight")).toBe("connections");
+    expect(getNextEntityDetailTab("connections", "ArrowRight")).toBe("lore");
     expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("family");
@@ -36,6 +37,7 @@ describe("entity detail tab ids", () => {
     expect(getNextEntityDetailTab("family", "ArrowLeft")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowLeft")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");
+    expect(getNextEntityDetailTab("lore", "ArrowLeft")).toBe("connections");
     expect(getNextEntityDetailTab("status", "End")).toBe("timeline");
   });
 
@@ -44,6 +46,9 @@ describe("entity detail tab ids", () => {
 
     expect(
       getNextEntityDetailTabInList(visibleTabs, "status", "ArrowRight"),
+    ).toBe("connections");
+    expect(
+      getNextEntityDetailTabInList(visibleTabs, "connections", "ArrowRight"),
     ).toBe("map");
     expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowRight")).toBe(
       "chats",
@@ -55,7 +60,7 @@ describe("entity detail tab ids", () => {
       getNextEntityDetailTabInList(visibleTabs, "timeline", "ArrowRight"),
     ).toBe("status");
     expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowLeft")).toBe(
-      "status",
+      "connections",
     );
     expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
       "timeline",

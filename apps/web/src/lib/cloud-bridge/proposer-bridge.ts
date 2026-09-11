@@ -2,6 +2,7 @@ import ProposerWorker from "$lib/workers/proposer.worker?worker";
 import { browser } from "$app/environment";
 import type { Proposal } from "@codex/proposer";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import type { CachedToken } from "@codex/ai-engine";
 
 export class ProposerBridge {
   private worker: Worker | null = null;
@@ -43,6 +44,16 @@ export class ProposerBridge {
   private initWorker() {
     this.worker = new ProposerWorker();
     this.attachWorkerHandler(this.worker);
+  }
+
+  /**
+   * Relays the main thread's session token snapshot into the worker — see
+   * `session-bootstrap.ts`'s `onTokenChange` wiring and `RelayedSessionToken`
+   * for why this is necessary (the worker has no DOM and can't mint its own
+   * token). Fire-and-forget: no response expected.
+   */
+  public setSessionToken(token: CachedToken | null): void {
+    this.worker?.postMessage({ type: "SESSION_TOKEN", payload: token });
   }
 
   public async analyzeEntity(

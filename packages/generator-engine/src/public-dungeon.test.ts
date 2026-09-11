@@ -260,7 +260,7 @@ describe("generateDungeonLocal", () => {
       const state = sealed.content
         .split("## Current State & Function")[1]
         .split("##")[0];
-      expect(state).toContain("Sealed Vault —");
+      expect(state).toContain("Sealed Vault:");
       // A sealed vault must not also be open to the weather or half-flooded.
       expect(state).toMatch(
         /airtight|shut from the inside|intact behind a door|preserved exactly/,
@@ -288,7 +288,7 @@ describe("generateDungeonLocal", () => {
       seededRng(4),
     );
     expect(out.content).toContain("## History & Original Purpose");
-    expect(out.content).toContain("Submerged in Brine —");
+    expect(out.content).toContain("Submerged in Brine:");
   });
 
   it("stocks Lore and Monster rooms from room-scale tables, not hooks or factions", () => {
@@ -2237,5 +2237,26 @@ describe("Campaign Generator Registry Integration", () => {
     expect(
       resolveEntityType("dungeon", ["location", "character", "item"]),
     ).toBe("location");
+  });
+});
+
+describe("dungeon campaign context", () => {
+  it("carries the form's world context into the prompt", () => {
+    const prompt = buildDungeonPrompt({
+      genre: "Fantasy",
+      campaignContext: "The Swift Wing Eagles rule the Kestrel Reach.",
+    });
+    expect(prompt.userMessage).toContain(
+      "[HIGHEST PRIORITY — Campaign context, supplied by the user]",
+    );
+    expect(prompt.userMessage).toContain(
+      "The Swift Wing Eagles rule the Kestrel Reach.",
+    );
+  });
+
+  it("omits the line when no context was given", () => {
+    expect(buildDungeonPrompt({ genre: "Fantasy" }).userMessage).not.toContain(
+      "[HIGHEST PRIORITY — Campaign context",
+    );
   });
 });

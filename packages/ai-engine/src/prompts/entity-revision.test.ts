@@ -172,6 +172,32 @@ describe("buildEntityRevisionPrompt", () => {
     );
   });
 
+  it("treats lore templates as non-output guidance", () => {
+    const prompt = buildEntityRevisionPrompt(
+      {
+        id: "test-entity",
+        title: "Test Entity",
+        type: "character",
+        content: "",
+        lore: "",
+      } as any,
+      { chronicle: "", lore: "" },
+      [],
+      [],
+      {
+        loreTemplate:
+          "## Summary\nA brief overview of this character.\n\n## Goals\nWhat they want.",
+      },
+    );
+
+    expect(prompt).toContain(
+      "<template_guidance>\n<USER_CONTENT>\n## Summary\nA brief overview of this character.",
+    );
+    expect(prompt).toContain(
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
+    );
+  });
+
   it("keeps the prompt core intact and user-wrapped without the related section", () => {
     const core = buildEntityRevisionPromptCore(
       {

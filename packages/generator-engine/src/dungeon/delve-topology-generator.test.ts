@@ -213,4 +213,14 @@ describe("DelveTopologyGenerator", () => {
 
     expect(sector?.data.theme).toBe("");
   });
+
+  it("uses the injected clock for deterministic timestamps", () => {
+    const mockTime = 1718000000000;
+    const mockClock = { now: () => mockTime };
+    const generator = new DelveTopologyGenerator(() => 0, mockClock);
+    const doc = generator.generateFromConcept(sampleConcept);
+
+    expect(doc.metadata.createdAt).toBe(mockTime);
+    expect(doc.metadata.updatedAt).toBe(mockTime);
+  });
 });

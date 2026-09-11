@@ -124,7 +124,6 @@ export class WebVaultWriter implements VaultWriter {
       {
         content: entity.content,
         lore: entity.lore,
-        tags: entity.tags,
         labels: entity.labels ?? [],
         aliases: entity.aliases,
         image: entity.image,
@@ -176,7 +175,6 @@ export class WebVaultWriter implements VaultWriter {
           title: entity.title,
           content: entity.content,
           lore: entity.lore,
-          tags: entity.tags,
           labels: entity.labels ?? [],
           aliases: entity.aliases,
           image: entity.image,
@@ -239,7 +237,6 @@ export class WebVaultWriter implements VaultWriter {
     if ("title" in patch) updates.title = patch.title;
     if ("content" in patch) updates.content = patch.content;
     if ("lore" in patch) updates.lore = patch.lore;
-    if ("tags" in patch) updates.tags = patch.tags;
     if ("labels" in patch) updates.labels = patch.labels;
     if ("aliases" in patch) updates.aliases = patch.aliases;
     if ("image" in patch) updates.image = patch.image;

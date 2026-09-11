@@ -1,5 +1,6 @@
 import { KeyedTaskQueue } from "./queue";
 import type { LocalEntity, FileEntry } from "./types";
+import { isReservedVaultPath } from "./types";
 import { EntitySchema } from "schema";
 
 export interface IFileIOAdapter {
@@ -67,6 +68,7 @@ export class VaultRepository {
     const files = await this.ioAdapter.walkDirectory(vaultHandle);
 
     const mdFiles = files.filter((f) => {
+      if (isReservedVaultPath(f.path)) return false;
       const name = f.path[f.path.length - 1].toLowerCase();
       return name.endsWith(".md") || name.endsWith(".markdown");
     });
@@ -228,9 +230,10 @@ export class VaultRepository {
         );
       }
 
-      if (total > CHUNK_SIZE) {
-        // Yield to allow UI updates
-        await new Promise((resolve) => setTimeout(resolve, 50));
+      // Yield only between chunks so rendering/input can run without imposing
+      // a fixed delay or adding a needless completion hop.
+      if (i + CHUNK_SIZE < total) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
 

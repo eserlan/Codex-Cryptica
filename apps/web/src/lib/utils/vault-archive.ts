@@ -8,6 +8,7 @@ import {
   VAULTS_DIR,
 } from "./opfs";
 import { systemClock } from "$lib/utils/runtime-deps";
+import { downloadBlob } from "./download";
 
 /**
  * Portable vault backup: bundles an entire OPFS vault into a single `.zip`
@@ -83,16 +84,10 @@ export async function exportVaultToZip(
 }
 
 function triggerDownload(bytes: Uint8Array, filename: string): void {
-  const blob = new Blob([bytes as BlobPart], { type: "application/zip" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  // Revoke on the next tick so the download has a chance to start.
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  downloadBlob(
+    new Blob([bytes as BlobPart], { type: "application/zip" }),
+    filename,
+  );
 }
 
 export interface ImportedVaultArchive {

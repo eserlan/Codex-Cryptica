@@ -142,7 +142,8 @@
           class="w-8 h-8 flex items-center justify-center bg-theme-bg/30 border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary"
           title="Change Icon"
         >
-          <span aria-hidden="true" class="{getIconClass(cat.icon)} w-4 h-4"></span>
+          <span aria-hidden="true" class="{getIconClass(cat.icon)} w-4 h-4"
+          ></span>
         </button>
 
         <!-- Delete -->
@@ -272,7 +273,8 @@
             title="Select {label} icon"
             aria-label="Select {label} icon"
           >
-            <span aria-hidden="true" class="{getIconClass(icon)} w-5 h-5"></span>
+            <span aria-hidden="true" class="{getIconClass(icon)} w-5 h-5"
+            ></span>
           </button>
         {/each}
       </div>

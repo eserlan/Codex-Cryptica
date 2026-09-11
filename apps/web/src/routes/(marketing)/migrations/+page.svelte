@@ -3,7 +3,6 @@
   const cleanBase = base === "/" ? "" : base;
   import { importsConfig } from "$lib/config/seo-pages";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   const importers = Object.values(importsConfig);
 
@@ -33,7 +32,7 @@
   <title>Migration Hub | Import Your Campaign into Codex Cryptica</title>
   <meta
     name="description"
-    content="Every way to bring your campaign into Codex Cryptica — Obsidian, World Anvil, Kanka, LegendKeeper, Scabard, and Thread Weaver Engine exports, all converted and previewed offline in your browser."
+    content="Every way to bring your campaign into Codex Cryptica: Obsidian, World Anvil, Kanka, LegendKeeper, Scabard, and Thread Weaver Engine exports, all converted and previewed offline in your browser."
   />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href={pageUrl} />
@@ -47,36 +46,7 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/?utm_source=migrations-logo&utm_medium=nav&utm_campaign=seo-funnel"
-        class="flex items-center gap-2 group min-w-0"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?utm_source=migrations-nav&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-5xl mx-auto px-6 py-16 flex-grow w-full">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full">
     <div class="text-center mb-14">
       <div
         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
@@ -86,15 +56,15 @@
         Migration Hub
       </div>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide uppercase text-theme-primary mb-4"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary mb-4"
       >
         Bring Your Campaign Into Codex Cryptica
       </h1>
       <p
         class="text-base md:text-lg text-theme-text/80 leading-relaxed max-w-2xl mx-auto"
       >
-        Every export below is parsed and previewed entirely in your browser —
-        nothing is uploaded anywhere. Pick the tool you're migrating from.
+        Every export below is parsed and previewed entirely in your browser.
+        Nothing is uploaded anywhere. Pick the tool you're migrating from.
       </p>
     </div>
 
@@ -106,15 +76,15 @@
             class="group block h-full rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
           >
             <span
-              class="block font-header text-lg font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-lg font-bold mb-2 group-hover:text-theme-primary transition-colors"
             >
               {importer.h1}
             </span>
-            <span class="block text-sm text-theme-muted leading-relaxed mb-4">
+            <span class="block text-base text-theme-muted leading-relaxed mb-4">
               {importer.subheading}
             </span>
             <span
-              class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary"
+              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary"
             >
               {importer.ctaText}
               <span
@@ -126,7 +96,5 @@
         </li>
       {/each}
     </ul>
-  </main>
-
-  <MarketingFooter />
+  </div>
 </div>

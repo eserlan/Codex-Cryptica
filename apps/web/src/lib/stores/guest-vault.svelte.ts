@@ -140,6 +140,12 @@ export class GuestVaultStore {
     this.isInitialized = true;
   }
 
+  private customBaseUrl?: string;
+
+  constructor(options: { baseUrl?: string } = {}) {
+    this.customBaseUrl = options.baseUrl;
+  }
+
   resolveImageUrl(path: string): string {
     if (!path) return "";
     if (/^(data:|blob:|https?:)/i.test(path)) {
@@ -169,11 +175,16 @@ export class GuestVaultStore {
       : cleanPath.replace(/[^a-zA-Z0-9.-]/g, "_");
 
     const baseUrl =
+      this.customBaseUrl ||
       (typeof import.meta !== "undefined" &&
         import.meta.env?.VITE_ORACLE_PROXY_URL) ||
       (typeof import.meta !== "undefined" &&
       import.meta.env?.DEV &&
-      !import.meta.env?.VITEST
+      !(typeof process !== "undefined" && Boolean(process.env?.VITEST)) &&
+      !(
+        typeof import.meta !== "undefined" &&
+        (Boolean(import.meta.env?.VITEST) || import.meta.env?.MODE === "test")
+      )
         ? "http://localhost:8787"
         : "https://oracle-proxy.espen-erlandsen.workers.dev");
     return `${baseUrl}/api/published/${this.publishId}/assets/${assetId}`;

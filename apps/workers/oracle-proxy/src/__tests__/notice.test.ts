@@ -64,7 +64,7 @@ function createRequest(
   return new Request(`https://oracle-proxy.espen-erlandsen.workers.dev${url}`, {
     method,
     headers: {
-      Origin: "https://codex-cryptica.com",
+      Origin: "https://codexcryptica.com",
       "Content-Type": "application/json",
       ...headers,
     },
@@ -82,7 +82,7 @@ describe("notice routes and sidecar integration", () => {
     env = {
       GEMINI_API_KEY: "test-api-key",
       BUCKET: bucket,
-      ALLOWED_ORIGINS: "https://codex-cryptica.com",
+      ALLOWED_ORIGINS: "https://codexcryptica.com",
     };
 
     // Seed a valid bundle

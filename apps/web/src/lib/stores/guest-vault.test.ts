@@ -46,7 +46,9 @@ describe("GuestVaultStore", () => {
   };
 
   beforeEach(() => {
-    store = new GuestVaultStore();
+    store = new GuestVaultStore({
+      baseUrl: "https://oracle-proxy.espen-erlandsen.workers.dev",
+    });
   });
 
   it("should initialize with default states", () => {

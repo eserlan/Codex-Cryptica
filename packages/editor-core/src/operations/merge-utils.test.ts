@@ -4,22 +4,22 @@ import { mergeFrontmatter, concatenateBody, INodeContent } from "./merge-utils";
 describe("merge-utils", () => {
   const nodeA: INodeContent = {
     id: "A",
-    frontmatter: { tags: ["tag1"], type: "npc" },
+    frontmatter: { labels: ["label1"], type: "npc" },
     body: "Content A",
     connections: [],
   };
 
   const nodeB: INodeContent = {
     id: "B",
-    frontmatter: { tags: ["tag2"], location: "forest" },
+    frontmatter: { labels: ["label2"], location: "forest" },
     body: "Content B",
     connections: [],
   };
 
   describe("mergeFrontmatter", () => {
-    it("should merge tags and deduplicate", () => {
+    it("should merge labels and deduplicate", () => {
       const merged = mergeFrontmatter(nodeA, [nodeB]);
-      expect(merged.tags).toEqual(["tag1", "tag2"]);
+      expect(merged.labels).toEqual(["label1", "label2"]);
     });
 
     it("should preserve target scalar values if conflict", () => {

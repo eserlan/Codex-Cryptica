@@ -7,6 +7,8 @@
 
 **Learning:** Using `Object.values(entities)` allocates an intermediate array, which can cause unnecessary GC pressure and slowdowns when called frequently or on large entity sets.
 **Action:** Replace `Object.values()` iterations with an imperative `for...in` loop over the object keys, retrieving the value directly inside the loop.
+
 ## 2025-02-18 - Optimize array allocations in EntityIndexMaintainer
+
 **Learning:** In Svelte 5 derived state and lifecycle rebuilds (like `rebuildIndexes`), replacing chained `.filter()` or intermediate `Object.values()` allocations with a single imperative loop over keys drastically reduces unnecessary garbage collection overhead on large maps, such as standard dictionaries of all entities.
 **Action:** When extracting multiple derived arrays from a dictionary, avoid allocating intermediate arrays by looping via `for...in` and pushing items natively using `hasOwnProperty`.

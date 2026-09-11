@@ -1,6 +1,7 @@
 import {
   aiClientManager as defaultAiClientManager,
   InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
 } from "./client-manager";
 import { interactionSessions } from "./interaction-session";
 import {
@@ -141,7 +142,6 @@ export class TextGenerationRevisionService {
         Boolean(options?.interactionsEnabled) && !apiKey && Boolean(entity?.id);
       const text = interactionsEnabled
         ? await this.reviseViaInteraction(
-            modelName,
             systemInstruction,
             entity.id,
             promptCore,
@@ -209,7 +209,6 @@ export class TextGenerationRevisionService {
   }
 
   private async reviseViaInteraction(
-    modelName: string,
     systemInstruction: string,
     entityId: string,
     promptCore: string,
@@ -220,7 +219,7 @@ export class TextGenerationRevisionService {
 
     const send = async (input: string, previousId: string | null) =>
       this.aiClientManager.sendInteraction({
-        model: modelName,
+        model: INTERACTION_MODEL_KEY,
         input,
         systemInstruction,
         previousInteractionId: previousId,

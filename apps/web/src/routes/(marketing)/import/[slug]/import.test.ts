@@ -347,5 +347,28 @@ describe("Imports SvelteKit Route", () => {
       );
       expect(importsConfig["scabard"].slug).toBe("scabard");
     });
+
+    it("renders without an internal navigation header", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+      };
+
+      const { container } = render(Page, {
+        props: { data: { importPage: mockPageData } },
+      });
+      expect(container.querySelector("header")).toBeNull();
+      expect(container.querySelector("#logo-link")).toBeNull();
+      expect(container.querySelector("#nav-cta-btn")).toBeNull();
+    });
   });
 });

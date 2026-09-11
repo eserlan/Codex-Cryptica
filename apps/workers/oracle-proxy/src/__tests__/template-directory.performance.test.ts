@@ -99,10 +99,17 @@ describe("template directory performance", () => {
       listingCreatedAt: "2026-07-31T00:00:00.000Z",
       listingUpdatedAt: "2026-07-31T00:00:00.000Z",
     };
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode("token"),
+    );
+    const ownerTokenHash = [...new Uint8Array(digest)]
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
     await bucket.put(
       "templates/listings/one/listing.json",
       JSON.stringify(listing),
-      { customMetadata: { ownerToken: "token" } },
+      { customMetadata: { ownerTokenHash } },
     );
     await bucket.put(
       "templates/listings/one/package.json",

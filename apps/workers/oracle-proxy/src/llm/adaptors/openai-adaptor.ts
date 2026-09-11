@@ -5,18 +5,46 @@
  */
 
 import type {
+  GenerationEvent,
   LlmAdaptorResult,
   LlmModelDefinition,
   LlmRequest,
+  LlmUsage,
 } from "../types";
 import {
   validateAgainstSchema,
+  validateStructuredStreamText,
   wantsStructuredOutput,
 } from "../schema-validation";
+import { readSseData } from "../sse";
 
-const PROVIDER_TIMEOUT_MS = 15_000;
+const PROVIDER_TIMEOUT_MS = 60_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
   "https://api.openai.com/v1/chat/completions";
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+
+function supportsOpenAiJsonSchema(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as { type?: unknown }).type === "object" &&
+    !Array.isArray((schema as { oneOf?: unknown }).oneOf)
+  );
+}
+
+function ensureJsonInstruction(
+  messages: Array<{ role: string; content: string }>,
+): void {
+  if (
+    messages.some((message) => message.content.toLowerCase().includes("json"))
+  ) {
+    return;
+  }
+  messages.unshift({
+    role: "system",
+    content: "Respond with valid JSON.",
+  });
+}
 
 interface OpenAiEnv {
   OPENAI_API_KEY?: string;
@@ -28,16 +56,16 @@ interface OpenAiEnv {
  * 15-second provider-call timeout itself (FR-005) — the resolver never
  * calls `fetch`/a provider directly.
  */
-export async function callOpenAi(
+/**
+ * Builds the `chat/completions` request body shared by `callOpenAi` and its
+ * streaming counterpart `streamOpenAi` — every field below (except `stream`
+ * itself) must apply identically to both, or the two calls would silently
+ * diverge in generated content, not just in how it's delivered.
+ */
+function buildChatCompletionsBody(
   request: LlmRequest,
   model: LlmModelDefinition,
-  env: OpenAiEnv,
-  fetcher: typeof fetch = fetch,
-): Promise<LlmAdaptorResult> {
-  if (!env.OPENAI_API_KEY) {
-    return { ok: false, reason: "missing-openai-api-key" };
-  }
-
+): Record<string, unknown> {
   const messages = request.messages.map((m) => ({
     role: m.role,
     content: m.content,
@@ -61,9 +89,19 @@ export async function callOpenAi(
     body.max_completion_tokens = maxOutputTokens;
   }
   if (request.topP !== undefined) body.top_p = request.topP;
+  // Reasoning-tier models (GPT-5.6-family) spend variable internal
+  // "thinking" time before responding; most of our tasks are constrained
+  // generation/classification following an already-detailed prompt, not
+  // genuine multi-step reasoning, so the registry sets this per operation
+  // (see OPERATION_DEFAULTS) rather than leaving it at the model's default
+  // depth. Omitted entirely when unset, so a future non-reasoning
+  // OpenAI-provider model that would reject this field is unaffected.
+  if (request.reasoningEffort) {
+    body.reasoning_effort = request.reasoningEffort;
+  }
 
   if (wantsStructuredOutput(request)) {
-    if (request.schema) {
+    if (request.schema && supportsOpenAiJsonSchema(request.schema)) {
       // OpenAI's `strict: true` structured-output mode rejects any schema
       // that doesn't set `additionalProperties: false` on every object level
       // and list every property as `required` — callers of this pipeline
@@ -84,8 +122,24 @@ export async function callOpenAi(
       // prompt mentions JSON when requesting structured-generation without
       // a schema.
       body.response_format = { type: "json_object" };
+      ensureJsonInstruction(messages);
     }
   }
+
+  return body;
+}
+
+export async function callOpenAi(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<LlmAdaptorResult> {
+  if (!env.OPENAI_API_KEY) {
+    return { ok: false, reason: "missing-openai-api-key" };
+  }
+
+  const body = buildChatCompletionsBody(request, model);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
@@ -161,4 +215,234 @@ export async function callOpenAi(
   }
 
   return { ok: true, response: { content: text, modelKey: model.key, usage } };
+}
+
+/**
+ * Streaming counterpart to `callOpenAi` (#2423). Same request body via
+ * `buildChatCompletionsBody`, plus `stream: true`, reading the
+ * `chat/completions` SSE stream and re-emitting normalized
+ * `GenerationEvent`s. No retry/fallback/structured-output-validation of its
+ * own — see the `GenerationEvent` doc comment in `types.ts`. A caller that
+ * requested structured output must accumulate `delta` text and parse/
+ * validate the buffer itself once `complete` fires.
+ */
+export async function* streamOpenAi(
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+  signal?: AbortSignal,
+): AsyncGenerator<GenerationEvent> {
+  if (!env.OPENAI_API_KEY) {
+    yield { type: "error", error: "missing-openai-api-key" };
+    return;
+  }
+
+  const body = {
+    ...buildChatCompletionsBody(request, model),
+    stream: true,
+    // Only OpenAI's streaming mode supports requesting token usage on the
+    // final chunk — worth taking since usage is otherwise unavailable here.
+    stream_options: { include_usage: true },
+  };
+
+  let response: Response;
+  try {
+    response = await fetcher(OPENAI_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "transport-error" };
+    return;
+  }
+
+  if (!response.ok || !response.body) {
+    yield { type: "error", error: `upstream-status-${response.status}` };
+    return;
+  }
+
+  yield { type: "started" };
+
+  const reader = response.body.getReader();
+  let fullText = "";
+  let usage: LlmUsage | undefined;
+
+  try {
+    for await (const dataStr of readSseData(reader)) {
+      if (dataStr === "[DONE]") continue;
+
+      let chunk: any;
+      try {
+        chunk = JSON.parse(dataStr);
+      } catch {
+        continue;
+      }
+
+      const deltaText: string = chunk?.choices?.[0]?.delta?.content ?? "";
+      if (deltaText) {
+        fullText += deltaText;
+        yield { type: "delta", text: deltaText };
+      }
+      if (chunk?.usage) {
+        usage = {
+          promptTokens: chunk.usage.prompt_tokens ?? 0,
+          completionTokens: chunk.usage.completion_tokens ?? 0,
+        };
+      }
+    }
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+    return;
+  }
+
+  const validation = validateStructuredStreamText(request, fullText);
+  if (!validation.ok) {
+    yield { type: "error", error: validation.reason };
+    return;
+  }
+
+  yield { type: "complete", text: fullText, usage };
+}
+
+export interface OpenAiInteractionResult {
+  ok: boolean;
+  status: number;
+  data: unknown;
+  parseError?: boolean;
+  transportError?: boolean;
+}
+
+/**
+ * Forward an Interactions-API-shaped request body (the proxy's provider-neutral
+ * wire contract: `input`, `previous_interaction_id`, `store`) to OpenAI's
+ * Responses API, translating it into that API's own turn-continuation shape
+ * (`input`, `previous_response_id`). Lets `handleInteraction` in index.ts treat
+ * every provider identically — same request/response shape as
+ * `forwardInteractionToGemini` — so chat/revision/generator sessions that
+ * already thread a `previousInteractionId` through get server-side turn state
+ * on OpenAI models for free, just by naming an OpenAI registry key as `model`.
+ */
+export async function forwardInteractionToOpenAi(
+  body: Record<string, any>,
+  modelId: string,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<OpenAiInteractionResult> {
+  if (!env.OPENAI_API_KEY) {
+    return {
+      ok: false,
+      status: 500,
+      data: { error: { message: "missing-openai-api-key" } },
+    };
+  }
+
+  const instructions: string | undefined =
+    typeof body.system_instruction === "string"
+      ? body.system_instruction
+      : typeof body.systemInstruction === "string"
+        ? body.systemInstruction
+        : body.system_instruction?.parts?.[0]?.text;
+
+  const payload: Record<string, unknown> = {
+    model: modelId,
+    input: body.input,
+    store: body.store ?? true,
+    // This path (chat/revision/generator sessions via the Interactions API)
+    // has no per-operation registry hook like the resolver-driven pipeline
+    // in callOpenAi does — it's routed by which model was requested, not by
+    // an LlmOperation. Hardcoding "low" here matches that pipeline's
+    // freeform-generation/structured-generation level as a reasonable
+    // single default; revisit independently if this path proves too slow
+    // or too shallow once it's actually measured.
+    reasoning: { effort: "low" },
+  };
+  if (body.previous_interaction_id) {
+    payload.previous_response_id = body.previous_interaction_id;
+  }
+  if (instructions) {
+    payload.instructions = instructions;
+  }
+
+  const genConfig = body.generation_config || body.generationConfig;
+  if (genConfig) {
+    // Schema-less "give me valid JSON" mode — the Responses API's structured
+    // output config moved from chat/completions' `response_format` to
+    // `text.format` (mirrors the json_object/json_schema modes callOpenAi
+    // already uses for the operation pipeline). Only json_object is needed
+    // here: none of today's Interactions-path callers (chat/revision/
+    // generator sessions) pass an explicit schema through generationConfig.
+    const mimeType = genConfig.responseMimeType ?? genConfig.response_mime_type;
+    if (mimeType === "application/json") {
+      payload.text = { format: { type: "json_object" } };
+      // The Responses API checks the submitted turn input itself for "json";
+      // mentioning it only in `instructions` still produces a 400. Keep the
+      // marker in both places: input satisfies that API constraint, while
+      // instructions keeps the rule explicit across continued turns.
+      if (typeof payload.input === "string") {
+        payload.input = `Respond with valid JSON.\n\n${payload.input}`;
+      }
+      payload.instructions = payload.instructions
+        ? `${payload.instructions}\n\nRespond with valid JSON.`
+        : "Respond with valid JSON.";
+    }
+    const maxOutputTokens =
+      genConfig.maxOutputTokens ?? genConfig.max_output_tokens;
+    if (maxOutputTokens !== undefined) {
+      payload.max_output_tokens = maxOutputTokens;
+    }
+    const topP = genConfig.topP ?? genConfig.top_p;
+    if (topP !== undefined) payload.top_p = topP;
+    // `temperature` intentionally omitted: GPT-5.6-family models reject an
+    // explicit value (see callOpenAi above) and every OpenAI registry entry
+    // today is in that family.
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await fetcher(OPENAI_RESPONSES_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error("[Oracle Proxy] OpenAI Responses fetch error:", err);
+    return { ok: false, status: 502, data: null, transportError: true };
+  }
+
+  const text = await upstream.text();
+  try {
+    const data = text ? JSON.parse(text) : {};
+    return { ok: upstream.ok, status: upstream.status, data };
+  } catch {
+    return { ok: false, status: 502, data: null, parseError: true };
+  }
+}
+
+/**
+ * Extract assistant text from a Responses API payload: `output` is a list of
+ * items, of which `message`-typed ones carry `content` blocks of type
+ * `output_text`.
+ */
+export function extractOpenAiResponseText(data: any): string {
+  const output: any[] = Array.isArray(data?.output) ? data.output : [];
+  return output
+    .filter((item) => item?.type === "message")
+    .flatMap((item) => (Array.isArray(item?.content) ? item.content : []))
+    .filter((c: any) => c?.type === "output_text")
+    .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
+    .filter(Boolean)
+    .join("");
 }

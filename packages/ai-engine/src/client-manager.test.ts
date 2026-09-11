@@ -100,6 +100,44 @@ describe("DefaultAIClientManager", () => {
       expect(fetch).not.toHaveBeenCalled();
       expect(result).toEqual({ id: "i1", text: "ok" });
     });
+
+    it("appends the proxy's error code on interaction failure too", async () => {
+      // Character chat goes through sendInteraction, not generateContent —
+      // the code has to survive on this path as well for classifyApiError
+      // to recognize a blocked verification handshake there.
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+      } as any);
+
+      await expect(
+        manager.sendInteraction({ model: "m", input: "hi" }),
+      ).rejects.toThrow(
+        "[OracleProxy] Interaction failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      );
+    });
+
+    it("forwards an AbortSignal to the underlying fetch (#2423 cancel support)", async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ id: "i1", text: "ok" }),
+      } as any);
+      const controller = new AbortController();
+
+      await manager.sendInteraction({
+        model: "m",
+        input: "hi",
+        signal: controller.signal,
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      expect(callArgs.signal).toBe(controller.signal);
+    });
   });
 
   describe("createProxyModel", () => {
@@ -294,6 +332,30 @@ describe("DefaultAIClientManager", () => {
       );
     });
 
+    it("appends the proxy's machine-readable error code so classifyApiError can pattern-match it", async () => {
+      // Regression: SESSION_TOKEN_MISSING/INVALID/EXPIRED used to be
+      // indistinguishable from any other generic failure once it reached
+      // the UI as "Generation failed. Please try again." — the code has to
+      // survive into the thrown message for the classifier to recognize it.
+      const mockResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+
+      await expect(model.generateContent("Test")).rejects.toThrow(
+        "[OracleProxy] Request failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      );
+    });
+
     it("should handle malformed proxy response gracefully", async () => {
       const mockResponse = {
         ok: false,
@@ -453,6 +515,74 @@ describe("DefaultAIClientManager", () => {
     });
   });
 
+  describe("session token retry", () => {
+    it("retries once on any 401, not just an expired-token response", async () => {
+      // Regression: a missing token (e.g. the Turnstile handshake failed
+      // because an ad blocker blocks challenges.cloudflare.com) used to
+      // return the 401 straight to the caller — only SESSION_TOKEN_EXPIRED
+      // triggered a re-handshake.
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 401,
+          ok: false,
+          json: vi
+            .fn()
+            .mockResolvedValue({ error: { code: "SESSION_TOKEN_MISSING" } }),
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          ok: true,
+          json: vi.fn().mockResolvedValue({ content: "ok" }),
+        });
+
+      const sessionManager = {
+        getToken: vi
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce("fresh-token"),
+        invalidate: vi.fn(),
+      };
+
+      const isolated = new DefaultAIClientManager(
+        fetcher as any,
+        sessionManager as any,
+      );
+      const model = await isolated.getModel("", "gemini-1.5-pro");
+      const result = await model.generateContent("Test message");
+
+      expect(sessionManager.invalidate).toHaveBeenCalledOnce();
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      const retryInit = fetcher.mock.calls[1][1] as RequestInit;
+      const headers = new Headers(retryInit.headers);
+      expect(headers.get("Authorization")).toBe("Bearer fresh-token");
+      expect(result.response.text()).toBe("ok");
+    });
+
+    it("returns the 401 unchanged when the retry also can't get a token", async () => {
+      const fetcher = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi
+          .fn()
+          .mockResolvedValue({ error: { code: "SESSION_TOKEN_MISSING" } }),
+      });
+      const sessionManager = {
+        getToken: vi.fn().mockResolvedValue(null),
+        invalidate: vi.fn(),
+      };
+
+      const isolated = new DefaultAIClientManager(
+        fetcher as any,
+        sessionManager as any,
+      );
+      const model = await isolated.getModel("", "gemini-1.5-pro");
+
+      await expect(model.generateContent("Test")).rejects.toThrow();
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("startChat", () => {
     it("should include history in proxy sendMessageStream", async () => {
       const mockResponse = {
@@ -525,5 +655,170 @@ describe("DefaultAIClientManager", () => {
         content: "Second message",
       });
     });
+  });
+});
+
+/** Builds a `Response` whose body streams the given SSE `data:` events. */
+function sseResponse(events: unknown[], status = 200): Response {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const encoder = new TextEncoder();
+      for (const event of events) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+        );
+      }
+      controller.close();
+    },
+  });
+  return new Response(stream, { status });
+}
+
+async function collect(gen: AsyncGenerator<unknown>): Promise<unknown[]> {
+  const events: unknown[] = [];
+  for await (const event of gen) events.push(event);
+  return events;
+}
+
+describe("DefaultAIClientManager streaming (generateContentStream)", () => {
+  let manager: DefaultAIClientManager;
+
+  beforeEach(() => {
+    manager = new DefaultAIClientManager();
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("yields started, delta, then complete events for a plain-text request", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      sseResponse([
+        { type: "started" },
+        { type: "delta", text: "Hello" },
+        { type: "delta", text: ", world" },
+        { type: "complete", text: "Hello, world" },
+      ]) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "delta", text: "Hello" },
+      { type: "delta", text: ", world" },
+      { type: "complete", text: "Hello, world" },
+    ]);
+  });
+
+  it("sends stream:true on the operation-pipeline request body", async () => {
+    vi.mocked(fetch).mockResolvedValue(sseResponse([]) as any);
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    await collect((model as any).generateContentStream("hi"));
+
+    const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(callArgs.body as string);
+    expect(body.stream).toBe(true);
+    expect(body.operation).toBe("freeform-generation");
+  });
+
+  it("yields a single error event for a non-text (legacy passthrough) request, without calling fetch", async () => {
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const request: any = {
+      contents: [{ role: "user", parts: [{ text: "draw a cat" }] }],
+      generationConfig: { response_modalities: ["IMAGE"] },
+    };
+
+    const events = await collect((model as any).generateContentStream(request));
+
+    expect(events).toEqual([
+      {
+        type: "error",
+        error: "streaming-not-supported-for-non-text-request",
+      },
+    ]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("yields an error event when the upstream response is not ok", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "no model" } }), {
+        status: 503,
+      }) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([{ type: "error", error: "no model" }]);
+  });
+
+  it("preserves the machine-readable error code on a non-ok response (#2423 session-expiry classification)", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+        { status: 401 },
+      ) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([
+      {
+        type: "error",
+        error:
+          "A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      },
+    ]);
+  });
+
+  it("flushes a trailing SSE event that arrives without a final blank-line separator", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "started" })}\n\n`),
+        );
+        // No trailing "\n\n" after this final event — the connection just
+        // closes, as a provider ending its response right after the last
+        // chunk would.
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "complete", text: "done" })}`,
+          ),
+        );
+        controller.close();
+      },
+    });
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(stream, { status: 200 }) as any,
+    );
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([
+      { type: "started" },
+      { type: "complete", text: "done" },
+    ]);
+  });
+
+  it("yields an error event without throwing on a transport failure", async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error("network down"));
+
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const events = await collect((model as any).generateContentStream("hi"));
+
+    expect(events).toEqual([{ type: "error", error: "transport-error" }]);
   });
 });

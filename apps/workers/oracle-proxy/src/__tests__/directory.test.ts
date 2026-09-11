@@ -202,7 +202,7 @@ describe("directory routes", () => {
       {
         method,
         headers: {
-          Origin: "https://codex-cryptica.com",
+          Origin: "https://codexcryptica.com",
           "Content-Type": "application/json",
           ...headers,
         },
@@ -664,7 +664,7 @@ describe("template directory routes", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Origin: "https://codex-cryptica.com",
+          Origin: "https://codexcryptica.com",
         },
         body: JSON.stringify({
           package: {

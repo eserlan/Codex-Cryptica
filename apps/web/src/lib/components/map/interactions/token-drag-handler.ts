@@ -32,6 +32,13 @@ export interface TokenDragState {
 
 export class TokenDragHandler {
   dragState: TokenDragState | null = null;
+  /**
+   * The token a `begin()` landed on but isn't allowed to move. Lets callers
+   * tell "pressed empty map" (fine to pan) apart from "pressed a locked
+   * tile" — panning the map out from under that press reads as the drag
+   * moving the whole map instead of the piece under the cursor.
+   */
+  blockedToken: Token | null = null;
 
   constructor(private deps: TokenDragDependencies) {}
 
@@ -43,14 +50,18 @@ export class TokenDragHandler {
       viewportPoint.y,
     );
 
+    this.blockedToken = null;
+
+    if (!hitToken) return null;
+
     if (
-      !hitToken ||
       !this.deps.canMoveToken(
         hitToken.id,
         this.deps.getPeerId(),
         this.deps.isHostMode(),
       )
     ) {
+      this.blockedToken = hitToken;
       return null;
     }
 

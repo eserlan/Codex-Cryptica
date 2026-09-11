@@ -1,8 +1,13 @@
 <script lang="ts">
   import { DEFAULT_CATEGORIES } from "schema";
 
-  // Entity-type colors for the welcome graph preview, sourced from the same
-  // canonical palette the real graph uses so the teaser matches the product.
+  // The cast, the types and the edges below are the fantasy demo vault's, the
+  // one "Explore Demo Vault" opens (static/vault-samples/fantasy.json). They
+  // used to be a separate invented world, so a visitor studied one graph and
+  // landed in a different one.
+  //
+  // Entity-type colors come from the same canonical palette the real graph
+  // uses, so the teaser matches the product.
   const typeColor = (id: string) =>
     DEFAULT_CATEGORIES.find((c) => c.id === id)?.color ?? "#94a3b8";
   const PREVIEW_COLORS = {
@@ -10,6 +15,8 @@
     faction: typeColor("faction"),
     location: typeColor("location"),
     event: typeColor("event"),
+    creature: typeColor("creature"),
+    note: typeColor("note"),
   };
   // Brand accent used purely to denote the *selected* node (matches the CTA),
   // not an entity type.
@@ -28,13 +35,13 @@
       aria-hidden="true"
     >
       <!-- peripheral edges (dim) -->
+      <!-- Black Iron Tavern is the hub the demo's other entities point at:
+           the Gilded Hand funds it, Captain Vaelen enforces order there, and
+           the Missing Heirloom's suspects were seen nearby. -->
       <g stroke="#8a8175" stroke-opacity="0.25" stroke-width="1.2">
         <line x1="130" y1="66" x2="358" y2="74" />
-        <line x1="138" y1="196" x2="350" y2="198" />
-        <line x1="52" y1="134" x2="130" y2="66" />
-        <line x1="52" y1="134" x2="138" y2="196" />
+        <line x1="52" y1="134" x2="358" y2="74" />
         <line x1="430" y1="140" x2="358" y2="74" />
-        <line x1="430" y1="140" x2="350" y2="198" />
       </g>
       <!-- edges from the selected node (selection accent) -->
       <g stroke={SELECT_ACCENT} stroke-opacity="0.5" stroke-width="2">
@@ -74,7 +81,7 @@
         cx="52"
         cy="134"
         r="8"
-        fill={PREVIEW_COLORS.location}
+        fill={PREVIEW_COLORS.character}
         fill-opacity="0.85"
       ></circle>
       <circle
@@ -102,14 +109,14 @@
         cx="138"
         cy="196"
         r="9"
-        fill={PREVIEW_COLORS.event}
+        fill={PREVIEW_COLORS.creature}
         fill-opacity="0.85"
       ></circle>
       <circle
         cx="350"
         cy="198"
         r="9"
-        fill={PREVIEW_COLORS.faction}
+        fill={PREVIEW_COLORS.note}
         fill-opacity="0.85"
       ></circle>
 
@@ -141,7 +148,7 @@
       <!-- node labels (color-keyed to type) -->
       <g font-family="var(--font-body, sans-serif)" text-anchor="middle">
         <text x="240" y="160" font-size="11" font-weight="700" fill="#f6dca0"
-          >Captain Veyra</text
+          >Eldrin the Wise</text
         >
         <text
           x="130"
@@ -149,7 +156,7 @@
           font-size="9.5"
           font-weight="600"
           fill="#d7d2c8"
-          fill-opacity="0.92">Glass Rebellion</text
+          fill-opacity="0.92">The Gilded Hand</text
         >
         <text
           x="358"
@@ -157,7 +164,7 @@
           font-size="9.5"
           font-weight="600"
           fill="#d7d2c8"
-          fill-opacity="0.92">Sunken Archive</text
+          fill-opacity="0.92">Black Iron Tavern</text
         >
         <text
           x="138"
@@ -165,7 +172,7 @@
           font-size="9.5"
           font-weight="600"
           fill="#d7d2c8"
-          fill-opacity="0.92">Crown Secret</text
+          fill-opacity="0.92">Ancient Forest Dragon</text
         >
         <text
           x="350"
@@ -173,7 +180,7 @@
           font-size="9.5"
           font-weight="600"
           fill="#d7d2c8"
-          fill-opacity="0.92">Blackspire Compact</text
+          fill-opacity="0.92">Prophecy of the Shattered Sky</text
         >
         <text
           x="52"
@@ -181,7 +188,7 @@
           font-size="9"
           font-weight="600"
           fill="#d7d2c8"
-          fill-opacity="0.85">Ironhold</text
+          fill-opacity="0.85">Captain Vaelen</text
         >
         <text
           x="430"
@@ -189,7 +196,7 @@
           font-size="9"
           font-weight="600"
           fill="#d7d2c8"
-          fill-opacity="0.85">The Vow</text
+          fill-opacity="0.85">The Missing Heirloom</text
         >
       </g>
     </svg>
@@ -208,7 +215,7 @@
       ></span>
     </div>
     <div class="text-xs font-bold text-theme-text leading-tight">
-      Captain Veyra
+      Eldrin the Wise
     </div>
     <div
       class="text-[9px] font-mono uppercase tracking-[0.15em] mb-3"
@@ -218,14 +225,14 @@
     </div>
     <div class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug">
       <div class="text-theme-muted">
-        Faction: <span class="text-theme-text">Red Concordat</span>
+        Faction: <span class="text-theme-text">The Gilded Hand</span>
       </div>
       <div class="text-theme-muted">
-        Status: <span class="text-theme-text">Missing</span>
+        Found at: <span class="text-theme-text">Black Iron Tavern</span>
       </div>
       <div class="flex items-center gap-1 text-theme-primary pt-0.5">
-        <span class="icon-[lucide--eye-off] w-3 h-3 shrink-0"></span>
-        2 unresolved secrets
+        <span class="icon-[lucide--search] w-3 h-3 shrink-0"></span>
+        Investigating the Missing Heirloom
       </div>
     </div>
   </div>

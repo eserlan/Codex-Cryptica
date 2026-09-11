@@ -7,6 +7,7 @@ import type {
   StatSheetTemplate,
   PresentationTemplate,
 } from "schema";
+import type { ImportJournal, ShelfEntry } from "@codex/entity-shelf";
 // ... (rest of imports unchanged)
 export interface VaultRecord {
   id: string;
@@ -121,6 +122,7 @@ interface CodexDB extends DBSchema {
     value: GuestChatTranscript;
     indexes: {
       "by-character": string;
+      "by-speaker": string;
     };
   };
   publish_registry: {
@@ -142,6 +144,22 @@ interface CodexDB extends DBSchema {
       "by-schema-template-id": string;
     };
   };
+  // The Shelf (156-entity-shelf). Deliberately NOT vault-scoped: unlike every
+  // other store here it carries no vaultId key and no by-vault index, because
+  // being readable from whichever vault is open is the whole feature.
+  shelf_entries: {
+    key: string; // entry id
+    value: ShelfEntry;
+    indexes: {
+      "by-group": string;
+    };
+  };
+  // Present only while an import is in flight. Anything found at startup is a
+  // crashed import whose artifacts need rolling back.
+  shelf_journal: {
+    key: string; // importId
+    value: ImportJournal;
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
@@ -150,7 +168,11 @@ export const DB_NAME = "CodexCryptica";
 // the upgrade() callback below, so 20 was a consumed no-op for them and the
 // store never got created) to support vault-scoped stat sheet templates.
 // Bumped to 22 to add stat_sheet_presentation_templates (152-stat-sheet-templates).
-export const DB_VERSION = 22;
+// Bumped to 23 to add shelf_entries and shelf_journal (156-entity-shelf).
+// Bumped to 24 to add a by-speaker index on guest_chat_transcripts, so a
+// character's chat history can be queried both as the AI-voiced participant
+// and as the human's speaker character (#2302).
+export const DB_VERSION = 24;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -162,136 +184,200 @@ export const DB_VERSION = 22;
 // session even though the file on disk has since moved on.
 const DB_PROMISE_KEY = "__codex_idb_db_promise__";
 
-export function getDB() {
+export function getDB(): Promise<IDBPDatabase<CodexDB>> {
   let dbPromise: Promise<IDBPDatabase<CodexDB>> | undefined = (
     globalThis as any
   )[DB_PROMISE_KEY];
   if (!dbPromise) {
-    dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion, _newVersion, transaction) {
-        if (!db.objectStoreNames.contains("settings")) {
-          db.createObjectStore("settings");
-        }
-        if (!db.objectStoreNames.contains("vault_cache")) {
-          db.createObjectStore("vault_cache", { keyPath: "path" });
-        }
-        if (!db.objectStoreNames.contains("chat_history")) {
-          db.createObjectStore("chat_history", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("world_eras")) {
-          db.createObjectStore("world_eras", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("vaults")) {
-          db.createObjectStore("vaults", { keyPath: "id" });
-        }
-
-        // Recreate sync_registry if schema changes
-        if (db.objectStoreNames.contains("sync_registry") && oldVersion < 10) {
-          db.deleteObjectStore("sync_registry");
-        }
-
-        if (!db.objectStoreNames.contains("sync_registry")) {
-          const store = db.createObjectStore("sync_registry", {
-            keyPath: ["vaultId", "filePath"],
-          });
-          store.createIndex("by-vault", "vaultId");
-          store.createIndex("by-remote-id", "remoteId");
-        } else if (oldVersion < 11) {
-          const store = transaction.objectStore("sync_registry");
-          if (!store.indexNames.contains("by-remote-id")) {
-            store.createIndex("by-remote-id", "remoteId");
+    dbPromise = (async () => {
+      let targetVersion: number | undefined = DB_VERSION;
+      if (
+        typeof indexedDB !== "undefined" &&
+        typeof indexedDB.databases === "function"
+      ) {
+        try {
+          const dbs = await indexedDB.databases();
+          const existing = dbs.find((d) => d.name === DB_NAME);
+          if (existing && existing.version && existing.version > DB_VERSION) {
+            console.warn(
+              `[IDB] Stored database '${DB_NAME}' has version ${existing.version} which is higher than requested ${DB_VERSION}. Opening at stored version.`,
+            );
+            targetVersion = undefined;
           }
+        } catch {
+          // Ignore databases() inspection failures
         }
+      }
 
-        if (!db.objectStoreNames.contains("cloud_sync_metadata")) {
-          db.createObjectStore("cloud_sync_metadata", { keyPath: "vaultId" });
-        }
+      if (targetVersion === undefined) {
+        return openDB<CodexDB>(DB_NAME);
+      }
 
-        if (!db.objectStoreNames.contains("opfs_file_state")) {
-          const store = db.createObjectStore("opfs_file_state", {
-            keyPath: ["vaultId", "filePath"],
-          });
-          store.createIndex("by-vault", "vaultId");
-        }
+      return openDB<CodexDB>(DB_NAME, targetVersion, {
+        upgrade(db, oldVersion, _newVersion, transaction) {
+          if (!db.objectStoreNames.contains("settings")) {
+            db.createObjectStore("settings");
+          }
+          if (!db.objectStoreNames.contains("vault_cache")) {
+            db.createObjectStore("vault_cache", { keyPath: "path" });
+          }
+          if (!db.objectStoreNames.contains("chat_history")) {
+            db.createObjectStore("chat_history", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("world_eras")) {
+            db.createObjectStore("world_eras", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("vaults")) {
+            db.createObjectStore("vaults", { keyPath: "id" });
+          }
 
-        if (!db.objectStoreNames.contains("proposals")) {
-          const store = db.createObjectStore("proposals", { keyPath: "id" });
-          store.createIndex("by-source", "sourceId");
-          store.createIndex("by-status", "status");
-          store.createIndex("by-vault", "vaultId");
-          store.createIndex("by-vault-status", ["vaultId", "status"]);
-          store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
-        } else if (oldVersion < 16) {
-          const store = transaction.objectStore("proposals");
-          if (!store.indexNames.contains("by-vault")) {
+          // Recreate sync_registry if schema changes
+          if (
+            db.objectStoreNames.contains("sync_registry") &&
+            oldVersion < 10
+          ) {
+            db.deleteObjectStore("sync_registry");
+          }
+
+          if (!db.objectStoreNames.contains("sync_registry")) {
+            const store = db.createObjectStore("sync_registry", {
+              keyPath: ["vaultId", "filePath"],
+            });
+            store.createIndex("by-vault", "vaultId");
+            store.createIndex("by-remote-id", "remoteId");
+          } else if (oldVersion < 11) {
+            const store = transaction.objectStore("sync_registry");
+            if (!store.indexNames.contains("by-remote-id")) {
+              store.createIndex("by-remote-id", "remoteId");
+            }
+          }
+
+          if (!db.objectStoreNames.contains("cloud_sync_metadata")) {
+            db.createObjectStore("cloud_sync_metadata", { keyPath: "vaultId" });
+          }
+
+          if (!db.objectStoreNames.contains("opfs_file_state")) {
+            const store = db.createObjectStore("opfs_file_state", {
+              keyPath: ["vaultId", "filePath"],
+            });
             store.createIndex("by-vault", "vaultId");
           }
-          if (!store.indexNames.contains("by-vault-status")) {
+
+          if (!db.objectStoreNames.contains("proposals")) {
+            const store = db.createObjectStore("proposals", { keyPath: "id" });
+            store.createIndex("by-source", "sourceId");
+            store.createIndex("by-status", "status");
+            store.createIndex("by-vault", "vaultId");
             store.createIndex("by-vault-status", ["vaultId", "status"]);
-          }
-          if (!store.indexNames.contains("by-vault-source")) {
             store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+          } else if (oldVersion < 16) {
+            const store = transaction.objectStore("proposals");
+            if (!store.indexNames.contains("by-vault")) {
+              store.createIndex("by-vault", "vaultId");
+            }
+            if (!store.indexNames.contains("by-vault-status")) {
+              store.createIndex("by-vault-status", ["vaultId", "status"]);
+            }
+            if (!store.indexNames.contains("by-vault-source")) {
+              store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+            }
           }
-        }
 
-        if (!db.objectStoreNames.contains("canvases")) {
-          const store = db.createObjectStore("canvases", { keyPath: "id" });
-          store.createIndex("by-vault", "vaultId");
-        }
+          if (!db.objectStoreNames.contains("canvases")) {
+            const store = db.createObjectStore("canvases", { keyPath: "id" });
+            store.createIndex("by-vault", "vaultId");
+          }
 
-        if (!db.objectStoreNames.contains("dice_history")) {
-          const store = db.createObjectStore("dice_history", { keyPath: "id" });
-          store.createIndex("by-context", "context");
-        }
+          if (!db.objectStoreNames.contains("dice_history")) {
+            const store = db.createObjectStore("dice_history", {
+              keyPath: "id",
+            });
+            store.createIndex("by-context", "context");
+          }
 
-        if (!db.objectStoreNames.contains("guest_chat_transcripts")) {
-          const store = db.createObjectStore("guest_chat_transcripts", {
-            keyPath: "id",
-          });
-          store.createIndex("by-character", "characterId");
-        }
+          if (!db.objectStoreNames.contains("guest_chat_transcripts")) {
+            const store = db.createObjectStore("guest_chat_transcripts", {
+              keyPath: "id",
+            });
+            store.createIndex("by-character", "characterId");
+            store.createIndex("by-speaker", "speakerCharacterId");
+          } else if (oldVersion < 24) {
+            const store = transaction.objectStore("guest_chat_transcripts");
+            if (!store.indexNames.contains("by-speaker")) {
+              store.createIndex("by-speaker", "speakerCharacterId");
+            }
+          }
 
-        if (!db.objectStoreNames.contains("publish_registry")) {
-          db.createObjectStore("publish_registry", {
-            keyPath: "vaultId",
-          });
-        }
+          if (!db.objectStoreNames.contains("publish_registry")) {
+            db.createObjectStore("publish_registry", {
+              keyPath: "vaultId",
+            });
+          }
 
-        if (!db.objectStoreNames.contains("stat_sheet_templates")) {
-          const store = db.createObjectStore("stat_sheet_templates", {
-            keyPath: "id",
-          });
-          store.createIndex("by-vault", "vaultId");
-        }
+          if (!db.objectStoreNames.contains("stat_sheet_templates")) {
+            const store = db.createObjectStore("stat_sheet_templates", {
+              keyPath: "id",
+            });
+            store.createIndex("by-vault", "vaultId");
+          }
 
-        if (
-          !db.objectStoreNames.contains("stat_sheet_presentation_templates")
-        ) {
-          const store = db.createObjectStore(
-            "stat_sheet_presentation_templates",
-            { keyPath: "id" },
+          if (
+            !db.objectStoreNames.contains("stat_sheet_presentation_templates")
+          ) {
+            const store = db.createObjectStore(
+              "stat_sheet_presentation_templates",
+              {
+                keyPath: "id",
+              },
+            );
+            store.createIndex("by-vault", "vaultId");
+            store.createIndex("by-schema-template-id", "schemaTemplateId");
+          }
+
+          if (!db.objectStoreNames.contains("shelf_entries")) {
+            const store = db.createObjectStore("shelf_entries", {
+              keyPath: "id",
+            });
+            store.createIndex("by-group", "groupId");
+          }
+
+          if (!db.objectStoreNames.contains("shelf_journal")) {
+            db.createObjectStore("shelf_journal", { keyPath: "importId" });
+          }
+        },
+        blocked() {
+          console.warn("[IDB] Database Open Blocked");
+        },
+        blocking() {
+          console.warn(
+            "[IDB] Database Open Blocking - closing older connection",
           );
-          store.createIndex("by-vault", "vaultId");
-          store.createIndex("by-schema-template-id", "schemaTemplateId");
+          const promiseToClose = (globalThis as any)[DB_PROMISE_KEY];
+          if (promiseToClose) {
+            (globalThis as any)[DB_PROMISE_KEY] = undefined;
+            promiseToClose
+              .then((db: IDBPDatabase<CodexDB>) => db.close())
+              .catch(() => {});
+          }
+        },
+        terminated() {
+          console.error("[IDB] Database Connection Terminated");
+        },
+      }).catch((err) => {
+        // If the browser already has a higher DB version (e.g. from local dev or an experimental branch),
+        // opening without specifying a version allows the app to continue without throwing VersionError.
+        if (
+          (err instanceof DOMException && err.name === "VersionError") ||
+          (err?.message && err.message.includes("higher version"))
+        ) {
+          console.warn(
+            `[IDB] Stored database '${DB_NAME}' has a higher version than requested ${DB_VERSION}. Opening at stored version.`,
+          );
+          return openDB<CodexDB>(DB_NAME);
         }
-      },
-      blocked() {
-        console.warn("[IDB] Database Open Blocked");
-      },
-      blocking() {
-        console.warn("[IDB] Database Open Blocking - closing older connection");
-        const promiseToClose = (globalThis as any)[DB_PROMISE_KEY];
-        if (promiseToClose) {
-          (globalThis as any)[DB_PROMISE_KEY] = undefined;
-          promiseToClose
-            .then((db: IDBPDatabase<CodexDB>) => db.close())
-            .catch(() => {});
-        }
-      },
-      terminated() {
-        console.error("[IDB] Database Connection Terminated");
-      },
-    });
+        throw err;
+      });
+    })();
     (globalThis as any)[DB_PROMISE_KEY] = dbPromise;
   }
   return dbPromise;

@@ -7,7 +7,6 @@ describe("isEntityVisible", () => {
     id: "test-node",
     title: "Test Node",
     type: "character",
-    tags: [],
     labels: [],
     connections: [],
     content: "",
@@ -28,31 +27,31 @@ describe("isEntityVisible", () => {
     defaultVisibility: "hidden",
   };
 
-  it("should show everything in admin mode regardless of tags", () => {
+  it("should show everything in admin mode regardless of labels", () => {
     expect(
-      isEntityVisible({ ...baseEntity, tags: ["hidden"] }, adminSettings),
+      isEntityVisible({ ...baseEntity, labels: ["hidden"] }, adminSettings),
     ).toBe(true);
     expect(isEntityVisible(baseEntity, adminSettings)).toBe(true);
   });
 
   describe("Shared Mode: Visible by Default", () => {
-    it("should show untagged nodes", () => {
+    it("should show unlabeled nodes", () => {
       expect(isEntityVisible(baseEntity, sharedVisibleSettings)).toBe(true);
     });
 
-    it("should hide nodes tagged with 'hidden'", () => {
+    it("should hide nodes labeled with 'hidden'", () => {
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["hidden"] },
+          { ...baseEntity, labels: ["hidden"] },
           sharedVisibleSettings,
         ),
       ).toBe(false);
     });
 
-    it("should hide nodes even if they also have 'revealed' tag (precedence)", () => {
+    it("should hide nodes even if they also have 'revealed' label (precedence)", () => {
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["hidden", "revealed"] },
+          { ...baseEntity, labels: ["hidden", "revealed"] },
           sharedVisibleSettings,
         ),
       ).toBe(false);
@@ -60,14 +59,14 @@ describe("isEntityVisible", () => {
   });
 
   describe("Shared Mode: Hidden by Default", () => {
-    it("should hide untagged nodes", () => {
+    it("should hide unlabeled nodes", () => {
       expect(isEntityVisible(baseEntity, sharedHiddenSettings)).toBe(false);
     });
 
-    it("should show nodes tagged with 'revealed'", () => {
+    it("should show nodes labeled with 'revealed'", () => {
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["revealed"] },
+          { ...baseEntity, labels: ["revealed"] },
           sharedHiddenSettings,
         ),
       ).toBe(true);
@@ -91,10 +90,10 @@ describe("isEntityVisible", () => {
       ).toBe(false);
     });
 
-    it("should still hide nodes tagged with 'hidden' even if they have 'revealed'", () => {
+    it("should still hide nodes labeled with 'hidden' even if they have 'revealed'", () => {
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["hidden", "revealed"] },
+          { ...baseEntity, labels: ["hidden", "revealed"] },
           sharedHiddenSettings,
         ),
       ).toBe(false);
@@ -102,40 +101,57 @@ describe("isEntityVisible", () => {
   });
 
   describe("Case Sensitivity", () => {
-    it("should handle uppercase tags", () => {
+    it("should handle uppercase labels", () => {
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["HIDDEN"] },
+          { ...baseEntity, labels: ["HIDDEN"] },
           sharedVisibleSettings,
         ),
       ).toBe(false);
 
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["REVEALED"] },
+          { ...baseEntity, labels: ["REVEALED"] },
           sharedHiddenSettings,
         ),
       ).toBe(true);
     });
 
-    it("should handle mixed-case tags", () => {
+    it("should handle mixed-case labels", () => {
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["Hidden"] },
+          { ...baseEntity, labels: ["Hidden"] },
           sharedVisibleSettings,
         ),
       ).toBe(false);
 
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["Revealed"] },
+          { ...baseEntity, labels: ["Revealed"] },
           sharedHiddenSettings,
         ),
       ).toBe(true);
 
       expect(
         isEntityVisible(
-          { ...baseEntity, tags: ["Visible"] },
+          { ...baseEntity, labels: ["Visible"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
+    });
+  });
+
+  describe("Legacy Tags Fallback", () => {
+    it("should recognize legacy tags for unmigrated objects", () => {
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["hidden"] } as unknown as Entity,
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["revealed"] } as unknown as Entity,
           sharedHiddenSettings,
         ),
       ).toBe(true);

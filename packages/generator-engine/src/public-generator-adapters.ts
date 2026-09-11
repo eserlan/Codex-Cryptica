@@ -10,8 +10,14 @@
 import { getGenerator } from "./campaign-generator-registry";
 import { generateShipLocal } from "./public-ship";
 import type { ShipGeneratorOptions } from "./public-ship";
-import { generateNomadClanLocal } from "./public-faction";
-import type { NomadClanGeneratorOptions } from "./public-faction";
+import {
+  generateNomadClanLocal,
+  generateDarkFactionLocal,
+} from "./public-faction";
+import type {
+  NomadClanGeneratorOptions,
+  DarkFactionGeneratorOptions,
+} from "./public-faction";
 import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
@@ -19,6 +25,11 @@ import type {
 } from "./campaign-generator-types";
 import type { LanguageProfileV1 } from "schema";
 import type { StarSystemBody } from "./public-star-system";
+import type {
+  ConstellationPattern,
+  ConstellationInterpretation,
+  NightSkyData,
+} from "./public-constellation";
 
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
@@ -46,6 +57,19 @@ export interface PublicGeneratorOutput {
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
   starType?: string;
+  /** Structured star-pattern data for constellations, for a future diagram. */
+  pattern?: ConstellationPattern;
+  /** Constellation generator's cultural interpretation(s) of `pattern`. */
+  interpretations?: ConstellationInterpretation[];
+  /** Night-sky mode's full set of constellations for one culture. */
+  nightSky?: NightSkyData;
+  /**
+   * Short label for the dominant conflict domain driving a BBEG villain's
+   * plan (e.g. "Political Corruption", "Cult Ritual"). Used to track domain
+   * variety across a session so repeated generations don't default to the
+   * same domain (#2325 follow-up).
+   */
+  conflictDomain?: string;
 }
 
 /** First non-blank value, or the last one if all are blank. */
@@ -151,6 +175,13 @@ export function adaptNomadClan(
   options: NomadClanGeneratorOptions = {},
 ): PublicGeneratorOutput {
   return generateNomadClanLocal(options);
+}
+
+/** Generate a Dark Fantasy / Grimdark Faction using the package's local generator. */
+export function adaptDarkFaction(
+  options: DarkFactionGeneratorOptions = {},
+): PublicGeneratorOutput {
+  return generateDarkFactionLocal(options);
 }
 
 /** Generate a Ship using the package's local generator. */

@@ -44,6 +44,25 @@ describe("GuestChatSettings", () => {
     expect(screen.getByText("Guest Character Chat")).toBeTruthy();
     expect(screen.getByText("Enabled")).toBeTruthy();
     expect(screen.getByText(/hybrid lore/i)).toBeTruthy();
+    expect(screen.queryByText("Missing Voice Guidance:")).toBeNull();
+  });
+
+  it("shows a missing voice guidance warning in view mode when personality is missing", () => {
+    render(GuestChatSettings, {
+      entity: {
+        ...character,
+        lore: "",
+        guestChatConfig: {
+          ...character.guestChatConfig,
+          extraInstructions: "",
+        },
+      },
+      isEditing: false,
+      editContent: "",
+    });
+
+    expect(screen.getByText("Missing Voice Guidance:")).toBeTruthy();
+    expect(screen.getByText(/Add a/)).toBeTruthy();
   });
 
   it("saves the availability toggle without entering edit mode", async () => {

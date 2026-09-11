@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { Entity, StatSheetField } from "schema";
+  import type { Entity, StatSheetField, StatSheetTemplate } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import StatSheetView from "$lib/components/stats/StatSheetView.svelte";
   import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
   import StatSheetTemplateModal from "$lib/components/stats/StatSheetTemplateModal.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { presentationUIStore } from "$lib/stores/ui/presentation-ui.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import PresentationRenderer from "$lib/components/stats/presentation/PresentationRenderer.svelte";
@@ -12,9 +13,11 @@
   import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
   import type { PresentationRenderContext } from "$lib/components/stats/presentation/types";
   import {
+    computeSectionKeys,
     isTemplateUsable,
     parseTemplate,
     resolvePresentationTemplate,
+    resolveStatSheetSchema,
     validateAst,
   } from "@codex/stat-sheet-engine";
   import {
@@ -37,9 +40,19 @@
   // FR-010: decide render-via-presentation-template vs. fall back to the
   // standard StatSheetView renderer, unchanged, whenever the resolved
   // template is missing, invalid, or its schema no longer exists.
-  const schema = $derived(
-    statSheetTemplates.allTemplates.find(
-      (t) => t.id === entity.statSheet?.templateId,
+  //
+  // The schema unions the bound template's fields with whatever this
+  // character has of its own, so per-character skills stay referenceable by
+  // a layout and placeable in the Presentation editor.
+  const schema = $derived.by<StatSheetTemplate | null>(() =>
+    resolveStatSheetSchema(
+      entity.statSheet,
+      entity.statSheet?.templateId
+        ? statSheetTemplates.allTemplates.find(
+            (t) => t.id === entity.statSheet?.templateId,
+          )
+        : null,
+      `entity-local-stat-sheet:${entity.id}`,
     ),
   );
   const resolvedTemplate = $derived(
@@ -47,7 +60,11 @@
       ? resolvePresentationTemplate(
           entity.statSheet,
           statSheetTemplates.getDefaultPresentationTemplateId(schema.id),
-          presentationTemplates.availableTemplatesForSchema(schema.id),
+          presentationTemplates.availableTemplatesForSchema(
+            schema.id,
+            schema.fields,
+            entity.type,
+          ),
         )
       : null,
   );
@@ -65,6 +82,10 @@
     if (!parsed.ok) return null;
     return validateAst(parsed.ast, schema);
   });
+
+  const sectionKeys = $derived(
+    presentationAst ? computeSectionKeys(presentationAst) : new Map(),
+  );
 
   function persistFields(nextFields: StatSheetField[]) {
     if (readOnly) return;
@@ -86,10 +107,24 @@
       return readOnly;
     },
     mode: "view",
+    get sectionKeys() {
+      return sectionKeys;
+    },
+    isSectionCollapsed: (sectionKey) =>
+      presentationUIStore.getCollapsedSections(entity.id).has(sectionKey),
+    onToggleSection: (sectionKey) =>
+      presentationUIStore.toggleSection(entity.id, sectionKey),
     onUpdateFieldValue: (fieldId, value) => {
       persistFields(
         (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>
           f.id === fieldId ? { ...f, value } : f,
+        ),
+      );
+    },
+    onUpdateField: (fieldId, updates) => {
+      persistFields(
+        (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>
+          f.id === fieldId ? { ...f, ...updates } : f,
         ),
       );
     },
@@ -193,6 +228,7 @@
 {#if showPresentationManager && schema}
   <PresentationTemplateManager
     {schema}
+    entityType={entity.type}
     onClose={() => (showPresentationManager = false)}
   />
 {/if}

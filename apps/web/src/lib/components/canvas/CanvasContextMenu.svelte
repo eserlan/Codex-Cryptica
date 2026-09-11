@@ -8,6 +8,7 @@
     DEFAULT_CANVAS_TEXT_FONT_SIZE,
   } from "@codex/canvas-engine";
   import { canvasTextBackgroundStyle } from "./canvas-workspace-helpers";
+  import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
 
   let {
     x,
@@ -344,67 +345,32 @@
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
 
-    {#if targetType === "node" && onToggleLock}
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
-          onToggleLock();
-          onClose();
-        }}
-      >
-        <span
-          class="{isLocked
-            ? 'icon-[lucide--lock-open]'
-            : 'icon-[lucide--lock]'} w-3.5 h-3.5"
-        ></span>
-        {isLocked ? "Unlock" : "Lock in Place"}
-      </button>
-      <div class="border-t border-theme-border/30 my-1"></div>
-    {/if}
-
-    {#if targetType === "node" && (onBringToFront || onSendToBack)}
-      {#if onBringToFront}
-        <button
-          role="menuitem"
-          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-          onclick={() => {
-            onBringToFront();
-            onClose();
-          }}
-        >
-          <span class="icon-[lucide--bring-to-front] w-3.5 h-3.5"></span>
-          Bring to Front
-        </button>
-      {/if}
-      {#if onSendToBack}
-        <button
-          role="menuitem"
-          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-          onclick={() => {
-            onSendToBack();
-            onClose();
-          }}
-        >
-          <span class="icon-[lucide--send-to-back] w-3.5 h-3.5"></span>
-          Send to Back
-        </button>
-      {/if}
-      <div class="border-t border-theme-border/30 my-1"></div>
-    {/if}
-
     {#if targetType !== "pane"}
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
+      <SpatialImageControls
+        locked={isLocked}
+        onToggleLock={targetType === "node" && onToggleLock
+          ? () => {
+              onToggleLock?.();
+              onClose();
+            }
+          : undefined}
+        onBringToFront={targetType === "node" && onBringToFront
+          ? () => {
+              onBringToFront?.();
+              onClose();
+            }
+          : undefined}
+        onSendToBack={targetType === "node" && onSendToBack
+          ? () => {
+              onSendToBack?.();
+              onClose();
+            }
+          : undefined}
+        onDelete={() => {
           onDelete();
           onClose();
         }}
-      >
-        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-        Delete
-      </button>
+      />
     {/if}
   {:else}
     <div

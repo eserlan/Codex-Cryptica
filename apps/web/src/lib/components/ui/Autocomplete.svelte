@@ -207,6 +207,7 @@
     >
       {#each results as result, i}
         <button
+          type="button"
           id="{finalId}-option-{i}"
           role="option"
           tabindex="-1"

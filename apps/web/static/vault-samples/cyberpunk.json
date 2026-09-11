@@ -124,6 +124,582 @@
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-city.png",
       "_path": ["events", "the-arasaka-data-heist.md"],
       "lastModified": 1700000000000
+    },
+    "neon-strip": {
+      "id": "neon-strip",
+      "title": "The Neon Strip",
+      "type": "location",
+      "tags": ["market", "nightlife", "crowded"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "located_in",
+          "label": "The slums' main artery"
+        }
+      ],
+      "content": "Six blocks of vendors, noodle carts and unlicensed clinics under a canopy of advertising. Everything is for sale and nothing has a receipt.",
+      "lore": "Six blocks of vendors, noodle carts and unlicensed clinics under a canopy of advertising. Everything is for sale and nothing has a receipt.",
+      "_path": ["locations", "neon-strip.md"],
+      "lastModified": 1700000000000
+    },
+    "vertical-stacks": {
+      "id": "vertical-stacks",
+      "title": "The Vertical Stacks",
+      "type": "location",
+      "tags": ["housing", "vertical", "poor"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "located_in",
+          "label": "Northern edge"
+        }
+      ],
+      "content": "Forty floors of converted cargo housing. The lifts fail weekly, so the upper stacks have their own economy and their own rules.",
+      "lore": "Forty floors of converted cargo housing. The lifts fail weekly, so the upper stacks have their own economy and their own rules.",
+      "_path": ["locations", "vertical-stacks.md"],
+      "lastModified": 1700000000000
+    },
+    "static-bar": {
+      "id": "static-bar",
+      "title": "Static Bar",
+      "type": "location",
+      "tags": ["bar", "neutral-ground", "hub"],
+      "connections": [
+        {
+          "target": "neon-strip",
+          "type": "located_in",
+          "label": "Beneath the strip"
+        }
+      ],
+      "content": "A basement bar where the music is loud enough to defeat directional microphones. Deals happen at the back booths; nobody looks.",
+      "lore": "A basement bar where the music is loud enough to defeat directional microphones. Deals happen at the back booths; nobody looks.",
+      "_path": ["locations", "static-bar.md"],
+      "lastModified": 1700000000000
+    },
+    "helix-tower": {
+      "id": "helix-tower",
+      "title": "Helix Tower",
+      "type": "location",
+      "tags": ["corporate", "secure", "landmark"],
+      "connections": [
+        {
+          "target": "helix-dynamics",
+          "type": "owned_by",
+          "label": "Corporate headquarters"
+        }
+      ],
+      "content": "Ninety floors of mirrored glass with its own weather. Visible from every alley in Sector 7, which is the point.",
+      "lore": "Ninety floors of mirrored glass with its own weather. Visible from every alley in Sector 7, which is the point.",
+      "_path": ["locations", "helix-tower.md"],
+      "lastModified": 1700000000000
+    },
+    "drowned-district": {
+      "id": "drowned-district",
+      "title": "The Drowned District",
+      "type": "location",
+      "tags": ["ruins", "flooded", "dangerous"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "borders",
+          "label": "Southern flood line"
+        }
+      ],
+      "content": "Twelve blocks that went under when the seawall failed and were never reclaimed. The grid still runs down there, which is why people go.",
+      "lore": "Twelve blocks that went under when the seawall failed and were never reclaimed. The grid still runs down there, which is why people go.",
+      "_path": ["locations", "drowned-district.md"],
+      "lastModified": 1700000000000
+    },
+    "cathedral-node": {
+      "id": "cathedral-node",
+      "title": "Cathedral Node",
+      "type": "location",
+      "tags": ["server-farm", "hidden", "sacred"],
+      "connections": [
+        {
+          "target": "drowned-district",
+          "type": "located_in",
+          "label": "Above the waterline"
+        },
+        {
+          "target": "net-ghosts",
+          "type": "controlled_by",
+          "label": "Primary relay"
+        }
+      ],
+      "content": "A decommissioned church whose nave now holds server racks. The Net-Ghosts route their heaviest traffic through its cold, quiet dark.",
+      "lore": "A decommissioned church whose nave now holds server racks. The Net-Ghosts route their heaviest traffic through its cold, quiet dark.",
+      "_path": ["locations", "cathedral-node.md"],
+      "lastModified": 1700000000000
+    },
+    "transit-spine": {
+      "id": "transit-spine",
+      "title": "The Transit Spine",
+      "type": "location",
+      "tags": ["transport", "maglev", "public"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "connects",
+          "label": "Sector 7 platform"
+        },
+        {
+          "target": "helix-tower",
+          "type": "connects",
+          "label": "Executive terminus"
+        }
+      ],
+      "content": "The maglev line that stitches the sectors together. Corporate cars run the upper rail; everyone else rides below it.",
+      "lore": "The maglev line that stitches the sectors together. Corporate cars run the upper rail; everyone else rides below it.",
+      "_path": ["locations", "transit-spine.md"],
+      "lastModified": 1700000000000
+    },
+    "vesper-kade": {
+      "id": "vesper-kade",
+      "title": "Vesper Kade",
+      "type": "character",
+      "tags": ["fixer", "connected", "careful"],
+      "connections": [
+        {
+          "target": "static-bar",
+          "type": "operates_in",
+          "label": "Back booth, most nights"
+        },
+        {
+          "target": "glitch",
+          "type": "employs",
+          "label": "Sends work their way"
+        }
+      ],
+      "content": "The fixer who decides which jobs reach which crews. Keeps no files, forgets nothing, and has never once been arrested.",
+      "lore": "The fixer who decides which jobs reach which crews. Keeps no files, forgets nothing, and has never once been arrested.",
+      "_path": ["npcs", "vesper-kade.md"],
+      "lastModified": 1700000000000
+    },
+    "kestrel-9": {
+      "id": "kestrel-9",
+      "title": "Kestrel-9",
+      "type": "character",
+      "tags": ["enforcer", "augmented", "corporate"],
+      "connections": [
+        {
+          "target": "helix-dynamics",
+          "type": "member_of",
+          "label": "Internal Security"
+        },
+        {
+          "target": "glitch",
+          "type": "hunts",
+          "label": "Standing contract"
+        }
+      ],
+      "content": "Helix Dynamics' field asset for problems that cannot go through legal. Eight confirmed augmentations, none of them cosmetic.",
+      "lore": "Helix Dynamics' field asset for problems that cannot go through legal. Eight confirmed augmentations, none of them cosmetic.",
+      "_path": ["npcs", "kestrel-9.md"],
+      "lastModified": 1700000000000
+    },
+    "mila-ferran": {
+      "id": "mila-ferran",
+      "title": "Mila Ferran",
+      "type": "character",
+      "tags": ["journalist", "stubborn", "exposed"],
+      "connections": [
+        {
+          "target": "black-ledger",
+          "type": "seeks",
+          "label": "Believes it proves the recall was deliberate"
+        },
+        {
+          "target": "static-bar",
+          "type": "operates_in",
+          "label": "Meets sources here"
+        }
+      ],
+      "content": "Independent reporter who has been building a case against Helix for three years. Publishes from a different address every week.",
+      "lore": "Independent reporter who has been building a case against Helix for three years. Publishes from a different address every week.",
+      "_path": ["npcs", "mila-ferran.md"],
+      "lastModified": 1700000000000
+    },
+    "rook": {
+      "id": "rook",
+      "title": "Rook",
+      "type": "character",
+      "tags": ["smuggler", "pilot", "reckless"],
+      "connections": [
+        {
+          "target": "the-quiet-hand",
+          "type": "member_of",
+          "label": "Preferred courier"
+        },
+        {
+          "target": "drowned-district",
+          "type": "operates_in",
+          "label": "Knows every submerged street"
+        }
+      ],
+      "content": "Runs cargo through the drowned district in a boat that should not float. Charges by risk, not by weight.",
+      "lore": "Runs cargo through the drowned district in a boat that should not float. Charges by risk, not by weight.",
+      "_path": ["npcs", "rook.md"],
+      "lastModified": 1700000000000
+    },
+    "saint-decibel": {
+      "id": "saint-decibel",
+      "title": "Saint Decibel",
+      "type": "character",
+      "tags": ["broker", "dj", "loud"],
+      "connections": [
+        {
+          "target": "static-bar",
+          "type": "works_at",
+          "label": "Resident DJ"
+        },
+        {
+          "target": "vesper-kade",
+          "type": "rivals",
+          "label": "Competing information trade"
+        }
+      ],
+      "content": "Spins at the Static Bar four nights a week and sells what the crowd says on the other three. Information priced by how badly you want it.",
+      "lore": "Spins at the Static Bar four nights a week and sells what the crowd says on the other three. Information priced by how badly you want it.",
+      "_path": ["npcs", "saint-decibel.md"],
+      "lastModified": 1700000000000
+    },
+    "auditor-grey": {
+      "id": "auditor-grey",
+      "title": "Auditor Grey",
+      "type": "character",
+      "tags": ["investigator", "corporate", "patient"],
+      "connections": [
+        {
+          "target": "helix-dynamics",
+          "type": "member_of",
+          "label": "Compliance"
+        },
+        {
+          "target": "black-ledger",
+          "type": "seeks",
+          "label": "Assigned to recover it"
+        }
+      ],
+      "content": "Helix's internal auditor, sent down from the tower to find out who has been moving numbers. Does not carry a weapon and does not need to.",
+      "lore": "Helix's internal auditor, sent down from the tower to find out who has been moving numbers. Does not carry a weapon and does not need to.",
+      "_path": ["npcs", "auditor-grey.md"],
+      "lastModified": 1700000000000
+    },
+    "tam-oyelaran": {
+      "id": "tam-oyelaran",
+      "title": "Tam Oyelaran",
+      "type": "character",
+      "tags": ["engineer", "retired", "principled"],
+      "connections": [
+        {
+          "target": "cathedral-node",
+          "type": "works_at",
+          "label": "Keeps the racks alive"
+        },
+        {
+          "target": "net-ghosts",
+          "type": "allied_with",
+          "label": "Sympathiser, not a member"
+        }
+      ],
+      "content": "Built ICE for Helix for eleven years, then walked out. Now maintains the Cathedral Node for people who cannot pay.",
+      "lore": "Built ICE for Helix for eleven years, then walked out. Now maintains the Cathedral Node for people who cannot pay.",
+      "_path": ["npcs", "tam-oyelaran.md"],
+      "lastModified": 1700000000000
+    },
+    "dr-solene-marrow": {
+      "id": "dr-solene-marrow",
+      "title": "Dr. Solene Marrow",
+      "type": "character",
+      "tags": ["ripperdoc", "licensed", "cold"],
+      "connections": [
+        {
+          "target": "helix-tower",
+          "type": "works_at",
+          "label": "Medical, floor 40"
+        },
+        {
+          "target": "chrome-eyes",
+          "type": "rivals",
+          "label": "Two ends of the same trade"
+        }
+      ],
+      "content": "The legitimate surgeon Helix employees are sent to. Better equipment than Chrome-Eyes, and a waiting list you cannot join.",
+      "lore": "The legitimate surgeon Helix employees are sent to. Better equipment than Chrome-Eyes, and a waiting list you cannot join.",
+      "_path": ["npcs", "dr-solene-marrow.md"],
+      "lastModified": 1700000000000
+    },
+    "helix-dynamics": {
+      "id": "helix-dynamics",
+      "title": "Helix Dynamics",
+      "type": "faction",
+      "tags": ["megacorp", "biotech", "powerful"],
+      "connections": [
+        {
+          "target": "sector-council",
+          "type": "influences",
+          "label": "Three seats voting reliably"
+        }
+      ],
+      "content": "Biotech megacorp holding the augmentation patents most of the sector depends on. Owns the tower, the upper rail, and a great deal of the council.",
+      "lore": "Biotech megacorp holding the augmentation patents most of the sector depends on. Owns the tower, the upper rail, and a great deal of the council.",
+      "_path": ["factions", "helix-dynamics.md"],
+      "lastModified": 1700000000000
+    },
+    "red-vector": {
+      "id": "red-vector",
+      "title": "Red Vector",
+      "type": "faction",
+      "tags": ["gang", "violent", "territorial"],
+      "connections": [
+        {
+          "target": "vertical-stacks",
+          "type": "controls",
+          "label": "Floors twelve and up"
+        },
+        {
+          "target": "net-ghosts",
+          "type": "rivals",
+          "label": "Fighting over the same alleys"
+        }
+      ],
+      "content": "Street crew running the Vertical Stacks. Sells protection to the same people it threatens, and calls the arrangement stability.",
+      "lore": "Street crew running the Vertical Stacks. Sells protection to the same people it threatens, and calls the arrangement stability.",
+      "_path": ["factions", "red-vector.md"],
+      "lastModified": 1700000000000
+    },
+    "the-quiet-hand": {
+      "id": "the-quiet-hand",
+      "title": "The Quiet Hand",
+      "type": "faction",
+      "tags": ["smugglers", "discreet", "old"],
+      "connections": [
+        {
+          "target": "drowned-district",
+          "type": "operates_in",
+          "label": "Flooded routes"
+        },
+        {
+          "target": "vesper-kade",
+          "type": "allied_with",
+          "label": "Long-standing arrangement"
+        }
+      ],
+      "content": "A smuggling network older than the seawall. Moves cargo, people and data, and never asks which it is carrying.",
+      "lore": "A smuggling network older than the seawall. Moves cargo, people and data, and never asks which it is carrying.",
+      "_path": ["factions", "the-quiet-hand.md"],
+      "lastModified": 1700000000000
+    },
+    "sector-council": {
+      "id": "sector-council",
+      "title": "The Sector Council",
+      "type": "faction",
+      "tags": ["governance", "compromised", "public"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "governs",
+          "label": "Nominal authority"
+        }
+      ],
+      "content": "Nine elected seats meant to govern Sector 7. Meets publicly, decides privately, and has not refused Helix anything in six years.",
+      "lore": "Nine elected seats meant to govern Sector 7. Meets publicly, decides privately, and has not refused Helix anything in six years.",
+      "_path": ["factions", "sector-council.md"],
+      "lastModified": 1700000000000
+    },
+    "black-ledger": {
+      "id": "black-ledger",
+      "title": "The Black Ledger",
+      "type": "item",
+      "tags": ["data", "evidence", "contested"],
+      "connections": [
+        {
+          "target": "the-helix-recall",
+          "type": "evidence_of",
+          "label": "Documents what was known"
+        }
+      ],
+      "content": "An encrypted chip carrying Helix's real recall figures. Three parties want it and none of them can decrypt it alone.",
+      "lore": "An encrypted chip carrying Helix's real recall figures. Three parties want it and none of them can decrypt it alone.",
+      "_path": ["notes", "black-ledger.md"],
+      "lastModified": 1700000000000
+    },
+    "ghostwire-suite": {
+      "id": "ghostwire-suite",
+      "title": "Ghostwire ICE-Breaker",
+      "type": "item",
+      "tags": ["software", "illegal", "rare"],
+      "connections": [
+        {
+          "target": "glitch",
+          "type": "owned_by",
+          "label": "Their working copy"
+        },
+        {
+          "target": "tam-oyelaran",
+          "type": "created_by",
+          "label": "Wrote the original core"
+        }
+      ],
+      "content": "A hand-built intrusion suite that adapts to ICE rather than brute-forcing it. Three known copies; two are Helix's.",
+      "lore": "A hand-built intrusion suite that adapts to ICE rather than brute-forcing it. Three known copies; two are Helix's.",
+      "_path": ["notes", "ghostwire-suite.md"],
+      "lastModified": 1700000000000
+    },
+    "neural-shunt": {
+      "id": "neural-shunt",
+      "title": "Marrow-Grade Neural Shunt",
+      "type": "item",
+      "tags": ["implant", "medical", "dangerous"],
+      "connections": [
+        {
+          "target": "dr-solene-marrow",
+          "type": "created_by",
+          "label": "Her design, her name on it"
+        },
+        {
+          "target": "chrome-eyes",
+          "type": "known_by",
+          "label": "Installs the copies"
+        }
+      ],
+      "content": "A surgical shunt that lets a runner hold a connection far past safe limits. It works. It also shortens the list of things you remember.",
+      "lore": "A surgical shunt that lets a runner hold a connection far past safe limits. It works. It also shortens the list of things you remember.",
+      "_path": ["notes", "neural-shunt.md"],
+      "lastModified": 1700000000000
+    },
+    "blackout-of-49": {
+      "id": "blackout-of-49",
+      "title": "The Blackout of '49",
+      "type": "event",
+      "tags": ["history", "disaster", "unresolved"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "occurred_in",
+          "label": "Sector-wide"
+        },
+        {
+          "target": "helix-dynamics",
+          "type": "involved",
+          "label": "Ran the grid contract that year"
+        }
+      ],
+      "content": "Eleven hours with no grid, no lifts and no lights. Officially a cascade fault. Nobody in the slums believes that.",
+      "lore": "Eleven hours with no grid, no lifts and no lights. Officially a cascade fault. Nobody in the slums believes that.",
+      "_path": ["events", "blackout-of-49.md"],
+      "lastModified": 1700000000000
+    },
+    "the-helix-recall": {
+      "id": "the-helix-recall",
+      "title": "The Helix Recall",
+      "type": "event",
+      "tags": ["scandal", "ongoing", "corporate"],
+      "connections": [
+        {
+          "target": "helix-dynamics",
+          "type": "involved",
+          "label": "Issued the recall"
+        },
+        {
+          "target": "mila-ferran",
+          "type": "investigated_by",
+          "label": "Three years of reporting"
+        }
+      ],
+      "content": "Helix quietly recalled a run of neural implants and offered replacements to anyone who signed. Most signed.",
+      "lore": "Helix quietly recalled a run of neural implants and offered replacements to anyone who signed. Most signed.",
+      "_path": ["events", "the-helix-recall.md"],
+      "lastModified": 1700000000000
+    },
+    "strip-riots": {
+      "id": "strip-riots",
+      "title": "The Strip Riots",
+      "type": "event",
+      "tags": ["recent", "violent", "public"],
+      "connections": [
+        {
+          "target": "neon-strip",
+          "type": "occurred_in",
+          "label": "Along the whole strip"
+        },
+        {
+          "target": "red-vector",
+          "type": "involved",
+          "label": "Started it"
+        },
+        {
+          "target": "sector-council",
+          "type": "involved",
+          "label": "Promised an inquiry"
+        }
+      ],
+      "content": "Four nights of fires along the Neon Strip after a Red Vector shakedown killed a vendor. The council promised an inquiry.",
+      "lore": "Four nights of fires along the Neon Strip after a Red Vector shakedown killed a vendor. The council promised an inquiry.",
+      "_path": ["events", "strip-riots.md"],
+      "lastModified": 1700000000000
+    },
+    "sable-drone-swarm": {
+      "id": "sable-drone-swarm",
+      "title": "Sable Drone Swarm",
+      "type": "creature",
+      "tags": ["drones", "autonomous", "hazard"],
+      "connections": [
+        {
+          "target": "drowned-district",
+          "type": "found_in",
+          "label": "Patrols the flood line"
+        }
+      ],
+      "content": "A maintenance swarm that outlived its contract and kept patrolling. It still repairs things. It still removes what it reads as damage.",
+      "lore": "A maintenance swarm that outlived its contract and kept patrolling. It still repairs things. It still removes what it reads as damage.",
+      "_path": ["creatures", "sable-drone-swarm.md"],
+      "lastModified": 1700000000000
+    },
+    "runners-code": {
+      "id": "runners-code",
+      "title": "The Runner's Code",
+      "type": "note",
+      "tags": ["culture", "rules", "informal"],
+      "connections": [
+        {
+          "target": "net-ghosts",
+          "type": "known_by",
+          "label": "Held most strictly here"
+        },
+        {
+          "target": "vesper-kade",
+          "type": "known_by",
+          "label": "Enforces it by refusing work"
+        }
+      ],
+      "content": "Not written anywhere, and everyone can recite it. Do not burn a fixer. Do not touch a clinic. Do not take corporate money to hunt your own.",
+      "lore": "Not written anywhere, and everyone can recite it. Do not burn a fixer. Do not touch a clinic. Do not take corporate money to hunt your own.",
+      "_path": ["notes", "runners-code.md"],
+      "lastModified": 1700000000000
+    },
+    "ice-protocols": {
+      "id": "ice-protocols",
+      "title": "ICE Protocols",
+      "type": "note",
+      "tags": ["technical", "reference", "corporate"],
+      "connections": [
+        {
+          "target": "ghostwire-suite",
+          "type": "describes",
+          "label": "What it was built against"
+        },
+        {
+          "target": "tam-oyelaran",
+          "type": "created_by",
+          "label": "Written from the inside"
+        }
+      ],
+      "content": "Working notes on Helix's intrusion countermeasures: what each layer watches for, and how long you have once it notices you.",
+      "lore": "Working notes on Helix's intrusion countermeasures: what each layer watches for, and how long you have once it notices you.",
+      "_path": ["notes", "ice-protocols.md"],
+      "lastModified": 1700000000000
     }
   }
 }

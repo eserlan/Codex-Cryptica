@@ -13,6 +13,7 @@ import { lancerTables } from "./lancer";
 import { spaceOperaResistanceTables } from "./space-opera-resistance";
 import { optimisticSciFiTables } from "./optimistic-scifi";
 import { cosmicHorrorTables } from "./cosmic-horror";
+import { spaceWesternDungeonTables } from "./space-western";
 
 /**
  * Every genre the dungeon generator can produce content for, keyed by the theme
@@ -36,6 +37,7 @@ export const DUNGEON_GENRE_TABLES: Record<string, DungeonGenreTables> = {
   Lancer: lancerTables,
   "Space Opera Resistance": spaceOperaResistanceTables,
   "Optimistic Exploration Sci-Fi": optimisticSciFiTables,
+  "Space Western": spaceWesternDungeonTables,
   "Cosmic Horror": cosmicHorrorTables,
 };
 

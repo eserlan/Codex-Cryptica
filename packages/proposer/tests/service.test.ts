@@ -600,5 +600,25 @@ describe("ProposerService", () => {
 
       db.close();
     });
+
+    it("should connect to higher-versioned databases without VersionError when dbVersion is omitted", async () => {
+      const dbName = `test-db-higher-ver-${crypto.randomUUID()}`;
+      // Pre-create DB at version 24
+      const existingDb = await openDB(dbName, 24, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("proposals")) {
+            const store = db.createObjectStore("proposals", { keyPath: "id" });
+            store.createIndex("by-vault", "vaultId");
+          }
+        },
+      });
+      existingDb.close();
+
+      // Instantiate ProposerService with no dbVersion (default constructor)
+      const service = new ProposerService(dbName);
+      const db = await service["getDB"]();
+      expect(db.version).toBe(24);
+      db.close();
+    });
   });
 });

@@ -4,11 +4,14 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { quickNoteScratchpadMock } = vi.hoisted(() => ({
-  quickNoteScratchpadMock: vi.fn(() => ({
-    $$render: () => "",
-  })),
-}));
+const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
+  () => ({
+    quickNoteScratchpadMock: vi.fn(() => ({
+      $$render: () => "",
+    })),
+    setVaultSessionActiveMock: vi.fn(),
+  }),
+);
 
 vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/paths", () => ({ base: "" }));
@@ -24,11 +27,6 @@ vi.mock("$app/navigation", () => ({
 vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
   default: function AppHeaderMock() {
     return { $$render: () => "<div data-testid='app-header'></div>" };
-  },
-}));
-vi.mock("$lib/components/layout/AppFooter.svelte", () => ({
-  default: function AppFooterMock() {
-    return { $$render: () => "<div data-testid='app-footer'></div>" };
   },
 }));
 vi.mock("$lib/components/layout/NotificationToast.svelte", () => ({
@@ -58,7 +56,9 @@ vi.mock("$lib/components/layout/MobileDemoBanner.svelte", () => ({
 }));
 vi.mock("$lib/components/modals/GlobalModalProvider.svelte", () => ({
   default: function GlobalModalProviderMock() {
-    return { $$render: () => "" };
+    return {
+      $$render: () => "<div data-testid='global-modal-provider'></div>",
+    };
   },
 }));
 vi.mock("$lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
@@ -113,7 +113,12 @@ vi.mock("$lib/stores/quicknote.svelte", () => ({
   quickNoteStore: {},
 }));
 vi.mock("@codex/events", () => ({
-  appEventBus: {},
+  // The Shelf subscribes to this bus on mount, so the stub needs the two
+  // methods it actually calls rather than being a bare object.
+  appEventBus: {
+    subscribe: () => () => {},
+    emit: () => {},
+  },
   CrossTabBroadcaster: class {
     destroy() {}
   },
@@ -135,6 +140,8 @@ vi.mock("$lib/config/help-content", () => ({
 }));
 vi.mock("$lib/config", () => ({
   VERSION: "0.0.0",
+  PATREON_URL: "https://patreon.com/codexcryptica",
+  DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
 vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [],
@@ -142,12 +149,16 @@ vi.mock("$lib/content/changelog/releases.json", () => ({
 vi.mock("schema", () => ({
   THEMES: {},
   isEntityVisible: vi.fn(),
+  DEFAULT_ITEM_TABLE_COLUMNS: [],
 }));
 vi.mock("$lib/app/init/app-init", () => ({
   bootSystem: vi.fn(() => true),
   initializeGlobalListeners: vi.fn(() => () => {}),
   setupWindowGlobals: vi.fn(),
-  registerServiceWorker: vi.fn(),
+  registerServiceWorker: vi.fn(() => ({
+    setVaultSessionActive: setVaultSessionActiveMock,
+    destroy: vi.fn(),
+  })),
 }));
 vi.mock("$lib/hooks/useGlobalShortcuts.svelte", () => ({
   useGlobalShortcuts: vi.fn(() => vi.fn()),
@@ -279,11 +290,107 @@ describe("+layout.svelte", () => {
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockClear();
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(false);
     quickNoteScratchpadMock.mockClear();
+    setVaultSessionActiveMock.mockClear();
+  });
+
+  it("activates offline shell caching only for an open local vault route", async () => {
+    render(LayoutTestHost);
+
+    await waitFor(() => {
+      expect(setVaultSessionActiveMock).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it("keeps offline shell caching inactive on non-vault app routes", async () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    await waitFor(() => {
+      expect(setVaultSessionActiveMock).toHaveBeenCalled();
+    });
+    expect(setVaultSessionActiveMock).not.toHaveBeenCalledWith(true);
+    expect(setVaultSessionActiveMock).toHaveBeenLastCalledWith(false);
   });
 
   it("keeps route content mounted beneath the app shell", () => {
     render(LayoutTestHost);
     expect(screen.getByTestId("layout-children")).toBeTruthy();
+  });
+
+  it("mounts the application footer in the standard application shell", () => {
+    render(LayoutTestHost);
+
+    expect(screen.getByTestId("app-footer")).toBeTruthy();
+  });
+
+  it("keeps the dice pop-out free of the application shell and global overlays", () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    expect(screen.queryByTestId("app-header")).toBeNull();
+    expect(screen.queryByTestId("app-footer")).toBeNull();
+    expect(screen.queryByTestId("global-modal-provider")).toBeNull();
+    expect(quickNoteScratchpadMock).not.toHaveBeenCalled();
+  });
+
+  it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {
+    const listeners = new Map<string, () => void>();
+    const originalVisualViewport = window.visualViewport;
+    (window as any).visualViewport = {
+      height: 742,
+      addEventListener: (type: string, listener: () => void) =>
+        listeners.set(type, listener),
+      removeEventListener: (type: string) => listeners.delete(type),
+    };
+
+    try {
+      const { unmount } = render(LayoutTestHost);
+
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--app-viewport-height",
+        ),
+      ).toBe("742px");
+
+      // Simulate the mobile browser's toolbar collapsing/expanding, changing
+      // the actually-visible height without a full window resize.
+      (window.visualViewport as any).height = 690;
+      listeners.get("resize")?.();
+
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--app-viewport-height",
+        ),
+      ).toBe("690px");
+
+      unmount();
+    } finally {
+      (window as any).visualViewport = originalVisualViewport;
+      document.documentElement.style.removeProperty("--app-viewport-height");
+    }
+  });
+
+  it("leaves --app-viewport-height alone when the browser has no visualViewport", () => {
+    const originalVisualViewport = window.visualViewport;
+    (window as any).visualViewport = undefined;
+    document.documentElement.style.removeProperty("--app-viewport-height");
+
+    try {
+      const { unmount } = render(LayoutTestHost);
+
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--app-viewport-height",
+        ),
+      ).toBe("");
+
+      unmount();
+    } finally {
+      (window as any).visualViewport = originalVisualViewport;
+      document.documentElement.style.removeProperty("--app-viewport-height");
+    }
   });
 
   it("does not open the in-app Help modal for standalone Help hashes", async () => {

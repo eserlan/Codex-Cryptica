@@ -311,7 +311,6 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     );
     expect(locationDraft).toBeDefined();
     expect(locationDraft?.labels).toContain("Dark Cities");
-    expect(locationDraft?.tags).toEqual([]);
 
     const characterDraft = pkg.entityDrafts.find(
       (d) => d.sourceId === "4543966",
@@ -322,7 +321,6 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft?.labels).toContain("Adventurers");
     expect(characterDraft?.labels).toContain("Brujah Clan");
     expect(characterDraft?.labels).not.toContain("Character");
-    expect(characterDraft?.tags).toEqual([]);
   });
 
   it("should infer entity types from CATEGORY_OF connections linking standard categories to generic pages", () => {
@@ -398,7 +396,6 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(draft).toBeDefined();
     expect(draft?.labels).toContain("Female");
     expect(draft?.labels).toContain("Human");
-    expect(draft?.tags).toEqual([]);
     expect(pkg.relationshipDrafts.length).toBe(0);
     expect(pkg.warnings).toContainEqual(
       expect.objectContaining({ code: "SCABARD_CONNECTION_SUMMARY" }),

@@ -63,6 +63,26 @@ describe("ContextMenuInteractionHandler", () => {
     expect(handler.contextMenu).toBeNull();
   });
 
+  it("opens for a note even when VTT mode is disabled", () => {
+    const tokenSelection = new TokenSelectionManager({
+      getTokens: () => [token({ id: "note-a", x: 10, y: 10, kind: "note" })],
+      project: (point) => point,
+      getSelectedTokens: () => new Set(),
+      setSelection: vi.fn(),
+      addToSelection: vi.fn(),
+      removeFromSelection: vi.fn(),
+      setMultiSelection: vi.fn(),
+    });
+    const noteHandler = new ContextMenuInteractionHandler({
+      isVttEnabled: () => false,
+      unproject: (point) => ({ x: point.x + 1, y: point.y + 2 }),
+      tokenSelection,
+    });
+
+    expect(noteHandler.open({ x: 300, y: 400 }, { x: 20, y: 20 })).toBe(true);
+    expect(noteHandler.contextMenu?.tokenId).toBe("note-a");
+  });
+
   it("clears the current context menu", () => {
     handler.open({ x: 300, y: 400 }, { x: 20, y: 20 });
 

@@ -64,6 +64,22 @@ export const THEME_GENERATOR_DEFAULTS: Record<
       currentState: "Occupied Stronghold",
     },
   },
+  "space-western": {
+    npc: { race: "Human", role: "Smuggler Captain" },
+    settlement: { type: "Boomtown Outpost" },
+    faction: { type: "Smuggler Syndicate" },
+    "magic-item": { rarity: "Uncommon" },
+    event: { type: "Discovery" },
+    dungeon: { purpose: "Mining Complex", currentState: "Abandoned Ruins" },
+  },
+  "space-western_light": {
+    npc: { race: "Human", role: "Smuggler Captain" },
+    settlement: { type: "Boomtown Outpost" },
+    faction: { type: "Smuggler Syndicate" },
+    "magic-item": { rarity: "Uncommon" },
+    event: { type: "Discovery" },
+    dungeon: { purpose: "Mining Complex", currentState: "Abandoned Ruins" },
+  },
 };
 
 /**
