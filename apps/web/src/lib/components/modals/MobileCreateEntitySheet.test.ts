@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import MobileCreateEntitySheet from "./MobileCreateEntitySheet.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
@@ -80,5 +81,56 @@ describe("MobileCreateEntitySheet", () => {
     await fireEvent.click(screen.getByLabelText("Cancel"));
     expect(modalUIStore.showMobileCreateSheet).toBe(false);
     expect(modalUIStore.pendingCreateDate).toBeNull();
+  });
+
+  it("hides the no-vault state icons from screen readers", () => {
+    (vault as any).isInitialized = false;
+    render(MobileCreateEntitySheet);
+
+    expect(
+      document
+        .querySelector(".icon-\\[lucide--database\\]")
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(
+      document
+        .querySelector(".icon-\\[lucide--plus\\]")
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(
+      document
+        .querySelector(".icon-\\[lucide--folder-open\\]")
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+
+    (vault as any).isInitialized = true;
+  });
+
+  it("hides the guest state icon from screen readers", () => {
+    (vault as any).isGuest = true;
+    render(MobileCreateEntitySheet);
+
+    expect(
+      document
+        .querySelector(".icon-\\[lucide--lock\\]")
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+
+    (vault as any).isGuest = false;
+  });
+
+  it("hides the labelled action button icons from screen readers", () => {
+    render(MobileCreateEntitySheet);
+
+    expect(
+      document
+        .querySelector(".icon-\\[lucide--calendar\\]")
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(
+      document
+        .querySelector(".icon-\\[lucide--wand-2\\]")
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
   });
 });

@@ -300,4 +300,17 @@ describe("SearchModal", () => {
     expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
     expect(mockSearchStore.isOpen).toBe(false);
   });
+
+  it("hides the no-results status icon from screen readers", () => {
+    mockSearchStore.query = "nonexistent";
+    mockSearchStore.results = [];
+
+    const { container } = render(SearchModal);
+
+    expect(screen.getByText(/couldn't find any notes/i)).toBeTruthy();
+    const icon = container.querySelector(
+      ".icon-\\[heroicons--magnifying-glass-minus\\]",
+    );
+    expect(icon?.getAttribute("aria-hidden")).toBe("true");
+  });
 });

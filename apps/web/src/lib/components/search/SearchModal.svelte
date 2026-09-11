@@ -450,6 +450,7 @@
           >
             <span
               class="icon-[heroicons--magnifying-glass-minus] w-12 h-12 opacity-50"
+              aria-hidden="true"
             ></span>
             <div class="text-sm">
               We couldn't find any notes matching "<span

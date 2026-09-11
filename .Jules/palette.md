@@ -171,3 +171,8 @@
 
 **Learning:** Found several buttons in `apps/web/src/routes/(marketing)/silhouettes/+page.svelte` containing decorative icon elements (`<span class="icon-[...]"></span>`) inside buttons that already have `aria-label` or clear text descriptions. These inner icons are missing `aria-hidden="true"`, which causes screen readers to redundantly announce confusing CSS class names.
 **Action:** Always add `aria-hidden="true"` to inner icon spans within interactive elements that are already labeled (via `aria-label` or inner text).
+
+## 2024-05-19 - ARIA hidden on decorative icons inside modal components
+
+**Learning:** Found multiple decorative icons (like `icon-[lucide--database]`, `icon-[lucide--lock]`) inside modals (`MobileCreateEntitySheet.svelte`, `ImagePromptReviewModal.svelte`, `SearchModal.svelte`) that were missing `aria-hidden="true"`. This causes screen readers to redundantly announce confusing CSS class names.
+**Action:** Always verify decorative `<span class="icon-[...]">` tags have `aria-hidden="true"` inside modal and layout components, particularly when accompanying descriptive text or inside buttons.
