@@ -35,8 +35,8 @@ export interface WriterResult {
 export interface ReleaseCommsPublications {
   bluesky: Array<{ pageUrl: string; url: string }>;
   githubDiscussions: Array<{ pageUrl: string; url: string }>;
-  /** True once the derived Discord announcement has been successfully delivered. */
-  discord?: boolean;
+  /** IDs of Discord destinations the derived announcement has been successfully delivered to. */
+  discord?: string[];
 }
 
 export interface ReleaseCommsHistoryEntry {

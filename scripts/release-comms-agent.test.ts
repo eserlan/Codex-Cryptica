@@ -23,6 +23,7 @@ import {
   runAgentCapturingOutput,
   runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
+  selectPendingDiscordDestinations,
   type EvaluatorResult,
   type ReleaseCommsState,
   type WriterResult,
@@ -821,6 +822,47 @@ describe("release-comms-agent", () => {
 
       expect(recommendedChannels).toContain("discord");
       expect(discordCopy).toBeUndefined();
+    });
+  });
+
+  describe("selectPendingDiscordDestinations", () => {
+    it("only retries auto-publish destinations that have not already succeeded", () => {
+      const destinations = [
+        {
+          id: "main-community",
+          source: "bluesky" as const,
+          strip_hashtags: true,
+          auto_publish: true,
+          webhookEnvVar: "DISCORD_WEBHOOK_URL",
+        },
+        {
+          id: "overflow",
+          source: "bluesky" as const,
+          strip_hashtags: true,
+          auto_publish: true,
+          webhookEnvVar: "DISCORD_WEBHOOK_URL_2",
+        },
+      ];
+
+      const pending = selectPendingDiscordDestinations(destinations, [
+        "main-community",
+      ]);
+
+      expect(pending.map((dest) => dest.id)).toEqual(["overflow"]);
+    });
+
+    it("excludes destinations that are not configured for auto-publish", () => {
+      const destinations = [
+        {
+          id: "manual-only",
+          source: "bluesky" as const,
+          strip_hashtags: true,
+          auto_publish: false,
+          webhookEnvVar: "DISCORD_WEBHOOK_URL",
+        },
+      ];
+
+      expect(selectPendingDiscordDestinations(destinations, [])).toEqual([]);
     });
   });
 

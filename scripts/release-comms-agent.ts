@@ -16,6 +16,7 @@ import {
   deriveDiscordFromBluesky,
   loadDiscordConfig,
   publishToDiscord,
+  type DiscordDestinationConfig,
 } from "./release-comms-discord.ts";
 import {
   insertTrackerRow,
@@ -656,6 +657,21 @@ export function deriveDiscordQualification(
   return { recommendedChannels, discordCopy };
 }
 
+/**
+ * Auto-publish destinations still pending delivery for this release: enabled
+ * for auto-publish and not already recorded as successfully published, so a
+ * retry after a partial failure only re-sends to the destinations that
+ * actually failed rather than duplicate-posting to ones that already succeeded.
+ */
+export function selectPendingDiscordDestinations(
+  destinations: DiscordDestinationConfig[],
+  alreadyPublishedIds: string[],
+): DiscordDestinationConfig[] {
+  return destinations.filter(
+    (dest) => dest.auto_publish && !alreadyPublishedIds.includes(dest.id),
+  );
+}
+
 export async function main(promoteRunId: string): Promise<void> {
   const state = await loadReleaseCommsState();
   const { newSha, previousSha: resolvedPreviousSha } =
@@ -830,14 +846,16 @@ export async function main(promoteRunId: string): Promise<void> {
   // of silently skipping this SHA forever (state.lastEvaluatedSha only
   // advances once completed is true, see recordEvaluation).
   let discordPublishFailed = false;
-  if (result.postworthy && drafts?.discord && !entry.publications?.discord) {
+  if (result.postworthy && drafts?.discord) {
     const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
     if (discordConfig.enabled) {
-      const autoPublishDestinations = discordConfig.destinations.filter(
-        (dest) => dest.auto_publish,
+      const publishedDiscordIds = entry.publications?.discord ?? [];
+      const autoPublishDestinations = selectPendingDiscordDestinations(
+        discordConfig.destinations,
+        publishedDiscordIds,
       );
       if (autoPublishDestinations.length > 0) {
-        let allSucceeded = true;
+        const newlyPublishedIds: string[] = [];
         for (const dest of autoPublishDestinations) {
           const pubResult = await publishToDiscord({
             message: drafts.discord,
@@ -848,21 +866,23 @@ export async function main(promoteRunId: string): Promise<void> {
             console.log(
               `[release-comms] published announcement to Discord destination '${dest.id}'`,
             );
+            newlyPublishedIds.push(dest.id);
           } else {
-            allSucceeded = false;
+            discordPublishFailed = true;
             console.error(
               `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
             );
           }
         }
 
-        if (allSucceeded) {
+        if (newlyPublishedIds.length > 0) {
           entry = {
             ...entry,
-            publications: { ...entry.publications!, discord: true },
+            publications: {
+              ...entry.publications!,
+              discord: [...publishedDiscordIds, ...newlyPublishedIds],
+            },
           };
-        } else {
-          discordPublishFailed = true;
         }
       }
     }
