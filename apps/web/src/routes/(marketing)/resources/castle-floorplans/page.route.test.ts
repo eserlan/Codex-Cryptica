@@ -52,6 +52,20 @@ describe("/resources/castle-floorplans route", () => {
     }
   });
 
+  it("renders each resource's sourceNote caveat when present", () => {
+    const { container } = render(Page);
+
+    const resourcesWithNotes = CASTLE_FLOORPLAN_RESOURCES.filter(
+      (resource) => resource.sourceNote,
+    );
+    expect(resourcesWithNotes.length).toBeGreaterThan(0);
+
+    for (const resource of resourcesWithNotes) {
+      const card = container.querySelector(`#${resource.id}`);
+      expect(card?.textContent).toContain(resource.sourceNote);
+    }
+  });
+
   it("links back to the related answers and generators", () => {
     const { getByRole } = render(Page);
 
