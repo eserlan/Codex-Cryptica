@@ -82,7 +82,7 @@ describe("prepareBlueskyText", () => {
         `${"A city guide. ".repeat(40)}\n\nhttps://codexcryptica.com/answers/living-city\n\n#TTRPG`,
         "https://codexcryptica.com/answers/living-city",
       ),
-    ).toThrow("exceeds 300 characters");
+    ).toThrow("exceeds 280 characters");
   });
 
   it("publishes a complete Bluesky post with the matched R2 asset and records its URL", () => {

@@ -24,6 +24,11 @@ import {
   publishInstagramPost,
 } from "./release-comms-instagram.ts";
 import {
+  deriveXQualification,
+  isXPublishingEnabled,
+  publishXPost,
+} from "./release-comms-x.ts";
+import {
   insertTrackerRow,
   updateTrackerPlatformStatus,
 } from "./release-comms-queue.ts";
@@ -54,6 +59,7 @@ import type {
   InstagramHandoff,
   ReleaseCommsHistoryEntry,
   WriterResult,
+  XHandoff,
 } from "./release-comms-types.ts";
 
 export {
@@ -70,6 +76,10 @@ export {
   deriveInstagramQualification,
   isInstagramPublishingEnabled,
 } from "./release-comms-instagram.ts";
+export {
+  deriveXQualification,
+  isXPublishingEnabled,
+} from "./release-comms-x.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -477,7 +487,7 @@ export function buildWriterRetryPrompt(
 Your previous response is REJECTED: the following Bluesky post(s), once the page URL is appended, exceed Bluesky's hard ${BLUESKY_CHARACTER_LIMIT}-character limit:
 ${notes}
 
-Do NOT resend reddit, discord, github_discussions, or any Bluesky post that isn't listed above — only rewrite the flagged post(s). Shorten each one so the complete text — including its URL and hashtags — is comfortably under ${BLUESKY_CHARACTER_LIMIT} characters, aiming for 220 characters or fewer before the URL and hashtags are added, same as the original instructions. Respond with ONLY a fenced \`\`\`json code block containing an object with a single "bluesky" array, one entry per flagged pageUrl, e.g. {"bluesky":[{"pageUrl":"<one of the URLs above>","text":"<shortened post text>"}]}. No other prose.`;
+Do NOT resend reddit, discord, github_discussions, or any Bluesky post that isn't listed above — only rewrite the flagged post(s). Shorten each one so the complete text — including its URL and hashtags — is comfortably under ${BLUESKY_CHARACTER_LIMIT} characters, aiming for 200 characters or fewer before the URL and hashtags are added, same as the original instructions. Respond with ONLY a single fenced \`\`\`json code block containing an object with a single "bluesky" array, one entry per flagged pageUrl, e.g. {"bluesky":[{"pageUrl":"<one of the URLs above>","text":"<shortened post text>"}]}. No other prose.`;
 }
 
 export interface BlueskyRetryResult {
@@ -825,6 +835,82 @@ export function shouldUpdateInstagramTracker(
   return pending.length === 0;
 }
 
+export function selectPendingXHandoffs(
+  handoffs: XHandoff[],
+  published: Array<{ pageUrl: string; url: string; id: string }>,
+): XHandoff[] {
+  return handoffs.filter(
+    (handoff) =>
+      !published.some((publication) => publication.pageUrl === handoff.pageUrl),
+  );
+}
+
+export interface ProcessXHandoffsOptions {
+  entry: ReleaseCommsHistoryEntry;
+  recommendedChannels?: string[];
+  state: ReleaseCommsState;
+  statePath?: string;
+  dryRun?: boolean;
+  env?: NodeJS.ProcessEnv;
+  publishFn?: typeof publishXPost;
+  saveStateFn?: (state: ReleaseCommsState, path?: string) => Promise<void>;
+}
+
+export interface ProcessXHandoffsResult {
+  entry: ReleaseCommsHistoryEntry;
+  xPublishFailed: boolean;
+}
+
+/** Publish the persisted exact Bluesky text to X, retrying only missing posts. */
+export async function processXHandoffs(
+  options: ProcessXHandoffsOptions,
+): Promise<ProcessXHandoffsResult> {
+  const {
+    recommendedChannels,
+    state,
+    statePath,
+    dryRun = false,
+    env = process.env,
+    publishFn = publishXPost,
+    saveStateFn = saveReleaseCommsState,
+  } = options;
+  let entry = options.entry;
+  if (!isXPublishingEnabled(env)) {
+    console.log(
+      "[release-comms] automatic X publishing is unconfigured or disabled; skipping",
+    );
+    return { entry, xPublishFailed: false };
+  }
+  if (!entry.xHandoffs?.length || !recommendedChannels?.includes("x")) {
+    return { entry, xPublishFailed: false };
+  }
+
+  const publishedX = [...(entry.publications?.x ?? [])];
+  for (const handoff of selectPendingXHandoffs(entry.xHandoffs, publishedX)) {
+    try {
+      const publication = await publishFn({ text: handoff.text, dryRun, env });
+      console.log(`[release-comms] published X post: ${publication.url}`);
+      publishedX.push({ pageUrl: handoff.pageUrl, ...publication });
+      entry = {
+        ...entry,
+        publications: {
+          ...entry.publications,
+          bluesky: entry.publications?.bluesky ?? [],
+          githubDiscussions: entry.publications?.githubDiscussions ?? [],
+          x: publishedX,
+        },
+      };
+      await saveStateFn(recordEvaluation(state, entry), statePath);
+    } catch (error) {
+      console.error(
+        `[release-comms] failed to publish X post for ${handoff.pageUrl}: ${error instanceof Error ? error.message : error}`,
+      );
+      return { entry, xPublishFailed: true };
+    }
+  }
+  return { entry, xPublishFailed: false };
+}
+
 export async function main(promoteRunId: string): Promise<void> {
   const state = await loadReleaseCommsState();
   const { newSha, previousSha: resolvedPreviousSha } =
@@ -911,6 +997,7 @@ export async function main(promoteRunId: string): Promise<void> {
       result,
       drafts,
     ).recommendedChannels;
+    result.recommended_channels = deriveXQualification(result, drafts);
     if (discordConfig.enabled && discordCopy !== undefined) {
       drafts.discord = discordCopy;
     }
@@ -941,6 +1028,14 @@ export async function main(promoteRunId: string): Promise<void> {
               };
             }),
           )
+        : undefined),
+    xHandoffs:
+      resumable?.xHandoffs ??
+      (drafts
+        ? drafts.bluesky.map((draft) => ({
+            pageUrl: draft.pageUrl,
+            text: prepareBlueskyText(draft.text, draft.pageUrl),
+          }))
         : undefined),
     publications: resumable?.publications ?? {
       bluesky: [],
@@ -1027,6 +1122,15 @@ export async function main(promoteRunId: string): Promise<void> {
       dryRun: isReleaseCommsDryRun(),
     });
   entry = updatedInstagramEntry;
+  // X receives the exact final Bluesky text. It remains opt-in until the
+  // dedicated X account's OAuth token is configured.
+  const { entry: updatedXEntry, xPublishFailed } = await processXHandoffs({
+    entry,
+    recommendedChannels: result.recommended_channels,
+    state,
+    dryRun: isReleaseCommsDryRun(),
+  });
+  entry = updatedXEntry;
   // Auto-publish to configured Discord destinations if enabled. This runs
   // before the entry is marked completed: if the webhook fails, completed
   // stays false so the next invocation resumes and retries delivery instead
@@ -1077,7 +1181,8 @@ export async function main(promoteRunId: string): Promise<void> {
 
   entry = {
     ...entry,
-    completed: !discordPublishFailed && !instagramPublishFailed,
+    completed:
+      !discordPublishFailed && !instagramPublishFailed && !xPublishFailed,
   };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 

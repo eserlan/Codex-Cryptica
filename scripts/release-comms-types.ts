@@ -36,6 +36,8 @@ export interface ReleaseCommsPublications {
   bluesky: Array<{ pageUrl: string; url: string }>;
   /** Instagram posts mirror the exact resolved Bluesky caption and R2 asset. */
   instagram?: Array<{ pageUrl: string; url: string; id?: string }>;
+  /** X posts mirror the exact final Bluesky text. */
+  x?: Array<{ pageUrl: string; url: string; id: string }>;
   githubDiscussions: Array<{ pageUrl: string; url: string }>;
   /** IDs of Discord destinations the derived announcement has been successfully delivered to. */
   discord?: string[];
@@ -52,6 +54,13 @@ export interface InstagramHandoff {
   publishedMediaId?: string;
 }
 
+/** Durable input for one automatic X post and its resumable retry. */
+export interface XHandoff {
+  pageUrl: string;
+  /** The exact final text published to Bluesky. */
+  text: string;
+}
+
 export interface ReleaseCommsHistoryEntry {
   sha: string;
   date: string;
@@ -64,6 +73,8 @@ export interface ReleaseCommsHistoryEntry {
   drafts?: WriterResult;
   /** Resolved before publishing so a resumed run preserves Instagram input. */
   instagramHandoffs?: InstagramHandoff[];
+  /** Resolved before publishing so a resumed run preserves the exact X text. */
+  xHandoffs?: XHandoff[];
   publications?: ReleaseCommsPublications;
   /** False while an external publish is resumable; omitted for older completed entries. */
   completed?: boolean;

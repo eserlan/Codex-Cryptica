@@ -8,6 +8,7 @@ export const ALL_CHANNELS = [
   "bluesky",
   "discord",
   "instagram",
+  "x",
   "reddit",
   "github_discussion",
 ];
@@ -34,6 +35,7 @@ This project deploys to production far more often than it does a big versioned "
 - Bluesky (low bar, per-feature): mark a feature "bluesky_worthy": true if it's any single generator, workflow, or UX change a GM/worldbuilder would notice and could actually use, even a small one — a new option on an existing generator, a genuinely useful export/import tweak, a small but real quality-of-life improvement. Do not hold this back waiting for something bigger. When a release has two or three unrelated small wins, mark each of them "bluesky_worthy" independently rather than lumping them into one feature — they will become separate posts spread across days, not one combined post.
 - Discord: if something qualifies for Bluesky, it also qualifies for Discord (Discord copy is derived directly from the Bluesky drafts with hashtags stripped). Whenever any feature is marked "bluesky_worthy": true, always include "discord" in "recommended_channels".
 - Instagram: if something qualifies for Bluesky, it also qualifies for Instagram. Instagram is published automatically using the exact Bluesky caption and same R2 social image, so do not create separate Instagram copy. Whenever any feature is marked "bluesky_worthy": true, always include "instagram" in "recommended_channels".
+- X: if something qualifies for Bluesky, it also qualifies for X. X is published automatically using the exact final Bluesky text, so do not create separate X copy. Whenever any feature is marked "bluesky_worthy": true, always include "x" in "recommended_channels".
 - Reddit and GitHub Discussion (higher bar, whole-release): reserve for something substantial on its own, or several related wins from this release that together tell one coherent story. Use the recent post titles below to calibrate what has actually earned a Reddit/Discussion post before — do not write one for something clearly smaller than that bar. It is fine, and often correct, for a release to be Bluesky, Discord, and Instagram only (with bluesky_worthy features present and Discord and Instagram recommended) with no Reddit/Discussion post at all.
 
 Not postworthy on any channel: dependency bumps, pure refactors with no user-visible effect, internal logging/analytics/CI/deployment plumbing, invisible bug fixes, and tiny visual tweaks nobody would notice or care about.
@@ -58,7 +60,7 @@ ${input.changelogDiff || "(no changelog entry added in this range)"}
 Public pages detected directly from the promoted diff. Use these exact URLs when you discuss an item; do not invent another page:
 ${input.publicContent?.map((item) => `- ${item.kind}: ${item.title} (${item.url})`).join("\n") || "(none detected)"}
 
-Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose. "recommended_channels" must be the actual subset of ["discord", "instagram", "reddit", "github_discussion"] that clears each channel's bar above — include both "discord" and "instagram" whenever any feature is marked "bluesky_worthy": true; "reddit" and "github_discussion" are reserved for substantial whole-release updates:
+Respond with ONLY a single fenced \`\`\`json code block containing this exact shape, no other prose. "recommended_channels" must be the actual subset of ["discord", "instagram", "x", "reddit", "github_discussion"] that clears each channel's bar above — include "discord", "instagram", and "x" whenever any feature is marked "bluesky_worthy": true; "reddit" and "github_discussion" are reserved for substantial whole-release updates:
 
 {
   "postworthy": true | false,
@@ -70,7 +72,7 @@ Respond with ONLY a single fenced \`\`\`json code block containing this exact sh
   "reason": "One or two sentences explaining the decision."
 }
 
-"recommended_channels" here covers Discord/Instagram/Reddit/GitHub Discussion posts — omit "bluesky" from it; Bluesky eligibility is decided per-feature via "bluesky_worthy" instead (and automatically qualifies for "discord" and automatically published "instagram"). If nothing is postworthy, still return the object with "postworthy": false, an empty "features" array, an empty "recommended_channels" array, and a "reason" explaining why (e.g. "only dependency bumps and refactors").`;
+"recommended_channels" here covers Discord/Instagram/X/Reddit/GitHub Discussion posts — omit "bluesky" from it; Bluesky eligibility is decided per-feature via "bluesky_worthy" instead (and automatically qualifies for "discord", automatically published "instagram", and automatically published "x"). If nothing is postworthy, still return the object with "postworthy": false, an empty "features" array, an empty "recommended_channels" array, and a "reason" explaining why (e.g. "only dependency bumps and refactors").`;
 }
 
 /**
@@ -110,7 +112,7 @@ Whole-release channels to draft a combined post for: ${wholeReleaseChannels.join
 Public pages that may be promoted, with the only permitted URLs:
 ${publicContent.map((item) => `- ${item.kind}: ${item.title} (${item.url})`).join("\n") || "(none: return empty Bluesky and GitHub Discussion arrays)"}
 
-Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above; never combine multiple features into one post. Every post MUST be a complete thought of 220 characters or fewer before its direct URL and hashtags are added, so it remains complete within Bluesky's 300-character limit. If no feature is bluesky_worthy, return an empty array for "bluesky".
+Bluesky is different from the other three: it is per-feature, not per-release. Write ONE short, standalone Bluesky post for EACH feature marked "(bluesky_worthy)" above; never combine multiple features into one post. Every post MUST be a complete thought of 200 characters or fewer before its direct URL and hashtags are added, so the exact copy remains complete within X's stricter 280-character limit. If no feature is bluesky_worthy, return an empty array for "bluesky".
 Discord announcements are derived automatically from the Bluesky drafts with hashtags stripped; no separate Discord draft is required.
 
 Before writing, read these two files in this repository for voice, tone, and format rules, and follow them exactly:
@@ -219,6 +221,9 @@ export function formatIssueComment(
         ...(entry.publications.instagram ?? []).map(
           (post) => `- Instagram: ${post.url} (${post.pageUrl})`,
         ),
+        ...(entry.publications.x ?? []).map(
+          (post) => `- X: ${post.url} (${post.pageUrl})`,
+        ),
         ...entry.publications.githubDiscussions.map(
           (post) => `- GitHub Discussion: ${post.url} (${post.pageUrl})`,
         ),
@@ -242,6 +247,11 @@ export function formatIssueComment(
     "Instagram (published automatically when recommended; shown here for reference):",
     instagramSection,
     "",
+    "X (published automatically when configured; mirrors Bluesky exactly):",
+    entry.xHandoffs?.length
+      ? entry.xHandoffs.map((handoff) => handoff.text).join("\n\n")
+      : "(no resolved Bluesky handoff is available)",
+    "",
     "Reddit:",
     drafts.reddit || "(not recommended for this release)",
     "",
@@ -250,7 +260,7 @@ export function formatIssueComment(
       .map((post) => `- ${post.title} (${post.pageUrl})`)
       .join("\n") || "(not recommended for this release)",
     "",
-    "Bluesky, GitHub Discussions, and Instagram are published automatically for validated public-page drafts, using the exact same caption and R2 image across Bluesky and Instagram. Discord is sent to configured webhooks; Reddit remains a draft.",
+    "Bluesky, GitHub Discussions, Instagram, and configured X accounts are published automatically for validated public-page drafts. Instagram shares Bluesky's caption and R2 image; X mirrors Bluesky's exact text. Discord is sent to configured webhooks; Reddit remains a draft.",
     "",
     "<details><summary>Raw evaluator + writer output</summary>",
     "",
