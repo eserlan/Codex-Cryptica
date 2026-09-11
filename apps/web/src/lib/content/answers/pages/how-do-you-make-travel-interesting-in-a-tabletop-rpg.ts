@@ -98,6 +98,26 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     linkText: "Try the encounter generator",
     href: "/generators/encounter",
   },
+  systemsThatSupportThis: [
+    {
+      system: "The One Ring 2e",
+      rationale:
+        "Journeys split the party into named roles (Guide, Hunter, Look-out, Scout): the Guide makes a Pathfinding check each leg to see how far the Company travels before an event, and the event then tests whichever other role it strikes, so every member has a defined job during the trip rather than a single shared roll.",
+      href: "https://freeleaguepublishing.com/games/the-one-ring/",
+    },
+    {
+      system: "Forbidden Lands",
+      rationale:
+        "Each leg of a journey is broken into assignable activities, one character leads the way and rolls Survival to navigate each hex, others keep watch, forage, hunt, or fish, and failing those rolls has concrete costs such as getting lost or going hungry, turning travel into a set of parallel character duties rather than narration.",
+      href: "https://freeleaguepublishing.com/games/forbidden-lands/",
+    },
+    {
+      system: "Ironsworn",
+      rationale:
+        "The Undertake a Journey move sets a difficulty rank for the trip, then resolves each leg as a roll against a progress track: a strong hit advances the track toward the destination, a weak hit advances it but costs supply, and a miss can send the party astray and raise the journey's difficulty, giving overland travel its own dedicated progress-and-setback structure.",
+      href: "https://tomkinpress.com/pages/ironsworn",
+    },
+  ],
   relatedTools: [
     {
       title: "Encounter generator",
