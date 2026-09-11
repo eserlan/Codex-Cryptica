@@ -95,11 +95,10 @@ describe("VaultControls", () => {
     guidedModeStore.setGuidedMode(true);
   });
 
-  it("hides the vault-actions/save/generate cluster in Guided Mode", () => {
+  it("hides the vault-actions/save cluster in Guided Mode", () => {
     render(VaultControls);
 
     expect(screen.queryByTestId("vault-actions-menu-button")).toBeNull();
-    expect(screen.queryByTestId("open-generator-button")).toBeNull();
     // The vault switcher stays available for navigation.
     expect(screen.getByTestId("open-vault-button")).toBeTruthy();
   });
@@ -109,7 +108,13 @@ describe("VaultControls", () => {
     render(VaultControls);
 
     expect(screen.getByTestId("vault-actions-menu-button")).toBeTruthy();
-    expect(screen.getByTestId("open-generator-button")).toBeTruthy();
+  });
+
+  it("no longer exposes the redundant generator button in the header (superseded by sidebar and footer)", () => {
+    guidedModeStore.setGuidedMode(false);
+    render(VaultControls);
+
+    expect(screen.queryByTestId("open-generator-button")).toBeNull();
   });
 
   it("no longer exposes the standalone NEW ENTITY toggle (superseded by header + Create)", () => {

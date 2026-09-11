@@ -36,6 +36,10 @@
         >
       {/each}
       <a
+        href="{cleanBase}/generators"
+        class="hover:text-theme-primary transition-colors">Generators</a
+      >
+      <a
         href="{cleanBase}/terms"
         class="hover:text-theme-primary transition-colors">Terms</a
       >

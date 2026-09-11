@@ -13,9 +13,12 @@ vi.mock("$lib/config", () => ({
 }));
 
 describe("MarketingFooter", () => {
-  it("renders only the legal, Explore, and Patreon symbol links, per #2760's minimal footer", () => {
+  it("renders only the legal, Explore, Generators, and Patreon symbol links", () => {
     render(MarketingFooter);
 
+    const generatorsLink = screen.getByRole("link", { name: "Generators" });
+    expect(generatorsLink).toBeTruthy();
+    expect(generatorsLink.getAttribute("href")).toBe("/generators");
     expect(screen.getByRole("link", { name: "Terms" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Privacy" })).toBeTruthy();
     const exploreLink = screen.getByRole("link", { name: "Explore" });

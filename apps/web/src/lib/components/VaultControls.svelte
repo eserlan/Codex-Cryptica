@@ -83,12 +83,6 @@
     `${btnBase} border border-chrome-border text-chrome-muted hover:text-chrome-text hover:border-chrome-accent`,
   );
 
-  const iconOnlyClasses = $derived(
-    isVertical
-      ? "py-3 text-sm justify-start px-4 gap-3"
-      : "px-2 py-1.5 justify-center gap-3",
-  );
-
   // Actions for the "No Vault Open" dropdown (demo / create / open).
   const runNoVaultAction = (action: () => void) => {
     showNoVaultMenu = false;
@@ -486,22 +480,6 @@
               {/if}
             </button>
           {/if}
-
-          <button
-            class="{btnGhost} {iconOnlyClasses}"
-            onclick={() => modalUIStore.openGeneratorWorkflow()}
-            title="Generate campaign content"
-            aria-label={isVertical
-              ? "GENERATE - Generate campaign content"
-              : "Generate campaign content"}
-            data-testid="open-generator-button"
-          >
-            <span class="icon-[lucide--wand-2] w-3.5 h-3.5" aria-hidden="true"
-            ></span>
-            {#if isVertical}<span class="font-bold tracking-widest"
-                >GENERATE</span
-              >{/if}
-          </button>
         </div>
       {/if}
     {/if}

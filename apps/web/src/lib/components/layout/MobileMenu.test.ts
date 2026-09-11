@@ -6,6 +6,7 @@ import MobileMenu from "./MobileMenu.svelte";
 import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 // jsdom has no Web Animations API, which Svelte's transitions drive. The
 // drawer's open and close behaviour is the subject here, not its animation.
@@ -46,7 +47,7 @@ describe("MobileMenu", () => {
   describe("navigation", () => {
     // The drawer is where the items dropped from the phone Activity Bar are
     // reached, so it has to carry all of them.
-    it.each(["random", "shelf", "quicknote", "guest-chat"])(
+    it.each(["random", "generators", "shelf", "quicknote", "guest-chat"])(
       "offers %s, which the phone bar leaves out",
       (id) => {
         render(MobileMenu, { isOpen: true });
@@ -70,6 +71,16 @@ describe("MobileMenu", () => {
       await fireEvent.click(screen.getByTestId("mobile-menu-shelf"));
 
       expect(layoutUIStore.toggleSidebarTool).toHaveBeenCalledWith("shelf");
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("runs the generators tool and closes the drawer behind it", async () => {
+      modalUIStore.closeGeneratorWorkflow();
+      render(MobileMenu, { isOpen: true });
+
+      await fireEvent.click(screen.getByTestId("mobile-menu-generators"));
+
+      expect(modalUIStore.generatorWorkflow.open).toBe(true);
       expect(screen.queryByRole("dialog")).toBeNull();
     });
   });
