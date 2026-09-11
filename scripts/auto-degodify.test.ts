@@ -123,7 +123,7 @@ describe("auto-degodify", () => {
       const codexArgs = AGENT_PROVIDERS.codex.getArgs("test-prompt", 15);
       expect(codexArgs).toContain("exec");
       expect(codexArgs).toContain("-m");
-      expect(codexArgs).toContain("gpt-5.6-terra");
+      expect(codexArgs).toContain("gpt-5.6-luna");
       expect(codexArgs).toContain("-c");
       expect(codexArgs).toContain('model_reasoning_effort="medium"');
       expect(codexArgs).toContain("--dangerously-bypass-approvals-and-sandbox");

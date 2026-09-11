@@ -67,7 +67,7 @@ export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
     getArgs: (prompt) => [
       "exec",
       "-m",
-      "gpt-5.6-terra",
+      process.env.CODEX_MODEL || "gpt-5.6-luna",
       "-c",
       'model_reasoning_effort="medium"',
       "--dangerously-bypass-approvals-and-sandbox",
@@ -111,14 +111,11 @@ export function hasOpenPrForBranch(
   branchName: string,
 ): boolean {
   try {
-    const prOutput = execSync(
-      `gh pr list --head ${branchName} --json number`,
-      {
-        cwd: repoDir,
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "ignore"],
-      },
-    );
+    const prOutput = execSync(`gh pr list --head ${branchName} --json number`, {
+      cwd: repoDir,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
+    });
     const prs = JSON.parse(prOutput) as Array<{ number: number }>;
     return prs.length > 0;
   } catch {

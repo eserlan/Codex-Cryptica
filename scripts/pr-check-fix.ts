@@ -623,7 +623,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
       ? (process.env.PR_FIX_PROVIDERS.split(",").map((s) =>
           s.trim(),
         ) as AgentProviderName[])
-      : ["claude", "agy"]);
+      : ["codex", "claude", "agy"]);
   const runId = new Date()
     .toISOString()
     .replace(/[-:T.]/g, "")

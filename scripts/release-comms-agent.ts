@@ -77,7 +77,7 @@ export type {
 
 const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
 const TRACKING_ISSUE = Number(process.env.RELEASE_COMMS_TRACKING_ISSUE ?? 2906);
-const DEFAULT_PROVIDERS: AgentProviderName[] = ["claude", "agy"];
+const DEFAULT_PROVIDERS: AgentProviderName[] = ["codex", "claude", "agy"];
 const TIMEOUT_MINUTES = 10;
 
 /**
