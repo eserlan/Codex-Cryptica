@@ -58,10 +58,10 @@
           class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-primary/10 text-theme-primary"
         >
           {#if dialog.isDangerous}
-            <span class="icon-[lucide--triangle-alert] h-6 w-6 text-red-400"
+            <span class="icon-[lucide--triangle-alert] h-6 w-6 text-red-400" aria-hidden="true"
             ></span>
           {:else}
-            <span class="icon-[lucide--help-circle] h-6 w-6"></span>
+            <span class="icon-[lucide--help-circle] h-6 w-6" aria-hidden="true"></span>
           {/if}
         </div>
         <h3
@@ -82,6 +82,7 @@
       <!-- Actions -->
       <div class="flex flex-col gap-3 p-8">
         <button
+          type="button"
           class={`w-full rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all ${
             dialog.isDangerous
               ? "bg-red-600 text-white border border-red-600 hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.25)]"
@@ -92,6 +93,7 @@
           {dialog.confirmLabel || "Confirm"}
         </button>
         <button
+          type="button"
           class="w-full rounded-xl border border-theme-border bg-theme-bg/50 px-6 py-3 text-xs font-bold uppercase tracking-widest text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text"
           onclick={handleCancel}
         >

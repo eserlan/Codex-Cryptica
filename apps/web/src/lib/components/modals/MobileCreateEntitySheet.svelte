@@ -148,7 +148,7 @@
   {#if !vault.isInitialized}
     <!-- No vault open state -->
     <div class="px-5 pb-8 pt-2 flex flex-col gap-4 items-center text-center">
-      <span class="icon-[lucide--database] w-8 h-8 text-chrome-muted"></span>
+      <span class="icon-[lucide--database] w-8 h-8 text-chrome-muted" aria-hidden="true"></span>
       <p class="text-sm text-chrome-muted">
         Open a {themeStore.jargon.vault} first to start creating entries.
       </p>
@@ -161,7 +161,7 @@
             modalUIStore.openVaultSwitcher("create");
           }}
         >
-          <span class="icon-[lucide--plus] w-4 h-4"></span>
+          <span class="icon-[lucide--plus] w-4 h-4" aria-hidden="true"></span>
           NEW {themeStore.jargon.vault.toUpperCase()}
         </button>
         <button
@@ -172,7 +172,7 @@
             modalUIStore.openVaultSwitcher("open");
           }}
         >
-          <span class="icon-[lucide--folder-open] w-4 h-4"></span>
+          <span class="icon-[lucide--folder-open] w-4 h-4" aria-hidden="true"></span>
           OPEN
         </button>
       </div>
@@ -180,7 +180,7 @@
   {:else if vault.isGuest}
     <!-- Guest mode — read-only, cannot create -->
     <div class="px-5 pb-8 pt-2 flex flex-col gap-4 items-center text-center">
-      <span class="icon-[lucide--lock] w-8 h-8 text-chrome-muted"></span>
+      <span class="icon-[lucide--lock] w-8 h-8 text-chrome-muted" aria-hidden="true"></span>
       <p class="text-sm text-chrome-muted">
         Guests cannot create entries. Exit guest mode to manage your own vault.
       </p>
@@ -297,7 +297,7 @@
         }}
         data-testid="mobile-open-generator-button"
       >
-        <span class="icon-[lucide--wand-2] w-4 h-4"></span>
+        <span class="icon-[lucide--wand-2] w-4 h-4" aria-hidden="true"></span>
         GENERATE
       </button>
     </div>
