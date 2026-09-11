@@ -14,9 +14,9 @@
   import {
     DEFAULT_CANVAS_TEXT_BACKGROUND,
     DEFAULT_CANVAS_TEXT_FONT_SIZE,
-            normalizeCanvasTextBackground,
+    normalizeCanvasTextBackground,
     normalizeCanvasTextFontSize,
-        CanvasStore,
+    CanvasStore,
     type Canvas,
   } from "@codex/canvas-engine";
   import type { FileImportFailureReason } from "@codex/vault-engine";
@@ -103,10 +103,10 @@
 
   const logic = createCanvasLogic(() => engine);
   const rotationLogic = useCanvasNodeRotation(logic, vault);
+  const drawingLogic = useCanvasDrawing(logic);
   const isCanvasToolActive = $derived(
     drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
   );
-  const drawingLogic = useCanvasDrawing(logic);
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
   let roomEnhancementError = $state<string | null>(null);
