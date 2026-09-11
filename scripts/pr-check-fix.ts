@@ -169,8 +169,11 @@ export async function runAgentWithLogging(
   const forward = (stream: NodeJS.ReadableStream | null, label: string) => {
     stream?.on("data", (chunk: Buffer | string) => {
       const output = chunk.toString();
-      log.write(`[${label}] ${output}`);
-      process.stdout.write(`${agentPrefix}:${label}] ${output}`);
+      const taggedPrefix = options.prNumber
+        ? `${agentPrefix}:${label}]`
+        : `[${label}]`;
+      log.write(`${taggedPrefix} ${output}`);
+      process.stdout.write(`${taggedPrefix} ${output}`);
     });
   };
   forward(child.stdout, "stdout");
@@ -628,6 +631,30 @@ export function resolveFixProviders(
 }
 
 /**
+ * Run a git command with stderr captured (instead of discarded), emitting
+ * it with the PR prefix on failure so operators can see why it failed.
+ */
+export function execWithPrefixedStderr(
+  command: string,
+  cwd: string,
+  prNumber: number,
+  actionLabel: string,
+): void {
+  try {
+    execSync(command, { cwd, stdio: ["ignore", "ignore", "pipe"] });
+  } catch (error) {
+    const stderr =
+      error instanceof Error && "stderr" in error
+        ? String((error as { stderr?: Buffer | string }).stderr ?? "").trim()
+        : "";
+    console.error(
+      `[pr-fix:#${prNumber}] ❌ ${actionLabel} failed${stderr ? `: ${stderr}` : ""}`,
+    );
+    throw error;
+  }
+}
+
+/**
  * Execute the PR check & fix loop.
  */
 export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
@@ -673,10 +700,13 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   );
 
   if (options.dryRun) {
-    console.log(
-      `\n[DRY RUN:PR #${prNumber}] Fix prompt that would be sent to agent:\n`,
-    );
-    console.log(buildPrFixPrompt(feedback, branchName, baseBranch));
+    const dryRunPrefix = `[DRY RUN:PR #${prNumber}]`;
+    console.log(`\n${dryRunPrefix} Fix prompt that would be sent to agent:\n`);
+    for (const line of buildPrFixPrompt(feedback, branchName, baseBranch).split(
+      "\n",
+    )) {
+      console.log(`${dryRunPrefix} ${line}`);
+    }
     return true;
   }
 
@@ -699,16 +729,17 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
       `[pr-fix:#${prNumber}] 📦 Creating isolated worktree at ${worktreePath}...`,
     );
 
-    execSync(`git fetch origin ${branchName} ${baseBranch}`, {
-      cwd: rootDir,
-      stdio: "ignore",
-    });
-    execSync(
+    execWithPrefixedStderr(
+      `git fetch origin ${branchName} ${baseBranch}`,
+      rootDir,
+      prNumber,
+      "git fetch",
+    );
+    execWithPrefixedStderr(
       `git worktree add -b pr-fix-${prNumber}-${timestamp} ${worktreePath} origin/${branchName}`,
-      {
-        cwd: rootDir,
-        stdio: "ignore",
-      },
+      rootDir,
+      prNumber,
+      "git worktree add",
     );
   }
 

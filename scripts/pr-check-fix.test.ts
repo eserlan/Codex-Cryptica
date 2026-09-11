@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   buildPrFixPrompt,
+  execWithPrefixedStderr,
   fetchFailedCheckLog,
   getRepoSlug,
   getPrFixLogPath,
@@ -256,9 +257,39 @@ describe("pr-check-fix", () => {
         expect(stdoutCaptured).toContain(
           "[agent:#2977:stdout] hello-from-agent",
         );
+        expect(await readFile(logPath, "utf8")).toContain(
+          "[agent:#2977:stdout] hello-from-agent",
+        );
       } finally {
         process.stdout.write = originalStdoutWrite;
         await rm(logDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("execWithPrefixedStderr", () => {
+    it("surfaces the command's stderr with the PR prefix instead of discarding it", () => {
+      const originalConsoleError = console.error;
+      let captured = "";
+      console.error = ((message: string) => {
+        captured += message;
+      }) as typeof console.error;
+
+      try {
+        expect(() =>
+          execWithPrefixedStderr(
+            "node -e \"process.stderr.write('boom'); process.exit(1)\"",
+            process.cwd(),
+            2980,
+            "test command",
+          ),
+        ).toThrow();
+
+        expect(captured).toContain("[pr-fix:#2980]");
+        expect(captured).toContain("test command failed");
+        expect(captured).toContain("boom");
+      } finally {
+        console.error = originalConsoleError;
       }
     });
   });

@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 export type StagingMergeResult =
   | { kind: "merged" }
   | { kind: "conflicted"; paths: string[] }
-  | { kind: "failed"; message: string };
+  | { kind: "failed"; message: string; stderr: string };
 
 export function buildConflictResolutionInstructions(paths: string[]): string {
   return (
@@ -35,9 +35,11 @@ export function mergeStagingIntoWorktree(
 
   const paths = getUnmergedPaths(worktreePath);
   if (paths.length > 0) return { kind: "conflicted", paths };
+  const stderr = merge.stderr?.toString().trim() ?? "";
   return {
     kind: "failed",
-    message: `git merge origin/${baseBranch} exited with ${merge.status ?? "unknown"}`,
+    message: `git merge origin/${baseBranch} exited with ${merge.status ?? "unknown"}${stderr ? `: ${stderr}` : ""}`,
+    stderr,
   };
 }
 
