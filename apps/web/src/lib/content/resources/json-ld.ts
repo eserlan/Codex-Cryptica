@@ -45,8 +45,8 @@ export function buildCastleFloorplansBreadcrumbJsonLd(): string {
       {
         "@type": "ListItem",
         position: 2,
-        name: "Resources",
-        item: buildAbsoluteUrl("/resources/castle-floorplans"),
+        name: "Explore",
+        item: buildAbsoluteUrl("/explore"),
       },
       {
         "@type": "ListItem",

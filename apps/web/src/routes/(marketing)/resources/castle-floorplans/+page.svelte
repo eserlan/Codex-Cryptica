@@ -97,7 +97,8 @@
           {#each resources as resource (resource.id)}
             <li
               id={resource.id}
-              class="border border-theme-border bg-theme-surface p-5"
+              class="rounded-xl border border-theme-border bg-theme-surface p-5 shadow-sm"
+              style:background-image="var(--bg-texture-overlay)"
             >
               <div class="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 class="font-header text-lg font-bold text-theme-text">
@@ -131,7 +132,7 @@
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-1.5 text-sm font-semibold text-theme-primary transition-colors hover:underline"
                 >
-                  View the floor plans
+                  View the {resource.name} floor plans
                   <span
                     class="icon-[lucide--external-link] h-3.5 w-3.5"
                     aria-hidden="true"
