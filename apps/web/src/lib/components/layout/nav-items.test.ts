@@ -2,9 +2,10 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { isViewActive, matchesPath, navItems } from "./nav-items";
+import { isToolActive, isViewActive, matchesPath, navItems } from "./nav-items";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("nav items", () => {
   beforeEach(() => {
@@ -52,6 +53,7 @@ describe("nav items", () => {
       expect(overflow).toEqual([
         "adventure",
         "random",
+        "generators",
         "shelf",
         "quicknote",
         "guest-chat",
@@ -71,6 +73,7 @@ describe("nav items", () => {
 
       const ids = navItems().map((i) => i.id);
 
+      expect(ids).not.toContain("generators");
       expect(ids).not.toContain("shelf");
       expect(ids).not.toContain("quicknote");
     });
@@ -104,6 +107,31 @@ describe("nav items", () => {
 
     it("never lights a tool by path", () => {
       expect(isViewActive(byId("oracle")!, "/oracle")).toBe(false);
+    });
+  });
+
+  describe("tool active state", () => {
+    it("lights generators when generatorWorkflow is open", () => {
+      const gen = byId("generators")!;
+      modalUIStore.closeGeneratorWorkflow();
+      expect(isToolActive(gen)).toBe(false);
+
+      modalUIStore.openGeneratorWorkflow();
+      expect(isToolActive(gen)).toBe(true);
+
+      modalUIStore.closeGeneratorWorkflow();
+      expect(isToolActive(gen)).toBe(false);
+    });
+
+    it("toggles the generator workflow when action is invoked", () => {
+      const gen = byId("generators")!;
+      modalUIStore.closeGeneratorWorkflow();
+
+      gen.action?.();
+      expect(modalUIStore.generatorWorkflow.open).toBe(true);
+
+      gen.action?.();
+      expect(modalUIStore.generatorWorkflow.open).toBe(false);
     });
   });
 });

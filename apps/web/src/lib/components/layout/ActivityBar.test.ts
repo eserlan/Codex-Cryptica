@@ -9,6 +9,7 @@ import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
@@ -35,6 +36,7 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
 describe("ActivityBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    modalUIStore.closeGeneratorWorkflow();
     discoveryPolicyStore.aiDisabled = false;
     discoveryPolicyStore.connectionDiscoveryMode = "suggest";
     layoutUIStore.activeSidebarTool = "none";
@@ -105,14 +107,18 @@ describe("ActivityBar", () => {
 
     // The row does not wrap and every item costs viewport width, so the
     // demoted ones are hidden below `md` and reached from the menu drawer.
-    it.each(["adventure", "random", "shelf", "quicknote", "guest-chat"])(
-      "hides %s from the bar on a phone",
-      (id) => {
-        render(ActivityBar);
+    it.each([
+      "adventure",
+      "random",
+      "generators",
+      "shelf",
+      "quicknote",
+      "guest-chat",
+    ])("hides %s from the bar on a phone", (id) => {
+      render(ActivityBar);
 
-        expect(classOf(id)).toContain("hidden md:flex");
-      },
-    );
+      expect(classOf(id)).toContain("hidden md:flex");
+    });
 
     it.each(["graph", "map", "canvas", "timeline", "table", "explorer"])(
       "keeps %s in the bar on a phone",
@@ -175,6 +181,23 @@ describe("ActivityBar", () => {
     expect(screen.getByTestId("activity-bar-oracle")).toBeDefined();
     expect(screen.getByTestId("activity-bar-explorer")).toBeDefined();
     expect(screen.getByTestId("activity-bar-quicknote")).toBeDefined();
+    expect(screen.getByTestId("activity-bar-generators")).toBeDefined();
+  });
+
+  it("opens the generator workflow when the Generators shortcut is clicked", async () => {
+    render(ActivityBar);
+
+    await fireEvent.click(screen.getByTestId("activity-bar-generators"));
+
+    expect(modalUIStore.generatorWorkflow.open).toBe(true);
+  });
+
+  it("lights the Generators shortcut when the generator workflow is open", () => {
+    modalUIStore.openGeneratorWorkflow();
+
+    render(ActivityBar);
+
+    expect(isActive("generators")).toBe(true);
   });
 
   it("absorbs the mobile bottom safe area into the activity bar", () => {

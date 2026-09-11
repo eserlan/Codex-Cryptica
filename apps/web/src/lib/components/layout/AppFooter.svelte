@@ -27,6 +27,11 @@
       </a>
     {/if}
     <a
+      href="{base}/generators"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Generators</a
+    >
+    <a
       href="{base}/explore"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Explore</a
