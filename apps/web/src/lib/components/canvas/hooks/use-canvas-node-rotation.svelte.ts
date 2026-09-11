@@ -31,8 +31,9 @@ export function useCanvasNodeRotation(logic: {
   } | null>(null);
 
   function nodeIdFromPointerTarget(target: EventTarget | null) {
-    if (!(target instanceof Element)) return null;
-    const nodeElement = target.closest(".svelte-flow__node") as HTMLElement;
+    if (!target) return null;
+    const element = target as HTMLElement;
+    const nodeElement = element.closest(".svelte-flow__node") as HTMLElement;
     return nodeElement?.dataset?.id || null;
   }
 
