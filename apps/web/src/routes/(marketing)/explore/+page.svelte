@@ -198,6 +198,13 @@
             "Bring a campaign in from another tool without losing your notes.",
           icon: "icon-[lucide--import]",
         },
+        {
+          href: "/resources/castle-floorplans",
+          label: "Castle Floorplans",
+          summary:
+            "Curated links to real castle and palace floor plans for mapping your own locations.",
+          icon: "icon-[lucide--map]",
+        },
       ],
     },
     {
