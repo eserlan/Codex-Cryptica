@@ -27,6 +27,7 @@
   } from "./source-workspace";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { createLongPressTracker } from "./long-press-tracker";
+  import { collectLabels, countOf, filterSources } from "./source-workspace-filter";
 
   /**
    * The shell both tables and decks live in (#2247, FR-003, FR-009).
@@ -336,19 +337,9 @@
     kind === "table" ? randomSources.tables : randomSources.decks,
   );
 
-  const labels = $derived([...new Set(all.flatMap((s) => s.labels))].sort());
+  const labels = $derived(collectLabels(all));
 
-  const visible = $derived.by(() => {
-    const needle = query.trim().toLowerCase();
-    return all
-      .filter((s) => !needle || s.name.toLowerCase().includes(needle))
-      .filter((s) => activeLabels.every((l) => s.labels.includes(l)))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
-
-  function countOf(source: RandomSource): number {
-    return (kind === "table" ? source.entries : source.cards)?.length ?? 0;
-  }
+  const visible = $derived.by(() => filterSources(all, query, activeLabels));
 
   function toggleLabel(label: string) {
     activeLabels = activeLabels.includes(label)
@@ -734,7 +725,7 @@
               <span
                 class="ml-1 font-mono text-[9px] text-theme-muted/60 shrink-0"
               >
-                {countOf(source)}
+                {countOf(kind, source)}
               </span>
             </button>
 
