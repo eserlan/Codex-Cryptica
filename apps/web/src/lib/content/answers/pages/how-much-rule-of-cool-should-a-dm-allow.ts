@@ -121,7 +121,7 @@ export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
     {
       system: "Exalted",
       rationale:
-        "Exalted's stunt system awards bonus dice based on how evocative and cinematically described an action is — a one-sentence visual earns one bonus die, a vivid environmental interaction earns two, and a genuinely memorable piece of narration earns three — making descriptive quality a direct mechanical input to every roll.",
+        "Exalted 3rd Edition rewards stunts on a three-tier scale: a one-die stunt is a solidly narrated action, a two-die stunt weaves in scene details or another character and refunds a point of Willpower, and a three-die stunt is a standout piece of narration that refunds two points of Willpower, tying descriptive quality to both bonus dice and resource recovery.",
       href: "https://www.drivethrurpg.com/product/162759/Exalted-3rd-Edition",
     },
     {
