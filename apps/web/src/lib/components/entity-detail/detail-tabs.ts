@@ -7,6 +7,7 @@ export const entityDetailTabs = [
   "family",
   "stats",
   "timeline",
+  "faction",
 ] as const;
 
 export type EntityDetailTab = (typeof entityDetailTabs)[number];

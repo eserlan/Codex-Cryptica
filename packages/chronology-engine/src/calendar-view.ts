@@ -216,7 +216,8 @@ export function buildAgendaSections(
 
 /**
  * Controlled set of entity title tokens that indicate "the current in-world date".
- * Matching is case-insensitive and whole-title only.
+ * Matching is case-insensitive and whole-title only. Decorative punctuation
+ * around the title is ignored so a GM can make their calendar marker prominent.
  */
 const CURRENT_DATE_TITLES = new Set([
   "current date",
@@ -225,6 +226,13 @@ const CURRENT_DATE_TITLES = new Set([
   "current day",
   "now",
 ]);
+
+function normalizeCurrentDateTitle(title: string): string {
+  return title
+    .trim()
+    .toLowerCase()
+    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+}
 
 /**
  * Minimal shape required from an entity for the FR-012 entity-title lookup.
@@ -256,7 +264,7 @@ export function resolveCalendarCurrentDate(
       (e) =>
         e.dateKind === "exact" &&
         e.exactDate !== undefined &&
-        CURRENT_DATE_TITLES.has(e.title.trim().toLowerCase()),
+        CURRENT_DATE_TITLES.has(normalizeCurrentDateTitle(e.title)),
     )
     .sort((a, b) => {
       // Oldest first for stable tie-breaking

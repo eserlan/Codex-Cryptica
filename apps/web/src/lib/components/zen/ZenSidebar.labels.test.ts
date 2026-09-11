@@ -1,8 +1,13 @@
 /** @vitest-environment jsdom */
-import { render } from "@testing-library/svelte";
+import { fireEvent, render } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+
+if (!Element.prototype.animate) {
+  Element.prototype.animate = () =>
+    ({ finished: Promise.resolve(), cancel: () => {} }) as unknown as Animation;
+}
 
 // Mock stores
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -131,5 +136,31 @@ describe("ZenSidebar labels addition when not editing", () => {
 
     const combobox = queryByRole("combobox", { name: "Quick add label" });
     expect(combobox).toBeFalsy();
+  });
+
+  it("places label suggestions below the quick-add input", async () => {
+    (vault as any).isGuest = false;
+    (vault as any).labelIndex = ["Dinosaur"];
+
+    const { getByRole } = render(ZenSidebar, {
+      entity: {
+        id: "entity-1",
+        title: "Test Entity",
+        labels: [],
+        aliases: [],
+      } as any,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    await fireEvent.input(getByRole("combobox", { name: "Quick add label" }), {
+      target: { value: "din" },
+    });
+
+    expect(getByRole("listbox").className).toContain("top-full");
+    expect(getByRole("listbox").className).toContain("mt-1");
   });
 });

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/paths", () => ({
@@ -65,6 +65,13 @@ vi.mock("$lib/components/entity-detail/DetailMapTab.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
+vi.mock(
+  "$lib/components/entity-detail/DetailFactionTurnTab.svelte",
+  async () => ({
+    default: (await import("./__tests__/ModalStub.svelte")).default,
+  }),
+);
+
 vi.mock("$lib/stores/vault.svelte", () => {
   const entities: Record<string, any> = {
     "entity-1": {
@@ -101,6 +108,7 @@ vi.mock("$lib/utils/zen-popout", async () => {
 
 import ZenModeModal from "./ZenModeModal.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 describe("ZenModeModal", () => {
   beforeEach(() => {
@@ -129,5 +137,33 @@ describe("ZenModeModal", () => {
         }),
       );
     });
+  });
+
+  it("shows and opens the Faction Turns tab for faction entities", async () => {
+    vault.entities["entity-1"] = {
+      ...vault.entities["entity-1"],
+      type: "faction",
+    };
+
+    render(ZenModeModal);
+
+    const turnsTab = screen.getByRole("tab", { name: "TURNS" });
+    expect(turnsTab).toBeTruthy();
+
+    await fireEvent.click(turnsTab);
+
+    expect(turnsTab.getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tabpanel").id).toBe("panel-faction");
+  });
+
+  it("does not show the Faction Turns tab for non-faction entities", async () => {
+    vault.entities["entity-1"] = {
+      ...vault.entities["entity-1"],
+      type: "location",
+    };
+
+    render(ZenModeModal);
+
+    expect(screen.queryByRole("tab", { name: "TURNS" })).toBeNull();
   });
 });

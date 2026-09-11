@@ -154,7 +154,7 @@
     <div
       id="{id}-listbox"
       role="listbox"
-      class="absolute bottom-full left-0 mb-1 w-full bg-theme-surface border border-theme-border rounded shadow-xl z-30 overflow-hidden"
+      class="absolute top-full left-0 mt-1 w-full bg-theme-surface border border-theme-border rounded shadow-xl z-30 overflow-hidden"
       transition:fade={{ duration: 100 }}
     >
       {#each suggestions as _label, i}

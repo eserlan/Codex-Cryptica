@@ -19,6 +19,9 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Faction Turns
+Let a faction act on your world between sessions. Name its stats whatever suits your setting, then say which one stands for influence. Turns are paced by your campaign's current date — the system reads that date and never changes it — and nothing is saved until you approve it.
+
 ### The Shelf
 Send an entity, or a whole selection, to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.
 
@@ -1236,6 +1239,95 @@ The **Connections Proposer** works in the background to find hidden links betwee
 
 ---
 
+### FACTION TURNS
+
+Most campaign worlds sit still between sessions. Faction Turns let a faction pursue something on its own — extending its reach over a place, a person, or a rival — so that when your players come back, the map has moved a little without you having to move it by hand.
+
+Nothing happens automatically. You choose when a faction acts, you see the result before anything is saved, and you can undo it afterwards.
+
+## Turning it on
+
+Open a faction and choose the **Turns** tab, then **Turn on faction turns**. Factions you don't turn on are completely unaffected — no new tabs, no new fields, nothing.
+
+## Naming your stats
+
+A faction acts using its own stats, and you name those yourself. A court-intrigue campaign might call them Standing, Coin and Loyalty; a space opera might use Fleet Strength, Political Reach and Morale.
+
+Add them as **number** stats on the faction's Stats tab, then come back to the Turns tab and say which stat plays which part:
+
+- **Influence** — politics, faith, persuasion. This is the one an Influence action uses.
+- **Stability** — cohesion, and how well the faction resists others reaching into _its_ business.
+- **Power** and **Resources** — set them if you like; nothing uses them yet.
+
+Only the parts an action actually needs have to be set, so you can start with just Influence.
+
+Because the mapping remembers the stat itself rather than its name, renaming "Influence" to "Political Reach" later changes nothing about how turns work.
+
+## When a faction can act
+
+Faction turns are paced by your campaign's current date. A faction that acted recently has to wait before acting again — by default, a month of world time. In vault settings, choose either monthly turns or quarterly turns (every three months).
+
+Your campaign's current date comes from whichever of these you have:
+
+1. An event titled **Current date**, **Today**, **Now** or similar, with a date on it.
+2. The **Present Year** setting in vault settings.
+
+If you have neither, the Turns tab will say so and ask you to set one. It will not quietly use today's real-world date — in a campaign set in the year 640, that would make every faction eligible forever and stamp your history with the wrong year.
+
+**The system never changes your campaign's date.** It only reads it. You move time forward when you're ready, and factions become able to act as a result.
+
+If you want a faction to act ahead of schedule anyway, you can — the turn is simply recorded as having been taken early.
+
+## Taking a turn
+
+Pick a target — any entity in your vault — and choose **Extend influence**. You'll get a result immediately, and **nothing is saved yet**.
+
+The result is one of five outcomes: decisive success, success, mixed, failure, or backfire. Choose **Show the working** to see exactly how it got there: which stat was used, what resisted it and why, what was rolled, and what the outcome could have been.
+
+How hard a target is to influence depends on who already holds it. Somewhere nobody has claimed is the easiest thing in your world to move on; a province a rival faction has a firm grip on is considerably harder.
+
+## Approving, or throwing it away
+
+The preview shows what will change: the faction's stat, and how firmly it holds the target. You can rewrite the account in your own words before saving it.
+
+- **Apply this turn** saves everything and adds it to the faction's history.
+- **Throw it away** leaves your vault exactly as it was.
+
+If an outcome suggests the relationship itself has changed character — a neutral arrangement becoming friendly, say — you'll be offered that as a tickbox. It never happens on its own, because a relationship you wrote deliberately shouldn't be overwritten by a dice roll.
+
+Leaving the tab with an unsaved result will ask you to confirm, and reloading the page discards it. Results are never saved half-finished.
+
+## Undoing
+
+The most recent turn can be undone from the history list, which puts the stat and the relationship back exactly as they were. Undone turns stay visible in the history, marked as undone, rather than disappearing.
+
+Only the most recent turn can be reversed. Undoing an older one would mean guessing how to reconcile everything that happened since, and a wrong guess there would quietly damage a world you wrote by hand.
+
+## History, and your timeline
+
+Every turn is kept, permanently and in full, so you can still see the reasoning behind a turn taken years of campaign time ago.
+
+Turns do **not** appear on your campaign timeline unless you put them there. A faction's routine manoeuvring would swamp the events you actually care about. When something _does_ matter, choose **Add to timeline** and it becomes a proper event alongside your hand-written history.
+
+## Using AI, or not
+
+Two separate settings in vault settings, both on by default:
+
+- **Let AI write the account** — describes the outcome in prose rather than a stock sentence.
+- **Let AI adjust the outcome** — lets AI shift an outcome one step better or worse when the situation warrants it, and it has to say why. The dice still decide the starting point.
+
+When either is on, **the faction's and the target's names and short descriptions are sent to your AI provider.** Turn them off and nothing leaves your device: outcomes are described locally instead, and everything else works exactly the same.
+
+There is also an off-by-default **Include participant lore with AI** setting. Turn it on only when you want a richer account: for that turn, the AI also receives each participant's aliases, up to 1,200 characters of their text and lore, and up to five of their named outgoing connections. It does not send unrelated entities or your whole vault.
+
+Faction turns never wait on AI. If your provider is slow, unreachable, or you have none set up, the dice result stands and the turn is described locally.
+
+## If you want no randomness at all
+
+Turn off **Roll dice for outcomes** and results are decided by comparing stats directly. With that off and AI adjustment off too, the same situation always produces the same outcome.
+
+---
+
 ### MULTIPLE VAULTS
 
 Codex Cryptica lets you manage multiple "Vaults" (folders). Each vault is completely separate, so your sci-fi notes won't mix with your fantasy ones.
@@ -1946,6 +2038,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Start with what adherents do, and let belief follow from that. A religion becomes believable through practice: the rites people perform, the days they cannot work, who pays for it, the questions it will not permit, because that is how a religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
 
+### [How do you create a fantasy city that feels alive?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-city-that-feels-alive)
+
+**Direct answer:** Make a fantasy city feel alive by showing what its people do repeatedly, what they are worried about today, and how yesterday's events have changed the streets. Give each district a daily rhythm, put competing groups in public view, let rumours travel through recognisable places, and change familiar details after the party acts. Players believe in a city when it carries on around them and remembers their presence.
+
 ### [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction)
 
 **Direct answer:** Start with what the faction wants and what is stopping it, then work outwards to membership, methods and territory. A faction is only worth having if it would act differently from every other group in the setting when the same thing happens, so define its goal specifically enough that you can predict its next move: "restore the drowned line to the throne" rather than "gain power".
@@ -1978,6 +2074,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Generate useful RPG rumours as a six-entry table: four are essentially true, one exaggerates a real situation, and one is a dangerous misconception. Give every entry a named source, a specific site, NPC, faction, or item to pursue, and a consequence if the party follows, repeats, or ignores it. Keep each rumour lighter than a quest hook so players choose what matters.
 
+### [How do you give players hints for an RPG puzzle without giving away the answer?](https://codexcryptica.com/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer)
+
+**Direct answer:** Use a three-step hint ladder that gets more concrete each time it fires, but never states the exact solution: first repeat an existing clue in a new form, then point at whatever changed as a result of the party's last attempt, then state the puzzle's immediate goal without naming the method. Escalate one step at a time, and only when the table has genuinely stalled rather than on a fixed schedule.
+
 ### [How do you handle character death in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg)
 
 **Direct answer:** Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
@@ -1989,6 +2089,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you improvise NPCs on the spot?](https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot)
 
 **Direct answer:** Improvise an NPC on the spot by fixing five things in the order the table will notice them: role, immediate want, attitude toward the party, one distinguishing behaviour you can repeat every time they speak, and one connection to something already in the campaign. Say the role out loud first so the scene has a name to react to, then let the rest surface through dialogue instead of description.
+
+### [How do you keep track of NPCs in a long campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign)
+
+**Direct answer:** Give every NPC who might return a short, standing record: name and role, what they want, where and when the party last saw them, their current status, and one open thread with them. Update it the moment something changes rather than reconstructing it later, and most minor NPCs never need more than that one line. The record's job is to answer 'who is this again?' in five seconds mid-session, not to be a biography.
 
 ### [How do you keep track of time in a tabletop campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-time-in-a-tabletop-campaign)
 
@@ -2074,6 +2178,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
 
+### [How much Rule of Cool should a DM allow?](https://codexcryptica.com/answers/how-much-rule-of-cool-should-a-dm-allow)
+
+**Direct answer:** Use the Rule of Cool when a player attempts something creative that fits the fictional situation, but resolve it using existing game mechanics whenever possible. Let creativity change what a character can attempt within the narrative world, rather than automatically granting a numerically superior mechanical result. By separating narrative permission from mechanical resolution, Dungeon Masters reward clever thinking while preserving tactical balance and avoiding broken campaign precedents.
+
 ### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
 
 **Direct answer:** Create a cyberpunk district by deciding what work it does for the city, who extracts value from that work, and what daily cost residents pay for staying there. Give it one stressed piece of infrastructure, a visible social divide, a local authority with limits, and a problem that forces people into difficult bargains. Then prepare a few places where that pressure can meet the crew.
@@ -2097,6 +2205,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
 **Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
+
+### [What kind of ship should a pirate crew start with?](https://codexcryptica.com/answers/what-kind-of-ship-should-a-pirate-crew-start-with)
+
+**Direct answer:** Start a pirate crew with a ship that can win a prize but cannot solve every problem: a fast sloop, modest schooner, or compromised brig gives the party a home, a reason to take jobs, and weaknesses that force choices. Give it one clear advantage, one serious flaw, a visible scar, and an owner or debt that can still make demands.
+
+### [What kind of ship should a sci-fi RPG party start with?](https://codexcryptica.com/answers/what-kind-of-ship-should-a-sci-fi-rpg-party-start-with)
+
+**Direct answer:** Start the party with a ship that creates play rather than one that solves it: capable enough to travel and survive, but limited enough to leave room for upgrades, debts, repairs, compromises, and difficult choices. A scrappy freighter, a scout ship, and a salvage tug all work; a fully armed cruiser with no weaknesses does not, because there is nothing left for the campaign to give the crew.
 
 ### [What makes a good heist target in a tabletop RPG?](https://codexcryptica.com/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg)
 
@@ -2233,6 +2349,18 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 
 **Summary:** Extracting an injured whistleblower compliance architect from a corporate penthouse before a twelve-minute custody roll call, with a cancelled ambulance transponder and two crew members forced to support her every step.
 
+### [Classic Fantasy puzzle example: The Bell Beneath Blackglass](https://codexcryptica.com/examples/the-bell-beneath-blackglass-fantasy-puzzle)
+
+**Genre:** Classic Fantasy
+
+**Summary:** Beneath the ruined Abbey of Saint Orra, the Moon-Eater Bell is draining the valley's protective ward, and the party must realign its three magical rings — or free the bound spirit powering it — before the next toll turns the living into silent shadows.
+
+### [Cyberpunk puzzle example: The Null-Key Reliquary](https://codexcryptica.com/examples/the-null-key-reliquary-cyberpunk-puzzle)
+
+**Genre:** Cyberpunk
+
+**Summary:** Inside the flooded Arasaka Transit Exchange, a biometric-free vault holds the stolen Ghostseed ledger behind a mechanical train-routing maze whose brass relays must be synchronized before the district-wide security purge floods the chamber in eleven minutes.
+
 
 ## TTRPG System & Genre Campaign Management
 
@@ -2291,6 +2419,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Keep families, estates, old promises, and buried secrets connected in one local-first workspace.
 
 **Overview:** Gothic horror campaigns turn on the weight of the past: inherited debts, estranged relatives, isolated manors, and buried family transgressions. When your players uncover a sealed portrait or confront the parish vicar, you shouldn't have to scramble through loose notes to recall which ancestor made the original promise — or who stands to lose everything when the truth comes to light.
+
+### [Tactical Mecha RPG Campaign Manager | Codex Cryptica](https://codexcryptica.com/for/mecha-rpgs)
+
+**Summary:** Track pilots, frames, contracts, operations, and the people caught between them.
+
+**Overview:** A tactical mecha campaign moves quickly between briefing rooms, hangars, battle maps, and the consequences left behind. When one squad changes a warzone, takes a contractor's job, or loses a frame in a bad extraction, you need more than a mission list to remember who authorised the operation, what the unit is carrying, which settlement is now exposed, and why the next deployment matters.
 
 ### [Codex Cryptica for Pathfinder 2e Campaign Management](https://codexcryptica.com/for/pathfinder-2e)
 

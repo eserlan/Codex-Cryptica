@@ -68,7 +68,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/2815-smart-copy/plan.md).
+shell commands, and other important information, read the [current plan](./specs/161-faction-turn-influence/plan.md).
 
 <!-- SPECKIT END -->
 
