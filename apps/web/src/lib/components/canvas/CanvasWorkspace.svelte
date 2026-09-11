@@ -45,6 +45,8 @@
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
   import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
+  import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
+
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { DelveEdgeData, DelveRoomNodeData } from "generator-engine";
@@ -105,6 +107,10 @@
   });
 
   const logic = createCanvasLogic(() => engine);
+  const rotationLogic = useCanvasNodeRotation(logic, vault);
+  const isCanvasToolActive = $derived(
+    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
+  );
   const drawingLogic = useCanvasDrawing(logic);
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
@@ -117,12 +123,6 @@
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
     let showMinimap = $state(true);
-  let selectedRotationNodeId = $state<string | null>(null);
-  let isRotatingNode = $state(false);
-  const touchRotationPointers = new SvelteMap<
-    number,
-    { nodeId: string; x: number; y: number }
-  >();
   let touchRotationGesture: {
     nodeId: string;
     pointerIds: [number, number];
@@ -136,9 +136,6 @@
     previousAngle: number;
     rotation: number;
   } | null = null;
-  const isCanvasToolActive = $derived(
-    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || isRotatingNode,
-  );
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -346,186 +343,6 @@
 
 
 
-  function nodeIdFromPointerTarget(target: EventTarget | null) {
-    if (!(target instanceof Element)) return null;
-    return (
-      target.closest<HTMLElement>(".svelte-flow__node")?.dataset.id ?? null
-    );
-  }
-
-  function canRotateNode(nodeId: string) {
-    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
-    return Boolean(
-      node &&
-      node.type !== "delveSectorGroup" &&
-      !(node.data as Record<string, unknown> | undefined)?.locked,
-    );
-  }
-
-  function beginTouchRotation(event: PointerEvent) {
-    if (
-      event.pointerType !== "touch" ||
-      vault.isGuest ||
-      drawingLogic.isDrawingMode ||
-      drawingLogic.isErasingMode
-    ) {
-      return;
-    }
-    const nodeId = nodeIdFromPointerTarget(event.target);
-    if (!nodeId || !canRotateNode(nodeId)) return;
-
-    touchRotationPointers.set(event.pointerId, {
-      nodeId,
-      x: event.clientX,
-      y: event.clientY,
-    });
-    const matching = [...touchRotationPointers.entries()].filter(
-      ([, pointer]) => pointer.nodeId === nodeId,
-    );
-    if (matching.length !== 2 || touchRotationGesture) return;
-
-    const [[firstId, first], [secondId, second]] = matching;
-    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
-    touchRotationGesture = {
-      nodeId,
-      pointerIds: [firstId, secondId],
-      previousAngle: pointerAngleDegrees(first, second),
-      rotation: canvasNodeRotation(node),
-    };
-    selectedRotationNodeId = nodeId;
-    isRotatingNode = true;
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  function beginDesktopRotation(event: PointerEvent) {
-    const nodeId = selectedRotationNodeId;
-    if (
-      !nodeId ||
-      vault.isGuest ||
-      event.pointerType === "touch" ||
-      event.button !== 0 ||
-      !canRotateNode(nodeId)
-    ) {
-      return;
-    }
-    const nodeElement = [
-      ...document.querySelectorAll<HTMLElement>(".svelte-flow__node"),
-    ].find((element) => element.dataset.id === nodeId);
-    if (!nodeElement) return;
-    const bounds = nodeElement.getBoundingClientRect();
-    const center = {
-      x: bounds.left + bounds.width / 2,
-      y: bounds.top + bounds.height / 2,
-    };
-    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
-    desktopRotationGesture = {
-      nodeId,
-      pointerId: event.pointerId,
-      center,
-      previousAngle: pointerAngleDegrees(center, {
-        x: event.clientX,
-        y: event.clientY,
-      }),
-      rotation: canvasNodeRotation(node),
-    };
-    isRotatingNode = true;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  function rotateSelectedNodeWithKeyboard(event: KeyboardEvent) {
-    if (
-      !selectedRotationNodeId ||
-      (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
-    ) {
-      return;
-    }
-    const node = logic.nodes.find(
-      (candidate) => candidate.id === selectedRotationNodeId,
-    );
-    if (!node || !canRotateNode(node.id)) return;
-    const step = event.shiftKey ? 45 : 15;
-    const rotation =
-      canvasNodeRotation(node) + (event.key === "ArrowRight" ? step : -step);
-    logic.updateNodeRotation(node.id, rotation);
-    logic.saveNow();
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  function handleRotationPointerMove(event: PointerEvent) {
-    if (touchRotationPointers.has(event.pointerId)) {
-      const current = touchRotationPointers.get(event.pointerId)!;
-      touchRotationPointers.set(event.pointerId, {
-        ...current,
-        x: event.clientX,
-        y: event.clientY,
-      });
-    }
-
-    if (touchRotationGesture) {
-      const [firstId, secondId] = touchRotationGesture.pointerIds;
-      const first = touchRotationPointers.get(firstId);
-      const second = touchRotationPointers.get(secondId);
-      if (
-        first &&
-        second &&
-        touchRotationGesture.pointerIds.includes(event.pointerId)
-      ) {
-        const angle = pointerAngleDegrees(first, second);
-        const rotation = accumulateRotationDegrees(
-          touchRotationGesture.rotation,
-          touchRotationGesture.previousAngle,
-          angle,
-        );
-        touchRotationGesture.rotation = rotation;
-        touchRotationGesture.previousAngle = angle;
-        logic.updateNodeRotation(touchRotationGesture.nodeId, rotation);
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      return;
-    }
-
-    if (
-      desktopRotationGesture &&
-      desktopRotationGesture.pointerId === event.pointerId
-    ) {
-      const angle = pointerAngleDegrees(desktopRotationGesture.center, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-      const rotation = accumulateRotationDegrees(
-        desktopRotationGesture.rotation,
-        desktopRotationGesture.previousAngle,
-        angle,
-      );
-      desktopRotationGesture.rotation = rotation;
-      desktopRotationGesture.previousAngle = angle;
-      logic.updateNodeRotation(desktopRotationGesture.nodeId, rotation);
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }
-
-  function finishNodeRotation(event: PointerEvent) {
-    const completedTouchGesture = Boolean(
-      touchRotationGesture?.pointerIds.includes(event.pointerId),
-    );
-    const completedDesktopGesture =
-      desktopRotationGesture?.pointerId === event.pointerId;
-    touchRotationPointers.delete(event.pointerId);
-    if (!completedTouchGesture && !completedDesktopGesture) return;
-
-    touchRotationGesture = null;
-    desktopRotationGesture = null;
-    isRotatingNode = false;
-    logic.saveNow();
-    event.preventDefault();
-    event.stopPropagation();
-  }
 
   let arrangedCanvasId = $state<string | null>(null);
 
@@ -611,8 +428,8 @@
   }
 
   function onNodeClick({ node }: { node: any }) {
-    if (!vault.isGuest && canRotateNode(node.id)) {
-      selectedRotationNodeId = node.id;
+    if (!vault.isGuest && rotationLogic.canRotateNode(node.id)) {
+      rotationLogic.selectedRotationNodeId = node.id;
     }
     if (node.type === "delveRoom") {
       roomEnhancementError = null;
@@ -630,7 +447,7 @@
   }
 
   function onPaneClick() {
-    selectedRotationNodeId = null;
+    rotationLogic.selectedRotationNodeId = null;
   }
 
   function onNodeDragStop({
@@ -1135,9 +952,9 @@
 <svelte:window
   onkeydown={drawingLogic.handleDrawingKeydown}
   onpaste={handleCanvasPaste}
-  onpointermove={handleRotationPointerMove}
-  onpointerup={finishNodeRotation}
-  onpointercancel={finishNodeRotation}
+  onpointermove={rotationLogic.handleRotationPointerMove}
+  onpointerup={rotationLogic.finishNodeRotation}
+  onpointercancel={rotationLogic.finishNodeRotation}
 />
 
 <div
@@ -1149,7 +966,7 @@
     class="flex-1 relative"
     ondragover={onDragOver}
     ondrop={onDrop}
-    onpointerdowncapture={beginTouchRotation}
+    onpointerdowncapture={(e) => rotationLogic.beginTouchRotation(e, drawingLogic.isDrawingMode, drawingLogic.isErasingMode)}
     role="region"
     aria-label="Canvas Workspace"
   >
@@ -1236,9 +1053,9 @@
         fitView
       >
         <Background gap={20} />
-        {#if selectedRotationNodeId && canRotateNode(selectedRotationNodeId)}
+        {#if rotationLogic.selectedRotationNodeId && rotationLogic.canRotateNode(rotationLogic.selectedRotationNodeId)}
           <NodeToolbar
-            nodeId={selectedRotationNodeId}
+            nodeId={rotationLogic.selectedRotationNodeId}
             position={Position.Top}
             offset={18}
             isVisible
@@ -1248,8 +1065,8 @@
               class="nodrag nopan touch-none flex h-9 w-9 cursor-grab items-center justify-center rounded-full border border-theme-primary/50 bg-theme-surface text-theme-primary shadow-lg transition-colors hover:bg-theme-primary/15 active:cursor-grabbing"
               title="Drag to rotate card; use arrow keys for precise rotation"
               aria-label="Rotate selected card"
-              onpointerdown={beginDesktopRotation}
-              onkeydown={rotateSelectedNodeWithKeyboard}
+              onpointerdown={rotationLogic.beginDesktopRotation}
+              onkeydown={rotationLogic.rotateSelectedNodeWithKeyboard}
             >
               <span class="icon-[lucide--rotate-cw] h-4 w-4" aria-hidden="true"
               ></span>
