@@ -21,9 +21,11 @@ describe("getIconClass", () => {
     expect(getIconClass("")).toBe("icon-[lucide--circle]");
   });
 
-  it("falls back to default icon when string has no colon and does not start with icon-", () => {
+  it("falls back to default icon for malformed icon names", () => {
     expect(getIconClass("user")).toBe("icon-[lucide--circle]");
     expect(getIconClass("not-an-icon")).toBe("icon-[lucide--circle]");
+    expect(getIconClass(":user")).toBe("icon-[lucide--circle]");
+    expect(getIconClass("lucide:")).toBe("icon-[lucide--circle]");
   });
 
   it("falls back to default icon when string has more than one colon", () => {
