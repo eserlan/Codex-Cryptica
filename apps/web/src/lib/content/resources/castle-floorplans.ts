@@ -67,6 +67,13 @@ export interface FloorplanResource {
   url: string;
   /** Name of the publisher/site to credit. */
   sourceName: string;
+  /**
+   * Optional caveat about the source's own site structure (broken nav, no
+   * working index, inconsistent categorisation). Shown next to attribution
+   * so a reader isn't surprised when "visit the site" doesn't lead anywhere
+   * useful beyond the page linked here.
+   */
+  sourceNote?: string;
   /** What the linked page actually contains. */
   description: string;
   /** Why a GM or worldbuilder would want this specific source. */
@@ -77,13 +84,30 @@ export interface FloorplanResource {
 
 export const CASTLE_FLOORPLAN_RESOURCES: FloorplanResource[] = [
   {
+    id: "neuschwanstein-castle",
+    name: "Neuschwanstein Castle",
+    category: "fantasy-scale-complexes",
+    url: "http://randwulf.com/hogwarts/Bavaria.html",
+    sourceName: "Randwülf Floorplans",
+    sourceNote:
+      "A personal floor-plan library with no working top-level index: each plan is its own page, linked directly here rather than through a hub URL.",
+    description:
+      "A hand-drawn floor plan of King Ludwig II's 19th-century Bavarian palace, the building that directly inspired Disney's fairytale castle. Covers the main tower, state rooms, and the hill-top footprint of a palace that was still unfinished at the king's death in 1886.",
+    whyUseful:
+      "This is the real building behind the generic 'fantasy castle' silhouette, so its floor plan is a shortcut past the cliché straight to specifics: a 213-foot main tower, a 426-foot footprint perched on a sheer 656-foot hill, and state rooms built for spectacle rather than defence. Useful as a direct model for a wizard's tower-palace or an eccentric noble's folly.",
+    complexity: "large",
+    complexityNote: "Main tower plus multiple state rooms",
+  },
+  {
     id: "biltmore-estate",
     name: "Biltmore Estate",
     category: "palaces-manor-houses",
     url: "http://randwulf.com/hogwarts/Biltmore.html",
     sourceName: "Randwülf Floorplans",
+    sourceNote:
+      "A personal floor-plan library with no working top-level index: each plan is its own page, linked directly here rather than through a hub URL.",
     description:
-      "Hand-drawn floor plans covering all six levels of the Biltmore House in Asheville, North Carolina, split into a lower-three-floors and an upper-three-floors view. The same site also hosts a widely cited fan floor plan of Hogwarts and a full plan of Neuschwanstein Castle.",
+      "Hand-drawn floor plans covering all six levels of the Biltmore House in Asheville, North Carolina, split into a lower-three-floors and an upper-three-floors view.",
     whyUseful:
       "At 175,000 square feet and 250 rooms, Biltmore is the largest private home built in North America, and the plan lays out exactly how a household that size actually functions: 21 servant rooms on the fourth floor, and a basement holding the swimming pool, bowling alley, kitchen, scullery, and laundry. That servant-and-service layer is what most fantasy palace maps skip, and it is the detail that makes a noble estate feel staffed rather than staged.",
     complexity: "sprawling",
