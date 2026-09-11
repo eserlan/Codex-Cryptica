@@ -53,6 +53,7 @@ export class AdventureSessionRepository {
   constructor(
     resolveVaultRoot: AdventureVaultRootResolver,
     generateId: () => string = () => crypto.randomUUID(),
+    private readonly now: () => number = () => Date.now(),
   ) {
     this.rootResolver = resolveVaultRoot;
     this.generateId = generateId;
@@ -222,7 +223,7 @@ export class AdventureSessionRepository {
       ...loaded.session,
       status: "archived",
       revision: loaded.session.revision + 1,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(this.now()).toISOString(),
     };
     return this.save(expectedRevision, archived);
   }
@@ -252,7 +253,7 @@ export class AdventureSessionRepository {
       ...loaded.session,
       title: trimmed,
       revision: loaded.session.revision + 1,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(this.now()).toISOString(),
     };
     return this.save(expectedRevision, renamed);
   }
@@ -271,7 +272,7 @@ export class AdventureSessionRepository {
     if (loaded.condition === "unreadable") {
       return { condition: "unreadable", error: loaded.error };
     }
-    const now = new Date().toISOString();
+    const now = new Date(this.now()).toISOString();
     const id = this.generateId();
     const duplicated: AdventureSession = {
       ...loaded.session,

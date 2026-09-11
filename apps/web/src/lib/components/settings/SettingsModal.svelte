@@ -120,6 +120,7 @@
               ? "Navigation disabled during active import"
               : ""}
             role="tab"
+            aria-label={tab.label}
             aria-selected={modalUIStore.activeSettingsTab === tab.id}
             aria-controls="settings-panel-{tab.id}"
             id="settings-tab-{tab.id}"
@@ -130,7 +131,7 @@
               ? 'opacity-50 cursor-not-allowed pointer-events-none'
               : ''}"
           >
-            <span class="{tab.icon} w-5 h-5"></span>
+            <span class="{tab.icon} w-5 h-5" aria-hidden="true"></span>
             <span
               class="text-sm font-bold uppercase font-header tracking-wider hidden md:block"
               >{tab.label}</span
@@ -483,7 +484,10 @@
                   class="w-full p-4 bg-chrome-accent/10 border border-chrome-accent/30 hover:border-chrome-accent text-chrome-accent transition-all rounded group flex items-center justify-between"
                 >
                   <div class="flex items-center gap-3">
-                    <span class="icon-[lucide--sparkles] w-5 h-5" aria-hidden="true"></span>
+                    <span
+                      class="icon-[lucide--sparkles] w-5 h-5"
+                      aria-hidden="true"
+                    ></span>
                     <span
                       class="text-sm font-bold uppercase font-header tracking-widest"
                       >What's New in Codex</span

@@ -2,7 +2,7 @@
 id: ai-slop-is-context-failure
 slug: ai-slop-is-context-failure
 title: "AI Slop Happens When the Tool Has No Memory"
-description: "Generic AI worldbuilding output is not a prose problem. It is a context problem — and the fix is structure, memory, and accountability to the world that already exists."
+description: "Generic AI worldbuilding output is not a prose problem. It is a context problem, and the fix is structure, memory, and accountability to the world that already exists."
 keywords:
   [
     "AI slop worldbuilding",
@@ -20,7 +20,7 @@ You have seen it. The ancient cult with the shadowy leader who has no history. T
 
 Bad prose is the symptom. Lack of memory is the disease.
 
-AI slop is not just adjective-heavy, over-polished, bloodless writing — though it is often that too, because generic prose is what you get when a model has no campaign-specific continuity to anchor itself to. The deeper problem is that every generated detail arrives with no relationship to what already happened. The cult has no connection to your factions. The ruin has no place in your geography. The rumour contradicts established canon. The model produced text that is technically fine and contextually useless.
+AI slop is not just adjective-heavy, over-polished, bloodless writing, though it is often that too, because generic prose is what you get when a model has no campaign-specific continuity to anchor itself to. The deeper problem is that every generated detail arrives with no relationship to what already happened. The cult has no connection to your factions. The ruin has no place in your geography. The rumour contradicts established canon. The model produced text that is technically fine and contextually useless.
 
 That is AI slop. And it accumulates.
 
@@ -28,7 +28,7 @@ That is AI slop. And it accumulates.
 
 These two terms often get conflated. They describe different problems.
 
-Context is what you include in a specific request — the lore, the faction details, the session notes you pass alongside the prompt. A well-structured context prompt produces better output. This is covered in [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore).
+Context is what you include in a specific request: the lore, the faction details, the session notes you pass alongside the prompt. A well-structured context prompt produces better output. This is covered in [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore).
 
 Memory is something larger. It is campaign continuity over time. It is the accumulated fact that session 1 introduced a particular faction, session 12 changed their allegiance, session 30 saw their leader killed, and session 50 is still dealing with the consequences. A tool with no memory treats every request like a fresh start. It has no knowledge of what happened before, no record of what has changed, and no way to avoid contradicting the last fifty sessions of play.
 
@@ -70,13 +70,13 @@ Memory, in this context, does not mean the model retains anything between sessio
 
 The Lore Oracle in Codex Cryptica works from your vault. When you ask it to suggest a faction motivation, it reads that faction's existing entry, its relationships, its history in the session log. When you ask it to draft a rumour, it knows which NPCs are alive, which locations exist, which events are in the public record. The model cannot accidentally resurrect a dead character if the vault records their death.
 
-The suggestions are grounded because the context is structured. Not freeform notes, but entities, relationships, timelines — information the model can work from specifically rather than inferring from genre convention.
+The suggestions are grounded because the context is structured. Not freeform notes, but entities, relationships, timelines: information the model can work from specifically rather than inferring from genre convention.
 
 ## The slot machine, and what changes it
 
-AI worldbuilding without a vault is a slot machine. Sometimes something interesting comes out. Usually it is noise — plausible-sounding text that belongs to no particular world, accountable to nothing.
+AI worldbuilding without a vault is a slot machine. Sometimes something interesting comes out. Usually it is noise: plausible-sounding text that belongs to no particular world, accountable to nothing.
 
-A local vault turns the AI from a random generation engine into an analytical filter. Instead of pulling tropes from a training distribution shaped by every fantasy property ever written, it works through saved lore, detects the patterns specific to your campaign, and suggests material shaped by what actually happened. The output is not always right. But it is wrong in ways that are easy to catch — because the vault makes the contradiction visible — rather than wrong in ways that quietly poison your notes.
+A local vault turns the AI from a random generation engine into an analytical filter. Instead of pulling tropes from a training distribution shaped by every fantasy property ever written, it works through saved lore, detects the patterns specific to your campaign, and suggests material shaped by what actually happened. The output is not always right. But it is wrong in ways that are easy to catch, because the vault makes the contradiction visible, rather than wrong in ways that quietly poison your notes.
 
 The difference is whether the tool remembers the world it is helping with.
 

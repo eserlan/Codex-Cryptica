@@ -13,6 +13,8 @@ vi.mock("../../stores/map.svelte", () => ({
     unproject: vi.fn((p) => p),
     pins: [{ id: "pin-a", coordinates: { x: 100, y: 100 }, visuals: {} }],
     updatePinCoordinatesInMemory: vi.fn(),
+    layerVisibility: { terrain: true, object: true, token: true },
+    layerLocked: { terrain: false, object: false, token: false },
   },
 }));
 
@@ -24,7 +26,21 @@ vi.mock("../../stores/map-session.svelte", () => ({
     selectedTokens: new Set(),
     tokens: {},
     allTokens: [],
+    myPeerId: null,
+    activeLayer: "token",
+    canViewToken: vi.fn(() => true),
+    canMoveToken: vi.fn(() => true),
+    setDraggingTokenId: vi.fn(),
     measurement: { active: false, start: null, end: null, locked: false },
+    tileDeckManager: { pendingPlacement: null },
+    notePlacementArmed: false,
+    pendingNoteCoords: null,
+    selectedToken: null,
+    cancelNotePlacement: vi.fn(),
+    toggleNoteCollapsed: vi.fn(),
+    cancelPendingTilePlacement: vi.fn(),
+    updatePendingTilePlacement: vi.fn(),
+    placePendingTile: vi.fn(),
     setSelection: vi.fn(),
     clearSelection: vi.fn(),
   },
@@ -223,6 +239,65 @@ describe("MapInteractionManager", () => {
     expect(mapStore.updateViewport).toHaveBeenCalled();
   });
 
+  it("shift+scroll during a grid-fit drag cycles the span instead of zooming", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).gridFitMode = true;
+
+    manager.onPointerDown(
+      new MouseEvent("mousedown", {
+        clientX: 10,
+        clientY: 10,
+        button: 0,
+      }) as unknown as PointerEvent,
+    );
+    expect(manager.gridFitStart).toEqual({ x: 10, y: 10 });
+    expect(manager.gridFitSpan).toBe(3);
+
+    const event = new WheelEvent("wheel", {
+      clientX: 10,
+      clientY: 10,
+      deltaY: -100,
+      shiftKey: true,
+    });
+    manager.onWheel(event);
+
+    expect(manager.gridFitSpan).toBe(5);
+    expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+    (mapSession as any).gridFitMode = false;
+  });
+
+  it("blocks plain (non-shift) scroll-zoom during a grid-fit drag, since it would corrupt the in-progress rectangle", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).gridFitMode = true;
+
+    manager.onPointerDown(
+      new MouseEvent("mousedown", {
+        clientX: 10,
+        clientY: 10,
+        button: 0,
+      }) as unknown as PointerEvent,
+    );
+    expect(manager.gridFitStart).toEqual({ x: 10, y: 10 });
+
+    const event = new WheelEvent("wheel", {
+      clientX: 10,
+      clientY: 10,
+      deltaY: -100,
+      shiftKey: false,
+    });
+    vi.spyOn(event, "preventDefault");
+    manager.onWheel(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(mapStore.updateViewport).not.toHaveBeenCalled();
+    expect(manager.gridFitSpan).toBe(3); // unchanged — no span cycling either
+
+    (mapSession as any).gridFitMode = false;
+  });
+
   it("should clear selection on Escape", async () => {
     const { mapSession } = await import("../../stores/map-session.svelte");
     mapSession.selectedTokens.add("token-1");
@@ -394,5 +469,300 @@ describe("MapInteractionManager", () => {
     manager.onDoubleClick(event);
 
     expect(handleDoubleClickSpy).not.toHaveBeenCalled();
+  });
+
+  describe("note placement", () => {
+    it("uses a left click to choose where an armed note goes, without panning", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).notePlacementArmed = true;
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 320, clientY: 240, button: 0 }),
+      );
+
+      expect((mapSession as any).pendingNoteCoords).toEqual({
+        x: 320,
+        y: 240,
+      });
+      expect(mapSession.cancelNotePlacement).toHaveBeenCalled();
+      expect(manager.isPanning).toBe(false);
+
+      (mapSession as any).notePlacementArmed = false;
+      (mapSession as any).pendingNoteCoords = null;
+    });
+
+    it("pans as usual when note placement is not armed", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 320, clientY: 240, button: 0 }),
+      );
+
+      expect((mapSession as any).pendingNoteCoords).toBeNull();
+      expect(manager.isPanning).toBe(true);
+    });
+
+    it("backs out of armed note placement on Escape", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).notePlacementArmed = true;
+
+      manager.onGlobalKeyDown(new KeyboardEvent("keydown", { key: "Escape" }));
+
+      expect(mapSession.cancelNotePlacement).toHaveBeenCalled();
+      (mapSession as any).notePlacementArmed = false;
+    });
+
+    it("backs out of armed tile placement on Escape", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).tileDeckManager.pendingPlacement = {
+        deckId: "deck-1",
+        tile: { id: "tile-1", name: "Corridor" },
+      };
+
+      manager.onGlobalKeyDown(new KeyboardEvent("keydown", { key: "Escape" }));
+
+      expect(mapSession.cancelPendingTilePlacement).toHaveBeenCalled();
+      expect(manager.mapAnnouncement).toBe("Tile placement cancelled");
+      (mapSession as any).tileDeckManager.pendingPlacement = null;
+    });
+  });
+
+  describe("notes with play switched off", () => {
+    it("selects a note on click instead of falling through to pins", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).vttEnabled = false;
+      (mapSession as any).allTokens = [
+        {
+          id: "note-a",
+          kind: "note",
+          x: 100,
+          y: 100,
+          width: 60,
+          height: 60,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.handleMapClick(
+        new MouseEvent("click", { clientX: 130, clientY: 130 }),
+      );
+
+      expect(mapSession.setSelection).toHaveBeenCalledWith("note-a");
+      expect(manager.selectedPinId).toBeNull();
+
+      (mapSession as any).vttEnabled = true;
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  describe("pressing a token that can't be moved", () => {
+    const lockedTile = {
+      id: "tile-a",
+      name: "Corridor A",
+      x: 100,
+      y: 100,
+      width: 50,
+      height: 50,
+      rotation: 0,
+      zIndex: 0,
+      baseShape: "square",
+      layer: "token",
+      visibleTo: "all",
+    };
+
+    it("keeps the press on the tile instead of panning the map", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).allTokens = [lockedTile];
+      (mapSession.canMoveToken as any).mockReturnValue(false);
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+
+      // The whole point: the map must not slide out from under the press.
+      expect(manager.isPanning).toBe(false);
+      expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 160, clientY: 170 }),
+      );
+      expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+      // And it says why, rather than just doing nothing.
+      expect(manager.mapAnnouncement).toContain("Corridor A");
+
+      (mapSession.canMoveToken as any).mockReturnValue(true);
+      (mapSession as any).allTokens = [];
+    });
+
+    it("still pans when the press lands on empty map", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).allTokens = [lockedTile];
+      (mapSession.canMoveToken as any).mockReturnValue(false);
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 600, clientY: 500, button: 0 }),
+      );
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 640, clientY: 540 }),
+      );
+
+      expect(manager.isPanning).toBe(true);
+      expect(mapStore.updateViewport).toHaveBeenCalled();
+
+      (mapSession.canMoveToken as any).mockReturnValue(true);
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  describe("move-map-to-fine-tune mode", () => {
+    // The mode exists to nudge a tile-covered map under a fixed grid, so a
+    // pointer-down landing on a tile/token must still pan the map — grabbing
+    // the object instead would drag it snapped to the grid while the map
+    // itself never moved, which reads as "moving the map snaps".
+    it("pans the map even when the drag starts on top of a token or tile", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      const { mapStore } = await import("../../stores/map.svelte");
+      (mapSession as any).gridMoveMode = true;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", {
+          clientX: 110,
+          clientY: 110,
+          button: 0,
+        }),
+      );
+
+      expect(manager.isPanning).toBe(true);
+      expect(manager.tokenDrag.dragState).toBeFalsy();
+
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 117, clientY: 123 }),
+      );
+
+      expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 7, y: 13 }, 1);
+
+      (mapSession as any).gridMoveMode = false;
+      (mapSession as any).allTokens = [];
+    });
+
+    it("leaves the mode on release, so tiles are draggable again afterwards", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).gridMoveMode = true;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+      manager.onMouseMove(
+        new MouseEvent("mousemove", { clientX: 150, clientY: 160 }),
+      );
+      await manager.onMouseUp(
+        new MouseEvent("mouseup", { clientX: 150, clientY: 160 }),
+      );
+
+      expect(mapSession.gridMoveMode).toBe(false);
+
+      // The very next pointer-down on a tile must grab it, not pan the map.
+      manager.onMouseDown(
+        new MouseEvent("mousedown", { clientX: 110, clientY: 110, button: 0 }),
+      );
+
+      expect(manager.tokenDrag.dragState).toBeTruthy();
+      expect(manager.isPanning).toBe(false);
+
+      (mapSession as any).allTokens = [];
+    });
+
+    it("still grabs a token normally when not in move-map mode", async () => {
+      const { mapSession } = await import("../../stores/map-session.svelte");
+      (mapSession as any).gridMoveMode = false;
+      (mapSession as any).allTokens = [
+        {
+          id: "token-1",
+          x: 100,
+          y: 100,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          zIndex: 0,
+          baseShape: "square",
+          layer: "token",
+          visibleTo: "all",
+        },
+      ];
+
+      manager.onMouseDown(
+        new MouseEvent("mousedown", {
+          clientX: 110,
+          clientY: 110,
+          button: 0,
+        }),
+      );
+
+      expect(manager.isPanning).toBe(false);
+      expect(manager.tokenDrag.dragState).toBeTruthy();
+
+      (mapSession as any).allTokens = [];
+    });
+  });
+
+  it("folds a note away on double-click instead of dropping a pin under it", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [
+      {
+        id: "note-a",
+        kind: "note",
+        x: 100,
+        y: 100,
+        width: 60,
+        height: 60,
+        rotation: 0,
+        zIndex: 0,
+        baseShape: "square",
+        layer: "token",
+        visibleTo: "all",
+      },
+    ];
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 130, clientY: 130 }),
+    );
+
+    expect(mapSession.toggleNoteCollapsed).toHaveBeenCalledWith("note-a");
+    (mapSession as any).allTokens = [];
   });
 });

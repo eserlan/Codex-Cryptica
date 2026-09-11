@@ -11,7 +11,6 @@ vi.mock("$app/paths", () => ({
 
 vi.mock("$lib/config", () => ({
   PATREON_URL: "https://patreon.com/codexcryptica",
-  DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
 
 describe("AppFooter", () => {
@@ -20,21 +19,34 @@ describe("AppFooter", () => {
     modalUIStore.activeSettingsTab = "vault";
   });
 
-  it("renders the footer landmark and legal / navigational links", () => {
+  it("renders the lightweight footer links", () => {
     render(AppFooter);
 
     expect(screen.getByTestId("app-footer")).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Support on Patreon" }),
-    ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Discord" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Features" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Tools" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Blog" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Explore Worlds" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Responsible AI" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Terms of Service" })).toBeTruthy();
+    const patreonLink = screen.getByRole("link", {
+      name: "Support Codex Cryptica on Patreon",
+    });
+    expect(patreonLink.getAttribute("href")).toBe(
+      "https://patreon.com/codexcryptica",
+    );
+    expect(screen.getByRole("link", { name: "Explore" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Privacy" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Terms" })).toBeTruthy();
+  });
+
+  it("does not duplicate discovery destinations already available from Explore", () => {
+    render(AppFooter);
+
+    expect(screen.queryByRole("link", { name: "Discord" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Tools" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Examples" })).toBeNull();
+  });
+
+  it("links Explore to the site directory page", () => {
+    render(AppFooter);
+
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
+    expect(exploreLink.getAttribute("href")).toBe("/explore");
   });
 
   it("opens Help settings when clicking the Help button", async () => {

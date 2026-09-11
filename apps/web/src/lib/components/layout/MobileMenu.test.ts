@@ -74,18 +74,13 @@ describe("MobileMenu", () => {
     });
   });
 
-  it("hides Explore Worlds in Guided Mode", () => {
+  it("uses Explore as the public directory instead of duplicating Examples", () => {
     render(MobileMenu, { isOpen: true });
 
-    expect(screen.queryByRole("link", { name: /explore worlds/i })).toBeNull();
-  });
-
-  it("restores Explore Worlds in Full Toolbox mode", () => {
-    guidedModeStore.setGuidedMode(false);
-
-    render(MobileMenu, { isOpen: true });
-
-    expect(screen.getByRole("link", { name: /explore worlds/i })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Examples" })).toBeNull();
+    const exploreLink = screen.getByRole("link", { name: "Explore" });
+    expect(exploreLink).toBeTruthy();
+    expect(exploreLink.getAttribute("href")).toBe("/explore");
   });
 
   it("exposes a Guided Mode toggle so mobile users can switch modes", () => {

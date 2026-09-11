@@ -2,7 +2,7 @@
 id: reuse-entities-between-campaigns
 slug: reuse-entities-between-campaigns
 title: "Reuse NPCs, Monsters and Items Across Campaigns Without Exporting Files"
-description: "Built a monster you want in another campaign? The Shelf carries entities between your vaults — stat sheet, artwork and links included — without touching the filesystem."
+description: "Built a monster you want in another campaign? The Shelf carries entities between your vaults, stat sheet, artwork and links included, without touching the filesystem."
 keywords:
   [
     "reuse NPCs across campaigns",
@@ -22,7 +22,7 @@ You spent an hour on a monster. Statted it properly, found the right artwork, wr
 
 It is also stuck in the campaign you built it for.
 
-That is the problem the **Shelf** solves. Select an entity in one vault, send it to the Shelf, switch to another vault, and import it. The whole thing arrives — stat sheet, artwork, sound bite, labels, lore — ready to use.
+That is the problem the **Shelf** solves. Select an entity in one vault, send it to the Shelf, switch to another vault, and import it. The whole thing arrives (stat sheet, artwork, sound bite, labels, lore) ready to use.
 
 ## How it works
 
@@ -46,7 +46,7 @@ The Shelf carries:
 - **Artwork and thumbnails.** The actual image files, not a link to somewhere they used to be.
 - **Sound bites**, including the audio.
 - **Labels, aliases, dates, lore, and your notes.**
-- **Links between entities**, with some care about how — see below.
+- **Links between entities**, with some care about how (see below).
 
 Nothing gets flattened into a generic interchange format. The Shelf copies the entity as Codex already stores it.
 
@@ -66,7 +66,7 @@ The same principle applies to names. Importing a Goblin into a vault that alread
 
 Worth being blunt, because this shapes whether it fits how you work.
 
-**It is not a backup.** The Shelf lives in your browser's storage on this device. Clearing site data removes it. Use vault backups for backups — that is what they are for.
+**It is not a backup.** The Shelf lives in your browser's storage on this device. Clearing site data removes it. Use vault backups for backups; that is what they are for.
 
 **It cannot send an entity to another person.** No links, no file to email your co-GM. If you want to hand your bestiary to someone else, the Shelf is not the route.
 
@@ -84,4 +84,4 @@ The reason to reuse an entity is rarely laziness. It is that a good NPC has alre
 
 The Shelf just stops the vault boundary from being the thing that prevents it.
 
-[Try Codex Cryptica](/) — free, local-first, and yours.
+[Try Codex Cryptica](/), free, local-first, and yours.

@@ -57,4 +57,20 @@ describe("LandingPageGraphPreview Layout & Positions", () => {
       }
     }
   });
+
+  it("ensures no node position overlaps another in the compact (mobile) layout", () => {
+    for (const count of [5, 6]) {
+      const positions = getPositions(count, true);
+      expect(positions).toHaveLength(count);
+      for (let i = 0; i < positions.length; i++) {
+        for (let j = i + 1; j < positions.length; j++) {
+          const d = distance(positions[i], positions[j]);
+          expect(
+            d,
+            `compact count=${count}: Nodes ${i} and ${j} are overlapping (distance: ${d}px)`,
+          ).toBeGreaterThan(60);
+        }
+      }
+    }
+  });
 });

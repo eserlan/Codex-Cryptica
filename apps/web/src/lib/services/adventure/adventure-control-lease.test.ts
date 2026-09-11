@@ -28,8 +28,8 @@ describe("AdventureControlAuthority", () => {
     const db = fakeDb();
     const authority = new AdventureControlAuthority(
       db as any,
-      () => time,
-      () => "owner-1",
+      { now: () => time },
+      { uuid: () => "owner-1" },
     );
     const key = { vaultId: "vault-1", sessionId: "session-1" };
     const first = await authority.acquire(key);
@@ -51,8 +51,8 @@ describe("AdventureControlAuthority", () => {
     let owner = "one";
     const authority = new AdventureControlAuthority(
       db as any,
-      () => 1_000,
-      () => owner,
+      { now: () => 1_000 },
+      { uuid: () => owner },
     );
     const key = { vaultId: "vault-1", sessionId: "session-1" };
     const first = await authority.acquire(key);

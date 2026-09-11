@@ -440,6 +440,36 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
     ],
     flavor: "occupation, quiet rebellion, and the cost of resisting",
   },
+  "space-western": {
+    themeName: "Space Western",
+    regionLabel: "Frontier Sector",
+    regionNames: [
+      "The Cinderbelt",
+      "Far Lantern Reach",
+      "The Prospector's Run",
+    ],
+    settlementLabel: "Frontier Port",
+    settlementNames: ["Redwater Station", "Cinder Dock", "Last Light Outpost"],
+    factionLabel: "Outfit",
+    factionNames: [
+      "The Cinderbelt Salvage Union",
+      "Redwater Freight Combine",
+      "The Last Light Marshal Service",
+    ],
+    characterRoles: [
+      "debt-bound freighter captain",
+      "independent salvage broker",
+      "frontier mechanic with a dangerous favour to call in",
+    ],
+    threatLabel: "Pressure",
+    threatNames: [
+      "a creditor closing in on a missed payment",
+      "a disputed salvage claim drawing armed crews",
+      "a customs blockade strangling the port's supply line",
+    ],
+    flavor:
+      "small crews, precarious jobs, debts, and hard choices at the edge of settled space",
+  },
   workspace: {
     themeName: "Neutral Workspace",
     regionLabel: "Region",

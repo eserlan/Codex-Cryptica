@@ -1,23 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntity } from "./test-helpers";
 
 test.describe("Add to Canvas - Context Menu", () => {
   test.setTimeout(60000);
 
   test.beforeEach(async ({ page }) => {
-    // Inject global flag BEFORE goto so +layout.svelte sees it immediately
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      // Entity creation goes through VaultControls' quick-create form, which
-      // Guided Mode (on by default) replaces with a different flow.
-      localStorage.setItem("codex_guided_mode_active", "false");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    // Navigate to graph view
-    await page.goto("/");
+    await setupVaultPage(page);
     await waitForCytoscape(page);
   });
 
@@ -47,11 +35,7 @@ test.describe("Add to Canvas - Context Menu", () => {
   }
 
   async function createEntity(page: any, title: string) {
-    await page.evaluate(() =>
-      (window as any).modalUIStore.requestCreateEntity(),
-    );
-    await page.fill('[data-testid="new-entity-title-input"]', title);
-    await page.keyboard.press("Enter");
+    await seedEntity(page, { title, type: "character" });
     await waitForEntityNodes(page, [title]);
   }
 
@@ -181,6 +165,7 @@ test.describe("Add to Canvas - Context Menu", () => {
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
     await page.goto("/");
+    await waitForCytoscape(page);
     await waitForEntityNodes(page, [
       "Multi Entity 1",
       "Multi Entity 2",
@@ -202,7 +187,7 @@ test.describe("Add to Canvas - Context Menu", () => {
 
     // Add to canvas
     await page.getByRole("menuitem", { name: "Add to Canvas" }).click();
-    await page.click('[data-testid="canvas-picker-item"]');
+    await page.locator('[data-testid="canvas-picker-item"]').first().click();
 
     // Verify success toast with count
     await expect(page.locator('[data-testid="toast-success"]')).toContainText(

@@ -13,9 +13,53 @@ import type { TokenDragDependencies } from "./token-drag-handler";
 import type { TokenRotationDependencies } from "./token-rotation-handler";
 import type { TokenSelectionDependencies } from "./token-selection-manager";
 
+/**
+ * `mapSession.allTokens` is the raw, unfiltered token record — using it
+ * directly for hit-testing would let a guest select/drag a token they can't
+ * even see (`canViewToken` gate), or a token on a layer the GM has hidden or
+ * locked from editing. `MapView.svelte`'s render list already applies both
+ * checks; this is the same filter for interaction (click/drag) purposes.
+ *
+ * For the host only, hit-testing is additionally exclusive to the active
+ * layer — like a paint program's layer panel, only the layer you're
+ * currently working on is reachable by click/drag, so e.g. selecting the
+ * Furniture layer means terrain tiles and combatant tokens underneath it
+ * simply can't be clicked or nudged by accident. This does NOT apply to
+ * guests: `activeLayer` is a GM-local editing-mode concept (never synced),
+ * and a player must always be able to select/move their own token
+ * regardless of whatever the GM's map-building focus happens to be.
+ *
+ * Notes are exempt from that active-layer exclusivity. A note is an
+ * annotation dropped on top of whatever the GM is building, not a piece of
+ * the map being built, and it always rides the token layer so it stays
+ * readable above the terrain it annotates. Without the exemption a note
+ * pinned while editing Terrain (the layer the session opens on) could never
+ * be selected or moved again.
+ *
+ * Notes are likewise the only thing still reachable with VTT mode off. A VTT
+ * map is an ordinary map toggled into play, and turning play off puts the
+ * combat pieces out of reach — but a note annotates the map itself, so it
+ * stays clickable and draggable either way.
+ */
+function hitTestableTokens() {
+  const peerId = mapSession.myPeerId;
+  const isHost = mapStore.isGMMode;
+  const inPlay = mapSession.vttEnabled;
+  return mapSession.allTokens.filter((token) => {
+    const layer = token.layer ?? "token";
+    const isNote = token.kind === "note";
+    return (
+      (inPlay || isNote) &&
+      mapSession.canViewToken(token.id, peerId, isHost) &&
+      mapStore.layerVisibility[layer] !== false &&
+      (!isHost || layer === mapSession.activeLayer || isNote)
+    );
+  });
+}
+
 export function createTokenSelectionDependencies(): TokenSelectionDependencies {
   return {
-    getTokens: () => mapSession.allTokens,
+    getTokens: hitTestableTokens,
     project: (point) => mapStore.project(point),
     getSelectedTokens: () => mapSession.selectedTokens,
     setSelection: (tokenId) => mapSession.setSelection(tokenId),
@@ -27,7 +71,7 @@ export function createTokenSelectionDependencies(): TokenSelectionDependencies {
 
 export function createTokenDragDependencies(): TokenDragDependencies {
   return {
-    getTokens: () => mapSession.allTokens,
+    getTokens: hitTestableTokens,
     project: (point) => mapStore.project(point),
     unproject: (point) => mapStore.unproject(point),
     isHostMode: () => mapStore.isGMMode,

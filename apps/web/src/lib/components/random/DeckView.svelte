@@ -17,6 +17,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import type { ChatCardPayload } from "../../../types/vtt";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
 
@@ -35,10 +36,8 @@
     history = diceHistory,
     idGenerator = systemIdGenerator,
     session = mapSession,
-    addToChat = async (text) => {
-      session.sendChatMessage(text);
-      addToOracleChatInput(text);
-    },
+    addToChat,
+    revealArt = true,
     copyText = async (text) => {
       const copied = await copyTextToClipboard(text, navigator.clipboard);
       if (!copied) throw new Error("Clipboard copy is unavailable.");
@@ -53,6 +52,15 @@
     idGenerator?: IdGenerator;
     session?: typeof mapSession;
     addToChat?: (text: string) => Promise<void>;
+    /**
+     * Whether a single-card draw throws its art up full screen by itself.
+     *
+     * On the deck page that reveal is the point. In the play tools panel it is
+     * not: the panel is a corner of the screen the GM keeps beside whatever
+     * else they are doing, and covering the whole app with a lightbox nobody
+     * asked for reads as the app locking up (#2440).
+     */
+    revealArt?: boolean;
     copyText?: (text: string) => Promise<void>;
   } = $props();
 
@@ -180,8 +188,22 @@
     if (!resultText || isAddingToChat) return;
     isAddingToChat = true;
     try {
-      await addToChat(resultText);
-      notificationStore.notify("Result added to chat input.", "success");
+      if (addToChat) {
+        await addToChat(resultText);
+      } else {
+        const cardsPayload: ChatCardPayload[] = (outcome?.cards ?? []).map(
+          (drawn, index) => ({
+            deckName: deck.name,
+            title: drawn.card.title,
+            body: drawn.resolved.finalText || undefined,
+            imagePath: drawn.card.imagePath || undefined,
+            reversed: drawn.reversed || undefined,
+            position: outcome?.positions?.[index] || undefined,
+          }),
+        );
+        session.sendCardDrawMessage(deck.name, cardsPayload);
+        addToOracleChatInput(`${deck.name}:\n${resultText}`);
+      }
     } catch (error) {
       console.error("[RandomSources] Could not add result to chat", error);
       notificationStore.notify(
@@ -228,6 +250,8 @@
             cardId: c.card.id,
             title: c.card.title,
             reversed: c.reversed,
+            imagePath: c.card.imagePath || undefined,
+            body: c.resolved.finalText || undefined,
           })),
           spreadPositions: result.positions?.map((label, i) => ({
             label,
@@ -337,7 +361,7 @@
       in:fade={{ duration: 150 }}
       data-testid={outcome.positions ? "spread-layout" : "draw-results"}
     >
-      {#each outcome.cards as drawn, index}
+      {#each outcome.cards as drawn, index (`${drawn.card.id}:${index}`)}
         <li
           class="rounded border border-theme-border bg-theme-bg p-3 {single
             ? 'w-full max-w-sm'
@@ -361,7 +385,7 @@
               alt="Picture on {drawn.card.title}"
               title={drawn.card.title}
               zoomable
-              autoZoom={single}
+              autoZoom={revealArt && single}
               className="aspect-[5/7] w-full rounded-lg border border-theme-border/60 object-cover shadow-md {drawn.reversed
                 ? 'rotate-180'
                 : ''}"

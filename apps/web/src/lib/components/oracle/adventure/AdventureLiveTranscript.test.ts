@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 
 import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { tick } from "svelte";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import AdventureLiveTranscript from "./AdventureLiveTranscript.svelte";
 
 function manager(overrides: Record<string, unknown> = {}) {
@@ -25,6 +26,10 @@ function manager(overrides: Record<string, unknown> = {}) {
 }
 
 describe("AdventureLiveTranscript", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("renders a turn's player action and narration", () => {
     render(AdventureLiveTranscript, { props: { manager: manager() } });
 
@@ -56,14 +61,32 @@ describe("AdventureLiveTranscript", () => {
     expect(screen.getByText(/14/)).toBeTruthy();
   });
 
-  it("shows a trailing generating indicator while the Oracle responds", () => {
+  it("rotates a flavorful generation message while the Oracle responds", async () => {
+    vi.useFakeTimers();
     render(AdventureLiveTranscript, {
       props: { manager: manager({ phase: "generating" }) },
     });
 
     expect(screen.getByRole("status").textContent).toContain(
-      "Oracle is responding to your action…",
+      "The Oracle traces the threads of consequence…",
     );
+    await vi.advanceTimersByTimeAsync(2_800);
+    await tick();
+    expect(screen.getByRole("status").textContent).toContain(
+      "Fate gathers around your choice…",
+    );
+  });
+
+  it("does not announce each visual message change to assistive technology", () => {
+    render(AdventureLiveTranscript, {
+      props: { manager: manager({ phase: "generating" }) },
+    });
+
+    expect(
+      screen
+        .getByTestId("adventure-generating-status")
+        .getAttribute("aria-live"),
+    ).toBe("off");
   });
 
   it("shows no generating indicator when the player can act", () => {

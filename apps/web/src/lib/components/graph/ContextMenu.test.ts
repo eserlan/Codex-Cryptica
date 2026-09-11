@@ -5,6 +5,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { deriveEntityTypeTone, parseColor, FANTASY_DARK } from "schema";
+
+// Pinned rather than read from the real store: the derived tone has to be
+// deterministic, and the singleton theme store resolves against app appearance
+// and localStorage.
+vi.mock("$lib/stores/theme.svelte", async () => {
+  const { FANTASY_DARK: theme } = await import("schema");
+  return { themeStore: { activeTheme: theme } };
+});
 
 vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
@@ -43,7 +52,14 @@ vi.mock("$lib/stores/canvas-registry.svelte", () => ({
 
 vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
-    list: [],
+    list: [
+      {
+        id: "location",
+        label: "Location",
+        icon: "lucide:map-pin",
+        color: "#4ade80",
+      },
+    ],
   },
 }));
 
@@ -215,5 +231,29 @@ describe("ContextMenu", () => {
     expect(
       screen.queryByRole("menuitem", { name: "Delete Connection" }),
     ).toBeNull();
+  });
+
+  it("previews the theme-derived tone in the category picker (issue #2680)", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openNodeMenu();
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Change Category" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("menu", { name: "Select category" }),
+      ).toBeTruthy(),
+    );
+
+    const swatch = screen
+      .getByRole("menu", { name: "Select category" })
+      .querySelector("div[style]");
+    const tone = deriveEntityTypeTone("#4ade80", FANTASY_DARK.tokens).accent;
+    const { r, g, b } = parseColor(tone)!;
+
+    // The swatch previews the colour the node will take, so it tracks the
+    // theme rather than showing the raw neon category colour.
+    expect(swatch?.getAttribute("style")).toContain(`rgb(${r}, ${g}, ${b})`);
   });
 });

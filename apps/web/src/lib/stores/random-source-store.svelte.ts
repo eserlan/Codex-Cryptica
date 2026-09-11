@@ -16,7 +16,9 @@ import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
  *
  * Sources live as Markdown files under `_tables/` and `_decks/`, so they are
  * exported, backed up, and carried by a Drive push/pull exactly like the rest
- * of the vault, and stay readable if a user opens one directly.
+ * of the vault, and stay readable if a user opens one directly. These
+ * directories are excluded from the generic vault entity walk (#2735) — keep
+ * these names in sync with `RESERVED_VAULT_DIRS` in `@codex/vault-engine`.
  */
 
 export const TABLE_DIR = "_tables";

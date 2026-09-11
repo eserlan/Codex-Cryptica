@@ -1,12 +1,12 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.31.86",
+  "version": "0.32.26",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "prebuild": "node ../../scripts/generate-llms-full.mjs && bun ../../scripts/generate-sitemap.mjs",
-    "build": "vite build && touch build/.nojekyll && node scripts/check-compiled-runes.js && node scripts/critical-css.mjs && cp build/index.html build/404.html",
+    "prebuild": "bun ../../scripts/sync-answers.ts && bun ../../scripts/discovery-audit.mjs && node ../../scripts/generate-llms-full.mjs && bun ../../scripts/generate-sitemap.mjs",
+    "build": "vite build && touch build/.nojekyll && node scripts/check-compiled-runes.js && node scripts/critical-css.mjs && node scripts/inject-shell-og.mjs && cp build/index.html build/404.html",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "test": "vitest run",
@@ -52,6 +52,7 @@
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/search-orchestrator": "workspace:*",
+    "@codex/spatial-engine": "workspace:*",
     "@codex/stat-sheet-engine": "workspace:*",
     "@codex/sync-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",
@@ -60,7 +61,7 @@
     "@tiptap/core": "^3.23.6",
     "@tiptap/extension-bubble-menu": "^3.23.6",
     "@tiptap/extension-floating-menu": "^3.23.6",
-    "@tiptap/extension-image": "3.30.1",
+    "@tiptap/extension-image": "3.31.3",
     "@tiptap/extension-link": "^3.23.6",
     "@tiptap/extension-table": "^3.23.6",
     "@tiptap/extension-table-cell": "^3.23.6",
@@ -123,7 +124,7 @@
     "@types/google.accounts": "^0.0.18",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.1.0",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^5.0.0",
     "critters": "^0.0.25",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.0.1",
@@ -134,6 +135,6 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0"
   }
 }

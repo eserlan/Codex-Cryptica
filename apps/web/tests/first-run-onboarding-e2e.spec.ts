@@ -78,6 +78,8 @@ test.describe("First-run onboarding tour — walkthrough", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("codex_guided_mode_active", "false");
+      localStorage.removeItem("codex-cryptica-help-state");
       // Deliberately do NOT mark initial-onboarding as seen, and don't
       // create any entities — the orchestrator should start the tour on its
       // own in this empty, un-onboarded vault.
@@ -151,6 +153,13 @@ test.describe("First-run onboarding tour — walkthrough", () => {
 });
 
 test.describe("First-run onboarding tour — demo-to-build chain", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_guided_mode_active", "false");
+      localStorage.removeItem("codex-cryptica-help-state");
+    });
+  });
+
   test("converting a demo vault skips the create-entity step (it already has entities)", async ({
     page,
   }) => {

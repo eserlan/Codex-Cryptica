@@ -5,7 +5,10 @@ export type ValidSlug =
   | "minor-magic-item"
   | "artifact-generator"
   | "faction"
+  | "faction-roster"
   | "quest"
+  | "rumour"
+  | "puzzle"
   | "item"
   | "tavern"
   | "social-hub"
@@ -13,6 +16,7 @@ export type ValidSlug =
   | "nation"
   | "vampire-clan"
   | "nomad-clan"
+  | "dark-fantasy-faction"
   | "names"
   | "fantasy-names"
   | "dnd-npc"
@@ -30,7 +34,11 @@ export type ValidSlug =
   | "council-vote"
   | "secret-society"
   | "star-system"
-  | "alien-race";
+  | "constellation"
+  | "alien-race"
+  | "creature"
+  | "encounter"
+  | "heist";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -48,6 +56,11 @@ export type SlugMetaEntry = {
   ogImage?: string;
   ogImageAlt?: string;
   keywords?: string[];
+  /**
+   * Public discovery labels (#2762). Chips linking to `/explore?label=X`.
+   * From the shared canonical vocabulary — see `lib/content/labels.ts`.
+   */
+  labels?: string[];
   faqs?: {
     question: string;
     answer: string;

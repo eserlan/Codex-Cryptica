@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { HUB_THEME_SLUGS, type HubThemeSlug } from "../hub-themes";
+import { PublicLabelSchema } from "../labels";
 
 export const LandingPageKindSchema = z.enum(["system", "genre", "use-case"]);
 export type LandingPageKind = z.infer<typeof LandingPageKindSchema>;
@@ -32,7 +33,16 @@ export type LandingPageGraphCategory = z.infer<
 export const LandingPageGraphStepSchema = z.object({
   label: z.string(),
   sublabel: z.string().optional(),
-  /** Relation from the hub node (the first step) to this node. */
+  /**
+   * Relation from the hub node (the first step) to **this** node — never from
+   * the step above it. The graph is drawn hub-and-spoke, so every relation has
+   * to read as `<first step> <relation> <this step>` standing on its own.
+   *
+   * A `steps` array reads like a sequence, which makes it tempting to write
+   * relations as a chain. #2197 had to correct exactly that mistake across
+   * seven packs; if a relation only makes sense when read against the previous
+   * entry, it is wrong.
+   */
   relation: z.string().optional(),
   category: LandingPageGraphCategorySchema.optional(),
 });
@@ -47,6 +57,11 @@ export type LandingPageGraphPalette = z.infer<
 export const LandingPageGraphSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
+  /**
+   * The first step is the hub; every later step is a spoke drawn off it. This
+   * is a star, not a path — see `relation` on the step schema before writing
+   * one.
+   */
   steps: z.array(LandingPageGraphStepSchema),
   /** Badge shown beside the section heading. Defaults to "Interactive Graph View". */
   badgeLabel: z.string().optional(),
@@ -90,7 +105,13 @@ export type LandingPageSurfaceStyle = z.infer<
 
 export const LandingPageConfigSchema = z.object({
   slug: z.string().min(1),
-  kind: z.enum(["system", "genre"]),
+  /**
+   * What the page is a guide *to*. "use-case" covers campaign styles — West
+   * Marches, sandbox play — which are neither a game system nor a genre: they
+   * cut across both, so the /for directory lists them in their own section
+   * rather than filing an open-table fantasy game under "Genres & Settings".
+   */
+  kind: LandingPageKindSchema,
   theme: z.string().optional(),
   surfaceStyle: LandingPageSurfaceStyleSchema.optional(),
   /**
@@ -98,11 +119,23 @@ export const LandingPageConfigSchema = z.object({
    * to the hub, and the hub's links back to its landing pages.
    */
   hub: z.enum(HUB_THEME_SLUGS as [HubThemeSlug, ...HubThemeSlug[]]).optional(),
+  /**
+   * Public discovery labels (#2762). Chips linking to `/explore?label=X`.
+   *
+   * Optional rather than defaulted: every pack in this family is authored
+   * against the parsed `LandingPageConfig` type (not an input variant), so a
+   * defaulted array would force every existing pack to set it explicitly.
+   * When unset, callers fall back to `[hub]` — see `landingPageLabels()` in
+   * `registry.ts` — since `hub` is already this page's genre/system label.
+   */
+  labels: z.array(PublicLabelSchema).optional(),
   sectionOrder: z.array(LandingPageSectionSchema).optional(),
   seo: z.object({
     title: z.string(),
     description: z.string(),
     canonical: z.string().optional(),
+    image: z.string().optional(),
+    imageAlt: z.string().optional(),
   }),
   hero: z.object({
     eyebrow: z.string().optional(),

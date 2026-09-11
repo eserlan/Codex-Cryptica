@@ -15,7 +15,13 @@ export interface RandomSourceRollPayload {
   finalText: string;
   /** Which sub-table produced which fragment, for the resolution chain view. */
   chain?: unknown[];
-  drawnCards?: Array<{ cardId: string; title: string; reversed: boolean }>;
+  drawnCards?: Array<{
+    cardId: string;
+    title: string;
+    reversed: boolean;
+    imagePath?: string;
+    body?: string;
+  }>;
   spreadPositions?: Array<{ label: string; cardId: string }>;
 }
 

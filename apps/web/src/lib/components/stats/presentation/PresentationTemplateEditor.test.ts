@@ -390,4 +390,84 @@ describe("PresentationTemplateEditor", () => {
 
     expect(screen.getByText(/deleted_field \(missing\)/i)).toBeTruthy();
   });
+
+  it("allows clearing a table title and saves without a heading line", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-untitled-table",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    const titleInput = screen.getByDisplayValue("Equipment");
+    await fireEvent.input(titleInput, { target: { value: "" } });
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.not.stringContaining("### Equipment"),
+      }),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("| Item | Notes |"),
+      }),
+    );
+  });
+
+  it("preserves intentionally untitled tables/sections when reopened and does not restore default titles", async () => {
+    const untitledTemplate = {
+      ...builtIn,
+      id: "presentation-untitled-reopen",
+      isBuiltIn: false,
+      source: "| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(untitledTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: untitledTemplate,
+    });
+
+    // The title input should be empty (not "Table 1")
+    const titleInput = screen.getByPlaceholderText(
+      "Table Title (optional)",
+    ) as HTMLInputElement;
+    expect(titleInput.value).toBe("");
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.not.stringContaining("###"),
+      }),
+    );
+  });
+
+  it("gives newly added sections sensible initial titles in the visual builder", async () => {
+    render(PresentationTemplateEditor, {
+      schema,
+      template: {
+        ...builtIn,
+        id: "presentation-blank",
+        isBuiltIn: false,
+        source: "",
+      },
+    });
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-add-table"));
+    expect(
+      screen.getAllByDisplayValue(/Table \d+/).length,
+    ).toBeGreaterThanOrEqual(1);
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-add-card"));
+    expect(
+      screen.getAllByDisplayValue(/Section \d+/).length,
+    ).toBeGreaterThanOrEqual(1);
+  });
 });

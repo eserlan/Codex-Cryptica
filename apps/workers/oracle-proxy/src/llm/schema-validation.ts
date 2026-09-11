@@ -24,6 +24,32 @@ export function wantsStructuredOutput(request: LlmRequest): boolean {
   return !!request.schema || request.operation === "structured-generation";
 }
 
+/**
+ * Applies the same structured-output validation the buffered adaptors run
+ * (`callGemini`/`callOpenAi`) to a streaming adaptor's fully-accumulated
+ * text, once its `complete` event is ready. Streaming has no retry/fallback
+ * of its own (see `GenerationEvent`'s doc comment in `types.ts`) — an
+ * invalid result here becomes an `error` event instead of silently skipping
+ * the validation the buffered contract promises callers.
+ */
+export function validateStructuredStreamText(
+  request: LlmRequest,
+  text: string,
+): { ok: true } | { ok: false; reason: string } {
+  if (!wantsStructuredOutput(request)) return { ok: true };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { ok: false, reason: "structured-output-invalid" };
+  }
+  if (request.schema && !validateAgainstSchema(parsed, request.schema)) {
+    return { ok: false, reason: "structured-output-schema-mismatch" };
+  }
+  return { ok: true };
+}
+
 function typeOf(value: unknown): string {
   if (value === null) return "null";
   if (Array.isArray(value)) return "array";

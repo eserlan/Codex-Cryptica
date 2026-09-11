@@ -47,7 +47,9 @@
     initializeGlobalListeners,
     setupWindowGlobals,
     registerServiceWorker,
+    type VaultServiceWorkerSession,
   } from "$lib/app/init/app-init";
+  import { isVaultAppPath } from "$lib/service-worker/lifecycle";
   import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
   import {
@@ -86,6 +88,20 @@
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
   let isDocumentVisible = $state(true);
+  let serviceWorkerSession: VaultServiceWorkerSession | undefined;
+
+  const isVaultCacheSessionActive = () => {
+    const pathname =
+      base && page.url.pathname.startsWith(base)
+        ? page.url.pathname.slice(base.length) || "/"
+        : page.url.pathname;
+    return (
+      !!vault.activeVaultId &&
+      !sessionModeStore.isGuestMode &&
+      !sessionModeStore.isDemoMode &&
+      isVaultAppPath(pathname)
+    );
+  };
 
   // Derived
   const isPopup = $derived(
@@ -134,6 +150,8 @@
   }
 
   onDestroy(() => {
+    serviceWorkerSession?.destroy();
+    serviceWorkerSession = undefined;
     crossTabBroadcaster?.destroy();
     crossTabBroadcaster = null;
     vaultThemePromptStore.stopTracking();
@@ -144,6 +162,10 @@
     if (browser && !globalListenersCleanup) {
       globalListenersCleanup = initializeGlobalListeners();
     }
+  });
+
+  $effect(() => {
+    serviceWorkerSession?.setVaultSessionActive(isVaultCacheSessionActive());
   });
 
   onMount(() => {
@@ -295,7 +317,8 @@
       preloadCode(`${base}/canvas`).catch(() => {});
       preloadCode(`${base}/map`).catch(() => {});
 
-      registerServiceWorker();
+      serviceWorkerSession = registerServiceWorker();
+      serviceWorkerSession.setVaultSessionActive(isVaultCacheSessionActive());
 
       if (browser) {
         crossTabBroadcaster = new CrossTabBroadcaster(appEventBus);

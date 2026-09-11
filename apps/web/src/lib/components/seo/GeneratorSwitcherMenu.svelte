@@ -18,6 +18,7 @@
     "/generators/pantheon-generator",
     "/generators/god-generator",
     "/generators/tavern",
+    "/generators/dark-fantasy-faction",
   ]);
 
   // Paths specific to the horror/vampire theme
@@ -43,9 +44,19 @@
       label: "Worldbuilding",
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
+        {
+          label: "Faction Roster Generator",
+          path: "/generators/faction-roster",
+        },
+        {
+          label: "Dark Fantasy Faction Generator",
+          path: "/generators/dark-fantasy-faction",
+        },
         { label: "Settlement Generator", path: "/generators/settlement" },
         { label: "Star System Generator", path: "/generators/star-system" },
+        { label: "Constellation Generator", path: "/generators/constellation" },
         { label: "Alien Race Generator", path: "/generators/alien-race" },
+        { label: "Creature Generator", path: "/generators/creature" },
         { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",
@@ -69,6 +80,9 @@
           path: "/generators/adventure-generator",
         },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Rumour Generator", path: "/generators/rumour" },
+        { label: "Encounter Generator", path: "/generators/encounter" },
+        { label: "Puzzle Generator", path: "/generators/puzzle" },
         {
           label: "Plot Twist & Complication Generator",
           path: "/generators/plot-twist-generator",
@@ -77,6 +91,7 @@
           label: "BBEG / Campaign Villain Generator",
           path: "/generators/bbeg-generator",
         },
+        { label: "Heist Generator", path: "/generators/heist" },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {
           label: "Secret Society Generator",

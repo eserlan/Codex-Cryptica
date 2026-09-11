@@ -1,8 +1,8 @@
 [
   {
-    "version": "0.32.0",
+    "version": "0.33.0",
     "title": "The Living World Update",
-    "date": "2026-08-21",
+    "date": "2026-09-11",
     "type": "minor",
     "highlights": [
       "Faction Turns: Let a faction act on your world between sessions. It extends its influence over a place, a person, or a rival, and you see exactly what happened and why before anything is saved.",
@@ -10,6 +10,22 @@
       "Dice Decide, AI Describes: Outcomes come from an opposed roll you can inspect down to the individual dice, then AI writes the account. Switch AI off entirely and everything still works, with nothing leaving your device.",
       "Nothing Happens Without You: Every turn is previewed before it is applied, can be rewritten in your own words, and can be undone afterwards. Your campaign's date is only ever read, never changed.",
       "Turn History: Every turn a faction takes is kept permanently with the full reasoning behind it, and any turn worth remembering can be promoted onto your campaign timeline."
+    ]
+  },
+  {
+    "version": "0.32.0",
+    "title": "The Solo Adventure & Cloud Backup Update",
+    "date": "2026-09-03",
+    "type": "minor",
+    "highlights": [
+      "Solo Adventure Mode: Play a full campaign with no other players — the Oracle runs the GM side, tracks your session, and keeps a live transcript with a streamlined dice and tools drawer.",
+      "Opt-In Cloud Backup: Securely back up your vault to Codex Cryptica Cloud with one toggle. Off by default, fully reversible, and never used for anything but keeping your copy safe.",
+      "Vector Silhouette Library: Every character, creature, location, and faction now gets a fitting vector token automatically when it has no portrait yet, matched to your world's genre and theme.",
+      "Random Tables & Card Decks: Build your own roll tables and card decks — loot, omens, NPC quirks, whatever your table needs — roll them inline in chat, and import or export a deck to share.",
+      "Virtual Tabletop Overhaul: A restocked tile deck, inline note editing, an adjustable pinned sidebar, and Token Vision so each player's fog of war follows their own character.",
+      "Expanded Generator Library: New dedicated generators for campaign villains, star systems, artifacts, minor magic items, creatures, encounters, and social hubs — all working fully offline, no AI connection required.",
+      "Reusable Stat Sheet Presentations: Design a custom character or NPC sheet layout once, then share it across your whole roster.",
+      "Rich Table Editing: Paste a Markdown table straight into any entity's notes, or build one from scratch with the new table toolbar."
     ]
   },
   {

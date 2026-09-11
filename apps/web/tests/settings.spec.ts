@@ -1,21 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Settings Modal", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      try {
-        (window as any).localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
-    });
-    await page.goto("/");
-    // Wait for app to be ready
-    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+    await setupVaultPage(page);
   });
 
   test("should open settings modal and switch tabs", async ({ page }) => {
@@ -33,9 +21,7 @@ test.describe("Settings Modal", () => {
     // Tab header should change to AI
     await expect(page.locator("h2", { hasText: "AI" })).toBeVisible();
     // Content should show the Oracle heading (now an h3)
-    await expect(
-      page.locator("h3", { hasText: "Lore Oracle (Gemini AI)" }),
-    ).toBeVisible();
+    await expect(page.locator("h3", { hasText: /Lore Oracle/ })).toBeVisible();
 
     // 4. Switch to Schema tab
     await page.click('[role="tab"]:has-text("Schema")');
@@ -75,9 +61,7 @@ test.describe("Settings Modal", () => {
     // 4. Switch tabs
     await page.click('[role="tab"]:has-text("AI")');
     await expect(page.locator("h2", { hasText: "AI" })).toBeVisible();
-    await expect(
-      page.locator("h3", { hasText: "Lore Oracle (Gemini AI)" }),
-    ).toBeVisible();
+    await expect(page.locator("h3", { hasText: /Lore Oracle/ })).toBeVisible();
 
     // 5. Go back online
     await context.setOffline(false);

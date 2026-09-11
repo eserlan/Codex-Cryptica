@@ -33,6 +33,7 @@ export const themeToQuestGenre: Record<string, string> = {
   Lancer: "Lancer",
   "Space Opera Resistance": "Space Fantasy",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
+  "Space Western": "Space Western",
 };
 
 export const questConfig = {
@@ -48,6 +49,7 @@ export const questConfig = {
     "Lancer",
     "Space Fantasy",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -106,6 +108,7 @@ export const questConfig = {
       "Claustrophobic",
       "Awe-struck",
     ],
+    "Space Western": ["Gritty", "Desperate", "Lawless", "Tense", "Rowdy"],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -172,6 +175,11 @@ export const questConfig = {
       "Regional investigation",
       "Continental pattern",
       "Reality-threatening discovery",
+    ],
+    "Space Western": [
+      "Local (settlement / saloon)",
+      "Sector (asteroid belt / planetary system)",
+      "Frontier-wide (inter-system conflict)",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -286,6 +294,14 @@ export const questConfig = {
       "Abandoned Expedition Camp",
       "University Collection",
       "Impossible Ruin",
+    ],
+    "Space Western": [
+      "Dust-Bowl Mining Camp",
+      "Hollowed Asteroid Saloon",
+      "Decommissioned Orbital Gantry",
+      "Arid Canyon Hideout",
+      "Smuggler Way-Station",
+      "Volcanic Moon Caldera",
     ],
   } as Record<string, string[]>,
   threats: [

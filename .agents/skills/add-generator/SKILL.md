@@ -1,11 +1,11 @@
 ---
 name: add-generator
-description: Add a new content generator (npc/faction/quest/council-vote-style) to Codex Cryptica — wires the in-app campaign generator workflow and/or the public no-login /generators + /tools SEO pages. Use when asked to "add a generator", "make a new generator type", "create a [thing] generator", or to expose an existing generator on /generators, theme hubs, or /tools.
+description: Add a new Codex Cryptica content generator across the in-app campaign workflow and public no-login /generators + /tools SEO pages. Use when asked to "add a generator", "make a new generator type", "create a [thing] generator", or to expose an existing generator on /generators, theme hubs, or /tools.
 ---
 
 # Add a Generator
 
-There are **two separate, non-interoperating generator systems** in this repo. Confusing them is the single biggest source of missed wiring. Always figure out which one(s) the user wants before touching files.
+There are **two separate, non-interoperating generator systems** in this repo. Confusing them is the single biggest source of missed wiring. A new generator MUST be implemented in both systems by default.
 
 |              | In-app campaign generator                                                                      | Public `/generators` SEO surface                                              |
 | ------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -16,11 +16,11 @@ There are **two separate, non-interoperating generator systems** in this repo. C
 
 They always share _content design_ (pools of options, per-councillor/per-NPC structure). Code sharing is tier-dependent: **simple**-tier in-app generators have their own inline prompt builder and local fallback, no shared code; **rich**-tier in-app generators (see Part A step 1) deliberately import `generateXLocal`/`buildXPrompt` from the matching `public-x.ts` file. Either way, building one does not expose the generator anywhere the other system reads from — that wiring is separate (Part A vs Part B below).
 
-**Ask the user which surface(s) they want** if it's not obvious from the request ("add it to /generators too" after an in-app-only generator means build Part B on top of Part A).
+Complete both Part A and Part B for every new generator. An explicit user request to limit work to one surface is the only exception; record that scope in the handoff.
 
 ---
 
-## Part A — In-app campaign generator
+## Part A — In-app campaign generator (required)
 
 1. **Pick a complexity tier**, matching an existing generator of similar shape:
    - **Simple** (npc/faction/event-tier): local fallback + prompt builder live as small inline functions directly in `campaign-generator-registry.ts`, using inline `const FOO_OPTIONS = [...]` arrays. No separate file.
@@ -46,9 +46,9 @@ They always share _content design_ (pools of options, per-councillor/per-NPC str
 
 ---
 
-## Part B — Public `/generators` + theme hubs + `/tools`
+## Part B — Public `/generators` + theme hubs + `/tools` (required)
 
-Only needed if the user wants the no-login web tool too. This is genuinely ~13 files; budget for it.
+Implement alongside Part A unless the user explicitly excludes the no-login web tool. This is genuinely ~13 files; budget for it.
 
 1. **`packages/generator-engine/src/public-<name>.ts`** — new file, mirror `public-quest.ts`'s shape exactly:
    - `<name>Config` object (option pools).
@@ -87,17 +87,29 @@ Only needed if the user wants the no-login web tool too. This is genuinely ~13 f
 
 9. **`apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/[slug=generator_slug]/+page.ts`** — same `validSlugs` addition, for the theme+slug combo route. Easy to miss since it's a sibling directory, not the same file as #8.
 
-10. **`apps/web/src/routes/(marketing)/generators/+page.svelte`** — add `{href, label, summary, icon}` to the right group in the `generators` array.
+10. **`apps/web/src/routes/(marketing)/generators/+page.svelte`** — add `{href, label, summary, icon}` to the right group in the `generators` array. This is required for every public generator.
 
-11. **`apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/+page.svelte`** — add a card to `sharedCards()` (the pool shared by every theme hub's `...sharedCards(...)` spread) if the generator is genre-agnostic and should show on every hub. Adding it once here propagates to all ~13 hub pages.
+11. **`apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/+page.svelte`** — add a card to `sharedCards()` (the pool shared by every theme hub's `...sharedCards(...)` spread) so every generator appears on every shared theme hub. Adding it once here propagates to all ~13 hub pages.
 
 12. **`apps/web/src/lib/components/seo/GeneratorSwitcherMenu.svelte`** — add `{label, path}` to the matching `GENERATOR_GROUPS` entry (cross-nav while viewing another generator page).
 
 13. **`apps/web/src/lib/services/seo/random-idea.ts`** — if the generator makes sense as a "Surprise Me" pick, add its `key` to `RandomIdeaCategory["key"]` and a `{ key, label, generate }` entry to `randomIdeaCategories`. Update `random-idea.test.ts`'s exact-match `.sort()` array and the `dispatches each category` test's mock engine (it calls **every** category's `generate()`, so a missing mock method throws).
 
-14. **`apps/web/src/routes/(marketing)/tools/+page.svelte`** (optional) — most entries here just link to `/generators/<slug>` rather than getting a dedicated `/tools/<slug>-generator` page (only npc/faction/quest-tier generators have standalone `/tools/*` pages with hardcoded example drafts). Add a listing entry pointing at the `/generators/<slug>` page unless the user specifically wants a dedicated keyword-targeted tools page.
+14. **`apps/web/src/routes/(marketing)/tools/+page.svelte`** — add a required listing entry pointing at `/generators/<slug>`. A dedicated `/tools/<slug>-generator` page remains optional and requires an explicit user request.
 
 15. **`apps/web/src/routes/(marketing)/generators/[slug=generator_slug]/generators.test.ts`** — has a hardcoded exact-match `entries()` array; add the new slug.
+
+16. **Dedicated social image (required):** capture the rendered public
+    `/generators/<slug>` page in a real browser at a social-card viewport.
+    This must be an actual generator screenshot, not generated artwork, a
+    mockup, or another generator's screenshot. Upload it with Wrangler to
+    remote R2 as `codex-cryptica-statics/screenshots/generator-<slug>.png`
+    using `--content-type image/png --remote`; verify the resulting
+    `https://assets.codexcryptica.com/screenshots/generator-<slug>.png` URL
+    returns the image, then use that exact URL and accurate alt text for
+    `ogImage` in `generator-page-meta.ts`. If authenticated R2 upload is not
+    available, stop and report that blocker rather than retaining a reused
+    image.
 
 ### Known trap: two lookalike theme files
 
@@ -153,6 +165,7 @@ If the generator's content should flavor itself to the picked world theme (fanta
      - **Direct** (dungeon-generator/adventure-generator pattern): `<name>.genre = activeTheme;` — use when the theme label IS the genre value.
      - **Mapped** (quest/world/star-system pattern): `<name>.genre = themeTo<Name>Genre[activeTheme] ?? "Classic Fantasy";` (or, for a generator with its own bespoke genre vocab like world/star-system, the reverse — `activeTheme = map<Name>GenreToTheme(<name>.genre);`) — use whenever the generator's genre vocabulary doesn't match the theme labels 1:1.
    - **Default: "Surprise Me" must NOT randomize `genre`.** Genre is a user-controlled axis (user feedback, 2026-08-05) — Surprise Me should only re-roll the other fields and leave whatever genre the user already picked untouched. This is World's and star-system's behavior; copy it. Do not call `onGenreChange?.()` from the Surprise Me handler at all — only the genre `<SelectWithCustomOption>`'s own `onvaluechange` should ever report a genre change. If a future generator has a genuine product reason to randomize genre too, confirm with the user first (don't default into it by copy-pasting an older pattern), and if so the handler must call `onGenreChange?.(genre)` with the freshly-rolled value before/alongside `onSurprise?.()` so `activeTheme` (the page's visual skin) doesn't stay stuck on the pre-reroll genre. Write a component test asserting `onGenreChange` is **not** called on Surprise Me click (only on manual select changes) unless that exception applies.
+   - If the form's field is named `genre` rather than directly bound as `theme`, pass an `onGenreChange` callback from `GeneratorPageContent.svelte` to its `SelectWithCustomOption`. The callback must map a manually selected built-in genre to `activeTheme`, while custom free-text genres remain generation input only and keep the current visual skin.
 4. Add the slug to **both** `GENERATOR_SLUGS_WITH_THEME` and `SLUGS_USING_STORED_THEME` in `generator-theme-maps.ts`. These are separate sets for separate concerns and it's easy to add one and forget the other:
    - Missing `GENERATOR_SLUGS_WITH_THEME` → theme selector changes generated content but the page's visual skin (`themeStore.worldThemeId`) never re-syncs, so picking "Cyberpunk" doesn't re-skin the page.
    - Missing `SLUGS_USING_STORED_THEME` → the theme choice doesn't persist across visits via localStorage.

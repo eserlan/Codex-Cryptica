@@ -55,3 +55,46 @@ describe("Responsible AI trust banner config", () => {
     }
   });
 });
+
+describe("Kanka self-hosted comparison config", () => {
+  it("covers self-hosted intent, risk reversal, proof, and fair-fit guidance", async () => {
+    const { comparisons: realComparisons } = (await vi.importActual(
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
+    const kanka = realComparisons["kanka-alternative"];
+
+    expect(kanka.eyebrow).toMatch(/self-hosted Kanka alternative/i);
+    expect(kanka.keywords).toContain("kanka self hosted");
+    expect(kanka.hostingComparison?.rows.length).toBeGreaterThan(0);
+    expect(kanka.productProof?.imageSrc).toBeTruthy();
+    expect(kanka.decisionGuidance).toHaveLength(2);
+    expect(kanka.features.map((feature) => feature.title)).toEqual([
+      "Relationship Graph",
+      "Maps & Timelines",
+      "Campaign Tools & Generators",
+    ]);
+    expect(`${kanka.introText} ${kanka.secondaryCtaText}`).toMatch(
+      /copy of your campaign|Kanka copy/i,
+    );
+    expect(kanka.hostingComparison?.description).toMatch(
+      /deploy, secure, patch, or keep online/i,
+    );
+    expect(kanka.hostingComparison?.description).toMatch(
+      /should still back up your local vault/i,
+    );
+    expect(kanka.hostingComparison?.description).not.toMatch(
+      /no campaign server[^.]*back up/i,
+    );
+  });
+
+  it("does not repeat outdated entity-limit or proprietary-format claims", async () => {
+    const { comparisons: realComparisons } = (await vi.importActual(
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
+    const pageCopy = JSON.stringify(realComparisons["kanka-alternative"]);
+
+    expect(pageCopy).not.toContain("Limited on free tier");
+    expect(pageCopy).not.toContain("No (Proprietary)");
+    expect(pageCopy).toMatch(/Unlimited campaigns and entries/i);
+  });
+});

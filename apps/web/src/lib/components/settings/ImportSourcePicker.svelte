@@ -64,8 +64,8 @@
         >
 
         <p class="text-xs text-theme-text/70 leading-tight">
-          Scabard JSON imports work without AI. Text, PDF, DOCX, and generic
-          JSON analysis still need an API key in the
+          Kanka ZIP and Scabard JSON imports work without AI. Text, PDF, DOCX,
+          and generic JSON analysis still need an API key in the
           <button
             class="underline hover:text-theme-text"
             onclick={() => (modalUIStore.activeSettingsTab = "intelligence")}
@@ -134,11 +134,11 @@
         <p
           class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
         >
-          Scabard and Chronica
+          Kanka, Scabard, and Chronica
         </p>
         <p class="mt-0.5 leading-snug text-theme-muted">
-          JSON exports use a deterministic review and import flow. No AI key is
-          needed.
+          Structured exports use a deterministic review and import flow. No AI
+          key is needed.
         </p>
       </div>
     </div>

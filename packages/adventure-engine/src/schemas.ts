@@ -15,6 +15,7 @@ import type {
 export const MAX_SERIALIZED_STATE_CHARS = 32_000;
 export const MAX_GENERATION_INPUT_CHARS = 96_000;
 export const MAX_TEXT_CHARS = 600;
+export const CURRENT_ADVENTURE_SCHEMA_VERSION = 2;
 
 const text = z.string().trim().min(1).max(MAX_TEXT_CHARS);
 const narration = z.string().trim().min(1).max(2_000);
@@ -27,11 +28,13 @@ const stateFactSchema = z.object({
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
 });
+const newStateFactSchema = stateFactSchema.omit({ id: true }).strict();
 
 const relationshipSchema = stateFactSchema.extend({
   subjectId: id,
   disposition: text,
 });
+const newRelationshipSchema = relationshipSchema.omit({ id: true }).strict();
 
 const visibleStateSchema = z.object({
   location: stateFactSchema.optional(),
@@ -49,6 +52,9 @@ const hiddenSecretSchema = z.object({
   status: z.enum(["hidden", "revealed"]),
   revealedOnTurnId: id.optional(),
 });
+const newHiddenSecretSchema = hiddenSecretSchema
+  .omit({ id: true, revealedOnTurnId: true })
+  .strict();
 
 const hiddenThreadSchema = z.object({
   id,
@@ -56,6 +62,7 @@ const hiddenThreadSchema = z.object({
   status: z.enum(["hidden", "revealed"]),
   revealCondition: text.optional(),
 });
+const newHiddenThreadSchema = hiddenThreadSchema.omit({ id: true }).strict();
 
 const hiddenStateSchema = z.object({
   secrets: z.array(hiddenSecretSchema).max(60),
@@ -87,6 +94,9 @@ const provisionalFactSchema = z.object({
   introducedOnTurnId: id,
   visibility: z.enum(["player-visible", "gm-only"]),
 });
+const newProvisionalFactSchema = provisionalFactSchema
+  .omit({ id: true, introducedOnTurnId: true })
+  .strict();
 
 const outcomeSchema = z.object({
   kind: z.enum(["narrative", "numeric"]),
@@ -145,25 +155,48 @@ const playerCharacterSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("provisional"), name: text, description: text }),
 ]);
 
-const collectionPatch = <T extends z.ZodType>(schema: T) =>
+const collectionPatch = <TAdd extends z.ZodType, TUpdate extends z.ZodType>(
+  addSchema: TAdd,
+  updateSchema: TUpdate,
+) =>
   z.object({
-    add: z.array(schema),
-    update: z.array(schema),
+    add: z.array(addSchema),
+    update: z.array(updateSchema),
     removeIds: z.array(id),
   });
 
 export const visiblePatchSchema = z.object({
-  location: stateFactSchema.nullable().optional(),
-  situation: stateFactSchema.nullable().optional(),
-  objectives: collectionPatch(stateFactSchema),
-  activeCharacters: collectionPatch(stateFactSchema),
-  knownFacts: collectionPatch(stateFactSchema),
-  relationships: collectionPatch(relationshipSchema),
+  location: newStateFactSchema.nullable().optional(),
+  situation: newStateFactSchema.nullable().optional(),
+  objectives: collectionPatch(newStateFactSchema, stateFactSchema),
+  activeCharacters: collectionPatch(newStateFactSchema, stateFactSchema),
+  knownFacts: collectionPatch(newStateFactSchema, stateFactSchema),
+  relationships: collectionPatch(newRelationshipSchema, relationshipSchema),
 });
 
 export const hiddenPatchSchema = z.object({
-  secrets: collectionPatch(hiddenSecretSchema),
-  gmThreads: collectionPatch(hiddenThreadSchema),
+  secrets: collectionPatch(newHiddenSecretSchema, hiddenSecretSchema),
+  gmThreads: collectionPatch(newHiddenThreadSchema, hiddenThreadSchema),
+});
+
+// Committed turns are durable history, not model proposals. Their additions
+// already have reducer-assigned IDs and must remain readable across schema
+// changes.
+const persistedCollectionPatch = <T extends z.ZodType>(schema: T) =>
+  collectionPatch(schema, schema);
+
+const persistedVisiblePatchSchema = z.object({
+  location: stateFactSchema.nullable().optional(),
+  situation: stateFactSchema.nullable().optional(),
+  objectives: persistedCollectionPatch(stateFactSchema),
+  activeCharacters: persistedCollectionPatch(stateFactSchema),
+  knownFacts: persistedCollectionPatch(stateFactSchema),
+  relationships: persistedCollectionPatch(relationshipSchema),
+});
+
+const persistedHiddenPatchSchema = z.object({
+  secrets: persistedCollectionPatch(hiddenSecretSchema),
+  gmThreads: persistedCollectionPatch(hiddenThreadSchema),
 });
 
 const completeProposalSchema = z.object({
@@ -172,9 +205,7 @@ const completeProposalSchema = z.object({
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
-  provisionalFacts: z.array(
-    provisionalFactSchema.omit({ introducedOnTurnId: true }),
-  ),
+  provisionalFacts: z.array(newProvisionalFactSchema),
   sourceRecordIds: z.array(id),
   suggestedActions: z.array(text).length(3).optional(),
 });
@@ -200,7 +231,7 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
 ]);
 
 export const adventureSessionSchema = z.object({
-  schemaVersion: z.union([z.literal(1), z.literal(2)]),
+  schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
   id,
   vaultId: id,
   title: text,
@@ -225,8 +256,8 @@ export const adventureSessionSchema = z.object({
       rollOutcome: outcomeSchema.optional(),
       resolvedRoll: resolvedRollSchema.optional(),
       narration,
-      visiblePatch: visiblePatchSchema,
-      hiddenPatch: hiddenPatchSchema,
+      visiblePatch: persistedVisiblePatchSchema,
+      hiddenPatch: persistedHiddenPatchSchema,
       revealedSecretIds: z.array(id),
       sourceRecordIds: z.array(id),
       provisionalFactIds: z.array(id),
@@ -244,8 +275,58 @@ export const adventureSessionSchema = z.object({
     .default([]),
 });
 
+type RawAdventureSession = Record<string, unknown>;
+type AdventureSessionMigration = (
+  session: RawAdventureSession,
+) => RawAdventureSession;
+
+const sessionMigrations: Record<number, AdventureSessionMigration> = {
+  1: (session) => ({
+    ...session,
+    schemaVersion: 2,
+    dicePresets: session.dicePresets ?? [],
+    resourceCounters: session.resourceCounters ?? [],
+  }),
+};
+
+/**
+ * Upgrades a durable session document without mutating the parsed JSON.
+ * Unknown future versions are deliberately rejected rather than rewritten.
+ */
+export function migrateAdventureSession(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("invalid-adventure-session");
+  }
+  let session = structuredClone(input) as RawAdventureSession;
+  const initialVersion = session.schemaVersion;
+  if (
+    typeof initialVersion !== "number" ||
+    !Number.isInteger(initialVersion) ||
+    initialVersion < 1
+  ) {
+    throw new Error("invalid-adventure-session-version");
+  }
+  let version = initialVersion;
+  while (version < CURRENT_ADVENTURE_SCHEMA_VERSION) {
+    const migrate = sessionMigrations[version];
+    if (!migrate) throw new Error("incompatible-version");
+    session = migrate(session);
+    const migratedVersion = session.schemaVersion;
+    if (
+      typeof migratedVersion !== "number" ||
+      !Number.isInteger(migratedVersion)
+    )
+      throw new Error("incompatible-version");
+    version = migratedVersion;
+  }
+  if (version !== CURRENT_ADVENTURE_SCHEMA_VERSION) {
+    throw new Error("incompatible-version");
+  }
+  return session;
+}
+
 export function parseAdventureSession(input: unknown): AdventureSession {
-  const parsed = adventureSessionSchema.parse(input);
+  const parsed = adventureSessionSchema.parse(migrateAdventureSession(input));
   const stateLength = JSON.stringify({
     visibleState: parsed.visibleState,
     hiddenState: parsed.hiddenState,

@@ -58,7 +58,33 @@ surface that renders it pairs it with screen-reader text: `DetailStatusTab`,
 `DetailHeader`, `NodeReadModal`, `EntityListItem`, `MapPinPopover`, `PinLinker`,
 `TokenAddDialog`.
 
-### 4. Focus is not stranded across view changes
+### 4. Entity type is never carried by colour alone
+
+Graph nodes are coloured by entity type because it makes a large graph
+scannable, but the colour is never the only carrier:
+
+- every node without a portrait paints a type-derived silhouette glyph, and
+  hovering a node names its type in words with the category icon
+  (`GraphTooltip`);
+- the type filter and the graph's category picker pair each colour with the
+  same icon and label.
+
+The colours themselves are derived from the active theme rather than hard-coded
+per component, in `packages/schema/src/entity-palette.ts`. That derivation is
+where the graph's non-text contrast promises live, all at the WCAG 1.4.11 3:1
+floor for graphics, and unit-tested for every shipped theme:
+
+| Painted thing             | Held at 3:1 against |
+| ------------------------- | ------------------- |
+| node ring (`border`)      | the canvas backdrop |
+| node icon (`glyph`)       | the node's own fill |
+| type chip/rule (`accent`) | a panel surface     |
+
+**If you add a surface that paints an entity type**, take its colour from
+`deriveEntityTypePalette` rather than `category.color`, and give the colour a
+text or icon companion.
+
+### 5. Focus is not stranded across view changes
 
 Navigating graph to table to entity detail must leave focus inside the live
 document. SvelteKit's default of resetting focus after client-side navigation is

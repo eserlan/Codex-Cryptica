@@ -47,17 +47,23 @@
 <svelte:window onkeydown={handleWindowKeydown} />
 
 {#if editingEdge}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-theme-bg/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
-    onclick={close}
   >
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full bg-theme-bg/80 backdrop-blur-sm cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary"
+      aria-label="Close dialog"
+      onclick={close}
+      onpointerdown={(e) => e.preventDefault()}
+    ></button>
     <div
-      class="bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      class="relative bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
       transition:fly={{ y: 20, duration: 300 }}
-      onclick={(e) => e.stopPropagation()}
     >
       <h2
         class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"

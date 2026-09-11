@@ -739,6 +739,52 @@ export const THEMES = {
       graph_loading: "Accessing Imperial Network...",
     },
   },
+  "space-western": {
+    id: "space-western",
+    name: "Frontier Scoundrels",
+    description:
+      "Space western outlaws, rusty freighters, boomtown spaceports, debts, and high-stakes smuggling runs.",
+    tokens: {
+      primary: "#d97706",
+      secondary: "#b45309",
+      background: "#0f1117",
+      surface: "#181b23",
+      text: "#f3f4f6",
+      border: "rgba(217, 119, 6, 0.35)",
+      accent: "#f59e0b",
+      texture: "rust.svg",
+      fontHeader: "'Alegreya', serif",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "4px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#78350f",
+    },
+    jargon: {
+      vault: "Ship's Log",
+      entity: "Record",
+      entity_plural: "Records",
+      save: "Stash",
+      delete: "Jettison",
+      new: "Draft",
+      syncing: "Transmitting",
+      search: "Scan",
+      lore_header: "Frontier Intel",
+      lore_secrets: "Contraband & Bounties",
+      chronicle_header: "Flight Log",
+      connections_header: "Ties & Debts",
+      tab_status: "Ship & Crew",
+      tab_lore: "Dossier",
+      tab_inventory: "Cargo & Hold",
+      blog_entry: "Dispatch",
+      blog_action: "Read Dispatch",
+      graph_loading: "Scanning Sector Frequency...",
+    },
+  },
 } as const satisfies Record<string, StylingTemplate>;
 
 export const FANTASY_DARK: StylingTemplate = {
@@ -748,7 +794,7 @@ export const FANTASY_DARK: StylingTemplate = {
     "Aged leather and brass by candlelight; the dark counterpart to Ancient Parchment.",
   tokens: {
     primary: "#d4a85a",
-    secondary: "#8b6532",
+    secondary: "#c4a468",
     background: "#1c1410",
     surface: "#2a1e16",
     text: "#e8ddc4",
@@ -757,6 +803,21 @@ export const FANTASY_DARK: StylingTemplate = {
     fontHeader: "'Alegreya', serif",
     fontBody: "'Alegreya', serif",
     texture: "leather.svg",
+    titleInk: "#f1eee5",
+    sectionTitle: "#d4a85a",
+    metaText: "#bfa68b",
+    iconDefault: "#bfa68b",
+    iconActive: "#d4a85a",
+    focus: "#f0c879",
+    panelFill: "#2a1e16",
+    panelMuted: "#1f1712",
+    selectedBg: "color-mix(in srgb, #d4a85a, #1c1410 82%)",
+    selectedBorder: "#d4a85a",
+    focusBg: "color-mix(in srgb, #f0c879, #1c1410 80%)",
+    focusBorder: "#f0c879",
+    actionBg: "#d4a85a",
+    actionHover: "#e2b868",
+    actionText: "#1c1410",
     borderRadius: "3px",
   },
   graph: {
@@ -1180,6 +1241,34 @@ export const SPACE_OPERA_RESISTANCE_DARK: StylingTemplate = {
     edgeColor: "#1e293b",
   },
   jargon: THEMES["space-opera-resistance"].jargon,
+};
+
+export const SPACE_WESTERN_LIGHT: StylingTemplate = {
+  id: "space-western_light",
+  name: "Dusty Spaceport",
+  description:
+    "Sun-baked landing strips, rusted hangars, trade outposts, and salvage yards under a harsh desert sky.",
+  tokens: {
+    primary: "#b45309",
+    secondary: "#78350f",
+    background: "#f7f1e7",
+    surface: "#ece3d3",
+    text: "#29180c",
+    border: "rgba(180, 83, 9, 0.4)",
+    accent: "#d97706",
+    texture: "rust.svg",
+    fontHeader: "'Alegreya', serif",
+    fontBody: "'Inter', sans-serif",
+    borderRadius: "4px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#b45309",
+  },
+  jargon: THEMES["space-western"].jargon,
 };
 
 export const DEFAULT_THEME = THEMES.workspace;

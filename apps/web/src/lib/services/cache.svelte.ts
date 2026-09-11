@@ -188,11 +188,12 @@ export class CacheService {
    * and content rows commit or rollback together, preventing a partial write
    * where one table succeeds and the other fails.
    */
+  /** @returns `false` if the row could not be written; see the catch below. */
   async set(
     path: string,
     lastModified: number,
     entity: LocalEntity,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       // $state.snapshot() returns a deep non-reactive POJO — Proxies and
       // Symbols are already stripped, so a second JSON round-trip is redundant.
@@ -249,12 +250,20 @@ export class CacheService {
         } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
       }
+      return true;
     } catch (err) {
       debugStore.error(
         `[CacheService] Failed to save ${entity.id} to Dexie:`,
         err,
       );
-      // Non-fatal — the OPFS file is the source of truth.
+      // The entity is safe: the OPFS write already succeeded and is retried on
+      // failure. What is lost is this cache row, which leaves the cache behind
+      // OPFS. That used to be permanent and invisible, because a warm cache
+      // short-circuited the vault load and OPFS was never consulted again
+      // (#2619). The load now reconciles against OPFS regardless, so this
+      // self-heals — but the caller is told, because a cache that cannot be
+      // written is worth knowing about before it becomes a support ticket.
+      return false;
     }
   }
 

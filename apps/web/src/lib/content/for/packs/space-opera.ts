@@ -9,6 +9,9 @@ export const spaceOpera: LandingPageConfig = {
     title: "Codex Cryptica for Space Opera Campaigns",
     description:
       "Organise sprawling space opera campaigns with connected star systems, worlds, governments, crews, and trade routes in one local-first setting bible.",
+    image: "https://assets.codexcryptica.com/og/space-opera.jpg",
+    imageAlt:
+      "Interstellar council chamber with giant 3D holographic galaxy sphere, fleet telemetry tables, and alien diplomatic envoys",
   },
   hero: {
     eyebrow: "Space Opera Worldbuilding",

@@ -3,8 +3,13 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
+  import { isNoteCollapsed } from "map-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "../../stores/vault.svelte";
+  import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
+  import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
+  import LayerMenu from "$lib/components/ui/LayerMenu.svelte";
 
   let {
     x,
@@ -25,6 +30,7 @@
   let showResizeSubmenu = $state(false);
   let showStatusSubmenu = $state(false);
   let showAppearanceSubmenu = $state(false);
+  let showLayerSubmenu = $state(false);
 </script>
 
 <div
@@ -54,6 +60,119 @@
 
     <!-- View Entity (host always; guest only if token is not gm-only) -->
     {@const _ctxToken = mapSession.tokens[tokenId]}
+    {@const _ctxTokenHasImage = Boolean(
+      _ctxToken?.imageUrl ||
+      (_ctxToken?.entityId && vault.entities[_ctxToken.entityId]?.image),
+    )}
+    {#if _ctxToken?.kind === "note" && mapStore.isGMMode && !sessionModeStore.isGuestMode}
+      {@const _ctxNoteCollapsed = isNoteCollapsed(_ctxToken)}
+      <div class="h-px bg-theme-border my-1 mx-2"></div>
+      <button
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={() => {
+          mapSession.toggleNoteCollapsed(tokenId);
+          onClose();
+        }}
+      >
+        <span
+          class={`${_ctxNoteCollapsed ? "icon-[lucide--maximize-2]" : "icon-[lucide--minimize-2]"} w-3.5 h-3.5 text-theme-muted`}
+          aria-hidden="true"
+        ></span>
+        <span>{_ctxNoteCollapsed ? "Expand note" : "Collapse to a marker"}</span
+        >
+      </button>
+    {/if}
+
+    {#if _ctxToken?.kind === "tile" && mapStore.isGMMode && !sessionModeStore.isGuestMode}
+      <div class="h-px bg-theme-border my-1 mx-2"></div>
+      <SpatialImageControls
+        locked={_ctxToken.locked === true}
+        onToggleLock={() => {
+          mapSession.toggleTokenLock(tokenId);
+          onClose();
+        }}
+        onBringToFront={() => {
+          mapSession.bringTokenToFront(tokenId);
+          onClose();
+        }}
+        onSendToBack={() => {
+          mapSession.sendTokenToBack(tokenId);
+          onClose();
+        }}
+        onDuplicate={() => {
+          mapSession.cloneToken(tokenId);
+          onClose();
+        }}
+        onDelete={() => {
+          mapSession.removeToken(tokenId);
+          onClose();
+        }}
+      />
+    {/if}
+
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
+      <!-- Move to Layer (Host only) — works for both tiles and tokens, so it
+           lives outside the kind-gated blocks above/below. -->
+      <div
+        class="relative group"
+        role="presentation"
+        onmouseenter={() => {
+          showLayerSubmenu = true;
+        }}
+        onmouseleave={() => {
+          showLayerSubmenu = false;
+        }}
+      >
+        <button
+          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+          role="menuitem"
+          aria-haspopup="menu"
+          aria-expanded={showLayerSubmenu}
+          onclick={(e) => {
+            e.stopPropagation();
+            showLayerSubmenu = !showLayerSubmenu;
+          }}
+          onkeydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              showLayerSubmenu = !showLayerSubmenu;
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <span class="icon-[lucide--layers] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
+            <span>Move to Layer</span>
+          </div>
+          <span
+            class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+            aria-hidden="true"
+          ></span>
+        </button>
+
+        {#if showLayerSubmenu}
+          <div
+            class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[150px]"
+            role="menu"
+            aria-label="Move token to layer"
+          >
+            <LayerMenu
+              value={_ctxToken?.layer}
+              onSelect={(layer) => {
+                mapSession.updateToken(tokenId, { layer });
+                // Land on top of wherever it just moved, not stacked
+                // underneath whatever was already on that layer.
+                mapSession.bringTokenToFront(tokenId);
+                onClose();
+              }}
+            />
+          </div>
+        {/if}
+      </div>
+    {/if}
+
     {#if _ctxToken?.entityId && mapSession.canViewToken(tokenId, mapSession.myPeerId, mapStore.isGMMode)}
       <div class="h-px bg-theme-border my-1 mx-2"></div>
       <button
@@ -75,7 +194,7 @@
     {/if}
 
     <!-- Multi-select actions (GM only) -->
-    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode && _ctxToken?.kind !== "tile"}
       {#if mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(tokenId)}
         <div class="h-px bg-theme-border my-1 mx-2"></div>
         <div
@@ -137,7 +256,7 @@
     <div class="h-px bg-theme-border my-1 mx-2"></div>
 
     <!-- Removal -->
-    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode && _ctxToken?.kind !== "tile"}
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
         role="menuitem"
@@ -277,6 +396,22 @@
                 {/if}
               </button>
             {/each}
+
+            {#if _ctxTokenHasImage}
+              <div class="h-px bg-theme-border my-1 mx-2"></div>
+              <div
+                class="px-4 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+              >
+                Image focus
+              </div>
+              <ImageFocusMenu
+                value={_ctxToken?.imageFocus}
+                onSelect={(focus) => {
+                  mapSession.updateToken(tokenId, { imageFocus: focus });
+                  onClose();
+                }}
+              />
+            {/if}
           </div>
         {/if}
       </div>

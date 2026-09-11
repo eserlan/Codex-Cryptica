@@ -5,13 +5,33 @@ export type EntityType =
   | "item"
   | "event"
   | "faction"
+  | "quest"
+  | "species"
   | "note";
+
+export interface ParsedRelationship {
+  title: string;
+  type?: string;
+  label?: string;
+}
+
+export interface ParsedAsset {
+  originalName: string;
+  mimeType: string;
+  dataUrl: string;
+}
 
 export interface ParsedEntity {
   type: EntityType;
   title: string;
   content: string;
   labels: string[];
+  references?: string[];
+  relationships?: ParsedRelationship[];
+  parentReference?: string;
+  assets?: ParsedAsset[];
+  discoverySource?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /** Convert World Anvil BBCode-style internal links to [[wiki links]]. */

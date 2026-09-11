@@ -1,0 +1,10 @@
+# Discord release communications destination configuration
+# Potential credentials / webhook URLs must be supplied through environment variables, never committed.
+discord:
+  enabled: true
+  destinations:
+    - id: main-community
+      source: bluesky
+      strip_hashtags: true
+      auto_publish: true
+      webhookEnvVar: DISCORD_WEBHOOK_URL

@@ -27,7 +27,10 @@ describe("Generators SvelteKit Route", () => {
         { slug: "minor-magic-item" },
         { slug: "artifact-generator" },
         { slug: "faction" },
+        { slug: "faction-roster" },
         { slug: "quest" },
+        { slug: "rumour" },
+        { slug: "puzzle" },
         { slug: "item" },
         { slug: "tavern" },
         { slug: "social-hub" },
@@ -35,6 +38,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "nation" },
         { slug: "vampire-clan" },
         { slug: "nomad-clan" },
+        { slug: "dark-fantasy-faction" },
         { slug: "names" },
         { slug: "fantasy-names" },
         { slug: "dnd-npc" },
@@ -52,7 +56,11 @@ describe("Generators SvelteKit Route", () => {
         { slug: "council-vote" },
         { slug: "secret-society" },
         { slug: "star-system" },
+        { slug: "constellation" },
         { slug: "alien-race" },
+        { slug: "creature" },
+        { slug: "encounter" },
+        { slug: "heist" },
       ]);
     });
   });

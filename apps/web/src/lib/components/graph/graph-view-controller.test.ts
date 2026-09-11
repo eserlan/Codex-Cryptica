@@ -7,6 +7,12 @@ import {
   type LoadPhase,
 } from "./graph-view-controller.svelte";
 import {
+  clearSilhouetteCache,
+  deriveEntityTypeTone,
+  PIRATE_DARK,
+} from "schema";
+import { categories } from "$lib/stores/categories.svelte";
+import {
   syncGraphElements,
   applyLargeGraphRenderHints,
   isLayoutCollinear,
@@ -94,6 +100,13 @@ vi.mock("graph-engine", () => {
     applyLargeGraphRenderHints: vi.fn(),
     isLayoutCollinear: vi.fn().mockReturnValue(false),
   };
+});
+
+// A dark theme is what makes the per-type glyph colours diverge: on a light
+// theme every type clears contrast against the theme primary already.
+vi.mock("$lib/stores/theme.svelte", async () => {
+  const { PIRATE_DARK: theme } = await import("schema");
+  return { themeStore: { activeTheme: theme } };
 });
 
 describe("GraphViewController", () => {
@@ -757,6 +770,80 @@ describe("GraphViewController", () => {
         reseed: true,
       });
       expect(lastPolicy()).toBe("fit");
+    });
+  });
+
+  describe("silhouette tinting (issue #2680)", () => {
+    const ARTWORK =
+      '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
+
+    beforeEach(() => {
+      clearSilhouetteCache();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(ARTWORK, { status: 200 })),
+      );
+    });
+
+    it("paints no glyph when the artwork cannot be fetched", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new TypeError("Failed to fetch");
+        }),
+      );
+      const options = await syncOptions();
+
+      // Null, not a broken data URI: the ImageManager leaves the node
+      // unstamped so a later sync retries once the network is back.
+      await expect(
+        options?.resolveSilhouetteUrl?.(node("location")),
+      ).resolves.toBeNull();
+    });
+
+    const syncOptions = async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      deps.graph.elements = [
+        { group: "nodes", data: { id: "node-1", type: "location" } },
+      ];
+      controller.syncImages();
+      return vi.mocked(controller.imageManager!.sync).mock.calls.at(-1)?.[0];
+    };
+
+    const node = (type: string) => ({
+      id: () => "node-1",
+      data: () => ({ id: "node-1", type, label: "The Ashen Reach" }),
+    });
+
+    const glyphFor = (type: string) =>
+      deriveEntityTypeTone(categories.getColor(type), PIRATE_DARK.tokens).glyph;
+
+    it("fills a silhouette with its own type's glyph colour", async () => {
+      const options = await syncOptions();
+
+      // Artwork comes from R2, so resolving one is a fetch.
+      const location = await options?.resolveSilhouetteUrl?.(node("location"));
+      const character = await options?.resolveSilhouetteUrl?.(
+        node("character"),
+      );
+
+      expect(location).toContain(encodeURIComponent(glyphFor("location")));
+      expect(character).toContain(encodeURIComponent(glyphFor("character")));
+      // A moss node needs a lighter glyph than the theme primary to clear 3:1;
+      // the blue character tone does not, so it keeps the theme's own colour.
+      expect(glyphFor("location")).not.toBe(PIRATE_DARK.tokens.primary);
+      expect(glyphFor("character")).toBe(PIRATE_DARK.tokens.primary);
+      expect(location).not.toBe(character);
+    });
+
+    it("keys the silhouette on the theme so a theme switch re-tints it", async () => {
+      const options = await syncOptions();
+
+      expect(options?.silhouetteVariant).toContain(PIRATE_DARK.id);
+      expect(options?.silhouetteVariant).toContain(
+        categories.getColor("location"),
+      );
     });
   });
 });

@@ -113,6 +113,28 @@ export type LlmAdaptorFn = (
 ) => Promise<LlmAdaptorResult>;
 
 /**
+ * Provider-neutral streaming event contract (#2423). A streaming adaptor
+ * yields `started` once the upstream connection is live, zero or more
+ * `delta` chunks as text arrives, then exactly one of `complete`/`error`.
+ * Unlike `LlmAdaptorResult`, there is no retry/fallback around a stream —
+ * once `delta` events have gone out, the caller has already shown partial
+ * output, so retrying transparently isn't possible. Callers that need a
+ * retry-on-invalid-output policy (e.g. structured-generation) must do so at
+ * a higher level, by discarding the stream and starting a fresh attempt.
+ */
+export type GenerationEvent =
+  | { type: "started" }
+  | { type: "delta"; text: string }
+  | { type: "complete"; text: string; usage?: LlmUsage }
+  | { type: "error"; error: string };
+
+export type LlmStreamingAdaptorFn = (
+  request: LlmRequest,
+  model: LlmModelDefinition,
+  signal?: AbortSignal,
+) => AsyncGenerator<GenerationEvent>;
+
+/**
  * Non-content record of one request's handling. MUST NEVER hold prompt or
  * generated-content text — enforced by construction: no such field exists
  * on this type (FR-012/SC-006).

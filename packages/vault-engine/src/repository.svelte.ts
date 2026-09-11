@@ -1,5 +1,6 @@
 import { KeyedTaskQueue } from "./queue";
 import type { LocalEntity, FileEntry } from "./types";
+import { isReservedVaultPath } from "./types";
 import { EntitySchema } from "schema";
 
 export interface IFileIOAdapter {
@@ -67,6 +68,7 @@ export class VaultRepository {
     const files = await this.ioAdapter.walkDirectory(vaultHandle);
 
     const mdFiles = files.filter((f) => {
+      if (isReservedVaultPath(f.path)) return false;
       const name = f.path[f.path.length - 1].toLowerCase();
       return name.endsWith(".md") || name.endsWith(".markdown");
     });

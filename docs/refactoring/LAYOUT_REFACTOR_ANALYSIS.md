@@ -30,40 +30,43 @@
 ### Root Layout Imports (261 lines total)
 
 **Store Imports (13):**
-| Store | Purpose |
-|-------|---------|
-| `helpStore` | Help articles, tours, onboarding |
-| `searchStore` | Global search modal state |
-| `uiStore` | Global UI state, modals, settings |
-| `vault` | Core data store, entity CRUD |
-| `vaultRegistry` | Multiple vault management |
-| `canvasRegistry` | Canvas state management |
-| `themeStore` | Theme persistence |
-| `timelineStore` | Timeline/chronology data |
-| `calendarStore` | Calendar config |
-| `graph` | Graph visualization state |
-| `oracle` | AI assistant state |
-| `categories` | Entity categories |
-| `demoService` | Demo mode management |
+
+| Store            | Purpose                           |
+| ---------------- | --------------------------------- |
+| `helpStore`      | Help articles, tours, onboarding  |
+| `searchStore`    | Global search modal state         |
+| `uiStore`        | Global UI state, modals, settings |
+| `vault`          | Core data store, entity CRUD      |
+| `vaultRegistry`  | Multiple vault management         |
+| `canvasRegistry` | Canvas state management           |
+| `themeStore`     | Theme persistence                 |
+| `timelineStore`  | Timeline/chronology data          |
+| `calendarStore`  | Calendar config                   |
+| `graph`          | Graph visualization state         |
+| `oracle`         | AI assistant state                |
+| `categories`     | Entity categories                 |
+| `demoService`    | Demo mode management              |
 
 **Component Imports (6):**
-| Component | Purpose | Status |
-|-----------|---------|--------|
-| `AppHeader` | Top navigation bar | Already modular |
-| `AppFooter` | Bottom footer | Already modular |
-| `NotificationToast` | Toast notifications | Already modular |
-| `FatalErrorOverlay` | Fatal error display | Already modular |
-| `OracleSidebarProvider` | AI sidebar wrapper | Extracted |
-| `GlobalModalProvider` | All modal management | Extracted |
+
+| Component               | Purpose              | Status          |
+| ----------------------- | -------------------- | --------------- |
+| `AppHeader`             | Top navigation bar   | Already modular |
+| `AppFooter`             | Bottom footer        | Already modular |
+| `NotificationToast`     | Toast notifications  | Already modular |
+| `FatalErrorOverlay`     | Fatal error display  | Already modular |
+| `OracleSidebarProvider` | AI sidebar wrapper   | Extracted       |
+| `GlobalModalProvider`   | All modal management | Extracted       |
 
 **Logic Imports (5):**
-| Import | Purpose | Status |
-|--------|---------|--------|
-| `bootSystem` | Store initialization | Extracted to `app-init.ts` |
+
+| Import                      | Purpose               | Status                     |
+| --------------------------- | --------------------- | -------------------------- |
+| `bootSystem`                | Store initialization  | Extracted to `app-init.ts` |
 | `initializeGlobalListeners` | Global error handlers | Extracted to `app-init.ts` |
-| `setupWindowGlobals` | Debug globals | Extracted to `app-init.ts` |
-| `registerServiceWorker` | PWA registration | Extracted to `app-init.ts` |
-| `useGlobalShortcuts` | Keyboard shortcuts | Extracted to hook |
+| `setupWindowGlobals`        | Debug globals         | Extracted to `app-init.ts` |
+| `registerServiceWorker`     | PWA registration      | Extracted to `app-init.ts` |
+| `useGlobalShortcuts`        | Keyboard shortcuts    | Extracted to hook          |
 
 ---
 

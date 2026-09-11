@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { browser } from "$app/environment";
   import { base } from "$app/paths";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
   // Matches the marketing shell: a bare "/" base would make every link
   // protocol-relative ("//generators/...").
   const cleanBase = base === "/" ? "" : base;
@@ -12,9 +14,19 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { hubThemeLabel, type HubThemeSlug } from "$lib/content/hub-themes";
   import LandingPageGraphPreview from "$lib/components/for/LandingPageGraphPreview.svelte";
+  import { getLandingPageCanonicalUrl } from "$lib/content/for/canonical";
+  import { landingPageLabels } from "$lib/content/for/registry";
+  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import {
+    trackDiscoveryPageViewed,
+    classifyDiscoveryTarget,
+    createDiscoveryViewGuard,
+  } from "$lib/services/analytics/discovery-tracking";
+  import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
+  let labels = $derived(landingPageLabels(config));
   let themeBootstrap = $derived.by(() => {
     if (!config.theme) return "";
 
@@ -60,14 +72,51 @@
     config.exampleGraph?.badgeLabel ?? "Interactive Graph View",
   );
 
+  // A genre page is a guide to a *world*; system and campaign-style pages are
+  // guides to running a *campaign*.
+  let complicationSubject = $derived(
+    config.kind === "genre" ? "worlds" : "campaigns",
+  );
+
+  let canonicalUrl = $derived(getLandingPageCanonicalUrl(config));
+
+  let seoImage = $derived(
+    config.seo.image
+      ? config.seo.image.startsWith("http://") ||
+        config.seo.image.startsWith("https://")
+        ? config.seo.image
+        : buildAbsoluteUrl(config.seo.image)
+      : buildAbsoluteUrl("/og-image.png"),
+  );
+  let seoImageAlt = $derived(
+    config.seo.imageAlt ?? `${config.hero.title} — Codex Cryptica`,
+  );
+
+  // Always assign, never only when a theme exists: SvelteKit reuses this
+  // component across /for/[slug] -> /for/[slug] navigations, so `onDestroy`
+  // does not run between packs. Skipping the call for a theme-less pack would
+  // leave the previous page's theme applied.
   $effect(() => {
-    if (config.theme) {
-      themeStore.previewTheme(config.theme);
-    }
+    themeStore.previewTheme(config.theme ?? null);
   });
 
   onDestroy(() => {
     themeStore.previewTheme(null);
+  });
+
+  // See discovery-tracking.ts: this route reuses one component instance
+  // across /for/a -> /for/b navigations, so the guard (not just onMount) is
+  // what keeps discovery_page_viewed to one fire per slug.
+  const seenLandingPage = createDiscoveryViewGuard();
+  $effect(() => {
+    if (!browser) return;
+    const slug = config.slug;
+    if (!seenLandingPage(slug)) return;
+    trackDiscoveryPageViewed({
+      sourceKind: "for",
+      sourceId: slug,
+      path: `/for/${slug}`,
+    });
   });
 </script>
 
@@ -82,12 +131,16 @@
   <meta property="og:title" content={config.seo.title} />
   <meta property="og:description" content={config.seo.description} />
   <meta property="og:type" content="website" />
+  <meta property="og:image" content={seoImage} />
+  <meta property="og:image:alt" content={seoImageAlt} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={config.seo.title} />
   <meta name="twitter:description" content={config.seo.description} />
-  {#if config.seo.canonical}
-    <link rel="canonical" href={config.seo.canonical} />
-  {/if}
+  <meta name="twitter:image" content={seoImage} />
+  <meta name="twitter:image:alt" content={seoImageAlt} />
+  <link rel="canonical" href={canonicalUrl} />
 </svelte:head>
 
 <div
@@ -119,6 +172,14 @@
             {config.hero.tagline}
           </p>
 
+          {#if labels.length}
+            <div class="mb-8 flex flex-wrap justify-center gap-2">
+              {#each labels as label (label)}
+                <PublicLabelChip {label} />
+              {/each}
+            </div>
+          {/if}
+
           <div
             class="mx-auto max-w-2xl rounded-[var(--for-surface-radius)] border border-theme-border/70 bg-theme-surface/50 p-6 text-left shadow-sm sm:p-8"
             style:background-image="var(--bg-texture-overlay)"
@@ -126,11 +187,10 @@
             <h2
               class="mb-2 font-header text-base font-bold text-theme-text sm:text-lg"
             >
-              Why {config.kind === "system" ? "chronicles" : "fantasy worlds"} get
-              complicated
+              Why {complicationSubject} get complicated
             </h2>
             <p
-              class="font-light text-sm sm:text-base leading-relaxed text-theme-muted"
+              class="font-light text-base sm:text-lg leading-relaxed text-theme-muted"
             >
               {config.hero.problemStatement}
             </p>
@@ -164,7 +224,7 @@
                   </h3>
                 </div>
                 <p
-                  class="font-light leading-relaxed text-theme-muted text-sm sm:text-base"
+                  class="font-light leading-relaxed text-theme-muted text-base sm:text-lg"
                 >
                   {useCase.description}
                 </p>
@@ -235,6 +295,12 @@
                 href="{cleanBase}{tool.href}"
                 class="group block rounded-[var(--for-surface-radius)] border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50"
                 style:background-image="var(--bg-texture-overlay)"
+                use:trackDiscoveryClick={{
+                  sourceKind: "for",
+                  sourceId: config.slug,
+                  placement: "related_tool",
+                  ...classifyDiscoveryTarget(tool.href),
+                }}
               >
                 <div class="mb-2 flex items-center justify-between">
                   <h3
@@ -242,7 +308,7 @@
                   >
                     {tool.title}
                   </h3>
-                  {#if tool.badge}
+                  {#if tool.badge && !tool.title.endsWith(tool.badge)}
                     <span
                       class="rounded-[var(--for-surface-radius)] border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
                       >{tool.badge}</span
@@ -264,6 +330,13 @@
             href="{cleanBase}/generators/{hub}"
             class="group flex flex-col gap-3 rounded-[var(--for-surface-radius)] border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 sm:flex-row sm:items-center sm:justify-between sm:p-8"
             style:background-image="var(--bg-texture-overlay)"
+            use:trackDiscoveryClick={{
+              sourceKind: "for",
+              sourceId: config.slug,
+              targetKind: "generator",
+              targetId: hub,
+              placement: "theme_hub",
+            }}
           >
             <div>
               <h2
@@ -274,8 +347,8 @@
               <p
                 class="mt-1 font-light text-sm leading-relaxed text-theme-muted"
               >
-                Every {hubThemeLabel(hub).toLowerCase()} generator in one place —
-                free, no login required.
+                Every {hubThemeLabel(hub).toLowerCase()} generator in one place, free,
+                no login required.
               </p>
             </div>
             <span
@@ -309,6 +382,12 @@
           <a
             href="{cleanBase}{config.cta.buttonHref}"
             class="inline-block rounded-[var(--for-surface-radius)] bg-theme-primary px-10 py-4 font-header text-sm font-bold text-theme-bg transition-all hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] active:scale-95"
+            use:trackDiscoveryClick={{
+              sourceKind: "for",
+              sourceId: config.slug,
+              placement: "section_cta",
+              ...classifyDiscoveryTarget(config.cta.buttonHref),
+            }}
           >
             {config.cta.buttonText}
           </a>

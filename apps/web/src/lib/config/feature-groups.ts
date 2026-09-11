@@ -113,6 +113,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "fog-of-war",
       "guest-entity-links",
       "vtt-entity-list",
+      "vtt-tile-decks",
+      "vtt-layers",
+      "vtt-notes",
       "dice-rolling",
       "random-tables-and-decks",
       "voice-chat",
@@ -146,6 +149,8 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "image-stature",
       "adventure-generator",
       "quest-generator",
+      "rumour-generator",
+      "encounter-generator",
       "dungeon-generator",
       "world-generator",
       "language-generator",
@@ -171,6 +176,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "cif-importer",
       "vault-save",
       "vault-load",
+      // Opt-in and off by default, so it sits with the ownership story rather
+      // than contradicting it: the local files stay the original.
+      "cloud-backup",
       "import-resume",
       "entity-shelf",
     ],
@@ -203,6 +211,9 @@ export const HELP_ONLY_HINT_IDS = [
   "p2p-connection-manager",
   // Says the same thing as "AI Disabled", which carries it in the privacy group.
   "generator-local-mode",
+  // Explains how one generator form works. Worth promoting once matching
+  // options reach the generators generally rather than settlements alone.
+  "generator-presets",
   // Decoration rather than a job. Distinctive, but it belongs in a gallery, not
   // in a list of what the product does for you.
   "themes",

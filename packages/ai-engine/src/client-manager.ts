@@ -46,22 +46,31 @@ export const GENERATOR_INTERACTION_MODEL_KEY = INTERACTION_MODEL_KEY;
  * `GenerativeModel.generateContent()` result so callers see no interface
  * change.
  */
-async function sendViaOperationPipeline(params: {
-  proxyUrl: string;
-  doFetch: typeof fetch;
+/**
+ * Provider-neutral streaming event contract (#2423), mirrored from
+ * oracle-proxy's `GenerationEvent` (apps/workers/oracle-proxy/src/llm/types.ts)
+ * — the two are never imported across the client/Worker boundary (no shared
+ * package), so this is a structural, not nominal, match kept in sync by hand.
+ */
+export type GenerationEvent =
+  | { type: "started" }
+  | { type: "delta"; text: string }
+  | {
+      type: "complete";
+      text: string;
+      usage?: { promptTokens: number; completionTokens: number };
+    }
+  | { type: "error"; error: string };
+
+/** Shared by `sendViaOperationPipeline` and its streaming counterpart so a
+ * buffered and a streamed request for the same content always ask the
+ * operation pipeline for exactly the same thing. */
+function buildOperationPipelineBody(params: {
   contents: any[];
   generationConfig: any;
   finalSysInst?: string;
-  modelName: string;
-}) {
-  const {
-    proxyUrl,
-    doFetch,
-    contents,
-    generationConfig,
-    finalSysInst,
-    modelName,
-  } = params;
+}): Record<string, unknown> {
+  const { contents, generationConfig, finalSysInst } = params;
 
   const messages: Array<{ role: string; content: string }> = [];
   if (finalSysInst) {
@@ -105,6 +114,32 @@ async function sendViaOperationPipeline(params: {
   const maxOutputTokens =
     generationConfig?.maxOutputTokens ?? generationConfig?.max_output_tokens;
   if (maxOutputTokens !== undefined) body.maxOutputTokens = maxOutputTokens;
+
+  return body;
+}
+
+async function sendViaOperationPipeline(params: {
+  proxyUrl: string;
+  doFetch: typeof fetch;
+  contents: any[];
+  generationConfig: any;
+  finalSysInst?: string;
+  modelName: string;
+}) {
+  const {
+    proxyUrl,
+    doFetch,
+    contents,
+    generationConfig,
+    finalSysInst,
+    modelName,
+  } = params;
+
+  const body = buildOperationPipelineBody({
+    contents,
+    generationConfig,
+    finalSysInst,
+  });
 
   console.log(`[OracleProxy] Fetching from: ${proxyUrl} (operation pipeline)`);
   if (import.meta.env.DEV) {
@@ -171,6 +206,232 @@ async function sendViaOperationPipeline(params: {
     },
     rawResponse: data,
   };
+}
+
+/**
+ * Normalizes a `generateContent`/`generateContentStream` request (a bare
+ * string, a parts array, a single content object, or a full request object)
+ * into the shape both the operation pipeline and the legacy passthrough
+ * expect. Shared so a streamed and a buffered call for the same input always
+ * produce identical `contents`/`generationConfig`/`finalSysInst` — only how
+ * the response comes back differs.
+ */
+function normalizeGenerateContentRequest(
+  request: string | Array<GenerativeContentBlob | string> | any,
+  systemInstruction: string | undefined,
+): {
+  contents: any[];
+  generationConfig: any;
+  finalSysInst: string | undefined;
+  isPlainTextRequest: boolean;
+} {
+  // Deep clone request data so any reactive proxies are removed before the
+  // payload is normalized and serialized.
+  const raw = safeSnapshot(request);
+
+  let contents: any[];
+  let generationConfig: any = {};
+
+  if (
+    raw &&
+    typeof raw === "object" &&
+    raw.contents &&
+    Array.isArray(raw.contents)
+  ) {
+    // It's a full request object
+    contents = raw.contents;
+    generationConfig = raw.generationConfig || raw.generation_config || {};
+  } else if (Array.isArray(raw)) {
+    // It's an array of parts
+    contents = [
+      {
+        role: "user",
+        parts: raw.map((p) => (typeof p === "string" ? { text: p } : p)),
+      },
+    ];
+  } else if (raw && typeof raw === "object" && raw.parts) {
+    // It's a single content object
+    contents = [raw];
+  } else {
+    // It's a simple string
+    contents = [{ role: "user", parts: [{ text: String(raw) }] }];
+  }
+
+  // Final sanitation of parts (crucial for scalar field error)
+  contents = contents.map((c) => ({
+    role: c.role || "user",
+    parts: (c.parts || []).map((p: any) => {
+      // Ensure part is an object, and if text is an object, extract its string
+      if (typeof p === "string") return { text: p };
+      if (p.text && typeof p.text !== "string") {
+        console.warn(
+          "[OracleProxy] Sanitizing object found in text field:",
+          p.text,
+        );
+        return { text: String(p.text) };
+      }
+      return p;
+    }),
+  }));
+
+  const requestSysInst = raw?.systemInstruction ?? raw?.system_instruction;
+  const finalSysInst =
+    systemInstruction ??
+    (typeof requestSysInst === "string"
+      ? requestSysInst
+      : requestSysInst?.parts?.[0]?.text);
+
+  // Non-text response modalities (e.g. inline image generation via Gemini's
+  // multimodal endpoint) and non-text input parts (e.g. an inlineData image
+  // sent as part of the prompt) have no equivalent in the operation-based
+  // pipeline, which only ever deals in plain text messages both directions.
+  // Those requests keep using the legacy passthrough; only plain-text
+  // requests route through the registry/resolver pipeline (streaming or not).
+  const modalities: string[] =
+    generationConfig?.responseModalities ??
+    generationConfig?.response_modalities ??
+    [];
+  const wantsNonTextOutput =
+    modalities.length > 0 &&
+    !(modalities.length === 1 && modalities[0] === "TEXT");
+  const hasNonTextInput = contents.some((c) =>
+    (c.parts || []).some((p: any) => !p || typeof p.text !== "string"),
+  );
+  const isPlainTextRequest = !wantsNonTextOutput && !hasNonTextInput;
+
+  return { contents, generationConfig, finalSysInst, isPlainTextRequest };
+}
+
+/**
+ * Streaming counterpart to `sendViaOperationPipeline` (#2423). Same body as
+ * the buffered call, plus `stream: true`, reading oracle-proxy's SSE
+ * response and re-emitting each `GenerationEvent` as it arrives. No
+ * 401-retry-with-fresh-token here — see `proxyFetch`'s doc comment; a token
+ * expiring mid-stream surfaces as an `error` event rather than a silent
+ * reconnect, since replaying a request that's already streamed content to
+ * the caller isn't safe to do transparently.
+ */
+async function* sendViaOperationPipelineStream(params: {
+  proxyUrl: string;
+  doFetch: typeof fetch;
+  contents: any[];
+  generationConfig: any;
+  finalSysInst?: string;
+  signal?: AbortSignal;
+}): AsyncGenerator<GenerationEvent> {
+  const {
+    proxyUrl,
+    doFetch,
+    contents,
+    generationConfig,
+    finalSysInst,
+    signal,
+  } = params;
+
+  const body = {
+    ...buildOperationPipelineBody({ contents, generationConfig, finalSysInst }),
+    stream: true,
+  };
+
+  if (import.meta.env.DEV) {
+    console.debug("[Generator stream] opening SSE request");
+  }
+
+  let response: Response;
+  try {
+    response = await doFetch(proxyUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "transport-error" };
+    return;
+  }
+
+  if (!response.ok || !response.body) {
+    let message = `upstream-status-${response.status}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody?.error?.message) {
+        // Match the buffered path's message shape (`formatErrorCode`) — a
+        // caller-side classifier (classifyApiError) pattern-matches the
+        // trailing "(code: X)" to detect e.g. session-token expiry, and
+        // needs to see it here too, not just on the non-streaming request.
+        message = `${errorBody.error.message}${formatErrorCode(errorBody.error?.code)}`;
+      }
+    } catch {
+      // Body wasn't JSON (or the stream never opened) — keep the status-based message.
+    }
+    yield { type: "error", error: message };
+    return;
+  }
+
+  if (import.meta.env.DEV) {
+    console.debug("[Generator stream] SSE response opened", {
+      contentType: response.headers.get("content-type"),
+    });
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  // Parses the `data:` lines out of one raw SSE event and yields each as a
+  // GenerationEvent, skipping (not throwing on) a malformed payload.
+  function* parseSseEvent(rawEvent: string): Generator<GenerationEvent> {
+    for (const line of rawEvent.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const dataStr = trimmed.slice(5).trim();
+      if (!dataStr) continue;
+      try {
+        const event = JSON.parse(dataStr) as GenerationEvent;
+        if (import.meta.env.DEV) {
+          console.debug("[Generator stream] SSE event received", {
+            type: event.type,
+            textLength: event.type === "delta" ? event.text.length : undefined,
+          });
+        }
+        yield event;
+      } catch {
+        // Skip a malformed SSE payload rather than aborting the stream.
+      }
+    }
+  }
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (import.meta.env.DEV) {
+        console.debug("[Generator stream] SSE network chunk received", {
+          byteLength: value.byteLength,
+        });
+      }
+      buffer += decoder.decode(value, { stream: true });
+
+      let sepIndex: number;
+      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
+        const rawEvent = buffer.slice(0, sepIndex);
+        buffer = buffer.slice(sepIndex + 2);
+        yield* parseSseEvent(rawEvent);
+      }
+    }
+
+    // Flush any trailing partial event still buffered when the stream ends
+    // without a final blank-line separator — a provider closing the
+    // connection right after its last chunk shouldn't silently drop it.
+    buffer += decoder.decode();
+    if (buffer.trim()) yield* parseSseEvent(buffer);
+  } catch (err) {
+    const isAbort =
+      (err as { name?: string } | undefined)?.name === "AbortError";
+    yield { type: "error", error: isAbort ? "aborted" : "stream-read-error" };
+  }
 }
 
 /**
@@ -287,6 +548,9 @@ export class DefaultAIClientManager {
     previousInteractionId?: string | null;
     storeConversation?: boolean;
     generationConfig?: Record<string, unknown>;
+    /** Cancels the in-flight request (#2423) — e.g. a user cancelling a
+     * streaming generation whose interaction-degrade path routes here. */
+    signal?: AbortSignal;
   }): Promise<{ id: string; text: string }> {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       throw new Error("You appear to be offline. Generation is unavailable.");
@@ -311,6 +575,7 @@ export class DefaultAIClientManager {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: params.signal,
     });
 
     const data = await response.json().catch(() => ({}) as any);
@@ -436,84 +701,8 @@ export class DefaultAIClientManager {
         // `modelName` as a legacy hint (see sendViaOperationPipeline's own
         // log) — logging it here unqualified, before that's known, reads as
         // the actual model in use when it may not be.
-
-        // 1. Deep clone request data so any reactive proxies are removed
-        // before the payload is normalized and serialized.
-        const raw = safeSnapshot(request);
-
-        // 2. Normalize to standard Google "Contents" array
-        let contents: any[];
-        let generationConfig: any = {};
-
-        if (
-          raw &&
-          typeof raw === "object" &&
-          raw.contents &&
-          Array.isArray(raw.contents)
-        ) {
-          // It's a full request object
-          contents = raw.contents;
-          generationConfig =
-            raw.generationConfig || raw.generation_config || {};
-        } else if (Array.isArray(raw)) {
-          // It's an array of parts
-          contents = [
-            {
-              role: "user",
-              parts: raw.map((p) => (typeof p === "string" ? { text: p } : p)),
-            },
-          ];
-        } else if (raw && typeof raw === "object" && raw.parts) {
-          // It's a single content object
-          contents = [raw];
-        } else {
-          // It's a simple string
-          contents = [{ role: "user", parts: [{ text: String(raw) }] }];
-        }
-
-        // 3. Final sanitation of parts (Crucial for scalar field error)
-        contents = contents.map((c) => ({
-          role: c.role || "user",
-          parts: (c.parts || []).map((p: any) => {
-            // Ensure part is an object, and if text is an object, extract its string
-            if (typeof p === "string") return { text: p };
-            if (p.text && typeof p.text !== "string") {
-              console.warn(
-                "[OracleProxy] Sanitizing object found in text field:",
-                p.text,
-              );
-              return { text: String(p.text) };
-            }
-            return p;
-          }),
-        }));
-
-        const requestSysInst =
-          raw?.systemInstruction ?? raw?.system_instruction;
-        const finalSysInst =
-          systemInstruction ??
-          (typeof requestSysInst === "string"
-            ? requestSysInst
-            : requestSysInst?.parts?.[0]?.text);
-
-        // Non-text response modalities (e.g. inline image generation via
-        // Gemini's multimodal endpoint) and non-text input parts (e.g. an
-        // inlineData image sent as part of the prompt) have no equivalent
-        // in the new operation-based pipeline, which only ever deals in
-        // plain text messages both directions. Those requests keep using
-        // today's exact legacy passthrough; only plain-text requests route
-        // through the registry/resolver pipeline.
-        const modalities: string[] =
-          generationConfig?.responseModalities ??
-          generationConfig?.response_modalities ??
-          [];
-        const wantsNonTextOutput =
-          modalities.length > 0 &&
-          !(modalities.length === 1 && modalities[0] === "TEXT");
-        const hasNonTextInput = contents.some((c) =>
-          (c.parts || []).some((p: any) => !p || typeof p.text !== "string"),
-        );
-        const isPlainTextRequest = !wantsNonTextOutput && !hasNonTextInput;
+        const { contents, generationConfig, finalSysInst, isPlainTextRequest } =
+          normalizeGenerateContentRequest(request, systemInstruction);
 
         try {
           if (isPlainTextRequest) {
@@ -599,6 +788,39 @@ export class DefaultAIClientManager {
           console.error("[OracleProxy] Fetch error:", err);
           throw err;
         }
+      },
+
+      /**
+       * Streaming counterpart to `generateContent` (#2423). Only the
+       * operation-pipeline (plain-text) path supports streaming — a request
+       * needing the legacy passthrough (non-text modalities) yields a single
+       * `error` event instead, so callers that don't check first still fail
+       * safely rather than getting bytes that skip the pipeline entirely.
+       */
+      generateContentStream(
+        request: string | Array<GenerativeContentBlob | string> | any,
+        signal?: AbortSignal,
+      ): AsyncGenerator<GenerationEvent> {
+        const { contents, generationConfig, finalSysInst, isPlainTextRequest } =
+          normalizeGenerateContentRequest(request, systemInstruction);
+
+        if (!isPlainTextRequest) {
+          return (async function* () {
+            yield {
+              type: "error",
+              error: "streaming-not-supported-for-non-text-request",
+            } as GenerationEvent;
+          })();
+        }
+
+        return sendViaOperationPipelineStream({
+          proxyUrl,
+          doFetch,
+          contents,
+          generationConfig,
+          finalSysInst,
+          signal,
+        });
       },
     } as unknown as GenerativeModel;
   }

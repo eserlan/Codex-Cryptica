@@ -130,6 +130,18 @@ export function navItems(): NavItem[] {
       placement: "bar",
     },
     {
+      id: "adventure",
+      icon: "icon-[lucide--swords]",
+      label: "Play",
+      title: "Solo Adventure — play a session guided by your campaign world",
+      href: `${base}/adventure`,
+      group: "view",
+      // The desktop rail has room for a first-class Play workspace. On a
+      // phone it remains in the navigation drawer, where its label can stay
+      // clear without crowding the fixed-size bottom bar.
+      placement: "overflow",
+    },
+    {
       // Tables and decks are two modes of one workspace, so they share one
       // slot and switch inside it.
       id: "random",

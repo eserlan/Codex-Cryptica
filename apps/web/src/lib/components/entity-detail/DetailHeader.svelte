@@ -31,6 +31,13 @@
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
   import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
+  import SaveStatusIndicator from "$lib/components/ui/SaveStatusIndicator.svelte";
+  import {
+    isMonsterLabsHandoffEligibleType,
+    getMonsterLabsActionLabel,
+  } from "$lib/services/seo/monsterlabs-handoff";
+  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
 
   let {
     entity,
@@ -84,6 +91,24 @@
     if (!ok) return;
     shelvedJustNow = true;
     setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
+  /**
+   * Hands this entity's content off to MonsterLabs' D&D monster or magic
+   * item generator in a new tab (#2871, #2872). Read-only against this
+   * vault, like Send to Shelf. The user confirms in a modal first; only
+   * after that confirm does the Oracle compression call run (shown as its
+   * own "loading" state), and MonsterLabs opens once the URL is ready.
+   */
+  const monsterLabsFlow = createMonsterLabsHandoffFlow();
+  const handleSendToMonsterLabs = () => {
+    monsterLabsFlow.start({
+      name: entity.title,
+      type: entity.type,
+      description: [entity.content, entity.lore]
+        .filter((part): part is string => Boolean(part?.trim()))
+        .join("\n\n"),
+    });
   };
 
   const handleFindInGraph = () => {
@@ -152,6 +177,9 @@
       vault.selectedEntityId = parentEntity.id;
     }
   };
+
+  // Guests read the hierarchy but never rearrange it.
+  const canEditParent = $derived(!vault.isGuest);
 </script>
 
 {#if isObscured}
@@ -239,6 +267,27 @@
           class="{shelvedJustNow
             ? 'icon-[lucide--check]'
             : 'icon-[lucide--library]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
+    {#if isMonsterLabsHandoffEligibleType(entity.type)}
+      <button
+        type="button"
+        onclick={handleSendToMonsterLabs}
+        disabled={monsterLabsFlow.open}
+        aria-busy={monsterLabsFlow.state === "loading"}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50"
+        aria-label={getMonsterLabsActionLabel(entity.type)}
+        title="{getMonsterLabsActionLabel(
+          entity.type,
+        )} — opens monsterlabs.app in a new tab"
+        data-testid="send-to-monsterlabs-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{monsterLabsFlow.state === 'loading'
+            ? 'icon-[lucide--loader-2] animate-spin'
+            : 'icon-[lucide--external-link]'} w-5 h-5"
         ></span>
       </button>
     {/if}
@@ -355,26 +404,34 @@
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
-          <input
-            type="text"
-            bind:value={editTitle}
-            class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
-            placeholder="Entity Title"
-          />
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              bind:value={editTitle}
+              class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
+              placeholder="Entity Title"
+            />
+            <SaveStatusIndicator />
+          </div>
           <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
         </div>
       {:else}
         <div class="flex flex-col gap-0.5 min-w-0 w-full">
-          <h2
-            class="{isFantasyTheme
-              ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} w-full break-words whitespace-normal font-bold"
-            style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
-          >
-            {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                aria-hidden="true">*</sup
-              ><span class="sr-only"> (past)</span>{/if}
-          </h2>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2
+              class="{isFantasyTheme
+                ? 'text-xl md:text-3xl font-header tracking-wider'
+                : 'text-xl md:text-3xl font-body tracking-wide'} break-words whitespace-normal font-bold"
+              style:color={isFantasyTheme
+                ? "var(--theme-title-ink)"
+                : undefined}
+            >
+              {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                  aria-hidden="true">*</sup
+                ><span class="sr-only"> (past)</span>{/if}
+            </h2>
+            <SaveStatusIndicator />
+          </div>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
               <span
@@ -407,6 +464,35 @@
                 {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
                     aria-hidden="true">*</sup
                   ><span class="sr-only"> (past)</span>{/if}
+              </button>
+              {#if canEditParent}
+                <button
+                  type="button"
+                  onclick={() => modalUIStore.openParentPicker(entity.id)}
+                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
+                  aria-label="Change parent"
+                  title="Change parent"
+                  data-testid="change-parent-button"
+                >
+                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  ></span>
+                </button>
+              {/if}
+            </div>
+          {:else if canEditParent}
+            <div class="mt-1.5">
+              <button
+                type="button"
+                onclick={() => modalUIStore.openParentPicker(entity.id)}
+                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                title="Nest this under another entity"
+                data-testid="set-parent-button"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
+                ></span>
+                <span>Set parent</span>
               </button>
             </div>
           {/if}
@@ -484,3 +570,13 @@
     <StructuralSuggestionBanner entityId={entity.id} />
   {/if}
 </div>
+
+<MonsterLabsSendingModal
+  open={monsterLabsFlow.open}
+  state={monsterLabsFlow.state}
+  entityLabel={monsterLabsFlow.entityLabel}
+  url={monsterLabsFlow.url}
+  onConfirm={monsterLabsFlow.confirm}
+  onOpen={monsterLabsFlow.close}
+  onClose={monsterLabsFlow.close}
+/>

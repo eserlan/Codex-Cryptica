@@ -20,7 +20,7 @@
           href: "/generators/npc",
           label: "RPG NPC Generator",
           summary:
-            "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
+            "Generate NPCs across six genres: fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
           icon: "icon-[lucide--users]",
         },
       ],
@@ -34,6 +34,13 @@
           summary:
             "Build guilds, megacorps, vampire clans, and rebel cells with agendas, conflicts, and NPCs.",
           icon: "icon-[lucide--flag]",
+        },
+        {
+          href: "/generators/faction-roster",
+          label: "Faction Roster Generator",
+          summary:
+            "Turn a faction into 3-6 named members, each with a motive, a stance, and a connection to another member.",
+          icon: "icon-[lucide--users-round]",
         },
         {
           href: "/generators/vampire-clan",
@@ -50,6 +57,13 @@
           icon: "icon-[lucide--truck]",
         },
         {
+          href: "/generators/dark-fantasy-faction",
+          label: "Dark Fantasy Faction Generator",
+          summary:
+            "Create fallen orders, cursed noble houses, plague cults, witch-hunters, and corpse guilds with morally sharp agendas and hooks.",
+          icon: "icon-[lucide--skull]",
+        },
+        {
           href: "/generators/names",
           label: "RPG Name Generator",
           summary:
@@ -60,7 +74,7 @@
           href: "/generators/fantasy-names",
           label: "Fantasy Name Generator",
           summary:
-            "Generate fantasy names across ten cultural styles — elven, dwarven, orcish, Norse, and more.",
+            "Generate fantasy names across ten cultural styles: elven, dwarven, orcish, Norse, and more.",
           icon: "icon-[lucide--feather]",
         },
       ],
@@ -95,6 +109,27 @@
           icon: "icon-[lucide--scroll-text]",
         },
         {
+          href: "/generators/rumour",
+          label: "Rumour Generator",
+          summary:
+            "Generate a d6 table of six local rumours -- each with a concrete lead and a source -- lighter than a full quest hook.",
+          icon: "icon-[lucide--ear]",
+        },
+        {
+          href: "/generators/encounter",
+          label: "Encounter Generator",
+          summary:
+            "Generate a playable combat, social, exploration, environmental, or mixed encounter with participants, environment, a complication, and outcomes.",
+          icon: "icon-[lucide--swords]",
+        },
+        {
+          href: "/generators/puzzle",
+          label: "Puzzle Generator",
+          summary:
+            "Create encounter puzzles with layered clues, multiple approaches, and consequences that keep the adventure moving.",
+          icon: "icon-[lucide--puzzle]",
+        },
+        {
           href: "/generators/plot-twist-generator",
           label: "Plot Twist & Complication Generator",
           summary:
@@ -109,10 +144,17 @@
           icon: "icon-[lucide--skull]",
         },
         {
+          href: "/generators/heist",
+          label: "Heist Generator",
+          summary:
+            "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+          icon: "icon-[lucide--key-round]",
+        },
+        {
           href: "/generators/council-vote",
           label: "Council Vote Generator",
           summary:
-            "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+            "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision.",
           icon: "icon-[lucide--gavel]",
         },
         {
@@ -133,15 +175,29 @@
           href: "/generators/star-system",
           label: "Star System Generator",
           summary:
-            "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+            "Generate a coherent sci-fi star system: star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
           icon: "icon-[lucide--orbit]",
+        },
+        {
+          href: "/generators/constellation",
+          label: "Constellation Generator",
+          summary:
+            "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, and an adventure hook.",
+          icon: "icon-[lucide--stars]",
         },
         {
           href: "/generators/alien-race",
           label: "Alien Race Generator",
           summary:
-            "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+            "Generate a coherent alien species: biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
           icon: "icon-[lucide--dna]",
+        },
+        {
+          href: "/generators/creature",
+          label: "Creature Generator",
+          summary:
+            "Generate memorable monsters, beasts, alien fauna, and undead with ecology, sensory signs, combat tactics, and adventure hooks.",
+          icon: "icon-[lucide--paw-print]",
         },
         {
           href: "/generators/dungeon-generator",
@@ -189,7 +245,7 @@
           href: "/generators/social-hub",
           label: "Social Hub Generator",
           summary:
-            "Generate a social venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas.",
+            "Generate a social venue for any genre: cyberpunk dive bars, western saloons, sci-fi cantinas.",
           icon: "icon-[lucide--map-pin]",
         },
         {
@@ -203,14 +259,14 @@
           href: "/generators/nation",
           label: "Nation Generator",
           summary:
-            "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations.",
+            "Generate a political entity for any genre: fantasy empires, cyberpunk megacorp-states, sci-fi federations.",
           icon: "icon-[lucide--globe]",
         },
         {
           href: "/generators/news-sheet-generator",
           label: "News Sheet Generator",
           summary:
-            "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, propaganda, and GM-only hooks.",
+            "Generate an in-world news sheet for any genre: cyberpunk screamsheets, fantasy broadsheets, station newsfeeds, with rumours, classifieds, propaganda, and GM-only hooks.",
           icon: "icon-[lucide--newspaper]",
         },
         {
@@ -224,7 +280,7 @@
           href: "/generators/random",
           label: "Surprise Me",
           summary:
-            "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, deity, or venue.",
+            "Not sure what you need? Spin the idea machine: a random faction, realm, NPC, quest hook, deity, or venue.",
           icon: "icon-[lucide--dices]",
         },
       ],
@@ -236,7 +292,7 @@
       href: "/generators/fantasy",
       label: "Fantasy Hub",
       summary:
-        "All fantasy generators in one place — NPCs, factions, kingdoms, magic items, pantheons, and more.",
+        "All fantasy generators in one place: NPCs, factions, kingdoms, magic items, pantheons, and more.",
       icon: "icon-[lucide--wand-sparkles]",
     },
     {
@@ -316,6 +372,13 @@
         "Diplomatic officers, scientific factions, space station hubs, and first-contact quest hooks for optimistic space opera campaigns.",
       icon: "icon-[lucide--rocket]",
     },
+    {
+      href: "/generators/space-western",
+      label: "Space Western Hub",
+      summary:
+        "Frontier scoundrels, asteroid boomtowns, smuggling rings, and rust-bucket freighters for space western campaigns.",
+      icon: "icon-[lucide--orbit]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);
@@ -325,7 +388,7 @@
     "@type": "ItemList",
     name: "RPG Generators",
     description:
-      "Free RPG generators for tabletop GMs — NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more.",
+      "Free RPG generators for tabletop GMs: NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more.",
     url: `${origin}/generators`,
     numberOfItems: allItems.length,
     itemListElement: allItems.map((gen, i) => ({
@@ -359,7 +422,7 @@
 
 <SeoHead
   title="RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica"
-  description="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
+  description="Free RPG generators for tabletop GMs: create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
   canonicalUrl="https://codexcryptica.com/generators"
   image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
   imageAlt="Codex Cryptica RPG generator tools overview"
@@ -392,7 +455,7 @@
           RPG Generators
         </h1>
         <p class="text-base md:text-lg text-theme-muted leading-relaxed">
-          Free, table-ready generators for tabletop GMs. No login required —
+          Free, table-ready generators for tabletop GMs. No login required:
           generate a draft, copy it, or save it into your local Codex Cryptica
           campaign vault.
         </p>
@@ -422,7 +485,7 @@
               >
                 {hub.label}
               </span>
-              <span class="block text-sm text-theme-muted leading-relaxed">
+              <span class="block text-base text-theme-muted leading-relaxed">
                 {hub.summary}
               </span>
             </a>
@@ -453,7 +516,7 @@
                 >
                   {gen.label}
                 </span>
-                <span class="block text-sm text-theme-muted leading-relaxed">
+                <span class="block text-base text-theme-muted leading-relaxed">
                   {gen.summary}
                 </span>
               </a>

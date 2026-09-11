@@ -447,14 +447,14 @@ export class SearchEngine {
     }
 
     const decoder = new TextDecoder();
+    const segments: Record<string, string> = {};
+    for (const [key, value] of Object.entries(segmented.segments ?? {})) {
+      segments[key] =
+        typeof value === "string" ? value : decoder.decode(value as any);
+    }
     const serializable = {
       ...segmented,
-      segments: Object.fromEntries(
-        Object.entries(segmented.segments ?? {}).map(([key, value]) => [
-          key,
-          typeof value === "string" ? value : decoder.decode(value as any),
-        ]),
-      ),
+      segments,
     };
     const compressed = compressSync(strToU8(JSON.stringify(serializable)));
     return Comlink.transfer(

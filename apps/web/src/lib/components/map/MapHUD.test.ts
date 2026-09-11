@@ -102,6 +102,38 @@ describe("MapHUD", () => {
     expect(onShowUpload).toHaveBeenCalled();
   });
 
+  it("offers the note button out of play, and leaves it to the VTT toolbar in play", async () => {
+    const { mapSession } = await import("$lib/stores/map-session.svelte");
+    mapSession.setVttEnabled(false);
+
+    const { unmount } = render(MapHUD, {
+      props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+    });
+
+    expect(screen.getByRole("button", { name: "Pin Note" })).not.toBeNull();
+    unmount();
+
+    mapSession.setVttEnabled(true);
+    render(MapHUD, {
+      props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+    });
+
+    expect(screen.queryByRole("button", { name: "Pin Note" })).toBeNull();
+    mapSession.setVttEnabled(false);
+  });
+
+  it("hides the note button from guests", async () => {
+    const { mapSession } = await import("$lib/stores/map-session.svelte");
+    mapSession.setVttEnabled(false);
+    sessionModeStoreMock.isGuestMode = true;
+
+    render(MapHUD, {
+      props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+    });
+
+    expect(screen.queryByRole("button", { name: "Pin Note" })).toBeNull();
+  });
+
   it("renders only the active map name for a live VTT guest", () => {
     sessionModeStoreMock.isGuestMode = true;
     guestVaultMock.publishId = null;

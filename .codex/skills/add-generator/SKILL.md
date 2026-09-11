@@ -1,11 +1,11 @@
 ---
 name: add-generator
-description: Add or expose a Codex Cryptica content generator. Use when asked to add, create, implement, wire, or publish a generator; make a new generator type; or expose a generator in the in-app campaign workflow, public /generators pages, theme hubs, or /tools.
+description: Add a Codex Cryptica content generator across both the in-app campaign workflow and public /generators surface. Use when asked to add, create, implement, wire, or publish a generator; make a new generator type; or expose a generator in the in-app campaign workflow, public /generators pages, theme hubs, or /tools.
 ---
 
 # Add a Generator
 
-Codex Cryptica has two separate generator surfaces. Decide which is requested before editing. Ask only if the request does not make the target clear.
+Codex Cryptica has two separate generator surfaces. A new generator MUST be implemented on both surfaces by default. They have independent registration and UI wiring; completing one never exposes it on the other.
 
 | Surface     | In-app campaign generator                                      | Public generator pages                                           |
 | ----------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
@@ -14,7 +14,7 @@ Codex Cryptica has two separate generator surfaces. Decide which is requested be
 | Core        | `packages/generator-engine/src/campaign-generator-registry.ts` | `packages/generator-engine/src/public-<name>.ts` plus web wiring |
 | Output      | `GeneratorOutput`                                              | `PublicGeneratorOutput`                                          |
 
-Implement both only when requested. Shared content design does not make either surface discover the other automatically.
+Implement both surfaces for every new generator. An explicit user request to limit work to one surface is the only exception; confirm that scope in the handoff. Shared content design does not make either surface discover the other automatically.
 
 ## Before editing
 
@@ -24,7 +24,7 @@ Implement both only when requested. Shared content design does not make either s
 4. Decide whether generated `content` belongs in the main document and `lore` in the reference rail. Inspect `apps/web/src/lib/components/seo/generator-document-layout.ts` before adding a layout rule.
 5. Keep the change library-first: prompt construction and local fallbacks belong in `packages/generator-engine`, not Svelte components.
 
-## In-app campaign generator
+## In-app campaign generator (required)
 
 1. Pick the matching implementation tier.
    - Use an inline registry prompt and fallback for simple NPC/faction/event-shaped generators.
@@ -42,9 +42,9 @@ Implement both only when requested. Shared content design does not make either s
 
 The generic campaign modal and form consume `listGenerators()`; do not add special-case UI wiring unless the generator genuinely requires it.
 
-## Public `/generators` surface
+## Public `/generators` surface (required)
 
-Only do this when the no-login public tool is requested.
+Implement this alongside the in-app generator unless the user explicitly excludes the public surface.
 
 1. Create `packages/generator-engine/src/public-<name>.ts`, following a comparable current generator:
    - config option pools and typed options;
@@ -66,19 +66,37 @@ Only do this when the no-login public tool is requested.
 8. Add a `/tools` listing link when appropriate. Do not create a dedicated `/tools` page unless explicitly requested.
 9. Verify the public catalogue is consistent: the generator slug and label must
    appear in the generator index, every shared theme-hub card list, the
-   generator switcher dropdown pill/menu, and `/tools` when the surface is
-   intended to be discoverable there. Add or update focused catalogue tests.
+   generator switcher dropdown pill/menu, and the `/tools` listing. Add or
+   update focused catalogue tests. These links are required for every public
+   generator; do not treat any of them as optional discoverability work.
+10. Create a dedicated SEO image for the new public generator. Capture the
+    rendered `/generators/<slug>` page in a real browser at a social-card
+    viewport; do not use generated artwork, mock UI, or another generator's
+    screenshot. Upload it to remote R2 as
+    `codex-cryptica-statics/screenshots/generator-<slug>.png` with
+    `image/png`, verify the public
+    `https://assets.codexcryptica.com/screenshots/generator-<slug>.png` URL,
+    and set that exact URL plus accurate alt text in `generator-page-meta.ts`.
+    If R2 access is unavailable, report it rather than silently pointing at a
+    reused image.
 
 ## Theme-aware generators
 
 Use the canonical theme vocabulary already defined by comparable generators. If public output is genre-sensitive:
 
 1. Add `genre?: string` from the start, with an established default.
-2. Synchronize the form theme only when the generator uses it.
-3. Add the slug to both `GENERATOR_SLUGS_WITH_THEME` and `SLUGS_USING_STORED_THEME` in `generator-theme-maps.ts`.
-4. Update the real theme map, not the orphaned `generator-theme.ts`; verify imports before changing lookalike files.
-5. Use per-theme option pools only for options that genuinely vary by genre. Preserve custom user values when changing theme.
-6. Make the AI prompt explicitly require theme fidelity: respect the selected genre's era, technology, institutions, and vocabulary. Prohibit modern terminology, institutions, or technology unless the selected theme supports them, and add a prompt regression test for that rule.
+2. Synchronize the form's genre/theme selection with the page's visual theme.
+   A manual selection of a canonical CC theme must update `activeTheme`, so
+   `SEOGeneratorLayout` re-skins immediately; use a mapping when the
+   generator has a different genre vocabulary. Preserve custom free-text
+   genres for generation without assigning an unknown visual skin.
+3. Surprise Me must not change the genre or visual theme. Only the genre
+   selector's own change callback may update `activeTheme`; cover manual
+   selection and Surprise Me in the component test.
+4. Add the slug to both `GENERATOR_SLUGS_WITH_THEME` and `SLUGS_USING_STORED_THEME` in `generator-theme-maps.ts`.
+5. Update the real theme map, not the orphaned `generator-theme.ts`; verify imports before changing lookalike files.
+6. Use per-theme option pools only for options that genuinely vary by genre. Preserve custom user values when changing theme.
+7. Make the AI prompt explicitly require theme fidelity: respect the selected genre's era, technology, institutions, and vocabulary. Prohibit modern terminology, institutions, or technology unless the selected theme supports them, and add a prompt regression test for that rule.
 
 ## Structured visuals and saved entities
 
@@ -95,5 +113,8 @@ Only add this path when a generator explicitly produces a diagram, map, or other
 2. Run focused generator-engine tests and the affected web tests.
 3. Run `bun --filter generator-engine lint`, `bun --filter web check`, and `bun run lint`; report any unrelated baseline failures precisely.
 4. For public pages, verify the route entries and a representative rendered generator page.
+5. Verify both surfaces are discoverable: `listGenerators()` includes the in-app generator; the public generator appears in `/generators`, every shared theme hub, the switcher, and `/tools`.
+6. Verify the dedicated public SEO screenshot resolves from R2 and is the same
+   URL referenced by the generator's `ogImage` metadata.
 
 Follow the repository’s constructor-DI, privacy, Svelte 5, semantic-token, Iconify, and plain-language rules throughout.

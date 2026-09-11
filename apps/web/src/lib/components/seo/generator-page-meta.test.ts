@@ -8,7 +8,10 @@ const allExpectedSlugs: ValidSlug[] = [
   "minor-magic-item",
   "artifact-generator",
   "faction",
+  "faction-roster",
   "quest",
+  "rumour",
+  "puzzle",
   "item",
   "tavern",
   "social-hub",
@@ -16,6 +19,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -33,11 +37,22 @@ const allExpectedSlugs: ValidSlug[] = [
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
+  "creature",
+  "encounter",
+  "heist",
 ];
 
 describe("generator-page-meta completeness and social preview tags", () => {
-  it("has metadata entries for all 30 valid generator slugs", () => {
+  it("uses Puzzle's own rendered social screenshot", () => {
+    expect(slugMeta.puzzle.ogImage).toBe(
+      "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
+    );
+    expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
+  });
+
+  it("has metadata entries for all valid generator slugs", () => {
     const keys = Object.keys(slugMeta);
     expect(keys.length).toBe(allExpectedSlugs.length);
     for (const slug of allExpectedSlugs) {
@@ -76,4 +91,25 @@ describe("generator-page-meta completeness and social preview tags", () => {
       });
     });
   }
+
+  describe("heist and puzzle cluster-link integrity (#2850)", () => {
+    it("heist generator links to its answer guide and its worked example", () => {
+      const hrefs = slugMeta.heist.relatedLinks?.map((link) => link.href) ?? [];
+      expect(hrefs).toContain(
+        "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+      );
+      expect(hrefs).toContain(
+        "/examples/the-breakwater-vault-space-western-heist",
+      );
+    });
+
+    it("puzzle generator links to its answer guide and its worked example", () => {
+      const hrefs =
+        slugMeta.puzzle.relatedLinks?.map((link) => link.href) ?? [];
+      expect(hrefs).toContain(
+        "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+      );
+      expect(hrefs).toContain("/examples/the-venting-helix-derelict-hazard");
+    });
+  });
 });

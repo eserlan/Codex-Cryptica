@@ -10,6 +10,9 @@ export const vampireTheMasquerade: LandingPageConfig = {
     title: "Codex Cryptica for Vampire: The Masquerade",
     description:
       "Whether you run V5, V20, or classic Revised, manage your Vampire: The Masquerade chronicle in one connected, local-first workspace.",
+    image: "https://assets.codexcryptica.com/og/vampire-the-masquerade.jpg",
+    imageAlt:
+      "Elysium penthouse study overlooking rainy city skyline with vampire clan lineage chart, wax seals, and crystal glass",
   },
   hero: {
     eyebrow: "Edition-Agnostic Chronicle Management",

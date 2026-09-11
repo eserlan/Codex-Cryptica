@@ -50,6 +50,11 @@ describe("Themed Generator Route", () => {
       expect(res).toContainEqual({ theme: "lancer", slug: "npc" });
     });
 
+    it("includes space western + nation", () => {
+      const res = (entries as any)();
+      expect(res).toContainEqual({ theme: "space-western", slug: "nation" });
+    });
+
     it("includes fantasy + settlement", () => {
       const res = (entries as any)();
       expect(res).toContainEqual({ theme: "fantasy", slug: "settlement" });

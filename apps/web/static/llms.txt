@@ -40,6 +40,21 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Offline RPG Campaign Manager](https://codexcryptica.com/solutions/offline-rpg-campaign-manager): Fully offline campaign management.
 - [Local-First Worldbuilding Tool](https://codexcryptica.com/solutions/local-first-worldbuilding-tool): Privacy-first worldbuilding with no cloud dependency.
 
+## TTRPG System & Genre Pages
+
+- [D&D 5e Campaign Management](https://codexcryptica.com/for/dungeons-and-dragons): Campaign and session management for D&D 5e Dungeon Masters.
+- [Pathfinder 2e Campaign Management](https://codexcryptica.com/for/pathfinder-2e): Adventure Path, deity, faction, and hex exploration tracker.
+- [Vampire: The Masquerade Chronicle Management](https://codexcryptica.com/for/vampire-the-masquerade): Coteries, clan lineages, hunting grounds, boons, and Touchstones.
+- [Call of Cthulhu Keeper Notes](https://codexcryptica.com/for/call-of-cthulhu): Scenario clue webs, handouts, occult tomes, and cults.
+- [Cyberpunk RED Campaign Management](https://codexcryptica.com/for/cyberpunk-red): Fixers, edgerunner crews, boostergang turf, and gig recaps.
+- [Traveller Campaign Management](https://codexcryptica.com/for/traveller): Subsectors, star systems, speculative trade, jump routes, and patrons.
+- [Fantasy Worldbuilding](https://codexcryptica.com/for/fantasy-worldbuilding): Dynasties, pantheons, realms, and centuries of historical lore.
+- [Gothic Horror Worldbuilding](https://codexcryptica.com/for/gothic-horror): Cursed lineages, decaying estates, buried secrets, and heirlooms.
+- [Cosmic Horror Worldbuilding](https://codexcryptica.com/for/cosmic-horror): Occult orders, research archives, expeditions, and anomalous manifestations.
+- [Dystopian Sci-Fi Worldbuilding](https://codexcryptica.com/for/dystopian-sci-fi): Megacity regimes, surveillance networks, arcologies, and resistance movements.
+- [Space Opera Worldbuilding](https://codexcryptica.com/for/space-opera): Galactic empires, hyperlanes, fleet telemetry, and alien factions.
+- [Conspiracy & Intrigue Worldbuilding](https://codexcryptica.com/for/conspiracy): Shadow cabals, shell organisations, compromised assets, and classified dossiers.
+
 ## Feature Pages
 
 - [Local-First RPG Campaign Manager](https://codexcryptica.com/features/local-first-rpg-campaign-manager): Deep dive into OPFS-based local storage.
@@ -77,7 +92,36 @@ The pages above are informational landing pages; these are the canonical, no-log
 - [RPG NPC Generator](https://codexcryptica.com/generators/npc): Generate a full NPC — name, ancestry, role, secret, faction tie, and GM hook — across any genre, no account required.
 - [Faction Generator](https://codexcryptica.com/generators/faction): Generate a faction with agenda, leadership, resources, rivals, and hooks.
 - [Settlement Generator](https://codexcryptica.com/generators/settlement): Generate a town, city, or outpost with population, industry, threats, and points of interest.
+- [RPG Rumour Generator](https://codexcryptica.com/generators/rumour): Generate six local rumours with four reliable leads, one exaggeration, one dangerous misconception, and a concrete lead for each.
 - [Magic Item Generator](https://codexcryptica.com/generators/magic-item): Generate a magic item with properties, history, and drawbacks.
+
+## Answer Pages
+
+Concise, self-contained reference answers to real RPG and worldbuilding questions. Each page answers the question directly before any product material.
+
+- [Answers Hub](https://codexcryptica.com/answers): Index of every published answer page.
+- [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl): Mapping an adventure as named locations joined by explicit routes, rather than a hex grid.
+- [How do you organise RPG campaign notes?](https://codexcryptica.com/answers/how-do-you-organise-rpg-campaign-notes): Durable entity pages, dated session logs, and disposable prep — plus the post-session pass that keeps them true.
+- [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction): Six questions — goal, obstacle, recruits, limits, assets, next move — that make a faction act on its own.
+- [How do you organise NPC relationships?](https://codexcryptica.com/answers/how-do-you-organise-npc-relationships): Store relationships as directed, named links with a reason and a visibility, not as ally lists.
+- [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter): A situation already in progress, with a reason to be there and an option that is not combat.
+- [How do you create a pantheon?](https://codexcryptica.com/answers/how-do-you-create-a-pantheon): Build entanglements between gods before assigning domains; five structural moves that generate play.
+- [How do you design RPG puzzles that do not stall the game?](https://codexcryptica.com/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game): More than one way through, and failure that costs something other than time.
+- [What should an RPG settlement contain?](https://codexcryptica.com/answers/what-should-an-rpg-settlement-contain): A reason to exist, three or four enterable places, three people who want things, and one unsolved problem.
+- [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion): Write the practice before the doctrine: one rite, one prohibition, who funds it, and what adherents dispute.
+- [How do you generate useful RPG rumours?](https://codexcryptica.com/answers/how-do-you-generate-useful-rpg-rumours): Build a six-entry table with four reliable leads, one exaggeration, one dangerous misconception, and named sources and destinations.
+- [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign): Decide the truth in full before session one, then design how it leaks; every conclusion needs three routes.
+
+## Curated Generator Examples
+
+Curated raw or lightly edited generator output, with provenance, the settings that produced it, and a short editorial note on what makes it usable.
+
+- [Examples Hub](https://codexcryptica.com/examples): Every published example.
+- [Fantasy settlement example: Gull's Roost](https://codexcryptica.com/examples/gulls-roost-coastal-smuggling-town): A coastal smuggling town with a working economy, five points of interest and live adventure hooks.
+- [RPG faction example: The Low-Tide Rust](https://codexcryptica.com/examples/the-low-tide-rust-dock-syndicate): A dock syndicate rolled inside the Gull's Roost session, reusing that town's places and people.
+- [Cyberpunk district example: Arc Hub](https://codexcryptica.com/examples/arc-hub-augmentation-slum): A vertical augmentation slum governed by a malfunctioning municipal AI.
+- [Sci-fi encounter example: The Venting Helix](https://codexcryptica.com/examples/the-venting-helix-derelict-hazard): A derelict-ship hazard with four viable solutions and fail-forward escalation.
+- [RPG rumour table example: Six Words from Lowmere](https://codexcryptica.com/examples/lowmere-six-words-rumour-table): Lightly edited six-entry rumour table with player-facing gossip, GM truth notes, named sources, and connected consequences.
 
 ## Technical Documentation
 

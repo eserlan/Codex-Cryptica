@@ -81,6 +81,7 @@ export const npcConfig = {
     "Neutral Evil",
     "Chaotic Evil",
   ],
+  modes: ["dossier", "table-card"],
   traits: [
     "Always whispers when speaking to build dramatic tension.",
     "Carries a pocket watch that runs backward but claims it is correct.",
@@ -111,7 +112,7 @@ export const npcConfig = {
     ],
     "Cyberpunk / Corporate": [
       "Has a black-market neural implant that records every conversation they have.",
-      "Is running a double identity — one registered citizen, one ghost in the Net.",
+      "Is running a double identity: one registered citizen, one ghost in the Net.",
       "Sold corporate blueprints to a rival megacorp and is waiting to be found out.",
       "Their real body is in cryo storage; this one is a remotely piloted sleeve.",
       "Is paying off a fixer to delete their past arrest record before it resurfaces.",
@@ -130,13 +131,13 @@ export const npcConfig = {
       "Is a deserter from a dissolved fleet who assumed a dead crewmate's identity.",
       "Has been skimming fuel rations and selling them to a black-market hauler.",
       "Secretly communicates with an AI collective officially declared extinct after the Purge.",
-      "Possesses classified gene-therapy that could cure a colony plague — but has a buyer lined up.",
+      "Possesses classified gene-therapy that could cure a colony plague, but has a buyer lined up.",
       "Is a deep-cover operative whose own handler has gone dark for six months.",
     ],
     "Modern Conspiracy": [
       "Photographed a government official at a meeting that never officially took place.",
       "Has a second phone with texts that contradict a high-profile alibi.",
-      "Was a witness to a staged accident and was paid to stay quiet — once.",
+      "Was a witness to a staged accident and was paid to stay quiet, just once.",
       "Runs a seemingly normal business that fronts for a document-forging operation.",
       "Is on three different intelligence watchlists under three different names.",
       "Knows the identity of a mole inside the task force investigating them.",
@@ -154,7 +155,7 @@ export const npcConfig = {
       "Buried stolen railroad payroll in the desert and hasn't been able to retrieve it.",
       "Is feeding land-office survey reports to a cattle baron ahead of official filing.",
       "Witnessed a US Marshal commit murder and hasn't decided what to do about it.",
-      "Has a letter of pardon — forged, but so far no one has checked closely.",
+      "Has a letter of pardon, forged, but so far no one has checked closely.",
       "Was the getaway rider in a bank job and is now living off a preacher's charity.",
     ],
     Steampunk: [
@@ -162,11 +163,11 @@ export const npcConfig = {
       "Is selling guild-licensed patents to unlicensed workshops across the Ironhaven border.",
       "Their airship runs on a fuel compound the Alchemists' Union declared illegal last year.",
       "Maintains a secret press in the engine room and distributes seditious broadsheets.",
-      "Was the anonymous informant who exposed the Clavenwick Boiler Disaster — and caused it.",
+      "Was the anonymous informant who exposed the Clavenwick Boiler Disaster, and also caused it.",
       "Keeps a clockwork duplicate of themselves wound and ready to take the blame if needed.",
     ],
     Lancer: [
-      "Their mech's kill-record has been scrubbed — they know what was removed and why.",
+      "Their mech's kill-record has been scrubbed, and they know what was removed and why.",
       "Is an unlicensed omninet node operator running pirate frequencies inside Union space.",
       "Accepted a contract from a Harrison Armory shell company they cannot legally acknowledge.",
       "Their pilot licence is valid; their frame's chassis number belongs to a destroyed unit.",
@@ -174,7 +175,7 @@ export const npcConfig = {
       "Carries a paracausal field reading that HORUS flagged but Union NHP oversight buried.",
     ],
     "Space Opera Resistance": [
-      "Is a double agent — loyalty to the Resistance is genuine, but they report troop positions to the Empire.",
+      "Is a double agent: loyalty to the Resistance is genuine, but they report troop positions to the Empire.",
       "Destroyed a refugee shuttle to prevent an Imperial boarding party from capturing codes aboard.",
       "Has a sibling serving as an Imperial officer and sends them warnings before major strikes.",
       "Stole Resistance encryption keys to sell, then lost their nerve and never made the handoff.",
@@ -185,9 +186,17 @@ export const npcConfig = {
       "Made first contact with a sentient species and filed a false 'no signs of life' report.",
       "Has been quietly altering the survey data on a planet to delay its colonisation.",
       "Is harbouring a non-registered AI crew member in the ship's secondary systems.",
-      "Received a message from a probe that vanished fifteen years ago — and hasn't reported it.",
+      "Received a message from a probe that vanished fifteen years ago, and hasn't reported it.",
       "Traded protected artefacts from a pre-spaceflight culture for personal passage home.",
-      "Their breakthrough publication was based on a colleague's research — the colleague is missing.",
+      "Their breakthrough publication was based on a colleague's research, and that colleague is missing.",
+    ],
+    "Space Western": [
+      "Carries forged clearance transponder codes for an impounded blockade runner.",
+      "Has a lethal bounty on their head issued by an off-world crime syndicate.",
+      "Stole a shipment of refined antimatter fuel and hid it in a dead asteroid.",
+      "Is an undercover corporate investigator whose handler was murdered yesterday.",
+      "Is paying off the sector marshal with untraceable bearer chits to look the other way.",
+      "Secretly sabotaged their previous captain's hyperdrive to escape a suicide mission.",
     ],
   } as Record<string, string[]>,
   motivesByTheme: {
@@ -213,7 +222,7 @@ export const npcConfig = {
       "To find their missing sister who was last seen entering a corporate arcology.",
       "To buy out their debt contract before their handler calls in the clause.",
       "To build a reputation clean enough that the big fixers will actually return their calls.",
-      "To expose the corporation that erased their memory — and find out who they used to be.",
+      "To expose the corporation that erased their memory, and find out who they used to be.",
     ],
     "Vampire / Gothic Noir": [
       "To find the mortal bloodline that can grant them a permanent death on their own terms.",
@@ -253,7 +262,7 @@ export const npcConfig = {
       "To locate their father, who rode into the hills after the war and never came back.",
       "To recover a deed stolen by the land agent who burned their homestead.",
       "To earn enough to pay back the family whose wagon they stole during a hard winter.",
-      "To find the man who sold a false map to a whole wagon train — and collect.",
+      "To find the man who sold a false map to a whole wagon train, and collect.",
     ],
     Steampunk: [
       "To patent a suppressed invention before the Guild can bury it permanently.",
@@ -286,6 +295,14 @@ export const npcConfig = {
       "To protect a fragile first-contact relationship from being damaged by a careless diplomat.",
       "To recover a colleague's personal logs from a wrecked survey vessel.",
       "To prove a long-dismissed exoplanet theory before a rival publishes with stolen data.",
+    ],
+    "Space Western": [
+      "To earn enough credits to pay off the mortgage on their battered freighter.",
+      "To track down the rival bounty hunter who left them for dead in an airlock.",
+      "To smuggle an estranged family member out of a heavily policed corporate colony.",
+      "To find an uncharted asteroid rich with rare heavy-metal ore veins.",
+      "To clear a falsified death warrant before the syndicate enforcers catch up.",
+      "To secure reliable fuel and spare parts before their sub-light thrusters fail completely.",
     ],
   } as Record<string, string[]>,
   factionsByTheme: {
@@ -343,7 +360,7 @@ export const npcConfig = {
       "The Grey Caravan, a travelling trade convoy that enforces its own law between settlements.",
       "The Wellkeepers, a small guild that controls clean water access and charges accordingly.",
       "The Dustborn Riders, outriders for hire who move between settlements and know every trail.",
-      "The Reclamation Front, idealists who believe pre-collapse infrastructure can be restored — and are working on it.",
+      "The Reclamation Front, idealists who believe pre-collapse infrastructure can be restored, and are working on it.",
     ],
     "Western / Frontier": [
       "The Cattlemen's Association, ranchers who pool influence and occasionally pool hired guns.",
@@ -366,7 +383,7 @@ export const npcConfig = {
       "The Albatross Compact, a loose alliance of independent lances who share intel and split contracts.",
       "Harrison Armory's Frontier Division, a corporate military arm operating under a Union provisional charter.",
       "The Pastoral Collective, a civilian infrastructure group that hires security lances for convoy work.",
-      "NHP Oversight Bureau — Provisional, a watchdog body whose jurisdiction is perpetually contested.",
+      "The Provisional NHP Oversight Bureau, a watchdog body whose jurisdiction is perpetually contested.",
       "The Barony Horizon Vanguard, an expansionist faction with contested claim over the operational zone.",
     ],
     "Space Opera Resistance": [
@@ -384,6 +401,14 @@ export const npcConfig = {
       "The Colonial Stewardship Commission, advocates for settlement ethics and indigenous species protections.",
       "The Deep Range Pilots' Association, a professional body for long-haul survey vessel crews.",
       "The Luminance Institute, a privately funded think-tank that sometimes gets to places before the Consortium.",
+    ],
+    "Space Western": [
+      "The Dust-Well Salvage Guild, roughneck scrappers with claims on every local wreck.",
+      "The Rust-Star Syndicate, an underworld network controlling black-market fuel.",
+      "The Free Belters' League, independent prospectors resisting corporate tariffs.",
+      "The Iron Star Bounty Guild, licensed trackers operating with minimal oversight.",
+      "The Sector Marshal's Posse, overworked deputies enforcing rough frontier law.",
+      "The Meridian Haulers' Compact, independent captains bound by emergency mutual aid.",
     ],
   } as Record<string, string[]>,
   plotHooks: [
@@ -500,6 +525,14 @@ export const npcThemeConfig = {
       "Cybernetic collective escapee",
       "Avian academic",
       "Amphibious diplomat",
+    ],
+    "Space Western": [
+      "Human",
+      "Frontier Drifter",
+      "Asteroid Belter",
+      "Scrap-Cyborg",
+      "Displaced Colonist",
+      "Desert Moon Native",
     ],
   } as Record<string, string[]>,
   roles: {
@@ -630,6 +663,18 @@ export const npcThemeConfig = {
       "First Officer",
       "Xenobiologist",
       "Security Chief",
+    ],
+    "Space Western": [
+      "Smuggler Captain",
+      "Grease-Monkey Engineer",
+      "Frontier Fixer",
+      "Black Market Fence",
+      "Bounty Hunter",
+      "Corrupt Customs Officer",
+      "Outpost Marshal",
+      "Syndicate Enforcer",
+      "Drifter Scout",
+      "Ex-Soldier Mercenary",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -1121,6 +1166,44 @@ export const npcThemeConfig = {
           "This NPC belongs to a vastly superior or incomprehensible culture. Their dialogue should be calm, slightly detached, and often phrased as questions that challenge basic assumptions about reality.",
       },
     ],
+    "Space Western": [
+      {
+        id: "scoundrel_code",
+        label: "Scoundrel's Code",
+        aiPromptDirective:
+          "Write this NPC as living by a personal scoundrel code: keep your word once coin changes hands, never shoot a partner in the back, and look out for your crew before anyone else.",
+      },
+      {
+        id: "debt_bound_pragmatist",
+        label: "Debt-Bound Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as heavily motivated by looming financial ruin or syndicate mortgages. Every choice is measured against the cost of fuel, ammunition, and staying one step ahead of collectors.",
+      },
+      {
+        id: "frontier_lawman",
+        label: "Frontier Lawman",
+        aiPromptDirective:
+          "Write this NPC as an isolated marshal or peacekeeper who knows central authority is corrupt or useless. They enforce an unwritten frontier law with quiet authority and a ready sidearm.",
+      },
+      {
+        id: "ruthless_profiteer",
+        label: "Ruthless Profiteer",
+        aiPromptDirective:
+          "Write this NPC as a cold cartel fixer or salvage baron who treats human lives and dangerous cargo as ledger lines. Polite, transactional, and entirely without remorse.",
+      },
+      {
+        id: "weary_runaway",
+        label: "Weary Runaway",
+        aiPromptDirective:
+          "Write this NPC as someone fleeing a powerful core-world past, corporate family, or military court martial. Guarded, observant, and desperate to remain off official sensor logs.",
+      },
+      {
+        id: "wildcat_rebel",
+        label: "Wildcat Rebel",
+        aiPromptDirective:
+          "Write this NPC as an independent asteroid miner or colonist fighting corporate monopoly encroachment. Fierce, defiant, and suspicious of off-world strangers.",
+      },
+    ],
   } as Record<string, MoralityAnchor[]>,
 };
 
@@ -1149,6 +1232,8 @@ export const NPC_THEME_VOICE: Record<string, string> = {
     "pulpy galactic rebellion — ancient mystical orders, frontier planets, smugglers, imperial fleets, desert worlds, and desperate heroic missions against overwhelming tyranny",
   "Optimistic Exploration Sci-Fi":
     "optimistic exploration sci-fi — diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded",
+  "Space Western":
+    "space western & scoundrels — smugglers, salvage crews, bounty hunters, corrupt marshals, lived-in battered freighters, unpaid mortgages, and frontier outposts on the rim",
 };
 
 export const NPC_NAMING_STYLES = [
@@ -1177,4 +1262,69 @@ export const dndNpcQuickStatsByRole: Record<
   Guard: { archetype: "Guard Veteran / Level 3", tableRating: "CR 1" },
   Noble: { archetype: "Noble / Level 3", tableRating: "CR 1" },
   Innkeeper: { archetype: "Commoner-Expert / Level 2", tableRating: "CR 1/2" },
+  "Dungeon Mastermind": {
+    archetype: "Warlock-Commander / Level 7",
+    tableRating: "CR 5",
+  },
+  "Bound Vault Guardian": {
+    archetype: "Ancient Construct / Heavy Warden",
+    tableRating: "CR 6",
+  },
+  "Lair Boss": { archetype: "Warlord / Level 6", tableRating: "CR 4" },
+  "Outlaw Chief": {
+    archetype: "Brigand Captain / Level 5",
+    tableRating: "CR 3",
+  },
+  "Captive VIP": {
+    archetype: "Noble-Prisoner / Level 2",
+    tableRating: "CR 1/2",
+  },
+  "Cursed Caretaker": {
+    archetype: "Corrupted Sage / Level 4",
+    tableRating: "CR 2",
+  },
 };
+
+// ---------------------------------------------------------------------------
+// Delve & Dungeon Boss contextual pools
+// ---------------------------------------------------------------------------
+
+export const DELVE_ROLES = new Set([
+  "Dungeon Mastermind",
+  "Bound Vault Guardian",
+  "Lair Boss",
+  "Outlaw Chief",
+  "Captive VIP",
+  "Cursed Caretaker",
+]);
+
+export const DELVE_SECTOR_LOCATIONS = [
+  "Inner Sanctum / Deepest Vault",
+  "Central Control Hub / Throne Cavern",
+  "Sealed Detention Block / Lower Oubliette",
+  "Overgrown Ritual Chamber / Precursor Altar",
+  "Perimeter Wards / Guard Outpost",
+  "Sub-level Facility Core / Foundry",
+] as const;
+
+export const DELVE_INHABITANT_RELATIONS = [
+  "Commands the resident garrison through fear, strict authority, and superior leverage.",
+  "Hunts competing scavengers within the delve while exploiting the site traps for cover.",
+  "Held captive or bound by the occupying faction as a dangerous living weapon or bargaining chip.",
+  "A solitary guardian whose violent reputation terrifies every other occupant into keeping clear.",
+  "A compromised caretaker who quietly provides warnings or cipher keys to intruders willing to end the corruption.",
+] as const;
+
+export const DELVE_SECRET_TIES = [
+  "Holds the only passphrase and cipher seal required to breach the site's central vault.",
+  "Is slowly undergoing physical or mental mutation caused by the precursor artifact at the delve core.",
+  "Knows the site was constructed not as a sanctuary or treasure vault, but as a prison to contain an ancient entity.",
+  "Accidentally triggered the site's permanent quarantine lockdown and is trapped until an external override occurs.",
+  "Their life force is magically bound to the delve's structural integrity — destroying them triggers a site collapse.",
+] as const;
+
+export const DELVE_ALERT_STAGES = [
+  "- **Stage 1 (Unaware)**: Overseeing operations or in stasis within their lair chamber.",
+  "- **Stage 2 (Alerted)**: Dispatches internal patrols, seals blast doors or portcullises, and arms corridor traps.",
+  "- **Stage 3 (Lair Defense / Confrontation)**: Uses room hazards as terrain leverage, bargaining with leverage or fighting to the death.",
+] as const;

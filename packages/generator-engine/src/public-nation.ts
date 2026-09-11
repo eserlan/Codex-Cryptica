@@ -36,6 +36,7 @@ export const nationConfig = {
     "Lancer",
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
+    "Space Western",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -138,6 +139,13 @@ export const nationConfig = {
       "Scientific Directorate",
       "Allied Worlds Council",
       "Neutral System Alliance",
+    ],
+    "Space Western": [
+      "Frontier System Authority",
+      "Corporate Mining Concession",
+      "Independent Belt Coalition",
+      "Marshal's Protectorate",
+      "Freeport Compact",
     ],
   } as Record<string, string[]>,
   governmentStyles: [

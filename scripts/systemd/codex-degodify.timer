@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly Codex-Cryptica God File Decomposition Timer
+
+[Timer]
+# Run daily at 04:00 (after the 03:00 UTC nightly god file analysis workflow)
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

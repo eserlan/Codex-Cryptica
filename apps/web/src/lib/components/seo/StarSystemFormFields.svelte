@@ -112,7 +112,7 @@
       onSurprise?.();
     }}
   >
-    <span class="icon-[lucide--dices] h-3.5 w-3.5"></span>
+    <span class="icon-[lucide--dices] h-3.5 w-3.5" aria-hidden="true"></span>
     Surprise Me
   </button>
 </div>

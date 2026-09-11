@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 /**
  * Author → roll → history, the whole US1 journey (#2247, SC-001, FR-018).
@@ -8,32 +9,7 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 async function bootVault(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("codex_skip_landing", "true");
-    // The die roller — and with it the shared roll history — is hidden in
-    // Guided Mode, which is on by default.
-    localStorage.setItem("codex_guided_mode_active", "false");
-    localStorage.setItem(
-      "codex-cryptica-help-state",
-      JSON.stringify({ completedTours: ["initial-onboarding"] }),
-    );
-  });
-
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-
-  const enterBtn = page.getByRole("button", { name: /ENTER THE CODEX/i });
-  if (await enterBtn.isVisible().catch(() => false)) await enterBtn.click();
-
-  await page.waitForFunction(() => (window as any).vault?.status === "idle");
-  await page.evaluate(() => {
-    const ui = (window as any).uiStore;
-    if (ui) {
-      ui.dismissedWorldPage = true;
-      ui.dismissedLandingPage = true;
-    }
-  });
-
+  await setupVaultPage(page);
   await expect(page.getByTestId("dice-roller-button")).toBeVisible({
     timeout: 30000,
   });

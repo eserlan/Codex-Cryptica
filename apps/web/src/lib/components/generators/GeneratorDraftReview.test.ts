@@ -132,22 +132,39 @@ describe("GeneratorDraftReview", () => {
     expect(onGeneratePlotTwist).toHaveBeenCalledOnce();
   });
 
-  it("disables the Plot Twist handoff while saving", () => {
+  it("shows and invokes the Boss handoff action for delve drafts", async () => {
+    const onGenerateBoss = vi.fn();
     render(GeneratorDraftReview, {
       props: {
-        draft: dungeonDraft({ labels: ["rpg-quest"] }),
+        draft: dungeonDraft({ labels: ["dungeon", "delve"] }),
+        categories,
+        saving: false,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+        onGenerateBoss,
+      },
+    });
+
+    const button = screen.getByTestId("generate-boss-from-dungeon");
+    expect(button.getAttribute("disabled")).toBeNull();
+    await fireEvent.click(button);
+    expect(onGenerateBoss).toHaveBeenCalledOnce();
+  });
+
+  it("disables the Boss handoff while saving", () => {
+    render(GeneratorDraftReview, {
+      props: {
+        draft: dungeonDraft({ labels: ["dungeon", "delve"] }),
         categories,
         saving: true,
         onsave: vi.fn(),
         onback: vi.fn(),
-        onGeneratePlotTwist: vi.fn(),
+        onGenerateBoss: vi.fn(),
       },
     });
 
     expect(
-      screen
-        .getByTestId("generate-plot-twist-from-quest")
-        .getAttribute("disabled"),
+      screen.getByTestId("generate-boss-from-dungeon").getAttribute("disabled"),
     ).not.toBeNull();
   });
 

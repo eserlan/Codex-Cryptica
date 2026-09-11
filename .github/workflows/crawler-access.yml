@@ -1,0 +1,57 @@
+name: Crawler Access Check
+
+# Verifies that the major discovery crawlers can retrieve the public routes
+# through Cloudflare — see docs/seo/crawler-access.md and issues #2567, #2844.
+# A WAF rule, bot-management change or stray `noindex` can break discovery
+# without touching this repo, so this runs on a schedule rather than only on
+# push.
+
+on:
+  schedule:
+    # 05:00 UTC daily, after the nightly E2E run.
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Origin to check (defaults to production)"
+        required: false
+        default: "https://codexcryptica.com"
+
+concurrency:
+  group: "crawler-access"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.crawler.name }} access
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        crawler:
+          - id: oai-searchbot
+            name: OAI-SearchBot
+          - id: googlebot
+            name: Googlebot
+          - id: bingbot
+            name: Bingbot
+          - id: perplexitybot
+            name: PerplexityBot
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Check crawler access
+        run: |
+          bun scripts/crawler-access-check.mjs \
+            --base="${{ inputs.base || 'https://codexcryptica.com' }}" \
+            --crawler="${{ matrix.crawler.id }}"

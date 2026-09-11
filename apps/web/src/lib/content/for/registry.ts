@@ -44,3 +44,13 @@ export function getAllLandingPageSlugs(
 ): string[] {
   return Object.keys(customRegistry);
 }
+
+/**
+ * The public discovery labels for a landing page. Falls back to `[hub]` when
+ * `labels` was not set explicitly, since `hub` already names this page's
+ * genre/system — see #2762.
+ */
+export function landingPageLabels(page: LandingPageConfig): string[] {
+  if (page.labels?.length) return page.labels;
+  return page.hub ? [page.hub] : [];
+}

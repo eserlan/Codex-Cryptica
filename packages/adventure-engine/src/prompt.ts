@@ -30,6 +30,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
     "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry so the player may choose to save it to Codex. Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
+    "For every newly created fact (including add entries, location, situation, hidden state, and provisionalFacts), omit id. IDs are assigned when the turn is committed. Include an id only to update, remove, or reveal existing state.",
     "Omit optional fields when they have no value; never use empty strings as placeholder IDs.",
     "Narration may be up to 2,000 characters; all other text fields must be 600 characters or fewer.",
     "Include exactly three concise suggestedActions. They are optional player choices, never actions you have decided for the character.",

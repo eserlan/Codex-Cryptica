@@ -1,0 +1,8 @@
+# Copy to ~/.cloudflared/codex-pr-review.yml and replace TUNNEL_ID.
+tunnel: TUNNEL_ID
+credentials-file: ~/.cloudflared/TUNNEL_ID.json
+
+ingress:
+  - hostname: pr-webhook.codexcryptica.com
+    service: http://127.0.0.1:8788
+  - service: http_status:404

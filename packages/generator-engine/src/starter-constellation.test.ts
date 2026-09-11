@@ -87,6 +87,17 @@ describe("generateStarterConstellationLocal", () => {
     expect(JSON.stringify(cosmicHorror)).not.toMatch(
       /cthulhu|arkham|innsmouth|necronomicon/i,
     );
+
+    const spaceWestern = generateStarterConstellationLocal(
+      { themeId: "space-western" },
+      seededRng(1),
+    );
+    expect(spaceWestern.entities.map((entity) => entity.subtype)).toContain(
+      "Frontier Port",
+    );
+    expect(JSON.stringify(spaceWestern)).not.toMatch(
+      /scum and villainy|star wars|firefly/i,
+    );
   });
 
   it("weaves an empty premise into a theme-only constellation without error", () => {
@@ -353,6 +364,9 @@ describe("getStarterConstellationPreview", () => {
     );
     expect(getStarterConstellationPreview("fallout").genreName).toBe(
       "Retro-Futurist Wasteland",
+    );
+    expect(getStarterConstellationPreview("space-western").genreName).toBe(
+      "Space Western",
     );
   });
 

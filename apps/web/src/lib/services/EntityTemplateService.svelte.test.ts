@@ -39,6 +39,13 @@ describe("EntityTemplateService", () => {
       expect(result).toBe(GENERIC_TEMPLATES.location);
     });
 
+    it("should return the ship-specific outline for generated vessels", async () => {
+      const result = await service.resolveTemplate("ship", "space-western");
+      expect(result).toBe(GENERIC_TEMPLATES.ship);
+      expect(result).toContain("## Ownership, Debts & Allegiances");
+      expect(result).not.toContain("## Districts & Layout");
+    });
+
     it("should return the correct generic template for item", async () => {
       const result = await service.resolveTemplate("item");
       expect(result).toBe(GENERIC_TEMPLATES.item);

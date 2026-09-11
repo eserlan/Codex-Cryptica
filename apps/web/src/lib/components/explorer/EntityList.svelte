@@ -25,8 +25,8 @@
   import EntityListItem from "./EntityListItem.svelte";
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+    import EntityEmptyState from "./EntityEmptyState.svelte";
+  import EntitySearchEmptyState from "./EntitySearchEmptyState.svelte";
   import { sortExplorerEntities } from "./entityListSorting";
   import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
   import type { PerformanceOperationHandle } from "@codex/performance-observability";
@@ -722,27 +722,11 @@
           row.ancestorLines,
         )}
       {:else}
-        <div data-testid="no-entities-found">
-          {#if vault.allEntities.length === 0}
-            <EmptyState
-              icon="icon-[lucide--ghost]"
-              headline="No entities yet"
-              body={vault.isGuest
-                ? "Nothing has been shared with you yet."
-                : "Create your first entity to start building your vault."}
-              cta={vault.isGuest ? undefined : "＋ Create"}
-              onCta={vault.isGuest
-                ? undefined
-                : () => modalUIStore.openIntentCreateMenu()}
-            />
-          {:else}
-            <EmptyState
-              icon="icon-[lucide--search-x]"
-              headline="No entities found"
-              body="Try adjusting your search or filters."
-            />
-          {/if}
-        </div>
+        {#if vault.allEntities.length === 0}
+          <EntityEmptyState isGuest={vault.isGuest} />
+        {:else}
+          <EntitySearchEmptyState />
+        {/if}
       {/each}
     {:else if effectiveViewMode === "label" || effectiveViewMode === "category"}
       {#each pagedGroupRows as entry (entry.id)}
@@ -783,13 +767,7 @@
         {/if}
       {/each}
       {#if sortedEntities.length === 0}
-        <div data-testid="no-entities-found">
-          <EmptyState
-            icon="icon-[lucide--search-x]"
-            headline="No entities found"
-            body="Try adjusting your search or filters."
-          />
-        </div>
+        <EntitySearchEmptyState />
       {/if}
     {/if}
 

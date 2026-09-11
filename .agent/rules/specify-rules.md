@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-17
+Auto-generated from all feature plans. Last updated: 2026-08-31
 
 ## Active Technologies
+
+- TypeScript 6.0.3; Svelte 5.55.9 (runes); SvelteKit 2 + Existing `@codex/gdrive-sync`-shaped package pattern (new `packages/cloud-backup-sync`); existing `schema`/Zod package (`packages/schema/src/publishing.ts`) for shared types; Cloudflare Workers runtime (`apps/workers/oracle-proxy`) — no new third-party dependency (162-cc-cloud-backup)
+- Existing R2 bucket `codex-cryptica-statics` (new `cloud-backup/` key prefix, no new binding); browser IndexedDB for the local `LocalCloudBackupRecord` (ownership code, enabled state, status cache) (162-cc-cloud-backup)
 
 - TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/adventure-engine`, `@codex/ai-engine` (`AdventureTurnGenerationService`), `@codex/oracle-engine`, `dice-engine`, `schema`/Zod, `idb`; no new third-party dependency (2306-adventure-phase-2-play-tools)
 - Extends the existing one-document-per-session OPFS layout (`.codex/adventures/<session-id>.json`, `AdventureSessionRepository`) with a `schemaVersion: 2` shape adding optional `dicePresets`, `resourceCounters`, and per-turn `resolvedRoll` fields; a `schemaVersion: 1` document loads unchanged with these fields defaulted empty/absent (2306-adventure-phase-2-play-tools)
@@ -53,11 +56,11 @@ TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventi
 
 ## Recent Changes
 
+- 162-cc-cloud-backup: Added TypeScript 6.0.3; Svelte 5.55.9 (runes); SvelteKit 2 + Existing `@codex/gdrive-sync`-shaped package pattern (new `packages/cloud-backup-sync`); existing `schema`/Zod package (`packages/schema/src/publishing.ts`) for shared types; Cloudflare Workers runtime (`apps/workers/oracle-proxy`) — no new third-party dependency
+
 - 2306-adventure-phase-2-play-tools: Added TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/adventure-engine`, `@codex/ai-engine` (`AdventureTurnGenerationService`), `@codex/oracle-engine`, `dice-engine`, `schema`/Zod, `idb`; no new third-party dependency
 
 - 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
-
-- 153-llm-model-registry: Added TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

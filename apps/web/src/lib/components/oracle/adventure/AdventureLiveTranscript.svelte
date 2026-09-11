@@ -1,6 +1,25 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
   let { manager }: { manager: AdventureManager } = $props();
+
+  const generationMessages = [
+    "The Oracle traces the threads of consequence…",
+    "Fate gathers around your choice…",
+    "The world shifts in answer to your action…",
+    "The next turn of the tale is taking shape…",
+  ];
+  let generationMessageIndex = $state(0);
+  let generationMessage = $derived(generationMessages[generationMessageIndex]!);
+
+  onMount(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const interval = window.setInterval(() => {
+      generationMessageIndex =
+        (generationMessageIndex + 1) % generationMessages.length;
+    }, 2_800);
+    return () => window.clearInterval(interval);
+  });
 
   function rollFor(sequence: number) {
     return manager.rollHistory.find((entry) => entry.turn.sequence === sequence)
@@ -37,13 +56,14 @@
     <div
       class="flex items-center gap-2 text-sm text-theme-secondary"
       role="status"
-      aria-live="polite"
+      aria-live="off"
+      data-testid="adventure-generating-status"
     >
       <span
         aria-hidden="true"
-        class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
+        class="icon-[lucide--sparkles] h-4 w-4 motion-safe:animate-pulse"
       ></span>
-      Oracle is responding to your action…
+      <span>{generationMessage}</span>
     </div>
   {/if}
 </div>

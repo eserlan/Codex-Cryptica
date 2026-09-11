@@ -1,27 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { openOracle } from "./test-helpers";
+import { setupVaultPage, openOracle } from "./test-helpers";
 
 test.describe("Oracle Sidebar", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      try {
-        localStorage.setItem("oracle-hint-seen", "true");
-      } catch {
-        /* ignore */
-      }
-    });
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto("/");
-    await page.waitForTimeout(2000);
-    // Wait for vault to be idle
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
+    await setupVaultPage(page);
   });
 
   test("should toggle oracle sidebar and expand workspace", async ({

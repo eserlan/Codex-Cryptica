@@ -19,7 +19,7 @@ We've all been there: your campaign setting is growing, you've designed a magnif
 
 Typically, using generic AI chatbots means writing long, repetitive prompts explaining your world's backstory, only to receive generic suggestions that don't fit your lore.
 
-Today, we are thrilled to introduce **Context-Aware Entity Generation**—a new way to expand your campaign settings organically, grounded directly in the lore you've already created.
+Today, we are thrilled to introduce **Context-Aware Entity Generation**, a new way to expand your campaign settings organically, grounded directly in the lore you've already created.
 
 ## Grounded Local Context
 
@@ -33,7 +33,7 @@ Instead of generating details in a vacuum, the Lore Oracle compiles a compilatio
 
 This means when you generate a new character related to a specific city, the AI already knows about the city's ruler, the local tavern, and the neighboring region, ensuring the generated character feels like they've lived in that city their whole life.
 
-## Seamless Guided Wizard
+## Guided Wizard
 
 The feature is integrated directly into both the standard Detail Status Tab and **Zen Mode**:
 
@@ -43,6 +43,6 @@ The feature is integrated directly into both the standard Detail Status Tab and 
 - **Complete Editorial Control**: Review and edit the name, summary, description, and labels before committing the draft to the vault.
 - **Directed Connections**: Saving the draft automatically creates the new entity in your vault and establishes a directed relationship connection (`Source → New Entity`) using the selected relationship back label.
 
-This puts complete editorial control in your hands—ensuring AI suggestions remain a spark of inspiration while you curate the final canon.
+This puts complete editorial control in your hands. AI suggestions stay a spark of inspiration while you curate the final canon.
 
 Try it out on your active campaign notes today by clicking the **Generate Related** action button!

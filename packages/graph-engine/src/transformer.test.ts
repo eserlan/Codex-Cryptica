@@ -130,6 +130,28 @@ describe("GraphTransformer", () => {
     expect(node?.data.image).toBe("http://example.com/img.png");
   });
 
+  it("should transform imageFocus field", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        image: "http://example.com/img.png",
+        imageFocus: "top",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const node = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n1",
+    );
+    expect(node?.data.imageFocus).toBe("top");
+  });
+
   it("should use custom label on edges when provided", () => {
     const entities: Entity[] = [
       {
@@ -484,6 +506,42 @@ describe("GraphTransformer", () => {
     );
     expect(resolvedImageStyle.style["background-image-crossorigin"]).toBe(
       "null",
+    );
+  });
+
+  it("crops a resolved portrait to the node's own imageFocus", () => {
+    const mockTemplate = {
+      tokens: {
+        primary: "#000",
+        background: "#fff",
+        text: "#333",
+        surface: "#eee",
+        fontHeader: "Arial",
+        fontBody: "Arial",
+      },
+      graph: {
+        nodeShape: "ellipse",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#ccc",
+        edgeStyle: "solid",
+      },
+    } as any;
+    const style = getGraphStyle(mockTemplate, [], true);
+    const resolvedImageStyle = style.find((s: any) =>
+      s.selector.includes("resolvedImage"),
+    );
+    const focused = { data: (key: string) => ({ imageFocus: "right" })[key] };
+    const unset = { data: (key: string) => ({ imageFocus: undefined })[key] };
+
+    expect(resolvedImageStyle.style["background-position-x"](focused)).toBe(
+      "100%",
+    );
+    expect(resolvedImageStyle.style["background-position-y"](focused)).toBe(
+      "50%",
+    );
+    expect(resolvedImageStyle.style["background-position-x"](unset)).toBe(
+      "50%",
     );
   });
 

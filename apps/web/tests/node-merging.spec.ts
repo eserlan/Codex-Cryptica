@@ -1,29 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Node Merging", () => {
   test.beforeEach(async ({ page }) => {
-    // Disable onboarding to access main UI
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    if (process.env.PWDEBUG || process.env.DEBUG_E2E_LOGS) {
-      page.on("console", (msg) => {
-        console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
-      });
-    }
-
-    await page.goto("/");
-    // Wait for vault to initialize
-    await page.waitForFunction(
-      () =>
-        (window as any).vault?.isInitialized &&
-        (window as any).vault?.status === "idle",
-    );
+    await setupVaultPage(page);
   });
 
   test("should merge two nodes and preserve content and links", async ({
@@ -274,36 +254,13 @@ test.describe("Node Merging", () => {
 
   test.describe("Documentation & Hints", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/");
-      // Wait for vault to initialize
-      await page.waitForFunction(
-        () =>
-          (window as any).vault?.isInitialized &&
-          (window as any).vault?.status === "idle",
-      );
-      // Clear help state to ensure hints appear
-      await page.evaluate(() => {
-        try {
-          localStorage.clear();
-        } catch (error) {
-          if (error instanceof DOMException && error.name === "SecurityError") {
-            return;
-          }
-
-          throw error;
-        }
-      });
-      await page.reload();
-      await page.waitForFunction(
-        () =>
-          (window as any).vault?.isInitialized &&
-          (window as any).vault?.status === "idle",
-      );
+      await setupVaultPage(page);
     });
 
     test("should show the node merging help article", async ({ page }) => {
       // 1. Open Settings -> Help
       await page.getByTestId("settings-button").click();
+      await expect(page.locator('[role="dialog"]')).toBeVisible();
       await page.getByRole("tab", { name: "Help" }).click();
 
       // 2. Search for merging
@@ -348,7 +305,7 @@ test.describe("Node Merging", () => {
       await expect(page.getByText("Multi-Selection Actions")).toBeVisible();
 
       // 6. Dismiss hint
-      await page.getByTestId("dismiss-hint-button").click();
+      await page.getByTestId("dismiss-hint-button").first().click();
       await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
 
       // 7. Unselect and re-select to verify it stays dismissed

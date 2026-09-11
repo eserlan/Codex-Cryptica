@@ -12,9 +12,9 @@
     "typecheck": "tsc --noEmit --project tsconfig.test.json"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^5.0.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7",
-    "eslint": "^10.8.1"
+    "vitest": "^5.0.0",
+    "eslint": "^10.10.0"
   }
 }

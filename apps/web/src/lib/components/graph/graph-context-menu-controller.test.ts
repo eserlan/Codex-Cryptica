@@ -13,6 +13,8 @@ describe("GraphContextMenuController", () => {
       $: vi.fn().mockReturnValue({
         map: vi.fn().mockReturnValue([]),
       }),
+      getElementById: vi.fn().mockReturnValue({ length: 0, data: vi.fn() }),
+      style: vi.fn().mockReturnValue({ update: vi.fn() }),
     };
 
     deps = {
@@ -114,6 +116,48 @@ describe("GraphContextMenuController", () => {
       "Updated 2 nodes.",
       "success",
     );
+  });
+
+  it("should update entity image focus, patch the live node and force a redraw, then close the menu", async () => {
+    const nodeData = vi.fn();
+    cy.getElementById.mockReturnValue({ length: 1, data: nodeData });
+    const styleUpdate = vi.fn();
+    cy.style.mockReturnValue({ update: styleUpdate });
+    controller.selectedNodes = ["node-1"];
+    controller.imagePickerOpen = true;
+    controller.contextMenuOpen = true;
+
+    await controller.handleSetImageFocus("bottom");
+
+    expect(deps.vault.updateEntity).toHaveBeenCalledWith("node-1", {
+      imageFocus: "bottom",
+    });
+    expect(cy.getElementById).toHaveBeenCalledWith("node-1");
+    expect(nodeData).toHaveBeenCalledWith("imageFocus", "bottom");
+    expect(styleUpdate).toHaveBeenCalled();
+    expect(controller.imagePickerOpen).toBe(false);
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not update image focus for a multi-node selection", async () => {
+    controller.selectedNodes = ["node-1", "node-2"];
+
+    await controller.handleSetImageFocus("top");
+
+    expect(deps.vault.updateEntity).not.toHaveBeenCalled();
+  });
+
+  it("should read the single selected node's image focus", () => {
+    deps.vault.entities = { "node-1": { imageFocus: "left" } };
+    controller.selectedNodes = ["node-1"];
+
+    expect(controller.currentImageFocus).toBe("left");
+  });
+
+  it("should have no image focus reading for a multi-node selection", () => {
+    controller.selectedNodes = ["node-1", "node-2"];
+
+    expect(controller.currentImageFocus).toBeUndefined();
   });
 
   it("should return correct labels and isImportant status", () => {

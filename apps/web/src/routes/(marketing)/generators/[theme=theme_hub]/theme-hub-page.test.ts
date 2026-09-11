@@ -112,12 +112,31 @@ describe("Generator Theme Hub Page", () => {
     "cosmic-horror",
     "space-opera-resistance",
     "optimistic-exploration-sci-fi",
+    "space-western",
   ])("offers the alien race generator on the %s hub", (theme) => {
     render(Page, { props: { data: { theme: theme as ThemeSlug } } });
 
     expect(
       screen.getByRole("link", { name: /alien race generator/i }),
     ).toBeTruthy();
+  });
+
+  it("renders a space-western hub with ship and frontier outpost generators", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "space-western",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Space Western RPG Generators",
+    );
+    expect(
+      screen.getByRole("link", { name: /frontier outpost generator/i }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: /ship generator/i })).toBeTruthy();
   });
 
   it.each(["fantasy", "pirate", "western", "vampire", "steampunk"])(

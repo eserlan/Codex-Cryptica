@@ -45,6 +45,19 @@ This file is the Codex-facing instruction layer for this repository.
 - Create regular ready-for-review pull requests by default; never create draft PRs unless the user explicitly asks for a draft.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
+- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
+- **Discovery Intent Governance** (Constitution XIII): Before adding or materially repositioning any public, indexable discovery page — `/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference blog posts — consult the discovery intent registry at `apps/web/src/lib/content/discovery/`:
+  1. Check whether the intent already has an owner (`findIntentOwner`, or read the audit output).
+  2. If it does, extend that page or record the new phrasing as an **alias**. Do not create a second URL for a synonym or word-order variant.
+  3. If it does not, add an entry with a canonical path, primary intent, user job and unique-value rationale **before** building the page.
+  4. Run `bun scripts/discovery-audit.mjs`. Deterministic findings are errors; overlap warnings need a judgement call, recorded via `acknowledgedOverlap` with a reason if the overlap is intentional.
+  - The registry constrains the public surface; it is never a source for generating pages from keywords. See [docs/discovery-intent-registry.md](./docs/discovery-intent-registry.md).
+- **PR Quality Gate**: Never create or open a Pull Request unless:
+  1. `bun run lint:types` passes with 0 errors.
+  2. `bun run lint` passes with 0 errors.
+  3. The changes pass the `codex-review` specialist review.
+  4. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
 
 ## Maintenance Rule
 
@@ -60,6 +73,9 @@ shell commands, and other important information, read the [current plan](./specs
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
+- N/A — clipboard payloads are transient and browser-local (2815-smart-copy)
 
 - TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `@codex/oracle-engine`, `@codex/vault-engine`, `dice-engine`, `schema`/Zod, `idb`/Dexie, and `@codex/events`; no new third-party dependency (160-solo-adventure-mode)
 - One versioned JSON document per session at `.codex/adventures/<session-id>.json`; transient cross-tab lease in existing IndexedDB `appSettings`; vault records remain canonical Markdown/metadata (160-solo-adventure-mode)

@@ -1,42 +1,19 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntity } from "./test-helpers";
 
 test.describe("Graph Category Context Menu", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
+    await setupVaultPage(page);
+
+    await seedEntity(page, {
+      title: "Category Test Node",
+      type: "character",
     });
 
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
+    await page.waitForFunction(() => {
+      const cy = (window as any).cy;
+      return cy && cy.nodes().length > 0;
     });
-
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") resolve(true);
-            else setTimeout(check, 100);
-          };
-          check();
-        });
-      await waitForVault();
-    });
-
-    // Create a test entity
-    await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      await vault.createEntity("character", "Category Test Node", {
-        id: "category-test-node",
-      });
-    });
-
-    await page.waitForTimeout(500);
   });
 
   test("should change category for a single node via context menu", async ({

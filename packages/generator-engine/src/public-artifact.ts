@@ -871,7 +871,7 @@ export function generateArtifactLocal(
   const rumors = [
     `Common folk believe the artifact brings bountiful harvests, but in truth, it leeches fertility from neighboring lands to fuel its miracles.`,
     `Scholars debate whether the creator was a benevolent demigod or a mad sorcerer who doomed their entire civilization.`,
-    `It is whispered that the true power of the relic can only be unlocked by someone who has lost everything they loved.`,
+    `The relic's true power, so the story goes, only answers to someone who has lost everything they loved.`,
   ];
 
   const hooks = [

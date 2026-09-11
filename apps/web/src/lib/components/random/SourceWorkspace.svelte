@@ -2,7 +2,7 @@
   import { onMount, type Snippet } from "svelte";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+  import { browserStorage, systemIdGenerator, type IdGenerator, type StorageLike } from "$lib/utils/runtime-deps";
   import { browser } from "$app/environment";
   import type {
     Diagnostic,
@@ -26,6 +26,8 @@
     type SourceMode,
   } from "./source-workspace";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { createLongPressTracker } from "./long-press-tracker";
+  import { collectLabels, countOf, filterSources } from "./source-workspace-filter";
 
   /**
    * The shell both tables and decks live in (#2247, FR-003, FR-009).
@@ -44,6 +46,7 @@
     editor,
     player,
     storage,
+    idGenerator = systemIdGenerator,
   }: {
     kind: "table" | "deck";
     heading: string;
@@ -53,6 +56,7 @@
     editor: Snippet<[EditorContext]>;
     player: Snippet<[PlayerContext]>;
     storage?: StorageLike;
+    idGenerator?: IdGenerator;
   } = $props();
 
   const noun = $derived(kind === "table" ? "table" : "deck");
@@ -201,45 +205,29 @@
     showContextMenu(source, e.clientX, e.clientY);
   }
 
-  let longPressTimer: ReturnType<typeof setTimeout> | undefined;
-  let longPressTriggered = false;
-  let touchStartX = 0;
-  let touchStartY = 0;
+  const longPress = createLongPressTracker<RandomSource>({
+    onLongPress: (source, clientX, clientY) =>
+      showContextMenu(source, clientX, clientY),
+    vibrate: (ms) => {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(ms);
+      }
+    },
+  });
 
   function handleItemTouchStart(e: TouchEvent, source: RandomSource) {
     const touch = e.touches?.[0];
-    const clientX = touch ? touch.clientX : 0;
-    const clientY = touch ? touch.clientY : 0;
-    touchStartX = clientX;
-    touchStartY = clientY;
-    longPressTriggered = false;
-    clearTimeout(longPressTimer);
-
-    longPressTimer = setTimeout(() => {
-      longPressTriggered = true;
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        try {
-          navigator.vibrate(40);
-        } catch {
-          // ignore
-        }
-      }
-      showContextMenu(source, clientX, clientY);
-    }, 450);
+    longPress.handleTouchStart(source, touch?.clientX ?? 0, touch?.clientY ?? 0);
   }
 
   function handleItemTouchMove(e: TouchEvent) {
     const touch = e.touches[0];
     if (!touch) return;
-    const dx = Math.abs(touch.clientX - touchStartX);
-    const dy = Math.abs(touch.clientY - touchStartY);
-    if (dx > 10 || dy > 10) {
-      clearTimeout(longPressTimer);
-    }
+    longPress.handleTouchMove(touch.clientX, touch.clientY);
   }
 
   function handleItemTouchEnd() {
-    clearTimeout(longPressTimer);
+    longPress.handleTouchEnd();
   }
 
   function closeContextMenu() {
@@ -315,11 +303,11 @@
     const copyName = uniqueName(`${source.name} (Copy)`);
     const copy: RandomSource = {
       ...($state.snapshot(source) as RandomSource),
-      id: crypto.randomUUID(),
+      id: idGenerator.uuid(),
       name: copyName,
-      entries: source.entries?.map((e) => ({ ...e, id: crypto.randomUUID() })),
-      cards: source.cards?.map((c) => ({ ...c, id: crypto.randomUUID() })),
-      spreads: source.spreads?.map((s) => ({ ...s, id: crypto.randomUUID() })),
+      entries: source.entries?.map((e) => ({ ...e, id: idGenerator.uuid() })),
+      cards: source.cards?.map((c) => ({ ...c, id: idGenerator.uuid() })),
+      spreads: source.spreads?.map((s) => ({ ...s, id: idGenerator.uuid() })),
     };
     select(copy);
     openBuild();
@@ -349,19 +337,9 @@
     kind === "table" ? randomSources.tables : randomSources.decks,
   );
 
-  const labels = $derived([...new Set(all.flatMap((s) => s.labels))].sort());
+  const labels = $derived(collectLabels(all));
 
-  const visible = $derived.by(() => {
-    const needle = query.trim().toLowerCase();
-    return all
-      .filter((s) => !needle || s.name.toLowerCase().includes(needle))
-      .filter((s) => activeLabels.every((l) => s.labels.includes(l)))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
-
-  function countOf(source: RandomSource): number {
-    return (kind === "table" ? source.entries : source.cards)?.length ?? 0;
-  }
+  const visible = $derived.by(() => filterSources(all, query, activeLabels));
 
   function toggleLabel(label: string) {
     activeLabels = activeLabels.includes(label)
@@ -411,7 +389,7 @@
     const created = randomSources.create("table", name);
     created.description = tableDescription;
     created.entries = candidates.map((c) => ({
-      id: c.id || crypto.randomUUID(),
+      id: c.id || idGenerator.uuid(),
       text: c.text,
       weight: c.weight ?? 1,
     }));
@@ -737,10 +715,7 @@
             <button
               type="button"
               onclick={() => {
-                if (longPressTriggered) {
-                  longPressTriggered = false;
-                  return;
-                }
+                if (longPress.consumeTriggered()) return;
                 select(source);
               }}
               class="flex flex-1 min-w-0 items-center justify-between text-left focus:outline-none"
@@ -750,7 +725,7 @@
               <span
                 class="ml-1 font-mono text-[9px] text-theme-muted/60 shrink-0"
               >
-                {countOf(source)}
+                {countOf(kind, source)}
               </span>
             </button>
 

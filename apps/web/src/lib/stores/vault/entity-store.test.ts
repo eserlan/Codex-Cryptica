@@ -287,6 +287,19 @@ describe("EntityStore", () => {
     expect(store.entities.place.type).toBe("location");
   });
 
+  it("handles null-prototype update dictionaries safely", async () => {
+    const updates: Record<string, Partial<LocalEntity>> = Object.create(null);
+    updates["hero"] = { type: "faction" };
+    updates["__proto__"] = { type: "item" };
+
+    const result = await store.bulkUpdate(updates);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["__proto__"]);
+    expect(store.entities.hero.type).toBe("faction");
+    expect(({} as any).type).toBeUndefined();
+  });
+
   it("deletes an entity", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
       entities: { place: repository.entities.place },
@@ -478,9 +491,9 @@ describe("EntityStore", () => {
 
       await storeWithNoHandle.scheduleSave(repository.entities.hero);
 
-      // Status should be set to "saving" first, then reset to "idle"
+      // Status should be set to "saving" first, then transition to "saved"
       expect(setStatus).toHaveBeenCalledWith("saving");
-      expect(setStatus).toHaveBeenCalledWith("idle");
+      expect(setStatus).toHaveBeenCalledWith("saved");
     });
 
     it("should set status to error on save failure", async () => {
@@ -568,8 +581,9 @@ describe("EntityStore", () => {
 
     it("should return early when entity does not exist in repository", async () => {
       const setStatus = vi.fn();
+      const saveToDisk = vi.fn();
       const store = new EntityStore({
-        repository: { ...repository, entities: {} } as any,
+        repository: { ...repository, entities: {}, saveToDisk } as any,
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
@@ -584,7 +598,7 @@ describe("EntityStore", () => {
 
       await store.scheduleSave({ id: "nonexistent" } as LocalEntity);
 
-      expect(setStatus).not.toHaveBeenCalledWith("saving");
+      expect(saveToDisk).not.toHaveBeenCalled();
     });
 
     it("should call onEntityUpdate callback", async () => {

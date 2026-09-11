@@ -11,7 +11,10 @@ const validSlugs = new Set([
   "minor-magic-item",
   "artifact-generator",
   "faction",
+  "faction-roster",
   "quest",
+  "rumour",
+  "puzzle",
   "item",
   "tavern",
   "social-hub",
@@ -19,6 +22,7 @@ const validSlugs = new Set([
   "nation",
   "vampire-clan",
   "nomad-clan",
+  "dark-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -36,7 +40,11 @@ const validSlugs = new Set([
   "council-vote",
   "secret-society",
   "star-system",
+  "constellation",
   "alien-race",
+  "creature",
+  "encounter",
+  "heist",
 ]);
 
 export const load: PageLoad = ({ params }) => {

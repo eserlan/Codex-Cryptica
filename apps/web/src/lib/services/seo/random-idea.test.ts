@@ -17,8 +17,11 @@ describe("randomIdeaCategories", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
       "artifact",
       "council-vote",
+      "creature",
       "deity",
+      "encounter",
       "faction",
+      "heist",
       "minor-magic-item",
       "nation",
       "npc",
@@ -49,9 +52,12 @@ describe("randomIdeaCategories", () => {
         .mockResolvedValue("minor-magic-item-result"),
       generateArtifact: vi.fn().mockResolvedValue("artifact-result"),
       generateCouncilVote: vi.fn().mockResolvedValue("council-vote-result"),
+      generateHeist: vi.fn().mockResolvedValue("heist-result"),
       generateSecretSociety: vi.fn().mockResolvedValue("secret-society-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
+      generateCreature: vi.fn().mockResolvedValue("creature-result"),
+      generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -95,6 +101,10 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
       useAI: true,
     });
+    expect(engine.generateHeist).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
     expect(engine.generateSecretSociety).toHaveBeenCalledWith({
       useAI: true,
       theme,
@@ -112,6 +122,14 @@ describe("randomIdeaCategories", () => {
       useAI: true,
       genre: theme,
       mode: "single",
+    });
+    expect(engine.generateCreature).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+    });
+    expect(engine.generateEncounter).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
   });
 

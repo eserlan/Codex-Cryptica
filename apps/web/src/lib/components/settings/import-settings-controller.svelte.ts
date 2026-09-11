@@ -47,6 +47,7 @@ import { buildOracleSession } from "./import-oracle-session";
 import { ImportReviewManager } from "./import-review-manager";
 import { processChronicaFiles } from "./import-chronica-processor";
 import { processScabardFile } from "./import-scabard-processor";
+import { processKankaFile } from "./import-kanka-processor";
 import { runOracleFileAnalysis } from "./import-oracle-analyzer";
 import { ImportPackManager } from "./import-pack-manager.svelte";
 import { VaultFilesProcessor } from "./import-vault-files-processor";
@@ -192,6 +193,8 @@ export class ImportSettingsController {
       { when: { sourceType: "faction" }, thenType: "faction" },
       { when: { sourceType: "item" }, thenType: "item" },
       { when: { sourceType: "event" }, thenType: "event" },
+      { when: { sourceType: "quest" }, thenType: "quest" },
+      { when: { sourceType: "species" }, thenType: "species" },
       { when: { sourceType: "note" }, thenType: "note" },
       { when: { sourceType: "lore" }, thenType: "note" },
     ],
@@ -334,6 +337,21 @@ export class ImportSettingsController {
     // consistent with the rest of this deterministic import surface.
     if (files.length === 1 && (await this.looksLikeCifFile(files[0]))) {
       await this.handleCifFile(files[0], signal);
+      return;
+    }
+
+    // Official Kanka campaign backups are JSON ZIPs. Route them before the
+    // generic parsers so the deterministic adapter handles the raw archive.
+    if (files.length === 1 && files[0].name.toLowerCase().endsWith(".zip")) {
+      await processKankaFile(files[0], signal, {
+        rejectFile: (name, reason) => this.rejectedFiles.push({ name, reason }),
+        setImportMode: (mode) => (this.importMode = mode),
+        setStatusMessage: (msg) => (this.statusMessage = msg),
+        setStep: (step) => (this.step = step),
+        createEngine: () => this.createEngine(),
+        setSession: (session) => (this.ccSession = session),
+        setReport: (report) => (this.ccReport = report),
+      });
       return;
     }
 

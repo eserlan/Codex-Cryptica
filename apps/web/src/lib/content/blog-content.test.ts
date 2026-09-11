@@ -20,6 +20,18 @@ describe("blog content loader", () => {
     expect(index[0]).toHaveProperty("slug");
   });
 
+  it("loads introducing-the-canvas article with complete metadata", async () => {
+    const article = await loadBlogArticle("introducing-the-canvas");
+    expect(article).not.toBeNull();
+    expect(article?.slug).toBe("introducing-the-canvas");
+    expect(article?.title).toContain("Introducing the Canvas");
+    expect(article?.description).toBeTruthy();
+    expect(article?.keywords.length).toBeGreaterThan(0);
+    expect(article?.image).toContain("canvas-announcement.png");
+    expect(article?.content).toContain("Spatial Canvas");
+    expect(article?.content).toContain("Building an Investigation Board");
+  });
+
   it("loads remote blog index and articles when a base URL is configured", async () => {
     vi.stubEnv("VITE_BLOG_CONTENT_BASE_URL", "https://example.com/blog");
 

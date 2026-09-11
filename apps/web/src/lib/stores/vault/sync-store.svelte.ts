@@ -15,6 +15,13 @@ import {
 } from "$lib/services/performance/browser-performance-capture";
 import type { PerformanceOperationHandle } from "@codex/performance-observability";
 
+/**
+ * How long the post-paint OPFS reconcile waits (#2619). Long enough to stay
+ * clear of first paint and hydration, short enough that a user cannot get far
+ * into editing stale data before it is corrected.
+ */
+const WARM_RECONCILE_DELAY_MS = 1500;
+
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
   activeVaultRecord: () => VaultRecord | undefined;
@@ -74,6 +81,7 @@ export class SyncStore {
   }
 
   private syncAbortController: AbortController | null = null;
+  private warmReconcileTimer: ReturnType<typeof setTimeout> | null = null;
   private savedTimer: any = null;
   /**
    * The vault whose entities are currently seeded in memory. Used to tell a
@@ -148,6 +156,7 @@ export class SyncStore {
 
   destroy() {
     this.clearSavedTimer();
+    this.cancelWarmReconcile();
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
@@ -160,11 +169,41 @@ export class SyncStore {
     );
   }
 
+  /**
+   * Re-reads the vault from OPFS after a warm-cache paint (#2619).
+   *
+   * Deferred rather than awaited so the instant load the cache exists for is
+   * unaffected: the user already has their vault on screen before this starts.
+   * `loadFiles(false)` takes the cold path, which reads OPFS and syncs the
+   * local folder, so anything the cache was missing or holding stale is
+   * corrected — and because it is the cold path, it cannot re-enter this.
+   */
+  private scheduleWarmReconcile(vaultIdAtStart: string): void {
+    if (this.warmReconcileTimer) return;
+    this.warmReconcileTimer = setTimeout(() => {
+      this.warmReconcileTimer = null;
+      // The user may have switched vaults while we waited; reconciling the
+      // wrong vault would be worse than not reconciling at all.
+      if (this.isStale(vaultIdAtStart)) return;
+      void this.loadFiles(false).catch((err) => {
+        debugStore.warn("[SyncStore] Warm-cache reconcile failed:", err);
+      });
+    }, WARM_RECONCILE_DELAY_MS);
+  }
+
+  private cancelWarmReconcile(): void {
+    if (!this.warmReconcileTimer) return;
+    clearTimeout(this.warmReconcileTimer);
+    this.warmReconcileTimer = null;
+  }
+
   async loadFiles(skipSyncIfWarm = true) {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;
 
+    // A load starting now supersedes any reconcile still waiting to fire.
+    this.cancelWarmReconcile();
     if (this.syncAbortController) {
       this.syncAbortController.abort();
     }
@@ -303,13 +342,22 @@ export class SyncStore {
 
       if (cachedMap.size > 0 && skipSyncIfWarm) {
         debugStore.log(
-          "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
+          "[SyncStore] Cache is warm. Painting from cache, reconciling after.",
         );
         await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
         await this.deps.loadMaps(vaultIdAtStart);
         await this.deps.loadCanvases(vaultIdAtStart);
         void this.deps.getActiveVaultHandle();
         completeVaultOpen();
+        // The cache is a cache. Returning here made it the source of truth at
+        // startup, with no validation and no expiry — so a cache write that
+        // failed (its error is swallowed on the grounds that "the OPFS file is
+        // the source of truth") left the app showing stale data on every
+        // launch, forever, while the real entity sat on disk and synced
+        // correctly to the user's folder. That is #2619. The warm paint still
+        // happens first, so this costs nothing the user can perceive; it just
+        // stops the cache being able to mask the disk.
+        this.scheduleWarmReconcile(vaultIdAtStart);
         return;
       }
 
@@ -558,11 +606,6 @@ export class SyncStore {
         });
 
         this.setStatus("saved");
-        this.savedTimer = setTimeout(() => {
-          if (this._status === "saved") {
-            this.setStatus("idle");
-          }
-        }, 3000);
       }
     } finally {
       // Fix C4: if vault switched mid-save the onStateChange vault-ID guard
@@ -572,6 +615,25 @@ export class SyncStore {
         this.setStatus("idle");
       }
     }
+  }
+
+  /**
+   * Discards the fast-start cache and re-reads the vault from OPFS (#2619).
+   *
+   * The recovery action that did not exist. Every other path that clears the
+   * cache is reached only by a Google Drive pull, so a local-only user whose
+   * cache had drifted from disk had no way back — switching vaults does not do
+   * it either, since `invalidatePreload()` drops the in-memory snapshot without
+   * touching Dexie. Needs no linked folder: OPFS is the source of truth.
+   */
+  async reloadFromDisk(): Promise<void> {
+    const activeVaultId = this.deps.activeVaultId();
+    if (!activeVaultId) return;
+
+    // Anything still sitting in the debounce would be lost by the reseed.
+    await this.waitForSaves();
+    await cacheService.clearVault(activeVaultId);
+    await this.loadFiles(false);
   }
 
   async loadFromFolder() {
@@ -632,7 +694,12 @@ export class SyncStore {
           metadata: { timestamp: systemClock.now(), vaultId: vaultIdAtStart },
         });
 
-        await this.loadFiles();
+        // Clear the cache before reloading, exactly as the Drive pull does.
+        // Without this the pull lands in OPFS and `loadFiles()` then takes the
+        // warm path and re-displays the pre-pull cache — the user asks to load
+        // from their folder and is shown the stale copy anyway (#2619).
+        await cacheService.clearVault(vaultIdAtStart);
+        await this.loadFiles(false);
       }
     } finally {
       // Fix C4: mirror of saveToFolder — reset stuck transitional status
@@ -683,10 +750,15 @@ export class SyncStore {
   setStatus(
     s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
-    if (s !== "saved") {
-      this.clearSavedTimer();
-    }
+    this.clearSavedTimer();
     this._status = s;
+    if (s === "saved") {
+      this.savedTimer = setTimeout(() => {
+        if (this._status === "saved") {
+          this._status = "idle";
+        }
+      }, 2500);
+    }
   }
 
   setErrorMessage(m: string | null) {

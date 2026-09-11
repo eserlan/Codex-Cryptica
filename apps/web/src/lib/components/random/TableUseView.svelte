@@ -2,6 +2,14 @@
   import type { RandomSource } from "random-source-engine";
   import SourceHeading from "./SourceHeading.svelte";
   import TableRoller from "./TableRoller.svelte";
+  import { randomSources } from "$lib/features/random";
+  import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
+  import {
+    diceHistory,
+    type DiceHistoryStore,
+  } from "$lib/stores/dice-history.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
   /**
    * A table as it is used at the table, rather than as it is written
@@ -12,7 +20,23 @@
    * question is usually "what did I get", and only sometimes "what could I
    * have got".
    */
-  let { source }: { source: RandomSource } = $props();
+  let {
+    source,
+    sources = randomSources,
+    history = diceHistory,
+    session = mapSession,
+    addToChat,
+    copyText,
+    clock = systemClock,
+  }: {
+    source: RandomSource;
+    sources?: RandomSourceStore;
+    history?: DiceHistoryStore;
+    session?: typeof mapSession;
+    addToChat?: (text: string) => Promise<void>;
+    copyText?: (text: string) => Promise<void>;
+    clock?: Clock;
+  } = $props();
 
   const entries = $derived(source.entries ?? []);
   const isRanged = $derived(source.selection?.mode === "ranged");
@@ -36,7 +60,15 @@
 <div class="flex flex-col gap-4" data-testid="table-use-view">
   <SourceHeading {source} />
 
-  <TableRoller {source} />
+  <TableRoller
+    {source}
+    {sources}
+    {history}
+    {session}
+    {...addToChat ? { addToChat } : {}}
+    {...copyText ? { copyText } : {}}
+    {clock}
+  />
 
   {#if entries.length > 0}
     <details

@@ -11,16 +11,30 @@ import {
   normalizeToken,
   normalizeTokenRotation,
   normalizeTokenVisibility,
+  nextZIndexInLayer,
+  isNoteCollapsed,
+  NOTE_COLLAPSED_SCALE,
+  type MapLayer,
 } from "map-engine";
 import {
   snapToGrid,
   clampPointToBounds,
   hashToColor,
 } from "$lib/utils/vtt-helpers";
+import { snapToNeighborTiles } from "@codex/spatial-engine";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 const TOKEN_COORD_PRECISION = 2;
+/** Smallest a freshly-placed character token defaults to, regardless of how fine the map's grid is. */
+const MIN_DEFAULT_TOKEN_SIZE = 30;
+/** Sticky-note amber. Notes are GM furniture, so they get one recognisable
+ * colour rather than a name-hashed one. */
+export const NOTE_DEFAULT_COLOR = "#f5b942";
+/** Notes hold prose, not a portrait — give them more room than a token. */
+const NOTE_SIZE_MULTIPLIER = 1.5;
+/** A collapsed note still has to be big enough to click on a fine grid. */
+const MIN_COLLAPSED_NOTE_SIZE = 16;
 
 function roundTokenCoordinate(value: number) {
   const factor = 10 ** TOKEN_COORD_PRECISION;
@@ -42,6 +56,8 @@ export interface VTTTokenManagerDependencies {
   removeTokenFromInitiativeState?: (tokenId: string) => void;
   cloneInitiativeState?: (sourceId: string, cloneId: string) => void;
   isInitiativeOrdered?: (tokenId: string) => boolean;
+  getActiveLayer: () => MapLayer;
+  isLayerLocked: (layer: MapLayer) => boolean;
 }
 
 export class VTTTokenManager {
@@ -49,6 +65,10 @@ export class VTTTokenManager {
   selection = $state<string | null>(null);
   selectedTokens = $state<Set<string>>(new Set());
   pendingTokenCoords = $state<Point | null>(null);
+  pendingNoteCoords = $state<Point | null>(null);
+  /** True while the GM has armed the toolbar's note button and is choosing a
+   * spot on the map for it. The next left click places the note there. */
+  notePlacementArmed = $state(false);
   draggingTokenId = $state<string | null>(null);
   dragPreview = $state<DragPreview | null>(null);
 
@@ -77,6 +97,8 @@ export class VTTTokenManager {
     this.selection = null;
     this.selectedTokens = new Set();
     this.pendingTokenCoords = null;
+    this.pendingNoteCoords = null;
+    this.notePlacementArmed = false;
     this.draggingTokenId = null;
     this.dragPreview = null;
     for (const pending of this.pendingTokenMoves.values()) {
@@ -94,7 +116,25 @@ export class VTTTokenManager {
     selection: string | null,
     selectedTokens: Set<string>,
   ) {
-    this.tokens = tokens;
+    const vault = this.deps.getVault?.();
+    const hydratedTokens: Record<string, Token> = {};
+    for (const id in tokens) {
+      const token = tokens[id];
+      if (token.entityId && vault?.entities?.[token.entityId]) {
+        const entity = vault.entities[token.entityId];
+        hydratedTokens[id] = {
+          ...token,
+          name: entity.title || token.name,
+          noteBody:
+            token.kind === "note" && entity.content !== undefined
+              ? entity.content
+              : token.noteBody,
+        };
+      } else {
+        hydratedTokens[id] = token;
+      }
+    }
+    this.tokens = hydratedTokens;
     this.selection = selection;
     this.selectedTokens = selectedTokens;
   }
@@ -142,7 +182,56 @@ export class VTTTokenManager {
     const token = this.tokens[tokenId];
     if (!token) return;
     const next = token.visibleTo === "all" ? "gm-only" : "all";
+    // Guests were sent an empty body while the note was GM-only (see
+    // redactGmOnlyNote), so revealing it has to carry the text along.
+    if (next === "all" && token.kind === "note") {
+      return this.updateToken(tokenId, {
+        visibleTo: next,
+        noteBody: token.noteBody ?? "",
+      });
+    }
     return this.updateToken(tokenId, { visibleTo: next });
+  }
+
+  /**
+   * Folds a note down to a marker, or springs it back to the size it had.
+   * A collapsed note keeps its body — it is only taking up less of the map,
+   * the way a pin does, so a stocked dungeon does not bury its own art.
+   */
+  toggleNoteCollapsed(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token || token.kind !== "note") return null;
+
+    if (isNoteCollapsed(token)) {
+      const restored = token.noteCollapsedFrom!;
+      return this.updateToken(tokenId, {
+        width: restored.width,
+        height: restored.height,
+        noteCollapsedFrom: undefined,
+      });
+    }
+
+    const collapsed = this.collapsedNoteSize();
+    return this.updateToken(tokenId, {
+      width: collapsed,
+      height: collapsed,
+      noteCollapsedFrom: { width: token.width, height: token.height },
+    });
+  }
+
+  /** The side length a note takes when it is folded down to a marker. */
+  private collapsedNoteSize() {
+    const mapStore = this.deps.getMapStore();
+    return Math.max(
+      MIN_COLLAPSED_NOTE_SIZE,
+      Math.round((mapStore.gridSize || 50) * NOTE_COLLAPSED_SCALE),
+    );
+  }
+
+  setVisionSource(tokenId: string, isVisionSource: boolean) {
+    const token = this.tokens[tokenId];
+    if (!token) return;
+    return this.updateToken(tokenId, { isVisionSource });
   }
 
   isTokenVisible(
@@ -158,31 +247,69 @@ export class VTTTokenManager {
 
   getTokenDefaults(input: TokenCreationInput): Token {
     const mapStore = this.deps.getMapStore();
-    const mapGrid = mapStore.gridSize || 50;
+    const kind = input.kind ?? "token";
+    const isNote = kind === "note";
+    // gridSize can legitimately be very small — it's fit to a tile's native
+    // pixel grid (e.g. ~15px for some geomorph packs), which is correct for
+    // alignment/snapping but useless as a default character-token size: a
+    // 15px circle is effectively invisible. Floor the default independently
+    // of how fine the underlying grid happens to be.
+    const mapGrid = Math.max(MIN_DEFAULT_TOKEN_SIZE, mapStore.gridSize || 50);
+    const noteExpandedSize = Math.round(mapGrid * NOTE_SIZE_MULTIPLIER);
+    const defaultSize = isNote ? noteExpandedSize : mapGrid;
+    // A note lands folded down to a marker, so a stocked dungeon reads as a
+    // field of pins rather than a wall of paper laid over the map art. It
+    // springs back to `noteCollapsedFrom` when the GM opens it. A caller that
+    // asks for an explicit size wants the note at that size, so it lands open.
+    const landsCollapsed = isNote && input.width === undefined;
+    const size = landsCollapsed ? this.collapsedNoteSize() : defaultSize;
     return {
       id: this.idGenerator.uuid(),
       entityId: input.entityId ?? null,
       name: input.name.trim(),
       x: input.x,
       y: input.y,
-      width: input.width ?? mapGrid,
-      height: input.height ?? mapGrid,
+      width: input.width ?? size,
+      height: input.height ?? size,
       rotation: input.rotation ?? 0,
-      baseShape: input.baseShape ?? "circle",
-      facingIndicator: input.facingIndicator ?? true,
+      baseShape: input.baseShape ?? (isNote ? "square" : "circle"),
+      facingIndicator: input.facingIndicator ?? !isNote,
       zIndex: input.zIndex ?? Object.keys(this.tokens).length,
       ownerPeerId: input.ownerPeerId ?? null,
       ownerGuestName: input.ownerGuestName ?? null,
-      visibleTo: normalizeTokenVisibility(input.visibleTo),
-      color: input.color || hashToColor(input.name),
+      // A note is the GM's own annotation: it stays hidden until they
+      // deliberately reveal it, where a character token defaults to visible.
+      visibleTo: normalizeTokenVisibility(
+        input.visibleTo ?? (isNote ? "gm-only" : "all"),
+      ),
+      color:
+        input.color || (isNote ? NOTE_DEFAULT_COLOR : hashToColor(input.name)),
       imageUrl: input.imageUrl ?? null,
       statusEffects: [],
+      locked: input.locked === true,
+      isVisionSource: input.isVisionSource === true,
+      kind,
+      tileDeckId: input.tileDeckId ?? null,
+      tileDetails: input.tileDetails,
+      noteBody: isNote ? (input.noteBody ?? "") : undefined,
+      noteCollapsedFrom: isNote
+        ? (input.noteCollapsedFrom ??
+          (landsCollapsed
+            ? { width: noteExpandedSize, height: noteExpandedSize }
+            : undefined))
+        : undefined,
+      layer: input.layer ?? this.deps.getActiveLayer(),
     };
   }
 
   clampAndSnapPosition(
     point: Point,
     tokenSize: { width: number; height: number },
+    // Notes opt out: grid snapping exists so creatures occupy whole cells,
+    // and a note is an annotation rather than something standing in a cell.
+    // Snapping it would also floor it at one full cell, which a collapsed
+    // note is deliberately smaller than.
+    { snapToTheGrid = true }: { snapToTheGrid?: boolean } = {},
   ) {
     const mapStore = this.deps.getMapStore();
     const activeMap = mapStore.activeMap;
@@ -199,7 +326,7 @@ export class VTTTokenManager {
     let targetWidth = tokenSize.width;
     let targetHeight = tokenSize.height;
 
-    if (mapStore.showGrid) {
+    if (mapStore.showGrid && snapToTheGrid) {
       const gridSize = mapStore.gridSize;
       const offsetX = mapStore.gridOffsetX;
       const offsetY = mapStore.gridOffsetY;
@@ -233,11 +360,32 @@ export class VTTTokenManager {
     };
   }
 
+  /**
+   * Map coordinates at the middle of what is currently on screen. Notes
+   * created from outside the map (a table roll, a toolbar button) have no
+   * click position to land on, and the map origin is often scrolled out of
+   * view — dropping them where the GM is already looking keeps them findable.
+   */
+  viewportCenterPoint(): Point {
+    const mapStore = this.deps.getMapStore();
+    const canvasSize = mapStore.canvasSize;
+    if (!canvasSize?.width || !canvasSize?.height) return { x: 0, y: 0 };
+    const point = mapStore.unproject({
+      x: canvasSize.width / 2,
+      y: canvasSize.height / 2,
+    });
+    return {
+      x: roundTokenCoordinate(point.x),
+      y: roundTokenCoordinate(point.y),
+    };
+  }
+
   addToken(input: TokenCreationInput, silent = false) {
     const token = this.getTokenDefaults(input);
     const snapped = this.clampAndSnapPosition(
       { x: token.x, y: token.y },
       { width: token.width, height: token.height },
+      { snapToTheGrid: token.kind !== "note" },
     );
     const positioned = {
       ...token,
@@ -250,7 +398,13 @@ export class VTTTokenManager {
       ...this.tokens,
       [positioned.id]: positioned,
     };
-    this.deps.addTokenToInitiativeState?.(positioned.id);
+    // Tiles are terrain/room pieces and notes are GM annotations — neither is
+    // a combatant, so keep them out of the initiative tracker so the first one
+    // placed doesn't inherit the "active turn" accent border from landing at
+    // initiativeOrder[0].
+    if (positioned.kind !== "tile" && positioned.kind !== "note") {
+      this.deps.addTokenToInitiativeState?.(positioned.id);
+    }
     if (!silent) {
       this.deps.emit({ type: "TOKEN_ADDED", token: positioned });
     } else {
@@ -290,6 +444,7 @@ export class VTTTokenManager {
       updates.ownerGuestName !== undefined ||
       updates.visibleTo !== undefined;
     const statusChanged = updates.statusEffects !== undefined;
+    const visionSourceChanged = updates.isVisionSource !== undefined;
     const shouldDebounceBroadcast = posChanged || sizeChanged;
 
     const snapped =
@@ -309,6 +464,7 @@ export class VTTTokenManager {
               width: updates.width ?? current.width,
               height: updates.height ?? current.height,
             },
+            { snapToTheGrid: current.kind !== "note" },
           )
         : {
             x: current.x,
@@ -316,6 +472,30 @@ export class VTTTokenManager {
             width: current.width,
             height: current.height,
           };
+
+    // Repositioning a placed tile magnetically aligns it to nearby tiles'
+    // edges too, same as initial placement — otherwise dragging a tile to
+    // nudge it into alignment with its neighbors would only grid-snap.
+    if (current.kind === "tile" && (posChanged || sizeChanged)) {
+      // ⚡ Bolt Optimization: Avoid intermediate array allocations during token movement hot path
+      const neighbors: Token[] = [];
+      for (const key in this.tokens) {
+        if (Object.prototype.hasOwnProperty.call(this.tokens, key)) {
+          const token = this.tokens[key];
+          if (token.kind === "tile" && token.id !== tokenId) {
+            neighbors.push(token);
+          }
+        }
+      }
+      const snapThreshold = Math.max(12, snapped.width * 0.12);
+      const tileSnapped = snapToNeighborTiles(
+        snapped,
+        neighbors,
+        snapThreshold,
+      );
+      snapped.x = tileSnapped.x;
+      snapped.y = tileSnapped.y;
+    }
 
     const next = {
       ...current,
@@ -340,6 +520,21 @@ export class VTTTokenManager {
       ...this.tokens,
       [tokenId]: next,
     };
+
+    if (posChanged && (snapped.x !== current.x || snapped.y !== current.y)) {
+      const dx = snapped.x - current.x;
+      const dy = snapped.y - current.y;
+      for (const childId in this.tokens) {
+        const child = this.tokens[childId];
+        if (child && child.parentTokenId === tokenId) {
+          this.tokens[childId] = {
+            ...child,
+            x: roundTokenCoordinate(child.x + dx),
+            y: roundTokenCoordinate(child.y + dy),
+          };
+        }
+      }
+    }
 
     if (!silent) {
       if (shouldDebounceBroadcast) {
@@ -369,7 +564,7 @@ export class VTTTokenManager {
       // Ownership/visibility and status changes are sensitive to client-side
       // drift. Follow the delta with a canonical snapshot so guests heal from
       // any stale local state immediately.
-      if (permissionChanged || statusChanged) {
+      if (permissionChanged || statusChanged || visionSourceChanged) {
         this.deps.broadcastSessionSnapshotNow();
       }
     } else {
@@ -385,6 +580,37 @@ export class VTTTokenManager {
 
   rotateToken(tokenId: string, rotation: number, silent = false) {
     return this.updateToken(tokenId, { rotation }, silent);
+  }
+
+  toggleTokenLock(tokenId: string) {
+    const token = this.tokens[tokenId];
+    return token ? this.updateToken(tokenId, { locked: !token.locked }) : null;
+  }
+
+  bringTokenToFront(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token) return null;
+    // "Front" is scoped to the token's own layer. Scan directly so this hot
+    // interaction does not allocate a filtered array on every invocation.
+    let maxZ = -1;
+    for (const item of Object.values(this.tokens)) {
+      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
+        maxZ = Math.max(maxZ, item.zIndex);
+      }
+    }
+    return this.updateToken(tokenId, { zIndex: maxZ + 1 });
+  }
+
+  sendTokenToBack(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token) return null;
+    let minZ = 0;
+    for (const item of Object.values(this.tokens)) {
+      if (item.layer === token.layer && Number.isFinite(item.zIndex)) {
+        minZ = Math.min(minZ, item.zIndex);
+      }
+    }
+    return this.updateToken(tokenId, { zIndex: minZ - 1 });
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -469,6 +695,14 @@ export class VTTTokenManager {
     this.clearPendingMove(tokenId);
     const nextTokens = { ...this.tokens };
     delete nextTokens[tokenId];
+    for (const key in nextTokens) {
+      if (nextTokens[key].parentTokenId === tokenId) {
+        nextTokens[key] = {
+          ...nextTokens[key],
+          parentTokenId: undefined,
+        };
+      }
+    }
     this.tokens = nextTokens;
     this.deps.removeTokenFromInitiativeState?.(tokenId);
     if (this.selection === tokenId) {
@@ -481,6 +715,26 @@ export class VTTTokenManager {
       this.deps.persistDraft();
     }
     return true;
+  }
+
+  getChildNotes(parentTokenId: string): Token[] {
+    const result: Token[] = [];
+    for (const key in this.tokens) {
+      if (this.tokens[key].parentTokenId === parentTokenId) {
+        result.push(this.tokens[key]);
+      }
+    }
+    return result;
+  }
+
+  linkTokens(childTokenId: string, parentTokenId: string) {
+    if (!this.tokens[childTokenId] || !this.tokens[parentTokenId]) return null;
+    return this.updateToken(childTokenId, { parentTokenId });
+  }
+
+  unlinkToken(childTokenId: string) {
+    if (!this.tokens[childTokenId]) return null;
+    return this.updateToken(childTokenId, { parentTokenId: undefined });
   }
 
   private getClonedTokenName(sourceName: string) {
@@ -509,14 +763,9 @@ export class VTTTokenManager {
 
     const mapStore = this.deps.getMapStore();
     const offset = mapStore.gridSize || 50;
-    // ⚡ Bolt Optimization: Use imperative loop instead of ...allTokens.map to find max zIndex
-    // to avoid intermediate array allocation and spread operator overhead.
-    let maxZ = source.zIndex;
-    for (const token of this.allTokens) {
-      if (token.zIndex > maxZ) {
-        maxZ = token.zIndex;
-      }
-    }
+    const sameLayer = this.allTokens.filter(
+      (token) => token.layer === source.layer,
+    );
 
     const clone: Token = {
       ...source,
@@ -524,7 +773,7 @@ export class VTTTokenManager {
       name: this.getClonedTokenName(source.name),
       x: source.x + offset,
       y: source.y + offset,
-      zIndex: maxZ + 1,
+      zIndex: nextZIndexInLayer(sameLayer),
     };
 
     this.tokens = {
@@ -613,6 +862,8 @@ export class VTTTokenManager {
   canMoveToken(tokenId: string, peerId: string | null, isHost = false) {
     const token = this.tokens[tokenId];
     if (!token) return false;
+    if (token.locked) return false;
+    if (token.layer && this.deps.isLayerLocked(token.layer)) return false;
     if (isHost) return true;
     return token.ownerPeerId !== null && token.ownerPeerId === peerId;
   }

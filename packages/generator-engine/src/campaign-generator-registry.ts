@@ -38,6 +38,12 @@ import {
   type AdventureGeneratorOptions,
 } from "./public-adventure";
 import {
+  buildEncounterPrompt,
+  generateEncounterLocal,
+  encounterConfig,
+  type EncounterGeneratorOptions,
+} from "./public-encounter";
+import {
   buildPlotTwistPrompt,
   generatePlotTwistLocal,
   plotTwistConfig,
@@ -49,6 +55,19 @@ import {
   questConfig,
   type QuestGeneratorOptions,
 } from "./public-quest";
+import {
+  buildRumourPrompt,
+  generateRumourLocal,
+  rumourConfig,
+  type RumourGeneratorOptions,
+} from "./public-rumour";
+import {
+  buildPuzzlePrompt,
+  DEFAULT_PUZZLE_SYSTEM,
+  generatePuzzleLocal,
+  puzzleConfig,
+  type PuzzleGeneratorOptions,
+} from "./public-puzzle";
 import {
   buildMinorMagicItemPrompt,
   generateMinorMagicItemLocal,
@@ -80,6 +99,14 @@ import {
   starSystemConfig,
 } from "./public-star-system";
 import {
+  buildConstellationPrompt,
+  generateConstellationLocal,
+  buildNightSkyPrompt,
+  generateNightSkyLocal,
+  type ConstellationGeneratorOptions,
+  constellationConfig,
+} from "./public-constellation";
+import {
   alienRaceConfig,
   buildAlienRacePrompt,
   generateAlienRaceLocal,
@@ -89,11 +116,29 @@ import {
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
 import { councilVoteConfig } from "./public-council-vote-constants";
 import {
+  buildFactionRosterPrompt,
+  generateFactionRosterLocal,
+  factionRosterConfig,
+  type FactionRosterGeneratorOptions,
+} from "./public-faction-roster";
+import {
   buildSecretSocietyPrompt,
   generateSecretSocietyLocal,
   secretSocietyConfig,
   type SecretSocietyGeneratorOptions,
 } from "./public-secret-society";
+import {
+  buildHeistPrompt,
+  generateHeistLocal,
+  heistConfig,
+  type HeistGeneratorOptions,
+} from "./public-heist";
+import {
+  buildCreaturePrompt,
+  generateCreatureLocal,
+  creatureConfig,
+  type CreatureGeneratorOptions,
+} from "./public-creature";
 
 /**
  * Generator id -> default vault category id.
@@ -104,6 +149,7 @@ import {
 export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   npc: "character",
   faction: "faction",
+  "faction-roster": "note",
   settlement: "location",
   "magic-item": "item",
   "minor-magic-item": "item",
@@ -115,15 +161,21 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   quest: "event",
+  rumour: "note",
+  puzzle: "note",
   villain: "character",
   world: "location",
   "council-vote": "note",
   "secret-society": "faction",
   "star-system": "location",
+  constellation: "note",
   // A species, not an individual — creature rather than character.
   "alien-race": "creature",
+  creature: "creature",
   "plot-twist": "note",
   "random-table": "table",
+  encounter: "note",
+  heist: "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -230,6 +282,11 @@ function mapOutputToDraft(
       primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
       bodies: output.bodies ? [...output.bodies] : undefined,
       starType: output.starType,
+      pattern: output.pattern,
+      interpretations: output.interpretations
+        ? [...output.interpretations]
+        : undefined,
+      nightSky: output.nightSky,
       contextProvenance: contextProvenance.length
         ? contextProvenance
         : undefined,
@@ -917,6 +974,98 @@ function adventurePrompt(request: GeneratorRunRequest): string {
   return buildCampaignAdventurePrompt(request).userMessage;
 }
 
+// ---------------------------------------------------------------------------
+// Encounter generator helpers
+// ---------------------------------------------------------------------------
+
+function encounterOptions(
+  request: GeneratorRunRequest,
+): EncounterGeneratorOptions {
+  return {
+    genre: themeIdToLabel[request.themeId || "fantasy"] || "Classic Fantasy",
+    encounterType: optionString(request, "encounterType", ""),
+    environment: optionString(request, "environment", ""),
+    threat: optionString(request, "threat", ""),
+    tone: optionString(request, "tone", ""),
+    context: optionString(request, "context", ""),
+  };
+}
+
+function generateEncounter(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateEncounterLocal(encounterOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary || "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+export function buildCampaignEncounterPrompt(request: GeneratorRunRequest) {
+  const options = encounterOptions(request);
+  const prompt = buildEncounterPrompt(options);
+  return {
+    ...prompt,
+    options,
+    userMessage: `${contextChain(request)}
+
+${prompt.userMessage}`,
+  };
+}
+
+function encounterPrompt(request: GeneratorRunRequest): string {
+  return buildCampaignEncounterPrompt(request).userMessage;
+}
+
+// Heist reuses the public generator's prompt and local fallback wholesale
+// (the encounter/adventure pattern), so the framework from the heist answer
+// page — score, prize, casing intel, three security rings, alarm track,
+// complications, compromised getaway, flashbacks — stays defined in exactly
+// one place for both surfaces. Only the vault-grounding context chain is
+// added on top here.
+function heistOptions(request: GeneratorRunRequest): HeistGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    heistType: optionString(request, "heistType", ""),
+    targetScale: optionString(request, "targetScale", ""),
+    targetType: optionString(request, "targetType", ""),
+    prize: optionString(request, "prize", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateHeist(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateHeistLocal(heistOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+export function buildCampaignHeistPrompt(request: GeneratorRunRequest) {
+  const prompt = buildHeistPrompt(heistOptions(request));
+  const context = contextChain(request);
+  return {
+    ...prompt,
+    userMessage: `${context}\n\n${prompt.userMessage}`,
+    // contextChain already includes the request instructions. Repeat the same
+    // bounded grounding for the independent reviewer without duplicating it.
+    reviewContext: context,
+  };
+}
+
+function heistPrompt(request: GeneratorRunRequest): string {
+  return buildCampaignHeistPrompt(request).userMessage;
+}
+
 function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {
   return {
     genre: optionString(
@@ -947,6 +1096,80 @@ function generateQuest(request: GeneratorRunRequest): GeneratorOutput {
 
 function questPrompt(request: GeneratorRunRequest): string {
   const prompt = buildQuestPrompt(questOptions(request), contextChain(request));
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function rumourOptions(request: GeneratorRunRequest): RumourGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    tone: optionString(request, "tone", ""),
+    dangerLevel: optionString(request, "dangerLevel", ""),
+    subjectFocus: optionString(request, "subjectFocus", ""),
+    locationContext: optionString(request, "locationContext", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateRumour(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateRumourLocal(rumourOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function rumourPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildRumourPrompt(
+    rumourOptions(request),
+    contextChain(request),
+  );
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+}
+
+function puzzleOptions(request: GeneratorRunRequest): PuzzleGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? puzzleConfig.genres[0],
+    ),
+    purpose: optionString(request, "purpose", ""),
+    complexity: optionString(request, "complexity", ""),
+    style: optionString(request, "style", ""),
+    partyLevel: optionString(request, "partyLevel", ""),
+    playerCount: optionString(request, "playerCount", ""),
+    capabilities: optionString(request, "capabilities", ""),
+    participationStyle: optionString(request, "participationStyle", ""),
+    failurePressure: optionString(request, "failurePressure", ""),
+    system: optionString(request, "system", ""),
+    downstreamConsequence: optionString(request, "downstreamConsequence", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generatePuzzle(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generatePuzzleLocal(puzzleOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function puzzlePrompt(request: GeneratorRunRequest): string {
+  const prompt = buildPuzzlePrompt(
+    puzzleOptions(request),
+    contextChain(request),
+  );
   return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
@@ -1261,6 +1484,126 @@ ${loreGuidance(
 }
 
 // ---------------------------------------------------------------------------
+// Constellation generator helpers
+// ---------------------------------------------------------------------------
+
+function constellationOptions(
+  request: GeneratorRunRequest,
+): ConstellationGeneratorOptions {
+  return {
+    mode:
+      optionString(request, "mode", "single") === "night-sky"
+        ? "night-sky"
+        : "single",
+    genre: optionString(request, "genre", ""),
+    visualImpression: optionString(request, "visualImpression", ""),
+    practicalUse: optionString(request, "practicalUse", ""),
+    culturalMeaning: optionString(request, "culturalMeaning", ""),
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateConstellation(request: GeneratorRunRequest): GeneratorOutput {
+  const options = constellationOptions(request);
+  const result =
+    options.mode === "night-sky"
+      ? generateNightSkyLocal(options)
+      : generateConstellationLocal(options);
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+    pattern: result.pattern,
+    interpretations: result.interpretations,
+    nightSky: result.nightSky,
+  };
+}
+
+function constellationPrompt(request: GeneratorRunRequest): string {
+  const options = constellationOptions(request);
+  const brief =
+    options.mode === "night-sky"
+      ? buildNightSkyPrompt(options).userMessage
+      : buildConstellationPrompt(options).userMessage;
+  return `${contextChain(request)}
+
+${brief}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "constellation")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  options.mode === "night-sky"
+    ? "every named constellation, grouped by season, each with its practical use, cultural meaning, omen and an adventure hook"
+    : "seasonal visibility; practical use; cultural and religious meaning; omens; and an adventure hook",
+)}`;
+}
+
+function creatureOptions(
+  request: GeneratorRunRequest,
+): CreatureGeneratorOptions {
+  return {
+    genre:
+      request.vaultContext?.themeName ||
+      optionString(request, "genre", "Classic Fantasy"),
+    category: optionString(request, "category", creatureConfig.categories[0]),
+    threatLevel: optionString(
+      request,
+      "threatLevel",
+      creatureConfig.threatLevels[0],
+    ),
+    size: optionString(request, "size", creatureConfig.sizes[0]),
+    temperament: optionString(
+      request,
+      "temperament",
+      creatureConfig.temperaments[0],
+    ),
+    habitat: optionString(request, "habitat", creatureConfig.habitats[0]),
+    ecologicalRole: optionString(
+      request,
+      "ecologicalRole",
+      creatureConfig.ecologicalRoles[0],
+    ),
+    campaignContext: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateCreature(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateCreatureLocal(creatureOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+  };
+}
+
+function creaturePrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+${buildCreaturePrompt(creatureOptions(request)).userMessage}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "creature")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  "the true origin & hidden ecology; hidden abilities & surprises; secret weaknesses; tactical notes & ambush strategies; truth behind rumours; adventure & encounter hooks; and secret motives if sapient",
+)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Council Vote generator helpers
 // ---------------------------------------------------------------------------
 
@@ -1423,6 +1766,27 @@ If nothing needs fixing, return the paths exactly as they were.
 Return ONLY the JSON object.`;
 }
 
+function generateFactionRoster(request: GeneratorRunRequest): GeneratorOutput {
+  const output = generateFactionRosterLocal(
+    request.options as FactionRosterGeneratorOptions,
+  );
+  return {
+    title: output.title,
+    summary: output.summary ?? "",
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+  };
+}
+
+function factionRosterPrompt(request: GeneratorRunRequest): string {
+  const { systemInstruction, userMessage } = buildFactionRosterPrompt(
+    request.options as FactionRosterGeneratorOptions,
+    contextChain(request),
+  );
+  return `${systemInstruction}\n\n${userMessage}`;
+}
+
 function generateSecretSociety(request: GeneratorRunRequest): GeneratorOutput {
   const output = generateSecretSocietyLocal(
     request.options as SecretSocietyGeneratorOptions,
@@ -1492,6 +1856,52 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateFaction,
     mapOutputToDraft: mapOutputToDraft("faction"),
     buildPrompt: factionPrompt,
+  },
+  "faction-roster": {
+    id: "faction-roster",
+    label: "Faction Roster",
+    description: "Generate notable members of an existing faction.",
+    entityType: GENERATOR_ENTITY_TYPE["faction-roster"],
+    defaultInstruction:
+      "3-6 notable members of the faction, each with a personal motive, a stance toward the faction, and a connection to another member on the roster.",
+    icon: "lucide:users-round",
+    options: [
+      {
+        id: "size",
+        label: "Roster Size",
+        control: "select",
+        choices: factionRosterConfig.sizes.map((s) => ({
+          value: s,
+          label: `${s} members`,
+        })),
+      },
+      {
+        id: "structure",
+        label: "Structure",
+        control: "select",
+        choices: factionRosterConfig.structures.map((s) => ({
+          value: s,
+          label: s,
+        })),
+      },
+      {
+        id: "emphasis",
+        label: "Emphasis",
+        control: "select",
+        choices: factionRosterConfig.emphases.map((e) => ({
+          value: e,
+          label: e,
+        })),
+      },
+    ],
+    defaults: {
+      size: factionRosterConfig.sizes[1],
+      structure: factionRosterConfig.structures[0],
+      emphasis: factionRosterConfig.emphases[0],
+    },
+    generate: generateFactionRoster,
+    mapOutputToDraft: mapOutputToDraft("faction-roster"),
+    buildPrompt: factionRosterPrompt,
   },
   settlement: {
     id: "settlement",
@@ -1753,6 +2163,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           "Cyberpunk",
           "Optimistic Exploration Sci-Fi",
           "Space Opera Resistance",
+          "Space Western",
           "Lancer",
           "Post-Apocalyptic",
         ].map((g) => ({ value: g, label: g })),
@@ -1985,6 +2396,65 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     mapOutputToDraft: mapOutputToDraft("adventure"),
     buildPrompt: adventurePrompt,
   },
+  encounter: {
+    id: "encounter",
+    label: "Encounter",
+    description:
+      "Generate a playable encounter — combat, social, exploration, environmental, or mixed — with participants, environment, goals, a complication, and outcomes.",
+    entityType: GENERATOR_ENTITY_TYPE.encounter,
+    defaultInstruction:
+      "A playable encounter situation complete with an at-a-glance summary, participants and their motives, environment, non-combat approaches, a complication, and outcomes/rewards.",
+    icon: "lucide:swords",
+    options: [
+      {
+        id: "encounterType",
+        label: "Encounter Type",
+        control: "select",
+        choices: encounterConfig.encounterTypes.map((t) => ({
+          value: t,
+          label: t,
+        })),
+      },
+      {
+        id: "environment",
+        label: "Environment",
+        control: "select",
+        choices: encounterConfig.environments.map((e) => ({
+          value: e,
+          label: e,
+        })),
+      },
+      {
+        id: "threat",
+        label: "Threat",
+        control: "select",
+        choices: encounterConfig.threats.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: encounterConfig.tones.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "context",
+        label: "Additional Context",
+        description:
+          "Optional: describe an existing situation, location, or NPC to anchor the encounter.",
+        control: "textarea",
+      },
+    ],
+    defaults: {
+      encounterType: "Random",
+      environment: "",
+      threat: "Moderate",
+      tone: "",
+      context: "",
+    },
+    generate: generateEncounter,
+    mapOutputToDraft: mapOutputToDraft("encounter"),
+    buildPrompt: encounterPrompt,
+  },
   quest: {
     id: "quest",
     label: "Quest Hook",
@@ -2053,6 +2523,169 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateQuest,
     mapOutputToDraft: mapOutputToDraft("quest"),
     buildPrompt: questPrompt,
+  },
+  rumour: {
+    id: "rumour",
+    label: "Rumour",
+    description:
+      "Generate a d6 table of 6 local rumours — lighter than a quest hook, each with a concrete lead the players can pursue.",
+    entityType: GENERATOR_ENTITY_TYPE.rumour,
+    defaultInstruction:
+      "A d6 table of six local rumours grounded in the campaign, each naming a specific site, NPC, faction, or item the players can pursue, with GM-only truth notes kept separate from the player-facing text.",
+    icon: "lucide:ear",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: rumourConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: rumourConfig.tones.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "dangerLevel",
+        label: "Danger Level",
+        control: "select",
+        choices: rumourConfig.dangerLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "subjectFocus",
+        label: "Subject Focus",
+        control: "select",
+        choices: rumourConfig.subjects.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "locationContext",
+        label: "Settlement / Location",
+        control: "text",
+      },
+    ],
+    defaults: {
+      genre: "",
+      tone: "",
+      dangerLevel: "",
+      subjectFocus: "",
+      locationContext: "",
+    },
+    generate: generateRumour,
+    mapOutputToDraft: mapOutputToDraft("rumour"),
+    buildPrompt: rumourPrompt,
+  },
+  puzzle: {
+    id: "puzzle",
+    label: "Puzzle",
+    description:
+      "Generate a flexible, table-ready encounter puzzle with layered clues and multiple viable solutions.",
+    entityType: GENERATOR_ENTITY_TYPE.puzzle,
+    defaultInstruction:
+      "A thematic encounter puzzle with clear player-facing setup, GM-only solution details, layered clues, alternate approaches, and fail-forward consequences.",
+    icon: "lucide:puzzle",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: puzzleConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "purpose",
+        label: "Puzzle Purpose",
+        control: "select",
+        choices: puzzleConfig.purposes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "complexity",
+        label: "Complexity",
+        control: "select",
+        choices: puzzleConfig.complexities.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "style",
+        label: "Puzzle Style",
+        control: "select",
+        choices: puzzleConfig.styles.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "partyLevel",
+        label: "Advanced: Party Level or Competence",
+        control: "text",
+        visibleWhen: { optionId: "system", notValues: [DEFAULT_PUZZLE_SYSTEM] },
+      },
+      {
+        id: "playerCount",
+        label: "Advanced: Exact Player Count",
+        control: "number",
+        visibleWhen: { optionId: "system", notValues: [DEFAULT_PUZZLE_SYSTEM] },
+      },
+      {
+        id: "capabilities",
+        label: "PC Capabilities to Make Matter",
+        description:
+          "Add character concepts, abilities, spells, or skills. They create opportunities, never requirements.",
+        control: "textarea",
+      },
+      {
+        id: "participationStyle",
+        label: "Participation Style",
+        control: "select",
+        choices: puzzleConfig.participationStyles.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "failurePressure",
+        label: "Failure Pressure",
+        control: "select",
+        choices: puzzleConfig.failurePressures.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "system",
+        label: "System Tailoring",
+        control: "select",
+        choices: puzzleConfig.systems.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "downstreamConsequence",
+        label: "Optional Downstream Consequence",
+        control: "textarea",
+      },
+    ],
+    defaults: {
+      genre: "",
+      purpose: "",
+      complexity: "",
+      style: "",
+      partyLevel: "",
+      playerCount: "",
+      capabilities: "",
+      participationStyle: "",
+      failurePressure: "",
+      system: DEFAULT_PUZZLE_SYSTEM,
+      downstreamConsequence: "",
+    },
+    generate: generatePuzzle,
+    mapOutputToDraft: mapOutputToDraft("puzzle"),
+    buildPrompt: puzzlePrompt,
   },
   "plot-twist": {
     id: "plot-twist",
@@ -2398,6 +3031,82 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     }),
     buildPrompt: starSystemPrompt,
   },
+  constellation: {
+    id: "constellation",
+    label: "Constellation",
+    description:
+      "Generate a culturally meaningful constellation: a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, an omen, and an adventure hook.",
+    entityType: GENERATOR_ENTITY_TYPE["constellation"],
+    defaultInstruction:
+      "A constellation a specific culture reads a clear meaning into — a shape, a myth explaining it, a mundane use (navigation, planting, migration, timekeeping), and one concrete adventure hook.",
+    icon: "lucide:stars",
+    options: [
+      {
+        id: "mode",
+        label: "Mode",
+        control: "select",
+        choices: [
+          { value: "single", label: "Single Constellation" },
+          { value: "night-sky", label: "Full Night Sky (8-15)" },
+        ],
+      },
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: constellationConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "visualImpression",
+        label: "Visual Impression",
+        control: "select",
+        choices: constellationConfig.visualImpressions.map((value) => ({
+          value,
+          label: value,
+        })),
+        visibleWhen: { optionId: "mode", notValues: ["night-sky"] },
+      },
+      {
+        id: "practicalUse",
+        label: "Practical Use",
+        control: "select",
+        choices: constellationConfig.practicalUses.map((value) => ({
+          value,
+          label: value,
+        })),
+        visibleWhen: { optionId: "mode", notValues: ["night-sky"] },
+      },
+      {
+        id: "culturalMeaning",
+        label: "Cultural Meaning",
+        control: "select",
+        choices: constellationConfig.culturalMeanings.map((value) => ({
+          value,
+          label: value,
+        })),
+        visibleWhen: { optionId: "mode", notValues: ["night-sky"] },
+      },
+    ],
+    defaults: {
+      mode: "single",
+      genre: "Classic Fantasy",
+      visualImpression: "Beast",
+      practicalUse: "Navigation",
+      culturalMeaning: "A deity or divine figure",
+    },
+    generate: generateConstellation,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("constellation")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+      pattern: output.pattern,
+      interpretations: output.interpretations,
+      nightSky: output.nightSky,
+    }),
+    buildPrompt: constellationPrompt,
+  },
   "alien-race": {
     id: "alien-race",
     label: "Alien Race",
@@ -2659,6 +3368,141 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateCouncilVote,
     mapOutputToDraft: mapOutputToDraft("council-vote"),
     buildPrompt: councilVoteFoundationPrompt,
+  },
+  heist: {
+    id: "heist",
+    label: "Heist",
+    description:
+      "Generate a playable score: a prize with a practical catch, three layered security rings, an escalating alarm track, and a getaway whose original plan has already failed.",
+    entityType: GENERATOR_ENTITY_TYPE.heist,
+    defaultInstruction:
+      "A table-ready heist with a concrete objective, actionable casing intel, three security rings that each allow multiple approaches, a five-state alarm track, three complications with a trigger, a compromised getaway, and flashback opportunities the players may establish.",
+    icon: "lucide:key-round",
+    options: [
+      {
+        id: "heistType",
+        label: "Heist Type",
+        control: "select",
+        choices: heistConfig.heistTypes.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "targetScale",
+        label: "Target Scale",
+        description:
+          "How well defended the target is — a single building, a funded institution, or somewhere nobody has ever robbed.",
+        control: "radio",
+        choices: heistConfig.targetScales.map((s) => ({ value: s, label: s })),
+      },
+      {
+        id: "targetType",
+        label: "Target",
+        description: "Optional: the kind of place being hit.",
+        control: "text",
+      },
+      {
+        id: "prize",
+        label: "The Prize",
+        description:
+          "Optional: what the crew is after. Left blank, the generator picks something that fits the target.",
+        control: "textarea",
+      },
+    ],
+    defaults: {
+      heistType: "",
+      targetScale: "",
+      targetType: "",
+      prize: "",
+    },
+    generate: generateHeist,
+    mapOutputToDraft: mapOutputToDraft("heist"),
+    buildPrompt: heistPrompt,
+  },
+  creature: {
+    id: "creature",
+    label: "Creature",
+    description:
+      "Generate memorable beasts, monsters, alien fauna, constructs, spirits, or mounts with ecology, signs, tactics, and adventure hooks.",
+    entityType: GENERATOR_ENTITY_TYPE["creature"],
+    defaultInstruction:
+      "A distinctive creature or monster grounded in the setting's ecology — with concrete appearance, signs, abilities, weaknesses, encounter behaviour, and adventure hooks beyond just fighting it.",
+    icon: "lucide:paw-print",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: creatureConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "category",
+        label: "Category / Origin",
+        control: "select",
+        choices: creatureConfig.categories.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "threatLevel",
+        label: "Threat Level",
+        control: "select",
+        choices: creatureConfig.threatLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "size",
+        label: "Size",
+        control: "select",
+        choices: creatureConfig.sizes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "temperament",
+        label: "Intelligence / Temperament",
+        control: "select",
+        choices: creatureConfig.temperaments.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "habitat",
+        label: "Habitat",
+        control: "select",
+        choices: creatureConfig.habitats.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "ecologicalRole",
+        label: "Ecological Role",
+        control: "select",
+        choices: creatureConfig.ecologicalRoles.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      genre: "Classic Fantasy",
+      category: creatureConfig.categories[0],
+      threatLevel: creatureConfig.threatLevels[0],
+      size: creatureConfig.sizes[0],
+      temperament: creatureConfig.temperaments[0],
+      habitat: creatureConfig.habitats[0],
+      ecologicalRole: creatureConfig.ecologicalRoles[0],
+    },
+    generate: generateCreature,
+    mapOutputToDraft: mapOutputToDraft("creature"),
+    buildPrompt: creaturePrompt,
   },
   "random-table": {
     id: "random-table",

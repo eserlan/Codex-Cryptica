@@ -2,12 +2,11 @@
   import { onMount } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
-  import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
-  import { SCHEMA_ORG, DISCORD_URL, REDDIT_URL, GITHUB_URL } from "$lib/config";
+  import { SCHEMA_ORG } from "$lib/config";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
@@ -16,6 +15,7 @@
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { seoImportService } from "$lib/services/seo/import-handler";
   import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
+  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
   import {
     trackWelcomeFirstClick,
     type WelcomeAction,
@@ -147,8 +147,13 @@
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      // 0. If settings or dice modal is open, let them handle Escape
-      if (modalUIStore.showSettings || modalUIStore.showDiceModal) return;
+      // 0. Any open modal owns Escape. Modals attach their own window-level
+      // listeners, and stopPropagation cannot help — every listener sits on
+      // window — so this handler has to stand down, or it deselects the entity
+      // behind whichever modal the user was actually dismissing. Reading the
+      // store's own aggregate rather than naming modals keeps that true for
+      // ones added later.
+      if (modalUIStore.isAnyModalOpen) return;
 
       // 1. If an entity is focused (EmbeddedEntityView), close it
       if (layoutUIStore.mainViewMode === "focus") {
@@ -564,98 +569,7 @@
         </section>
 
         <!-- Footer actions & settings -->
-        <footer class="flex flex-col items-center gap-4 w-full">
-          <div class="flex flex-wrap items-center justify-center gap-6">
-            <a
-              href="{base}/free-rpg-campaign-manager"
-              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--castle] w-3 h-3" aria-hidden="true"
-              ></span>
-              Free RPG campaign manager
-            </a>
-            <a
-              href="{base}/worldbuilding-tool"
-              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--globe] w-3 h-3" aria-hidden="true"
-              ></span>
-              worldbuilding tool
-            </a>
-            <a
-              href="{base}/features"
-              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--zap] w-3 h-3" aria-hidden="true"
-              ></span>
-              Features
-            </a>
-            <a
-              href="{base}/changelog"
-              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-            >
-              <span class="icon-[lucide--history] w-3 h-3" aria-hidden="true"
-              ></span>
-              Changelog
-            </a>
-            {#if DISCORD_URL}
-              <a
-                href={DISCORD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-              >
-                <span
-                  class="icon-[lucide--message-square] w-3 h-3"
-                  aria-hidden="true"
-                ></span>
-                Discord
-              </a>
-            {/if}
-            {#if REDDIT_URL}
-              <a
-                href={REDDIT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-              >
-                <span
-                  class="icon-[lucide--message-circle] w-3 h-3"
-                  aria-hidden="true"
-                ></span>
-                Reddit
-              </a>
-            {/if}
-            {#if GITHUB_URL}
-              <a
-                href={GITHUB_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
-              >
-                <span class="icon-[lucide--github] w-3 h-3" aria-hidden="true"
-                ></span>
-                GitHub
-              </a>
-            {/if}
-            <a
-              href="https://groupfinder.gg/library/codex-cryptica"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center opacity-70 hover:opacity-100 transition-opacity"
-              aria-label="Codex Cryptica on Groupfinder"
-            >
-              <img
-                src="https://groupfinder.gg/images/badges/gf-badge-light.svg"
-                alt="Codex Cryptica on Groupfinder"
-                width="164"
-                height="45"
-                loading="lazy"
-                class="h-5 w-auto"
-              />
-            </a>
-          </div>
-
+        <div class="flex flex-col items-center gap-4 w-full">
           <div
             class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
           >
@@ -674,7 +588,8 @@
               Hide welcome screen on startup
             </label>
           </div>
-        </footer>
+          <MarketingFooter />
+        </div>
       </div>
     </div>
   {/if}

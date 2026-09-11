@@ -6,6 +6,7 @@ import {
   LayoutUIStore,
   MIN_LEFT_SIDEBAR_WIDTH,
   MIN_RIGHT_SIDEBAR_WIDTH,
+  MIN_VTT_SIDEBAR_WIDTH,
   type UIViewport,
 } from "./layout-ui.svelte";
 import {
@@ -77,6 +78,7 @@ describe("LayoutUIStore", () => {
     const backing = storage({
       codex_left_sidebar_width: "-10",
       codex_right_sidebar_width: "100",
+      codex_vtt_sidebar_width: "50",
     });
     const store = new LayoutUIStore(
       new UIPersistence({ storage: backing.storage }),
@@ -85,6 +87,7 @@ describe("LayoutUIStore", () => {
 
     expect(store.leftSidebarWidth).toBe(MIN_LEFT_SIDEBAR_WIDTH);
     expect(store.rightSidebarWidth).toBe(MIN_RIGHT_SIDEBAR_WIDTH);
+    expect(store.vttSidebarWidth).toBe(MIN_VTT_SIDEBAR_WIDTH);
   });
 
   it("persists sidebar widths with the legacy keys", () => {
@@ -97,6 +100,7 @@ describe("LayoutUIStore", () => {
 
     store.setLeftSidebarWidth(320);
     store.setRightSidebarWidth(420);
+    store.setVttSidebarWidth(450);
 
     expect(backing.storage.setItem).toHaveBeenCalledWith(
       "codex_left_sidebar_width",
@@ -105,6 +109,10 @@ describe("LayoutUIStore", () => {
     expect(backing.storage.setItem).toHaveBeenCalledWith(
       "codex_right_sidebar_width",
       "420",
+    );
+    expect(backing.storage.setItem).toHaveBeenCalledWith(
+      "codex_vtt_sidebar_width",
+      "450",
     );
   });
 

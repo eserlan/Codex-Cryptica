@@ -22,7 +22,7 @@ imageAlt: "Knowledge Graph Discovery in Codex Cryptica"
 
 We’ve all been there. Your archive is overflowing with three hundred notes on NPCs, locations, and forgotten historical scraps. You know the "killer hook" is buried in there somewhere, but finding that specific thread during a live session feels like digging through a digital junk drawer in the dark. It’s frustrating, slow, and it kills the creative flow.
 
-In **Codex Cryptica**, we solved this by moving past simple lists. We built a dual-engine system: **Labels** and **Smart Filters**. When you use them together, they don't just organize your chaos—they breathe life into your world, turning static notes into a living web of discovery.
+In **Codex Cryptica**, we solved this by moving past simple lists. We built a dual-engine system: **Labels** and **Smart Filters**. When you use them together, they don't just organize your chaos; they breathe life into your world, turning static notes into a living web of discovery.
 
 ### **The Rigidity of Folders**
 
@@ -58,7 +58,7 @@ This isn't just about finding data; it's about **seeing the gaps**. If you filte
 
 ## **3. Discovery via Visual Flow**
 
-When you apply a filter, the graph doesn't just list results—it **isolates** them. The rest of your world dims, and the filtered entities begin to glow, revealing the "invisible lines" of influence.
+When you apply a filter, the graph doesn't just list results; it **isolates** them. The rest of your world dims, and the filtered entities begin to glow, revealing the "invisible lines" of influence.
 
 ![Filtered Graph Isolation](https://assets.codexcryptica.com/images/blog/filters-and-labels/graph-filter-highlight.png)
 
@@ -67,7 +67,7 @@ When you apply a filter, the graph doesn't just list results—it **isolates** t
 
 ## **4. AI Discovery: The /plot Command**
 
-Once you've used labels and filters to slice your world into a high-definition focus—say, all the NPCs in the `#Underworld`—you can use the **Lore Oracle** to explore the "Why."
+Once you've used labels and filters to slice your world into a high-definition focus, say, all the NPCs in the `#Underworld`, you can use the **Lore Oracle** to explore the "Why."
 
 The `/plot` command is your narrative analyst. It's most powerful when you've already "narrowed the field" using filters. By telling the Oracle exactly which network to look at, you get far more relevant dramatic tensions.
 

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 /**
  * Paste-import of a real-sized table (#2247, SC-002, FR-034 – FR-038).
@@ -13,18 +14,7 @@ const HUNDRED_ROWS = Array.from(
 ).join("\n");
 
 async function openTables(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("codex_skip_landing", "true");
-    localStorage.setItem("codex_guided_mode_active", "false");
-    localStorage.setItem(
-      "codex-cryptica-help-state",
-      JSON.stringify({ completedTours: ["initial-onboarding"] }),
-    );
-  });
-
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-  await page.waitForFunction(() => (window as any).vault?.status === "idle");
+  await setupVaultPage(page);
   await page.goto("/tables");
   await expect(page.getByTestId("open-import")).toBeVisible({ timeout: 30000 });
 }

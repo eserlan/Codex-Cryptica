@@ -64,9 +64,10 @@ test.describe("Graph Deletion and UI Safety", () => {
       });
     });
 
-    // 2. Open Zen Mode for it via uiStore to be reliable
+    // 2. Open Zen Mode for it via modalUIStore to be reliable
     await page.evaluate((id) => {
-      (window as any).uiStore.openZenMode(id);
+      const store = (window as any).modalUIStore ?? (window as any).uiStore;
+      store.openZenMode(id);
     }, entityId);
 
     const modal = page.getByTestId("zen-mode-modal");

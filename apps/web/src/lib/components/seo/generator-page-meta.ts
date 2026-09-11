@@ -100,6 +100,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.",
     canonicalPath: "/generators/magic-item",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-magic-item.jpg",
     ogImageAlt:
@@ -277,6 +278,125 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
     ],
   },
+  "faction-roster": {
+    pageTitle:
+      "Faction Roster Generator | Notable Members for Any RPG Faction | Codex Cryptica",
+    metaDescription:
+      "Turn a generated faction into 3-6 named members with their own motives, loyalties, and leverage over each other. Paste in a faction, or generate one first, then build the roster.",
+    introTitle: "Faction Roster Generator",
+    eyebrow: "Faction Roster Generator",
+    introText:
+      "Turn a faction from an organization on paper into the people the party can actually meet, recruit, threaten, or betray — each with a personal motive, a stance toward the faction, and a connection to another member on the roster.",
+    canonicalPath: "/generators/faction-roster",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-faction-roster.jpg",
+    ogImageAlt:
+      "Codex Cryptica faction roster generator showing several named faction members with roles, motives, and a connection between two of them",
+    keywords: [
+      "faction roster generator",
+      "faction npc generator",
+      "rpg organization members generator",
+      "guild members generator",
+      "cult members generator",
+    ],
+    faqs: [
+      {
+        question: "Do I need a generated faction first?",
+        answer:
+          "No, though it works best that way. Generate a faction and select Generate Roster on the result to carry its details straight over, or paste your own faction's details into the context box on this page.",
+      },
+      {
+        question: "What does the faction roster generator create?",
+        answer:
+          "It generates 3 to 6 notable members of a faction, each with a role, a personal motive distinct from the faction's own goal, a stance toward the faction (loyalist, zealot, opportunist, trapped, reformer, secret traitor, or similar), a distinctive trait, an immediate hook, a leverage point, and a connection to another member on the same roster.",
+      },
+      {
+        question: "Will the roster always be a leader and underlings?",
+        answer:
+          "No. Choosing a structure — hierarchy, cell network, council, warband, corporate ladder, or congregation — changes the shape of the roster to match, so a clandestine cult produces a genuinely different roster than a corporation.",
+      },
+      {
+        question: "How does saving a generated roster work?",
+        answer:
+          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity. Each member section also has its own Open as Character action to continue developing that member individually.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/npc", label: "RPG NPC Generator" },
+    ],
+  },
+  puzzle: {
+    pageTitle:
+      "RPG Puzzle Generator | Table-Ready Encounter Puzzles | Codex Cryptica",
+    metaDescription:
+      "Create adaptable RPG encounter puzzles with layered clues, multiple solutions, character spotlight opportunities, and fail-forward consequences.",
+    introTitle: "RPG Puzzle Generator",
+    eyebrow: "RPG Puzzle Generator",
+    introText:
+      "Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.",
+    canonicalPath: "/generators/puzzle",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
+    ogImageAlt:
+      "Codex Cryptica RPG Puzzle Generator showing the input form, generated puzzle draft, and GM reference rail",
+    keywords: [
+      "rpg puzzle generator",
+      "dnd puzzle generator",
+      "tabletop encounter puzzle",
+      "gm puzzle builder",
+    ],
+    labels: ["puzzle"],
+    faqs: [
+      {
+        question: "Does this puzzle generator require a specific RPG system?",
+        answer:
+          "No. It is system-neutral by default, with optional D&D, Pathfinder 2e, and Tales of the Valiant tailoring.",
+      },
+      {
+        question: "Will a puzzle require one spell or character class?",
+        answer:
+          "No. Every puzzle is designed with multiple viable approaches, so capabilities create useful opportunities without becoming mandatory gates.",
+      },
+      {
+        question: "What happens when players fail?",
+        answer:
+          "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
+      },
+      {
+        question: "What makes this the best RPG puzzle generator to try?",
+        answer:
+          "Look for three things in any puzzle generator: layered clues instead of a single answer, multiple viable solutions rather than one intended path, and a fail-forward consequence instead of a dead stop. This generator is built around all three, plus a GM reference rail that keeps the solution space visible during play.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+        label: "How to Design RPG Puzzles (Guide)",
+      },
+      {
+        href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+        label: "How to Give Puzzle Hints Without Spoiling It (Guide)",
+      },
+      {
+        href: "/examples/the-venting-helix-derelict-hazard",
+        label: "Derelict Hazard Puzzle Example",
+      },
+      {
+        href: "/examples/the-bell-beneath-blackglass-fantasy-puzzle",
+        label: "Classic Fantasy Puzzle Example",
+      },
+      {
+        href: "/examples/the-null-key-reliquary-cyberpunk-puzzle",
+        label: "Cyberpunk Puzzle Example",
+      },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      {
+        href: "/generators/dungeon-generator",
+        label: "Dungeon & Delve Generator",
+      },
+    ],
+  },
   quest: {
     pageTitle:
       "RPG Quest Hook Generator | Free Fantasy & Cyberpunk Adventure Tool | Codex Cryptica",
@@ -298,6 +418,97 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "ttrpg plot hooks",
     ],
   },
+  rumour: {
+    pageTitle:
+      "RPG Rumour Generator | Free Tavern & Town Gossip Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a d6 table of six local rumours for any tavern, shrine, market, or settlement -- each with a concrete lead, a source, and hidden GM-only truth. Free, no login required.",
+    introTitle: "RPG Rumour Generator",
+    eyebrow: "Rumour Generator",
+    introText:
+      "Create a d6 table of six local rumours the party can overhear and choose to chase. Four are essentially true, one is exaggerated, and one is a dangerous misconception. Every rumour names a real lead; the truth stays hidden in GM notes until someone investigates.",
+    canonicalPath: "/generators/rumour",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-rumour.jpg",
+    ogImageAlt:
+      "Codex Cryptica Rumour Generator showing a d6 table of local rumours with a player-facing lead and source, and a GM-only truth rail",
+    keywords: [
+      "rpg rumour generator",
+      "rpg rumor generator",
+      "fantasy rumour generator",
+      "tavern rumour generator",
+      "tavern rumor generator",
+      "dnd rumour generator",
+      "random rumours for a town",
+      "fantasy town rumours",
+    ],
+    labels: ["rumour"],
+    faqs: [
+      {
+        question: "How is a rumour different from a quest hook?",
+        answer:
+          "A quest hook presents something the party could explicitly go and do. A rumour presents something people are saying, with enough specificity that the players can decide for themselves whether it's worth investigating. This generator stays deliberately lighter than the Quest Hook Generator -- no objectives, rewards, or encounter structure, just a gossip line, a lead, and a source.",
+      },
+      {
+        question: "Are the rumours always true?",
+        answer:
+          "No. Each table of six rolls a fixed hidden distribution: four rumours are essentially true, one is an exaggeration of something real, and one is a dangerous misconception that sounds plausible but is materially wrong. Which is which is never shown to players -- it lives in the GM-only notes beneath each entry.",
+      },
+      {
+        question: "Will every rumour actually be useful at the table?",
+        answer:
+          "Yes. Every rumour names at least one concrete, pursuable lead -- a specific person, place, faction, or item the players can seek out, question, or investigate. Vague ominous statements with nothing to act on are treated as a quality failure, not a feature.",
+      },
+      {
+        question: "Does this work for genres other than fantasy?",
+        answer:
+          "Yes. Set the genre to fantasy, cyberpunk, cosmic horror, space opera, western, and more -- the source, subject matter, and vocabulary adapt while the structure (rumour, lead, source, hidden truth) stays the same.",
+      },
+      {
+        question: "Do I have to save all six rumours as separate entities?",
+        answer:
+          "No. The whole table copies and saves as a single lightweight note, so you're not forced to create six new entities in your campaign vault every time you roll a table of local gossip.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/settlement", label: "Settlement Generator" },
+      {
+        href: "/generators/news-sheet-generator",
+        label: "News Sheet Generator",
+      },
+      {
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "How to generate useful RPG rumours",
+      },
+      {
+        href: "/examples/lowmere-six-words-rumour-table",
+        label: "Lowmere rumour table example",
+      },
+    ],
+  },
+  encounter: {
+    pageTitle:
+      "RPG Encounter Generator | Free Combat, Social & Exploration Tool | Codex Cryptica",
+    metaDescription:
+      "Generate playable RPG encounters -- combat, social, exploration, environmental, or mixed -- with participants, environment, a complication, and outcomes. System-neutral threat levels.",
+    introTitle: "RPG Encounter Generator",
+    eyebrow: "Encounter Generator",
+    introText:
+      "Create playable encounters your players can actually interact with, not just a monster list. Set the encounter type, environment, and threat, then import into your local vault.",
+    canonicalPath: "/generators/encounter",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-encounter.jpg",
+    ogImageAlt:
+      "Codex Cryptica encounter generator showing participants, environment, and possible approaches for a playable RPG encounter",
+    keywords: [
+      "rpg encounter generator",
+      "random encounter generator",
+      "fantasy encounter generator",
+      "dnd encounter generator",
+      "travel encounter generator",
+    ],
+  },
   item: {
     pageTitle:
       "RPG Loot & Magic Item Generator | Free Fantasy Equipment Tool | Codex Cryptica",
@@ -308,6 +519,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
     canonicalPath: "/generators/item",
+    labels: ["fantasy"],
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-item.jpg",
     ogImageAlt:
       "Codex Cryptica loot and equipment generator drafting custom items and relics",
@@ -372,6 +584,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/kingdom",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-kingdom.jpg",
     ogImageAlt:
@@ -416,6 +629,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/tavern",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-tavern.jpg",
     ogImageAlt:
@@ -438,6 +652,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/vampire-clan",
+    labels: ["vampire"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-vampire-clan.jpg",
     ogImageAlt:
@@ -460,6 +675,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/nomad-clan",
+    labels: ["cyberpunk", "post-apocalyptic"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-nomad-clan.jpg",
     ogImageAlt:
@@ -499,6 +715,66 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/settlement", label: "Settlement generator" },
     ],
   },
+  "dark-fantasy-faction": {
+    pageTitle:
+      "Dark Fantasy Faction Generator | Free Grimdark RPG Tool | Codex Cryptica",
+    metaDescription:
+      "Generate dark fantasy and grimdark factions — fallen orders, cursed noble houses, plague cults, witch-hunter lodges, and corpse guilds — with agendas, secrets, and table-ready hooks.",
+    introTitle: "Dark Fantasy Faction Generator",
+    eyebrow: "Dark Fantasy Faction Generator",
+    introText:
+      "Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+    canonicalPath: "/generators/dark-fantasy-faction",
+    labels: ["fantasy"],
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-dark-fantasy-faction.jpg",
+    ogImageAlt:
+      "Codex Cryptica dark fantasy faction generator drafting a cursed noble house with agenda, secrets, and rivals",
+    keywords: [
+      "dark fantasy faction generator",
+      "grimdark faction generator",
+      "dark rpg faction generator",
+      "osr faction generator",
+      "witch hunter faction generator",
+      "cursed kingdom generator",
+      "fantasy cult generator",
+    ],
+    faqs: [
+      {
+        question: "What does the dark fantasy faction generator create?",
+        answer:
+          "It generates a complete grimdark faction — a fallen order, cursed noble house, witch-hunter lodge, plague cult, corpse guild, or similar — with what they control, what they want, why they're dangerous, notable NPCs, an internal conflict, a rival faction, and a table-ready GM hook.",
+      },
+      {
+        question: "Is every faction just evil for the sake of it?",
+        answer:
+          "No. The generator aims for morally sharp, table-usable factions — institutions doing something defensible in the worst possible way, not cartoon villains. Pick a moral posture (necessary evil, fallen idealists, fanatical purists, and more) to steer the tone.",
+      },
+      {
+        question: "Can I use it without an account?",
+        answer:
+          "Yes. Generate and copy faction notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+      {
+        question: "Which RPG systems does it work with?",
+        answer:
+          "The generator is system-agnostic and works for any dark fantasy or grimdark campaign — OSR, Warhammer-adjacent settings, cursed kingdoms, plague-ridden cities, or your own homebrew. It makes no claim of official affiliation with any third-party system.",
+      },
+      {
+        question: "Can I aim the faction at my current campaign?",
+        answer:
+          "Yes. Add optional campaign context and the generator will fit the faction to your table rather than producing a generic result.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/faction",
+        label: "Classic Fantasy faction generator",
+      },
+      { href: "/generators/vampire-clan", label: "Vampire clan generator" },
+      { href: "/generators/cosmic-horror", label: "Cosmic Horror generators" },
+    ],
+  },
   names: {
     pageTitle:
       "RPG Name Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Names | Codex Cryptica",
@@ -530,6 +806,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.",
     canonicalPath: "/generators/fantasy-names",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg",
     ogImageAlt:
@@ -552,6 +829,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/dnd-npc",
+    labels: ["fantasy"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-dnd-npc.jpg",
     ogImageAlt:
@@ -585,6 +863,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "divine hierarchy tool",
       "worldbuilding gods",
     ],
+    labels: ["religion"],
   },
   "god-generator": {
     pageTitle:
@@ -1008,6 +1287,81 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/kingdom", label: "Kingdom Generator" },
     ],
   },
+  heist: {
+    pageTitle:
+      "Heist Generator | RPG Score & Infiltration Creator | Codex Cryptica",
+    metaDescription:
+      "Generate a table-ready RPG heist: the score, a prize with a practical catch, casing intel, three security rings, an escalating alarm track, complications, and a compromised getaway.",
+    introTitle: "Heist Generator",
+    eyebrow: "Score & Infiltration Generator",
+    introText:
+      "Build a playable heist instead of a planning session. You get a concrete objective, a prize that is awkward to move, three layered security rings that each allow more than one approach, a five-state alarm track, and a getaway whose original route has already failed. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/heist",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-heist.jpg",
+    ogImageAlt:
+      "Codex Cryptica heist generator drafting a score, layered security rings, and an alarm track",
+    keywords: [
+      "heist generator",
+      "rpg heist generator",
+      "tabletop rpg heist generator",
+      "infiltration scenario generator",
+      "blades in the dark score generator",
+      "dnd heist ideas",
+    ],
+    labels: ["heist"],
+    faqs: [
+      {
+        question: "What does the heist generator create?",
+        answer:
+          "A complete score: the objective, the prize and its practical complication, at least three pieces of casing intel, three distinct security rings, a five-state alarm track from Quiet to Lethal Response, three complications with a trigger that fires when the prize is lifted, a compromised getaway with alternate routes, and a menu of flashbacks the players could establish.",
+      },
+      {
+        question: "Is there one correct way through the security?",
+        answer:
+          "No. Every security ring is written with at least two genuinely different approaches, so the crew can talk, sneak, forge, bribe, or force their way past each layer rather than hunting for the single intended solution.",
+      },
+      {
+        question: "How do the flashback opportunities work?",
+        answer:
+          "They are offered, never dictated. The generator lists things the players could plausibly establish after the fact — a bribed guard, forged credentials, cached equipment, an inside contact — so the crew's competence is preserved without the table spending an hour planning for hypotheticals.",
+      },
+      {
+        question: "Does it work outside fantasy?",
+        answer:
+          "Yes. The target, its security, the alarm flavour, and the pursuit all follow the vibe you pick, so a cyberpunk data fortress, a frontier payroll car, an orbital station vault, and a cathedral undercroft each generate their own kind of score.",
+      },
+      {
+        question: "What should I look for in a heist generator?",
+        answer:
+          "Judge a heist generator on three things: whether every security layer has more than one way through, whether failure escalates instead of ending the scene, and whether the getaway is its own act rather than an afterthought. See the example scores linked below and judge for yourself.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
+        label: "How to Run a Heist (Guide)",
+      },
+      {
+        href: "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+        label: "Choosing a Heist Target (Guide)",
+      },
+      {
+        href: "/examples/the-breakwater-vault-space-western-heist",
+        label: "Space Western Heist Example",
+      },
+      {
+        href: "/examples/the-dawnheart-diadem-fantasy-heist",
+        label: "Classic Fantasy Heist Example",
+      },
+      {
+        href: "/examples/the-quell-extraction-cyberpunk-heist",
+        label: "Cyberpunk Extraction Example",
+      },
+      { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
+      { href: "/generators/npc", label: "NPC Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+    ],
+  },
   "secret-society": {
     pageTitle:
       "Secret Society Generator | Cult & Conspiracy Creator | Codex Cryptica",
@@ -1062,6 +1416,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a coherent sci-fi star system for your campaign — not just an astronomical inventory. Choose its system type, genre, civilisation level, character, and scientific realism, then generate a star (or stars), major bodies, factions, resources, hazards, and a system-wide conflict or mystery worth building a campaign around.",
     canonicalPath: "/generators/star-system",
+    labels: ["sci-fi"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-star-system.jpg",
     ogImageAlt:
@@ -1102,6 +1457,57 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/faction", label: "Faction Generator" },
     ],
   },
+  constellation: {
+    pageTitle:
+      "Constellation Generator | RPG Night Sky & Star Lore Creator | Codex Cryptica",
+    metaDescription:
+      "Generate a culturally meaningful RPG constellation — a star pattern, an origin myth, seasonal visibility, practical use, cultural meaning, an omen, and an adventure hook.",
+    introTitle: "Constellation Generator",
+    eyebrow: "Constellation Generator",
+    introText:
+      "Create a night-sky constellation with a story behind it, not just a random name. Choose its genre, visual impression, practical use, and cultural meaning, then generate a star pattern, the culture that reads meaning into it, an origin myth, when it's visible, what it's used for, and one adventure hook.",
+    canonicalPath: "/generators/constellation",
+    labels: ["worldbuilding"],
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-constellation.jpg",
+    ogImageAlt:
+      "Codex Cryptica constellation generator drafting a star pattern, origin myth, and cultural meaning",
+    keywords: [
+      "constellation generator",
+      "rpg night sky generator",
+      "star lore generator",
+      "fantasy constellation names",
+      "worldbuilding star myths",
+    ],
+    faqs: [
+      {
+        question: "What does the constellation generator create?",
+        answer:
+          "It generates one named constellation: a star pattern, the specific culture that reads a shape into it, an origin myth explaining why that shape exists, when and where it's visible, a practical mundane use (navigation, planting, migration, timekeeping), its cultural or religious meaning, an omen, and one playable adventure hook.",
+      },
+      {
+        question: "Is this astronomically accurate?",
+        answer:
+          "No, and it isn't meant to be. Star positions are a readable worldbuilding shape, not a real sky chart — the goal is a constellation a GM can use at the table, not a planetarium simulation.",
+      },
+      {
+        question:
+          "Can different cultures interpret the same stars differently?",
+        answer:
+          "The generator's data model is built to support that: a star pattern is kept separate from its cultural interpretation, so a later pass can hand the same pattern to a second culture with its own myth, use, and meaning.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy constellations on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/star-system", label: "Star System Generator" },
+      { href: "/generators/world", label: "Sci-Fi World Generator" },
+      { href: "/generators/settlement", label: "Settlement Generator" },
+    ],
+  },
   "alien-race": {
     pageTitle:
       "Alien Race Generator | Sci-Fi Alien Species Creator | Codex Cryptica",
@@ -1112,6 +1518,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Build an alien species that is genuinely non-human. Every biological and environmental trait changes something else — six limbs reach their tools and architecture, chemical speech changes what privacy means, a long life reshapes their politics.",
     canonicalPath: "/generators/alien-race",
+    labels: ["sci-fi"],
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
     ogImageAlt:
@@ -1155,6 +1562,64 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/star-system", label: "Star System Generator" },
       { href: "/generators/world", label: "Sci-Fi World Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
+    ],
+  },
+  creature: {
+    pageTitle:
+      "Creature Generator | RPG Monster, Beast & Fauna Creator | Codex Cryptica",
+    metaDescription:
+      "Generate monsters, beasts, alien fauna, undead, and magical creatures for any tabletop RPG. Complete with appearance, ecology, signs, tactics, weaknesses, and adventure hooks.",
+    introTitle: "Creature Generator",
+    eyebrow: "Monster & Creature Generator",
+    introText:
+      "Create table-ready monsters, beasts, alien fauna, undead, constructs, and mounts across any genre. Generates distinctive appearance, sensory signs, ecological roles, tactical combat behaviour, harvestable remains, and adventure hooks beyond just fighting them.",
+    canonicalPath: "/generators/creature",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-creature.jpg",
+    ogImageAlt:
+      "Codex Cryptica creature generator drafting monsters and beasts with ecology, signs, abilities, and adventure hooks",
+    keywords: [
+      "creature generator",
+      "monster generator",
+      "fantasy monster generator",
+      "rpg monster creator",
+      "alien fauna generator",
+      "dnd monster maker",
+      "tabletop beast generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Creature Generator create?",
+        answer:
+          "It produces a complete RPG creature — name, category, size, habitat, threat level, temperament, physical appearance, tracks and sensory signs, ecological role, abilities and defences, exploitable weaknesses, encounter behaviour, harvestable materials, lore and rumours, and 2–4 adventure hooks.",
+      },
+      {
+        question: "Is this only a fantasy monster generator?",
+        answer:
+          "No. While it functions as a powerful fantasy monster generator, it natively adapts to all 13 world themes — creating cyberpunk security bioweapons, sci-fi vacuum organisms, post-apocalyptic mutants, cosmic horror aberrations, and gothic undead.",
+      },
+      {
+        question:
+          "Can it generate non-hostile creatures, mounts, or familiars?",
+        answer:
+          "Yes. Select ecological roles like Herbivore / Migratory Grazer, Mount / Domesticated Beast, Familiar / Companion, or Scavenger, and choose appropriate threat levels from Harmless to Apex Predator.",
+      },
+      {
+        question: "How are intelligent or sapient creatures handled?",
+        answer:
+          "When a semi-sapient, fully sapient, or alien-minded temperament is selected, the generator adds communication methods, motives, social hierarchy, and relationship with nearby settlements, enabling memorable alien societies or monster cultures.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate, customize, and copy creature notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault with full Markdown notes — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
+      { href: "/generators/alien-race", label: "Alien Race Generator" },
+      { href: "/generators/npc", label: "RPG NPC Generator" },
     ],
   },
 };

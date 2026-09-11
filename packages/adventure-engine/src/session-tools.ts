@@ -38,9 +38,24 @@ export function buildAdventureRecap(
   recentTurnCount = 3,
 ): AdventureRecap {
   const recentTurns = session.turns.slice(-recentTurnCount);
+  // A roll-required turn (including the opening) never writes a
+  // visiblePatch — applyRollRequest only records the pending roll — so
+  // visibleState.situation stays empty until the roll resolves. The
+  // pending roll's setup narration is already player-visible (it's shown
+  // in the roll prompt itself), so it's a safe, non-hidden-state fallback
+  // rather than leaving this recap blank while a roll is outstanding.
+  const situation =
+    session.visibleState.situation ??
+    (session.pendingRoll?.setupNarration
+      ? {
+          id: `pending-roll:${session.pendingRoll.id}`,
+          text: session.pendingRoll.setupNarration,
+          source: "provisional" as const,
+        }
+      : undefined);
   return {
     location: session.visibleState.location,
-    situation: session.visibleState.situation,
+    situation,
     objectives: session.visibleState.objectives,
     activeCharacters: session.visibleState.activeCharacters,
     knownFacts: session.visibleState.knownFacts,

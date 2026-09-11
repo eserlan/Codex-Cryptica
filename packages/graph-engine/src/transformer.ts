@@ -3,7 +3,9 @@ import type {
   TemporalMetadata,
   Category,
   StylingTemplate,
+  ImageFocus,
 } from "schema";
+import { deriveEntityTypePalette, imageFocusBackgroundPosition } from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
 
@@ -17,6 +19,7 @@ export interface GraphNode {
     status?: "active" | "draft";
     image?: string;
     thumbnail?: string;
+    imageFocus?: ImageFocus;
     labels?: string[];
     isImportant?: boolean;
     isPast?: boolean;
@@ -212,6 +215,15 @@ export class GraphTransformer {
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
+      if (entity.silhouette) (nodeData as any).silhouette = entity.silhouette;
+      (nodeData as any).entity = {
+        id: entity.id,
+        title: entity.title,
+        type: entity.type,
+        labels: entity.labels,
+        silhouette: entity.silhouette,
+      };
       if ((entity as any).guestChatConfig?.isEnabled)
         nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -499,6 +511,40 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
+        "background-opacity": 1,
+        "border-color": tokens.primary,
+      },
+    });
+
+    baseStyle.push({
+      selector: "node[isSilhouette][resolvedImage][resolvedImage != 'none']",
+      style: {
+        // `none`, not `contain`: cytoscape applies background-width/height
+        // first and then, for `contain`, rescales the image to fill the node
+        // box — which cancelled the 72% and let the glyph spill outside
+        // non-rectangular nodes (the fantasy shield especially), since
+        // background-clip is none. With `none` the 72% stands and
+        // background-position 50% centres what is left.
+        "background-fit": "none",
+        // The fantasy shield is the one non-rectangular node shape: it tapers
+        // to a point, so a glyph sized and centred for the bounding box hangs
+        // over the sides. A smaller box, sat slightly high, lands in the part
+        // of the shield that is actually wide.
+        "background-width": isFantasy ? "64%" : "72%",
+        "background-height": isFantasy ? "64%" : "72%",
+        "background-clip": "none",
+        "background-image": "data(resolvedImage)",
+        "background-image-crossorigin": "null",
+        "background-position-x": "50%",
+        "background-position-y": isFantasy ? "44%" : "50%",
+        // Opaque, not 0.95: the silhouette's fill colour is contrast-checked
+        // against the node tone itself (issue #2680), so the tone has to be
+        // what is actually painted rather than a near-miss blend with the
+        // canvas behind it.
         "background-opacity": 1,
         "border-color": tokens.primary,
       },
@@ -608,18 +654,28 @@ export const getGraphStyle = (
     },
   );
 
-  const categoryStyles = categories.map((cat) => ({
-    selector: `node[type="${cat.id}"]`,
-    style: {
-      "border-color": cat.color,
-      "border-width": isFantasy
-        ? graph.nodeBorderWidth + 1
-        : graph.nodeBorderWidth + 4,
-      // For fantasy, we want the category color to overlay the parchment background
-      "background-color": cat.color,
-      "background-opacity": isFantasy ? 0.58 : 0.55,
-    },
-  }));
+  // Entity types are painted from theme-derived tones rather than the raw
+  // category colour (issue #2680): the seed hue survives, but saturation and
+  // lightness come from the active theme, so a mixed graph reads as one
+  // palette instead of neon blue/orange/green blocks. The tone is already
+  // blended against the theme surface, so it is applied at full opacity —
+  // that is what makes the icon-vs-fill contrast the palette guarantees hold
+  // on canvas.
+  const palette = deriveEntityTypePalette(template, categories);
+  const categoryStyles = categories.map((cat) => {
+    const tone = palette[cat.id];
+    return {
+      selector: `node[type="${cat.id}"]`,
+      style: {
+        "border-color": tone?.border ?? cat.color,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 1
+          : graph.nodeBorderWidth + 4,
+        "background-color": tone?.fill ?? cat.color,
+        "background-opacity": 1,
+      },
+    };
+  });
 
   const importantStyles: any[] = [
     {
@@ -673,7 +729,10 @@ export const getGraphStyle = (
         "background-image": "data(resolvedImage)",
         "background-clip": "node",
         "background-fit": "cover",
-        "background-position-y": "50%",
+        "background-position-x": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).x,
+        "background-position-y": (ele: any) =>
+          imageFocusBackgroundPosition(ele.data("imageFocus")).y,
         "border-width": isFantasy
           ? graph.nodeBorderWidth + 2
           : graph.nodeBorderWidth + 10,

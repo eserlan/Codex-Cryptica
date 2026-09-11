@@ -9,6 +9,9 @@ export const traveller: LandingPageConfig = {
     title: "Codex Cryptica for Traveller Campaign Management",
     description:
       "Organise your Traveller campaign with connected subsectors, worlds, patrons, speculative trade, jump routes, and rival powers.",
+    image: "https://assets.codexcryptica.com/og/traveller.jpg",
+    imageAlt:
+      "Free Trader starship cockpit console with subsector hex starmap, jump drive calculations, flight clipboards, and nebula view",
   },
   hero: {
     eyebrow: "Traveller Campaign Management",

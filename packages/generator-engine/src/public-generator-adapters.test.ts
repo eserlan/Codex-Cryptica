@@ -6,6 +6,7 @@ import {
   adaptMagicItem,
   adaptEvent,
   adaptVampire,
+  adaptDarkFaction,
   adaptLanguage,
   adaptDungeon,
 } from "./public-generator-adapters";
@@ -74,6 +75,13 @@ describe("public generator adapters (T052)", () => {
     expect(() => adaptVampire({}, "vampire-gothic-noir")).not.toThrow();
   });
 
+  it("adaptDarkFaction returns PublicGeneratorOutput shape", () => {
+    const result = adaptDarkFaction();
+    expect(result.type).toBe("faction");
+    expect(result.title.length).toBeGreaterThan(0);
+    expect(result.labels).toContain("dark-fantasy-faction");
+  });
+
   it("adaptLanguage returns PublicGeneratorOutput shape", () => {
     const result = adaptLanguage();
     expect(result.type).toBe("note");
@@ -91,6 +99,7 @@ describe("public generator adapters (T052)", () => {
       adaptMagicItem,
       adaptEvent,
       adaptVampire,
+      adaptDarkFaction,
       adaptLanguage,
       adaptDungeon,
     ]) {

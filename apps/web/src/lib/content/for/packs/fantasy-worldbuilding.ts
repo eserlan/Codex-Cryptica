@@ -9,6 +9,9 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     title: "Codex Cryptica for Fantasy Worldbuilding",
     description:
       "Connect realms to dynasties, faiths to schisms, factions to treaties, and history to the lands they shape in one local-first lore bible.",
+    image: "https://assets.codexcryptica.com/og/fantasy-worldbuilding.jpg",
+    imageAlt:
+      "Fantasy cartographer desk with hand-drawn continent world map, dynastic lineage scrolls, pantheon mythology books, and glowing crystals",
   },
   hero: {
     eyebrow: "Setting Lore & World Bible",

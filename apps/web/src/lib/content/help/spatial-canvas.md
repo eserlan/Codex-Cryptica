@@ -61,4 +61,5 @@ Once a layout is just how you want it, right-click any card (entity, file, or ot
 
 ### Related Blog Posts
 
+- [Introducing the Canvas: Visual Brainstorming Meets Structured Lore](/blog/introducing-the-canvas) — Practical workflows, worked examples, and tips for organizing freeform visual workspaces.
 - [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — How spatial layouts reduce cognitive load and reveal hidden lore connections.

@@ -45,7 +45,7 @@ Follow this quick checklist to set up your first vault and see Codex Cryptica's 
 
 ## 1. Vaults & The Workspace
 
-Your worldbuilding begins with a **Vault**—a dedicated workspace containing all of your campaign's entities, relationships, custom calendars, and spatial layouts.
+Your worldbuilding begins with a **Vault**: a dedicated workspace containing all of your campaign's entities, relationships, custom calendars, and spatial layouts.
 
 - **Absolute Sovereignty**: Vault files reside locally in your browser's **Origin Private File System (OPFS)**. They are not stored on external servers by default.
 - **Opening/Switching Vaults**: Click the vault indicator or the **folder icon** in the top-left toolbar to switch campaigns or initialize a new vault.
@@ -66,7 +66,7 @@ Every person, place, or thing in your world is represented as an **Entity**.
 
 ## 3. Writing & Bidirectional Linking
 
-CC features a bidirectional link editor (built on **Tiptap**). Connecting your notes is seamless and instantaneous.
+CC features a bidirectional link editor (built on **Tiptap**). Connecting your notes happens instantly, right as you type.
 
 - **Entity Auto-Links**: In read mode, any text matching an entity's name or its registered **aliases** is automatically highlighted as a clickable link.
 - **Command Bar (Slash Commands)**: Type a forward slash `/` in the chat input or the editor to trigger commands:

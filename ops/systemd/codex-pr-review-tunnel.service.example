@@ -1,0 +1,14 @@
+[Unit]
+Description=Cloudflare Tunnel for Codex Cryptica GitHub PR webhook
+Requires=codex-pr-review-webhook.service
+After=codex-pr-review-webhook.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cloudflared --config /home/espen/.cloudflared/codex-pr-review.yml tunnel run codex-pr-review
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

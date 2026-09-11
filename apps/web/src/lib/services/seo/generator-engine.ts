@@ -1,5 +1,4 @@
 import { aiClientManager } from "@codex/ai-engine";
-import { classifyApiError } from "@codex/ai-engine";
 import {
   buildNpcPrompt,
   parseNpcResponse,
@@ -16,12 +15,18 @@ import {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
+  buildFactionRosterPrompt,
+  parseFactionRosterResponse,
+  generateFactionRosterLocal,
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
   buildNomadClanPrompt,
   parseNomadClanResponse,
   generateNomadClanLocal,
+  buildDarkFactionPrompt,
+  parseDarkFactionResponse,
+  generateDarkFactionLocal,
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
@@ -31,6 +36,15 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildRumourPrompt,
+  parseRumourResponse,
+  generateRumourLocal,
+  buildEncounterPrompt,
+  parseEncounterResponse,
+  generateEncounterLocal,
+  buildPuzzlePrompt,
+  parsePuzzleResponse,
+  generatePuzzleLocal,
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
@@ -42,6 +56,9 @@ import {
   parseCouncilVotePathsResponse,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
+  buildHeistPrompt,
+  runHeistGeneration,
+  generateHeistLocal,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -65,12 +82,7 @@ import {
   generateShipLocal,
   buildLanguagePrompt,
   buildLanguageRepairPrompt,
-  classifyAILanguageQuality,
-  parseLanguageGenerationResult,
-  parseLanguageResponse,
   generateLanguageLocal,
-  validateLanguageInputFidelity,
-  validateLanguageNameBans,
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
   generateNewsSheetLocal,
@@ -91,22 +103,37 @@ import {
   buildStarSystemPrompt,
   parseStarSystemResponse,
   generateStarSystemLocal,
+  buildConstellationPrompt,
+  parseConstellationResponse,
+  generateConstellationLocal,
+  buildNightSkyPrompt,
+  parseNightSkyResponse,
+  generateNightSkyLocal,
   buildAlienRacePrompt,
   parseAlienRaceResponse,
   generateAlienRaceLocal,
+  buildCreaturePrompt,
+  parseCreatureResponse,
+  generateCreatureLocal,
   BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type MinorMagicItemGeneratorOptions,
   type ArtifactGeneratorOptions,
   type FactionGeneratorOptions,
+  type FactionRosterGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
+  type DarkFactionGeneratorOptions,
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type RumourGeneratorOptions,
+  type EncounterGeneratorOptions,
+  type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type CouncilVoteGeneratorOptions,
+  type HeistGeneratorOptions,
   type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
@@ -121,7 +148,9 @@ import {
   type PlotTwistGeneratorOptions,
   type WorldGeneratorOptions,
   type StarSystemGeneratorOptions,
+  type ConstellationGeneratorOptions,
   type AlienRaceGeneratorOptions,
+  type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -132,6 +161,11 @@ import {
   summarizeResolvedInputs,
   formatRecentInputsNote,
 } from "./generation-input-history";
+import {
+  GeneratorAITransport,
+  LANGUAGE_GENERATION_CONFIG,
+} from "./generator-ai-transport";
+import { assessLanguageOutput } from "./language-output-assessment";
 
 export {
   nameTable,
@@ -144,21 +178,47 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-// Faction + vampire + nomad + settlement content data now live in the package (#1351).
 export {
   factionConfig,
   themeIdToLabel,
   vampireConfig,
   nomadClanConfig,
+  darkFactionConfig,
+  resolveFaction,
+  resolveNomadClan,
+  resolveVampire,
+  resolveDarkFaction,
+  factionSchema,
+  nomadClanSchema,
+  vampireSchema,
+  darkFactionSchema,
+  FACTION_PRESETS,
+  NOMAD_CLAN_PRESETS,
+  VAMPIRE_PRESETS,
 } from "generator-engine";
-export { settlementConfig } from "generator-engine";
+export { factionRosterConfig } from "generator-engine";
+export {
+  settlementConfig,
+  SETTLEMENT_PRESETS,
+  SETTLEMENT_LEXICON,
+  settlementSchema,
+  presetsFor,
+  analyseIntent,
+  applyIntent,
+  resolveSmart,
+  type InferredChoice,
+} from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { rumourConfig } from "generator-engine";
+export { encounterConfig } from "generator-engine";
+export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
+export { heistConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
@@ -173,122 +233,56 @@ export { adventureConfig, forAdventureGenre } from "generator-engine";
 export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
 export { starSystemConfig } from "generator-engine";
+export { constellationConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
+export { creatureConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
 
-/**
- * Bridge the package's {@link PublicGeneratorOutput} (whose `type` is a plain
- * string) onto the SEO {@link GeneratorOutput} union the public pages expect.
- */
-function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
-  return { ...o, type: o.type as GeneratorOutput["type"] };
-}
-
-/** Single source of truth for the generator model id (#1494). */
-const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
-const LANGUAGE_GENERATION_CONFIG = {
-  temperature: 0.35,
-  topP: 0.8,
-  maxOutputTokens: 8192,
-  responseMimeType: "application/json",
-};
-
 export class DefaultGeneratorEngine {
-  constructor(private clientManager = aiClientManager) {}
+  private transport: GeneratorAITransport;
 
-  /**
-   * Shared AI-with-local-fallback flow for every generator (#1494). When AI is
-   * requested (`useAI !== false`) we try the AI path and, on any failure, fall
-   * back to the local tables while stamping `aiFallback` so the UI can surface a
-   * friendly "AI was unavailable" notice. When AI is not requested we go
-   * straight to local with no flag.
-   */
-  private async runWithAIFallback(
+  constructor(private clientManager = aiClientManager) {
+    this.transport = new GeneratorAITransport(clientManager);
+  }
+
+  async generateWithPreview<T>(
+    generate: () => Promise<T>,
+    onPreview: (text: string) => void,
+  ): Promise<T> {
+    return this.transport.generateWithPreview(generate, onPreview);
+  }
+
+  private runWithAIFallback(
     useAI: boolean | undefined,
     aiAttempt: () => Promise<PublicGeneratorOutput>,
     local: () => PublicGeneratorOutput,
   ): Promise<GeneratorOutput> {
-    if (useAI !== false) {
-      try {
-        return toSeoOutput(await aiAttempt());
-      } catch (err) {
-        // Distinguish routine, user-facing failure classes (offline, rate
-        // limits, quota, safety) from a genuine AI-pipeline defect (e.g. an
-        // unparseable response). Both fall back to local tables, but an
-        // "unknown" error is logged at error level so real regressions are not
-        // masked behind a warn (#1494 review follow-up).
-        const { type } = classifyApiError(err);
-        if (type === "unknown") {
-          console.error(
-            "AI generation failed unexpectedly, falling back to local tables:",
-            err,
-          );
-        } else {
-          console.warn(
-            `AI generation unavailable (${type}), falling back to local tables.`,
-          );
-        }
-        return toSeoOutput({ ...local(), aiFallback: true });
-      }
-    }
-    return toSeoOutput(local());
+    return this.transport.runWithAIFallback(useAI, aiAttempt, local);
   }
 
-  /**
-   * Shared AI call: resolve the model once (single source for the model id),
-   * run the prompt, and return trimmed text. Each generator keeps its own
-   * prompt builder and response parser; only this transport is shared (#1494).
-   */
-  private async runModel(
+  private runModel(
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
   ): Promise<string> {
-    const model = await this.clientManager.getModel(
-      "",
-      GENERATOR_MODEL_ID,
+    return this.transport.runModel(
       systemInstruction,
+      userMessage,
+      generationConfig,
     );
-    const response = await model.generateContent(
-      generationConfig
-        ? {
-            contents: [{ role: "user", parts: [{ text: userMessage }] }],
-            generationConfig,
-          }
-        : userMessage,
-    );
-    return response.response.text().trim();
   }
 
-  /**
-   * Multi-pass AI call over a single real chat session (#2033). Unlike
-   * runModel's one-shot call, each turn sent on the returned session sees
-   * every prior turn's actual text as conversation history — the model reads
-   * its own earlier output instead of us hand-summarizing it back in. Used
-   * where a single long generation has repeatedly contradicted its own
-   * earlier sections (council-vote's paths vs. its own roster).
-   */
-  private async startChat(systemInstruction: string) {
-    const model = await this.clientManager.getModel(
-      "",
-      GENERATOR_MODEL_ID,
-      systemInstruction,
-    );
-    return model.startChat({ history: [] });
+  private startChat(systemInstruction: string) {
+    return this.transport.startChat(systemInstruction);
   }
 
-  private async sendChatMessage(
-    chat: Awaited<ReturnType<DefaultGeneratorEngine["startChat"]>>,
+  private sendChatMessage(
+    chat: Awaited<ReturnType<GeneratorAITransport["startChat"]>>,
     userMessage: string,
   ): Promise<string> {
-    const result = await chat.sendMessageStream(userMessage);
-    let text = "";
-    for await (const chunk of result.stream) {
-      text += chunk.text();
-    }
-    return text.trim();
+    return this.transport.sendChatMessage(chat, userMessage);
   }
 
   generateName(): string {
@@ -348,6 +342,31 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  /** Faction roster generation (#2808): notable members of a faction. */
+  async generateFactionRoster(
+    options: FactionRosterGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rosterOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("faction-roster");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildFactionRosterPrompt(
+            rosterOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "faction-roster",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseFactionRosterResponse(text, resolved);
+      },
+      () => generateFactionRosterLocal(rosterOptions),
+    );
+  }
+
   /** Vampire clan generation delegates to the generator-engine package (#1351). */
   async generateVampireClan(
     options: VampireGeneratorOptions & { useAI?: boolean } = {},
@@ -394,6 +413,33 @@ export class DefaultGeneratorEngine {
         return parseNomadClanResponse(text, resolved);
       },
       () => generateNomadClanLocal(nomadOptions),
+    );
+  }
+
+  /** Dark fantasy / grimdark faction generation delegates to the generator-engine package (#1136). */
+  async generateDarkFaction(
+    options: DarkFactionGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...darkFactionOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent(
+      "dark-fantasy-faction",
+    );
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildDarkFactionPrompt(
+            darkFactionOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "dark-fantasy-faction",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseDarkFactionResponse(text, resolved);
+      },
+      () => generateDarkFactionLocal(darkFactionOptions),
     );
   }
 
@@ -519,6 +565,78 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  async generateRumour(
+    options: RumourGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rumourOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("rumour");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildRumourPrompt(
+          rumourOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "rumour",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseRumourResponse(text, resolved);
+      },
+      () => generateRumourLocal(rumourOptions),
+    );
+  }
+
+  async generateEncounter(
+    options: EncounterGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...encounterOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("encounter");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildEncounterPrompt(
+            encounterOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "encounter",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseEncounterResponse(text, resolved);
+      },
+      () => generateEncounterLocal(encounterOptions),
+    );
+  }
+
+  async generatePuzzle(
+    options: PuzzleGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...puzzleOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("puzzle");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildPuzzlePrompt(
+          puzzleOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "puzzle",
+          summarizeResolvedInputs(resolved),
+        );
+        return parsePuzzleResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generatePuzzleLocal(puzzleOptions),
+    );
+  }
+
   async generateVillain(
     options: VillainGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
@@ -545,6 +663,48 @@ export class DefaultGeneratorEngine {
     );
     villainDomainHistoryStore.record(result.conflictDomain);
     return result;
+  }
+
+  /**
+   * Generate, independently audit, then conditionally repair (#2768).
+   *
+   * Public and campaign generation share the same policy. A fresh reviewer
+   * always externalises the scenario's state transitions. Repair runs in that
+   * reviewer's conversation only when semantic or deterministic issues exist;
+   * failed or structurally worse repairs retain the usable original.
+   */
+  async generateHeist(
+    options: HeistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...heistOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("heist");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const prompt = buildHeistPrompt(
+          heistOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        const { systemInstruction, resolved } = prompt;
+        generationInputHistoryStore.record(
+          "heist",
+          summarizeResolvedInputs(resolved),
+        );
+        const generationChat = await this.startChat(systemInstruction);
+        let reviewChatPromise:
+          ReturnType<DefaultGeneratorEngine["startChat"]> | undefined;
+        const result = await runHeistGeneration(prompt, {
+          generate: (message) => this.sendChatMessage(generationChat, message),
+          review: async (message) =>
+            this.sendChatMessage(
+              await (reviewChatPromise ??= this.startChat(systemInstruction)),
+              message,
+            ),
+        });
+        return result.output;
+      },
+      () => generateHeistLocal(heistOptions),
+    );
   }
 
   async generateCouncilVote(
@@ -846,50 +1006,8 @@ export class DefaultGeneratorEngine {
           structure: resolved.structure,
           ...(resolved.context ? { worldContext: resolved.context } : {}),
         };
-        const assess = (
-          raw: string,
-        ): {
-          output?: PublicGeneratorOutput;
-          blockingIssues: string[];
-          advisoryIssues: string[];
-          issues: string[];
-        } => {
-          try {
-            const output = parseLanguageResponse(raw);
-            const result = parseLanguageGenerationResult({
-              version: output.languageProfileVersion,
-              title: output.title,
-              summary: output.summary,
-              labels: output.labels,
-              profile: output.languageProfile,
-            });
-            const quality = classifyAILanguageQuality(result);
-            const blockingIssues = [
-              ...quality.blockingIssues,
-              ...validateLanguageInputFidelity(result, expected).issues,
-              ...validateLanguageNameBans(result, resolved.bannedNames ?? [])
-                .issues,
-            ];
-            const advisoryIssues = quality.advisoryIssues;
-            return {
-              output,
-              blockingIssues,
-              advisoryIssues,
-              issues: [...blockingIssues, ...advisoryIssues],
-            };
-          } catch (error) {
-            const blockingIssues = [
-              error instanceof Error
-                ? `Structural validation failed: ${error.message}`
-                : "Structural validation failed.",
-            ];
-            return {
-              blockingIssues,
-              advisoryIssues: [],
-              issues: blockingIssues,
-            };
-          }
-        };
+        const assess = (raw: string) =>
+          assessLanguageOutput(raw, expected, resolved.bannedNames ?? []);
 
         const initialRaw = await this.runModel(
           systemInstruction,
@@ -1144,6 +1262,41 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  /** Constellation generation delegates to the shared offline-first generator package. */
+  async generateConstellation(
+    options: ConstellationGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...constellationOptions } = options;
+    const isNightSky = constellationOptions.mode === "night-sky";
+    // buildConstellationPrompt/buildNightSkyPrompt's return type has no
+    // `resolved` field, so this isn't wired into generationInputHistoryStore.
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = isNightSky
+          ? buildNightSkyPrompt(constellationOptions)
+          : buildConstellationPrompt(constellationOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        const avoidNames = [
+          ...BANNED_NAMES,
+          ...(constellationOptions.avoidNames ?? []),
+        ];
+        return isNightSky
+          ? parseNightSkyResponse(text, avoidNames)
+          : parseConstellationResponse(text, avoidNames);
+      },
+      () => {
+        const avoidNames = [
+          ...BANNED_NAMES,
+          ...(constellationOptions.avoidNames ?? []),
+        ];
+        return isNightSky
+          ? generateNightSkyLocal({ ...constellationOptions, avoidNames })
+          : generateConstellationLocal({ ...constellationOptions, avoidNames });
+      },
+    );
+  }
+
   /** Alien race generation delegates to the shared offline-first generator package. */
   async generateAlienRace(
     options: AlienRaceGeneratorOptions & { useAI?: boolean } = {},
@@ -1166,6 +1319,37 @@ export class DefaultGeneratorEngine {
         generateAlienRaceLocal({
           ...alienRaceOptions,
           avoidNames: [...BANNED_NAMES, ...(alienRaceOptions.avoidNames ?? [])],
+        }),
+    );
+  }
+
+  /** Creature generation delegates to the shared offline-first generator package. */
+  async generateCreature(
+    options: CreatureGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...creatureOptions } = options;
+    const historyNote = formatRecentInputsNote(
+      generationInputHistoryStore.recent("creature"),
+    );
+    const sessionContext = [getSessionContext(), historyNote]
+      .filter(Boolean)
+      .join("\n\n");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildCreaturePrompt(creatureOptions, sessionContext);
+        const text = await this.runModel(systemInstruction, userMessage);
+        generationInputHistoryStore.record(
+          "creature",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseCreatureResponse(text, resolved);
+      },
+      () =>
+        generateCreatureLocal({
+          ...creatureOptions,
+          avoidNames: [...BANNED_NAMES, ...(creatureOptions.avoidNames ?? [])],
         }),
     );
   }

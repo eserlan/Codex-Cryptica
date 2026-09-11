@@ -626,6 +626,34 @@ export class AdventureManager {
   }
 
   /**
+   * Archives the current session even when this tab never holds (or has
+   * lost) the control lease — recovers a session stuck read-only with no
+   * other tab actually able to advance it, e.g. one whose opening-turn
+   * generation failed and whose own cleanup archive also failed, leaving
+   * an orphaned lease that keeps renewing itself. Goes straight through
+   * the repository's revision check rather than `manager.end()`'s
+   * lease-based `readOnly` gate: if another tab is genuinely mid-turn, its
+   * next save will have moved the revision on, so this fails with
+   * `revision-conflict` instead of silently cutting it off.
+   */
+  async forceEnd(): Promise<void> {
+    if (!this.session) return;
+    const result = await this.deps.repository.archive(
+      this.session.vaultId,
+      this.session.id,
+      this.session.revision,
+    );
+    if (!result.ok) throw result.error;
+    void this.deps.clearGenerationInteraction(result.session.id);
+    await this.deps.coordinator.stop();
+    this.lease = null;
+    this.session = null;
+    this.readOnly = false;
+    this.errorMessage = null;
+    this.phase = "idle";
+  }
+
+  /**
    * Resumes an archived (or freshly duplicated) adventure as the vault's
    * active adventure. Throws `active-adventure-exists` under the same rule
    * `start()` already enforces — the caller must end or continue the

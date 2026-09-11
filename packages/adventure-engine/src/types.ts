@@ -111,6 +111,23 @@ export interface CollectionPatch<T> {
   removeIds: string[];
 }
 
+/** Facts created by a generation. Their durable IDs are assigned at commit time. */
+export type NewStateFact = Omit<StateFact, "id">;
+export type NewRelationshipFact = Omit<RelationshipFact, "id">;
+export type NewHiddenSecret = Omit<HiddenSecret, "id" | "revealedOnTurnId">;
+export type NewHiddenThread = Omit<HiddenThread, "id">;
+export type NewProvisionalFact = Omit<
+  ProvisionalFact,
+  "id" | "introducedOnTurnId"
+>;
+
+/** A model proposal may only name IDs when it updates or removes existing state. */
+export interface ProposalCollectionPatch<T, TNew = Omit<T, "id">> {
+  add: TNew[];
+  update: T[];
+  removeIds: string[];
+}
+
 export interface VisibleStatePatch {
   location?: StateFact | null;
   situation?: StateFact | null;
@@ -123,6 +140,20 @@ export interface VisibleStatePatch {
 export interface HiddenStatePatch {
   secrets: CollectionPatch<HiddenSecret>;
   gmThreads: CollectionPatch<HiddenThread>;
+}
+
+export interface VisibleStateProposalPatch {
+  location?: NewStateFact | null;
+  situation?: NewStateFact | null;
+  objectives: ProposalCollectionPatch<StateFact, NewStateFact>;
+  activeCharacters: ProposalCollectionPatch<StateFact, NewStateFact>;
+  knownFacts: ProposalCollectionPatch<StateFact, NewStateFact>;
+  relationships: ProposalCollectionPatch<RelationshipFact, NewRelationshipFact>;
+}
+
+export interface HiddenStateProposalPatch {
+  secrets: ProposalCollectionPatch<HiddenSecret, NewHiddenSecret>;
+  gmThreads: ProposalCollectionPatch<HiddenThread, NewHiddenThread>;
 }
 
 /** Snapshot of a resolved roll, captured on the turn that resolved it. See data-model.md "Resolved Roll snapshot". */
@@ -194,10 +225,10 @@ export interface AdventureSession {
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
-  visiblePatch: VisibleStatePatch;
-  hiddenPatch: HiddenStatePatch;
+  visiblePatch: VisibleStateProposalPatch;
+  hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];
-  provisionalFacts: Omit<ProvisionalFact, "introducedOnTurnId">[];
+  provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
 }
@@ -234,6 +265,7 @@ export interface AdventureValidationError {
     | "canon-conflict"
     | "invalid-roll"
     | "state-budget-exceeded"
+    | "id-allocation-failed"
     | "incompatible-version";
   message: string;
 }

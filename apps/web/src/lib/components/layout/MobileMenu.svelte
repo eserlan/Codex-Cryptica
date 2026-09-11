@@ -7,7 +7,6 @@
   import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { isToolActive, isViewActive, navItems } from "./nav-items";
 
@@ -83,7 +82,7 @@
       <h2
         class="text-lg font-bold text-theme-text font-mono flex items-center gap-2"
       >
-        <span class="icon-[lucide--menu] text-theme-primary"></span>
+        <span class="icon-[lucide--menu] text-theme-primary" aria-hidden="true"></span>
         MENU
       </h2>
       <button
@@ -190,6 +189,7 @@
           Application
         </h3>
         <button
+          type="button"
           class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-theme-primary min-h-[44px]"
           onclick={() => {
             modalUIStore.toggleSettings("vault");
@@ -220,52 +220,27 @@
             rel="noopener noreferrer"
             class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           >
-            <span class="icon-[lucide--heart] w-4 h-4"></span>
+            <span class="icon-[lucide--heart] w-4 h-4" aria-hidden="true"></span>
             Support on Patreon
           </a>
         {/if}
         <a
-          href="{base}/features"
+          href="{base}/explore"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--zap] w-4 h-4"></span>
-          Features
-        </a>
-        <a
-          href="{base}/blog"
-          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-          onclick={close}
-        >
-          <span class="icon-[lucide--newspaper] w-4 h-4"></span>
-          Blog
-        </a>
-        {#if !guidedModeStore.isGuidedMode}
-          <a
-            href="{base}/worlds"
-            class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-            onclick={close}
-          >
-            <span class="icon-[lucide--compass] w-4 h-4"></span>
-            Explore Worlds
-          </a>
-        {/if}
-        <a
-          href="{base}/responsible-ai-worldbuilding"
-          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
-          onclick={close}
-        >
-          <span class="icon-[lucide--shield-alert] w-4 h-4"></span>
-          Responsible AI
+          <span class="icon-[lucide--compass] w-4 h-4" aria-hidden="true"></span>
+          Explore
         </a>
         <button
+          type="button"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
           onclick={() => {
             modalUIStore.openSettings("help");
             close();
           }}
         >
-          <span class="icon-[lucide--help-circle] w-4 h-4"></span>
+          <span class="icon-[lucide--help-circle] w-4 h-4" aria-hidden="true"></span>
           Help
         </button>
         <a
@@ -274,8 +249,8 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--shield] w-4 h-4"></span>
-          Privacy Policy
+          <span class="icon-[lucide--shield] w-4 h-4" aria-hidden="true"></span>
+          Privacy
         </a>
         <a
           href="{base}/terms"
@@ -283,8 +258,8 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--file-text] w-4 h-4"></span>
-          Terms of Service
+          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
+          Terms
         </a>
       </div>
     </div>

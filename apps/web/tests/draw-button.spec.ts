@@ -1,49 +1,18 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntity, openOracle } from "./test-helpers";
 
 test.describe("Advanced Draw Button", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      localStorage.setItem("oracle-hint-seen", "true");
-      localStorage.setItem("front-page-hint-seen", "true");
-      localStorage.setItem("vtt-mode-hint-seen", "true");
-      localStorage.setItem("entity-hierarchy-hint-seen", "true");
+    await setupVaultPage(page);
+
+    await page.evaluate(() => {
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("/");
 
-    // Create an entity to test sidepanel/zen mode
-    await page.waitForFunction(() => !!(window as any).modalUIStore);
-    await page.evaluate(() =>
-      (window as any).modalUIStore.requestCreateEntity(),
-    );
-    await page.getByPlaceholder(/Title.../i).fill("Ancient Dragon");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for indexing
-    await expect(page.getByTestId("entity-count")).toHaveText(
-      /1\s+(CHRONICLE|NOTE)/i,
-    );
-
-    // Wait for the search index to include "Ancient Dragon"
-    await page.waitForFunction(
-      async () => {
-        const s = (window as any).searchStore;
-        if (!s?.setQuery) return false;
-        try {
-          await s.setQuery("Ancient Dragon");
-          return Array.isArray(s.results) && s.results.length > 0;
-        } catch {
-          return false;
-        }
-      },
-      null,
-      { timeout: 15000 },
-    );
+    await seedEntity(page, {
+      title: "Ancient Dragon",
+      type: "note",
+    });
   });
 
   test("Lite tier does NOT show draw buttons", async ({ page }) => {
@@ -58,7 +27,7 @@ test.describe("Advanced Draw Button", () => {
     ).not.toBeVisible();
 
     // 2. Check Oracle Chat
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
     const input = page.getByTestId("oracle-input");
     await input.fill("Tell me about the dragon");
     await input.press("Enter");
@@ -106,7 +75,7 @@ test.describe("Advanced Draw Button", () => {
     await expect(page.getByText("VISUALIZING...")).toBeVisible();
 
     // 3. Check Oracle Chat
-    await page.getByTestId("activity-bar-oracle").click();
+    await openOracle(page);
 
     // Inject a mock assistant message directly into the store to test the button logic
     await page.evaluate(async () => {

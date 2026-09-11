@@ -20,6 +20,7 @@ import {
   handleDeleteVault,
   handleDeleteAsset,
 } from "./publish";
+import { handleGetStarterTileDeck } from "./starter-tile-decks";
 import {
   handleDeletePublicListing,
   handleGetPublicListing,
@@ -40,6 +41,8 @@ import { getModel } from "./llm/registry";
 import {
   isLlmOperationRequest,
   handleLlmOperationRequest,
+  isLlmOperationStreamRequest,
+  handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
 import {
@@ -52,6 +55,19 @@ import {
   handleUpdateTemplateListing,
   handleAdminSuspendTemplateListing,
 } from "./template-directory";
+import {
+  handleEnableCloudBackup,
+  handleCommitCloudBackup,
+  handleCloudBackupAssetUpload,
+  handleGetCloudBackupStatus,
+  handleGetCloudBackupBundle,
+  handleGetCloudBackupAsset,
+  handleDeleteCloudBackup,
+  handleCloudBackupAdminLookup,
+  handleCloudBackupAdminStats,
+  handleCloudBackupReissueCode,
+  handleCloudBackupAdminDelete,
+} from "./cloud-backup";
 
 interface Env {
   GEMINI_API_KEY: string;
@@ -61,6 +77,7 @@ interface Env {
   AI?: any;
   BUCKET?: any; // R2Bucket
   TURNSTILE_SECRET_KEY?: string;
+  CODEX_AUTOMATION_KEY?: string;
   PUBLISH_CREATE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
@@ -73,6 +90,9 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   LLM_GENERATION_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  LLM_AUTOMATION_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
@@ -164,9 +184,40 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    if (pathname.startsWith("/api/starter-tile-decks/")) {
+      const withCors = (response: Response) => {
+        const headers = getCorsHeaders(request.headers, env);
+        for (const [name, value] of Object.entries(headers)) {
+          response.headers.set(name, value);
+        }
+        response.headers.append("Vary", "Origin");
+        return response;
+      };
+      if (request.method !== "GET")
+        return withCors(new Response("Method not allowed", { status: 405 }));
+      const parts = pathname.split("/");
+      const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
+      if (!deckId) return withCors(new Response("Not found", { status: 404 }));
+      if (parts.length === 4)
+        return withCors(await handleGetStarterTileDeck(env, deckId));
+      if (parts.length === 6 && parts[4] === "assets") {
+        return withCors(
+          await handleGetStarterTileDeck(
+            env,
+            deckId,
+            decodeURIComponent(parts[5]),
+          ),
+        );
+      }
+      return withCors(new Response("Not found", { status: 404 }));
+    }
+
     if (pathname === "/api/session") {
+      const hasAutomationKey =
+        request.headers.has("X-Codex-Automation-Key") ||
+        request.headers.has("x-codex-automation-key");
       const sessionOrigin = request.headers.get("Origin") || "";
-      if (!isOriginAllowed(sessionOrigin, env)) {
+      if (!hasAutomationKey && !isOriginAllowed(sessionOrigin, env)) {
         return new Response("Forbidden", {
           status: 403,
           headers: getCorsHeaders(request.headers, env),
@@ -193,6 +244,107 @@ export default {
         pathname,
       );
       if (rateLimitResponse) return rateLimitResponse;
+    }
+
+    if (pathname.startsWith("/api/cloud-backup/")) {
+      const origin = request.headers.get("Origin") || "";
+      if (origin && !isOriginAllowed(origin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+      const rateLimitResponse = await enforcePublishRateLimit(
+        request,
+        env,
+        pathname,
+      );
+      if (rateLimitResponse) return rateLimitResponse;
+
+      // Admin routes first: they are gated by a worker secret rather than a
+      // vault's ownership code, and must never be reachable by the patterns
+      // below (spec 162, FR-016).
+      if (pathname === "/api/cloud-backup/admin/lookup") {
+        if (request.method !== "POST")
+          return new Response("Method not allowed", {
+            status: 405,
+            headers: getCorsHeaders(request.headers, env),
+          });
+        return handleCloudBackupAdminLookup(request, env);
+      }
+
+      if (pathname === "/api/cloud-backup/admin/stats") {
+        if (request.method !== "GET")
+          return new Response("Method not allowed", {
+            status: 405,
+            headers: getCorsHeaders(request.headers, env),
+          });
+        return handleCloudBackupAdminStats(request, env);
+      }
+
+      if (pathname.startsWith("/api/cloud-backup/admin/")) {
+        const parts = pathname.split("/");
+        // /api/cloud-backup/admin/{backupId}/reissue-code
+        if (
+          parts.length === 6 &&
+          parts[5] === "reissue-code" &&
+          request.method === "POST"
+        ) {
+          return handleCloudBackupReissueCode(request, env, parts[4]);
+        }
+        // /api/cloud-backup/admin/{backupId}
+        if (parts.length === 5 && request.method === "DELETE") {
+          return handleCloudBackupAdminDelete(request, env, parts[4]);
+        }
+        return new Response("Not found", {
+          status: 404,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      if (pathname === "/api/cloud-backup/enable") {
+        if (request.method !== "POST")
+          return new Response("Method not allowed", {
+            status: 405,
+            headers: getCorsHeaders(request.headers, env),
+          });
+        return handleEnableCloudBackup(request, env);
+      }
+
+      const parts = pathname.split("/");
+      const backupId = parts[3];
+      if (backupId) {
+        // /api/cloud-backup/{backupId}
+        if (parts.length === 4 && request.method === "DELETE") {
+          return handleDeleteCloudBackup(request, env, backupId);
+        }
+        if (parts.length === 5) {
+          if (parts[4] === "commit" && request.method === "POST")
+            return handleCommitCloudBackup(request, env, backupId);
+          if (parts[4] === "status" && request.method === "GET")
+            return handleGetCloudBackupStatus(request, env, backupId);
+          if (parts[4] === "bundle" && request.method === "GET")
+            return handleGetCloudBackupBundle(request, env, backupId);
+        }
+        // /api/cloud-backup/{backupId}/assets/{assetId}
+        if (parts.length === 6 && parts[4] === "assets") {
+          const assetId = parts[5];
+          if (request.method === "GET")
+            return handleGetCloudBackupAsset(request, env, backupId, assetId);
+          if (request.method === "PUT")
+            return handleCloudBackupAssetUpload(
+              request,
+              env,
+              backupId,
+              assetId,
+            );
+        }
+      }
+
+      return new Response("Not found", {
+        status: 404,
+        headers: getCorsHeaders(request.headers, env),
+      });
     }
 
     if (pathname === "/api/directory/listings") {
@@ -383,16 +535,17 @@ export default {
       });
     }
 
-    // Validate origin
     const origin = request.headers.get("Origin") || "";
-    if (!isOriginAllowed(origin, env)) {
-      return new Response("Forbidden", {
-        status: 403,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const isAllowedOrigin = isOriginAllowed(origin, env);
 
     if (url.pathname === "/v1/images/generations") {
+      if (!isAllowedOrigin) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
       const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
       const limitResult = await checkRateLimit(ip);
       if (!limitResult.allowed) {
@@ -585,6 +738,7 @@ export default {
       request,
       env,
       getCorsHeaders(request.headers, env),
+      isAllowedOrigin,
     );
     if (sessionResponse) return sessionResponse;
 
@@ -596,6 +750,15 @@ export default {
       // a recognized `operation` field. Requests without it fall through to
       // the two legacy branches below completely unchanged (FR-007,
       // research.md R1).
+      if (isLlmOperationStreamRequest(body)) {
+        return await handleLlmOperationStreamRequest(
+          body,
+          getCorsHeaders(request.headers, env),
+          env,
+          request.signal,
+        );
+      }
+
       if (isLlmOperationRequest(body)) {
         return await handleLlmOperationRequest(
           body,
@@ -789,7 +952,7 @@ async function handleInteraction(
 function handleCorsPreflight(request: Request, env: Env): Response {
   const headers = new Headers();
   const allowedHeaders =
-    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename";
+    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename, X-Codex-Automation-Key";
   const allowedMethods = "GET, POST, PUT, DELETE, OPTIONS";
 
   // Set CORS headers

@@ -107,6 +107,7 @@ export class EntityMutationService {
     title: string,
     initialData: Partial<Entity> = {},
   ): Promise<string> {
+    const span = this.performanceRecorder.start("entity_save");
     const newEntity = vaultEntities.createEntity(
       title,
       type,
@@ -120,7 +121,7 @@ export class EntityMutationService {
     this.deps.loader.markContentLoaded(newEntity.id);
 
     const activeVaultId = this.deps.activeVaultId();
-    await this.deps.persistence.scheduleSave(newEntity);
+    await this.deps.persistence.scheduleSave(newEntity, { immediate: true });
 
     if (activeVaultId) {
       await this.deps.updateEntityCount(
@@ -135,6 +136,7 @@ export class EntityMutationService {
       entities: [newEntity],
     });
 
+    span.complete(() => ({ entityCount: Object.keys(this.entities).length }));
     return newEntity.id;
   }
 
@@ -185,8 +187,13 @@ export class EntityMutationService {
       services.ai.clearStyleCache();
     }
 
+    const hasLongFormUpdate =
+      updates.content !== undefined || updates.lore !== undefined;
+
     try {
-      await this.deps.persistence.scheduleSave(updated);
+      await this.deps.persistence.scheduleSave(updated, {
+        immediate: hasLongFormUpdate,
+      });
     } catch (error) {
       span.fail("unexpected", () => ({
         entityCount: Object.keys(this.entities).length,

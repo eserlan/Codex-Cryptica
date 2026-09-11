@@ -2,20 +2,32 @@ import type {
   ChatMessagePayload,
   EncounterSession,
   LegacyTokenVisibility,
+  MapLayer,
   SessionMode,
   Token,
   TokenBaseShape,
+  TokenImageFocus,
+  TokenKind,
 } from "map-engine";
 
 export type {
+  ChatCardPayload,
   ChatMessagePayload,
   EncounterSession,
   LegacyTokenVisibility,
+  MapLayer,
   MeasurementState,
   PingState,
   SessionMode,
   Token,
   TokenBaseShape,
+  TokenImageFocus,
+  TileDeck,
+  TileDeckEntry,
+  TileDeckStocking,
+  TileDeckStockingMode,
+  TileDetails,
+  TokenKind,
   TokenVisibility,
 } from "map-engine";
 
@@ -62,6 +74,15 @@ export interface TokenCreationInput {
   visibleTo?: LegacyTokenVisibility;
   color?: string;
   imageUrl?: string | null;
+  kind?: TokenKind;
+  tileDeckId?: string | null;
+  tileDetails?: import("map-engine").TileDetails;
+  noteBody?: string;
+  parentTokenId?: string;
+  noteCollapsedFrom?: { width: number; height: number };
+  locked?: boolean;
+  isVisionSource?: boolean;
+  layer?: MapLayer;
 }
 
 export const TOKEN_STATUS_EFFECTS = [
@@ -100,6 +121,9 @@ export interface TokenMoveInput {
 
 export interface TokenStateUpdateInput {
   tokenId?: string;
+  name?: string;
+  /** Links this element to a vault entity, or clears the link with null. */
+  entityId?: string | null;
   x?: number;
   y?: number;
   width?: number;
@@ -111,7 +135,16 @@ export interface TokenStateUpdateInput {
   ownerPeerId?: string | null;
   ownerGuestName?: string | null;
   imageUrl?: string | null;
+  imageFocus?: TokenImageFocus;
   statusEffects?: string[];
+  locked?: boolean;
+  zIndex?: number;
+  tileDetails?: import("map-engine").TileDetails;
+  noteBody?: string;
+  parentTokenId?: string;
+  noteCollapsedFrom?: { width: number; height: number } | undefined;
+  isVisionSource?: boolean;
+  layer?: MapLayer;
 }
 
 export interface SessionSnapshotPayload {

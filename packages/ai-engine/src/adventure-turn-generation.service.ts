@@ -78,11 +78,31 @@ const stateFactSchema = {
   },
 } as const;
 
+const newStateFactSchema = {
+  type: "object",
+  required: ["text", "source"],
+  properties: {
+    text: textSchema,
+    source: stateFactSchema.properties.source,
+    sourceRecordId: idSchema,
+  },
+} as const;
+
 const relationshipSchema = {
   ...stateFactSchema,
   required: [...stateFactSchema.required, "subjectId", "disposition"],
   properties: {
     ...stateFactSchema.properties,
+    subjectId: idSchema,
+    disposition: textSchema,
+  },
+} as const;
+
+const newRelationshipSchema = {
+  ...newStateFactSchema,
+  required: [...newStateFactSchema.required, "subjectId", "disposition"],
+  properties: {
+    ...newStateFactSchema.properties,
     subjectId: idSchema,
     disposition: textSchema,
   },
@@ -100,6 +120,16 @@ const hiddenSecretSchema = {
   },
 } as const;
 
+const newHiddenSecretSchema = {
+  type: "object",
+  required: ["text", "status"],
+  properties: {
+    text: textSchema,
+    status: hiddenSecretSchema.properties.status,
+    revealCondition: textSchema,
+  },
+} as const;
+
 const hiddenThreadSchema = {
   type: "object",
   required: ["id", "text", "status"],
@@ -107,6 +137,16 @@ const hiddenThreadSchema = {
     id: idSchema,
     text: textSchema,
     status: { type: "string", enum: ["hidden", "revealed"] },
+    revealCondition: textSchema,
+  },
+} as const;
+
+const newHiddenThreadSchema = {
+  type: "object",
+  required: ["text", "status"],
+  properties: {
+    text: textSchema,
+    status: hiddenThreadSchema.properties.status,
     revealCondition: textSchema,
   },
 } as const;
@@ -126,13 +166,27 @@ const provisionalFactSchema = {
   },
 } as const;
 
-function patchSchema(itemSchema: Record<string, unknown>) {
+const newProvisionalFactSchema = {
+  type: "object",
+  required: ["kind", "name", "summary", "visibility"],
+  properties: {
+    kind: provisionalFactSchema.properties.kind,
+    name: textSchema,
+    summary: textSchema,
+    visibility: provisionalFactSchema.properties.visibility,
+  },
+} as const;
+
+function patchSchema(
+  addItemSchema: Record<string, unknown>,
+  updateItemSchema: Record<string, unknown>,
+) {
   return {
     type: "object",
     required: ["add", "update", "removeIds"],
     properties: {
-      add: { type: "array", items: itemSchema },
-      update: { type: "array", items: itemSchema },
+      add: { type: "array", items: addItemSchema },
+      update: { type: "array", items: updateItemSchema },
       removeIds: { type: "array", items: idSchema },
     },
   } as const;
@@ -168,12 +222,15 @@ const adventureTurnResponseSchema = {
         visiblePatch: {
           type: "object",
           properties: {
-            location: { anyOf: [stateFactSchema, { type: "null" }] },
-            situation: { anyOf: [stateFactSchema, { type: "null" }] },
-            objectives: patchSchema(stateFactSchema),
-            activeCharacters: patchSchema(stateFactSchema),
-            knownFacts: patchSchema(stateFactSchema),
-            relationships: patchSchema(relationshipSchema),
+            location: { anyOf: [newStateFactSchema, { type: "null" }] },
+            situation: { anyOf: [newStateFactSchema, { type: "null" }] },
+            objectives: patchSchema(newStateFactSchema, stateFactSchema),
+            activeCharacters: patchSchema(newStateFactSchema, stateFactSchema),
+            knownFacts: patchSchema(newStateFactSchema, stateFactSchema),
+            relationships: patchSchema(
+              newRelationshipSchema,
+              relationshipSchema,
+            ),
           },
           required: [
             "objectives",
@@ -185,13 +242,13 @@ const adventureTurnResponseSchema = {
         hiddenPatch: {
           type: "object",
           properties: {
-            secrets: patchSchema(hiddenSecretSchema),
-            gmThreads: patchSchema(hiddenThreadSchema),
+            secrets: patchSchema(newHiddenSecretSchema, hiddenSecretSchema),
+            gmThreads: patchSchema(newHiddenThreadSchema, hiddenThreadSchema),
           },
           required: ["secrets", "gmThreads"],
         },
         revealSecretIds: { type: "array", items: { type: "string" } },
-        provisionalFacts: { type: "array", items: provisionalFactSchema },
+        provisionalFacts: { type: "array", items: newProvisionalFactSchema },
         sourceRecordIds: { type: "array", items: idSchema },
         suggestedActions: {
           type: "array",

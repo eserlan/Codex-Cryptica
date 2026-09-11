@@ -24,7 +24,7 @@ Codex Cryptica does not work that way. If you disable the Lore Oracle entirely, 
 
 ## What the tool is without AI
 
-Codex Cryptica is built around a local vault — a structured archive of your campaign world. That archive has real functionality regardless of whether AI is involved:
+Codex Cryptica is built around a local vault: a structured archive of your campaign world. That archive has real functionality regardless of whether AI is involved:
 
 - **Knowledge graph.** Your entities, locations, factions, NPCs, and events connect into an interactive graph. See how your world links together, find orphaned nodes, and trace relationships across the setting.
 - **Entity archive.** Every person, place, faction, or concept gets its own structured entry. Search, filter, and link them however your world requires.
@@ -34,7 +34,7 @@ Codex Cryptica is built around a local vault — a structured archive of your ca
 
 None of that requires the Lore Oracle. None of it calls out to a model provider. It is just your world, organised.
 
-## What disabling the Oracle removes — and what it doesn't
+## What disabling the Oracle removes, and what it doesn't
 
 With AI off, you lose:
 
@@ -66,6 +66,6 @@ AI earns its place by being useful, not by being mandatory. If the Lore Oracle h
 2. Add AI as an optional layer that makes the tool faster or more capable.
 3. Make sure disabling AI still leaves a complete product.
 
-If AI comes first — if the pitch is "AI generates your campaign" and the structured archive is an afterthought — you get a product that is impressive in demos and unreliable in long-running campaigns where consistency, memory, and canon control matter most.
+If AI comes first, if the pitch is "AI generates your campaign" and the structured archive is an afterthought, you get a product that is impressive in demos and unreliable in long-running campaigns where consistency, memory, and canon control matter most.
 
 Codex Cryptica was built starting from step one. The Lore Oracle came later, and it works from the archive you already built. That order matters.

@@ -1,6 +1,7 @@
 /**
- * Public Faction + Vampire Clan generators — framework-free port of the SEO
- * faction generator (`apps/web/src/lib/services/seo/generators/faction.ts`).
+ * Public Faction + Vampire Clan + Nomad Clan + Dark Fantasy Faction
+ * generators — framework-free port of the SEO faction generator
+ * (`apps/web/src/lib/services/seo/generators/faction.ts`).
  *
  * Per the unification plan (#1351) this stays framework-free: no AI client, no
  * sessionStorage. The web page builds the prompt here, runs it through
@@ -26,15 +27,29 @@ import {
   themeIdToLabel,
   vampireConfig,
   nomadClanConfig,
+  darkFactionConfig,
   FACTION_THEME_VOICE,
-  factionBase,
   FACTION_NAMING_STYLES,
   FACTION_NPC_NAMING_STYLES,
-  factionResource,
 } from "./public-faction-constants";
 import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  factionSchema,
+  nomadClanSchema,
+  vampireSchema,
+  darkFactionSchema,
+  selectSmartFactionBase,
+  selectSmartFactionResource,
+} from "./public-faction-schema";
+import { resolveSmart, type LockedValue } from "./smart";
 
-export { factionConfig, themeIdToLabel, vampireConfig, nomadClanConfig };
+export {
+  factionConfig,
+  themeIdToLabel,
+  vampireConfig,
+  nomadClanConfig,
+  darkFactionConfig,
+};
 
 export interface FactionGeneratorOptions {
   type?: string;
@@ -44,36 +59,48 @@ export interface FactionGeneratorOptions {
   theme?: string;
 }
 
-interface ResolvedFaction {
+export interface ResolvedFaction {
   theme: string;
   factionType: string;
   scope: string;
   alignment: string;
+  goal: string;
+  conflict: string;
+  hook: string;
   campaignContext?: string;
   name: string;
+  traits: readonly string[];
 }
 
-function resolveFaction(
+export function resolveFaction(
   options: FactionGeneratorOptions,
   rng: Rng,
 ): ResolvedFaction {
   const theme = options.theme || factionConfig.themes[0];
-  const typePool =
-    factionConfig.typesByTheme[theme] ??
-    factionConfig.typesByTheme["Classic Fantasy"];
+  const locked: Record<string, LockedValue> = {};
+  if (options.type)
+    locked.factionType = { value: options.type, source: "manual" };
+  if (options.scope) locked.scope = { value: options.scope, source: "manual" };
+  if (options.alignment)
+    locked.alignment = { value: options.alignment, source: "manual" };
+
+  const { values, traits } = resolveSmart(
+    factionSchema,
+    { genre: theme, locked },
+    rng,
+  );
+
   return {
     theme,
-    factionType: options.type || pickFrom(typePool, rng),
-    scope:
-      options.scope ||
-      pickFrom(
-        factionConfig.scopesByTheme[theme] ??
-          factionConfig.scopesByTheme["Classic Fantasy"],
-        rng,
-      ),
-    alignment: options.alignment || pickFrom(factionConfig.alignments, rng),
+    factionType: values.factionType,
+    scope: values.scope,
+    alignment: values.alignment,
+    goal: values.goal,
+    conflict: values.conflict,
+    hook: values.hook,
     campaignContext: options.campaignContext?.trim() || undefined,
     name: `${generateName(rng)} Compact`,
+    traits,
   };
 }
 
@@ -102,7 +129,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
   "title": "Faction name (follow the naming directive in the user message)",
   "summary": "One sentence: what this faction is and what makes them interesting (e.g. 'A sanitation cult-technocracy that controls clean water in a poisoned city.').",
   "content": "Markdown. Use exactly these four section headers in order: '### What they control', '### What they want', '### Why they are dangerous', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At the Table\\n- **📍 Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **👤 Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **📍 Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **👤 Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry",
   "labels": ["2-5 lowercase tags for the faction's theme and activities, plus 'rpg-faction', 'faction-generator', 'imported-draft'"]
 }
 
@@ -146,18 +173,23 @@ export function generateFactionLocal(
   options: FactionGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const { theme, factionType, scope, alignment, campaignContext, name } =
-    resolveFaction(options, rng);
-  const goal = pickFrom(
-    factionConfig.goalsByTheme[theme] ??
-      factionConfig.goalsByTheme["Classic Fantasy"],
-    rng,
-  );
-  const conflict = pickFrom(factionConfig.conflicts, rng);
-  const hook = pickFrom(factionConfig.hooks, rng);
+  const {
+    theme,
+    factionType,
+    scope,
+    alignment,
+    goal,
+    conflict,
+    hook,
+    campaignContext,
+    name,
+    traits,
+  } = resolveFaction(options, rng);
   const rival = `${generateName(rng)} Covenant`;
   const leader = generateName(rng);
   const agent = generateName(rng);
+  const base = selectSmartFactionBase(factionType, traits, rng);
+  const resource = selectSmartFactionResource(factionType, traits, rng);
 
   const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
 
@@ -210,10 +242,10 @@ ${conflict} ${pickFrom(factionDangerClosers, rng)}
 ### How to use them at the table
 ${pickFrom(factionHowToUse, rng)(name)}`;
 
-  const lore = `### At the Table
+  const lore = `### At a Glance
 - **Theme / Genre**: ${theme}
-- **📍 Base**: ${factionBase(factionType, rng)}
-- **Resource**: ${factionResource(factionType, rng)}
+- **📍 Base**: ${base}
+- **Resource**: ${resource}
 - **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
 - **Secret**: ${conflict}
 - **Immediate Hook**: ${hook}
@@ -251,13 +283,16 @@ export type NomadClanGeneratorOptions = {
   campaignContext?: string;
 };
 
-interface ResolvedNomadClan {
+export interface ResolvedNomadClan {
   role: string;
   tone: string;
   territory: string;
   conflict: string;
+  goal: string;
+  hook: string;
   campaignContext?: string;
   name: string;
+  traits: readonly string[];
 }
 
 function generateNomadName(rng: Rng = defaultRng): string {
@@ -288,17 +323,34 @@ function generateNomadName(rng: Rng = defaultRng): string {
   return `${pickFrom(prefixes, rng)} ${pickFrom(suffixes, rng)}`;
 }
 
-function resolveNomadClan(
+export function resolveNomadClan(
   options: NomadClanGeneratorOptions,
   rng: Rng,
 ): ResolvedNomadClan {
+  const locked: Record<string, LockedValue> = {};
+  if (options.role) locked.role = { value: options.role, source: "manual" };
+  if (options.territory)
+    locked.territory = { value: options.territory, source: "manual" };
+  if (options.tone) locked.tone = { value: options.tone, source: "manual" };
+  if (options.conflict)
+    locked.conflict = { value: options.conflict, source: "manual" };
+
+  const { values, traits } = resolveSmart(
+    nomadClanSchema,
+    { genre: "Cyberpunk / Corporate", locked },
+    rng,
+  );
+
   return {
-    role: options.role || pickFrom(nomadClanConfig.roles, rng),
-    tone: options.tone || pickFrom(nomadClanConfig.tones, rng),
-    territory: options.territory || pickFrom(nomadClanConfig.territories, rng),
-    conflict: options.conflict || pickFrom(nomadClanConfig.conflicts, rng),
+    role: values.role,
+    tone: values.tone,
+    territory: values.territory,
+    conflict: values.conflict,
+    goal: values.goal,
+    hook: values.hook,
     campaignContext: options.campaignContext?.trim() || undefined,
     name: generateNomadName(rng),
+    traits,
   };
 }
 
@@ -367,10 +419,8 @@ export function generateNomadClanLocal(
   options: NomadClanGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const { role, tone, territory, conflict, campaignContext, name } =
+  const { role, tone, territory, conflict, goal, hook, campaignContext, name } =
     resolveNomadClan(options, rng);
-  const goal = pickFrom(nomadClanConfig.goals, rng);
-  const hook = pickFrom(nomadClanConfig.hooks, rng);
   const rival = generateNomadName(rng);
   const leader = generateName(rng);
   const mechanic = generateName(rng);
@@ -431,18 +481,22 @@ export interface VampireGeneratorOptions {
   campaignContext?: string;
 }
 
-interface ResolvedVampire {
+export interface ResolvedVampire {
   archetype: string;
   bloodline: string;
   feedingHabit: string;
   weakness: string;
   scope: string;
   alignment: string;
+  goal: string;
+  conflict: string;
+  hook: string;
   campaignContext?: string;
   name: string;
+  traits: readonly string[];
 }
 
-function resolveVampire(
+export function resolveVampire(
   options: VampireGeneratorOptions,
   rng: Rng,
 ): ResolvedVampire {
@@ -459,16 +513,39 @@ function resolveVampire(
     "Vargo",
     "Ruthven",
   ];
+
+  const locked: Record<string, LockedValue> = {};
+  if (options.archetype)
+    locked.archetype = { value: options.archetype, source: "manual" };
+  if (options.bloodline)
+    locked.bloodline = { value: options.bloodline, source: "manual" };
+  if (options.scope) locked.scope = { value: options.scope, source: "manual" };
+  if (options.feedingHabit)
+    locked.feedingHabit = { value: options.feedingHabit, source: "manual" };
+  if (options.weakness)
+    locked.weakness = { value: options.weakness, source: "manual" };
+  if (options.alignment)
+    locked.alignment = { value: options.alignment, source: "manual" };
+
+  const { values, traits } = resolveSmart(
+    vampireSchema,
+    { genre: "Vampire / Gothic Noir", locked },
+    rng,
+  );
+
   return {
-    archetype: options.archetype || pickFrom(vampireConfig.archetypes, rng),
-    bloodline: options.bloodline || pickFrom(vampireConfig.bloodlines, rng),
-    feedingHabit:
-      options.feedingHabit || pickFrom(vampireConfig.feedingHabits, rng),
-    weakness: options.weakness || pickFrom(vampireConfig.weaknesses, rng),
-    scope: options.scope || pickFrom(vampireConfig.scopes, rng),
-    alignment: options.alignment || pickFrom(vampireConfig.alignments, rng),
+    archetype: values.archetype,
+    bloodline: values.bloodline,
+    feedingHabit: values.feedingHabit,
+    weakness: values.weakness,
+    scope: values.scope,
+    alignment: values.alignment,
+    goal: values.goal,
+    conflict: values.conflict,
+    hook: values.hook,
     campaignContext: options.campaignContext?.trim() || undefined,
     name: pickFrom(prefixes, rng) + pickFrom(roots, rng),
+    traits,
   };
 }
 
@@ -554,12 +631,12 @@ export function generateVampireLocal(
     weakness,
     scope,
     alignment,
+    goal,
+    conflict,
+    hook,
     campaignContext,
     name,
   } = resolveVampire(options, rng);
-  const goal = pickFrom(vampireConfig.goals, rng);
-  const conflict = pickFrom(vampireConfig.conflicts, rng);
-  const hook = pickFrom(vampireConfig.hooks, rng);
   const rival = `${generateName(rng)} Inquisition`;
   const sire = generateName(rng);
   const thrall = generateName(rng);
@@ -605,6 +682,217 @@ ${hook}`;
     content,
     lore,
     labels: ["rpg-faction", "vampire-clan", "imported-draft"],
+    status: "active",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Dark Fantasy / Grimdark Faction public API (#1136)
+// ---------------------------------------------------------------------------
+
+export interface DarkFactionGeneratorOptions {
+  mode?: string;
+  factionType?: string;
+  scope?: string;
+  moralPosture?: string;
+  campaignContext?: string;
+}
+
+export interface ResolvedDarkFaction {
+  mode: string;
+  factionType: string;
+  scope: string;
+  moralPosture: string;
+  goal: string;
+  conflict: string;
+  hook: string;
+  campaignContext?: string;
+  name: string;
+  traits: readonly string[];
+}
+
+function generateDarkFactionName(rng: Rng = defaultRng): string {
+  const prefixes = [
+    "The ",
+    "Order of ",
+    "Cult of the ",
+    "House ",
+    "Brotherhood of ",
+    "Congregation of ",
+  ];
+  const roots = [
+    "Ashen Veil",
+    "Black Rose",
+    "Hollow Crown",
+    "Ninth Bell",
+    "Withered Hand",
+    "Long Fast",
+    "Pale Oath",
+    "Rotten Throne",
+    "Grey Penitence",
+    "Last Ember",
+  ];
+  return `${pickFrom(prefixes, rng)}${pickFrom(roots, rng)}`;
+}
+
+export function resolveDarkFaction(
+  options: DarkFactionGeneratorOptions,
+  rng: Rng,
+): ResolvedDarkFaction {
+  const locked: Record<string, LockedValue> = {};
+  if (options.mode) locked.mode = { value: options.mode, source: "manual" };
+  if (options.factionType)
+    locked.factionType = { value: options.factionType, source: "manual" };
+  if (options.scope) locked.scope = { value: options.scope, source: "manual" };
+  if (options.moralPosture)
+    locked.moralPosture = { value: options.moralPosture, source: "manual" };
+
+  const { values, traits } = resolveSmart(darkFactionSchema, { locked }, rng);
+
+  return {
+    mode: values.mode,
+    factionType: values.factionType,
+    scope: values.scope,
+    moralPosture: values.moralPosture,
+    goal: values.goal,
+    conflict: values.conflict,
+    hook: values.hook,
+    campaignContext: options.campaignContext?.trim() || undefined,
+    name: generateDarkFactionName(rng),
+    traits,
+  };
+}
+
+export interface DarkFactionPrompt {
+  systemInstruction: string;
+  userMessage: string;
+  resolved: ResolvedDarkFaction;
+}
+
+export function buildDarkFactionPrompt(
+  options: DarkFactionGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): DarkFactionPrompt {
+  const resolved = resolveDarkFaction(options, rng);
+  const { mode, factionType, scope, moralPosture, campaignContext } = resolved;
+  const chosenNamingStyle = pickFrom(FACTION_NAMING_STYLES, rng);
+  const chosenNpcStyle = pickFrom(FACTION_NPC_NAMING_STYLES, rng);
+  const varianceSeed = Math.floor(rng() * 99991) + 10;
+
+  const systemInstruction = `You are an expert RPG campaign writer specialising in dark fantasy and grimdark worldbuilding — cursed kingdoms, fallen churches, plague cults, witch-hunters, and institutions doing terrible things for reasons that still make sense from the inside. You generate detailed, original faction drafts for that tone in JSON format.
+
+OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
+{
+  "title": "Faction name (follow the naming directive in the user message)",
+  "summary": "One sentence: what this faction is and what makes them dangerous or sympathetic — never generic evil-for-evil's-sake (e.g. 'A witch-hunter lodge that has started seeing witches everywhere because admitting they were wrong once would cost them everything.').",
+  "content": "Markdown. Use exactly these four section headers in order: '### What they control', '### What they want', '### Why they are dangerous', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **📍 Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **👤 Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry",
+  "labels": ["2-5 lowercase tags for the faction's flavour and activities, plus 'rpg-faction', 'dark-fantasy-faction', 'grimdark', 'imported-draft'"]
+}
+
+QUALITY RULES:
+- Keep the faction morally sharp and table-usable, not evil for evil's sake — the best grimdark factions are doing something understandable, or think they are.
+- Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
+- Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
+- ${NAME_BAN_PROMPT}
+${sessionContext}
+- Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), whether the moral posture actually reads as sharp rather than cartoonish. Rewrite if issues found.`;
+
+  const userMessage = `Generate a dark fantasy / grimdark faction. Variation seed: ${varianceSeed}.
+- Dark Fantasy Mode: ${mode}
+- Faction Type: ${factionType}
+- Operating Scope: ${scope}
+- Moral Posture: ${moralPosture}${formatCampaignContextBlock(campaignContext)}
+- Faction Naming Directive: ${chosenNamingStyle}
+- NPC Naming Directive: ${chosenNpcStyle}`;
+
+  return { systemInstruction, userMessage, resolved };
+}
+
+export function parseDarkFactionResponse(
+  text: string,
+  resolved: ResolvedDarkFaction,
+): PublicGeneratorOutput {
+  const data = parseFencedJson(text);
+  return {
+    type: "faction",
+    title: data.title || resolved.name,
+    summary: data.summary || "",
+    content: data.content || "",
+    lore: data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-faction", "dark-fantasy-faction", "grimdark", "imported-draft"],
+    status: "active",
+  };
+}
+
+export function generateDarkFactionLocal(
+  options: DarkFactionGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const {
+    mode,
+    factionType,
+    scope,
+    moralPosture,
+    goal,
+    conflict,
+    hook,
+    campaignContext,
+    name,
+    traits,
+  } = resolveDarkFaction(options, rng);
+  const rival = generateDarkFactionName(rng);
+  const leader = generateName(rng);
+  const agent = generateName(rng);
+  const base = selectSmartFactionBase(factionType, traits, rng);
+  const resource = selectSmartFactionResource(factionType, traits, rng);
+
+  const summary = `A ${moralPosture.split(" —")[0].toLowerCase()} ${factionType.toLowerCase()} operating through a ${mode.toLowerCase()}.`;
+
+  const content = `### What they control
+${name} is a ${factionType.toLowerCase()} with real authority across ${scope.toLowerCase()}, built on the back of the ${mode.toLowerCase()} that made them necessary in the first place.
+
+### What they want
+${goal}
+
+### Why they are dangerous
+${conflict} Their posture — ${moralPosture.toLowerCase()} — means they will not stop simply because they are shown to be wrong.
+
+### How to use them at the table
+Bring ${name} into play when the party needs a power that is doing something defensible in the worst possible way. Let them be useful, or unavoidable, before the party learns the full cost of what they protect.${campaignContext ? ` They fit naturally into ${campaignContext}.` : ""}`;
+
+  const lore = `### At a Glance
+- **📍 Base**: ${base}
+- **Resource**: ${resource}
+- **Symbol**: ${name.split(" ").slice(-2).join(" ")} iconography, worn or branded by the faithful
+- **Secret**: ${conflict}
+- **Immediate Hook**: ${hook}
+
+### Notable NPCs
+- **👤 ${leader}**: The one who still believes this was the right choice, and needs everyone else to believe it too.
+- **👤 ${agent}**: Does the parts of the work no one else will, and keeps a private ledger of what it has cost them.
+
+### Internal Conflict
+${conflict}
+
+### Rival Faction
+- **👥 ${rival}**: Wants the same ground, the same relic, or the same absolution — and is no more virtuous in pursuing it.`;
+
+  return {
+    type: "faction",
+    title: name,
+    summary,
+    content,
+    lore,
+    labels: [
+      "rpg-faction",
+      "dark-fantasy-faction",
+      "grimdark",
+      "imported-draft",
+    ],
     status: "active",
   };
 }

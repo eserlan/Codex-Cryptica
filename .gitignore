@@ -1,3 +1,6 @@
+# Secrets (never commit)
+.secrets/
+
 # Node.js
 node_modules/
 dist/
@@ -96,8 +99,16 @@ apps/web/android/app/build/
 apps/web/android/build/
 apps/web/android/captures/
 apps/web/android/local.properties
-apps/web/ios/App/Pods/
-apps/web/ios/App/build/
 apps/web/ios/App/DerivedData/
 apps/web/ios/App/Podfile.lock
 
+# Reddit Automation Session
+.reddit-session/
+.reddit-auth/
+
+# CodeGraph local index + agent wiring (trial; remove if adopted repo-wide)
+.codegraph/
+.mcp.json
+
+# Cloudflare Pages functions build
+_worker.bundle*
