@@ -304,4 +304,89 @@ describe("GeneratorConfigForm", () => {
       ).value,
     ).toBe("Custody of the orbital elevator");
   });
+
+  it("renders favourite generators in a dedicated section when starred", async () => {
+    const { GeneratorFavoritesStore } =
+      await import("$lib/stores/ui/generator-favorites.svelte");
+    const { UIPersistence, UI_STORAGE_KEYS } =
+      await import("$lib/stores/ui/persistence");
+
+    const storageMap = new Map<string, string>();
+    const mockStorage = {
+      getItem: (k: string) => storageMap.get(k) ?? null,
+      setItem: (k: string, v: string) => storageMap.set(k, v),
+      removeItem: (k: string) => storageMap.delete(k),
+    };
+    storageMap.set(
+      UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
+      JSON.stringify(["npc"]),
+    );
+
+    const persistence = new UIPersistence({ storage: mockStorage as any });
+    const favoritesStore = new GeneratorFavoritesStore(persistence);
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+        favoritesStore,
+      },
+    });
+
+    // Favourites section should exist
+    expect(screen.getByText("Favourites")).toBeTruthy();
+
+    // The star button for NPC in favourites should have remove aria-label
+    const removeNpcButtons = screen.getAllByRole("button", {
+      name: "Remove NPC from favourites",
+    });
+    expect(removeNpcButtons.length).toBeGreaterThanOrEqual(1);
+
+    // Click to unstar NPC
+    await fireEvent.click(removeNpcButtons[0]);
+
+    // Favourites store should now be empty and Favourites section disappears
+    expect(favoritesStore.isFavorite("npc")).toBe(false);
+    expect(screen.queryByText("Favourites")).toBeNull();
+    expect(
+      screen.getByText(
+        "Star generators you use often to keep them at the top.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("filters generators by search query and shows clear button", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const searchInput = screen.getByPlaceholderText(
+      "Search generators by name, category, or description...",
+    );
+
+    // Search for "dungeon"
+    await fireEvent.input(searchInput, { target: { value: "dungeon" } });
+
+    // Should find Dungeon generator, but not Settlement
+    expect(screen.getByText("Dungeon / Delve")).toBeTruthy();
+    expect(screen.queryByText("Settlement")).toBeNull();
+
+    // Clear search button should appear
+    const clearButton = screen.getByRole("button", {
+      name: "Clear generator search",
+    });
+    await fireEvent.click(clearButton);
+
+    // After clearing, Settlement should be visible again
+    expect(screen.getByText("Settlement")).toBeTruthy();
+
+    // Search for non-matching query
+    await fireEvent.input(searchInput, { target: { value: "xyznonexistent" } });
+    expect(
+      screen.getByText('No generators match "xyznonexistent".'),
+    ).toBeTruthy();
+  });
 });

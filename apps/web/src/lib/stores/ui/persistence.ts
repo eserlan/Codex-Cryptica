@@ -38,6 +38,7 @@ export const UI_STORAGE_KEYS = {
   GUIDED_MODE_DISMISSED_RECOMMENDATIONS:
     "codex_guided_mode_dismissed_recommendations",
   AUTO_FULLSCREEN: "codex_auto_fullscreen",
+  FAVOURITE_GENERATOR_IDS: "codex_favourite_generator_ids",
   TILE_DECK_CATALOG_COLLAPSED: "codex_tile_deck_catalog_collapsed",
   TILE_DECK_GRID_EXPANDED: "codex_tile_deck_grid_expanded",
   VTT_SIDEBAR_WIDTH: "codex_vtt_sidebar_width",
