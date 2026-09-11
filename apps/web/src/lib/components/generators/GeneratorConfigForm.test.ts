@@ -20,15 +20,22 @@ describe("GeneratorConfigForm", () => {
     const npcRadio = screen.getByRole("radio", {
       name: "NPC Creates Character",
     });
+
+    // Expand the Note group to reveal the Plot Twist generator
+    const noteGroupButton = screen.getByRole("button", {
+      name: /note/i,
+    });
+    await fireEvent.click(noteGroupButton);
+
     const plotTwistRadio = screen.getByRole("radio", {
       name: "Plot Twist & Complication Creates Note",
     });
 
     expect(npcRadio.getAttribute("aria-describedby")).toBe(
-      "generator-description-npc",
+      "fav-generator-description-npc",
     );
     expect(
-      document.getElementById("generator-description-npc")?.textContent,
+      document.getElementById("fav-generator-description-npc")?.textContent,
     ).toContain("Generate a non-player character for your campaign.");
     expect(plotTwistRadio.hasAttribute("aria-describedby")).toBe(false);
     expect(
@@ -38,7 +45,7 @@ describe("GeneratorConfigForm", () => {
     await fireEvent.click(plotTwistRadio);
 
     expect(npcRadio.hasAttribute("aria-describedby")).toBe(false);
-    expect(document.getElementById("generator-description-npc")).toBeNull();
+    expect(document.getElementById("fav-generator-description-npc")).toBeNull();
     expect(plotTwistRadio.getAttribute("aria-describedby")).toBe(
       "generator-description-plot-twist",
     );
@@ -105,6 +112,12 @@ describe("GeneratorConfigForm", () => {
         aiPolicy: { isEnabled: true, isAvailable: true },
       },
     });
+
+    // Expand the Location group to reveal the Dungeon / Delve generator
+    const locationGroupButton = screen.getByRole("button", {
+      name: /location/i,
+    });
+    await fireEvent.click(locationGroupButton);
 
     expect(
       screen.getByRole("radio", {
@@ -444,5 +457,47 @@ describe("GeneratorConfigForm", () => {
     expect(
       favoriteButtons.every((button) => (button as HTMLButtonElement).disabled),
     ).toBe(true);
+  });
+
+  it("groups generators by category and keeps them collapsed by default until toggled", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    // Note group button should exist with aria-expanded="false" by default
+    const noteGroupButton = screen.getByRole("button", {
+      name: /note/i,
+    });
+    expect(noteGroupButton.getAttribute("aria-expanded")).toBe("false");
+
+    // Plot Twist should not be visible while collapsed
+    expect(
+      screen.queryByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeNull();
+
+    // Click to expand Note group
+    await fireEvent.click(noteGroupButton);
+    expect(noteGroupButton.getAttribute("aria-expanded")).toBe("true");
+
+    // Now Plot Twist radio should be visible
+    expect(
+      screen.getByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeTruthy();
+
+    // Click again to collapse
+    await fireEvent.click(noteGroupButton);
+    expect(noteGroupButton.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      screen.queryByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeNull();
   });
 });
