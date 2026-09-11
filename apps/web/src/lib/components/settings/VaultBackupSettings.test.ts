@@ -14,7 +14,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: { activeVaultId: "vault-1", vaultName: "Test Vault", switchVault: mocks.switchVault },
+  vault: {
+    activeVaultId: "vault-1",
+    vaultName: "Test Vault",
+    switchVault: mocks.switchVault,
+  },
 }));
 vi.mock("$lib/stores/vault-registry.svelte", () => ({
   vaultRegistry: { createVault: mocks.createVault },
@@ -41,7 +45,9 @@ describe("VaultBackupSettings", () => {
     );
     render(VaultBackupSettings);
 
-    await fireEvent.click(screen.getByRole("button", { name: "Export Backup" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Export Backup" }),
+    );
 
     const exportButton = screen.getByRole("button", { name: "Preparing..." });
     expect(exportButton.getAttribute("type")).toBe("button");
@@ -52,7 +58,9 @@ describe("VaultBackupSettings", () => {
     resolveExport(2);
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: "Export Backup" }).getAttribute("aria-busy"),
+        screen
+          .getByRole("button", { name: "Export Backup" })
+          .getAttribute("aria-busy"),
       ).toBe("false");
     });
   });
@@ -60,13 +68,19 @@ describe("VaultBackupSettings", () => {
   it("restores the import action after archive parsing fails", async () => {
     mocks.parseVaultArchive.mockRejectedValue(new Error("Invalid archive"));
     render(VaultBackupSettings);
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    Object.defineProperty(input, "files", { value: [new File(["bad"], "bad.zip")] });
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [new File(["bad"], "bad.zip")],
+    });
 
     await fireEvent.change(input);
 
     expect(
-      screen.getByRole("button", { name: "Import Backup" }).getAttribute("aria-busy"),
+      screen
+        .getByRole("button", { name: "Import Backup" })
+        .getAttribute("aria-busy"),
     ).toBe("false");
     expect(mocks.notify).toHaveBeenCalledWith("Invalid archive", "error", true);
   });
