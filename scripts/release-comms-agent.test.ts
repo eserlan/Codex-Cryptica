@@ -6,9 +6,11 @@ import { describe, it, expect } from "vitest";
 import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
+  buildWriterRetryPrompt,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
+  findOversizedBlueskyDrafts,
   getReleaseCommsLogPath,
   isEvaluatorResult,
   isWriterResult,
@@ -509,10 +511,7 @@ describe("release-comms-agent", () => {
         git(["init", "-q"]);
         git(["config", "user.email", "test@example.com"]);
         git(["config", "user.name", "Test"]);
-        const pagesDir = join(
-          dir,
-          "apps/web/src/lib/content/answers/pages",
-        );
+        const pagesDir = join(dir, "apps/web/src/lib/content/answers/pages");
         await mkdirNode(pagesDir, { recursive: true });
         const oldPath = join(pagesDir, "old-slug.ts");
         const newPath = join(pagesDir, "new-slug.ts");
@@ -525,10 +524,7 @@ describe("release-comms-agent", () => {
           `};`,
           "",
         ].join("\n");
-        await (await import("node:fs/promises")).writeFile(
-          oldPath,
-          contents,
-        );
+        await (await import("node:fs/promises")).writeFile(oldPath, contents);
         git(["add", "-A"]);
         git(["commit", "-q", "-m", "add page"]);
         const before = git(["rev-parse", "HEAD"]).trim();
@@ -680,6 +676,50 @@ describe("release-comms-agent", () => {
       } finally {
         await rm(logDir, { recursive: true, force: true });
       }
+    });
+  });
+
+  describe("findOversizedBlueskyDrafts", () => {
+    it("returns nothing when every draft fits under the character limit", () => {
+      expect(
+        findOversizedBlueskyDrafts({
+          bluesky: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/short",
+              text: "A short post.",
+            },
+          ],
+          discord: "",
+          reddit: "",
+          github_discussions: [],
+        }),
+      ).toEqual([]);
+    });
+
+    it("flags a draft that exceeds 300 characters once the page URL is resolved in", () => {
+      const pageUrl = "https://codexcryptica.com/answers/long-one";
+      const oversized = findOversizedBlueskyDrafts({
+        bluesky: [{ pageUrl, text: "x".repeat(295) }],
+        discord: "",
+        reddit: "",
+        github_discussions: [],
+      });
+      expect(oversized).toHaveLength(1);
+      expect(oversized[0]).toMatchObject({ pageUrl });
+      expect(oversized[0].length).toBeGreaterThan(300);
+    });
+  });
+
+  describe("buildWriterRetryPrompt", () => {
+    it("appends the flagged drafts and asks for a same-shape rewrite", () => {
+      const prompt = buildWriterRetryPrompt("BASE PROMPT", [
+        { pageUrl: "https://codexcryptica.com/answers/long-one", length: 340 },
+      ]);
+      expect(prompt).toContain("BASE PROMPT");
+      expect(prompt).toContain("https://codexcryptica.com/answers/long-one");
+      expect(prompt).toContain("340 characters");
+      expect(prompt).toContain("REJECTED");
+      expect(prompt).toContain("exact same shape");
     });
   });
 });
