@@ -37,10 +37,28 @@ export interface InstagramPublication {
   url: string;
 }
 
+export function isInstagramPublishingEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (
+    env.INSTAGRAM_AUTO_PUBLISH === "0" ||
+    env.INSTAGRAM_AUTO_PUBLISH === "false" ||
+    env.RELEASE_COMMS_INSTAGRAM_ENABLED === "0" ||
+    env.RELEASE_COMMS_INSTAGRAM_ENABLED === "false"
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export interface PublishInstagramOptions {
   asset: BlueskyAsset;
   /** The final Bluesky caption, preserved byte-for-byte for Instagram. */
   caption: string;
+  /** An already published Meta media ID to look up permalink for, bypassing creation and media publish. */
+  publishedMediaId?: string;
+  /** Invoked immediately after media_publish succeeds, before permalink lookup, to checkpoint the media ID. */
+  onMediaPublished?: (mediaId: string) => Promise<void> | void;
   dryRun?: boolean;
   env?: NodeJS.ProcessEnv;
   fetchFn?: typeof fetch;
@@ -115,6 +133,36 @@ function form(fields: Record<string, string>): string {
   return new URLSearchParams(fields).toString();
 }
 
+/** Look up the permalink for an already published Meta media item. */
+export async function lookupInstagramPermalink(
+  mediaId: string,
+  options: {
+    env?: NodeJS.ProcessEnv;
+    fetchFn?: typeof fetch;
+    dryRun?: boolean;
+  } = {},
+): Promise<string> {
+  if (options.dryRun) {
+    return `dry-run://instagram/media/${encodeURIComponent(mediaId)}`;
+  }
+  const env = options.env ?? process.env;
+  const fetchFn = options.fetchFn ?? fetch;
+  const accessToken = requiredEnv(env, "INSTAGRAM_ACCESS_TOKEN");
+  const graphApiUrl = parseGraphApiUrl(
+    requiredEnv(env, "INSTAGRAM_GRAPH_API_URL"),
+  );
+  const media = await jsonResponse(
+    await fetchFn(
+      `${endpoint(graphApiUrl, mediaId)}?${form({ fields: "permalink", access_token: accessToken })}`,
+    ),
+    "permalink lookup",
+  );
+  if (typeof media.permalink !== "string" || !media.permalink) {
+    throw new Error("Instagram permalink lookup returned no permalink");
+  }
+  return media.permalink;
+}
+
 /** Publish one Instagram image post through Meta Graph API. */
 export async function publishInstagramPost(
   options: PublishInstagramOptions,
@@ -123,8 +171,12 @@ export async function publishInstagramPost(
   if (!caption) throw new Error("Instagram caption must not be empty");
   requireR2SocialImage(asset.imageUrl);
   if (options.dryRun) {
+    const dryRunId = options.publishedMediaId ?? "dry-run";
+    if (options.onMediaPublished && !options.publishedMediaId) {
+      await options.onMediaPublished(dryRunId);
+    }
     return {
-      id: "dry-run",
+      id: dryRunId,
       url: `dry-run://instagram/${encodeURIComponent(asset.pageUrl)}`,
     };
   }
@@ -134,6 +186,18 @@ export async function publishInstagramPost(
   const graphApiUrl = parseGraphApiUrl(
     requiredEnv(env, "INSTAGRAM_GRAPH_API_URL"),
   );
+
+  // If this handoff already completed media_publish on a previous attempt,
+  // recover only the permalink instead of creating duplicate media posts.
+  if (options.publishedMediaId) {
+    const permalink = await lookupInstagramPermalink(options.publishedMediaId, {
+      env,
+      fetchFn,
+      dryRun: false,
+    });
+    return { id: options.publishedMediaId, url: permalink };
+  }
+
   const headers = { "Content-Type": "application/x-www-form-urlencoded" };
 
   const create = await jsonResponse(
@@ -190,14 +254,18 @@ export async function publishInstagramPost(
   if (typeof published.id !== "string" || !published.id) {
     throw new Error("Instagram media publish returned no media ID");
   }
-  const media = await jsonResponse(
-    await fetchFn(
-      `${endpoint(graphApiUrl, published.id)}?${form({ fields: "permalink", access_token: accessToken })}`,
-    ),
-    "permalink lookup",
-  );
-  if (typeof media.permalink !== "string" || !media.permalink) {
-    throw new Error("Instagram permalink lookup returned no permalink");
+
+  // Checkpoint the published media ID before looking up the permalink.
+  // If the permalink lookup fails transiently, subsequent retries can
+  // recover the permalink using this ID rather than creating a duplicate post.
+  if (options.onMediaPublished) {
+    await options.onMediaPublished(published.id);
   }
-  return { id: published.id, url: media.permalink };
+
+  const permalink = await lookupInstagramPermalink(published.id, {
+    env,
+    fetchFn,
+    dryRun: false,
+  });
+  return { id: published.id, url: permalink };
 }

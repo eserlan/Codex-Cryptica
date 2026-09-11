@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
   deriveInstagramQualification,
+  isInstagramPublishingEnabled,
+  lookupInstagramPermalink,
   publishInstagramPost,
 } from "./release-comms-instagram.ts";
 import type { EvaluatorResult, WriterResult } from "./release-comms-types.ts";
@@ -203,6 +205,118 @@ describe("release-comms-instagram", () => {
           },
         }),
       ).rejects.toThrow("processing ended with ERROR");
+    });
+
+    it("bypasses media creation and only looks up permalink when publishedMediaId is provided", async () => {
+      const calls: Array<{ url: string; init?: RequestInit }> = [];
+      const fetchFn: typeof fetch = async (input, init) => {
+        calls.push({ url: String(input), init });
+        return response({ permalink: "https://www.instagram.com/p/recovered/" });
+      };
+
+      const publication = await publishInstagramPost({
+        asset,
+        caption: "Exact Bluesky caption",
+        publishedMediaId: "already-published-id",
+        env,
+        fetchFn,
+      });
+
+      expect(publication).toEqual({
+        id: "already-published-id",
+        url: "https://www.instagram.com/p/recovered/",
+      });
+      expect(calls).toHaveLength(1);
+      expect(calls[0].url).toBe(
+        "https://graph.facebook.com/v99.0/already-published-id?fields=permalink&access_token=secret-token",
+      );
+    });
+
+    it("invokes onMediaPublished immediately after media_publish before permalink lookup", async () => {
+      let mediaPublishedCheckpoint: string | null = null;
+      let permalinkLookupHappened = false;
+
+      const fetchFn: typeof fetch = async (input) => {
+        const urlStr = String(input);
+        if (urlStr.endsWith("/media")) {
+          return response({ id: "container-1" });
+        }
+        if (urlStr.includes("fields=status_code")) {
+          return response({ status_code: "FINISHED" });
+        }
+        if (urlStr.endsWith("/media_publish")) {
+          return response({ id: "published-meta-id" });
+        }
+        if (urlStr.includes("fields=permalink")) {
+          permalinkLookupHappened = true;
+          return response({ permalink: "https://www.instagram.com/p/checkpointed/" });
+        }
+        return response({});
+      };
+
+      const publication = await publishInstagramPost({
+        asset,
+        caption: "Exact Bluesky caption",
+        env,
+        fetchFn,
+        onMediaPublished: async (mediaId) => {
+          mediaPublishedCheckpoint = mediaId;
+          // Verify onMediaPublished was called BEFORE permalink lookup completed
+          expect(permalinkLookupHappened).toBe(false);
+        },
+      });
+
+      expect(mediaPublishedCheckpoint).toBe("published-meta-id");
+      expect(publication.url).toBe("https://www.instagram.com/p/checkpointed/");
+    });
+  });
+
+  describe("lookupInstagramPermalink", () => {
+    it("looks up permalink from Meta Graph API", async () => {
+      const fetchFn: typeof fetch = async () =>
+        response({ permalink: "https://www.instagram.com/p/direct-lookup/" });
+
+      const url = await lookupInstagramPermalink("test-media-id", {
+        env,
+        fetchFn,
+      });
+      expect(url).toBe("https://www.instagram.com/p/direct-lookup/");
+    });
+
+    it("returns dry-run permalink in dryRun mode", async () => {
+      const url = await lookupInstagramPermalink("dry-run-media", {
+        dryRun: true,
+      });
+      expect(url).toBe("dry-run://instagram/media/dry-run-media");
+    });
+  });
+
+  describe("isInstagramPublishingEnabled", () => {
+    it("returns true by default or when not explicitly disabled", () => {
+      expect(isInstagramPublishingEnabled({})).toBe(true);
+      expect(isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "1" })).toBe(
+        true,
+      );
+    });
+
+    it("returns false when INSTAGRAM_AUTO_PUBLISH is 0 or false", () => {
+      expect(isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "0" })).toBe(
+        false,
+      );
+      expect(
+        isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "false" }),
+      ).toBe(false);
+    });
+
+    it("returns false when RELEASE_COMMS_INSTAGRAM_ENABLED is 0 or false", () => {
+      expect(
+        isInstagramPublishingEnabled({ RELEASE_COMMS_INSTAGRAM_ENABLED: "0" }),
+      ).toBe(false);
+      expect(
+        isInstagramPublishingEnabled({
+          RELEASE_COMMS_INSTAGRAM_ENABLED: "false",
+        }),
+      ).toBe(false);
     });
   });
 

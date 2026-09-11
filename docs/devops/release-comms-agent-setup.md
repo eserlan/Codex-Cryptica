@@ -28,10 +28,12 @@ Cloudflare Tunnel → `scripts/release-comms-agent.ts`) is unfamiliar.
       The workflow step in `promote-to-prod.yml` and the listener both
       compare against this one secret.
 - [ ] Add `INSTAGRAM_ACCOUNT_ID`, `INSTAGRAM_ACCESS_TOKEN`, and
-      `INSTAGRAM_GRAPH_API_URL` to that same private environment file if
-      automatic Instagram publishing is enabled. The account must be a
-      Meta-supported professional account connected to the relevant Facebook
-      Page, and the token must be authorised for content publishing.
+      `INSTAGRAM_GRAPH_API_URL` to that same private environment file.
+      The account must be a Meta-supported professional account connected to
+      the relevant Facebook Page, and the token must be authorised for content
+      publishing. If an installation opts out of automatic Instagram
+      publishing, set `INSTAGRAM_AUTO_PUBLISH=0` in that same private
+      environment file to skip Instagram publishing without failing releases.
 - [ ] Restart the webhook service so it picks up the new code and environment:
       `systemctl --user restart codex-pr-review-webhook.service`.
 - [ ] Confirm the new route is live: `curl -fsS https://pr-webhook.codexcryptica.com/health`

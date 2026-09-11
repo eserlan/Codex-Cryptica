@@ -35,7 +35,7 @@ export interface WriterResult {
 export interface ReleaseCommsPublications {
   bluesky: Array<{ pageUrl: string; url: string }>;
   /** Instagram posts mirror the exact resolved Bluesky caption and R2 asset. */
-  instagram?: Array<{ pageUrl: string; url: string }>;
+  instagram?: Array<{ pageUrl: string; url: string; id?: string }>;
   githubDiscussions: Array<{ pageUrl: string; url: string }>;
   /** IDs of Discord destinations the derived announcement has been successfully delivered to. */
   discord?: string[];
@@ -48,6 +48,8 @@ export interface InstagramHandoff {
   caption: string;
   /** The verified R2 JPEG used for the matching Bluesky publication. */
   imageUrl: string;
+  /** Published Meta media ID, preserved so retries recover permalinks without re-publishing. */
+  publishedMediaId?: string;
 }
 
 export interface ReleaseCommsHistoryEntry {
