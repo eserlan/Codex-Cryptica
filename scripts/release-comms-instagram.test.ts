@@ -211,7 +211,9 @@ describe("release-comms-instagram", () => {
       const calls: Array<{ url: string; init?: RequestInit }> = [];
       const fetchFn: typeof fetch = async (input, init) => {
         calls.push({ url: String(input), init });
-        return response({ permalink: "https://www.instagram.com/p/recovered/" });
+        return response({
+          permalink: "https://www.instagram.com/p/recovered/",
+        });
       };
 
       const publication = await publishInstagramPost({
@@ -249,7 +251,9 @@ describe("release-comms-instagram", () => {
         }
         if (urlStr.includes("fields=permalink")) {
           permalinkLookupHappened = true;
-          return response({ permalink: "https://www.instagram.com/p/checkpointed/" });
+          return response({
+            permalink: "https://www.instagram.com/p/checkpointed/",
+          });
         }
         return response({});
       };
@@ -294,15 +298,15 @@ describe("release-comms-instagram", () => {
   describe("isInstagramPublishingEnabled", () => {
     it("returns true by default or when not explicitly disabled", () => {
       expect(isInstagramPublishingEnabled({})).toBe(true);
-      expect(isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "1" })).toBe(
-        true,
-      );
+      expect(
+        isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "1" }),
+      ).toBe(true);
     });
 
     it("returns false when INSTAGRAM_AUTO_PUBLISH is 0 or false", () => {
-      expect(isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "0" })).toBe(
-        false,
-      );
+      expect(
+        isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "0" }),
+      ).toBe(false);
       expect(
         isInstagramPublishingEnabled({ INSTAGRAM_AUTO_PUBLISH: "false" }),
       ).toBe(false);

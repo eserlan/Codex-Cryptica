@@ -135,13 +135,21 @@ export async function runAgentWithLogging(
     timeoutMs: number;
     logPath: string;
     runId: string;
+    prNumber?: number;
   },
 ): Promise<AgentRunResult> {
+  const prPrefix = options.prNumber
+    ? `[pr-fix:#${options.prNumber}:${options.runId}]`
+    : `[pr-fix:${options.runId}]`;
+  const agentPrefix = options.prNumber
+    ? `[agent:#${options.prNumber}`
+    : `[agent`;
+
   await mkdir(resolve(options.logPath, ".."), { recursive: true });
   const log = createWriteStream(options.logPath, { flags: "a" });
   const startedAt = new Date().toISOString();
   log.write(`\n=== agent started ${startedAt} (${options.runId}) ===\n`);
-  console.log(`[pr-fix:${options.runId}] agent output: ${options.logPath}`);
+  console.log(`${prPrefix} agent output: ${options.logPath}`);
 
   const child = spawn(binPath, args, {
     cwd: options.cwd,
@@ -153,7 +161,7 @@ export async function runAgentWithLogging(
   let heartbeatSeconds = 0;
   const heartbeat = setInterval(() => {
     heartbeatSeconds += 30;
-    const message = `[pr-fix:${options.runId}] agent still running (${heartbeatSeconds}s elapsed)`;
+    const message = `${prPrefix} agent still running (${heartbeatSeconds}s elapsed)`;
     console.log(message);
     log.write(`${message}\n`);
   }, 30_000);
@@ -161,8 +169,11 @@ export async function runAgentWithLogging(
   const forward = (stream: NodeJS.ReadableStream | null, label: string) => {
     stream?.on("data", (chunk: Buffer | string) => {
       const output = chunk.toString();
-      log.write(`[${label}] ${output}`);
-      process.stdout.write(`[agent:${label}] ${output}`);
+      const taggedPrefix = options.prNumber
+        ? `${agentPrefix}:${label}]`
+        : `[${label}]`;
+      log.write(`${taggedPrefix} ${output}`);
+      process.stdout.write(`${taggedPrefix} ${output}`);
     });
   };
   forward(child.stdout, "stdout");
@@ -171,7 +182,7 @@ export async function runAgentWithLogging(
   const result = await new Promise<AgentRunResult>((resolveResult) => {
     const timeout = setTimeout(() => {
       timedOut = true;
-      const message = `[pr-fix:${options.runId}] timeout reached; terminating agent`;
+      const message = `${prPrefix} timeout reached; terminating agent`;
       console.error(message);
       log.write(`${message}\n`);
       child.kill("SIGTERM");
@@ -180,9 +191,7 @@ export async function runAgentWithLogging(
     child.once("error", (error) => {
       clearTimeout(timeout);
       resolveResult({ status: null, signal: null, timedOut });
-      console.error(
-        `[pr-fix:${options.runId}] agent process error: ${error.message}`,
-      );
+      console.error(`${prPrefix} agent process error: ${error.message}`);
     });
     child.once("close", (status, signal) => {
       clearTimeout(timeout);
@@ -388,7 +397,7 @@ export async function pollForPrFeedback(
   let feedback = fetchPrFeedback(prNumber, repoDir);
   if (feedback.hasActionableFeedback) {
     console.log(
-      `📬 Detected actionable feedback on PR #${prNumber}: ` +
+      `[pr-fix:#${prNumber}] 📬 Detected actionable feedback: ` +
         `${feedback.unresolvedComments.length} comment(s), ` +
         `${feedback.failingChecks.length} failing check(s).`,
     );
@@ -398,7 +407,7 @@ export async function pollForPrFeedback(
   // If review already arrived with no requested changes and all CI checks completed
   if (feedback.reviews.length > 0 && feedback.pendingChecks.length === 0) {
     console.log(
-      `✅ PR #${prNumber} already has completed review with no issues, and all checks finished.`,
+      `[pr-fix:#${prNumber}] ✅ Completed review with no issues, and all checks finished.`,
     );
     return feedback;
   }
@@ -408,7 +417,7 @@ export async function pollForPrFeedback(
   const maxWaitMs = maxWaitMinutes * 60 * 1000;
 
   console.log(
-    `⏳ Waiting initial ${initialWaitMinutes}m for PR #${prNumber} CI runs and bot reviews...`,
+    `[pr-fix:#${prNumber}] ⏳ Waiting initial ${initialWaitMinutes}m for CI runs and bot reviews...`,
   );
 
   // Initial wait phase: check every 20s during the first initialWaitMinutes
@@ -422,7 +431,7 @@ export async function pollForPrFeedback(
     feedback = fetchPrFeedback(prNumber, repoDir);
     if (feedback.hasActionableFeedback) {
       console.log(
-        `📬 Detected actionable feedback on PR #${prNumber} at ${Math.round((Date.now() - startTime) / 1000)}s: ` +
+        `[pr-fix:#${prNumber}] 📬 Detected actionable feedback at ${Math.round((Date.now() - startTime) / 1000)}s: ` +
           `${feedback.unresolvedComments.length} comment(s), ` +
           `${feedback.failingChecks.length} failing check(s).`,
       );
@@ -431,14 +440,14 @@ export async function pollForPrFeedback(
 
     if (feedback.reviews.length > 0 && feedback.pendingChecks.length === 0) {
       console.log(
-        `✅ Review landed on PR #${prNumber} with no requested changes, and all CI checks passed.`,
+        `[pr-fix:#${prNumber}] ✅ Review landed with no requested changes, and all CI checks passed.`,
       );
       return feedback;
     }
   }
 
   console.log(
-    `\n🔄 Reached ${initialWaitMinutes}m mark. Starting review loop (checking every ${pollIntervalSeconds}s up to ${maxWaitMinutes}m total)...`,
+    `\n[pr-fix:#${prNumber}] 🔄 Reached ${initialWaitMinutes}m mark. Starting review loop (checking every ${pollIntervalSeconds}s up to ${maxWaitMinutes}m total)...`,
   );
 
   // Extended review loop phase: check every pollIntervalSeconds (e.g. 60s / 1 min)
@@ -446,7 +455,7 @@ export async function pollForPrFeedback(
     feedback = fetchPrFeedback(prNumber, repoDir);
     if (feedback.hasActionableFeedback) {
       console.log(
-        `📬 Detected actionable feedback on PR #${prNumber}: ` +
+        `[pr-fix:#${prNumber}] 📬 Detected actionable feedback: ` +
           `${feedback.unresolvedComments.length} comment(s), ` +
           `${feedback.failingChecks.length} failing check(s).`,
       );
@@ -455,14 +464,14 @@ export async function pollForPrFeedback(
 
     if (feedback.reviews.length > 0 && feedback.pendingChecks.length === 0) {
       console.log(
-        `✅ Review landed on PR #${prNumber} with no requested changes, and all CI checks passed.`,
+        `[pr-fix:#${prNumber}] ✅ Review landed with no requested changes, and all CI checks passed.`,
       );
       return feedback;
     }
 
     const elapsedMinutes = Math.round((Date.now() - startTime) / 60_000);
     console.log(
-      `⏳ [Minute ${elapsedMinutes}/${maxWaitMinutes}] No review yet on PR #${prNumber}. ` +
+      `[pr-fix:#${prNumber}] ⏳ [Minute ${elapsedMinutes}/${maxWaitMinutes}] No review yet. ` +
         `Checking again in ${pollIntervalSeconds}s... (${feedback.pendingChecks.length} check(s) still pending)`,
     );
 
@@ -470,7 +479,7 @@ export async function pollForPrFeedback(
   }
 
   console.log(
-    `⏰ Reached maximum review wait window (${maxWaitMinutes}m). Concluding review loop.`,
+    `[pr-fix:#${prNumber}] ⏰ Reached maximum review wait window (${maxWaitMinutes}m). Concluding review loop.`,
   );
   return fetchPrFeedback(prNumber, repoDir);
 }
@@ -622,6 +631,30 @@ export function resolveFixProviders(
 }
 
 /**
+ * Run a git command with stderr captured (instead of discarded), emitting
+ * it with the PR prefix on failure so operators can see why it failed.
+ */
+export function execWithPrefixedStderr(
+  command: string,
+  cwd: string,
+  prNumber: number,
+  actionLabel: string,
+): void {
+  try {
+    execSync(command, { cwd, stdio: ["ignore", "ignore", "pipe"] });
+  } catch (error) {
+    const stderr =
+      error instanceof Error && "stderr" in error
+        ? String((error as { stderr?: Buffer | string }).stderr ?? "").trim()
+        : "";
+    console.error(
+      `[pr-fix:#${prNumber}] ❌ ${actionLabel} failed${stderr ? `: ${stderr}` : ""}`,
+    );
+    throw error;
+  }
+}
+
+/**
  * Execute the PR check & fix loop.
  */
 export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
@@ -636,8 +669,8 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     .slice(0, 14);
   const logPath = getPrFixLogPath(prNumber, runId, options.logDir);
 
-  console.log(`\n🔍 Checking feedback for PR #${prNumber} (run ${runId})...`);
-  console.log(`[pr-fix:${runId}] durable log: ${logPath}`);
+  console.log(`\n[pr-fix:#${prNumber}] 🔍 Checking feedback (run ${runId})...`);
+  console.log(`[pr-fix:#${prNumber}:${runId}] durable log: ${logPath}`);
   const feedback = await pollForPrFeedback(prNumber, rootDir, {
     initialWaitMinutes:
       options.initialWaitMinutes ?? options.waitMinutesForReview ?? 4,
@@ -647,14 +680,14 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
 
   if (isPrPaused(feedback.prMeta)) {
     console.log(
-      `⏸️ PR #${prNumber} has 'paused' label; skipping all automated actions.`,
+      `[pr-fix:#${prNumber}] ⏸️ Labeled "paused"; skipping all automated actions.`,
     );
     return true;
   }
 
   if (!feedback.hasActionableFeedback) {
     console.log(
-      `🎉 PR #${prNumber} has no actionable review comments or failing checks. All clear!`,
+      `[pr-fix:#${prNumber}] 🎉 No actionable review comments or failing checks. All clear!`,
     );
     return true;
   }
@@ -663,12 +696,17 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   const baseBranch = options.baseBranch || feedback.prMeta.baseRefName;
 
   console.log(
-    `\n🛠️ PR #${prNumber} has ${feedback.unresolvedComments.length} comment(s) and ${feedback.failingChecks.length} failing check(s).`,
+    `\n[pr-fix:#${prNumber}] 🛠️ PR has ${feedback.unresolvedComments.length} comment(s) and ${feedback.failingChecks.length} failing check(s).`,
   );
 
   if (options.dryRun) {
-    console.log("\n[DRY RUN] Fix prompt that would be sent to agent:\n");
-    console.log(buildPrFixPrompt(feedback, branchName, baseBranch));
+    const dryRunPrefix = `[DRY RUN:PR #${prNumber}]`;
+    console.log(`\n${dryRunPrefix} Fix prompt that would be sent to agent:\n`);
+    for (const line of buildPrFixPrompt(feedback, branchName, baseBranch).split(
+      "\n",
+    )) {
+      console.log(`${dryRunPrefix} ${line}`);
+    }
     return true;
   }
 
@@ -687,18 +725,21 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     ownWorktree = true;
 
     await mkdir(workdirBase, { recursive: true });
-    console.log(`📦 Creating isolated worktree at ${worktreePath}...`);
+    console.log(
+      `[pr-fix:#${prNumber}] 📦 Creating isolated worktree at ${worktreePath}...`,
+    );
 
-    execSync(`git fetch origin ${branchName} ${baseBranch}`, {
-      cwd: rootDir,
-      stdio: "inherit",
-    });
-    execSync(
+    execWithPrefixedStderr(
+      `git fetch origin ${branchName} ${baseBranch}`,
+      rootDir,
+      prNumber,
+      "git fetch",
+    );
+    execWithPrefixedStderr(
       `git worktree add -b pr-fix-${prNumber}-${timestamp} ${worktreePath} origin/${branchName}`,
-      {
-        cwd: rootDir,
-        stdio: "inherit",
-      },
+      rootDir,
+      prNumber,
+      "git worktree add",
     );
   }
 
@@ -706,7 +747,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     let mergeResult = mergeStagingIntoWorktree(worktreePath, baseBranch);
     if (mergeResult.kind === "failed") {
       console.error(
-        `[pr-fix:${runId}] could not merge staging: ${mergeResult.message}`,
+        `[pr-fix:#${prNumber}:${runId}] could not merge staging: ${mergeResult.message}`,
       );
       return false;
     }
@@ -720,14 +761,14 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     );
     if (mergeConflictPaths.length > 0) {
       console.log(
-        `[pr-fix:${runId}] staging merge has ${mergeConflictPaths.length} conflict(s); handing them to the agent.`,
+        `[pr-fix:#${prNumber}:${runId}] staging merge has ${mergeConflictPaths.length} conflict(s); handing them to the agent.`,
       );
     }
 
     let fixSucceeded = false;
     for (let round = 1; round <= maxRounds; round++) {
       console.log(
-        `\n🚀 [Round ${round}/${maxRounds}] Running agent fix pass...`,
+        `\n[pr-fix:#${prNumber}] 🚀 [Round ${round}/${maxRounds}] Running agent fix pass...`,
       );
 
       let passSucceeded = false;
@@ -738,7 +779,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
         if (!binPath) continue;
 
         console.log(
-          `🤖 [Provider ${i + 1}/${providers.length}] Launching ${providerName} (${binPath})...`,
+          `[pr-fix:#${prNumber}] 🤖 [Provider ${i + 1}/${providers.length}] Launching ${providerName} (${binPath})...`,
         );
 
         const providerConfig = AGENT_PROVIDERS[providerName];
@@ -752,6 +793,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           timeoutMs: timeoutMinutes * 60 * 1000,
           logPath,
           runId,
+          prNumber,
         });
 
         const unresolvedPaths = getUnmergedPaths(worktreePath);
@@ -761,7 +803,9 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
           isWorktreePushed(worktreePath, branchName);
 
         if (pushed) {
-          console.log(`✅ ${providerName} completed successfully.`);
+          console.log(
+            `[pr-fix:#${prNumber}] ✅ ${providerName} completed successfully.`,
+          );
           if (pushed && feedback.unresolvedComments.length > 0) {
             try {
               const newHeadSha = execSync("git rev-parse --short HEAD", {
@@ -798,29 +842,35 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
 
         if (result.status === 0 && unresolvedPaths.length > 0) {
           console.warn(
-            `⚠️ ${providerName} left ${unresolvedPaths.length} merge conflict(s) behind.`,
+            `[pr-fix:#${prNumber}] ⚠️ ${providerName} left ${unresolvedPaths.length} merge conflict(s) behind.`,
           );
         } else if (result.status === 0) {
           console.warn(
-            `⚠️ ${providerName} completed but did not push the resulting branch.`,
+            `[pr-fix:#${prNumber}] ⚠️ ${providerName} completed but did not push the resulting branch.`,
           );
         }
 
         console.warn(
-          `⚠️ ${providerName} exited with code ${result.status ?? "null"}` +
+          `[pr-fix:#${prNumber}] ⚠️ ${providerName} exited with code ${result.status ?? "null"}` +
             ` (signal: ${result.signal ?? "none"}, timed out: ${result.timedOut}).`,
         );
 
         const nextProvider = providers[i + 1];
         if (nextProvider) {
           console.log(
-            `🔄 Resetting worktree and falling back to ${nextProvider}...`,
+            `[pr-fix:#${prNumber}] 🔄 Resetting worktree and falling back to ${nextProvider}...`,
           );
-          resetWorktree(worktreePath, branchName, branchName);
+          try {
+            resetWorktree(worktreePath, branchName, branchName);
+          } catch (error) {
+            console.warn(
+              `[pr-fix:#${prNumber}] ⚠️ Failed to reset worktree between agent attempts: ${error}`,
+            );
+          }
           mergeResult = mergeStagingIntoWorktree(worktreePath, baseBranch);
           if (mergeResult.kind === "failed") {
             console.error(
-              `[pr-fix:${runId}] could not restore the staging merge for ${nextProvider}: ${mergeResult.message}`,
+              `[pr-fix:#${prNumber}:${runId}] could not restore the staging merge for ${nextProvider}: ${mergeResult.message}`,
             );
             break;
           }
@@ -836,7 +886,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
       }
 
       if (passSucceeded) {
-        console.log(`\n🎉 Fix round ${round} complete.`);
+        console.log(`\n[pr-fix:#${prNumber}] 🎉 Fix round ${round} complete.`);
         fixSucceeded = true;
         break;
       }
@@ -844,13 +894,13 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
 
     if (!fixSucceeded) {
       console.error(
-        `[pr-fix:${runId}] no provider completed a fix pass successfully.`,
+        `[pr-fix:#${prNumber}:${runId}] no provider completed a fix pass successfully.`,
       );
       return false;
     }
   } finally {
     if (ownWorktree && worktreePath && existsSync(worktreePath)) {
-      console.log("🧹 Cleaning up isolated worktree...");
+      console.log(`[pr-fix:#${prNumber}] 🧹 Cleaning up isolated worktree...`);
       try {
         execSync(`git worktree remove --force ${worktreePath}`, {
           cwd: rootDir,
@@ -863,7 +913,9 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     }
   }
 
-  console.log(`[pr-fix:${runId}] run complete; detailed output: ${logPath}`);
+  console.log(
+    `[pr-fix:#${prNumber}:${runId}] run complete; detailed output: ${logPath}`,
+  );
   return true;
 }
 
@@ -885,7 +937,7 @@ if (import.meta.main) {
   }
 
   runPrFixLoop({ prNumber, dryRun }).catch((err) => {
-    console.error("Fatal error:", err);
+    console.error(`[pr-fix:#${prNumber}] Fatal error:`, err);
     process.exit(1);
   });
 }

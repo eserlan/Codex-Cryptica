@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   buildPrFixPrompt,
+  execWithPrefixedStderr,
   fetchFailedCheckLog,
   getRepoSlug,
   getPrFixLogPath,
@@ -226,6 +227,69 @@ describe("pr-check-fix", () => {
         expect(await readFile(logPath, "utf8")).toContain("timeout reached");
       } finally {
         await rm(logDir, { recursive: true, force: true });
+      }
+    });
+
+    it("includes prNumber in log and stdout prefixes when provided", async () => {
+      const logDir = await mkdtemp(join(tmpdir(), "pr-fix-test-"));
+      const logPath = getPrFixLogPath(2977, "prtag", logDir);
+      const originalStdoutWrite = process.stdout.write;
+      let stdoutCaptured = "";
+      process.stdout.write = ((chunk: any) => {
+        stdoutCaptured += chunk.toString();
+        return true;
+      }) as any;
+
+      try {
+        await runAgentWithLogging(
+          "/bin/sh",
+          ["-c", "printf hello-from-agent"],
+          {
+            cwd: process.cwd(),
+            env: process.env,
+            timeoutMs: 2_000,
+            logPath,
+            runId: "prtag",
+            prNumber: 2977,
+          },
+        );
+
+        expect(stdoutCaptured).toContain(
+          "[agent:#2977:stdout] hello-from-agent",
+        );
+        expect(await readFile(logPath, "utf8")).toContain(
+          "[agent:#2977:stdout] hello-from-agent",
+        );
+      } finally {
+        process.stdout.write = originalStdoutWrite;
+        await rm(logDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("execWithPrefixedStderr", () => {
+    it("surfaces the command's stderr with the PR prefix instead of discarding it", () => {
+      const originalConsoleError = console.error;
+      let captured = "";
+      console.error = ((message: string) => {
+        captured += message;
+      }) as typeof console.error;
+
+      try {
+        expect(() =>
+          execWithPrefixedStderr(
+            "node -e \"process.stderr.write('boom'); process.exit(1)\"",
+            process.cwd(),
+            2980,
+            "test command",
+          ),
+        ).toThrow();
+
+        expect(captured).toContain("[pr-fix:#2980]");
+        expect(captured).toContain("test command failed");
+        expect(captured).toContain("boom");
+      } finally {
+        console.error = originalConsoleError;
       }
     });
   });

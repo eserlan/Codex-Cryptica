@@ -417,7 +417,7 @@
             disabled={isBusy}
             class="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-theme-border bg-theme-surface px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-muted transition hover:border-theme-primary hover:text-theme-primary disabled:cursor-wait disabled:opacity-50"
           >
-            <span class="icon-[lucide--copy] h-4 w-4"></span>
+            <span class="icon-[lucide--copy] h-4 w-4" aria-hidden="true"></span>
             Copy
           </button>
           <button
@@ -434,7 +434,7 @@
               ></span>
               Revising
             {:else}
-              <span class="icon-[lucide--refresh-cw] h-4 w-4"></span>
+              <span class="icon-[lucide--refresh-cw] h-4 w-4" aria-hidden="true"></span>
               Revise Prompt
             {/if}
           </button>
@@ -459,7 +459,7 @@
               ></span>
               Generating
             {:else}
-              <span class="icon-[lucide--image-plus] h-4 w-4"></span>
+              <span class="icon-[lucide--image-plus] h-4 w-4" aria-hidden="true"></span>
               Generate
             {/if}
           </button>
