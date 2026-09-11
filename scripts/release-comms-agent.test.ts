@@ -8,6 +8,7 @@ import {
   buildWriterPrompt,
   buildWriterRetryPrompt,
   deriveDiscordFromBluesky,
+  deriveDiscordQualification,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
@@ -759,7 +760,7 @@ describe("release-comms-agent", () => {
       );
     });
 
-    it("qualifies for discord whenever bluesky drafts are present even if omitted from recommended_channels", () => {
+    it("qualifies for discord and derives copy when bluesky drafts are present, even if omitted from recommended_channels", () => {
       const result: EvaluatorResult = {
         postworthy: true,
         reason: "Single small win",
@@ -767,7 +768,7 @@ describe("release-comms-agent", () => {
           {
             name: "Rule of Cool",
             why_users_care: "System notes",
-            bluesky_worthy: true,
+            bluesky_worthy: false,
           },
         ],
         recommended_channels: [],
@@ -783,32 +784,43 @@ describe("release-comms-agent", () => {
         github_discussions: [],
       };
 
-      const hasBlueskyDrafts = Boolean(
-        drafts.bluesky && drafts.bluesky.length > 0,
+      const { recommendedChannels, discordCopy } = deriveDiscordQualification(
+        result,
+        drafts,
       );
-      const hasBlueskyWorthy = Boolean(
-        result.features?.some((f) => f.bluesky_worthy),
-      );
-      const isDiscordRecommended =
-        (result.recommended_channels?.includes("discord") ?? false) ||
-        hasBlueskyDrafts ||
-        hasBlueskyWorthy;
 
-      if (isDiscordRecommended) {
-        result.recommended_channels = Array.from(
-          new Set([...(result.recommended_channels ?? []), "discord"]),
-        );
-      }
-      if (isDiscordRecommended && hasBlueskyDrafts) {
-        drafts.discord = deriveDiscordFromBluesky(
-          drafts.bluesky.map((post) => post.text),
-        );
-      }
-
-      expect(result.recommended_channels).toContain("discord");
-      expect(drafts.discord).toBe(
+      expect(recommendedChannels).toContain("discord");
+      expect(discordCopy).toBe(
         "Rule of cool!\n\nhttps://codexcryptica.com/answers/rule-of-cool",
       );
+    });
+
+    it("qualifies for discord on a bluesky_worthy feature alone, but cannot derive copy without drafts", () => {
+      const result: EvaluatorResult = {
+        postworthy: true,
+        reason: "Worthy feature, writer returned no bluesky copy",
+        features: [
+          {
+            name: "Rule of Cool",
+            why_users_care: "System notes",
+            bluesky_worthy: true,
+          },
+        ],
+        recommended_channels: [],
+      };
+      const drafts: WriterResult = {
+        bluesky: [],
+        reddit: "",
+        github_discussions: [],
+      };
+
+      const { recommendedChannels, discordCopy } = deriveDiscordQualification(
+        result,
+        drafts,
+      );
+
+      expect(recommendedChannels).toContain("discord");
+      expect(discordCopy).toBeUndefined();
     });
   });
 
