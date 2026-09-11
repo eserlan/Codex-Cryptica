@@ -533,6 +533,23 @@ describe("published answers", () => {
     }
   });
 
+  it("publishes the point crawl answer with the expected system references", () => {
+    const pointCrawlAnswer =
+      answers["how-do-you-build-a-point-crawl-for-an-rpg"];
+    expect(pointCrawlAnswer).toBeDefined();
+    expect(
+      pointCrawlAnswer.systemsThatSupportThis?.map((s) => s.system),
+    ).toEqual([
+      "The Ultraviolet Grasslands",
+      "Heart: The City Beneath",
+      "Stars Without Number",
+    ]);
+    for (const ref of pointCrawlAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
+
   it("publishes the sci-fi star system answer with the expected system references", () => {
     const starSystemAnswer =
       answers["how-to-create-a-sci-fi-star-system-for-an-rpg"];
