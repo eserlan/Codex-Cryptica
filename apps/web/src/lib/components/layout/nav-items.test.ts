@@ -6,11 +6,13 @@ import { isToolActive, isViewActive, matchesPath, navItems } from "./nav-items";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 describe("nav items", () => {
   beforeEach(() => {
     sessionModeStore.isGuestMode = false;
     discoveryPolicyStore.aiDisabled = false;
+    vault.isInitialized = true;
   });
 
   const byId = (id: string) => navItems().find((i) => i.id === id);
@@ -76,6 +78,16 @@ describe("nav items", () => {
       expect(ids).not.toContain("generators");
       expect(ids).not.toContain("shelf");
       expect(ids).not.toContain("quicknote");
+    });
+
+    it("drops generators when no vault is initialized", () => {
+      vault.isInitialized = false;
+
+      const ids = navItems().map((i) => i.id);
+
+      expect(ids).not.toContain("generators");
+      expect(ids).toContain("shelf");
+      expect(ids).toContain("quicknote");
     });
   });
 

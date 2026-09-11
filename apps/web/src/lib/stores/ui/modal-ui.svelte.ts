@@ -529,6 +529,7 @@ export class ModalUIStore {
       this.lightbox.show ||
       this.soundBite.show ||
       this.revisionDialog.open ||
+      this.generatorWorkflow.open ||
       this.showIntentCreateMenu ||
       this.showQuickStartModal ||
       this.silhouettePickerState.open

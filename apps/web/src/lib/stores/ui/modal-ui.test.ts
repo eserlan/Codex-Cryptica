@@ -134,8 +134,9 @@ describe("ModalUIStore", () => {
     expect(store.lightbox.imagePath).toBe("");
   });
 
-  it("openGeneratorWorkflow sets workspace launch mode", () => {
+  it("openGeneratorWorkflow sets workspace launch mode and reflects in isAnyModalOpen", () => {
     const store = new ModalUIStore();
+    expect(store.isAnyModalOpen).toBe(false);
     store.openGeneratorWorkflow("npc");
     expect(store.generatorWorkflow).toEqual({
       open: true,
@@ -146,9 +147,11 @@ describe("ModalUIStore", () => {
       autoGenerate: false,
       initialPrompt: null,
     });
+    expect(store.isAnyModalOpen).toBe(true);
     store.closeGeneratorWorkflow();
     expect(store.generatorWorkflow.open).toBe(false);
     expect(store.generatorWorkflow.generatorId).toBeNull();
+    expect(store.isAnyModalOpen).toBe(false);
   });
 
   it("openGeneratorWorkflow defaults generatorId to null", () => {

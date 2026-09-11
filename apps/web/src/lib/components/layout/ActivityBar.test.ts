@@ -10,6 +10,7 @@ import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
@@ -45,6 +46,7 @@ describe("ActivityBar", () => {
     layoutUIStore.toggleSidebarTool = vi.fn();
     guestChatStore.showChatModal = false;
     sessionModeStore.isGuestMode = false;
+    vault.isInitialized = true;
     page.url.pathname = "/";
   });
 
@@ -244,6 +246,14 @@ describe("ActivityBar", () => {
 
     expect(screen.queryByTestId("activity-bar-quicknote")).toBeNull();
     expect(screen.getByTestId("activity-bar-oracle")).toBeTruthy();
+  });
+
+  it("hides the Generators shortcut when no vault is initialized", () => {
+    vault.isInitialized = false;
+
+    render(ActivityBar);
+
+    expect(screen.queryByTestId("activity-bar-generators")).toBeNull();
   });
 
   it("opens the guest chat modal for guests", async () => {
