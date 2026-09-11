@@ -9,7 +9,7 @@ describe("isVaultReadyForGenerators", () => {
     const readyState: VaultReadinessState = {
       isInitialized: true,
       activeVaultId: "vault-123",
-      status: "ready",
+      status: "idle",
     };
 
     expect(isVaultReadyForGenerators(readyState)).toBe(true);
@@ -19,7 +19,7 @@ describe("isVaultReadyForGenerators", () => {
     const uninitializedState: VaultReadinessState = {
       isInitialized: false,
       activeVaultId: "vault-123",
-      status: "ready",
+      status: "idle",
     };
 
     expect(isVaultReadyForGenerators(uninitializedState)).toBe(false);
@@ -29,7 +29,7 @@ describe("isVaultReadyForGenerators", () => {
     const noActiveVaultState: VaultReadinessState = {
       isInitialized: true,
       activeVaultId: null,
-      status: "ready",
+      status: "idle",
     };
 
     expect(isVaultReadyForGenerators(noActiveVaultState)).toBe(false);
