@@ -1,9 +1,19 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
 
 // Stub $state before importing the store
 (global as any).$state = (v: any) => v;
 
 import { ModalUIStore } from "./modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { sessionModeStore } from "./session-mode.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+
+beforeEach(() => {
+  sessionModeStore.isGuestMode = false;
+  vault.isInitialized = true;
+  vaultRegistry.activeVaultId = "vault-1";
+  vault.status = "idle";
+});
 
 describe("ModalUIStore", () => {
   it("initializes with default values", () => {
@@ -204,6 +214,19 @@ describe("ModalUIStore", () => {
     expect(store.showIntentCreateMenu).toBe(true);
     store.closeIntentCreateMenu();
     expect(store.showIntentCreateMenu).toBe(false);
+  });
+
+  it("does not open generator entry points while the vault is loading", () => {
+    const store = new ModalUIStore();
+    vault.status = "loading";
+
+    store.openIntentCreateMenu();
+    store.openGeneratorWorkflow("npc");
+    store.openGeneratorWorkflowForEntity("src-42");
+    store.openIntentGeneratorWorkflow("npc");
+
+    expect(store.showIntentCreateMenu).toBe(false);
+    expect(store.generatorWorkflow.open).toBe(false);
   });
 
   it("openQuickStartModal and closeQuickStartModal toggle Quick Start visibility", () => {

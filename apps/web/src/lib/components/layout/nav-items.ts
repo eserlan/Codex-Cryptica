@@ -7,6 +7,7 @@ import { guestVault } from "$lib/stores/guest-vault.svelte";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
 /**
  * The one list of application navigation, shared by the Activity Bar and the
@@ -182,7 +183,7 @@ export function navItems(): NavItem[] {
     },
   ];
 
-  if (!sessionModeStore.isGuestMode && vault.isInitialized) {
+  if (!sessionModeStore.isGuestMode && isVaultReadyForGenerators(vault)) {
     items.push({
       id: "generators",
       icon: "icon-[lucide--wand-2]",

@@ -1,4 +1,7 @@
 import type { AspectRatio, Entity } from "schema";
+import { sessionModeStore } from "./session-mode.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { isVaultReadyForGenerators } from "$lib/stores/vault/readiness";
 
 export type SettingsTab =
   | "vault"
@@ -15,6 +18,10 @@ export type ImagePromptReviewTarget =
   | { kind: "message"; id: string; title: string; entityId?: string };
 
 export class ModalUIStore {
+  private canOpenGenerators() {
+    return !sessionModeStore.isGuestMode && isVaultReadyForGenerators(vault);
+  }
+
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
   showCanvasSelector = $state(false);
@@ -270,6 +277,7 @@ export class ModalUIStore {
     generatorId: string | null = null,
     prefillDate: { year: number; month: number; day: number } | null = null,
   ) {
+    if (!this.canOpenGenerators()) return;
     this.generatorWorkflow = {
       open: true,
       launchMode: "workspace",
@@ -286,6 +294,7 @@ export class ModalUIStore {
     sourceEntityId: string,
     generatorId: string | null = null,
   ) {
+    if (!this.canOpenGenerators()) return;
     this.generatorWorkflow = {
       open: true,
       launchMode: "contextual",
@@ -307,6 +316,7 @@ export class ModalUIStore {
     sourceEntityId: string | null = null,
     initialPrompt: string | null = null,
   ) {
+    if (!this.canOpenGenerators()) return;
     this.generatorWorkflow = {
       open: true,
       launchMode: sourceEntityId ? "contextual" : "workspace",
@@ -334,6 +344,7 @@ export class ModalUIStore {
   showIntentCreateMenu = $state(false);
 
   openIntentCreateMenu() {
+    if (!this.canOpenGenerators()) return;
     this.showIntentCreateMenu = true;
   }
 
