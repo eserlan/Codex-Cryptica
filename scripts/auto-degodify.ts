@@ -67,7 +67,7 @@ export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
     getArgs: (prompt) => [
       "exec",
       "-m",
-      process.env.CODEX_MODEL || "gpt-5.6-luna",
+      "gpt-5.6-terra",
       "-c",
       'model_reasoning_effort="medium"',
       "--dangerously-bypass-approvals-and-sandbox",
@@ -75,46 +75,6 @@ export const AGENT_PROVIDERS: Record<AgentProviderName, AgentProviderConfig> = {
     ],
   },
 };
-
-export const DEFAULT_AGENT_PROVIDERS: AgentProviderName[] = [
-  "codex",
-  "claude",
-  "agy",
-];
-
-export function isValidAgentProvider(name: string): name is AgentProviderName {
-  return Object.prototype.hasOwnProperty.call(AGENT_PROVIDERS, name);
-}
-
-export function resolveConfiguredProviders(
-  rawEnv: string | undefined = process.env.PR_FIX_PROVIDERS,
-): AgentProviderName[] {
-  if (rawEnv === undefined) {
-    return [...DEFAULT_AGENT_PROVIDERS];
-  }
-
-  const items = rawEnv
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-
-  if (items.length === 0) {
-    throw new Error(
-      `Invalid PR_FIX_PROVIDERS configuration: "${rawEnv}" contains no provider names.`,
-    );
-  }
-
-  for (const item of items) {
-    if (!isValidAgentProvider(item)) {
-      const valid = Object.keys(AGENT_PROVIDERS).join(", ");
-      throw new Error(
-        `Invalid agent provider "${item}" configured in PR_FIX_PROVIDERS. Valid providers: ${valid}`,
-      );
-    }
-  }
-
-  return items;
-}
 
 /**
  * Locate executable path for a given agent provider.
@@ -151,11 +111,14 @@ export function hasOpenPrForBranch(
   branchName: string,
 ): boolean {
   try {
-    const prOutput = execSync(`gh pr list --head ${branchName} --json number`, {
-      cwd: repoDir,
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "ignore"],
-    });
+    const prOutput = execSync(
+      `gh pr list --head ${branchName} --json number`,
+      {
+        cwd: repoDir,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "ignore"],
+      },
+    );
     const prs = JSON.parse(prOutput) as Array<{ number: number }>;
     return prs.length > 0;
   } catch {
@@ -395,7 +358,7 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
     options.agentProviders ||
     (options.agentBin
       ? [options.agentBin as AgentProviderName]
-      : resolveConfiguredProviders());
+      : ["claude", "codex", "agy"]);
 
   // Setup isolated worktree
   const worktreePath = resolve(workdirBase, `worktree-${timestamp}`);
@@ -497,9 +460,7 @@ export async function autoDegodify(options: AutoDegodifyOptions = {}) {
             branchName,
             baseBranch,
             worktreePath,
-            agentProviders:
-              options.agentProviders ||
-              (options.agentBin ? providers : undefined),
+            agentProviders: providers,
             timeoutMinutes,
             initialWaitMinutes: options.initialWaitMinutes ?? 4,
             pollIntervalSeconds: options.pollIntervalSeconds ?? 60,

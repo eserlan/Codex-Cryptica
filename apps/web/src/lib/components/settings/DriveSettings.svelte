@@ -251,23 +251,13 @@
 
       <div class="grid grid-cols-2 gap-4">
         <button
-          type="button"
           onclick={handlePush}
           disabled={isPushing || isPulling}
-          aria-busy={isPushing}
-          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50"
         >
-          {#if isPushing}
-            <span
-              class="icon-[lucide--loader-2] h-6 w-6 text-theme-primary animate-spin"
-              aria-hidden="true"
-            ></span>
-          {:else}
-            <span
-              class="icon-[lucide--upload-cloud] h-6 w-6 text-theme-primary group-hover:scale-110 transition-transform"
-              aria-hidden="true"
-            ></span>
-          {/if}
+          <span
+            class="icon-[lucide--upload-cloud] h-6 w-6 text-theme-primary group-hover:scale-110 transition-transform"
+          ></span>
           <span
             class="text-xs font-bold uppercase tracking-widest text-theme-text"
           >
@@ -276,23 +266,13 @@
         </button>
 
         <button
-          type="button"
           onclick={handlePull}
           disabled={isPushing || isPulling}
-          aria-busy={isPulling}
-          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50"
         >
-          {#if isPulling}
-            <span
-              class="icon-[lucide--loader-2] h-6 w-6 text-theme-secondary animate-spin"
-              aria-hidden="true"
-            ></span>
-          {:else}
-            <span
-              class="icon-[lucide--download-cloud] h-6 w-6 text-theme-secondary group-hover:scale-110 transition-transform"
-              aria-hidden="true"
-            ></span>
-          {/if}
+          <span
+            class="icon-[lucide--download-cloud] h-6 w-6 text-theme-secondary group-hover:scale-110 transition-transform"
+          ></span>
           <span
             class="text-xs font-bold uppercase tracking-widest text-theme-text"
           >

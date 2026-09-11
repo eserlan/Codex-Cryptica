@@ -27,14 +27,7 @@ Cloudflare Tunnel → `scripts/release-comms-agent.ts`) is unfamiliar.
       `gh secret set RELEASE_COMMS_SECRET --repo eserlan/Codex-Cryptica`.
       The workflow step in `promote-to-prod.yml` and the listener both
       compare against this one secret.
-- [ ] Add `INSTAGRAM_ACCOUNT_ID`, `INSTAGRAM_ACCESS_TOKEN`, and
-      `INSTAGRAM_GRAPH_API_URL` to that same private environment file.
-      The account must be a Meta-supported professional account connected to
-      the relevant Facebook Page, and the token must be authorised for content
-      publishing. If an installation opts out of automatic Instagram
-      publishing, set `INSTAGRAM_AUTO_PUBLISH=0` in that same private
-      environment file to skip Instagram publishing without failing releases.
-- [ ] Restart the webhook service so it picks up the new code and environment:
+- [ ] Restart the webhook service so it picks up the new code and env var:
       `systemctl --user restart codex-pr-review-webhook.service`.
 - [ ] Confirm the new route is live: `curl -fsS https://pr-webhook.codexcryptica.com/health`
       should return JSON including `activeCommsJobs` (not just `activeJobs`).
@@ -153,8 +146,6 @@ When an item clears its channel's bar, it publishes immediately:
   post URL.
 - GitHub Discussions publishes the long-form Markdown body with that same
   image and direct page link, then records its Discussion URL.
-- Instagram publishes the exact resolved Bluesky caption with that same R2
-  JPEG image, then records its Instagram permalink.
 
 Each external URL is checkpointed in
 `~/.local/state/codex-release-comms/state.json` before the next channel runs.
@@ -162,10 +153,9 @@ Replaying a partial failure resumes only the missing publication; it does not
 duplicate a successful one. The tracking issue comment lists the drafts and
 durable publication URLs.
 
-The listener environment needs `BLUESKY_IDENTIFIER`, `BLUESKY_APP_PASSWORD`,
-`INSTAGRAM_ACCOUNT_ID`, `INSTAGRAM_ACCESS_TOKEN`, and
-`INSTAGRAM_GRAPH_API_URL` in addition to the webhook secrets. Keep the env
-file mode `600`. GitHub Discussions uses the authenticated local `gh` session.
+The listener environment needs `BLUESKY_IDENTIFIER` and
+`BLUESKY_APP_PASSWORD` in addition to the webhook secrets. Keep the env file
+mode `600`. GitHub Discussions uses the authenticated local `gh` session.
 
 When a public page has no source social card, the agent first checks its
 deterministic `https://assets.codexcryptica.com/og/<slug>.jpg` location. If it
@@ -183,13 +173,12 @@ GitHub Actions through `scripts/discord-deploy.sh`. The release-comms writer
 also creates a Discord draft, but does not send a duplicate content-specific
 deployment message.
 
-### Automatic Instagram publishing
+### Manual Instagram publishing
 
-Every Bluesky-qualified item is also published to Instagram by the deploy
-agent, using the exact same final caption and verified R2 social image. This
-keeps the two posts aligned without asking the writer to invent a second
-version. The agent checkpoints each permalink before continuing, so a Meta API
-failure leaves the release resumable and retries only the missing post.
+Instagram is intentionally never posted by the deploy agent. Every
+Bluesky-qualified item also qualifies for Instagram, using the exact same
+final caption and verified R2 social image. This keeps the two posts aligned
+without asking the writer to invent a second version.
 
 Configure the local, mode-`600` webhook environment with the connected
 Instagram professional account ID, a Meta access token authorised for content
@@ -205,11 +194,9 @@ The account must be a Meta-supported professional Instagram account connected
 to the relevant Facebook Page. Confirm the current app permissions and API
 version in Meta's dashboard before its first real post.
 
-The release issue comment shows the exact final Bluesky caption and verified
-R2 JPEG image URL for each qualifying draft, plus the published Instagram
-permalink. First exercise the full release agent with `RELEASE_COMMS_DRY_RUN=1`
-as described above; it never contacts Meta. The manual command remains useful
-only for troubleshooting the Meta credentials without a release:
+The release issue comment provides the exact final Bluesky caption and its
+verified R2 JPEG image URL for each qualifying draft. First exercise the
+manual command without a network write:
 
 ```sh
 bun run post:instagram -- --dry-run \
@@ -217,9 +204,9 @@ bun run post:instagram -- --dry-run \
   "The exact final Bluesky caption, unchanged"
 ```
 
-For a troubleshooting post, remove `--dry-run` and copy one caption and image
-URL from the release issue comment. Do not use it alongside the automatic
-release agent for the same draft, or it will create a duplicate post.
+For a real post, remove `--dry-run` and copy one caption and image URL from
+the release issue comment. Run once for each Bluesky post; do not combine
+separate Bluesky drafts into one Instagram caption.
 
 The Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
 remains a separate, unconfigured channel.

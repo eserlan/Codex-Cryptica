@@ -49,8 +49,8 @@ Their local definitions are:
 ```
 
 The listener environment file is private and contains the GitHub webhook
-secret, the release-comms shared secret, and the Bluesky and Instagram
-publishing credentials:
+secret, the release-comms shared secret, and the Bluesky publishing
+credentials:
 
 ```text
 ~/.config/codex-pr-review/webhook.env
@@ -59,9 +59,8 @@ publishing credentials:
 It must stay mode `600`. `GITHUB_WEBHOOK_SECRET` is shared only with the
 GitHub repository webhook configuration; `RELEASE_COMMS_SECRET` is shared
 only with the `RELEASE_COMMS_SECRET` GitHub Actions secret on this repo.
-`BLUESKY_IDENTIFIER`, `BLUESKY_APP_PASSWORD`, `INSTAGRAM_ACCOUNT_ID`,
-`INSTAGRAM_ACCESS_TOKEN`, and `INSTAGRAM_GRAPH_API_URL` are used only by the
-local release-comms publisher. None is stored in this repository.
+`BLUESKY_IDENTIFIER` and `BLUESKY_APP_PASSWORD` are used only by the local
+release-comms publisher. None is stored in this repository.
 
 The same private environment file enables squash auto-merge with
 `PR_AUTO_MERGE=true`. The listener persists handled feedback under
@@ -102,11 +101,10 @@ for voice/format rules — cc-announcer is also mirrored under
 `.codex/skills/`), and the evaluator verdict, drafts, and returned publication
 URLs are posted as one comment on
 [issue #2906](https://github.com/eserlan/Codex-Cryptica/issues/2906). For
-validated public-page drafts, Bluesky, GitHub Discussions, and Instagram
-publish automatically with the page's R2 social image. Instagram uses the
-exact resolved Bluesky caption. The agent checkpoints each URL so retrying a
-partial failure does not repost it. Discord deployment notices remain in
-GitHub Actions. To replay the whole flow against a real past
+validated public-page drafts, Bluesky and GitHub Discussions publish
+automatically with the page's R2 social image. The agent checkpoints each URL
+so retrying a partial failure does not repost it. Discord deployment notices
+remain in GitHub Actions. To replay the whole flow against a real past
 production promotion without waiting for the next deploy:
 
 ```sh

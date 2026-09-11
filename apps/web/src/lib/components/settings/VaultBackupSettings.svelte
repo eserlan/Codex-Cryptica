@@ -89,23 +89,14 @@
 
     <div class="grid grid-cols-2 gap-4">
       <button
-        type="button"
         onclick={handleExport}
         disabled={isExporting || isImporting}
         aria-busy={isExporting}
-        class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {#if isExporting}
-          <span
-            class="icon-[lucide--loader-2] h-6 w-6 text-theme-primary animate-spin"
-            aria-hidden="true"
-          ></span>
-        {:else}
-          <span
-            class="icon-[lucide--download] h-6 w-6 text-theme-primary group-hover:scale-110 transition-transform"
-            aria-hidden="true"
-          ></span>
-        {/if}
+        <span
+          class="icon-[lucide--download] h-6 w-6 text-theme-primary group-hover:scale-110 transition-transform"
+        ></span>
         <span
           class="text-xs font-bold uppercase tracking-widest text-theme-text"
         >
@@ -114,23 +105,14 @@
       </button>
 
       <button
-        type="button"
         onclick={() => fileInput?.click()}
         disabled={isExporting || isImporting}
         aria-busy={isImporting}
-        class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        class="flex flex-col items-center gap-2 p-4 rounded-lg border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {#if isImporting}
-          <span
-            class="icon-[lucide--loader-2] h-6 w-6 text-theme-secondary animate-spin"
-            aria-hidden="true"
-          ></span>
-        {:else}
-          <span
-            class="icon-[lucide--upload] h-6 w-6 text-theme-secondary group-hover:scale-110 transition-transform"
-            aria-hidden="true"
-          ></span>
-        {/if}
+        <span
+          class="icon-[lucide--upload] h-6 w-6 text-theme-secondary group-hover:scale-110 transition-transform"
+        ></span>
         <span
           class="text-xs font-bold uppercase tracking-widest text-theme-text"
         >

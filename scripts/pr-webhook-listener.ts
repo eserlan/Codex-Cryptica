@@ -1,12 +1,14 @@
 import { execFileSync, spawn } from "node:child_process";
-import { fetchPrFeedback, isPrPaused } from "./pr-check-fix.ts";
+import { fetchPrFeedback } from "./pr-check-fix.ts";
 import {
   getUnseenFeedback,
   hasFixEvidence,
   isAutoMergeEligible,
+  isInternalReviewDue,
   loadPrAutomationState,
   markAutoMergeRequested,
   markFeedbackHandled,
+  markInternalReviewCompleted,
   savePrAutomationState,
 } from "./pr-review-automation-state.ts";
 
@@ -193,12 +195,6 @@ export async function scheduleAutoMerge(
     scheduledMerges.delete(pullRequestNumber);
     try {
       const feedback = fetchPrFeedback(pullRequestNumber, REPOSITORY_ROOT);
-      if (isPrPaused(feedback.prMeta)) {
-        console.log(
-          `[webhook] PR #${pullRequestNumber} has 'paused' label; skipping auto-merge`,
-        );
-        return;
-      }
       const state = await loadPrAutomationState();
       const unseen = getUnseenFeedback(feedback, state);
       if (!isAutoMergeEligible(feedback, unseen, state)) {
@@ -267,15 +263,10 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       summary.pullRequestNumber,
       REPOSITORY_ROOT,
     );
-    if (isPrPaused(feedback.prMeta)) {
-      console.log(
-        `[webhook] PR #${summary.pullRequestNumber} has 'paused' label; ignoring`,
-      );
-      return false;
-    }
     const state = await loadPrAutomationState();
     const unseen = getUnseenFeedback(feedback, state);
-    if (!unseen.hasActionableFeedback) {
+    const reviewIfClear = isInternalReviewDue(feedback, unseen, state);
+    if (!unseen.hasActionableFeedback && !reviewIfClear) {
       console.log(
         `[webhook] PR #${summary.pullRequestNumber} has no new actionable feedback; ignoring duplicate`,
       );
@@ -285,7 +276,11 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
 
     const child = spawn(
       "bun",
-      ["scripts/pr-check-fix.ts", String(summary.pullRequestNumber)],
+      [
+        "scripts/pr-check-fix.ts",
+        String(summary.pullRequestNumber),
+        ...(reviewIfClear ? ["--review-if-clear"] : []),
+      ],
       {
         cwd: REPOSITORY_ROOT,
         env: { ...process.env, HUSKY: "0" },
@@ -304,6 +299,21 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
         summary.pullRequestNumber,
         REPOSITORY_ROOT,
       );
+      if (reviewIfClear) {
+        const completedState = await loadPrAutomationState();
+        await savePrAutomationState(
+          markInternalReviewCompleted(
+            completedState,
+            summary.pullRequestNumber,
+            refreshedFeedback.prMeta.headRefOid,
+          ),
+        );
+        console.log(
+          `[webhook] internal two-pass review completed for PR #${summary.pullRequestNumber} at ${refreshedFeedback.prMeta.headRefOid}`,
+        );
+        await scheduleAutoMerge(summary.pullRequestNumber);
+        return;
+      }
 
       if (!hasFixEvidence(feedback, refreshedFeedback)) {
         console.warn(
@@ -319,7 +329,7 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       await scheduleAutoMerge(summary.pullRequestNumber);
     });
     console.log(
-      `[webhook] started fixer for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
+      `[webhook] started ${reviewIfClear ? "internal reviewer" : "fixer"} for PR #${summary.pullRequestNumber} (${summary.event}:${summary.action})`,
     );
     return true;
   } catch (error) {
@@ -333,16 +343,6 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
 }
 
 const RECONCILE_LIST_LIMIT = 1000;
-
-export function filterNonPausedPrs(
-  prs: Array<{ number: number; labels?: Array<{ name: string }> }>,
-): number[] {
-  return prs
-    .filter(
-      (pr) => !pr.labels?.some((l) => l.name.trim().toLowerCase() === "paused"),
-    )
-    .map((pr) => pr.number);
-}
 
 function listOpenStagingPrIds(): number[] {
   try {
@@ -358,7 +358,7 @@ function listOpenStagingPrIds(): number[] {
         "--limit",
         String(RECONCILE_LIST_LIMIT),
         "--json",
-        "number,labels",
+        "number",
       ],
       {
         cwd: REPOSITORY_ROOT,
@@ -366,11 +366,9 @@ function listOpenStagingPrIds(): number[] {
         stdio: ["ignore", "pipe", "ignore"],
       },
     );
-    const prs = JSON.parse(raw) as Array<{
-      number: number;
-      labels?: Array<{ name: string }>;
-    }>;
-    return filterNonPausedPrs(prs);
+    return (JSON.parse(raw) as Array<{ number: number }>).map(
+      (pr) => pr.number,
+    );
   } catch (error) {
     console.error(
       `[webhook] could not list open staging PRs for reconciliation: ${error instanceof Error ? error.message : error}`,
@@ -450,7 +448,9 @@ async function launchStagingConflictFixes(): Promise<number> {
         "--state",
         "open",
         "--json",
-        "number,labels",
+        "number",
+        "--jq",
+        ".[].number",
       ],
       {
         cwd: REPOSITORY_ROOT,
@@ -458,11 +458,10 @@ async function launchStagingConflictFixes(): Promise<number> {
         stdio: ["ignore", "pipe", "ignore"],
       },
     );
-    const prs = JSON.parse(output) as Array<{
-      number: number;
-      labels?: Array<{ name: string }>;
-    }>;
-    prNumbers = filterNonPausedPrs(prs);
+    prNumbers = output
+      .split("\n")
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isInteger(value));
   } catch (error) {
     console.error(
       `[webhook] could not list staging PRs after a staging push: ${error instanceof Error ? error.message : error}`,

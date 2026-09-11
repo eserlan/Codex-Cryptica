@@ -4,7 +4,6 @@ import {
   buildDecompositionPrompt,
   AGENT_PROVIDERS,
   resolveAgentExecutable,
-  resolveConfiguredProviders,
 } from "./auto-degodify.ts";
 import type { FileAnalysis } from "./god-file-analysis.ts";
 
@@ -121,38 +120,14 @@ describe("auto-degodify", () => {
       expect(claudeArgs).toContain("medium");
       expect(claudeArgs).toContain("--dangerously-skip-permissions");
 
-      const previousModel = process.env.CODEX_MODEL;
-      delete process.env.CODEX_MODEL;
-      try {
-        const codexArgs = AGENT_PROVIDERS.codex.getArgs("test-prompt", 15);
-        expect(codexArgs).toContain("exec");
-        expect(codexArgs).toContain("-m");
-        expect(codexArgs).toContain("gpt-5.6-luna");
-        expect(codexArgs).toContain("-c");
-        expect(codexArgs).toContain('model_reasoning_effort="medium"');
-        expect(codexArgs).toContain(
-          "--dangerously-bypass-approvals-and-sandbox",
-        );
-        expect(codexArgs).toContain("test-prompt");
-      } finally {
-        if (previousModel !== undefined) {
-          process.env.CODEX_MODEL = previousModel;
-        } else {
-          delete process.env.CODEX_MODEL;
-        }
-      }
-
-      process.env.CODEX_MODEL = "gpt-5.6-custom";
-      try {
-        const customArgs = AGENT_PROVIDERS.codex.getArgs("test-prompt", 15);
-        expect(customArgs).toContain("gpt-5.6-custom");
-      } finally {
-        if (previousModel !== undefined) {
-          process.env.CODEX_MODEL = previousModel;
-        } else {
-          delete process.env.CODEX_MODEL;
-        }
-      }
+      const codexArgs = AGENT_PROVIDERS.codex.getArgs("test-prompt", 15);
+      expect(codexArgs).toContain("exec");
+      expect(codexArgs).toContain("-m");
+      expect(codexArgs).toContain("gpt-5.6-terra");
+      expect(codexArgs).toContain("-c");
+      expect(codexArgs).toContain('model_reasoning_effort="medium"');
+      expect(codexArgs).toContain("--dangerously-bypass-approvals-and-sandbox");
+      expect(codexArgs).toContain("test-prompt");
     });
 
     it("resolves available agent executables on system", () => {
@@ -167,35 +142,6 @@ describe("auto-degodify", () => {
     it("returns null for unknown provider", () => {
       // @ts-expect-error Testing invalid provider
       expect(resolveAgentExecutable("unknown-agent")).toBeNull();
-    });
-  });
-
-  describe("resolveConfiguredProviders", () => {
-    it("returns defaults when unset", () => {
-      expect(resolveConfiguredProviders(undefined)).toEqual([
-        "codex",
-        "claude",
-        "agy",
-      ]);
-    });
-
-    it("parses valid comma-separated providers", () => {
-      expect(resolveConfiguredProviders("claude, codex")).toEqual([
-        "claude",
-        "codex",
-      ]);
-    });
-
-    it("throws on empty or malformed list", () => {
-      expect(() => resolveConfiguredProviders(" ,  ")).toThrow(
-        /contains no provider names/,
-      );
-    });
-
-    it("throws on unknown provider names", () => {
-      expect(() => resolveConfiguredProviders("codex, unknown-bot")).toThrow(
-        /Invalid agent provider "unknown-bot"/,
-      );
     });
   });
 });
