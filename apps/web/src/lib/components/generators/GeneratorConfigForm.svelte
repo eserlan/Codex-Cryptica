@@ -1,3 +1,75 @@
+<script module lang="ts">
+  import type { GeneratorId } from "generator-engine";
+
+  export const GENERATOR_SECTION_CATEGORIES = [
+    { id: "people-factions", label: "People & Factions" },
+    { id: "locations-worlds", label: "Locations & Worlds" },
+    { id: "adventures-encounters", label: "Adventures & Encounters" },
+    { id: "loot-lore", label: "Loot & Lore" },
+  ] as const;
+
+  export type GeneratorSectionId =
+    (typeof GENERATOR_SECTION_CATEGORIES)[number]["id"];
+
+  export const GENERATOR_SECTION_MAP: Record<GeneratorId, GeneratorSectionId> =
+    {
+      // People & Factions
+      npc: "people-factions",
+      villain: "people-factions",
+      faction: "people-factions",
+      "secret-society": "people-factions",
+      "faction-roster": "people-factions",
+      creature: "people-factions",
+      "alien-race": "people-factions",
+
+      // Locations & Worlds
+      settlement: "locations-worlds",
+      dungeon: "locations-worlds",
+      ship: "locations-worlds",
+      world: "locations-worlds",
+      "star-system": "locations-worlds",
+      constellation: "locations-worlds",
+
+      // Adventures & Encounters
+      adventure: "adventures-encounters",
+      quest: "adventures-encounters",
+      encounter: "adventures-encounters",
+      heist: "adventures-encounters",
+      event: "adventures-encounters",
+      "plot-twist": "adventures-encounters",
+      puzzle: "adventures-encounters",
+      rumour: "adventures-encounters",
+      "council-vote": "adventures-encounters",
+
+      // Loot & Lore
+      "magic-item": "loot-lore",
+      "minor-magic-item": "loot-lore",
+      artifact: "loot-lore",
+      language: "loot-lore",
+      "news-sheet": "loot-lore",
+      "random-table": "loot-lore",
+    };
+
+  export function resolveGeneratorSection(gen: {
+    id: GeneratorId;
+    entityType: string;
+  }): GeneratorSectionId {
+    if (GENERATOR_SECTION_MAP[gen.id]) {
+      return GENERATOR_SECTION_MAP[gen.id];
+    }
+    if (["character", "faction", "creature"].includes(gen.entityType)) {
+      return "people-factions";
+    }
+    if (["location"].includes(gen.entityType)) {
+      return "locations-worlds";
+    }
+    if (["event"].includes(gen.entityType)) {
+      return "adventures-encounters";
+    }
+    return "loot-lore";
+  }
+</script>
+
 <script lang="ts">
   import {
     dungeonConfig,
@@ -11,11 +83,7 @@
     themeIdToLabel,
     worldConfig,
   } from "generator-engine";
-  import type {
-    AIPolicy,
-    GeneratorId,
-    GeneratorRunRequest,
-  } from "generator-engine";
+  import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import type { DetectedVaultLanguage } from "$lib/services/generators/generator-vault-context";
@@ -97,14 +165,27 @@
 
   const normalizedQuery = $derived(searchQuery.trim().toLowerCase());
 
+  function getSectionLabel(gen: {
+    id: GeneratorId;
+    entityType: string;
+  }): string {
+    const sectionId = resolveGeneratorSection(gen);
+    return (
+      GENERATOR_SECTION_CATEGORIES.find((c) => c.id === sectionId)?.label ??
+      "Loot & Lore"
+    );
+  }
+
   function matchesQuery(gen: (typeof generators)[number]): boolean {
     if (!normalizedQuery) return true;
     const labelMatch = gen.label.toLowerCase().includes(normalizedQuery);
     const descMatch = gen.description.toLowerCase().includes(normalizedQuery);
     const typeLabel = resolveEntityTypeLabel(gen).toLowerCase();
+    const sectionLabel = getSectionLabel(gen).toLowerCase();
     const typeMatch =
       typeLabel.includes(normalizedQuery) ||
-      gen.entityType.toLowerCase().includes(normalizedQuery);
+      gen.entityType.toLowerCase().includes(normalizedQuery) ||
+      sectionLabel.includes(normalizedQuery);
     return labelMatch || descMatch || typeMatch;
   }
 
@@ -112,9 +193,58 @@
   const favoriteGenerators = $derived(
     filteredGenerators.filter((g) => favoritesStore.isFavorite(g.id)),
   );
-  const allFilteredGenerators = $derived(
-    filteredGenerators.filter((g) => !favoritesStore.isFavorite(g.id)),
-  );
+
+  // Group all generators into the four condensed categories
+  // Pre-favourited generators remain present in their category
+  interface GeneratorGroup {
+    id: GeneratorSectionId;
+    label: string;
+    generators: typeof generators;
+  }
+
+  const generatorGroups = $derived.by(() => {
+    const groups: GeneratorGroup[] = [];
+    for (const section of GENERATOR_SECTION_CATEGORIES) {
+      const items = filteredGenerators.filter(
+        (gen) => resolveGeneratorSection(gen) === section.id,
+      );
+      if (items.length > 0) {
+        groups.push({
+          id: section.id,
+          label: section.label,
+          generators: items,
+        });
+      }
+    }
+    return groups;
+  });
+
+  // Track collapsed state per group id; default is collapsed
+  let collapsedGroups = $state<Record<string, boolean>>({});
+
+  function isGroupCollapsed(groupId: string): boolean {
+    // When actively searching, expand all matching groups
+    if (normalizedQuery) return false;
+    const explicitlyCollapsed = collapsedGroups[groupId];
+    if (explicitlyCollapsed !== undefined) return explicitlyCollapsed;
+
+    // Make a non-favourite generator selected by the parent visible, without
+    // overriding a category the user has explicitly collapsed. Favourites
+    // already remain visible in their dedicated section.
+    return (
+      generatorId !== selectedId ||
+      favoritesStore.isFavorite(selectedId) ||
+      resolveGeneratorSection(selectedGenerator) !== groupId
+    );
+  }
+
+  function toggleGroupCollapsed(groupId: string) {
+    const current = isGroupCollapsed(groupId);
+    collapsedGroups = {
+      ...collapsedGroups,
+      [groupId]: !current,
+    };
+  }
 
   const selectedGenerator = $derived(getGenerator(selectedId));
   const supportsPrimaryLanguage = $derived(
@@ -413,97 +543,143 @@
     </p>
   {/if}
 
-  <fieldset class="flex flex-col gap-2">
-    <legend
-      class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
-    >
-      All Generators
-    </legend>
+  <div class="flex flex-col gap-3">
+    <div class="flex items-center justify-between">
+      <span
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        All Generators
+      </span>
+    </div>
     {#if filteredGenerators.length === 0}
       <p
         class="rounded-lg border border-chrome-border/60 bg-chrome-bg/20 px-3 py-4 text-center text-xs text-chrome-muted"
       >
         No generators match "{searchQuery}".
       </p>
-    {:else if allFilteredGenerators.length > 0}
-      {#each allFilteredGenerators as gen (gen.id)}
-        {@const entityTypeLabel = resolveEntityTypeLabel(gen)}
-        {@const isFav = favoritesStore.isFavorite(gen.id)}
+    {:else}
+      {#each generatorGroups as group (group.id)}
+        {@const isCollapsed = isGroupCollapsed(group.id)}
         <div
-          class={[
-            "group relative flex items-start rounded-lg border transition-colors",
-            selectedId === gen.id
-              ? "border-chrome-accent/60 bg-chrome-accent/10"
-              : "border-chrome-border bg-chrome-bg/30 hover:border-chrome-accent/35 hover:bg-chrome-bg/60",
-          ]}
+          class="rounded-lg border border-chrome-border/70 bg-chrome-bg/20 overflow-hidden"
         >
-          <label
-            class="flex flex-1 cursor-pointer items-start gap-3 px-3 py-2.5"
-          >
-            <input
-              type="radio"
-              name="generator"
-              value={gen.id}
-              bind:group={selectedId}
-              {disabled}
-              aria-labelledby="generator-label-{gen.id}"
-              aria-describedby={selectedId === gen.id
-                ? `generator-description-${gen.id}`
-                : undefined}
-              class="mt-1 accent-chrome-accent"
-            />
-            <span class="min-w-0 flex-1 pr-6">
-              <span
-                id="generator-label-{gen.id}"
-                class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
-              >
-                <span class="text-sm font-semibold text-chrome-text">
-                  {gen.label}
-                </span>
-                <span
-                  class="text-[10px] uppercase tracking-wider text-chrome-muted"
-                >
-                  Creates {entityTypeLabel}
-                </span>
-              </span>
-              {#if selectedId === gen.id}
-                <span
-                  id="generator-description-{gen.id}"
-                  class="mt-1 block text-xs leading-relaxed text-chrome-muted"
-                >
-                  {gen.description}
-                </span>
-              {/if}
-            </span>
-          </label>
           <button
             type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              favoritesStore.toggleFavorite(gen.id);
-            }}
-            class="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded text-chrome-muted transition hover:text-amber-400 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
-            aria-label={isFav
-              ? `Remove ${gen.label} from favourites`
-              : `Add ${gen.label} to favourites`}
-            aria-pressed={isFav}
-            {disabled}
-            title={isFav ? "Remove from favourites" : "Add to favourites"}
+            onclick={() => toggleGroupCollapsed(group.id)}
+            class="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-chrome-bg/40 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
+            aria-expanded={!isCollapsed}
           >
+            <span class="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                class={[
+                  "h-3.5 w-3.5 text-chrome-muted transition-transform duration-150",
+                  isCollapsed
+                    ? "icon-[lucide--chevron-right]"
+                    : "icon-[lucide--chevron-down]",
+                ]}
+              ></span>
+              <span
+                class="text-xs font-semibold uppercase tracking-wider text-chrome-text"
+              >
+                {group.label}
+              </span>
+            </span>
             <span
-              aria-hidden="true"
-              class={[
-                "h-4 w-4 transition-transform group-hover:scale-110",
-                isFav
-                  ? "icon-[lucide--star] fill-amber-400 text-amber-400"
-                  : "icon-[lucide--star] text-chrome-muted hover:text-amber-400",
-              ]}
-            ></span>
+              class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-[10px] font-medium text-chrome-muted"
+            >
+              {group.generators.length}
+            </span>
           </button>
+
+          {#if !isCollapsed}
+            <div
+              class="flex flex-col gap-2 border-t border-chrome-border/50 p-2.5"
+            >
+              {#each group.generators as gen (gen.id)}
+                {@const entityTypeLabel = resolveEntityTypeLabel(gen)}
+                {@const isFav = favoritesStore.isFavorite(gen.id)}
+                <div
+                  class={[
+                    "group relative flex items-start rounded-lg border transition-colors",
+                    selectedId === gen.id
+                      ? "border-chrome-accent/60 bg-chrome-accent/10"
+                      : "border-chrome-border bg-chrome-bg/30 hover:border-chrome-accent/35 hover:bg-chrome-bg/60",
+                  ]}
+                >
+                  <label
+                    class="flex flex-1 cursor-pointer items-start gap-3 px-3 py-2.5"
+                  >
+                    <input
+                      type="radio"
+                      name="generator"
+                      value={gen.id}
+                      bind:group={selectedId}
+                      {disabled}
+                      aria-labelledby="generator-label-{gen.id}"
+                      aria-describedby={selectedId === gen.id
+                        ? `generator-description-${gen.id}`
+                        : undefined}
+                      class="mt-1 accent-chrome-accent"
+                    />
+                    <span class="min-w-0 flex-1 pr-6">
+                      <span
+                        id="generator-label-{gen.id}"
+                        class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
+                      >
+                        <span class="text-sm font-semibold text-chrome-text">
+                          {gen.label}
+                        </span>
+                        <span
+                          class="text-[10px] uppercase tracking-wider text-chrome-muted"
+                        >
+                          Creates {entityTypeLabel}
+                        </span>
+                      </span>
+                      {#if selectedId === gen.id}
+                        <span
+                          id="generator-description-{gen.id}"
+                          class="mt-1 block text-xs leading-relaxed text-chrome-muted"
+                        >
+                          {gen.description}
+                        </span>
+                      {/if}
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      favoritesStore.toggleFavorite(gen.id);
+                    }}
+                    class="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded text-chrome-muted transition hover:text-amber-400 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
+                    aria-label={isFav
+                      ? `Remove ${gen.label} from favourites`
+                      : `Add ${gen.label} to favourites`}
+                    aria-pressed={isFav}
+                    {disabled}
+                    title={isFav
+                      ? "Remove from favourites"
+                      : "Add to favourites"}
+                  >
+                    <span
+                      aria-hidden="true"
+                      class={[
+                        "h-4 w-4 transition-transform group-hover:scale-110",
+                        isFav
+                          ? "icon-[lucide--star] fill-amber-400 text-amber-400"
+                          : "icon-[lucide--star] text-chrome-muted hover:text-amber-400",
+                      ]}
+                    ></span>
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
       {/each}
     {/if}
-  </fieldset>
+  </div>
 
   {#if visibleOptions.length > 0}
     <fieldset class="flex flex-col gap-3">

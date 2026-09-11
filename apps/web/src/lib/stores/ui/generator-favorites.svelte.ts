@@ -7,6 +7,15 @@ import {
 } from "./persistence";
 
 /**
+ * Default starred generators when the user has no saved preference (#2988).
+ */
+export const DEFAULT_FAVORITE_GENERATOR_IDS: readonly GeneratorId[] = [
+  "npc",
+  "faction",
+  "settlement",
+] as const;
+
+/**
  * Manages user's favourite / starred generators (#2988).
  * Persisted in local browser storage via UIPersistence.
  */
@@ -32,9 +41,9 @@ export class GeneratorFavoritesStore {
         } catch {
           // ignore corrupted JSON
         }
-        return [];
+        return [...DEFAULT_FAVORITE_GENERATOR_IDS];
       },
-      [],
+      [...DEFAULT_FAVORITE_GENERATOR_IDS],
     );
 
     this.favoriteIds = raw;

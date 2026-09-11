@@ -31,10 +31,13 @@ describe("GeneratorFavoritesStore", () => {
     persistence = new UIPersistence({ storage });
   });
 
-  it("initializes with empty favorites when storage is clean", () => {
+  it("initializes with default favorites (npc, faction, settlement) when storage is clean", () => {
     const store = new GeneratorFavoritesStore(persistence);
-    expect(store.favoriteIds).toEqual([]);
-    expect(store.isFavorite("npc")).toBe(false);
+    expect(store.favoriteIds).toEqual(["npc", "faction", "settlement"]);
+    expect(store.isFavorite("npc")).toBe(true);
+    expect(store.isFavorite("faction")).toBe(true);
+    expect(store.isFavorite("settlement")).toBe(true);
+    expect(store.isFavorite("dungeon")).toBe(false);
   });
 
   it("loads valid favorite generator IDs from storage", () => {
@@ -50,17 +53,33 @@ describe("GeneratorFavoritesStore", () => {
     expect(store.isFavorite("settlement")).toBe(false);
   });
 
-  it("handles corrupted storage data gracefully", () => {
+  it("handles empty array saved by user", () => {
+    storage.setItem(
+      UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
+      JSON.stringify([]),
+    );
+
+    const store = new GeneratorFavoritesStore(persistence);
+    expect(store.favoriteIds).toEqual([]);
+    expect(store.isFavorite("npc")).toBe(false);
+  });
+
+  it("handles corrupted storage data gracefully with defaults", () => {
     storage.setItem(
       UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
       "not-a-valid-json{",
     );
 
     const store = new GeneratorFavoritesStore(persistence);
-    expect(store.favoriteIds).toEqual([]);
+    expect(store.favoriteIds).toEqual(["npc", "faction", "settlement"]);
   });
 
   it("adds, removes, and toggles favorite status and persists changes", () => {
+    // Start with empty favorites saved by user
+    storage.setItem(
+      UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
+      JSON.stringify([]),
+    );
     const store = new GeneratorFavoritesStore(persistence);
 
     // Toggle on
@@ -98,6 +117,11 @@ describe("GeneratorFavoritesStore", () => {
   });
 
   it("rejects invalid generator IDs from being added", () => {
+    // Start with empty favorites
+    storage.setItem(
+      UI_STORAGE_KEYS.FAVOURITE_GENERATOR_IDS,
+      JSON.stringify([]),
+    );
     const store = new GeneratorFavoritesStore(persistence);
     store.addFavorite("fake-gen" as any);
     expect(store.favoriteIds).toEqual([]);
