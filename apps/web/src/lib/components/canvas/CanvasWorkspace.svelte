@@ -16,7 +16,6 @@
     DEFAULT_CANVAS_TEXT_FONT_SIZE,
             normalizeCanvasTextBackground,
     normalizeCanvasTextFontSize,
-        type CanvasDrawingPoint,
     CanvasStore,
     type Canvas,
   } from "@codex/canvas-engine";
@@ -40,7 +39,6 @@
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
   import { tick, untrack } from "svelte";
-  import { SvelteMap } from "svelte/reactivity";
 
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
   import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
@@ -61,8 +59,6 @@
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
     autoArrangeCanvasNodes,
-    accumulateRotationDegrees,
-    canvasNodeRotation,
     canvasNodeStyle,
     canvasNodeZIndex,
     createFlowFileNode,
@@ -70,7 +66,6 @@
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodesToCanvasNodes,
-    pointerAngleDegrees,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
   import { openOrCreateSourceEntity } from "./canvas-source-entity";
@@ -108,10 +103,10 @@
 
   const logic = createCanvasLogic(() => engine);
   const rotationLogic = useCanvasNodeRotation(logic, vault);
+  const drawingLogic = useCanvasDrawing(logic);
   const isCanvasToolActive = $derived(
     drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
   );
-  const drawingLogic = useCanvasDrawing(logic);
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
   let roomEnhancementError = $state<string | null>(null);
@@ -123,19 +118,6 @@
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
     let showMinimap = $state(true);
-  let touchRotationGesture: {
-    nodeId: string;
-    pointerIds: [number, number];
-    previousAngle: number;
-    rotation: number;
-  } | null = null;
-  let desktopRotationGesture: {
-    nodeId: string;
-    pointerId: number;
-    center: CanvasDrawingPoint;
-    previousAngle: number;
-    rotation: number;
-  } | null = null;
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
