@@ -84,5 +84,8 @@ describe("Sitemap.xml API Endpoint", () => {
     for (const slug of RA_SLUGS) {
       expect(xml).toContain(`https://codexcryptica.com/blog/${slug}`);
     }
+    expect(xml).toContain(
+      "https://codexcryptica.com/resources/castle-floorplans",
+    );
   });
 });

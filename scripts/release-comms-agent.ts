@@ -16,13 +16,18 @@ import {
   deriveDiscordFromBluesky,
   loadDiscordConfig,
   publishToDiscord,
+  type DiscordDestinationConfig,
 } from "./release-comms-discord.ts";
+import { deriveInstagramQualification } from "./release-comms-instagram.ts";
 import {
   insertTrackerRow,
   updateTrackerPlatformStatus,
 } from "./release-comms-queue.ts";
 import {
+  BLUESKY_CHARACTER_LIMIT,
+  blueskyTextLength,
   isReleaseCommsDryRun,
+  prepareBlueskyText,
   publishBlueskyPost,
   publishDiscussion,
 } from "./release-comms-publish.ts";
@@ -41,6 +46,7 @@ import {
   saveReleaseCommsState,
 } from "./release-comms-state.ts";
 import type {
+  EvaluatorResult,
   ReleaseCommsHistoryEntry,
   WriterResult,
 } from "./release-comms-types.ts";
@@ -55,6 +61,7 @@ export {
   publishToDiscord,
   stripHashtags,
 } from "./release-comms-discord.ts";
+export { deriveInstagramQualification } from "./release-comms-instagram.ts";
 export {
   getReleaseCommsLogPath,
   isEvaluatorResult,
@@ -426,6 +433,148 @@ function fetchRecentBlueskyTitles(): string {
   }
 }
 
+/** Bounds the cost of re-asking a provider to shorten an over-budget Bluesky draft. */
+const MAX_BLUESKY_BUDGET_ATTEMPTS = 4;
+
+export interface OversizedBlueskyDraft {
+  pageUrl: string;
+  length: number;
+}
+
+/** Quality-assess the writer pass's Bluesky drafts against the real character budget, once the page URL is resolved in. */
+export function findOversizedBlueskyDrafts(
+  drafts: WriterResult,
+): OversizedBlueskyDraft[] {
+  return drafts.bluesky
+    .map((draft) => ({
+      pageUrl: draft.pageUrl,
+      length: blueskyTextLength(draft.text, draft.pageUrl),
+    }))
+    .filter((draft) => draft.length > BLUESKY_CHARACTER_LIMIT);
+}
+
+/** Ask the writer to resubmit ONLY the flagged Bluesky post(s), shortened — never the full result, so Reddit/Discussion text and every other Bluesky draft can't be silently changed or dropped by the retry. */
+export function buildWriterRetryPrompt(
+  basePrompt: string,
+  oversized: OversizedBlueskyDraft[],
+): string {
+  const notes = oversized
+    .map(
+      (draft) =>
+        `- ${draft.pageUrl}: ${draft.length} characters (${draft.length - BLUESKY_CHARACTER_LIMIT} over the ${BLUESKY_CHARACTER_LIMIT}-character limit), counting the page URL and hashtags already appended`,
+    )
+    .join("\n");
+  return `${basePrompt}
+
+Your previous response is REJECTED: the following Bluesky post(s), once the page URL is appended, exceed Bluesky's hard ${BLUESKY_CHARACTER_LIMIT}-character limit:
+${notes}
+
+Do NOT resend reddit, discord, github_discussions, or any Bluesky post that isn't listed above — only rewrite the flagged post(s). Shorten each one so the complete text — including its URL and hashtags — is comfortably under ${BLUESKY_CHARACTER_LIMIT} characters, aiming for 220 characters or fewer before the URL and hashtags are added, same as the original instructions. Respond with ONLY a fenced \`\`\`json code block containing an object with a single "bluesky" array, one entry per flagged pageUrl, e.g. {"bluesky":[{"pageUrl":"<one of the URLs above>","text":"<shortened post text>"}]}. No other prose.`;
+}
+
+export interface BlueskyRetryResult {
+  bluesky: Array<{ pageUrl: string; text: string }>;
+}
+
+function isBlueskyRetryResult(value: unknown): value is BlueskyRetryResult {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    Array.isArray(record.bluesky) &&
+    record.bluesky.length > 0 &&
+    record.bluesky.every(
+      (post) =>
+        !!post &&
+        typeof post === "object" &&
+        typeof (post as Record<string, unknown>).pageUrl === "string" &&
+        typeof (post as Record<string, unknown>).text === "string",
+    )
+  );
+}
+
+/** Replaces only the flagged Bluesky post(s) in `previous` with the retry's rewrites; reddit, discord, github_discussions, and any unflagged Bluesky post pass through untouched. */
+export function mergeBlueskyRetry(
+  previous: WriterResult,
+  retry: BlueskyRetryResult,
+): WriterResult {
+  const rewritten = new Map(
+    retry.bluesky.map((post) => [post.pageUrl, post.text]),
+  );
+  return {
+    ...previous,
+    bluesky: previous.bluesky.map((post) =>
+      rewritten.has(post.pageUrl)
+        ? { ...post, text: rewritten.get(post.pageUrl)! }
+        : post,
+    ),
+  };
+}
+
+/**
+ * Run the writer pass, and if it comes back with any Bluesky draft over
+ * budget, ask it to shorten just that draft and try again — up to
+ * MAX_BLUESKY_BUDGET_ATTEMPTS times — rather than letting an oversized post
+ * crash the whole run at publish time. Each retry response is merged back
+ * into the last full result so unflagged content is never at risk. If it
+ * still doesn't fit after every attempt (or a retry returns no parseable
+ * JSON), drop the still-oversized post(s) (loudly) instead of blocking
+ * every other channel on it.
+ */
+export async function runWriterPassWithBudgetRetries(
+  evaluation: EvaluatorResult,
+  publicContent: PublicContentItem[],
+  logPath: string,
+  runId: string,
+  runPass: typeof runJsonAgentPass = runJsonAgentPass,
+): Promise<WriterResult | null> {
+  const basePrompt = buildWriterPrompt(evaluation, publicContent);
+  const parsed = await runPass(
+    basePrompt,
+    logPath,
+    runId,
+    isWriterResult,
+    "write",
+  );
+  if (!parsed) return null;
+
+  let lastResult = parsed;
+  let oversized = findOversizedBlueskyDrafts(lastResult);
+
+  for (
+    let attempt = 1;
+    oversized.length > 0 && attempt < MAX_BLUESKY_BUDGET_ATTEMPTS;
+    attempt++
+  ) {
+    console.warn(
+      `[release-comms] ${oversized.length} Bluesky draft(s) over the ${BLUESKY_CHARACTER_LIMIT}-character budget (attempt ${attempt}/${MAX_BLUESKY_BUDGET_ATTEMPTS}); asking for a rewrite`,
+    );
+    const retryResult = await runPass(
+      buildWriterRetryPrompt(basePrompt, oversized),
+      logPath,
+      runId,
+      isBlueskyRetryResult,
+      `write-retry-${attempt}`,
+    );
+    if (!retryResult) break;
+
+    lastResult = mergeBlueskyRetry(lastResult, retryResult);
+    oversized = findOversizedBlueskyDrafts(lastResult);
+  }
+
+  if (oversized.length > 0) {
+    console.error(
+      `[release-comms] giving up on ${oversized.length} Bluesky draft(s) still over budget after ${MAX_BLUESKY_BUDGET_ATTEMPTS} attempts; skipping them: ${oversized.map((draft) => draft.pageUrl).join(", ")}`,
+    );
+    return {
+      ...lastResult,
+      bluesky: lastResult.bluesky.filter(
+        (draft) => !oversized.some((o) => o.pageUrl === draft.pageUrl),
+      ),
+    };
+  }
+  return lastResult;
+}
+
 /**
  * Run a prompt through the provider fallback chain until one returns a
  * parseable, schema-valid JSON result. Shared by the evaluator and writer
@@ -471,6 +620,59 @@ async function runJsonAgentPass<T>(
   return null;
 }
 
+export interface DiscordQualificationResult {
+  recommendedChannels: string[] | undefined;
+  /** Derived Discord copy, or undefined if there is no Bluesky copy to derive it from. */
+  discordCopy: string | undefined;
+}
+
+/**
+ * Decide whether a release qualifies for Discord and, if so, derive its copy.
+ * A release qualifies whenever Bluesky drafts exist or any feature was
+ * marked bluesky_worthy — but copy can only be derived from actual Bluesky
+ * drafts, so a worthy-but-draftless release qualifies without copy.
+ */
+export function deriveDiscordQualification(
+  result: EvaluatorResult,
+  drafts: WriterResult,
+): DiscordQualificationResult {
+  const hasBlueskyDrafts = Boolean(drafts.bluesky && drafts.bluesky.length > 0);
+  const hasBlueskyWorthy = Boolean(
+    result.features?.some((f) => f.bluesky_worthy),
+  );
+  // If something qualifies for Bluesky, it also qualifies for Discord
+  const isDiscordRecommended =
+    (result.recommended_channels?.includes("discord") ?? false) ||
+    hasBlueskyDrafts ||
+    hasBlueskyWorthy;
+
+  const recommendedChannels = isDiscordRecommended
+    ? Array.from(new Set([...(result.recommended_channels ?? []), "discord"]))
+    : result.recommended_channels;
+
+  const discordCopy =
+    isDiscordRecommended && hasBlueskyDrafts
+      ? deriveDiscordFromBluesky(drafts.bluesky.map((post) => post.text))
+      : undefined;
+
+  return { recommendedChannels, discordCopy };
+}
+
+/**
+ * Auto-publish destinations still pending delivery for this release: enabled
+ * for auto-publish and not already recorded as successfully published, so a
+ * retry after a partial failure only re-sends to the destinations that
+ * actually failed rather than duplicate-posting to ones that already succeeded.
+ */
+export function selectPendingDiscordDestinations(
+  destinations: DiscordDestinationConfig[],
+  alreadyPublishedIds: string[],
+): DiscordDestinationConfig[] {
+  return destinations.filter(
+    (dest) => dest.auto_publish && !alreadyPublishedIds.includes(dest.id),
+  );
+}
+
 export async function main(promoteRunId: string): Promise<void> {
   const state = await loadReleaseCommsState();
   const { newSha, previousSha: resolvedPreviousSha } =
@@ -497,7 +699,7 @@ export async function main(promoteRunId: string): Promise<void> {
     (entry) =>
       entry.sha === newSha && entry.completed === false && entry.drafts,
   );
-  const result: import("./release-comms-types.ts").EvaluatorResult = resumable
+  const result: EvaluatorResult = resumable
     ? {
         postworthy: resumable.postworthy,
         importance: resumable.importance as
@@ -527,15 +729,19 @@ export async function main(promoteRunId: string): Promise<void> {
     return;
   }
 
+  const resumableDrafts =
+    resumable?.drafts &&
+    findOversizedBlueskyDrafts(resumable.drafts).length === 0
+      ? resumable.drafts
+      : undefined;
   const drafts: WriterResult | null =
-    resumable?.drafts ??
+    resumableDrafts ??
     (result.postworthy
-      ? await runJsonAgentPass(
-          buildWriterPrompt(result, publicContent),
+      ? await runWriterPassWithBudgetRetries(
+          result,
+          publicContent,
           logPath,
           promoteRunId,
-          isWriterResult,
-          "write",
         )
       : null);
   if (result.postworthy && !drafts) {
@@ -544,17 +750,17 @@ export async function main(promoteRunId: string): Promise<void> {
     );
   } else if (drafts) {
     const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
-    const isDiscordRecommended =
-      result.recommended_channels?.includes("discord") ?? false;
-    if (
-      discordConfig.enabled &&
-      isDiscordRecommended &&
-      drafts.bluesky &&
-      drafts.bluesky.length > 0
-    ) {
-      drafts.discord = deriveDiscordFromBluesky(
-        drafts.bluesky.map((post) => post.text),
-      );
+    const { recommendedChannels, discordCopy } = deriveDiscordQualification(
+      result,
+      drafts,
+    );
+    result.recommended_channels = recommendedChannels;
+    result.recommended_channels = deriveInstagramQualification(
+      result,
+      drafts,
+    ).recommendedChannels;
+    if (discordConfig.enabled && discordCopy !== undefined) {
+      drafts.discord = discordCopy;
     }
   }
 
@@ -568,6 +774,22 @@ export async function main(promoteRunId: string): Promise<void> {
     recommendedChannels: result.recommended_channels,
     reason: result.reason,
     drafts: drafts ?? undefined,
+    instagramHandoffs:
+      resumable?.instagramHandoffs ??
+      (drafts
+        ? await Promise.all(
+            drafts.bluesky.map(async (draft) => {
+              const asset = await resolveSocialAsset(
+                publicPageFor(publicContent, draft.pageUrl),
+              );
+              return {
+                pageUrl: draft.pageUrl,
+                caption: prepareBlueskyText(draft.text, asset.pageUrl),
+                imageUrl: asset.imageUrl,
+              };
+            }),
+          )
+        : undefined),
     publications: resumable?.publications ?? {
       bluesky: [],
       githubDiscussions: [],
@@ -601,7 +823,10 @@ export async function main(promoteRunId: string): Promise<void> {
         },
       };
       publishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
-      newlyPublishedBluesky.push({ pageUrl: draft.pageUrl, url: publication.url });
+      newlyPublishedBluesky.push({
+        pageUrl: draft.pageUrl,
+        url: publication.url,
+      });
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
     const publishedDiscussions = entry.publications?.githubDiscussions ?? [];
@@ -636,7 +861,55 @@ export async function main(promoteRunId: string): Promise<void> {
       await saveReleaseCommsState(recordEvaluation(state, entry));
     }
   }
-  entry = { ...entry, completed: true };
+  // Auto-publish to configured Discord destinations if enabled. This runs
+  // before the entry is marked completed: if the webhook fails, completed
+  // stays false so the next invocation resumes and retries delivery instead
+  // of silently skipping this SHA forever (state.lastEvaluatedSha only
+  // advances once completed is true, see recordEvaluation).
+  let discordPublishFailed = false;
+  if (result.postworthy && drafts?.discord) {
+    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
+    if (discordConfig.enabled) {
+      const publishedDiscordIds = entry.publications?.discord ?? [];
+      const autoPublishDestinations = selectPendingDiscordDestinations(
+        discordConfig.destinations,
+        publishedDiscordIds,
+      );
+      if (autoPublishDestinations.length > 0) {
+        const newlyPublishedIds: string[] = [];
+        for (const dest of autoPublishDestinations) {
+          const pubResult = await publishToDiscord({
+            message: drafts.discord,
+            destination: dest,
+            dryRun: isReleaseCommsDryRun(),
+          });
+          if (pubResult.success) {
+            console.log(
+              `[release-comms] published announcement to Discord destination '${dest.id}'`,
+            );
+            newlyPublishedIds.push(dest.id);
+          } else {
+            discordPublishFailed = true;
+            console.error(
+              `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
+            );
+          }
+        }
+
+        if (newlyPublishedIds.length > 0) {
+          entry = {
+            ...entry,
+            publications: {
+              ...entry.publications!,
+              discord: [...publishedDiscordIds, ...newlyPublishedIds],
+            },
+          };
+        }
+      }
+    }
+  }
+
+  entry = { ...entry, completed: !discordPublishFailed };
   await saveReleaseCommsState(recordEvaluation(state, entry));
 
   if (isReleaseCommsDryRun()) {
@@ -669,43 +942,17 @@ export async function main(promoteRunId: string): Promise<void> {
     }
   }
 
-  // Auto-publish to configured Discord destinations if enabled
-  if (result.postworthy && drafts?.discord) {
-    const discordConfig = loadDiscordConfig(REPOSITORY_ROOT);
-    if (discordConfig.enabled) {
-      let publishedToDiscord = false;
-      for (const dest of discordConfig.destinations) {
-        if (dest.auto_publish) {
-          const pubResult = await publishToDiscord({
-            message: drafts.discord,
-            destination: dest,
-          });
-          if (pubResult.success) {
-            publishedToDiscord = true;
-            console.log(
-              `[release-comms] published announcement to Discord destination '${dest.id}'`,
-            );
-          } else {
-            console.error(
-              `[release-comms] failed to publish to Discord destination '${dest.id}': ${pubResult.error}`,
-            );
-          }
-        }
-      }
-
-      if (publishedToDiscord) {
-        const trackerResult = await updateTrackerPlatformStatus(
-          newSha.slice(0, 7),
-          "Discord",
-          true,
-          REPOSITORY_ROOT,
-        );
-        if (!trackerResult.success) {
-          console.error(
-            `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
-          );
-        }
-      }
+  if (entry.publications?.discord) {
+    const trackerResult = await updateTrackerPlatformStatus(
+      newSha.slice(0, 7),
+      "Discord",
+      true,
+      REPOSITORY_ROOT,
+    );
+    if (!trackerResult.success) {
+      console.error(
+        `[release-comms] could not update Discord tracker status: ${trackerResult.error}`,
+      );
     }
   }
 

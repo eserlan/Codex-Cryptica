@@ -22,7 +22,7 @@ export const DEFAULT_DISCORD_CONFIG: DiscordConfig = {
       id: "main-community",
       source: "bluesky",
       strip_hashtags: true,
-      auto_publish: false,
+      auto_publish: true,
       webhookEnvVar: "DISCORD_WEBHOOK_URL",
     },
   ],

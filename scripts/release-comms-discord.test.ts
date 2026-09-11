@@ -145,6 +145,7 @@ describe("release-comms-discord", () => {
         expect(config.enabled).toBe(true);
         expect(config.destinations.length).toBe(1);
         expect(config.destinations[0].id).toBe("main-community");
+        expect(config.destinations[0].auto_publish).toBe(true);
       } finally {
         await rm(tempDir, { recursive: true, force: true });
       }

@@ -87,6 +87,26 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     linkText: "See the RPG knowledge graph",
     href: "/solutions/rpg-knowledge-graph",
   },
+  systemsThatSupportThis: [
+    {
+      system: "The Ultraviolet Grasslands",
+      rationale:
+        "The core campaign structure is an explicit pointcrawl road of dozens of numbered destinations, with a caravan procedure that tracks fuel, supplies, and mounts between stops rather than simulating the terrain in between.",
+      href: "https://wizardthieffighter.itch.io/uvg-2e",
+    },
+    {
+      system: "Heart: The City Beneath",
+      rationale:
+        "Delves move between a set of fixed Landmarks while the routes connecting them shift, matching a point crawl's separation of stable nodes from variable travel paths, with Haunts inside each Landmark giving every stop a reason to visit.",
+      href: "https://rowanrookanddecard.itch.io/heart-the-city-beneath-rpg-core-book",
+    },
+    {
+      system: "Stars Without Number",
+      rationale:
+        "Spike drives can only drill into hexes containing a star, so travel is constrained to a network of star systems linked by drive-range 'spike lanes': the map is drawn as a grid, but play only ever moves node to node along fixed connections.",
+      href: "https://sine-nomine-publishing.myshopify.com/products/stars-without-number-revised",
+    },
+  ],
   relatedTools: [
     {
       title: "Quest Hook Generator",

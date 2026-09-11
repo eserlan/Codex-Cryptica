@@ -35,7 +35,9 @@ describe("formatIssueComment", () => {
     expect(comment).toContain(
       "Why it is worth posting:\nnew generator\n\nBluesky",
     );
-    expect(comment).toContain("Discord:\ndiscord draft\n\nReddit:");
+    expect(comment).toContain(
+      "Discord:\ndiscord draft\n\nInstagram (manual):\n(no resolved Bluesky handoff is available)\n\nReddit:",
+    );
   });
 
   it("lists the exact public page for each Bluesky draft", () => {
