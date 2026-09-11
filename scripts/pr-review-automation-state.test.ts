@@ -155,6 +155,16 @@ describe("PR review automation state", () => {
       isAutoMergeEligible(
         {
           ...settled,
+          prMeta: { ...settled.prMeta, labels: [{ name: "paused" }] },
+        },
+        unseen,
+        emptyState(),
+      ),
+    ).toBe(false);
+    expect(
+      isAutoMergeEligible(
+        {
+          ...settled,
           pendingChecks: [
             { name: "CI", state: "IN_PROGRESS", bucket: "pending", link: "" },
           ],

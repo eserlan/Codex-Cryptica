@@ -5,7 +5,9 @@ import { resolve } from "node:path";
 import { homedir } from "node:os";
 import {
   AGENT_PROVIDERS,
+  isValidAgentProvider,
   resolveAgentExecutable,
+  resolveConfiguredProviders,
   resetWorktree,
   type AgentProviderName,
 } from "./auto-degodify.ts";
@@ -41,6 +43,13 @@ export interface PrReview {
   body: string;
 }
 
+export interface PrLabel {
+  id?: string;
+  name: string;
+  description?: string;
+  color?: string;
+}
+
 export interface PrMetadata {
   number: number;
   title: string;
@@ -53,6 +62,15 @@ export interface PrMetadata {
   mergeStateStatus?: string;
   reviewDecision?: string | null;
   isDraft?: boolean;
+  labels?: PrLabel[];
+}
+
+export function isPrPaused(prMeta: PrMetadata): boolean {
+  return Boolean(
+    prMeta.labels?.some(
+      (label) => label.name.trim().toLowerCase() === "paused",
+    ),
+  );
 }
 
 export interface PrFeedback {
@@ -207,7 +225,7 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   const repoSlug = getRepoSlug(repoDir);
 
   const prMetaRaw = execSync(
-    `gh pr view ${prNumber} --json number,title,headRefName,headRefOid,baseRefName,url,state,mergeable,mergeStateStatus,reviewDecision,isDraft`,
+    `gh pr view ${prNumber} --json number,title,headRefName,headRefOid,baseRefName,url,state,mergeable,mergeStateStatus,reviewDecision,isDraft,labels`,
     { cwd: repoDir, encoding: "utf-8" },
   );
   const prMeta = JSON.parse(prMetaRaw) as PrMetadata;
@@ -314,11 +332,12 @@ export function fetchPrFeedback(prNumber: number, repoDir: string): PrFeedback {
   }
 
   const hasActionableFeedback =
-    unresolvedComments.length > 0 ||
-    failingChecks.length > 0 ||
-    reviews.some((r) => r.state === "CHANGES_REQUESTED") ||
-    prMeta.mergeable === "CONFLICTING" ||
-    prMeta.mergeStateStatus === "DIRTY";
+    !isPrPaused(prMeta) &&
+    (unresolvedComments.length > 0 ||
+      failingChecks.length > 0 ||
+      reviews.some((r) => r.state === "CHANGES_REQUESTED") ||
+      prMeta.mergeable === "CONFLICTING" ||
+      prMeta.mergeStateStatus === "DIRTY");
 
   return {
     prMeta,
@@ -580,6 +599,29 @@ export function replyToPrComment(
 }
 
 /**
+ * Resolve and validate the agent provider order for a PR fix run.
+ * Respects explicit caller choices when provided, otherwise resolves and validates PR_FIX_PROVIDERS,
+ * falling back to ["codex", "claude", "agy"].
+ */
+export function resolveFixProviders(
+  explicitProviders?: AgentProviderName[],
+  rawEnv: string | undefined = process.env.PR_FIX_PROVIDERS,
+): AgentProviderName[] {
+  if (explicitProviders && explicitProviders.length > 0) {
+    for (const provider of explicitProviders) {
+      if (!isValidAgentProvider(provider)) {
+        const valid = Object.keys(AGENT_PROVIDERS).join(", ");
+        throw new Error(
+          `Invalid agent provider "${provider}" specified. Valid providers: ${valid}`,
+        );
+      }
+    }
+    return explicitProviders;
+  }
+  return resolveConfiguredProviders(rawEnv);
+}
+
+/**
  * Execute the PR check & fix loop.
  */
 export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
@@ -587,13 +629,7 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   const prNumber = options.prNumber;
   const timeoutMinutes = options.timeoutMinutes ?? 20;
   const maxRounds = options.maxRounds ?? 2;
-  const providers =
-    options.agentProviders ||
-    (process.env.PR_FIX_PROVIDERS
-      ? (process.env.PR_FIX_PROVIDERS.split(",").map((s) =>
-          s.trim(),
-        ) as AgentProviderName[])
-      : ["codex", "claude", "agy"]);
+  const providers = resolveFixProviders(options.agentProviders);
   const runId = new Date()
     .toISOString()
     .replace(/[-:T.]/g, "")
@@ -608,6 +644,13 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
     pollIntervalSeconds: options.pollIntervalSeconds ?? 60,
     maxWaitMinutes: options.maxWaitMinutes ?? 12,
   });
+
+  if (isPrPaused(feedback.prMeta)) {
+    console.log(
+      `⏸️ PR #${prNumber} has 'paused' label; skipping all automated actions.`,
+    );
+    return true;
+  }
 
   if (!feedback.hasActionableFeedback) {
     console.log(

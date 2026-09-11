@@ -7,6 +7,8 @@ import {
   fetchFailedCheckLog,
   getRepoSlug,
   getPrFixLogPath,
+  isPrPaused,
+  resolveFixProviders,
   runAgentWithLogging,
   selectCommentsForFixedReply,
   type PrFeedback,
@@ -257,6 +259,70 @@ describe("pr-check-fix", () => {
       const result = selectCommentsForFixedReply(original, refreshed);
       expect(result).toEqual([makeComment(1)]);
       expect(result.some((c) => c.id === 3)).toBe(false);
+    });
+  });
+
+  describe("isPrPaused", () => {
+    it("returns true when a 'paused' label is present", () => {
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [{ name: "enhancement" }, { name: "paused" }],
+        }),
+      ).toBe(true);
+
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [{ name: "  PAUSED  " }],
+        }),
+      ).toBe(true);
+    });
+
+    it("returns false when 'paused' label is absent", () => {
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [{ name: "enhancement" }],
+        }),
+      ).toBe(false);
+
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: [],
+        }),
+      ).toBe(false);
+
+      expect(
+        isPrPaused({
+          ...sampleFeedback.prMeta,
+          labels: undefined,
+        }),
+      ).toBe(false);
+    });
+  });
+
+  describe("resolveFixProviders", () => {
+    it("falls back to default providers when no overrides are given", () => {
+      expect(resolveFixProviders(undefined, undefined)).toEqual([
+        "codex",
+        "claude",
+        "agy",
+      ]);
+    });
+
+    it("validates and parses PR_FIX_PROVIDERS", () => {
+      expect(resolveFixProviders(undefined, "codex,agy")).toEqual([
+        "codex",
+        "agy",
+      ]);
+    });
+
+    it("throws on invalid provider names in PR_FIX_PROVIDERS", () => {
+      expect(() => resolveFixProviders(undefined, "codexx")).toThrow(
+        /Invalid agent provider "codexx"/,
+      );
     });
   });
 });

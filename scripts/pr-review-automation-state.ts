@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
-import type { PrCheck, PrFeedback } from "./pr-check-fix.ts";
+import { isPrPaused, type PrCheck, type PrFeedback } from "./pr-check-fix.ts";
 
 export interface PrAutomationRecord {
   handledCommentIds: number[];
@@ -209,6 +209,7 @@ export function isAutoMergeEligible(
     feedback.prMeta.state === "OPEN" &&
     feedback.prMeta.baseRefName === "staging" &&
     !feedback.prMeta.isDraft &&
+    !isPrPaused(feedback.prMeta) &&
     feedback.prMeta.mergeable === "MERGEABLE" &&
     feedback.prMeta.reviewDecision !== "CHANGES_REQUESTED" &&
     feedback.failingChecks.length === 0 &&

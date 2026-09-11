@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
-import { fetchPrFeedback } from "./pr-check-fix.ts";
+import { fetchPrFeedback, isPrPaused } from "./pr-check-fix.ts";
 import {
   getUnseenFeedback,
   hasFixEvidence,
@@ -193,6 +193,12 @@ export async function scheduleAutoMerge(
     scheduledMerges.delete(pullRequestNumber);
     try {
       const feedback = fetchPrFeedback(pullRequestNumber, REPOSITORY_ROOT);
+      if (isPrPaused(feedback.prMeta)) {
+        console.log(
+          `[webhook] PR #${pullRequestNumber} has 'paused' label; skipping auto-merge`,
+        );
+        return;
+      }
       const state = await loadPrAutomationState();
       const unseen = getUnseenFeedback(feedback, state);
       if (!isAutoMergeEligible(feedback, unseen, state)) {
@@ -261,6 +267,12 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
       summary.pullRequestNumber,
       REPOSITORY_ROOT,
     );
+    if (isPrPaused(feedback.prMeta)) {
+      console.log(
+        `[webhook] PR #${summary.pullRequestNumber} has 'paused' label; ignoring`,
+      );
+      return false;
+    }
     const state = await loadPrAutomationState();
     const unseen = getUnseenFeedback(feedback, state);
     if (!unseen.hasActionableFeedback) {
@@ -322,6 +334,16 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
 
 const RECONCILE_LIST_LIMIT = 1000;
 
+export function filterNonPausedPrs(
+  prs: Array<{ number: number; labels?: Array<{ name: string }> }>,
+): number[] {
+  return prs
+    .filter(
+      (pr) => !pr.labels?.some((l) => l.name.trim().toLowerCase() === "paused"),
+    )
+    .map((pr) => pr.number);
+}
+
 function listOpenStagingPrIds(): number[] {
   try {
     const raw = execFileSync(
@@ -336,7 +358,7 @@ function listOpenStagingPrIds(): number[] {
         "--limit",
         String(RECONCILE_LIST_LIMIT),
         "--json",
-        "number",
+        "number,labels",
       ],
       {
         cwd: REPOSITORY_ROOT,
@@ -344,9 +366,11 @@ function listOpenStagingPrIds(): number[] {
         stdio: ["ignore", "pipe", "ignore"],
       },
     );
-    return (JSON.parse(raw) as Array<{ number: number }>).map(
-      (pr) => pr.number,
-    );
+    const prs = JSON.parse(raw) as Array<{
+      number: number;
+      labels?: Array<{ name: string }>;
+    }>;
+    return filterNonPausedPrs(prs);
   } catch (error) {
     console.error(
       `[webhook] could not list open staging PRs for reconciliation: ${error instanceof Error ? error.message : error}`,
@@ -426,9 +450,7 @@ async function launchStagingConflictFixes(): Promise<number> {
         "--state",
         "open",
         "--json",
-        "number",
-        "--jq",
-        ".[].number",
+        "number,labels",
       ],
       {
         cwd: REPOSITORY_ROOT,
@@ -436,10 +458,11 @@ async function launchStagingConflictFixes(): Promise<number> {
         stdio: ["ignore", "pipe", "ignore"],
       },
     );
-    prNumbers = output
-      .split("\n")
-      .map((value) => Number.parseInt(value, 10))
-      .filter((value) => Number.isInteger(value));
+    const prs = JSON.parse(output) as Array<{
+      number: number;
+      labels?: Array<{ name: string }>;
+    }>;
+    prNumbers = filterNonPausedPrs(prs);
   } catch (error) {
     console.error(
       `[webhook] could not list staging PRs after a staging push: ${error instanceof Error ? error.message : error}`,
