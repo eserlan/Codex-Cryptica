@@ -564,6 +564,32 @@ describe("published answers", () => {
       expect(ref.rationale.length).toBeGreaterThan(0);
     }
   });
+
+  it("publishes the character-death answer with exact system references", () => {
+    const characterDeathAnswer =
+      answers["how-do-you-handle-character-death-in-a-tabletop-rpg"];
+    expect(characterDeathAnswer).toBeDefined();
+    expect(characterDeathAnswer.systemsThatSupportThis).toEqual([
+      {
+        system: "Dungeon World",
+        rationale:
+          "The Last Breath move turns dying into a negotiation with Death itself: roll with no modifiers, a 10+ cheats death outright, a 7-9 means Death offers a genuine bargain the player can accept or refuse, and a miss seals the character's fate on the GM's timing rather than immediately.",
+        href: "https://www.dungeonworldsrd.com/moves/",
+      },
+      {
+        system: "D&D (2024 rules)",
+        rationale:
+          "Death saving throws begin at the start of a downed character's turn and continue until three successes stabilise them or three failures kill them outright; a natural 20 restores 1 hit point, while a natural 1 counts as two failures, an explicit recovery window this page's protocol assumes rather than replaces.",
+        href: "https://www.dndbeyond.com/srd",
+      },
+      {
+        system: "Mörk Borg",
+        rationale:
+          "There are no death saves: hitting exactly 0 hit points forces a d4 roll with a real chance of instant death, a deliberate structural contrast to the negotiated, ceremonial death this page describes.",
+        href: "https://morkborg.com/",
+      },
+    ]);
+  });
 });
 
 describe("answer structured data", () => {
