@@ -144,4 +144,17 @@ describe("PR webhook listener", () => {
       clearSpy?.mockRestore();
     }
   });
+
+  it("defaults INTERNAL_REVIEW_ENABLED to false when PR_INTERNAL_REVIEW is unset", async () => {
+    const previous = process.env.PR_INTERNAL_REVIEW;
+    delete process.env.PR_INTERNAL_REVIEW;
+    try {
+      const { INTERNAL_REVIEW_ENABLED } = await import(
+        `./pr-webhook-listener.ts?review-default-test=${Date.now()}`
+      );
+      expect(INTERNAL_REVIEW_ENABLED).toBe(false);
+    } finally {
+      if (previous !== undefined) process.env.PR_INTERNAL_REVIEW = previous;
+    }
+  });
 });

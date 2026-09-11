@@ -77,7 +77,7 @@ export type {
 
 const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
 const TRACKING_ISSUE = Number(process.env.RELEASE_COMMS_TRACKING_ISSUE ?? 2906);
-const DEFAULT_PROVIDERS: AgentProviderName[] = ["claude", "codex", "agy"];
+const DEFAULT_PROVIDERS: AgentProviderName[] = ["claude", "agy"];
 const TIMEOUT_MINUTES = 10;
 
 /**
@@ -493,7 +493,9 @@ export function mergeBlueskyRetry(
   previous: WriterResult,
   retry: BlueskyRetryResult,
 ): WriterResult {
-  const rewritten = new Map(retry.bluesky.map((post) => [post.pageUrl, post.text]));
+  const rewritten = new Map(
+    retry.bluesky.map((post) => [post.pageUrl, post.text]),
+  );
   return {
     ...previous,
     bluesky: previous.bluesky.map((post) =>

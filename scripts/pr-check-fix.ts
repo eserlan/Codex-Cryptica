@@ -617,7 +617,13 @@ export async function runPrFixLoop(options: PrFixOptions): Promise<boolean> {
   const prNumber = options.prNumber;
   const timeoutMinutes = options.timeoutMinutes ?? 20;
   const maxRounds = options.maxRounds ?? 2;
-  const providers = options.agentProviders || ["claude", "codex", "agy"];
+  const providers =
+    options.agentProviders ||
+    (process.env.PR_FIX_PROVIDERS
+      ? (process.env.PR_FIX_PROVIDERS.split(",").map((s) =>
+          s.trim(),
+        ) as AgentProviderName[])
+      : ["claude", "agy"]);
   const runId = new Date()
     .toISOString()
     .replace(/[-:T.]/g, "")

@@ -20,6 +20,8 @@ const EXPECTED_REPOSITORY =
 const REPOSITORY_ROOT = process.env.PR_FIX_ROOT ?? process.cwd();
 export const MAX_BODY_BYTES = 1_000_000;
 const AUTO_MERGE_ENABLED = process.env.PR_AUTO_MERGE === "true";
+export const INTERNAL_REVIEW_ENABLED =
+  process.env.PR_INTERNAL_REVIEW === "true";
 const AUTO_MERGE_QUIET_MS = 60_000;
 
 const activeJobs = new Map<number, ReturnType<typeof spawn>>();
@@ -251,7 +253,8 @@ async function launchFix(summary: WebhookEventSummary): Promise<boolean> {
     );
     const state = await loadPrAutomationState();
     const unseen = getUnseenFeedback(feedback, state);
-    const reviewIfClear = isInternalReviewDue(feedback, unseen, state);
+    const reviewIfClear =
+      INTERNAL_REVIEW_ENABLED && isInternalReviewDue(feedback, unseen, state);
     if (!unseen.hasActionableFeedback && !reviewIfClear) {
       console.log(
         `[webhook] PR #${summary.pullRequestNumber} has no new actionable feedback; ignoring duplicate`,
