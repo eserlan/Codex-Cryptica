@@ -73,7 +73,7 @@
       <p class="text-lg leading-relaxed text-theme-muted">
         A real building's floor plan settles arguments a description never does:
         where the guards actually stand, how far the kitchen is from the great
-        hall, which window a rope trick reaches. The two sources below are worth
+        hall, which window a rope trick reaches. The sources below are worth
         keeping open next to your map while you draw one.
       </p>
       <p class="mt-4 text-base leading-relaxed text-theme-muted">
@@ -123,9 +123,16 @@
               <div
                 class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-theme-border pt-4"
               >
-                <p class="font-mono text-xs text-theme-muted">
-                  Source: {resource.sourceName}
-                </p>
+                <div>
+                  <p class="font-mono text-xs text-theme-muted">
+                    Source: {resource.sourceName}
+                  </p>
+                  {#if resource.sourceNote}
+                    <p class="mt-1 max-w-sm text-xs text-theme-muted italic">
+                      {resource.sourceNote}
+                    </p>
+                  {/if}
+                </div>
                 <a
                   href={resource.url}
                   target="_blank"
