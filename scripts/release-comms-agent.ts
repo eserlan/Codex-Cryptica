@@ -449,7 +449,7 @@ export function findOversizedBlueskyDrafts(
     .filter((draft) => draft.length > BLUESKY_CHARACTER_LIMIT);
 }
 
-/** Ask the writer to resubmit the same JSON shape with only the flagged Bluesky post(s) shortened. */
+/** Ask the writer to resubmit ONLY the flagged Bluesky post(s), shortened — never the full result, so Reddit/Discussion text and every other Bluesky draft can't be silently changed or dropped by the retry. */
 export function buildWriterRetryPrompt(
   basePrompt: string,
   oversized: OversizedBlueskyDraft[],
@@ -465,62 +465,104 @@ export function buildWriterRetryPrompt(
 Your previous response is REJECTED: the following Bluesky post(s), once the page URL is appended, exceed Bluesky's hard ${BLUESKY_CHARACTER_LIMIT}-character limit:
 ${notes}
 
-Rewrite the ENTIRE JSON response in the exact same shape. Keep every field and every other entry unchanged, but shorten ONLY the flagged Bluesky post(s) so the complete text — including its URL and hashtags — is comfortably under ${BLUESKY_CHARACTER_LIMIT} characters, aiming for 220 characters or fewer before the URL and hashtags are added, same as the original instructions. Respond with ONLY the corrected fenced \`\`\`json code block, no other prose.`;
+Do NOT resend reddit, discord, github_discussions, or any Bluesky post that isn't listed above — only rewrite the flagged post(s). Shorten each one so the complete text — including its URL and hashtags — is comfortably under ${BLUESKY_CHARACTER_LIMIT} characters, aiming for 220 characters or fewer before the URL and hashtags are added, same as the original instructions. Respond with ONLY a fenced \`\`\`json code block containing an object with a single "bluesky" array, one entry per flagged pageUrl, e.g. {"bluesky":[{"pageUrl":"<one of the URLs above>","text":"<shortened post text>"}]}. No other prose.`;
+}
+
+export interface BlueskyRetryResult {
+  bluesky: Array<{ pageUrl: string; text: string }>;
+}
+
+function isBlueskyRetryResult(value: unknown): value is BlueskyRetryResult {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    Array.isArray(record.bluesky) &&
+    record.bluesky.length > 0 &&
+    record.bluesky.every(
+      (post) =>
+        !!post &&
+        typeof post === "object" &&
+        typeof (post as Record<string, unknown>).pageUrl === "string" &&
+        typeof (post as Record<string, unknown>).text === "string",
+    )
+  );
+}
+
+/** Replaces only the flagged Bluesky post(s) in `previous` with the retry's rewrites; reddit, discord, github_discussions, and any unflagged Bluesky post pass through untouched. */
+export function mergeBlueskyRetry(
+  previous: WriterResult,
+  retry: BlueskyRetryResult,
+): WriterResult {
+  const rewritten = new Map(retry.bluesky.map((post) => [post.pageUrl, post.text]));
+  return {
+    ...previous,
+    bluesky: previous.bluesky.map((post) =>
+      rewritten.has(post.pageUrl)
+        ? { ...post, text: rewritten.get(post.pageUrl)! }
+        : post,
+    ),
+  };
 }
 
 /**
  * Run the writer pass, and if it comes back with any Bluesky draft over
  * budget, ask it to shorten just that draft and try again — up to
  * MAX_BLUESKY_BUDGET_ATTEMPTS times — rather than letting an oversized post
- * crash the whole run at publish time. If it still doesn't fit after every
- * attempt, drop that one post (loudly) instead of blocking every other
- * channel on it.
+ * crash the whole run at publish time. Each retry response is merged back
+ * into the last full result so unflagged content is never at risk. If it
+ * still doesn't fit after every attempt (or a retry returns no parseable
+ * JSON), drop the still-oversized post(s) (loudly) instead of blocking
+ * every other channel on it.
  */
-async function runWriterPassWithBudgetRetries(
+export async function runWriterPassWithBudgetRetries(
   evaluation: EvaluatorResult,
   publicContent: PublicContentItem[],
   logPath: string,
   runId: string,
+  runPass: typeof runJsonAgentPass = runJsonAgentPass,
 ): Promise<WriterResult | null> {
   const basePrompt = buildWriterPrompt(evaluation, publicContent);
-  let prompt = basePrompt;
-  let lastResult: WriterResult | null = null;
+  const parsed = await runPass(
+    basePrompt,
+    logPath,
+    runId,
+    isWriterResult,
+    "write",
+  );
+  if (!parsed) return null;
 
-  for (let attempt = 1; attempt <= MAX_BLUESKY_BUDGET_ATTEMPTS; attempt++) {
-    const passName = attempt === 1 ? "write" : `write-retry-${attempt - 1}`;
-    const parsed = await runJsonAgentPass(
-      prompt,
-      logPath,
-      runId,
-      isWriterResult,
-      passName,
-    );
-    if (!parsed) return lastResult;
-    lastResult = parsed;
+  let lastResult = parsed;
+  let oversized = findOversizedBlueskyDrafts(lastResult);
 
-    const oversized = findOversizedBlueskyDrafts(parsed);
-    if (oversized.length === 0) return parsed;
-
+  for (
+    let attempt = 1;
+    oversized.length > 0 && attempt < MAX_BLUESKY_BUDGET_ATTEMPTS;
+    attempt++
+  ) {
     console.warn(
       `[release-comms] ${oversized.length} Bluesky draft(s) over the ${BLUESKY_CHARACTER_LIMIT}-character budget (attempt ${attempt}/${MAX_BLUESKY_BUDGET_ATTEMPTS}); asking for a rewrite`,
     );
-    prompt = buildWriterRetryPrompt(basePrompt, oversized);
+    const retryResult = await runPass(
+      buildWriterRetryPrompt(basePrompt, oversized),
+      logPath,
+      runId,
+      isBlueskyRetryResult,
+      `write-retry-${attempt}`,
+    );
+    if (!retryResult) break;
+
+    lastResult = mergeBlueskyRetry(lastResult, retryResult);
+    oversized = findOversizedBlueskyDrafts(lastResult);
   }
 
-  const stillOversized = lastResult
-    ? findOversizedBlueskyDrafts(lastResult)
-    : [];
-  if (lastResult && stillOversized.length > 0) {
+  if (oversized.length > 0) {
     console.error(
-      `[release-comms] giving up on ${stillOversized.length} Bluesky draft(s) still over budget after ${MAX_BLUESKY_BUDGET_ATTEMPTS} attempts; skipping them: ${stillOversized.map((draft) => draft.pageUrl).join(", ")}`,
+      `[release-comms] giving up on ${oversized.length} Bluesky draft(s) still over budget after ${MAX_BLUESKY_BUDGET_ATTEMPTS} attempts; skipping them: ${oversized.map((draft) => draft.pageUrl).join(", ")}`,
     );
     return {
       ...lastResult,
       bluesky: lastResult.bluesky.filter(
-        (draft) =>
-          !stillOversized.some(
-            (oversize) => oversize.pageUrl === draft.pageUrl,
-          ),
+        (draft) => !oversized.some((o) => o.pageUrl === draft.pageUrl),
       ),
     };
   }

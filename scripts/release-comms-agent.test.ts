@@ -16,12 +16,15 @@ import {
   isEvaluatorResult,
   isWriterResult,
   loadReleaseCommsState,
+  mergeBlueskyRetry,
   pickPreviousSha,
   recordEvaluation,
   runAgentCapturingOutput,
+  runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
   type EvaluatorResult,
   type ReleaseCommsState,
+  type WriterResult,
 } from "./release-comms-agent.ts";
 import { formatIssueComment } from "./release-comms-prompts.ts";
 
@@ -771,7 +774,7 @@ describe("release-comms-agent", () => {
   });
 
   describe("buildWriterRetryPrompt", () => {
-    it("appends the flagged drafts and asks for a same-shape rewrite", () => {
+    it("appends the flagged drafts and asks for only those posts back", () => {
       const prompt = buildWriterRetryPrompt("BASE PROMPT", [
         { pageUrl: "https://codexcryptica.com/answers/long-one", length: 340 },
       ]);
@@ -779,7 +782,163 @@ describe("release-comms-agent", () => {
       expect(prompt).toContain("https://codexcryptica.com/answers/long-one");
       expect(prompt).toContain("340 characters");
       expect(prompt).toContain("REJECTED");
-      expect(prompt).toContain("exact same shape");
+      expect(prompt).toContain('"bluesky"');
+      expect(prompt).toContain("Do NOT resend reddit, discord, github_discussions");
+    });
+  });
+
+  describe("mergeBlueskyRetry", () => {
+    it("replaces only the flagged post(s), leaving everything else untouched", () => {
+      const previous: WriterResult = {
+        bluesky: [
+          { pageUrl: "https://codexcryptica.com/answers/short", text: "keep me" },
+          { pageUrl: "https://codexcryptica.com/answers/long-one", text: "x".repeat(340) },
+        ],
+        discord: "discord copy",
+        reddit: "reddit copy",
+        github_discussions: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/short",
+            title: "title",
+            body: "body",
+          },
+        ],
+      };
+      const merged = mergeBlueskyRetry(previous, {
+        bluesky: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/long-one",
+            text: "shortened",
+          },
+        ],
+      });
+      expect(merged.bluesky).toEqual([
+        { pageUrl: "https://codexcryptica.com/answers/short", text: "keep me" },
+        { pageUrl: "https://codexcryptica.com/answers/long-one", text: "shortened" },
+      ]);
+      expect(merged.discord).toBe("discord copy");
+      expect(merged.reddit).toBe("reddit copy");
+      expect(merged.github_discussions).toBe(previous.github_discussions);
+    });
+  });
+
+  describe("runWriterPassWithBudgetRetries", () => {
+    const evaluation: EvaluatorResult = { postworthy: true, reason: "x" };
+    const oversizedDraft: WriterResult = {
+      bluesky: [
+        {
+          pageUrl: "https://codexcryptica.com/answers/long-one",
+          text: "x".repeat(340),
+        },
+      ],
+      discord: "discord copy",
+      reddit: "reddit copy",
+      github_discussions: [],
+    };
+
+    it("retries an oversized draft, merges the fix, and returns the merged result", async () => {
+      const calls: string[] = [];
+      const runPass = async (
+        _prompt: string,
+        _logPath: string,
+        _runId: string,
+        isValid: (value: unknown) => boolean,
+        passName: string,
+      ) => {
+        calls.push(passName);
+        const value =
+          passName === "write"
+            ? oversizedDraft
+            : { bluesky: [{ pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "short enough" }] };
+        return isValid(value) ? value : null;
+      };
+
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+
+      expect(calls).toEqual(["write", "write-retry-1"]);
+      expect(result?.bluesky).toEqual([
+        { pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "short enough" },
+      ]);
+      expect(result?.discord).toBe("discord copy");
+      expect(result?.reddit).toBe("reddit copy");
+    });
+
+    it("stops retrying and falls back to filtering when a retry returns no parseable JSON", async () => {
+      const calls: string[] = [];
+      const runPass = async (
+        _prompt: string,
+        _logPath: string,
+        _runId: string,
+        _isValid: (value: unknown) => boolean,
+        passName: string,
+      ) => {
+        calls.push(passName);
+        return passName === "write" ? oversizedDraft : null;
+      };
+
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+
+      expect(calls).toEqual(["write", "write-retry-1"]);
+      expect(result?.bluesky).toEqual([]);
+      expect(result?.discord).toBe("discord copy");
+      expect(result?.reddit).toBe("reddit copy");
+    });
+
+    it("gives up after exhausting all attempts and filters out the still-oversized post", async () => {
+      const calls: string[] = [];
+      const runPass = async (
+        _prompt: string,
+        _logPath: string,
+        _runId: string,
+        isValid: (value: unknown) => boolean,
+        passName: string,
+      ) => {
+        calls.push(passName);
+        const value =
+          passName === "write"
+            ? oversizedDraft
+            : {
+                bluesky: [
+                  { pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "x".repeat(340) },
+                ],
+              };
+        return isValid(value) ? value : null;
+      };
+
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+
+      expect(calls).toEqual(["write", "write-retry-1", "write-retry-2", "write-retry-3"]);
+      expect(result?.bluesky).toEqual([]);
+    });
+
+    it("returns null when the initial write pass produces no parseable JSON", async () => {
+      const runPass = async () => null;
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+      expect(result).toBeNull();
     });
   });
 });

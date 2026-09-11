@@ -29,14 +29,23 @@ function withVerifiedPageUrl(draft: string, pageUrl: string): string {
   return resolved.includes(pageUrl) ? resolved : `${resolved}\n\n${pageUrl}`;
 }
 
+/** Counts user-perceived characters the same way the Bluesky CLI enforces its limit (scripts/post-to-bluesky.mjs), so multi-code-point graphemes aren't miscounted as oversized. */
+export function graphemeLength(text: string): number {
+  if (typeof Intl.Segmenter === "function") {
+    const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+    return [...segmenter.segment(text)].length;
+  }
+  return [...text].length;
+}
+
 /** Final post length once the page URL is resolved into the draft, for pre-publish budget checks. */
 export function blueskyTextLength(draft: string, pageUrl: string): number {
-  return [...withVerifiedPageUrl(draft, pageUrl)].length;
+  return graphemeLength(withVerifiedPageUrl(draft, pageUrl));
 }
 
 export function prepareBlueskyText(draft: string, pageUrl: string): string {
   const resolved = withVerifiedPageUrl(draft, pageUrl);
-  if ([...resolved].length <= BLUESKY_CHARACTER_LIMIT) return resolved;
+  if (graphemeLength(resolved) <= BLUESKY_CHARACTER_LIMIT) return resolved;
   throw new Error(
     `Bluesky draft exceeds ${BLUESKY_CHARACTER_LIMIT} characters; request a shorter complete rewrite instead of truncating it`,
   );
