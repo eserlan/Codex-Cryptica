@@ -53,6 +53,11 @@ export async function GET() {
       changefreq: "monthly",
       priority: "0.8",
     },
+    {
+      path: "/resources/castle-floorplans",
+      changefreq: "monthly",
+      priority: "0.6",
+    },
 
     {
       path: "/tools/vampire-clan-generator",
