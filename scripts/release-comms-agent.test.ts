@@ -6,20 +6,25 @@ import { describe, it, expect } from "vitest";
 import {
   buildEvaluatorPrompt,
   buildWriterPrompt,
+  buildWriterRetryPrompt,
   deriveDiscordFromBluesky,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
+  findOversizedBlueskyDrafts,
   getReleaseCommsLogPath,
   isEvaluatorResult,
   isWriterResult,
   loadReleaseCommsState,
+  mergeBlueskyRetry,
   pickPreviousSha,
   recordEvaluation,
   runAgentCapturingOutput,
+  runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
   type EvaluatorResult,
   type ReleaseCommsState,
+  type WriterResult,
 } from "./release-comms-agent.ts";
 import { formatIssueComment } from "./release-comms-prompts.ts";
 
@@ -511,10 +516,7 @@ describe("release-comms-agent", () => {
         git(["init", "-q"]);
         git(["config", "user.email", "test@example.com"]);
         git(["config", "user.name", "Test"]);
-        const pagesDir = join(
-          dir,
-          "apps/web/src/lib/content/answers/pages",
-        );
+        const pagesDir = join(dir, "apps/web/src/lib/content/answers/pages");
         await mkdirNode(pagesDir, { recursive: true });
         const oldPath = join(pagesDir, "old-slug.ts");
         const newPath = join(pagesDir, "new-slug.ts");
@@ -527,10 +529,7 @@ describe("release-comms-agent", () => {
           `};`,
           "",
         ].join("\n");
-        await (await import("node:fs/promises")).writeFile(
-          oldPath,
-          contents,
-        );
+        await (await import("node:fs/promises")).writeFile(oldPath, contents);
         git(["add", "-A"]);
         git(["commit", "-q", "-m", "add page"]);
         const before = git(["rev-parse", "HEAD"]).trim();
@@ -740,6 +739,206 @@ describe("release-comms-agent", () => {
       expect(comment).toContain(
         "Discord:\nGenerate faction members!\n\nhttps://codexcryptica.com\n\nReddit:",
       );
+    });
+  });
+
+  describe("findOversizedBlueskyDrafts", () => {
+    it("returns nothing when every draft fits under the character limit", () => {
+      expect(
+        findOversizedBlueskyDrafts({
+          bluesky: [
+            {
+              pageUrl: "https://codexcryptica.com/answers/short",
+              text: "A short post.",
+            },
+          ],
+          discord: "",
+          reddit: "",
+          github_discussions: [],
+        }),
+      ).toEqual([]);
+    });
+
+    it("flags a draft that exceeds 300 characters once the page URL is resolved in", () => {
+      const pageUrl = "https://codexcryptica.com/answers/long-one";
+      const oversized = findOversizedBlueskyDrafts({
+        bluesky: [{ pageUrl, text: "x".repeat(295) }],
+        discord: "",
+        reddit: "",
+        github_discussions: [],
+      });
+      expect(oversized).toHaveLength(1);
+      expect(oversized[0]).toMatchObject({ pageUrl });
+      expect(oversized[0].length).toBeGreaterThan(300);
+    });
+  });
+
+  describe("buildWriterRetryPrompt", () => {
+    it("appends the flagged drafts and asks for only those posts back", () => {
+      const prompt = buildWriterRetryPrompt("BASE PROMPT", [
+        { pageUrl: "https://codexcryptica.com/answers/long-one", length: 340 },
+      ]);
+      expect(prompt).toContain("BASE PROMPT");
+      expect(prompt).toContain("https://codexcryptica.com/answers/long-one");
+      expect(prompt).toContain("340 characters");
+      expect(prompt).toContain("REJECTED");
+      expect(prompt).toContain('"bluesky"');
+      expect(prompt).toContain("Do NOT resend reddit, discord, github_discussions");
+    });
+  });
+
+  describe("mergeBlueskyRetry", () => {
+    it("replaces only the flagged post(s), leaving everything else untouched", () => {
+      const previous: WriterResult = {
+        bluesky: [
+          { pageUrl: "https://codexcryptica.com/answers/short", text: "keep me" },
+          { pageUrl: "https://codexcryptica.com/answers/long-one", text: "x".repeat(340) },
+        ],
+        discord: "discord copy",
+        reddit: "reddit copy",
+        github_discussions: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/short",
+            title: "title",
+            body: "body",
+          },
+        ],
+      };
+      const merged = mergeBlueskyRetry(previous, {
+        bluesky: [
+          {
+            pageUrl: "https://codexcryptica.com/answers/long-one",
+            text: "shortened",
+          },
+        ],
+      });
+      expect(merged.bluesky).toEqual([
+        { pageUrl: "https://codexcryptica.com/answers/short", text: "keep me" },
+        { pageUrl: "https://codexcryptica.com/answers/long-one", text: "shortened" },
+      ]);
+      expect(merged.discord).toBe("discord copy");
+      expect(merged.reddit).toBe("reddit copy");
+      expect(merged.github_discussions).toBe(previous.github_discussions);
+    });
+  });
+
+  describe("runWriterPassWithBudgetRetries", () => {
+    const evaluation: EvaluatorResult = { postworthy: true, reason: "x" };
+    const oversizedDraft: WriterResult = {
+      bluesky: [
+        {
+          pageUrl: "https://codexcryptica.com/answers/long-one",
+          text: "x".repeat(340),
+        },
+      ],
+      discord: "discord copy",
+      reddit: "reddit copy",
+      github_discussions: [],
+    };
+
+    it("retries an oversized draft, merges the fix, and returns the merged result", async () => {
+      const calls: string[] = [];
+      const runPass = async (
+        _prompt: string,
+        _logPath: string,
+        _runId: string,
+        isValid: (value: unknown) => boolean,
+        passName: string,
+      ) => {
+        calls.push(passName);
+        const value =
+          passName === "write"
+            ? oversizedDraft
+            : { bluesky: [{ pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "short enough" }] };
+        return isValid(value) ? value : null;
+      };
+
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+
+      expect(calls).toEqual(["write", "write-retry-1"]);
+      expect(result?.bluesky).toEqual([
+        { pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "short enough" },
+      ]);
+      expect(result?.discord).toBe("discord copy");
+      expect(result?.reddit).toBe("reddit copy");
+    });
+
+    it("stops retrying and falls back to filtering when a retry returns no parseable JSON", async () => {
+      const calls: string[] = [];
+      const runPass = async (
+        _prompt: string,
+        _logPath: string,
+        _runId: string,
+        _isValid: (value: unknown) => boolean,
+        passName: string,
+      ) => {
+        calls.push(passName);
+        return passName === "write" ? oversizedDraft : null;
+      };
+
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+
+      expect(calls).toEqual(["write", "write-retry-1"]);
+      expect(result?.bluesky).toEqual([]);
+      expect(result?.discord).toBe("discord copy");
+      expect(result?.reddit).toBe("reddit copy");
+    });
+
+    it("gives up after exhausting all attempts and filters out the still-oversized post", async () => {
+      const calls: string[] = [];
+      const runPass = async (
+        _prompt: string,
+        _logPath: string,
+        _runId: string,
+        isValid: (value: unknown) => boolean,
+        passName: string,
+      ) => {
+        calls.push(passName);
+        const value =
+          passName === "write"
+            ? oversizedDraft
+            : {
+                bluesky: [
+                  { pageUrl: oversizedDraft.bluesky[0].pageUrl, text: "x".repeat(340) },
+                ],
+              };
+        return isValid(value) ? value : null;
+      };
+
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+
+      expect(calls).toEqual(["write", "write-retry-1", "write-retry-2", "write-retry-3"]);
+      expect(result?.bluesky).toEqual([]);
+    });
+
+    it("returns null when the initial write pass produces no parseable JSON", async () => {
+      const runPass = async () => null;
+      const result = await runWriterPassWithBudgetRetries(
+        evaluation,
+        [],
+        "/tmp/log",
+        "run-1",
+        runPass as never,
+      );
+      expect(result).toBeNull();
     });
   });
 });
