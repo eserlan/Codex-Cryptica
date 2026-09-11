@@ -68,3 +68,23 @@ jobs:
             test-results/god-files-summary.md
             test-results/god-files-report.json
           retention-days: 30
+
+      - name: Trigger dev-agents degodify
+        if: success()
+        env:
+          DEGODIFY_WEBHOOK_URL: ${{ secrets.DEGODIFY_WEBHOOK_URL }}
+          DEGODIFY_WEBHOOK_SECRET: ${{ secrets.DEGODIFY_WEBHOOK_SECRET }}
+          REPORT_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          test -n "$DEGODIFY_WEBHOOK_URL"
+          test -n "$DEGODIFY_WEBHOOK_SECRET"
+          candidate=$(jq -c '.topFiles[] | select(.isDataCatalog == false and .status != "STABLE")' test-results/god-files-report.json | head -n 1)
+          test -n "$candidate"
+          payload=$(jq -cn --arg repository "${{ github.repository }}" --arg sha "$REPORT_SHA" --arg run "$RUN_ID" --argjson candidate "$candidate" '{repository:$repository, analysisRunId:$run, commitSha:$sha, candidate:{path:$candidate.relativePath,totalLines:$candidate.totalLines,codeLines:$candidate.codeLines,type:$candidate.type,status:$candidate.status,isDataCatalog:$candidate.isDataCatalog}}')
+          signature=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$DEGODIFY_WEBHOOK_SECRET" -hex | sed 's/^.* //')
+          curl --fail-with-body --retry 3 -X POST "$DEGODIFY_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -H "X-Hub-Signature-256: sha256=$signature" \
+            -H "X-GitHub-Delivery: degodify-$RUN_ID" \
+            --data "$payload"
