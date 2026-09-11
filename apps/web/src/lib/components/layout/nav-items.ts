@@ -182,7 +182,7 @@ export function navItems(): NavItem[] {
     },
   ];
 
-  if (!sessionModeStore.isGuestMode) {
+  if (!sessionModeStore.isGuestMode && vault.isInitialized) {
     items.push({
       id: "generators",
       icon: "icon-[lucide--wand-2]",
@@ -199,7 +199,9 @@ export function navItems(): NavItem[] {
       group: "tool",
       placement: "overflow",
     });
+  }
 
+  if (!sessionModeStore.isGuestMode) {
     items.push({
       id: "shelf",
       icon: "icon-[lucide--library]",
