@@ -30,6 +30,7 @@ import { howDoYouOrganiseRpgCampaignNotes } from "./how-do-you-organise-rpg-camp
 import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly-rpg-session-quickly";
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRecapATtrpgSession } from "./how-do-you-recap-a-ttrpg-session";
+import { howDoYouRunACampaignWhenYouOnlyPlayOnceAMonth } from "./how-do-you-run-a-campaign-when-you-only-play-once-a-month";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-tabletop-rpg";
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
@@ -41,6 +42,7 @@ import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-tr
 import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
+import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
@@ -98,6 +100,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouPrepAWeeklyRpgSessionQuickly,
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRecapATtrpgSession,
+    howDoYouRunACampaignWhenYouOnlyPlayOnceAMonth,
     howDoYouRunAConspiracyCampaign,
     howDoYouRunAHeistInATabletopRpg,
     howDoYouRunAMysteryWithoutRailroading,
@@ -109,6 +112,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
     howManyNpcsDoesAnRpgTownNeed,
+    howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
     howToCreateACyberpunkCityDistrict,

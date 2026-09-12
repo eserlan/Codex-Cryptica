@@ -119,6 +119,8 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
+    "how-do-you-recap-a-ttrpg-session",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-organise-npc-relationships",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
@@ -128,17 +130,21 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
   discovery: {
     id: "answer-track-npcs-long-campaign",
     parentCluster: "campaign-notes",
+    clusters: ["campaign-memory"],
     primaryIntent: "how do you keep track of npcs in a long campaign",
     intentAliases: [
       "how to remember npcs across sessions",
       "npc tracking system for rpg campaigns",
       "recurring npc record rpg",
+      "how do you keep track of npcs in a campaign",
     ],
     uniqueValue:
       "A five-field minimum NPC record (name/role, want, last seen, status, one open thread) focused on recall across dozens of sessions, distinct from relationship-linking, the general campaign-notes system, and plot-hook lifecycle tracking.",
     relatedIntents: [
       "generator-npc",
       "solution-campaign-manager",
+      "answer-campaign-memory-hub",
+      "answer-session-recap",
       "answer-campaign-notes",
       "answer-npc-relationships",
       "answer-unresolved-plot-hooks",
@@ -146,6 +152,11 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
       "answer-npcs-improvise-on-the-spot",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-campaign-memory-hub",
+        reason:
+          "The campaign-memory hub covers recap, reference habits, and memory across the whole campaign; this answer is the narrow, NPC-specific record format the hub links out to rather than restates.",
+      },
       {
         with: "answer-campaign-notes",
         reason:
