@@ -176,3 +176,6 @@
 
 **Learning:** Found multiple decorative icons (like `icon-[lucide--database]`, `icon-[lucide--lock]`) inside modals (`MobileCreateEntitySheet.svelte`, `ImagePromptReviewModal.svelte`, `SearchModal.svelte`) that were missing `aria-hidden="true"`. This causes screen readers to redundantly announce confusing CSS class names.
 **Action:** Always verify decorative `<span class="icon-[...]">` tags have `aria-hidden="true"` inside modal and layout components, particularly when accompanying descriptive text or inside buttons.
+## 2025-02-14 - Ensure explicit aria-label for icon-only buttons
+**Learning:** Even when `title` attributes are present, icon-only buttons might not be consistently announced optimally by all screen readers. Providing an explicit `aria-label` along with `aria-hidden="true"` on the inner icon is the safest and most standard pattern for ensuring maximum accessibility compatibility for icon buttons.
+**Action:** When adding or reviewing icon-only buttons, always ensure an explicit `aria-label` is used on the `<button>` element and the decorative inner `<span>` icon uses `aria-hidden="true"`.

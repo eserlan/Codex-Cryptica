@@ -162,10 +162,11 @@
           <button
             type="button"
             title="Rebuild Canvas Map"
+            aria-label="Rebuild Canvas Map"
             onclick={handleBuildDelveCanvas}
             class="p-2 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
           >
-            <span class="icon-[lucide--rotate-cw] w-4 h-4"></span>
+            <span class="icon-[lucide--rotate-cw] w-4 h-4" aria-hidden="true"></span>
           </button>
         {:else}
           <button
