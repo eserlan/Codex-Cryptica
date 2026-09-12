@@ -206,6 +206,42 @@ const ARCHETYPE_VARIETY_GUARDRAIL = `Do not default to the same recurring archet
 
 const COHERENCE_PASS = `Before returning, run a coherence pass: the drives, the virtue/flaw pair, the contradiction, the pressure response, the social behaviour, and the speech style must all describe the same person — someone reading only the roleplaying cues should recognise the same character described in the core personality line. The flaw must be a direct consequence of the virtue, not an unrelated weakness. The mannerism/tell must be restrained (one or two behavioural details, not a costume of quirks). Do not invent a repetitive catchphrase or verbal tic unless the options explicitly call for one. Do not assign trauma as the default explanation for the flaw or boundary unless the campaign context supports it.`;
 
+/**
+ * Guards against the failure mode where every section is internally coherent
+ * but the piece as a whole just proves the same thesis six times over (user
+ * feedback, 2026-09-12): Core Personality states the central tension, then
+ * Drives, Virtue and Flaw, Contradiction, Under Pressure, and Social
+ * Behaviour all restate it in slightly different words instead of adding new
+ * information.
+ */
+const NON_REPETITION_GUARDRAIL = `Each section must add genuinely new behavioural information — do not restate the core personality, the drives, or the contradiction in different words section after section. Once a trait is established, later sections should show a new consequence or a different facet of it, not re-explain the trait itself: Drives should describe five distinct wants, not five phrasings of the same want; Social Behaviour should differentiate the four groups from each other, not just from the core description. Favour concrete, observable behaviour ("checks the exits twice, then makes himself stop") over psychological narration ("this reflects a fear of losing control") — one or two brief insight lines across the whole piece are plenty; if you notice yourself explaining what a behaviour "really means" more than twice, cut it back to the behaviour itself.`;
+
+/**
+ * Guards against a second, deeper convergence failure the archetype-variety
+ * guardrail alone doesn't catch (user feedback, 2026-09-12, third sample in a
+ * row): even with different surface traits, generations kept reusing the
+ * same underlying chassis — composed/decisive exterior, conviction that
+ * curdles into control, procedural/orderly behaviour under fear, a tidy
+ * virtue-becomes-flaw contradiction, high self-awareness, concise assertive
+ * speech, and leadership-shaped competence. This targets the chassis itself,
+ * not just the archetype label.
+ */
+const STRUCTURAL_VARIETY_GUARDRAIL = `Known failure mode: regardless of which options are selected, generations converge on the same underlying chassis — composed, decisive exterior; conviction that curdles into control; procedural, orderly behaviour under fear; a tidy, elegant virtue-becomes-flaw contradiction; high self-awareness; concise, assertive speech; and leadership-shaped competence. Do not default to this shape. Deliberately choose, for this generation only, a combination across these axes that is not the one above:
+- Agency style: commanding, deferential, evasive, collaborative, passive, impulsive, manipulative, or reactive — commanding is one option among many, not the default.
+- Self-awareness: insightful, only partly aware of their own pattern, or confidently wrong about themselves — insightful is one option among many, not the default.
+- Speech style: concise and assertive is one option among many — also consider expansive, elliptical, warm, verbose, hesitant, theatrical, blunt, cryptic, or rambling.
+- Flaw structure: "virtue taken too far" is one valid shape, not the default — a flaw can instead be unrelated to any virtue, a plain bad habit, or a blind spot they've never examined.
+- Contradiction intensity: not every character needs an elegant thematic paradox — some contradictions should be minor, mundane, or barely worth mentioning.
+- Social posture: not everyone tests, manages, or wants to be challenged by other people — some are indifferent to others' opinions, some avoid friction entirely, some just want to be left alone.
+- Competence: not every personality is a trustworthy leader with admirable flaws. Petty, indecisive, needy, avoidant, vain, unserious, passive-aggressive, easily distracted, conflict-averse, socially awkward, emotionally opaque, or simply ordinary are all valid, playable output — not failure states.`;
+
+/**
+ * Companion to STRUCTURAL_VARIETY_GUARDRAIL: the pressure response was the
+ * single most repeated line across samples ("becomes brisk and procedural")
+ * even when everything else varied, so it gets its own explicit guardrail.
+ */
+const PRESSURE_RESPONSE_GUARDRAIL = `Avoid recurring stress patterns: do not default to "becomes brisk and procedural", "issues orders", "takes control", "over-explains", or "becomes rigid" unless this specific personality genuinely demands it. Select the pressure response independently from the character's everyday competence style — consider freezing, fleeing, appeasing, joking, dissociating, lashing out, deferring to someone else, obsessing over an irrelevant detail, becoming reckless, becoming clingy or dependent, going silent, or overcorrecting into the opposite of their normal behaviour. A composed, competent character under pressure does not have to become more composed and competent — pressure can reveal a completely different side of them.`;
+
 export function buildPersonalityPrompt(
   options: PersonalityGeneratorOptions = {},
   entityContext = "",
@@ -236,11 +272,14 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A name fitting the genre, or a short role-based label if a full character name is not appropriate (3-6 words)",
   "content": "Table-usable quick reference markdown (use exactly these '###' headings, in this order): '### Core Personality' (one or two sentences capturing the central behavioural pattern — never a comma-separated adjective list), '### Speech & Conversational Style' (concise vs rambling, blunt vs indirect, formal vs casual, whether they ask questions or make assertions, and one specific conversational habit — no invented catchphrase unless requested), '### Mannerism / Tell' (one or two restrained behavioural tells, not a list of quirks), '### Roleplaying Cues' (3 to 5 concrete, immediately usable behavioural instructions, e.g. 'Answers suspicious questions with another question' — instructions, not prose biography).",
-  "lore": "GM-only markdown (use exactly these '###' headings, in this order): '### Outward Demeanour vs Inner Nature' (how they appear to others, contrasted with what is actually happening internally), '### Drives' (as bullets: what they want, what they fear, what they protect, what they envy or resent, what they need from other people — each one sentence, all reinforcing the same personality), '### Virtue and Flaw' (a strength stated first, then the specific way that same strength produces the weakness — not two unrelated traits), '### Contradiction' (at least one meaningful internal tension that makes psychological sense, stated plainly), '### Under Pressure' (how they change when frightened, angry, cornered, embarrassed, exhausted, or losing control — specific enough to guide roleplay, not just 'they get defensive'), '### Social Behaviour' (brief coverage of how they treat strangers, friends/trusted people, authority figures, and rivals/enemies — only make a category radically different from the others if the core personality justifies it), '### Boundary / Trigger' (something likely to provoke an unusually strong response, arising from the generated personality rather than random trauma decoration), '### Example Reactions' (short, non-scripted illustrations of how they might react if praised, threatened, caught lying, offered power, betrayed, or asked for help — pick 3 of these 6, do not do all of them).",
+  "lore": "GM-only markdown (use exactly these '###' headings, in this order): '### Outward Demeanour vs Inner Nature' (how they appear to others, contrasted with what is actually happening internally), '### Drives' (as bullets: what they want, what they fear, what they protect, what they envy or resent, what they need from other people — each one sentence naming a distinct want, not five phrasings of the same want), '### Virtue and Flaw' (a strength stated first, then the specific way that same strength produces the weakness — not two unrelated traits), '### Contradiction' (at least one meaningful internal tension that makes psychological sense, stated plainly), '### Under Pressure' (how they change when frightened, angry, cornered, embarrassed, exhausted, or losing control — specific enough to guide roleplay, not just 'they get defensive'), '### Social Behaviour' (brief coverage of how they treat strangers, friends/trusted people, authority figures, and rivals/enemies — only make a category radically different from the others if the core personality justifies it), '### Boundary / Trigger' (something likely to provoke an unusually strong response, arising from the generated personality rather than random trauma decoration), '### Example Reactions' (optional expanded reference — short, non-scripted illustrations of how they might react if praised, threatened, caught lying, offered power, betrayed, or asked for help — pick 3 of these 6, do not do all of them, and keep each one a behaviour, not dialogue).",
   "labels": ["personality", "personality-generator", "imported-draft"]
 }
 Quality guardrails: prefer a coherent behavioural concept with internal tension over a trait list. ${ARCHETYPE_VARIETY_GUARDRAIL}
+${STRUCTURAL_VARIETY_GUARDRAIL}
+${PRESSURE_RESPONSE_GUARDRAIL}
 ${COHERENCE_PASS}
+${NON_REPETITION_GUARDRAIL}
 ${NAME_BAN_PROMPT}
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;

@@ -49,6 +49,13 @@
                 "Genre-agnostic NPC generator: same six-theme engine via the reusable generator interface.",
               icon: "icon-[lucide--user-round-plus]",
             },
+            {
+              href: "/generators/personality",
+              label: "Personality Generator",
+              summary:
+                "Generate a coherent, playable personality -- drives, virtue and flaw, a real contradiction, and how they act under pressure -- ready to roleplay.",
+              icon: "icon-[lucide--drama]",
+            },
           ],
         },
         {

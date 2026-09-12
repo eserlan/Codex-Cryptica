@@ -21,6 +21,7 @@
     concept = $bindable(""),
     campaignContext = $bindable(""),
     onSurprise = undefined,
+    onGenreChange = undefined,
   }: {
     genre: string;
     roleHint: string;
@@ -37,6 +38,7 @@
     concept: string;
     campaignContext: string;
     onSurprise?: () => void;
+    onGenreChange?: (genre: string) => void;
   } = $props();
 
   const selectClass =
@@ -59,6 +61,7 @@
   {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom vibe"
+  onvaluechange={onGenreChange}
 />
 
 <SelectWithCustomOption
@@ -164,7 +167,6 @@
   <button
     type="button"
     onclick={() => {
-      genre = pickFrom(personalityConfig.genres);
       roleHint = pickFrom(personalityConfig.roleHints);
       temperament = pickFrom(personalityConfig.temperaments);
       socialStyle = pickFrom(personalityConfig.socialStyles);
