@@ -41,7 +41,10 @@ describe("createLongPressTracker", () => {
 
   it("cancels the pending long press on touch end before the delay elapses", () => {
     const onLongPress = vi.fn();
-    const tracker = createLongPressTracker<string>({ onLongPress, delayMs: 300 });
+    const tracker = createLongPressTracker<string>({
+      onLongPress,
+      delayMs: 300,
+    });
 
     tracker.handleTouchStart("item-1", 0, 0);
     tracker.handleTouchEnd();

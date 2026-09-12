@@ -152,7 +152,8 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
   discovery: {
     id: "answer-new-dnd-player-learn-first",
     parentCluster: "beginner-entry",
-    primaryIntent: "what a new dnd player should learn before their first session",
+    primaryIntent:
+      "what a new dnd player should learn before their first session",
     intentAliases: [
       "what should i learn before playing dnd",
       "how much dnd do i need to know before playing",

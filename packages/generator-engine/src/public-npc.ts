@@ -223,7 +223,9 @@ export function resolveNpc(
   const relationshipHook = isTableCard
     ? pickFrom(LOCAL_RELATIONSHIP_HOOKS, rng)
     : undefined;
-  const sensoryTag = isTableCard ? pickFrom(LOCAL_SENSORY_TAGS, rng) : undefined;
+  const sensoryTag = isTableCard
+    ? pickFrom(LOCAL_SENSORY_TAGS, rng)
+    : undefined;
 
   return {
     race,

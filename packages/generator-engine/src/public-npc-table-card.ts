@@ -62,8 +62,7 @@ export function generateNpcTableCardLocal(
   const contradiction = resolved.contradiction ?? "";
   const relationshipHook = resolved.relationshipHook ?? "";
   const sensoryTag = resolved.sensoryTag ?? "";
-  const { isDelve, delveSector, delveRelation, delveSecretTie } =
-    delveContext;
+  const { isDelve, delveSector, delveRelation, delveSecretTie } = delveContext;
 
   const content = `### The Five Elements
 - **Immediate Want**: ${immediateWant}
