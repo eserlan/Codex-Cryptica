@@ -47,7 +47,9 @@ describe("EntityDetailModal", () => {
 
     const pre = container.querySelector(".seo-md pre");
     expect(pre).toBeTruthy();
-    expect(pre?.closest(".seo-md")?.classList.contains("[&_pre]:overflow-x-auto")).toBe(true);
+    expect(
+      pre?.closest(".seo-md")?.classList.contains("[&_pre]:overflow-x-auto"),
+    ).toBe(true);
   });
 
   it("copies a historical result and shows success feedback", async () => {

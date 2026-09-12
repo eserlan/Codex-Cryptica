@@ -83,9 +83,7 @@ describe("GeneratorAITransport", () => {
 
     it("falls back to local output and stamps aiFallback when the AI attempt throws", async () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const errorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const result = await transport.runWithAIFallback(
         true,

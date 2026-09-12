@@ -61,7 +61,11 @@ describe("useCanvasNodeRotation", () => {
     const lockedNode = makeNode({ id: "locked", data: { locked: true } });
     const groupNode = makeNode({ id: "group", type: "delveSectorGroup" });
     const rotation = useCanvasNodeRotation(
-      { nodes: [lockedNode, groupNode], updateNodeRotation: vi.fn(), saveNow: vi.fn() },
+      {
+        nodes: [lockedNode, groupNode],
+        updateNodeRotation: vi.fn(),
+        saveNow: vi.fn(),
+      },
       { isGuest: false },
     );
 
@@ -101,7 +105,10 @@ describe("useCanvasNodeRotation", () => {
       pointerEvent({ pointerId: 2, clientX: 10, clientY: 10 }),
     );
 
-    expect(updateNodeRotation).toHaveBeenCalledWith("node-1", expect.any(Number));
+    expect(updateNodeRotation).toHaveBeenCalledWith(
+      "node-1",
+      expect.any(Number),
+    );
   });
 
   it("clears rotation state when a rotating pointer is cancelled", () => {
@@ -146,11 +153,7 @@ describe("useCanvasNodeRotation", () => {
     );
 
     expect(() =>
-      rotation.beginTouchRotation(
-        pointerEvent({ target: null }),
-        false,
-        false,
-      ),
+      rotation.beginTouchRotation(pointerEvent({ target: null }), false, false),
     ).not.toThrow();
     expect(rotation.isRotatingNode).toBe(false);
   });
