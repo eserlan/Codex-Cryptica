@@ -130,6 +130,7 @@ export const howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld: AnswerConfigInput
       "how-do-you-create-a-fantasy-faction",
       "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
       "how-do-i-run-a-successful-session-0",
+      "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     ],
     discovery: {
       id: "answer-player-backstories",

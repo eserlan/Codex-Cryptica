@@ -129,6 +129,7 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-i-run-a-successful-session-0",
+    "how-much-campaign-lore-should-players-be-expected-to-remember",
   ],
   discovery: {
     id: "answer-session-recap",

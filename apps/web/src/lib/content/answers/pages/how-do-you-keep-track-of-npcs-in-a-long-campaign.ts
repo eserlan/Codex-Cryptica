@@ -126,6 +126,8 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-you-improvise-npcs-on-the-spot",
+    "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
+    "how-much-campaign-lore-should-players-be-expected-to-remember",
   ],
   discovery: {
     id: "answer-track-npcs-long-campaign",

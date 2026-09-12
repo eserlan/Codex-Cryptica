@@ -149,6 +149,9 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
     "how-much-rule-of-cool-should-a-dm-allow",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "how-do-i-start-gming-for-the-first-time",
+    "how-do-you-make-a-tabletop-rpg-session-more-engaging",
+    "how-do-you-recap-a-ttrpg-session",
   ],
   discovery: {
     id: "answer-session-zero",
