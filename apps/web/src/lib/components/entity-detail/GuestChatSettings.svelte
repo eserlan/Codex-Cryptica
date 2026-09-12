@@ -2,6 +2,7 @@
   import type { Entity, GuestChatConfig } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { generatePersonality } from "./generate-personality";
+  import { generatePersonalityProfile } from "./generate-personality-profile";
 
   let {
     entity,
@@ -18,6 +19,7 @@
   }>();
 
   let isGeneratingPersonality = $state(false);
+  let isGeneratingPersonalityProfile = $state(false);
   let personalityError = $state<string | null>(null);
   let isSavingAvailability = $state(false);
   let availabilityError = $state<string | null>(null);
@@ -52,6 +54,24 @@
       },
       setGenerating: (generating: boolean) => {
         isGeneratingPersonality = generating;
+      },
+      setError: (error: string | null) => {
+        personalityError = error;
+      },
+    });
+  }
+
+  async function handleGeneratePersonalityProfile() {
+    if (isGeneratingPersonalityProfile) return false;
+    return generatePersonalityProfile({
+      entity,
+      editContent,
+      getEditLore: () => editLore,
+      setEditLore: (lore: string) => {
+        editLore = lore;
+      },
+      setGenerating: (generating: boolean) => {
+        isGeneratingPersonalityProfile = generating;
       },
       setError: (error: string | null) => {
         personalityError = error;
@@ -240,30 +260,49 @@
                 Found in character lore
               </span>
             {:else}
-              <div class="flex items-center gap-2">
-                <span
-                  class="flex items-center gap-1 text-amber-500 font-semibold"
-                >
-                  <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
-                  ></span>
-                  Missing from lore
-                </span>
-                <button
-                  type="button"
-                  onclick={handleGeneratePersonality}
-                  disabled={isGeneratingPersonality}
-                  aria-busy={isGeneratingPersonality}
-                  class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
-                >
-                  <span
-                    class={isGeneratingPersonality
-                      ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
-                      : "icon-[lucide--sparkles] w-3 h-3"}
-                  ></span>
-                  {isGeneratingPersonality ? "Generating..." : "Generate"}
-                </button>
-              </div>
+              <span
+                class="flex items-center gap-1 text-amber-500 font-semibold"
+              >
+                <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
+                Missing from lore
+              </span>
             {/if}
+          </div>
+          <div class="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onclick={handleGeneratePersonality}
+              disabled={isGeneratingPersonality ||
+                isGeneratingPersonalityProfile}
+              aria-busy={isGeneratingPersonality}
+              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+              title="Write a few quick voice notes into the character's lore"
+            >
+              <span
+                class={isGeneratingPersonality
+                  ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
+                  : "icon-[lucide--sparkles] w-3 h-3"}
+              ></span>
+              {isGeneratingPersonality ? "Generating..." : "Quick Generate"}
+            </button>
+            <button
+              type="button"
+              onclick={handleGeneratePersonalityProfile}
+              disabled={isGeneratingPersonality ||
+                isGeneratingPersonalityProfile}
+              aria-busy={isGeneratingPersonalityProfile}
+              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+              title="Generate a full structured personality profile (drives, contradiction, pressure response, roleplaying cues) using the Personality Generator"
+            >
+              <span
+                class={isGeneratingPersonalityProfile
+                  ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
+                  : "icon-[lucide--drama] w-3 h-3"}
+              ></span>
+              {isGeneratingPersonalityProfile
+                ? "Generating..."
+                : "Generate Full Profile"}
+            </button>
           </div>
           {#if personalityError}
             <p
