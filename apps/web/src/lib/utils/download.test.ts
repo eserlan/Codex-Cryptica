@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { downloadBlob, downloadText } from "./download";
 
@@ -48,7 +49,7 @@ describe("download", () => {
   });
 
   describe("downloadText", () => {
-    it("encodes text with utf-8 charset and initiates blob download", () => {
+    it("encodes text with utf-8 charset and initiates blob download", async () => {
       let createdBlob: Blob | null = null;
       vi.stubGlobal("URL", {
         createObjectURL: vi.fn((blob: Blob) => {
@@ -58,12 +59,13 @@ describe("download", () => {
         revokeObjectURL: vi.fn(),
       });
 
-      downloadText("fantasy lore with — em dash", "lore.md", "text/markdown");
+      const textContent = "fantasy lore with — em dash";
+      downloadText(textContent, "lore.md", "text/markdown");
 
       expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
       expect(createdBlob).not.toBeNull();
-      const typedBlob = createdBlob as unknown as Blob;
-      expect(typedBlob.type).toBe("text/markdown;charset=utf-8");
+      expect(createdBlob?.type).toBe("text/markdown;charset=utf-8");
+      expect(await createdBlob!.text()).toBe(textContent);
 
       vi.advanceTimersByTime(0);
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-text");
