@@ -112,6 +112,32 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
     linkText: "Build one-shot dungeons with the Dungeon Builder",
     href: "/generators/dungeon-generator",
   },
+  systemsThatSupportThis: [
+    {
+      system: "Fiasco",
+      rationale:
+        "Organises play into Act One, The Tilt (a midpoint disaster roll), Act Two, and The Aftermath to mechanically guarantee a self-contained cinematic story in three hours without preparation.",
+      href: "https://bullypulpitgames.com/products/fiasco",
+    },
+    {
+      system: "Ten Candles",
+      rationale:
+        "Ties narrative scenes and dice pools directly to ten physically burning tea lights that extinguish upon failure, enforcing escalating desperation and definitive closure within a single sitting.",
+      href: "https://cavalrygames.com/ten-candles",
+    },
+    {
+      system: "Trophy Dark",
+      rationale:
+        "Structures one-shot incursions into five discrete concentric rings that progressively heighten peril and character ruin toward an inevitable confrontation.",
+      href: "https://trophyrpg.com/",
+    },
+    {
+      system: "Alice is Missing",
+      rationale:
+        "Drives a single-session silent investigation with a synchronised 90-minute soundtrack and timed clue cards that unlock fixed narrative developments as the clock ticks down.",
+      href: "https://www.huntersentertainment.com/alice-is-missing",
+    },
+  ],
   relatedTools: [
     {
       title: "Adventure generator",
