@@ -48,6 +48,9 @@ import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  buildPersonalityPrompt,
+  parsePersonalityResponse,
+  generatePersonalityLocal,
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   parseCouncilVoteFoundation,
@@ -132,6 +135,7 @@ import {
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
+  type PersonalityGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type HeistGeneratorOptions,
   type SecretSocietyGeneratorOptions,
@@ -217,6 +221,7 @@ export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
+export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
 export { secretSocietyConfig } from "generator-engine";
@@ -562,6 +567,22 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generatePersonality(
+    options: PersonalityGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...personalityOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildPersonalityPrompt(personalityOptions, "", getSessionContext());
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parsePersonalityResponse(text, resolved);
+      },
+      () => generatePersonalityLocal(personalityOptions),
     );
   }
 
