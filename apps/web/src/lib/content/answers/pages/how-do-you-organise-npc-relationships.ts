@@ -93,6 +93,26 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Monsterhearts",
+      rationale:
+        "Strings represent leverage held over another character directly, spent to automatically succeed on certain moves or impose a condition on them — relationship as a mechanical resource, not backstory colour.",
+      href: "https://buriedwithoutceremony.com/monsterhearts/",
+    },
+    {
+      system: "Urban Shadows",
+      rationale:
+        "Debt is an explicit, trackable currency between characters: owing or being owed Debt grants concrete moves and leverage, mirroring a directed relationship link with a reason attached.",
+      href: "https://sonofoak.com/",
+    },
+    {
+      system: "Cortex Prime",
+      rationale:
+        "In Drama-style play (as used by Smallville), a relationship is itself a rollable die rated by its strength, replacing an ability score with the tie between two people as the mechanically active thing.",
+      href: "https://cortexrpg.com/",
+    },
+  ],
   codexConnection: {
     heading: "How Codex Cryptica stores this",
     paragraphs: [
