@@ -152,6 +152,9 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "what-should-i-look-for-in-an-rpg-campaign-manager",
+    "how-do-i-start-gming-for-the-first-time",
+    "how-do-you-make-a-tabletop-rpg-session-more-engaging",
+    "how-do-you-recap-a-ttrpg-session",
   ],
   discovery: {
     id: "answer-session-prep",

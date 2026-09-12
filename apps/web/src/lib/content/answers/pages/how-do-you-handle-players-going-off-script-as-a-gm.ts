@@ -127,6 +127,8 @@ export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-much-rule-of-cool-should-a-dm-allow",
+    "how-do-i-start-gming-for-the-first-time",
+    "how-do-you-make-a-tabletop-rpg-session-more-engaging",
   ],
   discovery: {
     id: "answer-players-going-off-script",
