@@ -64,7 +64,7 @@ describe("download", () => {
 
       expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
       expect(createdBlob).not.toBeNull();
-      expect(createdBlob?.type).toBe("text/markdown;charset=utf-8");
+      expect(createdBlob!.type).toBe("text/markdown;charset=utf-8");
       expect(await createdBlob!.text()).toBe(textContent);
 
       vi.advanceTimersByTime(0);
