@@ -605,6 +605,21 @@ describe("published answers", () => {
       },
     ]);
   });
+
+  it("publishes the one-shot adventure answer with verified system references", () => {
+    const oneShotAnswer = answers["how-do-you-write-a-one-shot-adventure"];
+    expect(oneShotAnswer).toBeDefined();
+    expect(oneShotAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Fiasco",
+      "Ten Candles",
+      "Trophy Dark",
+      "Alice is Missing",
+    ]);
+    for (const ref of oneShotAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe("answer structured data", () => {

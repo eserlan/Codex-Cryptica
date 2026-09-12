@@ -15,7 +15,8 @@ export interface DiscussionPublication {
   url: string;
 }
 
-export const BLUESKY_CHARACTER_LIMIT = 300;
+/** Keep mirrored Bluesky/X copy within X's stricter 280-character limit. */
+export const BLUESKY_CHARACTER_LIMIT = 280;
 
 /** Avoid every external write while still exercising the production flow. */
 export function isReleaseCommsDryRun(): boolean {

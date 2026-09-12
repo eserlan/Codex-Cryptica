@@ -8,6 +8,25 @@ describe("extractIdAndDoc", () => {
     expect(doc).toBeUndefined();
   });
 
+  it("should extract IDs from a number and abbreviated FlexSearch result", () => {
+    expect(extractIdAndDoc(456).id).toBe("456");
+
+    const doc = {
+      id: "node-6",
+      title: "Abbreviated Result",
+      content: "content",
+      path: "node-6.md",
+    };
+    expect(extractIdAndDoc({ key: "node-6", d: doc })).toEqual({
+      id: "node-6",
+      doc,
+    });
+    expect(extractIdAndDoc({ i: "node-7", d: doc })).toEqual({
+      id: "node-7",
+      doc,
+    });
+  });
+
   it("should extract ID from an object with i property", () => {
     const { id } = extractIdAndDoc({ i: "node-2" });
     expect(id).toBe("node-2");
