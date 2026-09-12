@@ -62,7 +62,8 @@ describe("download", () => {
 
       expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
       expect(createdBlob).not.toBeNull();
-      expect(createdBlob?.type).toBe("text/markdown;charset=utf-8");
+      const typedBlob = createdBlob as unknown as Blob;
+      expect(typedBlob.type).toBe("text/markdown;charset=utf-8");
 
       vi.advanceTimersByTime(0);
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-text");
