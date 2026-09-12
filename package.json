@@ -46,7 +46,6 @@
     "eval:heist": "bun scripts/heist-eval.ts",
     "degodify": "bun scripts/auto-degodify.ts",
     "pr:fix": "bun scripts/pr-check-fix.ts",
-    "pr:webhook": "bun scripts/pr-webhook-listener.ts",
     "comms:evaluate": "bun scripts/release-comms-agent.ts",
     "post:discussion": "bun scripts/post-to-github-discussion.ts",
     "post:instagram": "bun scripts/post-to-instagram.ts",
