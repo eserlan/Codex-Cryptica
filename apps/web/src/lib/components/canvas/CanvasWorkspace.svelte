@@ -19,7 +19,6 @@
     CanvasStore,
     type Canvas,
   } from "@codex/canvas-engine";
-  import type { FileImportFailureReason } from "@codex/vault-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
@@ -44,6 +43,10 @@
   import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
   import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
+  import {
+    useCanvasFileImport,
+    centerScreenPosition,
+  } from "./hooks/use-canvas-file-import.svelte";
 
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -61,7 +64,6 @@
     autoArrangeCanvasNodes,
     canvasNodeStyle,
     canvasNodeZIndex,
-    createFlowFileNode,
     createFlowTextNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
@@ -85,7 +87,6 @@
     ) as Canvas | undefined,
   );
   const canvasId = $derived(canvas?.id || canvasSlug);
-  let isImportingExternalFiles = $state(false);
   const sourceEntityId = $derived.by(() => {
     const id = canvas?.metadata?.sourceEntityId;
     return typeof id === "string" && id ? id : undefined;
@@ -104,8 +105,22 @@
   const logic = createCanvasLogic(() => engine);
   const rotationLogic = useCanvasNodeRotation(logic, vault);
   const drawingLogic = useCanvasDrawing(logic);
+  const fileImport = useCanvasFileImport({
+    vault,
+    engine: {
+      addFileNode: (file, position) => engine.addFileNode(file, position),
+    },
+    logic,
+    isEditableTarget: drawingLogic.isEditableTarget,
+    notify: (message, level) => notificationStore.notify(message, level),
+    setNodes: (updater) => {
+      logic.nodes = updater(logic.nodes);
+    },
+  });
   const isCanvasToolActive = $derived(
-    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
+    drawingLogic.isDrawingMode ||
+      drawingLogic.isErasingMode ||
+      rotationLogic.isRotatingNode,
   );
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
@@ -117,7 +132,7 @@
   let isFinalizingDossier = $state(false);
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
-    let showMinimap = $state(true);
+  let showMinimap = $state(true);
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -322,9 +337,6 @@
     threatens: CustomEdge,
     resolves_to: CustomEdge,
   };
-
-
-
 
   let arrangedCanvasId = $state<string | null>(null);
 
@@ -716,7 +728,7 @@
     }
     event.preventDefault();
     if (files.length > 0) {
-      await handleExternalFiles(files, {
+      await fileImport.handleExternalFiles(files, {
         x: event.clientX,
         y: event.clientY,
       });
@@ -732,110 +744,6 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
-  function formatFileFailure(file: File, reason: FileImportFailureReason) {
-    const descriptions: Record<FileImportFailureReason, string> = {
-      empty: "is empty",
-      too_large: "is larger than 10 MB",
-      vault_unavailable: "could not be saved because the vault is unavailable",
-      write_failed: "could not be saved to the vault",
-    };
-    return `${file.name || "A file"} ${descriptions[reason] || "could not be added"}.`;
-  }
-
-  async function handleExternalFiles(
-    files: File[],
-    screenPosition?: { x: number; y: number },
-  ) {
-    if (vault.isGuest || files.length === 0 || isImportingExternalFiles) return;
-    isImportingExternalFiles = true;
-    try {
-      const start = screenPosition
-        ? logic.screenToFlowPosition(screenPosition)
-        : {
-            x: 80 + logic.nodes.length * 24,
-            y: 80 + logic.nodes.length * 24,
-          };
-      const failures: string[] = [];
-      let added = 0;
-
-      for (const file of files) {
-        const result = await vault.importFileToVault(file);
-        if (!result.ok) {
-          failures.push(formatFileFailure(file, result.reason));
-          continue;
-        }
-        const position = { x: start.x + added * 28, y: start.y + added * 28 };
-        const nodeId = engine.addFileNode(result.file, position);
-        logic.nodes = [
-          ...logic.nodes,
-          createFlowFileNode(result.file, position, nodeId),
-        ];
-        added++;
-      }
-
-      if (added > 0 && failures.length > 0) {
-        logic.saveNow();
-        notificationStore.notify(
-          `${added} file${added === 1 ? "" : "s"} added. ${failures.join(" ")}`,
-          "info",
-        );
-      } else if (added > 0) {
-        logic.saveNow();
-        notificationStore.notify(
-          `${added} file${added === 1 ? "" : "s"} added to the vault and canvas.`,
-          "success",
-        );
-      } else if (failures.length) {
-        notificationStore.notify(failures.join(" "), "error");
-      }
-    } catch {
-      notificationStore.notify(
-        "Files could not be added. Please try again.",
-        "error",
-      );
-    } finally {
-      isImportingExternalFiles = false;
-    }
-  }
-
-  function imageFileFromBlob(blob: Blob, mimeType: string) {
-    const extension = mimeType.split("/")[1]?.split("+")[0] || "png";
-    return new File([blob], `pasted-image-${Date.now()}.${extension}`, {
-      type: mimeType,
-    });
-  }
-
-  function extractImageFilesFromClipboardData(
-    clipboardData: DataTransfer | null,
-  ) {
-    if (!clipboardData) return [];
-    const fromFiles = Array.from(clipboardData.files).filter((file) =>
-      file.type.startsWith("image/"),
-    );
-    if (fromFiles.length > 0) return fromFiles;
-    // Some browsers only populate `items` (with getAsFile()) for pasted
-    // images, leaving `files` empty.
-    return Array.from(clipboardData.items)
-      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
-      .map((item) => item.getAsFile())
-      .filter((file): file is File => file !== null);
-  }
-
-  async function extractImageFilesFromClipboardItems(items: ClipboardItem[]) {
-    const files: File[] = [];
-    for (const item of items) {
-      const imageType = item.types.find((type) => type.startsWith("image/"));
-      if (!imageType) continue;
-      const blob = await item.getType(imageType);
-      files.push(imageFileFromBlob(blob, imageType));
-    }
-    return files;
-  }
-
-  function centerScreenPosition() {
-    return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  }
-
   function handleAddTextNode(screenPosition?: { x: number; y: number }) {
     if (vault.isGuest) return;
     const position = logic.screenToFlowPosition(
@@ -849,42 +757,6 @@
       { ...node, data: { ...node.data, zIndex: max + 1 } },
     ];
     logic.saveNow();
-  }
-
-  async function handleCanvasPaste(event: ClipboardEvent) {
-    if (vault.isGuest || drawingLogic.isEditableTarget(event.target)) return;
-    const files = extractImageFilesFromClipboardData(event.clipboardData);
-    if (files.length === 0) return;
-    event.preventDefault();
-    await handleExternalFiles(files, centerScreenPosition());
-  }
-
-  async function handlePasteFromClipboard(screenPosition: {
-    x: number;
-    y: number;
-  }) {
-    if (vault.isGuest) return;
-    if (!navigator.clipboard?.read) {
-      notificationStore.notify(
-        "Pasting from the clipboard isn't supported in this browser.",
-        "error",
-      );
-      return;
-    }
-    try {
-      const items = await navigator.clipboard.read();
-      const files = await extractImageFilesFromClipboardItems(items);
-      if (files.length === 0) {
-        notificationStore.notify("No image found in clipboard.", "info");
-        return;
-      }
-      await handleExternalFiles(files, screenPosition);
-    } catch {
-      notificationStore.notify(
-        "Couldn't read the clipboard. Your browser may need permission.",
-        "error",
-      );
-    }
   }
 
   let isCreatingSourceEntity = false;
@@ -933,7 +805,7 @@
 
 <svelte:window
   onkeydown={drawingLogic.handleDrawingKeydown}
-  onpaste={handleCanvasPaste}
+  onpaste={fileImport.handleCanvasPaste}
   onpointermove={rotationLogic.handleRotationPointerMove}
   onpointerup={rotationLogic.finishNodeRotation}
   onpointercancel={rotationLogic.finishNodeRotation}
@@ -948,7 +820,12 @@
     class="flex-1 relative"
     ondragover={onDragOver}
     ondrop={onDrop}
-    onpointerdowncapture={(e) => rotationLogic.beginTouchRotation(e, drawingLogic.isDrawingMode, drawingLogic.isErasingMode)}
+    onpointerdowncapture={(e) =>
+      rotationLogic.beginTouchRotation(
+        e,
+        drawingLogic.isDrawingMode,
+        drawingLogic.isErasingMode,
+      )}
     role="region"
     aria-label="Canvas Workspace"
   >
@@ -971,14 +848,20 @@
       onAutoArrange={handleAutoArrange}
       {showMinimap}
       onToggleMinimap={() => (showMinimap = !showMinimap)}
-      onUploadFiles={!vault.isGuest ? handleExternalFiles : undefined}
+      onUploadFiles={!vault.isGuest
+        ? fileImport.handleExternalFiles
+        : undefined}
       onAddTextNode={!vault.isGuest ? () => handleAddTextNode() : undefined}
       isDrawingMode={drawingLogic.isDrawingMode}
       isErasingMode={drawingLogic.isErasingMode}
       drawingColor={drawingLogic.drawingColor}
       drawingWidth={drawingLogic.drawingWidth}
-      onToggleDrawing={!vault.isGuest ? drawingLogic.toggleDrawingMode : undefined}
-      onToggleErasing={!vault.isGuest ? drawingLogic.toggleErasingMode : undefined}
+      onToggleDrawing={!vault.isGuest
+        ? drawingLogic.toggleDrawingMode
+        : undefined}
+      onToggleErasing={!vault.isGuest
+        ? drawingLogic.toggleErasingMode
+        : undefined}
       onDrawingColorChange={!vault.isGuest
         ? drawingLogic.handleDrawingColorChange
         : undefined}
@@ -1201,7 +1084,7 @@
         })}
       onPaste={!vault.isGuest
         ? () =>
-            handlePasteFromClipboard({
+            fileImport.handlePasteFromClipboard({
               x: logic.contextMenu?.x || 0,
               y: logic.contextMenu?.y || 0,
             })
@@ -1226,7 +1109,7 @@
             updateNodeData(contextMenuTextNode!.id, {
               background: normalizeCanvasTextBackground(
                 background,
-    DEFAULT_CANVAS_TEXT_BACKGROUND,
+                DEFAULT_CANVAS_TEXT_BACKGROUND,
               ),
             })
         : undefined}
