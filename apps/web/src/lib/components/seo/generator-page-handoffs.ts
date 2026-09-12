@@ -56,11 +56,12 @@ export function initializeHandoffState(
 }
 
 export function setupHandoffNavigation(
-  slug: ValidSlug,
+  getSlug: () => ValidSlug,
   state: GeneratorHandoffState,
   onStateChange: (updates: Partial<GeneratorHandoffState>) => void,
 ) {
   afterNavigate(({ to }) => {
+    const slug = getSlug();
     const premise =
       slug === "plot-twist-generator"
         ? (to?.url.searchParams.get("questPremise") ?? "")
