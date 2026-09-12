@@ -348,9 +348,15 @@ function sameJobInCluster(entries: DiscoveryEntry[]): DiscoveryFinding[] {
         if (acknowledged.has(pairKey(a.id, b.id))) continue;
 
         const aTokens = tokens.get(a.id) as Set<string>;
-        const shared = [...(tokens.get(b.id) as Set<string>)].filter(
-          (token) => aTokens.has(token) && !clusterVocabulary.has(token),
-        );
+        const bTokens = tokens.get(b.id) as Set<string>;
+        // ⚡ Bolt Optimization: Replace chained [...set].filter() with an imperative loop
+        // to avoid O(N^2) intermediate array allocations during hot loop cluster audits
+        const shared: string[] = [];
+        for (const token of bTokens) {
+          if (aTokens.has(token) && !clusterVocabulary.has(token)) {
+            shared.push(token);
+          }
+        }
         if (shared.length === 0) continue;
 
         findings.push({
