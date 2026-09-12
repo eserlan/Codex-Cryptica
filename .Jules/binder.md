@@ -200,3 +200,8 @@
 **Learning:** Svelte 5 components using `$props()` can accept dependency injection boundaries with optional typed dependencies and production defaults (like `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps.ts`). Relying heavily on hardcoded `crypto.randomUUID()` within UI components forces tests to implement flaky random UUID mocks. Injecting `idGenerator` avoids Vitest global pollution and creates a deterministic test boundary without requiring complicated DI framework constructs.
 
 **Action:** Continue identifying hardcoded `crypto.randomUUID()` in UI component logic. Use destructured optional dependency props (with `systemIdGenerator` as default) to safely replace it with `idGenerator.uuid()`.
+## 2024-05-18 - Replacing hardcoded global localStorage in UIPersistence
+
+**Learning:** When a class manages generic local UI persistence (like `UIPersistence` inside `$lib/stores/ui`), directly grabbing `window.localStorage` within its constructor severely limits testability and can cause SSR issues (if `window` isn't guarded properly, though it was guarded here). The repository provides `browserStorage` from `$lib/utils/runtime-deps` which gracefully falls back to memory or null objects on SSR, providing a clean dependency injection boundary that makes the global explicit and mockable during testing.
+
+**Action:** Look for UI or data storage classes that grab `window.localStorage` natively. Refactor them to accept a `storage` dependency in their constructor options, defaulting to `browserStorage` to provide an explicit, testable seam that maintains production behaviour.
