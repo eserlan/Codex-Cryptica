@@ -114,6 +114,8 @@ export const howDoYouManageACampaignTimelineInAnRpg: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-organise-npc-relationships",
     "how-do-you-track-faction-turns-between-rpg-sessions",
+    "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
+    "how-do-you-recap-a-ttrpg-session",
   ],
   discovery: {
     id: "answer-manage-campaign-timeline",

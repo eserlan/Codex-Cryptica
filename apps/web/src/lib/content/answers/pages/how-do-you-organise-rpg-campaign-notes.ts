@@ -152,6 +152,11 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
+    "how-do-i-start-gming-for-the-first-time",
+    "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
+    "how-do-you-recap-a-ttrpg-session",
+    "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
+    "how-much-campaign-lore-should-players-be-expected-to-remember",
   ],
   discovery: {
     id: "answer-campaign-notes",

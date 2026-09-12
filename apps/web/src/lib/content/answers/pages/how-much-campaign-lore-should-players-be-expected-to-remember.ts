@@ -123,6 +123,7 @@ export const howMuchCampaignLoreShouldPlayersBeExpectedToRemember: AnswerConfigI
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
       "how-do-you-organise-rpg-campaign-notes",
       "how-do-you-make-npcs-memorable-without-lots-of-prep",
+      "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
     ],
     discovery: {
       id: "answer-lore-memory-expectations",

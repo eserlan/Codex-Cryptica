@@ -13,14 +13,14 @@ Rules for what goes in R2 vs. `apps/web/static/` live in [`docs/deployment/asset
 | [`directory/listings/`](#directory--public-generator-directory-listing-metadata-json-not-images) | 4               | ~3 KB    | Public generator directory metadata (JSON)                                                   |
 | [`discussions/alien-race/`](#discussions--github-discussions-announcement-images)                | 1               | 0.2 MB   | Alien Race generator discussion image                                                        |
 | [`images/`](#images--blog-post-inline-images--old-help-doc-screenshots)                          | 50              | ~18 MB   | Blog post inline images + old help-doc screenshots                                           |
-| [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 18              | ~15.7 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages and reference answers |
+| [`og/`](#og--for-landing-page-169-opengraph-cards)                                               | 22              | ~19.2 MB | Dedicated 16:9 social share / OpenGraph cards for `/for` landing pages and reference answers |
 | [`screenshots/`](#screenshots--generators--tools-page-cards-and-ogimage)                         | 38              | ~6.5 MB  | `/generators` + `/tools` page cards, og:image                                                |
 | [`silhouettes/`](#silhouettes--curated-vector-silhouettes-for-entities-and-generators)           | 148 (74 SVGs)   | ~450 KB  | Curated vector SVG silhouettes for entity types, categories, locations, and public gallery   |
 | [`vault-samples/images/`](#vault-samples--demoquick-start-vault-portrait-art)                    | 36              | 58.7 MB  | Portrait art for the 9 demo/quick-start vaults                                               |
 | [`published/{vault-uuid}/`](#collapsed-groups-user-data--bundled-packs)                          | 531 (11 vaults) | ~52 MB   | **User data**, not ours — assets from real vaults published for guest/player viewing         |
 | [`starter-tile-decks/kenney-scribble-dungeons/`](#collapsed-groups-user-data--bundled-packs)     | 159             | 0.17 MB  | Bundled third-party VTT map tile pack (Kenney)                                               |
 
-Total: 890 objects, ~163 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
+Total: 894 objects, ~166.5 MB. The tables below cover everything **except** `published/` and `starter-tile-decks/`, which are listed as one row per vault/pack in the [Collapsed groups](#collapsed-groups-user-data--bundled-packs) section at the bottom since their contents are user-generated or third-party, not assets we authored.
 
 ## `announcements/` — Bluesky / GitHub discussion launch images
 
@@ -161,6 +161,10 @@ Total: 890 objects, ~163 MB. The tables below cover everything **except** `publi
 | [`og/how-do-you-keep-track-of-time-in-a-tabletop-campaign.jpg`](https://assets.codexcryptica.com/og/how-do-you-keep-track-of-time-in-a-tabletop-campaign.jpg) | TBD     | image/jpeg | pending    | Reference answer OG card (needed / pending generation) |
 
 | [`og/how-do-i-balance-rpg-combat-encounters-without-a-tpk.jpg`](https://assets.codexcryptica.com/og/how-do-i-balance-rpg-combat-encounters-without-a-tpk.jpg) | 377 KB | image/jpeg | 2026-09-10 | Reference answer OG card, AI-generated |
+| [`og/how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign.jpg`](https://assets.codexcryptica.com/og/how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign.jpg) | 897 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3017) |
+| [`og/how-do-you-recap-a-ttrpg-session.jpg`](https://assets.codexcryptica.com/og/how-do-you-recap-a-ttrpg-session.jpg) | 843 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3015) |
+| [`og/how-much-campaign-lore-should-players-be-expected-to-remember.jpg`](https://assets.codexcryptica.com/og/how-much-campaign-lore-should-players-be-expected-to-remember.jpg) | 836 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3010) |
+| [`og/how-do-you-run-a-campaign-when-you-only-play-once-a-month.jpg`](https://assets.codexcryptica.com/og/how-do-you-run-a-campaign-when-you-only-play-once-a-month.jpg) | 979 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3009) |
 
 ## `screenshots/` — `/generators` + `/tools` page cards and og:image
 

@@ -3,6 +3,7 @@ import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyCityThatFeelsAlive } from "./how-do-you-create-a-fantasy-city-that-feels-alive";
@@ -21,6 +22,7 @@ import { howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign } from "./how-d
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
+import { howDoYouMakeATabletopRpgSessionMoreEngaging } from "./how-do-you-make-a-tabletop-rpg-session-more-engaging";
 import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
 import { howDoYouMakeTravelInterestingInATabletopRpg } from "./how-do-you-make-travel-interesting-in-a-tabletop-rpg";
@@ -73,6 +75,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIRunASuccessfulSessionZero,
+    howDoIStartGmingForTheFirstTime,
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyCityThatFeelsAlive,
@@ -91,6 +94,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfNpcsInALongCampaign,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
+    howDoYouMakeATabletopRpgSessionMoreEngaging,
     howDoYouMakeAnAlienSpeciesFeelBelievable,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
     howDoYouMakeTravelInterestingInATabletopRpg,

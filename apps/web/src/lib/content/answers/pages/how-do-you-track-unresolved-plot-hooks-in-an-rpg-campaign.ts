@@ -145,6 +145,8 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
       "how-do-you-generate-useful-rpg-rumours",
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
+      "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
+      "how-do-you-recap-a-ttrpg-session",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",
