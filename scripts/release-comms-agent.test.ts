@@ -10,6 +10,7 @@ import {
   deriveDiscordFromBluesky,
   deriveDiscordQualification,
   deriveInstagramQualification,
+  deriveXQualification,
   publicPageFor,
   extractJsonBlock,
   fetchPromotionCommits,
@@ -21,12 +22,14 @@ import {
   mergeBlueskyRetry,
   pickPreviousSha,
   processInstagramHandoffs,
+  processXHandoffs,
   recordEvaluation,
   runAgentCapturingOutput,
   runWriterPassWithBudgetRetries,
   saveReleaseCommsState,
   selectPendingDiscordDestinations,
   selectPendingInstagramHandoffs,
+  selectPendingXHandoffs,
   shouldUpdateInstagramTracker,
   type EvaluatorResult,
   type InstagramHandoff,
@@ -1272,6 +1275,111 @@ describe("release-comms-agent", () => {
     });
   });
 
+  describe("X integration", () => {
+    const pageUrl = "https://codexcryptica.com/answers/example";
+    const text = `Exact Bluesky copy\n\n${pageUrl}`;
+
+    it("qualifies and publishes every missing exact Bluesky handoff once", async () => {
+      const result: EvaluatorResult = {
+        postworthy: true,
+        reason: "Useful release",
+        recommended_channels: ["instagram"],
+      };
+      const drafts: WriterResult = {
+        bluesky: [{ pageUrl, text }],
+        reddit: "",
+        github_discussions: [],
+      };
+      expect(deriveXQualification(result, drafts)).toEqual(["instagram", "x"]);
+
+      const entry: ReleaseCommsHistoryEntry = {
+        sha: "x123456",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "111",
+        postworthy: true,
+        reason: "Useful release",
+        xHandoffs: [{ pageUrl, text }],
+        publications: { bluesky: [], githubDiscussions: [] },
+        completed: false,
+      };
+      const state: ReleaseCommsState = {
+        version: 1,
+        lastEvaluatedSha: null,
+        history: [],
+      };
+      let calls = 0;
+      const first = await processXHandoffs({
+        entry,
+        recommendedChannels: ["x"],
+        state,
+        env: { X_ACCESS_TOKEN: "token" },
+        publishFn: async (input) => {
+          calls += 1;
+          expect(input.text).toBe(text);
+          return { id: "x-post", url: "https://x.com/i/web/status/x-post" };
+        },
+        saveStateFn: async () => {},
+      });
+      expect(calls).toBe(1);
+      expect(first.entry.publications?.x).toEqual([
+        { pageUrl, id: "x-post", url: "https://x.com/i/web/status/x-post" },
+      ]);
+      expect(
+        selectPendingXHandoffs(
+          first.entry.xHandoffs ?? [],
+          first.entry.publications?.x ?? [],
+        ),
+      ).toEqual([]);
+
+      await processXHandoffs({
+        entry: first.entry,
+        recommendedChannels: ["x"],
+        state,
+        env: { X_ACCESS_TOKEN: "token" },
+        publishFn: async () => {
+          calls += 1;
+          throw new Error("must not duplicate post");
+        },
+        saveStateFn: async () => {},
+      });
+      expect(calls).toBe(1);
+    });
+
+    it("skips an unconfigured account and reports a configured publishing failure", async () => {
+      const entry: ReleaseCommsHistoryEntry = {
+        sha: "x987654",
+        date: "2026-09-11T12:00:00.000Z",
+        promoteRunId: "222",
+        postworthy: true,
+        reason: "Useful release",
+        xHandoffs: [{ pageUrl, text }],
+        publications: { bluesky: [], githubDiscussions: [] },
+      };
+      const state: ReleaseCommsState = {
+        version: 1,
+        lastEvaluatedSha: null,
+        history: [],
+      };
+      const skipped = await processXHandoffs({
+        entry,
+        recommendedChannels: ["x"],
+        state,
+        env: {},
+      });
+      expect(skipped.xPublishFailed).toBe(false);
+      const failed = await processXHandoffs({
+        entry,
+        recommendedChannels: ["x"],
+        state,
+        env: { X_ACCESS_TOKEN: "token" },
+        publishFn: async () => {
+          throw new Error("rate limited");
+        },
+      });
+      expect(failed.xPublishFailed).toBe(true);
+    });
+  });
+
   describe("selectPendingDiscordDestinations", () => {
     it("only retries auto-publish destinations that have not already succeeded", () => {
       const destinations = [
@@ -1330,7 +1438,7 @@ describe("release-comms-agent", () => {
       ).toEqual([]);
     });
 
-    it("flags a draft that exceeds 300 characters once the page URL is resolved in", () => {
+    it("flags a draft that exceeds 280 characters once the page URL is resolved in", () => {
       const pageUrl = "https://codexcryptica.com/answers/long-one";
       const oversized = findOversizedBlueskyDrafts({
         bluesky: [{ pageUrl, text: "x".repeat(295) }],
@@ -1340,7 +1448,7 @@ describe("release-comms-agent", () => {
       });
       expect(oversized).toHaveLength(1);
       expect(oversized[0]).toMatchObject({ pageUrl });
-      expect(oversized[0].length).toBeGreaterThan(300);
+      expect(oversized[0].length).toBeGreaterThan(280);
     });
   });
 

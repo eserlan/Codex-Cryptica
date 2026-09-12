@@ -34,6 +34,20 @@ Cloudflare Tunnel → `scripts/release-comms-agent.ts`) is unfamiliar.
       publishing. If an installation opts out of automatic Instagram
       publishing, set `INSTAGRAM_AUTO_PUBLISH=0` in that same private
       environment file to skip Instagram publishing without failing releases.
+- [ ] Create the dedicated Codex Cryptica X account, create an X developer app,
+      and authorise it with that account (OAuth 2.0 Authorization Code + PKCE,
+      `tweet.write users.read tweet.read offline.access` scopes). Add the
+      resulting values to that same private environment file:
+      `X_ACCESS_TOKEN`, `X_REFRESH_TOKEN`, `X_CLIENT_ID`, `X_CLIENT_SECRET`,
+      and `X_ENV_FILE=<absolute path to this same webhook.env>`. The access
+      token expires in ~2 hours; `release-comms-x.ts` refreshes it
+      automatically on a 401 using the other three values and rewrites
+      `X_ENV_FILE` in place so the new token survives a service restart. If
+      any of `X_REFRESH_TOKEN`/`X_CLIENT_ID`/`X_CLIENT_SECRET` are missing,
+      publishing just fails again after the token expires until someone
+      re-authorises by hand. `scripts/setup-x-publisher.sh` automates writing
+      all five values. X publishing stays inactive until `X_ACCESS_TOKEN` is
+      present; set `X_AUTO_PUBLISH=0` to opt out after configuration.
 - [ ] Restart the webhook service so it picks up the new code and environment:
       `systemctl --user restart codex-pr-review-webhook.service`.
 - [ ] Confirm the new route is live: `curl -fsS https://pr-webhook.codexcryptica.com/health`
@@ -220,6 +234,26 @@ bun run post:instagram -- --dry-run \
 For a troubleshooting post, remove `--dry-run` and copy one caption and image
 URL from the release issue comment. Do not use it alongside the automatic
 release agent for the same draft, or it will create a duplicate post.
+
+### Automatic X publishing
+
+X mirrors every final Bluesky post through X's official Create Post API. It
+uses the exact resolved text, including the public-page URL and hashtags; it
+does not create separate copy. Create a dedicated X account and an X developer
+app, then complete OAuth 2 user authorisation for that account with permission
+to create posts. Store the resulting user access token only in the mode-`600`
+webhook environment file:
+
+```sh
+export X_ACCESS_TOKEN=<X OAuth 2 user access token>
+# Optional: leave credentials installed but disable automatic posts.
+export X_AUTO_PUBLISH=1
+```
+
+Leave `X_ACCESS_TOKEN` unset until the account and app are ready. The release
+agent then logs a skip, rather than attempting an unauthorised request. For a
+non-production endpoint during troubleshooting only, set `X_POST_URL` to an
+absolute HTTPS URL; production defaults to `https://api.x.com/2/tweets`.
 
 The Facebook group [#2910](https://github.com/eserlan/Codex-Cryptica/issues/2910)
 remains a separate, unconfigured channel.
