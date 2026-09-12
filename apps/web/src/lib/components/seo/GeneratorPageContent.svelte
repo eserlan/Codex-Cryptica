@@ -9,6 +9,7 @@
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import FactionRosterFormFields from "$lib/components/seo/FactionRosterFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import PersonalityFormFields from "$lib/components/seo/PersonalityFormFields.svelte";
   import RumourFormFields from "$lib/components/seo/RumourFormFields.svelte";
   import EncounterFormFields from "$lib/components/seo/EncounterFormFields.svelte";
   import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
@@ -51,6 +52,7 @@
     factionConfig,
     factionRosterConfig,
     questConfig,
+    personalityConfig,
     rumourConfig,
     encounterConfig,
     puzzleConfig,
@@ -266,6 +268,22 @@
     }
   });
 
+  let personality = $state({
+    genre: personalityConfig.genres[0],
+    roleHint: personalityConfig.roleHints[0],
+    temperament: personalityConfig.temperaments[0],
+    socialStyle: personalityConfig.socialStyles[0],
+    moralOutlook: personalityConfig.moralOutlooks[0],
+    emotionalOpenness: personalityConfig.emotionalOpenness[0],
+    confidence: personalityConfig.confidenceLevels[0],
+    optimism: personalityConfig.optimismSpectrum[0],
+    expressiveness: personalityConfig.expressiveness[0],
+    cooperationStyle: personalityConfig.cooperationStyles[0],
+    ageOrLifeStage: "",
+    relationshipContext: "",
+    concept: "",
+    campaignContext: "",
+  });
   let quest = $state({
     genre: questConfig.genres[0],
     tone: questConfig.tones[0],
@@ -694,6 +712,7 @@
     else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
     else if (slug === "artifact-generator") artifact.genre = activeTheme;
     else if (slug === "creature") creature.genre = activeTheme;
+    else if (slug === "personality") personality.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -866,6 +885,7 @@
     faction,
     factionRoster,
     quest,
+    personality,
     rumour,
     encounter,
     puzzle,
@@ -1028,6 +1048,31 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "personality"}
+      <PersonalityFormFields
+        bind:genre={personality.genre}
+        bind:roleHint={personality.roleHint}
+        bind:temperament={personality.temperament}
+        bind:socialStyle={personality.socialStyle}
+        bind:moralOutlook={personality.moralOutlook}
+        bind:emotionalOpenness={personality.emotionalOpenness}
+        bind:confidence={personality.confidence}
+        bind:optimism={personality.optimism}
+        bind:expressiveness={personality.expressiveness}
+        bind:cooperationStyle={personality.cooperationStyle}
+        bind:ageOrLifeStage={personality.ageOrLifeStage}
+        bind:relationshipContext={personality.relationshipContext}
+        bind:concept={personality.concept}
+        bind:campaignContext={personality.campaignContext}
+        onGenreChange={(genre) => {
+          // Custom genre text still flavors the output, but only established
+          // CC themes can select a visual skin.
+          if ((personalityConfig.genres as readonly string[]).includes(genre)) {
+            activeTheme = genre;
+          }
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "rumour"}

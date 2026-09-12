@@ -44,6 +44,13 @@
       icon: "icon-[lucide--user-round-plus]",
     },
     {
+      slug: "personality",
+      label: "Personality Generator",
+      summary:
+        "Generate a coherent, playable personality -- drives, virtue and flaw, a real contradiction, and how they act under pressure -- ready to roleplay.",
+      icon: "icon-[lucide--drama]",
+    },
+    {
       slug: "faction",
       label: "Faction Generator",
       summary:

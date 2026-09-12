@@ -23,6 +23,13 @@
             "Generate NPCs across six genres: fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
           icon: "icon-[lucide--users]",
         },
+        {
+          href: "/generators/personality",
+          label: "Personality Generator",
+          summary:
+            "Generate a coherent, playable personality: drives, a connected virtue and flaw, a believable contradiction, and roleplaying cues.",
+          icon: "icon-[lucide--drama]",
+        },
       ],
     },
     {

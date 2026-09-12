@@ -78,5 +78,10 @@ export function createLongPressTracker<T>(
     return was;
   }
 
-  return { handleTouchStart, handleTouchMove, handleTouchEnd, consumeTriggered };
+  return {
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    consumeTriggered,
+  };
 }

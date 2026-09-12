@@ -5,7 +5,10 @@ import {
 } from "./language-profile";
 import type { LanguageGeneratorOptions } from "./public-language";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import type { GeneratorOutput, GeneratorRunRequest } from "./campaign-generator-types";
+import type {
+  GeneratorOutput,
+  GeneratorRunRequest,
+} from "./campaign-generator-types";
 import type { LanguageGenerationResultV1 } from "schema";
 
 export const LANGUAGE_GENERATION_CONFIG = {

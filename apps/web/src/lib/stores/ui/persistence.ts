@@ -1,3 +1,4 @@
+import { browserStorage } from "$lib/utils/runtime-deps";
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -51,13 +52,7 @@ export class UIPersistence {
   private storage: StorageLike | null;
 
   constructor(options?: { storage?: StorageLike }) {
-    if (options?.storage) {
-      this.storage = options.storage;
-    } else if (typeof window !== "undefined" && window.localStorage) {
-      this.storage = window.localStorage;
-    } else {
-      this.storage = null;
-    }
+    this.storage = options?.storage ?? browserStorage;
   }
 
   read<T>(key: string, parse: (raw: string) => T, fallback: T): T {

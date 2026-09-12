@@ -388,9 +388,17 @@ export async function updateTrackerPlatformStatus(
 
     const logPath = resolve(worktreeDir, BLUESKY_LOG_PATH);
     const original = await readFile(logPath, "utf8");
-    const updated = updatePlatformStatus(original, identifier, platform, status);
+    const updated = updatePlatformStatus(
+      original,
+      identifier,
+      platform,
+      status,
+    );
     if (updated === original) {
-      return { success: false, error: `No tracker row found for '${identifier}'` };
+      return {
+        success: false,
+        error: `No tracker row found for '${identifier}'`,
+      };
     }
     await writeFile(logPath, updated, "utf8");
 

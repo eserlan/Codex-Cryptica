@@ -1157,6 +1157,51 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "tabletop plot reversals",
     ],
   },
+  personality: {
+    pageTitle:
+      "Personality Generator | Free RPG Character Personality Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a coherent, playable RPG character personality: drives, a connected virtue and flaw, a believable contradiction, behaviour under pressure, speech style, and roleplaying cues — not a flat trait list.",
+    introTitle: "Personality Generator",
+    eyebrow: "Character Personality Generator",
+    introText:
+      "Create a personality you can actually portray at the table: what they want, how they act under pressure, how they speak, and the one contradiction that makes them feel human. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/personality",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-personality.jpg",
+    ogImageAlt:
+      "Codex Cryptica personality generator drafting a character's drives, contradiction, and roleplaying cues",
+    keywords: [
+      "personality generator",
+      "random personality generator",
+      "character personality generator",
+      "rpg personality generator",
+      "npc personality generator",
+      "character trait generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Personality Generator create?",
+        answer:
+          "A coherent personality profile: a core behavioural pattern, outward demeanour versus inner nature, drives (what they want, fear, protect, envy, and need from others), a connected virtue and flaw, a psychologically believable contradiction, how they change under pressure, social behaviour by relationship type, speech style, a restrained mannerism, a boundary or trigger, and 3-5 concrete roleplaying cues.",
+      },
+      {
+        question: "Does it just generate a list of adjectives?",
+        answer:
+          "No. The generator is deliberately built against adjective-soup output — every field is checked for internal consistency, so the drives, virtue/flaw, contradiction, and speech style all describe the same person rather than a pile of unrelated traits.",
+      },
+      {
+        question: "Can I use it to enrich an existing character?",
+        answer:
+          "The standalone generator produces a new character personality you can save into your vault. Generating a personality directly from an existing entity, using its established facts as context, is supported from the entity's own detail view.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/npc", label: "NPC Generator" },
+      { href: "/generators/dnd-npc", label: "D&D NPC Generator" },
+      { href: "/generators/bbeg-generator", label: "BBEG Generator" },
+    ],
+  },
   "bbeg-generator": {
     pageTitle:
       "BBEG / Campaign Villain Generator | Free RPG Antagonist Tool | Codex Cryptica",

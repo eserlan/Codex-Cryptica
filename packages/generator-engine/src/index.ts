@@ -300,6 +300,14 @@ export {
   type VillainPrompt,
 } from "./public-villain";
 export {
+  buildPersonalityPrompt,
+  parsePersonalityResponse,
+  generatePersonalityLocal,
+  personalityConfig,
+  type PersonalityGeneratorOptions,
+  type PersonalityPrompt,
+} from "./public-personality";
+export {
   buildCouncilVoteFoundationPrompt,
   buildCouncilVoteFoundationRepairPrompt,
   parseCouncilVoteFoundation,

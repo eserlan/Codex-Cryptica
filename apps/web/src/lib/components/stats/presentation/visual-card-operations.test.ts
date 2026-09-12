@@ -321,9 +321,9 @@ describe("visual-card-operations", () => {
         rows: [[]],
       };
       expect(addValueToTableRow([gridCard], "g1", 0)).toEqual([gridCard]);
-      expect(
-        updateValueInTableRow([gridCard], "g1", 0, 0, "x"),
-      ).toEqual([gridCard]);
+      expect(updateValueInTableRow([gridCard], "g1", 0, 0, "x")).toEqual([
+        gridCard,
+      ]);
       expect(removeValueFromTableRow([gridCard], "g1", 0, 0)).toEqual([
         gridCard,
       ]);
@@ -340,9 +340,9 @@ describe("visual-card-operations", () => {
       expect(
         updateValueInTableRow([undefinedModeCard], "u1", 0, 0, "x"),
       ).toEqual([undefinedModeCard]);
-      expect(
-        removeValueFromTableRow([undefinedModeCard], "u1", 0, 0),
-      ).toEqual([undefinedModeCard]);
+      expect(removeValueFromTableRow([undefinedModeCard], "u1", 0, 0)).toEqual([
+        undefinedModeCard,
+      ]);
     });
   });
 

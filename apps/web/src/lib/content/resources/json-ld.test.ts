@@ -45,9 +45,7 @@ describe("buildCastleFloorplansJsonLd", () => {
     expect(first.position).toBe(1);
     expect(first.item["@type"]).toBe("WebPage");
     expect(first.item.name).toBe("Biltmore Estate");
-    expect(first.item.url).toBe(
-      "http://randwulf.com/hogwarts/Biltmore.html",
-    );
+    expect(first.item.url).toBe("http://randwulf.com/hogwarts/Biltmore.html");
     expect(second.position).toBe(2);
     expect(second.item.name).toBe("Great Castles floor plan directory");
   });
@@ -92,7 +90,9 @@ describe("buildCastleFloorplansBreadcrumbJsonLd", () => {
 
   it("gives each crumb a distinct URL so parent/child are valid", () => {
     const parsed = JSON.parse(buildCastleFloorplansBreadcrumbJsonLd());
-    const urls = parsed.itemListElement.map((crumb: { item: string }) => crumb.item);
+    const urls = parsed.itemListElement.map(
+      (crumb: { item: string }) => crumb.item,
+    );
     expect(new Set(urls).size).toBe(urls.length);
   });
 });

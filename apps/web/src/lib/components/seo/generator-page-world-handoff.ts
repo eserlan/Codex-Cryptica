@@ -43,7 +43,8 @@ export function parseDevelopWorldHandoff(
 
   const bodyType = normalize(searchParams.get("developBodyType"));
   const context = normalize(searchParams.get("developContext"));
-  const detail = context || (systemTitle ? `part of the ${systemTitle} system.` : "");
+  const detail =
+    context || (systemTitle ? `part of the ${systemTitle} system.` : "");
   const dominantFeature = `${bodyName}${bodyType ? ` (${bodyType})` : ""}${detail ? ` — ${detail}` : ""}`;
 
   return {

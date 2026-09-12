@@ -8,12 +8,7 @@ The `status` of `SyncStore` is modeled as a reactive string state with the follo
 
 ```typescript
 type VaultStatus =
-  | "idle"
-  | "loading"
-  | "saving"
-  | "saved"
-  | "needs-permission"
-  | "error";
+  "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
 ```
 
 ### State Description
