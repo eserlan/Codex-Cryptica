@@ -32,6 +32,9 @@ function makeFakeEngine(): any {
     generateQuestHook: vi
       .fn()
       .mockResolvedValue({ type: "note", title: "quest" }),
+    generatePersonality: vi
+      .fn()
+      .mockResolvedValue({ type: "character", title: "personality" }),
     generateRumour: vi
       .fn()
       .mockResolvedValue({ type: "note", title: "rumour" }),
@@ -134,6 +137,7 @@ function makeBaseCtx(overrides: any) {
     faction: { theme: "Fantasy" },
     factionRoster: { theme: "Fantasy" },
     quest: { genre: "Fantasy" },
+    personality: { genre: "Fantasy" },
     rumour: { genre: "Fantasy" },
     encounter: { genre: "Fantasy" },
     puzzle: { genre: "Fantasy" },

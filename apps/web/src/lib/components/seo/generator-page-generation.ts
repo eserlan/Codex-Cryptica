@@ -42,6 +42,7 @@ export interface GenerationContext {
   faction: Record<string, unknown>;
   factionRoster: Record<string, unknown>;
   quest: Record<string, unknown>;
+  personality: Record<string, unknown>;
   rumour: Record<string, unknown>;
   encounter: Record<string, unknown>;
   puzzle: Record<string, unknown>;
@@ -125,6 +126,11 @@ export function createGeneratorHandlers(
       } as never),
     quest: (useAI) =>
       engine.generateQuestHook({ ...(ctx.quest as object), useAI } as never),
+    personality: (useAI) =>
+      engine.generatePersonality({
+        ...(ctx.personality as object),
+        useAI,
+      } as never),
     rumour: (useAI) =>
       engine.generateRumour({ ...(ctx.rumour as object), useAI } as never),
     encounter: (useAI) =>

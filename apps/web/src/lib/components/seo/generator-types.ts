@@ -38,7 +38,8 @@ export type ValidSlug =
   | "alien-race"
   | "creature"
   | "encounter"
-  | "heist";
+  | "heist"
+  | "personality";
 
 export type SlugMetaEntry = {
   pageTitle: string;

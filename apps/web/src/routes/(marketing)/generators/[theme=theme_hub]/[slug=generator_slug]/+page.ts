@@ -45,6 +45,7 @@ const validSlugs = new Set([
   "creature",
   "encounter",
   "heist",
+  "personality",
 ]);
 
 export const load: PageLoad = ({ params }) => {

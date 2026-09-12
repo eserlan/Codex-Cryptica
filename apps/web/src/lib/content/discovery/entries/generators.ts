@@ -72,6 +72,32 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     ],
   },
   {
+    id: "generator-personality",
+    pageKind: "generator",
+    canonicalPath: "/generators/personality",
+    primaryIntent: "personality generator",
+    intentAliases: [
+      "random personality generator",
+      "character personality generator",
+      "rpg personality generator",
+      "npc personality generator",
+      "character trait generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A coherent, playable personality — drives, a connected virtue and flaw, a believable contradiction, pressure response, and roleplaying cues — rather than a flat adjective list.",
+    parentCluster: "npc-creation",
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "generator-npc",
+        reason:
+          "The NPC generator produces a full character including a light personality sketch as one part of the whole; this generator's entire output is the personality itself, at far greater depth, and can also be generated standalone for a character built elsewhere.",
+      },
+    ],
+  },
+  {
     id: "generator-settlement",
     pageKind: "generator",
     canonicalPath: "/generators/settlement",
