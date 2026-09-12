@@ -75,6 +75,12 @@ describe("Puzzle generator", () => {
     expect(systemInstruction).toContain("Respect the genre");
   });
 
+  it("warns against defaulting to lamps/light fixtures as the puzzle mechanism (#3005)", () => {
+    const { userMessage } = buildPuzzlePrompt({ genre: "Fantasy" });
+    expect(userMessage).toContain("Avoid defaulting to lamps");
+    expect(userMessage).toContain("sconces, torches, or other light fixtures");
+  });
+
   it("rejects malformed AI output so the web seam can fall back", () => {
     expect(() =>
       parsePuzzleResponse('{"title":"Missing sections","content":"Nope"}'),
