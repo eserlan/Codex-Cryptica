@@ -120,6 +120,7 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-prep-a-weekly-rpg-session-quickly",
@@ -131,6 +132,7 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
   discovery: {
     id: "answer-session-recap",
     parentCluster: "session-prep",
+    clusters: ["campaign-memory"],
     primaryIntent: "how do you recap a ttrpg session",
     intentAliases: [
       "how to recap a d&d session",
@@ -142,11 +144,17 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
     uniqueValue:
       "A five-point 60–90 second recap framework (location, active threat, party goal, relevant NPCs, one consequence), concrete delivery techniques including telling characters what players themselves have forgotten, and a worked concise-vs-overlong comparison, in place of the instinct toward an exhaustive chronological retelling.",
     relatedIntents: [
+      "answer-campaign-memory-hub",
       "answer-campaign-notes",
       "answer-session-prep",
       "answer-npc-relationships",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-campaign-memory-hub",
+        reason:
+          "The campaign-memory hub page is the broad framework across a whole campaign's lifespan; this answer is the narrow, tactical piece of it — the specific ritual delivered at the start of a session.",
+      },
       {
         with: "answer-session-prep",
         reason:
