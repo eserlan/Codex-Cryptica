@@ -96,6 +96,26 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     linkText: "Manage campaign factions in Codex Cryptica",
     href: "/solutions/campaign-manager",
   },
+  systemsThatSupportThis: [
+    {
+      system: "Stars Without Number",
+      rationale:
+        "Between player adventures, organisations spend FacCreds, manoeuvre discrete Force, Cunning, and Wealth assets across the sector map, and execute attacks against rival holdings to pursue designated faction goals.",
+      href: "https://www.drivethrurpg.com/product/230009/Stars-Without-Number-Revised-Edition-Free-Version",
+    },
+    {
+      system: "Reign",
+      rationale:
+        "The Company rules treat organisations as characters with five core qualities, resolving large-scale moves between player adventures through a single pool roll for actions such as attacking territory, countering infiltration, or improving wealth.",
+      href: "https://atomicovermind.com/reign/",
+    },
+    {
+      system: "Blades in the Dark",
+      rationale:
+        "During downtime between scores, the GM advances segmented progress clocks for active city factions by rolling a fortune roll based on faction Tier, letting rival schemes develop off-screen without requiring detailed tactical simulation.",
+      href: "https://bladesinthedark.com/faction-game",
+    },
+  ],
   relatedTools: [
     {
       title: "Faction generator",
