@@ -122,6 +122,7 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
   relatedAnswers: [
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
+    "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-prep-a-weekly-rpg-session-quickly",
     "how-much-prep-do-you-need-for-an-rpg-session",

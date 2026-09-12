@@ -105,6 +105,8 @@ export const howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign: AnswerConf
     relatedAnswers: [
       "how-do-you-recap-a-ttrpg-session",
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
+      "how-much-campaign-lore-should-players-be-expected-to-remember",
+      "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
       "how-do-you-organise-rpg-campaign-notes",
       "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
       "how-do-you-make-npcs-memorable-without-lots-of-prep",
