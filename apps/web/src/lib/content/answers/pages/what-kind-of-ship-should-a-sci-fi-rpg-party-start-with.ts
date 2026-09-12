@@ -133,6 +133,20 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Traveller",
+      rationale:
+        "Character creation can end with the party owning a ship financed by a bank mortgage, with monthly payments and repossession as a real consequence of missing them — ownership as a built-in campaign pressure, not GM flavour.",
+      href: "https://www.traveller-srd.com/",
+    },
+    {
+      system: "Scum & Villainy",
+      rationale:
+        "Crew creation includes choosing a Ship type that sets starting hull stats, upgrades, and cohorts directly, the same way a Blades in the Dark crew picks a playbook — the vessel is a formal character-creation choice, not backstory.",
+      href: "https://www.evilhat.com/home/scum-villainy/",
+    },
+  ],
   codexConnection: {
     heading: "Generate the ship, keep its history",
     paragraphs: [
