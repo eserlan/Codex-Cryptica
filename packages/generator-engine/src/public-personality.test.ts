@@ -100,6 +100,27 @@ describe("buildPersonalityPrompt", () => {
     expect(userMessage).toContain("not five phrasings of the same want");
   });
 
+  it("includes the structural variety guardrail naming the convergent chassis and its axes", () => {
+    const { userMessage } = buildPersonalityPrompt({}, "", "", seededRng(1));
+    expect(userMessage).toContain("conviction that curdles into control");
+    expect(userMessage).toContain("Agency style:");
+    expect(userMessage).toContain("Self-awareness:");
+    expect(userMessage).toContain("Speech style:");
+    expect(userMessage).toContain("Flaw structure:");
+    expect(userMessage).toContain("Contradiction intensity:");
+    expect(userMessage).toContain("Social posture:");
+    expect(userMessage).toContain("Competence:");
+    expect(userMessage).toContain("simply ordinary");
+  });
+
+  it("includes the pressure-response guardrail against the most-repeated stress pattern", () => {
+    const { userMessage } = buildPersonalityPrompt({}, "", "", seededRng(1));
+    expect(userMessage).toContain("becomes brisk and procedural");
+    expect(userMessage).toContain(
+      "Select the pressure response independently from the character's everyday competence style",
+    );
+  });
+
   it("folds entity context into the prompt as established fact to extend, not overwrite", () => {
     const { userMessage } = buildPersonalityPrompt(
       {},

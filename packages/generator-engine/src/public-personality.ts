@@ -216,6 +216,32 @@ const COHERENCE_PASS = `Before returning, run a coherence pass: the drives, the 
  */
 const NON_REPETITION_GUARDRAIL = `Each section must add genuinely new behavioural information — do not restate the core personality, the drives, or the contradiction in different words section after section. Once a trait is established, later sections should show a new consequence or a different facet of it, not re-explain the trait itself: Drives should describe five distinct wants, not five phrasings of the same want; Social Behaviour should differentiate the four groups from each other, not just from the core description. Favour concrete, observable behaviour ("checks the exits twice, then makes himself stop") over psychological narration ("this reflects a fear of losing control") — one or two brief insight lines across the whole piece are plenty; if you notice yourself explaining what a behaviour "really means" more than twice, cut it back to the behaviour itself.`;
 
+/**
+ * Guards against a second, deeper convergence failure the archetype-variety
+ * guardrail alone doesn't catch (user feedback, 2026-09-12, third sample in a
+ * row): even with different surface traits, generations kept reusing the
+ * same underlying chassis — composed/decisive exterior, conviction that
+ * curdles into control, procedural/orderly behaviour under fear, a tidy
+ * virtue-becomes-flaw contradiction, high self-awareness, concise assertive
+ * speech, and leadership-shaped competence. This targets the chassis itself,
+ * not just the archetype label.
+ */
+const STRUCTURAL_VARIETY_GUARDRAIL = `Known failure mode: regardless of which options are selected, generations converge on the same underlying chassis — composed, decisive exterior; conviction that curdles into control; procedural, orderly behaviour under fear; a tidy, elegant virtue-becomes-flaw contradiction; high self-awareness; concise, assertive speech; and leadership-shaped competence. Do not default to this shape. Deliberately choose, for this generation only, a combination across these axes that is not the one above:
+- Agency style: commanding, deferential, evasive, collaborative, passive, impulsive, manipulative, or reactive — commanding is one option among many, not the default.
+- Self-awareness: insightful, only partly aware of their own pattern, or confidently wrong about themselves — insightful is one option among many, not the default.
+- Speech style: concise and assertive is one option among many — also consider expansive, elliptical, warm, verbose, hesitant, theatrical, blunt, cryptic, or rambling.
+- Flaw structure: "virtue taken too far" is one valid shape, not the default — a flaw can instead be unrelated to any virtue, a plain bad habit, or a blind spot they've never examined.
+- Contradiction intensity: not every character needs an elegant thematic paradox — some contradictions should be minor, mundane, or barely worth mentioning.
+- Social posture: not everyone tests, manages, or wants to be challenged by other people — some are indifferent to others' opinions, some avoid friction entirely, some just want to be left alone.
+- Competence: not every personality is a trustworthy leader with admirable flaws. Petty, indecisive, needy, avoidant, vain, unserious, passive-aggressive, easily distracted, conflict-averse, socially awkward, emotionally opaque, or simply ordinary are all valid, playable output — not failure states.`;
+
+/**
+ * Companion to STRUCTURAL_VARIETY_GUARDRAIL: the pressure response was the
+ * single most repeated line across samples ("becomes brisk and procedural")
+ * even when everything else varied, so it gets its own explicit guardrail.
+ */
+const PRESSURE_RESPONSE_GUARDRAIL = `Avoid recurring stress patterns: do not default to "becomes brisk and procedural", "issues orders", "takes control", "over-explains", or "becomes rigid" unless this specific personality genuinely demands it. Select the pressure response independently from the character's everyday competence style — consider freezing, fleeing, appeasing, joking, dissociating, lashing out, deferring to someone else, obsessing over an irrelevant detail, becoming reckless, becoming clingy or dependent, going silent, or overcorrecting into the opposite of their normal behaviour. A composed, competent character under pressure does not have to become more composed and competent — pressure can reveal a completely different side of them.`;
+
 export function buildPersonalityPrompt(
   options: PersonalityGeneratorOptions = {},
   entityContext = "",
@@ -250,6 +276,8 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["personality", "personality-generator", "imported-draft"]
 }
 Quality guardrails: prefer a coherent behavioural concept with internal tension over a trait list. ${ARCHETYPE_VARIETY_GUARDRAIL}
+${STRUCTURAL_VARIETY_GUARDRAIL}
+${PRESSURE_RESPONSE_GUARDRAIL}
 ${COHERENCE_PASS}
 ${NON_REPETITION_GUARDRAIL}
 ${NAME_BAN_PROMPT}
