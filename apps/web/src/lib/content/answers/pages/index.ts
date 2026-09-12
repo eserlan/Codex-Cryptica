@@ -17,6 +17,7 @@ import { howDoYouGenerateUsefulRpgRumours } from "./how-do-you-generate-useful-r
 import { howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer } from "./how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer";
 import { howDoYouHandleCharacterDeathInATabletopRpg } from "./how-do-you-handle-character-death-in-a-tabletop-rpg";
 import { howDoYouHandlePlayersGoingOffScriptAsAGm } from "./how-do-you-handle-players-going-off-script-as-a-gm";
+import { howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign } from "./how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign";
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
@@ -84,6 +85,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer,
     howDoYouHandleCharacterDeathInATabletopRpg,
     howDoYouHandlePlayersGoingOffScriptAsAGm,
+    howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign,
     howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfNpcsInALongCampaign,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
