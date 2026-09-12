@@ -92,6 +92,14 @@ describe("buildPersonalityPrompt", () => {
     expect(userMessage).toContain("sarcastic but secretly caring");
   });
 
+  it("includes the non-repetition guardrail against restating the same thesis in every section", () => {
+    const { userMessage } = buildPersonalityPrompt({}, "", "", seededRng(1));
+    expect(userMessage).toContain(
+      "Each section must add genuinely new behavioural information",
+    );
+    expect(userMessage).toContain("not five phrasings of the same want");
+  });
+
   it("folds entity context into the prompt as established fact to extend, not overwrite", () => {
     const { userMessage } = buildPersonalityPrompt(
       {},
