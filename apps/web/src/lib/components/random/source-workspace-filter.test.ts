@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { RandomSource } from "random-source-engine";
 
-import { collectLabels, countOf, filterSources } from "./source-workspace-filter";
+import {
+  collectLabels,
+  countOf,
+  filterSources,
+} from "./source-workspace-filter";
 
 function source(overrides: Partial<RandomSource>): RandomSource {
   return {
@@ -34,7 +38,11 @@ describe("filterSources", () => {
   const all = [
     source({ id: "1", name: "Tavern Names", labels: ["travel"] }),
     source({ id: "2", name: "Dungeon Traps", labels: ["dungeon"] }),
-    source({ id: "3", name: "Desert Encounters", labels: ["travel", "dungeon"] }),
+    source({
+      id: "3",
+      name: "Desert Encounters",
+      labels: ["travel", "dungeon"],
+    }),
   ];
 
   it("filters by a case-insensitive name search and sorts alphabetically", () => {

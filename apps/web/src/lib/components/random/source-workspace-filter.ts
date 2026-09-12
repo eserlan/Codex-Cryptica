@@ -27,9 +27,6 @@ export function filterSources(
 }
 
 /** Entries for a table, cards for a deck — whichever the kind counts as content. */
-export function countOf(
-  kind: "table" | "deck",
-  source: RandomSource,
-): number {
+export function countOf(kind: "table" | "deck", source: RandomSource): number {
   return (kind === "table" ? source.entries : source.cards)?.length ?? 0;
 }

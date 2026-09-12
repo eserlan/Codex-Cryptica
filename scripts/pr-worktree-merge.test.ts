@@ -32,11 +32,10 @@ describe("PR worktree merge", () => {
       };
       try {
         execFileSync("git", ["init"], { cwd: dir, env: gitEnv });
-        execFileSync(
-          "git",
-          ["commit", "--allow-empty", "-m", "init"],
-          { cwd: dir, env: gitEnv },
-        );
+        execFileSync("git", ["commit", "--allow-empty", "-m", "init"], {
+          cwd: dir,
+          env: gitEnv,
+        });
 
         const result = mergeStagingIntoWorktree(dir, "does-not-exist");
 

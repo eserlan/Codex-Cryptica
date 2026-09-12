@@ -346,7 +346,9 @@ describe("Table Card (5-Element) NPC mode", () => {
         { role: "Guard", mode: "table-card" },
         seededRng(seed),
       );
-      expect(out.summary).not.toMatch(/who urgently (needs|desperate|seeking|searching|wants|looking)/i);
+      expect(out.summary).not.toMatch(
+        /who urgently (needs|desperate|seeking|searching|wants|looking)/i,
+      );
     }
   });
 });

@@ -1,12 +1,19 @@
 import { SvelteMap } from "svelte/reactivity";
-import { accumulateRotationDegrees, canvasNodeRotation, pointerAngleDegrees } from "../canvas-workspace-helpers";
+import {
+  accumulateRotationDegrees,
+  canvasNodeRotation,
+  pointerAngleDegrees,
+} from "../canvas-workspace-helpers";
 import type { Node } from "@xyflow/svelte";
 
-export function useCanvasNodeRotation(logic: {
-  nodes: Node[];
-  updateNodeRotation: (nodeId: string, rotation: number) => void;
-  saveNow: () => void;
-}, vault: { isGuest: boolean }) {
+export function useCanvasNodeRotation(
+  logic: {
+    nodes: Node[];
+    updateNodeRotation: (nodeId: string, rotation: number) => void;
+    saveNow: () => void;
+  },
+  vault: { isGuest: boolean },
+) {
   let selectedRotationNodeId = $state<string | null>(null);
   let isRotatingNode = $state(false);
 
@@ -40,12 +47,16 @@ export function useCanvasNodeRotation(logic: {
     const node = logic.nodes.find((candidate) => candidate.id === nodeId);
     return Boolean(
       node &&
-        node.type !== "delveSectorGroup" &&
-        !(node.data as Record<string, unknown> | undefined)?.locked,
+      node.type !== "delveSectorGroup" &&
+      !(node.data as Record<string, unknown> | undefined)?.locked,
     );
   }
 
-  function beginTouchRotation(event: PointerEvent, isDrawingMode: boolean, isErasingMode: boolean) {
+  function beginTouchRotation(
+    event: PointerEvent,
+    isDrawingMode: boolean,
+    isErasingMode: boolean,
+  ) {
     if (
       event.pointerType !== "touch" ||
       vault.isGuest ||

@@ -28,9 +28,7 @@ import { GuestVTTHandler } from "./handlers/guest-vtt-handler";
 
 const handler = new GuestVTTHandler();
 const mockConnection = { send: vi.fn(), close: vi.fn(), peer: "host" };
-const mockContext = {
-  /* ... */
-};
+const mockContext = {/* ... */};
 
 await handler.handle(
   { type: "TOKEN_ADDED", token: { id: "1" } },

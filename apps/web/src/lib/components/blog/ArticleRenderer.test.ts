@@ -16,9 +16,7 @@ describe("ArticleRenderer", () => {
     expect(article?.classList.contains("text-lg")).toBe(true);
     expect(article?.classList.contains("leading-relaxed")).toBe(true);
     expect(article?.classList.contains("break-words")).toBe(true);
-    expect(article?.classList.contains("prose-pre:overflow-x-auto")).toBe(
-      true,
-    );
+    expect(article?.classList.contains("prose-pre:overflow-x-auto")).toBe(true);
     expect(article?.querySelector("pre")).toBeTruthy();
   });
 });

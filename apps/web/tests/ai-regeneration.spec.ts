@@ -85,7 +85,9 @@ test.describe("AI Entity Regeneration", () => {
     await page.click('button:has-text("Apply Changes")');
 
     // 9.5 Handle Lore Merge Modal if it appears
-    const mergeDialog = page.getByRole("dialog", { name: "Review lore changes" });
+    const mergeDialog = page.getByRole("dialog", {
+      name: "Review lore changes",
+    });
     await expect(mergeDialog).toBeVisible({ timeout: 5000 });
     await mergeDialog.getByRole("button", { name: "Apply selection" }).click();
 

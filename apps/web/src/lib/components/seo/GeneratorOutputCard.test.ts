@@ -81,12 +81,10 @@ describe("GeneratorOutputCard", () => {
     expect(seoMdContainer?.classList.contains("leading-relaxed")).toBe(true);
     expect(seoMdContainer?.classList.contains("break-words")).toBe(true);
     expect(seoMdContainer?.classList.contains("text-base")).toBe(false);
-    expect(
-      seoMdContainer?.classList.contains("[&_pre]:overflow-x-auto"),
-    ).toBe(true);
-    expect(seoMdContainer?.classList.contains("[&_pre]:max-w-full")).toBe(
+    expect(seoMdContainer?.classList.contains("[&_pre]:overflow-x-auto")).toBe(
       true,
     );
+    expect(seoMdContainer?.classList.contains("[&_pre]:max-w-full")).toBe(true);
   });
 
   it("keeps fenced code blocks from overflowing the card on mobile", () => {
