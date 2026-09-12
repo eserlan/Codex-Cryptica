@@ -620,6 +620,22 @@ describe("published answers", () => {
       expect(ref.rationale.length).toBeGreaterThan(0);
     }
   });
+
+  it("publishes the faction turn tracking answer with verified system references", () => {
+    const factionAnswer =
+      answers["how-do-you-track-faction-turns-between-rpg-sessions"];
+    expect(factionAnswer).toBeDefined();
+    expect(factionAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Stars Without Number",
+      "Reign",
+      "Blades in the Dark",
+    ]);
+    for (const ref of factionAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
 });
 
 describe("answer structured data", () => {
