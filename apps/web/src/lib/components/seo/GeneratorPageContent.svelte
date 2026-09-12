@@ -712,6 +712,7 @@
     else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
     else if (slug === "artifact-generator") artifact.genre = activeTheme;
     else if (slug === "creature") creature.genre = activeTheme;
+    else if (slug === "personality") personality.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -1065,6 +1066,13 @@
         bind:relationshipContext={personality.relationshipContext}
         bind:concept={personality.concept}
         bind:campaignContext={personality.campaignContext}
+        onGenreChange={(genre) => {
+          // Custom genre text still flavors the output, but only established
+          // CC themes can select a visual skin.
+          if ((personalityConfig.genres as readonly string[]).includes(genre)) {
+            activeTheme = genre;
+          }
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "rumour"}
