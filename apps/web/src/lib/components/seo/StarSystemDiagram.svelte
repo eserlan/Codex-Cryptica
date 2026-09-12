@@ -386,6 +386,7 @@
         onclick={closeFullscreen}
         class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-theme-border/50 bg-theme-bg/60 text-theme-text/80 transition-all hover:border-theme-primary hover:text-theme-primary"
         title="Close"
+        aria-label="Close diagram"
       >
         <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
       </button>
