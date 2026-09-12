@@ -29,10 +29,7 @@ export function centerScreenPosition() {
   return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 }
 
-export function formatFileFailure(
-  file: File,
-  reason: FileImportFailureReason,
-) {
+export function formatFileFailure(file: File, reason: FileImportFailureReason) {
   const descriptions: Record<FileImportFailureReason, string> = {
     empty: "is empty",
     too_large: "is larger than 10 MB",

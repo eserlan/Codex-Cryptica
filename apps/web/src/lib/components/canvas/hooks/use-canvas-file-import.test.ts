@@ -7,14 +7,21 @@ import {
   centerScreenPosition,
 } from "./use-canvas-file-import.svelte";
 
-function makeDeps(overrides: Partial<Parameters<typeof useCanvasFileImport>[0]> = {}) {
+function makeDeps(
+  overrides: Partial<Parameters<typeof useCanvasFileImport>[0]> = {},
+) {
   const nodes: Node[] = [];
   return {
     vault: {
       isGuest: false,
       importFileToVault: vi.fn(async (file: File) => ({
         ok: true as const,
-        file: { path: `/files/${file.name}`, name: file.name, mimeType: file.type, size: file.size },
+        file: {
+          path: `/files/${file.name}`,
+          name: file.name,
+          mimeType: file.type,
+          size: file.size,
+        },
       })),
     },
     engine: { addFileNode: vi.fn(() => "node-1") },
@@ -69,7 +76,9 @@ describe("useCanvasFileImport", () => {
   });
 
   it("does nothing for guests and reports failures without adding nodes", async () => {
-    const guestDeps = makeDeps({ vault: { isGuest: true, importFileToVault: vi.fn() } });
+    const guestDeps = makeDeps({
+      vault: { isGuest: true, importFileToVault: vi.fn() },
+    });
     const guestImport = useCanvasFileImport(guestDeps);
     await guestImport.handleExternalFiles([new File(["a"], "a.png")]);
     expect(guestDeps.vault.importFileToVault).not.toHaveBeenCalled();

@@ -107,7 +107,9 @@
   const drawingLogic = useCanvasDrawing(logic);
   const fileImport = useCanvasFileImport({
     vault,
-    engine: { addFileNode: (file, position) => engine.addFileNode(file, position) },
+    engine: {
+      addFileNode: (file, position) => engine.addFileNode(file, position),
+    },
     logic,
     isEditableTarget: drawingLogic.isEditableTarget,
     notify: (message, level) => notificationStore.notify(message, level),
@@ -116,7 +118,9 @@
     },
   });
   const isCanvasToolActive = $derived(
-    drawingLogic.isDrawingMode || drawingLogic.isErasingMode || rotationLogic.isRotatingNode,
+    drawingLogic.isDrawingMode ||
+      drawingLogic.isErasingMode ||
+      rotationLogic.isRotatingNode,
   );
   let selectedRoomId = $state<string | null>(null);
   let isRestockingRoom = $state(false);
@@ -128,7 +132,7 @@
   let isFinalizingDossier = $state(false);
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
-    let showMinimap = $state(true);
+  let showMinimap = $state(true);
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -333,9 +337,6 @@
     threatens: CustomEdge,
     resolves_to: CustomEdge,
   };
-
-
-
 
   let arrangedCanvasId = $state<string | null>(null);
 
@@ -819,7 +820,12 @@
     class="flex-1 relative"
     ondragover={onDragOver}
     ondrop={onDrop}
-    onpointerdowncapture={(e) => rotationLogic.beginTouchRotation(e, drawingLogic.isDrawingMode, drawingLogic.isErasingMode)}
+    onpointerdowncapture={(e) =>
+      rotationLogic.beginTouchRotation(
+        e,
+        drawingLogic.isDrawingMode,
+        drawingLogic.isErasingMode,
+      )}
     role="region"
     aria-label="Canvas Workspace"
   >
@@ -842,14 +848,20 @@
       onAutoArrange={handleAutoArrange}
       {showMinimap}
       onToggleMinimap={() => (showMinimap = !showMinimap)}
-      onUploadFiles={!vault.isGuest ? fileImport.handleExternalFiles : undefined}
+      onUploadFiles={!vault.isGuest
+        ? fileImport.handleExternalFiles
+        : undefined}
       onAddTextNode={!vault.isGuest ? () => handleAddTextNode() : undefined}
       isDrawingMode={drawingLogic.isDrawingMode}
       isErasingMode={drawingLogic.isErasingMode}
       drawingColor={drawingLogic.drawingColor}
       drawingWidth={drawingLogic.drawingWidth}
-      onToggleDrawing={!vault.isGuest ? drawingLogic.toggleDrawingMode : undefined}
-      onToggleErasing={!vault.isGuest ? drawingLogic.toggleErasingMode : undefined}
+      onToggleDrawing={!vault.isGuest
+        ? drawingLogic.toggleDrawingMode
+        : undefined}
+      onToggleErasing={!vault.isGuest
+        ? drawingLogic.toggleErasingMode
+        : undefined}
       onDrawingColorChange={!vault.isGuest
         ? drawingLogic.handleDrawingColorChange
         : undefined}
@@ -1097,7 +1109,7 @@
             updateNodeData(contextMenuTextNode!.id, {
               background: normalizeCanvasTextBackground(
                 background,
-    DEFAULT_CANVAS_TEXT_BACKGROUND,
+                DEFAULT_CANVAS_TEXT_BACKGROUND,
               ),
             })
         : undefined}
