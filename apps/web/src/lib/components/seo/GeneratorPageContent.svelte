@@ -3,11 +3,6 @@
   import { browser } from "$app/environment";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import {
-    collectSessionNames,
-    collectSessionTraits,
-    extractPartialJsonStringFields,
-  } from "generator-engine";
   import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
@@ -47,7 +42,6 @@
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
   import {
-    generatorEngine,
     npcConfig,
     npcThemeConfig,
     settlementConfig,
@@ -93,7 +87,10 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
-  import { resolvePlotTwistPremiseForGeneration } from "$lib/services/seo/generator-handoffs";
+  import {
+    createGenerate,
+    createGeneratorHandlers,
+  } from "./generator-page-generation";
   import {
     initializeHandoffState,
     setupHandoffNavigation,
@@ -860,188 +857,53 @@
     }
   });
 
-  const GENERATE_HANDLERS: Record<
-    ValidSlug,
-    (useAI: boolean) => Promise<GeneratorOutput>
-  > = {
-    npc: (useAI) => generatorEngine.generateNPC({ ...npc, useAI }),
-    settlement: (useAI) =>
-      generatorEngine.generateSettlement({ ...settlement, useAI }),
-    "magic-item": (useAI) =>
-      generatorEngine.generateMagicItem({ ...magicItem, useAI }),
-    "minor-magic-item": (useAI) =>
-      generatorEngine.generateMinorMagicItem({
-        ...minorMagicItem,
-        genre: activeTheme,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "artifact-generator": (useAI) =>
-      generatorEngine.generateArtifact({
-        ...artifact,
-        genre: activeTheme,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
-    faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
-    "faction-roster": (useAI) =>
-      generatorEngine.generateFactionRoster({ ...factionRoster, useAI }),
-    quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
-    rumour: (useAI) => generatorEngine.generateRumour({ ...rumour, useAI }),
-    encounter: (useAI) =>
-      generatorEngine.generateEncounter({ ...encounter, useAI }),
-    puzzle: (useAI) => generatorEngine.generatePuzzle({ ...puzzle, useAI }),
-    "council-vote": (useAI) =>
-      generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
-    heist: (useAI) => generatorEngine.generateHeist({ ...heist, useAI }),
-    "secret-society": (useAI) =>
-      generatorEngine.generateSecretSociety({ ...secretSociety, useAI }),
-    tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
-    kingdom: (useAI) => generatorEngine.generateKingdom({ ...kingdom, useAI }),
-    nation: (useAI) => generatorEngine.generateNation({ ...nation, useAI }),
-    "social-hub": (useAI) =>
-      generatorEngine.generateSocialHub({ ...socialHub, useAI }),
-    "vampire-clan": (useAI) =>
-      generatorEngine.generateVampireClan({ ...vampireClan, useAI }),
-    "nomad-clan": (useAI) =>
-      generatorEngine.generateNomadClan({ ...nomadClan, useAI }),
-    "dark-fantasy-faction": (useAI) =>
-      generatorEngine.generateDarkFaction({ ...darkFaction, useAI }),
-    names: (useAI) =>
-      generatorEngine.generateNames({ ...names, theme: activeTheme, useAI }),
-    "fantasy-names": (useAI) =>
-      generatorEngine.generateNames({
-        ...names,
-        theme: "Classic Fantasy",
-        useAI,
-      }),
-    "dnd-npc": (useAI) =>
-      generatorEngine.generateNPC({
-        ...dndNpc,
-        includeDndQuickStats: true,
-        useAI,
-      }),
-    "pantheon-generator": (useAI) =>
-      generatorEngine.generatePantheon({ ...pantheon, useAI }),
-    "god-generator": (useAI) =>
-      generatorEngine.generatePantheon({ ...pantheon, useAI }),
-    "ship-generator": (useAI) =>
-      generatorEngine.generateShip({ ...ship, useAI }),
-    "language-generator": (useAI) =>
-      generatorEngine.generateLanguage({ ...language, useAI }),
-    "news-sheet-generator": (useAI) =>
-      generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
-    "dungeon-generator": (useAI) =>
-      generatorEngine.generateDungeon({
-        ...dungeon,
-        useAI,
-        // Names already drafted this session, so the model does not fall back
-        // on the same faction it invented for the last delve.
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-        avoidTraits: collectSessionTraits(sessionHubStore.entities),
-      }),
-    "adventure-generator": (useAI) =>
-      generatorEngine.generateAdventure({
-        ...adventure,
-        themeId: activeTheme,
-        genre: activeTheme,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "adventure-idea-generator": (useAI) =>
-      generatorEngine.generateAdventure({
-        ...adventure,
-        themeId: activeTheme,
-        genre: activeTheme,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "plot-twist-generator": (useAI) =>
-      generatorEngine.generatePlotTwist({
-        ...plotTwist,
-        premise: resolvePlotTwistPremiseForGeneration(
-          plotTwist.premise,
-          handoffState.questPremise,
-        ),
-        themeId: activeTheme,
-        genre: activeTheme,
-        useAI,
-      }),
-    "bbeg-generator": (useAI) =>
-      generatorEngine.generateVillain({
-        ...villain,
-        genre: activeTheme,
-        useAI,
-      }),
-    world: (useAI) =>
-      generatorEngine.generateWorld({
-        ...world,
-        useAI,
-        // Keep world titles and named factions varied within the current session.
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "star-system": (useAI) =>
-      generatorEngine.generateStarSystem({
-        ...starSystem,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    constellation: (useAI) =>
-      generatorEngine.generateConstellation({
-        ...constellation,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    "alien-race": (useAI) =>
-      generatorEngine.generateAlienRace({
-        ...alienRace,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-    creature: (useAI) =>
-      generatorEngine.generateCreature({
-        ...creature,
-        useAI,
-        avoidNames: collectSessionNames(sessionHubStore.entities),
-      }),
-  };
+  const GENERATE_HANDLERS = createGeneratorHandlers({
+    npc,
+    settlement,
+    magicItem,
+    minorMagicItem,
+    artifact,
+    faction,
+    factionRoster,
+    quest,
+    rumour,
+    encounter,
+    puzzle,
+    councilVote,
+    heist,
+    secretSociety,
+    tavern,
+    kingdom,
+    nation,
+    socialHub,
+    vampireClan,
+    nomadClan,
+    darkFaction,
+    names,
+    dndNpc,
+    pantheon,
+    ship,
+    language,
+    newsSheet,
+    dungeon,
+    adventure,
+    plotTwist,
+    villain,
+    world,
+    starSystem,
+    constellation,
+    alienRace,
+    creature,
+    getActiveTheme: () => activeTheme,
+    getPlotTwistPremise: () => plotTwist.premise,
+    getHandoffQuestPremise: () => handoffState.questPremise,
+    getSessionEntities: () => sessionHubStore.entities,
+  });
 
-  async function generate({
-    useAI,
-    onPreview,
-  }: {
-    useAI: boolean;
-    onPreview?: (preview: GeneratorOutput) => void;
-  }) {
-    const handler = GENERATE_HANDLERS[slug];
-    if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
-    const streamable = ![
-      "council-vote",
-      "dungeon-generator",
-      "adventure-generator",
-      "adventure-idea-generator",
-      "language-generator",
-    ].includes(slug);
-    if (useAI && onPreview && streamable) {
-      return generatorEngine.generateWithPreview(
-        () => handler(useAI),
-        (raw) => {
-          const fields = extractPartialJsonStringFields(raw);
-          onPreview({
-            type: "note",
-            title: fields.title || "Generating…",
-            summary: fields.summary || "",
-            content: fields.content || "",
-            lore: fields.lore || "",
-            labels: [],
-            status: "draft",
-          });
-        },
-      );
-    }
-    return handler(useAI);
-  }
+  const generate = createGenerate({
+    getSlug: () => slug,
+    getHandlers: () => GENERATE_HANDLERS,
+  });
 
   const initialDraft = $derived(
     (handoffState.questPremise && slug === "plot-twist-generator") ||
