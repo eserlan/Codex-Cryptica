@@ -21,9 +21,12 @@
     onClose: () => void;
     onCopy?: (entity: SessionEntity) => Promise<boolean>;
     onRefine?: (entity: SessionEntity) => void;
-    onPrepareShare?: (
-      entity: SessionEntity,
-    ) => Promise<{ url: string; title?: string; text?: string }>;
+    onPrepareShare?: (entity: SessionEntity) => Promise<{
+      url: string;
+      title?: string;
+      text?: string;
+      cleanup?: () => Promise<void>;
+    }>;
     onShareClicked?: () => void;
     onShareCompleted?: () => void;
     onShareLinkCopied?: () => void;

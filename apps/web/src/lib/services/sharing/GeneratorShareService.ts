@@ -32,12 +32,13 @@ function readTokens(storage: StorageLike): StoredTokens {
   }
 }
 
-function writeTokens(storage: StorageLike, tokens: StoredTokens): void {
+function writeTokens(storage: StorageLike, tokens: StoredTokens): boolean {
   try {
-    storage.setItem(MANAGEMENT_TOKENS_KEY, JSON.stringify(tokens));
+    const serialised = JSON.stringify(tokens);
+    storage.setItem(MANAGEMENT_TOKENS_KEY, serialised);
+    return storage.getItem(MANAGEMENT_TOKENS_KEY) === serialised;
   } catch {
-    // The public share is already created; blocked local storage only means
-    // this browser cannot later manage that share.
+    return false;
   }
 }
 
@@ -76,7 +77,22 @@ export class GeneratorShareService {
     };
     const tokens = readTokens(this.storage);
     tokens[result.share.shareId] = result.managementToken;
-    writeTokens(this.storage, tokens);
+    if (!writeTokens(this.storage, tokens)) {
+      try {
+        await this.deleteWithToken(
+          result.share.shareId,
+          result.managementToken,
+        );
+      } catch (cleanupError) {
+        console.warn(
+          "[GeneratorShareService] Failed to clean up an unmanaged share",
+          cleanupError,
+        );
+      }
+      throw new Error(
+        "Could not store the share management token; the share was not created.",
+      );
+    }
 
     return {
       ...result,
@@ -96,14 +112,18 @@ export class GeneratorShareService {
   async revoke(shareId: string): Promise<void> {
     const token = readTokens(this.storage)[shareId];
     if (!token) throw new Error("This share cannot be revoked on this device.");
+    await this.deleteWithToken(shareId, token);
+    const tokens = readTokens(this.storage);
+    delete tokens[shareId];
+    writeTokens(this.storage, tokens);
+  }
+
+  private async deleteWithToken(shareId: string, token: string): Promise<void> {
     const response = await this.fetcher(
       `${this.baseUrl}/api/generator-shares/${encodeURIComponent(shareId)}`,
       { method: "DELETE", headers: { Authorization: `Bearer ${token}` } },
     );
     if (!response.ok) throw new Error("Could not revoke this share link.");
-    const tokens = readTokens(this.storage);
-    delete tokens[shareId];
-    writeTokens(this.storage, tokens);
   }
 
   hasManagementToken(shareId: string): boolean {

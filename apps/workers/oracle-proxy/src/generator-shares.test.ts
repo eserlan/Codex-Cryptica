@@ -99,6 +99,21 @@ describe("generator share worker handlers", () => {
     expect(env.BUCKET.objects.size).toBe(0);
   });
 
+  it("uses a valid fallback slug for titles without ASCII word characters", async () => {
+    const env = { BUCKET: bucket() };
+    const response = await handleCreateGeneratorShare(
+      request("POST", "/api/generator-shares", {
+        ...payload,
+        title: "!!!",
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(201);
+    const body = await response.json();
+    expect(body.share.shareId).toMatch(/^npc-result-[a-f0-9]{6}$/);
+  });
+
   it("requires the private token to revoke a snapshot", async () => {
     const env = { BUCKET: bucket() };
     const created = await handleCreateGeneratorShare(

@@ -801,6 +801,7 @@
       url: share.url,
       title: document.title,
       text: share.share.metadata.description || "Created with Codex Cryptica",
+      cleanup: () => generatorShareService.revoke(share.share.shareId),
     };
   }
 

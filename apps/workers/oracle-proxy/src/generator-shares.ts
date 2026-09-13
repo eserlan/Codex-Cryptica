@@ -63,8 +63,8 @@ function generateShareId(
   randomSuffix: string,
 ): string {
   const generatorSlug = generatorId.replace("/", "-");
-  const titleSlug = slugify(title);
-  return `${generatorSlug}-${titleSlug}-${randomSuffix}`;
+  const titleSlug = slugify(title) || "result";
+  return [generatorSlug, titleSlug, randomSuffix].join("-");
 }
 
 function randomSuffix(): string {

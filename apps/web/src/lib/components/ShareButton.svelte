@@ -2,6 +2,13 @@
   import { tick } from "svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
 
+  type PreparedShare = {
+    url: string;
+    title?: string;
+    text?: string;
+    cleanup?: () => Promise<void>;
+  };
+
   let {
     url,
     title,
@@ -24,11 +31,7 @@
     onShareCompleted?: () => void;
     onLinkCopied?: () => void;
     /** Optionally creates the final URL immediately before sharing. */
-    prepareShare?: () => Promise<{
-      url: string;
-      title?: string;
-      text?: string;
-    }>;
+    prepareShare?: () => Promise<PreparedShare>;
     /** The thing named in the button's accessible label. */
     subjectLabel?: string;
     /** Injectable for testing; defaults to the real `navigator`. */
@@ -44,7 +47,7 @@
 
   const canNativeShare = $derived(typeof nav?.share === "function");
 
-  async function copyLink(link: string) {
+  async function copyLink(link: string): Promise<boolean> {
     const success = await copyTextToClipboard(link, clipboard);
     if (success) {
       onLinkCopied?.();
@@ -59,8 +62,19 @@
       copyTimeout = setTimeout(() => {
         copied = false;
       }, 2000);
+      return true;
     } else {
       copyFailed = true;
+      return false;
+    }
+  }
+
+  async function cleanupPreparedShare(prepared: PreparedShare) {
+    if (!prepared.cleanup) return;
+    try {
+      await prepared.cleanup();
+    } catch (err) {
+      console.warn("[ShareButton] Failed to clean up prepared share", err);
     }
   }
 
@@ -71,7 +85,7 @@
 
     try {
       copyFailed = false;
-      let prepared: { url: string; title?: string; text?: string };
+      let prepared: PreparedShare;
       try {
         prepared = prepareShare ? await prepareShare() : { url, title, text };
       } catch (err) {
@@ -92,15 +106,19 @@
           // signal, not an inference from merely opening the sheet.
           onShareCompleted?.();
         } catch (err) {
-          if ((err as { name?: string })?.name !== "AbortError") {
+          if ((err as { name?: string })?.name === "AbortError") {
+            await cleanupPreparedShare(prepared);
+          } else {
             console.warn("[ShareButton] navigator.share failed", err);
-            await copyLink(prepared.url);
+            const copiedLink = await copyLink(prepared.url);
+            if (!copiedLink) await cleanupPreparedShare(prepared);
           }
         }
         return;
       }
 
-      await copyLink(prepared.url);
+      const copiedLink = await copyLink(prepared.url);
+      if (!copiedLink) await cleanupPreparedShare(prepared);
     } finally {
       isSharing = false;
     }

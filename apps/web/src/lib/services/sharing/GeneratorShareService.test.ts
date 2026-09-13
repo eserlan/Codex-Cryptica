@@ -75,6 +75,46 @@ describe("GeneratorShareService", () => {
     ).rejects.toThrow("Too large");
   });
 
+  it("cleans up the remote share when its management token cannot be stored", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ share, managementToken: "private-token" }),
+          { status: 201 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    const blockedStorage = {
+      ...storage(),
+      setItem: () => {
+        throw new Error("storage blocked");
+      },
+    };
+    const service = new GeneratorShareService({
+      fetch: fetcher,
+      baseUrl: "https://proxy.example",
+      storage: blockedStorage,
+    });
+
+    await expect(
+      service.create({
+        generatorId: "npc",
+        title: share.title,
+        content: share.content,
+        metadata: share.metadata,
+      }),
+    ).rejects.toThrow("management token");
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      `https://proxy.example/api/generator-shares/${share.shareId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: "Bearer private-token" },
+      },
+    );
+  });
+
   it("revokes a locally managed share and removes the token", async () => {
     const store = storage();
     const fetcher = vi

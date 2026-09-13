@@ -65,6 +65,30 @@ describe("ShareButton", () => {
     expect(onShareCompleted).not.toHaveBeenCalled();
   });
 
+  it("cleans up a prepared share when the native share sheet is cancelled", async () => {
+    const abortError = Object.assign(new Error("cancelled"), {
+      name: "AbortError",
+    });
+    const share = vi.fn().mockRejectedValue(abortError);
+    const cleanup = vi.fn().mockResolvedValue(undefined);
+
+    render(ShareButton, {
+      props: {
+        ...props,
+        nav: { share },
+        prepareShare: async () => ({ url: props.url, cleanup }),
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Share this article" }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(cleanup).toHaveBeenCalledTimes(1);
+  });
+
   it("falls back to copying when the native share sheet fails", async () => {
     const share = vi.fn().mockRejectedValue(new Error("activation lost"));
     const writeText = vi.fn().mockResolvedValue(undefined);

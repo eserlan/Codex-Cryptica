@@ -87,6 +87,7 @@
       url: string;
       title?: string;
       text?: string;
+      cleanup?: () => Promise<void>;
     }>;
     onShareClicked?: () => void;
     onShareCompleted?: () => void;
