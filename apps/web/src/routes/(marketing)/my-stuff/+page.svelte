@@ -26,6 +26,7 @@
   let isLoaded = $state(false);
   let copiedShareId = $state<string | null>(null);
   let revokingShareId = $state<string | null>(null);
+  let revokeErrorShareId = $state<string | null>(null);
 
   function refreshData() {
     if (!browser) return;
@@ -65,6 +66,7 @@
   }
 
   async function handleRevokeShare(item: SharedGeneratorItem) {
+    if (revokingShareId === item.shareId) return;
     const confirmed =
       typeof window === "undefined" ||
       window.confirm(
@@ -73,10 +75,17 @@
     if (!confirmed) return;
 
     revokingShareId = item.shareId;
+    revokeErrorShareId = null;
     try {
-      await myStuffService.revokeSharedGenerator(item.shareId);
+      const revoked = await myStuffService.revokeSharedGenerator(item.shareId);
+      if (!revoked) {
+        revokeErrorShareId = item.shareId;
+        return;
+      }
       trackMyStuffShareRevoked(item.shareId);
       refreshData();
+    } catch {
+      revokeErrorShareId = item.shareId;
     } finally {
       revokingShareId = null;
     }
@@ -454,6 +463,11 @@
                     </button>
                   </div>
                 </div>
+                {#if revokeErrorShareId === item.shareId}
+                  <p class="text-xs text-theme-danger" role="alert">
+                    Could not revoke this share. It is still available publicly.
+                  </p>
+                {/if}
               </article>
             {/each}
           </div>
