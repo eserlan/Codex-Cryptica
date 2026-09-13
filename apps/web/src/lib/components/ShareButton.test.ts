@@ -65,28 +65,25 @@ describe("ShareButton", () => {
     expect(onShareCompleted).not.toHaveBeenCalled();
   });
 
-  it("cleans up a prepared share when the native share sheet is cancelled", async () => {
-    const abortError = Object.assign(new Error("cancelled"), {
-      name: "AbortError",
-    });
-    const share = vi.fn().mockRejectedValue(abortError);
-    const cleanup = vi.fn().mockResolvedValue(undefined);
+  it("opens a modal when prepareShare is provided", async () => {
+    const prepareShare = vi
+      .fn()
+      .mockResolvedValue({ url: props.url, title: props.title });
 
     render(ShareButton, {
       props: {
         ...props,
-        nav: { share },
-        prepareShare: async () => ({ url: props.url, cleanup }),
+        prepareShare,
       },
     });
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Share this article" }),
     );
-    await Promise.resolve();
-    await Promise.resolve();
+    await tick();
 
-    expect(cleanup).toHaveBeenCalledTimes(1);
+    // Modal should be visible
+    expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
   });
 
   it("falls back to copying when the native share sheet fails", async () => {

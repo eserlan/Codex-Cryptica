@@ -60,11 +60,25 @@ describe("generator share schemas", () => {
     ).toBe(false);
   });
 
-  it("requires a public snapshot to have a UUID and timestamp", () => {
+  it("requires a public snapshot to have a valid share ID slug and timestamp", () => {
     expect(
       GeneratorShareSchema.safeParse({
         ...valid,
-        shareId: "not-a-uuid",
+        shareId: "npc-mara-venn-a1b2c3",
+        createdAt: "2026-09-13T12:00:00Z",
+      }).success,
+    ).toBe(true);
+    expect(
+      GeneratorShareSchema.safeParse({
+        ...valid,
+        shareId: "not_valid_slug",
+        createdAt: "2026-09-13T12:00:00Z",
+      }).success,
+    ).toBe(false);
+    expect(
+      GeneratorShareSchema.safeParse({
+        ...valid,
+        shareId: "npc-mara-venn-a1b2c3",
         createdAt: "yesterday",
       }).success,
     ).toBe(false);
