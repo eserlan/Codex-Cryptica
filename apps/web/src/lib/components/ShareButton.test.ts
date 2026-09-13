@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 import ShareButton from "./ShareButton.svelte";
 
@@ -107,6 +108,83 @@ describe("ShareButton", () => {
     await Promise.resolve();
     await Promise.resolve();
 
+    expect(screen.getByText("Link copied to clipboard")).toBeTruthy();
+  });
+
+  it("ignores a second click while a share/copy is still in flight", async () => {
+    let resolveShare: () => void = () => {};
+    const share = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveShare = resolve;
+        }),
+    );
+    const onShareClicked = vi.fn();
+
+    render(ShareButton, {
+      props: { ...props, nav: { share }, onShareClicked },
+    });
+
+    const button = screen.getByRole("button", { name: "Share this article" });
+    await fireEvent.click(button);
+    await fireEvent.click(button);
+    await fireEvent.click(button);
+
+    expect(onShareClicked).toHaveBeenCalledTimes(1);
+    expect(share).toHaveBeenCalledTimes(1);
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+
+    resolveShare();
+    await Promise.resolve();
+    await Promise.resolve();
+    await tick();
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("shows accessible failure feedback when the copy fails entirely", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("denied"));
+    render(ShareButton, {
+      props: {
+        ...props,
+        nav: undefined,
+        // No documentRef is passed, so the execCommand fallback also can't
+        // run — copyTextToClipboard resolves to false.
+        clipboard: { writeText },
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy link to this article" }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Couldn't copy the link",
+    );
+    expect(screen.queryByText("Copied!")).toBeNull();
+  });
+
+  it("re-announces the aria-live region on a repeat copy within the feedback window", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    render(ShareButton, {
+      props: { ...props, nav: undefined, clipboard: { writeText } },
+    });
+
+    const button = screen.getByRole("button", {
+      name: "Copy link to this article",
+    });
+
+    await fireEvent.click(button);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(screen.getByText("Link copied to clipboard")).toBeTruthy();
+
+    await fireEvent.click(button);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledTimes(2);
     expect(screen.getByText("Link copied to clipboard")).toBeTruthy();
   });
 });
