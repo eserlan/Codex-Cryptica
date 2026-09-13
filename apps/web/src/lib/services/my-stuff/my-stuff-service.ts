@@ -41,6 +41,50 @@ function getAllStorageKeys(storage: StorageLike): string[] {
   return [];
 }
 
+function parseStoredShare(item: unknown): SharedGeneratorItem | null {
+  if (!item || typeof item !== "object") return null;
+
+  const record = item as Record<string, unknown>;
+  if (typeof record.shareId !== "string" || !record.shareId.trim()) {
+    return null;
+  }
+
+  const shareId = record.shareId;
+  const title =
+    typeof record.title === "string" && record.title.trim()
+      ? record.title
+      : "Shared Generator Snapshot";
+  const generatorId =
+    typeof record.generatorId === "string" && record.generatorId.trim()
+      ? record.generatorId
+      : "generator";
+  const createdAt =
+    typeof record.createdAt === "string" && record.createdAt.trim()
+      ? record.createdAt
+      : new Date().toISOString();
+  const url =
+    typeof record.url === "string" && /^https?:\/\//i.test(record.url)
+      ? record.url
+      : buildAbsoluteUrl(`/share/${encodeURIComponent(shareId)}`);
+
+  return {
+    shareId,
+    title,
+    generatorId,
+    generatorTitle:
+      typeof record.generatorTitle === "string"
+        ? record.generatorTitle
+        : undefined,
+    createdAt,
+    url,
+    excerpt: typeof record.excerpt === "string" ? record.excerpt : undefined,
+    managementToken:
+      typeof record.managementToken === "string"
+        ? record.managementToken
+        : undefined,
+  };
+}
+
 export class MyStuffService {
   private readonly storage: StorageLike;
   private readonly getAnswerFn: typeof getAnswer;
@@ -108,19 +152,10 @@ export class MyStuffService {
         const parsed = JSON.parse(rawShares);
         if (Array.isArray(parsed)) {
           for (const item of parsed) {
-            if (item && typeof item.shareId === "string") {
-              items.push({
-                shareId: item.shareId,
-                title: item.title || "Shared Generator Snapshot",
-                generatorId: item.generatorId || "generator",
-                generatorTitle: item.generatorTitle,
-                createdAt: item.createdAt || new Date().toISOString(),
-                url: item.url || buildAbsoluteUrl(`/share/${item.shareId}`),
-                excerpt: item.excerpt,
-                managementToken: item.managementToken,
-              });
-              seenShareIds.add(item.shareId);
-            }
+            const share = parseStoredShare(item);
+            if (!share) continue;
+            items.push(share);
+            seenShareIds.add(share.shareId);
           }
         }
       } catch {
@@ -190,19 +225,27 @@ export class MyStuffService {
       token = existing?.managementToken;
     }
 
-    // 2. Call remote revoke if token is present
-    if (token) {
-      try {
-        await this.fetcher(
-          `${this.baseUrl}/api/generator-shares/${encodeURIComponent(shareId)}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          },
+    // 2. Confirm remote revoke before removing the local entry.
+    if (!token) return false;
+
+    try {
+      const response = await this.fetcher(
+        `${this.baseUrl}/api/generator-shares/${encodeURIComponent(shareId)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      // A missing remote object is already revoked, so local cleanup is safe.
+      if (!response.ok && response.status !== 404) {
+        console.warn(
+          `[MyStuffService] Remote revoke returned ${response.status}`,
         );
-      } catch (error) {
-        console.warn("[MyStuffService] Remote revoke request failed", error);
+        return false;
       }
+    } catch (error) {
+      console.warn("[MyStuffService] Remote revoke request failed", error);
+      return false;
     }
 
     // 3. Remove locally from shares and management tokens
