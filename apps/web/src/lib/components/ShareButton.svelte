@@ -1,6 +1,8 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
+  import { createGeneratorShareFlow } from "$lib/services/sharing/generator-share-flow.svelte";
+  import GeneratorShareModal from "$lib/components/modals/GeneratorShareModal.svelte";
 
   type PreparedShare = {
     url: string;
@@ -46,6 +48,9 @@
   let copyTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const canNativeShare = $derived(typeof nav?.share === "function");
+  const shareFlow = $derived.by(() =>
+    prepareShare ? createGeneratorShareFlow() : null,
+  );
 
   async function copyLink(link: string): Promise<boolean> {
     const success = await copyTextToClipboard(link, clipboard);
@@ -80,8 +85,18 @@
 
   async function handleClick() {
     if (isSharing) return;
-    isSharing = true;
     onShareClicked?.();
+
+    // For generator shares with prepareShare, use the modal flow
+    if (prepareShare && shareFlow) {
+      shareFlow.start({
+        title: subjectLabel,
+        prepareShare,
+      });
+      return;
+    }
+
+    isSharing = true;
 
     try {
       copyFailed = false;
@@ -151,3 +166,18 @@
   >
 {/if}
 <span class="sr-only" aria-live="polite">{copyAnnouncement}</span>
+
+{#if shareFlow}
+  <GeneratorShareModal
+    open={shareFlow.open}
+    state={shareFlow.state}
+    subject={shareFlow.subject}
+    shareData={shareFlow.shareData}
+    onConfirm={() => shareFlow.confirm()}
+    onCopyLink={(url) => {
+      shareFlow.copyLink(url);
+      onLinkCopied?.();
+    }}
+    onClose={() => shareFlow.close()}
+  />
+{/if}
