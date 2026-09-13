@@ -4,9 +4,11 @@
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import ShareButton from "$lib/components/ShareButton.svelte";
+  import SilhouetteGlyph from "$lib/components/ui/SilhouetteGlyph.svelte";
   import { renderGeneratorMarkdown } from "$lib/components/seo/markdown-renderers";
   import { parseGeneratorShareMarkdown } from "$lib/components/seo/generator-copy";
   import { buildAbsoluteUrl } from "$lib/seo/site";
+  import { resolveEntitySilhouette } from "schema";
   import {
     generatorShareService,
     type GeneratorShareService,
@@ -37,6 +39,17 @@
   );
   const parsedShare = $derived(
     share ? parseGeneratorShareMarkdown(share.content) : null,
+  );
+  const silhouette = $derived(
+    share
+      ? resolveEntitySilhouette({
+          silhouette: share.metadata.silhouette,
+          type: share.generatorId,
+          title: share.title,
+          labels: share.metadata.labels,
+          content: share.content,
+        })
+      : null,
   );
   const displayContent = $derived(
     parsedShare
@@ -144,16 +157,27 @@
       </section>
     {:else if share}
       <header class="mb-10">
-        <p
-          class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-primary"
-        >
-          Shared {share.generatorId.replaceAll("-", " ")}
-        </p>
-        <h1
-          class="font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
-        >
-          {share.title}
-        </h1>
+        <div class="flex items-start gap-5">
+          {#if silhouette}
+            <div
+              class="hidden h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-theme-border bg-theme-surface p-3 text-theme-primary shadow-sm sm:flex"
+            >
+              <SilhouetteGlyph {silhouette} eager />
+            </div>
+          {/if}
+          <div class="min-w-0 flex-1">
+            <p
+              class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-primary"
+            >
+              Shared {share.generatorId.replaceAll("-", " ")}
+            </p>
+            <h1
+              class="font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
+            >
+              {share.title}
+            </h1>
+          </div>
+        </div>
         {#if share.metadata.theme}
           <p class="mt-3 text-sm text-theme-muted">
             Theme: {share.metadata.theme}
