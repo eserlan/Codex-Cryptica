@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
   import { createGeneratorShareFlow } from "$lib/services/sharing/generator-share-flow.svelte";
   import GeneratorShareModal from "$lib/components/modals/GeneratorShareModal.svelte";
@@ -48,7 +48,12 @@
   let copyTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const canNativeShare = $derived(typeof nav?.share === "function");
-  const shareFlow = $derived.by(() =>
+  // Created once per component instance, not derived from `prepareShare`'s
+  // identity — callers pass inline arrow functions (a new reference on every
+  // re-render), and `$derived.by` would otherwise recreate the flow (losing
+  // its `open` state) the moment anything re-renders this button after a
+  // click, which showed up as the modal opening then instantly vanishing.
+  const shareFlow = untrack(() =>
     prepareShare ? createGeneratorShareFlow() : null,
   );
 
