@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
-  import { createGeneratorShareFlow } from "$lib/services/sharing/generator-share-flow.svelte";
+  import {
+    createGeneratorShareFlow,
+    type GeneratorShareFlow,
+  } from "$lib/services/sharing/generator-share-flow.svelte";
   import GeneratorShareModal from "$lib/components/modals/GeneratorShareModal.svelte";
 
   type PreparedShare = {
@@ -48,9 +51,17 @@
   let copyTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const canNativeShare = $derived(typeof nav?.share === "function");
-  const shareFlow = $derived.by(() =>
-    prepareShare ? createGeneratorShareFlow() : null,
-  );
+  // Create once per component instance, not once per `prepareShare` identity —
+  // callers pass inline arrow functions (a new reference on every re-render),
+  // and `$derived.by` would otherwise recreate the flow (losing its `open`
+  // state) the moment anything re-renders this button after a click.
+  let shareFlow = $state<GeneratorShareFlow | null>(null);
+  $effect(() => {
+    if (!prepareShare) return;
+    untrack(() => {
+      if (!shareFlow) shareFlow = createGeneratorShareFlow();
+    });
+  });
 
   async function copyLink(link: string): Promise<boolean> {
     const success = await copyTextToClipboard(link, clipboard);
@@ -168,16 +179,17 @@
 <span class="sr-only" aria-live="polite">{copyAnnouncement}</span>
 
 {#if shareFlow}
+  {@const flow = shareFlow}
   <GeneratorShareModal
-    open={shareFlow.open}
-    state={shareFlow.state}
-    subject={shareFlow.subject}
-    shareData={shareFlow.shareData}
-    onConfirm={() => shareFlow.confirm()}
+    open={flow.open}
+    state={flow.state}
+    subject={flow.subject}
+    shareData={flow.shareData}
+    onConfirm={() => flow.confirm()}
     onCopyLink={(url) => {
-      shareFlow.copyLink(url);
+      flow.copyLink(url);
       onLinkCopied?.();
     }}
-    onClose={() => shareFlow.close()}
+    onClose={() => flow.close()}
   />
 {/if}
