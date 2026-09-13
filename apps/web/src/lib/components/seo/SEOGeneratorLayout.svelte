@@ -4,6 +4,7 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import { resolveEntitySilhouette } from "schema";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import { tick } from "svelte";
   import type { Snippet } from "svelte";
@@ -777,8 +778,21 @@
       content: string;
       lore?: string;
       summaryIncludedInContent?: boolean;
+      /** Entity/session sub-kind, when known — sharpens the silhouette guess. */
+      type?: string;
     },
   ) {
+    const worldThemeContext = theme || worldTheme;
+    const silhouette = resolveEntitySilhouette(
+      {
+        type: document.type || generatorType,
+        title: document.title,
+        labels: document.labels,
+        content: document.content,
+        lore: document.lore,
+      },
+      { worldTheme: worldThemeContext },
+    ).id;
     const share = await generatorShareService.create({
       generatorId: generatorType,
       title: document.title,
@@ -790,10 +804,11 @@
             .replace(/[#*_\n]/g, " ")
             .trim()
             .slice(0, 280),
-        theme: theme || worldTheme,
+        theme: worldThemeContext,
         labels: document.labels?.slice(0, 8),
         generatorPath: canonicalPath || "/generators",
         imageUrl: ogImage.startsWith("https://") ? ogImage : undefined,
+        silhouette,
       },
     });
     trackGeneratorShareCreated(shareEvent(source));
@@ -824,6 +839,7 @@
       labels: entity.labels,
       content: entity.content,
       lore: entity.lore,
+      type: entity.type,
       summaryIncludedInContent: Boolean(
         entity.summary &&
         entity.content.trim().startsWith(`*${entity.summary.trim()}*`),

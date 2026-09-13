@@ -34,6 +34,13 @@ const safeImageUrl = z
   .max(GENERATOR_SHARE_LIMITS.maxImageUrlLength)
   .refine((value) => value.startsWith("https://"), "Image URL must be HTTPS");
 
+const safeSilhouetteId = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z0-9][a-z0-9-]*$/);
+
 export const GeneratorShareMetadataSchema = z
   .object({
     description: z
@@ -54,6 +61,13 @@ export const GeneratorShareMetadataSchema = z
       .optional(),
     generatorPath: safeRootRelativePath,
     imageUrl: safeImageUrl.optional(),
+    /**
+     * Catalog id from `SILHOUETTES` (see silhouettes.ts), resolved at share
+     * creation time via `resolveEntitySilhouette` so the share page can show
+     * matching artwork without re-deriving it (and without ever inlining the
+     * SVG itself into the share payload).
+     */
+    silhouette: safeSilhouetteId.optional(),
   })
   .strict();
 
