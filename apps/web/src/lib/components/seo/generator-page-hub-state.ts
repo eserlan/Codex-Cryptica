@@ -41,7 +41,7 @@ export function resolveInitialActiveTheme(opts: {
   const persistence = opts.persistence ?? new UIPersistence();
   const browser = opts.browser ?? false;
   const effectiveStoredId =
-    (urlHubTheme ? (HUB_SLUG_TO_THEME_ID[urlHubTheme] ?? null) : null) ??
+    (urlHubTheme ? HUB_SLUG_TO_THEME_ID[urlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(opts.slug)
       ? persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null)
       : null);
@@ -68,9 +68,7 @@ export function getEffectiveStoredThemeId(opts: {
   const persistence = opts.persistence ?? new UIPersistence();
   const browser = opts.browser ?? false;
   return (
-    (opts.urlHubTheme
-      ? (HUB_SLUG_TO_THEME_ID[opts.urlHubTheme] ?? null)
-      : null) ??
+    (opts.urlHubTheme ? HUB_SLUG_TO_THEME_ID[opts.urlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(opts.slug)
       ? persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null)
       : null)
