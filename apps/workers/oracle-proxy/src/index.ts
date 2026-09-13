@@ -169,11 +169,12 @@ function buildMultipartInput(
   if (negativePrompt) form.append("negative_prompt", negativePrompt);
 
   const formResponse = new Response(form);
+  const contentType =
+    formResponse.headers.get("content-type") || "multipart/form-data";
   return {
     multipart: {
       body: formResponse.body || form,
-      contentType:
-        formResponse.headers.get("content-type") || "multipart/form-data",
+      contentType,
     },
   };
 }
