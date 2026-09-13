@@ -45,7 +45,11 @@ This file is the Codex-facing instruction layer for this repository.
 - Create regular ready-for-review pull requests by default; never create draft PRs unless the user explicitly asks for a draft.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
-- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **No Baseline Tests / Impacted-Only Validation**: NEVER run repository-wide test suites (`bun run test`), repository-wide linters (`bun run lint`), or repository-wide typechecks (`bun run lint:types`) across the entire repository during development or PR verification. ALWAYS validate only the impacted/changed code:
+  - Lint: `bun run lint:changed` (or `bun scripts/lint-changed.mjs`)
+  - Tests: `bun run test:changed` (or `bun scripts/test-changed.mjs`)
+  - Type-check: Scoped to the affected workspace (e.g. `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web`) or affected workspaces via `bun scripts/affected-workspaces.mjs`.
+- **Run Repo Scripts with Bun**: ALWAYS execute repository scripts using `bun`, NEVER `node` (e.g., `bun scripts/lint-changed.mjs`, `bun scripts/test-changed.mjs`).
 - **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
 - **Discovery Intent Governance** (Constitution XIII): Before adding or materially repositioning any public, indexable discovery page — `/for`, `/answers`, `/examples`, `/solutions`, `/vs`, `/import`, generator or tool landing pages, evergreen reference blog posts — consult the discovery intent registry at `apps/web/src/lib/content/discovery/`:
   1. Check whether the intent already has an owner (`findIntentOwner`, or read the audit output).
@@ -54,10 +58,11 @@ This file is the Codex-facing instruction layer for this repository.
   4. Run `bun scripts/discovery-audit.mjs`. Deterministic findings are errors; overlap warnings need a judgement call, recorded via `acknowledgedOverlap` with a reason if the overlap is intentional.
   - The registry constrains the public surface; it is never a source for generating pages from keywords. See [docs/discovery-intent-registry.md](./docs/discovery-intent-registry.md).
 - **PR Quality Gate**: Never create or open a Pull Request unless:
-  1. `bun run lint:types` passes with 0 errors.
-  2. `bun run lint` passes with 0 errors.
-  3. The changes pass the `codex-review` specialist review.
-  4. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
+  1. Type-checking for affected workspaces passes with 0 errors (e.g., `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` or affected workspaces via `bun scripts/affected-workspaces.mjs`).
+  2. Changed-file lint passes with 0 errors (`bun run lint:changed` or `bun scripts/lint-changed.mjs`).
+  3. Impacted tests pass with 0 errors (`bun run test:changed` or `bun scripts/test-changed.mjs`).
+  4. The changes pass the `codex-review` specialist review.
+  5. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
 
 ## Maintenance Rule
 

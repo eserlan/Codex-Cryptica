@@ -216,7 +216,7 @@ specs/          # Feature specifications
 
 ## Commands
 
-bun run test; bun run lint
+bun run test:changed; bun run lint:changed
 
 ## Code Style
 
@@ -232,19 +232,21 @@ TypeScript: Follow standard conventions
 - **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`).
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - **Reactive Snapshots**: Use `$state.snapshot(obj)` when passing state to non-reactive logic or async handlers to prevent stale references.
-- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `bun run test` passes with your changes.
+- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `bun run test:changed` passes with your changes.
 - **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
 - **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
 - **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
 - **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
-- **No Baseline Tests**: Do not run baseline test suites across the repository.
+- **No Baseline Tests / Impacted-Only Validation**: NEVER run repository-wide test suites (`bun run test`), repository-wide linters (`bun run lint`), or repository-wide typechecks (`bun run lint:types`) across the entire repository during development or PR verification. ALWAYS validate only the impacted/changed code via `bun run lint:changed` (`bun scripts/lint-changed.mjs`), `bun run test:changed` (`bun scripts/test-changed.mjs`), and scoped type-checking on affected workspaces.
+- **Run Repo Scripts with Bun**: ALWAYS execute repository scripts using `bun`, NEVER `node` (e.g., `bun scripts/lint-changed.mjs`, `bun scripts/test-changed.mjs`).
 - **Image Asset Storage (R2 / Cloudflare Only)**: NEVER commit generated or uploaded image assets (such as OpenGraph cards, screenshots, blog illustrations, or demo portraits) to the local git repository. All marketing, social share, and content image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local image files created temporarily during generation must be deleted immediately after uploading to R2.
 - **PR Quality Gate**: Never create or open a Pull Request unless:
-  1. `bun run lint:types` passes with 0 errors.
-  2. `bun run lint` passes with 0 errors.
-  3. The changes pass the `codex-review` specialist review.
+  1. Type-checking for affected workspaces passes with 0 errors (e.g., `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` or affected workspaces via `bun scripts/affected-workspaces.mjs`).
+  2. Changed-file lint passes with 0 errors (`bun run lint:changed` or `bun scripts/lint-changed.mjs`).
+  3. Impacted tests pass with 0 errors (`bun run test:changed` or `bun scripts/test-changed.mjs`).
+  4. The changes pass the `codex-review` specialist review.
 
 ## Recent Changes
 
