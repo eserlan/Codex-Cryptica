@@ -66,7 +66,7 @@
   }
 
   async function handleRevokeShare(item: SharedGeneratorItem) {
-    if (revokingShareId === item.shareId) return;
+    if (revokingShareId !== null) return;
     const confirmed =
       typeof window === "undefined" ||
       window.confirm(
@@ -447,7 +447,7 @@
 
                     <button
                       type="button"
-                      disabled={revokingShareId === item.shareId}
+                      disabled={revokingShareId !== null}
                       class="px-3 py-1.5 text-xs font-header font-medium rounded-lg border border-theme-border/60 hover:border-red-500/40 text-theme-muted hover:text-red-400 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
                       onclick={() => handleRevokeShare(item)}
                     >

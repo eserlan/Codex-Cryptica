@@ -87,4 +87,45 @@ describe("/my-stuff route", () => {
     expect(screen.getByText("Haunted Crypt of Moria")).toBeTruthy();
     expect(screen.getByText("Dungeon Generator")).toBeTruthy();
   });
+
+  it("prevents a second share revoke while the first is pending", async () => {
+    myStuffService.recordSharedGenerator({
+      shareId: "pending-share-1",
+      title: "First Share",
+      generatorId: "dungeon",
+      createdAt: "2026-09-14T00:00:00.000Z",
+      url: "https://codexcryptica.com/share/pending-share-1",
+    });
+    myStuffService.recordSharedGenerator({
+      shareId: "pending-share-2",
+      title: "Second Share",
+      generatorId: "dungeon",
+      createdAt: "2026-09-13T00:00:00.000Z",
+      url: "https://codexcryptica.com/share/pending-share-2",
+    });
+
+    const revoke = vi
+      .spyOn(myStuffService, "revokeSharedGenerator")
+      .mockReturnValue(new Promise<boolean>(() => {}));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    try {
+      render(Page);
+      await fireEvent.click(
+        screen.getByRole("tab", { name: /Shared Results/i }),
+      );
+
+      const revokeButtons = screen.getAllByRole("button", { name: "Revoke" });
+      await fireEvent.click(revokeButtons[0]);
+      expect(revoke).toHaveBeenCalledTimes(1);
+      expect((revokeButtons[0] as HTMLButtonElement).disabled).toBe(true);
+      expect((revokeButtons[1] as HTMLButtonElement).disabled).toBe(true);
+
+      await fireEvent.click(revokeButtons[1]);
+      expect(revoke).toHaveBeenCalledTimes(1);
+    } finally {
+      revoke.mockRestore();
+      vi.restoreAllMocks();
+    }
+  });
 });
