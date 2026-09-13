@@ -636,6 +636,21 @@ describe("published answers", () => {
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
   });
+
+  it("publishes the one-city campaign answer with verified system references", () => {
+    const cityAnswer = answers["how-do-you-run-an-rpg-campaign-in-one-city"];
+    expect(cityAnswer).toBeDefined();
+    expect(cityAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Blades in the Dark",
+      "Urban Shadows",
+      "Vampire: The Masquerade",
+    ]);
+    for (const ref of cityAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
 });
 
 describe("answer structured data", () => {
