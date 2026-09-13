@@ -14,8 +14,14 @@ const FULL_VALIDATION_FILES = new Set([
   "tsconfig.json",
 ]);
 
-function isDocumentationPath(file) {
-  return file.startsWith("docs/") || file.endsWith(".md");
+export function isDocumentationPath(file) {
+  return (
+    file.startsWith("docs/") ||
+    file.endsWith(".md") ||
+    file === "llms.txt" ||
+    file === "llms-full.txt" ||
+    file === "LICENSE"
+  );
 }
 
 export async function loadWorkspaces(root = process.cwd()) {
