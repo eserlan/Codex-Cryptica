@@ -71,6 +71,12 @@
     type ClipboardService,
   } from "$lib/services/ClipboardService";
   import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import {
+    resolveWorldThemeId,
+    resolveGeneratorType,
+    resolveGeneratedNoun,
+    resolveGeneratedSingular,
+  } from "./generator-page-identity";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -208,67 +214,17 @@
   let refinementSourceId = $state<string | undefined>(undefined);
   let refinementSourceDocument = $state<RefinementDocument | null>(null);
 
-  const themeMap: Record<string, string> = {
-    "Classic Fantasy": "fantasy",
-    Pirate: "pirate",
-    "Cyberpunk / Corporate": "cyberpunk",
-    "Vampire / Gothic Noir": "horror",
-    "Cosmic Horror": "cosmic_horror",
-    "Sci-Fi / Space Opera": "scifi",
-    "Star Wars": "starwars",
-    "Modern Conspiracy": "modern",
-    "Post-Apocalyptic": "apocalyptic",
-    "Western / Frontier": "western",
-    Steampunk: "steampunk",
-    Lancer: "lancer",
-    "Optimistic Exploration Sci-Fi": "startrek",
-  };
-
-  const activeThemeId = $derived(themeMap[theme] || "workspace");
+  const activeThemeId = $derived(resolveWorldThemeId(theme));
 
   // Stable per-page generator identifier for analytics (#1796) — derived from
   // the page's own canonical path (or the eyebrow label as a fallback) so
   // it's available immediately, before any generation happens, unlike
   // generatedData.type which only exists after a successful generate() call.
-  const generatorType = $derived.by(() => {
-    if (canonicalPath) {
-      const segments = canonicalPath.split("/").filter(Boolean);
-      const last = segments[segments.length - 1];
-      if (last) return last;
-    }
-    const slug = eyebrow
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-    return slug || "unknown";
-  });
+  const generatorType = $derived(resolveGeneratorType(canonicalPath, eyebrow));
 
-  const generatedNoun = $derived(
-    eyebrow.toLowerCase().includes("name")
-      ? "fantasy names"
-      : eyebrow.toLowerCase().includes("rpg npc")
-        ? "RPG NPCs"
-        : eyebrow.toLowerCase().includes("npc")
-          ? "D&D NPCs"
-          : eyebrow.toLowerCase().includes("faction")
-            ? "RPG factions"
-            : eyebrow.toLowerCase().includes("quest")
-              ? "quest hooks"
-              : eyebrow.toLowerCase().includes("settlement")
-                ? "settlements"
-                : eyebrow.toLowerCase().includes("item")
-                  ? "magic items"
-                  : eyebrow.toLowerCase().includes("pantheon")
-                    ? "pantheons"
-                    : eyebrow.toLowerCase().includes("deity") ||
-                        eyebrow.toLowerCase().includes("god")
-                      ? "deities"
-                      : "RPG elements",
-  );
+  const generatedNoun = $derived(resolveGeneratedNoun(eyebrow));
 
-  const generatedSingular = $derived(
-    eyebrow.replace(/\s*Generator\s*/i, "").trim() || "Draft",
-  );
+  const generatedSingular = $derived(resolveGeneratedSingular(eyebrow));
 
   const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
   const documentSections = $derived(
