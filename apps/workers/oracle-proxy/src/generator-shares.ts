@@ -10,7 +10,10 @@ interface GeneratorShareEnv {
 }
 
 const PREFIX = "generator-shares/";
-const CACHE_CONTROL = "public, max-age=300";
+// Revocation must take effect for the next request. A public response cache
+// could otherwise continue serving a deleted snapshot after the R2 object is
+// gone.
+const CACHE_CONTROL = "no-store";
 
 export function getGeneratorShareKey(shareId: string): string {
   return `${PREFIX}${shareId}.json`;

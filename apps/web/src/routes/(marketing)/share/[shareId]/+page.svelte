@@ -5,6 +5,7 @@
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import ShareButton from "$lib/components/ShareButton.svelte";
   import { renderGeneratorMarkdown } from "$lib/components/seo/markdown-renderers";
+  import { parseGeneratorShareMarkdown } from "$lib/components/seo/generator-copy";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import {
     generatorShareService,
@@ -34,8 +35,18 @@
       ? `${cleanBase}${share.metadata.generatorPath}`
       : `${cleanBase}/generators`,
   );
+  const parsedShare = $derived(
+    share ? parseGeneratorShareMarkdown(share.content) : null,
+  );
   const displayContent = $derived(
-    share?.content.replace(/^# [^\n]+\n*/, "") ?? "",
+    parsedShare
+      ? [
+          parsedShare.summary ? `*${parsedShare.summary}*` : "",
+          parsedShare.content,
+        ]
+          .filter(Boolean)
+          .join("\n\n")
+      : "",
   );
 
   onMount(() => {

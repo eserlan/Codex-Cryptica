@@ -84,6 +84,7 @@
     themeToQuestGenre,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
+  import { parseGeneratorShareMarkdown } from "./generator-copy";
   import {
     type SlugMetaEntry,
     type ValidSlug,
@@ -117,6 +118,7 @@
   } from "./generator-theme-maps";
   import { worldGenreForHub } from "./generator-page-world-handoff";
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
+  import { resolveGeneratorShareTheme } from "./generator-page-identity";
   import {
     getHubMountPatch,
     resolveInitialActiveTheme,
@@ -724,7 +726,6 @@
   }
 
   onMount(() => {
-    void loadRemixDraft();
     const patch = getHubMountPatch({
       slug,
       hubTheme: hubContext.theme,
@@ -798,30 +799,44 @@
     }
   });
 
-  async function loadRemixDraft() {
-    if (!browser) return;
+  let remixLoadVersion = 0;
+
+  $effect(() => {
     const remixId = page.url.searchParams.get("remix");
-    if (!remixId) return;
+    const targetPath = meta.canonicalPath;
+    const loadVersion = ++remixLoadVersion;
+    remixDraft = null;
+    if (!browser || !remixId) return;
+    void loadRemixDraft(remixId, targetPath, loadVersion);
+  });
+
+  async function loadRemixDraft(
+    remixId: string,
+    targetPath: string | undefined,
+    loadVersion: number,
+  ) {
     try {
       const shared = await generatorShareService.get(remixId);
-      if (!shared || shared.metadata.generatorPath !== meta.canonicalPath)
+      if (
+        loadVersion !== remixLoadVersion ||
+        !shared ||
+        shared.metadata.generatorPath !== targetPath
+      )
         return;
 
-      const withoutTitle = shared.content.replace(/^# [^\n]+\n*/, "");
-      const summaryMatch = withoutTitle.match(/^\*([^*\n]+)\*\n*/);
+      const parsed = parseGeneratorShareMarkdown(shared.content);
       remixDraft = {
         type: "note",
         title: shared.title,
-        summary: summaryMatch?.[1],
-        content: summaryMatch
-          ? withoutTitle.slice(summaryMatch[0].length)
-          : withoutTitle,
+        summary: parsed.summary,
+        content: parsed.content,
         lore: "",
         labels: shared.metadata.labels ?? [],
         status: "draft",
       };
-      if (shared.metadata.theme && themeIdToLabel[shared.metadata.theme]) {
-        activeTheme = shared.metadata.theme;
+      const sharedTheme = resolveGeneratorShareTheme(shared.metadata.theme);
+      if (sharedTheme) {
+        activeTheme = sharedTheme;
       }
       window.history.replaceState({}, "", window.location.pathname);
     } catch {

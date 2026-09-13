@@ -3,6 +3,7 @@ import {
   buildGeneratorMarkdown,
   buildSectionMarkdown,
   buildSessionEntityMarkdown,
+  parseGeneratorShareMarkdown,
 } from "./generator-copy";
 
 describe("generator copy formatting", () => {
@@ -43,5 +44,16 @@ describe("generator copy formatting", () => {
     expect(buildSectionMarkdown("\n### Hooks\n\n- One\n")).toBe(
       "### Hooks\n\n- One",
     );
+  });
+
+  it("removes share-only title, summary, and labels headers when remixing", () => {
+    expect(
+      parseGeneratorShareMarkdown(
+        "# Mara Venn\n*A guide.*\nLabels: npc, ally\n\n## Details\nA watchful guide.",
+      ),
+    ).toEqual({
+      summary: "A guide.",
+      content: "## Details\nA watchful guide.",
+    });
   });
 });

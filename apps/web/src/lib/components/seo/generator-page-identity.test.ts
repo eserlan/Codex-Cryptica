@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   resolveWorldThemeId,
+  resolveGeneratorShareTheme,
   resolveGeneratorType,
   resolveGeneratedNoun,
   resolveGeneratedSingular,
@@ -14,6 +15,19 @@ describe("resolveWorldThemeId", () => {
 
   it("falls back to the workspace theme for an unrecognized label", () => {
     expect(resolveWorldThemeId("Not A Real Theme")).toBe("workspace");
+  });
+});
+
+describe("resolveGeneratorShareTheme", () => {
+  it("accepts both stored theme labels and theme ids", () => {
+    expect(resolveGeneratorShareTheme("Classic Fantasy")).toBe(
+      "Classic Fantasy",
+    );
+    expect(resolveGeneratorShareTheme("fantasy")).toBe("Classic Fantasy");
+  });
+
+  it("rejects unknown public metadata", () => {
+    expect(resolveGeneratorShareTheme("Not A Real Theme")).toBeUndefined();
   });
 });
 

@@ -83,6 +83,7 @@ describe("generator share worker handlers", () => {
     expect(publicBody).toEqual(createdBody.share);
     expect(publicBody).not.toHaveProperty("managementToken");
     expect(read.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+    expect(read.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("rejects an oversized payload before storing it", async () => {
