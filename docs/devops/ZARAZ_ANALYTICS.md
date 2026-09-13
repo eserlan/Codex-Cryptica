@@ -63,19 +63,35 @@ user-authored content.
     plus `/alternatives/[slug]` which 301s into the same `/vs` page — and,
     outside the named discovery families, `/solutions/[slug]` and
     `/features/[slug]`, tracked under `source_kind: "other"`)
+- `apps/web/src/lib/services/analytics/answer-share-tracking.ts` (#3037) —
+  `trackAnswerShareClicked()`, `trackAnswerShareCompleted()`,
+  `trackAnswerShareLinkCopied()` for the Share action on `/answers/[slug]`.
+  Kept separate from discovery-tracking.ts since share intents don't fit
+  that module's click/target model.
+- `apps/web/src/lib/components/ShareButton.svelte` (#3037) — the generic
+  Web-Share-API-with-Copy-Link-fallback button, wired into
+  `apps/web/src/routes/(marketing)/answers/[slug]/+page.svelte`'s header.
+  Deliberately not coupled to the answer-sharing tracking calls above (or to
+  any snapshot/persistence backend) — the page passes
+  `onShareClicked`/`onShareCompleted`/`onLinkCopied` callbacks, so the
+  component stays reusable for other share surfaces (e.g. generator results,
+  #2916) with different event names.
 
 ## Events
 
-| Event                    | Fires when                                                                  | Properties                                                                                                                     |
-| ------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `seo_entry`              | A marketing page is visited with new UTM or AI-referral attribution         | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
-| `generator_started`      | A visitor submits a generator form (not the silent auto-draft on page load) | `generator_type`                                                                                                               |
-| `generator_completed`    | Generation succeeds                                                         | `generator_type`                                                                                                               |
-| `entity_saved`           | "Save to Codex" is clicked                                                  | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
-| `vault_created`          | `entity_saved` fires with `is_first_saved_entity: true`                     | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
-| `related_entity_created` | A save includes one or more `[[wiki-links]]`/references                     | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
-| `discovery_page_viewed`  | A supported discovery page is viewed (once per page per visit — see below)  | `source_kind`, `source_id`, `path`                                                                                             |
-| `discovery_click`        | A visitor follows a meaningful discovery-page link/CTA                      | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
+| Event                      | Fires when                                                                             | Properties                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `seo_entry`                | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
+| `generator_started`        | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                               |
+| `generator_completed`      | Generation succeeds                                                                    | `generator_type`                                                                                                               |
+| `entity_saved`             | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
+| `vault_created`            | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
+| `related_entity_created`   | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
+| `discovery_page_viewed`    | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                             |
+| `discovery_click`          | A visitor follows a meaningful discovery-page link/CTA                                 | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
+| `answer_share_clicked`     | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                        |
+| `answer_share_completed`   | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                               |
+| `answer_share_link_copied` | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                               |
 
 Every event also carries `first_touch` and `latest_touch` objects when
 attribution has been captured for the current browser. Their shape is
@@ -181,6 +197,26 @@ click-through rate, CTA-placement performance, and
 answer/example/for → generator/app conversion funnels (join
 `discovery_page_viewed` → `discovery_click` on the same `source_kind` +
 `source_id` within a session).
+
+### Answer sharing (#3037)
+
+A restrained Share action on `/answers/[slug]` — much simpler than the
+generator-result sharing in #2916, which persists public snapshots for
+remix; this has no backend, it just shares the answer's own already-public
+canonical URL. `ShareButton.svelte` prefers `navigator.share()` (the native
+OS share sheet) and falls back to a Copy Link button when unsupported.
+
+`answer_share_completed` is only fired when `navigator.share()`'s own
+promise resolves — that promise rejects with `AbortError` when the user
+dismisses the share sheet without picking a destination, so this is a real
+completion signal from the browser, not an assumption that opening the
+sheet means the share happened. A cancelled share (or the Copy Link path)
+never fires `answer_share_completed`.
+
+`intent` is the answer's `discovery.id` when the page has discovery
+metadata (most do) — omitted otherwise, same optional-property convention
+as `first_touch`/`latest_touch`. No article content (title, question,
+description) is ever sent; only the stable slug and intent id.
 
 ## Cloudflare Zaraz dashboard configuration
 
