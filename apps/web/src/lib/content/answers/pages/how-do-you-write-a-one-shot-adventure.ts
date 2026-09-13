@@ -163,6 +163,7 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
     "how-do-you-prep-a-weekly-rpg-session-quickly",
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "what-makes-a-good-random-encounter",
+    "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-write-one-shot-adventure",

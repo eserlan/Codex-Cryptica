@@ -22,6 +22,7 @@ import { howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign } from "./how-d
 import { howDoYouImproviseNpcsOnTheSpot } from "./how-do-you-improvise-npcs-on-the-spot";
 import { howDoYouKeepTrackOfNpcsInALongCampaign } from "./how-do-you-keep-track-of-npcs-in-a-long-campaign";
 import { howDoYouKeepTrackOfTimeInATabletopCampaign } from "./how-do-you-keep-track-of-time-in-a-tabletop-campaign";
+import { howDoYouMakeABossFightMemorableInATabletopRpg } from "./how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg";
 import { howDoYouMakeATabletopRpgSessionMoreEngaging } from "./how-do-you-make-a-tabletop-rpg-session-more-engaging";
 import { howDoYouMakeAnAlienSpeciesFeelBelievable } from "./how-do-you-make-an-alien-species-feel-believable";
 import { howDoYouMakeNpcsMemorableWithoutLotsOfPrep } from "./how-do-you-make-npcs-memorable-without-lots-of-prep";
@@ -94,6 +95,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouImproviseNpcsOnTheSpot,
     howDoYouKeepTrackOfNpcsInALongCampaign,
     howDoYouKeepTrackOfTimeInATabletopCampaign,
+    howDoYouMakeABossFightMemorableInATabletopRpg,
     howDoYouMakeATabletopRpgSessionMoreEngaging,
     howDoYouMakeAnAlienSpeciesFeelBelievable,
     howDoYouMakeNpcsMemorableWithoutLotsOfPrep,
