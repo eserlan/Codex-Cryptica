@@ -2471,7 +2471,8 @@ export function resolveEntitySilhouette(
   } else if (
     rawType.includes("location") ||
     rawType.includes("place") ||
-    rawType.includes("settlement")
+    rawType.includes("settlement") ||
+    rawType.includes("dungeon")
   ) {
     targetCategory = "location";
   } else if (
@@ -2498,7 +2499,9 @@ export function resolveEntitySilhouette(
     rawType.includes("event") ||
     rawType.includes("festival") ||
     rawType.includes("ritual") ||
-    rawType.includes("war")
+    rawType.includes("war") ||
+    rawType.includes("quest") ||
+    rawType.includes("encounter")
   ) {
     targetCategory = "event";
   }
