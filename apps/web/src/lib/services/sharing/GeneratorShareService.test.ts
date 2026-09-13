@@ -11,7 +11,7 @@ function storage() {
 }
 
 const share = {
-  shareId: "00000000-0000-4000-8000-000000000001",
+  shareId: "npc-mara-venn-a1b2c3",
   generatorId: "npc",
   title: "Mara Venn",
   content: "# Mara Venn\n\nA guide.",
@@ -44,7 +44,7 @@ describe("GeneratorShareService", () => {
     });
 
     expect(result.url).toBe(
-      "https://codexcryptica.com/share/00000000-0000-4000-8000-000000000001",
+      "https://codexcryptica.com/share/npc-mara-venn-a1b2c3",
     );
     expect(fetcher).toHaveBeenCalledWith(
       "https://proxy.example/api/generator-shares",
