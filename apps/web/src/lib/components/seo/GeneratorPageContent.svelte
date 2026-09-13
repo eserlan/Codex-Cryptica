@@ -104,19 +104,21 @@
   } from "./generator-page-handoffs";
   import {
     HUB_LABELS,
-    HUB_SLUG_TO_THEME_ID,
     SETTLEMENT_GENRE_FOR_HUB,
-    SLUGS_USING_STORED_THEME,
     SOCIAL_HUB_GENRE_TO_THEME,
+    mapAlienRaceGenreToTheme,
     mapHubGenreToShipGenre,
     mapShipGenreToTheme,
-    mapWorldGenreToTheme,
     mapStarSystemGenreToTheme,
-    mapAlienRaceGenreToTheme,
+    mapWorldGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
   import { worldGenreForHub } from "./generator-page-world-handoff";
+  import {
+    getHubMountPatch,
+    resolveInitialActiveTheme,
+  } from "./generator-page-hub-state";
 
   let {
     slug,
@@ -643,22 +645,14 @@
     campaignContext: "",
   });
 
-  // For themed URL: seed from hub slug. For flat URL: read localStorage.
-  const _initStoredThemeId =
-    (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
-    (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
-      ? persistence.read(UI_STORAGE_KEYS.ACTIVE_THEME, (v) => v, null)
-      : null);
-  const _worldInitialTheme = _initialUrlHubTheme
-    ? (SOCIAL_HUB_GENRE_TO_THEME[
-        resolveHubGeneratorGenre(_initialUrlHubTheme) ?? ""
-      ] ?? null)
-    : null;
-
   let activeTheme = $state(
-    _worldInitialTheme ||
-      (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
-      factionConfig.themes[0],
+    resolveInitialActiveTheme({
+      urlHubTheme: _initialUrlHubTheme,
+      slug: _initialSlug,
+      persistence,
+      browser: Boolean(browser),
+      fallbackTheme: factionConfig.themes[0],
+    }),
   );
   let lastSlug = $state(_initialSlug);
 
@@ -727,151 +721,75 @@
   }
 
   onMount(() => {
-    if (slug === "nation") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) nation.genre = hubGenre;
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
-      return;
-    }
-    if (slug === "social-hub") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) socialHub.genre = hubGenre;
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
-      return;
-    }
-    if (slug === "settlement") {
-      const rawHubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      const hubGenre = rawHubGenre
-        ? (SETTLEMENT_GENRE_FOR_HUB[rawHubGenre] ?? rawHubGenre)
-        : null;
-      if (hubGenre) {
-        settlement.genre = hubGenre;
-        const sizes =
-          settlementConfig.sizesByGenre[hubGenre] ??
-          settlementConfig.sizesByGenre["Fantasy"];
-        settlement.size = sizes[2].name;
-        settlement.environment = (settlementConfig.environmentsByGenre[
-          hubGenre
-        ] ?? settlementConfig.environmentsByGenre["Fantasy"])[0];
-        settlement.primaryFunction = (settlementConfig.primaryFunctionsByGenre[
-          hubGenre
-        ] ?? settlementConfig.primaryFunctionsByGenre["Fantasy"])[0];
-        settlement.tone = (settlementConfig.tonesByGenre[hubGenre] ??
-          settlementConfig.tonesByGenre["Fantasy"])[0];
-        settlement.mainTension = (settlementConfig.mainTensionsByGenre[
-          hubGenre
-        ] ?? settlementConfig.mainTensionsByGenre["Fantasy"])[0];
-      }
-      // Use raw hub genre (before settlement remapping) so e.g. Lancer hub
-      // keeps Lancer theming even though settlement.genre is mapped to Sci-Fi.
-      activeTheme =
-        (rawHubGenre ? SOCIAL_HUB_GENRE_TO_THEME[rawHubGenre] : "") ||
-        SOCIAL_HUB_GENRE_TO_THEME[settlement.genre] ||
-        "Classic Fantasy";
-      return;
-    }
-    if (slug === "vampire-clan") {
-      activeTheme = "Vampire / Gothic Noir";
-      return;
-    }
-    if (slug === "nomad-clan") {
-      activeTheme = "Cyberpunk / Corporate";
-      return;
-    }
-    if (slug === "dark-fantasy-faction") {
-      // No dedicated visual theme for "grimdark" in the 13-theme system;
-      // Classic Fantasy is the closest existing skin, matching the general
-      // Faction generator's own default rather than inventing a new one.
-      activeTheme = "Classic Fantasy";
-      return;
-    }
-    if (slug === "pantheon-generator" || slug === "god-generator") {
-      activeTheme = pantheon.genre;
-      return;
-    }
-    if (slug === "dnd-npc" || slug === "fantasy-names" || slug === "tavern") {
-      activeTheme = "Classic Fantasy";
-      return;
-    }
-    if (slug === "ship-generator") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) {
-        const mapped = mapHubGenreToShipGenre(hubGenre);
-        ship.genre = mapped;
-        ship.role = (shipConfig.rolesByGenre[mapped] ??
-          shipConfig.rolesByGenre["Sci-Fi"])[0];
-      }
-      activeTheme =
-        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
-        "Sci-Fi / Space Opera";
-      return;
-    }
-    if (slug === "world") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      world.genre = worldGenreForHub(hubGenre);
-      activeTheme = mapWorldGenreToTheme(world.genre);
-      applyPendingDevelopWorld();
-      return;
-    }
-    if (slug === "star-system") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+    const patch = getHubMountPatch({
+      slug,
+      hubTheme: hubContext.theme,
+      urlHubTheme,
+      persistence,
+      browser: Boolean(browser),
+      currentState: {
+        pantheonGenre: pantheon.genre,
+        newsSheetGenre: newsSheet.genre,
+        starSystemGenre: starSystem.genre,
+        alienRaceGenre: alienRace.genre,
+      },
+    });
+
+    if (patch) {
+      if (patch.settlement) Object.assign(settlement, patch.settlement);
+      if (patch.nation) Object.assign(nation, patch.nation);
+      if (patch.socialHub) Object.assign(socialHub, patch.socialHub);
+      if (patch.ship) Object.assign(ship, patch.ship);
+      if (patch.world) Object.assign(world, patch.world);
+      if (patch.starSystem) Object.assign(starSystem, patch.starSystem);
+      if (patch.alienRace) Object.assign(alienRace, patch.alienRace);
+      if (patch.newsSheet) Object.assign(newsSheet, patch.newsSheet);
+      if (patch.language) Object.assign(language, patch.language);
+      if (patch.activeTheme) activeTheme = patch.activeTheme;
+      // World handoff is hub-patch plus query-param develop handoff.
+      if (slug === "world") applyPendingDevelopWorld();
+      // Language has no activeTheme change in patch when hub genre is
+      // incompatible — fall back to stored theme handling below if needed.
       if (
-        hubGenre &&
-        (starSystemConfig.genres as readonly string[]).includes(hubGenre)
+        slug === "pantheon-generator" ||
+        slug === "god-generator" ||
+        slug === "vampire-clan" ||
+        slug === "nomad-clan" ||
+        slug === "dark-fantasy-faction" ||
+        slug === "dnd-npc" ||
+        slug === "fantasy-names" ||
+        slug === "tavern" ||
+        slug === "settlement" ||
+        slug === "nation" ||
+        slug === "social-hub" ||
+        slug === "ship-generator" ||
+        slug === "world" ||
+        slug === "star-system" ||
+        slug === "alien-race" ||
+        slug === "news-sheet-generator"
       ) {
-        starSystem.genre = hubGenre;
+        return;
       }
-      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    }
+
+    if (slug === "language-generator" && patch?.language) {
       return;
     }
-    if (slug === "alien-race") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (
-        hubGenre &&
-        (alienRaceConfig.genres as readonly string[]).includes(hubGenre)
-      ) {
-        alienRace.genre = hubGenre;
-      }
-      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
-      return;
-    }
-    if (slug === "news-sheet-generator") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
-        newsSheet.genre = hubGenre;
-        newsSheet.publicationType = (newsSheetConfig.publicationTypesByGenre[
-          hubGenre
-        ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0];
-      }
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
-      return;
-    }
-    if (slug === "language-generator") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre) {
-        // Language genres follow the theme labels (Classic Fantasy,
-        // Cyberpunk / Corporate, …); the genre select only offers a fixed
-        // list, so hubs without a matching language genre (e.g. Western,
-        // Steampunk) are left on the default rather than an unselectable value.
-        const mapped = SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? hubGenre;
-        if ((languageConfig.genres as string[]).includes(mapped)) {
-          language.genre = mapped;
-        }
-      }
-    }
-    // For quest/npc/faction on flat URL: read localStorage.
-    // On themed URL: urlHubTheme already seeded activeTheme above — skip.
+
+    // Flat URL without a specific hub patch: re-check stored theme for
+    // quest/npc/faction style generators (urlHubTheme already seeded above).
     if (!urlHubTheme) {
-      const stored = persistence.read(
-        UI_STORAGE_KEYS.ACTIVE_THEME,
-        (v) => v,
-        null,
-      );
-      if (stored && themeIdToLabel[stored]) {
-        activeTheme = themeIdToLabel[stored];
+      // patch already applied stored theme for generic slugs; for
+      // language-generator without a valid hub mapping we still honour it.
+      if (!patch?.activeTheme) {
+        const stored = persistence.read(
+          UI_STORAGE_KEYS.ACTIVE_THEME,
+          (v) => v,
+          null,
+        );
+        if (stored && themeIdToLabel[stored]) {
+          activeTheme = themeIdToLabel[stored];
+        }
       }
     }
   });
