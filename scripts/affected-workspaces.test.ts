@@ -59,6 +59,9 @@ describe("selectAffectedWorkspaces", () => {
     const result = selectAffectedWorkspaces(workspaces, [
       "README.md",
       "docs/TESTING.md",
+      "llms.txt",
+      "llms-full.txt",
+      "LICENSE",
     ]);
     expect(result.workspaces).toEqual([]);
     expect(result.full).toBe(false);
