@@ -76,6 +76,10 @@ user-authored content.
   `onShareClicked`/`onShareCompleted`/`onLinkCopied` callbacks, so the
   component stays reusable for other share surfaces (e.g. generator results,
   #2916) with different event names.
+- `apps/web/src/lib/services/sharing/GeneratorShareService.ts` (#2916) —
+  creates immutable text snapshots through the R2-backed Worker and keeps
+  only the private revocation token in local browser storage. The generator
+  result and Session Hub detail actions use the same ShareButton surface.
 - `apps/web/src/lib/services/analytics/answer-feedback-tracking.ts` (#3038)
   — `trackAnswerUsefulVote()` for the "Was this useful?" prompt at the end
   of an answer's substantive content.
@@ -89,20 +93,26 @@ user-authored content.
 
 ## Events
 
-| Event                      | Fires when                                                                             | Properties                                                                                                                     |
-| -------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `seo_entry`                | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
-| `generator_started`        | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                               |
-| `generator_completed`      | Generation succeeds                                                                    | `generator_type`                                                                                                               |
-| `entity_saved`             | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
-| `vault_created`            | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
-| `related_entity_created`   | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
-| `discovery_page_viewed`    | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                             |
-| `discovery_click`          | A visitor follows a meaningful discovery-page link/CTA                                 | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
-| `answer_share_clicked`     | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                        |
-| `answer_share_completed`   | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                               |
-| `answer_share_link_copied` | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                               |
-| `answer_useful_vote`       | A reader answers "Was this useful?"                                                    | `slug`, `intent`, `value` (`yes` \| `no`), `reason` (closed set, "no" votes only, optional)                                    |
+| Event                              | Fires when                                                                             | Properties                                                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `seo_entry`                        | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
+| `generator_started`                | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                               |
+| `generator_completed`              | Generation succeeds                                                                    | `generator_type`                                                                                                               |
+| `entity_saved`                     | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
+| `vault_created`                    | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
+| `related_entity_created`           | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
+| `discovery_page_viewed`            | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                             |
+| `discovery_click`                  | A visitor follows a meaningful discovery-page link/CTA                                 | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
+| `answer_share_clicked`             | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                        |
+| `answer_share_completed`           | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                               |
+| `answer_share_link_copied`         | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                               |
+| `answer_useful_vote`               | A reader answers "Was this useful?"                                                    | `slug`, `intent`, `value` (`yes` \| `no`), `reason` (closed set, "no" votes only, optional)                                    |
+| `generator_share_clicked`          | Share is activated for a generated result or Session Hub detail                        | `generator_type`, `source`                                                                                                     |
+| `generator_share_created`          | The immutable public snapshot is stored successfully                                   | `generator_type`, `source`                                                                                                     |
+| `generator_share_link_copied`      | A generated-result share URL is copied successfully                                    | `generator_type`, `source`                                                                                                     |
+| `generator_share_opened`           | A shared generator snapshot loads successfully                                         | `generator_type`, `source`, `share_id`                                                                                         |
+| `generator_share_remix_clicked`    | A visitor follows the shared-result Remix CTA                                          | `generator_type`, `source`, `share_id`                                                                                         |
+| `generator_share_generate_clicked` | A visitor follows the originating generator CTA                                        | `generator_type`, `source`, `share_id`                                                                                         |
 
 Every event also carries `first_touch` and `latest_touch` objects when
 attribution has been captured for the current browser. Their shape is

@@ -88,6 +88,17 @@ namespace_id = "1352"
   limit = 300
   period = 60
 
+# Generator result shares are anonymous public writes. Keep their creation
+# budget separate from vault publishing so a burst of shares cannot consume
+# the vault publishing budget.
+[[ratelimits]]
+name = "SHARE_CREATE_RATE_LIMITER"
+namespace_id = "1358"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
 # LLM generation limits, keyed by session capability token id.
 #
 # The binding only supports period = 10 or 60, and is a permissive,

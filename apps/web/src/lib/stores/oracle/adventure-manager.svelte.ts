@@ -41,6 +41,7 @@ import {
 import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
@@ -51,10 +52,7 @@ export interface AdventureManagerDependencies {
   coordinator?: AdventureControlCoordinator;
   now?: () => string;
   dice?: Pick<typeof defaultDiceEngine, "evaluate">;
-}
-
-function newId(): string {
-  return crypto.randomUUID();
+  idGenerator?: () => string;
 }
 
 function validateRollExpression(proposal: {
@@ -73,10 +71,11 @@ function initialSession(input: {
   playerCharacter: PlayerCharacter;
   sourceRecords?: AdventureSession["sourceRecords"];
   now: string;
+  idGenerator: () => string;
 }): AdventureSession {
   return {
     schemaVersion: 2,
-    id: newId(),
+    id: input.idGenerator(),
     vaultId: input.vaultId,
     title: input.title,
     status: "active",
@@ -172,6 +171,7 @@ export class AdventureManager {
       coordinator: deps.coordinator ?? adventureControlCoordinator,
       now: deps.now ?? (() => new Date().toISOString()),
       dice: deps.dice ?? defaultDiceEngine,
+      idGenerator: deps.idGenerator ?? systemIdGenerator.uuid,
     };
   }
 
@@ -223,7 +223,11 @@ export class AdventureManager {
         throw new Error("active-adventure-exists");
       }
     }
-    const session = initialSession({ ...input, now: this.deps.now() });
+    const session = initialSession({
+      ...input,
+      now: this.deps.now(),
+      idGenerator: this.deps.idGenerator,
+    });
     const saved = await this.deps.repository.save(null, session);
     if (!saved.ok) {
       this.phase = "error";
@@ -268,8 +272,8 @@ export class AdventureManager {
       if (this.session?.id !== session.id) return;
       validateRollExpression(proposal);
       const meta: CommitMetadata = {
-        turnId: newId(),
-        inputId: newId(),
+        turnId: this.deps.idGenerator(),
+        inputId: this.deps.idGenerator(),
         playerAction: "",
         now: this.deps.now(),
       };
@@ -423,8 +427,8 @@ export class AdventureManager {
       validateRollExpression(proposal);
       if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
       const meta: CommitMetadata = {
-        turnId: newId(),
-        inputId: newId(),
+        turnId: this.deps.idGenerator(),
+        inputId: this.deps.idGenerator(),
         playerAction: action,
         now: this.deps.now(),
       };
@@ -474,7 +478,7 @@ export class AdventureManager {
         this.session.pendingRoll.inputId,
         outcome,
         {
-          turnId: newId(),
+          turnId: this.deps.idGenerator(),
           inputId: this.session.pendingRoll.inputId,
           now: this.deps.now(),
         },
@@ -544,8 +548,8 @@ export class AdventureManager {
       if (proposal.kind !== "complete")
         throw new Error("roll-resolution-requires-complete-turn");
       const result = resolveRecordedRoll(session, proposal, {
-        turnId: newId(),
-        inputId: newId(),
+        turnId: this.deps.idGenerator(),
+        inputId: this.deps.idGenerator(),
         now: this.deps.now(),
         playerAction: pendingRoll.playerAction,
       });
@@ -593,7 +597,7 @@ export class AdventureManager {
       this.session,
       this.session.pendingRoll.inputId,
       {
-        turnId: newId(),
+        turnId: this.deps.idGenerator(),
         inputId: this.session.pendingRoll.inputId,
         now: this.deps.now(),
       },
@@ -736,7 +740,7 @@ export class AdventureManager {
     if (!this.session || this.readOnly) throw new Error("no-active-session");
     const result = addDicePreset(
       this.session,
-      { id: newId(), label, expression },
+      { id: this.deps.idGenerator(), label, expression },
       this.deps.now(),
     );
     if (!result.ok) {
@@ -755,7 +759,7 @@ export class AdventureManager {
     if (!this.session || this.readOnly) throw new Error("no-active-session");
     const result = addResourceCounter(
       this.session,
-      { id: newId(), label, value: initialValue },
+      { id: this.deps.idGenerator(), label, value: initialValue },
       this.deps.now(),
     );
     if (!result.ok) {

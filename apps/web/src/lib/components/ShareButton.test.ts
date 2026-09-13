@@ -5,6 +5,21 @@ import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 import ShareButton from "./ShareButton.svelte";
 
+// Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility.
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () => {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      pause: () => {},
+      play: () => {},
+      reverse: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any;
+  };
+}
+
 const props = {
   url: "https://codexcryptica.com/answers/how-do-you-track-faction-turns-between-rpg-sessions",
   title: "How do you track faction turns between RPG sessions?",
@@ -63,6 +78,102 @@ describe("ShareButton", () => {
     await Promise.resolve();
 
     expect(onShareCompleted).not.toHaveBeenCalled();
+  });
+
+  it("opens a modal when prepareShare is provided", async () => {
+    const prepareShare = vi
+      .fn()
+      .mockResolvedValue({ url: props.url, title: props.title });
+
+    render(ShareButton, {
+      props: {
+        ...props,
+        prepareShare,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy link to this article" }),
+    );
+    await tick();
+
+    // Modal should be visible
+    expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
+  });
+
+  it("keeps the share modal open across a re-render that changes prepareShare's identity", async () => {
+    // Regression test: callers pass an inline arrow function for
+    // prepareShare (e.g. `prepareShare={() => onPrepareShare!(entity)}`),
+    // a new reference on every re-render. The share flow must be created
+    // once per component instance rather than recreated whenever that
+    // reference changes, or the modal opens and instantly disappears.
+    const prepareShare1 = vi
+      .fn()
+      .mockResolvedValue({ url: props.url, title: props.title });
+
+    const { rerender } = render(ShareButton, {
+      props: { ...props, prepareShare: prepareShare1 },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy link to this article" }),
+    );
+    await tick();
+    expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
+
+    const prepareShare2 = vi
+      .fn()
+      .mockResolvedValue({ url: props.url, title: props.title });
+    await rerender({ ...props, prepareShare: prepareShare2 });
+    await tick();
+
+    expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
+  });
+
+  it("creates the share modal when prepareShare becomes available after mount", async () => {
+    const prepareShare = vi
+      .fn()
+      .mockResolvedValue({ url: props.url, title: props.title });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+
+    const { rerender } = render(ShareButton, {
+      props: { ...props, nav: undefined, clipboard: { writeText } },
+    });
+
+    await rerender({ ...props, nav: undefined, prepareShare });
+    await tick();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy link to this article" }),
+    );
+    await tick();
+
+    expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("falls back to copying when the native share sheet fails", async () => {
+    const share = vi.fn().mockRejectedValue(new Error("activation lost"));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const onLinkCopied = vi.fn();
+
+    render(ShareButton, {
+      props: {
+        ...props,
+        nav: { share },
+        clipboard: { writeText },
+        onLinkCopied,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Share this article" }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledWith(props.url);
+    expect(onLinkCopied).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Copied!")).toBeTruthy();
   });
 
   it("falls back to copying the link when navigator.share is unavailable", async () => {
@@ -178,11 +289,13 @@ describe("ShareButton", () => {
     await fireEvent.click(button);
     await Promise.resolve();
     await Promise.resolve();
+    await tick();
     expect(screen.getByText("Link copied to clipboard")).toBeTruthy();
 
     await fireEvent.click(button);
     await Promise.resolve();
     await Promise.resolve();
+    await tick();
 
     expect(writeText).toHaveBeenCalledTimes(2);
     expect(screen.getByText("Link copied to clipboard")).toBeTruthy();

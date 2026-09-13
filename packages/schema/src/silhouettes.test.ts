@@ -349,6 +349,32 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     expect(match.category).toBe("event");
   });
 
+  // Generator share results carry the route slug (e.g. "dungeon-generator",
+  // "quest", "encounter") as `type`, not a SilhouetteCategory — these confirm
+  // that classification, not just the generic vault-entity types above.
+  it("categorizes a dungeon-generator result as a location, not the character default", () => {
+    const match = resolveEntitySilhouette({
+      type: "dungeon-generator",
+      title: "The Sunken Vault",
+    });
+    expect(match.category).toBe("location");
+  });
+
+  it("categorizes quest and encounter generator results as events", () => {
+    expect(
+      resolveEntitySilhouette({
+        type: "quest",
+        title: "The Vanished Caravan",
+      }).category,
+    ).toBe("event");
+    expect(
+      resolveEntitySilhouette({
+        type: "encounter",
+        title: "Ambush at Dusk",
+      }).category,
+    ).toBe("event");
+  });
+
   it("falls back to generic silhouette when no specific metadata matches", () => {
     const match = resolveEntitySilhouette({
       title: "Unknown Entity",

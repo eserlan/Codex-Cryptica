@@ -205,6 +205,13 @@
             "Curated links to real castle and palace floor plans for mapping your own locations.",
           icon: "icon-[lucide--map]",
         },
+        {
+          href: "/my-stuff",
+          label: "My Stuff",
+          summary:
+            "Your local bookmarks, saved answers, and shared generator results.",
+          icon: "icon-[lucide--bookmark]",
+        },
       ],
     },
     {

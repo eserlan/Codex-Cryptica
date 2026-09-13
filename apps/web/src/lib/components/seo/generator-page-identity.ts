@@ -2,6 +2,7 @@
 // props (`theme`, `canonicalPath`, `eyebrow`). Kept separate from
 // SEOGeneratorLayout.svelte so these lookups can be unit tested without a
 // component harness.
+import { themeIdToLabel } from "generator-engine";
 
 export const THEME_TO_WORLD_ID: Record<string, string> = {
   "Classic Fantasy": "fantasy",
@@ -21,6 +22,21 @@ export const THEME_TO_WORLD_ID: Record<string, string> = {
 
 export function resolveWorldThemeId(theme: string): string {
   return THEME_TO_WORLD_ID[theme] || "workspace";
+}
+
+/**
+ * Share snapshots historically stored the display label, while the theme
+ * registry uses IDs. Accept both forms so old and new snapshots restore the
+ * same generator theme without accepting arbitrary public metadata.
+ */
+export function resolveGeneratorShareTheme(
+  theme: string | undefined,
+): string | undefined {
+  if (!theme) return undefined;
+  return (
+    themeIdToLabel[theme] ??
+    (Object.values(themeIdToLabel).includes(theme) ? theme : undefined)
+  );
 }
 
 // Stable per-page generator identifier for analytics (#1796) — derived from
