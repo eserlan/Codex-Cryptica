@@ -120,6 +120,16 @@
           </a>
         {/if}
         <a
+          href="{cleanBase}/my-stuff"
+          class="inline-flex items-center justify-center min-w-[24px] min-h-[24px] p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+          aria-label="My Stuff"
+          title="My Stuff"
+          data-testid="shell-my-stuff-link"
+        >
+          <span class="icon-[lucide--bookmark] w-4 h-4" aria-hidden="true"
+          ></span>
+        </a>
+        <a
           href={ctaHref}
           class="min-h-[24px] px-4 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 active:brightness-95 shadow-sm transition-all whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           id="nav-cta-btn"
@@ -138,9 +148,7 @@
           title="Explore"
           data-testid="shell-explore-link"
         >
-          <span
-            aria-hidden="true"
-            class="icon-[lucide--compass] w-4 h-4 block"
+          <span aria-hidden="true" class="icon-[lucide--compass] w-4 h-4 block"
           ></span>
           <span>Explore</span>
         </a>
