@@ -19,8 +19,10 @@
     trackAnswerShareCompleted,
     trackAnswerShareLinkCopied,
   } from "$lib/services/analytics/answer-share-tracking";
+  import { trackAnswerUsefulVote } from "$lib/services/analytics/answer-feedback-tracking";
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import ShareButton from "$lib/components/ShareButton.svelte";
+  import UsefulnessFeedback from "$lib/components/UsefulnessFeedback.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -291,6 +293,19 @@
         {/if}
       </section>
     {/each}
+
+    <div class="mb-12">
+      <UsefulnessFeedback
+        voteKey={answer.slug}
+        onVote={(value, reason) =>
+          trackAnswerUsefulVote({
+            slug: answer.slug,
+            intent: answer.discovery?.id,
+            value,
+            reason,
+          })}
+      />
+    </div>
 
     {#if answer.systemsThatSupportThis && answer.systemsThatSupportThis.length > 0}
       <section class="mb-12 border-t border-theme-border pt-8">

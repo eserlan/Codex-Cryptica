@@ -76,6 +76,16 @@ user-authored content.
   `onShareClicked`/`onShareCompleted`/`onLinkCopied` callbacks, so the
   component stays reusable for other share surfaces (e.g. generator results,
   #2916) with different event names.
+- `apps/web/src/lib/services/analytics/answer-feedback-tracking.ts` (#3038)
+  — `trackAnswerUsefulVote()` for the "Was this useful?" prompt at the end
+  of an answer's substantive content.
+- `apps/web/src/lib/components/UsefulnessFeedback.svelte` (#3038) — the
+  Yes/No + optional structured-reason widget, wired the same
+  callback-prop way as `ShareButton.svelte` (`onVote`). It also owns a
+  per-browser duplicate-vote marker in `localStorage`
+  (`codex_answer_feedback_<slug>`, via the existing `UIPersistence` helper)
+  so a reader can't accidentally vote twice, with an explicit "Change your
+  answer" action to vote again deliberately.
 
 ## Events
 
@@ -92,6 +102,7 @@ user-authored content.
 | `answer_share_clicked`     | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                        |
 | `answer_share_completed`   | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                               |
 | `answer_share_link_copied` | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                               |
+| `answer_useful_vote`       | A reader answers "Was this useful?"                                                    | `slug`, `intent`, `value` (`yes` \| `no`), `reason` (closed set, "no" votes only, optional)                                    |
 
 Every event also carries `first_touch` and `latest_touch` objects when
 attribution has been captured for the current browser. Their shape is
@@ -217,6 +228,29 @@ never fires `answer_share_completed`.
 metadata (most do) — omitted otherwise, same optional-property convention
 as `first_touch`/`latest_touch`. No article content (title, question,
 description) is ever sent; only the stable slug and intent id.
+
+### "Was this useful?" feedback (#3038)
+
+An editorial signal, not a public rating — `UsefulnessFeedback.svelte` never
+displays a vote count, individual voter identity, or free-text comments.
+A "no" vote can optionally attach one reason from a small closed set (`Too
+vague`, `Too long`, `Didn't answer my question`, `Advice didn't fit my
+game`, `Already knew this`, `Other`); picking a reason and clicking "no"
+with no reason ("Skip") both resolve to exactly one `answer_useful_vote`
+event — the reason step never fires a second event.
+
+Per #3038's own guidance to avoid duplicating an already-reliably-captured
+signal into a second store, this does **not** introduce a database or
+backend aggregation endpoint: `answer_useful_vote` flows through the same
+Zaraz pipeline as every other event here, and is aggregated by the
+destination analytics tool exactly the way `discovery_click` already is
+(see the dashboard-mapping guidance above). Revisit this only if editorial
+review genuinely needs a query the destination tool can't answer.
+
+The per-browser duplicate-vote guard is local only (`localStorage`, via
+`UIPersistence`) — it prevents an accidental repeat vote on the same
+browser, and is not a source of truth Codex reads back from anywhere; the
+Zaraz event stream is the only aggregate.
 
 ## Cloudflare Zaraz dashboard configuration
 
