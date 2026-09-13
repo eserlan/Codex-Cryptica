@@ -83,6 +83,26 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     linkText: "Track mystery campaign nodes in Codex Cryptica",
     href: "/solutions/campaign-manager",
   },
+  systemsThatSupportThis: [
+    {
+      system: "GUMSHOE",
+      rationale:
+        "Core clues are provided automatically whenever an investigator uses an appropriate investigative ability in a scene, eliminating binary skill checks that could stall the mystery and shifting play to deduction and decision-making.",
+      href: "https://pelgranepress.com/gumshoe/files/GUMSHOE%20SRD%20CC%20version.pdf",
+    },
+    {
+      system: "Brindlewood Bay",
+      rationale:
+        "The Theorize move allows players to connect open-ended clues without a pre-written culprit, rolling with a modifier based on discovered clues to establish whether their group deduction becomes canon.",
+      href: "https://www.gauntlet-rpg.com/brindlewood-bay.html",
+    },
+    {
+      system: "Monster of the Week",
+      rationale:
+        "The Investigate a Mystery move supplies direct answers to targeted diagnostic questions on a hit, providing hunters actionable information without confining them to a linear sequence of crime scenes.",
+      href: "https://evilhat.com/product/monster-of-the-week/",
+    },
+  ],
   relatedTools: [
     {
       title: "Quest generator",

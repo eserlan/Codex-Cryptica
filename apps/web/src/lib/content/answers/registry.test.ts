@@ -651,6 +651,22 @@ describe("published answers", () => {
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
   });
+
+  it("publishes the mystery without railroading answer with verified system references", () => {
+    const mysteryAnswer =
+      answers["how-do-you-run-a-mystery-without-railroading"];
+    expect(mysteryAnswer).toBeDefined();
+    expect(mysteryAnswer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "GUMSHOE",
+      "Brindlewood Bay",
+      "Monster of the Week",
+    ]);
+    for (const ref of mysteryAnswer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
 });
 
 describe("answer structured data", () => {
