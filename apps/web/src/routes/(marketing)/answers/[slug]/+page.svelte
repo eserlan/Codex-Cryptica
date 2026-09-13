@@ -14,7 +14,13 @@
     createDiscoveryViewGuard,
   } from "$lib/services/analytics/discovery-tracking";
   import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import {
+    trackAnswerShareClicked,
+    trackAnswerShareCompleted,
+    trackAnswerShareLinkCopied,
+  } from "$lib/services/analytics/answer-share-tracking";
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import ShareButton from "$lib/components/ShareButton.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -101,6 +107,28 @@
           {/each}
         </div>
       {/if}
+      <div class="mt-4">
+        <ShareButton
+          url={canonical}
+          title={answer.question}
+          text={answer.seo.description}
+          onShareClicked={() =>
+            trackAnswerShareClicked({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+          onShareCompleted={() =>
+            trackAnswerShareCompleted({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+          onLinkCopied={() =>
+            trackAnswerShareLinkCopied({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+        />
+      </div>
     </header>
 
     <!-- The direct answer, before anything else on the page. Ruled rather than
