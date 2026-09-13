@@ -92,6 +92,26 @@ export const howDoYouRunAnRpgCampaignInOneCity: AnswerConfigInput = {
     linkText: "Try the settlement generator",
     href: "/generators/settlement",
   },
+  systemsThatSupportThis: [
+    {
+      system: "Blades in the Dark",
+      rationale:
+        "The crew sheet ties scoundrels to a specific district hunting ground and claims map, while heat, entanglements, and faction status ensure that every score permanently alters standing across the city without allowing characters to evade local consequences.",
+      href: "https://bladesinthedark.com/downtime-activities",
+    },
+    {
+      system: "Urban Shadows",
+      rationale:
+        "The debt economy and faction circles turn city politics into a mechanical web of social leverage, where calling in or refusing favours forces players into ongoing entanglements with the same recurring local power brokers.",
+      href: "https://magpiegames.com/collections/urban-shadows",
+    },
+    {
+      system: "Vampire: The Masquerade",
+      rationale:
+        "Coterie domain rules and the boon hierarchy define the party's territory, hunting rights, and political debts within a single municipality, ensuring that rival kindred and local obligations remain the permanent focus of play across long chronicles.",
+      href: "https://renegadegamestudios.com/vampire-the-masquerade-5th-edition-roleplaying-game-core-rulebook/",
+    },
+  ],
   relatedTools: [
     {
       title: "Settlement generator",
