@@ -33,15 +33,35 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - **No Symmetrical Contrast Cadences or Generic Contrast Formulas**: Avoid repetitive rhetorical swings like "It is not about X; it is about Y", "X isn't just Y, it's Z", "Not only does this X, but it also Y". State the point directly without artificial rhetorical symmetry.
    - **No Formulaic Boilerplate Conclusions**: Never end sections or the answer with decorative moralizing recaps ("Ultimately, the key is...", "In conclusion...", "By keeping these principles in mind, your world will come alive..."). When the practical explanation is finished, stop.
    - **Break the Uniform AI Cadence**: Avoid uniform 3-sentence paragraphs or lists where every bullet has the exact same grammatical shape (e.g. bold verb-noun phrase followed by 12 words of generic explanation). Vary sentence lengths and paragraph depths to match genuine human technical writing.
-4. **Substantive Framework & Structure**:
+4. **Editorial Quality Beyond Compliance (Mandatory)**:
+   Apply this as a final editorial pass. These checks concern the answer's usefulness and judgement, while the AI-writing-tells section above concerns detectable patterns.
+   - **Give the answer one editorial spine**: Before drafting sections, write the one sentence the whole answer is teaching. For example: "A faction turn should answer one question: what changed in the world while the players were busy elsewhere?" Make the framework, examples, checklist, and Codex connection reinforce that idea.
+   - **Use realistic failure cases**: The weak or default approach in a worked example should describe a competent GM's genuine friction, not an absurd straw man. Show how increasing complexity makes actions, changes, and visible consequences harder to track.
+   - **Avoid unsupported precision and theatrical certainty**: Do not invent timelines, percentages, time costs, frequencies, or universal outcomes. Use specific numbers only when sourced or clearly labelled as an example.
+   - **Separate strong advice from universal rules**: State a useful heuristic confidently, but qualify it when circumstances change. Reserve absolute language for procedures that genuinely require it.
+   - **Prefer ordinary tabletop language**: Use the simplest terms that preserve meaning. Prefer "factions that currently matter to the party" over "organisations within the party's operational area", and "NPC, place, or rival" over "target entity" where appropriate.
+   - **Optimise for economy**: After drafting, remove repeated thesis statements, setup that merely restates a heading, and explanations the worked example already demonstrates. Aim for roughly 10 to 15 percent trimming when it improves pace without losing substance.
+   - **Make examples prove the advice through play**: Show a consequence the players can encounter, such as a blocked road, missing contact, price increase, changed patrol, new rumour, burned district, or political demand. An example that only paraphrases the framework is not enough.
+   - **Vary authority and cadence naturally**: Mix direct procedure, conditional advice, concrete examples, and brief reasoning. Authoritative writing can contain uncertainty where the table's circumstances genuinely matter.
+
+   Keep these examples concise and use them as editorial checks:
+
+   - **Failure case**: "Every GM ends up with sprawling spreadsheets, dozens of numerical stats, and hours of simulation."
+     **Better**: "As more factions become active, it becomes easy to lose track of who acted, what changed, and which consequences the players have actually seen."
+   - **Unsupported certainty**: "By the fourth session, the party will have forgotten the original clue."
+     **Better**: "If a clue has not returned to play for several sessions, give the players a fresh way to recognise its importance."
+   - **Universal rule**: "If the players ignore the faction, it succeeds automatically next turn."
+     **Better**: "If nobody meaningfully opposes the move, consider resolving it without a roll. If another faction or obstacle still resists it, use the normal resolution procedure."
+
+5. **Substantive Framework & Structure**:
    - At least 3 body sections (`sections.length >= 3`).
    - **At least one worked `example` block** (`kind: "example"`): Concrete tabletop comparison (e.g. weak/strong or before/after) with a "Why it works" takeaway.
    - **At least one actionable checklist block** (`kind: "checklist"`): Specific, practical prep items the reader can take straight to their table.
-5. **Honest Product Connection**:
+6. **Honest Product Connection**:
    - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
-6. **Clean List Item Titles (No Redundant Numbering)**:
+7. **Clean List Item Titles (No Redundant Numbering)**:
    - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
-7. **Optional `systemsThatSupportThis` (#2769)**:
+8. **Optional `systemsThatSupportThis` (#2769)**:
    - Only add an entry when a named RPG system has an actual rule or procedure for this topic (a named mechanic, not a matching genre or vibe). "Blades in the Dark" belongs on a heist answer because of its flashback/clock rules; a generic fantasy heartbreaker that merely permits heists does not.
    - Each entry needs `system`, one-sentence `rationale` naming the specific mechanic, and an external `href` to the system's own site or its publisher.
    - Roughly 2 to 4 entries where genuinely applicable. Omit the field entirely rather than padding it with a loosely-related system.
