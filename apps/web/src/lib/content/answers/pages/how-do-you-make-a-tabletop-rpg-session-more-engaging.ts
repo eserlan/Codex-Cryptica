@@ -165,6 +165,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-i-get-players-to-engage-with-my-campaign-world",
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
     "how-do-you-organise-npc-relationships",
+    "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-session-engagement",

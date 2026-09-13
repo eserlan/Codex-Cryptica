@@ -127,6 +127,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
     "how-do-you-create-a-magic-system",
+    "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-handle-character-death",
