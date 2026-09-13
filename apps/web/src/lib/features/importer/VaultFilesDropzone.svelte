@@ -47,7 +47,10 @@
   ondragleave={() => (dragging = false)}
   ondrop={handleDrop}
 >
-  <span class="icon-[lucide--folder-input] w-6 h-6 text-theme-muted"></span>
+  <span
+    class="icon-[lucide--folder-input] w-6 h-6 text-theme-muted"
+    aria-hidden="true"
+  ></span>
   <p class="drop-label">Drag files (or a folder) here</p>
   <button
     type="button"

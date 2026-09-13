@@ -15,7 +15,8 @@
       <div
         class="h-10 w-10 rounded-full bg-theme-primary/10 text-theme-primary flex items-center justify-center shrink-0"
       >
-        <span class="icon-[lucide--check-circle] h-5 w-5"></span>
+        <span class="icon-[lucide--check-circle] h-5 w-5" aria-hidden="true"
+        ></span>
       </div>
       <div class="min-w-0">
         <h3

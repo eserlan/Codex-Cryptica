@@ -38,6 +38,7 @@
     <div class="flex items-start gap-2 mb-2">
       <span
         class="icon-[lucide--image-off] mt-0.5 h-4 w-4 shrink-0 text-amber-500"
+        aria-hidden="true"
       ></span>
       <div class="min-w-0">
         <p

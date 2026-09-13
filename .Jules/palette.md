@@ -181,3 +181,7 @@
 
 **Learning:** Even when `title` attributes are present, icon-only buttons might not be consistently announced optimally by all screen readers. Providing an explicit `aria-label` along with `aria-hidden="true"` on the inner icon is the safest and most standard pattern for ensuring maximum accessibility compatibility for icon buttons.
 **Action:** When adding or reviewing icon-only buttons, always ensure an explicit `aria-label` is used on the `<button>` element and the decorative inner `<span>` icon uses `aria-hidden="true"`.
+
+## 2024-11-20 - Add aria-hidden to decorative icons in Importer and GraphView
+**Learning:** Found several decorative spans with `icon-[...]` utility classes in `GraphView.svelte`, `CCImportReport.svelte`, `CCImportReview.svelte`, `MissingImageResolver.svelte`, and `VaultFilesDropzone.svelte` that were missing `aria-hidden="true"`. This can cause screen readers to announce confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to decorative inner icon elements across the application to ensure clean screen reader experiences.

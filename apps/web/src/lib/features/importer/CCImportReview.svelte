@@ -237,7 +237,9 @@
                     <span
                       class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-amber-500"
                     >
-                      <span class="icon-[lucide--triangle-alert] h-3.5 w-3.5"
+                      <span
+                        class="icon-[lucide--triangle-alert] h-3.5 w-3.5"
+                        aria-hidden="true"
                       ></span>
                       Type fallback — check the type
                     </span>
@@ -246,7 +248,9 @@
                     <span
                       class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-red-400"
                     >
-                      <span class="icon-[lucide--alert-triangle] h-3.5 w-3.5"
+                      <span
+                        class="icon-[lucide--alert-triangle] h-3.5 w-3.5"
+                        aria-hidden="true"
                       ></span>
                       {itemWarningCount(item)} warning{itemWarningCount(
                         item,
@@ -289,14 +293,20 @@
                 <span
                   class="inline-flex items-center gap-1 px-2 py-1 border border-theme-primary/30 bg-theme-primary/10 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary rounded"
                 >
-                  <span class="icon-[lucide--link-2] h-3.5 w-3.5"></span>
+                  <span
+                    class="icon-[lucide--link-2] h-3.5 w-3.5"
+                    aria-hidden="true"
+                  ></span>
                   Existing
                 </span>
               {:else}
                 <span
                   class="inline-flex items-center gap-1 px-2 py-1 border border-theme-border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted rounded"
                 >
-                  <span class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
+                  <span
+                    class="icon-[lucide--sparkles] h-3.5 w-3.5"
+                    aria-hidden="true"
+                  ></span>
                   New
                 </span>
               {/if}
