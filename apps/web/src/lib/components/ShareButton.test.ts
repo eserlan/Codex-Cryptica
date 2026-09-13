@@ -65,6 +65,31 @@ describe("ShareButton", () => {
     expect(onShareCompleted).not.toHaveBeenCalled();
   });
 
+  it("falls back to copying when the native share sheet fails", async () => {
+    const share = vi.fn().mockRejectedValue(new Error("activation lost"));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const onLinkCopied = vi.fn();
+
+    render(ShareButton, {
+      props: {
+        ...props,
+        nav: { share },
+        clipboard: { writeText },
+        onLinkCopied,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Share this article" }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledWith(props.url);
+    expect(onLinkCopied).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Copied!")).toBeTruthy();
+  });
+
   it("falls back to copying the link when navigator.share is unavailable", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     const onShareClicked = vi.fn();
@@ -178,11 +203,13 @@ describe("ShareButton", () => {
     await fireEvent.click(button);
     await Promise.resolve();
     await Promise.resolve();
+    await tick();
     expect(screen.getByText("Link copied to clipboard")).toBeTruthy();
 
     await fireEvent.click(button);
     await Promise.resolve();
     await Promise.resolve();
+    await tick();
 
     expect(writeText).toHaveBeenCalledTimes(2);
     expect(screen.getByText("Link copied to clipboard")).toBeTruthy();

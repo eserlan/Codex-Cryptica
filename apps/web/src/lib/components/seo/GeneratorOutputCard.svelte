@@ -13,6 +13,7 @@
     isMonsterLabsHandoffEligibleType,
     isMonsterLabsItemEligibleType,
   } from "$lib/services/seo/monsterlabs-handoff";
+  import ShareButton from "$lib/components/ShareButton.svelte";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -49,6 +50,10 @@
     onRefine,
     onCopyMarkdown,
     onCopySection,
+    onPrepareShare,
+    onShareClicked,
+    onShareCompleted,
+    onShareLinkCopied,
     onContainerClick,
     onContainerKeydown,
     onSelectHubEntity,
@@ -78,6 +83,14 @@
     onRefine?: (data: GeneratorOutput) => void;
     onCopyMarkdown: () => void;
     onCopySection: (sectionId: string, markdown: string) => void;
+    onPrepareShare?: () => Promise<{
+      url: string;
+      title?: string;
+      text?: string;
+    }>;
+    onShareClicked?: () => void;
+    onShareCompleted?: () => void;
+    onShareLinkCopied?: () => void;
     onContainerClick: (event: MouseEvent) => void;
     onContainerKeydown: (event: KeyboardEvent) => void;
     onSelectHubEntity: (entity: SessionEntity) => void;
@@ -321,6 +334,17 @@
               ></span>
               {copied ? "Copied!" : "Copy"}
             </button>
+            {#if onPrepareShare}
+              <ShareButton
+                url="https://codexcryptica.com/generators"
+                title={generatedData.title}
+                subjectLabel="this result"
+                prepareShare={onPrepareShare}
+                {onShareClicked}
+                {onShareCompleted}
+                onLinkCopied={onShareLinkCopied}
+              />
+            {/if}
           </div>
         </div>
       </div>

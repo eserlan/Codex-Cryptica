@@ -68,6 +68,11 @@ import {
   handleCloudBackupReissueCode,
   handleCloudBackupAdminDelete,
 } from "./cloud-backup";
+import {
+  handleCreateGeneratorShare,
+  handleDeleteGeneratorShare,
+  handleGetGeneratorShare,
+} from "./generator-shares";
 
 interface Env {
   GEMINI_API_KEY: string;
@@ -96,6 +101,9 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
+  SHARE_CREATE_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
 }
 
 /**
@@ -244,6 +252,50 @@ export default {
         pathname,
       );
       if (rateLimitResponse) return rateLimitResponse;
+    }
+
+    if (
+      pathname === "/api/generator-shares" ||
+      pathname.startsWith("/api/generator-shares/")
+    ) {
+      const origin = request.headers.get("Origin") || "";
+      const isPublicRead =
+        pathname.startsWith("/api/generator-shares/") &&
+        request.method === "GET";
+      if (!isPublicRead && !isOriginAllowed(origin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+      const rateLimitResponse = await enforcePublishRateLimit(
+        request,
+        env,
+        pathname,
+      );
+      if (rateLimitResponse) return rateLimitResponse;
+
+      if (pathname === "/api/generator-shares") {
+        if (request.method === "POST")
+          return handleCreateGeneratorShare(request, env);
+        return new Response("Method not allowed", {
+          status: 405,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      const shareId = pathname.split("/")[3];
+      if (!shareId || !/^[0-9a-f-]{36}$/i.test(shareId)) {
+        return new Response("Not found", { status: 404 });
+      }
+      if (request.method === "GET")
+        return handleGetGeneratorShare(request, env, shareId);
+      if (request.method === "DELETE")
+        return handleDeleteGeneratorShare(request, env, shareId);
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: getCorsHeaders(request.headers, env),
+      });
     }
 
     if (pathname.startsWith("/api/cloud-backup/")) {
@@ -998,18 +1050,24 @@ async function enforcePublishRateLimit(
   const isTemplateCreate =
     pathname === "/api/template-directory/listings" &&
     request.method === "POST";
+  const isShareCreate =
+    pathname === "/api/generator-shares" && request.method === "POST";
   const limiter =
     pathname === "/api/publish-vault" || isTemplateCreate
       ? env.PUBLISH_CREATE_RATE_LIMITER
-      : env.PUBLISH_WRITE_RATE_LIMITER;
+      : isShareCreate
+        ? env.SHARE_CREATE_RATE_LIMITER
+        : env.PUBLISH_WRITE_RATE_LIMITER;
   if (!limiter) return null;
 
   const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
   const publishId = pathname.startsWith("/api/template-directory/listings/")
     ? pathname.split("/")[4] || "new"
-    : pathname.split("/")[3] || "new";
+    : pathname.startsWith("/api/generator-shares/")
+      ? pathname.split("/")[3] || "new"
+      : pathname.split("/")[3] || "new";
   const key =
-    pathname === "/api/publish-vault" || isTemplateCreate
+    pathname === "/api/publish-vault" || isTemplateCreate || isShareCreate
       ? ip
       : `${ip}:${publishId}`;
   const { success } = await limiter.limit({ key });

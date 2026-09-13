@@ -36,6 +36,8 @@ Tracking is limited to our public marketing and generator pages (the pages you l
 - **Cloudflare Web Analytics:** Anonymous, cookie-free pageview counts across the site.
 - **Cloudflare Zaraz:** Anonymous funnel events on marketing/generator pages only — a page visit, starting or completing a generator, and the moment you choose to save generated content to your vault (including whether that content had links to other entities). We also record campaign parameters and, when a referral is clearly from an identified AI assistant such as ChatGPT, Perplexity, Copilot, Claude, or Gemini, the assistant category and landing page. We keep only the recognised source category, not the referrer's path or query string. None of these events include your generated content, campaign data, or anything that happens after you land in the app.
 
+When you explicitly choose **Share** on a generated result, the selected text is copied to a public, immutable snapshot hosted in Cloudflare R2. This is separate from your local vault and is not added to search results. If the link was created in the same browser, you can revoke that snapshot from its public page.
+
 ## 5. Third-Party Services
 
 - **Web Fonts:** We may load fonts from Google Fonts.

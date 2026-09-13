@@ -348,6 +348,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link. All listed worlds display a provenance and copyright notice confirming they are user-created and independently published without rights-holder endorsement. Authors must confirm they have the legal right to publish their content, and visitors may report potential copyright concerns for moderation review.",
     icon: "icon-[lucide--globe]",
   },
+  "generator-sharing": {
+    id: "generator-sharing",
+    title: "Share a generated result",
+    content:
+      "Choose Share on a generated result or a Session Hub draft to create an immutable public snapshot. Your original draft stays private and later refinements do not change the link. Phones can use the native share sheet; on desktop, Share copies the link. Shared pages are not added to search results. If you created the link in this browser, open it again to revoke it. Sharing sends the selected text to Codex Cryptica's Cloudflare-hosted snapshot service only after you choose Share; it is separate from your local vault.",
+    icon: "icon-[lucide--share-2]",
+  },
   "guest-entity-links": {
     id: "guest-entity-links",
     title: "Sharing a Link to an Entry",

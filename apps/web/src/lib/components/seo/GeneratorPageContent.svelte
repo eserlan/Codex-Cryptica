@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
+  import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
@@ -115,6 +116,7 @@
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
   import { worldGenreForHub } from "./generator-page-world-handoff";
+  import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
   import {
     getHubMountPatch,
     resolveInitialActiveTheme,
@@ -251,6 +253,7 @@
   });
 
   let seoLayoutRef = $state<ReturnType<typeof SEOGeneratorLayout> | null>(null);
+  let remixDraft = $state<GeneratorOutput | null>(null);
 
   // Drives the roster's auto-generation explicitly once handoff context
   // has actually settled, rather than have the child guess how long to wait
@@ -721,6 +724,7 @@
   }
 
   onMount(() => {
+    void loadRemixDraft();
     const patch = getHubMountPatch({
       slug,
       hubTheme: hubContext.theme,
@@ -794,6 +798,38 @@
     }
   });
 
+  async function loadRemixDraft() {
+    if (!browser) return;
+    const remixId = page.url.searchParams.get("remix");
+    if (!remixId) return;
+    try {
+      const shared = await generatorShareService.get(remixId);
+      if (!shared || shared.metadata.generatorPath !== meta.canonicalPath)
+        return;
+
+      const withoutTitle = shared.content.replace(/^# [^\n]+\n*/, "");
+      const summaryMatch = withoutTitle.match(/^\*([^*\n]+)\*\n*/);
+      remixDraft = {
+        type: "note",
+        title: shared.title,
+        summary: summaryMatch?.[1],
+        content: summaryMatch
+          ? withoutTitle.slice(summaryMatch[0].length)
+          : withoutTitle,
+        lore: "",
+        labels: shared.metadata.labels ?? [],
+        status: "draft",
+      };
+      if (shared.metadata.theme && themeIdToLabel[shared.metadata.theme]) {
+        activeTheme = shared.metadata.theme;
+      }
+      window.history.replaceState({}, "", window.location.pathname);
+    } catch {
+      // A remix is an enhancement; the normal generator remains usable when
+      // the shared snapshot cannot be reached.
+    }
+  }
+
   const GENERATE_HANDLERS = createGeneratorHandlers({
     npc,
     settlement,
@@ -844,11 +880,12 @@
   });
 
   const initialDraft = $derived(
-    (handoffState.questPremise && slug === "plot-twist-generator") ||
+    remixDraft ??
+      ((handoffState.questPremise && slug === "plot-twist-generator") ||
       (handoffState.factionContext && slug === "faction-roster") ||
       (handoffState.npcContext && slug === "npc")
-      ? null
-      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
+        ? null
+        : (initialDraftOverride ?? slugDrafts[slug] ?? null)),
   );
 </script>
 
@@ -877,6 +914,7 @@
   ].includes(slug)}
   {generate}
   {initialDraft}
+  initialDraftIsUserGenerated={Boolean(remixDraft)}
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
