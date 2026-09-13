@@ -10,6 +10,7 @@ Tracks whether each post has been published across current and planned platforms
 
 |    Date    | Topic                                         | Copy / reference                                                                                                                                                                                                    | Bluesky | Discord | Instagram | Patreon |
 | :--------: | :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-----: | :-----: | :-------: | :-----: |
+| 2026-09-13 | Release comms auto-draft (`4e17671`) | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvffbpruzk23 | [x] | [ ] | [ ] | [ ] |
 | 2026-09-12 | Release comms auto-draft (`11872dd`) | https://bsky.app/profile/codexcryptica.bsky.social/post/3mveayhooru2l | [x] | [x] | [x] | [ ] |
 | 2026-09-12 | Release comms auto-draft (`093e40f`) | https://bsky.app/profile/codexcryptica.bsky.social/post/3mve7tvi55y2t | [x] | [x] | [x] | [ ] |
 | 2026-09-12 | Release comms auto-draft (`b002ac8`)          | https://bsky.app/profile/codexcryptica.bsky.social/post/3mvdp23e7bi2i                                                                                                                                               |   [x]   |   [x]   |    [x]    |   [ ]   |
