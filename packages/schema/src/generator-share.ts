@@ -66,9 +66,16 @@ export const GeneratorShareCreateSchema = z
   })
   .strict();
 
+const shareId = z
+  .string()
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    "Share ID must be lowercase alphanumeric with hyphens",
+  );
+
 export const GeneratorShareSchema = z
   .object({
-    shareId: z.string().uuid(),
+    shareId,
     generatorId: safeGeneratorId,
     title: z.string().trim().min(1).max(GENERATOR_SHARE_LIMITS.maxTitleLength),
     content: z.string().min(1).max(GENERATOR_SHARE_LIMITS.maxContentLength),

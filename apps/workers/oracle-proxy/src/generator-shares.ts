@@ -47,6 +47,34 @@ async function hashToken(token: string): Promise<string> {
     .join("");
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function generateShareId(
+  generatorId: string,
+  title: string,
+  randomSuffix: string,
+): string {
+  const generatorSlug = generatorId.replace("/", "-");
+  const titleSlug = slugify(title);
+  return `${generatorSlug}-${titleSlug}-${randomSuffix}`;
+}
+
+function randomSuffix(): string {
+  const bytes = new Uint8Array(3);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function randomToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -104,7 +132,11 @@ export async function handleCreateGeneratorShare(
 
   try {
     const payload = GeneratorShareCreateSchema.parse(await request.json());
-    const shareId = crypto.randomUUID();
+    const shareId = generateShareId(
+      payload.generatorId,
+      payload.title,
+      randomSuffix(),
+    );
     const managementToken = randomToken();
     const share = GeneratorShareSchema.parse({
       shareId,

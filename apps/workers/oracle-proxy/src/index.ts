@@ -285,7 +285,7 @@ export default {
       }
 
       const shareId = pathname.split("/")[3];
-      if (!shareId || !/^[0-9a-f-]{36}$/i.test(shareId)) {
+      if (!shareId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(shareId)) {
         return new Response("Not found", { status: 404 });
       }
       if (request.method === "GET")
