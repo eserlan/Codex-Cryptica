@@ -5,17 +5,31 @@
     renderGeneratorMarkdown,
     renderGeneratorLore,
   } from "$lib/components/seo/markdown-renderers";
+  import ShareButton from "$lib/components/ShareButton.svelte";
 
   let {
     entity,
     onClose,
     onCopy,
     onRefine,
+    onPrepareShare,
+    onShareClicked,
+    onShareCompleted,
+    onShareLinkCopied,
   }: {
     entity: SessionEntity | null;
     onClose: () => void;
     onCopy?: (entity: SessionEntity) => Promise<boolean>;
     onRefine?: (entity: SessionEntity) => void;
+    onPrepareShare?: (entity: SessionEntity) => Promise<{
+      url: string;
+      title?: string;
+      text?: string;
+      cleanup?: () => Promise<void>;
+    }>;
+    onShareClicked?: () => void;
+    onShareCompleted?: () => void;
+    onShareLinkCopied?: () => void;
   } = $props();
 
   let copyState = $state<"idle" | "success" | "error">("idle");
@@ -124,6 +138,17 @@
           >
             Refine
           </button>
+        {/if}
+        {#if onPrepareShare}
+          <ShareButton
+            url="https://codexcryptica.com/generators"
+            title={entity.title}
+            subjectLabel="this result"
+            prepareShare={() => onPrepareShare!(entity)}
+            {onShareClicked}
+            {onShareCompleted}
+            onLinkCopied={onShareLinkCopied}
+          />
         {/if}
         <button
           type="button"

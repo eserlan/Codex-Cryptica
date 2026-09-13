@@ -77,6 +77,14 @@
     resolveGeneratedNoun,
     resolveGeneratedSingular,
   } from "./generator-page-identity";
+  import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
+  import {
+    trackGeneratorShareCreated,
+    trackGeneratorShareLinkCopied,
+    trackGeneratorShareCompleted,
+    trackGeneratorShareClicked,
+    type GeneratorShareSource,
+  } from "$lib/services/sharing/generator-share-tracking";
 
   // Link-preview fallback for generators without a capture of their own. Plain
   // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
@@ -115,6 +123,7 @@
     onOpenMemberAsCharacter = undefined,
     clipboardService = defaultClipboardService,
     autoGenerateExplicit = false,
+    initialDraftIsUserGenerated = false,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -151,6 +160,8 @@
     ) => void;
     clipboardService?: ClipboardService;
     autoGenerateExplicit?: boolean;
+    /** Enables actions when a public result was explicitly opened as a remix. */
+    initialDraftIsUserGenerated?: boolean;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -173,14 +184,26 @@
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
   let currentPagePath = $state<string | undefined>(undefined);
+  let appliedInitialDraft: GeneratorOutput | null | undefined;
 
   $effect(() => {
     if (canonicalPath !== currentPagePath) {
       currentPagePath = canonicalPath;
-      userGenerated = false;
-      userGenerationSucceeded = false;
+      userGenerated = initialDraftIsUserGenerated;
+      userGenerationSucceeded = initialDraftIsUserGenerated;
       generatedData = initialDraft;
-      isExampleDraft = true;
+      isExampleDraft = !initialDraftIsUserGenerated;
+      appliedInitialDraft = initialDraft;
+    } else if (
+      initialDraft !== appliedInitialDraft &&
+      initialDraft &&
+      !userGenerated
+    ) {
+      generatedData = initialDraft;
+      userGenerated = initialDraftIsUserGenerated;
+      userGenerationSucceeded = initialDraftIsUserGenerated;
+      isExampleDraft = !initialDraftIsUserGenerated;
+      appliedInitialDraft = initialDraft;
     }
   });
 
@@ -741,6 +764,73 @@
     });
   }
 
+  function shareEvent(source: GeneratorShareSource) {
+    return { generatorType, source };
+  }
+
+  async function prepareGeneratorShare(
+    source: GeneratorShareSource,
+    document: {
+      title: string;
+      summary?: string;
+      labels?: string[];
+      content: string;
+      lore?: string;
+      summaryIncludedInContent?: boolean;
+    },
+  ) {
+    const share = await generatorShareService.create({
+      generatorId: generatorType,
+      title: document.title,
+      content: buildGeneratorMarkdown(document),
+      metadata: {
+        description:
+          document.summary ||
+          document.content
+            .replace(/[#*_\n]/g, " ")
+            .trim()
+            .slice(0, 280),
+        theme: theme || worldTheme,
+        labels: document.labels?.slice(0, 8),
+        generatorPath: canonicalPath || "/generators",
+        imageUrl: ogImage.startsWith("https://") ? ogImage : undefined,
+      },
+    });
+    trackGeneratorShareCreated(shareEvent(source));
+    return {
+      url: share.url,
+      title: document.title,
+      text: share.share.metadata.description || "Created with Codex Cryptica",
+      cleanup: () => generatorShareService.revoke(share.share.shareId),
+    };
+  }
+
+  function prepareCurrentOutputShare() {
+    if (!generatedData)
+      throw new Error("There is no generated result to share.");
+    return prepareGeneratorShare("current_output", {
+      title: generatedData.title,
+      summary: generatedData.summary,
+      labels: generatedData.labels,
+      content: documentLayout.content,
+      lore: documentLayout.lore,
+    });
+  }
+
+  function prepareSessionEntityShare(entity: SessionEntity) {
+    return prepareGeneratorShare("session_hub_detail", {
+      title: entity.title,
+      summary: entity.summary,
+      labels: entity.labels,
+      content: entity.content,
+      lore: entity.lore,
+      summaryIncludedInContent: Boolean(
+        entity.summary &&
+        entity.content.trim().startsWith(`*${entity.summary.trim()}*`),
+      ),
+    });
+  }
+
   function handleContainerKeydown(event: KeyboardEvent) {
     if (event.key === "Enter" || event.key === " ") {
       handleContainerClick(event as unknown as MouseEvent);
@@ -1091,6 +1181,15 @@
         onCopyMarkdown={handleCopyMarkdown}
         onCopySection={(sectionId, markdown) =>
           void handleCopySection(sectionId, markdown)}
+        onPrepareShare={userGenerationSucceeded
+          ? prepareCurrentOutputShare
+          : undefined}
+        onShareClicked={() =>
+          trackGeneratorShareClicked(shareEvent("current_output"))}
+        onShareCompleted={() =>
+          trackGeneratorShareCompleted(shareEvent("current_output"))}
+        onShareLinkCopied={() =>
+          trackGeneratorShareLinkCopied(shareEvent("current_output"))}
         onContainerClick={handleContainerClick}
         onContainerKeydown={handleContainerKeydown}
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
@@ -1173,6 +1272,13 @@
     onClose={() => (selectedHubEntity = null)}
     onCopy={handleCopySessionEntity}
     onRefine={handleOpenSessionRefinement}
+    onPrepareShare={prepareSessionEntityShare}
+    onShareClicked={() =>
+      trackGeneratorShareClicked(shareEvent("session_hub_detail"))}
+    onShareCompleted={() =>
+      trackGeneratorShareCompleted(shareEvent("session_hub_detail"))}
+    onShareLinkCopied={() =>
+      trackGeneratorShareLinkCopied(shareEvent("session_hub_detail"))}
   />
 
   <GeneratorRefinementModal

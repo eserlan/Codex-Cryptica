@@ -208,5 +208,6 @@
 **Action:** Look for UI or data storage classes that grab `window.localStorage` natively. Refactor them to accept a `storage` dependency in their constructor options, defaulting to `browserStorage` to provide an explicit, testable seam that maintains production behaviour.
 
 ## 2024-03-22 - Inject ID Generator in Stores
+
 **Learning:** Hardcoded ID generation (`crypto.randomUUID()`) inside Svelte 5 store managers like `AdventureManager` couples them to the global environment and makes tests harder to control.
 **Action:** Inject `idGenerator` via a dependencies object, falling back to `systemIdGenerator.uuid` from `@codex/runtime` for a sensible default.

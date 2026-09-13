@@ -165,6 +165,7 @@ Total: 894 objects, ~166.5 MB. The tables below cover everything **except** `pub
 | [`og/how-do-you-recap-a-ttrpg-session.jpg`](https://assets.codexcryptica.com/og/how-do-you-recap-a-ttrpg-session.jpg) | 843 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3015) |
 | [`og/how-much-campaign-lore-should-players-be-expected-to-remember.jpg`](https://assets.codexcryptica.com/og/how-much-campaign-lore-should-players-be-expected-to-remember.jpg) | 836 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3010) |
 | [`og/how-do-you-run-a-campaign-when-you-only-play-once-a-month.jpg`](https://assets.codexcryptica.com/og/how-do-you-run-a-campaign-when-you-only-play-once-a-month.jpg) | 979 KB | image/jpeg | 2026-09-12 | Reference answer OG card, AI-generated (#3009) |
+| [`og/how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg.jpg`](https://assets.codexcryptica.com/og/how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg.jpg) | 422 KB | image/jpeg | 2026-09-13 | Reference answer OG card, AI-generated |
 
 ## `screenshots/` — `/generators` + `/tools` page cards and og:image
 
