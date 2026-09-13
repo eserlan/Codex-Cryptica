@@ -130,6 +130,27 @@ describe("ShareButton", () => {
     expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
   });
 
+  it("creates the share modal when prepareShare becomes available after mount", async () => {
+    const prepareShare = vi
+      .fn()
+      .mockResolvedValue({ url: props.url, title: props.title });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+
+    const { rerender } = render(ShareButton, {
+      props: { ...props, nav: undefined, clipboard: { writeText } },
+    });
+
+    await rerender({ ...props, nav: undefined, prepareShare });
+    await tick();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Copy link to this article" }),
+    );
+    await tick();
+
+    expect(screen.getByTestId("share-confirm-button")).toBeTruthy();
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
   it("falls back to copying when the native share sheet fails", async () => {
     const share = vi.fn().mockRejectedValue(new Error("activation lost"));
     const writeText = vi.fn().mockResolvedValue(undefined);
