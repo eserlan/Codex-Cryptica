@@ -14,7 +14,15 @@
     createDiscoveryViewGuard,
   } from "$lib/services/analytics/discovery-tracking";
   import { trackDiscoveryClick } from "$lib/actions/trackDiscoveryClick";
+  import {
+    trackAnswerShareClicked,
+    trackAnswerShareCompleted,
+    trackAnswerShareLinkCopied,
+  } from "$lib/services/analytics/answer-share-tracking";
+  import { trackAnswerUsefulVote } from "$lib/services/analytics/answer-feedback-tracking";
   import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
+  import ShareButton from "$lib/components/ShareButton.svelte";
+  import UsefulnessFeedback from "$lib/components/UsefulnessFeedback.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -101,6 +109,28 @@
           {/each}
         </div>
       {/if}
+      <div class="mt-4">
+        <ShareButton
+          url={canonical}
+          title={answer.question}
+          text={answer.seo.description}
+          onShareClicked={() =>
+            trackAnswerShareClicked({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+          onShareCompleted={() =>
+            trackAnswerShareCompleted({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+          onLinkCopied={() =>
+            trackAnswerShareLinkCopied({
+              slug: answer.slug,
+              intent: answer.discovery?.id,
+            })}
+        />
+      </div>
     </header>
 
     <!-- The direct answer, before anything else on the page. Ruled rather than
@@ -263,6 +293,19 @@
         {/if}
       </section>
     {/each}
+
+    <div class="mb-12">
+      <UsefulnessFeedback
+        voteKey={answer.slug}
+        onVote={(value, reason) =>
+          trackAnswerUsefulVote({
+            slug: answer.slug,
+            intent: answer.discovery?.id,
+            value,
+            reason,
+          })}
+      />
+    </div>
 
     {#if answer.systemsThatSupportThis && answer.systemsThatSupportThis.length > 0}
       <section class="mb-12 border-t border-theme-border pt-8">

@@ -7,14 +7,14 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
   question: "How do you track faction turns between RPG sessions?",
   kind: "framework",
   shortAnswer:
-    "Track between-session faction turns with a five-step record for each active organisation: define its immediate intent, select a single action against a target entity, resolve the outcome, translate that outcome into a visible consequence in the game world, and log the change on your campaign timeline. Limiting each organisation to one concrete action per downtime cycle keeps the world moving without turning prep into spreadsheet bookkeeping.",
+    "A faction turn should answer one question: what changed in the world while the players were busy elsewhere? Track it with a five-step record for each active organisation: define its immediate intent, choose one action against a specific target, resolve the outcome, surface a visible consequence in the game world, and log the change on your campaign timeline. Limiting each organisation to one action per downtime cycle keeps that answer clear without turning prep into spreadsheet bookkeeping.",
   sections: [
     {
       kind: "prose",
-      heading: "Off-screen simulation dies of administrative bloat",
+      heading: "A faction turn only needs to answer one question",
       paragraphs: [
-        "Game Masters often begin faction play by drafting sprawling spreadsheets with dozens of numerical stats, balance sheets, and complex rolling procedures for every organisation on the continent. By the fourth session, running this simulated wargame between sessions consumes several hours of prep, burns out the GM, and generates pages of unobserved background lore that players never touch.",
-        "Faction turns exist to produce player-facing tension, not to run an unobserved wargame. An off-screen organisation needs only enough structure to answer four practical questions: what did it try to do this week, who was targeted, what physical evidence did it leave behind, and what changes permanently on the campaign map.",
+        "As more factions become active, it's easy to lose track of who acted, what changed, and which consequences the players have actually seen. A GM trying to be thorough can end up tracking resources, rosters, and rival moves for organisations nobody at the table is thinking about, and a tool meant to save prep time turns into more prep.",
+        "A faction turn should answer one question: what changed in the world while the players were busy elsewhere? An off-screen organisation needs only enough structure to say what it tried to do, who it targeted, what evidence it left behind, and what changed on the campaign map — everything else is detail in service of that answer.",
       ],
     },
     {
@@ -29,19 +29,19 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
         },
         {
           term: "Select a targeted action",
-          text: "Choose how the faction pursues that intent this cycle. Standard moves include expanding territory, seizing an asset, infiltrating a rival, forging a pact, or sabotaging an enemy holding. Always name the specific target entity, location, or NPC involved.",
+          text: "Choose how the faction pursues that intent this cycle. Standard moves include expanding territory, seizing an asset, infiltrating a rival, forging a pact, or sabotaging an enemy holding. Always name the specific NPC, location, or rival involved.",
         },
         {
           term: "Resolve the outcome",
-          text: "Decide whether the move succeeds, stalls, or triggers a setback. In narrative systems, compare the faction's relative standing and resources against its target. In dice-driven games, make a single opposed roll or advance a multi-segment progress clock.",
+          text: "Decide whether the move succeeds, stalls, or triggers a setback. In narrative systems, compare the faction's standing and resources against its target. In dice-driven games, make a single opposed roll or advance a progress clock.",
         },
         {
           term: "Surface a visible consequence",
-          text: "Translate the mechanical result into tangible evidence the players encounter in the next session. A failed infiltration leaves an arrested spy in the stocks; a successful raid leaves smoke on the horizon, displaced villagers on the road, and doubled sentry watches at the gate.",
+          text: "Translate the result into tangible evidence the players encounter next session. A failed infiltration leaves an arrested spy in the stocks; a successful raid leaves smoke on the horizon, displaced villagers on the road, and doubled sentry watches at the gate.",
         },
         {
-          term: "Log the permanent history",
-          text: "Record the result as a dated entry on your campaign timeline and update the faction's relationship to the target entity. Logging the turn immediately prevents contradictions four sessions later when players ask when the docks burned down.",
+          term: "Log what changed",
+          text: "Record the result as a dated entry on your campaign timeline and update the faction's relationship to its target. Logging it immediately avoids contradictions later, when players ask when the docks burned down.",
         },
       ],
     },
@@ -54,7 +54,7 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
       items: [
         {
           term: "The spreadsheet simulation trap",
-          text: "The GM tracks gold reserves, payroll, twenty named hirelings, and supply lines across three notebook pages, spending forty minutes rolling sub-table skirmishes between mercenary guards and smugglers. None of this internal arithmetic reaches the table; the players merely receive a dry summary that scrap prices increased.",
+          text: "The GM tracks gold reserves, payroll, and a roster of hirelings across several notebook pages, then spends forty minutes rolling skirmishes between guards and smugglers. None of it reaches the table — the players just hear that scrap prices went up.",
         },
         {
           term: "The five-step turn loop",
@@ -70,8 +70,8 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
       kind: "prose",
       heading: "Limit active turns to organisations in the party's orbit",
       paragraphs: [
-        "A common mistake is attempting to run between-session turns for every nation, cult, and syndicate on the world map. Restrict active turns to three or four organisations directly interacting with the region where the adventurers are currently operating. Distant factions can advance on broad seasonal milestones when the party travels to new regions.",
-        "When the players deliberately ignore an active faction's move, let that organisation succeed automatically on its next turn. Unopposed momentum makes the campaign world feel alive: when the party chooses to pursue a dungeon rumour rather than guard the granary, the grain cartel completes its monopoly on schedule and the town faces food rationing.",
+        "A common mistake is attempting to run between-session turns for every nation, cult, and syndicate on the world map. Restrict active turns to three or four factions that currently matter to the party. Distant factions can advance on broad seasonal milestones when the party travels to new regions.",
+        "When the players deliberately ignore an active faction's move, that's still information worth acting on. If nobody is meaningfully opposing it, consider letting the move succeed without a roll — unopposed momentum makes the campaign world feel alive. If another faction or some other obstacle still stands in the way, resolve it normally, perhaps from a stronger position. When the party chooses to pursue a dungeon rumour rather than guard the granary, the grain cartel might complete its monopoly on schedule and the town faces food rationing, unless a rival guild or a bad harvest gets there first.",
       ],
     },
     {
@@ -79,11 +79,11 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
       heading: "Between-session faction turn checklist",
       intro: "Complete this sequence before concluding your session prep:",
       items: [
-        "Pick no more than three or four factions active within the party's operational area.",
-        "Assign each organisation one specific action targeting a named NPC, location, or rival.",
-        "Resolve the action with a single opposed check, clock tick, or position comparison.",
-        "Note at least one visible consequence that players will observe or hear rumoured next session.",
-        "Update the relationship links on your campaign map and append the outcome to the timeline.",
+        "Pick no more than three or four factions active around the party.",
+        "Assign each faction one specific action targeting a named NPC, location, or rival.",
+        "Resolve the action with a single opposed check, a clock tick, or a plain comparison of who has the advantage.",
+        "Note at least one visible consequence the players will notice or hear about next session.",
+        "Update the relationship links on your campaign map and log the outcome on the timeline.",
       ],
     },
   ],

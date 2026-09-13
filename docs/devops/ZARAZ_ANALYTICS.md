@@ -63,19 +63,46 @@ user-authored content.
     plus `/alternatives/[slug]` which 301s into the same `/vs` page — and,
     outside the named discovery families, `/solutions/[slug]` and
     `/features/[slug]`, tracked under `source_kind: "other"`)
+- `apps/web/src/lib/services/analytics/answer-share-tracking.ts` (#3037) —
+  `trackAnswerShareClicked()`, `trackAnswerShareCompleted()`,
+  `trackAnswerShareLinkCopied()` for the Share action on `/answers/[slug]`.
+  Kept separate from discovery-tracking.ts since share intents don't fit
+  that module's click/target model.
+- `apps/web/src/lib/components/ShareButton.svelte` (#3037) — the generic
+  Web-Share-API-with-Copy-Link-fallback button, wired into
+  `apps/web/src/routes/(marketing)/answers/[slug]/+page.svelte`'s header.
+  Deliberately not coupled to the answer-sharing tracking calls above (or to
+  any snapshot/persistence backend) — the page passes
+  `onShareClicked`/`onShareCompleted`/`onLinkCopied` callbacks, so the
+  component stays reusable for other share surfaces (e.g. generator results,
+  #2916) with different event names.
+- `apps/web/src/lib/services/analytics/answer-feedback-tracking.ts` (#3038)
+  — `trackAnswerUsefulVote()` for the "Was this useful?" prompt at the end
+  of an answer's substantive content.
+- `apps/web/src/lib/components/UsefulnessFeedback.svelte` (#3038) — the
+  Yes/No + optional structured-reason widget, wired the same
+  callback-prop way as `ShareButton.svelte` (`onVote`). It also owns a
+  per-browser duplicate-vote marker in `localStorage`
+  (`codex_answer_feedback_<slug>`, via the existing `UIPersistence` helper)
+  so a reader can't accidentally vote twice, with an explicit "Change your
+  answer" action to vote again deliberately.
 
 ## Events
 
-| Event                    | Fires when                                                                  | Properties                                                                                                                     |
-| ------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `seo_entry`              | A marketing page is visited with new UTM or AI-referral attribution         | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
-| `generator_started`      | A visitor submits a generator form (not the silent auto-draft on page load) | `generator_type`                                                                                                               |
-| `generator_completed`    | Generation succeeds                                                         | `generator_type`                                                                                                               |
-| `entity_saved`           | "Save to Codex" is clicked                                                  | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
-| `vault_created`          | `entity_saved` fires with `is_first_saved_entity: true`                     | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
-| `related_entity_created` | A save includes one or more `[[wiki-links]]`/references                     | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
-| `discovery_page_viewed`  | A supported discovery page is viewed (once per page per visit — see below)  | `source_kind`, `source_id`, `path`                                                                                             |
-| `discovery_click`        | A visitor follows a meaningful discovery-page link/CTA                      | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
+| Event                      | Fires when                                                                             | Properties                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `seo_entry`                | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
+| `generator_started`        | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                               |
+| `generator_completed`      | Generation succeeds                                                                    | `generator_type`                                                                                                               |
+| `entity_saved`             | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
+| `vault_created`            | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
+| `related_entity_created`   | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
+| `discovery_page_viewed`    | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                             |
+| `discovery_click`          | A visitor follows a meaningful discovery-page link/CTA                                 | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
+| `answer_share_clicked`     | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                        |
+| `answer_share_completed`   | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                               |
+| `answer_share_link_copied` | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                               |
+| `answer_useful_vote`       | A reader answers "Was this useful?"                                                    | `slug`, `intent`, `value` (`yes` \| `no`), `reason` (closed set, "no" votes only, optional)                                    |
 
 Every event also carries `first_touch` and `latest_touch` objects when
 attribution has been captured for the current browser. Their shape is
@@ -181,6 +208,49 @@ click-through rate, CTA-placement performance, and
 answer/example/for → generator/app conversion funnels (join
 `discovery_page_viewed` → `discovery_click` on the same `source_kind` +
 `source_id` within a session).
+
+### Answer sharing (#3037)
+
+A restrained Share action on `/answers/[slug]` — much simpler than the
+generator-result sharing in #2916, which persists public snapshots for
+remix; this has no backend, it just shares the answer's own already-public
+canonical URL. `ShareButton.svelte` prefers `navigator.share()` (the native
+OS share sheet) and falls back to a Copy Link button when unsupported.
+
+`answer_share_completed` is only fired when `navigator.share()`'s own
+promise resolves — that promise rejects with `AbortError` when the user
+dismisses the share sheet without picking a destination, so this is a real
+completion signal from the browser, not an assumption that opening the
+sheet means the share happened. A cancelled share (or the Copy Link path)
+never fires `answer_share_completed`.
+
+`intent` is the answer's `discovery.id` when the page has discovery
+metadata (most do) — omitted otherwise, same optional-property convention
+as `first_touch`/`latest_touch`. No article content (title, question,
+description) is ever sent; only the stable slug and intent id.
+
+### "Was this useful?" feedback (#3038)
+
+An editorial signal, not a public rating — `UsefulnessFeedback.svelte` never
+displays a vote count, individual voter identity, or free-text comments.
+A "no" vote can optionally attach one reason from a small closed set (`Too
+vague`, `Too long`, `Didn't answer my question`, `Advice didn't fit my
+game`, `Already knew this`, `Other`); picking a reason and clicking "no"
+with no reason ("Skip") both resolve to exactly one `answer_useful_vote`
+event — the reason step never fires a second event.
+
+Per #3038's own guidance to avoid duplicating an already-reliably-captured
+signal into a second store, this does **not** introduce a database or
+backend aggregation endpoint: `answer_useful_vote` flows through the same
+Zaraz pipeline as every other event here, and is aggregated by the
+destination analytics tool exactly the way `discovery_click` already is
+(see the dashboard-mapping guidance above). Revisit this only if editorial
+review genuinely needs a query the destination tool can't answer.
+
+The per-browser duplicate-vote guard is local only (`localStorage`, via
+`UIPersistence`) — it prevents an accidental repeat vote on the same
+browser, and is not a source of truth Codex reads back from anywhere; the
+Zaraz event stream is the only aggregate.
 
 ## Cloudflare Zaraz dashboard configuration
 
