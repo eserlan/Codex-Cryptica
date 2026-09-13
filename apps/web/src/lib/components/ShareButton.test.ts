@@ -5,6 +5,21 @@ import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 import ShareButton from "./ShareButton.svelte";
 
+// Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility.
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () => {
+    return {
+      cancel: () => {},
+      finish: () => {},
+      pause: () => {},
+      play: () => {},
+      reverse: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any;
+  };
+}
+
 const props = {
   url: "https://codexcryptica.com/answers/how-do-you-track-faction-turns-between-rpg-sessions",
   title: "How do you track faction turns between RPG sessions?",
@@ -78,7 +93,7 @@ describe("ShareButton", () => {
     });
 
     await fireEvent.click(
-      screen.getByRole("button", { name: "Share this article" }),
+      screen.getByRole("button", { name: "Copy link to this article" }),
     );
     await tick();
 
