@@ -201,7 +201,7 @@ describe("MyStuffService", () => {
     expect(tokens["share-to-revoke"]).toBeUndefined();
   });
 
-  it("handles remote revoke failure gracefully while removing local entry", async () => {
+  it("keeps a share and token when remote revocation is rejected", async () => {
     const storage = new MockStorage();
     storage.setItem(
       LOCAL_SHARES_KEY,
@@ -217,7 +217,7 @@ describe("MyStuffService", () => {
       ]),
     );
 
-    const fetchMock = vi.fn().mockRejectedValue(new Error("Network offline"));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 });
 
     const service = new MyStuffService({
       storage,
@@ -225,7 +225,79 @@ describe("MyStuffService", () => {
     });
 
     const success = await service.revokeSharedGenerator("share-fail");
-    expect(success).toBe(true);
-    expect(service.getSharedGenerators()).toHaveLength(0);
+    expect(success).toBe(false);
+    expect(service.getSharedGenerators()).toHaveLength(1);
+  });
+
+  it("keeps a share when remote revocation cannot reach the service", async () => {
+    const storage = new MockStorage();
+    storage.setItem(
+      LOCAL_SHARES_KEY,
+      JSON.stringify([
+        {
+          shareId: "share-offline",
+          title: "Offline Share",
+          generatorId: "dungeon",
+          createdAt: "2026-09-14T00:00:00.000Z",
+          managementToken: "tok-offline",
+        },
+      ]),
+    );
+    const fetchMock = vi.fn().mockRejectedValue(new Error("Network offline"));
+    const service = new MyStuffService({ storage, fetch: fetchMock as any });
+
+    await expect(service.revokeSharedGenerator("share-offline")).resolves.toBe(
+      false,
+    );
+    expect(service.getSharedGenerators()).toHaveLength(1);
+  });
+
+  it("keeps an unmanaged share instead of claiming it was revoked", async () => {
+    const storage = new MockStorage();
+    storage.setItem(
+      LOCAL_SHARES_KEY,
+      JSON.stringify([
+        {
+          shareId: "share-without-token",
+          title: "Unmanaged Share",
+          generatorId: "dungeon",
+          createdAt: "2026-09-14T00:00:00.000Z",
+        },
+      ]),
+    );
+    const fetchMock = vi.fn();
+    const service = new MyStuffService({ storage, fetch: fetchMock as any });
+
+    await expect(
+      service.revokeSharedGenerator("share-without-token"),
+    ).resolves.toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(service.getSharedGenerators()).toHaveLength(1);
+  });
+
+  it("ignores malformed stored fields instead of crashing sorting", () => {
+    const storage = new MockStorage();
+    storage.setItem(
+      LOCAL_SHARES_KEY,
+      JSON.stringify([
+        {
+          shareId: "malformed-share",
+          title: { unexpected: true },
+          generatorId: 42,
+          createdAt: { unexpected: true },
+          url: "javascript:alert(1)",
+          excerpt: ["not text"],
+        },
+      ]),
+    );
+    const service = new MyStuffService({ storage });
+
+    expect(() => service.getSharedGenerators()).not.toThrow();
+    expect(service.getSharedGenerators()[0]).toMatchObject({
+      shareId: "malformed-share",
+      title: "Shared Generator Snapshot",
+      generatorId: "generator",
+      url: expect.stringContaining("/share/malformed-share"),
+    });
   });
 });
