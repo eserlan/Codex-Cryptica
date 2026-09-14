@@ -75,6 +75,37 @@ describe("handleAssetGallery", () => {
     expect(html).not.toContain("readme.txt");
   });
 
+  it("escapes R2-derived tile values at the client HTML sink", async () => {
+    const env = {
+      BUCKET: bucket([
+        {
+          key: 'screenshots/cover" onerror="alert(1).png',
+          size: 1000,
+        },
+      ]),
+    };
+    const response = await handleAssetGallery(
+      new Request("https://x/gallery"),
+      env,
+    );
+    const html = await response.text();
+
+    expect(html).toContain("function escapeHtml(value)");
+    expect(html).toContain('href="${safeUrl}"');
+    expect(html).toContain('alt="${safeName}"');
+    expect(html).toContain('data-search="${safeSearch}"');
+  });
+
+  it("gives the asset filter an accessible name", async () => {
+    const response = await handleAssetGallery(
+      new Request("https://x/gallery"),
+      { BUCKET: bucket([]) },
+    );
+    const html = await response.text();
+
+    expect(html).toContain('aria-label="Filter assets by name or purpose"');
+  });
+
   it("returns 500 when the bucket binding is missing", async () => {
     const response = await handleAssetGallery(
       new Request("https://x/gallery"),

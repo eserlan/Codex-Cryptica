@@ -302,7 +302,7 @@ function renderPage(data: {
 <div class="controls">
   <label class="search-field">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    <input type="text" id="searchInput" placeholder="Filter by name or purpose…" autocomplete="off">
+    <input type="text" id="searchInput" aria-label="Filter assets by name or purpose" placeholder="Filter by name or purpose…" autocomplete="off">
   </label>
   <nav class="jumplist" id="jumplist" aria-label="Jump to group"></nav>
 </div>
@@ -317,17 +317,26 @@ function renderPage(data: {
 <script>
   const data = JSON.parse(document.getElementById("gallery-data").textContent);
   function fmtCount(n) { return n.toLocaleString("en-US"); }
+  const htmlEscapes = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (character) => htmlEscapes[character]);
+  }
   function tile(item, isSilhouette) {
     const name = isSilhouette ? item.name : item.key.split("/").pop();
     const meta = isSilhouette ? (item.category + " · " + item.archetype) : item.size;
     const purpose = isSilhouette ? item.r2Path.split("/").pop() : item.purpose;
-    return \`<a class="tile-link" href="\${item.url}" target="_blank" rel="noopener noreferrer" data-search="\${(name + " " + purpose).toLowerCase().replace(/"/g, '')}">
+    const safeName = escapeHtml(name);
+    const safeMeta = escapeHtml(meta);
+    const safePurpose = escapeHtml(purpose);
+    const safeSearch = escapeHtml((name + " " + purpose).toLowerCase());
+    const safeUrl = escapeHtml(item.url);
+    return \`<a class="tile-link" href="\${safeUrl}" target="_blank" rel="noopener noreferrer" data-search="\${safeSearch}">
       <figure class="tile">
-        <div class="thumb-wrap"><img src="\${item.url}" alt="\${name}" loading="lazy" decoding="async"></div>
+        <div class="thumb-wrap"><img src="\${safeUrl}" alt="\${safeName}" loading="lazy" decoding="async"></div>
         <figcaption>
-          <span class="tile-name">\${name}</span>
-          <span class="tile-meta"><span>\${meta}</span></span>
-          <span class="tile-purpose">\${purpose}</span>
+          <span class="tile-name">\${safeName}</span>
+          <span class="tile-meta"><span>\${safeMeta}</span></span>
+          <span class="tile-purpose">\${safePurpose}</span>
         </figcaption>
       </figure>
     </a>\`;
