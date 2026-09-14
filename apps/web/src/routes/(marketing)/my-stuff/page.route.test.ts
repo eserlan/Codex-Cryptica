@@ -37,6 +37,64 @@ describe("/my-stuff route", () => {
     expect(screen.getByText("Stored on this browser only")).toBeTruthy();
   });
 
+  it("publishes Open Graph and Twitter social preview metadata", () => {
+    render(Page);
+
+    const expectedImage =
+      "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
+
+    expect(
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content"),
+    ).toBe(expectedImage);
+    expect(
+      document
+        .querySelector('meta[property="og:image:alt"]')
+        ?.getAttribute("content"),
+    ).toBe("Codex Cryptica personal library and connected workspace");
+    expect(
+      document
+        .querySelector('meta[property="og:image:width"]')
+        ?.getAttribute("content"),
+    ).toBe("1600");
+    expect(
+      document
+        .querySelector('meta[property="og:image:height"]')
+        ?.getAttribute("content"),
+    ).toBe("1000");
+    expect(
+      document
+        .querySelector('meta[name="twitter:image"]')
+        ?.getAttribute("content"),
+    ).toBe(expectedImage);
+    expect(
+      document
+        .querySelector('meta[name="twitter:image:alt"]')
+        ?.getAttribute("content"),
+    ).toBe("Codex Cryptica personal library and connected workspace");
+    expect(
+      document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
+    ).toBe("https://codexcryptica.com/my-stuff");
+    expect(
+      document
+        .querySelector('meta[property="og:url"]')
+        ?.getAttribute("content"),
+    ).toBe("https://codexcryptica.com/my-stuff");
+
+    // Negative assertions: ensure not falling back to the generic root card or leaving tags empty
+    expect(
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content"),
+    ).not.toBe("https://codexcryptica.com/og-image.png");
+    expect(
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content"),
+    ).not.toBe("");
+  });
+
   it("renders empty states when no content has been liked or shared", () => {
     render(Page);
 
