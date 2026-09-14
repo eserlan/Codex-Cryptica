@@ -1,5 +1,5 @@
 import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { SILHOUETTES, clearSilhouetteCache } from "schema";
 import Page from "./+page.svelte";
 
@@ -39,6 +39,75 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
     if (!globalThis.URL.revokeObjectURL) {
       globalThis.URL.revokeObjectURL = vi.fn();
     }
+  });
+
+  afterEach(() => {
+    document.head.innerHTML = "";
+  });
+
+  it("publishes Open Graph and Twitter social preview metadata", () => {
+    render(Page);
+
+    const expectedImage =
+      "https://assets.codexcryptica.com/screenshots/silhouettes.jpg";
+
+    expect(document.title).toBe(
+      "Vector RPG Silhouettes & Token Art | Codex Cryptica",
+    );
+    expect(
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content"),
+    ).toBe(expectedImage);
+    expect(
+      document
+        .querySelector('meta[property="og:image:alt"]')
+        ?.getAttribute("content"),
+    ).toBe(
+      "Codex Cryptica silhouettes gallery showing fantasy character tokens and palette controls",
+    );
+    expect(
+      document
+        .querySelector('meta[property="og:image:width"]')
+        ?.getAttribute("content"),
+    ).toBe("1600");
+    expect(
+      document
+        .querySelector('meta[property="og:image:height"]')
+        ?.getAttribute("content"),
+    ).toBe("1000");
+    expect(
+      document
+        .querySelector('meta[name="twitter:image"]')
+        ?.getAttribute("content"),
+    ).toBe(expectedImage);
+    expect(
+      document
+        .querySelector('meta[name="twitter:image:alt"]')
+        ?.getAttribute("content"),
+    ).toBe(
+      "Codex Cryptica silhouettes gallery showing fantasy character tokens and palette controls",
+    );
+    expect(
+      document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
+    ).toBe("https://codexcryptica.com/silhouettes");
+    expect(
+      document
+        .querySelector('meta[property="og:url"]')
+        ?.getAttribute("content"),
+    ).toBe("https://codexcryptica.com/silhouettes");
+
+    // Negative assertions: ensure not falling back to the generic root card or leaving tags empty
+    expect(
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content"),
+    ).not.toBe("https://codexcryptica.com/og-image.png");
+    expect(
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute("content"),
+    ).not.toBe("");
   });
 
   it("renders hero header with title and dynamic silhouettes count", () => {

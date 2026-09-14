@@ -218,7 +218,7 @@ When reading an entity's content or lore, names of other vault entities are auto
 Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears (read-only, with a link back) under that character's own Chat tab.
 
 ### Campaign Generators
-Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Use Refine on a generated result or a Session Hub entry to ask for a focused change, review the new version, refine it again, or use it. Confirming replaces the source draft with the accepted revision while keeping its lineage.
+Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Search by generator name, category, or description to find the right tool quickly. Star generators you use often to keep them at the top; favourites are saved in this browser only. Use Refine on a generated result or a Session Hub entry to ask for a focused change, review the new version, refine it again, or use it. Confirming replaces the source draft with the accepted revision while keeping its lineage.
 
 ### Secret Societies & Cults
 Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.
@@ -1435,6 +1435,9 @@ For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high f
 3. Open the file and write your custom markdown structure (e.g. `## Cyberware` or `## Magical Lineage`).
 4. Any new entities of that type created henceforth will immediately use your custom structure.
 
+> [!NOTE]
+> **No frontmatter or placeholders required:** You do not need to add YAML frontmatter or placeholder tags (`title`, `type`, `labels`). Codex Cryptica manages entity metadata automatically through the creation dialog and header bar. Template files only define the Markdown body of the note.
+
 > [!TIP]
 > If you want to _always_ start completely blank for a specific type without untoggling the checkbox, create an empty file at `.cc/templates/{type}.md`. The system respects empty override files as valid, giving you a blank canvas.
 
@@ -1941,6 +1944,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork; done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
 
+### [How do I start GMing for the first time?](https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time)
+
+**Direct answer:** Pick a system or a beginner-friendly published scenario you can actually run soon, prepare the next session rather than an entire world, and hold at least a short Session 0 to align expectations before play. Build only the NPCs, places, factions, and conflicts the players are likely to encounter, expect them to go off script and prepare situations rather than a fixed plot, and focus on clear choices, pacing, and spotlight over elaborate lore or performance. After the first session, keep only the notes that actually became real at the table. You do not need voices, acting skill, encyclopedic rules knowledge, or hours of prep to run a good first session.
+
 ### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
 
 **Direct answer:** A point crawl is a network of six to ten landmark nodes connected by differentiated travel paths, rather than a grid of terrain to cross. Define each node as a destination with a clear hazard, resource, or encounter, then connect them with routes that carry real trade-offs in travel time, terrain, and risk. Build in enough loops and alternative paths that the map isn't a single linear road.
@@ -1948,6 +1955,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you create a believable fictional religion?](https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion)
 
 **Direct answer:** Start with what adherents do, and let belief follow from that. A religion becomes believable through practice: the rites people perform, the days they cannot work, who pays for it, the questions it will not permit, because that is how a religion is encountered from outside. Doctrine is the last thing a visitor learns and the first thing most invented religions over-specify.
+
+### [How do you create a fantasy city that feels alive?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-city-that-feels-alive)
+
+**Direct answer:** Make a fantasy city feel alive by showing what its people do repeatedly, what they are worried about today, and how yesterday's events have changed the streets. Give each district a daily rhythm, put competing groups in public view, let rumours travel through recognisable places, and change familiar details after the party acts. Players believe in a city when it carries on around them and remembers their presence.
 
 ### [How do you create a fantasy faction?](https://codexcryptica.com/answers/how-do-you-create-a-fantasy-faction)
 
@@ -1981,6 +1992,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Generate useful RPG rumours as a six-entry table: four are essentially true, one exaggerates a real situation, and one is a dangerous misconception. Give every entry a named source, a specific site, NPC, faction, or item to pursue, and a consequence if the party follows, repeats, or ignores it. Keep each rumour lighter than a quest hook so players choose what matters.
 
+### [How do you give players hints for an RPG puzzle without giving away the answer?](https://codexcryptica.com/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer)
+
+**Direct answer:** Use a three-step hint ladder that gets more concrete each time it fires, but never states the exact solution: first repeat an existing clue in a new form, then point at whatever changed as a result of the party's last attempt, then state the puzzle's immediate goal without naming the method. Escalate one step at a time, and only when the table has genuinely stalled rather than on a fixed schedule.
+
 ### [How do you handle character death in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg)
 
 **Direct answer:** Handle it in three steps: pause the table to confirm the result is final, give the dying character a last action or parting words, then take a short break before anyone touches a replacement sheet. Don't rush a dead character out of the room or slide a new one across the table in the same breath. Honouring the moment keeps the death feeling like a real story beat, and agreeing the process in advance stops it from turning into resentment.
@@ -1989,13 +2004,29 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Handle players going off script by treating your prep as a toolbox rather than a route. Identify what the nearest NPC, faction, or site actually wants, reuse that motivation to improvise the new direction, and let the fiction absorb the consequences instead of steering the party back by force. Reserve a hard pause, calling for a short break to think, for the rare moment a rule, a safety concern, or a genuine plot dead end requires it, not for every deviation from your notes.
 
+### [How do you help players remember what happened in a TTRPG campaign?](https://codexcryptica.com/answers/how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign)
+
+**Direct answer:** Stop treating campaign memory as a reading assignment. Players rarely want to reread five pages of session notes; they ask specific questions — who was this person, which faction were they with, why do we care right now — and campaign memory works when those questions have a fast answer. Recap briefly at the start of every session, keep information tied to what matters this session rather than the whole campaign's history, give recurring NPCs one memorable hook each, keep a lightweight reference instead of a long chronological log, make old material searchable for campaigns with long gaps between sessions, and let characters know things their players have forgotten instead of treating imperfect memory as a test.
+
 ### [How do you improvise NPCs on the spot?](https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot)
 
 **Direct answer:** Improvise an NPC on the spot by fixing five things in the order the table will notice them: role, immediate want, attitude toward the party, one distinguishing behaviour you can repeat every time they speak, and one connection to something already in the campaign. Say the role out loud first so the scene has a name to react to, then let the rest surface through dialogue instead of description.
 
+### [How do you keep track of NPCs in a long campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign)
+
+**Direct answer:** Give every NPC who might return a short, standing record: name and role, what they want, where and when the party last saw them, their current status, and one open thread with them. Update it the moment something changes rather than reconstructing it later, and most minor NPCs never need more than that one line. The record's job is to answer 'who is this again?' in five seconds mid-session, not to be a biography.
+
 ### [How do you keep track of time in a tabletop campaign?](https://codexcryptica.com/answers/how-do-you-keep-track-of-time-in-a-tabletop-campaign)
 
 **Direct answer:** Track it at three separate scales: ten-minute dungeon turns for tactical resource use, four-to-six-hour travel watches for overland journeys, and a campaign calendar with ticking faction clocks so the world keeps moving whether the party acts or rests.
+
+### [How do you make a boss fight memorable in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg)
+
+**Direct answer:** A memorable boss fight is a payoff encounter, not merely a harder combat encounter. Connect the fight to earlier campaign material, give the villain an objective beyond surviving, create multiple simultaneous problems for the party, let phase changes alter play rather than just refill the boss's HP, reward preparation and earlier player choices, and show visible consequences when the fight ends.
+
+### [How do you make a tabletop RPG session more engaging?](https://codexcryptica.com/answers/how-do-you-make-a-tabletop-rpg-session-more-engaging)
+
+**Direct answer:** Engagement comes from meaningful choices, purposeful scenes, and shared spotlight, not from performance. Give players decisions with visible consequences, enter scenes late and leave once the interesting thing has happened, make sure every scene serves a decision, discovery, danger, relationship change, or consequence, and share spotlight deliberately rather than letting the loudest player fill every gap. Cut dead time such as repeated planning loops and unnecessary travel narration, alternate pressure with breathing room, and end sessions on momentum. None of this requires voices, acting skill, elaborate lore, or props; those can help but they are optional extras, not the source of engagement.
 
 ### [How do you make an alien species feel believable?](https://codexcryptica.com/answers/how-do-you-make-an-alien-species-feel-believable)
 
@@ -2029,6 +2060,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A sandbox RPG campaign is prepared from the centre outward rather than the top down. Instead of drafting a continental atlas or extensive global lore, establish a compact starting region: one resilient settlement hub, three local factions in active friction, three immediate adventure sites within a day's travel, and a roster of six rumours that point towards distinct hazards and rewards. Worldbuilding beyond that perimeter is only developed when players declare their travel intentions at the end of a session.
 
+### [How do you recap a TTRPG session?](https://codexcryptica.com/answers/how-do-you-recap-a-ttrpg-session)
+
+**Direct answer:** Keep it to roughly 60–90 seconds and include only what the party needs to act in the next few minutes: where they are, one active threat or clock if there is one, the goal they set for themselves last time, one or two NPCs relevant to what's next, and a single concrete consequence carried over from their last choices. Skip anything that isn't coming up tonight, let players add colour without treating their memory as the source of record, and tell characters things they would reasonably know even when the players have forgotten — a recap orients the table for the next scene, it is not a campaign digest or a memory test.
+
+### [How do you run a campaign when you only play once a month?](https://codexcryptica.com/answers/how-do-you-run-a-campaign-when-you-only-play-once-a-month)
+
+**Direct answer:** A monthly campaign isn't a weekly campaign played badly — it needs a different information rhythm. Run shorter arcs with a clear session endpoint instead of open-ended threads, end each session with one stated next objective, and open the next one with a short recap focused only on what's active now. Keep a short list of the NPCs, factions, and threads currently in play rather than a long write-up nobody rereads, lean on memorable, recurring hooks instead of dense lore, and freely restate anything the characters would obviously still know. The goal is to make each session self-sufficient rather than dependent on players remembering the last one in detail.
+
 ### [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign)
 
 **Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
@@ -2040,6 +2079,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you run a mystery without railroading?](https://codexcryptica.com/answers/how-do-you-run-a-mystery-without-railroading)
 
 **Direct answer:** Apply the Three-Clue Rule: for any conclusion you want the investigators to reach, place at least three separate clues pointing toward it across distinct locations or witnesses, so no single missed roll or wrong turn can stall the whole plot. Don't lock essential clues behind binary failure checks; if a player searches a crime scene, they find the evidence automatically, while the dice decide speed, thoroughness, or stealth instead. And give the culprit an active agenda that keeps moving whenever the investigators hesitate.
+
+### [How do you run a scene with multiple NPCs without talking to yourself?](https://codexcryptica.com/answers/how-do-you-run-a-scene-with-multiple-npcs)
+
+**Direct answer:** Do not perform a screenplay at the table: player characters must remain the camera and the catalyst for every scene. Keep dialogue between non-player characters to brief, purposeful friction beats of one or two sentences, such as an accusation, an interruption, or a sharp contradiction, then immediately pivot to the party with a direct question or prompt. Give each character one visible want in the room, break large gatherings into discrete conversational sub-scenes, and let the players choose who to approach so discovering relationships becomes active gameplay rather than a private monologue.
 
 ### [How do you run an RPG campaign in one city?](https://codexcryptica.com/answers/how-do-you-run-an-rpg-campaign-in-one-city)
 
@@ -2055,7 +2098,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do you track faction turns between RPG sessions?](https://codexcryptica.com/answers/how-do-you-track-faction-turns-between-rpg-sessions)
 
-**Direct answer:** Track between-session faction turns with a five-step record for each active organisation: define its immediate intent, select a single action against a target entity, resolve the outcome, translate that outcome into a visible consequence in the game world, and log the change on your campaign timeline. Limiting each organisation to one concrete action per downtime cycle keeps the world moving without turning prep into spreadsheet bookkeeping.
+**Direct answer:** A faction turn should answer one question: what changed in the world while the players were busy elsewhere? Track it with a five-step record for each active organisation: define its immediate intent, choose one action against a specific target, resolve the outcome, surface a visible consequence in the game world, and log the change on your campaign timeline. Limiting each organisation to one action per downtime cycle keeps that answer clear without turning prep into spreadsheet bookkeeping.
 
 ### [How do you track unresolved plot hooks in an RPG campaign?](https://codexcryptica.com/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign)
 
@@ -2073,9 +2116,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A town needs roughly three to five named NPCs for a single visit, six to ten for a settlement the party returns to across a campaign, and no fixed number for the background population, which stays unnamed until a player addresses someone directly. Scale by how many roles the party will interact with, not by the town's population figure, and add named NPCs only when the story creates a reason for one.
 
+### [How much campaign lore should players be expected to remember?](https://codexcryptica.com/answers/how-much-campaign-lore-should-players-be-expected-to-remember)
+
+**Direct answer:** Players should reliably remember their current goal and whichever two or three NPCs and factions are active right now, but not a campaign encyclopedia of every name, title, or detail mentioned once. Separate player memory from character memory: if the character would obviously know something, restate it rather than testing whether the player recalls it. Reinforce important information through play — repetition, consistent hooks, recurring symbols — rather than hiding it behind a memory check, and lower your expectations further after a long gap between sessions. Most forgetting is normal and fixable with a quick reminder, not a sign players aren't paying attention.
+
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
+
+### [How much Rule of Cool should a DM allow?](https://codexcryptica.com/answers/how-much-rule-of-cool-should-a-dm-allow)
+
+**Direct answer:** Use the Rule of Cool when a player attempts something creative that fits the fictional situation, but resolve it using existing game mechanics whenever possible. Let creativity change what a character can attempt within the narrative world, rather than automatically granting a numerically superior mechanical result. By separating narrative permission from mechanical resolution, Dungeon Masters reward clever thinking while preserving tactical balance and avoiding broken campaign precedents.
 
 ### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
 
@@ -2100,6 +2151,14 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
 **Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
+
+### [What kind of ship should a pirate crew start with?](https://codexcryptica.com/answers/what-kind-of-ship-should-a-pirate-crew-start-with)
+
+**Direct answer:** Start a pirate crew with a ship that can win a prize but cannot solve every problem: a fast sloop, modest schooner, or compromised brig gives the party a home, a reason to take jobs, and weaknesses that force choices. Give it one clear advantage, one serious flaw, a visible scar, and an owner or debt that can still make demands.
+
+### [What kind of ship should a sci-fi RPG party start with?](https://codexcryptica.com/answers/what-kind-of-ship-should-a-sci-fi-rpg-party-start-with)
+
+**Direct answer:** Start the party with a ship that creates play rather than one that solves it: capable enough to travel and survive, but limited enough to leave room for upgrades, debts, repairs, compromises, and difficult choices. A scrappy freighter, a scout ship, and a salvage tug all work; a fully armed cruiser with no weaknesses does not, because there is nothing left for the campaign to give the crew.
 
 ### [What makes a good heist target in a tabletop RPG?](https://codexcryptica.com/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg)
 
@@ -2236,6 +2295,18 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 
 **Summary:** Extracting an injured whistleblower compliance architect from a corporate penthouse before a twelve-minute custody roll call, with a cancelled ambulance transponder and two crew members forced to support her every step.
 
+### [Classic Fantasy puzzle example: The Bell Beneath Blackglass](https://codexcryptica.com/examples/the-bell-beneath-blackglass-fantasy-puzzle)
+
+**Genre:** Classic Fantasy
+
+**Summary:** Beneath the ruined Abbey of Saint Orra, the Moon-Eater Bell is draining the valley's protective ward, and the party must realign its three magical rings — or free the bound spirit powering it — before the next toll turns the living into silent shadows.
+
+### [Cyberpunk puzzle example: The Null-Key Reliquary](https://codexcryptica.com/examples/the-null-key-reliquary-cyberpunk-puzzle)
+
+**Genre:** Cyberpunk
+
+**Summary:** Inside the flooded Arasaka Transit Exchange, a biometric-free vault holds the stolen Ghostseed ledger behind a mechanical train-routing maze whose brass relays must be synchronized before the district-wide security purge floods the chamber in eleven minutes.
+
 
 ## TTRPG System & Genre Campaign Management
 
@@ -2295,6 +2366,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** Gothic horror campaigns turn on the weight of the past: inherited debts, estranged relatives, isolated manors, and buried family transgressions. When your players uncover a sealed portrait or confront the parish vicar, you shouldn't have to scramble through loose notes to recall which ancestor made the original promise — or who stands to lose everything when the truth comes to light.
 
+### [Tactical Mecha RPG Campaign Manager | Codex Cryptica](https://codexcryptica.com/for/mecha-rpgs)
+
+**Summary:** Track pilots, frames, contracts, operations, and the people caught between them.
+
+**Overview:** A tactical mecha campaign moves quickly between briefing rooms, hangars, battle maps, and the consequences left behind. When one squad changes a warzone, takes a contractor's job, or loses a frame in a bad extraction, you need more than a mission list to remember who authorised the operation, what the unit is carrying, which settlement is now exposed, and why the next deployment matters.
+
 ### [Codex Cryptica for Pathfinder 2e Campaign Management](https://codexcryptica.com/for/pathfinder-2e)
 
 **Summary:** Keep every NPC, faction, nation, and deity in your Adventure Path connected — and still findable three books later.
@@ -2348,3 +2425,4 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** One world, one hex map, one set of consequences — however many players turn up, and whenever they do.
 
 **Overview:** In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.
+
