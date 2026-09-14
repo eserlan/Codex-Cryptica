@@ -25,11 +25,23 @@ describe("codex-review skill layout", () => {
     expect(existsSync(resolve(canonicalPath, "references/patterns.md"))).toBe(
       true,
     );
+    const patterns = readFileSync(
+      resolve(canonicalPath, "references/patterns.md"),
+      "utf8",
+    );
     expect(canonicalSkill).toContain("REPORT_JSON:");
     expect(canonicalSkill).toContain("constitution");
     expect(canonicalSkill).toContain("privacy and security boundaries");
     expect(canonicalSkill).toContain("meaningful failure");
     expect(canonicalSkill).toContain("documentation and spec artifacts");
+    expect(canonicalSkill).toContain("bun --cwd apps/web run build");
+    expect(patterns).toContain("## Trust, Privacy & Public Boundaries");
+    expect(patterns).toContain("AI Output Is Untrusted Input");
+    expect(patterns).toContain("AbortSignal");
+    expect(patterns).toContain("renderMarkdown");
+    expect(patterns).toContain("Persisted Schema and Migration Compatibility");
+    expect(patterns).toContain("onclick={openLightbox}");
+    expect(patterns).not.toContain('onclick="{openLightbox}"');
 
     for (const adapterPath of adapterPaths) {
       const adapter = readFileSync(
