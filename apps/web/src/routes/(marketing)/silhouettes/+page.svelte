@@ -207,8 +207,8 @@
   title="Vector RPG Silhouettes & Token Art | Codex Cryptica"
   description={`Explore ${SILHOUETTES.length}+ curated, CC-licensed vector RPG silhouettes with live theme palette previews, one-click SVG export, and VTT token assets.`}
   canonicalUrl={buildAbsoluteUrl("/silhouettes")}
-  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
-  imageAlt="Curated vector RPG silhouettes and token art gallery in Codex Cryptica"
+  image="https://assets.codexcryptica.com/screenshots/silhouettes.jpg"
+  imageAlt="Codex Cryptica silhouettes gallery showing fantasy character tokens and palette controls"
   imageWidth={1600}
   imageHeight={1000}
   keywords={[

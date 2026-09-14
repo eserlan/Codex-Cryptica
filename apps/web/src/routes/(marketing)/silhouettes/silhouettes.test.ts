@@ -49,7 +49,7 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
     render(Page);
 
     const expectedImage =
-      "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
+      "https://assets.codexcryptica.com/screenshots/silhouettes.jpg";
 
     expect(document.title).toBe(
       "Vector RPG Silhouettes & Token Art | Codex Cryptica",
@@ -64,7 +64,7 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
         .querySelector('meta[property="og:image:alt"]')
         ?.getAttribute("content"),
     ).toBe(
-      "Curated vector RPG silhouettes and token art gallery in Codex Cryptica",
+      "Codex Cryptica silhouettes gallery showing fantasy character tokens and palette controls",
     );
     expect(
       document
@@ -86,7 +86,7 @@ describe("Public Silhouette Gallery (/silhouettes)", { timeout: 15000 }, () => {
         .querySelector('meta[name="twitter:image:alt"]')
         ?.getAttribute("content"),
     ).toBe(
-      "Curated vector RPG silhouettes and token art gallery in Codex Cryptica",
+      "Codex Cryptica silhouettes gallery showing fantasy character tokens and palette controls",
     );
     expect(
       document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
