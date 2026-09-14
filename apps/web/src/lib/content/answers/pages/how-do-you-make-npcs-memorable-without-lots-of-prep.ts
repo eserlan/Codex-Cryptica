@@ -136,6 +136,7 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "how-much-campaign-lore-should-players-be-expected-to-remember",
+    "how-do-you-run-a-scene-with-multiple-npcs",
   ],
   discovery: {
     id: "answer-npcs-memorable",

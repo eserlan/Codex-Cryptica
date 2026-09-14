@@ -166,6 +166,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
     "how-do-you-organise-npc-relationships",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
+    "how-do-you-run-a-scene-with-multiple-npcs",
   ],
   discovery: {
     id: "answer-session-engagement",
@@ -198,6 +199,11 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
         with: "answer-first-time-gm-hub",
         reason:
           "The hub page is the beginner's entry point covering the whole first-session path; this answer is the deeper, narrower technique page on session engagement specifically, that the hub links out to rather than restates.",
+      },
+      {
+        with: "answer-run-scene-multiple-npcs",
+        reason:
+          "Both address table engagement during play, but this answer covers overall session pacing and player involvement, while the multiple-NPC answer specifically tackles the logistical challenge of running multiple characters in a single scene.",
       },
     ],
   },

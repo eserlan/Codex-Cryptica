@@ -178,6 +178,11 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
         reason:
           "Both share the session-prep cluster and the 'understand' job, but answer different questions: how much to prepare for an ongoing session versus how to structure the one conversation that happens before a campaign starts at all. Neither is a rephrasing of the other's intent.",
       },
+      {
+        with: "answer-run-scene-multiple-npcs",
+        reason:
+          "Both sit in the session-prep cluster, but session zero addresses campaign alignment before play begins, while the multiple-NPC answer provides mid-session GM techniques for running crowded social encounters.",
+      },
     ],
   },
 
