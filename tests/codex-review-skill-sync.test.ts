@@ -34,7 +34,8 @@ describe("codex-review skill layout", () => {
     expect(canonicalSkill).toContain("privacy and security boundaries");
     expect(canonicalSkill).toContain("meaningful failure");
     expect(canonicalSkill).toContain("documentation and spec artifacts");
-    expect(canonicalSkill).toContain("bun --cwd apps/web run build");
+    expect(canonicalSkill).toContain("bun run --cwd apps/web build");
+    expect(canonicalSkill).not.toContain("bun --cwd apps/web run build");
     expect(patterns).toContain("## Trust, Privacy & Public Boundaries");
     expect(patterns).toContain("AI Output Is Untrusted Input");
     expect(patterns).toContain("AbortSignal");
