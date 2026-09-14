@@ -93,7 +93,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
       system: "Apocalypse World",
       rationale:
         "The GM principle of asking what do you do after every dramatic move keeps player characters at the centre of multi-party disputes instead of resolving NPC conflicts in isolation.",
-      href: "http://apocalypse-world.com/",
+      href: "https://apocalypse-world.com/",
     },
     {
       system: "A Song of Ice and Fire Roleplaying",

@@ -271,7 +271,20 @@ describe("answer schema", () => {
       ).toThrow();
     });
 
-    it("rejects a non-http(s) href such as javascript:", () => {
+    it("rejects a non-HTTPS href such as HTTP or javascript:", () => {
+      expect(() =>
+        makeAnswer({
+          slug: "insecure-http-href",
+          systemsThatSupportThis: [
+            {
+              system: "Blades in the Dark",
+              rationale: "Clocks give the mechanic a ready-made procedure.",
+              href: "http://bladesinthedark.com/",
+            },
+          ],
+        }),
+      ).toThrow();
+
       expect(() =>
         makeAnswer({
           slug: "unsafe-href",
