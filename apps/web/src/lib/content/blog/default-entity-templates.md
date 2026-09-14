@@ -56,7 +56,7 @@ A common question when creating custom templates is whether you need to include 
 In Codex Cryptica, entity metadata (titles, entity types, label chips, and timestamps) is managed automatically by the application interface. When you create a note, you enter the title in the creation dialog and assign your labels in the app header. Your template file is strictly for the **document body**:
 
 ```markdown
-## Overview
+## Summary
 
 A quick 1–2 sentence summary of who this figure is in the world.
 
