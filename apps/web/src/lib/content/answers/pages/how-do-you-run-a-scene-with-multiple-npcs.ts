@@ -193,6 +193,6 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     image:
       "https://assets.codexcryptica.com/og/how-do-you-run-a-scene-with-multiple-npcs.jpg",
     imageAlt:
-      "Tabletop RPG adventurers observing a tense council debate between rival nobles and faction representatives",
+      "Tabletop RPG adventurers and faction delegates gathered around a map-strewn council table in tense debate",
   },
 };
