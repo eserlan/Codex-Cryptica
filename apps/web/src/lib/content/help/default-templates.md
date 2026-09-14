@@ -38,6 +38,9 @@ For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high f
 3. Open the file and write your custom markdown structure (e.g. `## Cyberware` or `## Magical Lineage`).
 4. Any new entities of that type created henceforth will immediately use your custom structure.
 
+> [!NOTE]
+> **No frontmatter or placeholders required:** You do not need to add YAML frontmatter or placeholder tags (`title`, `type`, `labels`). Codex Cryptica manages entity metadata automatically through the creation dialog and header bar. Template files only define the Markdown body of the note.
+
 > [!TIP]
 > If you want to _always_ start completely blank for a specific type without untoggling the checkbox, create an empty file at `.cc/templates/{type}.md`. The system respects empty override files as valid, giving you a blank canvas.
 
