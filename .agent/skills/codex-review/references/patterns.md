@@ -1,13 +1,18 @@
 # Codex Review Patterns
 
-This reference documents specific anti-patterns and quality standards for the Codex-Cryptica project.
+This reference documents project-specific regressions and quality standards for Codex-Cryptica.
+Apply a pattern when the changed code enters that boundary; do not turn a narrow historical
+regression into an unrelated style finding. Every reported issue needs a changed-code location,
+a concrete failure mode, and an appropriate focused validation or regression test.
 
 ## Svelte 5 & Reactivity
 
 ### Race Conditions in Async Handlers
 
 - **Issue**: Multiple clicks on a "Commit" or "Save" button triggering multiple async operations.
-- **Pattern**: Always use an `isCommitting` or `isLoading` guard.
+- **Pattern**: Guard re-entry, reset the guard in `finally`, and prevent an older request from
+  overwriting state after a newer request, close, or cancellation. Use an `AbortSignal` or a
+  request/version token when the operation can outlive the component or be superseded.
 - **Example**:
 
 ```svelte
@@ -16,7 +21,11 @@ This reference documents specific anti-patterns and quality standards for the Co
   async function handleCommit() {
     if (isCommitting) return; // REQUIRED
     isCommitting = true;
-    try { ... } finally { isCommitting = false; }
+    try {
+      await commit();
+    } finally {
+      isCommitting = false;
+    }
   }
 </script>
 ```
@@ -34,25 +43,72 @@ This reference documents specific anti-patterns and quality standards for the Co
 ### Svelte 5 Runes in Web Worker Bundles
 
 - **Issue**: Importing files containing Svelte 5 runes (such as `$state`, `$derived`, `$effect`, or `$state.snapshot`) into a Web Worker (e.g., `oracle.worker.ts`). Since the Web Worker environment runs in a separate thread without Svelte's runtime globally registered or compiled, these runes trigger fatal runtime crashes: `ReferenceError: $state is not defined`.
-- **Pattern**: Never reference Svelte runes or compiler instructions inside Web Worker scripts or files transitively imported by them. Use a fully environment-agnostic, standard JS deep clone mechanism (such as standard browser `structuredClone` with fallback) on the main thread before passing parameters to Web Worker boundaries, and verify the output using the static analyzer script `node scripts/check-compiled-runes.js` integrated into the build process.
+- **Pattern**: Never reference Svelte runes or compiler instructions inside Web Worker scripts or
+  files transitively imported by them. Pass cloneable data across the boundary, preserve request
+  correlation/cancellation, and validate the message shape before using it. When a worker bundle
+  changes, run `bun --cwd apps/web run build`; that build executes
+  `apps/web/scripts/check-compiled-runes.js`.
 
 ## Oracle & AI Logic
 
 ### Aggressive Regex Parsing
 
 - **Issue**: Commands like `/create "Name"` matching even when extra text is provided, causing AI context loss.
-- **Pattern**: Use strict regex with line endings (`\s*$`) for deterministic commands.
-- **Check**: Does the regex in `oracle-parser.ts` allow for "fall through" to AI when extra description is present?
+- **Pattern**: Match the complete deterministic command (`^...\s*$`) and test the near miss.
+  Text that adds a description or changes the command's shape must fall through to normal AI
+  handling rather than silently discarding user intent.
+- **Check**: Does the parser have tests for the exact command, trailing whitespace, and extra text?
 
 ### Web Worker Proxy Binding
 
 - **Issue**: Calling methods on the `OracleWorker` proxy that aren't exposed in the `OracleWorker` class.
-- **Pattern**: Every AI generation method in `TextGenerationService` must have a corresponding wrapper in `oracle.worker.ts`.
+- **Pattern**: Every AI generation method in `TextGenerationService` must have a corresponding
+  wrapper in `oracle.worker.ts`, with the same input/output contract, error path, and cancellation
+  behaviour. Verify both directions of the RPC boundary, not only the happy path.
 
 ### Batch Processing Heuristics
 
 - **Issue**: Massive batch AI reconciliation slowing down the UI.
-- **Pattern**: Limit synchronous AI reconciliation in loops (e.g., `< 5` entities).
+- **Pattern**: Bound concurrency and work per turn. The appropriate limit depends on model latency,
+  payload size, and the interaction; document it beside the queue/batch and provide cancellation or
+  yielding for work that can outlive the current view. Do not introduce an arbitrary threshold
+  without a user-facing reason or measurement.
+
+### AI Output Is Untrusted Input
+
+- **Issue**: Treating model output as a trusted command, schema, URL, HTML fragment, or persistence
+  payload can create malformed state, unsafe rendering, or unexpected tool actions.
+- **Pattern**: Parse AI output at the boundary with the existing schema (for example, Zod), reject
+  invalid or partial results, and keep tool selection and side effects explicitly controlled by the
+  application. Do not infer permissions or execute model-provided paths, URLs, or identifiers.
+- **Check**: Are malformed, missing-field, oversized, and cancellation/error responses covered by
+  focused tests?
+
+## Trust, Privacy & Public Boundaries
+
+### Untrusted Markdown and HTML
+
+- **Issue**: Rendering imported, generated, or remote text through `{@html}` without sanitizing it
+  creates an XSS boundary.
+- **Pattern**: Use the existing `renderMarkdown` utility, which sanitizes output with DOMPurify, or
+  use a deliberately allowlisted structured renderer. Never add a raw `{@html value}` path for
+  user, AI, import, or network content.
+
+### External Responses and Stored Documents
+
+- **Issue**: Assuming a response, import, or persisted document has the current shape causes crashes
+  and can expose prototype-pollution or invalid-reference paths.
+- **Pattern**: Validate at the boundary with the relevant schema before reading fields. Reject
+  reserved keys and impossible IDs where the domain requires it; make errors user-safe and avoid
+  logging private document content.
+
+### Public Projection Must Be Deliberate
+
+- **Issue**: Reusing an internal vault/entity object for guest, share, support, or public APIs can
+  leak owner tokens, local paths, private notes, identifiers, or assets not intended for sharing.
+- **Pattern**: Construct a dedicated public projection and validate it with the public schema. Treat
+  a new field on an internal type as private until it is explicitly reviewed into that projection.
+- **Check**: Does the changed public response have a negative test proving private fields are absent?
 
 ## UI & Accessibility
 
@@ -112,6 +168,14 @@ This reference documents specific anti-patterns and quality standards for the Co
 - **Issue**: Elements that use Tailwind transition classes (like `opacity-0`, `scale-95`, or `pointer-events-none`) to fade out or animate away are still present in the DOM. Even when fully invisible to sighted users, they remain visible to assistive technologies (screen readers, keyboard focus tabs, etc.), resulting in an inaccessible experience.
 - **Pattern**: Dynamically apply `aria-hidden="true"` or `inert` to transition elements, modal overlays, or backdrops when their visibility state is closed or hidden, or conditionally unmount them entirely if Svelte transitions are used instead.
 
+### Custom Dialog Focus and Keyboard Lifecycle
+
+- **Issue**: A custom modal that only looks like a dialog can leave focus behind the overlay, trap it
+  nowhere, or fail to restore it when closed.
+- **Pattern**: Prefer the existing dialog/modal primitives. If a custom dialog is necessary, provide
+  an accessible name, keep focus inside while open, support Escape when dismissal is allowed, and
+  restore focus to the triggering control. Verify keyboard-only navigation.
+
 ## Event Bus & Lifecycles
 
 ### Subscription Memory Leaks in Stores & Tests
@@ -137,7 +201,17 @@ class FeatureStore {
 ### Transition Status Gating
 
 - **Issue**: Attempting to catch state changes (such as draft approvals) by checking pre-transition statuses (e.g. `entity.status === 'draft'`) when the event bus payload actually emits the finalized post-transition state.
-- **Pattern**: Check both the updated status field and the patch/event payload to cleanly capture transition states (e.g. `patch.status === 'active' && entity.status === 'active'`).
+- **Pattern**: Read the event contract before adding a condition. Gate on the post-transition value
+  actually emitted by that event, and verify the transition once instead of reacting to both stale
+  state and the patch independently.
+
+### Cancellation and Stale Completion
+
+- **Issue**: An async task can resolve after navigation, replacement, or cancellation and then mutate
+  a destroyed view or newer state.
+- **Pattern**: Thread `AbortSignal` through cancellable work, stop progress/state updates once it is
+  aborted, and dispose listeners, workers, object URLs, and subscriptions during teardown. Test a
+  cancellation between meaningful phases, not only before the task starts.
 
 ## Data Gating & Optimization
 
@@ -192,6 +266,14 @@ class FeatureStore {
   }
   ```
 
+### Persisted Schema and Migration Compatibility
+
+- **Issue**: Adding a stored field, changing its meaning, or assuming a new record shape can make
+  existing local-first vaults unreadable or silently rewrite user data.
+- **Pattern**: Keep readers compatible with absent/legacy fields, add an explicit migration when a
+  transformation is necessary, and preserve unknown data unless a deliberate migration removes it.
+  Test a legacy document, the new document, and an invalid document before changing persistence.
+
 ## JavaScript & HTML Best Practices
 
 ### Coordinate Check Nullish Coalescing (Falsy 0)
@@ -229,12 +311,33 @@ class FeatureStore {
 ### User-Agent Sniffing vs Environment Flags
 
 - **Issue**: Checking `navigator.userAgent` (e.g., looking for "jsdom") to detect a testing/jsdom environment is fragile and easily breaks in different browser/node runtimes.
-- **Pattern**: Use explicit environment flags like `import.meta.env.MODE === "test"` (Vite/Vitest) or feature checks instead of fragile user-agent parsing.
+- **Pattern**: Use a capability check or the framework's explicit environment helpers (for example
+  `browser` from `$app/environment`) instead of fragile user-agent parsing. Keep test-only behavior
+  injected or explicitly configured rather than inferred from the runtime.
 
 ### Explicit Button Types
 
 - **Issue**: `<button>` tags without a `type` attribute default to `type="submit"` in HTML, which can cause unwanted form submissions or page reloads when clicked.
 - **Pattern**: Always add an explicit `type="button"` attribute to trigger/action buttons.
-  ```html
-  <button type="button" onclick="{openLightbox}">Zoom</button>
+  ```svelte
+  <button type="button" onclick={openLightbox}>Zoom</button>
   ```
+
+## Review Evidence
+
+### Tests Follow the Failure Mode
+
+- **Issue**: A review accepts an implementation based on a happy-path test even though the changed
+  boundary is cancellation, invalid input, permission, persistence, or cleanup.
+- **Pattern**: Match validation to the risk: add a focused regression test for the bug or boundary,
+  including a meaningful failure, cancellation, or negative path when applicable. Run changed-file
+  lint and tests plus the affected workspace type-check; do not substitute a broad baseline run for
+  understanding the changed behaviour.
+
+### Findings Must Be Actionable
+
+- **Issue**: A broad warning such as "consider accessibility" or "this might race" sends work to the
+  author without proving a defect.
+- **Pattern**: Report only a changed-code defect with its location, reproduction or failure mode,
+  user impact, and a concrete remediation. If the evidence is insufficient, record the uncertainty
+  as a validation gap rather than presenting it as a bug.
