@@ -16,7 +16,8 @@ This skill provides a meticulous code review process tailored specifically for t
 5. **Enforce Performance Heuristics**: Ensure synchronous AI processing in loops (like auto-archive) is limited to small batches (< 5), and check that simple selection/click gestures do not trigger unconditional disk/database writes.
 6. **Check Accessibility**: Ensure `Autocomplete` components have `ariaLabel`, icons follow the Iconify class pattern, and transition elements that fade out or hide are dynamically given `aria-hidden` attributes to keep the accessibility tree clean.
 7. **Verify HTML & JS Semantics**: Ensure all action buttons have explicit `type="button"`, coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, avoid user-agent sniffing, and ensure highly-interactive canvas or map dragging interfaces use pointer displacement gates (e.g., 5px threshold) to prevent micro-movement drift on simple clicks.
-8. **Incorporate General Branch Review**: Initiate and perform the complete branch changes review defined in `code-review:code-review`, applying the comprehensive guidelines, reviewer persona, and critical constraints set by `code-review:code-review-commons` to audit code quality, style, and correctness.
+8. **Run Constitution, Privacy & Delivery Checks**: Audit the branch against `.specify/memory/constitution.md` and `docs/STYLE_GUIDE.md`. Check privacy and security boundaries, including credentials, owner tokens, entity values, vault identifiers, asset paths, validation, authorization, and public response projections. Verify changed behaviour has tests with a meaningful failure, cancellation, or negative path, and that documentation and spec artifacts stay synchronised.
+9. **Incorporate General Branch Review**: Initiate and perform the complete branch changes review defined in `code-review:code-review`, applying the comprehensive guidelines, reviewer persona, and critical constraints set by `code-review:code-review-commons` to audit code quality, style, and correctness.
 
 ## Review Output Guidelines
 
@@ -36,3 +37,22 @@ For detailed examples of anti-patterns and the preferred implementations, refer 
 - "Review my Svelte 5 component for race conditions."
 - "Check if my new AI command parser is robust."
 - "Run codex-review and code-review:code-review on my branch changes."
+
+## Machine-readable Result
+
+After the human-readable review and any fixes, print this exact block so the
+automation can persist and summarize the result:
+
+```text
+DEV_AGENTS_REVIEW_REPORT_BEGIN
+FINDINGS: <short human-readable summary, or none>
+FIXES: <short human-readable summary, or none>
+REPORT_JSON: {"verdict":"clean|findings","findings":[],"categories_checked":[],"validation":[],"fixes":[]}
+DEV_AGENTS_REVIEW_REPORT_END
+```
+
+The JSON must be valid and contain the keys shown above. Each finding must
+include string fields `severity`, `category`, `location`, `impact`, and
+`remediation`; each fix must include string fields `location` and `summary`.
+Use empty arrays when there are no findings or fixes. Do not include
+credentials, tokens, private user data, or other secrets.

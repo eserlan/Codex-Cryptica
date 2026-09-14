@@ -25,4 +25,14 @@ Activate the following skills to load your specialized instructions:
 ```text
 $ARGUMENTS
 ```
+
+After the review and any fixes, print this exact machine-readable block:
+
+```text
+DEV_AGENTS_REVIEW_REPORT_BEGIN
+FINDINGS: <short human-readable summary, or none>
+FIXES: <short human-readable summary, or none>
+REPORT_JSON: {"verdict":"clean|findings","findings":[],"categories_checked":[],"validation":[],"fixes":[]}
+DEV_AGENTS_REVIEW_REPORT_END
+```
 """
