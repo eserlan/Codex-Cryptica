@@ -180,11 +180,30 @@ function buildMultipartInput(
   };
 }
 
+async function handleCachedAssetGallery(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+): Promise<Response> {
+  const cacheUrl = new URL("/gallery", request.url);
+  cacheUrl.search = "";
+  const cacheKey = new Request(cacheUrl.toString(), { method: "GET" });
+  const cache = caches.default;
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  const response = await handleAssetGallery(request, env);
+  if (response.ok) {
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
+  return response;
+}
+
 export default {
   async fetch(
     request: Request,
     env: Env,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<Response> {
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
@@ -198,7 +217,7 @@ export default {
       if (request.method !== "GET") {
         return new Response("Method not allowed", { status: 405 });
       }
-      return handleAssetGallery(request, env);
+      return handleCachedAssetGallery(request, env, ctx);
     }
 
     if (pathname.startsWith("/api/starter-tile-decks/")) {

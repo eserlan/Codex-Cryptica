@@ -211,6 +211,52 @@ describe("Oracle Proxy Worker directory routing", () => {
   });
 });
 
+describe("Oracle Proxy Worker asset gallery routing", () => {
+  it("caches successful gallery responses by path without caching query variants", async () => {
+    const match = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(new Response("cached gallery"));
+    const put = vi.fn(async () => undefined);
+    const previousCaches = (globalThis as any).caches;
+    (globalThis as any).caches = { default: { match, put } };
+    const list = vi.fn(async () => ({ objects: [], truncated: false }));
+    const waitUntil = vi.fn();
+    const env = {
+      GEMINI_API_KEY: "test-key",
+      BUCKET: { list },
+    };
+
+    try {
+      const first = await worker.fetch(
+        new Request("https://assets.codexcryptica.com/gallery?refresh=1"),
+        env,
+        { waitUntil } as unknown as ExecutionContext,
+      );
+      const second = await worker.fetch(
+        new Request("https://assets.codexcryptica.com/gallery?refresh=2"),
+        env,
+        { waitUntil } as unknown as ExecutionContext,
+      );
+
+      expect(first.status).toBe(200);
+      expect(await second.text()).toBe("cached gallery");
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(put.mock.calls[0][0].url).toBe(
+        "https://assets.codexcryptica.com/gallery",
+      );
+      expect(waitUntil).toHaveBeenCalledTimes(1);
+    } finally {
+      if (previousCaches === undefined) {
+        delete (globalThis as any).caches;
+      } else {
+        (globalThis as any).caches = previousCaches;
+      }
+    }
+  });
+});
+
 describe("Oracle Proxy Worker image generation", () => {
   beforeEach(() => {
     (globalThis as any).caches = {
