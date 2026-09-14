@@ -131,6 +131,7 @@ export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
     "how-many-npcs-does-an-rpg-town-need",
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
+    "how-do-you-run-a-scene-with-multiple-npcs",
   ],
   discovery: {
     id: "answer-npcs-improvise-on-the-spot",

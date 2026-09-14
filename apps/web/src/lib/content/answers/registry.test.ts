@@ -667,6 +667,23 @@ describe("published answers", () => {
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
   });
+
+  it("publishes the multiple NPCs scene answer with complete framework sections and system references", () => {
+    const answer = answers["how-do-you-run-a-scene-with-multiple-npcs"];
+    expect(answer).toBeDefined();
+    expect(answer.category).toBe("session-prep");
+    expect(answer.sections.length).toBeGreaterThanOrEqual(3);
+    expect(answer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Apocalypse World",
+      "A Song of Ice and Fire Roleplaying",
+      "Vampire: The Masquerade",
+    ]);
+    for (const ref of answer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https?:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
 });
 
 describe("answer structured data", () => {

@@ -155,6 +155,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-you-track-faction-turns-between-rpg-sessions",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
+    "how-do-you-run-a-scene-with-multiple-npcs",
   ],
   discovery: {
     id: "answer-fantasy-faction",
