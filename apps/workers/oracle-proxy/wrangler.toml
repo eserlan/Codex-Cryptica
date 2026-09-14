@@ -19,7 +19,7 @@ workers_dev = true
 # Routes match on the specific pattern, so this doesn't touch how the rest of
 # assets.codexcryptica.com is served.
 routes = [
-  { pattern = "assets.codexcryptica.com/gallery", zone_name = "codexcryptica.com" },
+  { pattern = "assets.codexcryptica.com/gallery*", zone_name = "codexcryptica.com" },
 ]
 
 # Environment variables (non-sensitive)
