@@ -181,4 +181,21 @@ describe("useGlobalShortcuts", () => {
 
     document.body.removeChild(input);
   });
+
+  it("should safely ignore events where key is undefined without throwing", () => {
+    const mockContext = {
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+    };
+
+    const handleKeydown = useGlobalShortcuts(mockContext)!;
+    const event = new KeyboardEvent("keydown");
+    Object.defineProperty(event, "key", { value: undefined });
+
+    expect(() => handleKeydown(event)).not.toThrow();
+    expect(mockContext.searchStore.toggle).not.toHaveBeenCalled();
+    expect(mockContext.quickNoteStore.toggle).not.toHaveBeenCalled();
+    expect(mockContext.modalUIStore.closeSettings).not.toHaveBeenCalled();
+  });
 });

@@ -26,6 +26,8 @@ export function useGlobalShortcuts(context: ShortcutContext) {
   if (!browser) return;
 
   const handleKeydown = (e: KeyboardEvent) => {
+    if (!e.key) return;
+
     const target = document.activeElement;
 
     // Ignore shortcuts if user is typing in an input or textarea

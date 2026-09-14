@@ -19,7 +19,9 @@ const isTypingTarget = (target: EventTarget | null) => {
 
 export const createGlobalShortcutHandler = () => {
   return (event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+    if (!event.key) return;
+
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
       event.preventDefault();
       searchStore.open();
       return;
@@ -29,15 +31,14 @@ export const createGlobalShortcutHandler = () => {
       return;
     }
 
+    const key = event.key.toLowerCase();
+
     const isUndo =
-      (event.metaKey || event.ctrlKey) &&
-      event.key.toLowerCase() === "z" &&
-      !event.shiftKey;
+      (event.metaKey || event.ctrlKey) && key === "z" && !event.shiftKey;
 
     const isRedo =
       (event.metaKey || event.ctrlKey) &&
-      (event.key.toLowerCase() === "y" ||
-        (event.key.toLowerCase() === "z" && event.shiftKey));
+      (key === "y" || (key === "z" && event.shiftKey));
 
     if (isUndo) {
       event.preventDefault();
@@ -53,7 +54,7 @@ export const createGlobalShortcutHandler = () => {
 
     const isZenShortcut =
       ((event.ctrlKey || event.metaKey) && event.key === "ArrowUp") ||
-      (event.altKey && event.key.toLowerCase() === "z");
+      (event.altKey && key === "z");
 
     if (isZenShortcut && vault.selectedEntityId) {
       event.preventDefault();
@@ -62,10 +63,7 @@ export const createGlobalShortcutHandler = () => {
     }
 
     const isSharedModeToggle =
-      event.key.toLowerCase() === "p" &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey;
+      key === "p" && !event.ctrlKey && !event.metaKey && !event.altKey;
 
     if (isSharedModeToggle) {
       sessionModeStore.sharedMode = !sessionModeStore.sharedMode;
