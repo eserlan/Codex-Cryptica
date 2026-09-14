@@ -65,6 +65,11 @@
     }
   }
 
+  function getSharedLinkLabel(item: SharedGeneratorItem): string {
+    if (item.hasDescriptiveMetadata === false) return "View Shared Page";
+    return `View ${item.title} (${item.generatorTitle || item.generatorId})`;
+  }
+
   async function handleRevokeShare(item: SharedGeneratorItem) {
     if (revokingShareId === item.shareId) return;
     const confirmed =
@@ -409,16 +414,19 @@
                 <div
                   class="pt-3 border-t border-theme-border/50 flex flex-wrap items-center justify-between gap-3"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
                     <a
                       href="{cleanBase}/share/{item.shareId}"
-                      class="text-xs font-header font-bold text-theme-primary hover:underline inline-flex items-center gap-1"
+                      class="text-xs font-header font-bold text-theme-primary hover:underline inline-flex items-center gap-1 min-w-0"
+                      title={getSharedLinkLabel(item)}
                       onclick={() =>
                         trackMyStuffItemOpened("generator_share", item.shareId)}
                     >
-                      <span>Open Snapshot</span>
+                      <span class="truncate max-w-[220px]"
+                        >{getSharedLinkLabel(item)}</span
+                      >
                       <span
-                        class="icon-[lucide--external-link] h-3.5 w-3.5"
+                        class="icon-[lucide--external-link] h-3.5 w-3.5 shrink-0"
                         aria-hidden="true"
                       ></span>
                     </a>
