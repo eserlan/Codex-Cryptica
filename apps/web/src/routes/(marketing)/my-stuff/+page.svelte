@@ -416,7 +416,7 @@
                       onclick={() =>
                         trackMyStuffItemOpened("generator_share", item.shareId)}
                     >
-                      <span>Open Snapshot</span>
+                      <span>View Shared Page</span>
                       <span
                         class="icon-[lucide--external-link] h-3.5 w-3.5"
                         aria-hidden="true"
