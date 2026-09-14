@@ -153,6 +153,26 @@ describe("MyStuffService", () => {
     expect(shares).toHaveLength(1);
     expect(shares[0].shareId).toBe("legacy-share-999");
     expect(shares[0].managementToken).toBe("secret-token-xyz");
+    expect(shares[0].hasDescriptiveMetadata).toBe(false);
+
+    service.recordSharedGenerator(shares[0]);
+    expect(service.getSharedGenerators()[0].hasDescriptiveMetadata).toBe(false);
+  });
+
+  it("does not treat incomplete local share metadata as descriptive", () => {
+    const storage = new MockStorage();
+    storage.setItem(
+      LOCAL_SHARES_KEY,
+      JSON.stringify([{ shareId: "incomplete-share", managementToken: "tok" }]),
+    );
+
+    const service = new MyStuffService({ storage });
+
+    expect(service.getSharedGenerators()[0]).toMatchObject({
+      title: "Shared Generator Snapshot",
+      generatorId: "generator",
+      hasDescriptiveMetadata: false,
+    });
   });
 
   it("revokes shared generator remotely and cleans up locally", async () => {

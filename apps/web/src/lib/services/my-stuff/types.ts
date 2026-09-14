@@ -14,6 +14,8 @@ export interface SharedGeneratorItem {
   title: string;
   generatorId: string;
   generatorTitle?: string;
+  /** False when only a management token was available to reconstruct the entry. */
+  hasDescriptiveMetadata?: boolean;
   createdAt: string;
   url: string;
   excerpt?: string;

@@ -84,7 +84,7 @@
     themeToQuestGenre,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
-  import { parseGeneratorShareMarkdown } from "./generator-copy";
+  import { loadGeneratorRemixDraft } from "./generator-page-remix";
   import {
     type SlugMetaEntry,
     type ValidSlug,
@@ -118,7 +118,6 @@
   } from "./generator-theme-maps";
   import { worldGenreForHub } from "./generator-page-world-handoff";
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
-  import { resolveGeneratorShareTheme } from "./generator-page-identity";
   import {
     getHubMountPatch,
     resolveInitialActiveTheme,
@@ -815,33 +814,17 @@
     targetPath: string | undefined,
     loadVersion: number,
   ) {
-    try {
-      const shared = await generatorShareService.get(remixId);
-      if (
-        loadVersion !== remixLoadVersion ||
-        !shared ||
-        shared.metadata.generatorPath !== targetPath
-      )
-        return;
-
-      const parsed = parseGeneratorShareMarkdown(shared.content);
-      remixDraft = {
-        type: "note",
-        title: shared.title,
-        summary: parsed.summary,
-        content: parsed.content,
-        lore: "",
-        labels: shared.metadata.labels ?? [],
-        status: "draft",
-      };
-      const sharedTheme = resolveGeneratorShareTheme(shared.metadata.theme);
-      if (sharedTheme) {
-        activeTheme = sharedTheme;
-      }
+    const result = await loadGeneratorRemixDraft({
+      remixId,
+      targetPath,
+      loadVersion,
+      getCurrentLoadVersion: () => remixLoadVersion,
+      getShared: (id) => generatorShareService.get(id),
+    });
+    if (result) {
+      remixDraft = result.draft;
+      if (result.theme) activeTheme = result.theme;
       window.history.replaceState({}, "", window.location.pathname);
-    } catch {
-      // A remix is an enhancement; the normal generator remains usable when
-      // the shared snapshot cannot be reached.
     }
   }
 

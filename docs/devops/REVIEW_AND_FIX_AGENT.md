@@ -36,9 +36,16 @@ Run this after you've replied to a `needs-input` PR comment. Reads your answer, 
 
 ### `codex-review`
 
-The actual review logic `review-and-fix` calls into: a Codex-Cryptica-specific checklist (Svelte 5 rune/worker safety, `isCommitting` race guards, accessibility, `??` vs `||`, worker proxy wiring, constitution check against `.specify/memory/constitution.md`) layered on top of the general `code-review:code-review` pass.
+The actual review logic `review-and-fix` calls into is canonical and local: the general
+`.agent/skills/code-review` pass first checks changed behaviour, trust boundaries, data
+compatibility, operations, and focused validation. The Codex-Cryptica-specific
+`.agent/skills/codex-review` pass then checks Svelte rune/worker safety, `isCommitting`
+race guards, accessibility, `??` vs `||`, worker proxy wiring, and the constitution.
 
-**Token budget**: defaults to `code-review:code-review` at **low effort**, run **inline** in the current agent context — it does _not_ spawn parallel Agent-tool subagents (finder angles + verifiers) for a standard run. That fan-out (used at `high`/`xhigh`/`max`/`ultra`) means every subagent re-reads the diff and surrounding files cold, which multiplies token cost for what's meant to be a fast safety net on a branch you've already tested by hand, not an exhaustive audit. Only step up to a heavier effort level if you explicitly ask for a deeper pass.
+**Runtime**: a standard review is one inline Codex/Luna run with a generic pass followed by
+the project pass. It does not fan out into separate agents, so it stays a bounded review of
+the branch diff and its immediate call paths. Ask explicitly for an independent second opinion
+when the change warrants the additional cost.
 
 ## How a PR gets the `needs-input` label
 

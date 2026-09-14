@@ -9,6 +9,19 @@ minify = false
 # Account ID (optional - will prompt if not set)
 # account_id = "your-account-id"
 
+# Adding `routes` disables the workers.dev deployment by default — and the
+# whole app calls oracle-proxy through *that* URL (oracle-proxy.<subdomain>
+# .workers.dev), not a custom domain. Keep it on explicitly.
+workers_dev = true
+
+# Serves the live asset gallery (/gallery) on the R2 custom domain, alongside
+# R2's own direct-object serving for every other path on that host. Workers
+# Routes match on the specific pattern, so this doesn't touch how the rest of
+# assets.codexcryptica.com is served.
+routes = [
+  { pattern = "assets.codexcryptica.com/gallery*", zone_name = "codexcryptica.com" },
+]
+
 # Environment variables (non-sensitive)
 [vars]
 # Comma-separated list of allowed origins
