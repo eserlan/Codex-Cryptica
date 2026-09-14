@@ -66,16 +66,25 @@ function parseStoredShare(item: unknown): SharedGeneratorItem | null {
     typeof record.url === "string" && /^https?:\/\//i.test(record.url)
       ? record.url
       : buildAbsoluteUrl(`/share/${encodeURIComponent(shareId)}`);
+  const generatorTitle =
+    typeof record.generatorTitle === "string" && record.generatorTitle.trim()
+      ? record.generatorTitle
+      : undefined;
+  const hasDescriptiveMetadata =
+    record.hasDescriptiveMetadata === false
+      ? false
+      : typeof record.title === "string" &&
+        record.title.trim().length > 0 &&
+        (Boolean(generatorTitle) ||
+          (typeof record.generatorId === "string" &&
+            record.generatorId.trim().length > 0));
 
   return {
     shareId,
     title,
     generatorId,
-    generatorTitle:
-      typeof record.generatorTitle === "string"
-        ? record.generatorTitle
-        : undefined,
-    hasDescriptiveMetadata: true,
+    generatorTitle,
+    hasDescriptiveMetadata,
     createdAt,
     url,
     excerpt: typeof record.excerpt === "string" ? record.excerpt : undefined,
