@@ -3,6 +3,7 @@
   import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
   import { myStuffService } from "$lib/services/my-stuff/my-stuff-service";
   import {
     trackMyStuffOpened,
@@ -113,6 +114,11 @@
 <SeoHead
   title="My Stuff | Codex Cryptica"
   description="Your local saved answers and shared generator results in Codex Cryptica."
+  canonicalUrl={buildAbsoluteUrl("/my-stuff")}
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="Codex Cryptica personal library and connected workspace"
+  imageWidth={1600}
+  imageHeight={1000}
   robots="noindex, follow"
 />
 
