@@ -6,7 +6,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 - The Speckit command definitions in [`.gemini/commands`](./.gemini/commands) are the canonical command source for this repo.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
-- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md) and [`.codex/skills/codex-review/SKILL.md`](./.codex/skills/codex-review/SKILL.md); the extended canonical review patterns remain in [`.agent/skills/codex-review`](./.agent/skills/codex-review).
+- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md); the canonical review skill and patterns live in [`.agent/skills/codex-review`](./.agent/skills/codex-review). The `.codex`, `.claude`, and `.agents` entries are compatibility adapters.
 - Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.

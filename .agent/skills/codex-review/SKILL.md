@@ -36,3 +36,22 @@ For detailed examples of anti-patterns and the preferred implementations, refer 
 - "Review my Svelte 5 component for race conditions."
 - "Check if my new AI command parser is robust."
 - "Run codex-review and code-review:code-review on my branch changes."
+
+## Machine-readable Result
+
+After the human-readable review and any fixes, print this exact block so the
+automation can persist and summarize the result:
+
+```text
+DEV_AGENTS_REVIEW_REPORT_BEGIN
+FINDINGS: <short human-readable summary, or none>
+FIXES: <short human-readable summary, or none>
+REPORT_JSON: {"verdict":"clean|findings","findings":[],"categories_checked":[],"validation":[],"fixes":[]}
+DEV_AGENTS_REVIEW_REPORT_END
+```
+
+The JSON must be valid and contain the keys shown above. Each finding must
+include string fields `severity`, `category`, `location`, `impact`, and
+`remediation`; each fix must include string fields `location` and `summary`.
+Use empty arrays when there are no findings or fixes. Do not include
+credentials, tokens, private user data, or other secrets.
