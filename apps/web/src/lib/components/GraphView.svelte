@@ -14,7 +14,10 @@
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
-  import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
+  import {
+    handleGraphDeleteShortcut,
+    handleGraphActionShortcut,
+  } from "./graph/graph-keyboard";
   import { DEFAULT_SEARCH_ENTITY_ZOOM } from "./search/search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -171,6 +174,9 @@
   });
 
   const handleKeyDown = async (e: KeyboardEvent) => {
+    if (!e.key) return;
+    if (modalUIStore.isAnyModalOpen) return;
+
     const handledDelete = await handleGraphDeleteShortcut(e, {
       cy: controller.cy,
       selectedId: controller.selectedId,
@@ -184,40 +190,25 @@
 
     if (handledDelete) return;
 
-    const target = document.activeElement;
-    if (
-      target?.tagName === "INPUT" ||
-      target?.tagName === "TEXTAREA" ||
-      (target as HTMLElement)?.isContentEditable
-    )
-      return;
-
-    if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      graph.toggleTimeline();
-      controller.applyCurrentLayout({
-        reason: "Keyboard Shortcut (T)",
-        isForced: true,
-      });
-    }
-    if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (!vault.isGuest) {
-        if (controller.selectedCount === 2) {
-          connectionModeStore.showSelectionConnector =
-            !connectionModeStore.showSelectionConnector;
-        } else {
-          connectionModeStore.toggleConnectMode();
-        }
-      }
-    }
-    if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      graph.toggleLabels();
-    }
-    if (e.key.toLowerCase() === "i" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      graph.toggleImages();
-    }
-    if (e.key === "Escape" && connectionModeStore.isConnecting) {
-      connectionModeStore.toggleConnectMode();
-    }
+    handleGraphActionShortcut(e, {
+      isGuest: vault.isGuest,
+      selectedCount: controller.selectedCount,
+      isConnecting: connectionModeStore.isConnecting,
+      toggleTimeline: () => graph.toggleTimeline(),
+      applyTimelineLayout: () => {
+        controller.applyCurrentLayout({
+          reason: "Keyboard Shortcut (T)",
+          isForced: true,
+        });
+      },
+      toggleConnectMode: () => connectionModeStore.toggleConnectMode(),
+      toggleSelectionConnector: () => {
+        connectionModeStore.showSelectionConnector =
+          !connectionModeStore.showSelectionConnector;
+      },
+      toggleLabels: () => graph.toggleLabels(),
+      toggleImages: () => graph.toggleImages(),
+    });
   };
 
   onMount(() => {
