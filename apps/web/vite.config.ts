@@ -167,6 +167,7 @@ export default defineConfig({
     format: "es",
   },
   build: {
+    sourcemap: true,
     chunkSizeWarningLimit: 900,
     minify: "esbuild",
     target: "es2020",
