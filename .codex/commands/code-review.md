@@ -23,6 +23,16 @@ Output only actionable attention items. For every item include severity,
 file/line, impact, and a concrete code proposal or exact remediation. Do not
 include praise, filler, or a list of code that is already correct.
 
+After the review and any fixes, print this exact machine-readable block:
+
+```text
+DEV_AGENTS_REVIEW_REPORT_BEGIN
+FINDINGS: <short human-readable summary, or none>
+FIXES: <short human-readable summary, or none>
+REPORT_JSON: {"verdict":"clean|findings","findings":[],"categories_checked":[],"validation":[],"fixes":[]}
+DEV_AGENTS_REVIEW_REPORT_END
+```
+
 ## User Input
 
 ```text

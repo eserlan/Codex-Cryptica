@@ -10,6 +10,10 @@ const adapterPaths = [
   ".claude/skills/codex-review/SKILL.md",
   ".agents/skills/codex-review/SKILL.md",
 ];
+const commandPaths = [
+  ".codex/commands/code-review.md",
+  ".gemini/commands/code-review.toml",
+];
 
 describe("codex-review skill layout", () => {
   it("keeps one canonical skill and thin compatibility adapters", () => {
@@ -22,6 +26,10 @@ describe("codex-review skill layout", () => {
       true,
     );
     expect(canonicalSkill).toContain("REPORT_JSON:");
+    expect(canonicalSkill).toContain("constitution");
+    expect(canonicalSkill).toContain("privacy and security boundaries");
+    expect(canonicalSkill).toContain("meaningful failure");
+    expect(canonicalSkill).toContain("documentation and spec artifacts");
 
     for (const adapterPath of adapterPaths) {
       const adapter = readFileSync(
@@ -30,6 +38,12 @@ describe("codex-review skill layout", () => {
       );
       expect(adapter).toContain("../../../.agent/skills/codex-review/SKILL.md");
       expect(adapter).not.toContain("## Required checks");
+    }
+
+    for (const commandPath of commandPaths) {
+      expect(
+        readFileSync(resolve(repositoryRoot, commandPath), "utf8"),
+      ).toContain("REPORT_JSON:");
     }
 
     expect(
