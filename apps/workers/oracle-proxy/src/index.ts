@@ -73,6 +73,7 @@ import {
   handleDeleteGeneratorShare,
   handleGetGeneratorShare,
 } from "./generator-shares";
+import { handleAssetGallery } from "./asset-gallery";
 
 interface Env {
   GEMINI_API_KEY: string;
@@ -192,6 +193,13 @@ export default {
 
     const url = new URL(request.url);
     const pathname = url.pathname;
+
+    if (pathname === "/gallery") {
+      if (request.method !== "GET") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+      return handleAssetGallery(request, env);
+    }
 
     if (pathname.startsWith("/api/starter-tile-decks/")) {
       const withCors = (response: Response) => {
