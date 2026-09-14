@@ -148,10 +148,7 @@ export const AnswerSystemReferenceSchema = z.object({
   href: z
     .string()
     .url()
-    .refine(
-      (value) => /^https?:\/\//.test(value),
-      "href must be an http(s) URL",
-    ),
+    .refine((value) => /^https:\/\//.test(value), "href must be an HTTPS URL"),
 });
 export type AnswerSystemReference = z.infer<typeof AnswerSystemReferenceSchema>;
 
