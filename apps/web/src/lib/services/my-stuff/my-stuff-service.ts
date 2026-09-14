@@ -75,6 +75,7 @@ function parseStoredShare(item: unknown): SharedGeneratorItem | null {
       typeof record.generatorTitle === "string"
         ? record.generatorTitle
         : undefined,
+    hasDescriptiveMetadata: true,
     createdAt,
     url,
     excerpt: typeof record.excerpt === "string" ? record.excerpt : undefined,
@@ -175,6 +176,7 @@ export class MyStuffService {
                 shareId,
                 title: "Shared Result",
                 generatorId: "generator",
+                hasDescriptiveMetadata: false,
                 createdAt: new Date().toISOString(),
                 url: buildAbsoluteUrl(`/share/${shareId}`),
                 managementToken: token,

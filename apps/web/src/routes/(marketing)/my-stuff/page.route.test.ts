@@ -10,6 +10,7 @@ import Page from "./+page.svelte";
 import {
   myStuffService,
   ANSWER_FEEDBACK_PREFIX,
+  MANAGEMENT_TOKENS_KEY,
 } from "$lib/services/my-stuff/my-stuff-service";
 
 describe("/my-stuff route", () => {
@@ -86,5 +87,29 @@ describe("/my-stuff route", () => {
 
     expect(screen.getByText("Haunted Crypt of Moria")).toBeTruthy();
     expect(screen.getByText("Dungeon Generator")).toBeTruthy();
+    expect(
+      screen.getByRole("link", {
+        name: "View Haunted Crypt of Moria (Dungeon Generator)",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("uses the generic link label for token-only legacy shares", async () => {
+    localStorage.setItem(
+      MANAGEMENT_TOKENS_KEY,
+      JSON.stringify({ "legacy-share-1": "private-token" }),
+    );
+
+    render(Page);
+
+    const sharedTab = screen.getByRole("tab", { name: /Shared Results/i });
+    await fireEvent.click(sharedTab);
+
+    expect(screen.getByRole("link", { name: "View Shared Page" })).toBeTruthy();
+    expect(
+      screen.queryByRole("link", {
+        name: /View Shared Result \(generator\)/,
+      }),
+    ).toBeNull();
   });
 });
