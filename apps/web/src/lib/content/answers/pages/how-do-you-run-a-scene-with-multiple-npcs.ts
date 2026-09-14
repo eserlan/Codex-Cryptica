@@ -191,7 +191,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     description:
       "How to run scenes with multiple NPCs without talking to yourself: the camera-and-catalyst framework, contradiction beats, sub-scenes, and table-ready prep.",
     image:
-      "https://assets.codexcryptica.com/og/how-do-you-run-a-scene-with-multiple-npcs.jpg",
+      "https://assets.codexcryptica.com/og/how-do-you-run-a-scene-with-multiple-npcs-v2.jpg",
     imageAlt:
       "Tabletop RPG adventurers and faction delegates gathered around a map-strewn council table in tense debate",
   },
