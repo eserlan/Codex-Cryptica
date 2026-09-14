@@ -409,16 +409,21 @@
                 <div
                   class="pt-3 border-t border-theme-border/50 flex flex-wrap items-center justify-between gap-3"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
                     <a
                       href="{cleanBase}/share/{item.shareId}"
-                      class="text-xs font-header font-bold text-theme-primary hover:underline inline-flex items-center gap-1"
+                      class="text-xs font-header font-bold text-theme-primary hover:underline inline-flex items-center gap-1 min-w-0"
+                      title="View {item.title} ({item.generatorTitle ||
+                        item.generatorId})"
                       onclick={() =>
                         trackMyStuffItemOpened("generator_share", item.shareId)}
                     >
-                      <span>View Shared Page</span>
+                      <span class="truncate max-w-[220px]"
+                        >View {item.title} ({item.generatorTitle ||
+                          item.generatorId})</span
+                      >
                       <span
-                        class="icon-[lucide--external-link] h-3.5 w-3.5"
+                        class="icon-[lucide--external-link] h-3.5 w-3.5 shrink-0"
                         aria-hidden="true"
                       ></span>
                     </a>
