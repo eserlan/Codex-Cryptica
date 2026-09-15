@@ -41,6 +41,23 @@ describe("generateVillainLocal", () => {
     expect(out.content).toContain("openly feared threat");
   });
 
+  it("draws the threat scale from the Superhero Power Scale for that genre, not the generic pool", () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const out = generateVillainLocal(
+        { genre: "Superhero / Comic Book" },
+        seededRng(seed),
+      );
+      expect([
+        "street",
+        "city",
+        "national",
+        "global",
+        "cosmic",
+        "multiversal",
+      ]).toContain(out.lore.match(/(\w+)-scale/i)?.[1]?.toLowerCase());
+    }
+  });
+
   it("resolves the Random archetype to a concrete one", () => {
     const out = generateVillainLocal({ archetype: "Random" }, seededRng(3));
     expect(out.lore).not.toMatch(/a random-scale random\b/i);
@@ -115,6 +132,26 @@ describe("buildVillainPrompt", () => {
     expect(userMessage).toContain(NAME_BAN_PROMPT);
     expect(userMessage).toContain("The Salt Concord");
     expect(resolved.threatScale).toBe("Cosmic");
+  });
+
+  it("weaves the Superhero Power Scale hint into the prompt for that genre", () => {
+    const { userMessage } = buildVillainPrompt(
+      { genre: "Superhero / Comic Book", threatScale: "City" },
+      "",
+      seededRng(4),
+    );
+    expect(userMessage).toContain(
+      "- Threat Scale: City — One metropolitan area.",
+    );
+  });
+
+  it("does not append a Power Scale hint for a non-Superhero genre", () => {
+    const { userMessage } = buildVillainPrompt(
+      { genre: "Cyberpunk / Corporate", threatScale: "City" },
+      "",
+      seededRng(4),
+    );
+    expect(userMessage).toContain("- Threat Scale: City\n");
 
     // Consistency-pass phrases (add-generator skill requires field-specific
     // assertions, not just "some text exists").
