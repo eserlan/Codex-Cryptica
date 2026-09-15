@@ -98,6 +98,17 @@ describe("generateComicBookEventLocal", () => {
     }
   });
 
+  it("supports a custom scale in the local fallback", () => {
+    const out = generateComicBookEventLocal(
+      { scale: "Dimensional" },
+      seededRng(4),
+    );
+    expect(out.content).toContain("At Dimensional scale");
+    expect(out.content).toContain(
+      "a campaign-scale reach defined by the custom scale you provided.",
+    );
+  });
+
   it("produces concrete, non-vague lasting consequences for every event type", () => {
     for (const eventType of comicBookEventConfig.eventTypes) {
       if (eventType === "Random") continue;
@@ -144,6 +155,18 @@ describe("buildComicBookEventPrompt", () => {
       seededRng(4),
     );
     expect(userMessage).toContain("- Scale: Global — Planetary in reach.");
+  });
+
+  it("keeps custom scales usable instead of emitting an undefined hint", () => {
+    const { userMessage } = buildComicBookEventPrompt(
+      { scale: "Dimensional" },
+      "",
+      seededRng(4),
+    );
+    expect(userMessage).toContain(
+      "- Scale: Dimensional — a campaign-scale reach defined by the custom scale you provided.",
+    );
+    expect(userMessage).not.toContain("undefined");
   });
 
   it("asks for the three structurally separated sections by field/heading name", () => {

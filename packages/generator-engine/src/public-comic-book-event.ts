@@ -120,6 +120,9 @@ const CONSEQUENCES_GUARDRAIL = `Every item under 'Lasting Consequences' must be 
 
 const CONSISTENCY_PASS = `Before returning, run a consistency pass: the declared Scale must be reflected consistently across Public Response, How It Unfolds, and Lasting Consequences — do not describe Multiversal-level stakes for a National-scale event, or vice versa; each Lasting Consequence must be concrete and campaign-persistent, never a restatement that things returned to normal; the True Cause must be consistent with, not contradict, what is shown in How It Unfolds; and every Campaign Hook must connect directly to an unresolved thread from True Cause or Lasting Consequences rather than being generic.`;
 
+const CUSTOM_SCALE_HINT =
+  "a campaign-scale reach defined by the custom scale you provided.";
+
 export function buildComicBookEventPrompt(
   options: ComicBookEventGeneratorOptions = {},
   sessionContext = "",
@@ -127,7 +130,8 @@ export function buildComicBookEventPrompt(
 ): ComicBookEventPrompt {
   const resolved = resolveComicBookEvent(options, rng);
   const scaleHint =
-    SUPERHERO_POWER_SCALE_HINTS[resolved.scale as SuperheroPowerScale];
+    SUPERHERO_POWER_SCALE_HINTS[resolved.scale as SuperheroPowerScale] ??
+    CUSTOM_SCALE_HINT;
 
   const userMessage = `Generate a campaign-scale Superhero / Comic Book Event in JSON format. This is a large, crossover-tier crisis a superhero campaign builds an arc around — not a single villain's scheme. British English. System-neutral (no game-system mechanics or stat blocks). Original event concept only — do not imitate or rename any existing published comic-book crossover event, storyline, or title.
 Options:
@@ -402,7 +406,8 @@ export function generateComicBookEventLocal(
   const location = `${generateName(rng)} City`;
   const fill = (s: string) => s.replaceAll("{{LOCATION}}", location);
   const scaleHint =
-    SUPERHERO_POWER_SCALE_HINTS[resolved.scale as SuperheroPowerScale];
+    SUPERHERO_POWER_SCALE_HINTS[resolved.scale as SuperheroPowerScale] ??
+    CUSTOM_SCALE_HINT;
 
   const content = `### The Event
 ${fill(flavor.premise)}
