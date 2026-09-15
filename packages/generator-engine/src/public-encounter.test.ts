@@ -122,6 +122,31 @@ describe("buildEncounterPrompt", () => {
   });
 });
 
+describe("Superhero theme regression (#3108)", () => {
+  // "Superhero / Comic Book" has no dedicated entry in
+  // encounterConfig.environmentsByTheme, so the generator must fall back to
+  // the generic environment pool instead of crashing on an undefined lookup.
+  it("falls back to the generic environment pool and does not crash", () => {
+    expect(
+      encounterConfig.environmentsByTheme["Superhero / Comic Book"],
+    ).toBeUndefined();
+
+    const out = generateEncounterLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(7),
+    );
+    expect(out.type).toBe("event");
+    expect(out.content).toBeTruthy();
+
+    const { resolved } = buildEncounterPrompt(
+      { genre: "Superhero / Comic Book" },
+      "",
+      seededRng(7),
+    );
+    expect(encounterConfig.environments).toContain(resolved.environment);
+  });
+});
+
 describe("parseEncounterResponse", () => {
   const { resolved } = buildEncounterPrompt({}, "", seededRng(3));
 

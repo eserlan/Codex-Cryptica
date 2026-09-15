@@ -3,6 +3,7 @@
     questConfig,
     factionConfig,
     pickFrom,
+    questGenreForTheme,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
@@ -33,23 +34,24 @@
   const labelClass =
     "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
 
+  const questGenre = $derived(questGenreForTheme(theme));
   const activeTones = $derived(
-    questConfig.tonesByTheme[theme] ?? questConfig.tones,
+    questConfig.tonesByTheme[questGenre] ?? questConfig.tones,
   );
   const activeScopes = $derived(
-    questConfig.scopesByTheme[theme] ?? questConfig.scopes,
+    questConfig.scopesByTheme[questGenre] ?? questConfig.scopes,
   );
   const activeLocationTypes = $derived(
-    questConfig.locationTypesByTheme[theme] ?? questConfig.locationTypes,
+    questConfig.locationTypesByTheme[questGenre] ?? questConfig.locationTypes,
   );
   const activeThreats = $derived(
-    questConfig.threatsByTheme[theme] ?? questConfig.threats,
+    questConfig.threatsByTheme[questGenre] ?? questConfig.threats,
   );
   const activeTwists = $derived(
-    questConfig.twistsByTheme[theme] ?? questConfig.twists,
+    questConfig.twistsByTheme[questGenre] ?? questConfig.twists,
   );
   const activeRewards = $derived(
-    questConfig.rewardsByTheme[theme] ?? questConfig.rewards,
+    questConfig.rewardsByTheme[questGenre] ?? questConfig.rewards,
   );
   const builtInTones = questConfig.tones;
   const builtInScopes = questConfig.scopes;
