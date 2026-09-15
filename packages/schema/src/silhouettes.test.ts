@@ -41,7 +41,7 @@ describe("Silhouette Registry & Schema", () => {
     }
   });
 
-  it("includes practical fantasy items and note motifs", () => {
+  it("includes practical fantasy and sci-fi items and note motifs", () => {
     const ids = new Set(SILHOUETTES.map((silhouette) => silhouette.id));
 
     for (const id of [
@@ -52,6 +52,13 @@ describe("Silhouette Registry & Schema", () => {
       "fantasy-note-sealed-letter",
       "fantasy-note-treasure-map",
       "fantasy-note-quest-notice",
+      "scifi-item-plasma-cell",
+      "scifi-item-datapad",
+      "scifi-item-explorer-helmet",
+      "scifi-item-alien-relic",
+      "scifi-note-star-chart",
+      "scifi-note-encrypted-transmission",
+      "scifi-note-mission-dossier",
     ]) {
       expect(ids.has(id), `Missing ${id}`).toBe(true);
     }
@@ -268,6 +275,20 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     );
 
     expect(match.id).toBe("fantasy-note-treasure-map");
+  });
+
+  it("resolves a sci-fi star chart for a note", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "note",
+        title: "Survey Star Chart",
+        labels: ["navigation", "astrogation"],
+        content: "The plotted route marks the next stellar survey.",
+      },
+      { worldTheme: "scifi" },
+    );
+
+    expect(match.id).toBe("scifi-note-star-chart");
   });
 
   it("does not assign note artwork to an item that mentions a map", () => {
