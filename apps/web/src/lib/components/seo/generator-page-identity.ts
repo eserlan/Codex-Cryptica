@@ -18,6 +18,7 @@ export const THEME_TO_WORLD_ID: Record<string, string> = {
   Steampunk: "steampunk",
   Lancer: "lancer",
   "Optimistic Exploration Sci-Fi": "startrek",
+  "Superhero / Comic Book": "superhero",
 };
 
 export function resolveWorldThemeId(theme: string): string {

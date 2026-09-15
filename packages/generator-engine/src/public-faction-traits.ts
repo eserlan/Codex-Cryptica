@@ -294,6 +294,20 @@ export const FACTION_TYPE_TRAITS: TraitMap = {
   "Pirate Cartel": ["criminal", "syndicate", "fleet", "ruthless"],
   "Boomtown Council": ["administrative", "democratic", "local", "pragmatic"],
   "Mercenary Outfit": ["military", "violence-power", "pragmatic"],
+  "Rogues' Gallery": ["criminal", "clandestine", "rivalry", "violence-power"],
+  "Vigilante Cell": ["clandestine", "protective", "violence-power"],
+  "Hero Team": ["protective", "idealistic", "violence-power"],
+  "Black-Ops Program": ["clandestine", "military", "secretive"],
+  "Superhuman Supremacist Movement": [
+    "fanatical",
+    "violence-power",
+    "oppression",
+  ],
+  "Media Conglomerate": ["corporate", "information", "wealth"],
+  "Research Institute": ["research", "academic", "technology"],
+  "Occult Cabal": ["esoteric", "secretive", "magic"],
+  "Corporate Security Force": ["corporate", "military", "violence-power"],
+  "Government Oversight Committee": ["administrative", "lawful", "oppression"],
 };
 
 export const FACTION_SCOPE_TRAITS: TraitMap = {
@@ -410,6 +424,12 @@ export const FACTION_SCOPE_TRAITS: TraitMap = {
   "Frontier star system": ["regional", "interstellar", "isolated"],
   "Uncharted hyper-lane run": ["regional", "logistics", "clandestine"],
   "Sector-wide syndicate reach": ["interstellar", "syndicate", "wealth"],
+  "Single neighborhood watch": ["local", "protective"],
+  "City-wide operation": ["city"],
+  "Regional network": ["regional"],
+  "National organization": ["global"],
+  "Global consortium": ["global", "wealth"],
+  "Cosmic-scale threat": ["global", "interstellar"],
 };
 
 export const FACTION_ALIGNMENT_TRAITS: TraitMap = {
@@ -874,6 +894,36 @@ export const FACTION_GOAL_TRAITS: TraitMap = {
     "survival",
     "debt",
     "clandestine",
+  ],
+  "Force a registration act through before public opinion turns.": [
+    "administrative",
+    "oppression",
+    "pragmatic",
+  ],
+  "Recover a stolen origin sample before a rival organization weaponizes it.": [
+    "research",
+    "rivalry",
+    "clandestine",
+  ],
+  "Discredit a hero publicly to clear the way for a larger scheme.": [
+    "information",
+    "ruthless",
+    "clandestine",
+  ],
+  "Secure exclusive access to a captured metahuman for study.": [
+    "research",
+    "ruthless",
+    "clandestine",
+  ],
+  "Install a sympathetic figure on the city council before the next vote.": [
+    "administrative",
+    "subversive",
+    "clandestine",
+  ],
+  "Erase every record connecting them to a decades-old disaster.": [
+    "secretive",
+    "clandestine",
+    "information",
   ],
 };
 

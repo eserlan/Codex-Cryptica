@@ -15,6 +15,7 @@ import { spaceOperaResistanceAdventureTables } from "./space-opera-resistance";
 import { optimisticSciFiAdventureTables } from "./optimistic-scifi";
 import { cosmicHorrorAdventureTables } from "./cosmic-horror";
 import { spaceWesternAdventureTables } from "./space-western";
+import { superheroAdventureTables } from "./superhero";
 
 /**
  * Every genre the adventure generator can produce content for, keyed by the theme
@@ -41,6 +42,7 @@ export const ADVENTURE_GENRE_TABLES: Record<string, AdventureGenreTables> = {
   // Gothic Horror maps to the Vampire/Gothic Noir table for dungeon parity.
   "Gothic Horror": gothicHorrorAdventureTables,
   "Cosmic Horror": cosmicHorrorAdventureTables,
+  "Superhero / Comic Book": superheroAdventureTables,
 };
 
 /** Build a genre-keyed lookup table for one field, as the *_BY_GENRE records. */
