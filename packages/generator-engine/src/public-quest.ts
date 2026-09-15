@@ -34,6 +34,9 @@ export const themeToQuestGenre: Record<string, string> = {
   "Space Opera Resistance": "Space Fantasy",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Western": "Space Western",
+  // Political Intrigue is the closest existing quest vocabulary for superhero
+  // stories until the dedicated superhero quest tables are added.
+  "Superhero / Comic Book": "Political Intrigue",
 };
 
 export const questConfig = {

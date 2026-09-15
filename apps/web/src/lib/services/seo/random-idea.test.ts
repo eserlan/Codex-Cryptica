@@ -8,6 +8,7 @@ import {
 } from "./random-idea";
 import type { DefaultGeneratorEngine } from "./generator-engine";
 import { factionConfig } from "generator-engine";
+import { npcConfig } from "generator-engine";
 import { npcThemeConfig } from "generator-engine";
 import { socialHubConfig } from "generator-engine";
 import { nationConfig } from "generator-engine";
@@ -149,6 +150,21 @@ describe("randomIdeaCategories", () => {
     expect(npcThemeConfig.moralities[theme].map((m) => m.id)).toContain(
       options.alignment,
     );
+  });
+
+  it("keeps the NPC roll usable for canonical themes without NPC-specific pools", async () => {
+    const engine = {
+      generateNPC: vi.fn().mockResolvedValue("npc-result"),
+    } as unknown as DefaultGeneratorEngine;
+    const npc = randomIdeaCategories.find((c) => c.key === "npc")!;
+
+    await npc.generate(engine, false, "Superhero / Comic Book");
+
+    const options = (engine.generateNPC as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
+    expect(npcConfig.races).toContain(options.ancestry);
+    expect(npcConfig.roles).toContain(options.role);
+    expect(npcConfig.alignments).toContain(options.alignment);
   });
 
   it("forwards useAI false to the engine", async () => {
