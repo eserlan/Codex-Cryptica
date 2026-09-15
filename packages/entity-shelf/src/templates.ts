@@ -44,7 +44,8 @@ function stableStringify(value: unknown): string {
     // to avoid intermediate array allocations during deep object stringification.
     let s = "[";
     for (let i = 0; i < value.length; i++) {
-      s += stableStringify(value[i]) + (i < value.length - 1 ? "," : "");
+      s +=
+        (stableStringify(value[i]) ?? "") + (i < value.length - 1 ? "," : "");
     }
     return s + "]";
   }
