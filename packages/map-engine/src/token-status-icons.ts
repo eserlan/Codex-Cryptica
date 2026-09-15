@@ -197,7 +197,16 @@ export function drawStatusEffects(
   if (!statusEffects || statusEffects.length === 0) return;
 
   if (statusEffects.includes("dead")) {
-    drawDeadOverlay(ctx, traceShape, center, rotation, shape, width, height, radius);
+    drawDeadOverlay(
+      ctx,
+      traceShape,
+      center,
+      rotation,
+      shape,
+      width,
+      height,
+      radius,
+    );
   }
   drawStatusIconBar(ctx, center, radius, statusEffects);
 }

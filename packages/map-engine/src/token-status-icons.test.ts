@@ -33,7 +33,17 @@ describe("drawStatusEffects", () => {
   it("does nothing when there are no status effects", () => {
     const ctx = createCtxMock();
 
-    drawStatusEffects(ctx, traceShape, center, 0, "circle", 50, 50, 25, undefined);
+    drawStatusEffects(
+      ctx,
+      traceShape,
+      center,
+      0,
+      "circle",
+      50,
+      50,
+      25,
+      undefined,
+    );
     drawStatusEffects(ctx, traceShape, center, 0, "circle", 50, 50, 25, []);
 
     expect(ctx.save).not.toHaveBeenCalled();
