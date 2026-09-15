@@ -181,3 +181,8 @@
 
 **Learning:** Even when `title` attributes are present, icon-only buttons might not be consistently announced optimally by all screen readers. Providing an explicit `aria-label` along with `aria-hidden="true"` on the inner icon is the safest and most standard pattern for ensuring maximum accessibility compatibility for icon buttons.
 **Action:** When adding or reviewing icon-only buttons, always ensure an explicit `aria-label` is used on the `<button>` element and the decorative inner `<span>` icon uses `aria-hidden="true"`.
+
+## 2024-05-20 - Incomplete Application of aria-hidden
+
+**Learning:** When adding `aria-hidden="true"` to inner decorative icons within a button, you must ensure that *all* sibling decorative spans inside that specific button context are targeted, rather than just the first one. Missed sibling icons (like an adjacent list-checks icon next to a chevron) will still be redundantly announced by screen readers.
+**Action:** When inspecting a target element for accessibility attributes, review the entire block (e.g., using `grep -B 5 -A 10`) to identify all inner decorative `<span>` tags, and ensure `aria-hidden="true"` is applied comprehensively to all relevant sibling tags within that button.
