@@ -209,6 +209,14 @@ export const ENVIRONMENT_TRAITS: TraitMap = {
   "Orbital Scrapyard Cluster": ["orbital", "ruined", "industrial"],
   "Volcanic Moon Caldera": ["volcanic", "isolated", "frontier"],
   "Toxic Salt Flats": ["desert", "wasteland", "isolated"],
+
+  // Superhero / Comic Book
+  "Downtown high-rise core": ["urban"],
+  "Harbor industrial waterfront": ["coastal", "maritime", "industrial"],
+  "Underground transit warren": ["underground", "urban", "transit"],
+  "Fringe suburb bordering a containment perimeter": ["urban", "isolated"],
+  "Elevated skyway district": ["urban", "transit"],
+  "Old quarter built over a collapsed landmark": ["urban", "ruined"],
 };
 
 /** Primary functions, keyed by the exact value in `primaryFunctionsByGenre`. */
@@ -320,6 +328,15 @@ export const FUNCTION_TRAITS: TraitMap = {
   "Salvage Scrapyard": ["industrial", "trade", "ruined"],
   "Smuggler Way-Station": ["transit", "criminal", "refuge"],
   "Agricultural Hydroponics Dome": ["agrarian", "research"],
+
+  // Superhero / Comic Book
+  "Hero headquarters city": ["military", "administrative"],
+  "Corporate research capital": ["research", "administrative"],
+  "Government oversight seat": ["administrative", "bureaucratic"],
+  "Power-tech black market hub": ["criminal", "trade", "technology"],
+  "Disaster recovery zone": ["refuge", "administrative"],
+  "Media and press capital": ["entertainment"],
+  "Containment and parole district": ["administrative", "criminal"],
 };
 
 /** Tones, keyed by the exact value in `tonesByGenre`. */
@@ -410,6 +427,13 @@ export const TONE_TRAITS: TraitMap = {
   "Rowdy and boomtown-busy": ["prosperous", "frontier", "vibrant"],
   "Desolate and resource-strapped": ["desperate", "declining", "isolated"],
   "Tense under corrupt oversight": ["oppressive", "crime", "politics"],
+
+  // Superhero / Comic Book
+  "Four-color hopeful": ["heroic", "hopeful"],
+  "Street-level gritty": ["grim", "frontier"],
+  "Surveilled and distrustful": ["oppressive", "politics"],
+  "Media-saturated and image-obsessed": ["vibrant", "decadent"],
+  "Recovering and resilient": ["hopeful", "declining"],
 };
 
 /** Dominant tensions, keyed by the exact value in `mainTensionsByGenre`. */
@@ -533,6 +557,24 @@ export const TENSION_TRAITS: TraitMap = {
     ["labour", "industrial", "mining", "scarcity"],
   "A syndicate enforcer boss is demanding protection money from every docked vessel.":
     ["crime", "oppressive"],
+
+  // Superhero / Comic Book
+  "A hero registration vote splitting public opinion": ["politics"],
+  "A corporate cover-up of a botched power experiment": [
+    "betrayal",
+    "technology",
+  ],
+  "A containment breach nobody will publicly acknowledge": [
+    "technology",
+    "betrayal",
+  ],
+  "Vigilante backlash from residents tired of collateral damage": [
+    "politics",
+    "crime",
+  ],
+  "A legacy villain's return exploiting an old grudge": ["crime", "betrayal"],
+  "A press exposé threatening to unmask a local hero": ["betrayal", "politics"],
+  "A turf war between rival power-tech gangs": ["crime", "war"],
 };
 
 /** Official authorities, keyed by the exact value in `authorityTypesByGenre`. */
@@ -630,6 +672,14 @@ export const AUTHORITY_TRAITS: TraitMap = {
   "Syndicate Enforcer Boss": ["criminal-rule", "autocratic"],
   "Elected Saloon Proprietor": ["elected", "entertainment", "frontier"],
   "None / Lawless Anarchy": ["lawless", "desperate"],
+
+  // Superhero / Comic Book
+  "Elected mayor with a metahuman task force": ["elected", "administrative"],
+  "Federal superhuman affairs bureau": ["administrative", "bureaucratic"],
+  "Corporate security consortium": ["oligarchic", "bureaucratic"],
+  "Independent hero council": ["elected", "military"],
+  "Police commissioner under public pressure": ["administrative", "military"],
+  "Reform board for paroled villains": ["bureaucratic", "criminal"],
 };
 
 /**
@@ -855,6 +905,16 @@ export const LOCATION_TRAITS: TraitMap = {
   "Assay Office & Claim Registry": ["administrative", "mining", "trade"],
   "Pressurised Hydroponics Greenhouse": ["agrarian", "research"],
   "The Boneyard Scrap Heap": ["ruined", "industrial", "trade"],
+
+  // Superhero / Comic Book
+  "The Cape and Cowl Diner": ["entertainment"],
+  "Skyline Memorial to the Fallen": ["mysterious"],
+  "Municipal Superhuman Registry Office": ["administrative"],
+  "The Underlight Exchange": ["criminal", "trade"],
+  "Containment Perimeter Checkpoint": ["military", "administrative"],
+  "The Old Watchtower, Abandoned": ["ruined", "mysterious"],
+  "Press Row Broadcast Tower": ["entertainment"],
+  "Ward Seven Trauma Center": ["medical"],
 };
 
 /** Controlling factions, keyed by the exact value in `factionsByGenre`. */
@@ -949,4 +1009,11 @@ export const FACTION_TRAITS: TraitMap = {
   "Consortium Security Enforcers": ["military", "oligarchic", "oppressive"],
   "The Scrappers' Mutual Union": ["industrial", "trade", "elected"],
   "Frontier Marshals' Posse": ["military", "frontier", "administrative"],
+
+  // Superhero / Comic Book
+  "The Skyline Vanguard": ["military"],
+  "The Underlight Syndicate": ["criminal", "trade"],
+  "Halcyon Dynamics": ["oligarchic", "research"],
+  "The Registry Office": ["administrative"],
+  "The Parole Watch": ["bureaucratic", "criminal"],
 };

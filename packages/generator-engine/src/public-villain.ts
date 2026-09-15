@@ -20,6 +20,7 @@ import { formatCampaignContextBlock } from "./campaign-context";
 import { factionConfig } from "./public-faction-constants";
 import {
   SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
   SUPERHERO_POWER_SCALE_HINTS,
   type SuperheroPowerScale,
 } from "./superhero-power-scale";
@@ -100,6 +101,10 @@ export const villainConfig = {
   ],
 };
 
+export function getVillainThreatScales(genre: string): readonly string[] {
+  return villainConfig.threatScalesByTheme[genre] ?? villainConfig.threatScales;
+}
+
 export interface VillainGeneratorOptions {
   genre?: string;
   tone?: string;
@@ -164,12 +169,11 @@ function resolveVillain(
   rng: Rng,
 ): ResolvedVillain {
   const genre = options.genre || pickFrom(villainConfig.genres, rng);
-  const threatScalePool =
-    villainConfig.threatScalesByTheme[genre] ?? villainConfig.threatScales;
   return {
     genre,
     tone: options.tone || pickFrom(villainConfig.tones, rng),
-    threatScale: options.threatScale || pickFrom(threatScalePool, rng),
+    threatScale:
+      options.threatScale || pickFrom(getVillainThreatScales(genre), rng),
     archetype: resolvePick(options.archetype, villainConfig.archetypes, rng),
     sympathy: options.sympathy || pickFrom(villainConfig.sympathyLevels, rng),
     worldRelation: resolvePick(
@@ -474,6 +478,12 @@ export function generateVillainLocal(
 ): PublicGeneratorOutput {
   const resolved = resolveVillain(options, rng);
   const flavor = pickFrom(DOMAIN_FLAVORS, rng);
+  const scaleFallback =
+    resolved.genre === "Superhero / Comic Book"
+      ? SUPERHERO_POWER_SCALE_FALLBACKS[
+          resolved.threatScale as SuperheroPowerScale
+        ]
+      : undefined;
   const relationFlavor = RELATION_FLAVORS[resolved.worldRelation];
   const lieutenantNames = [generateName(rng), generateName(rng)];
   const firstSign = pickFrom(FIRST_SIGNS_POOL, rng);
@@ -512,10 +522,10 @@ As a ${resolved.worldRelation.toLowerCase()}, they ${relationFlavor.motivation} 
 They trust their own read of people more than the evidence in front of them, and that overconfidence is what eventually hands the party their opening.
 
 ### Methods
-${flavor.methods}
+${scaleFallback ? `${scaleFallback.methods} ${flavor.methods}` : flavor.methods}
 
 ### Resources
-${flavor.resources}
+${scaleFallback ? `${scaleFallback.resources} ${flavor.resources}` : flavor.resources}
 
 ### Lieutenants & Inner Circle
 - **${lieutenantNames[0]}** — Enforcer. Loyal out of genuine belief, not fear; privately doubts one specific order they have not yet refused.
@@ -525,10 +535,10 @@ ${flavor.resources}
 ${flavor.organisation}
 
 ### Territory / Lair
-${flavor.territory}
+${scaleFallback ? `${scaleFallback.territory} ${flavor.territory}` : flavor.territory}
 
 ### The Villain's Plan
-${flavor.planStages.join("\n")}
+${(scaleFallback?.planStages ?? flavor.planStages).join("\n")}
 
 ### Escalation If Ignored
 Left unopposed, each stage completes roughly on schedule; by Stage 4 the villain's position becomes semi-official, and by Stage 6 removing them creates as much damage as leaving them would have.

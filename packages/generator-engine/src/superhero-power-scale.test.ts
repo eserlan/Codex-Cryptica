@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
   SUPERHERO_POWER_SCALE_HINTS,
 } from "./superhero-power-scale";
 
@@ -30,5 +31,15 @@ describe("superhero power scale", () => {
     expect(Object.keys(SUPERHERO_POWER_SCALE_HINTS).sort()).toEqual(
       [...SUPERHERO_POWER_SCALES].sort(),
     );
+  });
+
+  it("has complete local fallback framing for every level", () => {
+    for (const level of SUPERHERO_POWER_SCALES) {
+      const fallback = SUPERHERO_POWER_SCALE_FALLBACKS[level];
+      expect(fallback.methods.length).toBeGreaterThan(20);
+      expect(fallback.resources.length).toBeGreaterThan(20);
+      expect(fallback.territory.length).toBeGreaterThan(20);
+      expect(fallback.planStages).toHaveLength(6);
+    }
   });
 });
