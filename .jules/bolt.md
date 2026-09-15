@@ -271,3 +271,8 @@
 
 **Learning:** Constructing objects using `Object.fromEntries(array.map(...))` or `Object.fromEntries(Object.entries(...).map(...))` allocates multiple intermediate arrays that are immediately discarded, increasing garbage collection pressure. This is especially prevalent when transforming arrays of items into lookup records or updating object state in UI handlers.
 **Action:** Use an imperative `for...of` or `for` loop to instantiate and populate a `Record` directly (e.g., `const result: Record<string, Item> = Object.create(null); for (let i = 0; i < items.length; i++) { result[items[i].id] = items[i]; }`). Use `Object.create(null)` for ID-keyed records to prevent prototype pollution from special keys like `__proto__`. This avoids temporary array allocations and is measurably faster for large objects or frequent UI updates. Avoid this optimization in cold paths like tests or static data initialization where readability outweighs unmeasurable micro-optimizations.
+
+## 2025-02-23 - Replace `.map().join()` with imperative loop for deep stringification
+
+**Learning:** Using chained `.map().join()` in a recursive `stableStringify` function creates heavy intermediate string array allocations. For complex object structures, this causes measurable GC pressure and latency spikes.
+**Action:** Replace `.map().join()` with imperative string concatenation loops (`let s = "["; for (...) { s += ... }`) in hot code paths dealing with deep serialization, saving considerable allocation overhead.
