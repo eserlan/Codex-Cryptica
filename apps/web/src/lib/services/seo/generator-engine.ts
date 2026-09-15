@@ -48,6 +48,9 @@ import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  buildVillainSchemePrompt,
+  parseVillainSchemeResponse,
+  generateVillainSchemeLocal,
   buildPersonalityPrompt,
   parsePersonalityResponse,
   generatePersonalityLocal,
@@ -134,6 +137,7 @@ import {
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
+  type VillainSchemeGeneratorOptions,
   type PersonalityGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type HeistGeneratorOptions,
@@ -221,6 +225,7 @@ export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
+export { villainSchemeConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
@@ -684,6 +689,30 @@ export class DefaultGeneratorEngine {
     );
     villainDomainHistoryStore.record(result.conflictDomain);
     return result;
+  }
+
+  async generateVillainScheme(
+    options: VillainSchemeGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...villainSchemeOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("villain-scheme");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildVillainSchemePrompt(
+            villainSchemeOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "villain-scheme",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseVillainSchemeResponse(text, resolved);
+      },
+      () => generateVillainSchemeLocal(villainSchemeOptions),
+    );
   }
 
   /**

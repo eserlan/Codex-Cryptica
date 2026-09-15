@@ -38,6 +38,7 @@
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
+  import VillainSchemeFormFields from "$lib/components/seo/VillainSchemeFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import ConstellationFormFields from "$lib/components/seo/ConstellationFormFields.svelte";
@@ -75,6 +76,7 @@
     adventureConfig,
     plotTwistConfig,
     villainConfig,
+    villainSchemeConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -558,6 +560,14 @@
     campaignContext: "",
   });
 
+  let villainScheme = $state({
+    powerScale: villainSchemeConfig.powerScales[0],
+    tone: villainSchemeConfig.tones[0],
+    schemeType: villainSchemeConfig.schemeTypes[0],
+    villainProfile: villainSchemeConfig.villainProfiles[0],
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -861,6 +871,7 @@
     adventure,
     plotTwist,
     villain,
+    villainScheme,
     world,
     starSystem,
     constellation,
@@ -916,7 +927,9 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
-  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
+  onGeneratePlotTwist={slug === "quest" || slug === "villain-scheme-generator"
+    ? openPlotTwistFromQuest
+    : undefined}
   onGenerateRoster={slug === "faction" ? openRosterFromFaction : undefined}
   onOpenMemberAsCharacter={slug === "faction-roster"
     ? openMemberAsCharacter
@@ -1298,6 +1311,15 @@
         bind:sympathy={villain.sympathy}
         bind:worldRelation={villain.worldRelation}
         bind:campaignContext={villain.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "villain-scheme-generator"}
+      <VillainSchemeFormFields
+        bind:powerScale={villainScheme.powerScale}
+        bind:tone={villainScheme.tone}
+        bind:schemeType={villainScheme.schemeType}
+        bind:villainProfile={villainScheme.villainProfile}
+        bind:campaignContext={villainScheme.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}
