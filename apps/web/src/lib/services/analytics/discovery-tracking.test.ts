@@ -96,6 +96,7 @@ describe("classifyDiscoveryTarget", () => {
     ["/alternatives/world-anvil", "comparison", "world-anvil"],
     ["/import/world-anvil", "importer", "world-anvil"],
     ["/migrations/obsidian", "importer", "obsidian"],
+    ["/topics/heists", "topic", "heists"],
   ] as const)("classifies %s as %s/%s", (href, targetKind, targetId) => {
     expect(classifyDiscoveryTarget(href)).toEqual({ targetKind, targetId });
   });
