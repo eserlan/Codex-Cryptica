@@ -2717,7 +2717,7 @@ export function resolveEntitySilhouette(
 
   // 2. Identify target category
   const rawType = (entity.type || "note").toLowerCase();
-  let targetCategory: SilhouetteCategory = "character";
+  let targetCategory: SilhouetteCategory | undefined;
   if (
     rawType.includes("creature") ||
     rawType.includes("monster") ||
@@ -2821,13 +2821,16 @@ export function resolveEntitySilhouette(
   for (const s of SILHOUETTES) {
     // Entity type is authoritative. Without this guard, a strongly tagged
     // document (for example, a map case) can be assigned a note silhouette.
-    if (s.category !== targetCategory) continue;
+    if (targetCategory && s.category !== targetCategory) continue;
 
     let score = 0;
 
-    // All candidates share the requested category; retain its baseline so
-    // genre and semantic tags rank within that category.
-    score += 10;
+    // Known categories share the requested-category baseline. For custom
+    // entity types, preserve semantic cross-category inference for backwards
+    // compatibility with the flexible EntityTypeSchema.
+    if (s.category === (targetCategory ?? "character")) {
+      score += 10;
+    }
 
     // Genre affinity
     if (s.genres.includes(preferredGenre)) {

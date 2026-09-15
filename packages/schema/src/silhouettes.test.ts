@@ -305,6 +305,20 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     expect(match.category).toBe("item");
   });
 
+  it("keeps semantic inference for unrecognised custom entity types", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "parchment",
+        title: "Map of the Sunken Vault",
+        labels: ["map", "treasure"],
+        content: "A parchment chart marks the expedition route.",
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.id).toBe("fantasy-note-treasure-map");
+  });
+
   it("resolves fantasy town for fortified walled settlement", () => {
     const match = resolveEntitySilhouette(
       {
