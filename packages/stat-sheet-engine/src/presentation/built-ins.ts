@@ -51,6 +51,27 @@ const MOBILE_QUICK_REFERENCE_SOURCE = `{{stat.hp display="current-max" label="HP
 {{stat.ac display="plain" label="AC"}}
 `;
 
+const FACTION_INFLUENCE_BOARD_SOURCE = `## Influence Board
+
+:::row
+:::card
+### Reach & Resolve
+:::stat-group columns=2
+{{stat.influence display="prominent" label="Influence"}}
+{{stat.stability display="prominent" label="Stability"}}
+:::
+:::
+
+:::card
+### Means to Act
+:::stat-group columns=2
+{{stat.power display="prominent" label="Power"}}
+{{stat.resources display="prominent" label="Resources"}}
+:::
+:::
+:::
+`;
+
 const DND_CHARACTER_SHEET_SOURCE = `:::row
 :::card
 ### Vital Stats
@@ -187,6 +208,17 @@ export function getBuiltInPresentationTemplates(
   schemaTemplateId: string,
 ): PresentationTemplate[] {
   return [
+    ...(schemaTemplateId === "builtin-faction-turn"
+      ? [
+          builtIn(
+            `builtin-presentation-faction-influence-board-${schemaTemplateId}`,
+            schemaTemplateId,
+            "Faction Influence Board",
+            "A two-card overview of the four stats used by faction turns.",
+            FACTION_INFLUENCE_BOARD_SOURCE,
+          ),
+        ]
+      : []),
     builtIn(
       `builtin-presentation-mythras-character-sheet-${schemaTemplateId}`,
       schemaTemplateId,

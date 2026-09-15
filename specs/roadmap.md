@@ -63,6 +63,32 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ---
 
+### [IN PROGRESS] Faction Turns — Rules Foundation and Action Expansion
+
+- **Target Area**: Faction engine, entity relationships, stat sheets, campaign chronology, and faction history
+- **Objective**: Give opted-in factions visible, paced actions that create GM-approved changes and useful campaign pressure without becoming an automatic world simulator.
+- **Current slice**: Feature [161-faction-turn-influence](./161-faction-turn-influence/spec.md) implements the first **Extend Influence** workflow: campaign-date eligibility, stat-role mapping, opposed resolution, optional bounded AI assistance, preview/commit/discard, history, timeline promotion, and latest-turn undo.
+- **Parent vision**: [#2396](https://github.com/eserlan/Codex-Cryptica/issues/2396)
+- **Living rules reference**: [`faction-turns.md`](../apps/web/src/lib/content/blog/faction-turns.md)
+
+#### Required work order
+
+1. **Harden the shared Influence rules — [#2424](https://github.com/eserlan/Codex-Cryptica/issues/2424).** Create a dedicated SpecKit spec before implementation. Define explicit faction-hold semantics, remove incidental per-action Influence stat drift, avoid zero-strength relationships after failed first attempts, separate authored relationship type from mechanical hold, calibrate the 0–20/d10/opposition numbers, and specify migration plus undo behaviour. This gates every later action that reads or writes faction hold.
+2. **Make AI mechanical adjustment opt-in — [#2425](https://github.com/eserlan/Codex-Cryptica/issues/2425).** This is a narrow feature-161 follow-up and can land alongside or immediately after #2424. Keep narration independent and preserve explicit existing settings. A dedicated spec is not expected unless persisted-setting migration proves substantial.
+3. **Establish self-directed actions.** Specify and implement [Fortify #2415](https://github.com/eserlan/Codex-Cryptica/issues/2415) first, then [Recover #2422](https://github.com/eserlan/Codex-Cryptica/issues/2422). Fortify establishes the no-external-target action contract; Recover must restore an attributable setback rather than assume ordinary Influence failures damaged a permanent core stat.
+4. **Add direct multi-entity actions.** Specify [Attack #2416](https://github.com/eserlan/Codex-Cryptica/issues/2416) and [Negotiate #2417](https://github.com/eserlan/Codex-Cryptica/issues/2417) only after #2424 settles hold and relationship semantics. Basic Attack must remain useful without assets; Negotiate must model agreement, stance, reciprocal relationships, and hold as separate deliberate writes.
+5. **Add durable faction-development foundations.** Specify [goals #2419](https://github.com/eserlan/Codex-Cryptica/issues/2419) before permanent core-stat advancement, [schemes and conditions #2420](https://github.com/eserlan/Codex-Cryptica/issues/2420) before temporary momentum or pressure modifiers, and [assets #2418](https://github.com/eserlan/Codex-Cryptica/issues/2418) before Acquire, Refit, asset abilities, or asset combat. These may be designed independently after #2424, but each requires its own SpecKit feature.
+6. **Add the campaign-level digest last — [#2421](https://github.com/eserlan/Codex-Cryptica/issues/2421).** Aggregate already-approved faction history only after several action types produce stable records. Do not introduce batch resolution, automatic target/action selection, or automatic campaign-clock advancement.
+
+#### Progression gates
+
+- No new action may infer political control from an arbitrary relationship or add incidental permanent growth to the stat used to resolve itself.
+- Every action spec must define required roles, valid targets, opposition, exact writes, clamps, preview, discard, atomic commit, staleness, history, undo, AI boundaries, and focused success plus failure-path tests.
+- Goals own any future permanent advancement rule; durable conditions own any temporary momentum rule; assets own asset-specific capability and damage.
+- The world-turn digest remains read-only orchestration until individual action records and cross-faction performance are proven at realistic vault scale.
+
+---
+
 ### [PROPOSED] Direct P2P Video Overlays
 
 - **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/cloud-bridge/p2p/`)

@@ -37,6 +37,7 @@
     "@capacitor/status-bar": "^8.0.3",
     "@codex/adventure-engine": "workspace:*",
     "@codex/ai-engine": "workspace:*",
+    "@codex/faction-engine": "workspace:*",
     "@codex/audio-engine": "workspace:*",
     "@codex/canvas-engine": "workspace:*",
     "@codex/content-packs": "workspace:*",
