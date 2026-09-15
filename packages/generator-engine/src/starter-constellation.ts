@@ -470,6 +470,36 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
     flavor:
       "small crews, precarious jobs, debts, and hard choices at the edge of settled space",
   },
+  superhero: {
+    themeName: "Superhero / Comic Book",
+    regionLabel: "City",
+    regionNames: ["The Crown District", "Halcyon City", "The Meridian Ward"],
+    settlementLabel: "Headquarters",
+    settlementNames: [
+      "The Sentinel Tower",
+      "The Civic Watchhouse",
+      "Aegis House",
+    ],
+    factionLabel: "Team",
+    factionNames: [
+      "The Vanguard Circle",
+      "The Civic Guardians",
+      "The Night Signal Network",
+    ],
+    characterRoles: [
+      "legacy hero",
+      "masked investigator",
+      "reluctant metahuman",
+    ],
+    threatLabel: "Villain",
+    threatNames: [
+      "a supervillain's public ultimatum",
+      "a power-draining device nearing activation",
+      "a trusted hero exposed as a double agent",
+    ],
+    flavor:
+      "secret identities, public trust, and impossible choices under a city skyline",
+  },
   workspace: {
     themeName: "Neutral Workspace",
     regionLabel: "Region",

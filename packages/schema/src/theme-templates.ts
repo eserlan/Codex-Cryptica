@@ -785,6 +785,51 @@ export const THEMES = {
       graph_loading: "Scanning Sector Frequency...",
     },
   },
+  superhero: {
+    id: "superhero",
+    name: "Four-Color Dawn",
+    description:
+      "Bold primary-color comic-book heroics — bright paper panels, inked borders, and burst-yellow accents.",
+    tokens: {
+      primary: "#dc2626",
+      secondary: "#1d4ed8",
+      background: "#fdfdfb",
+      surface: "#ffffff",
+      text: "#111113",
+      border: "rgba(17, 17, 19, 0.55)",
+      accent: "#b45309",
+      fontHeader: "'Bangers', cursive",
+      fontBody: "'Comic Neue', sans-serif",
+      borderRadius: "2px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 2,
+      edgeWidth: 1,
+      edgeColor: "#111113",
+    },
+    jargon: {
+      vault: "Case File",
+      entity: "Dossier",
+      entity_plural: "Dossiers",
+      save: "File",
+      delete: "Redact",
+      new: "Open Case",
+      syncing: "Filing",
+      search: "Investigate",
+      lore_header: "Full Dossier",
+      lore_secrets: "Classified Intel",
+      chronicle_header: "Case Log",
+      connections_header: "Known Associates",
+      tab_status: "Status",
+      tab_lore: "Dossier",
+      tab_inventory: "Gear & Tech",
+      blog_entry: "Field Report",
+      blog_action: "Read Full Report",
+      graph_loading: "Assembling the Team...",
+    },
+  },
 } as const satisfies Record<string, StylingTemplate>;
 
 export const FANTASY_DARK: StylingTemplate = {
@@ -1269,6 +1314,33 @@ export const SPACE_WESTERN_LIGHT: StylingTemplate = {
     edgeColor: "#b45309",
   },
   jargon: THEMES["space-western"].jargon,
+};
+
+export const SUPERHERO_DARK: StylingTemplate = {
+  id: "superhero_dark",
+  name: "Midnight Patrol",
+  description:
+    "Comic-book heroics after dark — city-noir black, a crimson glow, and a signal-light gold accent; the dark counterpart to Four-Color Dawn.",
+  tokens: {
+    primary: "#ef4444",
+    secondary: "#3b82f6",
+    background: "#07080d",
+    surface: "#12151f",
+    text: "#f1f5f9",
+    border: "rgba(239, 68, 68, 0.3)",
+    accent: "#fbbf24",
+    fontHeader: "'Bangers', cursive",
+    fontBody: "'Comic Neue', sans-serif",
+    borderRadius: "2px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 2,
+    edgeWidth: 1,
+    edgeColor: "#1e293b",
+  },
+  jargon: THEMES.superhero.jargon,
 };
 
 export const DEFAULT_THEME = THEMES.workspace;

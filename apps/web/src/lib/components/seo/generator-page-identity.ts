@@ -18,8 +18,7 @@ export const THEME_TO_WORLD_ID: Record<string, string> = {
   Steampunk: "steampunk",
   Lancer: "lancer",
   "Optimistic Exploration Sci-Fi": "startrek",
-  // Superhero has dedicated generator content but no registered visual theme yet.
-  "Superhero / Comic Book": "modern",
+  "Superhero / Comic Book": "superhero",
 };
 
 export function resolveWorldThemeId(theme: string): string {
