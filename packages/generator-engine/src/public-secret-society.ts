@@ -15,6 +15,7 @@ export const secretSocietyConfig = {
     "Sci-Fi / Space Opera",
     "Post-Apocalyptic",
     "Modern Conspiracy",
+    "Superhero / Comic Book",
   ],
   tones: ["Sinister", "Tragic", "Mythic", "Grotesque", "Grounded", "Silly"],
   scales: [

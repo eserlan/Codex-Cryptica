@@ -6,9 +6,10 @@
 import {
   activateBuild,
   getVaultSeedUrls,
+  handleFetchRequest,
   installWorker,
-  matchCurrentThenOlderCache,
   seedVaultCache,
+  shouldBypassFetchSynchronously,
   shouldHandleVaultRequest,
 } from "$lib/service-worker/lifecycle";
 
@@ -71,126 +72,50 @@ sw.addEventListener("message", (event) => {
 sw.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
-  async function respond() {
-    const url = new URL(event.request.url);
+  const url = new URL(event.request.url);
 
-    // 1. Bypass for cross-origin requests (e.g., CDN, Google Drive, Gemini)
-    // We only want to manage local app assets.
-    if (url.origin !== location.origin) {
-      return fetch(event.request);
-    }
-
-    // 2. Bypass non-http protocols
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return fetch(event.request);
-    }
-
-    // 3. Bypass Vite dev server requests — never cache .svelte source files,
-    //    Vite modules, filesystem proxies, or hot-module-replacement endpoints.
-    //    These are transformed on-the-fly by the dev server and should never
-    //    pass through the service worker cache.
-    const viteDevPatterns = [
-      /\.svelte($|\?)/,
-      /\.ts($|\?)/,
-      /\/@vite\//,
-      /\/@fs\//,
-      /\/node_modules\//,
-      /\?v=/,
-      /__vite/,
-      /\/@id\//,
-    ];
-    if (
-      viteDevPatterns.some((pattern) => pattern.test(url.pathname + url.search))
-    ) {
-      return fetch(event.request);
-    }
-
-    // The worker is root-scoped because app and public routes share one origin,
-    // but only the interactive vault surface should participate in offline
-    // caching. Public generators, blogs, and discovery pages stay network-only.
-    let clientPathname: string | undefined;
-    if (event.request.mode !== "navigate" && event.clientId) {
-      const client = await sw.clients.get(event.clientId);
-      if (client) {
-        clientPathname = new URL(client.url).pathname;
-      }
-    }
-
-    if (
-      !shouldHandleVaultRequest({
-        pathname: url.pathname,
-        mode: event.request.mode,
-        destination: event.request.destination,
-        clientPathname,
-      })
-    ) {
-      return fetch(event.request);
-    }
-
-    const cache = await caches.open(CACHE);
-
-    // for everything else, try the network first, but fall back to the cache if we're offline
-    try {
-      const response = await fetch(event.request);
-
-      const contentType = response.headers.get("content-type") || "";
-      const isJsOrCss =
-        url.pathname.endsWith(".js") ||
-        url.pathname.endsWith(".css") ||
-        url.pathname.includes("/_app/immutable/");
-
-      // If a JS/CSS asset request returns HTML (e.g., Cloudflare SPA 404 fallback),
-      // return a 404 text response so script error handlers fail cleanly rather than throwing syntax errors.
-      if (isJsOrCss && contentType.includes("text/html")) {
-        return new Response("Asset missing (Version Skew)", {
-          status: 404,
-          statusText: "Not Found",
-          headers: { "Content-Type": "text/plain" },
-        });
-      }
-
-      // Only cache valid successful responses from our own origin
-      if (response.status === 200 && url.origin === location.origin) {
-        event.waitUntil(
-          cache.put(event.request, response.clone()).catch((error) => {
-            console.warn(
-              `[SW] Failed to cache response: ${url.pathname}`,
-              error,
-            );
-          }),
-        );
-      }
-
-      return response;
-    } catch (err) {
-      const response = await matchCurrentThenOlderCache({
-        request: event.request,
-        currentCache: cache,
-        matchOlderCache: (request) => caches.match(request),
-      });
-      if (response) return response;
-
-      // If it's a navigation request and we don't have it in cache, return index.html (fallback for SPA)
-      if (event.request.mode === "navigate") {
-        return (
-          (await matchCurrentThenOlderCache({
-            request: "/",
-            currentCache: cache,
-            matchOlderCache: (request) => caches.match(request),
-          })) ??
-          matchCurrentThenOlderCache({
-            request: "/index.html",
-            currentCache: cache,
-            matchOlderCache: (request) => caches.match(request),
-          })
-        );
-      }
-
-      // If we are in development, don't return a 503, let the error bubble
-      // This helps diagnose real fetch errors instead of swallowing them in a "Offline" response
-      throw err;
-    }
+  // Fast synchronous bypass: avoid calling event.respondWith() for cross-origin,
+  // non-http, Vite dev assets, non-vault navigations, or non-vault subresources.
+  // This allows the browser to perform native fetching without service-worker
+  // interception, eliminating overhead and unhandled promise rejections.
+  if (
+    shouldBypassFetchSynchronously({
+      url,
+      mode: event.request.mode,
+      destination: event.request.destination,
+      origin: location.origin,
+    })
+  ) {
+    return;
   }
 
-  event.respondWith(respond());
+  event.respondWith(
+    (async () => {
+      let clientPathname: string | undefined;
+      if (event.request.mode !== "navigate" && event.clientId) {
+        const client = await sw.clients.get(event.clientId);
+        if (client) {
+          clientPathname = new URL(client.url).pathname;
+        }
+      }
+
+      if (
+        !shouldHandleVaultRequest({
+          pathname: url.pathname,
+          mode: event.request.mode,
+          destination: event.request.destination,
+          clientPathname,
+        })
+      ) {
+        return fetch(event.request).catch(() => Response.error());
+      }
+
+      return handleFetchRequest({
+        request: event.request,
+        cacheName: CACHE,
+        waitUntil: (promise) => event.waitUntil(promise),
+        isDev: appVersion === "dev",
+      });
+    })(),
+  );
 });

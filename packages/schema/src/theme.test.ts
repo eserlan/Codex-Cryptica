@@ -19,6 +19,7 @@ import {
   WESTERN_DARK,
   SPACE_OPERA_RESISTANCE_DARK,
   SPACE_WESTERN_LIGHT,
+  SUPERHERO_DARK,
 } from "./theme-templates";
 
 describe("Theme Schema & Definitions", () => {
@@ -110,6 +111,47 @@ describe("Theme Schema & Definitions", () => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("defines Superhero / Four-Color Dawn and its dark counterpart with WCAG AA contrast", () => {
+    expect(THEMES.superhero.id).toBe("superhero");
+    expect(SUPERHERO_DARK.id).toBe("superhero_dark");
+    expect(THEMES.superhero.tokens.fontHeader).toContain("Bangers");
+    expect(THEMES.superhero.tokens.fontBody).toContain("Comic Neue");
+    expect(() => StylingTemplateSchema.parse(THEMES.superhero)).not.toThrow();
+    expect(() => StylingTemplateSchema.parse(SUPERHERO_DARK)).not.toThrow();
+    expect(THEMES.superhero.jargon).toEqual(SUPERHERO_DARK.jargon);
+
+    function relativeLuminance(hex: string): number {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      const [cr, cg, cb] = [r, g, b].map((c) =>
+        c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
+      );
+      return 0.2126 * cr + 0.7152 * cg + 0.0722 * cb;
+    }
+    function contrastRatio(hex1: string, hex2: string): number {
+      const l1 = relativeLuminance(hex1);
+      const l2 = relativeLuminance(hex2);
+      const lighter = Math.max(l1, l2);
+      const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    // A bold four-color comic palette (saturated red/blue/gold) is exactly
+    // the kind that can fail contrast against a bright or a near-black
+    // ground — check both variants against both their background and
+    // surface tones rather than assume the palette "reads fine" visually.
+    for (const template of [THEMES.superhero, SUPERHERO_DARK]) {
+      const tokens = template.tokens;
+      for (const bg of [tokens.background, tokens.surface]) {
+        expect(contrastRatio(tokens.text, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.secondary, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.primary, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.accent, bg)).toBeGreaterThanOrEqual(3.0);
+      }
+    }
+  });
+
   it("defines the Pirate light and dark themes with nautical contrast tokens", () => {
     expect(THEMES.pirate.id).toBe("pirate");
     expect(PIRATE_DARK.id).toBe("pirate_dark");
@@ -154,6 +196,7 @@ describe("Theme Schema & Definitions", () => {
         light: SPACE_WESTERN_LIGHT,
         dark: THEMES["space-western"],
       },
+      superhero: { light: THEMES.superhero, dark: SUPERHERO_DARK },
     };
 
     for (const [key, pair] of Object.entries(counterparts)) {
@@ -165,7 +208,8 @@ describe("Theme Schema & Definitions", () => {
         key === "fantasy" ||
         key === "pirate" ||
         key === "modern" ||
-        key === "western"
+        key === "western" ||
+        key === "superhero"
           ? key
           : `${key}_light`;
       const expectedDarkId =
@@ -173,7 +217,8 @@ describe("Theme Schema & Definitions", () => {
         key === "fantasy" ||
         key === "pirate" ||
         key === "modern" ||
-        key === "western"
+        key === "western" ||
+        key === "superhero"
           ? `${key}_dark`
           : key;
 

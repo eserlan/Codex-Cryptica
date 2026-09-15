@@ -23,7 +23,7 @@
 			function loadThemeFonts() {
 				var l = document.createElement('link');
 				l.rel = 'stylesheet';
-				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap';
+				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=swap';
 				document.head.appendChild(l);
 			}
 			if ('requestIdleCallback' in window) {
@@ -35,7 +35,7 @@
 	</script>
 	<noscript>
 		<link rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&display=optional" />
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional" />
 	</noscript>
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
@@ -65,7 +65,7 @@
 			document.documentElement.dataset.appAppearanceChoice = appearance;
 
 			let storedTheme = (localStorage.getItem("codex-cryptica-active-theme") || "workspace").replace(/_(light|dark)$/, "");
-			const baseThemes = ["workspace", "fantasy", "modern", "scifi", "cyberpunk", "apocalyptic", "horror", "fallout", "starwars", "startrek", "western"];
+			const baseThemes = ["workspace", "fantasy", "modern", "scifi", "cyberpunk", "apocalyptic", "horror", "fallout", "starwars", "startrek", "western", "superhero"];
 			if (!baseThemes.includes(storedTheme)) {
 				storedTheme = "workspace";
 			}
@@ -93,7 +93,9 @@
 				startrek:        { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#fbcfe8", border: "rgba(255, 153, 0, 0.4)",          muted: "#d1d5db", dim: "#9ca3af" },
 				startrek_light:  { bg: "#f1f4f6", surface: "#ffffff", text: "#1e293b", primary: "#c2410c", secondary: "#ea580c", border: "rgba(194, 65, 12, 0.3)",          muted: "#7c3d17", dim: "#c2410c" },
 				western:         { bg: "#f5ece1", surface: "#eaddcc", text: "#3d2a1f", primary: "#8c5a3c", secondary: "#5c4033", border: "rgba(140, 90, 60, 0.4)",  texture: "parchment.svg", muted: "#8c5a3c", dim: "#5c4033" },
-				western_dark:    { bg: "#1a120c", surface: "#2b1e15", text: "#f0e6dc", primary: "#d48227", secondary: "#a0785a", border: "rgba(212, 130, 39, 0.3)", texture: "leather.svg",   muted: "#a0785a", dim: "#805c43" }
+				western_dark:    { bg: "#1a120c", surface: "#2b1e15", text: "#f0e6dc", primary: "#d48227", secondary: "#a0785a", border: "rgba(212, 130, 39, 0.3)", texture: "leather.svg",   muted: "#a0785a", dim: "#805c43" },
+				superhero:       { bg: "#fdfdfb", surface: "#ffffff", text: "#111113", primary: "#dc2626", secondary: "#1d4ed8", border: "rgba(17, 17, 19, 0.55)",        muted: "#4b5563", dim: "#6b7280" },
+				superhero_dark:  { bg: "#07080d", surface: "#12151f", text: "#f1f5f9", primary: "#ef4444", secondary: "#3b82f6", border: "rgba(239, 68, 68, 0.3)",         muted: "#94a3b8", dim: "#64748b" }
 			};
 
 			function applyTheme(baseTheme) {
@@ -105,6 +107,7 @@
 					else if (baseTheme === "fantasy") theme = "fantasy_dark";
 					else if (baseTheme === "modern") theme = "modern_dark";
 					else if (baseTheme === "western") theme = "western_dark";
+					else if (baseTheme === "superhero") theme = "superhero_dark";
 				} else {
 					if (baseTheme === "scifi") theme = "scifi_light";
 					else if (baseTheme === "cyberpunk") theme = "cyberpunk_light";

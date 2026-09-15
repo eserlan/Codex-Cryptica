@@ -40,6 +40,41 @@ describe("Silhouette Registry & Schema", () => {
       expect(SILHOUETTE_MAP.get(s.id)).toBe(s);
     }
   });
+
+  it("includes practical fantasy and sci-fi items and note motifs", () => {
+    const ids = new Set(SILHOUETTES.map((silhouette) => silhouette.id));
+
+    for (const id of [
+      "fantasy-item-heraldic-shield",
+      "fantasy-item-alchemist-potion",
+      "fantasy-item-royal-crown",
+      "fantasy-item-ancient-key",
+      "fantasy-note-sealed-letter",
+      "fantasy-note-treasure-map",
+      "fantasy-note-quest-notice",
+      "scifi-item-plasma-cell",
+      "scifi-item-datapad",
+      "scifi-item-explorer-helmet",
+      "scifi-item-alien-relic",
+      "scifi-note-star-chart",
+      "scifi-note-encrypted-transmission",
+      "scifi-note-mission-dossier",
+      "scifi-character-alien-diplomat",
+      "scifi-character-frontier-marshal",
+      "scifi-character-salvage-diver",
+      "scifi-location-desert-colony",
+      "scifi-location-alien-ruins",
+      "scifi-location-terraforming-facility",
+      "scifi-faction-stellar-republic",
+      "scifi-faction-mining-consortium",
+      "scifi-faction-alien-hive",
+      "scifi-event-hyperspace-arrival",
+      "scifi-event-solar-storm",
+      "scifi-event-first-contact",
+    ]) {
+      expect(ids.has(id), `Missing ${id}`).toBe(true);
+    }
+  });
 });
 
 describe("Silhouette artwork loading", () => {
@@ -238,6 +273,102 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
       { worldTheme: "fantasy" },
     );
     expect(match.id).toBe("location-fantasy-village");
+  });
+
+  it("resolves a fantasy treasure map for a note", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "note",
+        title: "Map of the Sunken Vault",
+        labels: ["map", "treasure"],
+        content: "A parchment chart marks the expedition route.",
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.id).toBe("fantasy-note-treasure-map");
+  });
+
+  it("resolves a sci-fi star chart for a note", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "note",
+        title: "Survey Star Chart",
+        labels: ["navigation", "astrogation"],
+        content: "The plotted route marks the next stellar survey.",
+      },
+      { worldTheme: "scifi" },
+    );
+
+    expect(match.id).toBe("scifi-note-star-chart");
+  });
+
+  it("resolves a sci-fi solar storm as an event", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Helios Solar Storm",
+        labels: ["solar", "storm", "radiation"],
+        content: "A stellar flare bathed the orbital station in radiation.",
+      },
+      { worldTheme: "scifi" },
+    );
+
+    expect(match.id).toBe("scifi-event-solar-storm");
+  });
+
+  it("resolves a stellar republic as a sci-fi faction", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "The Orphean Stellar Republic",
+        labels: ["republic", "federation", "senate"],
+        content: "A galactic civic union governed by an elected senate.",
+      },
+      { worldTheme: "scifi" },
+    );
+
+    expect(match.id).toBe("scifi-faction-stellar-republic");
+  });
+
+  it("does not assign note artwork to an item that mentions a map", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Map Case",
+        labels: ["map"],
+        content: "A case that protects a parchment chart on an expedition.",
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.category).toBe("item");
+  });
+
+  it("keeps semantic inference for unrecognised custom entity types", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "parchment",
+        title: "Map of the Sunken Vault",
+        labels: ["map", "treasure"],
+        content: "A parchment chart marks the expedition route.",
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.id).toBe("fantasy-note-treasure-map");
+  });
+
+  it("does not apply a character baseline to custom types", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "custom-record",
+        labels: ["chart"],
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.id).toBe("fantasy-note-treasure-map");
   });
 
   it("resolves fantasy town for fortified walled settlement", () => {

@@ -17,6 +17,7 @@ import {
   LANCER_LIGHT,
   WESTERN_DARK,
   STEAMPUNK_DARK,
+  SUPERHERO_DARK,
 } from "schema";
 import type {
   StylingTemplate,
@@ -89,6 +90,8 @@ export class ThemeStore {
           return WESTERN_DARK;
         case "steampunk":
           return STEAMPUNK_DARK;
+        case "superhero":
+          return SUPERHERO_DARK;
         default:
           return (THEMES as any)[id] || DEFAULT_THEME;
       }
@@ -124,6 +127,8 @@ export class ThemeStore {
           return THEMES.western;
         case "steampunk":
           return THEMES.steampunk;
+        case "superhero":
+          return THEMES.superhero;
         default:
           return DEFAULT_THEME;
       }
