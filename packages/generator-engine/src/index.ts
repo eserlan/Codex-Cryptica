@@ -295,6 +295,7 @@ export {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  getVillainThreatScales,
   villainConfig,
   type VillainGeneratorOptions,
   type VillainPrompt,

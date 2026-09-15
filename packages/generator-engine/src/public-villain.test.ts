@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildVillainPrompt,
   generateVillainLocal,
+  getVillainThreatScales,
   parseVillainResponse,
   villainConfig,
 } from "./public-villain";
@@ -58,6 +59,18 @@ describe("generateVillainLocal", () => {
     }
   });
 
+  it("uses scale-aware framing in the superhero local fallback", () => {
+    const out = generateVillainLocal(
+      { genre: "Superhero / Comic Book", threatScale: "Multiversal" },
+      seededRng(2),
+    );
+
+    expect(out.lore).toContain("Act across realities");
+    expect(out.lore).toContain("A nexus between realities");
+    expect(out.lore).toContain("**Stage 1: Map the divergences**");
+    expect(out.lore).not.toContain("**Stage 1: Fail the independents**");
+  });
+
   it("resolves the Random archetype to a concrete one", () => {
     const out = generateVillainLocal({ archetype: "Random" }, seededRng(3));
     expect(out.lore).not.toMatch(/a random-scale random\b/i);
@@ -112,6 +125,25 @@ describe("generateVillainLocal", () => {
 });
 
 describe("buildVillainPrompt", () => {
+  it("returns the theme-specific scale pool with a generic fallback", () => {
+    expect(getVillainThreatScales("Superhero / Comic Book")).toEqual([
+      "Street",
+      "City",
+      "National",
+      "Global",
+      "Cosmic",
+      "Multiversal",
+    ]);
+    expect(getVillainThreatScales("Classic Fantasy")).toEqual([
+      "Local",
+      "Regional",
+      "National",
+      "Continental / Planetary",
+      "Global",
+      "Cosmic",
+    ]);
+  });
+
   it("embeds options, the consistency pass, ban prompt, and session context", () => {
     const { userMessage, resolved } = buildVillainPrompt(
       {
