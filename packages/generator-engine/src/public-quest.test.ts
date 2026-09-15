@@ -102,6 +102,9 @@ describe("buildQuestPrompt", () => {
     expect(themeToQuestGenre["Cyberpunk / Corporate"]).toBe("Cyberpunk");
     expect(themeToQuestGenre["Western / Frontier"]).toBe("Western");
     expect(themeToQuestGenre["Cosmic Horror"]).toBe("Cosmic Horror");
+    expect(themeToQuestGenre["Superhero / Comic Book"]).toBe(
+      "Political Intrigue",
+    );
     expect(questConfig.genres).toContain("Cosmic Horror");
     expect(questConfig.tonesByTheme["Cosmic Horror"]).toContain(
       "Investigative",

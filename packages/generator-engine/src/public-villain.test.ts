@@ -188,11 +188,12 @@ describe("buildVillainPrompt", () => {
     expect(userMessage).not.toContain("Domains used in this session");
   });
 
-  it("reuses the canonical 14-theme genre vocabulary", () => {
+  it("reuses the canonical 15-theme genre vocabulary", () => {
     expect(villainConfig.genres).toContain("Classic Fantasy");
     expect(villainConfig.genres).toContain("Cyberpunk / Corporate");
     expect(villainConfig.genres).toContain("Space Western");
-    expect(villainConfig.genres.length).toBe(14);
+    expect(villainConfig.genres).toContain("Superhero / Comic Book");
+    expect(villainConfig.genres.length).toBe(15);
   });
 });
 
