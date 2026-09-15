@@ -9,6 +9,7 @@ import {
 import { AnswerConfigSchema, type AnswerConfig } from "./schema";
 import { answers } from "./pages";
 import { getAllLandingPageSlugs } from "../for/registry";
+import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { solutions } from "$lib/config/seo-pages";
 import { featuresConfig } from "$lib/config/seo-features";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -383,6 +384,7 @@ describe("published answers", () => {
     // hand-written href is the easiest thing on these pages to get wrong, so
     // it is checked against the same registries the routes are built from.
     const forSlugs = new Set(getAllLandingPageSlugs());
+    const topicPaths = new Set([HEIST_TOPIC_CONFIG.canonicalPath]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",
       "dnd-npc-generator",
@@ -411,6 +413,8 @@ describe("published answers", () => {
           return slug in solutions;
         case "features":
           return slug in featuresConfig;
+        case "topics":
+          return topicPaths.has(`/${section}/${slug}`);
         default:
           return false;
       }
