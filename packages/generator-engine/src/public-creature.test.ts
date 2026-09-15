@@ -175,4 +175,28 @@ describe("Public Creature generator", () => {
     expect(creatureConfig.habitats).toContain("Subterranean / Caverns");
     expect(creatureConfig.ecologicalRoles).toContain("Ambush Hunter");
   });
+
+  // Regression test (#3108): "Superhero / Comic Book" has no dedicated entry
+  // in creatureConfig.habitatByTheme, so resolveCreature must fall back to
+  // the generic habitat pool instead of crashing on an undefined lookup.
+  it("falls back to the generic habitat pool for the Superhero theme", () => {
+    expect(
+      creatureConfig.habitatByTheme["Superhero / Comic Book"],
+    ).toBeUndefined();
+
+    const resolved = resolveCreature(
+      { genre: "Superhero / Comic Book" },
+      fixedRng,
+    );
+
+    expect(resolved.genre).toBe("Superhero / Comic Book");
+    expect(creatureConfig.habitats).toContain(resolved.habitat);
+
+    const output = generateCreatureLocal(
+      { genre: "Superhero / Comic Book" },
+      fixedRng,
+    );
+    expect(output.type).toBe("creature");
+    expect(output.content).toBeTruthy();
+  });
 });

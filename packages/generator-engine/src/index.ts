@@ -262,6 +262,7 @@ export {
   parseQuestResponse,
   generateQuestLocal,
   questConfig,
+  questGenreForTheme,
   themeToQuestGenre,
   type QuestGeneratorOptions,
   type QuestPrompt,
@@ -295,10 +296,16 @@ export {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  getVillainThreatScales,
   villainConfig,
   type VillainGeneratorOptions,
   type VillainPrompt,
 } from "./public-villain";
+export {
+  SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_HINTS,
+  type SuperheroPowerScale,
+} from "./superhero-power-scale";
 export {
   buildPersonalityPrompt,
   parsePersonalityResponse,
