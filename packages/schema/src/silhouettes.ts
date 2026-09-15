@@ -749,6 +749,190 @@ export const SILHOUETTES: SilhouetteDefinition[] = [
     ],
     r2Path: "silhouettes/item/fantasy/arcane-tome.svg",
   },
+  {
+    id: "fantasy-item-heraldic-shield",
+    name: "Heraldic Shield / Buckler",
+    category: "item",
+    genres: ["fantasy"],
+    archetype: "relic",
+    tags: [
+      "shield",
+      "buckler",
+      "heraldry",
+      "crest",
+      "defence",
+      "armor",
+      "knight",
+      "guardian",
+    ],
+    r2Path: "silhouettes/item/fantasy/heraldic-shield.svg",
+  },
+  {
+    id: "fantasy-item-alchemist-potion",
+    name: "Alchemist's Potion / Elixir",
+    category: "item",
+    genres: ["fantasy"],
+    archetype: "relic",
+    tags: [
+      "potion",
+      "elixir",
+      "vial",
+      "flask",
+      "draught",
+      "healing",
+      "alchemy",
+      "consumable",
+    ],
+    r2Path: "silhouettes/item/fantasy/alchemist-potion.svg",
+  },
+  {
+    id: "fantasy-item-royal-crown",
+    name: "Royal Crown / Regalia",
+    category: "item",
+    genres: ["fantasy"],
+    archetype: "relic",
+    tags: [
+      "crown",
+      "regalia",
+      "royal",
+      "king",
+      "queen",
+      "coronation",
+      "throne",
+      "sovereign",
+    ],
+    r2Path: "silhouettes/item/fantasy/royal-crown.svg",
+  },
+  {
+    id: "fantasy-item-ancient-key",
+    name: "Ancient Key / Keyring",
+    category: "item",
+    genres: ["fantasy", "gothic"],
+    archetype: "relic",
+    tags: [
+      "key",
+      "keyring",
+      "lock",
+      "locked",
+      "door",
+      "vault",
+      "ancient",
+      "warded",
+    ],
+    r2Path: "silhouettes/item/fantasy/ancient-key.svg",
+  },
+
+  // ==========================================
+  // NOTES & DOCUMENTS
+  // ==========================================
+  {
+    id: "fantasy-note-sealed-letter",
+    name: "Sealed Letter / Decree",
+    category: "note",
+    genres: ["fantasy", "gothic"],
+    archetype: "generic",
+    tags: [
+      "letter",
+      "decree",
+      "message",
+      "correspondence",
+      "sealed",
+      "wax-seal",
+      "dispatch",
+      "invitation",
+    ],
+    r2Path: "silhouettes/note/fantasy/sealed-letter.svg",
+  },
+  {
+    id: "fantasy-note-treasure-map",
+    name: "Treasure Map / Chart",
+    category: "note",
+    genres: ["fantasy"],
+    archetype: "generic",
+    tags: [
+      "map",
+      "chart",
+      "treasure",
+      "route",
+      "expedition",
+      "navigation",
+      "coordinates",
+      "parchment",
+    ],
+    r2Path: "silhouettes/note/fantasy/treasure-map.svg",
+  },
+  {
+    id: "fantasy-note-quest-notice",
+    name: "Quest Notice / Bounty Board",
+    category: "note",
+    genres: ["fantasy", "western"],
+    archetype: "generic",
+    tags: [
+      "quest",
+      "notice",
+      "bounty",
+      "poster",
+      "proclamation",
+      "contract",
+      "job",
+      "bulletin",
+    ],
+    r2Path: "silhouettes/note/fantasy/quest-notice.svg",
+  },
+  {
+    id: "scifi-note-star-chart",
+    name: "Star Chart / Navigation Map",
+    category: "note",
+    genres: ["scifi"],
+    archetype: "generic",
+    tags: [
+      "star",
+      "chart",
+      "navigation",
+      "astrogation",
+      "coordinates",
+      "route",
+      "survey",
+      "stellar",
+    ],
+    r2Path: "silhouettes/note/scifi/star-chart.svg",
+  },
+  {
+    id: "scifi-note-encrypted-transmission",
+    name: "Encrypted Transmission / Signal",
+    category: "note",
+    genres: ["scifi", "cyberpunk"],
+    archetype: "generic",
+    tags: [
+      "transmission",
+      "encrypted",
+      "message",
+      "signal",
+      "comms",
+      "communication",
+      "secure",
+      "intercept",
+    ],
+    r2Path: "silhouettes/note/scifi/encrypted-transmission.svg",
+  },
+  {
+    id: "scifi-note-mission-dossier",
+    name: "Mission Dossier / Briefing",
+    category: "note",
+    genres: ["scifi"],
+    archetype: "generic",
+    tags: [
+      "mission",
+      "dossier",
+      "briefing",
+      "intel",
+      "report",
+      "orders",
+      "assignment",
+      "classified",
+    ],
+    r2Path: "silhouettes/note/scifi/mission-dossier.svg",
+  },
 
   // ==========================================
   // LOCATIONS & STRUCTURES
@@ -2347,6 +2531,78 @@ export const SILHOUETTES: SilhouetteDefinition[] = [
     r2Path: "silhouettes/item/scifi/energy-blade.svg",
   },
   {
+    id: "scifi-item-plasma-cell",
+    name: "Plasma Power Cell / Energy Canister",
+    category: "item",
+    genres: ["scifi", "cyberpunk"],
+    archetype: "generic",
+    tags: [
+      "plasma",
+      "power",
+      "cell",
+      "battery",
+      "reactor",
+      "fuel",
+      "canister",
+      "capacitor",
+    ],
+    r2Path: "silhouettes/item/scifi/plasma-cell.svg",
+  },
+  {
+    id: "scifi-item-datapad",
+    name: "Datapad / Holo Tablet",
+    category: "item",
+    genres: ["scifi", "cyberpunk"],
+    archetype: "generic",
+    tags: [
+      "datapad",
+      "tablet",
+      "terminal",
+      "console",
+      "data",
+      "log",
+      "hologram",
+      "device",
+    ],
+    r2Path: "silhouettes/item/scifi/datapad.svg",
+  },
+  {
+    id: "scifi-item-explorer-helmet",
+    name: "Explorer Helmet / EVA Suit",
+    category: "item",
+    genres: ["scifi"],
+    archetype: "generic",
+    tags: [
+      "helmet",
+      "spacesuit",
+      "eva",
+      "suit",
+      "visor",
+      "explorer",
+      "pressure",
+      "environmental",
+    ],
+    r2Path: "silhouettes/item/scifi/explorer-helmet.svg",
+  },
+  {
+    id: "scifi-item-alien-relic",
+    name: "Alien Relic / Precursor Artifact",
+    category: "item",
+    genres: ["scifi", "cosmic-horror"],
+    archetype: "relic",
+    tags: [
+      "alien",
+      "relic",
+      "artifact",
+      "precursor",
+      "xeno",
+      "ancient",
+      "monolith",
+      "anomalous",
+    ],
+    r2Path: "silhouettes/item/scifi/alien-relic.svg",
+  },
+  {
     id: "scifi-location-jump-gate",
     name: "Hyperspace Jump Gate",
     category: "location",
@@ -2461,7 +2717,7 @@ export function resolveEntitySilhouette(
 
   // 2. Identify target category
   const rawType = (entity.type || "note").toLowerCase();
-  let targetCategory: SilhouetteCategory = "character";
+  let targetCategory: SilhouetteCategory | undefined;
   if (
     rawType.includes("creature") ||
     rawType.includes("monster") ||
@@ -2504,6 +2760,8 @@ export function resolveEntitySilhouette(
     rawType.includes("encounter")
   ) {
     targetCategory = "event";
+  } else if (rawType.includes("note") || rawType.includes("document")) {
+    targetCategory = "note";
   }
 
   // 3. World genre context
@@ -2561,10 +2819,16 @@ export function resolveEntitySilhouette(
   let highestScore = -1;
 
   for (const s of SILHOUETTES) {
+    // Entity type is authoritative. Without this guard, a strongly tagged
+    // document (for example, a map case) can be assigned a note silhouette.
+    if (targetCategory && s.category !== targetCategory) continue;
+
     let score = 0;
 
-    // Category match
-    if (s.category === targetCategory) {
+    // Known categories share the requested-category baseline. For custom
+    // entity types, preserve semantic cross-category inference for backwards
+    // compatibility with the flexible EntityTypeSchema.
+    if (targetCategory && s.category === targetCategory) {
       score += 10;
     }
 
