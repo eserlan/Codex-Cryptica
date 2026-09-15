@@ -60,7 +60,6 @@ import {
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
   buildHeistPrompt,
-  runHeistGeneration,
   generateHeistLocal,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
@@ -170,6 +169,7 @@ import {
   LANGUAGE_GENERATION_CONFIG,
 } from "./generator-ai-transport";
 import { assessLanguageOutput } from "./language-output-assessment";
+import { runSeoHeistGeneration } from "./heist-generation-orchestration";
 
 export {
   nameTable,
@@ -706,23 +706,16 @@ export class DefaultGeneratorEngine {
           heistOptions,
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
-        const { systemInstruction, resolved } = prompt;
+        const { resolved } = prompt;
         generationInputHistoryStore.record(
           "heist",
           summarizeResolvedInputs(resolved),
         );
-        const generationChat = await this.startChat(systemInstruction);
-        let reviewChatPromise:
-          ReturnType<DefaultGeneratorEngine["startChat"]> | undefined;
-        const result = await runHeistGeneration(prompt, {
-          generate: (message) => this.sendChatMessage(generationChat, message),
-          review: async (message) =>
-            this.sendChatMessage(
-              await (reviewChatPromise ??= this.startChat(systemInstruction)),
-              message,
-            ),
-        });
-        return result.output;
+        return runSeoHeistGeneration(
+          prompt,
+          this.startChat.bind(this),
+          this.sendChatMessage.bind(this),
+        );
       },
       () => generateHeistLocal(heistOptions),
     );
