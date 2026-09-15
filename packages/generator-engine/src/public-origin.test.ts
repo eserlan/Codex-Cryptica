@@ -8,6 +8,11 @@ import {
 
 const fixedRng = () => 0.25;
 
+const VALID_CONTENT =
+  "### The Origin\nSomething happened.\n\n### What the World Knows\nNothing public.\n\n### Campaign Hook\nA scientist wants a sample.";
+const VALID_LORE =
+  "### The Full Truth\nThe real story.\n\n### Ongoing Consequence\nThe connection never closed.\n\n### Who Knows\nJust one contact.\n\n### Further Hooks\nThe event happens again.";
+
 describe("Origin generator", () => {
   describe("generateOriginLocal", () => {
     it("is deterministic for a fixed rng", () => {
@@ -94,6 +99,29 @@ describe("Origin generator", () => {
       expect(output.labels).toContain("superhero");
       expect(output.labels).toContain("character-generator");
     });
+
+    it("preserves campaign context in local output", () => {
+      const output = generateOriginLocal(
+        {
+          originType: "Mutation",
+          campaignContext: "New Avalon is under a citywide blackout.",
+        },
+        fixedRng,
+      );
+      expect(output.content).toContain(
+        "New Avalon is under a citywide blackout.",
+      );
+    });
+
+    it("uses the selected custom origin type in local output", () => {
+      const output = generateOriginLocal(
+        { originType: "Temporal Echo" },
+        fixedRng,
+      );
+      expect(output.summary).toContain("temporal echo");
+      expect(output.content).toContain("temporal echo");
+      expect(output.content).not.toContain("dormant trait");
+    });
   });
 
   describe("buildOriginPrompt", () => {
@@ -169,7 +197,7 @@ describe("Origin generator", () => {
           summary: "A cosmic-event origin.",
           content:
             "### The Origin\nSomething happened.\n\n### What the World Knows\nNothing public.\n\n### Campaign Hook\nA scientist wants a sample.",
-          lore: "### The Full Truth\nThe real story.\n\n### Ongoing Consequence\nThe connection never closed.\n\n### Who Knows\nJust one contact.",
+          lore: VALID_LORE,
           labels: ["origin-generator", "superhero"],
         }),
         prompt.resolved,
@@ -185,7 +213,8 @@ describe("Origin generator", () => {
         parseOriginResponse(
           JSON.stringify({
             title: "Voltframe",
-            content: "### The Origin\nSomething happened, no hook given.",
+            content:
+              "### The Origin\nSomething happened.\n\n### What the World Knows\nNothing public.",
             lore: "### The Full Truth\nTrue.\n\n### Ongoing Consequence\nStill open.",
           }),
           prompt.resolved,
@@ -198,9 +227,8 @@ describe("Origin generator", () => {
         parseOriginResponse(
           JSON.stringify({
             title: "Voltframe",
-            content:
-              "### The Origin\nSomething happened.\n\n### Campaign Hook\nA lead.",
-            lore: "### The Full Truth\nTrue, but nothing else.",
+            content: VALID_CONTENT,
+            lore: "### The Full Truth\nTrue.",
           }),
           prompt.resolved,
         ),
@@ -216,9 +244,8 @@ describe("Origin generator", () => {
     it("falls back to the resolved codename when the AI omits a title", () => {
       const output = parseOriginResponse(
         JSON.stringify({
-          content:
-            "### The Origin\nSomething happened.\n\n### Campaign Hook\nA lead.",
-          lore: "### The Full Truth\nTrue.\n\n### Ongoing Consequence\nStill open.",
+          content: VALID_CONTENT,
+          lore: VALID_LORE,
         }),
         prompt.resolved,
       );
@@ -230,9 +257,8 @@ describe("Origin generator", () => {
         parseOriginResponse(
           JSON.stringify({
             title: "Kael",
-            content:
-              "### The Origin\nSomething happened.\n\n### Campaign Hook\nA lead.",
-            lore: "### The Full Truth\nTrue.\n\n### Ongoing Consequence\nStill open.",
+            content: VALID_CONTENT,
+            lore: VALID_LORE,
           }),
           prompt.resolved,
         ),
@@ -243,13 +269,38 @@ describe("Origin generator", () => {
       const output = parseOriginResponse(
         JSON.stringify({
           title: "Ferrowing",
-          content:
-            "### The Origin\nSomething happened.\n\n### Campaign Hook\nA lead.",
-          lore: "### The Full Truth\nTrue.\n\n### Ongoing Consequence\nStill open.",
+          content: VALID_CONTENT,
+          lore: VALID_LORE,
         }),
         prompt.resolved,
       );
       expect(output.labels).toContain("origin-generator");
+    });
+
+    it("rejects empty required sections instead of accepting a heading alone", () => {
+      expect(() =>
+        parseOriginResponse(
+          JSON.stringify({
+            content:
+              "### The Origin\nSomething happened.\n\n### What the World Knows\nNothing public.\n\n### Campaign Hook\n",
+            lore: VALID_LORE,
+          }),
+          prompt.resolved,
+        ),
+      ).toThrow(/empty content section/);
+    });
+
+    it("rejects section headings that are out of order or have extra text", () => {
+      expect(() =>
+        parseOriginResponse(
+          JSON.stringify({
+            content:
+              "### The Origin\nSomething happened.\n\n### Campaign Hook (missing)\nA lead.\n\n### What the World Knows\nNothing public.",
+            lore: VALID_LORE,
+          }),
+          prompt.resolved,
+        ),
+      ).toThrow(/section order/);
     });
   });
 });

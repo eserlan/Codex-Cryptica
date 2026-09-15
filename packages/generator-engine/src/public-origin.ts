@@ -352,11 +352,51 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
-function sectionPresent(markdown: string, heading: string): boolean {
-  return new RegExp(
-    `^###\\s+${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
-    "im",
-  ).test(markdown);
+function validateRequiredSections(
+  markdown: string,
+  headings: readonly string[],
+  fieldName: string,
+): void {
+  const lines = markdown.split(/\r?\n/);
+  let headingIndex = 0;
+  let bodyLines: string[] = [];
+  let sawHeading = false;
+
+  const finishSection = () => {
+    if (sawHeading && !bodyLines.join("\n").trim()) {
+      throw new Error(`Origin response has an empty ${fieldName} section.`);
+    }
+  };
+
+  for (const line of lines) {
+    const heading = /^(###)\s+(.+?)\s*$/.exec(line);
+    if (heading) {
+      finishSection();
+      const expected = headings[headingIndex];
+      if (heading[2] !== expected) {
+        throw new Error(
+          `Origin response has an invalid ${fieldName} section order.`,
+        );
+      }
+      headingIndex += 1;
+      bodyLines = [];
+      sawHeading = true;
+      continue;
+    }
+
+    if (!sawHeading && line.trim()) {
+      throw new Error(`Origin response has text before ${fieldName} sections.`);
+    }
+    bodyLines.push(line);
+  }
+
+  finishSection();
+  if (headingIndex !== headings.length) {
+    const missingHeading = headings[headingIndex] ?? headings.at(-1);
+    throw new Error(
+      `Origin response is missing the ${fieldName} section "${missingHeading}".`,
+    );
+  }
 }
 
 export function parseOriginResponse(
@@ -380,16 +420,16 @@ export function parseOriginResponse(
   if (!lore) {
     throw new Error("Origin response is missing lore.");
   }
-  if (!sectionPresent(content, "Campaign Hook")) {
-    throw new Error(
-      "Origin response is missing a '### Campaign Hook' section in content.",
-    );
-  }
-  if (!sectionPresent(lore, "Ongoing Consequence")) {
-    throw new Error(
-      "Origin response is missing an '### Ongoing Consequence' section in lore.",
-    );
-  }
+  validateRequiredSections(
+    content,
+    ["The Origin", "What the World Knows", "Campaign Hook"],
+    "content",
+  );
+  validateRequiredSections(
+    lore,
+    ["The Full Truth", "Ongoing Consequence", "Who Knows", "Further Hooks"],
+    "lore",
+  );
 
   const title =
     typeof data.title === "string" && data.title.trim()
@@ -423,6 +463,28 @@ export function parseOriginResponse(
   };
 }
 
+function createCustomOriginProfile(originType: string): OriginProfile {
+  const type = originType.toLowerCase();
+  return {
+    name: originType,
+    events: [
+      `A ${type} event changed them in a way nobody present had anticipated, and the consequences became impossible to hide.`,
+      `They were caught in a ${type} situation that should have left them ordinary or dead, but instead they came out altered.`,
+      `The first sign of their powers appeared during a ${type} incident, and the people responsible have denied the connection ever since.`,
+    ],
+    hooks: [
+      `Someone connected to the ${type} event has found the hero and wants them returned, studied, or silenced.`,
+      `Evidence of the ${type} incident has resurfaced, and it points directly to the hero's identity.`,
+      `A second ${type} incident is developing, giving the hero one chance to learn what really happened the first time.`,
+    ],
+    consequences: [
+      `The ${type} origin left a lasting change that the hero cannot fully control or explain.`,
+      `The people who caused or witnessed the ${type} event still have information the hero needs, but they have reasons to keep it hidden.`,
+      `Whatever made the ${type} event possible has not gone away, and the hero remains connected to it.`,
+    ],
+  };
+}
+
 /**
  * Local (non-AI) fallback. Each origin type's event/hook/consequence come
  * from that type's own profile, so the structural separation the issue
@@ -436,7 +498,7 @@ export function generateOriginLocal(
   const resolved = resolveOrigin(options, rng);
   const profile =
     ORIGIN_PROFILES.find((p) => p.name === resolved.originType) ??
-    ORIGIN_PROFILES[0];
+    createCustomOriginProfile(resolved.originType);
 
   const event = pickFrom(profile.events, rng);
   const hook = pickFrom(profile.hooks, rng);
@@ -448,8 +510,11 @@ export function generateOriginLocal(
     `A garbled version has circulated in whispers and tabloid speculation, most of it wrong in ways ${resolved.codename} has never bothered to correct.`,
   ] as const;
 
+  const contextLine = resolved.campaignContext
+    ? `\n\nCampaign setting: ${resolved.campaignContext}`
+    : "";
   const content = `### The Origin
-${event}
+${event}${contextLine}
 
 ### What the World Knows
 ${pickFrom(publicVersionVariants, rng)}
