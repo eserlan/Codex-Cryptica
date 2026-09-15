@@ -119,6 +119,8 @@ describe("PlayToolsVault", () => {
       reset: vi.fn(),
       remaining: vi.fn(async () => deck1.cards ?? []),
     };
+    const history = { addResult: vi.fn() };
+    const clock = { now: vi.fn(() => 1_725_000_000_000) };
 
     render(PlayToolsVault, {
       props: {
@@ -129,7 +131,8 @@ describe("PlayToolsVault", () => {
           resolutionContext: () => ({ lookup: () => undefined }),
         } as any,
         service: mockService as any,
-        history: { addResult: vi.fn() } as any,
+        history: history as any,
+        clock,
       },
     });
 
@@ -147,6 +150,11 @@ describe("PlayToolsVault", () => {
       expect(screen.getByTestId("drawn-card")).toBeDefined();
       expect(screen.getByText("Ambush")).toBeDefined();
     });
+    expect(history.addResult).toHaveBeenCalledWith(
+      expect.objectContaining({ timestamp: 1_725_000_000_000 }),
+      "table",
+      expect.any(Object),
+    );
   });
 
   it("displays available tables, allows selection, and rolls on table", async () => {
