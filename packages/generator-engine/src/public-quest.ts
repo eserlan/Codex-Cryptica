@@ -647,7 +647,9 @@ export interface ResolvedQuest {
 }
 
 function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
-  const genre = options.genre || pickFrom(questConfig.genres, rng);
+  const genre = questGenreForTheme(
+    options.genre || pickFrom(questConfig.genres, rng),
+  );
   const usesDedicatedPools =
     genre === "Pirate" || genre === "Cosmic Horror" || genre === "Superhero";
   return {

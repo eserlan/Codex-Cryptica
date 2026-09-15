@@ -190,6 +190,24 @@ describe("buildQuestPrompt", () => {
       "Rescuing every hostage means letting the real target escape",
     );
   });
+
+  it("normalizes canonical theme labels at the public generation boundary", () => {
+    const canonicalTheme = "Superhero / Comic Book";
+    const zeroRng = () => 0;
+    const { resolved } = buildQuestPrompt(
+      { genre: canonicalTheme },
+      "",
+      zeroRng,
+    );
+
+    expect(resolved.genre).toBe("Superhero");
+    expect(resolved.tone).toBe("Four-Color Heroic");
+
+    const output = generateQuestLocal({ genre: canonicalTheme }, zeroRng);
+    expect(output.content).toContain(
+      "A live broadcast cuts to a villain's ultimatum",
+    );
+  });
 });
 
 describe("parseQuestResponse", () => {
