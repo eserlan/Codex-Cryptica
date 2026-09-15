@@ -20,7 +20,7 @@ import { formatCampaignContextBlock } from "./campaign-context";
 import { factionConfig } from "./public-faction-constants";
 
 export const villainConfig = {
-  // Genre uses the canonical 13-theme vocabulary directly (no per-generator
+  // Genre uses the canonical theme vocabulary directly (no per-generator
   // synonym mapping needed — see add-generator skill Part C step 0).
   genres: factionConfig.themes,
   tones: ["Grim", "Epic", "Sinister", "Tragic", "Pulpy", "Bleak", "Mysterious"],

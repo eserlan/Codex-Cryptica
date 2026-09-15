@@ -36,7 +36,10 @@
   const availableRoles = $derived(
     npcThemeConfig.roles[theme] ?? npcConfig.roles,
   );
-  const availableMoralities = $derived(npcThemeConfig.moralities[theme] ?? []);
+  const availableMoralities = $derived(
+    npcThemeConfig.moralities[theme] ??
+      npcConfig.alignments.map((id) => ({ id, label: id })),
+  );
   const knownAncestries = $derived(
     Array.from(
       new Set([
@@ -58,7 +61,10 @@
   );
   const knownMoralityIds = $derived(
     Array.from(
-      new Set(allMoralities.map((morality: MoralityOption) => morality.id)),
+      new Set([
+        ...npcConfig.alignments,
+        ...allMoralities.map((morality: MoralityOption) => morality.id),
+      ]),
     ),
   );
 

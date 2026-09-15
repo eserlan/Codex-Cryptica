@@ -17,6 +17,7 @@ export const factionConfig = {
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
     "Space Western",
+    "Superhero / Comic Book",
   ],
   typesByTheme: {
     "Classic Fantasy": [
@@ -194,6 +195,18 @@ export const factionConfig = {
       "Boomtown Council",
       "Mercenary Outfit",
     ],
+    "Superhero / Comic Book": [
+      "Rogues' Gallery",
+      "Vigilante Cell",
+      "Hero Team",
+      "Black-Ops Program",
+      "Superhuman Supremacist Movement",
+      "Media Conglomerate",
+      "Research Institute",
+      "Occult Cabal",
+      "Corporate Security Force",
+      "Government Oversight Committee",
+    ],
   } as Record<string, string[]>,
   scopesByTheme: {
     "Classic Fantasy": [
@@ -307,6 +320,14 @@ export const factionConfig = {
       "Frontier star system",
       "Uncharted hyper-lane run",
       "Sector-wide syndicate reach",
+    ],
+    "Superhero / Comic Book": [
+      "Single neighborhood watch",
+      "City-wide operation",
+      "Regional network",
+      "National organization",
+      "Global consortium",
+      "Cosmic-scale threat",
     ],
   } as Record<string, string[]>,
   goalsByTheme: {
@@ -422,6 +443,14 @@ export const factionConfig = {
       "Break a corporate strike by hiring off-world scoundrels to seize the loading docks.",
       "Erase a syndicate death mark by delivering a rogue pilot alive.",
     ],
+    "Superhero / Comic Book": [
+      "Force a registration act through before public opinion turns.",
+      "Recover a stolen origin sample before a rival organization weaponizes it.",
+      "Discredit a hero publicly to clear the way for a larger scheme.",
+      "Secure exclusive access to a captured metahuman for study.",
+      "Install a sympathetic figure on the city council before the next vote.",
+      "Erase every record connecting them to a decades-old disaster.",
+    ],
   } as Record<string, string[]>,
   alignments: [
     "Publicly lawful, privately ruthless",
@@ -486,6 +515,8 @@ export const themeIdToLabel: Record<string, string> = {
   "optimistic-exploration-sci-fi_dark": "Optimistic Exploration Sci-Fi",
   "space-western": "Space Western",
   "space-western_light": "Space Western",
+  superhero: "Superhero / Comic Book",
+  superhero_dark: "Superhero / Comic Book",
 };
 
 export const vampireConfig = {

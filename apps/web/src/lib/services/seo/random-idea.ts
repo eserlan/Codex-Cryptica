@@ -1,7 +1,6 @@
 import type { DefaultGeneratorEngine } from "./generator-engine";
 import { pickFrom, type GeneratorOutput } from "./generator-helpers";
-import { factionConfig } from "generator-engine";
-import { npcThemeConfig } from "generator-engine";
+import { factionConfig, npcConfig, npcThemeConfig } from "generator-engine";
 import { themeToQuestGenre } from "generator-engine";
 
 export interface RandomIdeaCategory {
@@ -46,6 +45,7 @@ export const themeToHubGenre: Record<string, string> = {
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Opera Resistance": "Space Opera Resistance",
   "Space Western": "Space Western",
+  "Superhero / Comic Book": "Modern",
 };
 
 export function pickRandomIdeaTheme(
@@ -80,9 +80,11 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     generate: (engine, useAI, theme) =>
       engine.generateNPC({
         theme,
-        ancestry: pickFrom(npcThemeConfig.ancestries[theme]),
-        role: pickFrom(npcThemeConfig.roles[theme]),
-        alignment: pickFrom(npcThemeConfig.moralities[theme]).id,
+        ancestry: pickFrom(npcThemeConfig.ancestries[theme] ?? npcConfig.races),
+        role: pickFrom(npcThemeConfig.roles[theme] ?? npcConfig.roles),
+        alignment: npcThemeConfig.moralities[theme]
+          ? pickFrom(npcThemeConfig.moralities[theme]).id
+          : pickFrom(npcConfig.alignments),
         useAI,
       }),
   },

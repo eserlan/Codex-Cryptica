@@ -14,6 +14,7 @@ import { spaceOperaResistanceTables } from "./space-opera-resistance";
 import { optimisticSciFiTables } from "./optimistic-scifi";
 import { cosmicHorrorTables } from "./cosmic-horror";
 import { spaceWesternDungeonTables } from "./space-western";
+import { superheroTables } from "./superhero";
 
 /**
  * Every genre the dungeon generator can produce content for, keyed by the theme
@@ -39,6 +40,7 @@ export const DUNGEON_GENRE_TABLES: Record<string, DungeonGenreTables> = {
   "Optimistic Exploration Sci-Fi": optimisticSciFiTables,
   "Space Western": spaceWesternDungeonTables,
   "Cosmic Horror": cosmicHorrorTables,
+  "Superhero / Comic Book": superheroTables,
 };
 
 /** Build a genre-keyed lookup table for one field, as the old *_BY_GENRE records. */
