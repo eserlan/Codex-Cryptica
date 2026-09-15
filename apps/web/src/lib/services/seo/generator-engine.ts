@@ -220,7 +220,7 @@ export { questConfig, themeToQuestGenre } from "generator-engine";
 export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
-export { villainConfig } from "generator-engine";
+export { getVillainThreatScales, villainConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
