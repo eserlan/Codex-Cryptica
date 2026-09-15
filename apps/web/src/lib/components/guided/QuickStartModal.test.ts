@@ -126,6 +126,7 @@ describe("QuickStartModal", () => {
     expect(options).toContain("Classic Fantasy (Ancient Parchment look)");
     expect(options).toContain("Space Exploration (LCARS Interface look)");
     expect(options).toContain("Space Western (Frontier Scoundrels look)");
+    expect(options).toContain("Superhero / Comic Book (Four-Color Dawn look)");
     expect(options.every((label) => label.includes("look"))).toBe(true);
   });
 
