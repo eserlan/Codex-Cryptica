@@ -262,6 +262,7 @@ export {
   parseQuestResponse,
   generateQuestLocal,
   questConfig,
+  questGenreForTheme,
   themeToQuestGenre,
   type QuestGeneratorOptions,
   type QuestPrompt,

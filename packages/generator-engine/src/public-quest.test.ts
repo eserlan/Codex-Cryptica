@@ -3,6 +3,7 @@ import {
   buildQuestPrompt,
   generateQuestLocal,
   parseQuestResponse,
+  questGenreForTheme,
   questConfig,
   themeToQuestGenre,
 } from "./public-quest";
@@ -137,6 +138,8 @@ describe("buildQuestPrompt", () => {
     expect(themeToQuestGenre["Western / Frontier"]).toBe("Western");
     expect(themeToQuestGenre["Cosmic Horror"]).toBe("Cosmic Horror");
     expect(themeToQuestGenre["Superhero / Comic Book"]).toBe("Superhero");
+    expect(questGenreForTheme("Superhero / Comic Book")).toBe("Superhero");
+    expect(questGenreForTheme("Custom Genre")).toBe("Custom Genre");
     expect(questConfig.genres).toContain("Superhero");
     expect(questConfig.genres).toContain("Cosmic Horror");
     expect(questConfig.tonesByTheme["Cosmic Horror"]).toContain(

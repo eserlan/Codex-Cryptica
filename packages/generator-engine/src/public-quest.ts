@@ -37,6 +37,10 @@ export const themeToQuestGenre: Record<string, string> = {
   "Superhero / Comic Book": "Superhero",
 };
 
+export function questGenreForTheme(theme: string): string {
+  return themeToQuestGenre[theme] ?? theme;
+}
+
 export const questConfig = {
   genres: [
     "Classic Fantasy",

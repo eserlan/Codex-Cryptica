@@ -216,7 +216,11 @@ export {
 export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
-export { questConfig, themeToQuestGenre } from "generator-engine";
+export {
+  questConfig,
+  questGenreForTheme,
+  themeToQuestGenre,
+} from "generator-engine";
 export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
