@@ -180,6 +180,17 @@ const LAYOUT_RULES: LayoutRule[] = [
     ]),
   },
   {
+    label: "villain-scheme-generator",
+    // Objective, Motivation, Current Activity, Scheme Stages, Escalation If
+    // Ignored, Consequences If Nobody Intervenes, and Possible Twist are all
+    // narrative payoff (each is a paragraph or a per-stage breakdown, not a
+    // quick lookup) — deliberately NOT in the rail, mirroring bbeg-generator's
+    // Villain's Plan exclusion. Only the genuinely compact reference sections
+    // (a bullet list of who/what is available, and a short list of
+    // complications to remember mid-session) stay in the rail.
+    railSections: new Set(["Resources & Minions", "Complications"]),
+  },
+  {
     label: "council-vote",
     // Council Members is deliberately NOT in the rail: each entry is a full
     // paragraph (public position, true agenda, persuasion angle, secret),
