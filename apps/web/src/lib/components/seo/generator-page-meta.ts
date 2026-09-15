@@ -1249,6 +1249,54 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
   },
+  "origin-generator": {
+    pageTitle:
+      "Superhero Origin Generator | Free RPG Origin Story Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a superhero origin story with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence that the backstory itself never resolves.",
+    introTitle: "Superhero Origin Generator",
+    eyebrow: "Superhero Origin Story Generator",
+    introText:
+      "Build a superhero origin that is more than a backstory paragraph: a concrete origin event, at least one campaign hook a GM can use tonight, and an ongoing consequence that stays unresolved. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/origin-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-origin-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica superhero origin generator drafting an origin event, a campaign hook, and an ongoing consequence",
+    keywords: [
+      "superhero origin generator",
+      "superhero backstory generator",
+      "comic book origin generator",
+      "superhero character generator",
+      "rpg superpower origin",
+    ],
+    faqs: [
+      {
+        question: "What does the Superhero Origin Generator create?",
+        answer:
+          "It creates a full superhero origin: the concrete origin event itself (mutation, accident, experiment, technology, magic, alien heritage, artefact, cosmic event, inherited mantle, government programme, or divine/extradimensional intervention), what the public believes versus the full truth, at least one campaign hook a GM can use immediately, and at least one ongoing consequence the origin story does not resolve.",
+      },
+      {
+        question:
+          "Why does the origin include a hook and a consequence, not just a backstory?",
+        answer:
+          "An origin that only explains where the power came from is a dead end at the table. Every generated origin structurally separates the event from a usable hook and a lasting complication, so it plugs straight into an ongoing campaign instead of sitting as flavour text.",
+      },
+      {
+        question: "Is this generator specific to the superhero genre?",
+        answer:
+          "Yes. Unlike most Codex Cryptica generators, this one is Superhero / Comic Book only by design — origins are an inherently superhero-genre concept, so there is no genre selector.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/npc", label: "RPG NPC Generator" },
+      { href: "/generators/personality", label: "Personality Generator" },
+      {
+        href: "/generators/bbeg-generator",
+        label: "BBEG / Campaign Villain Generator",
+      },
+    ],
+  },
   "adventure-idea-generator": {
     pageTitle:
       "Adventure Idea Generator | Multi-Genre RPG Scenario Generator | Codex Cryptica",

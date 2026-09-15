@@ -38,6 +38,7 @@
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
+  import OriginFormFields from "$lib/components/seo/OriginFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import ConstellationFormFields from "$lib/components/seo/ConstellationFormFields.svelte";
@@ -75,6 +76,7 @@
     adventureConfig,
     plotTwistConfig,
     villainConfig,
+    originConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -558,6 +560,14 @@
     campaignContext: "",
   });
 
+  // Superhero / Comic Book only, by design (#3111) — no genre field, no
+  // theme-sync $effect branch below (Part C is deliberately not applicable).
+  let origin = $state({
+    originType: originConfig.originTypes[0],
+    tone: originConfig.tones[0],
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -861,6 +871,7 @@
     adventure,
     plotTwist,
     villain,
+    origin,
     world,
     starSystem,
     constellation,
@@ -1298,6 +1309,13 @@
         bind:sympathy={villain.sympathy}
         bind:worldRelation={villain.worldRelation}
         bind:campaignContext={villain.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "origin-generator"}
+      <OriginFormFields
+        bind:originType={origin.originType}
+        bind:tone={origin.tone}
+        bind:campaignContext={origin.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}

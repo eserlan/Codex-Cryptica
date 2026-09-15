@@ -48,6 +48,9 @@ import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  buildOriginPrompt,
+  parseOriginResponse,
+  generateOriginLocal,
   buildPersonalityPrompt,
   parsePersonalityResponse,
   generatePersonalityLocal,
@@ -134,6 +137,7 @@ import {
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
+  type OriginGeneratorOptions,
   type PersonalityGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type HeistGeneratorOptions,
@@ -221,6 +225,7 @@ export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
+export { originConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
@@ -816,6 +821,31 @@ export class DefaultGeneratorEngine {
         );
       },
       () => generateSecretSocietyLocal(secretSocietyOptions),
+    );
+  }
+
+  async generateOrigin(
+    options: OriginGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...originOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("origin");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildOriginPrompt(
+          originOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "origin",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseOriginResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateOriginLocal(originOptions),
     );
   }
 

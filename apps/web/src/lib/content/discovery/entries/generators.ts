@@ -254,6 +254,23 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-origin-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/origin-generator",
+    primaryIntent: "superhero origin generator",
+    intentAliases: [
+      "superhero backstory generator",
+      "comic book origin generator",
+      "superpower origin generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A superhero origin that structurally separates the origin event from a GM-usable campaign hook and an ongoing consequence, rather than a backstory paragraph that merely explains where a power came from.",
+    parentCluster: "npc-creation",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-creature",
     pageKind: "generator",
     canonicalPath: "/generators/creature",

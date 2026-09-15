@@ -66,6 +66,7 @@ export interface GenerationContext {
   adventure: Record<string, unknown>;
   plotTwist: Record<string, unknown>;
   villain: Record<string, unknown>;
+  origin: Record<string, unknown>;
   world: Record<string, unknown>;
   starSystem: Record<string, unknown>;
   constellation: Record<string, unknown>;
@@ -249,6 +250,8 @@ export function createGeneratorHandlers(
         genre: ctx.getActiveTheme(),
         useAI,
       } as never),
+    "origin-generator": (useAI) =>
+      engine.generateOrigin({ ...(ctx.origin as object), useAI } as never),
     world: (useAI) =>
       engine.generateWorld({
         ...(ctx.world as object),

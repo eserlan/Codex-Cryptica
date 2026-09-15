@@ -35,6 +35,7 @@ const validSlugs = new Set([
   "adventure-idea-generator",
   "plot-twist-generator",
   "bbeg-generator",
+  "origin-generator",
   "world",
   "council-vote",
   "secret-society",
@@ -84,6 +85,7 @@ export const load: PageLoad = ({ params }) => {
       | "adventure-idea-generator"
       | "plot-twist-generator"
       | "bbeg-generator"
+      | "origin-generator"
       | "world"
       | "council-vote"
       | "secret-society"
@@ -130,6 +132,7 @@ export const entries: EntryGenerator = () => {
     { slug: "adventure-idea-generator" },
     { slug: "plot-twist-generator" },
     { slug: "bbeg-generator" },
+    { slug: "origin-generator" },
     { slug: "world" },
     { slug: "council-vote" },
     { slug: "secret-society" },
