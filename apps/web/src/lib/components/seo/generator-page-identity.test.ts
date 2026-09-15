@@ -11,7 +11,7 @@ describe("resolveWorldThemeId", () => {
   it("maps a known theme label to its world theme id", () => {
     expect(resolveWorldThemeId("Classic Fantasy")).toBe("fantasy");
     expect(resolveWorldThemeId("Sci-Fi / Space Opera")).toBe("scifi");
-    expect(resolveWorldThemeId("Superhero / Comic Book")).toBe("modern");
+    expect(resolveWorldThemeId("Superhero / Comic Book")).toBe("superhero");
   });
 
   it("falls back to the workspace theme for an unrecognized label", () => {
