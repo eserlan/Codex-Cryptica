@@ -319,6 +319,18 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     expect(match.id).toBe("fantasy-note-treasure-map");
   });
 
+  it("does not apply a character baseline to custom types", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "custom-record",
+        labels: ["chart"],
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.id).toBe("fantasy-note-treasure-map");
+  });
+
   it("resolves fantasy town for fortified walled settlement", () => {
     const match = resolveEntitySilhouette(
       {

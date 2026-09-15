@@ -2828,7 +2828,7 @@ export function resolveEntitySilhouette(
     // Known categories share the requested-category baseline. For custom
     // entity types, preserve semantic cross-category inference for backwards
     // compatibility with the flexible EntityTypeSchema.
-    if (s.category === (targetCategory ?? "character")) {
+    if (targetCategory && s.category === targetCategory) {
       score += 10;
     }
 
