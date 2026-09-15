@@ -55,7 +55,9 @@ function stableStringify(value: unknown): string {
   let s = "{";
   for (let i = 0; i < entries.length; i++) {
     const [k, v] = entries[i];
-    s += `${JSON.stringify(k)}:${stableStringify(v)}` + (i < entries.length - 1 ? "," : "");
+    s +=
+      `${JSON.stringify(k)}:${stableStringify(v)}` +
+      (i < entries.length - 1 ? "," : "");
   }
   return s + "}";
 }
