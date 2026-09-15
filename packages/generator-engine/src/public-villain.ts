@@ -18,6 +18,11 @@ import {
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import { factionConfig } from "./public-faction-constants";
+import {
+  SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_HINTS,
+  type SuperheroPowerScale,
+} from "./superhero-power-scale";
 
 export const villainConfig = {
   // Genre uses the canonical theme vocabulary directly (no per-generator
@@ -32,6 +37,13 @@ export const villainConfig = {
     "Global",
     "Cosmic",
   ],
+  // Per-genre override for the scale picker — a genre with its own scale
+  // vocabulary (see the shared Superhero Power Scale, #3103) uses this
+  // instead of the generic threatScales list above. Falls back to
+  // threatScales for every genre not listed here.
+  threatScalesByTheme: {
+    "Superhero / Comic Book": SUPERHERO_POWER_SCALES,
+  } as Record<string, readonly string[]>,
   archetypes: [
     "Random",
     "Dark Lord",
@@ -152,11 +164,12 @@ function resolveVillain(
   rng: Rng,
 ): ResolvedVillain {
   const genre = options.genre || pickFrom(villainConfig.genres, rng);
+  const threatScalePool =
+    villainConfig.threatScalesByTheme[genre] ?? villainConfig.threatScales;
   return {
     genre,
     tone: options.tone || pickFrom(villainConfig.tones, rng),
-    threatScale:
-      options.threatScale || pickFrom(villainConfig.threatScales, rng),
+    threatScale: options.threatScale || pickFrom(threatScalePool, rng),
     archetype: resolvePick(options.archetype, villainConfig.archetypes, rng),
     sympathy: options.sympathy || pickFrom(villainConfig.sympathyLevels, rng),
     worldRelation: resolvePick(
@@ -208,12 +221,20 @@ export function buildVillainPrompt(
   recentDomains: readonly string[] = [],
 ): VillainPrompt {
   const resolved = resolveVillain(options, rng);
+  // Only attach the hint when the genre itself is Superhero — the scale
+  // words (e.g. "City") aren't exclusive to this genre, and a non-superhero
+  // villain that happens to share one as a custom threat scale should not
+  // get superhero-flavoured guidance attached to it.
+  const powerScaleHint =
+    resolved.genre === "Superhero / Comic Book"
+      ? SUPERHERO_POWER_SCALE_HINTS[resolved.threatScale as SuperheroPowerScale]
+      : undefined;
 
   const userMessage = `Generate a campaign-scale BBEG / campaign villain in JSON format. The villain must function as a campaign engine — a clear goal, methods, resources, lieutenants, weaknesses, an escalating plan, discoverable clues, and consequences — not just biography, appearance, and generic villain flavour. British English. System-neutral (no game-system mechanics or stat blocks).
 Options:
 - Genre / Theme: ${resolved.genre}
 - Tone: ${resolved.tone}
-- Threat Scale: ${resolved.threatScale}
+- Threat Scale: ${resolved.threatScale}${powerScaleHint ? ` — ${powerScaleHint}` : ""}
 - Villain Archetype: ${resolved.archetype}
 - Degree of Sympathy / Redeemability: ${resolved.sympathy}
 - World Relation: ${resolved.worldRelation} — this villain ${WORLD_RELATION_DEFINITIONS[resolved.worldRelation]}. This is the villain's FUNDAMENTAL relationship to the status quo and MUST shape 'Ultimate Goal', 'Motivation', and 'Why Now' directly — do not default to a Reformer/Guardian "the existing institutions have failed, I must take control" framing unless World Relation is literally Reformer or Guardian. A Predator's goal preserves the system it feeds on; a Destroyer's goal has no replacement order in mind; an Escapee's goal is to leave, not to rule; a Servant's goal belongs to whoever or whatever they serve, not to them personally — and so on for each relation.
