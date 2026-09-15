@@ -749,6 +749,136 @@ export const SILHOUETTES: SilhouetteDefinition[] = [
     ],
     r2Path: "silhouettes/item/fantasy/arcane-tome.svg",
   },
+  {
+    id: "fantasy-item-heraldic-shield",
+    name: "Heraldic Shield / Buckler",
+    category: "item",
+    genres: ["fantasy"],
+    archetype: "relic",
+    tags: [
+      "shield",
+      "buckler",
+      "heraldry",
+      "crest",
+      "defence",
+      "armor",
+      "knight",
+      "guardian",
+    ],
+    r2Path: "silhouettes/item/fantasy/heraldic-shield.svg",
+  },
+  {
+    id: "fantasy-item-alchemist-potion",
+    name: "Alchemist's Potion / Elixir",
+    category: "item",
+    genres: ["fantasy"],
+    archetype: "relic",
+    tags: [
+      "potion",
+      "elixir",
+      "vial",
+      "flask",
+      "draught",
+      "healing",
+      "alchemy",
+      "consumable",
+    ],
+    r2Path: "silhouettes/item/fantasy/alchemist-potion.svg",
+  },
+  {
+    id: "fantasy-item-royal-crown",
+    name: "Royal Crown / Regalia",
+    category: "item",
+    genres: ["fantasy"],
+    archetype: "relic",
+    tags: [
+      "crown",
+      "regalia",
+      "royal",
+      "king",
+      "queen",
+      "coronation",
+      "throne",
+      "sovereign",
+    ],
+    r2Path: "silhouettes/item/fantasy/royal-crown.svg",
+  },
+  {
+    id: "fantasy-item-ancient-key",
+    name: "Ancient Key / Keyring",
+    category: "item",
+    genres: ["fantasy", "gothic"],
+    archetype: "relic",
+    tags: [
+      "key",
+      "keyring",
+      "lock",
+      "locked",
+      "door",
+      "vault",
+      "ancient",
+      "warded",
+    ],
+    r2Path: "silhouettes/item/fantasy/ancient-key.svg",
+  },
+
+  // ==========================================
+  // NOTES & DOCUMENTS
+  // ==========================================
+  {
+    id: "fantasy-note-sealed-letter",
+    name: "Sealed Letter / Decree",
+    category: "note",
+    genres: ["fantasy", "gothic"],
+    archetype: "generic",
+    tags: [
+      "letter",
+      "decree",
+      "message",
+      "correspondence",
+      "sealed",
+      "wax-seal",
+      "dispatch",
+      "invitation",
+    ],
+    r2Path: "silhouettes/note/fantasy/sealed-letter.svg",
+  },
+  {
+    id: "fantasy-note-treasure-map",
+    name: "Treasure Map / Chart",
+    category: "note",
+    genres: ["fantasy"],
+    archetype: "generic",
+    tags: [
+      "map",
+      "chart",
+      "treasure",
+      "route",
+      "expedition",
+      "navigation",
+      "coordinates",
+      "parchment",
+    ],
+    r2Path: "silhouettes/note/fantasy/treasure-map.svg",
+  },
+  {
+    id: "fantasy-note-quest-notice",
+    name: "Quest Notice / Bounty Board",
+    category: "note",
+    genres: ["fantasy", "western"],
+    archetype: "generic",
+    tags: [
+      "quest",
+      "notice",
+      "bounty",
+      "poster",
+      "proclamation",
+      "contract",
+      "job",
+      "bulletin",
+    ],
+    r2Path: "silhouettes/note/fantasy/quest-notice.svg",
+  },
 
   // ==========================================
   // LOCATIONS & STRUCTURES
@@ -2504,6 +2634,8 @@ export function resolveEntitySilhouette(
     rawType.includes("encounter")
   ) {
     targetCategory = "event";
+  } else if (rawType.includes("note") || rawType.includes("document")) {
+    targetCategory = "note";
   }
 
   // 3. World genre context
@@ -2561,12 +2693,15 @@ export function resolveEntitySilhouette(
   let highestScore = -1;
 
   for (const s of SILHOUETTES) {
+    // Entity type is authoritative. Without this guard, a strongly tagged
+    // document (for example, a map case) can be assigned a note silhouette.
+    if (s.category !== targetCategory) continue;
+
     let score = 0;
 
-    // Category match
-    if (s.category === targetCategory) {
-      score += 10;
-    }
+    // All candidates share the requested category; retain its baseline so
+    // genre and semantic tags rank within that category.
+    score += 10;
 
     // Genre affinity
     if (s.genres.includes(preferredGenre)) {

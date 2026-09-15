@@ -40,6 +40,22 @@ describe("Silhouette Registry & Schema", () => {
       expect(SILHOUETTE_MAP.get(s.id)).toBe(s);
     }
   });
+
+  it("includes practical fantasy items and note motifs", () => {
+    const ids = new Set(SILHOUETTES.map((silhouette) => silhouette.id));
+
+    for (const id of [
+      "fantasy-item-heraldic-shield",
+      "fantasy-item-alchemist-potion",
+      "fantasy-item-royal-crown",
+      "fantasy-item-ancient-key",
+      "fantasy-note-sealed-letter",
+      "fantasy-note-treasure-map",
+      "fantasy-note-quest-notice",
+    ]) {
+      expect(ids.has(id), `Missing ${id}`).toBe(true);
+    }
+  });
 });
 
 describe("Silhouette artwork loading", () => {
@@ -238,6 +254,34 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
       { worldTheme: "fantasy" },
     );
     expect(match.id).toBe("location-fantasy-village");
+  });
+
+  it("resolves a fantasy treasure map for a note", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "note",
+        title: "Map of the Sunken Vault",
+        labels: ["map", "treasure"],
+        content: "A parchment chart marks the expedition route.",
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.id).toBe("fantasy-note-treasure-map");
+  });
+
+  it("does not assign note artwork to an item that mentions a map", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Map Case",
+        labels: ["map"],
+        content: "A case that protects a parchment chart on an expedition.",
+      },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(match.category).toBe("item");
   });
 
   it("resolves fantasy town for fortified walled settlement", () => {
