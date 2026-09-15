@@ -59,6 +59,18 @@ describe("Silhouette Registry & Schema", () => {
       "scifi-note-star-chart",
       "scifi-note-encrypted-transmission",
       "scifi-note-mission-dossier",
+      "scifi-character-alien-diplomat",
+      "scifi-character-frontier-marshal",
+      "scifi-character-salvage-diver",
+      "scifi-location-desert-colony",
+      "scifi-location-alien-ruins",
+      "scifi-location-terraforming-facility",
+      "scifi-faction-stellar-republic",
+      "scifi-faction-mining-consortium",
+      "scifi-faction-alien-hive",
+      "scifi-event-hyperspace-arrival",
+      "scifi-event-solar-storm",
+      "scifi-event-first-contact",
     ]) {
       expect(ids.has(id), `Missing ${id}`).toBe(true);
     }
@@ -289,6 +301,34 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     );
 
     expect(match.id).toBe("scifi-note-star-chart");
+  });
+
+  it("resolves a sci-fi solar storm as an event", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "event",
+        title: "The Helios Solar Storm",
+        labels: ["solar", "storm", "radiation"],
+        content: "A stellar flare bathed the orbital station in radiation.",
+      },
+      { worldTheme: "scifi" },
+    );
+
+    expect(match.id).toBe("scifi-event-solar-storm");
+  });
+
+  it("resolves a stellar republic as a sci-fi faction", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "faction",
+        title: "The Orphean Stellar Republic",
+        labels: ["republic", "federation", "senate"],
+        content: "A galactic civic union governed by an elected senate.",
+      },
+      { worldTheme: "scifi" },
+    );
+
+    expect(match.id).toBe("scifi-faction-stellar-republic");
   });
 
   it("does not assign note artwork to an item that mentions a map", () => {
