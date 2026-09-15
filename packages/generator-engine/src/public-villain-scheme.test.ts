@@ -77,6 +77,16 @@ describe("generateVillainSchemeLocal", () => {
       ]).toContain(out.lore.match(/(\w+)-level threat/i)?.[1]?.toLowerCase());
     }
   });
+
+  it("keeps the local fallback aligned with a built-in Power Scale", () => {
+    const out = generateVillainSchemeLocal(
+      { powerScale: "Multiversal" },
+      seededRng(12),
+    );
+    expect(out.lore).toContain("Act across realities");
+    expect(out.lore).toContain("Stabilise the new multiverse");
+    expect(out.lore).not.toContain("Establish the front");
+  });
 });
 
 describe("buildVillainSchemePrompt", () => {
@@ -145,6 +155,14 @@ describe("buildVillainSchemePrompt", () => {
     expect(villainSchemeConfig.powerScales).toContain("Multiversal");
     expect(villainSchemeConfig.powerScales.length).toBe(6);
   });
+
+  it("does not send an undefined hint for a custom Power Scale", () => {
+    const { userMessage } = buildVillainSchemePrompt({
+      powerScale: "Orbital",
+    });
+    expect(userMessage).toContain("- Power Scale: Orbital");
+    expect(userMessage).not.toContain("Orbital — undefined");
+  });
 });
 
 describe("parseVillainSchemeResponse", () => {
@@ -166,5 +184,27 @@ describe("parseVillainSchemeResponse", () => {
     );
     expect(out.title).toBe(resolved.schemeName);
     expect(() => parseVillainSchemeResponse("nope", resolved)).toThrow();
+  });
+
+  it("normalises malformed field types at the AI boundary", () => {
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({
+        title: { unexpected: true },
+        summary: 42,
+        content: { unexpected: true },
+        lore: [],
+        labels: [{}],
+      }),
+      resolved,
+    );
+    expect(out.title).toBe(resolved.schemeName);
+    expect(out.summary).toBe("");
+    expect(out.content).toBe("");
+    expect(out.lore).toBe("");
+    expect(out.labels).toEqual([
+      "villain-scheme",
+      "villain-scheme-generator",
+      "imported-draft",
+    ]);
   });
 });

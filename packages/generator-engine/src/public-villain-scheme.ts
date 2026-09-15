@@ -21,13 +21,25 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
-import { parseFencedJson } from "./llm-response-utils";
+import {
+  asArray,
+  asRecord,
+  asString,
+  parseFencedJson,
+} from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import {
   SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
   SUPERHERO_POWER_SCALE_HINTS,
   type SuperheroPowerScale,
 } from "./superhero-power-scale";
+
+const DEFAULT_VILLAIN_SCHEME_LABELS = [
+  "villain-scheme",
+  "villain-scheme-generator",
+  "imported-draft",
+];
 
 export const villainSchemeConfig = {
   powerScales: SUPERHERO_POWER_SCALES,
@@ -148,7 +160,7 @@ export function buildVillainSchemePrompt(
 
   const userMessage = `Generate a Superhero / Comic Book villain SCHEME in JSON format — an ongoing plot or plan, not a villain biography. The scheme must be usable by any villain (an existing one from the campaign, or a freshly imagined one referenced only lightly): staged, escalating, and discoverable, with clues the heroes can plausibly uncover before the finale. British English. System-neutral (no game-system mechanics or stat blocks).
 Options:
-- Power Scale: ${resolved.powerScale} — ${powerScaleHint}
+- Power Scale: ${resolved.powerScale}${powerScaleHint ? ` — ${powerScaleHint}` : ""}
 - Tone: ${resolved.tone}
 - Scheme Type: ${resolved.schemeType}
 - Villain Profile (who is plausibly behind it): ${resolved.villainProfile}
@@ -179,16 +191,17 @@ export function parseVillainSchemeResponse(
   text: string,
   resolved: ResolvedVillainScheme,
 ): PublicGeneratorOutput {
-  const data = parseFencedJson(text);
+  const data = asRecord(parseFencedJson<unknown>(text));
+  const labels = asArray(data.labels).filter(
+    (label): label is string => typeof label === "string",
+  );
   return {
     type: "note",
-    title: data.title || resolved.schemeName,
-    summary: data.summary || "",
-    content: data.content || "",
-    lore: data.lore || "",
-    labels: Array.isArray(data.labels)
-      ? data.labels
-      : ["villain-scheme", "villain-scheme-generator", "imported-draft"],
+    title: asString(data.title) || resolved.schemeName,
+    summary: asString(data.summary),
+    content: asString(data.content),
+    lore: asString(data.lore),
+    labels: labels.length > 0 ? labels : [...DEFAULT_VILLAIN_SCHEME_LABELS],
     status: "active",
   };
 }
@@ -235,7 +248,11 @@ export function generateVillainSchemeLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveVillainScheme(options, rng);
-  const publicActivity = pickFrom(PUBLIC_ACTIVITY_POOL, rng);
+  const scaleFallback =
+    SUPERHERO_POWER_SCALE_FALLBACKS[resolved.powerScale as SuperheroPowerScale];
+  const publicActivity = scaleFallback
+    ? `Coordinated disruptions are being reported around ${scaleFallback.territory.charAt(0).toLowerCase()}${scaleFallback.territory.slice(1)}, all following an unexplained pattern.`
+    : pickFrom(PUBLIC_ACTIVITY_POOL, rng);
   const rumourOne = pickFrom(RUMOUR_POOL, rng);
   const rumourTwo = pickFrom(
     RUMOUR_POOL.filter((r) => r !== rumourOne),
@@ -267,18 +284,23 @@ The ${resolved.villainProfile.toLowerCase()} behind ${resolved.schemeName} wants
 Their reasoning holds together on its own terms: a ${resolved.tone.toLowerCase()}, ${resolved.schemeType.toLowerCase()}-flavoured plan that makes sense from inside their own priorities, whatever the wider world would think of it.
 
 ### Current Activity
-Behind ${publicActivity.charAt(0).toLowerCase()}${publicActivity.slice(1)}, the real work is quieter: positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable.
+The reported public incidents are a cover for quieter work: ${scaleFallback?.methods ?? "positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
 
 ### Resources & Minions
 - **${minionName}** — handles the operation's day-to-day logistics; loyal enough to follow orders, not loyal enough to die for them.
 - **${secondMinionName}** — provides the specialised capability (technical, financial, or occult, matching ${resolved.schemeType.toLowerCase()}) the scheme depends on.
-- A cover operation legitimate enough to survive a casual look, appropriately scaled to a ${resolved.powerScale.toLowerCase()}-level threat.
+- Power Scale: ${resolved.powerScale.toLowerCase()}-level threat.
+- ${scaleFallback?.resources ?? `A cover operation legitimate enough to survive a casual look, appropriately scaled to a ${resolved.powerScale.toLowerCase()}-level threat.`}
+- Territory: ${scaleFallback?.territory ?? "a location the villain can control before outside help arrives."}
 
 ### Scheme Stages
-**Stage 1: Establish the front** — The cover operation goes fully live; clues are administrative (permits, hires, filings) rather than dramatic. Disrupting this stage forces a cruder, more exposed cover later.
+${
+  scaleFallback?.planStages.join("\n") ??
+  `**Stage 1: Establish the front** — The cover operation goes fully live; clues are administrative (permits, hires, filings) rather than dramatic. Disrupting this stage forces a cruder, more exposed cover later.
 **Stage 2: Gather the pieces** — Resources and minions are quietly assembled under the front's legitimate cover. Clues appear as unusual patterns noticed by people close to the operation. Undisrupted, the scheme gains the capacity it needs.
 **Stage 3: Test the mechanism** — A small-scale trial run, deniable if caught, reveals whether the plan actually works. Clues are now physical evidence, not just patterns. This is the last stage stoppable without a direct confrontation.
-**Stage 4: Execute in earnest** — The scheme moves from preparation to action; its effects become visible to the wider public even if its source is not. Clues are now unmistakable, but resources to reverse the damage are scarce.
+**Stage 4: Execute in earnest** — The scheme moves from preparation to action; its effects become visible to the wider public even if its source is not. Clues are now unmistakable, but resources to reverse the damage are scarce.`
+}
 
 ### Complications
 - ${complicationOne}
@@ -299,7 +321,7 @@ Someone the heroes already trust from an earlier stage — an informant, a minor
     summary: "",
     content,
     lore,
-    labels: ["villain-scheme", "villain-scheme-generator", "imported-draft"],
+    labels: [...DEFAULT_VILLAIN_SCHEME_LABELS],
     status: "active",
   };
 }
