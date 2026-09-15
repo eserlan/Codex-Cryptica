@@ -253,3 +253,19 @@ describe("parseMinorMagicItemResponse", () => {
     ).toThrow();
   });
 });
+
+// Regression test (#3108): "Superhero / Comic Book" has no entry in
+// minorMagicItemConfig.formsByTheme, so resolveMinorMagicItem falls back to
+// FALLBACK_THEME ("Classic Fantasy") instead of crashing on an undefined
+// lookup.
+describe("Superhero theme regression (#3108)", () => {
+  it("falls back to the Classic Fantasy forms/names pool", () => {
+    const out = generateMinorMagicItemLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(9),
+    );
+    expect(out.type).toBe("item");
+    expect(out.content).toBeTruthy();
+    expect(out.title).toBeTruthy();
+  });
+});
