@@ -192,6 +192,14 @@ describe("registry lookup", () => {
     });
   });
 
+  it("normalizes the superhero theme before building a quest prompt", () => {
+    const prompt = getGenerator("quest").buildPrompt(
+      run("quest", { themeId: "superhero" }),
+    );
+
+    expect(prompt).toContain("- Genre: Superhero");
+  });
+
   it("builds and generates a d6 rumour table as a note draft", () => {
     const generator = getGenerator("rumour");
     const request = run("rumour", {

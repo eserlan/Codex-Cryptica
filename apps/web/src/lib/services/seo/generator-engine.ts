@@ -220,11 +220,15 @@ export {
 export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
-export { questConfig, themeToQuestGenre } from "generator-engine";
+export {
+  questConfig,
+  questGenreForTheme,
+  themeToQuestGenre,
+} from "generator-engine";
 export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
-export { villainConfig } from "generator-engine";
+export { getVillainThreatScales, villainConfig } from "generator-engine";
 export { originConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
