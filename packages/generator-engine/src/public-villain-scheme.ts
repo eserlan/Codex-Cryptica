@@ -250,6 +250,7 @@ export function generateVillainSchemeLocal(
   const resolved = resolveVillainScheme(options, rng);
   const scaleFallback =
     SUPERHERO_POWER_SCALE_FALLBACKS[resolved.powerScale as SuperheroPowerScale];
+  const finalStageNumber = scaleFallback?.planStages.length ?? 4;
   const publicActivity = scaleFallback
     ? `Coordinated disruptions are being reported around ${scaleFallback.territory.charAt(0).toLowerCase()}${scaleFallback.territory.slice(1)}, all following an unexplained pattern.`
     : pickFrom(PUBLIC_ACTIVITY_POOL, rng);
@@ -307,7 +308,7 @@ ${
 - ${complicationTwo}
 
 ### Escalation If Ignored
-Left unchecked, each stage completes roughly on schedule, and the villain's position becomes harder to dislodge the longer the heroes wait — by Stage 4, undoing the scheme costs far more than preventing it would have.
+Left unchecked, each stage completes roughly on schedule, and the villain's position becomes harder to dislodge the longer the heroes wait — by Stage ${finalStageNumber}, undoing the scheme costs far more than preventing it would have.
 
 ### Consequences If Nobody Intervenes
 The scheme completes: the ${resolved.villainProfile.toLowerCase()} secures the objective outright, the public is left with only the cover story to explain what happened, and the affected community bears whatever cost the plan required.

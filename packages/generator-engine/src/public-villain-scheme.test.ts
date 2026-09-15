@@ -85,6 +85,7 @@ describe("generateVillainSchemeLocal", () => {
     );
     expect(out.lore).toContain("Act across realities");
     expect(out.lore).toContain("Stabilise the new multiverse");
+    expect(out.lore).toContain("by Stage 6");
     expect(out.lore).not.toContain("Establish the front");
   });
 });
