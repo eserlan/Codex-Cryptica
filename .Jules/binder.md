@@ -211,8 +211,3 @@
 
 **Learning:** Hardcoded ID generation (`crypto.randomUUID()`) inside Svelte 5 store managers like `AdventureManager` couples them to the global environment and makes tests harder to control.
 **Action:** Inject `idGenerator` via a dependencies object, falling back to `systemIdGenerator.uuid` from `@codex/runtime` for a sensible default.
-
-## 2024-05-18 - Injecting Clock into Randomness Components
-
-**Learning:** UI components dealing with random events (like draws or rolls) that need to record timestamps to a history store shouldn't hard-code `Date.now()`. This makes testing timing-specific history logic difficult and pollutes global mocks.
-**Action:** Always inject `clock: Clock = systemClock` (from `$lib/utils/runtime-deps`) as an optional component prop (via `$props()`) and use `clock.now()` instead of `Date.now()`.

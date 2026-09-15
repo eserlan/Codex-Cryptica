@@ -16,12 +16,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
-  import {
-    systemIdGenerator,
-    type IdGenerator,
-    systemClock,
-    type Clock,
-  } from "$lib/utils/runtime-deps";
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import type { ChatCardPayload } from "../../../types/vtt";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
@@ -41,7 +36,6 @@
     history = diceHistory,
     idGenerator = systemIdGenerator,
     session = mapSession,
-    clock = systemClock,
     addToChat,
     revealArt = true,
     copyText = async (text) => {
@@ -57,7 +51,6 @@
     history?: DiceHistoryStore;
     idGenerator?: IdGenerator;
     session?: typeof mapSession;
-    clock?: Clock;
     addToChat?: (text: string) => Promise<void>;
     /**
      * Whether a single-card draw throws its art up full screen by itself.
@@ -241,7 +234,7 @@
         total: result.cards.length,
         parts: [],
         formula: `${result.cards.length} card${result.cards.length === 1 ? "" : "s"}`,
-        timestamp: clock.now(),
+        timestamp: Date.now(),
       },
       "table",
       {

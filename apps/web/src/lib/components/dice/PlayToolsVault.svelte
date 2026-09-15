@@ -11,7 +11,6 @@
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import DiceVault from "./DiceVault.svelte";
   import DeckUseView from "$lib/components/random/DeckUseView.svelte";
   import TableUseView from "$lib/components/random/TableUseView.svelte";
@@ -25,7 +24,6 @@
     service = deckService,
     history = diceHistory,
     session = mapSession,
-    clock = systemClock,
   }: {
     isStandalone?: boolean;
     activeTab?: PlayToolsTab;
@@ -33,7 +31,6 @@
     service?: DeckService;
     history?: DiceHistoryStore;
     session?: typeof mapSession;
-    clock?: Clock;
   } = $props();
 
   let selectedDeckId = $state<string>("");
@@ -204,7 +201,6 @@
                 {sources}
                 {history}
                 {session}
-                {clock}
                 revealArt={false}
               />
             </div>
