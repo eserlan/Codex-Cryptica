@@ -95,6 +95,9 @@ function makeFakeEngine(): any {
     generateVillain: vi
       .fn()
       .mockResolvedValue({ type: "note", title: "villain" }),
+    generateComicBookEvent: vi
+      .fn()
+      .mockResolvedValue({ type: "note", title: "comic-book-event" }),
     generateWorld: vi.fn().mockResolvedValue({ type: "note", title: "world" }),
     generateStarSystem: vi
       .fn()
@@ -163,6 +166,7 @@ function makeBaseCtx(overrides: any) {
       premise: (overrides.plotPremise as string) ?? "local premise",
     },
     villain: { genre: "Fantasy" },
+    comicBookEvent: { eventType: "Alien Invasion" },
     world: { genre: "Fantasy" },
     starSystem: { genre: "Sci-Fi" },
     constellation: { genre: "Fantasy" },
@@ -288,6 +292,7 @@ describe("generator-page-generation", () => {
         "adventure-generator",
         "plot-twist-generator",
         "bbeg-generator",
+        "comic-book-event-generator",
       ];
       for (const slug of slugs) {
         expect(typeof handlers[slug]).toBe("function");

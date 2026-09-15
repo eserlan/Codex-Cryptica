@@ -33,6 +33,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "adventure-idea-generator",
   "plot-twist-generator",
   "bbeg-generator",
+  "comic-book-event-generator",
   "world",
   "council-vote",
   "secret-society",

@@ -300,6 +300,14 @@ export {
   type VillainPrompt,
 } from "./public-villain";
 export {
+  buildComicBookEventPrompt,
+  parseComicBookEventResponse,
+  generateComicBookEventLocal,
+  comicBookEventConfig,
+  type ComicBookEventGeneratorOptions,
+  type ComicBookEventPrompt,
+} from "./public-comic-book-event";
+export {
   SUPERHERO_POWER_SCALES,
   SUPERHERO_POWER_SCALE_HINTS,
   type SuperheroPowerScale,

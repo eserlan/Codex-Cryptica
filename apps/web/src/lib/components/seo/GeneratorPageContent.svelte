@@ -38,6 +38,7 @@
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
+  import ComicBookEventFormFields from "$lib/components/seo/ComicBookEventFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import ConstellationFormFields from "$lib/components/seo/ConstellationFormFields.svelte";
@@ -75,6 +76,7 @@
     adventureConfig,
     plotTwistConfig,
     villainConfig,
+    comicBookEventConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -558,6 +560,13 @@
     campaignContext: "",
   });
 
+  let comicBookEvent = $state({
+    eventType: comicBookEventConfig.eventTypes[0],
+    scale: comicBookEventConfig.scales[0],
+    tone: comicBookEventConfig.tones[0],
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -861,6 +870,7 @@
     adventure,
     plotTwist,
     villain,
+    comicBookEvent,
     world,
     starSystem,
     constellation,
@@ -1298,6 +1308,14 @@
         bind:sympathy={villain.sympathy}
         bind:worldRelation={villain.worldRelation}
         bind:campaignContext={villain.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "comic-book-event-generator"}
+      <ComicBookEventFormFields
+        bind:eventType={comicBookEvent.eventType}
+        bind:scale={comicBookEvent.scale}
+        bind:tone={comicBookEvent.tone}
+        bind:campaignContext={comicBookEvent.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}

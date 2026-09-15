@@ -1249,6 +1249,53 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
     ],
   },
+  "comic-book-event-generator": {
+    pageTitle:
+      "Comic Book Event Generator | Superhero Campaign Crisis Generator | Codex Cryptica",
+    metaDescription:
+      "Generate a campaign-scale superhero event — an alien invasion, hero civil war, secret invasion, reality fracture, and more — with a staged escalation and concrete, lasting consequences, not just a flashy premise.",
+    introTitle: "Comic Book Event Generator",
+    eyebrow: "Superhero Event Generator",
+    introText:
+      "Create a large, crossover-tier superhero crisis a campaign can build an arc around: a premise, a staged escalation the party can witness and intervene in, and concrete, campaign-persistent consequences — a location changed, an institution's trust broken, a hero unmasked — not just a premise that resets to normal. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/comic-book-event-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-comic-book-event-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica Comic Book Event generator drafting a superhero campaign crisis with staged escalation and lasting consequences",
+    keywords: [
+      "comic book event generator",
+      "superhero event generator",
+      "superhero campaign crisis generator",
+      "comic book crossover generator",
+      "superhero rpg generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Comic Book Event generator create?",
+        answer:
+          "It creates a large, campaign-scale superhero crisis: a premise / inciting incident, a public response, a staged escalation across several beats, the true cause behind the event, and concrete, lasting consequences that persist after the climax — a location destroyed, an institution's trust broken, a hero publicly unmasked, or a new political reality.",
+      },
+      {
+        question: "Does the event actually change the campaign afterward?",
+        answer:
+          "Yes, by design. Every generated event includes a dedicated 'Lasting Consequences' section, and the generator is explicitly guarded against vague resolutions like 'the city was saved' or 'life returned to normal' — consequences must be specific enough for a GM to reference sessions later.",
+      },
+      {
+        question: "What scale of event does this generate?",
+        answer:
+          "Comic Book Events are campaign-scale by nature, so the Scale option runs from National through Multiversal. For a smaller, single-villain threat, use the BBEG / Campaign Villain or Quest Hook generators instead.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/bbeg-generator", label: "BBEG Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      {
+        href: "/generators/secret-society",
+        label: "Secret Society Generator",
+      },
+    ],
+  },
   "adventure-idea-generator": {
     pageTitle:
       "Adventure Idea Generator | Multi-Genre RPG Scenario Generator | Codex Cryptica",

@@ -52,6 +52,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "adventure-idea-generator" },
         { slug: "plot-twist-generator" },
         { slug: "bbeg-generator" },
+        { slug: "comic-book-event-generator" },
         { slug: "world" },
         { slug: "council-vote" },
         { slug: "secret-society" },

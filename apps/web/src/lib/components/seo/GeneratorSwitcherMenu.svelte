@@ -91,6 +91,10 @@
           label: "BBEG / Campaign Villain Generator",
           path: "/generators/bbeg-generator",
         },
+        {
+          label: "Comic Book Event Generator",
+          path: "/generators/comic-book-event-generator",
+        },
         { label: "Heist Generator", path: "/generators/heist" },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {

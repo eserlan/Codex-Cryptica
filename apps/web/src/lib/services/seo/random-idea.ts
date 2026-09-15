@@ -10,6 +10,7 @@ export interface RandomIdeaCategory {
     | "npc"
     | "quest"
     | "villain"
+    | "comic-book-event"
     | "minor-magic-item"
     | "artifact"
     | "council-vote"
@@ -99,6 +100,11 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "BBEG / Campaign Villain",
     generate: (engine, useAI, theme) =>
       engine.generateVillain({ genre: theme, useAI }),
+  },
+  {
+    key: "comic-book-event",
+    label: "Comic Book Event",
+    generate: (engine, useAI) => engine.generateComicBookEvent({ useAI }),
   },
   {
     key: "minor-magic-item",

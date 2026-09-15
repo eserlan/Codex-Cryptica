@@ -48,6 +48,9 @@ import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  buildComicBookEventPrompt,
+  parseComicBookEventResponse,
+  generateComicBookEventLocal,
   buildPersonalityPrompt,
   parsePersonalityResponse,
   generatePersonalityLocal,
@@ -134,6 +137,7 @@ import {
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
+  type ComicBookEventGeneratorOptions,
   type PersonalityGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type HeistGeneratorOptions,
@@ -221,6 +225,7 @@ export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { villainConfig } from "generator-engine";
+export { comicBookEventConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
@@ -684,6 +689,30 @@ export class DefaultGeneratorEngine {
     );
     villainDomainHistoryStore.record(result.conflictDomain);
     return result;
+  }
+
+  async generateComicBookEvent(
+    options: ComicBookEventGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...eventOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("comic-book-event");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildComicBookEventPrompt(
+            eventOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "comic-book-event",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseComicBookEventResponse(text, resolved);
+      },
+      () => generateComicBookEventLocal(eventOptions),
+    );
   }
 
   /**
