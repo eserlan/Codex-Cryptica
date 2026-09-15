@@ -365,51 +365,6 @@ describe("DeckView timestamp injection", () => {
       getDiscardedCards: () => [],
     };
 
-    render(DeckView, {
-      deck: deckOf(1),
-      service: service as any,
-      sources: {
-        getSource: () => deckOf(1),
-        resolutionContext: () => ({}),
-      } as any,
-      history: history as any,
-      clock: fakeClock,
-      session: { getPopulatedAreaCount: () => 0 } as any,
-      revealArt: false,
-    });
-
-    await fireEvent.click(screen.getByTestId("draw-cards"));
-    await waitFor(() => expect(history.addResult).toHaveBeenCalled());
-
-    // The first argument is the RollRecord payload
-    const recordPayload = history.addResult.mock.calls[0][0];
-    expect(recordPayload.timestamp).toBe(fixedTime);
-  });
-});
-
-describe("DeckView timestamp injection", () => {
-  it("uses the injected clock to timestamp history records", async () => {
-    const fixedTime = 123456789;
-    const fakeClock = { now: () => fixedTime };
-    const history = { addResult: vi.fn() };
-
-    const service = {
-      remaining: vi.fn(async () => []),
-      discarded: vi.fn(async () => []),
-      draw: vi.fn(async () => ({
-        exhausted: false,
-        cards: [
-          {
-            card: { id: "card-1", title: "Test Card" },
-            reversed: false,
-            resolved: { finalText: "Test Text", notices: [] },
-          },
-        ],
-      })),
-      getRemainingCount: () => 1,
-      getDiscardedCards: () => [],
-    };
-
     const sources = {
       getSource: () => deckOf(1),
       resolutionContext: () => ({}),
