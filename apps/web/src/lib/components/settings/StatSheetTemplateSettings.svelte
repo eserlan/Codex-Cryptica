@@ -584,6 +584,7 @@
                 )
                   ? 'rotate-90'
                   : ''}"
+                aria-hidden="true"
               ></span>
               <span
                 class="icon-[lucide--list-checks] text-theme-secondary w-3.5 h-3.5 shrink-0"
@@ -745,6 +746,7 @@
                     )
                       ? 'rotate-90'
                       : ''}"
+                    aria-hidden="true"
                   ></span>
                   <span
                     class="icon-[lucide--list-checks] text-theme-secondary w-3.5 h-3.5"
