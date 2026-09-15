@@ -21,7 +21,12 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
-import { parseFencedJson } from "./llm-response-utils";
+import {
+  asArray,
+  asRecord,
+  asString,
+  parseFencedJson,
+} from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import {
   SUPERHERO_POWER_SCALES,
@@ -165,16 +170,30 @@ export function parseComicBookEventResponse(
   text: string,
   resolved: ResolvedComicBookEvent,
 ): PublicGeneratorOutput {
-  const data = parseFencedJson(text);
+  const data = asRecord(parseFencedJson<unknown>(text));
+  const content = asString(data.content).trim();
+  const lore = asString(data.lore).trim();
+  if (!content || !lore) {
+    throw new Error(
+      "Comic book event response must contain content and lore strings.",
+    );
+  }
+
+  const labels = asArray(data.labels)
+    .filter((label): label is string => typeof label === "string")
+    .map((label) => label.trim())
+    .filter(Boolean);
+
   return {
     type: "event",
-    title: data.title || resolved.eventName,
-    summary: data.summary || "",
-    content: data.content || "",
-    lore: data.lore || "",
-    labels: Array.isArray(data.labels)
-      ? data.labels
-      : ["comic-book-event", "superhero-event-generator", "imported-draft"],
+    title: asString(data.title).trim() || resolved.eventName,
+    summary: asString(data.summary).trim(),
+    content,
+    lore,
+    labels:
+      labels.length > 0
+        ? labels
+        : ["comic-book-event", "superhero-event-generator", "imported-draft"],
     status: "active",
   };
 }
@@ -387,7 +406,24 @@ const EVENT_TYPE_FLAVORS: Record<string, EventTypeFlavor> = {
   },
 };
 
-const RANDOM_EVENT_TYPES = Object.keys(EVENT_TYPE_FLAVORS);
+function customEventFlavor(eventType: string): EventTypeFlavor {
+  const label = eventType.trim();
+  return {
+    premise: `The ${label.toLowerCase()} becomes undeniable when its first public consequence cannot be contained or explained away.`,
+    publicResponse: `Authorities and the hero community disagree about how to respond to the ${label.toLowerCase()}, while public attention turns every new development into a crisis.`,
+    trueCause: `The ${label.toLowerCase()} was set in motion by an actor whose immediate objective is only the first step in a larger plan, and the evidence is still being deliberately obscured.`,
+    climax: `The ${label.toLowerCase()} is contained at a cost that leaves the campaign permanently changed, while the force behind it keeps one advantage in reserve.`,
+    consequences: [
+      `The ${label.toLowerCase()} leaves a permanent physical or institutional mark that changes how ${label.toLowerCase()}-scale threats are handled.`,
+      `A person, organisation, or public assumption central to the ${label.toLowerCase()} is permanently changed and cannot simply return to its former role.`,
+      `The evidence left behind makes the ${label.toLowerCase()} a continuing political or social fact, not an incident that can be forgotten after the climax.`,
+    ],
+    hooks: [
+      `The actor who set the ${label.toLowerCase()} in motion is still pursuing the next step of the plan.`,
+      `Someone who profited from the ${label.toLowerCase()} is trying to suppress the evidence that would expose them.`,
+    ],
+  };
+}
 
 /**
  * Local (non-AI) fallback. Deliberately lighter than the AI prompt's full
@@ -399,10 +435,9 @@ export function generateComicBookEventLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveComicBookEvent(options, rng);
-  const flavorKey = RANDOM_EVENT_TYPES.includes(resolved.eventType)
-    ? resolved.eventType
-    : pickFrom(RANDOM_EVENT_TYPES, rng);
-  const flavor = EVENT_TYPE_FLAVORS[flavorKey];
+  const knownFlavor = EVENT_TYPE_FLAVORS[resolved.eventType];
+  const flavorKey = knownFlavor ? resolved.eventType : "Custom Event";
+  const flavor = knownFlavor ?? customEventFlavor(resolved.eventType);
   const location = `${generateName(rng)} City`;
   const fill = (s: string) => s.replaceAll("{{LOCATION}}", location);
   const scaleHint =
@@ -438,7 +473,7 @@ ${fill(flavor.climax)}
 
   return {
     type: "event",
-    title: `${resolved.eventName}: ${flavorKey}`,
+    title: `${resolved.eventName}: ${knownFlavor ? flavorKey : resolved.eventType}`,
     summary: "",
     content,
     lore,

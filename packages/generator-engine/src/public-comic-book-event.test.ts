@@ -109,6 +109,16 @@ describe("generateComicBookEventLocal", () => {
     );
   });
 
+  it("preserves a custom event type in the local fallback", () => {
+    const out = generateComicBookEventLocal(
+      { eventType: "Zombie Plague" },
+      seededRng(4),
+    );
+    expect(out.title).toContain("Zombie Plague");
+    expect(out.content.toLowerCase()).toContain("zombie plague");
+    expect(out.lore.toLowerCase()).toContain("zombie plague");
+  });
+
   it("produces concrete, non-vague lasting consequences for every event type", () => {
     for (const eventType of comicBookEventConfig.eventTypes) {
       if (eventType === "Random") continue;
@@ -241,5 +251,25 @@ describe("parseComicBookEventResponse", () => {
     );
     expect(out.title).toBe(resolved.eventName);
     expect(() => parseComicBookEventResponse("nope", resolved)).toThrow();
+  });
+
+  it("rejects malformed field types at the AI boundary", () => {
+    expect(() =>
+      parseComicBookEventResponse(
+        JSON.stringify({ title: {}, content: {}, lore: "valid" }),
+        resolved,
+      ),
+    ).toThrow("content and lore strings");
+
+    const output = parseComicBookEventResponse(
+      JSON.stringify({
+        title: "Safe Event",
+        content: "player-facing",
+        lore: "gm-facing",
+        labels: ["safe-label", 42, { unexpected: true }],
+      }),
+      resolved,
+    );
+    expect(output.labels).toEqual(["safe-label"]);
   });
 });
