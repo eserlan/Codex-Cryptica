@@ -16,7 +16,12 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
-  import { systemIdGenerator, type IdGenerator, systemClock, type Clock } from "$lib/utils/runtime-deps";
+  import {
+    systemIdGenerator,
+    type IdGenerator,
+    systemClock,
+    type Clock,
+  } from "$lib/utils/runtime-deps";
   import type { ChatCardPayload } from "../../../types/vtt";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
