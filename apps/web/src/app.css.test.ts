@@ -25,7 +25,7 @@ describe("Markdown Typography theme contract", () => {
     );
     expect(proseBlock).toContain("--tw-prose-body: var(--color-text-primary)");
     expect(proseBlock).toContain(
-      "--tw-prose-links: var(--color-accent-primary)",
+      "--tw-prose-links: var(--link, var(--color-accent-primary))",
     );
     expect(proseBlock).toContain("--tw-prose-kbd: var(--color-text-primary)");
   });
