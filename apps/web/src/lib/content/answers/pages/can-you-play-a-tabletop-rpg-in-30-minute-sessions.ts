@@ -14,7 +14,7 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
       heading: "A short session is a different shape, not a smaller one",
       paragraphs: [
         "The failure mode with thirty-minute sessions is trying to run a normal session at speed: arrive in town, take the quest, investigate three locations, talk to several witnesses, then run out of time before anything gets resolved. Compressing a full session into a fraction of the time mostly compresses the setup, and setup is the part players remember least.",
-        "A thirty-minute session works when it's built around a single playable unit with a beginning, a decision, and a consequence, the same shape a longer session has, just with only one of them instead of several. That's a scheduling and session-design problem, not a smaller version of ordinary pacing advice: recap, admin, and scene transitions eat a much larger share of a thirty-minute slot than a three-hour one, so they have to be cut or moved out rather than merely trimmed.",
+        "A thirty-minute session works when it's built around a single playable unit with a beginning, a decision, and a consequence, the same shape a longer session has, just with one playable unit instead of several. That's a scheduling and session-design problem, not a smaller version of ordinary pacing advice: recap, admin, and scene transitions eat a much larger share of a thirty-minute slot than a three-hour one, so they have to be cut or moved out rather than merely trimmed.",
       ],
     },
     {

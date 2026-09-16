@@ -522,6 +522,29 @@ describe("published answers", () => {
     );
   });
 
+  it("publishes the short-session answer around one playable unit", () => {
+    const shortSessionAnswer =
+      answers["can-you-play-a-tabletop-rpg-in-30-minute-sessions"];
+    expect(shortSessionAnswer).toBeDefined();
+    expect(shortSessionAnswer.kind).toBe("framework");
+    expect(shortSessionAnswer.sections[0].kind).toBe("prose");
+    expect(
+      shortSessionAnswer.sections[0].kind === "prose" &&
+        shortSessionAnswer.sections[0].paragraphs.some((paragraph) =>
+          paragraph.includes("one playable unit instead of several"),
+        ),
+    ).toBe(true);
+    expect(shortSessionAnswer.sections.some((s) => s.kind === "example")).toBe(
+      true,
+    );
+    expect(
+      shortSessionAnswer.sections.some((s) => s.kind === "checklist"),
+    ).toBe(true);
+    expect(shortSessionAnswer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+  });
+
   it("publishes the heist answer with the expected system references", () => {
     const heistAnswer = answers["how-do-you-run-a-heist-in-a-tabletop-rpg"];
     expect(heistAnswer).toBeDefined();
