@@ -194,6 +194,7 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-i-run-a-successful-session-0",
     "what-kind-of-ship-should-a-pirate-crew-start-with",
+    "what-rpg-should-i-play-for-an-over-the-top-space-opera",
   ],
   labels: ["sci-fi"],
   discovery: {
