@@ -67,6 +67,7 @@ export interface GenerationContext {
   plotTwist: Record<string, unknown>;
   villain: Record<string, unknown>;
   comicBookEvent: Record<string, unknown>;
+  villainScheme: Record<string, unknown>;
   world: Record<string, unknown>;
   starSystem: Record<string, unknown>;
   constellation: Record<string, unknown>;
@@ -253,6 +254,9 @@ export function createGeneratorHandlers(
     "comic-book-event-generator": (useAI) =>
       engine.generateComicBookEvent({
         ...(ctx.comicBookEvent as object),
+    "villain-scheme-generator": (useAI) =>
+      engine.generateVillainScheme({
+        ...(ctx.villainScheme as object),
         useAI,
       } as never),
     world: (useAI) =>

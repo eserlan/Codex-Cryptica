@@ -51,6 +51,9 @@ import {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
+  buildVillainSchemePrompt,
+  parseVillainSchemeResponse,
+  generateVillainSchemeLocal,
   buildPersonalityPrompt,
   parsePersonalityResponse,
   generatePersonalityLocal,
@@ -138,6 +141,7 @@ import {
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
   type ComicBookEventGeneratorOptions,
+  type VillainSchemeGeneratorOptions,
   type PersonalityGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type HeistGeneratorOptions,
@@ -230,6 +234,11 @@ export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
 export { getVillainThreatScales, villainConfig } from "generator-engine";
 export { comicBookEventConfig } from "generator-engine";
+export {
+  getVillainThreatScales,
+  villainConfig,
+  villainSchemeConfig,
+} from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
@@ -716,6 +725,30 @@ export class DefaultGeneratorEngine {
         return parseComicBookEventResponse(text, resolved);
       },
       () => generateComicBookEventLocal(eventOptions),
+    );
+  }
+
+  async generateVillainScheme(
+    options: VillainSchemeGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...villainSchemeOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("villain-scheme");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildVillainSchemePrompt(
+            villainSchemeOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "villain-scheme",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseVillainSchemeResponse(text, resolved);
+      },
+      () => generateVillainSchemeLocal(villainSchemeOptions),
     );
   }
 
