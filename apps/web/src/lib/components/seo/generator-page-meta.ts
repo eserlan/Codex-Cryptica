@@ -1465,7 +1465,6 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/quest", label: "Quest Hook Generator" },
     ],
   },
-  },
   heist: {
     pageTitle:
       "Heist Generator | RPG Score & Infiltration Creator | Codex Cryptica",
