@@ -1247,6 +1247,60 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         href: "/generators/secret-society",
         label: "Secret Society Generator",
       },
+      {
+        href: "/generators/villain-scheme-generator",
+        label: "Villain Scheme Generator",
+      },
+    ],
+  },
+  "villain-scheme-generator": {
+    pageTitle:
+      "Superhero Villain Scheme Generator | Comic Book Plot Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a staged, discoverable, escalating superhero villain scheme -- objective, motivation, current activity, resources, scheme stages, clues, complications, and consequences if nobody intervenes.",
+    introTitle: "Superhero Villain Scheme Generator",
+    eyebrow: "Superhero / Comic Book Generator",
+    introText:
+      "Create an ongoing villain plot for a Superhero / Comic Book campaign: an objective, why they want it, what they're doing right now, resources and minions, escalating scheme stages the heroes can discover and disrupt, complications, and consequences if nobody intervenes. Any villain -- existing or freshly imagined -- can be running it. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/villain-scheme-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-villain-scheme-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica superhero villain scheme generator drafting an escalating, discoverable plot with clues and consequences",
+    keywords: [
+      "villain scheme generator",
+      "superhero plot generator",
+      "comic book villain plan",
+      "superhero campaign generator",
+      "villain plot generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Villain Scheme generator create?",
+        answer:
+          "It creates an ongoing villain plot, not a villain biography: an objective, why they want it, what they're doing right now, resources and minions, 4-6 escalating scheme stages with clues heroes can uncover at each one, complications, escalation if ignored, consequences if nobody intervenes, and an optional twist -- plus a ready-to-run Adventure Hook drawn from the scheme's current stage.",
+      },
+      {
+        question: "Is this the same as the BBEG / Campaign Villain generator?",
+        answer:
+          "No. The BBEG generator writes up a full villain character. This generator writes the SCHEME itself -- a staged, discoverable, escalating plot that any villain, existing or freshly imagined, could be running.",
+      },
+      {
+        question: "Can I send the result to another generator?",
+        answer:
+          "Yes. The generated draft includes a 'Generate Plot Twist' action that hands the scheme straight to the Plot Twist Generator as a premise, so you can spin up a twist that recontextualises the scheme.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/bbeg-generator",
+        label: "BBEG / Campaign Villain Generator",
+      },
+      {
+        href: "/generators/plot-twist-generator",
+        label: "Plot Twist & Complication Generator",
+      },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
     ],
   },
   "origin-generator": {

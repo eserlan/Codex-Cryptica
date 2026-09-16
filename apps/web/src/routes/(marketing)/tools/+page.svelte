@@ -198,6 +198,13 @@
               icon: "icon-[lucide--skull]",
             },
             {
+              href: "/generators/villain-scheme-generator",
+              label: "Villain Scheme Generator",
+              summary:
+                "Generate a Superhero / Comic Book villain scheme: objective, motivation, resources, escalating discoverable stages, complications, and consequences if nobody intervenes.",
+              icon: "icon-[lucide--target]",
+            },
+            {
               href: "/generators/heist",
               label: "Heist Generator",
               summary:

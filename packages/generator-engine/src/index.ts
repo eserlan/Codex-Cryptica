@@ -310,7 +310,16 @@ export {
   type OriginPrompt,
 } from "./public-origin";
 export {
+  buildVillainSchemePrompt,
+  parseVillainSchemeResponse,
+  generateVillainSchemeLocal,
+  villainSchemeConfig,
+  type VillainSchemeGeneratorOptions,
+  type VillainSchemePrompt,
+} from "./public-villain-scheme";
+export {
   SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
   SUPERHERO_POWER_SCALE_HINTS,
   type SuperheroPowerScale,
 } from "./superhero-power-scale";

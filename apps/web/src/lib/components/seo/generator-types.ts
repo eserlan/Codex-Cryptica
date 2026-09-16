@@ -31,6 +31,7 @@ export type ValidSlug =
   | "plot-twist-generator"
   | "bbeg-generator"
   | "origin-generator"
+  | "villain-scheme-generator"
   | "world"
   | "council-vote"
   | "secret-society"

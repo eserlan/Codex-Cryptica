@@ -271,6 +271,22 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-villain-scheme-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/villain-scheme-generator",
+    primaryIntent: "superhero villain scheme generator",
+    intentAliases: [
+      "comic book villain plot generator",
+      "superhero plot generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A Superhero / Comic Book villain plot, not a villain writeup -- an escalating, discoverable scheme with clues, complications, and consequences that any villain could be running.",
+    parentCluster: "antagonist-creation",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-creature",
     pageKind: "generator",
     canonicalPath: "/generators/creature",
