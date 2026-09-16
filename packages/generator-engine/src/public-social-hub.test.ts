@@ -143,20 +143,19 @@ describe("parse social hub responses", () => {
   });
 });
 
-// Regression test (#3108): socialHubConfig is its own closed genre system
-// that does not include "Superhero / Comic Book". It's reached only via
-// random-idea.ts's themeToHubGenre mapping, which maps Superhero to
-// "Modern" — a real key with real content, so this never actually crashes.
-// Confirm that directly too, in case a caller ever passes the raw theme
-// through.
-describe("Superhero theme regression (#3108)", () => {
-  it("falls back to the Fantasy venue/clientele pools for an unmapped genre", () => {
+// Superhero / Comic Book genre content (#3125): socialHubConfig used to have
+// no entry for this genre, so random-idea.ts's themeToHubGenre mapping fell
+// back to "Modern" (#3108). It now has real venue types and clientele of
+// its own.
+describe("Superhero / Comic Book genre (#3125)", () => {
+  it("has its own venue and clientele pools, not the Fantasy fallback", () => {
+    expect(socialHubConfig.genres).toContain("Superhero / Comic Book");
     expect(
       socialHubConfig.venueTypesByGenre["Superhero / Comic Book"],
-    ).toBeUndefined();
+    ).toContain("Hero-Team HQ Commissary");
     expect(
       socialHubConfig.clientelesByGenre["Superhero / Comic Book"],
-    ).toBeUndefined();
+    ).toContain("Off-duty heroes and sidekicks");
 
     const out = generateSocialHubLocal(
       { genre: "Superhero / Comic Book" },

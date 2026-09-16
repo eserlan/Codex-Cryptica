@@ -114,6 +114,7 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Western": "Space Western",
   Superhero: "Superhero / Comic Book",
+  "Superhero / Comic Book": "Superhero / Comic Book",
 };
 
 // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids
