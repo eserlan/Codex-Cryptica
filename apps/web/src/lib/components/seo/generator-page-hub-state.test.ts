@@ -3,6 +3,7 @@ import { UIPersistence } from "$lib/stores/ui/persistence";
 import {
   getHubMountPatch,
   resolveInitialActiveTheme,
+  resolveSupportedHubGenre,
 } from "./generator-page-hub-state";
 
 function memoryPersistence(
@@ -79,6 +80,27 @@ describe("resolveInitialActiveTheme", () => {
         fallbackTheme: "Classic Fantasy",
       }),
     ).toBe("Vampire / Gothic Noir");
+  });
+});
+
+describe("resolveSupportedHubGenre", () => {
+  it("keeps a hub genre supported by the generator config", () => {
+    expect(
+      resolveSupportedHubGenre(
+        "Cyberpunk",
+        ["Fantasy", "Cyberpunk"],
+        "Fantasy",
+      ),
+    ).toBe("Cyberpunk");
+  });
+
+  it("falls back when a hub genre has no config pool", () => {
+    expect(
+      resolveSupportedHubGenre("Superhero", ["Fantasy", "Modern"], "Fantasy"),
+    ).toBe("Fantasy");
+    expect(resolveSupportedHubGenre(null, ["Fantasy"], "Fantasy")).toBe(
+      "Fantasy",
+    );
   });
 });
 

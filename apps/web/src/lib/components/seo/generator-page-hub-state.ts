@@ -59,6 +59,16 @@ export function resolveInitialActiveTheme(opts: {
   return worldInitialTheme || storedLabel || opts.fallbackTheme;
 }
 
+export function resolveSupportedHubGenre(
+  hubGenre: string | null,
+  supportedGenres: readonly string[],
+  fallbackGenre: string,
+): string {
+  return hubGenre && supportedGenres.includes(hubGenre)
+    ? hubGenre
+    : fallbackGenre;
+}
+
 export function getEffectiveStoredThemeId(opts: {
   urlHubTheme?: string | null;
   slug: string;

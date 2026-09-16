@@ -127,6 +127,7 @@
   import {
     getHubMountPatch,
     resolveInitialActiveTheme,
+    resolveSupportedHubGenre,
   } from "./generator-page-hub-state";
 
   let {
@@ -388,30 +389,40 @@
     campaignContext: "",
   });
 
+  const initialNationGenre = resolveSupportedHubGenre(
+    initialHubGenre,
+    nationConfig.genres,
+    nationConfig.genres[0],
+  );
+  const initialNationPolityTypes =
+    nationConfig.polityTypesByGenre[initialNationGenre] ??
+    nationConfig.polityTypesByGenre[nationConfig.genres[0]];
   let nation = $state({
-    genre: initialHubGenre ?? nationConfig.genres[0],
-    polityType:
-      nationConfig.polityTypesByGenre[
-        initialHubGenre ?? nationConfig.genres[0]
-      ][0],
+    genre: initialNationGenre,
+    polityType: initialNationPolityTypes[0],
     governmentStyle: nationConfig.governmentStyles[0],
     scale: nationConfig.scales[2],
     conflictLevel: nationConfig.conflictLevels[0],
     campaignContext: "",
   });
 
+  const initialSocialHubGenre = resolveSupportedHubGenre(
+    initialHubGenre,
+    socialHubConfig.genres,
+    socialHubConfig.genres[0],
+  );
+  const initialSocialHubVenueTypes =
+    socialHubConfig.venueTypesByGenre[initialSocialHubGenre] ??
+    socialHubConfig.venueTypesByGenre[socialHubConfig.genres[0]];
+  const initialSocialHubClienteles =
+    socialHubConfig.clientelesByGenre[initialSocialHubGenre] ??
+    socialHubConfig.clientelesByGenre[socialHubConfig.genres[0]];
   let socialHub = $state({
-    genre: initialHubGenre ?? socialHubConfig.genres[0],
-    venueType:
-      socialHubConfig.venueTypesByGenre[
-        initialHubGenre ?? socialHubConfig.genres[0]
-      ][0],
+    genre: initialSocialHubGenre,
+    venueType: initialSocialHubVenueTypes[0],
     atmosphere: socialHubConfig.atmospheres[0],
     wealthLevel: socialHubConfig.wealthLevels[2],
-    clientele:
-      socialHubConfig.clientelesByGenre[
-        initialHubGenre ?? socialHubConfig.genres[0]
-      ][0],
+    clientele: initialSocialHubClienteles[0],
     campaignContext: "",
   });
 
