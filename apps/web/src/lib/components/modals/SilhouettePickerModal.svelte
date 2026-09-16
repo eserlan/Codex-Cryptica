@@ -89,6 +89,10 @@
     try {
       await vault.updateEntity(entity.id, {
         silhouette: activeSelectedId,
+        image: undefined,
+        thumbnail: undefined,
+        imageFocus: undefined,
+        imageArtDirection: undefined,
       });
       notificationStore.notify(
         `Set silhouette for "${entity.title}".`,
