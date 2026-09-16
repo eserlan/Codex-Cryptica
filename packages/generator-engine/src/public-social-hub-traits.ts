@@ -177,6 +177,18 @@ export const VENUE_TYPE_TRAITS: TraitMap = {
     "industrial",
   ],
   "Hydroponic Distillery": ["agrarian", "industrial", "trade", "cosy"],
+
+  // Superhero / Comic Book
+  "Hero-Team HQ Commissary": ["heroic", "military", "urban", "hospitality"],
+  "Superhuman Dive Bar": ["urban", "working-class", "clandestine", "grim"],
+  "Press-Corps Hangout": ["urban", "research", "vibrant", "administrative"],
+  "Rooftop Vigilante Lookout": ["urban", "isolated", "clandestine", "heroic"],
+  "Underground Villain Speakeasy": [
+    "criminal",
+    "clandestine",
+    "underground",
+    "decadent",
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -382,6 +394,25 @@ export const CLIENTELE_TRAITS: TraitMap = {
     "working-class",
   ],
   "Displaced drifters and runaway nobles": ["refuge", "highborn", "desperate"],
+
+  // Superhero / Comic Book
+  "Off-duty heroes and sidekicks": ["heroic", "urban", "vibrant"],
+  "Journalists and photographers chasing a scoop": [
+    "research",
+    "urban",
+    "vibrant",
+  ],
+  "Costumed vigilantes keeping a low profile": [
+    "heroic",
+    "clandestine",
+    "mysterious",
+  ],
+  "Government agents watching the regulars": [
+    "administrative",
+    "clandestine",
+    "mysterious",
+  ],
+  "Reformed villains and parolees": ["criminal", "desperate", "defiant"],
 };
 
 // ---------------------------------------------------------------------------
