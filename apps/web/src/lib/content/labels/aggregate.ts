@@ -11,7 +11,7 @@ import { isContentClusterSlug, isPublicLabel } from "../labels";
  * loader can merge both sources into one typed list.
  */
 export type PublicContentKind =
-  "answer" | "for" | "example" | "generator" | "world" | "topic";
+  "answer" | "for" | "example" | "generator" | "world";
 
 export interface PublicLabelResult {
   kind: PublicContentKind;
@@ -33,16 +33,6 @@ export function getPublicContentByLabel(label: string): PublicLabelResult[] {
 
   const isCluster = isContentClusterSlug(label);
   const results: PublicLabelResult[] = [];
-
-  if (label === "heist") {
-    results.push({
-      kind: "topic",
-      title: "Running and Designing RPG Heists",
-      summary:
-        "The central cluster hub for tabletop RPG heists: core running frameworks, prize design checklists, worked examples across genres, and generator tools.",
-      href: "/topics/heists",
-    });
-  }
 
   for (const answer of getAllAnswers()) {
     const matches =

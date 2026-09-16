@@ -292,11 +292,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/generators/comic-book-event-generator</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://codexcryptica.com/generators/world</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

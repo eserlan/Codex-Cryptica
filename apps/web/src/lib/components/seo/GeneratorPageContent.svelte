@@ -38,9 +38,6 @@
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
-  import ComicBookEventFormFields from "$lib/components/seo/ComicBookEventFormFields.svelte";
-  import OriginFormFields from "$lib/components/seo/OriginFormFields.svelte";
-  import VillainSchemeFormFields from "$lib/components/seo/VillainSchemeFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import ConstellationFormFields from "$lib/components/seo/ConstellationFormFields.svelte";
@@ -78,9 +75,6 @@
     adventureConfig,
     plotTwistConfig,
     villainConfig,
-    comicBookEventConfig,
-    originConfig,
-    villainSchemeConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -564,29 +558,6 @@
     campaignContext: "",
   });
 
-  let comicBookEvent = $state({
-    eventType: comicBookEventConfig.eventTypes[0],
-    scale: comicBookEventConfig.scales[0],
-    tone: comicBookEventConfig.tones[0],
-    campaignContext: "",
-  });
-
-  // Superhero / Comic Book only, by design (#3111) — no genre field, no
-  // theme-sync $effect branch below (Part C is deliberately not applicable).
-  let origin = $state({
-    originType: originConfig.originTypes[0],
-    tone: originConfig.tones[0],
-    campaignContext: "",
-  });
-
-  let villainScheme = $state({
-    powerScale: villainSchemeConfig.powerScales[0],
-    tone: villainSchemeConfig.tones[0],
-    schemeType: villainSchemeConfig.schemeTypes[0],
-    villainProfile: villainSchemeConfig.villainProfiles[0],
-    campaignContext: "",
-  });
-
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -890,9 +861,6 @@
     adventure,
     plotTwist,
     villain,
-    comicBookEvent,
-    origin,
-    villainScheme,
     world,
     starSystem,
     constellation,
@@ -948,9 +916,7 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
-  onGeneratePlotTwist={slug === "quest" || slug === "villain-scheme-generator"
-    ? openPlotTwistFromQuest
-    : undefined}
+  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
   onGenerateRoster={slug === "faction" ? openRosterFromFaction : undefined}
   onOpenMemberAsCharacter={slug === "faction-roster"
     ? openMemberAsCharacter
@@ -1332,30 +1298,6 @@
         bind:sympathy={villain.sympathy}
         bind:worldRelation={villain.worldRelation}
         bind:campaignContext={villain.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "comic-book-event-generator"}
-      <ComicBookEventFormFields
-        bind:eventType={comicBookEvent.eventType}
-        bind:scale={comicBookEvent.scale}
-        bind:tone={comicBookEvent.tone}
-        bind:campaignContext={comicBookEvent.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "origin-generator"}
-      <OriginFormFields
-        bind:originType={origin.originType}
-        bind:tone={origin.tone}
-        bind:campaignContext={origin.campaignContext}
-        onSurprise={trigger}
-      />
-    {:else if slug === "villain-scheme-generator"}
-      <VillainSchemeFormFields
-        bind:powerScale={villainScheme.powerScale}
-        bind:tone={villainScheme.tone}
-        bind:schemeType={villainScheme.schemeType}
-        bind:villainProfile={villainScheme.villainProfile}
-        bind:campaignContext={villainScheme.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}

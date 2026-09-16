@@ -685,26 +685,4 @@ describe("public-alien-race", () => {
       expect(result.lore).toContain("Fragile limbs.");
     });
   });
-
-  // Regression test (#3108): alienRaceConfig.genres is its own closed list
-  // and does not include "Superhero / Comic Book". Content isn't keyed by
-  // genre, so passing it through should never crash.
-  describe("Superhero theme regression (#3108)", () => {
-    it("does not crash when passed the Superhero theme", () => {
-      expect(alienRaceConfig.genres).not.toContain("Superhero / Comic Book");
-
-      const resolved = resolveAlienRace(
-        { genre: "Superhero / Comic Book" },
-        seededRng(3),
-      );
-      expect(resolved.genre).toBe("Superhero / Comic Book");
-
-      const out = generateAlienRaceLocal(
-        { genre: "Superhero / Comic Book" },
-        seededRng(3),
-      );
-      expect(out.type).toBe("creature");
-      expect(out.content).toBeTruthy();
-    });
-  });
 });

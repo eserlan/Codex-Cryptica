@@ -142,21 +142,6 @@ describe("public-artifact generator", () => {
     expect(parsed.lore).toContain("Awakened Powers");
   });
 
-  // Regression test (#3108): artifactConfig.genres is factionConfig.themes,
-  // so "Superhero / Comic Book" is already exercised by the "for all genres"
-  // loop below via namesByTheme's "Classic Fantasy" fallback. Assert it
-  // explicitly so the safety guarantee doesn't silently erode if the loop
-  // is ever narrowed.
-  it("includes Superhero / Comic Book and does not crash generating it", () => {
-    expect(artifactConfig.genres).toContain("Superhero / Comic Book");
-    const local = generateArtifactLocal(
-      { genre: "Superhero / Comic Book" },
-      seededRng(12345),
-    );
-    expect(local.type).toBe("item");
-    expect(local.title).toBeTruthy();
-  });
-
   it("generates deterministic local artifact for all genres", () => {
     for (const genre of artifactConfig.genres) {
       const rng = seededRng(12345);

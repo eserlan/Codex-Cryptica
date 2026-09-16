@@ -74,10 +74,7 @@
           ></div>
 
           <div class="absolute inset-0 flex items-center justify-center">
-            <span
-              class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
-              aria-hidden="true"
-            ></span>
+            <span class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4" aria-hidden="true"></span>
           </div>
         </div>
 
@@ -149,10 +146,7 @@
           transition:slide
         >
           <div class="flex items-center gap-2">
-            <span
-              class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400"
-              aria-hidden="true"
-            ></span>
+            <span class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400" aria-hidden="true"></span>
             <span
               class="text-sm font-bold text-red-400 uppercase tracking-wider"
               >Skipped {controller.rejectedFiles.length} Invalid File(s)</span
@@ -182,10 +176,7 @@
           aria-label="Import ready"
         >
           <div class="flex items-start gap-2">
-            <span
-              class="icon-[lucide--database-zap] mt-0.5 h-4 w-4 shrink-0 text-theme-primary"
-              aria-hidden="true"
-            ></span>
+            <span class="icon-[lucide--database-zap] mt-0.5 h-4 w-4 shrink-0 text-theme-primary" aria-hidden="true"></span>
             <div class="min-w-0">
               <p
                 class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"

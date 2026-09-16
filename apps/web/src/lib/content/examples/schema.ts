@@ -171,7 +171,6 @@ export const ExampleConfigSchema = z
     relatedGenerators: z.array(ExampleLinkSchema).default([]),
     relatedAnswers: z.array(ExampleLinkSchema).default([]),
     relatedForPages: z.array(ExampleLinkSchema).default([]),
-    relatedTopics: z.array(ExampleLinkSchema).default([]),
     relatedExamples: z.array(z.string()).default([]),
     /**
      * Public discovery labels (#2762). Chips linking to `/explore?label=X`.

@@ -151,12 +151,6 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   },
   relatedTools: [
     {
-      title: "Heist topic hub",
-      description:
-        "The complete RPG heist cluster: core running frameworks, target design checklists, worked examples, and generation tools.",
-      href: "/topics/heists",
-    },
-    {
       title: "Heist generator",
       description:
         "Turn this framework into a score: prize, casing intel, three security rings, alarm track, complications, and a compromised getaway.",

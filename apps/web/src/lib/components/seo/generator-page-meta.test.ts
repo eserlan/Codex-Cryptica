@@ -33,9 +33,6 @@ const allExpectedSlugs: ValidSlug[] = [
   "adventure-idea-generator",
   "plot-twist-generator",
   "bbeg-generator",
-  "comic-book-event-generator",
-  "origin-generator",
-  "villain-scheme-generator",
   "world",
   "council-vote",
   "secret-society",
@@ -54,15 +51,6 @@ describe("generator-page-meta completeness and social preview tags", () => {
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
     );
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
-  });
-
-  it("preserves the Council Vote FAQs and related generators", () => {
-    expect(slugMeta["council-vote"].faqs).toHaveLength(3);
-    expect(slugMeta["council-vote"].relatedLinks).toEqual([
-      { href: "/generators/quest", label: "Quest Hook Generator" },
-      { href: "/generators/faction", label: "Faction Generator" },
-      { href: "/generators/kingdom", label: "Kingdom Generator" },
-    ]);
   });
 
   it("has metadata entries for all valid generator slugs", () => {
@@ -86,18 +74,15 @@ describe("generator-page-meta completeness and social preview tags", () => {
         expect(meta.canonicalPath.startsWith("/generators/")).toBe(true);
       });
 
-      it("has a valid social preview override when provided", () => {
+      it("has a dedicated ogImage and ogImageAlt", () => {
         const meta = slugMeta[slug];
-        if (meta.ogImage) {
-          expect(meta.ogImage.startsWith("https://")).toBe(true);
-          expect(
-            meta.ogImageAlt,
-            `Expected ogImageAlt for ${slug}`,
-          ).toBeDefined();
-          expect(meta.ogImageAlt?.trim().length).toBeGreaterThan(10);
-        } else {
-          expect(meta.ogImageAlt).toBeUndefined();
-        }
+        expect(meta.ogImage, `Expected ogImage for ${slug}`).toBeDefined();
+        expect(meta.ogImage?.startsWith("https://")).toBe(true);
+        expect(
+          meta.ogImageAlt,
+          `Expected ogImageAlt for ${slug}`,
+        ).toBeDefined();
+        expect(meta.ogImageAlt?.trim().length).toBeGreaterThan(10);
       });
 
       it("has valid keywords array", () => {

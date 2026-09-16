@@ -17,7 +17,6 @@ describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
       "artifact",
-      "comic-book-event",
       "council-vote",
       "creature",
       "deity",
@@ -27,7 +26,6 @@ describe("randomIdeaCategories", () => {
       "minor-magic-item",
       "nation",
       "npc",
-      "origin",
       "pantheon",
       "quest",
       "secret-society",
@@ -50,9 +48,6 @@ describe("randomIdeaCategories", () => {
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
       generateVillain: vi.fn().mockResolvedValue("villain-result"),
-      generateComicBookEvent: vi
-        .fn()
-        .mockResolvedValue("comic-book-event-result"),
       generateMinorMagicItem: vi
         .fn()
         .mockResolvedValue("minor-magic-item-result"),
@@ -64,7 +59,6 @@ describe("randomIdeaCategories", () => {
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
       generateCreature: vi.fn().mockResolvedValue("creature-result"),
       generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
-      generateOrigin: vi.fn().mockResolvedValue("origin-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -108,9 +102,6 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
       useAI: true,
     });
-    expect(engine.generateComicBookEvent).toHaveBeenCalledWith({
-      useAI: true,
-    });
     expect(engine.generateHeist).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
@@ -140,9 +131,6 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateEncounter).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
-    });
-    expect(engine.generateOrigin).toHaveBeenCalledWith({
-      useAI: true,
     });
   });
 

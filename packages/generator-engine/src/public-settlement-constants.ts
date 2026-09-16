@@ -98,7 +98,6 @@ export const settlementConfig = {
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
     "Space Western",
-    "Superhero / Comic Book",
   ],
 
   sizesByGenre: {
@@ -346,28 +345,6 @@ export const settlementConfig = {
         pointsOfInterestCount: 6,
       },
     ],
-    "Superhero / Comic Book": [
-      {
-        name: "Patrol Sector",
-        range: "200–1,000 residents",
-        pointsOfInterestCount: 3,
-      },
-      {
-        name: "Hero District",
-        range: "1,000–20,000 residents",
-        pointsOfInterestCount: 4,
-      },
-      {
-        name: "Metro Borough",
-        range: "20,000–250,000 residents",
-        pointsOfInterestCount: 5,
-      },
-      {
-        name: "Capital Zone",
-        range: "250,000+ residents",
-        pointsOfInterestCount: 6,
-      },
-    ],
   } as Record<
     string,
     { name: string; range: string; pointsOfInterestCount: number }[]
@@ -479,14 +456,6 @@ export const settlementConfig = {
       "Orbital Scrapyard Cluster",
       "Volcanic Moon Caldera",
       "Toxic Salt Flats",
-    ],
-    "Superhero / Comic Book": [
-      "Downtown high-rise core",
-      "Harbor industrial waterfront",
-      "Underground transit warren",
-      "Fringe suburb bordering a containment perimeter",
-      "Elevated skyway district",
-      "Old quarter built over a collapsed landmark",
     ],
   } as Record<string, string[]>,
 
@@ -604,15 +573,6 @@ export const settlementConfig = {
       "Smuggler Way-Station",
       "Agricultural Hydroponics Dome",
     ],
-    "Superhero / Comic Book": [
-      "Hero headquarters city",
-      "Corporate research capital",
-      "Government oversight seat",
-      "Power-tech black market hub",
-      "Disaster recovery zone",
-      "Media and press capital",
-      "Containment and parole district",
-    ],
   } as Record<string, string[]>,
 
   tonesByGenre: {
@@ -708,13 +668,6 @@ export const settlementConfig = {
       "Rowdy and boomtown-busy",
       "Desolate and resource-strapped",
       "Tense under corrupt oversight",
-    ],
-    "Superhero / Comic Book": [
-      "Four-color hopeful",
-      "Street-level gritty",
-      "Surveilled and distrustful",
-      "Media-saturated and image-obsessed",
-      "Recovering and resilient",
     ],
   } as Record<string, string[]>,
 
@@ -828,15 +781,6 @@ export const settlementConfig = {
       "Wildcat strikers have shut down the main ore conveyor, demanding fair fuel rations.",
       "A syndicate enforcer boss is demanding protection money from every docked vessel.",
     ],
-    "Superhero / Comic Book": [
-      "A hero registration vote splitting public opinion",
-      "A corporate cover-up of a botched power experiment",
-      "A containment breach nobody will publicly acknowledge",
-      "Vigilante backlash from residents tired of collateral damage",
-      "A legacy villain's return exploiting an old grudge",
-      "A press exposé threatening to unmask a local hero",
-      "A turf war between rival power-tech gangs",
-    ],
   } as Record<string, string[]>,
 
   authorityTypesByGenre: {
@@ -943,14 +887,6 @@ export const settlementConfig = {
       "Syndicate Enforcer Boss",
       "Elected Saloon Proprietor",
       "None / Lawless Anarchy",
-    ],
-    "Superhero / Comic Book": [
-      "Elected mayor with a metahuman task force",
-      "Federal superhuman affairs bureau",
-      "Corporate security consortium",
-      "Independent hero council",
-      "Police commissioner under public pressure",
-      "Reform board for paroled villains",
     ],
   } as Record<string, string[]>,
 
@@ -1078,16 +1014,6 @@ export const settlementConfig = {
       "Pressurised Hydroponics Greenhouse",
       "The Boneyard Scrap Heap",
     ],
-    "Superhero / Comic Book": [
-      "The Cape and Cowl Diner",
-      "Skyline Memorial to the Fallen",
-      "Municipal Superhuman Registry Office",
-      "The Underlight Exchange",
-      "Containment Perimeter Checkpoint",
-      "The Old Watchtower, Abandoned",
-      "Press Row Broadcast Tower",
-      "Ward Seven Trauma Center",
-    ],
   } as Record<string, string[]>,
 
   factionsByGenre: {
@@ -1184,13 +1110,6 @@ export const settlementConfig = {
       "Consortium Security Enforcers",
       "The Scrappers' Mutual Union",
       "Frontier Marshals' Posse",
-    ],
-    "Superhero / Comic Book": [
-      "The Skyline Vanguard",
-      "The Underlight Syndicate",
-      "Halcyon Dynamics",
-      "The Registry Office",
-      "The Parole Watch",
     ],
   } as Record<string, string[]>,
 
@@ -1306,16 +1225,6 @@ export const settlementConfig = {
       "Broken",
       "Ochre",
       "Iron",
-    ],
-    "Superhero / Comic Book": [
-      "New",
-      "North",
-      "Port",
-      "Steel",
-      "Beacon",
-      "Ember",
-      "Halcyon",
-      "Silver",
     ],
   } as Record<string, string[]>,
 
@@ -1440,16 +1349,6 @@ export const settlementConfig = {
       " Landing",
       " Flats",
       " Station",
-    ],
-    "Superhero / Comic Book": [
-      " City",
-      " Heights",
-      " Bay",
-      " Harbor",
-      " Crossing",
-      " District",
-      "ford",
-      " Point",
     ],
   } as Record<string, string[]>,
 

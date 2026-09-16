@@ -32,28 +32,6 @@ describe("Custom option forms", () => {
     await expectCustomValuePersists("Tone", "Tone (Own option)", "Quiet dread");
   });
 
-  it("quest fields use the dedicated pools for the superhero theme", () => {
-    render(QuestFormFields, {
-      props: {
-        theme: "Superhero / Comic Book",
-        tone: "Heroic",
-        scope: "Local (village / district)",
-        locationType: "Ancient Dungeon",
-        threat: "Monstrous Creature",
-        twist: "Villain is protecting something valuable",
-        reward: "Coin plus a local power's favor",
-        campaignContext: "",
-      },
-    });
-
-    expect(
-      screen.getByRole("option", { name: "Four-Color Heroic" }),
-    ).toBeTruthy();
-    expect(
-      screen.getAllByRole("option").map((option) => option.textContent),
-    ).not.toContain("Heroic");
-  });
-
   it("kingdom fields keep a typed custom value", async () => {
     render(KingdomFormFields);
     await expectCustomValuePersists(

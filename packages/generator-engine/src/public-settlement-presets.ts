@@ -276,38 +276,4 @@ export const SETTLEMENT_PRESETS: readonly SmartPreset[] = [
       tone: "Lawless and dangerous",
     },
   },
-
-  // Superhero / Comic Book
-  {
-    id: "hero-hq-district",
-    label: "Hero HQ District",
-    description:
-      "Where the capes actually live, when they're not saving the day.",
-    genres: ["Superhero / Comic Book"],
-    set: {
-      primaryFunction: "Hero headquarters city",
-      tone: "Four-color hopeful",
-    },
-  },
-  {
-    id: "corporate-research-capital",
-    label: "Corporate Research Capital",
-    description:
-      "Clean labs, bigger secrets, and a PR department working overtime.",
-    genres: ["Superhero / Comic Book"],
-    set: {
-      primaryFunction: "Corporate research capital",
-      tone: "Surveilled and distrustful",
-    },
-  },
-  {
-    id: "containment-district",
-    label: "Containment District",
-    description: "Where the city keeps what it would rather not explain.",
-    genres: ["Superhero / Comic Book"],
-    set: {
-      primaryFunction: "Containment and parole district",
-      mainTension: "A containment breach nobody will publicly acknowledge",
-    },
-  },
 ];

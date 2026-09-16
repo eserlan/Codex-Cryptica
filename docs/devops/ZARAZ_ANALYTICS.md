@@ -59,7 +59,6 @@ user-authored content.
   - `apps/web/src/routes/(marketing)/answers/[slug]/+page.svelte`
   - `apps/web/src/routes/(marketing)/examples/[slug]/+page.svelte`
   - `apps/web/src/routes/(marketing)/for/[slug]/+page.svelte`
-  - `apps/web/src/routes/(marketing)/topics/heists/+page.svelte`
   - `apps/web/src/lib/components/seo/SEOPageLayout.svelte` (`/vs/[slug]`,
     plus `/alternatives/[slug]` which 301s into the same `/vs` page — and,
     outside the named discovery families, `/solutions/[slug]` and
@@ -94,26 +93,26 @@ user-authored content.
 
 ## Events
 
-| Event                              | Fires when                                                                             | Properties                                                                                                                                 |
-| ---------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `seo_entry`                        | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `topics` \| `other`) |
-| `generator_started`                | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                                           |
-| `generator_completed`              | Generation succeeds                                                                    | `generator_type`                                                                                                                           |
-| `entity_saved`                     | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                                    |
-| `vault_created`                    | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                             |
-| `related_entity_created`           | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                                           |
-| `discovery_page_viewed`            | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                                         |
-| `discovery_click`                  | A visitor follows a meaningful discovery-page link/CTA                                 | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                                        |
-| `answer_share_clicked`             | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                                    |
-| `answer_share_completed`           | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                                           |
-| `answer_share_link_copied`         | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                                           |
-| `answer_useful_vote`               | A reader answers "Was this useful?"                                                    | `slug`, `intent`, `value` (`yes` \| `no`), `reason` (closed set, "no" votes only, optional)                                                |
-| `generator_share_clicked`          | Share is activated for a generated result or Session Hub detail                        | `generator_type`, `source`                                                                                                                 |
-| `generator_share_created`          | The immutable public snapshot is stored successfully                                   | `generator_type`, `source`                                                                                                                 |
-| `generator_share_link_copied`      | A generated-result share URL is copied successfully                                    | `generator_type`, `source`                                                                                                                 |
-| `generator_share_opened`           | A shared generator snapshot loads successfully                                         | `generator_type`, `source`, `share_id`                                                                                                     |
-| `generator_share_remix_clicked`    | A visitor follows the shared-result Remix CTA                                          | `generator_type`, `source`, `share_id`                                                                                                     |
-| `generator_share_generate_clicked` | A visitor follows the originating generator CTA                                        | `generator_type`, `source`, `share_id`                                                                                                     |
+| Event                              | Fires when                                                                             | Properties                                                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `seo_entry`                        | A marketing page is visited with new UTM or AI-referral attribution                    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `other`) |
+| `generator_started`                | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                               |
+| `generator_completed`              | Generation succeeds                                                                    | `generator_type`                                                                                                               |
+| `entity_saved`                     | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                        |
+| `vault_created`                    | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                 |
+| `related_entity_created`           | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                               |
+| `discovery_page_viewed`            | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                             |
+| `discovery_click`                  | A visitor follows a meaningful discovery-page link/CTA                                 | `source_kind`, `source_id`, `target_kind`, `target_id`, `placement`                                                            |
+| `answer_share_clicked`             | The Share action on an answer page is activated                                        | `slug`, `intent` (when the answer has a `discovery.id`)                                                                        |
+| `answer_share_completed`           | `navigator.share()`'s promise resolves (the user picked a destination, did not cancel) | `slug`, `intent`                                                                                                               |
+| `answer_share_link_copied`         | The Copy Link fallback succeeds (no native share support)                              | `slug`, `intent`                                                                                                               |
+| `answer_useful_vote`               | A reader answers "Was this useful?"                                                    | `slug`, `intent`, `value` (`yes` \| `no`), `reason` (closed set, "no" votes only, optional)                                    |
+| `generator_share_clicked`          | Share is activated for a generated result or Session Hub detail                        | `generator_type`, `source`                                                                                                     |
+| `generator_share_created`          | The immutable public snapshot is stored successfully                                   | `generator_type`, `source`                                                                                                     |
+| `generator_share_link_copied`      | A generated-result share URL is copied successfully                                    | `generator_type`, `source`                                                                                                     |
+| `generator_share_opened`           | A shared generator snapshot loads successfully                                         | `generator_type`, `source`, `share_id`                                                                                         |
+| `generator_share_remix_clicked`    | A visitor follows the shared-result Remix CTA                                          | `generator_type`, `source`, `share_id`                                                                                         |
+| `generator_share_generate_clicked` | A visitor follows the originating generator CTA                                        | `generator_type`, `source`, `share_id`                                                                                         |
 
 Every event also carries `first_touch` and `latest_touch` objects when
 attribution has been captured for the current browser. Their shape is
@@ -161,9 +160,9 @@ they did once they were on a discovery page.
 `source_kind` and `target_kind` share one closed vocabulary:
 
 - `source_kind`: `answer | example | for | comparison | alternative |
-importer | blog | tools | topic | other`
+importer | blog | tools | other`
 - `target_kind`: `generator | app | answer | example | for | comparison |
-importer | topic | external`
+importer | external`
 
 `target_kind`/`target_id` for a free-form content link (e.g. an answer's
 `codexConnection.href`, or any link whose destination isn't already known
@@ -173,7 +172,7 @@ first, then reads the href's first path segment: `/generators/*` →
 `generator` (`target_id`: the slug, e.g. `"npc"`), `/answers/*` → `answer`,
 `/examples/*` → `example`, `/for/*` → `for`, `/vs/*` and `/alternatives/*` →
 `comparison`, `/import/*` and `/migrations/*` → `importer` (all keyed by
-slug the same way), `/topics/*` → `topic`, an absolute URL → `external` (`target_id`: the URL's
+slug the same way), an absolute URL → `external` (`target_id`: the URL's
 origin+path, e.g. `"https://groupfinder.gg/list"`), and anything else
 (`/solutions/*`, `/features/*`, `/`, ...) → `app` (`target_id`: the full
 root-relative path, e.g. `"/solutions/campaign-manager"` — not just the

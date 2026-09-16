@@ -71,14 +71,10 @@ const GOVERNED_BLOG_PATHS = [
   "/blog/ai-slop-is-context-failure",
 ] as const;
 
-/** Topic hubs that act as crawlable cluster entry points (#3118). */
-const TOPIC_PATHS = ["/topics/heists"] as const;
-
 export function listGovernedPaths(): string[] {
   return [
     ...STANDALONE_PATHS,
     ...GOVERNED_BLOG_PATHS,
-    ...TOPIC_PATHS,
     ...getAllLandingPageSlugs().map((slug) => `/for/${slug}`),
     ...getAllAnswerSlugs().map((slug) => `/answers/${slug}`),
     ...getAllExampleSlugs().map((slug) => `/examples/${slug}`),

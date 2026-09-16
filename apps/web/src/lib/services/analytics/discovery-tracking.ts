@@ -25,7 +25,6 @@ export type DiscoverySourceKind =
   | "importer"
   | "blog"
   | "tools"
-  | "topic"
   | "other";
 
 export type DiscoveryTargetKind =
@@ -36,7 +35,6 @@ export type DiscoveryTargetKind =
   | "for"
   | "comparison"
   | "importer"
-  | "topic"
   | "external";
 
 export interface DiscoveryPageViewedInput {
@@ -98,7 +96,6 @@ const TARGET_KIND_BY_SEGMENT: Record<string, DiscoveryTargetKind> = {
   alternatives: "comparison",
   import: "importer",
   migrations: "importer",
-  topics: "topic",
 };
 
 /**

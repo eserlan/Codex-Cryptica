@@ -265,14 +265,6 @@ export const theQuellExtraction: ExampleConfigInput = {
       href: "/for/cyberpunk-red",
     },
   ],
-  relatedTopics: [
-    {
-      title: "RPG Heists Topic Hub",
-      description:
-        "The central cluster hub for tabletop RPG heists: core running frameworks, prize design checklists, worked examples, and generation tools.",
-      href: "/topics/heists",
-    },
-  ],
   relatedExamples: ["the-dawnheart-diadem-fantasy-heist"],
   sourceUrl: "https://github.com/eserlan/Codex-Cryptica/issues/2850",
   seo: {

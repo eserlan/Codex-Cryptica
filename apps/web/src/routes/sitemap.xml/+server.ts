@@ -58,11 +58,6 @@ export async function GET() {
       changefreq: "monthly",
       priority: "0.6",
     },
-    {
-      path: "/topics/heists",
-      changefreq: "weekly",
-      priority: "0.8",
-    },
 
     {
       path: "/tools/vampire-clan-generator",

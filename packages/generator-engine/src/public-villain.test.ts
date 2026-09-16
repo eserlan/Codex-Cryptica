@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildVillainPrompt,
   generateVillainLocal,
-  getVillainThreatScales,
   parseVillainResponse,
   villainConfig,
 } from "./public-villain";
@@ -40,35 +39,6 @@ describe("generateVillainLocal", () => {
     );
     expect(out.lore).toContain("global-scale crime lord");
     expect(out.content).toContain("openly feared threat");
-  });
-
-  it("draws the threat scale from the Superhero Power Scale for that genre, not the generic pool", () => {
-    for (let seed = 0; seed < 20; seed++) {
-      const out = generateVillainLocal(
-        { genre: "Superhero / Comic Book" },
-        seededRng(seed),
-      );
-      expect([
-        "street",
-        "city",
-        "national",
-        "global",
-        "cosmic",
-        "multiversal",
-      ]).toContain(out.lore.match(/(\w+)-scale/i)?.[1]?.toLowerCase());
-    }
-  });
-
-  it("uses scale-aware framing in the superhero local fallback", () => {
-    const out = generateVillainLocal(
-      { genre: "Superhero / Comic Book", threatScale: "Multiversal" },
-      seededRng(2),
-    );
-
-    expect(out.lore).toContain("Act across realities");
-    expect(out.lore).toContain("A nexus between realities");
-    expect(out.lore).toContain("**Stage 1: Map the divergences**");
-    expect(out.lore).not.toContain("**Stage 1: Fail the independents**");
   });
 
   it("resolves the Random archetype to a concrete one", () => {
@@ -125,25 +95,6 @@ describe("generateVillainLocal", () => {
 });
 
 describe("buildVillainPrompt", () => {
-  it("returns the theme-specific scale pool with a generic fallback", () => {
-    expect(getVillainThreatScales("Superhero / Comic Book")).toEqual([
-      "Street",
-      "City",
-      "National",
-      "Global",
-      "Cosmic",
-      "Multiversal",
-    ]);
-    expect(getVillainThreatScales("Classic Fantasy")).toEqual([
-      "Local",
-      "Regional",
-      "National",
-      "Continental / Planetary",
-      "Global",
-      "Cosmic",
-    ]);
-  });
-
   it("embeds options, the consistency pass, ban prompt, and session context", () => {
     const { userMessage, resolved } = buildVillainPrompt(
       {
@@ -164,26 +115,6 @@ describe("buildVillainPrompt", () => {
     expect(userMessage).toContain(NAME_BAN_PROMPT);
     expect(userMessage).toContain("The Salt Concord");
     expect(resolved.threatScale).toBe("Cosmic");
-  });
-
-  it("weaves the Superhero Power Scale hint into the prompt for that genre", () => {
-    const { userMessage } = buildVillainPrompt(
-      { genre: "Superhero / Comic Book", threatScale: "City" },
-      "",
-      seededRng(4),
-    );
-    expect(userMessage).toContain(
-      "- Threat Scale: City — One metropolitan area.",
-    );
-  });
-
-  it("does not append a Power Scale hint for a non-Superhero genre", () => {
-    const { userMessage } = buildVillainPrompt(
-      { genre: "Cyberpunk / Corporate", threatScale: "City" },
-      "",
-      seededRng(4),
-    );
-    expect(userMessage).toContain("- Threat Scale: City\n");
 
     // Consistency-pass phrases (add-generator skill requires field-specific
     // assertions, not just "some text exists").

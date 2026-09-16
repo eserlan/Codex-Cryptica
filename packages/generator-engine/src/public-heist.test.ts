@@ -1070,21 +1070,3 @@ describe("parseHeistResponse", () => {
     expect(() => parseHeistResponse("not json at all", resolved)).toThrow();
   });
 });
-
-// Regression test (#3108): "Superhero / Comic Book" has no dedicated entry
-// in heistConfig.targetTypesByTheme, so resolveHeist must fall back to the
-// generic targetTypes pool instead of crashing on an undefined lookup.
-describe("Superhero theme regression (#3108)", () => {
-  it("falls back to the generic target-type pool", () => {
-    expect(
-      heistConfig.targetTypesByTheme["Superhero / Comic Book"],
-    ).toBeUndefined();
-
-    const out = generateHeistLocal(
-      { genre: "Superhero / Comic Book" },
-      seededRng(9),
-    );
-    expect(out.type).toBe("event");
-    expect(out.content).toBeTruthy();
-  });
-});

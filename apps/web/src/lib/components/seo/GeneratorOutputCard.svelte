@@ -274,7 +274,7 @@
                 onclick={() => onGeneratePlotTwist(generatedData!)}
                 class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
                 id="generate-plot-twist-btn"
-                title="Generate a Plot Twist from this draft"
+                title="Generate a Plot Twist from this quest hook"
               >
                 <span
                   aria-hidden="true"

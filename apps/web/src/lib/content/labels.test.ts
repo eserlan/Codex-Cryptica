@@ -81,13 +81,11 @@ describe("public label content aggregation (#2762, #2863)", () => {
     );
     expect(paths).toContain("/examples/the-dawnheart-diadem-fantasy-heist");
     expect(paths).toContain("/examples/the-quell-extraction-cyberpunk-heist");
-    expect(paths).toContain("/topics/heists");
 
     const groups = groupPublicLabelResults(results);
     expect(groups.get("generator")?.length).toBe(1);
     expect(groups.get("answer")?.length).toBe(2);
     expect(groups.get("example")?.length).toBe(3);
-    expect(groups.get("topic")?.length).toBe(1);
   });
 
   it("aggregates all rumour cluster resources", () => {

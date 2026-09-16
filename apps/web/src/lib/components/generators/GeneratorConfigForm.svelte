@@ -76,13 +76,11 @@
     factionTypesForTheme,
     forDungeonGenre,
     getGenerator,
-    getVillainThreatScales,
     listGenerators,
     npcRacesForTheme,
     npcRolesForTheme,
     settlementTypesForTheme,
     themeIdToLabel,
-    villainConfig,
     worldConfig,
   } from "generator-engine";
   import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
@@ -262,20 +260,6 @@
   const availableDungeonStates = $derived(
     forDungeonGenre(dungeonConfig.currentStatesByGenre, dungeonGenre),
   );
-  const villainGenre = $derived(
-    stringValue("genre") || themeIdToLabel[themeId] || "Classic Fantasy",
-  );
-  const availableVillainThreatScales = $derived(
-    getVillainThreatScales(villainGenre),
-  );
-  const knownVillainThreatScales = $derived(
-    Array.from(
-      new Set([
-        ...villainConfig.threatScales,
-        ...Object.values(villainConfig.threatScalesByTheme).flat(),
-      ]),
-    ),
-  );
   const visibleOptions = $derived(
     selectedGenerator.options.filter((option) => {
       if (!option.visibleWhen) return true;
@@ -322,12 +306,6 @@
     }
     if (selectedId === "settlement" && option.id === "type") {
       return settlementTypesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "villain" && option.id === "threatScale") {
-      return availableVillainThreatScales.map((value) => ({
         value,
         label: value,
       }));
@@ -385,20 +363,6 @@
     }
     if (changed) optionValues = nextValues;
   });
-  $effect(() => {
-    if (selectedId !== "villain") return;
-    const currentScale = stringValue("threatScale");
-    if (
-      currentScale &&
-      knownVillainThreatScales.includes(currentScale) &&
-      !availableVillainThreatScales.includes(currentScale)
-    ) {
-      optionValues = {
-        ...optionValues,
-        threatScale: availableVillainThreatScales[0] ?? "",
-      };
-    }
-  });
   function updateOptionValue(optionId: string, value: unknown) {
     const nextValues = {
       ...optionValues,
@@ -420,22 +384,6 @@
           !availablePressures.includes(currentPressure))
       ) {
         nextValues.campaignPressure = availablePressures[0] ?? "";
-      }
-    }
-    if (selectedId === "villain" && optionId === "genre") {
-      const genre =
-        typeof value === "string" && value
-          ? value
-          : themeIdToLabel[themeId] || "Classic Fantasy";
-      const availableScales = getVillainThreatScales(genre);
-      const currentScale = optionValues.threatScale;
-      if (
-        typeof currentScale !== "string" ||
-        !currentScale ||
-        (knownVillainThreatScales.includes(currentScale) &&
-          !availableScales.includes(currentScale))
-      ) {
-        nextValues.threatScale = availableScales[0] ?? "";
       }
     }
     optionValues = nextValues;

@@ -29,28 +29,6 @@ describe("trackDiscoveryPageViewed", () => {
     );
   });
 
-  it("emits topic pages using the topic source vocabulary", () => {
-    const track = vi.fn();
-
-    trackDiscoveryPageViewed(
-      {
-        sourceKind: "topic",
-        sourceId: "heists",
-        path: "/topics/heists",
-      },
-      { zaraz: { track } },
-    );
-
-    expect(track).toHaveBeenCalledWith(
-      "discovery_page_viewed",
-      expect.objectContaining({
-        source_kind: "topic",
-        source_id: "heists",
-        path: "/topics/heists",
-      }),
-    );
-  });
-
   it("no-ops silently when window.zaraz is absent", () => {
     expect(() =>
       trackDiscoveryPageViewed(
@@ -88,30 +66,6 @@ describe("trackDiscoveryClick", () => {
     );
   });
 
-  it("emits topic destinations using the topic target vocabulary", () => {
-    const track = vi.fn();
-
-    trackDiscoveryClick(
-      {
-        sourceKind: "topic",
-        sourceId: "heists",
-        targetKind: "topic",
-        targetId: "heists",
-        placement: "topic_related",
-      },
-      { zaraz: { track } },
-    );
-
-    expect(track).toHaveBeenCalledWith(
-      "discovery_click",
-      expect.objectContaining({
-        source_kind: "topic",
-        target_kind: "topic",
-        target_id: "heists",
-      }),
-    );
-  });
-
   it("no-ops silently when window.zaraz is absent", () => {
     expect(() =>
       trackDiscoveryClick(
@@ -142,7 +96,6 @@ describe("classifyDiscoveryTarget", () => {
     ["/alternatives/world-anvil", "comparison", "world-anvil"],
     ["/import/world-anvil", "importer", "world-anvil"],
     ["/migrations/obsidian", "importer", "obsidian"],
-    ["/topics/heists", "topic", "heists"],
   ] as const)("classifies %s as %s/%s", (href, targetKind, targetId) => {
     expect(classifyDiscoveryTarget(href)).toEqual({ targetKind, targetId });
   });

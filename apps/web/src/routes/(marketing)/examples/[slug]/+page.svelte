@@ -27,8 +27,7 @@
   let connected = $derived(data.connected);
   let canonical = $derived(buildAbsoluteUrl(examplePath(example)));
   let hasFurtherReading = $derived(
-    (example.relatedTopics?.length ?? 0) +
-      example.relatedGenerators.length +
+    example.relatedGenerators.length +
       example.relatedAnswers.length +
       example.relatedForPages.length +
       related.length >
@@ -293,7 +292,7 @@
           Related
         </h2>
 
-        {#each [{ label: "Topic Hubs", placement: "related_topic", links: example.relatedTopics ?? [] }, { label: "Generators", placement: "related_tool", links: example.relatedGenerators }, { label: "Answers", placement: "related_answer", links: example.relatedAnswers }, { label: "Guides", placement: "related_guide", links: example.relatedForPages }] as group (group.label)}
+        {#each [{ label: "Generators", placement: "related_tool", links: example.relatedGenerators }, { label: "Answers", placement: "related_answer", links: example.relatedAnswers }, { label: "Guides", placement: "related_guide", links: example.relatedForPages }] as group (group.label)}
           {#if group.links.length > 0}
             <h3
               class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"

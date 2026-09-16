@@ -6,8 +6,6 @@ import {
   settlementConfig,
 } from "./public-settlement";
 import { NAME_BAN_PROMPT } from "./public-npc";
-import { BANNED_NAMES } from "./public-npc-constants";
-import { INHABITANT_NAMES_BY_GENRE } from "./public-settlement-inhabitant-names";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -118,120 +116,6 @@ describe("settlementConfig", () => {
       expect(settlementConfig.factionsByGenre[genre]).toBeDefined();
       expect(settlementConfig.namePrefixesByGenre[genre]).toBeDefined();
       expect(settlementConfig.nameSuffixesByGenre[genre]).toBeDefined();
-    }
-  });
-});
-
-describe("Superhero / Comic Book genre (#3104)", () => {
-  const GENRE = "Superhero / Comic Book";
-
-  it("is registered as a settlement genre", () => {
-    expect(settlementConfig.genres).toContain(GENRE);
-  });
-
-  it("has reasonably sized, genre-specific option pools rather than a 1-2 item stub", () => {
-    expect(settlementConfig.sizesByGenre[GENRE].length).toBeGreaterThanOrEqual(
-      4,
-    );
-    expect(
-      settlementConfig.environmentsByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(5);
-    expect(
-      settlementConfig.primaryFunctionsByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(5);
-    expect(settlementConfig.tonesByGenre[GENRE].length).toBeGreaterThanOrEqual(
-      4,
-    );
-    expect(
-      settlementConfig.mainTensionsByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(5);
-    expect(
-      settlementConfig.authorityTypesByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(4);
-    expect(
-      settlementConfig.notableLocationsByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(6);
-    expect(
-      settlementConfig.factionsByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(4);
-    expect(
-      settlementConfig.namePrefixesByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(4);
-    expect(
-      settlementConfig.nameSuffixesByGenre[GENRE].length,
-    ).toBeGreaterThanOrEqual(4);
-    expect(INHABITANT_NAMES_BY_GENRE[GENRE].length).toBeGreaterThanOrEqual(8);
-  });
-
-  it("does not fall back to the shared Fantasy default (content is genuinely genre-specific)", () => {
-    expect(settlementConfig.sizesByGenre[GENRE]).not.toEqual(
-      settlementConfig.sizesByGenre["Fantasy"],
-    );
-    expect(settlementConfig.environmentsByGenre[GENRE]).not.toEqual(
-      settlementConfig.environmentsByGenre["Fantasy"],
-    );
-    expect(settlementConfig.primaryFunctionsByGenre[GENRE]).not.toEqual(
-      settlementConfig.primaryFunctionsByGenre["Fantasy"],
-    );
-    expect(settlementConfig.factionsByGenre[GENRE]).not.toEqual(
-      settlementConfig.factionsByGenre["Fantasy"],
-    );
-  });
-
-  it("produces output naming supers, superhuman incidents, and public sentiment", () => {
-    const out = generateSettlementLocal({ genre: GENRE }, seededRng(11));
-    expect(out.lore).toContain(GENRE);
-    const combined = `${out.content} ${out.lore}`;
-    // Superhero-specific vocabulary should show up somewhere in the generated
-    // text — either the resolved axes themselves or the derived content that
-    // is built from their traits (occupations, POI blurbs, hooks, etc.).
-    const superheroSignals = [
-      "hero",
-      "villain",
-      "metahuman",
-      "superhuman",
-      "power",
-      "registry",
-      "containment",
-      "vigilante",
-    ];
-    const lowerCombined = combined.toLowerCase();
-    expect(superheroSignals.some((term) => lowerCombined.includes(term))).toBe(
-      true,
-    );
-  });
-
-  it("reads distinctly different from a Fantasy settlement generated with the same seed", () => {
-    const superhero = generateSettlementLocal({ genre: GENRE }, seededRng(3));
-    const fantasy = generateSettlementLocal({ genre: "Fantasy" }, seededRng(3));
-    expect(superhero.content).not.toEqual(fantasy.content);
-    expect(superhero.lore).not.toEqual(fantasy.lore);
-    expect(superhero.lore).toContain(GENRE);
-    expect(fantasy.lore).not.toContain(GENRE);
-  });
-
-  it("has crash-safe fallbacks: an unrecognised genre still resolves via the Fantasy default", () => {
-    expect(() =>
-      generateSettlementLocal({ genre: "Not A Real Genre" }, seededRng(7)),
-    ).not.toThrow();
-  });
-
-  it("has no invented proper nouns colliding with BANNED_NAMES (case-insensitive, whole word)", () => {
-    const haystacks = [
-      ...settlementConfig.notableLocationsByGenre[GENRE],
-      ...settlementConfig.factionsByGenre[GENRE],
-      ...settlementConfig.namePrefixesByGenre[GENRE],
-      ...settlementConfig.nameSuffixesByGenre[GENRE],
-      ...INHABITANT_NAMES_BY_GENRE[GENRE],
-    ];
-    for (const banned of BANNED_NAMES) {
-      const bannedRegex = new RegExp(`\\b${banned}\\b`, "i");
-      for (const text of haystacks) {
-        expect(
-          bannedRegex.test(text),
-          `"${text}" collides with banned name "${banned}"`,
-        ).toBe(false);
-      }
     }
   });
 });

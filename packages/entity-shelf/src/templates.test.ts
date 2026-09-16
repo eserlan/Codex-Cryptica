@@ -51,19 +51,6 @@ describe("decideTemplate — schema templates", () => {
     expect(decision.unresolved).toBe(false);
   });
 
-  it("preserves the previous comparison for undefined array entries", () => {
-    const decision = decideTemplate({
-      flavour: "schema",
-      incoming: schemaTemplate({
-        fields: [undefined] as unknown as StatSheetTemplate["fields"],
-      }),
-      existing: schemaTemplate({ fields: [] }),
-    });
-
-    expect(decision.kind).toBe("reuse-existing");
-    expect(decision.unresolved).toBe(false);
-  });
-
   it("treats templates differing only in vault-scoped bookkeeping as identical (research R6)", () => {
     // Comparing raw stored records would flag a conflict on every single
     // import, turning a rare decision into a nuisance authors click through.

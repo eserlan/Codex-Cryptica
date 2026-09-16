@@ -30,13 +30,6 @@
             "Generate a coherent, playable personality: drives, a connected virtue and flaw, a believable contradiction, and roleplaying cues.",
           icon: "icon-[lucide--drama]",
         },
-        {
-          href: "/generators/origin-generator",
-          label: "Superhero Origin Generator",
-          summary:
-            "Generate a superhero origin with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence the backstory doesn't resolve.",
-          icon: "icon-[lucide--zap]",
-        },
       ],
     },
     {
@@ -156,20 +149,6 @@
           summary:
             "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
           icon: "icon-[lucide--skull]",
-        },
-        {
-          href: "/generators/comic-book-event-generator",
-          label: "Comic Book Event Generator",
-          summary:
-            "Generate a campaign-scale superhero event -- an alien invasion, hero civil war, secret invasion, and more -- with a staged escalation and concrete, lasting consequences.",
-          icon: "icon-[lucide--zap]",
-        },
-        {
-          href: "/generators/villain-scheme-generator",
-          label: "Villain Scheme Generator",
-          summary:
-            "Generate a Superhero / Comic Book villain scheme: objective, motivation, resources, escalating discoverable stages, complications, and consequences if nobody intervenes.",
-          icon: "icon-[lucide--target]",
         },
         {
           href: "/generators/heist",

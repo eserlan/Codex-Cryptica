@@ -180,10 +180,7 @@
   <div class="flex items-center justify-between">
     <div>
       <h3 class="text-lg font-medium text-theme-text flex items-center gap-2">
-        <span
-          class="icon-[lucide--cloud] h-5 w-5 text-theme-primary"
-          aria-hidden="true"
-        ></span>
+        <span class="icon-[lucide--cloud] h-5 w-5 text-theme-primary" aria-hidden="true"></span>
         Cloud Sync
       </h3>
       <p class="text-sm text-theme-muted">
@@ -199,8 +196,7 @@
       <div
         class="flex items-center gap-2 text-amber-500 text-sm font-bold uppercase tracking-wider"
       >
-        <span class="icon-[lucide--alert-triangle] h-4 w-4" aria-hidden="true"
-        ></span>
+        <span class="icon-[lucide--alert-triangle] h-4 w-4" aria-hidden="true"></span>
         Configuration Missing
       </div>
       <p class="text-xs text-theme-muted leading-relaxed">
@@ -220,10 +216,7 @@
             <div
               class="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center"
             >
-              <span
-                class="icon-[lucide--check-circle] h-6 w-6 text-green-500"
-                aria-hidden="true"
-              ></span>
+              <span class="icon-[lucide--check-circle] h-6 w-6 text-green-500" aria-hidden="true"></span>
             </div>
             <div>
               <div class="text-sm font-medium text-theme-text">
@@ -316,14 +309,10 @@
         class="w-full py-3 px-4 flex items-center justify-center gap-2 bg-theme-primary hover:bg-theme-primary/90 text-white rounded-lg font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {#if isConnecting}
-          <span
-            class="icon-[lucide--loader-2] h-5 w-5 animate-spin"
-            aria-hidden="true"
-          ></span>
+          <span class="icon-[lucide--loader-2] h-5 w-5 animate-spin" aria-hidden="true"></span>
           Connecting...
         {:else}
-          <span class="icon-[lucide--plus-circle] h-5 w-5" aria-hidden="true"
-          ></span>
+          <span class="icon-[lucide--plus-circle] h-5 w-5" aria-hidden="true"></span>
           Connect Google Drive
         {/if}
       </button>
@@ -393,10 +382,7 @@
                 class="w-full flex items-center justify-between px-3 py-2 rounded-md border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all text-left disabled:opacity-50"
               >
                 <span class="flex items-center gap-2 text-sm text-theme-text">
-                  <span
-                    class="icon-[lucide--folder] h-4 w-4 text-theme-primary"
-                    aria-hidden="true"
-                  ></span>
+                  <span class="icon-[lucide--folder] h-4 w-4 text-theme-primary" aria-hidden="true"></span>
                   {v.name}
                 </span>
                 <span class="text-xs text-theme-muted">

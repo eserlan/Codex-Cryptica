@@ -8,7 +8,6 @@ import { generatorEntries } from "./generators";
 import { blogEntries } from "./blog";
 import { exampleEntries } from "./examples";
 import { resourceEntries } from "./resources";
-import { topicEntries } from "./topics";
 
 /**
  * The registry, parsed at module load so an invalid entry fails the build
@@ -28,5 +27,4 @@ export const entries: DiscoveryEntry[] = [
   ...exampleEntries,
   ...blogEntries,
   ...resourceEntries,
-  ...topicEntries,
 ].map((entry) => DiscoveryEntrySchema.parse(entry));

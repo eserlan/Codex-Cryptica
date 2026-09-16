@@ -3,7 +3,6 @@ import {
   buildQuestPrompt,
   generateQuestLocal,
   parseQuestResponse,
-  questGenreForTheme,
   questConfig,
   themeToQuestGenre,
 } from "./public-quest";
@@ -74,40 +73,6 @@ describe("generateQuestLocal", () => {
     ).toBe(true);
     expect(out.lore).not.toContain("Coin plus a local power's favor");
   });
-
-  it("uses dedicated Superhero pools in local generation", () => {
-    const out = generateQuestLocal({ genre: "Superhero" }, seededRng(11));
-    const superheroTones = questConfig.tonesByTheme.Superhero;
-    const superheroRewards = questConfig.rewardsByTheme.Superhero;
-
-    expect(
-      superheroTones.some((tone) =>
-        out.content.toLowerCase().includes(tone.toLowerCase()),
-      ),
-    ).toBe(true);
-    expect(superheroRewards.some((reward) => out.lore.includes(reward))).toBe(
-      true,
-    );
-    expect(
-      questConfig.twistsByTheme.Superhero.some((twist) =>
-        out.lore.includes(twist),
-      ),
-    ).toBe(true);
-    expect(out.lore).not.toContain("Coin plus a local power's favor");
-  });
-
-  it("draws Superhero hooks and complications from dedicated pools, not generic fantasy ones", () => {
-    for (let seed = 0; seed < 20; seed++) {
-      const out = generateQuestLocal(
-        { genre: "Superhero" },
-        seededRng(100 + seed),
-      );
-      expect(out.content).not.toContain(
-        "A local official offers a reward to find a missing heir",
-      );
-      expect(out.content).not.toContain("A temple guardian collapses");
-    }
-  });
 });
 
 describe("buildQuestPrompt", () => {
@@ -137,10 +102,9 @@ describe("buildQuestPrompt", () => {
     expect(themeToQuestGenre["Cyberpunk / Corporate"]).toBe("Cyberpunk");
     expect(themeToQuestGenre["Western / Frontier"]).toBe("Western");
     expect(themeToQuestGenre["Cosmic Horror"]).toBe("Cosmic Horror");
-    expect(themeToQuestGenre["Superhero / Comic Book"]).toBe("Superhero");
-    expect(questGenreForTheme("Superhero / Comic Book")).toBe("Superhero");
-    expect(questGenreForTheme("Custom Genre")).toBe("Custom Genre");
-    expect(questConfig.genres).toContain("Superhero");
+    expect(themeToQuestGenre["Superhero / Comic Book"]).toBe(
+      "Political Intrigue",
+    );
     expect(questConfig.genres).toContain("Cosmic Horror");
     expect(questConfig.tonesByTheme["Cosmic Horror"]).toContain(
       "Investigative",
@@ -172,40 +136,6 @@ describe("buildQuestPrompt", () => {
     );
     expect(questConfig.threatsByTheme["Post-Apocalyptic"]).toContain(
       "Raider Warlord",
-    );
-    expect(questConfig.tonesByTheme.Superhero).toContain("Four-Color Heroic");
-    expect(questConfig.scopesByTheme.Superhero).toContain(
-      "City-wide (metropolitan crisis)",
-    );
-    expect(questConfig.locationTypesByTheme.Superhero).toContain(
-      "Villain's Hidden Lair",
-    );
-    expect(questConfig.threatsByTheme.Superhero).toContain(
-      "Supervillain Scheme",
-    );
-    expect(questConfig.rewardsByTheme.Superhero).toContain(
-      "Public trust rebuilt, at least until the next headline",
-    );
-    expect(questConfig.twistsByTheme.Superhero).toContain(
-      "Rescuing every hostage means letting the real target escape",
-    );
-  });
-
-  it("normalizes canonical theme labels at the public generation boundary", () => {
-    const canonicalTheme = "Superhero / Comic Book";
-    const zeroRng = () => 0;
-    const { resolved } = buildQuestPrompt(
-      { genre: canonicalTheme },
-      "",
-      zeroRng,
-    );
-
-    expect(resolved.genre).toBe("Superhero");
-    expect(resolved.tone).toBe("Four-Color Heroic");
-
-    const output = generateQuestLocal({ genre: canonicalTheme }, zeroRng);
-    expect(output.content).toContain(
-      "A live broadcast cuts to a villain's ultimatum",
     );
   });
 });

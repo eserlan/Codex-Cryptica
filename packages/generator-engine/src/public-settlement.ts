@@ -243,8 +243,6 @@ const FIRST_IMPRESSION_BY_GENRE: Record<string, string> = {
     "Smoke stacks, the clank of pistons, and the acrid smell of coal tar. The city never quite stops moving.",
   "Space Opera Resistance":
     "The roar of a shuttle taking off, the chatter of alien tongues, and the ever-present gaze of imperial stormtroopers on patrol.",
-  "Superhero / Comic Book":
-    "Sirens overlap with cheering crowds. A news drone hovers for the shot, and somewhere above the rooftops, a cape catches the wind.",
 };
 
 /**
