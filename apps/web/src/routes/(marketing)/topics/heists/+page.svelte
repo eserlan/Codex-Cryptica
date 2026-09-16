@@ -39,6 +39,8 @@
   canonicalUrl={canonical}
   image={HEIST_TOPIC_CONFIG.ogImage}
   imageAlt={HEIST_TOPIC_CONFIG.ogImageAlt}
+  imageWidth={HEIST_TOPIC_CONFIG.heroImage.width}
+  imageHeight={HEIST_TOPIC_CONFIG.heroImage.height}
   type="website"
   jsonLd={[buildHeistTopicJsonLd(), buildHeistTopicBreadcrumbJsonLd()]}
 />
@@ -176,8 +178,6 @@
             {#if example.image}
               <a
                 href="{cleanBase}{example.href}"
-                tabindex="-1"
-                aria-hidden="true"
                 class="mb-4 block overflow-hidden border border-theme-border"
                 use:trackDiscoveryClick={{
                   sourceKind: "topic",
@@ -242,8 +242,6 @@
             {#if tool.image}
               <a
                 href="{cleanBase}{tool.href}"
-                tabindex="-1"
-                aria-hidden="true"
                 class="mb-4 block overflow-hidden border border-theme-border"
                 use:trackDiscoveryClick={{
                   sourceKind: "topic",

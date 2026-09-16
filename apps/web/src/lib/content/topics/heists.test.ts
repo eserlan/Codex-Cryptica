@@ -78,6 +78,12 @@ describe("heist topic hub config (#3118)", () => {
     expect(primaryGenerator?.image?.height).toBeGreaterThan(0);
   });
 
+  it("keeps the OG image metadata aligned with the hero asset", () => {
+    expect(HEIST_TOPIC_CONFIG.ogImage).toBe(HEIST_TOPIC_CONFIG.heroImage.src);
+    expect(HEIST_TOPIC_CONFIG.heroImage.width).toBe(1376);
+    expect(HEIST_TOPIC_CONFIG.heroImage.height).toBe(768);
+  });
+
   it("keeps every hub link root-relative, with no repeats inside a section", () => {
     const sections = [
       HEIST_TOPIC_CONFIG.coreGuides,
