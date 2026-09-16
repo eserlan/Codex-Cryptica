@@ -19,7 +19,9 @@ describe("resolveHubGeneratorGenre", () => {
       "Space Opera Resistance",
     );
     expect(resolveHubGeneratorGenre("space-western")).toBe("Space Western");
-    expect(resolveHubGeneratorGenre("superhero")).toBe("Superhero");
+    expect(resolveHubGeneratorGenre("superhero")).toBe(
+      "Superhero / Comic Book",
+    );
   });
 
   it("returns null for an unknown or missing theme", () => {
@@ -127,8 +129,11 @@ describe("mapAlienRaceGenreToTheme", () => {
 });
 
 describe("SOCIAL_HUB_GENRE_TO_THEME", () => {
-  it("maps Superhero to Superhero / Comic Book", () => {
+  it("maps superhero genre labels to the superhero theme", () => {
     expect(SOCIAL_HUB_GENRE_TO_THEME["Superhero"]).toBe(
+      "Superhero / Comic Book",
+    );
+    expect(SOCIAL_HUB_GENRE_TO_THEME["Superhero / Comic Book"]).toBe(
       "Superhero / Comic Book",
     );
   });

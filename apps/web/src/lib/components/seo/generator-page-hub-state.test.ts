@@ -109,7 +109,11 @@ describe("resolveSupportedHubGenre", () => {
 
   it("falls back when a hub genre has no config pool", () => {
     expect(
-      resolveSupportedHubGenre("Superhero", ["Fantasy", "Modern"], "Fantasy"),
+      resolveSupportedHubGenre(
+        "Superhero / Comic Book",
+        ["Fantasy", "Modern"],
+        "Fantasy",
+      ),
     ).toBe("Fantasy");
     expect(resolveSupportedHubGenre(null, ["Fantasy"], "Fantasy")).toBe(
       "Fantasy",
@@ -222,21 +226,21 @@ describe("getHubMountPatch", () => {
     expect(patch?.activeTheme).toBe("Pirate");
   });
 
-  it("safely falls back nation patch when hub genre is unsupported like superhero", () => {
+  it("seeds the canonical superhero nation genre when supported", () => {
     const patch = getHubMountPatch({
       slug: "nation",
       hubTheme: "superhero",
     });
-    expect(patch?.nation).toBeUndefined();
+    expect(patch?.nation?.genre).toBe("Superhero / Comic Book");
     expect(patch?.activeTheme).toBe("Superhero / Comic Book");
   });
 
-  it("safely falls back social-hub patch when hub genre is unsupported like superhero", () => {
+  it("seeds the canonical superhero social-hub genre when supported", () => {
     const patch = getHubMountPatch({
       slug: "social-hub",
       hubTheme: "superhero",
     });
-    expect(patch?.socialHub).toBeUndefined();
+    expect(patch?.socialHub?.genre).toBe("Superhero / Comic Book");
     expect(patch?.activeTheme).toBe("Superhero / Comic Book");
   });
 });
