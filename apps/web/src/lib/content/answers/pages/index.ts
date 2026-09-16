@@ -35,6 +35,7 @@ import { howDoYouPrepAWeeklyRpgSessionQuickly } from "./how-do-you-prep-a-weekly
 import { howDoYouPrepareASandboxRpgCampaign } from "./how-do-you-prepare-a-sandbox-rpg-campaign";
 import { howDoYouRecapATtrpgSession } from "./how-do-you-recap-a-ttrpg-session";
 import { howDoYouRunACampaignWhenYouOnlyPlayOnceAMonth } from "./how-do-you-run-a-campaign-when-you-only-play-once-a-month";
+import { howDoYouRunAChaseInATabletopRpg } from "./how-do-you-run-a-chase-in-a-tabletop-rpg";
 import { howDoYouRunAConspiracyCampaign } from "./how-do-you-run-a-conspiracy-campaign";
 import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-tabletop-rpg";
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
@@ -112,6 +113,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouPrepareASandboxRpgCampaign,
     howDoYouRecapATtrpgSession,
     howDoYouRunACampaignWhenYouOnlyPlayOnceAMonth,
+    howDoYouRunAChaseInATabletopRpg,
     howDoYouRunAConspiracyCampaign,
     howDoYouRunAHeistInATabletopRpg,
     howDoYouRunAMysteryWithoutRailroading,
