@@ -254,6 +254,8 @@ export function createGeneratorHandlers(
     "comic-book-event-generator": (useAI) =>
       engine.generateComicBookEvent({
         ...(ctx.comicBookEvent as object),
+        useAI,
+      } as never),
     "villain-scheme-generator": (useAI) =>
       engine.generateVillainScheme({
         ...(ctx.villainScheme as object),

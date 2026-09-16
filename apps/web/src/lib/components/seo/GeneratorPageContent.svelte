@@ -566,6 +566,9 @@
     eventType: comicBookEventConfig.eventTypes[0],
     scale: comicBookEventConfig.scales[0],
     tone: comicBookEventConfig.tones[0],
+    campaignContext: "",
+  });
+
   let villainScheme = $state({
     powerScale: villainSchemeConfig.powerScales[0],
     tone: villainSchemeConfig.tones[0],
@@ -1326,6 +1329,8 @@
         bind:scale={comicBookEvent.scale}
         bind:tone={comicBookEvent.tone}
         bind:campaignContext={comicBookEvent.campaignContext}
+        onSurprise={trigger}
+      />
     {:else if slug === "villain-scheme-generator"}
       <VillainSchemeFormFields
         bind:powerScale={villainScheme.powerScale}

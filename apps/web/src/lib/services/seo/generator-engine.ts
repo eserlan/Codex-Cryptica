@@ -232,11 +232,10 @@ export {
 export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
-export { getVillainThreatScales, villainConfig } from "generator-engine";
-export { comicBookEventConfig } from "generator-engine";
 export {
   getVillainThreatScales,
   villainConfig,
+  comicBookEventConfig,
   villainSchemeConfig,
 } from "generator-engine";
 export { personalityConfig } from "generator-engine";
