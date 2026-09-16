@@ -69,7 +69,10 @@
       <div
         class="w-12 h-12 bg-theme-primary/20 rounded-full flex items-center justify-center mx-auto"
       >
-        <span class="icon-[lucide--sparkles] text-theme-primary w-6 h-6"></span>
+        <span
+          class="icon-[lucide--sparkles] text-theme-primary w-6 h-6"
+          aria-hidden="true"
+        ></span>
       </div>
       <div>
         <h3
@@ -169,7 +172,8 @@
                 }
               }}
             >
-              <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+              <span class="icon-[lucide--trash-2] w-4 h-4" aria-hidden="true"
+              ></span>
               Squash History
             </button>
           </div>
