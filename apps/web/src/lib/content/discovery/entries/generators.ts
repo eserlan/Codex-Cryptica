@@ -254,6 +254,21 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-comic-book-event-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/comic-book-event-generator",
+    primaryIntent: "comic book event generator",
+    intentAliases: [
+      "superhero event generator",
+      "superhero campaign crisis generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A campaign-scale superhero crisis — invasion, civil war, secret infiltration, and more — with a staged escalation and concrete, lasting consequences rather than a premise that resets to normal.",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-origin-generator",
     pageKind: "generator",
     canonicalPath: "/generators/origin-generator",

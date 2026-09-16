@@ -17,6 +17,7 @@ describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
       "artifact",
+      "comic-book-event",
       "council-vote",
       "creature",
       "deity",
@@ -49,6 +50,9 @@ describe("randomIdeaCategories", () => {
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
       generateVillain: vi.fn().mockResolvedValue("villain-result"),
+      generateComicBookEvent: vi
+        .fn()
+        .mockResolvedValue("comic-book-event-result"),
       generateMinorMagicItem: vi
         .fn()
         .mockResolvedValue("minor-magic-item-result"),
@@ -102,6 +106,9 @@ describe("randomIdeaCategories", () => {
       genre: theme,
     });
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
+      useAI: true,
+    });
+    expect(engine.generateComicBookEvent).toHaveBeenCalledWith({
       useAI: true,
     });
     expect(engine.generateHeist).toHaveBeenCalledWith({

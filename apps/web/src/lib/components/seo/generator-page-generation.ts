@@ -66,6 +66,7 @@ export interface GenerationContext {
   adventure: Record<string, unknown>;
   plotTwist: Record<string, unknown>;
   villain: Record<string, unknown>;
+  comicBookEvent: Record<string, unknown>;
   origin: Record<string, unknown>;
   villainScheme: Record<string, unknown>;
   world: Record<string, unknown>;
@@ -249,6 +250,11 @@ export function createGeneratorHandlers(
       engine.generateVillain({
         ...(ctx.villain as object),
         genre: ctx.getActiveTheme(),
+        useAI,
+      } as never),
+    "comic-book-event-generator": (useAI) =>
+      engine.generateComicBookEvent({
+        ...(ctx.comicBookEvent as object),
         useAI,
       } as never),
     "origin-generator": (useAI) =>

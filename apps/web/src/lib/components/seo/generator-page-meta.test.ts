@@ -33,6 +33,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "adventure-idea-generator",
   "plot-twist-generator",
   "bbeg-generator",
+  "comic-book-event-generator",
   "origin-generator",
   "villain-scheme-generator",
   "world",
@@ -53,6 +54,15 @@ describe("generator-page-meta completeness and social preview tags", () => {
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
     );
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
+  });
+
+  it("preserves the Council Vote FAQs and related generators", () => {
+    expect(slugMeta["council-vote"].faqs).toHaveLength(3);
+    expect(slugMeta["council-vote"].relatedLinks).toEqual([
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/kingdom", label: "Kingdom Generator" },
+    ]);
   });
 
   it("has metadata entries for all valid generator slugs", () => {

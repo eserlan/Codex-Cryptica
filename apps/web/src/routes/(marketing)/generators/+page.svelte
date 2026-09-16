@@ -158,6 +158,13 @@
           icon: "icon-[lucide--skull]",
         },
         {
+          href: "/generators/comic-book-event-generator",
+          label: "Comic Book Event Generator",
+          summary:
+            "Generate a campaign-scale superhero event -- an alien invasion, hero civil war, secret invasion, and more -- with a staged escalation and concrete, lasting consequences.",
+          icon: "icon-[lucide--zap]",
+        },
+        {
           href: "/generators/villain-scheme-generator",
           label: "Villain Scheme Generator",
           summary:

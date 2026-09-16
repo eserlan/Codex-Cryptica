@@ -96,6 +96,10 @@
           path: "/generators/bbeg-generator",
         },
         {
+          label: "Comic Book Event Generator",
+          path: "/generators/comic-book-event-generator",
+        },
+        {
           label: "Villain Scheme Generator",
           path: "/generators/villain-scheme-generator",
         },

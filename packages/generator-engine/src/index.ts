@@ -302,6 +302,14 @@ export {
   type VillainPrompt,
 } from "./public-villain";
 export {
+  buildComicBookEventPrompt,
+  parseComicBookEventResponse,
+  generateComicBookEventLocal,
+  comicBookEventConfig,
+  type ComicBookEventGeneratorOptions,
+  type ComicBookEventPrompt,
+} from "./public-comic-book-event";
+export {
   buildOriginPrompt,
   parseOriginResponse,
   generateOriginLocal,

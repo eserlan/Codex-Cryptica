@@ -38,6 +38,7 @@
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
+  import ComicBookEventFormFields from "$lib/components/seo/ComicBookEventFormFields.svelte";
   import OriginFormFields from "$lib/components/seo/OriginFormFields.svelte";
   import VillainSchemeFormFields from "$lib/components/seo/VillainSchemeFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
@@ -77,6 +78,7 @@
     adventureConfig,
     plotTwistConfig,
     villainConfig,
+    comicBookEventConfig,
     originConfig,
     villainSchemeConfig,
     worldConfig,
@@ -562,6 +564,13 @@
     campaignContext: "",
   });
 
+  let comicBookEvent = $state({
+    eventType: comicBookEventConfig.eventTypes[0],
+    scale: comicBookEventConfig.scales[0],
+    tone: comicBookEventConfig.tones[0],
+    campaignContext: "",
+  });
+
   // Superhero / Comic Book only, by design (#3111) — no genre field, no
   // theme-sync $effect branch below (Part C is deliberately not applicable).
   let origin = $state({
@@ -881,6 +890,7 @@
     adventure,
     plotTwist,
     villain,
+    comicBookEvent,
     origin,
     villainScheme,
     world,
@@ -1322,6 +1332,14 @@
         bind:sympathy={villain.sympathy}
         bind:worldRelation={villain.worldRelation}
         bind:campaignContext={villain.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "comic-book-event-generator"}
+      <ComicBookEventFormFields
+        bind:eventType={comicBookEvent.eventType}
+        bind:scale={comicBookEvent.scale}
+        bind:tone={comicBookEvent.tone}
+        bind:campaignContext={comicBookEvent.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "origin-generator"}
