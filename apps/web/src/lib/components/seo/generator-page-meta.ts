@@ -1503,6 +1503,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         href: "/examples/the-quell-extraction-cyberpunk-heist",
         label: "Cyberpunk Extraction Example",
       },
+      {
+        href: "/topics/heists",
+        label: "RPG Heists Topic Hub",
+      },
       { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
       { href: "/generators/npc", label: "NPC Generator" },
       { href: "/generators/quest", label: "Quest Hook Generator" },

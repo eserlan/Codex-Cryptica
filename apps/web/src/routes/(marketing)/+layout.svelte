@@ -32,6 +32,7 @@
     if (pathname.startsWith(`${base}/import`)) return "importer";
     if (pathname.startsWith(`${base}/migrations`)) return "importer";
     if (pathname.startsWith(`${base}/tools`)) return "tools";
+    if (pathname.startsWith(`${base}/topics`)) return "topics";
     return "other";
   }
 

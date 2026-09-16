@@ -108,6 +108,12 @@ export const whatMakesAGoodHeistTargetInATabletopRpg: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "Heist topic hub",
+      description:
+        "The complete RPG heist cluster: core running frameworks, target design checklists, worked examples, and generation tools.",
+      href: "/topics/heists",
+    },
+    {
       title: "Heist generator",
       description:
         "Generate a full score built around a prize with a practical catch, three security rings, and a compromised getaway.",
