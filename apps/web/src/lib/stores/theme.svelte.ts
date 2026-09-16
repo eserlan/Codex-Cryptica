@@ -511,7 +511,7 @@ export class ThemeStore {
       tokens.sectionTitle ?? tokens.secondary,
     );
     root.style.setProperty("--text-muted", tokens.metaText ?? tokens.secondary);
-    root.style.setProperty("--link", tokens.primary);
+    root.style.setProperty("--link", tokens.link ?? tokens.primary);
     root.style.setProperty(
       "--icon-interactive",
       tokens.iconActive ?? tokens.primary,
