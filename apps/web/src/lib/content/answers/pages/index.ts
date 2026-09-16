@@ -39,6 +39,7 @@ import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-t
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
 import { howDoYouRunASceneWithMultipleNpcs } from "./how-do-you-run-a-scene-with-multiple-npcs";
 import { howDoYouRunAnRpgCampaignInOneCity } from "./how-do-you-run-an-rpg-campaign-in-one-city";
+import { howDoYouRunDndForALargeGroupOfPlayers } from "./how-do-you-run-dnd-for-a-large-group-of-players";
 import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions-in-a-sandbox-campaign";
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
 import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-faction-turns-between-rpg-sessions";
@@ -113,6 +114,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouRunAMysteryWithoutRailroading,
     howDoYouRunASceneWithMultipleNpcs,
     howDoYouRunAnRpgCampaignInOneCity,
+    howDoYouRunDndForALargeGroupOfPlayers,
     howDoYouRunFactionsInASandboxCampaign,
     howDoYouStartWorldbuildingFromScratch,
     howDoYouTrackFactionTurnsBetweenRpgSessions,

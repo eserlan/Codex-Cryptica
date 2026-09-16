@@ -155,6 +155,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-recap-a-ttrpg-session",
+    "how-do-you-run-dnd-for-a-large-group-of-players",
   ],
   discovery: {
     id: "answer-session-prep",
