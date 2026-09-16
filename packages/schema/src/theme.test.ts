@@ -143,13 +143,30 @@ describe("Theme Schema & Definitions", () => {
     // surface tones rather than assume the palette "reads fine" visually.
     for (const template of [THEMES.superhero, SUPERHERO_DARK]) {
       const tokens = template.tokens;
+      expect(tokens.metaText).toBeDefined();
+      expect(tokens.link).toBeDefined();
       for (const bg of [tokens.background, tokens.surface]) {
         expect(contrastRatio(tokens.text, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.metaText!, bg)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.secondary, bg)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.primary, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.link!, bg)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.accent, bg)).toBeGreaterThanOrEqual(3.0);
       }
     }
+
+    // Explicit color hierarchy checks
+    expect(THEMES.superhero.tokens.metaText).toBe("#4b5568");
+    expect(THEMES.superhero.tokens.link).toBe("#1d4ed8");
+    expect(THEMES.superhero.tokens.border).toBe("rgba(24, 32, 51, 0.18)");
+
+    expect(SUPERHERO_DARK.tokens.background).toBe("#090b16");
+    expect(SUPERHERO_DARK.tokens.surface).toBe("#121629");
+    expect(SUPERHERO_DARK.tokens.text).toBe("#f4f1e8");
+    expect(SUPERHERO_DARK.tokens.metaText).toBe("#bac5dd");
+    expect(SUPERHERO_DARK.tokens.primary).toBe("#f0444b");
+    expect(SUPERHERO_DARK.tokens.link).toBe("#4f8cff");
+    expect(SUPERHERO_DARK.tokens.border).toBe("rgba(186, 197, 221, 0.16)");
   });
 
   it("defines the Pirate light and dark themes with nautical contrast tokens", () => {

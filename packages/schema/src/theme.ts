@@ -17,6 +17,7 @@ export const ThemeTokensSchema = z.object({
   titleInk: z.string().optional(),
   sectionTitle: z.string().optional(),
   metaText: z.string().optional(),
+  link: z.string().optional(),
   iconDefault: z.string().optional(),
   iconActive: z.string().optional(),
   focus: z.string().optional(),
