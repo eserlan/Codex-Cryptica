@@ -37,8 +37,8 @@
   title={HEIST_TOPIC_CONFIG.metaTitle}
   description={HEIST_TOPIC_CONFIG.description}
   canonicalUrl={canonical}
-  image={buildAbsoluteUrl("/og-image.png")}
-  imageAlt={HEIST_TOPIC_CONFIG.title}
+  image={HEIST_TOPIC_CONFIG.ogImage}
+  imageAlt={HEIST_TOPIC_CONFIG.ogImageAlt}
   type="website"
   jsonLd={[buildHeistTopicJsonLd(), buildHeistTopicBreadcrumbJsonLd()]}
 />
@@ -79,6 +79,25 @@
         {HEIST_TOPIC_CONFIG.leadParagraph}
       </p>
     </header>
+
+    {#if HEIST_TOPIC_CONFIG.heroImage}
+      <figure class="mb-12">
+        <img
+          src={HEIST_TOPIC_CONFIG.heroImage.src}
+          alt={HEIST_TOPIC_CONFIG.heroImage.alt}
+          width={HEIST_TOPIC_CONFIG.heroImage.width}
+          height={HEIST_TOPIC_CONFIG.heroImage.height}
+          loading="eager"
+          decoding="async"
+          class="w-full border border-theme-border shadow-sm"
+        />
+        {#if HEIST_TOPIC_CONFIG.heroImage.caption}
+          <figcaption class="mt-2 font-mono text-xs text-theme-muted">
+            {HEIST_TOPIC_CONFIG.heroImage.caption}
+          </figcaption>
+        {/if}
+      </figure>
+    {/if}
 
     <!-- Standalone explanatory copy: the three pressures that make a heist sing. -->
     <section class="mb-12" aria-labelledby="heist-thesis">
@@ -154,6 +173,30 @@
       <ul class="flex list-none flex-col gap-4">
         {#each HEIST_TOPIC_CONFIG.workedExamples as example (example.href)}
           <li class="border border-theme-border bg-theme-surface p-6">
+            {#if example.image}
+              <a
+                href="{cleanBase}{example.href}"
+                tabindex="-1"
+                aria-hidden="true"
+                class="mb-4 block overflow-hidden border border-theme-border"
+                use:trackDiscoveryClick={{
+                  sourceKind: "topic",
+                  sourceId: HEIST_TOPIC_CONFIG.slug,
+                  placement: "topic_example",
+                  ...classifyDiscoveryTarget(example.href),
+                }}
+              >
+                <img
+                  src={example.image.src}
+                  alt={example.image.alt}
+                  width={example.image.width}
+                  height={example.image.height}
+                  loading="lazy"
+                  decoding="async"
+                  class="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                />
+              </a>
+            {/if}
             <p
               class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
             >
@@ -196,6 +239,30 @@
       <ul class="flex list-none flex-col gap-4">
         {#each HEIST_TOPIC_CONFIG.generators as tool (tool.href)}
           <li class="border border-theme-border bg-theme-surface p-6">
+            {#if tool.image}
+              <a
+                href="{cleanBase}{tool.href}"
+                tabindex="-1"
+                aria-hidden="true"
+                class="mb-4 block overflow-hidden border border-theme-border"
+                use:trackDiscoveryClick={{
+                  sourceKind: "topic",
+                  sourceId: HEIST_TOPIC_CONFIG.slug,
+                  placement: "topic_tool",
+                  ...classifyDiscoveryTarget(tool.href),
+                }}
+              >
+                <img
+                  src={tool.image.src}
+                  alt={tool.image.alt}
+                  width={tool.image.width}
+                  height={tool.image.height}
+                  loading="lazy"
+                  decoding="async"
+                  class="aspect-[16/10] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                />
+              </a>
+            {/if}
             {#if tool.badge}
               <p
                 class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
