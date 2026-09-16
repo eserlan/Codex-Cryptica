@@ -48,6 +48,15 @@ import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  buildComicBookEventPrompt,
+  parseComicBookEventResponse,
+  generateComicBookEventLocal,
+  buildOriginPrompt,
+  parseOriginResponse,
+  generateOriginLocal,
+  buildVillainSchemePrompt,
+  parseVillainSchemeResponse,
+  generateVillainSchemeLocal,
   buildPersonalityPrompt,
   parsePersonalityResponse,
   generatePersonalityLocal,
@@ -99,25 +108,6 @@ import {
   buildPlotTwistPrompt,
   parsePlotTwistResponse,
   generatePlotTwistLocal,
-  buildWorldPrompt,
-  parseWorldResponse,
-  generateWorldLocal,
-  buildStarSystemPrompt,
-  parseStarSystemResponse,
-  generateStarSystemLocal,
-  buildConstellationPrompt,
-  parseConstellationResponse,
-  generateConstellationLocal,
-  buildNightSkyPrompt,
-  parseNightSkyResponse,
-  generateNightSkyLocal,
-  buildAlienRacePrompt,
-  parseAlienRaceResponse,
-  generateAlienRaceLocal,
-  buildCreaturePrompt,
-  parseCreatureResponse,
-  generateCreatureLocal,
-  BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type MinorMagicItemGeneratorOptions,
@@ -134,6 +124,9 @@ import {
   type EncounterGeneratorOptions,
   type PuzzleGeneratorOptions,
   type VillainGeneratorOptions,
+  type ComicBookEventGeneratorOptions,
+  type OriginGeneratorOptions,
+  type VillainSchemeGeneratorOptions,
   type PersonalityGeneratorOptions,
   type CouncilVoteGeneratorOptions,
   type HeistGeneratorOptions,
@@ -170,6 +163,7 @@ import {
 } from "./generator-ai-transport";
 import { assessLanguageOutput } from "./language-output-assessment";
 import { runSeoHeistGeneration } from "./heist-generation-orchestration";
+import { WorldGenerationService } from "./world-generation";
 
 export {
   nameTable,
@@ -216,11 +210,21 @@ export {
 export { magicItemConfig } from "generator-engine";
 export { minorMagicItemConfig } from "generator-engine";
 export { artifactConfig } from "generator-engine";
-export { questConfig, themeToQuestGenre } from "generator-engine";
+export {
+  questConfig,
+  questGenreForTheme,
+  themeToQuestGenre,
+} from "generator-engine";
 export { rumourConfig } from "generator-engine";
 export { encounterConfig } from "generator-engine";
 export { puzzleConfig } from "generator-engine";
-export { villainConfig } from "generator-engine";
+export {
+  getVillainThreatScales,
+  villainConfig,
+  comicBookEventConfig,
+  villainSchemeConfig,
+} from "generator-engine";
+export { originConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
 export { heistConfig } from "generator-engine";
@@ -247,9 +251,23 @@ import type { GeneratorOutput } from "./generator-helpers";
 
 export class DefaultGeneratorEngine {
   private transport: GeneratorAITransport;
+  private readonly worldGeneration: WorldGenerationService;
 
   constructor(private clientManager = aiClientManager) {
     this.transport = new GeneratorAITransport(clientManager);
+    this.worldGeneration = new WorldGenerationService({
+      runWithAIFallback: this.runWithAIFallback.bind(this),
+      runModel: this.runModel.bind(this),
+      getSessionContext,
+      recentInputs: generationInputHistoryStore.recent.bind(
+        generationInputHistoryStore,
+      ),
+      recordInputs: generationInputHistoryStore.record.bind(
+        generationInputHistoryStore,
+      ),
+      summarizeResolvedInputs,
+      formatRecentInputsNote,
+    });
   }
 
   async generateWithPreview<T>(
@@ -686,6 +704,54 @@ export class DefaultGeneratorEngine {
     return result;
   }
 
+  async generateComicBookEvent(
+    options: ComicBookEventGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...eventOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("comic-book-event");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildComicBookEventPrompt(
+            eventOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "comic-book-event",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseComicBookEventResponse(text, resolved);
+      },
+      () => generateComicBookEventLocal(eventOptions),
+    );
+  }
+
+  async generateVillainScheme(
+    options: VillainSchemeGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...villainSchemeOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("villain-scheme");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildVillainSchemePrompt(
+            villainSchemeOptions,
+            getSessionContext() + formatRecentInputsNote(recentInputs),
+          );
+        generationInputHistoryStore.record(
+          "villain-scheme",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseVillainSchemeResponse(text, resolved);
+      },
+      () => generateVillainSchemeLocal(villainSchemeOptions),
+    );
+  }
+
   /**
    * Generate, independently audit, then conditionally repair (#2768).
    *
@@ -816,6 +882,31 @@ export class DefaultGeneratorEngine {
         );
       },
       () => generateSecretSocietyLocal(secretSocietyOptions),
+    );
+  }
+
+  async generateOrigin(
+    options: OriginGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...originOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("origin");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildOriginPrompt(
+          originOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "origin",
+          summarizeResolvedInputs(resolved),
+        );
+        return parseOriginResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateOriginLocal(originOptions),
     );
   }
 
@@ -1224,148 +1315,35 @@ export class DefaultGeneratorEngine {
   async generateWorld(
     options: WorldGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...worldOptions } = options;
-    // buildWorldPrompt's WorldPrompt return type has no `resolved` field
-    // (it resolves options inline without exposing them), so it's not
-    // wired into generationInputHistoryStore.
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage } =
-          buildWorldPrompt(worldOptions);
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseWorldResponse(text, [
-          ...BANNED_NAMES,
-          ...(worldOptions.avoidNames ?? []),
-        ]);
-      },
-      () =>
-        generateWorldLocal({
-          ...worldOptions,
-          avoidNames: [...BANNED_NAMES, ...(worldOptions.avoidNames ?? [])],
-        }),
-    );
+    return this.worldGeneration.generateWorld(options);
   }
 
   /** Star system generation delegates to the shared offline-first generator package. */
   async generateStarSystem(
     options: StarSystemGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...starSystemOptions } = options;
-    // buildStarSystemPrompt's StarSystemPrompt return type has no `resolved`
-    // field, so it's not wired into generationInputHistoryStore.
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage } =
-          buildStarSystemPrompt(starSystemOptions);
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseStarSystemResponse(text, [
-          ...BANNED_NAMES,
-          ...(starSystemOptions.avoidNames ?? []),
-        ]);
-      },
-      () =>
-        generateStarSystemLocal({
-          ...starSystemOptions,
-          avoidNames: [
-            ...BANNED_NAMES,
-            ...(starSystemOptions.avoidNames ?? []),
-          ],
-        }),
-    );
+    return this.worldGeneration.generateStarSystem(options);
   }
 
   /** Constellation generation delegates to the shared offline-first generator package. */
   async generateConstellation(
     options: ConstellationGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...constellationOptions } = options;
-    const isNightSky = constellationOptions.mode === "night-sky";
-    // buildConstellationPrompt/buildNightSkyPrompt's return type has no
-    // `resolved` field, so this isn't wired into generationInputHistoryStore.
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage } = isNightSky
-          ? buildNightSkyPrompt(constellationOptions)
-          : buildConstellationPrompt(constellationOptions);
-        const text = await this.runModel(systemInstruction, userMessage);
-        const avoidNames = [
-          ...BANNED_NAMES,
-          ...(constellationOptions.avoidNames ?? []),
-        ];
-        return isNightSky
-          ? parseNightSkyResponse(text, avoidNames)
-          : parseConstellationResponse(text, avoidNames);
-      },
-      () => {
-        const avoidNames = [
-          ...BANNED_NAMES,
-          ...(constellationOptions.avoidNames ?? []),
-        ];
-        return isNightSky
-          ? generateNightSkyLocal({ ...constellationOptions, avoidNames })
-          : generateConstellationLocal({ ...constellationOptions, avoidNames });
-      },
-    );
+    return this.worldGeneration.generateConstellation(options);
   }
 
   /** Alien race generation delegates to the shared offline-first generator package. */
   async generateAlienRace(
     options: AlienRaceGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...alienRaceOptions } = options;
-    // buildAlienRacePrompt's AlienRacePrompt return type has no `resolved`
-    // field, so it's not wired into generationInputHistoryStore.
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage } =
-          buildAlienRacePrompt(alienRaceOptions);
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseAlienRaceResponse(text, [
-          ...BANNED_NAMES,
-          ...(alienRaceOptions.avoidNames ?? []),
-        ]);
-      },
-      () =>
-        generateAlienRaceLocal({
-          ...alienRaceOptions,
-          avoidNames: [...BANNED_NAMES, ...(alienRaceOptions.avoidNames ?? [])],
-        }),
-    );
+    return this.worldGeneration.generateAlienRace(options);
   }
 
   /** Creature generation delegates to the shared offline-first generator package. */
   async generateCreature(
     options: CreatureGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...creatureOptions } = options;
-    const historyNote = formatRecentInputsNote(
-      generationInputHistoryStore.recent("creature"),
-    );
-    const sessionContext = [getSessionContext(), historyNote]
-      .filter(Boolean)
-      .join("\n\n");
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage, resolved } =
-          buildCreaturePrompt(creatureOptions, sessionContext);
-        const text = await this.runModel(systemInstruction, userMessage);
-        generationInputHistoryStore.record(
-          "creature",
-          summarizeResolvedInputs(resolved),
-        );
-        return parseCreatureResponse(text, resolved);
-      },
-      () =>
-        generateCreatureLocal({
-          ...creatureOptions,
-          avoidNames: [...BANNED_NAMES, ...(creatureOptions.avoidNames ?? [])],
-        }),
-    );
+    return this.worldGeneration.generateCreature(options);
   }
 }
 

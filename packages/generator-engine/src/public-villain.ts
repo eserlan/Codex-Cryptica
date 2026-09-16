@@ -18,6 +18,12 @@ import {
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import { factionConfig } from "./public-faction-constants";
+import {
+  SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
+  SUPERHERO_POWER_SCALE_HINTS,
+  type SuperheroPowerScale,
+} from "./superhero-power-scale";
 
 export const villainConfig = {
   // Genre uses the canonical theme vocabulary directly (no per-generator
@@ -32,6 +38,13 @@ export const villainConfig = {
     "Global",
     "Cosmic",
   ],
+  // Per-genre override for the scale picker — a genre with its own scale
+  // vocabulary (see the shared Superhero Power Scale, #3103) uses this
+  // instead of the generic threatScales list above. Falls back to
+  // threatScales for every genre not listed here.
+  threatScalesByTheme: {
+    "Superhero / Comic Book": SUPERHERO_POWER_SCALES,
+  } as Record<string, readonly string[]>,
   archetypes: [
     "Random",
     "Dark Lord",
@@ -87,6 +100,10 @@ export const villainConfig = {
     "the Final Answer",
   ],
 };
+
+export function getVillainThreatScales(genre: string): readonly string[] {
+  return villainConfig.threatScalesByTheme[genre] ?? villainConfig.threatScales;
+}
 
 export interface VillainGeneratorOptions {
   genre?: string;
@@ -156,7 +173,7 @@ function resolveVillain(
     genre,
     tone: options.tone || pickFrom(villainConfig.tones, rng),
     threatScale:
-      options.threatScale || pickFrom(villainConfig.threatScales, rng),
+      options.threatScale || pickFrom(getVillainThreatScales(genre), rng),
     archetype: resolvePick(options.archetype, villainConfig.archetypes, rng),
     sympathy: options.sympathy || pickFrom(villainConfig.sympathyLevels, rng),
     worldRelation: resolvePick(
@@ -208,12 +225,20 @@ export function buildVillainPrompt(
   recentDomains: readonly string[] = [],
 ): VillainPrompt {
   const resolved = resolveVillain(options, rng);
+  // Only attach the hint when the genre itself is Superhero — the scale
+  // words (e.g. "City") aren't exclusive to this genre, and a non-superhero
+  // villain that happens to share one as a custom threat scale should not
+  // get superhero-flavoured guidance attached to it.
+  const powerScaleHint =
+    resolved.genre === "Superhero / Comic Book"
+      ? SUPERHERO_POWER_SCALE_HINTS[resolved.threatScale as SuperheroPowerScale]
+      : undefined;
 
   const userMessage = `Generate a campaign-scale BBEG / campaign villain in JSON format. The villain must function as a campaign engine — a clear goal, methods, resources, lieutenants, weaknesses, an escalating plan, discoverable clues, and consequences — not just biography, appearance, and generic villain flavour. British English. System-neutral (no game-system mechanics or stat blocks).
 Options:
 - Genre / Theme: ${resolved.genre}
 - Tone: ${resolved.tone}
-- Threat Scale: ${resolved.threatScale}
+- Threat Scale: ${resolved.threatScale}${powerScaleHint ? ` — ${powerScaleHint}` : ""}
 - Villain Archetype: ${resolved.archetype}
 - Degree of Sympathy / Redeemability: ${resolved.sympathy}
 - World Relation: ${resolved.worldRelation} — this villain ${WORLD_RELATION_DEFINITIONS[resolved.worldRelation]}. This is the villain's FUNDAMENTAL relationship to the status quo and MUST shape 'Ultimate Goal', 'Motivation', and 'Why Now' directly — do not default to a Reformer/Guardian "the existing institutions have failed, I must take control" framing unless World Relation is literally Reformer or Guardian. A Predator's goal preserves the system it feeds on; a Destroyer's goal has no replacement order in mind; an Escapee's goal is to leave, not to rule; a Servant's goal belongs to whoever or whatever they serve, not to them personally — and so on for each relation.
@@ -453,6 +478,12 @@ export function generateVillainLocal(
 ): PublicGeneratorOutput {
   const resolved = resolveVillain(options, rng);
   const flavor = pickFrom(DOMAIN_FLAVORS, rng);
+  const scaleFallback =
+    resolved.genre === "Superhero / Comic Book"
+      ? SUPERHERO_POWER_SCALE_FALLBACKS[
+          resolved.threatScale as SuperheroPowerScale
+        ]
+      : undefined;
   const relationFlavor = RELATION_FLAVORS[resolved.worldRelation];
   const lieutenantNames = [generateName(rng), generateName(rng)];
   const firstSign = pickFrom(FIRST_SIGNS_POOL, rng);
@@ -491,10 +522,10 @@ As a ${resolved.worldRelation.toLowerCase()}, they ${relationFlavor.motivation} 
 They trust their own read of people more than the evidence in front of them, and that overconfidence is what eventually hands the party their opening.
 
 ### Methods
-${flavor.methods}
+${scaleFallback ? `${scaleFallback.methods} ${flavor.methods}` : flavor.methods}
 
 ### Resources
-${flavor.resources}
+${scaleFallback ? `${scaleFallback.resources} ${flavor.resources}` : flavor.resources}
 
 ### Lieutenants & Inner Circle
 - **${lieutenantNames[0]}** — Enforcer. Loyal out of genuine belief, not fear; privately doubts one specific order they have not yet refused.
@@ -504,10 +535,10 @@ ${flavor.resources}
 ${flavor.organisation}
 
 ### Territory / Lair
-${flavor.territory}
+${scaleFallback ? `${scaleFallback.territory} ${flavor.territory}` : flavor.territory}
 
 ### The Villain's Plan
-${flavor.planStages.join("\n")}
+${(scaleFallback?.planStages ?? flavor.planStages).join("\n")}
 
 ### Escalation If Ignored
 Left unopposed, each stage completes roughly on schedule; by Stage 4 the villain's position becomes semi-official, and by Stage 6 removing them creates as much damage as leaving them would have.

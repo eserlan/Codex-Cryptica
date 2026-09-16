@@ -10,6 +10,7 @@ export interface RandomIdeaCategory {
     | "npc"
     | "quest"
     | "villain"
+    | "comic-book-event"
     | "minor-magic-item"
     | "artifact"
     | "council-vote"
@@ -19,7 +20,8 @@ export interface RandomIdeaCategory {
     | "pantheon"
     | "deity"
     | "creature"
-    | "encounter";
+    | "encounter"
+    | "origin";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -101,6 +103,11 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
       engine.generateVillain({ genre: theme, useAI }),
   },
   {
+    key: "comic-book-event",
+    label: "Comic Book Event",
+    generate: (engine, useAI) => engine.generateComicBookEvent({ useAI }),
+  },
+  {
     key: "minor-magic-item",
     label: "Minor Magic Item",
     generate: (engine, useAI, theme) =>
@@ -158,6 +165,14 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Encounter",
     generate: (engine, useAI, theme) =>
       engine.generateEncounter({ genre: theme, useAI }),
+  },
+  {
+    // Superhero / Comic Book only, by design (#3111) — ignores the rolled
+    // theme entirely, the same way council-vote does, since this generator
+    // has no genre option.
+    key: "origin",
+    label: "Superhero Origin",
+    generate: (engine, useAI) => engine.generateOrigin({ useAI }),
   },
 ];
 

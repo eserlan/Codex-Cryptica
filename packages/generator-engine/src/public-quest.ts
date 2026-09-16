@@ -34,10 +34,12 @@ export const themeToQuestGenre: Record<string, string> = {
   "Space Opera Resistance": "Space Fantasy",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Western": "Space Western",
-  // Political Intrigue is the closest existing quest vocabulary for superhero
-  // stories until the dedicated superhero quest tables are added.
-  "Superhero / Comic Book": "Political Intrigue",
+  "Superhero / Comic Book": "Superhero",
 };
+
+export function questGenreForTheme(theme: string): string {
+  return themeToQuestGenre[theme] ?? theme;
+}
 
 export const questConfig = {
   genres: [
@@ -53,6 +55,7 @@ export const questConfig = {
     "Space Fantasy",
     "Optimistic Exploration Sci-Fi",
     "Space Western",
+    "Superhero",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -112,6 +115,13 @@ export const questConfig = {
       "Awe-struck",
     ],
     "Space Western": ["Gritty", "Desperate", "Lawless", "Tense", "Rowdy"],
+    Superhero: [
+      "Four-Color Heroic",
+      "Street-Level Gritty",
+      "Cynical & Cutting",
+      "Cosmic & Epic",
+      "Pulp Adventure",
+    ],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -183,6 +193,13 @@ export const questConfig = {
       "Local (settlement / saloon)",
       "Sector (asteroid belt / planetary system)",
       "Frontier-wide (inter-system conflict)",
+    ],
+    Superhero: [
+      "Street-level (block / neighborhood)",
+      "City-wide (metropolitan crisis)",
+      "National (registration crisis)",
+      "Global (crossover event)",
+      "Cosmic (multiversal threat)",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -306,6 +323,16 @@ export const questConfig = {
       "Smuggler Way-Station",
       "Volcanic Moon Caldera",
     ],
+    Superhero: [
+      "Skyscraper Headquarters",
+      "Villain's Hidden Lair",
+      "Press Conference Stage",
+      "Disaster Zone",
+      "Research Campus",
+      "Hero Rooftop Network",
+      "City Courthouse",
+      "Orbital Platform",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -420,6 +447,15 @@ export const questConfig = {
       "Secretive Research Society",
       "Tide-Bound Entity",
     ],
+    Superhero: [
+      "Supervillain Scheme",
+      "Black-Ops Strike Team",
+      "Rogue Former Ally",
+      "Media Manipulation Campaign",
+      "Cosmic-Scale Anomaly",
+      "Corporate Power Grab",
+      "Occult Collateral Ritual",
+    ],
   } as Record<string, string[]>,
   hooks: [
     "A local official offers a reward to find a missing heir before a rival claims the title.",
@@ -453,6 +489,14 @@ export const questConfig = {
       "The witness is accurate, but remembers a different version of the town",
       "Destroying the artefact removes the only warning before the next event",
       "The party's investigation is the final step in a long-running experiment",
+    ],
+    Superhero: [
+      "The villain's demands turn out to rest on a legitimate grievance",
+      "A secret identity nearly comes apart in front of the wrong witness",
+      "The team's on-camera disagreement was staged to flush out a mole",
+      "Rescuing every hostage means letting the real target escape",
+      "A former ally resurfaces on the opposing side, and won't explain why",
+      "The disaster was engineered specifically to force a hero's hand",
     ],
   } as Record<string, string[]>,
   rewards: [
@@ -568,6 +612,14 @@ export const questConfig = {
       "Safe passage through neutral space",
       "Alliance with a newly discovered species",
     ],
+    Superhero: [
+      "Public trust rebuilt, at least until the next headline",
+      "A favor owed by someone with real institutional power",
+      "Recovered villain tech too dangerous to sell but too useful to destroy",
+      "An ally's loyalty, earned rather than assumed",
+      "Access to a resource that raises the stakes for the next scheme",
+      "A cleared name and a sealed incident report",
+    ],
   } as Record<string, string[]>,
 };
 
@@ -595,8 +647,11 @@ export interface ResolvedQuest {
 }
 
 function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
-  const genre = options.genre || pickFrom(questConfig.genres, rng);
-  const usesDedicatedPools = genre === "Pirate" || genre === "Cosmic Horror";
+  const genre = questGenreForTheme(
+    options.genre || pickFrom(questConfig.genres, rng),
+  );
+  const usesDedicatedPools =
+    genre === "Pirate" || genre === "Cosmic Horror" || genre === "Superhero";
   return {
     genre,
     tone:
@@ -734,14 +789,36 @@ export function generateQuestLocal(
     "The apparent curse is tied to a real historical atrocity that the port's rulers want buried.",
     "The safest harbour is controlled by someone the party just betrayed at sea.",
   ];
+  const superheroHooks = [
+    "A live broadcast cuts to a villain's ultimatum that names the party by their civilian identities.",
+    "A rescue goes right on camera, but the footage conveniently omits who caused the disaster in the first place.",
+    "A rival hero team claims the case first, and their methods are not the party's own.",
+    "An anonymous tip arrives with photographic proof of who really funded last month's catastrophe.",
+    "A city council schedules an emergency vote on hero oversight, and someone wants the party's testimony tonight.",
+    "A former mentor's costume turns up abandoned at the scene of a disaster no one has claimed.",
+  ];
+  const superheroComplications = [
+    "The villain's demands turn out to rest on a grievance the city has been ignoring for years.",
+    "Stopping the scheme in public risks exposing a party member's secret identity for good.",
+    "The press already has a narrative, and the truth does not fit it.",
+    "Saving everyone in the building means letting the actual target walk away clean.",
+    "The client offering the reward has their own reasons for wanting this handled quietly.",
+    "A former ally turns up on the wrong side of the line, and refuses to explain why.",
+  ];
   const hook = pickFrom(
-    resolved.genre === "Pirate" ? pirateHooks : questConfig.hooks,
+    resolved.genre === "Pirate"
+      ? pirateHooks
+      : resolved.genre === "Superhero"
+        ? superheroHooks
+        : questConfig.hooks,
     rng,
   );
   const complication = pickFrom(
     resolved.genre === "Pirate"
       ? pirateComplications
-      : questConfig.complications,
+      : resolved.genre === "Superhero"
+        ? superheroComplications
+        : questConfig.complications,
     rng,
   );
   const npcName = generateName(rng);

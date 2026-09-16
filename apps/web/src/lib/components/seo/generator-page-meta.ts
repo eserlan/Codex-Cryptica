@@ -1247,6 +1247,151 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         href: "/generators/secret-society",
         label: "Secret Society Generator",
       },
+      {
+        href: "/generators/villain-scheme-generator",
+        label: "Villain Scheme Generator",
+      },
+    ],
+  },
+  "villain-scheme-generator": {
+    pageTitle:
+      "Superhero Villain Scheme Generator | Comic Book Plot Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a staged, discoverable, escalating superhero villain scheme -- objective, motivation, current activity, resources, scheme stages, clues, complications, and consequences if nobody intervenes.",
+    introTitle: "Superhero Villain Scheme Generator",
+    eyebrow: "Superhero / Comic Book Generator",
+    introText:
+      "Create an ongoing villain plot for a Superhero / Comic Book campaign: an objective, why they want it, what they're doing right now, resources and minions, escalating scheme stages the heroes can discover and disrupt, complications, and consequences if nobody intervenes. Any villain -- existing or freshly imagined -- can be running it. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/villain-scheme-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-villain-scheme-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica superhero villain scheme generator drafting an escalating, discoverable plot with clues and consequences",
+    keywords: [
+      "villain scheme generator",
+      "superhero plot generator",
+      "comic book villain plan",
+      "superhero campaign generator",
+      "villain plot generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Villain Scheme generator create?",
+        answer:
+          "It creates an ongoing villain plot, not a villain biography: an objective, why they want it, what they're doing right now, resources and minions, 4-6 escalating scheme stages with clues heroes can uncover at each one, complications, escalation if ignored, consequences if nobody intervenes, and an optional twist -- plus a ready-to-run Adventure Hook drawn from the scheme's current stage.",
+      },
+      {
+        question: "Is this the same as the BBEG / Campaign Villain generator?",
+        answer:
+          "No. The BBEG generator writes up a full villain character. This generator writes the SCHEME itself -- a staged, discoverable, escalating plot that any villain, existing or freshly imagined, could be running.",
+      },
+      {
+        question: "Can I send the result to another generator?",
+        answer:
+          "Yes. The generated draft includes a 'Generate Plot Twist' action that hands the scheme straight to the Plot Twist Generator as a premise, so you can spin up a twist that recontextualises the scheme.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/bbeg-generator",
+        label: "BBEG / Campaign Villain Generator",
+      },
+      {
+        href: "/generators/plot-twist-generator",
+        label: "Plot Twist & Complication Generator",
+      },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+    ],
+  },
+  "comic-book-event-generator": {
+    pageTitle:
+      "Comic Book Event Generator | Superhero Campaign Crisis Generator | Codex Cryptica",
+    metaDescription:
+      "Generate a campaign-scale superhero event — an alien invasion, hero civil war, secret invasion, reality fracture, and more — with a staged escalation and concrete, lasting consequences, not just a flashy premise.",
+    introTitle: "Comic Book Event Generator",
+    eyebrow: "Superhero Event Generator",
+    introText:
+      "Create a large, crossover-tier superhero crisis a campaign can build an arc around: a premise, a staged escalation the party can witness and intervene in, and concrete, campaign-persistent consequences — a location changed, an institution's trust broken, a hero unmasked — not just a premise that resets to normal. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/comic-book-event-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-comic-book-event-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica Comic Book Event generator drafting a superhero campaign crisis with staged escalation and lasting consequences",
+    keywords: [
+      "comic book event generator",
+      "superhero event generator",
+      "superhero campaign crisis generator",
+      "comic book crossover generator",
+      "superhero rpg generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Comic Book Event generator create?",
+        answer:
+          "It creates a large, campaign-scale superhero crisis: a premise / inciting incident, a public response, a staged escalation across several beats, the true cause behind the event, and concrete, lasting consequences that persist after the climax — a location destroyed, an institution's trust broken, a hero publicly unmasked, or a new political reality.",
+      },
+      {
+        question: "Does the event actually change the campaign afterward?",
+        answer:
+          "Yes, by design. Every generated event includes a dedicated 'Lasting Consequences' section, and the generator is explicitly guarded against vague resolutions like 'the city was saved' or 'life returned to normal' — consequences must be specific enough for a GM to reference sessions later.",
+      },
+      {
+        question: "What scale of event does this generate?",
+        answer:
+          "Comic Book Events are campaign-scale by nature, so the Scale option runs from National through Multiversal. For a smaller, single-villain threat, use the BBEG / Campaign Villain or Quest Hook generators instead.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/bbeg-generator", label: "BBEG Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      {
+        href: "/generators/secret-society",
+        label: "Secret Society Generator",
+      },
+    ],
+  },
+  "origin-generator": {
+    pageTitle:
+      "Superhero Origin Generator | Free RPG Origin Story Tool | Codex Cryptica",
+    metaDescription:
+      "Generate a superhero origin story with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence that the backstory itself never resolves.",
+    introTitle: "Superhero Origin Generator",
+    eyebrow: "Superhero Origin Story Generator",
+    introText:
+      "Build a superhero origin that is more than a backstory paragraph: a concrete origin event, at least one campaign hook a GM can use tonight, and an ongoing consequence that stays unresolved. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/origin-generator",
+    keywords: [
+      "superhero origin generator",
+      "superhero backstory generator",
+      "comic book origin generator",
+      "superhero character generator",
+      "rpg superpower origin",
+    ],
+    faqs: [
+      {
+        question: "What does the Superhero Origin Generator create?",
+        answer:
+          "It creates a full superhero origin: the concrete origin event itself (mutation, accident, experiment, technology, magic, alien heritage, artefact, cosmic event, inherited mantle, government programme, or divine/extradimensional intervention), what the public believes versus the full truth, at least one campaign hook a GM can use immediately, and at least one ongoing consequence the origin story does not resolve.",
+      },
+      {
+        question:
+          "Why does the origin include a hook and a consequence, not just a backstory?",
+        answer:
+          "An origin that only explains where the power came from is a dead end at the table. Every generated origin structurally separates the event from a usable hook and a lasting complication, so it plugs straight into an ongoing campaign instead of sitting as flavour text.",
+      },
+      {
+        question: "Is this generator specific to the superhero genre?",
+        answer:
+          "Yes. Unlike most Codex Cryptica generators, this one is Superhero / Comic Book only by design — origins are an inherently superhero-genre concept, so there is no genre selector.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/npc", label: "RPG NPC Generator" },
+      { href: "/generators/personality", label: "Personality Generator" },
+      {
+        href: "/generators/bbeg-generator",
+        label: "BBEG / Campaign Villain Generator",
+      },
     ],
   },
   "adventure-idea-generator": {
@@ -1401,6 +1546,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         href: "/examples/the-quell-extraction-cyberpunk-heist",
         label: "Cyberpunk Extraction Example",
+      },
+      {
+        href: "/topics/heists",
+        label: "RPG Heists Topic Hub",
       },
       { href: "/generators/dungeon-generator", label: "Dungeon Generator" },
       { href: "/generators/npc", label: "NPC Generator" },

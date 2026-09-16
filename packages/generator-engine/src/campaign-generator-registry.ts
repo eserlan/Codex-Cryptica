@@ -52,6 +52,7 @@ import {
 import {
   buildQuestPrompt,
   generateQuestLocal,
+  questGenreForTheme,
   questConfig,
   type QuestGeneratorOptions,
 } from "./public-quest";
@@ -1068,10 +1069,12 @@ function heistPrompt(request: GeneratorRunRequest): string {
 
 function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {
   return {
-    genre: optionString(
-      request,
-      "genre",
-      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    genre: questGenreForTheme(
+      optionString(
+        request,
+        "genre",
+        themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+      ),
     ),
     tone: optionString(request, "tone", ""),
     scope: optionString(request, "scope", ""),

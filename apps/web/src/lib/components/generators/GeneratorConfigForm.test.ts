@@ -178,6 +178,29 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     expect(screen.queryByRole("option", { name: "Fortress" })).toBeNull();
   });
 
+  it("switches the villain threat scale to the superhero scale", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "villain",
+        themeId: "fantasy",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const threatScale = screen.getByLabelText("Threat Scale");
+    expect(screen.getByRole("option", { name: "Local" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Street" })).toBeNull();
+
+    await fireEvent.change(screen.getByLabelText("Genre / Theme"), {
+      target: { value: "Superhero / Comic Book" },
+    });
+
+    expect(screen.getByRole("option", { name: "Street" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Local" })).toBeNull();
+    expect((threatScale as HTMLSelectElement).value).toBe("Street");
+  });
+
   it("requires explicit confirmation before applying a suggested language", async () => {
     const onsubmit = vi.fn();
     render(GeneratorConfigForm, {

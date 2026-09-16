@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    getVillainThreatScales,
     villainConfig,
     factionConfig,
     pickFrom,
@@ -30,6 +31,27 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+
+  const availableThreatScales = $derived(getVillainThreatScales(theme));
+  const knownThreatScales = $derived(
+    Array.from(
+      new Set([
+        ...villainConfig.threatScales,
+        ...Object.values(villainConfig.threatScalesByTheme).flat(),
+      ]),
+    ),
+  );
+
+  $effect(() => {
+    if (
+      theme &&
+      threatScale &&
+      knownThreatScales.includes(threatScale) &&
+      !availableThreatScales.includes(threatScale)
+    ) {
+      threatScale = availableThreatScales[0] ?? threatScale;
+    }
+  });
 </script>
 
 <SelectWithCustomOption
@@ -58,7 +80,7 @@
   id="villain-threat-scale-select"
   label="Threat Scale"
   bind:value={threatScale}
-  choices={villainConfig.threatScales.map((t: string) => ({
+  choices={availableThreatScales.map((t: string) => ({
     value: t,
     label: t,
   }))}
@@ -119,7 +141,7 @@
     type="button"
     onclick={() => {
       tone = pickFrom(villainConfig.tones);
-      threatScale = pickFrom(villainConfig.threatScales);
+      threatScale = pickFrom(availableThreatScales);
       archetype = pickFrom(villainConfig.archetypes);
       sympathy = pickFrom(villainConfig.sympathyLevels);
       worldRelation = pickFrom(villainConfig.worldRelations);

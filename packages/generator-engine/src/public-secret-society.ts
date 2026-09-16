@@ -52,6 +52,23 @@ export const secretSocietyConfig = {
   ],
 } as const;
 
+// Genre-specific steering injected into the prompt for themes that otherwise
+// read as generic modern conspiracies with a label swapped in. Superhero /
+// Comic Book secret societies have no dedicated *ByTheme tables (this
+// generator is LLM-driven), so the fix is a concrete steering block rather
+// than a structured table — see #3105. Deliberately avoids naming any
+// existing comic-book organizations; every example here is original.
+const SUPERHERO_SECRET_SOCIETY_HINT =
+  "This is a Superhero / Comic Book setting. The society must be clearly, specifically superhero-genre — not a generic modern conspiracy with a superhero label attached. Ground it in one of these archetypes (or a genuine hybrid), and make that archetype drive its belief, ritual, and conflict: " +
+  "a villain organization built around a shared scheme, ideology, or signature power source and commanded by a mastermind; " +
+  "a superhuman supremacist group of empowered zealots who believe powers make them destined to rule over the unpowered; " +
+  "a government black-ops programme that studies, weaponizes, or hunts superhumans under deniable, classified authority; " +
+  "a corporate conspiracy monetizing or concealing the true origin of powers, power-suppression technology, or superhuman labor; " +
+  "an occult cabal that treats superpowers as a manifestation of hidden mystic or cosmic forces to be harnessed or unleashed; " +
+  "alien or extradimensional infiltrators posing as ordinary humans while they gather intelligence or prepare an incursion; " +
+  "or an anti-super movement of ordinary people organized by fear or resentment of the empowered, pushing registration, suppression, or vigilante violence against them. " +
+  "Do not invent named organizations, characters, or artifacts that imitate existing comic-book IP; every proper noun must be original.";
+
 export interface SecretSocietyGeneratorOptions {
   theme?: string;
   tone?: string;
@@ -93,11 +110,15 @@ export function buildSecretSocietyPrompt(
 ) {
   const r = resolve(options, rng);
   const contextBlock = sessionContext ? `\n${sessionContext}` : "";
+  const genreHint =
+    r.theme === "Superhero / Comic Book"
+      ? ` ${SUPERHERO_SECRET_SOCIETY_HINT}`
+      : "";
   return {
     resolved: r,
     systemInstruction:
       "You create campaign-ready secret societies for tabletop RPGs. Faithfully respect the selected theme's genre conventions, era, technology, social institutions, and vocabulary; do not introduce modern terminology, institutions, or technology unless the selected theme explicitly supports them. Every society must have a distinct central conceit. Treat existing campaign entities as optional relationship context, not creative templates: do not reuse their central domain, motifs, names, leader archetypes, or public-face framing unless the user's supplied context explicitly asks for a linked or rival faction. Return only valid JSON.",
-    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${contextBlock}\nReturn {title,summary,content,lore,labels}. Both content and lore are required, substantive markdown fields: never return a title-and-summary-only result. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
+    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${genreHint}${contextBlock}\nReturn {title,summary,content,lore,labels}. Both content and lore are required, substantive markdown fields: never return a title-and-summary-only result. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
   };
 }
 export function parseSecretSocietyResponse(

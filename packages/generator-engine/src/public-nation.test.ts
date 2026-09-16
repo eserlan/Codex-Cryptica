@@ -98,3 +98,24 @@ describe("parseNationResponse", () => {
     expect(() => parseNationResponse("nope")).toThrow();
   });
 });
+
+// Regression test (#3108): nationConfig is its own closed genre system
+// (Fantasy, Cyberpunk, Modern, ...) that does not include
+// "Superhero / Comic Book". It's reached only via random-idea.ts's
+// themeToHubGenre mapping, which maps Superhero to "Modern" — a real key
+// with real content, so this never actually crashes. Confirm that directly
+// too, in case a caller ever passes the raw theme through.
+describe("Superhero theme regression (#3108)", () => {
+  it("falls back to the Fantasy polity-type pool for an unmapped genre", () => {
+    expect(
+      nationConfig.polityTypesByGenre["Superhero / Comic Book"],
+    ).toBeUndefined();
+
+    const out = generateNationLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(9),
+    );
+    expect(out.type).toBe("faction");
+    expect(out.content).toBeTruthy();
+  });
+});
