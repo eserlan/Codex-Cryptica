@@ -256,5 +256,45 @@ describe("ThemeStore", () => {
       expect(root.style.getPropertyValue("--color-text-muted")).toBe("#78716c");
       expect(root.style.getPropertyValue("--text-muted")).toBe("#78716c");
     });
+
+    it("should apply accessible metaText, link, and semantic tokens for superhero (light)", async () => {
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("superhero");
+
+      expect(store.activeTheme.id).toBe("superhero");
+      const root = document.documentElement;
+
+      expect(root.style.getPropertyValue("--color-text-primary")).toBe(
+        "#182033",
+      );
+      expect(root.style.getPropertyValue("--color-text-muted")).toBe("#4b5568");
+      expect(root.style.getPropertyValue("--text-primary")).toBe("#182033");
+      expect(root.style.getPropertyValue("--text-muted")).toBe("#4b5568");
+      expect(root.style.getPropertyValue("--link")).toBe("#1d4ed8");
+      expect(root.style.getPropertyValue("--border-interactive")).toBe(
+        "#dc2626",
+      );
+    });
+
+    it("should apply accessible dark navy, pale blue-grey meta, link, and semantic tokens for superhero_dark", async () => {
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("superhero");
+
+      expect(store.activeTheme.id).toBe("superhero_dark");
+      const root = document.documentElement;
+
+      expect(root.style.getPropertyValue("--color-bg-primary")).toBe("#090b16");
+      expect(root.style.getPropertyValue("--color-bg-surface")).toBe("#121629");
+      expect(root.style.getPropertyValue("--color-text-primary")).toBe(
+        "#f4f1e8",
+      );
+      expect(root.style.getPropertyValue("--color-text-muted")).toBe("#bac5dd");
+      expect(root.style.getPropertyValue("--text-primary")).toBe("#f4f1e8");
+      expect(root.style.getPropertyValue("--text-muted")).toBe("#bac5dd");
+      expect(root.style.getPropertyValue("--link")).toBe("#4f8cff");
+      expect(root.style.getPropertyValue("--border-interactive")).toBe(
+        "#f0444b",
+      );
+    });
   });
 });

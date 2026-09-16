@@ -341,6 +341,31 @@
     --color-text-muted: #b45309;
     --color-text-dim: #78350f;
   }
+  [data-theme="superhero"] {
+    --color-text-muted: #4b5568;
+    --color-text-dim: #6b7280;
+    --text-primary: #182033;
+    --text-secondary: #dc2626;
+    --text-muted: #4b5568;
+    --link: #1d4ed8;
+    --icon-interactive: #dc2626;
+    --border-interactive: #dc2626;
+  }
+  [data-theme="superhero_dark"] {
+    --color-text-muted: #bac5dd;
+    --color-text-dim: #8896b3;
+    --text-primary: #f4f1e8;
+    --text-secondary: #f0444b;
+    --text-muted: #bac5dd;
+    --link: #4f8cff;
+    --icon-interactive: #f0444b;
+    --border-interactive: #f0444b;
+  }
+
+  [data-theme="superhero"] .font-mono.uppercase,
+  [data-theme="superhero_dark"] .font-mono.uppercase {
+    letter-spacing: 0.12em;
+  }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;
@@ -652,7 +677,7 @@
   --tw-prose-body: var(--color-text-primary);
   --tw-prose-headings: var(--color-text-primary);
   --tw-prose-lead: var(--color-text-muted);
-  --tw-prose-links: var(--color-accent-primary);
+  --tw-prose-links: var(--link, var(--color-accent-primary));
   --tw-prose-bold: var(--color-text-primary);
   --tw-prose-counters: var(--color-text-muted);
   --tw-prose-bullets: var(--color-accent-dim);
