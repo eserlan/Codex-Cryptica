@@ -77,6 +77,7 @@
     "Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, guides, and the campaign directory.";
 
   const KIND_LABEL: Record<PublicContentKind, string> = {
+    topic: "Topic Hubs",
     answer: "Answers",
     for: "Campaign Guides",
     example: "Examples",
@@ -204,6 +205,13 @@
           summary:
             "Curated links to real castle and palace floor plans for mapping your own locations.",
           icon: "icon-[lucide--map]",
+        },
+        {
+          href: "/topics/heists",
+          label: "RPG Heists Hub",
+          summary:
+            "Frameworks, prize design checklists, worked genre examples, and tools for running tabletop heists.",
+          icon: "icon-[lucide--lock]",
         },
         {
           href: "/my-stuff",

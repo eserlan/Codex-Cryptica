@@ -29,6 +29,10 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Worldbuilding Tool](https://codexcryptica.com/worldbuilding-tool): Landing page for the visual worldbuilding workspace.
 - [Responsible AI Worldbuilding](https://codexcryptica.com/responsible-ai-worldbuilding): Principles for how Codex uses AI — context-first, author-controlled, draft-safe.
 
+## Topic Hubs
+
+- [Running and Designing RPG Heists](https://codexcryptica.com/topics/heists): Complete resource cluster for tabletop heists: four-phase running framework, target design checklist, worked genre examples, and heist generation tools.
+
 ## Solution Pages
 
 - [Campaign Manager](https://codexcryptica.com/solutions/campaign-manager): Interactive features for TTRPG campaign running.
