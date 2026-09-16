@@ -5,9 +5,11 @@
 import {
   alienRaceConfig,
   languageConfig,
+  nationConfig,
   newsSheetConfig,
   settlementConfig,
   shipConfig,
+  socialHubConfig,
   starSystemConfig,
 } from "$lib/services/seo/generator-engine";
 import { themeIdToLabel } from "$lib/services/seo/generator-engine";
@@ -134,7 +136,10 @@ export function getHubMountPatch(opts: {
 
   // Fixed-theme slugs (no hubGenre dependency beyond early return).
   if (slug === "nation") {
-    if (hubGenre) {
+    if (
+      hubGenre &&
+      (nationConfig.genres as readonly string[]).includes(hubGenre)
+    ) {
       const activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? "Classic Fantasy";
       return {
@@ -148,7 +153,10 @@ export function getHubMountPatch(opts: {
     };
   }
   if (slug === "social-hub") {
-    if (hubGenre) {
+    if (
+      hubGenre &&
+      (socialHubConfig.genres as readonly string[]).includes(hubGenre)
+    ) {
       const activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? "Classic Fantasy";
       return { socialHub: { genre: hubGenre }, activeTheme };

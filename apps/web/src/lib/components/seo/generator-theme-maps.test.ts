@@ -7,6 +7,7 @@ import {
   mapWorldGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
+  SOCIAL_HUB_GENRE_TO_THEME,
 } from "./generator-theme-maps";
 
 describe("resolveHubGeneratorGenre", () => {
@@ -122,5 +123,13 @@ describe("mapAlienRaceGenreToTheme", () => {
 
   it("falls back to the general sci-fi skin for a custom genre", () => {
     expect(mapAlienRaceGenreToTheme("Biopunk")).toBe("Sci-Fi / Space Opera");
+  });
+});
+
+describe("SOCIAL_HUB_GENRE_TO_THEME", () => {
+  it("maps Superhero to Superhero / Comic Book", () => {
+    expect(SOCIAL_HUB_GENRE_TO_THEME["Superhero"]).toBe(
+      "Superhero / Comic Book",
+    );
   });
 });

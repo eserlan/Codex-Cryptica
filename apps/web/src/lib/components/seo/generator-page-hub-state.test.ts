@@ -81,6 +81,19 @@ describe("resolveInitialActiveTheme", () => {
       }),
     ).toBe("Vampire / Gothic Noir");
   });
+
+  it("maps superhero hub to Superhero / Comic Book initial theme", () => {
+    const p = memoryPersistence();
+    expect(
+      resolveInitialActiveTheme({
+        urlHubTheme: "superhero",
+        slug: "npc",
+        persistence: p,
+        browser: true,
+        fallbackTheme: "Classic Fantasy",
+      }),
+    ).toBe("Superhero / Comic Book");
+  });
 });
 
 describe("resolveSupportedHubGenre", () => {
@@ -207,5 +220,23 @@ describe("getHubMountPatch", () => {
       browser: true,
     });
     expect(patch?.activeTheme).toBe("Pirate");
+  });
+
+  it("safely falls back nation patch when hub genre is unsupported like superhero", () => {
+    const patch = getHubMountPatch({
+      slug: "nation",
+      hubTheme: "superhero",
+    });
+    expect(patch?.nation).toBeUndefined();
+    expect(patch?.activeTheme).toBe("Superhero / Comic Book");
+  });
+
+  it("safely falls back social-hub patch when hub genre is unsupported like superhero", () => {
+    const patch = getHubMountPatch({
+      slug: "social-hub",
+      hubTheme: "superhero",
+    });
+    expect(patch?.socialHub).toBeUndefined();
+    expect(patch?.activeTheme).toBe("Superhero / Comic Book");
   });
 });
