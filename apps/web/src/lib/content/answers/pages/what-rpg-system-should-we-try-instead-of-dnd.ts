@@ -153,6 +153,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
+    "what-rpg-should-i-play-for-an-over-the-top-space-opera",
   ],
   discovery: {
     id: "answer-system-selection",
