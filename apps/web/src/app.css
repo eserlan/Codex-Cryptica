@@ -127,6 +127,7 @@
 
   --font-header: var(--font-header-val);
   --font-body: var(--font-body-val);
+  --font-display: var(--font-display-val, var(--font-header-val));
 }
 
 @layer base {
@@ -560,6 +561,29 @@
 
   .font-header {
     text-shadow: var(--theme-text-glow, none);
+  }
+
+  .font-display {
+    text-shadow: var(--theme-text-glow, none);
+  }
+
+  /*
+   * Supers functional headings (#3145): Oswald replaces Bangers for small /
+   * repeated headings (cards, section/output headings, sidebar labels).
+   * Bangers is reserved for hero display via .font-display. Normalise
+   * fallback x-height during the font swap and give functional headings
+   * room to wrap instead of compressing.
+   */
+  [data-theme="superhero"] .font-header,
+  [data-theme="superhero_dark"] .font-header {
+    font-size-adjust: from-font;
+    line-height: 1.3;
+  }
+
+  [data-theme="superhero"] .font-display,
+  [data-theme="superhero_dark"] .font-display {
+    font-size-adjust: from-font;
+    line-height: 1.1;
   }
 
   /* Ensure icons inherit color and are transitionable */

@@ -113,7 +113,12 @@ describe("Theme Schema & Definitions", () => {
   it("defines Superhero / Four-Color Dawn and its dark counterpart with WCAG AA contrast", () => {
     expect(THEMES.superhero.id).toBe("superhero");
     expect(SUPERHERO_DARK.id).toBe("superhero_dark");
-    expect(THEMES.superhero.tokens.fontHeader).toContain("Bangers");
+    // #3145 hierarchy: Oswald for small/repeated functional headings,
+    // Bangers reserved for hero display, Comic Neue for body.
+    expect(THEMES.superhero.tokens.fontHeader).toContain("Oswald");
+    expect(THEMES.superhero.tokens.fontDisplay).toContain("Bangers");
+    expect(SUPERHERO_DARK.tokens.fontHeader).toContain("Oswald");
+    expect(SUPERHERO_DARK.tokens.fontDisplay).toContain("Bangers");
     expect(THEMES.superhero.tokens.fontBody).toContain("Comic Neue");
     expect(() => StylingTemplateSchema.parse(THEMES.superhero)).not.toThrow();
     expect(() => StylingTemplateSchema.parse(SUPERHERO_DARK)).not.toThrow();

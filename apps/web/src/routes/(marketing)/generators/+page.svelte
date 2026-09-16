@@ -485,7 +485,7 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
+          class="font-display text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>

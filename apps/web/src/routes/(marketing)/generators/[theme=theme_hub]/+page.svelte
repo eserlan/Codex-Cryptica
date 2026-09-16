@@ -926,7 +926,7 @@
           {config.eyebrow}
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
+          class="font-display text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           {config.label} RPG Generators
         </h1>

@@ -185,7 +185,7 @@
       <div class="border-b border-theme-border/60 pb-4 mb-6">
         <div class="flex items-start gap-3 flex-wrap">
           <h2
-            class="font-header font-bold text-xl md:text-2xl tracking-wide text-theme-text/95"
+            class="font-display font-bold text-xl md:text-2xl tracking-wide text-theme-text/95"
           >
             {generatedData.title}
           </h2>

@@ -594,6 +594,10 @@ export class ThemeStore {
 
     root.style.setProperty("--font-header-val", tokens.fontHeader);
     root.style.setProperty("--font-body-val", tokens.fontBody);
+    root.style.setProperty(
+      "--font-display-val",
+      tokens.fontDisplay ?? tokens.fontHeader,
+    );
 
     root.style.setProperty(
       "--theme-border-width",

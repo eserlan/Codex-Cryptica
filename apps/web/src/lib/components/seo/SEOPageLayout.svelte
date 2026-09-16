@@ -216,7 +216,7 @@
           : "100% Local-First Campaign Wiki")}
     </div>
     <h1
-      class="text-3xl sm:text-4xl lg:text-5xl font-bold font-header leading-tight mb-4 tracking-wide"
+      class="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 tracking-wide"
       id="hero-h1"
     >
       {data.h1}
