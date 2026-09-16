@@ -138,6 +138,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
     "how-much-rule-of-cool-should-a-dm-allow",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
+    "how-do-you-run-dnd-for-a-large-group-of-players",
   ],
   discovery: {
     id: "answer-encounter-balance",

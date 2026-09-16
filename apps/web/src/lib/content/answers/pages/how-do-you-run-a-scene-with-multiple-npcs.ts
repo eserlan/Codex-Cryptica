@@ -154,6 +154,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-create-a-fantasy-faction",
+    "how-do-you-run-dnd-for-a-large-group-of-players",
   ],
   discovery: {
     id: "answer-run-scene-multiple-npcs",
@@ -183,6 +184,11 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
         with: "answer-session-engagement",
         reason:
           "Both address table engagement during play, but this answer specifically tackles the logistical challenge of running multiple non-player characters in a single scene without GM monologues.",
+      },
+      {
+        with: "answer-large-group-dnd",
+        reason:
+          "Both sit in the session-prep cluster and touch crowded scenes, but this answer is about running many NPCs at once regardless of party size, while the large-group answer addresses running many players at once regardless of NPC count.",
       },
     ],
   },
