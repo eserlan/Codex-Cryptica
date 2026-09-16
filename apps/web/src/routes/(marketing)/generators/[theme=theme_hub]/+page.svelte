@@ -795,7 +795,7 @@
         position: i + 1,
         name: card.label,
         description: card.summary,
-        url: `${origin}/generators/${card.slug}`,
+        url: `${origin}/generators/${card.slug === "random" ? card.slug : `${data.theme}/${card.slug}`}`,
       })),
     }),
   );

@@ -198,4 +198,27 @@ describe("Generator Theme Hub Page", () => {
       screen.queryByRole("link", { name: /vampire clan generator/i }),
     ).toBeNull();
   });
+
+  it("uses the themed card URLs in the hub ItemList JSON-LD", () => {
+    render(Page, { props: { data: { theme: "superhero" } } });
+
+    const itemList = Array.from(
+      document.head.querySelectorAll('script[type="application/ld+json"]'),
+    )
+      .map((script) => JSON.parse(script.textContent ?? "{}"))
+      .find((json) => json["@type"] === "ItemList");
+
+    expect(itemList?.itemListElement).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Superhero Origin Generator",
+          url: "https://codexcryptica.com/generators/superhero/origin-generator",
+        }),
+        expect.objectContaining({
+          name: "Surprise Me",
+          url: "https://codexcryptica.com/generators/random",
+        }),
+      ]),
+    );
+  });
 });
