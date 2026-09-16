@@ -796,7 +796,7 @@ export const THEMES = {
       background: "#fdfdfb",
       surface: "#ffffff",
       text: "#182033",
-      border: "rgba(24, 32, 51, 0.18)",
+      border: "rgba(24, 32, 51, 0.5)",
       accent: "#b45309",
       metaText: "#4b5568",
       titleInk: "#182033",

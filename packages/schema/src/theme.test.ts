@@ -78,7 +78,6 @@ describe("Theme Schema & Definitions", () => {
       const darker = Math.min(l1, l2);
       return (lighter + 0.05) / (darker + 0.05);
     }
-
     // Backgrounds: canvas background (#1c1410), surface (#2a1e16), effective textured background (#241c18)
     const backgrounds = [tokens.background, tokens.surface, "#241c18"];
 
@@ -136,6 +135,24 @@ describe("Theme Schema & Definitions", () => {
       const darker = Math.min(l1, l2);
       return (lighter + 0.05) / (darker + 0.05);
     }
+    function compositeRgbaOnHex(rgba: string, background: string): string {
+      const match = rgba.match(/^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$/);
+      if (!match) throw new Error(`Expected an rgba colour, got ${rgba}`);
+
+      const alpha = Number(match[4]);
+      const channels = [1, 3, 5].map((index) =>
+        parseInt(background.slice(index, index + 2), 16),
+      );
+      return `#${[1, 2, 3]
+        .map((index, channel) =>
+          Math.round(
+            Number(match[index]) * alpha + channels[channel] * (1 - alpha),
+          )
+            .toString(16)
+            .padStart(2, "0"),
+        )
+        .join("")}`;
+    }
 
     // A bold four-color comic palette (saturated red/blue/gold) is exactly
     // the kind that can fail contrast against a bright or a near-black
@@ -158,7 +175,18 @@ describe("Theme Schema & Definitions", () => {
     // Explicit color hierarchy checks
     expect(THEMES.superhero.tokens.metaText).toBe("#4b5568");
     expect(THEMES.superhero.tokens.link).toBe("#1d4ed8");
-    expect(THEMES.superhero.tokens.border).toBe("rgba(24, 32, 51, 0.18)");
+    expect(THEMES.superhero.tokens.border).toBe("rgba(24, 32, 51, 0.5)");
+    for (const background of [
+      THEMES.superhero.tokens.background,
+      THEMES.superhero.tokens.surface,
+    ]) {
+      expect(
+        contrastRatio(
+          compositeRgbaOnHex(THEMES.superhero.tokens.border, background),
+          background,
+        ),
+      ).toBeGreaterThanOrEqual(3.0);
+    }
 
     expect(SUPERHERO_DARK.tokens.background).toBe("#090b16");
     expect(SUPERHERO_DARK.tokens.surface).toBe("#121629");
