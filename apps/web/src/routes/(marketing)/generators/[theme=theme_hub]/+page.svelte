@@ -954,7 +954,7 @@
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
             ></span>
             <span
-              class="block text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
             >
               {card.label}
             </span>
@@ -984,7 +984,7 @@
               >
                 <span>
                   <span
-                    class="block text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
+                    class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
                   >
                     {page.hero.title}
                   </span>
