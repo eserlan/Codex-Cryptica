@@ -161,6 +161,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "point-crawl-vs-hex-crawl",
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "how-do-you-run-a-chase-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-travel-interesting",
