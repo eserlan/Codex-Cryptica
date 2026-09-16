@@ -502,7 +502,7 @@
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold text-theme-text mb-4"
+        class="font-header text-xl font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -516,11 +516,11 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
-              <span class="block text-base text-theme-muted leading-relaxed">
+              <span class="block text-sm text-theme-muted leading-relaxed">
                 {hub.summary}
               </span>
             </a>
@@ -533,7 +533,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold text-theme-text mb-4"
+          class="font-header text-xl font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -547,11 +547,11 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>
-                <span class="block text-base text-theme-muted leading-relaxed">
+                <span class="block text-sm text-theme-muted leading-relaxed">
                   {gen.summary}
                 </span>
               </a>

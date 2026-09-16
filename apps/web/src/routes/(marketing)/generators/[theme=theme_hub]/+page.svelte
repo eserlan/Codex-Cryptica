@@ -954,11 +954,11 @@
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
             ></span>
             <span
-              class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
             >
               {card.label}
             </span>
-            <span class="block text-base text-theme-muted leading-relaxed">
+            <span class="block text-sm text-theme-muted leading-relaxed">
               {card.summary}
             </span>
           </a>
@@ -984,13 +984,11 @@
               >
                 <span>
                   <span
-                    class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                    class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
                   >
                     {page.hero.title}
                   </span>
-                  <span
-                    class="block text-base text-theme-muted leading-relaxed"
-                  >
+                  <span class="block text-sm text-theme-muted leading-relaxed">
                     {page.hero.tagline}
                   </span>
                 </span>

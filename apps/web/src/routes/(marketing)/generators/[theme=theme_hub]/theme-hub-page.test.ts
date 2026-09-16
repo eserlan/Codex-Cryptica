@@ -37,9 +37,10 @@ describe("Generator Theme Hub Page", () => {
       },
     });
 
-    expect(
-      screen.getByRole("link", { name: /nomad clan generator/i }),
-    ).toBeTruthy();
+    const link = screen.getByRole("link", {
+      name: /nomad clan generator/i,
+    });
+    expect(link.querySelector("span.font-header")).toBeTruthy();
   });
 
   it("shows the Pirate ship generator on the Pirate hub", () => {
