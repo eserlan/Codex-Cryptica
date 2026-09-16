@@ -169,4 +169,56 @@ describe("Generator Theme Hub Page", () => {
 
     expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
   });
+
+  it("renders a superhero hub with origin, villain scheme, and comic book event generators", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "superhero",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Superhero RPG Generators",
+    );
+    expect(
+      screen.getByRole("link", { name: /superhero origin generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /villain scheme generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /comic book event generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /daily gazette generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /vampire clan generator/i }),
+    ).toBeNull();
+  });
+
+  it("uses the themed card URLs in the hub ItemList JSON-LD", () => {
+    render(Page, { props: { data: { theme: "superhero" } } });
+
+    const itemList = Array.from(
+      document.head.querySelectorAll('script[type="application/ld+json"]'),
+    )
+      .map((script) => JSON.parse(script.textContent ?? "{}"))
+      .find((json) => json["@type"] === "ItemList");
+
+    expect(itemList?.itemListElement).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Superhero Origin Generator",
+          url: "https://codexcryptica.com/generators/superhero/origin-generator",
+        }),
+        expect.objectContaining({
+          name: "Surprise Me",
+          url: "https://codexcryptica.com/generators/random",
+        }),
+      ]),
+    );
+  });
 });

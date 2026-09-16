@@ -65,11 +65,13 @@ export const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   "space-opera-resistance": "Space Opera Resistance",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
   "space-western": "Space Western",
+  superhero: "Superhero",
 };
 
 // Genres not supported by the settlement generator are mapped to the nearest equivalent.
 export const SETTLEMENT_GENRE_FOR_HUB: Record<string, string> = {
   Lancer: "Sci-Fi",
+  Superhero: "Modern",
 };
 
 export function resolveHubGeneratorGenre(theme: string | null): string | null {
@@ -92,6 +94,7 @@ export const HUB_LABELS: Record<string, string> = {
   "space-opera-resistance": "Space Opera Resistance Hub",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi Hub",
   "space-western": "Space Western Hub",
+  superhero: "Superhero Hub",
 };
 
 export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
@@ -110,6 +113,7 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   "Space Opera Resistance": "Space Opera Resistance",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Western": "Space Western",
+  Superhero: "Superhero / Comic Book",
   "Superhero / Comic Book": "Superhero / Comic Book",
 };
 
@@ -130,6 +134,7 @@ export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
   "space-opera-resistance": "space-opera-resistance",
   "optimistic-exploration-sci-fi": "startrek",
   "space-western": "space-western",
+  superhero: "superhero",
 };
 
 export const SLUGS_USING_STORED_THEME = new Set([
