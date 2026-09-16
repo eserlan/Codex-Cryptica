@@ -189,6 +189,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     "what-makes-a-good-random-encounter",
     "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
     "how-do-you-write-a-one-shot-adventure",
+    "how-do-you-run-a-chase-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-run-heist-in-tabletop-rpg",
