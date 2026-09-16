@@ -274,6 +274,16 @@ describe("ThemeStore", () => {
       expect(root.style.getPropertyValue("--border-interactive")).toBe(
         "#dc2626",
       );
+      // #3145 hierarchy: Oswald functional headings, Bangers display-only.
+      expect(root.style.getPropertyValue("--font-header-val")).toContain(
+        "Oswald",
+      );
+      expect(root.style.getPropertyValue("--font-display-val")).toContain(
+        "Bangers",
+      );
+      expect(root.style.getPropertyValue("--font-body-val")).toContain(
+        "Comic Neue",
+      );
     });
 
     it("should apply accessible dark navy, pale blue-grey meta, link, and semantic tokens for superhero_dark", async () => {
@@ -295,6 +305,23 @@ describe("ThemeStore", () => {
       expect(root.style.getPropertyValue("--border-interactive")).toBe(
         "#f0444b",
       );
+      // #3145 hierarchy holds in dark mode as well.
+      expect(root.style.getPropertyValue("--font-header-val")).toContain(
+        "Oswald",
+      );
+      expect(root.style.getPropertyValue("--font-display-val")).toContain(
+        "Bangers",
+      );
+    });
+
+    it("should fall back to fontHeader for --font-display-val when a theme defines no display face", async () => {
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("workspace");
+
+      const root = document.documentElement;
+      const header = root.style.getPropertyValue("--font-header-val");
+      expect(header).toContain("Fraunces");
+      expect(root.style.getPropertyValue("--font-display-val")).toBe(header);
     });
   });
 });

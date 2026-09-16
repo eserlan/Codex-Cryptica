@@ -809,8 +809,9 @@ export const THEMES = {
       actionBg: "#dc2626",
       actionHover: "#ef4444",
       actionText: "#ffffff",
-      fontHeader: "'Bangers', cursive",
+      fontHeader: "'Oswald', sans-serif",
       fontBody: "'Comic Neue', sans-serif",
+      fontDisplay: "'Bangers', cursive",
       borderRadius: "2px",
     },
     graph: {
@@ -1351,8 +1352,9 @@ export const SUPERHERO_DARK: StylingTemplate = {
     actionBg: "#f0444b",
     actionHover: "#ff575e",
     actionText: "#090b16",
-    fontHeader: "'Bangers', cursive",
+    fontHeader: "'Oswald', sans-serif",
     fontBody: "'Comic Neue', sans-serif",
+    fontDisplay: "'Bangers', cursive",
     borderRadius: "2px",
   },
   graph: {

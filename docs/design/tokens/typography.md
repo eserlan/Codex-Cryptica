@@ -6,7 +6,8 @@ Codex-Cryptica uses a semantic typography system that separates typographic role
 
 ### Fonts
 
-- **Header Font (`--font-header`)**: Semantic heading font token used for all headings (H1-H6).
+- **Header Font (`--font-header`)**: Semantic functional-heading font token used for card titles, section/output headings, sidebar headings, and other small or repeated headings.
+- **Display Font (`--font-display`)**: Expressive hero font token used for major page titles and intentional high-emphasis moments. Falls back to `--font-header` when the active theme defines no display face.
 - **Body Font (`--font-body`)**: Semantic body font token used for all primary text, inputs, and buttons.
 
 ### Scale (Utility Classes)
@@ -25,7 +26,9 @@ We use standard Tailwind typography scales with semantic overrides for prose:
 Font families are not hardcoded but are mapped to theme-specific variables. This allows the aesthetic to shift across themes without requiring component-level typography changes.
 
 - **Header Font Mapping**: `--font-header` maps to `--font-header-val` defined in the active theme.
+- **Display Font Mapping**: `--font-display` maps to `--font-display-val` (falling back to `--font-header-val`) defined in the active theme.
 - **Body Font Mapping**: `--font-body` maps to `--font-body-val` defined in the active theme.
+- **Supers hierarchy (#3145)**: the Superhero theme resolves `--font-header-val` to Oswald (readable bold condensed for functional headings) and `--font-display-val` to Bangers (hero titles only). The first-paint bootstrap in `app.html` mirrors these stacks so headings do not flash/swap before hydration.
 
 ### Formatting
 

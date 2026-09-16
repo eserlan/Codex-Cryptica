@@ -11,4 +11,15 @@ describe("Web App Smoke Test", () => {
     expect(appHtmlContent).toContain('data-sveltekit-preload-data="tap"');
     expect(appHtmlContent).not.toContain('data-sveltekit-preload-data="hover"');
   });
+
+  it("should bootstrap first-paint font stacks to prevent heading FOUT (#3145)", () => {
+    const appHtmlPath = path.resolve(__dirname, "app.html");
+    const appHtmlContent = fs.readFileSync(appHtmlPath, "utf-8");
+
+    // Functional Supers headings resolve to Oswald; Bangers is display-only.
+    expect(appHtmlContent).toContain("Oswald");
+    expect(appHtmlContent).toContain("--font-header-val");
+    expect(appHtmlContent).toContain("--font-body-val");
+    expect(appHtmlContent).toContain("--font-display-val");
+  });
 });

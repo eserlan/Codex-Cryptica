@@ -11,6 +11,7 @@ export const ThemeTokensSchema = z.object({
   accent: z.string(),
   fontHeader: z.string(),
   fontBody: z.string(),
+  fontDisplay: z.string().optional(),
   texture: z.string().optional(),
   textureOverlayAlpha: z.string().optional(),
   textureCardBlur: z.string().optional(),

@@ -23,7 +23,7 @@
 			function loadThemeFonts() {
 				var l = document.createElement('link');
 				l.rel = 'stylesheet';
-				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=swap';
+				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=swap';
 				document.head.appendChild(l);
 			}
 			if ('requestIdleCallback' in window) {
@@ -35,7 +35,7 @@
 	</script>
 	<noscript>
 		<link rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional" />
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional" />
 	</noscript>
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
@@ -121,6 +121,40 @@
 				if (!themes[theme]) return;
 				const t = themes[theme];
 				const root = document.documentElement;
+				// First-paint font stacks (#3145): mirror the theme store so
+				// headings render in the right family before hydration instead
+				// of falling back and swapping (FOUT/CLS). Oswald is the
+				// functional Supers heading face; Bangers is display-only.
+				const fonts = {
+					workspace: { header: "'Fraunces', serif", body: "'Inter', sans-serif" },
+					workspace_dark: { header: "'Fraunces', serif", body: "'Inter', sans-serif" },
+					fantasy: { header: "'Alegreya', serif", body: "'Inter', sans-serif" },
+					fantasy_dark: { header: "'Alegreya', serif", body: "'Alegreya', serif" },
+					modern: { header: "'Inter', sans-serif", body: "'Inter', sans-serif" },
+					modern_dark: { header: "'Inter', sans-serif", body: "'Inter', sans-serif" },
+					scifi: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					scifi_light: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					cyberpunk: { header: "'Fira Code', monospace", body: "'Fira Code', monospace" },
+					cyberpunk_light: { header: "'Fira Code', monospace", body: "'Fira Code', monospace" },
+					apocalyptic: { header: "'Courier Prime', monospace", body: "'Courier Prime', monospace" },
+					apocalyptic_light: { header: "'Courier Prime', monospace", body: "'Courier Prime', monospace" },
+					horror: { header: "'Spectral', serif", body: "'Spectral', serif" },
+					horror_light: { header: "'Spectral', serif", body: "'Spectral', serif" },
+					fallout: { header: "'Share Tech Mono', monospace", body: "'Share Tech Mono', monospace" },
+					fallout_light: { header: "'Share Tech Mono', monospace", body: "'Share Tech Mono', monospace" },
+					starwars: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					starwars_light: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					startrek: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					startrek_light: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					western: { header: "'Alegreya', serif", body: "'Inter', sans-serif" },
+					western_dark: { header: "'Alegreya', serif", body: "'Alegreya', serif" },
+					superhero: { header: "'Oswald', sans-serif", body: "'Comic Neue', sans-serif", display: "'Bangers', cursive" },
+					superhero_dark: { header: "'Oswald', sans-serif", body: "'Comic Neue', sans-serif", display: "'Bangers', cursive" }
+				};
+				const f = fonts[theme] || fonts.workspace;
+				root.style.setProperty("--font-header-val", f.header);
+				root.style.setProperty("--font-body-val", f.body);
+				root.style.setProperty("--font-display-val", f.display || f.header);
 				root.dataset.theme = theme;
 				root.dataset.worldTheme = baseTheme;
 				root.style.setProperty("--color-bg-primary", t.bg);
