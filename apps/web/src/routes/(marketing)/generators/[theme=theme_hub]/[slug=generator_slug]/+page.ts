@@ -36,6 +36,7 @@ const validSlugs = new Set([
   "adventure-idea-generator",
   "plot-twist-generator",
   "bbeg-generator",
+  "origin-generator",
   "villain-scheme-generator",
   "world",
   "council-vote",

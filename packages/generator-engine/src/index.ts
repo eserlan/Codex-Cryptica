@@ -302,6 +302,14 @@ export {
   type VillainPrompt,
 } from "./public-villain";
 export {
+  buildOriginPrompt,
+  parseOriginResponse,
+  generateOriginLocal,
+  originConfig,
+  type OriginGeneratorOptions,
+  type OriginPrompt,
+} from "./public-origin";
+export {
   buildVillainSchemePrompt,
   parseVillainSchemeResponse,
   generateVillainSchemeLocal,

@@ -56,6 +56,13 @@
                 "Generate a coherent, playable personality -- drives, virtue and flaw, a real contradiction, and how they act under pressure -- ready to roleplay.",
               icon: "icon-[lucide--drama]",
             },
+            {
+              href: "/generators/origin-generator",
+              label: "Superhero Origin Generator",
+              summary:
+                "Generate a superhero origin story with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence the backstory doesn't resolve.",
+              icon: "icon-[lucide--zap]",
+            },
           ],
         },
         {
