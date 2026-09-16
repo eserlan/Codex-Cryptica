@@ -100,7 +100,7 @@
             class="absolute right-2 top-2 text-theme-primary"
             transition:fade={{ duration: 150 }}
           >
-            <span class="icon-[lucide--check-circle] h-4 w-4"></span>
+            <span class="icon-[lucide--check-circle] h-4 w-4" aria-hidden="true"></span>
           </div>
         {/if}
 

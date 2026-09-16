@@ -148,8 +148,7 @@
           transition:slide
         >
           <div class="flex items-center gap-2">
-            <span class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400"
-            ></span>
+            <span class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400" aria-hidden="true"></span>
             <span
               class="text-sm font-bold text-red-400 uppercase tracking-wider"
               >Skipped {controller.rejectedFiles.length} Invalid File(s)</span

@@ -186,3 +186,6 @@
 
 **Learning:** When adding `aria-hidden="true"` to inner decorative icons within a button, you must ensure that *all* sibling decorative spans inside that specific button context are targeted, rather than just the first one. Missed sibling icons (like an adjacent list-checks icon next to a chevron) will still be redundantly announced by screen readers.
 **Action:** When inspecting a target element for accessibility attributes, review the entire block (e.g., using `grep -B 5 -A 10`) to identify all inner decorative `<span>` tags, and ensure `aria-hidden="true"` is applied comprehensively to all relevant sibling tags within that button.
+## 2025-02-13 - Added missing aria-hidden attributes
+**Learning:** Added missing aria-hidden to decorative icons to prevent screen readers from reading confusing CSS class names.
+**Action:** Always add aria-hidden="true" to purely decorative icons (like <span class="icon-[...]">) in Svelte components.
