@@ -1313,10 +1313,6 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Build a superhero origin that is more than a backstory paragraph: a concrete origin event, at least one campaign hook a GM can use tonight, and an ongoing consequence that stays unresolved. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/origin-generator",
-    ogImage:
-      "https://assets.codexcryptica.com/screenshots/generator-origin-generator.jpg",
-    ogImageAlt:
-      "Codex Cryptica superhero origin generator drafting an origin event, a campaign hook, and an ongoing consequence",
     keywords: [
       "superhero origin generator",
       "superhero backstory generator",
