@@ -56,6 +56,15 @@ describe("generator-page-meta completeness and social preview tags", () => {
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
   });
 
+  it("preserves the Council Vote FAQs and related generators", () => {
+    expect(slugMeta["council-vote"].faqs).toHaveLength(3);
+    expect(slugMeta["council-vote"].relatedLinks).toEqual([
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/kingdom", label: "Kingdom Generator" },
+    ]);
+  });
+
   it("has metadata entries for all valid generator slugs", () => {
     const keys = Object.keys(slugMeta);
     expect(keys.length).toBe(allExpectedSlugs.length);

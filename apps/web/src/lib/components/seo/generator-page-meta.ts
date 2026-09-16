@@ -1455,14 +1455,26 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ],
     faqs: [
       {
-        question: "What does the Council Vote generator create?",
+        question: "What does the council vote generator create?",
         answer:
-          "It creates a political quest centred on a council vote, with named voters, distinct agendas, leverage, alliances, secrets, demands, a deadline, and a voting threshold.",
+          "It creates a complete political vote quest: the proposal being voted on, the deadline and voting procedure, and a named council where every voter has a public position, a true agenda, an initial stance, relationships to other voters, what would persuade them, and a secret or piece of leverage.",
+      },
+      {
+        question:
+          "Does the party always have a guaranteed way to win the vote?",
+        answer:
+          "No — by design, the generator never hands the party a single guaranteed majority. It aims for at least two viable voting coalitions, so players have to build a path from persuasion, evidence, leverage, and favours rather than following one prescribed solution.",
+      },
+      {
+        question: "Can I use it for genres other than fantasy?",
+        answer:
+          "Yes. Town councils, noble courts, senates, clan moots, war councils, corporate boards, revolutionary committees, interstellar assemblies, criminal syndicates, and religious conclaves are all supported governing-body types.",
       },
     ],
     relatedLinks: [
-      { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/kingdom", label: "Kingdom Generator" },
     ],
   },
   heist: {

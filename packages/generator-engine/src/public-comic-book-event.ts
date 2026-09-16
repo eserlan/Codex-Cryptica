@@ -166,6 +166,56 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+function validateRequiredSections(
+  markdown: string,
+  headings: readonly string[],
+  fieldName: string,
+): void {
+  const lines = markdown.split(/\r?\n/);
+  let headingIndex = 0;
+  let bodyLines: string[] = [];
+  let sawHeading = false;
+
+  const finishSection = () => {
+    if (sawHeading && !bodyLines.join("\n").trim()) {
+      throw new Error(
+        `Comic book event response has an empty ${fieldName} section.`,
+      );
+    }
+  };
+
+  for (const line of lines) {
+    const heading = /^(###)\s+(.+?)\s*$/.exec(line);
+    if (heading) {
+      finishSection();
+      const expected = headings[headingIndex];
+      if (heading[2] !== expected) {
+        throw new Error(
+          `Comic book event response has an invalid ${fieldName} section order.`,
+        );
+      }
+      headingIndex += 1;
+      bodyLines = [];
+      sawHeading = true;
+      continue;
+    }
+
+    if (!sawHeading && line.trim()) {
+      throw new Error(
+        `Comic book event response has text before ${fieldName} sections.`,
+      );
+    }
+    bodyLines.push(line);
+  }
+
+  finishSection();
+  if (headingIndex !== headings.length) {
+    throw new Error(
+      `Comic book event response is missing a ${fieldName} section.`,
+    );
+  }
+}
+
 export function parseComicBookEventResponse(
   text: string,
   resolved: ResolvedComicBookEvent,
@@ -178,6 +228,16 @@ export function parseComicBookEventResponse(
       "Comic book event response must contain content and lore strings.",
     );
   }
+  validateRequiredSections(
+    content,
+    ["The Event", "Public Response", "How It Unfolds"],
+    "content",
+  );
+  validateRequiredSections(
+    lore,
+    ["True Cause", "The Climax", "Lasting Consequences", "Campaign Hooks"],
+    "lore",
+  );
 
   const labels = asArray(data.labels)
     .filter((label): label is string => typeof label === "string")

@@ -233,10 +233,23 @@ describe("buildComicBookEventPrompt", () => {
 
 describe("parseComicBookEventResponse", () => {
   const { resolved } = buildComicBookEventPrompt({}, "", seededRng(3));
+  const validContent =
+    "### The Event\nincident\n\n### Public Response\nreaction\n\n### How It Unfolds\nstages";
+  const validLore =
+    "### True Cause\ntruth\n\n### The Climax\nresolution\n\n### Lasting Consequences\nchange\n\n### Campaign Hooks\nhook";
 
   it("parses fenced JSON and keeps the rich body", () => {
-    const json =
-      '```json\n{"title":"Zero Hour: Secret Invasion","content":"### The Event\\ny","lore":"### True Cause\\nz","labels":["comic-book-event"]}\n```';
+    const fence = String.fromCharCode(96).repeat(3);
+    const json = [
+      fence + "json",
+      JSON.stringify({
+        title: "Zero Hour: Secret Invasion",
+        content: validContent,
+        lore: validLore,
+        labels: ["comic-book-event"],
+      }),
+      fence,
+    ].join("\n");
     const out = parseComicBookEventResponse(json, resolved);
     expect(out.title).toBe("Zero Hour: Secret Invasion");
     expect(out.content).toContain("The Event");
@@ -246,7 +259,7 @@ describe("parseComicBookEventResponse", () => {
 
   it("falls back to the resolved name and throws on bad JSON", () => {
     const out = parseComicBookEventResponse(
-      '{"content":"x","lore":"y"}',
+      JSON.stringify({ content: validContent, lore: validLore }),
       resolved,
     );
     expect(out.title).toBe(resolved.eventName);
@@ -264,12 +277,36 @@ describe("parseComicBookEventResponse", () => {
     const output = parseComicBookEventResponse(
       JSON.stringify({
         title: "Safe Event",
-        content: "player-facing",
-        lore: "gm-facing",
+        content: validContent,
+        lore: validLore,
         labels: ["safe-label", 42, { unexpected: true }],
       }),
       resolved,
     );
     expect(output.labels).toEqual(["safe-label"]);
+  });
+
+  it("rejects responses that omit or reorder the required sections", () => {
+    expect(() =>
+      parseComicBookEventResponse(
+        JSON.stringify({
+          content:
+            "### The Event\nincident\n\n### Public Response\nreaction\n\n### How It Unfolds\nstages",
+          lore: "### True Cause\ntruth\n\n### The Climax\nresolution\n\n### Campaign Hooks\nhook",
+        }),
+        resolved,
+      ),
+    ).toThrow("invalid lore section order");
+
+    expect(() =>
+      parseComicBookEventResponse(
+        JSON.stringify({
+          content:
+            "### The Event\nincident\n\n### Public Response\nreaction\n\n### How It Unfolds\nstages",
+          lore: "### True Cause\ntruth\n\n### The Climax\nresolution\n\n### Lasting Consequences\n",
+        }),
+        resolved,
+      ),
+    ).toThrow("empty lore section");
   });
 });
