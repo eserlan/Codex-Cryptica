@@ -407,6 +407,13 @@
         "Frontier scoundrels, asteroid boomtowns, smuggling rings, and rust-bucket freighters for space western campaigns.",
       icon: "icon-[lucide--orbit]",
     },
+    {
+      href: "/generators/superhero",
+      label: "Superhero Hub",
+      summary:
+        "Four-colour heroics, villain schemes, crossover events, and metahuman factions for comic book campaigns.",
+      icon: "icon-[lucide--zap]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);

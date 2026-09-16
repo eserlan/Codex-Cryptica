@@ -906,4 +906,23 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "hub-superhero",
+    pageKind: "hub",
+    canonicalPath: "/generators/superhero",
+    primaryIntent: "superhero rpg generators",
+    intentAliases: [
+      "superhero generator hub",
+      "supers rpg generators",
+      "comic book rpg generators",
+      "superhero campaign generator",
+    ],
+    audience: "Superhero and comic book game masters",
+    userJob: "navigate",
+    uniqueValue:
+      "Routes a game master with a Superhero or Comic Book campaign in mind to the generators that suit it (hero origins, villain schemes, crossover events, and metahuman factions), with four-colour genre framing.",
+    parentCluster: "theme-hubs",
+    indexable: true,
+    status: "live",
+  },
 ];

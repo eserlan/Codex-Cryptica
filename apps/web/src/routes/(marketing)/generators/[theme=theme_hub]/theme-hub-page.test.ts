@@ -169,4 +169,33 @@ describe("Generator Theme Hub Page", () => {
 
     expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
   });
+
+  it("renders a superhero hub with origin, villain scheme, and comic book event generators", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "superhero",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
+      "Superhero RPG Generators",
+    );
+    expect(
+      screen.getByRole("link", { name: /superhero origin generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /villain scheme generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /comic book event generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /daily gazette generator/i }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /vampire clan generator/i }),
+    ).toBeNull();
+  });
 });

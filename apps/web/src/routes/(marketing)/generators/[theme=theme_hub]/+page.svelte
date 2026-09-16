@@ -328,6 +328,30 @@
     },
   ];
 
+  const superheroOriginCard: GeneratorCard = {
+    slug: "origin-generator",
+    label: "Superhero Origin Generator",
+    summary:
+      "Generate a superhero origin: power catalyst, secret toll, signature abilities, iconic quirks, and lingering backstory hooks.",
+    icon: "icon-[lucide--zap]",
+  };
+
+  const villainSchemeCard: GeneratorCard = {
+    slug: "villain-scheme-generator",
+    label: "Villain Scheme Generator",
+    summary:
+      "Generate a comic book villain mastermind scheme: grand objective, public facade, escalating 4-stage plan, clues, and countermeasures.",
+    icon: "icon-[lucide--target]",
+  };
+
+  const comicBookEventCard: GeneratorCard = {
+    slug: "comic-book-event-generator",
+    label: "Comic Book Event Generator",
+    summary:
+      "Generate a campaign-scale crossover crisis with staged escalations, collateral damage, and lasting status-quo shifts.",
+    icon: "icon-[lucide--zap]",
+  };
+
   const themeConfig: Record<ThemeSlug, ThemeConfig> = {
     fantasy: {
       label: "Fantasy",
@@ -708,6 +732,35 @@
         newsSheetCard(
           "Rim-World Gazette Generator",
           "Generate a frontier news bulletin: bounty warrants, mining claim disputes, customs warnings, and cantina rumours, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
+    superhero: {
+      label: "Superhero",
+      localStorageId: "superhero",
+      eyebrow: "Vigilantes, Nemeses & City Crises",
+      intro:
+        "Four-colour heroics, street-level vigilantes, and cosmic crises. Build hero origins, mastermind villain schemes, crossover events, and metahuman factions for your superhero campaign, all pre-tuned to the genre.",
+      metaTitle:
+        "Superhero RPG Generators — Origin, Villain Scheme, Events & More | Codex Cryptica",
+      metaDescription:
+        "Free superhero RPG generators for tabletop GMs. Create hero origins, mastermind villain schemes, city crises, hero teams, and metahuman factions. No login required.",
+      cards: [
+        superheroOriginCard,
+        villainSchemeCard,
+        comicBookEventCard,
+        ...sharedCards(
+          "City District Generator",
+          "Draft sprawling city districts, corporate towers, waterfront docks, and tenement alleys where street-level action happens.",
+        ),
+        alienRaceCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Daily Gazette Generator",
+          "Generate city broadsheet headlines, police blotters, metahuman sightings, and investigative exposes, with GM-only hooks.",
         ),
         languageCard,
         surpriseMeCard,

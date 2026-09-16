@@ -20,6 +20,7 @@ export const HUB_THEME_LABELS = {
   "space-opera-resistance": "Space Opera Resistance",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
   "space-western": "Space Western",
+  superhero: "Superhero",
 } as const;
 
 export type HubThemeSlug = keyof typeof HUB_THEME_LABELS;

@@ -18,6 +18,7 @@ describe("resolveHubGeneratorGenre", () => {
       "Space Opera Resistance",
     );
     expect(resolveHubGeneratorGenre("space-western")).toBe("Space Western");
+    expect(resolveHubGeneratorGenre("superhero")).toBe("Superhero");
   });
 
   it("returns null for an unknown or missing theme", () => {
