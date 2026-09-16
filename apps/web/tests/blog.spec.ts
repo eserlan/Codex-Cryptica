@@ -147,14 +147,18 @@ test.describe("Blog", () => {
     // Sitemap, LLM Docs, Groupfinder). So the test was asserting on chrome
     // that exists nowhere, and had been failing on staging.
     //
-    // The intent still holds, the mechanism moved: the shared shell's nav
-    // carries "Devlog" on every public page.
+    // The intent still holds, the mechanism moved again (#3140): the shared
+    // shell's primary nav trimmed down to just Generators + Explore, so
+    // Devlog is reached via the Explore directory now.
     await page.goto("/tools");
 
     await page
       .getByTestId("shell-nav")
-      .getByRole("link", { name: "Devlog" })
+      .getByRole("link", { name: "Explore" })
       .click();
+    await expect(page).toHaveURL(/\/explore/);
+
+    await page.getByRole("link", { name: "Devlog" }).first().click();
 
     await expect(page).toHaveURL(/\/blog/);
     await expect(
