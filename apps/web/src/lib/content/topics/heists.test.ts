@@ -40,6 +40,50 @@ describe("heist topic hub config (#3118)", () => {
     ).toBe(true);
   });
 
+  it("configures R2 hero and section images with valid metadata", () => {
+    // Hero & OG image
+    expect(HEIST_TOPIC_CONFIG.ogImage).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(HEIST_TOPIC_CONFIG.ogImageAlt.length).toBeGreaterThan(10);
+    expect(HEIST_TOPIC_CONFIG.heroImage).toBeDefined();
+    expect(HEIST_TOPIC_CONFIG.heroImage.src).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(HEIST_TOPIC_CONFIG.heroImage.alt.length).toBeGreaterThan(10);
+    expect(HEIST_TOPIC_CONFIG.heroImage.width).toBeGreaterThan(500);
+    expect(HEIST_TOPIC_CONFIG.heroImage.height).toBeGreaterThan(300);
+
+    // Worked examples have hero images
+    for (const example of HEIST_TOPIC_CONFIG.workedExamples) {
+      expect(example.image).toBeDefined();
+      expect(example.image?.src).toMatch(
+        /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+      );
+      expect(example.image?.alt.length).toBeGreaterThan(10);
+      expect(example.image?.width).toBeGreaterThan(0);
+      expect(example.image?.height).toBeGreaterThan(0);
+    }
+
+    // Primary heist generator has screenshot image
+    const primaryGenerator = HEIST_TOPIC_CONFIG.generators.find(
+      (tool) => tool.href === "/generators/heist",
+    );
+    expect(primaryGenerator?.image).toBeDefined();
+    expect(primaryGenerator?.image?.src).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(primaryGenerator?.image?.alt.length).toBeGreaterThan(10);
+    expect(primaryGenerator?.image?.width).toBeGreaterThan(0);
+    expect(primaryGenerator?.image?.height).toBeGreaterThan(0);
+  });
+
+  it("keeps the OG image metadata aligned with the hero asset", () => {
+    expect(HEIST_TOPIC_CONFIG.ogImage).toBe(HEIST_TOPIC_CONFIG.heroImage.src);
+    expect(HEIST_TOPIC_CONFIG.heroImage.width).toBe(1376);
+    expect(HEIST_TOPIC_CONFIG.heroImage.height).toBe(768);
+  });
+
   it("keeps every hub link root-relative, with no repeats inside a section", () => {
     const sections = [
       HEIST_TOPIC_CONFIG.coreGuides,

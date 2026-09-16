@@ -1,3 +1,11 @@
+export interface TopicImage {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  caption?: string;
+}
+
 export interface TopicGuideLink {
   title: string;
   href: string;
@@ -11,6 +19,7 @@ export interface TopicExampleLink {
   genre: string;
   description: string;
   highlight: string;
+  image?: TopicImage;
 }
 
 export interface TopicToolLink {
@@ -18,6 +27,7 @@ export interface TopicToolLink {
   href: string;
   description: string;
   badge?: string;
+  image?: TopicImage;
 }
 
 export interface TopicWorkflowStep {
@@ -39,6 +49,20 @@ export const HEIST_TOPIC_CONFIG = {
     "A complete Game Master resource cluster for tabletop heists: eliminate planning paralysis with flashbacks, design dynamic targets, explore worked examples, and generate playable scores.",
   leadParagraph:
     "RPG heists work best when the objective, access vectors, security rings, complications, and getaway pressures interact dynamically rather than forming a linear corridor. Codex Cryptica's Heist cluster provides the frameworks to run them at the table, worked examples across three genres, and generator tools for rolling complete, table-ready scores.",
+
+  ogImage:
+    "https://assets.codexcryptica.com/announcements/heist-the-breakwater-vault.jpg",
+  ogImageAlt:
+    "Tabletop RPG Heists — Infiltration along the vacuum gantry of Last Light Outpost",
+
+  heroImage: {
+    src: "https://assets.codexcryptica.com/announcements/heist-the-breakwater-vault.jpg",
+    alt: "An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost, holding seized pitch-cobalt specie behind pneumatic vacuum seals",
+    caption:
+      "Infiltration along the vacuum gantry of Last Light Outpost — from the Breakwater Vault score.",
+    width: 1376,
+    height: 768,
+  } satisfies TopicImage,
 
   thesisPoints: [
     {
@@ -97,6 +121,12 @@ export const HEIST_TOPIC_CONFIG = {
       description:
         "Extracting an injured whistleblower compliance architect from an executive penthouse before a twelve-minute custody roll call, with a cancelled ambulance transponder and two crew members forced to support her every step.",
       highlight: "Time-limited extraction with an encumbered, vocal objective",
+      image: {
+        src: "https://assets.codexcryptica.com/announcements/heist-the-quell-extraction.jpg",
+        alt: "A cryogenic neural extraction tank surrounded by server racks and biometric surveillance nodes",
+        width: 1024,
+        height: 672,
+      },
     },
     {
       title: "The Dawnheart Diadem (Classic Fantasy)",
@@ -105,6 +135,12 @@ export const HEIST_TOPIC_CONFIG = {
       description:
         "A sun-gold circlet holding a captive phoenix ember, warded to a basalt cradle by three anchoring runes beneath the Argent Ledger Guild, with a hidden verification scribe and a fifteen-minute dawn deadline.",
       highlight: "Guild vault infiltration with multi-rune release timers",
+      image: {
+        src: "https://assets.codexcryptica.com/announcements/heist-the-dawnheart-diadem.jpg",
+        alt: "A glowing sun-gold circlet holding a trapped phoenix ember, resting on a warded basalt cradle in a torch-lit vault",
+        width: 1024,
+        height: 672,
+      },
     },
     {
       title: "The Breakwater Vault (Space Western)",
@@ -113,6 +149,12 @@ export const HEIST_TOPIC_CONFIG = {
       description:
         "An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost, holding seized pitch-cobalt specie behind pneumatic vacuum seals and a compromised getaway ship.",
       highlight: "Orbital exterior traverse with volatile hazardous cargo",
+      image: {
+        src: "https://assets.codexcryptica.com/announcements/heist-the-breakwater-vault.jpg",
+        alt: "An impounded mineral assay vault perched on the outer gantry spine of Last Light Outpost",
+        width: 1376,
+        height: 768,
+      },
     },
   ] satisfies TopicExampleLink[],
 
@@ -123,6 +165,12 @@ export const HEIST_TOPIC_CONFIG = {
       description:
         "Generate a complete table-ready score: the objective, a prize with a practical catch, casing intel, three concentric security rings with alternate approaches, an escalating five-state alarm track, and a compromised getaway route.",
       badge: "Primary Tool",
+      image: {
+        src: "https://assets.codexcryptica.com/screenshots/generator-heist.jpg",
+        alt: "Codex Cryptica heist generator drafting a score, layered security rings, and an alarm track",
+        width: 1600,
+        height: 1000,
+      },
     },
     {
       title: "Faction Generator",
