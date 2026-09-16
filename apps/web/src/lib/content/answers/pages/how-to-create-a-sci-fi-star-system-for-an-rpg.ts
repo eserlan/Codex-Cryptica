@@ -160,6 +160,7 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-you-start-worldbuilding-from-scratch",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "what-rpg-should-i-play-for-an-over-the-top-space-opera",
   ],
   labels: ["sci-fi"],
   discovery: {
