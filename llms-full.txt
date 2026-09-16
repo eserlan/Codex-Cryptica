@@ -1928,6 +1928,10 @@ your canonical vault automatically.
 
 Reference answers to real RPG and worldbuilding questions, indexed at https://codexcryptica.com/answers. Each page states the direct answer first, then the framework behind it and a concrete example.
 
+### [Can you play a tabletop RPG in 30-minute sessions?](https://codexcryptica.com/answers/can-you-play-a-tabletop-rpg-in-30-minute-sessions)
+
+**Direct answer:** Yes, but a 30-minute session has to be designed as a short episode rather than a compressed version of a normal three to four hour session. Prepare one meaningful scene, problem, decision, or encounter that can produce a real change in about half an hour, start at the interesting moment instead of narrating the approach to it, and move levelling, shopping, and long rules discussion outside the slot when the group is willing. Combat can work if it's scoped for the window: fewer, more meaningful enemies, a clear objective, and a willingness to let a fight run into next time rather than forcing it to finish. Stop the session once something has genuinely changed.
+
 ### [How do I balance RPG combat encounters without causing a TPK?](https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk)
 
 **Direct answer:** Encounter balance isn't only a monster-versus-party maths problem. A fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
@@ -2087,6 +2091,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you run an RPG campaign in one city?](https://codexcryptica.com/answers/how-do-you-run-an-rpg-campaign-in-one-city)
 
 **Direct answer:** Run a campaign in one city by trading breadth for depth: prepare a handful of districts instead of a whole map, build a small recurring cast the party keeps running into, let locations change permanently when the party acts, and layer secrets so each one implicates people the table already knows. A city campaign works when the same names, streets, and debts keep resurfacing rather than when new ones get introduced every session.
+
+### [How do you run D&D for a large group of players?](https://codexcryptica.com/answers/how-do-you-run-dnd-for-a-large-group-of-players)
+
+**Direct answer:** A table of seven to ten players works when the GM deliberately cuts dead time and structures spotlight, rather than running it exactly like a four-player table. Keep scene goals and stakes obvious from the first line, use visible initiative and prompt the next player before their turn arrives, and let players decide their action while someone else is still resolving theirs. Eight players is not automatically too many: the real constraint is attention and turn time, not encounter balance, and if the table keeps waiting more than playing, splitting into two smaller groups is a legitimate fix rather than a failure.
 
 ### [How do you run factions in a sandbox campaign?](https://codexcryptica.com/answers/how-do-you-run-factions-in-a-sandbox-campaign)
 

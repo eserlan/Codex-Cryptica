@@ -178,6 +178,7 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
     "how-do-you-run-a-scene-with-multiple-npcs",
+    "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
   ],
   discovery: {
     id: "answer-large-group-dnd",
