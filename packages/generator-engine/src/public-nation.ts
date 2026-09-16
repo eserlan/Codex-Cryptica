@@ -37,6 +37,7 @@ export const nationConfig = {
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
     "Space Western",
+    "Superhero / Comic Book",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -146,6 +147,13 @@ export const nationConfig = {
       "Independent Belt Coalition",
       "Marshal's Protectorate",
       "Freeport Compact",
+    ],
+    "Superhero / Comic Book": [
+      "Secret Government Agency",
+      "Corporate-Hero Alliance",
+      "Vigilante-Run District",
+      "Superhuman Registration State",
+      "Metahuman City-State",
     ],
   } as Record<string, string[]>,
   governmentStyles: [

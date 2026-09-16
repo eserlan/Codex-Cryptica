@@ -125,6 +125,7 @@ export const socialHubConfig = {
     "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
     "Space Western",
+    "Superhero / Comic Book",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -226,6 +227,13 @@ export const socialHubConfig = {
       "Smuggler's Speakeasy",
       "Scrappers' Gambling Den",
       "Hydroponic Distillery",
+    ],
+    "Superhero / Comic Book": [
+      "Hero-Team HQ Commissary",
+      "Superhuman Dive Bar",
+      "Press-Corps Hangout",
+      "Rooftop Vigilante Lookout",
+      "Underground Villain Speakeasy",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -351,6 +359,13 @@ export const socialHubConfig = {
       "Frontier marshals and bounty hunters",
       "Wildcat prospectors and ore drillers",
       "Displaced drifters and runaway nobles",
+    ],
+    "Superhero / Comic Book": [
+      "Off-duty heroes and sidekicks",
+      "Journalists and photographers chasing a scoop",
+      "Costumed vigilantes keeping a low profile",
+      "Government agents watching the regulars",
+      "Reformed villains and parolees",
     ],
   } as Record<string, string[]>,
   troubles: [
