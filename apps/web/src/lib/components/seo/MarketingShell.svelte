@@ -146,6 +146,7 @@
           class="md:hidden inline-flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
           aria-label="Generators"
           title="Generators"
+          aria-current={isCurrent("/generators")}
           data-testid="shell-generators-link"
         >
           <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4 block"

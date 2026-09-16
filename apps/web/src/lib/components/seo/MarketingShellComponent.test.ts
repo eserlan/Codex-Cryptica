@@ -10,7 +10,7 @@ vi.mock("$app/paths", () => ({
 
 vi.mock("$app/state", () => ({
   page: {
-    url: new URL("https://codexcryptica.com/features"),
+    url: new URL("https://codexcryptica.com/generators"),
   },
 }));
 
@@ -45,6 +45,7 @@ describe("MarketingShell component", () => {
 
     const generatorsLink = screen.getByTestId("shell-generators-link");
     expect(generatorsLink.getAttribute("href")).toBe("/generators");
+    expect(generatorsLink.getAttribute("aria-current")).toBe("page");
     expect(generatorsLink.textContent).toContain("Generators");
 
     const exploreLink = screen.getByTestId("shell-explore-link");
