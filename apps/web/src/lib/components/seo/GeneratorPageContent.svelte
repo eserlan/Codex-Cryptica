@@ -39,6 +39,7 @@
   import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import VillainFormFields from "$lib/components/seo/VillainFormFields.svelte";
   import ComicBookEventFormFields from "$lib/components/seo/ComicBookEventFormFields.svelte";
+  import OriginFormFields from "$lib/components/seo/OriginFormFields.svelte";
   import VillainSchemeFormFields from "$lib/components/seo/VillainSchemeFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
@@ -78,6 +79,7 @@
     plotTwistConfig,
     villainConfig,
     comicBookEventConfig,
+    originConfig,
     villainSchemeConfig,
     worldConfig,
     starSystemConfig,
@@ -569,6 +571,14 @@
     campaignContext: "",
   });
 
+  // Superhero / Comic Book only, by design (#3111) — no genre field, no
+  // theme-sync $effect branch below (Part C is deliberately not applicable).
+  let origin = $state({
+    originType: originConfig.originTypes[0],
+    tone: originConfig.tones[0],
+    campaignContext: "",
+  });
+
   let villainScheme = $state({
     powerScale: villainSchemeConfig.powerScales[0],
     tone: villainSchemeConfig.tones[0],
@@ -881,6 +891,7 @@
     plotTwist,
     villain,
     comicBookEvent,
+    origin,
     villainScheme,
     world,
     starSystem,
@@ -1329,6 +1340,13 @@
         bind:scale={comicBookEvent.scale}
         bind:tone={comicBookEvent.tone}
         bind:campaignContext={comicBookEvent.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "origin-generator"}
+      <OriginFormFields
+        bind:originType={origin.originType}
+        bind:tone={origin.tone}
+        bind:campaignContext={origin.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "villain-scheme-generator"}

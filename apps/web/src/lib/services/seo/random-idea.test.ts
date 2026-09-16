@@ -27,6 +27,7 @@ describe("randomIdeaCategories", () => {
       "minor-magic-item",
       "nation",
       "npc",
+      "origin",
       "pantheon",
       "quest",
       "secret-society",
@@ -63,6 +64,7 @@ describe("randomIdeaCategories", () => {
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
       generateCreature: vi.fn().mockResolvedValue("creature-result"),
       generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
+      generateOrigin: vi.fn().mockResolvedValue("origin-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -138,6 +140,9 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateEncounter).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
+    });
+    expect(engine.generateOrigin).toHaveBeenCalledWith({
+      useAI: true,
     });
   });
 

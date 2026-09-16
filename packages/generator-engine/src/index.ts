@@ -310,6 +310,14 @@ export {
   type ComicBookEventPrompt,
 } from "./public-comic-book-event";
 export {
+  buildOriginPrompt,
+  parseOriginResponse,
+  generateOriginLocal,
+  originConfig,
+  type OriginGeneratorOptions,
+  type OriginPrompt,
+} from "./public-origin";
+export {
   buildVillainSchemePrompt,
   parseVillainSchemeResponse,
   generateVillainSchemeLocal,

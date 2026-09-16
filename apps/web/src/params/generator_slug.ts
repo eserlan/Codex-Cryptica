@@ -40,6 +40,7 @@ export const GENERATOR_SLUGS = [
   "plot-twist-generator",
   "bbeg-generator",
   "comic-book-event-generator",
+  "origin-generator",
   "villain-scheme-generator",
   "world",
   "council-vote",

@@ -38,6 +38,10 @@
         { label: "Nomad Clan Generator", path: "/generators/nomad-clan" },
         { label: "RPG Name Generator", path: "/generators/names" },
         { label: "Fantasy Name Generator", path: "/generators/fantasy-names" },
+        {
+          label: "Superhero Origin Generator",
+          path: "/generators/origin-generator",
+        },
       ],
     },
     {

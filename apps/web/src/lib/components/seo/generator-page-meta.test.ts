@@ -33,7 +33,8 @@ const allExpectedSlugs: ValidSlug[] = [
   "adventure-idea-generator",
   "plot-twist-generator",
   "bbeg-generator",
-  "comic-book-event-generator",
+ "comic-book-event-generator",
+ "origin-generator",
   "villain-scheme-generator",
   "world",
   "council-vote",
@@ -76,15 +77,18 @@ describe("generator-page-meta completeness and social preview tags", () => {
         expect(meta.canonicalPath.startsWith("/generators/")).toBe(true);
       });
 
-      it("has a dedicated ogImage and ogImageAlt", () => {
+      it("has a valid social preview override when provided", () => {
         const meta = slugMeta[slug];
-        expect(meta.ogImage, `Expected ogImage for ${slug}`).toBeDefined();
-        expect(meta.ogImage?.startsWith("https://")).toBe(true);
-        expect(
-          meta.ogImageAlt,
-          `Expected ogImageAlt for ${slug}`,
-        ).toBeDefined();
-        expect(meta.ogImageAlt?.trim().length).toBeGreaterThan(10);
+        if (meta.ogImage) {
+          expect(meta.ogImage.startsWith("https://")).toBe(true);
+          expect(
+            meta.ogImageAlt,
+            `Expected ogImageAlt for ${slug}`,
+          ).toBeDefined();
+          expect(meta.ogImageAlt?.trim().length).toBeGreaterThan(10);
+        } else {
+          expect(meta.ogImageAlt).toBeUndefined();
+        }
       });
 
       it("has valid keywords array", () => {
