@@ -262,6 +262,7 @@ export {
   parseQuestResponse,
   generateQuestLocal,
   questConfig,
+  questGenreForTheme,
   themeToQuestGenre,
   type QuestGeneratorOptions,
   type QuestPrompt,
@@ -295,10 +296,41 @@ export {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  getVillainThreatScales,
   villainConfig,
   type VillainGeneratorOptions,
   type VillainPrompt,
 } from "./public-villain";
+export {
+  buildComicBookEventPrompt,
+  parseComicBookEventResponse,
+  generateComicBookEventLocal,
+  comicBookEventConfig,
+  type ComicBookEventGeneratorOptions,
+  type ComicBookEventPrompt,
+} from "./public-comic-book-event";
+export {
+  buildOriginPrompt,
+  parseOriginResponse,
+  generateOriginLocal,
+  originConfig,
+  type OriginGeneratorOptions,
+  type OriginPrompt,
+} from "./public-origin";
+export {
+  buildVillainSchemePrompt,
+  parseVillainSchemeResponse,
+  generateVillainSchemeLocal,
+  villainSchemeConfig,
+  type VillainSchemeGeneratorOptions,
+  type VillainSchemePrompt,
+} from "./public-villain-scheme";
+export {
+  SUPERHERO_POWER_SCALES,
+  SUPERHERO_POWER_SCALE_FALLBACKS,
+  SUPERHERO_POWER_SCALE_HINTS,
+  type SuperheroPowerScale,
+} from "./superhero-power-scale";
 export {
   buildPersonalityPrompt,
   parsePersonalityResponse,

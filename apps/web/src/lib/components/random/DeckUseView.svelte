@@ -10,6 +10,7 @@
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
+  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
   /**
    * A deck as it is used at the table (issue 2258).
@@ -26,6 +27,7 @@
     sources = randomSources,
     history = diceHistory,
     session = mapSession,
+    clock = systemClock,
     addToChat,
     revealArt = true,
     copyText,
@@ -35,6 +37,7 @@
     sources?: RandomSourceStore;
     history?: DiceHistoryStore;
     session?: typeof mapSession;
+    clock?: Clock;
     addToChat?: (text: string) => Promise<void>;
     /** Passed through to `DeckView`: off where a full-screen reveal intrudes. */
     revealArt?: boolean;
@@ -51,6 +54,7 @@
     {sources}
     {history}
     {session}
+    {clock}
     {revealArt}
     {...addToChat ? { addToChat } : {}}
     {...copyText ? { copyText } : {}}

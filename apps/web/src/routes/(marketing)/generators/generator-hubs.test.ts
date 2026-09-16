@@ -15,6 +15,7 @@ describe("Generator hubs", () => {
     const link = screen.getByRole("link", { name: /cosmic horror hub/i });
 
     expect(link.getAttribute("href")).toBe("/generators/cosmic-horror");
+    expect(link.querySelector("span.font-header")).toBeTruthy();
   });
 
   it("keeps the cosmic-horror hub distinct from the vampire hub", () => {

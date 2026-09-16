@@ -23,7 +23,7 @@
 			function loadThemeFonts() {
 				var l = document.createElement('link');
 				l.rel = 'stylesheet';
-				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=swap';
+				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=swap';
 				document.head.appendChild(l);
 			}
 			if ('requestIdleCallback' in window) {
@@ -35,7 +35,7 @@
 	</script>
 	<noscript>
 		<link rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional" />
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional" />
 	</noscript>
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
@@ -94,8 +94,8 @@
 				startrek_light:  { bg: "#f1f4f6", surface: "#ffffff", text: "#1e293b", primary: "#c2410c", secondary: "#ea580c", border: "rgba(194, 65, 12, 0.3)",          muted: "#7c3d17", dim: "#c2410c" },
 				western:         { bg: "#f5ece1", surface: "#eaddcc", text: "#3d2a1f", primary: "#8c5a3c", secondary: "#5c4033", border: "rgba(140, 90, 60, 0.4)",  texture: "parchment.svg", muted: "#8c5a3c", dim: "#5c4033" },
 				western_dark:    { bg: "#1a120c", surface: "#2b1e15", text: "#f0e6dc", primary: "#d48227", secondary: "#a0785a", border: "rgba(212, 130, 39, 0.3)", texture: "leather.svg",   muted: "#a0785a", dim: "#805c43" },
-				superhero:       { bg: "#fdfdfb", surface: "#ffffff", text: "#111113", primary: "#dc2626", secondary: "#1d4ed8", border: "rgba(17, 17, 19, 0.55)",        muted: "#4b5563", dim: "#6b7280" },
-				superhero_dark:  { bg: "#07080d", surface: "#12151f", text: "#f1f5f9", primary: "#ef4444", secondary: "#3b82f6", border: "rgba(239, 68, 68, 0.3)",         muted: "#94a3b8", dim: "#64748b" }
+				superhero:       { bg: "#fdfdfb", surface: "#ffffff", text: "#182033", primary: "#dc2626", secondary: "#1d4ed8", border: "rgba(24, 32, 51, 0.18)",        muted: "#4b5568", dim: "#6b7280" },
+				superhero_dark:  { bg: "#090b16", surface: "#121629", text: "#f4f1e8", primary: "#f0444b", secondary: "#4f8cff", border: "rgba(186, 197, 221, 0.16)",        muted: "#bac5dd", dim: "#8896b3" }
 			};
 
 			function applyTheme(baseTheme) {
@@ -121,6 +121,40 @@
 				if (!themes[theme]) return;
 				const t = themes[theme];
 				const root = document.documentElement;
+				// First-paint font stacks (#3145): mirror the theme store so
+				// headings render in the right family before hydration instead
+				// of falling back and swapping (FOUT/CLS). Oswald is the
+				// functional Supers heading face; Bangers is display-only.
+				const fonts = {
+					workspace: { header: "'Fraunces', serif", body: "'Inter', sans-serif" },
+					workspace_dark: { header: "'Fraunces', serif", body: "'Inter', sans-serif" },
+					fantasy: { header: "'Alegreya', serif", body: "'Inter', sans-serif" },
+					fantasy_dark: { header: "'Alegreya', serif", body: "'Alegreya', serif" },
+					modern: { header: "'Inter', sans-serif", body: "'Inter', sans-serif" },
+					modern_dark: { header: "'Inter', sans-serif", body: "'Inter', sans-serif" },
+					scifi: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					scifi_light: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					cyberpunk: { header: "'Fira Code', monospace", body: "'Fira Code', monospace" },
+					cyberpunk_light: { header: "'Fira Code', monospace", body: "'Fira Code', monospace" },
+					apocalyptic: { header: "'Courier Prime', monospace", body: "'Courier Prime', monospace" },
+					apocalyptic_light: { header: "'Courier Prime', monospace", body: "'Courier Prime', monospace" },
+					horror: { header: "'Spectral', serif", body: "'Spectral', serif" },
+					horror_light: { header: "'Spectral', serif", body: "'Spectral', serif" },
+					fallout: { header: "'Share Tech Mono', monospace", body: "'Share Tech Mono', monospace" },
+					fallout_light: { header: "'Share Tech Mono', monospace", body: "'Share Tech Mono', monospace" },
+					starwars: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					starwars_light: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					startrek: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					startrek_light: { header: "'Orbitron', sans-serif", body: "'Inter', sans-serif" },
+					western: { header: "'Alegreya', serif", body: "'Inter', sans-serif" },
+					western_dark: { header: "'Alegreya', serif", body: "'Inter', sans-serif" },
+					superhero: { header: "'Oswald', sans-serif", body: "'Comic Neue', sans-serif", display: "'Bangers', cursive" },
+					superhero_dark: { header: "'Oswald', sans-serif", body: "'Comic Neue', sans-serif", display: "'Bangers', cursive" }
+				};
+				const f = fonts[theme] || fonts.workspace;
+				root.style.setProperty("--font-header-val", f.header);
+				root.style.setProperty("--font-body-val", f.body);
+				root.style.setProperty("--font-display-val", f.display || f.header);
 				root.dataset.theme = theme;
 				root.dataset.worldTheme = baseTheme;
 				root.style.setProperty("--color-bg-primary", t.bg);

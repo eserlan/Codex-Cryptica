@@ -328,6 +328,30 @@
     },
   ];
 
+  const superheroOriginCard: GeneratorCard = {
+    slug: "origin-generator",
+    label: "Superhero Origin Generator",
+    summary:
+      "Generate a superhero origin: power catalyst, secret toll, signature abilities, iconic quirks, and lingering backstory hooks.",
+    icon: "icon-[lucide--zap]",
+  };
+
+  const villainSchemeCard: GeneratorCard = {
+    slug: "villain-scheme-generator",
+    label: "Villain Scheme Generator",
+    summary:
+      "Generate a comic book villain mastermind scheme: grand objective, public facade, escalating 4-stage plan, clues, and countermeasures.",
+    icon: "icon-[lucide--target]",
+  };
+
+  const comicBookEventCard: GeneratorCard = {
+    slug: "comic-book-event-generator",
+    label: "Comic Book Event Generator",
+    summary:
+      "Generate a campaign-scale crossover crisis with staged escalations, collateral damage, and lasting status-quo shifts.",
+    icon: "icon-[lucide--zap]",
+  };
+
   const themeConfig: Record<ThemeSlug, ThemeConfig> = {
     fantasy: {
       label: "Fantasy",
@@ -713,6 +737,35 @@
         surpriseMeCard,
       ],
     },
+    superhero: {
+      label: "Superhero",
+      localStorageId: "superhero",
+      eyebrow: "Vigilantes, Nemeses & City Crises",
+      intro:
+        "Four-colour heroics, street-level vigilantes, and cosmic crises. Build hero origins, mastermind villain schemes, crossover events, and metahuman factions for your superhero campaign, all pre-tuned to the genre.",
+      metaTitle:
+        "Superhero RPG Generators — Origin, Villain Scheme, Events & More | Codex Cryptica",
+      metaDescription:
+        "Free superhero RPG generators for tabletop GMs. Create hero origins, mastermind villain schemes, city crises, hero teams, and metahuman factions. No login required.",
+      cards: [
+        superheroOriginCard,
+        villainSchemeCard,
+        comicBookEventCard,
+        ...sharedCards(
+          "City District Generator",
+          "Draft sprawling city districts, corporate towers, waterfront docks, and tenement alleys where street-level action happens.",
+        ),
+        alienRaceCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Daily Gazette Generator",
+          "Generate city broadsheet headlines, police blotters, metahuman sightings, and investigative exposes, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
   };
 
   const config = $derived(themeConfig[data.theme]);
@@ -742,7 +795,7 @@
         position: i + 1,
         name: card.label,
         description: card.summary,
-        url: `${origin}/generators/${card.slug}`,
+        url: `${origin}/generators/${card.slug === "random" ? card.slug : `${data.theme}/${card.slug}`}`,
       })),
     }),
   );
@@ -873,7 +926,7 @@
           {config.eyebrow}
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
+          class="font-display text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           {config.label} RPG Generators
         </h1>
@@ -901,11 +954,11 @@
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
             ></span>
             <span
-              class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
             >
               {card.label}
             </span>
-            <span class="block text-base text-theme-muted leading-relaxed">
+            <span class="block text-sm text-theme-muted leading-relaxed">
               {card.summary}
             </span>
           </a>
@@ -931,13 +984,11 @@
               >
                 <span>
                   <span
-                    class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                    class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
                   >
                     {page.hero.title}
                   </span>
-                  <span
-                    class="block text-base text-theme-muted leading-relaxed"
-                  >
+                  <span class="block text-sm text-theme-muted leading-relaxed">
                     {page.hero.tagline}
                   </span>
                 </span>

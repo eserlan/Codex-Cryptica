@@ -185,7 +185,7 @@
       <div class="border-b border-theme-border/60 pb-4 mb-6">
         <div class="flex items-start gap-3 flex-wrap">
           <h2
-            class="font-header font-bold text-xl md:text-2xl tracking-wide text-theme-text/95"
+            class="font-display font-bold text-xl md:text-2xl tracking-wide text-theme-text/95"
           >
             {generatedData.title}
           </h2>
@@ -274,7 +274,7 @@
                 onclick={() => onGeneratePlotTwist(generatedData!)}
                 class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
                 id="generate-plot-twist-btn"
-                title="Generate a Plot Twist from this quest hook"
+                title="Generate a Plot Twist from this draft"
               >
                 <span
                   aria-hidden="true"

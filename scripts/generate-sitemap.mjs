@@ -44,6 +44,16 @@ const staticRoutes = [
   },
   { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
   { path: "/ai-rpg-campaign-manager", changefreq: "monthly", priority: "0.8" },
+  {
+    path: "/resources/castle-floorplans",
+    changefreq: "monthly",
+    priority: "0.6",
+  },
+  {
+    path: "/topics/heists",
+    changefreq: "weekly",
+    priority: "0.8",
+  },
   // /tools/dnd-npc-generator and /tools/faction-generator are 301 stubs to
   // /generators/npc and /generators/faction. Static hosting prerenders them as
   // empty meta-refresh pages, so listing them handed discovery crawlers two

@@ -97,7 +97,10 @@
       id="cloud-destination-heading"
       class="flex items-center gap-2 font-header text-base font-bold text-theme-text"
     >
-      <span class="icon-[lucide--cloud] h-5 w-5 text-theme-primary"></span>
+      <span
+        class="icon-[lucide--cloud] h-5 w-5 text-theme-primary"
+        aria-hidden="true"
+      ></span>
       Cloud copy
     </h3>
     <p class="mt-1 text-sm text-theme-muted">
@@ -141,7 +144,10 @@
         <span
           class="flex items-center gap-2 text-sm font-medium text-theme-text"
         >
-          <span class="{option.icon} h-4 w-4 text-theme-primary"></span>
+          <span
+            class="{option.icon} h-4 w-4 text-theme-primary"
+            aria-hidden="true"
+          ></span>
           {DESTINATION_LABEL[option.id]}
           {#if isActive && option.id !== "none"}
             <span

@@ -181,4 +181,16 @@ export const INHABITANT_NAMES_BY_GENRE: Record<string, readonly string[]> = {
     "Zeke",
     "Lula",
   ],
+  "Superhero / Comic Book": [
+    "Nova",
+    "Reyes",
+    "Milo",
+    "Zola",
+    "Dara",
+    "Callix",
+    "Wren",
+    "Indra",
+    "Priya",
+    "Farrah",
+  ],
 };

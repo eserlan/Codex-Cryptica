@@ -127,6 +127,7 @@
 
   --font-header: var(--font-header-val);
   --font-body: var(--font-body-val);
+  --font-display: var(--font-display-val, var(--font-header-val));
 }
 
 @layer base {
@@ -341,6 +342,31 @@
     --color-text-muted: #b45309;
     --color-text-dim: #78350f;
   }
+  [data-theme="superhero"] {
+    --color-text-muted: #4b5568;
+    --color-text-dim: #6b7280;
+    --text-primary: #182033;
+    --text-secondary: #dc2626;
+    --text-muted: #4b5568;
+    --link: #1d4ed8;
+    --icon-interactive: #dc2626;
+    --border-interactive: #dc2626;
+  }
+  [data-theme="superhero_dark"] {
+    --color-text-muted: #bac5dd;
+    --color-text-dim: #8896b3;
+    --text-primary: #f4f1e8;
+    --text-secondary: #f0444b;
+    --text-muted: #bac5dd;
+    --link: #4f8cff;
+    --icon-interactive: #f0444b;
+    --border-interactive: #f0444b;
+  }
+
+  [data-theme="superhero"] .font-mono.uppercase,
+  [data-theme="superhero_dark"] .font-mono.uppercase {
+    letter-spacing: 0.12em;
+  }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;
@@ -537,6 +563,29 @@
     text-shadow: var(--theme-text-glow, none);
   }
 
+  .font-display {
+    text-shadow: var(--theme-text-glow, none);
+  }
+
+  /*
+   * Supers functional headings (#3145): Oswald replaces Bangers for small /
+   * repeated headings (cards, section/output headings, sidebar labels).
+   * Bangers is reserved for hero display via .font-display. Normalise
+   * fallback x-height during the font swap and give functional headings
+   * room to wrap instead of compressing.
+   */
+  [data-theme="superhero"] .font-header,
+  [data-theme="superhero_dark"] .font-header {
+    font-size-adjust: from-font;
+    line-height: 1.3;
+  }
+
+  [data-theme="superhero"] .font-display,
+  [data-theme="superhero_dark"] .font-display {
+    font-size-adjust: from-font;
+    line-height: 1.1;
+  }
+
   /* Ensure icons inherit color and are transitionable */
   [class^="icon-"],
   [class*=" icon-"] {
@@ -652,7 +701,7 @@
   --tw-prose-body: var(--color-text-primary);
   --tw-prose-headings: var(--color-text-primary);
   --tw-prose-lead: var(--color-text-muted);
-  --tw-prose-links: var(--color-accent-primary);
+  --tw-prose-links: var(--link, var(--color-accent-primary));
   --tw-prose-bold: var(--color-text-primary);
   --tw-prose-counters: var(--color-text-muted);
   --tw-prose-bullets: var(--color-accent-dim);

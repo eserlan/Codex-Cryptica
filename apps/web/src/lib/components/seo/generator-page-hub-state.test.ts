@@ -3,6 +3,7 @@ import { UIPersistence } from "$lib/stores/ui/persistence";
 import {
   getHubMountPatch,
   resolveInitialActiveTheme,
+  resolveSupportedHubGenre,
 } from "./generator-page-hub-state";
 
 function memoryPersistence(
@@ -79,6 +80,40 @@ describe("resolveInitialActiveTheme", () => {
         fallbackTheme: "Classic Fantasy",
       }),
     ).toBe("Vampire / Gothic Noir");
+  });
+
+  it("maps superhero hub to Superhero / Comic Book initial theme", () => {
+    const p = memoryPersistence();
+    expect(
+      resolveInitialActiveTheme({
+        urlHubTheme: "superhero",
+        slug: "npc",
+        persistence: p,
+        browser: true,
+        fallbackTheme: "Classic Fantasy",
+      }),
+    ).toBe("Superhero / Comic Book");
+  });
+});
+
+describe("resolveSupportedHubGenre", () => {
+  it("keeps a hub genre supported by the generator config", () => {
+    expect(
+      resolveSupportedHubGenre(
+        "Cyberpunk",
+        ["Fantasy", "Cyberpunk"],
+        "Fantasy",
+      ),
+    ).toBe("Cyberpunk");
+  });
+
+  it("falls back when a hub genre has no config pool", () => {
+    expect(
+      resolveSupportedHubGenre("Superhero", ["Fantasy", "Modern"], "Fantasy"),
+    ).toBe("Fantasy");
+    expect(resolveSupportedHubGenre(null, ["Fantasy"], "Fantasy")).toBe(
+      "Fantasy",
+    );
   });
 });
 
@@ -185,5 +220,23 @@ describe("getHubMountPatch", () => {
       browser: true,
     });
     expect(patch?.activeTheme).toBe("Pirate");
+  });
+
+  it("safely falls back nation patch when hub genre is unsupported like superhero", () => {
+    const patch = getHubMountPatch({
+      slug: "nation",
+      hubTheme: "superhero",
+    });
+    expect(patch?.nation).toBeUndefined();
+    expect(patch?.activeTheme).toBe("Superhero / Comic Book");
+  });
+
+  it("safely falls back social-hub patch when hub genre is unsupported like superhero", () => {
+    const patch = getHubMountPatch({
+      slug: "social-hub",
+      hubTheme: "superhero",
+    });
+    expect(patch?.socialHub).toBeUndefined();
+    expect(patch?.activeTheme).toBe("Superhero / Comic Book");
   });
 });

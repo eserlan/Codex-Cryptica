@@ -30,6 +30,13 @@
             "Generate a coherent, playable personality: drives, a connected virtue and flaw, a believable contradiction, and roleplaying cues.",
           icon: "icon-[lucide--drama]",
         },
+        {
+          href: "/generators/origin-generator",
+          label: "Superhero Origin Generator",
+          summary:
+            "Generate a superhero origin with a concrete origin event, a GM-usable campaign hook, and an ongoing consequence the backstory doesn't resolve.",
+          icon: "icon-[lucide--zap]",
+        },
       ],
     },
     {
@@ -149,6 +156,20 @@
           summary:
             "Create a campaign-scale antagonist with a concrete goal, methods, lieutenants, and an escalating plan the party can discover and disrupt.",
           icon: "icon-[lucide--skull]",
+        },
+        {
+          href: "/generators/comic-book-event-generator",
+          label: "Comic Book Event Generator",
+          summary:
+            "Generate a campaign-scale superhero event -- an alien invasion, hero civil war, secret invasion, and more -- with a staged escalation and concrete, lasting consequences.",
+          icon: "icon-[lucide--zap]",
+        },
+        {
+          href: "/generators/villain-scheme-generator",
+          label: "Villain Scheme Generator",
+          summary:
+            "Generate a Superhero / Comic Book villain scheme: objective, motivation, resources, escalating discoverable stages, complications, and consequences if nobody intervenes.",
+          icon: "icon-[lucide--target]",
         },
         {
           href: "/generators/heist",
@@ -386,6 +407,13 @@
         "Frontier scoundrels, asteroid boomtowns, smuggling rings, and rust-bucket freighters for space western campaigns.",
       icon: "icon-[lucide--orbit]",
     },
+    {
+      href: "/generators/superhero",
+      label: "Superhero Hub",
+      summary:
+        "Four-colour heroics, villain schemes, crossover events, and metahuman factions for comic book campaigns.",
+      icon: "icon-[lucide--zap]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);
@@ -457,7 +485,7 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
+          class="font-display text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>
@@ -474,7 +502,7 @@
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold text-theme-text mb-4"
+        class="font-header text-xl font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -488,11 +516,11 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
-              <span class="block text-base text-theme-muted leading-relaxed">
+              <span class="block text-sm text-theme-muted leading-relaxed">
                 {hub.summary}
               </span>
             </a>
@@ -505,7 +533,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold text-theme-text mb-4"
+          class="font-header text-xl font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -519,11 +547,11 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-base font-bold text-theme-text mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>
-                <span class="block text-base text-theme-muted leading-relaxed">
+                <span class="block text-sm text-theme-muted leading-relaxed">
                   {gen.summary}
                 </span>
               </a>

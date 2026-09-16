@@ -42,6 +42,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/resources/castle-floorplans</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/topics/heists</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/tools/quest-hook-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -292,6 +302,21 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/generators/comic-book-event-generator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/generators/origin-generator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/generators/villain-scheme-generator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/generators/world</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -333,6 +358,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/generators/heist</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/generators/personality</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -427,6 +457,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/mecha-rpgs</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/traveller</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -462,12 +497,22 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-create-a-believable-fictional-religion</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-create-a-fantasy-city-that-feels-alive</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -512,6 +557,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-handle-character-death-in-a-tabletop-rpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -522,12 +572,32 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-improvise-npcs-on-the-spot</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-keep-track-of-time-in-a-tabletop-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-make-a-tabletop-rpg-session-more-engaging</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -572,6 +642,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-recap-a-ttrpg-session</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-a-campaign-when-you-only-play-once-a-month</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -583,6 +663,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-run-a-mystery-without-railroading</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-a-scene-with-multiple-npcs</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -627,7 +712,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-much-campaign-lore-should-players-be-expected-to-remember</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-much-rule-of-cool-should-a-dm-allow</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -658,6 +753,16 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/what-is-a-point-crawl</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-kind-of-ship-should-a-pirate-crew-start-with</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-kind-of-ship-should-a-sci-fi-rpg-party-start-with</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -783,6 +888,16 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-quell-extraction-cyberpunk-heist</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-bell-beneath-blackglass-fantasy-puzzle</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-null-key-reliquary-cyberpunk-puzzle</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -925,13 +1040,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>

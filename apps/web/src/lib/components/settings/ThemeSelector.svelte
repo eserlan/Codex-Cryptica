@@ -22,7 +22,7 @@
           : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("system")}
       >
-        <span class="icon-[lucide--monitor] w-4 h-4"></span>
+        <span class="icon-[lucide--monitor] w-4 h-4" aria-hidden="true"></span>
         System
       </button>
       <button
@@ -34,7 +34,7 @@
           : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("neutral-light")}
       >
-        <span class="icon-[lucide--sun] w-4 h-4"></span>
+        <span class="icon-[lucide--sun] w-4 h-4" aria-hidden="true"></span>
         Light
       </button>
       <button
@@ -46,7 +46,7 @@
           : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("neutral-dark")}
       >
-        <span class="icon-[lucide--moon] w-4 h-4"></span>
+        <span class="icon-[lucide--moon] w-4 h-4" aria-hidden="true"></span>
         Dark
       </button>
     </div>

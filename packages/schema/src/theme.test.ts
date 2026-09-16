@@ -78,7 +78,6 @@ describe("Theme Schema & Definitions", () => {
       const darker = Math.min(l1, l2);
       return (lighter + 0.05) / (darker + 0.05);
     }
-
     // Backgrounds: canvas background (#1c1410), surface (#2a1e16), effective textured background (#241c18)
     const backgrounds = [tokens.background, tokens.surface, "#241c18"];
 
@@ -114,7 +113,12 @@ describe("Theme Schema & Definitions", () => {
   it("defines Superhero / Four-Color Dawn and its dark counterpart with WCAG AA contrast", () => {
     expect(THEMES.superhero.id).toBe("superhero");
     expect(SUPERHERO_DARK.id).toBe("superhero_dark");
-    expect(THEMES.superhero.tokens.fontHeader).toContain("Bangers");
+    // #3145 hierarchy: Oswald for small/repeated functional headings,
+    // Bangers reserved for hero display, Comic Neue for body.
+    expect(THEMES.superhero.tokens.fontHeader).toContain("Oswald");
+    expect(THEMES.superhero.tokens.fontDisplay).toContain("Bangers");
+    expect(SUPERHERO_DARK.tokens.fontHeader).toContain("Oswald");
+    expect(SUPERHERO_DARK.tokens.fontDisplay).toContain("Bangers");
     expect(THEMES.superhero.tokens.fontBody).toContain("Comic Neue");
     expect(() => StylingTemplateSchema.parse(THEMES.superhero)).not.toThrow();
     expect(() => StylingTemplateSchema.parse(SUPERHERO_DARK)).not.toThrow();
@@ -136,6 +140,24 @@ describe("Theme Schema & Definitions", () => {
       const darker = Math.min(l1, l2);
       return (lighter + 0.05) / (darker + 0.05);
     }
+    function compositeRgbaOnHex(rgba: string, background: string): string {
+      const match = rgba.match(/^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$/);
+      if (!match) throw new Error(`Expected an rgba colour, got ${rgba}`);
+
+      const alpha = Number(match[4]);
+      const channels = [1, 3, 5].map((index) =>
+        parseInt(background.slice(index, index + 2), 16),
+      );
+      return `#${[1, 2, 3]
+        .map((index, channel) =>
+          Math.round(
+            Number(match[index]) * alpha + channels[channel] * (1 - alpha),
+          )
+            .toString(16)
+            .padStart(2, "0"),
+        )
+        .join("")}`;
+    }
 
     // A bold four-color comic palette (saturated red/blue/gold) is exactly
     // the kind that can fail contrast against a bright or a near-black
@@ -143,13 +165,41 @@ describe("Theme Schema & Definitions", () => {
     // surface tones rather than assume the palette "reads fine" visually.
     for (const template of [THEMES.superhero, SUPERHERO_DARK]) {
       const tokens = template.tokens;
+      expect(tokens.metaText).toBeDefined();
+      expect(tokens.link).toBeDefined();
       for (const bg of [tokens.background, tokens.surface]) {
         expect(contrastRatio(tokens.text, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.metaText!, bg)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.secondary, bg)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.primary, bg)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.link!, bg)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.accent, bg)).toBeGreaterThanOrEqual(3.0);
       }
     }
+
+    // Explicit color hierarchy checks
+    expect(THEMES.superhero.tokens.metaText).toBe("#4b5568");
+    expect(THEMES.superhero.tokens.link).toBe("#1d4ed8");
+    expect(THEMES.superhero.tokens.border).toBe("rgba(24, 32, 51, 0.5)");
+    for (const background of [
+      THEMES.superhero.tokens.background,
+      THEMES.superhero.tokens.surface,
+    ]) {
+      expect(
+        contrastRatio(
+          compositeRgbaOnHex(THEMES.superhero.tokens.border, background),
+          background,
+        ),
+      ).toBeGreaterThanOrEqual(3.0);
+    }
+
+    expect(SUPERHERO_DARK.tokens.background).toBe("#090b16");
+    expect(SUPERHERO_DARK.tokens.surface).toBe("#121629");
+    expect(SUPERHERO_DARK.tokens.text).toBe("#f4f1e8");
+    expect(SUPERHERO_DARK.tokens.metaText).toBe("#bac5dd");
+    expect(SUPERHERO_DARK.tokens.primary).toBe("#f0444b");
+    expect(SUPERHERO_DARK.tokens.link).toBe("#4f8cff");
+    expect(SUPERHERO_DARK.tokens.border).toBe("rgba(186, 197, 221, 0.16)");
   });
 
   it("defines the Pirate light and dark themes with nautical contrast tokens", () => {

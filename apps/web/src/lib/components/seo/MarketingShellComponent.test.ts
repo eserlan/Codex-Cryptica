@@ -10,7 +10,7 @@ vi.mock("$app/paths", () => ({
 
 vi.mock("$app/state", () => ({
   page: {
-    url: new URL("https://codexcryptica.com/features"),
+    url: new URL("https://codexcryptica.com/generators"),
   },
 }));
 
@@ -40,13 +40,29 @@ describe("MarketingShell component", () => {
     expect(screen.getByTestId("shell-wordmark")).toBeTruthy();
   });
 
-  it("renders a direct Explore action instead of a mobile directory menu", () => {
+  it("renders direct Generators and Explore actions instead of a mobile directory menu", () => {
     render(MarketingShell);
+
+    const generatorsLink = screen.getByTestId("shell-generators-link");
+    expect(generatorsLink.getAttribute("href")).toBe("/generators");
+    expect(generatorsLink.getAttribute("aria-current")).toBe("page");
+    expect(generatorsLink.textContent).toContain("Generators");
 
     const exploreLink = screen.getByTestId("shell-explore-link");
     expect(exploreLink.getAttribute("href")).toBe("/explore");
     expect(exploreLink.textContent).toContain("Explore");
     expect(screen.queryByTestId("shell-menu-toggle")).toBeNull();
     expect(screen.queryByTestId("shell-mobile-nav")).toBeNull();
+  });
+
+  it("keeps the desktop nav to just Generators and Explore (#3140)", () => {
+    render(MarketingShell);
+
+    const nav = screen.getByTestId("shell-nav");
+    const links = nav.querySelectorAll("a");
+    expect(Array.from(links).map((a) => a.textContent)).toEqual([
+      "Generators",
+      "Explore",
+    ]);
   });
 });

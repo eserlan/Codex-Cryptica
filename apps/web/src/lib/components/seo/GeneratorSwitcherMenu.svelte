@@ -38,6 +38,10 @@
         { label: "Nomad Clan Generator", path: "/generators/nomad-clan" },
         { label: "RPG Name Generator", path: "/generators/names" },
         { label: "Fantasy Name Generator", path: "/generators/fantasy-names" },
+        {
+          label: "Superhero Origin Generator",
+          path: "/generators/origin-generator",
+        },
       ],
     },
     {
@@ -90,6 +94,14 @@
         {
           label: "BBEG / Campaign Villain Generator",
           path: "/generators/bbeg-generator",
+        },
+        {
+          label: "Comic Book Event Generator",
+          path: "/generators/comic-book-event-generator",
+        },
+        {
+          label: "Villain Scheme Generator",
+          path: "/generators/villain-scheme-generator",
         },
         { label: "Heist Generator", path: "/generators/heist" },
         { label: "Council Vote Generator", path: "/generators/council-vote" },

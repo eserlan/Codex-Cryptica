@@ -254,6 +254,54 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-comic-book-event-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/comic-book-event-generator",
+    primaryIntent: "comic book event generator",
+    intentAliases: [
+      "superhero event generator",
+      "superhero campaign crisis generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A campaign-scale superhero crisis — invasion, civil war, secret infiltration, and more — with a staged escalation and concrete, lasting consequences rather than a premise that resets to normal.",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "generator-origin-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/origin-generator",
+    primaryIntent: "superhero origin generator",
+    intentAliases: [
+      "superhero backstory generator",
+      "comic book origin generator",
+      "superpower origin generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A superhero origin that structurally separates the origin event from a GM-usable campaign hook and an ongoing consequence, rather than a backstory paragraph that merely explains where a power came from.",
+    parentCluster: "npc-creation",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "generator-villain-scheme-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/villain-scheme-generator",
+    primaryIntent: "superhero villain scheme generator",
+    intentAliases: [
+      "comic book villain plot generator",
+      "superhero plot generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A Superhero / Comic Book villain plot, not a villain writeup -- an escalating, discoverable scheme with clues, complications, and consequences that any villain could be running.",
+    parentCluster: "antagonist-creation",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-creature",
     pageKind: "generator",
     canonicalPath: "/generators/creature",
@@ -854,6 +902,25 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     userJob: "navigate",
     uniqueValue:
       "Routes a reader with a Space Western or Scoundrel campaign in mind to the generators that suit it, with genre-appropriate framing.",
+    parentCluster: "theme-hubs",
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "hub-superhero",
+    pageKind: "hub",
+    canonicalPath: "/generators/superhero",
+    primaryIntent: "superhero rpg generators",
+    intentAliases: [
+      "superhero generator hub",
+      "supers rpg generators",
+      "comic book rpg generators",
+      "superhero campaign generator",
+    ],
+    audience: "Superhero and comic book game masters",
+    userJob: "navigate",
+    uniqueValue:
+      "Routes a game master with a Superhero or Comic Book campaign in mind to the generators that suit it (hero origins, villain schemes, crossover events, and metahuman factions), with four-colour genre framing.",
     parentCluster: "theme-hubs",
     indexable: true,
     status: "live",

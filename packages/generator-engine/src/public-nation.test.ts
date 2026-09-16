@@ -98,3 +98,22 @@ describe("parseNationResponse", () => {
     expect(() => parseNationResponse("nope")).toThrow();
   });
 });
+
+// Superhero / Comic Book genre content (#3125): nationConfig used to have
+// no entry for this genre, so random-idea.ts's themeToHubGenre mapping fell
+// back to "Modern" (#3108). It now has real polity types of its own.
+describe("Superhero / Comic Book genre (#3125)", () => {
+  it("has its own polity-type pool, not the Fantasy fallback", () => {
+    expect(nationConfig.genres).toContain("Superhero / Comic Book");
+    expect(nationConfig.polityTypesByGenre["Superhero / Comic Book"]).toContain(
+      "Secret Government Agency",
+    );
+
+    const out = generateNationLocal(
+      { genre: "Superhero / Comic Book" },
+      seededRng(9),
+    );
+    expect(out.type).toBe("faction");
+    expect(out.content).toBeTruthy();
+  });
+});

@@ -52,18 +52,23 @@ test.describe("Public shell", () => {
     });
   }
 
-  test("Explore is directly reachable on a phone and covers Features", async ({
+  test("Generators and Explore are directly reachable on a phone and Explore covers Features (#3140)", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/generators");
+
+    const generators = page.getByTestId("shell-generators-link");
+    await expect(generators).toBeVisible();
+    await expect(generators).toHaveAttribute("href", "/generators");
 
     const explore = page.getByTestId("shell-explore-link");
     await expect(explore).toBeVisible();
     await expect(explore).toHaveAttribute("href", "/explore");
 
     // The old hamburger was another miniature site directory. Mobile now has
-    // one clear onward-navigation action instead.
+    // two clear onward-navigation actions instead — the strongest direct use
+    // entry point, and the way into everything else.
     await expect(page.getByTestId("shell-menu-toggle")).toHaveCount(0);
     await expect(page.getByTestId("shell-mobile-nav")).toHaveCount(0);
 
@@ -71,9 +76,9 @@ test.describe("Public shell", () => {
     // Explore. Features was the one destination missing from the hub.
     await explore.click();
     await expect(page).toHaveURL(/\/explore$/);
-    await expect(
-      page.getByRole("link", { name: "Features", exact: true }),
-    ).toBeVisible();
+    // Not `exact: true`: the link's accessible name includes its summary
+    // text alongside the "Features" heading.
+    await expect(page.getByRole("link", { name: /^Features\b/ })).toBeVisible();
   });
 
   test("the header CTA keeps its campaign attribution", async ({ page }) => {

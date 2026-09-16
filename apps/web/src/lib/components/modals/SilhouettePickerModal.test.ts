@@ -69,6 +69,10 @@ describe("SilhouettePickerModal", () => {
 
     expect(vault.updateEntity).toHaveBeenCalledWith("entity-vampire-1", {
       silhouette: "scifi-scientist-alien",
+      image: undefined,
+      thumbnail: undefined,
+      imageFocus: undefined,
+      imageArtDirection: undefined,
     });
     expect(modalUIStore.silhouettePickerState.open).toBe(false);
   });
