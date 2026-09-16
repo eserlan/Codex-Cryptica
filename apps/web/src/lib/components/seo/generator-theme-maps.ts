@@ -65,13 +65,14 @@ export const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   "space-opera-resistance": "Space Opera Resistance",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
   "space-western": "Space Western",
-  superhero: "Superhero",
+  superhero: "Superhero / Comic Book",
 };
 
 // Genres not supported by the settlement generator are mapped to the nearest equivalent.
 export const SETTLEMENT_GENRE_FOR_HUB: Record<string, string> = {
   Lancer: "Sci-Fi",
   Superhero: "Modern",
+  "Superhero / Comic Book": "Modern",
 };
 
 export function resolveHubGeneratorGenre(theme: string | null): string | null {
@@ -113,7 +114,10 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   "Space Opera Resistance": "Space Opera Resistance",
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Western": "Space Western",
+  // Keep the legacy key for saved generator state while using the canonical
+  // genre label for new hub-derived state.
   Superhero: "Superhero / Comic Book",
+  "Superhero / Comic Book": "Superhero / Comic Book",
 };
 
 // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids

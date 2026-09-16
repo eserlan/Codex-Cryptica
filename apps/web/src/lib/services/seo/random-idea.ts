@@ -47,7 +47,7 @@ export const themeToHubGenre: Record<string, string> = {
   "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
   "Space Opera Resistance": "Space Opera Resistance",
   "Space Western": "Space Western",
-  "Superhero / Comic Book": "Modern",
+  "Superhero / Comic Book": "Superhero / Comic Book",
 };
 
 export function pickRandomIdeaTheme(
