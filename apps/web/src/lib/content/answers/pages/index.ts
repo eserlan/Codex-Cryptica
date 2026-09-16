@@ -1,4 +1,5 @@
 import { AnswerConfigSchema, type AnswerConfig } from "../schema";
+import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
@@ -39,6 +40,7 @@ import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-t
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
 import { howDoYouRunASceneWithMultipleNpcs } from "./how-do-you-run-a-scene-with-multiple-npcs";
 import { howDoYouRunAnRpgCampaignInOneCity } from "./how-do-you-run-an-rpg-campaign-in-one-city";
+import { howDoYouRunDndForALargeGroupOfPlayers } from "./how-do-you-run-dnd-for-a-large-group-of-players";
 import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions-in-a-sandbox-campaign";
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
 import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-faction-turns-between-rpg-sessions";
@@ -73,6 +75,7 @@ import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-
  */
 export const answers: Record<string, AnswerConfig> = Object.fromEntries(
   [
+    canYouPlayATabletopRpgIn30MinuteSessions,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
@@ -113,6 +116,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouRunAMysteryWithoutRailroading,
     howDoYouRunASceneWithMultipleNpcs,
     howDoYouRunAnRpgCampaignInOneCity,
+    howDoYouRunDndForALargeGroupOfPlayers,
     howDoYouRunFactionsInASandboxCampaign,
     howDoYouStartWorldbuildingFromScratch,
     howDoYouTrackFactionTurnsBetweenRpgSessions,

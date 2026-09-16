@@ -477,6 +477,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/can-you-play-a-tabletop-rpg-in-30-minute-sessions</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -673,6 +678,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-you-run-an-rpg-campaign-in-one-city</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-dnd-for-a-large-group-of-players</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -167,6 +167,8 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-you-run-a-scene-with-multiple-npcs",
+    "how-do-you-run-dnd-for-a-large-group-of-players",
+    "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
   ],
   discovery: {
     id: "answer-session-engagement",
