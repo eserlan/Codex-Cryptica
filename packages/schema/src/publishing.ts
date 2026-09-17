@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { $RefinementCtx } from "zod/v4/core";
 import { EntitySchema } from "./entity";
 import { MapSchema } from "./map";
 import {
@@ -338,65 +339,98 @@ const TemplateFieldSchema = z
   })
   .strict();
 
+const TemplateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    description: z.string().trim().min(1).max(500),
+    system: z.string().trim().max(120).optional(),
+    category: StatSheetEntityCategorySchema.optional(),
+    labels: z.array(TemplateLabelSchema).max(8).default([]),
+    fields: z.array(TemplateFieldSchema).min(1).max(200),
+  })
+  .strict();
+
+type Template = z.infer<typeof TemplateSchema>;
+
+const hasEarlierFieldWithKey = (
+  fields: ReadonlyArray<{ key?: string }>,
+  index: number,
+  key: string,
+): boolean =>
+  fields.some((other, otherIndex) => otherIndex < index && other.key === key);
+
+const hasOtherFieldWithId = (
+  fields: ReadonlyArray<{ id: string }>,
+  index: number,
+  key: string,
+): boolean =>
+  fields.some((other, otherIndex) => otherIndex !== index && other.id === key);
+
+const validateTemplateFieldRange = (
+  field: Template["fields"][number],
+  index: number,
+  ctx: $RefinementCtx<Template>,
+): void => {
+  if (
+    field.min !== undefined &&
+    field.max !== undefined &&
+    field.min > field.max
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Field minimum cannot exceed maximum",
+      path: ["fields", index],
+    });
+  }
+};
+
+const validateTemplateFieldKey = (
+  field: Template["fields"][number],
+  index: number,
+  fields: Template["fields"],
+  ctx: $RefinementCtx<Template>,
+): void => {
+  if (!field.key) return;
+
+  if (hasEarlierFieldWithKey(fields, index, field.key)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Field keys must be unique within a template",
+      path: ["fields", index, "key"],
+    });
+  }
+
+  if (hasOtherFieldWithId(fields, index, field.key)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Field key must not reuse another field's stable ID",
+      path: ["fields", index, "key"],
+    });
+  }
+};
+
+const validateTemplate = (
+  template: Template,
+  ctx: $RefinementCtx<Template>,
+): void => {
+  if (!template.system && !template.category) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "A system or entity category is required",
+      path: ["system"],
+    });
+  }
+
+  template.fields.forEach((field, index) => {
+    validateTemplateFieldRange(field, index, ctx);
+    validateTemplateFieldKey(field, index, template.fields, ctx);
+  });
+};
+
 export const PublicTemplatePackageSchema = z
   .object({
     schemaVersion: z.literal(1),
-    template: z
-      .object({
-        name: z.string().trim().min(1).max(120),
-        description: z.string().trim().min(1).max(500),
-        system: z.string().trim().max(120).optional(),
-        category: StatSheetEntityCategorySchema.optional(),
-        labels: z.array(TemplateLabelSchema).max(8).default([]),
-        fields: z.array(TemplateFieldSchema).min(1).max(200),
-      })
-      .strict()
-      .superRefine((template, ctx) => {
-        if (!template.system && !template.category) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "A system or entity category is required",
-            path: ["system"],
-          });
-        }
-        for (let i = 0; i < template.fields.length; i++) {
-          const field = template.fields[i];
-          if (
-            field.min !== undefined &&
-            field.max !== undefined &&
-            field.min > field.max
-          ) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Field minimum cannot exceed maximum",
-              path: ["fields", i],
-            });
-          }
-          if (field.key) {
-            const duplicateKeyIndex = template.fields.findIndex(
-              (other, otherIndex) => otherIndex < i && other.key === field.key,
-            );
-            if (duplicateKeyIndex !== -1) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Field keys must be unique within a template",
-                path: ["fields", i, "key"],
-              });
-            }
-
-            const collidingIdIndex = template.fields.findIndex(
-              (other, otherIndex) => otherIndex !== i && other.id === field.key,
-            );
-            if (collidingIdIndex !== -1) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Field key must not reuse another field's stable ID",
-                path: ["fields", i, "key"],
-              });
-            }
-          }
-        }
-      }),
+    template: TemplateSchema.superRefine(validateTemplate),
     publishedAt: z.string().datetime().optional(),
   })
   .strict();
