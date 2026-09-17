@@ -19,3 +19,15 @@ describe("promote-to-prod workflow release comms trigger", () => {
     );
   });
 });
+
+describe("promote-to-prod workflow IndexNow notification (#3164)", () => {
+  test("runs notify-search-indexes with base-ref and commit_sha", () => {
+    expect(workflow).toContain("name: Notify Search Indexes (IndexNow)");
+    expect(workflow).toContain("bun scripts/notify-search-indexes.ts");
+    expect(workflow).toContain('--base-ref="origin/main"');
+    expect(workflow).toContain(
+      '--head-sha="${{ needs.find-staging-build.outputs.commit_sha }}"',
+    );
+    expect(workflow).toContain("continue-on-error: true");
+  });
+});

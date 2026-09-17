@@ -163,17 +163,17 @@ check:crawler-access` to verify the prerequisites Crawler Hints cannot fix:
 the sitemap, canonical URLs, crawlable public HTML, and private-route
 `noindex` protection.
 
-| Field                  | Production record                   |
-| ---------------------- | ----------------------------------- |
-| Crawler Hints enabled  | Pending a zone administrator action |
-| Enablement date        | Record in this table when enabled   |
-| Direct IndexNow client | Deliberately not implemented        |
+| Field                  | Production record                                      |
+| ---------------------- | ------------------------------------------------------ |
+| Crawler Hints enabled  | Active / zone configuration                            |
+| Enablement date        | 2026-08-31                                             |
+| Direct IndexNow client | Implemented (#3164): post-deploy and manual replay CLI |
+| IndexNow Key File      | `851cae8bbfd20e8381ba0b4e0260326c.txt`                 |
 
-Do not add a deploy hook, Worker, API key or submission service unless an
-observed production gap is recorded in a separate issue (for example,
-deterministic publish-time notifications or missing changed/deleted URL
-batches). A passing crawler request does not itself prove the dashboard toggle
-is on, so the dashboard remains the source of truth for that setting.
+Post-deploy indexing notifications are dispatched automatically after production
+promotion (`promote-to-prod.yml`), submitting changed public discovery and
+content canonical URLs to IndexNow. Manual replay is available via
+`bun scripts/notify-search-indexes.ts --cluster=<name>`.
 
 ## 4. Cloudflare / WAF audit
 

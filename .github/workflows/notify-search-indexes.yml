@@ -1,0 +1,61 @@
+name: Notify Search Indexes (IndexNow)
+
+# Manual replay workflow to notify IndexNow-compliant search engines
+# (Bing, Yandex, etc.) about public content or discovery route updates (#3164).
+#
+# Primary test case:
+#   Cluster: "heist" -> Notifies 7 heist routes + 5 high-level catalogue surfaces.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: "Discovery cluster slug to notify (e.g. 'heist')"
+        required: false
+        default: "heist"
+      urls:
+        description: "Comma-separated URLs or paths to submit directly (optional)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run (simulate validation without sending HTTP requests)"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: "notify-search-indexes"
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Submit to IndexNow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run IndexNow Notifier
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: |
+          ARGS=("--summary")
+          if [ -n "${{ inputs.cluster }}" ]; then
+            ARGS+=("--cluster=${{ inputs.cluster }}")
+          fi
+          if [ -n "${{ inputs.urls }}" ]; then
+            ARGS+=("--urls=${{ inputs.urls }}")
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS+=("--dry-run")
+          fi
+
+          bun scripts/notify-search-indexes.ts "${ARGS[@]}"
