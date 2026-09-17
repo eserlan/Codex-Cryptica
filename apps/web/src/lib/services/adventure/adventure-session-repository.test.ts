@@ -94,8 +94,7 @@ function mockWritableRepository(session: unknown, now?: () => number) {
     async () => {
       throw new Error("not used");
     },
-    undefined,
-    now,
+    now ? { clock: { now } } : undefined,
   );
   const writes: string[] = [];
   (repository as any).load = vi.fn(async () => ({
@@ -174,7 +173,7 @@ describe("AdventureSessionRepository.duplicate", () => {
       },
       () => fixedTime,
     );
-    (repository as any).generateId = () => "session-copy";
+    (repository as any).idGenerator = { uuid: () => "session-copy" };
 
     const result = await repository.duplicate("vault-1", "session-1");
     expect(result).toEqual({ condition: "duplicated", id: "session-copy" });
