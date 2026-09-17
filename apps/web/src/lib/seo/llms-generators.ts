@@ -1,5 +1,5 @@
-import { generatorEntries } from "$lib/content/discovery/entries/generators";
-import { slugMeta } from "$lib/components/seo/generator-page-meta";
+import { slugMeta } from "../components/seo/generator-page-meta";
+import { generatorEntries } from "../content/discovery/entries/generators";
 
 export interface LlmsGeneratorListing {
   slug: string;

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +17,10 @@ import {
 const llmsTxtPath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../../static/llms.txt",
+);
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../../..",
 );
 
 describe("llms generator listings", () => {
@@ -65,5 +70,29 @@ describe("llms generator listings", () => {
     );
     expect(section).not.toBeNull();
     expect(section!.trim().split("\n")).toEqual(renderLlmsGeneratorLines());
+  });
+
+  it("runs the root sync command without app-only path aliases", () => {
+    expect(() =>
+      execFileSync("bun", ["scripts/sync-llms-generators.ts", "--check"], {
+        cwd: repoRoot,
+        encoding: "utf8",
+        stdio: "pipe",
+      }),
+    ).not.toThrow();
+  });
+
+  it("syncs generator listings before full LLM generation in the web prebuild", () => {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, "apps/web/package.json"), "utf8"),
+    ) as { scripts?: { prebuild?: string } };
+    const prebuild = packageJson.scripts?.prebuild ?? "";
+
+    expect(
+      prebuild.indexOf("bun ../../scripts/sync-llms-generators.ts"),
+    ).toBeGreaterThanOrEqual(0);
+    expect(prebuild.indexOf("sync-llms-generators.ts")).toBeLessThan(
+      prebuild.indexOf("generate-llms-full.mjs"),
+    );
   });
 });
