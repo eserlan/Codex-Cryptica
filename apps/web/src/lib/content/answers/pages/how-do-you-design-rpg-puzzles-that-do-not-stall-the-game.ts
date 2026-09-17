@@ -145,6 +145,7 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       "how-do-you-run-a-heist-in-a-tabletop-rpg",
       "how-do-you-run-a-mystery-without-railroading",
       "how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
+      "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
     ],
     discovery: {
       id: "answer-rpg-puzzles",
