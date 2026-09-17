@@ -100,7 +100,9 @@ describe("VaultControls", () => {
 
     expect(screen.queryByTestId("vault-actions-menu-button")).toBeNull();
     // The vault switcher stays available for navigation.
-    expect(screen.getByTestId("open-vault-button")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Switch Vault: My World" }),
+    ).toBeTruthy();
   });
 
   it("shows the grouped vault actions in Full Toolbox mode", () => {

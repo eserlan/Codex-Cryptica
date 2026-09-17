@@ -242,6 +242,7 @@
           : 'px-3 py-2 hover:bg-chrome-bg/50'}"
         onclick={() => modalUIStore.openVaultSwitcher()}
         title="Switch Vault"
+        aria-label={`Switch Vault: ${vault.vaultName}`}
         data-testid="open-vault-button"
         aria-haspopup="dialog"
         aria-expanded={modalUIStore.showVaultSwitcher}
