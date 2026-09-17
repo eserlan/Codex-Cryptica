@@ -223,14 +223,14 @@
         id="vault-selector-title"
         class="text-lg font-bold text-theme-primary tracking-wide"
       >
-        VAULT SELECTOR
+        SWITCH VAULT
       </h2>
       <button
         type="button"
         onclick={onClose}
         class="text-theme-muted hover:text-theme-text"
-        title="Close Selector"
-        aria-label="Close Selector"
+        title="Close Switch Vault"
+        aria-label="Close Switch Vault"
       >
         <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>

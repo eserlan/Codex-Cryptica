@@ -112,6 +112,16 @@ describe("VaultSwitcherModal", () => {
     expect(createForm?.className).toContain("sm:flex-row");
   });
 
+  it("uses switch-vault terminology for the dialog and its close control", () => {
+    renderModal();
+
+    expect(screen.getByRole("heading", { name: "SWITCH VAULT" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Close Switch Vault" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Close Selector" })).toBeNull();
+  });
+
   it("prevents the default footer actions from overflowing on narrow screens", () => {
     renderModal();
 
