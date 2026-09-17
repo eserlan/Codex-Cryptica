@@ -12,6 +12,7 @@
   import DetailFamilyTab from "$lib/components/entity-detail/DetailFamilyTab.svelte";
   import DetailTimelineTab from "$lib/components/entity-detail/DetailTimelineTab.svelte";
   import DetailStatsTab from "$lib/components/entity-detail/DetailStatsTab.svelte";
+  import DetailFactionTurnTab from "$lib/components/entity-detail/DetailFactionTurnTab.svelte";
   import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -64,6 +65,7 @@
   let tabFamily = $state<HTMLButtonElement>();
   let tabTimeline = $state<HTMLButtonElement>();
   let tabStats = $state<HTMLButtonElement>();
+  let tabFaction = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
@@ -184,6 +186,7 @@
       | "family"
       | "timeline"
       | "stats"
+      | "faction"
     )[] = ["overview", "connections"];
     if (!vault.isGuest) {
       list.push("map");
@@ -194,6 +197,9 @@
     }
     list.push("stats");
     list.push("timeline");
+    if (entity?.type === "faction") {
+      list.push("faction");
+    }
     return list;
   });
 
@@ -216,6 +222,7 @@
       else if (nextTab === "family") tabFamily?.focus();
       else if (nextTab === "stats") tabStats?.focus();
       else if (nextTab === "timeline") tabTimeline?.focus();
+      else if (nextTab === "faction") tabFaction?.focus();
     }
   };
 
@@ -486,6 +493,25 @@
       >
         TIMELINE
       </button>
+      {#if visibleZenTabs.includes("faction")}
+        <button
+          bind:this={tabFaction}
+          type="button"
+          role="tab"
+          id="tab-faction"
+          aria-selected={activeTab === "faction"}
+          aria-controls="panel-faction"
+          tabindex={activeTab === "faction" ? 0 : -1}
+          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          'faction'
+            ? 'text-theme-primary border-theme-primary'
+            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          onclick={() => (modalUIStore.zenModeActiveTab = "faction")}
+          onkeydown={handleTabKeydown}
+        >
+          TURNS
+        </button>
+      {/if}
     </div>
 
     <!-- Main Body -->
@@ -601,6 +627,18 @@
           style="background-image: var(--bg-texture-overlay)"
         >
           <DetailTimelineTab {entity} onNavigate={navigateTo} />
+        </div>
+      {:else if activeTab === "faction" && entity?.type === "faction"}
+        <div
+          role="tabpanel"
+          id="panel-faction"
+          aria-labelledby="tab-faction"
+          class="flex-1 w-full h-full overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <div class="max-w-4xl mx-auto p-3 sm:p-6">
+            <DetailFactionTurnTab {entity} />
+          </div>
         </div>
       {/if}
     </div>

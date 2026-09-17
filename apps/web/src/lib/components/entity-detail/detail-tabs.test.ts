@@ -30,15 +30,17 @@ describe("entity detail tab ids", () => {
     expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("family");
     expect(getNextEntityDetailTab("family", "ArrowRight")).toBe("stats");
     expect(getNextEntityDetailTab("stats", "ArrowRight")).toBe("timeline");
-    expect(getNextEntityDetailTab("timeline", "ArrowRight")).toBe("status");
-    expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("timeline");
+    expect(getNextEntityDetailTab("timeline", "ArrowRight")).toBe("faction");
+    expect(getNextEntityDetailTab("faction", "ArrowRight")).toBe("status");
+    expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("faction");
+    expect(getNextEntityDetailTab("faction", "ArrowLeft")).toBe("timeline");
     expect(getNextEntityDetailTab("timeline", "ArrowLeft")).toBe("stats");
     expect(getNextEntityDetailTab("stats", "ArrowLeft")).toBe("family");
     expect(getNextEntityDetailTab("family", "ArrowLeft")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowLeft")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");
     expect(getNextEntityDetailTab("lore", "ArrowLeft")).toBe("connections");
-    expect(getNextEntityDetailTab("status", "End")).toBe("timeline");
+    expect(getNextEntityDetailTab("status", "End")).toBe("faction");
   });
 
   it("skips hidden tabs when navigating a guest-visible subset", () => {
@@ -58,12 +60,15 @@ describe("entity detail tab ids", () => {
     ).toBe("family");
     expect(
       getNextEntityDetailTabInList(visibleTabs, "timeline", "ArrowRight"),
+    ).toBe("faction");
+    expect(
+      getNextEntityDetailTabInList(visibleTabs, "faction", "ArrowRight"),
     ).toBe("status");
     expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowLeft")).toBe(
       "connections",
     );
     expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
-      "timeline",
+      "faction",
     );
   });
 });

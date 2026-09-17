@@ -18,6 +18,7 @@ export type { HelpArticle };
 /** Help articles linked directly from feature entry points. */
 export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
+  FACTION_TURNS: "faction-turns",
 } as const;
 
 export interface FeatureHint {
@@ -37,6 +38,7 @@ export const HINT_KEYS = {
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
   CREATURE_PACKS: "creature-packs-hint-seen",
   ADVENTURE: "adventure-hint-seen",
+  FACTION_TURNS: "faction-turns-hint-seen",
 } as const;
 
 /**
@@ -175,6 +177,16 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  // Two things trip people up on first use (161-faction-turn-influence): that
+  // stats are theirs to name, and that a faction can be ready-but-waiting
+  // rather than broken. Both are cheaper to explain here than to discover.
+  "faction-turns": {
+    id: "faction-turns",
+    title: "Faction Turns",
+    content:
+      "Let a faction act on your world between sessions. Name its stats whatever suits your setting, then say which one stands for influence. Turns are paced by your campaign's current date — the system reads that date and never changes it — and nothing is saved until you approve it.",
+    icon: "icon-[lucide--users]",
+  },
   // The browser-local caveat is the whole point of this hint (156-entity-shelf,
   // FR-024): people will otherwise assume the Shelf is a backup or a way to
   // send an entity to a co-GM, and find out it is neither at the worst moment.

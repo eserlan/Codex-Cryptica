@@ -94,6 +94,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "connections",
       "world-chronology",
       "entity-timeline",
+      "faction-turns",
       "node-merging",
     ],
   },
