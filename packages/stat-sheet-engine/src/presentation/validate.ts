@@ -113,12 +113,13 @@ export function validateAst(
   ast: PresentationAst,
   schema: StatSheetTemplate,
 ): PresentationAst {
-  // #3180: authoring refs accept a field key or id. Ids land first so keys
-  // win on collision, matching resolveFieldByKeyOrId. Resolved nodes below
-  // always carry the canonical id, so renaming a key can never corrupt them.
+  // #3180: authoring refs accept a field key or id. Stable IDs remain
+  // authoritative if malformed legacy data contains a key/ID collision.
+  // Resolved nodes below always carry the canonical id, so renaming a key can
+  // never corrupt them.
   const fieldsById = new Map(schema.fields.map((f) => [f.id, f]));
   for (const f of schema.fields) {
-    if (f.key) fieldsById.set(f.key, f);
+    if (f.key && !fieldsById.has(f.key)) fieldsById.set(f.key, f);
   }
   return validateBlock(ast, fieldsById);
 }

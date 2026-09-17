@@ -647,6 +647,26 @@ describe("StatSheetEditor field keys (#3180)", () => {
     expect(updateEntity).not.toHaveBeenCalled();
   });
 
+  it("blocks a key that reuses another field's stable ID", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "hp", label: "HP", type: "counter" },
+          { id: "other", label: "Other", type: "counter" },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+    updateEntity.mockClear();
+
+    await fireEvent.input(screen.getByLabelText("Reference key for Other"), {
+      target: { value: "hp" },
+    });
+
+    expect(screen.getByRole("alert").textContent).toMatch(/already used/);
+    expect(updateEntity).not.toHaveBeenCalled();
+  });
+
   it("blocks a malformed key without persisting it", async () => {
     const entity = buildEntity({
       statSheet: {

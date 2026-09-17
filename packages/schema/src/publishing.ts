@@ -372,6 +372,29 @@ export const PublicTemplatePackageSchema = z
               path: ["fields", i],
             });
           }
+          if (field.key) {
+            const duplicateKeyIndex = template.fields.findIndex(
+              (other, otherIndex) => otherIndex < i && other.key === field.key,
+            );
+            if (duplicateKeyIndex !== -1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Field keys must be unique within a template",
+                path: ["fields", i, "key"],
+              });
+            }
+
+            const collidingIdIndex = template.fields.findIndex(
+              (other, otherIndex) => otherIndex !== i && other.id === field.key,
+            );
+            if (collidingIdIndex !== -1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Field key must not reuse another field's stable ID",
+                path: ["fields", i, "key"],
+              });
+            }
+          }
         }
       }),
     publishedAt: z.string().datetime().optional(),
