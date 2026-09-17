@@ -87,6 +87,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
       - name: Deploy to Production
         uses: cloudflare/wrangler-action@v4
         env:
@@ -122,6 +125,17 @@ jobs:
           check "/"
           check "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg"
           check "/generators/heist"
+
+      - name: Notify Search Indexes (IndexNow)
+        if: success()
+        continue-on-error: true
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: |
+          bun scripts/notify-search-indexes.ts \
+            --base-ref="origin/main" \
+            --head-sha="${{ needs.find-staging-build.outputs.commit_sha }}" \
+            --summary
 
       - name: Notify Discord on Production Deploy
         if: success()
