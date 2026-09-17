@@ -121,7 +121,8 @@ Fallow provides first-class architecture boundary enforcement via `.fallowrc.jso
 
 ### 3.2 MCP Server (`fallow-mcp`)
 
-- Configured `.codex/config.toml` with `[mcp_servers.fallow]` and added `.mcp.json`.
+- Configured `.codex/config.toml` with `[mcp_servers.fallow]`. A local `.mcp.json` is not
+  committed because the repository ignores that file.
 - Exposes 24 specialized tools:
   - `trace_import_path`: Hop-by-hop resolution.
   - `inspect_target`: Unified evidence bundle (complexity, duplication, dead code, imports).
