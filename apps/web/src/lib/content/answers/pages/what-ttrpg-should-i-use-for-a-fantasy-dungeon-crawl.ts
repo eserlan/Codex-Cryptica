@@ -7,7 +7,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
   question: "What TTRPG should I use for a fantasy dungeon crawl?",
   kind: "comparison",
   shortAnswer:
-    "There is no single best system for fantasy dungeon crawling: the right pick depends on the crawl your group wants. For fast, dangerous old-school exploration with modern rules, Shadowdark; for gonzo magic and lethal funnel play, Dungeon Crawl Classics; for a game where the dungeon itself is the whole campaign, His Majesty the Worm; for very light, improvisable play, EZD6; for grim, stylish doom, Mörk Borg; and for tactical combat with deep character builds, Pathfinder Second Edition or D&D itself. Systems named here belong to their publishers; naming one is not an endorsement of Codex Cryptica by that publisher, or the reverse.",
+    "There is no single best system for fantasy dungeon crawling: the right pick depends on the crawl your group wants. For fast, dangerous old-school exploration with modern rules, Shadowdark; for gonzo magic and lethal funnel play, Dungeon Crawl Classics; for a game where the dungeon itself is the whole campaign, His Majesty the Worm; for very light, improvisable play, EZD6; for grim, stylish doom, Mörk Borg; and for tactical combat with deep character builds, Pathfinder Second Edition or D&D itself.",
   sections: [
     {
       kind: "prose",
@@ -29,7 +29,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
         },
         {
           term: "Gonzo magic and glorious lethality",
-          text: "Dungeon Crawl Classics. Goodman Games' system starts every campaign with the 0-level funnel, where each player runs several fragile peasants and the survivors become the party. Wizards fuel spells with spellburn, sacrificing their own strength for power, warriors improvise Mighty Deeds instead of picking feats off a list, and Luck is a spendable stat. Expect wild swings and memorable deaths.",
+          text: "Dungeon Crawl Classics. Goodman Games' system is famous for starting campaigns with a 0-level funnel, where each player runs several fragile peasants and the survivors become the party. Wizards fuel spells with spellburn, sacrificing their own strength for power, warriors improvise Mighty Deeds instead of picking feats off a list, and Luck is a spendable stat. Expect wild swings and memorable deaths.",
         },
         {
           term: "The dungeon as the entire campaign",
@@ -45,7 +45,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
         },
         {
           term: "Tactical combat and deep character builds",
-          text: "Pathfinder Second Edition or D&D itself. When the group wants grid-based set-piece fights, strongly defined classes, tank-and-healer party roles, and long build arcs, the heavier systems earn their weight. Accept the cost honestly: slower combat, more prep, and rules lookups as a regular feature of play.",
+          text: "Pathfinder Second Edition or D&D itself. When the group wants grid-based set-piece fights, strongly defined classes, clearly differentiated combat and support roles, and long build arcs, the extra rules support that style of play. Accept the cost honestly: slower combat, more prep, and rules lookups as a regular feature of play.",
         },
       ],
     },
@@ -54,7 +54,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
       heading: "I like D&D, but want something different",
       paragraphs: [
         "The easiest jump keeps what the group already enjoys. If that is classes, party roles, and d20 combat, Shadowdark preserves all three while cutting the rules weight and raising the stakes; the table learns it in an evening. If the draw is fast rulings and zero prep rather than familiar structure, EZD6 is the lighter break, with hero paths standing in for classes.",
-        "Dungeon Crawl Classics asks for more adjustment and repays it: the funnel resets everyone's expectations in the first session, because nobody arrives attached to a build. Whatever the group picks, keep one honest conversation for session zero: how the new game handles character death, since every system above except the tactical pair kills characters faster than D&D players usually expect.",
+        "Dungeon Crawl Classics asks for more adjustment and repays it: the funnel resets everyone's expectations in the first session, because nobody arrives attached to a build. Whatever the group picks, keep one honest conversation for session zero: how the new game handles character death, since several of these games assume more character turnover than modern D&D.",
       ],
     },
     {
@@ -62,7 +62,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
       heading: "Magic, mana pools and improvised casting",
       paragraphs: [
         "Dungeon-crawl magic splits the same way. Some tables want spells that behave: known lists, fixed costs, reliable outcomes. Others want magic that bends, backfires, or answers to the location, like mana pools where casting grows stronger or more chaotic. Decide which appetite the group has before choosing, because the systems sit at opposite ends.",
-        "For bending magic, Dungeon Crawl Classics is the natural home: spellburn already trades the caster's body for power, so house rules like volatile mana pools slot straight into logic the game teaches. EZD6 absorbs the same kind of improvisation through karma and its creativity-first stance. Shadowdark and Mörk Borg keep casting leaner and grimmer, which suits tables that want magic rare and costly rather than flexible. Match the house rule to the engine that already thinks that way.",
+        "For bending magic, Dungeon Crawl Classics is the natural home: spellburn already trades the caster's body for power, so house rules like volatile mana pools slot straight into logic the game teaches. EZD6 absorbs the same kind of improvisation through flexible casting where the conjurer sets the power level instead of picking from fixed spell lists. Shadowdark and Mörk Borg keep casting leaner and grimmer, which suits tables that want magic rare and costly rather than flexible. Match the house rule to the engine that already thinks that way.",
       ],
     },
     {
