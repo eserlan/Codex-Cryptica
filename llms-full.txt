@@ -86,7 +86,7 @@ Search builds quietly in the background when a large vault opens. Early results 
 The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.
 
 ### Load from Folder
-Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
+Use 'LOAD FROM FOLDER' in Switch Vault to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
 
 ### Public World Directory
 Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link. All listed worlds display a provenance and copyright notice confirming they are user-created and independently published without rights-holder endorsement. Authors must confirm they have the legal right to publish their content, and visitors may report potential copyright concerns for moderation review.
@@ -1317,7 +1317,7 @@ You can mirror your internal archives with any folder on your computer. This ena
 To access your world across multiple devices using Google Drive or other providers:
 
 1.  Install the official client for your provider (e.g., [Google Drive for Desktop](https://www.google.com/drive/download/)).
-2.  In Codex Cryptica, click **SAVE TO FOLDER** in the bottom-left sidebar (or the Save icon in the Vault Selector).
+2.  In Codex Cryptica, click **SAVE TO FOLDER** in the bottom-left sidebar (or the Save icon in Switch Vault).
 3.  If no folder is linked yet, you will be prompted to select a directory. Choose a folder within your local Google Drive/Cloud directory.
 4.  Codex will now write all changes to that folder, and your OS will handle the background upload to the cloud.
 
@@ -1325,7 +1325,7 @@ To access your world across multiple devices using Google Drive or other provide
 
 When you open Codex on a new device:
 
-1.  Create a new vault or open the **Vault Selector**.
+1.  Create a new vault or open **Switch Vault**.
 2.  Click **Open Folder**.
 3.  Select the cloud-synced folder you set up on your first device.
 4.  Codex will load your world and keep it updated with the cloud mirror.
@@ -2072,6 +2072,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A monthly campaign isn't a weekly campaign played badly — it needs a different information rhythm. Run shorter arcs with a clear session endpoint instead of open-ended threads, end each session with one stated next objective, and open the next one with a short recap focused only on what's active now. Keep a short list of the NPCs, factions, and threads currently in play rather than a long write-up nobody rereads, lean on memorable, recurring hooks instead of dense lore, and freely restate anything the characters would obviously still know. The goal is to make each session self-sufficient rather than dependent on players remembering the last one in detail.
 
+### [How do you run a chase in a tabletop RPG?](https://codexcryptica.com/answers/how-do-you-run-a-chase-in-a-tabletop-rpg)
+
+**Direct answer:** Run a chase as a race to a conclusion, not as combat movement with dice: track relative progress in zones rather than feet, keep the gap visible to everyone, spend complications that force choices instead of identical checks, give every character a job, and end the chase the moment the outcome stops being in doubt. The frame below works with any system, and the system references name the two published procedures most worth borrowing from.
+
 ### [How do you run a conspiracy campaign?](https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign)
 
 **Direct answer:** Decide the truth in full before the first session, then design how it leaks. A conspiracy campaign works when you know exactly who did what and why, and the play consists of the party assembling that picture from partial, contradictory and deliberately planted evidence. If the truth is still undecided, the trail cannot be consistent, and players notice inconsistency in a mystery faster than in any other genre.
@@ -2175,6 +2179,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What makes a good random encounter?](https://codexcryptica.com/answers/what-makes-a-good-random-encounter)
 
 **Direct answer:** A good random encounter presents a situation the party can respond to in more than one way, and it tells them something about where they are. A wandering monster with no context and no options is a dice-rolling interruption; the same creature, given a reason for being there and something it currently wants, becomes a scene. The test is whether "fight it" is one option among several rather than the only one.
+
+### [What RPG should I play for an over-the-top space opera?](https://codexcryptica.com/answers/what-rpg-should-i-play-for-an-over-the-top-space-opera)
+
+**Direct answer:** There is no single best system for over-the-top space opera: the right pick depends on the table experience your group wants. For cinematic crew drama with jobs, flashbacks and a shared ship, Scum and Villainy fits best; for colourful tactical science-fantasy with deep character builds and proper starship combat, Starfinder Second Edition; for fast pulpy action your group can bend to any setting, Savage Worlds with its Science Fiction Companion; and for rules-light gonzo science-fantasy with almost no prep, Solar Blades and Cosmic Spells. Systems named here belong to their publishers; naming one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
 
 ### [What RPG system should we try instead of D&D?](https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd)
 
@@ -2316,6 +2324,101 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 **Summary:** Inside the flooded Arasaka Transit Exchange, a biometric-free vault holds the stolen Ghostseed ledger behind a mechanical train-routing maze whose brass relays must be synchronized before the district-wide security purge floods the chamber in eleven minutes.
 
 
+## Live In-Browser Generators
+
+The canonical, no-login-required tools that actually generate and let you save a draft into a vault, indexed at https://codexcryptica.com/generators. Derived from the same discovery registry as llms.txt, so a released generator cannot silently disappear from either file.
+
+- [Random RPG Idea Generator](https://codexcryptica.com/generators/random): Draws from every generator at once, for a reader who wants a prompt rather than a specific artefact.
+
+- [RPG NPC Generator](https://codexcryptica.com/generators/npc): Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.
+
+- [D&D NPC Generator](https://codexcryptica.com/generators/dnd-npc): Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.
+
+- [Personality Generator](https://codexcryptica.com/generators/personality): Create a personality you can actually portray at the table: what they want, how they act under pressure, how they speak, and the one contradiction that makes them feel human. Works without login, then imports into your local vault.
+
+- [Settlement Generator](https://codexcryptica.com/generators/settlement): Generate an inhabited place that answers three questions: why does it exist, who really controls it, and what is about to go wrong. Works for any genre — fantasy, cyberpunk, sci-fi, horror, post-apocalyptic, and more.
+
+- [Tavern Generator](https://codexcryptica.com/generators/tavern): Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.
+
+- [Social Hub Generator](https://codexcryptica.com/generators/social-hub): Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.
+
+- [Kingdom Generator](https://codexcryptica.com/generators/kingdom): Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.
+
+- [Nation Generator](https://codexcryptica.com/generators/nation): Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.
+
+- [RPG Faction Generator](https://codexcryptica.com/generators/faction): Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.
+
+- [Faction Roster Generator](https://codexcryptica.com/generators/faction-roster): Turn a faction from an organization on paper into the people the party can actually meet, recruit, threaten, or betray — each with a personal motive, a stance toward the faction, and a connection to another member on the roster.
+
+- [Secret Society Generator](https://codexcryptica.com/generators/secret-society): Build a reusable society with a belief, ritual, public cover, secret truth, and immediate hooks for your campaign.
+
+- [Council Vote Generator](https://codexcryptica.com/generators/council-vote): Create a campaign-ready political vote — a council of named voters with different motives, alliances, secrets, and demands, plus a deadline and a voting threshold. Works without login, then imports into your local vault.
+
+- [Heist Generator](https://codexcryptica.com/generators/heist): Build a playable heist instead of a planning session. You get a concrete objective, a prize that is awkward to move, three layered security rings that each allow more than one approach, a five-state alarm track, and a getaway whose original route has already failed. Works without login, then imports into your local vault.
+
+- [BBEG / Campaign Villain Generator](https://codexcryptica.com/generators/bbeg-generator): Create a campaign antagonist who functions as a campaign engine: a goal, motivation, methods, lieutenants, an escalating plan the party can discover and disrupt, and consequences whether they act or not. Works without login, then imports into your local vault.
+
+- [Comic Book Event Generator](https://codexcryptica.com/generators/comic-book-event-generator): Create a large, crossover-tier superhero crisis a campaign can build an arc around: a premise, a staged escalation the party can witness and intervene in, and concrete, campaign-persistent consequences — a location changed, an institution's trust broken, a hero unmasked — not just a premise that resets to normal. Works without login, then imports into your local vault.
+
+- [Superhero Origin Generator](https://codexcryptica.com/generators/origin-generator): Build a superhero origin that is more than a backstory paragraph: a concrete origin event, at least one campaign hook a GM can use tonight, and an ongoing consequence that stays unresolved. Works without login, then imports into your local vault.
+
+- [Superhero Villain Scheme Generator](https://codexcryptica.com/generators/villain-scheme-generator): Create an ongoing villain plot for a Superhero / Comic Book campaign: an objective, why they want it, what they're doing right now, resources and minions, escalating scheme stages the heroes can discover and disrupt, complications, and consequences if nobody intervenes. Any villain -- existing or freshly imagined -- can be running it. Works without login, then imports into your local vault.
+
+- [Creature Generator](https://codexcryptica.com/generators/creature): Create table-ready monsters, beasts, alien fauna, undead, constructs, and mounts across any genre. Generates distinctive appearance, sensory signs, ecological roles, tactical combat behaviour, harvestable remains, and adventure hooks beyond just fighting them.
+
+- [Alien Race Generator](https://codexcryptica.com/generators/alien-race): Build an alien species that is genuinely non-human. Every biological and environmental trait changes something else — six limbs reach their tools and architecture, chemical speech changes what privacy means, a long life reshapes their politics.
+
+- [RPG Encounter Generator](https://codexcryptica.com/generators/encounter): Create playable encounters your players can actually interact with, not just a monster list. Set the encounter type, environment, and threat, then import into your local vault.
+
+- [RPG Quest Generator](https://codexcryptica.com/generators/quest): Create campaign-ready adventure seeds and quest hooks. Set the genre, tone, threat, and twist, then import into your local vault.
+
+- [RPG Rumour Generator](https://codexcryptica.com/generators/rumour): Create a d6 table of six local rumours the party can overhear and choose to chase. Four are essentially true, one is exaggerated, and one is a dangerous misconception. Every rumour names a real lead; the truth stays hidden in GM notes until someone investigates.
+
+- [RPG Puzzle Generator](https://codexcryptica.com/generators/puzzle): Build thematic encounter puzzles that give every player a way to contribute. Get layered clues, alternate solutions, and consequences that keep your adventure moving.
+
+- [Dungeon / Delve Idea Generator](https://codexcryptica.com/generators/dungeon-generator): Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks. Every generated delve can also become a fully explorable, room-by-room map — the interactive Dungeon Canvas is exclusive to Codex Cryptica, free to open once you're in the app.
+
+- [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
+
+- [Adventure Idea Generator](https://codexcryptica.com/generators/adventure-idea-generator): Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.
+
+- [Plot Twist & Complication Generator](https://codexcryptica.com/generators/plot-twist-generator): Turn an established situation into a fair, playable reversal or complication. Keep the facts that matter, overturn an assumption, and give the players new choices.
+
+- [Magic Item Generator](https://codexcryptica.com/generators/magic-item): Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.
+
+- [Minor Magic Item & Trinket Generator](https://codexcryptica.com/generators/minor-magic-item): Generate small-scale, consumable, and limited-use magic items, charms, alchemical draughts, and curiosities designed for creative problem-solving rather than numerical stat bloat. Works without login.
+
+- [RPG Artifact & Relic Generator](https://codexcryptica.com/generators/artifact-generator): Create legendary artifacts and ancient relics with deep lore, multi-tier powers (dormant, awakened, ascendant), consequential costs, pursuing factions, and adventure hooks. Works without login.
+
+- [RPG Item Generator](https://codexcryptica.com/generators/item): Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.
+
+- [RPG Ship Generator](https://codexcryptica.com/generators/ship-generator): Create a campaign-ready vessel for any RPG genre. Sci-fi starships, fantasy galleons, pirate sloops, steampunk airships — pick the role, scale, and condition and get a ship with a crew, a mission, a problem, and a secret.
+
+- [RPG Pantheon Generator](https://codexcryptica.com/generators/pantheon-generator): Create a campaign-ready pantheon with alliances, cosmic conflicts, and detailed member deities. Works without login, then imports into your local vault.
+
+- [RPG God & Deity Generator](https://codexcryptica.com/generators/god-generator): Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.
+
+- [RPG Name Generator](https://codexcryptica.com/generators/names): Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.
+
+- [Fantasy Name Generator](https://codexcryptica.com/generators/fantasy-names): Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.
+
+- [RPG Fictional Language Generator](https://codexcryptica.com/generators/language-generator): Create a campaign-ready language profile for your world, culture, or species. Choose fantasy, cyberpunk, gothic noir, space opera, modern conspiracy, post-apocalyptic, or pirate foundations, then customize the result.
+
+- [Sci-Fi World Generator](https://codexcryptica.com/generators/world): Create a detailed sci-fi world for your campaign. Choose its environment, habitability, civilisation, and defining feature, then generate a place with conflicts, locations, and playable hooks.
+
+- [Star System Generator](https://codexcryptica.com/generators/star-system): Create a coherent sci-fi star system for your campaign — not just an astronomical inventory. Choose its system type, genre, civilisation level, character, and scientific realism, then generate a star (or stars), major bodies, factions, resources, hazards, and a system-wide conflict or mystery worth building a campaign around.
+
+- [Constellation Generator](https://codexcryptica.com/generators/constellation): Create a night-sky constellation with a story behind it, not just a random name. Choose its genre, visual impression, practical use, and cultural meaning, then generate a star pattern, the culture that reads meaning into it, an origin myth, when it's visible, what it's used for, and one adventure hook.
+
+- [News Sheet Generator](https://codexcryptica.com/generators/news-sheet-generator): Create an in-world news sheet as a printable player handout — a lead headline, short articles, street rumours, classifieds, and propaganda, shaped by who owns the press. Cyberpunk players know it as a screamsheet; it works just as well as a fantasy broadsheet or a station newsfeed. The GM version holds the truth behind the stories and the adventure hooks.
+
+- [Vampire Clan Generator](https://codexcryptica.com/generators/vampire-clan): Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.
+
+- [Cyberpunk Nomad Clan Generator](https://codexcryptica.com/generators/nomad-clan): Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.
+
+- [Dark Fantasy Faction Generator](https://codexcryptica.com/generators/dark-fantasy-faction): Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.
+
+
 ## TTRPG System & Genre Campaign Management
 
 Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, and toolsets for major tabletop RPG systems and worldbuilding genres:
@@ -2415,6 +2518,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Keep your crews, ships, outposts, claims, and grudges connected at the edge of settled space.
 
 **Overview:** A Space Western campaign is held together by fragile routes, personal debts, contested claims, and the few people willing to make a stand when help is weeks away. When a ship is impounded, a mining town runs dry, or a marshal chooses a side, you need the whole frontier web in one place—not scattered across manifests and session notes.
+
+### [Codex Cryptica for Starship Campaign Management](https://codexcryptica.com/for/starship-campaigns)
+
+**Summary:** Keep bridge crews, ship systems, sector maps, starbases, and fleet orders connected in one place.
+
+**Overview:** A starship campaign splits its story across decks, planets, and headquarters: the bridge crew rotates between watches, the ship carries refit debt and battle damage from three sectors back, a trade pact signed last month now constrains this week's first contact, and fleet command keeps issuing orders that contradict the captain's log. When diplomacy, exploration, and fleet politics collide mid-session, you should not have to dig through scattered notes to remember which admiral promised what, which system is under quarantine, and who on the crew still owes the quartermaster an explanation.
 
 ### [Codex Cryptica for Traveller Campaign Management](https://codexcryptica.com/for/traveller)
 
