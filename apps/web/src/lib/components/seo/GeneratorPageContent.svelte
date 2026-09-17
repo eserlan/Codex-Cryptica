@@ -123,6 +123,7 @@
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
   import { worldGenreForHub } from "./generator-page-world-handoff";
+  import { syncGeneratorTheme } from "./generator-theme-sync";
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
   import {
     getHubMountPatch,
@@ -708,49 +709,44 @@
   });
 
   $effect(() => {
-    if (slug === "npc") npc.theme = activeTheme;
-    else if (slug === "faction") faction.theme = activeTheme;
-    else if (slug === "faction-roster") factionRoster.theme = activeTheme;
-    else if (slug === "quest")
-      quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
-    else if (slug === "rumour") rumour.genre = activeTheme;
-    else if (slug === "puzzle") puzzle.genre = activeTheme;
-    else if (slug === "encounter") encounter.genre = activeTheme;
-    else if (slug === "council-vote") councilVote.genre = activeTheme;
-    else if (slug === "heist") heist.genre = activeTheme;
-    else if (slug === "secret-society") secretSociety.theme = activeTheme;
-    else if (slug === "social-hub")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
-    else if (slug === "nation")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
-    else if (slug === "pantheon-generator" || slug === "god-generator")
-      activeTheme = pantheon.genre;
-    // Language genre is a fixed select using the theme labels directly
-    // (Classic Fantasy, …), so it maps straight to activeTheme.
-    else if (slug === "language-generator") activeTheme = language.genre;
-    else if (slug === "news-sheet-generator")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
-    else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
-    else if (slug === "star-system")
-      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
-    else if (slug === "constellation") constellation.genre = activeTheme;
-    else if (slug === "alien-race")
-      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
-    else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
-    else if (
-      slug === "adventure-generator" ||
-      slug === "adventure-idea-generator"
-    )
-      adventure.genre = activeTheme;
-    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
-    else if (slug === "bbeg-generator") villain.genre = activeTheme;
-    else if (slug === "minor-magic-item") minorMagicItem.genre = activeTheme;
-    else if (slug === "artifact-generator") artifact.genre = activeTheme;
-    else if (slug === "creature") creature.genre = activeTheme;
-    else if (slug === "personality") personality.genre = activeTheme;
+    syncGeneratorTheme({
+      slug,
+      activeTheme,
+      setActiveTheme: (theme) => (activeTheme = theme),
+      npc,
+      faction,
+      factionRoster,
+      quest,
+      personality,
+      rumour,
+      puzzle,
+      encounter,
+      councilVote,
+      heist,
+      secretSociety,
+      socialHub,
+      nation,
+      pantheon,
+      language,
+      newsSheet,
+      world,
+      starSystem,
+      constellation,
+      alienRace,
+      dungeon,
+      adventure,
+      plotTwist,
+      villain,
+      minorMagicItem,
+      artifact,
+      creature,
+      themeToQuestGenre,
+      mapSocialHubGenre: (genre) =>
+        SOCIAL_HUB_GENRE_TO_THEME[genre] ?? "Classic Fantasy",
+      mapWorldGenre: mapWorldGenreToTheme,
+      mapStarSystemGenre: mapStarSystemGenreToTheme,
+      mapAlienRaceGenre: mapAlienRaceGenreToTheme,
+    });
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
