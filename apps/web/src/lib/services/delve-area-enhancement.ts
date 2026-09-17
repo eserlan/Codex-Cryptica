@@ -308,7 +308,7 @@ export class DelveAreaEnhancementService {
     sectorPassages: Canvas["edges"],
   ): Promise<EnhancedSectorResult> {
     const roomsById = new Map(allRooms.map((room) => [room.id, room]));
-    let neighboringAreasArr: string[] = [];
+    const neighboringAreasArr: string[] = [];
     for (const room of allRooms) {
       if (room.sectorId !== sectorId) {
         neighboringAreasArr.push(areaUsageContext(room));
