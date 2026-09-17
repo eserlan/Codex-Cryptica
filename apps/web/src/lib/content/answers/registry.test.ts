@@ -724,6 +724,32 @@ describe("published answers", () => {
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
   });
+
+  it("publishes the solo rpg system answer with complete framework sections, R2 image, and verified system references", () => {
+    const answer = answers["what-rpg-system-is-good-for-solo-play"];
+    expect(answer).toBeDefined();
+    expect(answer.category).toBe("getting-started");
+    expect(answer.kind).toBe("comparison");
+    expect(answer.seo.image).toMatch(
+      /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+    expect(answer.seo.imageAlt?.trim().length ?? 0).toBeGreaterThan(0);
+    expect(answer.sections.length).toBeGreaterThanOrEqual(3);
+    expect(answer.sections.some((s) => s.kind === "example")).toBe(true);
+    expect(answer.sections.some((s) => s.kind === "checklist")).toBe(true);
+    expect(answer.systemsThatSupportThis?.map((s) => s.system)).toEqual([
+      "Ironsworn",
+      "Ironsworn: Starforged",
+      "Mythic Game Master Emulator Second Edition",
+      "Four Against Darkness",
+      "Thousand Year Old Vampire",
+    ]);
+    for (const ref of answer.systemsThatSupportThis ?? []) {
+      expect(ref.href).toMatch(/^https:\/\//);
+      expect(ref.rationale.length).toBeGreaterThan(0);
+      expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
 });
 
 describe("answer structured data", () => {

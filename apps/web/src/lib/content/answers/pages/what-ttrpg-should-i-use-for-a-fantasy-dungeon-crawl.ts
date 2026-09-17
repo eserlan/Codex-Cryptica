@@ -170,6 +170,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
   ],
   relatedAnswers: [
     "what-rpg-system-should-we-try-instead-of-dnd",
+    "what-rpg-system-is-good-for-solo-play",
     "how-do-you-build-a-point-crawl-for-an-rpg",
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
   ],
@@ -192,12 +193,18 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
     relatedIntents: [
       "answer-space-opera-system-selection",
       "answer-system-selection",
+      "answer-solo-rpg-system-selection",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-space-opera-system-selection",
         reason:
           "Sibling vibe-to-system chooser for colourful space opera; this page owns dungeon-crawl system choice and links across rather than repeating the pattern.",
+      },
+      {
+        with: "answer-solo-rpg-system-selection",
+        reason:
+          "That page evaluates systems and emulators specifically for solitary play; this page evaluates group systems for fantasy dungeon crawling.",
       },
     ],
   },

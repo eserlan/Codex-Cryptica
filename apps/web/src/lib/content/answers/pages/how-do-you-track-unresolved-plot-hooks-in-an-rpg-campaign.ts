@@ -147,6 +147,7 @@ export const howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign: AnswerConfigInput 
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
       "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
       "how-do-you-recap-a-ttrpg-session",
+      "what-rpg-system-is-good-for-solo-play",
     ],
     discovery: {
       id: "answer-unresolved-plot-hooks",
