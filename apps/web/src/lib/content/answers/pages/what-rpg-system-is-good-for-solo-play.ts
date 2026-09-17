@@ -171,6 +171,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+    "what-rpg-feels-like-dnd-but-is-simpler",
   ],
   discovery: {
     id: "answer-solo-rpg-system-selection",
@@ -209,6 +210,11 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
         with: "answer-dungeon-crawl-system-selection",
         reason:
           "That page evaluates group systems for fantasy dungeon crawling; this page evaluates systems and emulators specifically for solo play across all genres.",
+      },
+      {
+        with: "answer-simpler-dnd-alternative",
+        reason:
+          "That page evaluates group systems for simpler fantasy adventure; this page evaluates systems and emulators specifically for solo play.",
       },
     ],
   },

@@ -156,6 +156,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-rpg-should-i-play-for-an-over-the-top-space-opera",
     "what-rpg-system-is-good-for-solo-play",
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
+    "what-rpg-feels-like-dnd-but-is-simpler",
   ],
   discovery: {
     id: "answer-system-selection",
