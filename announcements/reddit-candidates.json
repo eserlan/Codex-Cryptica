@@ -1,0 +1,15 @@
+{
+  "updated_at": 1789566922,
+  "candidates": [
+    {
+      "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
+      "title": "I put every superhero generator in one place",
+      "body": "Running a supers campaign usually means bouncing between a city generator that thinks in castle walls, a quest tool that writes fantasy bounties, and a villain builder that never quite gets to the comic book part.\n\nI built a dedicated Superhero hub at /generators/superhero so you can browse and build a whole cape campaign without hunting individual tools.\n\nYou can try it here: [Superhero Hub](https://codexcryptica.com/generators/superhero)\n\nIt groups everything that understands capes and masks in one view:\n- every superhero generator in one browseable hub\n- theme-aware defaults so settlement, nation and quest open in superhero context\n- quick jump between origin, villain scheme and event without losing your filters\n\nI kept it as a hub rather than a separate app, so it still shares your vault and offline fallback. Tradeoff is it looks like the other genre hubs, which might underplay how much of the content underneath is new.\n\nWhat kind of superhero city are you running right now, a lived-in metropolis or a registration-state pressure cooker?\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35104395212 -->",
+      "url": "https://codexcryptica.com/generators/superhero",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35104395212-0.png",
+      "source_id": "35104395212",
+      "status": "approved",
+      "created_at": 1789566922
+    }
+  ]
+}
