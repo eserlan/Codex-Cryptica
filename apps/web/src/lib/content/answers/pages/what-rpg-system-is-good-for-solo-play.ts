@@ -166,6 +166,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
   relatedAnswers: [
     "what-rpg-system-should-we-try-instead-of-dnd",
     "what-rpg-should-i-play-for-an-over-the-top-space-opera",
+    "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
@@ -188,7 +189,11 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     uniqueValue:
       "Compares built-for-solo engines, procedural dungeon crawlers, prompt journalling, and external GM emulators by interpretation burden and play experience rather than popularity.",
     userJob: "evaluate",
-    relatedIntents: ["answer-system-selection", "for-solo-worldbuilding"],
+    relatedIntents: [
+      "answer-system-selection",
+      "answer-dungeon-crawl-system-selection",
+      "for-solo-worldbuilding",
+    ],
     acknowledgedOverlap: [
       {
         with: "answer-system-selection",
@@ -199,6 +204,11 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
         with: "answer-space-opera-system-selection",
         reason:
           "That page evaluates systems for over-the-top space opera multiplayer campaigns; this page evaluates systems and emulators across all genres specifically for solitary play.",
+      },
+      {
+        with: "answer-dungeon-crawl-system-selection",
+        reason:
+          "That page evaluates group systems for fantasy dungeon crawling; this page evaluates systems and emulators specifically for solo play across all genres.",
       },
     ],
   },

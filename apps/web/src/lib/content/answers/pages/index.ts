@@ -68,6 +68,7 @@ import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-w
 import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
+import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
 
 /**
@@ -147,6 +148,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
+    whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
