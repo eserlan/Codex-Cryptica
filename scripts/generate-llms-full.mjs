@@ -1,20 +1,24 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { load as yamlLoad } from 'js-yaml';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { load as yamlLoad } from "js-yaml";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '..');
-const outputPath = path.join(rootDir, 'apps/web/static/llms-full.txt');
+const rootDir = path.resolve(__dirname, "..");
+const outputPath = path.join(rootDir, "apps/web/static/llms-full.txt");
 
-const helpDir = path.join(rootDir, 'apps/web/src/lib/content/help');
-const helpContentFile = path.join(rootDir, 'apps/web/src/lib/config/help-content.ts');
+const helpDir = path.join(rootDir, "apps/web/src/lib/content/help");
+const helpContentFile = path.join(
+  rootDir,
+  "apps/web/src/lib/config/help-content.ts",
+);
 
 function getFiles(dir, extension) {
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir)
-    .filter(file => file.endsWith(extension))
-    .map(file => path.join(dir, file));
+  return fs
+    .readdirSync(dir)
+    .filter((file) => file.endsWith(extension))
+    .map((file) => path.join(dir, file));
 }
 
 let fullContent = `# Codex Cryptica - User Guide & Features
@@ -40,90 +44,104 @@ It is especially relevant to users searching for:
 
 // 1. Extract Features from help-content.ts
 if (fs.existsSync(helpContentFile)) {
-  console.log('Extracting Features...');
-  const content = fs.readFileSync(helpContentFile, 'utf8');
-  
+  console.log("Extracting Features...");
+  const content = fs.readFileSync(helpContentFile, "utf8");
+
   // Restrict extraction to the FEATURE_HINTS object to avoid picking up onboarding hints
-  const featureHintsMatch = content.match(/export const FEATURE_HINTS: Record<string, FeatureHint> = {([\s\S]*?)};/);
-  
+  const featureHintsMatch = content.match(
+    /export const FEATURE_HINTS: Record<string, FeatureHint> = {([\s\S]*?)};/,
+  );
+
   if (featureHintsMatch) {
     fullContent += `## Core Features\n\n`;
     const featureHintsSection = featureHintsMatch[1];
-    
+
     // Support single quotes, double quotes, and template literals for title and content
-    const featureRegex = /title:\s*["'](.*?)["'],\s*content:\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`)/gs;
+    const featureRegex =
+      /title:\s*["'](.*?)["'],\s*content:\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`)/gs;
     let match;
     while ((match = featureRegex.exec(featureHintsSection)) !== null) {
       const title = match[1];
-      const rawContent = match[2] ?? match[3] ?? match[4] ?? '';
-      const description = rawContent.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\'/g, "'");
+      const rawContent = match[2] ?? match[3] ?? match[4] ?? "";
+      const description = rawContent
+        .replace(/\\n/g, "\n")
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'");
       fullContent += `### ${title}\n${description}\n\n`;
     }
   }
 }
 
 // 2. Add Help Articles
-const helpFiles = getFiles(helpDir, '.md');
+const helpFiles = getFiles(helpDir, ".md");
 if (helpFiles.length > 0) {
-  console.log('Processing Help Articles...');
-  
-  const helpArticles = helpFiles.map(file => {
-    const rawContent = fs.readFileSync(file, 'utf8');
-    const filename = path.basename(file, '.md');
-    
+  console.log("Processing Help Articles...");
+
+  const helpArticles = helpFiles.map((file) => {
+    const rawContent = fs.readFileSync(file, "utf8");
+    const filename = path.basename(file, ".md");
+
     // Use a bounded regex for frontmatter to avoid performance issues
-    const frontmatterMatch = rawContent.match(/^---\r?\n([\s\S]{0,10000}?)\r?\n---\r?\n?/);
-    
+    const frontmatterMatch = rawContent.match(
+      /^---\r?\n([\s\S]{0,10000}?)\r?\n---\r?\n?/,
+    );
+
     let content = rawContent;
     let metadata = {};
-    
+
     if (frontmatterMatch) {
       try {
         metadata = yamlLoad(frontmatterMatch[1]);
         content = rawContent.slice(frontmatterMatch[0].length).trim();
       } catch (e) {
         console.warn(`Failed to parse YAML in ${filename}:`, e.message);
-        content = rawContent.replace(/^---[\s\S]*?---/, '').trim();
+        content = rawContent.replace(/^---[\s\S]*?---/, "").trim();
       }
     }
-    
+
     // Strip leading H1/H2 headings from the article content to avoid heading level conflicts
-    content = content.replace(/^#{1,2}\s.*\n?/, '').trimStart();
-    
-    const title = (metadata.title || filename.replace(/-/g, ' ')).toUpperCase();
+    content = content.replace(/^#{1,2}\s.*\n?/, "").trimStart();
+
+    const title = (metadata.title || filename.replace(/-/g, " ")).toUpperCase();
     const rank = metadata.rank !== undefined ? metadata.rank : 999;
-    
+
     return {
       title,
       content,
       rank,
-      filename
+      filename,
     };
   });
-  
+
   // Sort by rank (ascending), then by title
   helpArticles.sort((a, b) => {
     if (a.rank !== b.rank) return a.rank - b.rank;
     return a.title.localeCompare(b.title);
   });
-  
+
   fullContent += `\n## Help Documentation\n`;
   for (const article of helpArticles) {
-    console.log(`Adding Help Article: ${article.filename} (Rank: ${article.rank})`);
+    console.log(
+      `Adding Help Article: ${article.filename} (Rank: ${article.rank})`,
+    );
     fullContent += `\n### ${article.title}\n\n${article.content}\n\n---\n`;
   }
 }
 
 // 3. Add Answer Pages (/answers/[slug])
-const answersDir = path.join(rootDir, 'apps/web/src/lib/content/answers/pages');
+const answersDir = path.join(rootDir, "apps/web/src/lib/content/answers/pages");
 if (fs.existsSync(answersDir)) {
-  console.log('Extracting Answer Pages...');
+  console.log("Extracting Answer Pages...");
 
   // Registration order, taken from the registry's imports, so the agent-readable
   // index matches the order the site publishes them in.
-  const indexSource = fs.readFileSync(path.join(answersDir, 'index.ts'), 'utf8');
-  const slugs = [...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g)]
-    .map(m => m[1] ?? m[2]);
+  const indexSource = fs.readFileSync(
+    path.join(answersDir, "index.ts"),
+    "utf8",
+  );
+  const slugs = [
+    ...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g),
+  ].map((m) => m[1] ?? m[2]);
 
   // Tolerant of both quote styles and of indentation, because Prettier
   // reformats these modules after they are written: it rewrites a string
@@ -135,12 +153,12 @@ if (fs.existsSync(answersDir)) {
       `\\n[ \\t]*${field}:[ \\t]*\\n?[ \\t]*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)')`,
     );
     const match = content.match(regex);
-    if (!match) return '';
-    const raw = match[1] ?? match[2] ?? '';
+    if (!match) return "";
+    const raw = match[1] ?? match[2] ?? "";
     return raw
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'")
-      .replace(/\\\\/g, '\\')
+      .replace(/\\\\/g, "\\")
       .trim();
   };
 
@@ -151,9 +169,9 @@ if (fs.existsSync(answersDir)) {
       console.warn(`[llms-full] Answer module missing for slug: ${slug}`);
       continue;
     }
-    const content = fs.readFileSync(file, 'utf8');
-    const question = readString(content, 'question');
-    const shortAnswer = readString(content, 'shortAnswer');
+    const content = fs.readFileSync(file, "utf8");
+    const question = readString(content, "question");
+    const shortAnswer = readString(content, "shortAnswer");
     if (!question || !shortAnswer) {
       // Fatal on purpose: a silent skip here removes a page from the
       // agent-readable index with no visible failure.
@@ -181,24 +199,31 @@ if (fs.existsSync(answersDir)) {
 }
 
 // 4. Add curated generator examples (/examples/[slug])
-const examplesDir = path.join(rootDir, 'apps/web/src/lib/content/examples/pages');
+const examplesDir = path.join(
+  rootDir,
+  "apps/web/src/lib/content/examples/pages",
+);
 if (fs.existsSync(examplesDir)) {
-  console.log('Extracting Curated Examples...');
+  console.log("Extracting Curated Examples...");
 
-  const indexSource = fs.readFileSync(path.join(examplesDir, 'index.ts'), 'utf8');
-  const slugs = [...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g)]
-    .map(m => m[1] ?? m[2]);
+  const indexSource = fs.readFileSync(
+    path.join(examplesDir, "index.ts"),
+    "utf8",
+  );
+  const slugs = [
+    ...indexSource.matchAll(/from '\.\/([a-z0-9-]+)'|from "\.\/([a-z0-9-]+)"/g),
+  ].map((m) => m[1] ?? m[2]);
 
   const readString = (content, field) => {
     const regex = new RegExp(
       `\\n[ \\t]*${field}:[ \\t]*\\n?[ \\t]*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)')`,
     );
     const match = content.match(regex);
-    if (!match) return '';
-    return (match[1] ?? match[2] ?? '')
+    if (!match) return "";
+    return (match[1] ?? match[2] ?? "")
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'")
-      .replace(/\\\\/g, '\\')
+      .replace(/\\\\/g, "\\")
       .trim();
   };
 
@@ -208,12 +233,14 @@ if (fs.existsSync(examplesDir)) {
     if (!fs.existsSync(file)) {
       throw new Error(`[llms-full] Example module missing for slug: ${slug}`);
     }
-    const content = fs.readFileSync(file, 'utf8');
-    const title = readString(content, 'title');
-    const summary = readString(content, 'summary');
-    const genre = readString(content, 'genre');
+    const content = fs.readFileSync(file, "utf8");
+    const title = readString(content, "title");
+    const summary = readString(content, "summary");
+    const genre = readString(content, "genre");
     if (!title || !summary) {
-      throw new Error(`[llms-full] Could not extract title/summary for example: ${slug}`);
+      throw new Error(
+        `[llms-full] Could not extract title/summary for example: ${slug}`,
+      );
     }
     entries.push({ slug, title, summary, genre });
   }
@@ -235,19 +262,67 @@ if (fs.existsSync(examplesDir)) {
   }
 }
 
+// 4b. Add Live In-Browser Generators, derived from the same canonical
+// discovery registry as llms.txt (#3163). The generator bullets live in
+// static/llms.txt between LLMS-GENERATORS markers (see
+// scripts/sync-llms-generators.ts); this script reuses that synced section
+// rather than maintaining a second list, so both files share one source of
+// truth. Fatal on purpose: a silent skip here removes generators from the
+// agent-readable index with no visible failure.
+{
+  const llmsTxt = fs.readFileSync(
+    path.join(rootDir, "apps/web/static/llms.txt"),
+    "utf8",
+  );
+  const startMarker = "<!-- LLMS-GENERATORS:START -->";
+  const endMarker = "<!-- LLMS-GENERATORS:END -->";
+  const startIndex = llmsTxt.indexOf(startMarker);
+  const endIndex = llmsTxt.indexOf(endMarker);
+  if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+    throw new Error(
+      "[llms-full] LLMS-GENERATORS markers missing in apps/web/static/llms.txt.",
+    );
+  }
+  const generatorLines = llmsTxt
+    .slice(startIndex + startMarker.length, endIndex)
+    .trim()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- ["));
+  if (generatorLines.length === 0) {
+    throw new Error(
+      "[llms-full] No generator bullets found in apps/web/static/llms.txt.",
+    );
+  }
+  fullContent += `\n## Live In-Browser Generators\n\n`;
+  fullContent += `The canonical, no-login-required tools that actually generate and let you save a draft into a vault, indexed at https://codexcryptica.com/generators. Derived from the same discovery registry as llms.txt, so a released generator cannot silently disappear from either file.\n\n`;
+  for (const line of generatorLines) {
+    fullContent += `${line}\n\n`;
+  }
+}
+
 // 5. Add TTRPG System & Genre Landing Pages
-const packsDir = path.join(rootDir, 'apps/web/src/lib/content/for/packs');
+const packsDir = path.join(rootDir, "apps/web/src/lib/content/for/packs");
 if (fs.existsSync(packsDir)) {
-  console.log('Extracting TTRPG System & Genre Landing Pages...');
-  const packFiles = fs.readdirSync(packsDir).filter(f => f.endsWith('.ts') && f !== 'index.ts');
+  console.log("Extracting TTRPG System & Genre Landing Pages...");
+  const packFiles = fs
+    .readdirSync(packsDir)
+    .filter((f) => f.endsWith(".ts") && f !== "index.ts");
   packFiles.sort();
 
   function extractField(content, fieldName) {
-    const regex = new RegExp(`${fieldName}:\\s*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)'|\`([^\`\\\\]*(?:\\\\.[^\`\\\\]*)*)\`)`, 's');
+    const regex = new RegExp(
+      `${fieldName}:\\s*(?:"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|'([^'\\\\]*(?:\\\\.[^'\\\\]*)*)'|\`([^\`\\\\]*(?:\\\\.[^\`\\\\]*)*)\`)`,
+      "s",
+    );
     const match = content.match(regex);
-    if (!match) return '';
-    const raw = match[1] ?? match[2] ?? match[3] ?? '';
-    return raw.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\'/g, "'").trim();
+    if (!match) return "";
+    const raw = match[1] ?? match[2] ?? match[3] ?? "";
+    return raw
+      .replace(/\\n/g, "\n")
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
+      .trim();
   }
 
   fullContent += `\n## TTRPG System & Genre Campaign Management\n\n`;
@@ -255,13 +330,17 @@ if (fs.existsSync(packsDir)) {
 
   for (const file of packFiles) {
     const filePath = path.join(packsDir, file);
-    const content = fs.readFileSync(filePath, 'utf8');
+    const content = fs.readFileSync(filePath, "utf8");
 
-    const slug = extractField(content, 'slug');
-    const heroTitleMatch = content.match(/title:\s*["'](Codex Cryptica for [^"']+)["']/);
-    const title = heroTitleMatch ? heroTitleMatch[1] : extractField(content, 'title');
-    const tagline = extractField(content, 'tagline');
-    const problem = extractField(content, 'problemStatement');
+    const slug = extractField(content, "slug");
+    const heroTitleMatch = content.match(
+      /title:\s*["'](Codex Cryptica for [^"']+)["']/,
+    );
+    const title = heroTitleMatch
+      ? heroTitleMatch[1]
+      : extractField(content, "title");
+    const tagline = extractField(content, "tagline");
+    const problem = extractField(content, "problemStatement");
 
     if (slug && title) {
       fullContent += `### [${title}](https://codexcryptica.com/for/${slug})\n\n`;
@@ -272,7 +351,11 @@ if (fs.existsSync(packsDir)) {
 }
 
 fs.writeFileSync(outputPath, fullContent);
-const rootOutputPath = path.join(rootDir, 'llms-full.txt');
+const rootOutputPath = path.join(rootDir, "llms-full.txt");
 fs.writeFileSync(rootOutputPath, fullContent);
-console.log(`\n✅ Generated ${outputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
-console.log(`✅ Generated ${rootOutputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
+console.log(
+  `\n✅ Generated ${outputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`,
+);
+console.log(
+  `✅ Generated ${rootOutputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`,
+);
