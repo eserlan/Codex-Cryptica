@@ -338,7 +338,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vault-load",
     title: "Load from Folder",
     content:
-      "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.",
+      "Use 'LOAD FROM FOLDER' in Switch Vault to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.",
     icon: "icon-[lucide--download-cloud]",
   },
   "public-world-directory": {

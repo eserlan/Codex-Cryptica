@@ -38,7 +38,7 @@ You can mirror your internal archives with any folder on your computer. This ena
 To access your world across multiple devices using Google Drive or other providers:
 
 1.  Install the official client for your provider (e.g., [Google Drive for Desktop](https://www.google.com/drive/download/)).
-2.  In Codex Cryptica, click **SAVE TO FOLDER** in the bottom-left sidebar (or the Save icon in the Vault Selector).
+2.  In Codex Cryptica, click **SAVE TO FOLDER** in the bottom-left sidebar (or the Save icon in Switch Vault).
 3.  If no folder is linked yet, you will be prompted to select a directory. Choose a folder within your local Google Drive/Cloud directory.
 4.  Codex will now write all changes to that folder, and your OS will handle the background upload to the cloud.
 
@@ -46,7 +46,7 @@ To access your world across multiple devices using Google Drive or other provide
 
 When you open Codex on a new device:
 
-1.  Create a new vault or open the **Vault Selector**.
+1.  Create a new vault or open **Switch Vault**.
 2.  Click **Open Folder**.
 3.  Select the cloud-synced folder you set up on your first device.
 4.  Codex will load your world and keep it updated with the cloud mirror.
