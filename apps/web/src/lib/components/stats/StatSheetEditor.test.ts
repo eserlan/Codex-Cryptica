@@ -601,3 +601,103 @@ describe("StatSheetEditor", () => {
     );
   });
 });
+
+describe("StatSheetEditor field keys (#3180)", () => {
+  beforeEach(() => {
+    updateEntity.mockClear();
+  });
+
+  it("assigns a readable unique key to a new field", async () => {
+    render(StatSheetEditor, { entity: buildEntity() });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-add"));
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({ label: "New Field", key: "new_field" }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("blocks a duplicate key without persisting it", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "a", key: "hp", label: "HP", type: "counter" },
+          { id: "b", label: "Hit Points", type: "counter" },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+    updateEntity.mockClear();
+
+    await fireEvent.input(
+      screen.getByLabelText("Reference key for Hit Points"),
+      {
+        target: { value: "hp" },
+      },
+    );
+
+    expect(screen.getByRole("alert").textContent).toMatch(/already used/);
+    expect(updateEntity).not.toHaveBeenCalled();
+  });
+
+  it("blocks a malformed key without persisting it", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "a", label: "HP", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+    updateEntity.mockClear();
+
+    await fireEvent.input(screen.getByLabelText("Reference key for HP"), {
+      target: { value: "hit-points" },
+    });
+
+    expect(screen.queryByRole("alert")).not.toBeNull();
+    expect(updateEntity).not.toHaveBeenCalled();
+  });
+
+  it("persists a valid key and clears it when emptied", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "a", label: "HP", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+    updateEntity.mockClear();
+
+    await fireEvent.input(screen.getByLabelText("Reference key for HP"), {
+      target: { value: "hit_points" },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ id: "a", key: "hit_points" })],
+        }),
+      }),
+    );
+
+    updateEntity.mockClear();
+    await fireEvent.input(screen.getByLabelText("Reference key for HP"), {
+      target: { value: "" },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ id: "a", key: undefined })],
+        }),
+      }),
+    );
+  });
+});

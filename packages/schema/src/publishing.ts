@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { EntitySchema } from "./entity";
 import { MapSchema } from "./map";
-import { StatSheetEntityCategorySchema } from "./stat-sheet";
+import {
+  StatSheetEntityCategorySchema,
+  StatSheetFieldKeySchema,
+} from "./stat-sheet";
 
 export const PUBLISH_LIMITS = {
   maxBundleBytes: 10 * 1024 * 1024,
@@ -313,6 +316,8 @@ const TemplateColumnSchema = z
 const TemplateFieldSchema = z
   .object({
     id: z.string().trim().min(1).max(120),
+    // #3180: user-friendly key travels with public packages.
+    key: StatSheetFieldKeySchema.optional(),
     label: z.string().trim().min(1).max(200),
     type: z.enum([
       "counter",
