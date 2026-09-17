@@ -38,6 +38,7 @@
     "prepare": "husky",
     "assets:sync": "bun scripts/upload-images.mjs",
     "sync:answers": "bun scripts/sync-answers.ts",
+    "sync:llms-generators": "bun scripts/sync-llms-generators.ts",
     "check:answer-mesh": "bun scripts/check-answer-mesh.ts",
     "check:crawler-access": "bun scripts/crawler-access-check.mjs",
     "report:crawler-activity": "bun scripts/crawler-activity-report.ts",
