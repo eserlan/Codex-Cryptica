@@ -1,3 +1,4 @@
+import { type IdGenerator, type Clock, systemIdGenerator, systemClock } from "$lib/utils/runtime-deps";
 import {
   parseAdventureSession,
   type AdventureSession,
@@ -48,15 +49,16 @@ function isSafeSessionId(value: string): boolean {
 export class AdventureSessionRepository {
   private readonly writes = new Map<string, Promise<void>>();
   private rootResolver: AdventureVaultRootResolver;
-  private readonly generateId: () => string;
+  private readonly idGenerator: IdGenerator;
+  private readonly clock: Clock;
 
   constructor(
     resolveVaultRoot: AdventureVaultRootResolver,
-    generateId: () => string = () => crypto.randomUUID(),
-    private readonly now: () => number = () => Date.now(),
+    deps: { idGenerator?: IdGenerator; clock?: Clock } = {},
   ) {
     this.rootResolver = resolveVaultRoot;
-    this.generateId = generateId;
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
+    this.clock = deps.clock ?? systemClock;
   }
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
@@ -223,7 +225,7 @@ export class AdventureSessionRepository {
       ...loaded.session,
       status: "archived",
       revision: loaded.session.revision + 1,
-      updatedAt: new Date(this.now()).toISOString(),
+      updatedAt: new Date(this.clock.now()).toISOString(),
     };
     return this.save(expectedRevision, archived);
   }
@@ -253,7 +255,7 @@ export class AdventureSessionRepository {
       ...loaded.session,
       title: trimmed,
       revision: loaded.session.revision + 1,
-      updatedAt: new Date(this.now()).toISOString(),
+      updatedAt: new Date(this.clock.now()).toISOString(),
     };
     return this.save(expectedRevision, renamed);
   }
@@ -272,8 +274,8 @@ export class AdventureSessionRepository {
     if (loaded.condition === "unreadable") {
       return { condition: "unreadable", error: loaded.error };
     }
-    const now = new Date(this.now()).toISOString();
-    const id = this.generateId();
+    const now = new Date(this.clock.now()).toISOString();
+    const id = this.idGenerator.uuid();
     const duplicated: AdventureSession = {
       ...loaded.session,
       id,
