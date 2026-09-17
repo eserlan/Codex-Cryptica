@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import {
   GraphViewController,
   resolveFocusDepth,
+  resolveWebGLExperiment,
   FOCUS_ZOOM_STEP_FACTOR,
   type LoadPhase,
 } from "./graph-view-controller.svelte";
@@ -99,6 +100,7 @@ vi.mock("graph-engine", () => {
     syncGraphElements: vi.fn(),
     applyLargeGraphRenderHints: vi.fn(),
     isLayoutCollinear: vi.fn().mockReturnValue(false),
+    isWebGL2Available: vi.fn().mockReturnValue(false),
   };
 });
 
@@ -879,5 +881,51 @@ describe("resolveFocusDepth", () => {
     const result = resolveFocusDepth(1, 0.001, 1, bounds);
     expect(result.depth).toBe(1);
     expect(result.mark).toBe(1);
+  });
+});
+
+describe("resolveWebGLExperiment (#3168 spike)", () => {
+  const memStore = () => {
+    let value: string | null = null;
+    return {
+      getItem: () => value,
+      setItem: (_k: string, v: string) => {
+        value = v;
+      },
+    };
+  };
+
+  it("is off by default with no param or stored preference", () => {
+    expect(resolveWebGLExperiment("", memStore())).toBe(false);
+  });
+
+  it("enables via ?webgl=1 and persists the preference", () => {
+    const store = memStore();
+    expect(resolveWebGLExperiment("?webgl=1", store)).toBe(true);
+    expect(store.getItem()).toBe("1");
+  });
+
+  it("disables via ?webgl=0 and persists the preference", () => {
+    const store = memStore();
+    expect(resolveWebGLExperiment("?webgl=0", store)).toBe(false);
+    expect(store.getItem()).toBe("0");
+  });
+
+  it("honours the stored preference when no param is present", () => {
+    const store = memStore();
+    store.setItem("codex-graph-webgl", "1");
+    expect(resolveWebGLExperiment("", store)).toBe(true);
+  });
+
+  it("falls back to off when storage throws", () => {
+    const broken = {
+      getItem: () => {
+        throw new Error("denied");
+      },
+      setItem: () => {
+        throw new Error("denied");
+      },
+    };
+    expect(resolveWebGLExperiment("", broken)).toBe(false);
   });
 });

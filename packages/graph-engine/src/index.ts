@@ -34,7 +34,35 @@ export interface GraphOptions {
   minZoom?: number;
   maxZoom?: number;
   wheelSensitivity?: number;
+  /**
+   * Experimental Cytoscape WebGL node/edge layer (#3168 spike). Defaults to
+   * `false` (Canvas 2D). Labels/images stay on Canvas 2D layers either way.
+   * Construction-time flag like `hideEdgesOnViewport` — cannot be toggled
+   * on a live instance; callers must recreate the graph to switch modes.
+   */
+  webgl?: boolean;
 }
+
+/**
+ * Probes for a usable WebGL2 context without creating a Cytoscape instance.
+ * Returns `false` outside a DOM environment or when context creation fails,
+ * so callers can fall back to the Canvas 2D renderer before construction.
+ */
+export const isWebGL2Available = (): boolean => {
+  try {
+    if (typeof document === "undefined") return false;
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl2");
+    // Lose the context immediately — this was only a capability probe.
+    const lose = (gl as WebGL2RenderingContext | null)?.getExtension?.(
+      "WEBGL_lose_context",
+    );
+    lose?.loseContext?.();
+    return gl != null;
+  } catch {
+    return false;
+  }
+};
 
 export const LARGE_GRAPH_NODE_THRESHOLD = 700;
 export const LARGE_GRAPH_EDGE_THRESHOLD = 1800;
@@ -145,6 +173,8 @@ export const initGraph = async (options: GraphOptions) => {
       name: "preset",
     },
     // Rendering Optimizations
+    // #3168 spike: experimental WebGL node/edge layer, off by default.
+    webgl: options.webgl ?? false,
     hideLabelsOnViewport: options.hideLabelsOnViewport ?? true,
     hideEdgesOnViewport: isLargeGraph,
     textureOnViewport: true,

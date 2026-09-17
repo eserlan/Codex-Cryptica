@@ -4,6 +4,7 @@ import {
   initGraph,
   applyLargeGraphRenderHints,
   isLargeGraphSize,
+  isWebGL2Available,
 } from "./index";
 
 describe("initGraph adaptive zoom", () => {
@@ -132,6 +133,63 @@ describe("initGraph overrides", () => {
     );
     expect((withDefaults as any)._private?.options?.wheelSensitivity).toBe(1.0);
     expect(withDefaults.maxZoom()).toBe(9.0);
+  });
+});
+
+describe("initGraph webgl flag (#3168 spike)", () => {
+  it("defaults to Canvas 2D rendering", async () => {
+    const cy = await initGraph({
+      headless: true,
+      elements: [{ group: "nodes", data: { id: "1" } }] as any,
+    });
+
+    expect((cy as any)._private?.options?.webgl).toBe(false);
+  });
+
+  it("passes webgl:true through to the cytoscape options", async () => {
+    const cy = await initGraph({
+      headless: true,
+      elements: [{ group: "nodes", data: { id: "1" } }] as any,
+      webgl: true,
+    });
+
+    expect((cy as any)._private?.options?.webgl).toBe(true);
+  });
+});
+
+describe("isWebGL2Available", () => {
+  it("returns false outside a DOM environment", () => {
+    expect(isWebGL2Available()).toBe(false);
+  });
+
+  it("returns false when context creation throws", () => {
+    const stub = {
+      createElement: () => {
+        throw new Error("no canvas");
+      },
+    };
+    (globalThis as any).document = stub;
+    try {
+      expect(isWebGL2Available()).toBe(false);
+    } finally {
+      delete (globalThis as any).document;
+    }
+  });
+
+  it("returns true when a webgl2 context is created", () => {
+    const stub = {
+      createElement: () => ({
+        getContext: () => ({
+          getExtension: () => ({ loseContext: () => {} }),
+        }),
+      }),
+    };
+    (globalThis as any).document = stub;
+    try {
+      expect(isWebGL2Available()).toBe(true);
+    } finally {
+      delete (globalThis as any).document;
+    }
   });
 });
 

@@ -3,6 +3,7 @@ import type { Core } from "cytoscape";
 import {
   initGraph,
   isLayoutCollinear,
+  isWebGL2Available,
   LayoutManager,
   GraphImageManager,
   setupGraphEvents,
@@ -77,6 +78,45 @@ export function resolveViewport(
   return "fit";
 }
 
+export const WEBGL_EXPERIMENT_PARAM = "webgl";
+export const WEBGL_EXPERIMENT_STORAGE_KEY = "codex-graph-webgl";
+
+/**
+ * Resolves the #3168 WebGL renderer experiment. Explicit `?webgl=1`/`?webgl=0`
+ * wins and is persisted to localStorage; otherwise the stored preference
+ * applies. Dependency-injected search/storage keep it unit-testable.
+ */
+export function resolveWebGLExperiment(
+  search: string = typeof window !== "undefined" ? window.location.search : "",
+  storage?: Pick<Storage, "getItem" | "setItem"> | null,
+): boolean {
+  const store =
+    storage ??
+    (typeof window !== "undefined" ? window.localStorage : undefined);
+  const param = new URLSearchParams(search).get(WEBGL_EXPERIMENT_PARAM);
+  if (param === "1" || param?.toLowerCase() === "true") {
+    try {
+      store?.setItem(WEBGL_EXPERIMENT_STORAGE_KEY, "1");
+    } catch {
+      // Storage may be unavailable (private mode) — the param still applies.
+    }
+    return true;
+  }
+  if (param === "0" || param?.toLowerCase() === "false") {
+    try {
+      store?.setItem(WEBGL_EXPERIMENT_STORAGE_KEY, "0");
+    } catch {
+      // See above.
+    }
+    return false;
+  }
+  try {
+    return store?.getItem(WEBGL_EXPERIMENT_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export interface GraphViewDependencies {
   graph: typeof graphStore;
   vault: typeof vaultStore;
@@ -95,6 +135,8 @@ export class GraphViewController {
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
   selectedCount = $state(0);
+  /** Which renderer the live instance uses (#3168 spike diagnostics). */
+  rendererMode = $state<"canvas" | "webgl">("canvas");
   visibility = $state<GraphVisibilitySnapshot>(
     resolveGraphVisibility({
       documentVisible: true,
@@ -274,11 +316,33 @@ export class GraphViewController {
     browserPerformanceCapture.start();
 
     try {
-      const instance = (await initGraph({
-        container,
-        elements: untrack(() => this.deps.graph.elements),
-        style: untrack(() => graphStyle),
-      })) as any;
+      // #3168 spike: opt-in WebGL renderer via `?webgl=1` (sticky through
+      // localStorage). Construction-time flag — changing it recreates the
+      // graph. Falls back to Canvas 2D when WebGL2 is unavailable or init
+      // throws, so production is never left without a graph.
+      const webgl = resolveWebGLExperiment() && isWebGL2Available();
+      let instance: any;
+      let actualMode: "canvas" | "webgl" = webgl ? "webgl" : "canvas";
+      try {
+        instance = (await initGraph({
+          container,
+          elements: untrack(() => this.deps.graph.elements),
+          style: untrack(() => graphStyle),
+          webgl,
+        })) as any;
+      } catch (err) {
+        if (!webgl) throw err;
+        this.deps.debugStore.log(
+          "[GraphView] WebGL init failed, falling back to Canvas 2D",
+        );
+        instance = (await initGraph({
+          container,
+          elements: untrack(() => this.deps.graph.elements),
+          style: untrack(() => graphStyle),
+        })) as any;
+        actualMode = "canvas";
+      }
+      this.rendererMode = actualMode;
 
       if (this.isDestroyed || !this.container) {
         instance.destroy();
