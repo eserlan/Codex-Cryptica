@@ -233,23 +233,21 @@ function roomSection(
 
 export function buildDelveDossier(input: DelveDossierInput): DelveDossier {
   const dossierTerm = cleanHeading(input.dossierTerm || "Delve");
-  const sectors = input.nodes
-    .map((node) => ({ node, data: sectorData(node) }))
-    .filter(
-      (
-        entry,
-      ): entry is {
-        node: DelveCanvasNode;
-        data: DungeonSectorFrameData;
-      } => entry.data !== null,
-    )
-    .sort((a, b) => a.data.order - b.data.order);
-  const rooms = input.nodes
-    .map((node) => ({ node, data: roomData(node) }))
-    .filter(
-      (entry): entry is { node: DelveCanvasNode; data: DelveRoomNodeData } =>
-        entry.data !== null,
-    );
+  const sectors: { node: DelveCanvasNode; data: DungeonSectorFrameData }[] = [];
+  for (const node of input.nodes) {
+    const data = sectorData(node);
+    if (data !== null) {
+      sectors.push({ node, data });
+    }
+  }
+  sectors.sort((a, b) => a.data.order - b.data.order);
+  const rooms: { node: DelveCanvasNode; data: DelveRoomNodeData }[] = [];
+  for (const node of input.nodes) {
+    const data = roomData(node);
+    if (data !== null) {
+      rooms.push({ node, data });
+    }
+  }
   const roomsById = new Map(rooms.map(({ data }) => [data.id, data]));
   const title = `${cleanHeading(input.title)} — ${dossierTerm} Dossier`;
   const summary =
