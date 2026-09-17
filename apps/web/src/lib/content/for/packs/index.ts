@@ -18,6 +18,7 @@ import { soloWorldbuilding } from "./solo-worldbuilding";
 import { westMarches } from "./west-marches";
 import { sandboxCampaigns } from "./sandbox-campaigns";
 import { mechaRpgs } from "./mecha-rpgs";
+import { starshipCampaigns } from "./starship-campaigns";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -37,6 +38,7 @@ export const packs: Record<string, LandingPageConfig> = {
   "west-marches": westMarches,
   "sandbox-campaigns": sandboxCampaigns,
   "mecha-rpgs": mechaRpgs,
+  "starship-campaigns": starshipCampaigns,
   traveller,
   conspiracy,
 };
