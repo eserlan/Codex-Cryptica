@@ -145,11 +145,3 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy apps/web/build --project-name=codex-cryptica --branch=${{ github.event_name == 'push' && 'main' || inputs.target_branch }}
-
-      - name: Notify Search Indexes (IndexNow)
-        if: success() && (github.event_name == 'push' || inputs.target_branch == 'main')
-        continue-on-error: true
-        env:
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
-        run: |
-          bun scripts/notify-search-indexes.ts --summary
