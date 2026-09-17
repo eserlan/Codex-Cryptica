@@ -16,6 +16,15 @@ import {
   getDiscoveryEntries,
 } from "../content/discovery/registry";
 import { listGovernedPaths } from "../content/discovery/governed-routes";
+import { solutions } from "../config/seo-pages";
+import { featuresConfig } from "../config/seo-features";
+import { importsConfig } from "../config/seo-imports";
+import { comparisons } from "../config/seo-comparisons";
+import { getAllLandingPageSlugs } from "../content/for/registry";
+import { getAllAnswerSlugs } from "../content/answers/registry";
+import { getAllExampleSlugs } from "../content/examples/registry";
+import { HUB_THEME_SLUGS } from "../content/hub-themes";
+import { GENERATOR_SLUGS } from "../../params/generator_slug";
 import { isDisallowedSitemapPath } from "./crawler-access";
 
 export const DEFAULT_INDEXNOW_HOST = "codexcryptica.com";
@@ -152,11 +161,54 @@ export function mapChangedFilesToRoutes(
     // 6. Hub themes: apps/web/src/lib/content/hub-themes.ts
     if (file.includes("apps/web/src/lib/content/hub-themes.ts")) {
       routes.add("/generators");
+      for (const slug of HUB_THEME_SLUGS) {
+        routes.add(`/generators/${slug}`);
+      }
       catalogueChanged = true;
       continue;
     }
 
-    // 7. Blog: apps/web/src/lib/content/blog/<slug>.md
+    // 7. Generator slugs parameter: apps/web/src/params/generator_slug.ts
+    if (file.includes("apps/web/src/params/generator_slug.ts")) {
+      routes.add("/generators");
+      for (const slug of GENERATOR_SLUGS) {
+        routes.add(`/generators/${slug}`);
+      }
+      catalogueChanged = true;
+      continue;
+    }
+
+    // 8. Answers registry: apps/web/src/lib/content/answers/registry.ts
+    if (file.includes("apps/web/src/lib/content/answers/registry.ts")) {
+      routes.add("/answers");
+      for (const slug of getAllAnswerSlugs()) {
+        routes.add(`/answers/${slug}`);
+      }
+      catalogueChanged = true;
+      continue;
+    }
+
+    // 9. Examples registry: apps/web/src/lib/content/examples/registry.ts
+    if (file.includes("apps/web/src/lib/content/examples/registry.ts")) {
+      routes.add("/examples");
+      for (const slug of getAllExampleSlugs()) {
+        routes.add(`/examples/${slug}`);
+      }
+      catalogueChanged = true;
+      continue;
+    }
+
+    // 10. For packs registry: apps/web/src/lib/content/for/registry.ts
+    if (file.includes("apps/web/src/lib/content/for/registry.ts")) {
+      routes.add("/for");
+      for (const slug of getAllLandingPageSlugs()) {
+        routes.add(`/for/${slug}`);
+      }
+      catalogueChanged = true;
+      continue;
+    }
+
+    // 11. Blog: apps/web/src/lib/content/blog/<slug>.md
     const blogMatch = file.match(
       /apps\/web\/src\/lib\/content\/blog\/([^/]+)\.md$/,
     );
@@ -166,24 +218,48 @@ export function mapChangedFilesToRoutes(
       continue;
     }
 
-    // 8. SEO Configs: solutions, features, comparisons, imports
+    // 12. SEO Configs: solutions, features, comparisons, imports
     if (file.includes("apps/web/src/lib/config/seo-pages.ts")) {
       routes.add("/solutions");
+      for (const slug of Object.keys(solutions)) {
+        routes.add(`/solutions/${slug}`);
+      }
       catalogueChanged = true;
       continue;
     }
     if (file.includes("apps/web/src/lib/config/seo-features.ts")) {
       routes.add("/features");
+      for (const slug of Object.keys(featuresConfig)) {
+        routes.add(`/features/${slug}`);
+      }
       catalogueChanged = true;
       continue;
     }
     if (file.includes("apps/web/src/lib/config/seo-comparisons.ts")) {
       routes.add("/alternatives");
+      for (const slug of Object.keys(comparisons)) {
+        routes.add(`/vs/${slug}`);
+      }
       catalogueChanged = true;
       continue;
     }
     if (file.includes("apps/web/src/lib/config/seo-imports.ts")) {
       routes.add("/migrations");
+      for (const slug of Object.keys(importsConfig)) {
+        routes.add(`/import/${slug}`);
+      }
+      catalogueChanged = true;
+      continue;
+    }
+
+    // 13. Discovery Governance & Registry: governed-routes.ts, registry.ts
+    if (
+      file.includes("apps/web/src/lib/content/discovery/governed-routes.ts") ||
+      file.includes("apps/web/src/lib/content/discovery/registry.ts")
+    ) {
+      for (const path of listGovernedPaths()) {
+        routes.add(path);
+      }
       catalogueChanged = true;
       continue;
     }
@@ -386,9 +462,17 @@ export async function submitToIndexNow(
   const keyLocation =
     options.keyLocation || `https://${host}/${INDEXNOW_KEY_FILENAME}`;
   const endpoint = options.endpoint || DEFAULT_INDEXNOW_ENDPOINT;
-  const batchSize = Math.min(
-    options.batchSize || DEFAULT_BATCH_SIZE,
-    MAX_URLS_PER_BATCH,
+  const rawBatchSize = options.batchSize;
+  const batchSize = Math.max(
+    1,
+    Math.min(
+      typeof rawBatchSize === "number" &&
+        Number.isFinite(rawBatchSize) &&
+        rawBatchSize > 0
+        ? Math.floor(rawBatchSize)
+        : DEFAULT_BATCH_SIZE,
+      MAX_URLS_PER_BATCH,
+    ),
   );
   const dryRun = Boolean(options.dryRun);
   const fetchFn = options.fetchFn || fetch;

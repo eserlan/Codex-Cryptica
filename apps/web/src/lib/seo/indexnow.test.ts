@@ -71,6 +71,36 @@ describe("IndexNow Route Mapping (#3164)", () => {
     expect(result.candidateRoutes).toContain("/sitemap.xml");
   });
 
+  it("maps all canonical routes when shared SEO configs change", () => {
+    const pagesResult = mapChangedFilesToRoutes([
+      "apps/web/src/lib/config/seo-pages.ts",
+    ]);
+    expect(pagesResult.candidateRoutes).toContain("/solutions");
+    expect(pagesResult.candidateRoutes).toContain(
+      "/solutions/campaign-manager",
+    );
+    expect(pagesResult.catalogueChanged).toBe(true);
+
+    const themesResult = mapChangedFilesToRoutes([
+      "apps/web/src/lib/content/hub-themes.ts",
+    ]);
+    expect(themesResult.candidateRoutes).toContain("/generators");
+    expect(themesResult.candidateRoutes).toContain("/generators/cyberpunk");
+    expect(themesResult.catalogueChanged).toBe(true);
+
+    const comparisonsResult = mapChangedFilesToRoutes([
+      "apps/web/src/lib/config/seo-comparisons.ts",
+    ]);
+    expect(comparisonsResult.candidateRoutes).toContain("/alternatives");
+    expect(comparisonsResult.candidateRoutes).toContain("/vs/obsidian");
+
+    const importsResult = mapChangedFilesToRoutes([
+      "apps/web/src/lib/config/seo-imports.ts",
+    ]);
+    expect(importsResult.candidateRoutes).toContain("/migrations");
+    expect(importsResult.candidateRoutes).toContain("/import/obsidian-vault");
+  });
+
   it("ignores non-content code files", () => {
     const result = mapChangedFilesToRoutes([
       "apps/web/src/lib/components/Modal.svelte",
@@ -216,6 +246,22 @@ describe("IndexNow Submission Client (#3164)", () => {
     expect(firstPayload.host).toBe(DEFAULT_INDEXNOW_HOST);
     expect(firstPayload.key).toBe(DEFAULT_INDEXNOW_KEY);
     expect(firstPayload.urlList).toHaveLength(2);
+  });
+
+  it("safely handles non-positive batchSize without looping indefinitely", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      status: 200,
+      statusText: "OK",
+      text: async () => "OK",
+    });
+
+    const result = await submitToIndexNow(["/generators/heist", "/tools"], {
+      batchSize: -1,
+      fetchFn: fetchSpy as unknown as typeof fetch,
+    });
+
+    expect(result.overallSuccess).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   it("handles HTTP 202 Accepted as success", async () => {

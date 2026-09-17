@@ -66,6 +66,26 @@ describe("notify-search-indexes CLI (#3164)", () => {
       "/tools/dnd-npc-generator",
     );
   });
+
+  test("handles non-positive batch size safely without crashing", () => {
+    const output = execFileSync(
+      "bun",
+      [
+        scriptPath,
+        "--urls=/generators/heist,/tools",
+        "--batch-size=-1",
+        "--dry-run",
+        "--json",
+      ],
+      {
+        encoding: "utf8",
+      },
+    );
+
+    const parsed = JSON.parse(output);
+    expect(parsed.overallSuccess).toBe(true);
+    expect(parsed.submittedUrls.length).toBe(2);
+  });
 });
 
 describe("notify-search-indexes workflow (#3164)", () => {
@@ -84,7 +104,17 @@ describe("notify-search-indexes workflow (#3164)", () => {
     expect(workflow).toContain("cluster:");
     expect(workflow).toContain('default: "heist"');
     expect(workflow).toContain("dry_run:");
+    expect(workflow).toContain("bun install --frozen-lockfile");
+    expect(workflow).toContain("INPUT_CLUSTER: ${{ inputs.cluster }}");
+    expect(workflow).toContain("INPUT_URLS: ${{ inputs.urls }}");
+    expect(workflow).toContain("INPUT_DRY_RUN: ${{ inputs.dry_run }}");
     expect(workflow).toContain("bun scripts/notify-search-indexes.ts");
     expect(workflow).toContain("--summary");
+
+    // Must not interpolate user inputs directly in shell commands
+    const runBlock = workflow.split("run: |")[1] || "";
+    expect(runBlock).not.toContain("${{ inputs.cluster }}");
+    expect(runBlock).not.toContain("${{ inputs.urls }}");
+    expect(runBlock).not.toContain("${{ inputs.dry_run }}");
   });
 });

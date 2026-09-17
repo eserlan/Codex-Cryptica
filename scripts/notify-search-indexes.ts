@@ -85,10 +85,13 @@ function parseArgs(args: string[]): CliOptions {
     } else if (arg.startsWith("--key=")) {
       options.key = arg.slice("--key=".length).trim();
     } else if (arg.startsWith("--batch-size=")) {
-      options.batchSize = Number.parseInt(
+      const parsed = Number.parseInt(
         arg.slice("--batch-size=".length).trim(),
         10,
       );
+      if (Number.isFinite(parsed) && parsed > 0) {
+        options.batchSize = parsed;
+      }
     }
   }
 

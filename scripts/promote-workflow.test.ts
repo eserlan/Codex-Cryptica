@@ -28,6 +28,7 @@ describe("promote-to-prod workflow IndexNow notification (#3164)", () => {
     expect(workflow).toContain(
       '--head-sha="${{ needs.find-staging-build.outputs.commit_sha }}"',
     );
+    expect(workflow).toContain("bun install --frozen-lockfile");
     expect(workflow).toContain("continue-on-error: true");
   });
 });

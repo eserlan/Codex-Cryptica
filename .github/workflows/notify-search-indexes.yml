@@ -43,18 +43,24 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
       - name: Run IndexNow Notifier
         env:
           INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          INPUT_CLUSTER: ${{ inputs.cluster }}
+          INPUT_URLS: ${{ inputs.urls }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           ARGS=("--summary")
-          if [ -n "${{ inputs.cluster }}" ]; then
-            ARGS+=("--cluster=${{ inputs.cluster }}")
+          if [ -n "$INPUT_CLUSTER" ]; then
+            ARGS+=("--cluster=$INPUT_CLUSTER")
           fi
-          if [ -n "${{ inputs.urls }}" ]; then
-            ARGS+=("--urls=${{ inputs.urls }}")
+          if [ -n "$INPUT_URLS" ]; then
+            ARGS+=("--urls=$INPUT_URLS")
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
             ARGS+=("--dry-run")
           fi
 
