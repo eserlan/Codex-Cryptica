@@ -204,6 +204,23 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-starship-campaigns",
+    pageKind: "for",
+    canonicalPath: "/for/starship-campaigns",
+    primaryIntent: "starship campaign management",
+    intentAliases: [
+      "fleet operations rpg campaign",
+      "starship campaign organiser",
+    ],
+    audience: "Game masters running starship or fleet campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Bridge crews, ship systems, sector maps, starbases and fleet orders kept as one connected campaign web.",
+    parentCluster: "genre-guides",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-mecha-rpgs",
     pageKind: "for",
     canonicalPath: "/for/mecha-rpgs",
