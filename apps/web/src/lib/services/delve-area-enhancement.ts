@@ -172,9 +172,12 @@ export class DelveAreaEnhancementService {
       room.id,
       ...nearbyAreas.map((area) => area.id),
     ]);
-    const otherCanvasAreas = canvas.nodes
-      .filter((node) => node.type === "delveRoom" && !suppliedIds.has(node.id))
-      .map((node) => node.data as unknown as DelveRoomNodeData);
+    const otherCanvasAreas: DelveRoomNodeData[] = [];
+    for (const node of canvas.nodes) {
+      if (node.type === "delveRoom" && !suppliedIds.has(node.id)) {
+        otherCanvasAreas.push(node.data as unknown as DelveRoomNodeData);
+      }
+    }
     const usedAreaContext = [...nearbyAreas, ...otherCanvasAreas];
     const nearbyContext = usedAreaContext.length
       ? usedAreaContext.map(areaUsageContext).join("\n").slice(0, 12_000)
@@ -197,9 +200,12 @@ export class DelveAreaEnhancementService {
     onProgress?: (progress: AreaPopulationProgress) => void,
   ): Promise<AreaPopulationResult> {
     const locationCanon = await this.loadLocationCanon(canvas);
-    const allRooms = canvas.nodes
-      .filter((node) => node.type === "delveRoom")
-      .map((node) => node.data as unknown as DelveRoomNodeData);
+    const allRooms: DelveRoomNodeData[] = [];
+    for (const node of canvas.nodes) {
+      if (node.type === "delveRoom") {
+        allRooms.push(node.data as unknown as DelveRoomNodeData);
+      }
+    }
     const pendingRooms = allRooms.filter(
       (room) =>
         !room.aiEnhancedAt ||
@@ -302,10 +308,13 @@ export class DelveAreaEnhancementService {
     sectorPassages: Canvas["edges"],
   ): Promise<EnhancedSectorResult> {
     const roomsById = new Map(allRooms.map((room) => [room.id, room]));
-    const neighboringAreas = allRooms
-      .filter((room) => room.sectorId !== sectorId)
-      .map(areaUsageContext)
-      .join("\n");
+    let neighboringAreasArr: string[] = [];
+    for (const room of allRooms) {
+      if (room.sectorId !== sectorId) {
+        neighboringAreasArr.push(areaUsageContext(room));
+      }
+    }
+    const neighboringAreas = neighboringAreasArr.join("\n");
     const systemInstruction = `You are an expert tabletop RPG location designer populating one complete sector of an existing delve. Ground every Area and passage in the supplied Location canon, including its explicitly connected canon. Treat that canon as the closed roster of factions, peoples, and creatures: never invent or substitute a named faction, ancestry, creature type, enemy group, key, ward, or access mechanism that is not present there. When no specific inhabitant is established, describe a generic role or evidence of occupation without assigning a new creature identity. Weave in established history, hazards, secrets, materials, and motifs where relevant without contradicting the source. Give every Area a distinct, evocative 2-6 word name tied to its function, history, material, inhabitants, hazard, or secret. Never use "Area", a number, the sector name plus a suffix, an unsupported climate word, or the same head noun repeatedly. Names must be unique across the supplied sector and must not duplicate or closely resemble OTHER AREAS. Each ordinary Area's gameplay categories were assigned during delve creation: populate every allowedStockingField and do not add other categories. Secrets must be information, revelations, evidence, or clues—not a straightforward cache or valuable item. Treasure must be a tangible reward. For a faction Area, populate factionPresence with the faction's purpose in the Area, defenses or leverage, and likely reaction; do not reduce it to a generic sentry encounter. For a climax Area, its allowedStockingFields are candidates: select only the 1-3 categories relevant to the culmination you design. Decide from the Location's central secret, current conflict, factions, hazards, purpose, and current state whether the climax is a confrontation, negotiation, ritual, revelation, environmental crisis, siege, escape, or another decisive turn; never default automatically to a boss fight. The climax must reveal, transform, or resolve the central secret, substantially change the situation, present an immediate decision, and provide at least two concrete outcomes. Never repeat an earlier encounter unchanged; a recurring threat must be meaningfully escalated or transformed. Description and atmosphere are always allowed. Keep Areas distinct, avoid repeated phrases and doubled word roots, and produce immediately usable table details.
 
 Rewrite every supplied passage as a specific physical route between its named endpoints. A standard passage describes its actual corridor, opening, bridge, crawlway, or threshold and has no condition. A hidden passage explains canon-grounded concealment or discovery. A conditional passage names a concrete obstacle and an actionable way to satisfy or bypass it, without inventing an unsupported key or ward. A vertical passage describes the actual stairs, ladder, shaft, lift, climb, or descent. Never use canned phrases such as "Requires Iron Key", "sector ward", "concealed revolving wall", or "spiral stone stairs" unless that exact feature is supported by the canon.
