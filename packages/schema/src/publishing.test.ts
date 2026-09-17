@@ -303,6 +303,36 @@ describe("publishing directory schemas", () => {
         expect(result.error.issues[0].path).toEqual(["template", "fields", 0]);
       }
     });
+
+    it("rejects duplicate keys and keys that shadow stable field IDs", () => {
+      const duplicateKeys = {
+        ...validPackage,
+        template: {
+          ...validPackage.template,
+          fields: [
+            { id: "first", key: "shared", label: "First", type: "number" },
+            { id: "second", key: "shared", label: "Second", type: "number" },
+          ],
+        },
+      };
+      expect(PublicTemplatePackageSchema.safeParse(duplicateKeys).success).toBe(
+        false,
+      );
+
+      const shadowedId = {
+        ...validPackage,
+        template: {
+          ...validPackage.template,
+          fields: [
+            { id: "hp", label: "Hit Points", type: "number" },
+            { id: "other", key: "hp", label: "Other", type: "number" },
+          ],
+        },
+      };
+      expect(PublicTemplatePackageSchema.safeParse(shadowedId).success).toBe(
+        false,
+      );
+    });
   });
 });
 

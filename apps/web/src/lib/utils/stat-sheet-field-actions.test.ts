@@ -144,6 +144,29 @@ describe("applyDerivedModifiers", () => {
     expect(result.find((f) => f.id === "wis")?.formula).toBe("1d20+0");
   });
 
+  it("resolves a modifierSource key to the canonical field (#3180)", () => {
+    const fields: StatSheetField[] = [
+      {
+        id: "field-abc",
+        key: "strength",
+        label: "STR",
+        type: "number",
+        value: 14,
+      } as StatSheetField,
+      {
+        id: "str",
+        label: "STR Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "strength",
+      } as StatSheetField,
+    ];
+
+    const result = applyDerivedModifiers(fields);
+
+    expect(result.find((f) => f.id === "str")?.formula).toBe("1d20+2");
+  });
+
   it("leaves fields without a modifierSource unchanged", () => {
     const fields: StatSheetField[] = [
       {

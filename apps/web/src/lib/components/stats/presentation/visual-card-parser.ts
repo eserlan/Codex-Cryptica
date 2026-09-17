@@ -1,4 +1,4 @@
-import { parseTemplate } from "@codex/stat-sheet-engine";
+import { parseTemplate, resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
 import { PRESENTATION_TEMPLATE_FORMAT_VERSION } from "schema";
 import type { StatSheetField } from "schema";
 
@@ -21,7 +21,14 @@ export function getUnusedFields(
   const used = new Set(
     cards.flatMap((card) =>
       card.rows.flatMap((row) =>
-        row.flatMap((cell) => (cell.kind === "field" ? [cell.fieldId] : [])),
+        row.flatMap((cell) =>
+          cell.kind === "field"
+            ? [
+                resolveFieldByKeyOrId(schemaFields, cell.fieldId)?.id ??
+                  cell.fieldId,
+              ]
+            : [],
+        ),
       ),
     ),
   );
@@ -36,11 +43,14 @@ export function parseCardsFromSource(
   const res = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
   if (!res.ok) return cards;
 
+  const canonicalFieldId = (ref: string): string =>
+    resolveFieldByKeyOrId(schemaFields, ref)?.id ?? ref;
+
   function extractFieldIdsFromNode(node: any): string[] {
     const fieldIds: string[] = [];
     if (!node) return fieldIds;
     if (node.type === "field-reference") {
-      fieldIds.push(node.fieldId);
+      fieldIds.push(canonicalFieldId(node.fieldId));
     } else if (node.children && Array.isArray(node.children)) {
       for (const child of node.children) {
         fieldIds.push(...extractFieldIdsFromNode(child));
@@ -80,7 +90,10 @@ export function parseCardsFromSource(
             .map((cell: any) => cell.text)
             .join("");
           if (field && cellNodes.length === 1) {
-            row.push({ kind: "field", fieldId: field.fieldId });
+            row.push({
+              kind: "field",
+              fieldId: canonicalFieldId(field.fieldId),
+            });
           } else if (text) {
             row.push({ kind: "value", value: text });
           }

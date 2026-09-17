@@ -158,6 +158,7 @@ export function projectTemplatePackage(
     (field) => {
       const {
         id,
+        key,
         label,
         type,
         formula,
@@ -170,6 +171,8 @@ export function projectTemplatePackage(
       } = field;
       return {
         id,
+        // #3180: keys travel with public packages.
+        ...(key !== undefined && key !== "" ? { key } : {}),
         label,
         type,
         ...(formula !== undefined && formula !== "" ? { formula } : {}),

@@ -6,6 +6,11 @@
     type StatSheetFieldType,
   } from "schema";
   import { untrack } from "svelte";
+  import {
+    slugifyFieldKey,
+    uniqueFieldKey,
+    validateFieldKeyFormat,
+  } from "@codex/stat-sheet-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
@@ -63,10 +68,50 @@
 
   function addField() {
     const id = `field-${idGenerator.uuid()}`;
+    // #3180: new fields get a readable key up front (unique within the
+    // sheet); the immutable id stays the stored identifier.
+    const key = uniqueFieldKey(
+      slugifyFieldKey("New Field"),
+      fields.flatMap((f) => (f.key ? [f.key, f.id] : [f.id])),
+    );
     persist([
       ...fields,
-      { id, label: "New Field", type: "text" as StatSheetFieldType },
+      { id, key, label: "New Field", type: "text" as StatSheetFieldType },
     ]);
+  }
+
+  // Per-field key validation errors, keyed by field id. Invalid keys are
+  // never persisted — the last valid key (or no key) stays stored.
+  let keyErrors = $state<Record<string, string>>({});
+
+  function handleKeyInput(field: StatSheetField, raw: string) {
+    const key = raw.trim();
+    if (key === "") {
+      const next = { ...keyErrors };
+      delete next[field.id];
+      keyErrors = next;
+      updateField(field.id, { key: undefined });
+      return;
+    }
+    const formatError = validateFieldKeyFormat(key);
+    if (formatError) {
+      keyErrors = { ...keyErrors, [field.id]: formatError };
+      return;
+    }
+    const clash = fields.some(
+      (f) => f.id !== field.id && (f.key === key || f.id === key),
+    );
+    if (clash) {
+      keyErrors = {
+        ...keyErrors,
+        [field.id]: `Key "${key}" is already used by another field.`,
+      };
+      return;
+    }
+    const next = { ...keyErrors };
+    delete next[field.id];
+    keyErrors = next;
+    updateField(field.id, { key });
   }
 
   function updateField(id: string, updates: Partial<StatSheetField>) {
@@ -347,6 +392,44 @@
           <span class="icon-[lucide--trash-2] h-3.5 w-3.5" aria-hidden="true"
           ></span>
         </button>
+      </div>
+
+      <div class="flex items-center gap-2 text-[10px] text-theme-muted">
+        <label
+          for={`field-key-${field.id}`}
+          class="shrink-0 font-bold uppercase tracking-wider"
+        >
+          Key
+        </label>
+        <input
+          id={`field-key-${field.id}`}
+          type="text"
+          class="w-36 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 font-mono text-[11px] text-theme-text"
+          value={field.key ?? ""}
+          placeholder={slugifyFieldKey(field.label)}
+          aria-label={`Reference key for ${field.label}`}
+          aria-invalid={keyErrors[field.id] ? "true" : undefined}
+          aria-describedby={keyErrors[field.id]
+            ? `field-key-error-${field.id}`
+            : undefined}
+          oninput={(e) =>
+            handleKeyInput(field, (e.target as HTMLInputElement).value)}
+        />
+        <span
+          class="min-w-0 flex-1 truncate font-mono text-theme-muted/70"
+          title={`Internal ID: ${field.id} (stable, never shown in references)`}
+        >
+          {field.id}
+        </span>
+        {#if keyErrors[field.id]}
+          <span
+            id={`field-key-error-${field.id}`}
+            role="alert"
+            class="text-red-500"
+          >
+            {keyErrors[field.id]}
+          </span>
+        {/if}
       </div>
 
       {#if field.type === "counter"}

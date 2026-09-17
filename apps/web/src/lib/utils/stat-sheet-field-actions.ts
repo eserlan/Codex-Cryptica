@@ -1,4 +1,5 @@
 import type { StatSheetField } from "schema";
+import { resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { diceHistory } from "$lib/stores/dice-history.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -112,10 +113,11 @@ export function abilityModifier(score: number): number {
 export function applyDerivedModifiers(
   fields: StatSheetField[],
 ): StatSheetField[] {
-  const byId = new Map(fields.map((f) => [f.id, f]));
   return fields.map((field) => {
     if (field.type !== "dice" || !field.modifierSource) return field;
-    const source = byId.get(field.modifierSource);
+    // #3180: modifierSource accepts a field key or id; resolution ends at
+    // the canonical field, so key renames never corrupt the derivation.
+    const source = resolveFieldByKeyOrId(fields, field.modifierSource);
     if (!source || typeof source.value !== "number") return field;
 
     const mod = abilityModifier(source.value);

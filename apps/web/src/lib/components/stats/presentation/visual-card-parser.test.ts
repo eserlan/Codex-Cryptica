@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCardsFromSource } from "./visual-card-parser";
+import { getUnusedFields, parseCardsFromSource } from "./visual-card-parser";
 
 describe("parseCardsFromSource", () => {
   it("keeps the title of a Markdown-heading table after it becomes a section", () => {
@@ -73,5 +73,33 @@ describe("parseCardsFromSource", () => {
     );
     expect(cardsFromCustomUntitled).toHaveLength(1);
     expect(cardsFromCustomUntitled[0].title).toBe("");
+  });
+
+  it("canonicalises keyed references for visual editing", () => {
+    const cards = parseCardsFromSource(
+      ":::card\n:::stat-group columns=2\n[strength]\n:::\n:::",
+      [
+        { id: "field-abc", key: "strength", label: "Strength", type: "number" },
+      ] as any,
+    );
+
+    expect(cards[0]?.rows[0]).toEqual([
+      { kind: "field", fieldId: "field-abc" },
+    ]);
+  });
+
+  it("does not offer a keyed field twice in the visual builder", () => {
+    const schemaFields = [
+      { id: "field-abc", key: "strength", label: "Strength", type: "number" },
+      { id: "hp", label: "HP", type: "number" },
+    ] as any;
+    const cards = parseCardsFromSource(
+      ":::card\n:::stat-group columns=2\n[strength]\n:::\n:::",
+      schemaFields,
+    );
+
+    expect(
+      getUnusedFields(cards, schemaFields).map((field) => field.id),
+    ).toEqual(["hp"]);
   });
 });
