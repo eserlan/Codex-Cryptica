@@ -122,9 +122,11 @@ framing as evaluative criteria rather than a superlative claim.
   anchor is confirmed.
 - **Baseline impressions/clicks/average position for the puzzle query.** Not
   recorded; needs Search Console access.
-- **The "tiny LLM visibility benchmark"** (two fixed queries, four-week
-  recheck) named in the issue does not exist anywhere in this repository and
-  was not created in this pass.
+- **The "tiny LLM visibility benchmark"** is documented in
+  [`llm-visibility-benchmark.md`](./llm-visibility-benchmark.md). The heist
+  query is fixed; the puzzle query remains provisional until the exact
+  Search Console query is recorded, so its baseline and four-week recheck are
+  not yet ready to run.
 - **A "refine" generator action / Zaraz event.** No refine feature exists in
   the product for any generator, heist/puzzle included, so there is nothing
   to instrument.
