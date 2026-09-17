@@ -78,12 +78,12 @@
     aria-haspopup="menu"
     aria-expanded={isOpen}
     aria-controls="vault-actions-menu"
-    title="Vault actions"
+    title="Manage vault"
     data-testid="vault-actions-menu-button"
   >
     <span class="icon-[lucide--folder-cog] h-3.5 w-3.5" aria-hidden="true"
     ></span>
-    Vault
+    Manage vault
     <span class="icon-[lucide--chevron-down] h-3.5 w-3.5" aria-hidden="true"
     ></span>
   </button>
@@ -93,7 +93,7 @@
       bind:this={menuEl}
       id="vault-actions-menu"
       role="menu"
-      aria-label="Vault actions"
+      aria-label="Manage vault"
       tabindex="-1"
       class="absolute z-[90] mt-2 rounded border border-chrome-border bg-chrome-surface p-1 shadow-xl {isVertical
         ? 'left-0 w-full'

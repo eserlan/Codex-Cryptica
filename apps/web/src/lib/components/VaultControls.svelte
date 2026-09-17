@@ -91,19 +91,19 @@
   const noVaultMenuItems = $derived([
     {
       icon: "icon-[lucide--sparkles]",
-      label: `Explore Demo ${themeStore.jargon.vault}`,
+      label: "Explore Demo Vault",
       testid: "no-vault-demo",
       action: () => demoService.startDemo("fantasy"),
     },
     {
       icon: "icon-[lucide--plus]",
-      label: `Create New ${themeStore.jargon.vault}`,
+      label: "Create New Vault",
       testid: "no-vault-create",
       action: () => modalUIStore.openVaultSwitcher("create"),
     },
     {
       icon: "icon-[lucide--folder-open]",
-      label: `Open Existing ${themeStore.jargon.vault}`,
+      label: "Open Existing Vault",
       testid: "no-vault-open",
       action: () => modalUIStore.openVaultSwitcher("open"),
     },
@@ -192,15 +192,15 @@
           try {
             await demoService.convertToWorld();
           } catch (error) {
-            console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
+            console.error("Failed to save Vault:", error);
             notificationStore.notify(
-              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              "Failed to save Vault. Please try again.",
               "error",
             );
           }
         }}
         data-testid="save-as-campaign-button"
-        aria-label={`Make this my ${themeStore.jargon.vault}`}
+        aria-label="Make this my Vault"
         aria-describedby="save-as-campaign-desc-text"
         title="Keep this world as your own and start building — we'll walk you through the first steps"
       >
@@ -208,8 +208,8 @@
         MAKE THIS MINE
       </button>
       <div class="sr-only" id="save-as-campaign-desc-text">
-        Keep this demo world as your own editable {themeStore.jargon.vault} and start
-        building — a short guide walks you through the first steps.
+        Keep this demo world as your own editable Vault and start building — a
+        short guide walks you through the first steps.
       </div>
       <button
         class={isVertical
@@ -253,7 +253,7 @@
         <span
           class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans min-w-0"
         >
-          {themeStore.jargon.vault}: {vault.vaultName}
+          {vault.vaultName}
         </span>
         <span
           class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
@@ -337,7 +337,7 @@
             aria-haspopup="menu"
             aria-expanded={showNoVaultMenu}
           >
-            <span>No {themeStore.jargon.vault} Open</span>
+            <span>No Vault Open</span>
             <span
               class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showNoVaultMenu
                 ? 'rotate-180'

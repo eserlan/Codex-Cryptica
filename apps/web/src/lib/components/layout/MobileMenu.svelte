@@ -5,7 +5,6 @@
   import { PATREON_URL } from "$lib/config";
   import VaultControls from "$lib/components/VaultControls.svelte";
   import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { isToolActive, isViewActive, navItems } from "./nav-items";
@@ -82,7 +81,8 @@
       <h2
         class="text-lg font-bold text-theme-text font-mono flex items-center gap-2"
       >
-        <span class="icon-[lucide--menu] text-theme-primary" aria-hidden="true"></span>
+        <span class="icon-[lucide--menu] text-theme-primary" aria-hidden="true"
+        ></span>
         MENU
       </h2>
       <button
@@ -176,7 +176,7 @@
         <h3
           class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
         >
-          {themeStore.jargon.vault} Controls
+          Vault
         </h3>
         <VaultControls orientation="vertical" />
       </div>
@@ -220,7 +220,8 @@
             rel="noopener noreferrer"
             class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           >
-            <span class="icon-[lucide--heart] w-4 h-4" aria-hidden="true"></span>
+            <span class="icon-[lucide--heart] w-4 h-4" aria-hidden="true"
+            ></span>
             Support on Patreon
           </a>
         {/if}
@@ -229,7 +230,8 @@
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}
         >
-          <span class="icon-[lucide--compass] w-4 h-4" aria-hidden="true"></span>
+          <span class="icon-[lucide--compass] w-4 h-4" aria-hidden="true"
+          ></span>
           Explore
         </a>
         <button
@@ -240,7 +242,8 @@
             close();
           }}
         >
-          <span class="icon-[lucide--help-circle] w-4 h-4" aria-hidden="true"></span>
+          <span class="icon-[lucide--help-circle] w-4 h-4" aria-hidden="true"
+          ></span>
           Help
         </button>
         <a
@@ -258,7 +261,8 @@
           rel="noopener noreferrer"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
         >
-          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"></span>
+          <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"
+          ></span>
           Terms
         </a>
       </div>

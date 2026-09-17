@@ -223,7 +223,7 @@
         id="vault-selector-title"
         class="text-lg font-bold text-theme-primary tracking-wide"
       >
-        VAULT SELECTOR
+        SWITCH VAULT
       </h2>
       <button
         type="button"
