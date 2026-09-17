@@ -131,6 +131,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "how-do-i-start-gming-for-the-first-time",
+    "what-rpg-system-is-good-for-solo-play",
   ],
   discovery: {
     id: "answer-beginner-start",

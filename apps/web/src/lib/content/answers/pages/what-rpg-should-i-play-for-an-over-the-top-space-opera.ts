@@ -156,6 +156,7 @@ export const whatRpgShouldIPlayForAnOverTheTopSpaceOpera: AnswerConfigInput = {
     "what-rpg-system-should-we-try-instead-of-dnd",
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "what-rpg-system-is-good-for-solo-play",
   ],
   labels: ["sci-fi"],
   discovery: {
@@ -181,6 +182,11 @@ export const whatRpgShouldIPlayForAnOverTheTopSpaceOpera: AnswerConfigInput = {
         with: "answer-system-selection",
         reason:
           "That page helps groups leaving D&D choose across all genres; this page matches one specific vibe to systems and links back rather than repeating the framework.",
+      },
+      {
+        with: "answer-solo-rpg-system-selection",
+        reason:
+          "That page evaluates systems and emulators for solitary play; this page evaluates systems for over-the-top space opera multiplayer group campaigns.",
       },
     ],
   },
