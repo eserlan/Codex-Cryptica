@@ -29,7 +29,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
         },
         {
           term: "Atmospheric survival horror in a necropolis",
-          text: "Ker Nethalas: Into the Necropolis. A dark, doom-laden dungeon crawl focusing on scavenging, stealth, and tense survival rules in an endless subterranean domain.",
+          text: "Ker Nethalas: Into the Midnight Throne. A dark, doom-laden dungeon crawl focusing on scavenging, stealth, and tense survival rules in an endless subterranean domain.",
         },
         {
           term: "Narrative questing driven by sworn vows",
@@ -128,10 +128,10 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
       href: "https://www.drivethrurpg.com/product/127180/Scarlet-Heroes",
     },
     {
-      system: "Ker Nethalas: Into the Necropolis",
+      system: "Ker Nethalas: Into the Midnight Throne",
       rationale:
         "A dark solo dungeon-crawling ruleset combining procedural room generation with tense stealth, domain exploration, and survival horror mechanics.",
-      href: "https://blackoathentertainment.com/",
+      href: "https://kernethalas.com/ker-nethalas-into-the-midnight-throne",
     },
     {
       system: "2D6 Dungeon",
@@ -143,7 +143,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
       system: "Across a Thousand Dead Worlds",
       rationale:
         "A sci-fi horror solo game featuring tactical action-point combat, alien derelict exploration, and automated enemy behaviour tables.",
-      href: "https://blackoathentertainment.com/",
+      href: "https://blackoathgames.com/store/p/across-a-thousand-dead-worlds",
     },
     {
       system: "Mythic Game Master Emulator Second Edition",

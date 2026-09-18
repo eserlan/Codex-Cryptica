@@ -741,11 +741,23 @@ describe("published answers", () => {
       "Ironsworn",
       "Four Against Darkness",
       "Scarlet Heroes",
-      "Ker Nethalas: Into the Necropolis",
+      "Ker Nethalas: Into the Midnight Throne",
       "2D6 Dungeon",
       "Across a Thousand Dead Worlds",
       "Mythic Game Master Emulator Second Edition",
     ]);
+    expect(answer.systemsThatSupportThis).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          system: "Ker Nethalas: Into the Midnight Throne",
+          href: "https://kernethalas.com/ker-nethalas-into-the-midnight-throne",
+        }),
+        expect.objectContaining({
+          system: "Across a Thousand Dead Worlds",
+          href: "https://blackoathgames.com/store/p/across-a-thousand-dead-worlds",
+        }),
+      ]),
+    );
     for (const ref of answer.systemsThatSupportThis ?? []) {
       expect(ref.href).toMatch(/^https:\/\//);
       expect(ref.rationale.length).toBeGreaterThan(0);
