@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789566922,
+  "updated_at": 1789719348,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -10,6 +10,16 @@
       "source_id": "35104395212",
       "status": "approved",
       "created_at": 1789566922
+    },
+    {
+      "id": "reddit-35234873859-starship-campaigns-a-connected-hub-for-b",
+      "title": "Starship Campaigns: a connected hub for bridge crews, ship systems and sector maps",
+      "body": "Running a Star Trek style campaign, the ship tends to flatten into a hallway between planets. Who was actually on the bridge, what took damage last jump, which starbase owes you refit time, and where fleet orders were sending you all live in different notes.\n\nI built the Starship Campaigns pack as a dedicated hub for optimistic exploration games where your bridge crew, ship, sector map, starbases and fleet orders stay linked as one graph instead of five separate docs.\n\nExplore it here: https://codexcryptica.com/for/starship-campaigns\n\nIt gives you:\n- bridge crews with stations and watch rotations, so the right officers are linked when red alert hits\n- ship damage, refit and system quirks that carry between missions\n- sector maps that tie star systems, anomalies and patrol routes together\n- starbases as supply and repair hubs that connect to where you are and what you need\n- fleet orders that link command intent to your next position on the map, with 5 linked generators for crews, ships, anomalies, starbases and orders\n\nIt leans toward Federation style exploration and chain of command. If your table is more free trader or frontier salvage, the Space Western or Scum and Villainy packs may fit better, and I am still figuring out where fleet scale stops feeling useful and starts feeling like bookkeeping.\n\nHow do you handle ship damage and bridge assignments between sessions, do they carry forward or reset for the next job?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35234873859-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35234873859 -->",
+      "url": "https://codexcryptica.com/for/starship-campaigns",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35234873859-0.png",
+      "source_id": "35234873859",
+      "status": "approved",
+      "created_at": 1789719348
     }
   ]
 }
