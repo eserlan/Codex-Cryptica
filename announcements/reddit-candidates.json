@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789730156,
+  "updated_at": 1789731420,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -32,14 +32,14 @@
       "created_at": 1789723051
     },
     {
-      "id": "reddit-35336173337-stat-sheets-now-use-readable-field-keys-",
-      "title": "Stat Sheets now use readable field keys like strength",
-      "body": "Building a Stat Sheet meant writing templates and formulas against internal ids that were stable but unreadable. A simple Strength check ended up looking like code, not like the sheet you were trying to make.\n\nCreators can now author with human-friendly keys like strength alongside the stable internal id. I wanted templates to read the way a player reads a sheet.\n\nTry it in the Stat Sheet editor:\nhttps://codexcryptica.com/templates\n\nThis makes it easier to:\n- write presentation templates with strength, dexterity, hp instead of hashed ids\n- write formulas that other creators can actually follow\n- rename a key without corrupting characters already saved with that sheet\n- keep existing sheets working, since the readable key maps to the stable id underneath\n\nIt is not a rename of the underlying storage, it is an alias layer. If you built tooling that reads raw ids directly, that still works, but you will see two names for the same field and need to pick one.\n\nWhat key names have you been wishing you could use in your sheets that the old ids made awkward?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35336173337 -->",
-      "url": "https://codexcryptica.com/blog/custom-stat-sheet-templates",
-      "image_url": "https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png",
+      "id": "reddit-35336173337-new-answer-what-rpg-feels-like-d-d-but-i",
+      "title": "New answer: What RPG feels like D&D but is simpler?",
+      "body": "A lot of D&D tables do not want a different genre, they just want less to track. Usually the pain shows up in one of three places: the character sheet, the combat, or the prep you do before anyone sits down.\n\nI put together a full comparison guide for that exact situation. It maps your specific bottleneck to the lighter game that actually fixes it.\n\nRead the full guide here:\nhttps://codexcryptica.com/answers/what-rpg-feels-like-dnd-but-is-simpler\n\nIt covers:\n- Shadowdark, Dragonbane, EZD6, Knave and Cairn side by side, not just as a list\n- which one cuts sheet complexity, which one cuts combat length, and which one cuts prep time\n- a simple decision table so new GMs can pick without reading five rulebooks\n- where each game still feels like D&D, and where it deliberately does not\n\nIt is opinionated by necessity. Any short list leaves out good options, and what feels simpler to one table feels thin to another.\n\nWhich of those three is hitting your table hardest right now, sheet complexity, combat length, or prep time?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/og/dungeons-and-dragons.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35336173337 -->",
+      "url": "https://codexcryptica.com/answers/what-rpg-feels-like-dnd-but-is-simpler",
+      "image_url": "https://assets.codexcryptica.com/og/dungeons-and-dragons.jpg",
       "source_id": "35336173337",
       "status": "approved",
-      "created_at": 1789730156
+      "created_at": 1789731420
     }
   ]
 }
