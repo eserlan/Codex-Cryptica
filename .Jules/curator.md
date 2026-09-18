@@ -47,9 +47,3 @@
 **Learning:** When extracting encapsulated `$state` from a Svelte 5 component into a separate module (as in `use-canvas-drawing.svelte.ts`), the returned object must expose that state via property getters (e.g., `get isDrawingMode() { return isDrawingMode; }`) rather than plain destructured values, or reactive read access breaks in the consuming template.
 
 **Action:** Future agents extracting logic from Svelte 5 `.svelte` files into `.svelte.ts` files must follow the pattern of internal `$state` variables combined with a returned object that exposes them via getters.
-
-## 2024-05-16 - Svelte 5 Custom Hooks
-
-**Learning:** When extracting complex visual layout and state manipulation logic out of a large UI component (god-file) into a custom Svelte 5 hook, make sure to pass derived props as getter functions (e.g., `schemaFields: () => schema.fields`) if you need them to be reactive inside the custom hook.
-
-**Action:** When extracting state and logic from a component into a `.svelte.ts` hook, use getter functions or Svelte 5 runes for inputs that need to stay reactive.
