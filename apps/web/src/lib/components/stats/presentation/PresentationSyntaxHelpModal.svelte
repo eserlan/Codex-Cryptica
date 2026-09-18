@@ -56,7 +56,10 @@
           or mustache syntax
           <code class="rounded bg-theme-bg px-1 font-mono text-theme-primary"
             >&#123;&#123;stat.field_id&#125;&#125;</code
-          >.
+          >. Use the field's <strong>key</strong> (e.g.
+          <code class="rounded bg-theme-bg px-1 font-mono text-theme-primary"
+            >strength</code
+          >) or its internal ID — both resolve to the same field.
         </p>
         <p class="text-theme-muted text-[11px]">
           In the Visual Builder, right-click a field chip to choose a compatible

@@ -234,6 +234,63 @@ describe("parseTemplate", () => {
 });
 
 describe("validateAst / isTemplateUsable", () => {
+  it("resolves a key reference to the canonical field id (#3180)", () => {
+    const keyedSchema: StatSheetTemplate = {
+      ...schema,
+      fields: [
+        { id: "field-abc", key: "strength", label: "Strength", type: "number" },
+      ],
+    };
+    const parsed = parseTemplate("{{stat.strength}}", 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, keyedSchema);
+    const para = validated[0] as ParagraphNode;
+    // Stored as the immutable id even though the author wrote the key, so
+    // renaming the key later can never corrupt this reference.
+    expect(para.children[0]).toMatchObject({
+      type: "field-reference",
+      fieldId: "field-abc",
+    } satisfies Partial<FieldReferenceNode>);
+  });
+
+  it("marks a renamed-away key as missing rather than corrupting (#3180)", () => {
+    const keyedSchema: StatSheetTemplate = {
+      ...schema,
+      fields: [
+        { id: "field-abc", key: "might", label: "Might", type: "number" },
+      ],
+    };
+    const parsed = parseTemplate("{{stat.strength}}", 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, keyedSchema);
+    const para = validated[0] as ParagraphNode;
+    expect(para.children[0]).toMatchObject({
+      type: "missing-field",
+      fieldId: "strength",
+    } satisfies Partial<MissingFieldNode>);
+  });
+
+  it("keeps a stable ID authoritative over a colliding legacy key", () => {
+    const keyedSchema: StatSheetTemplate = {
+      ...schema,
+      fields: [
+        { id: "hp", label: "Hit Points", type: "number" },
+        { id: "other", key: "hp", label: "Other", type: "number" },
+      ],
+    };
+    const parsed = parseTemplate("{{stat.hp}}", 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, keyedSchema);
+    const para = validated[0] as ParagraphNode;
+    expect(para.children[0]).toMatchObject({
+      type: "field-reference",
+      fieldId: "hp",
+    } satisfies Partial<FieldReferenceNode>);
+  });
+
   it("turns an unresolved field reference into MissingFieldNode", () => {
     const parsed = parseTemplate("{{stat.doesNotExist}}", 1);
     expect(parsed.ok).toBe(true);

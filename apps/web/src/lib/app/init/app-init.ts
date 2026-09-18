@@ -23,6 +23,7 @@ import {
   cloudBackupBrowserStorage,
 } from "$lib/stores/cloud-backup.svelte";
 import { buildCloudBackupPayload } from "$lib/services/cloud-backup-payload";
+import { onDurableVaultChange } from "$lib/stores/vault/registry";
 import { writeOpfsFile } from "$lib/utils/opfs";
 import {
   handleVersionSkewReload,
@@ -277,9 +278,20 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     flushPendingSaves: () => vault.flushPendingSaves(),
   });
 
+  // Automatic cloud backup (#3189): durable writes schedule a debounced
+  // guarded push, and lifecycle events flush it. The subscription lives for
+  // the app lifetime; the store itself stays inert while backup is off.
+  const unsubDurableChanges = onDurableVaultChange((changedVaultId) => {
+    if (changedVaultId === vault.activeVaultId) {
+      cloudBackupStore.notifyLocalChange(changedVaultId);
+    }
+  });
+  cloudBackupStore.startAutoSyncListeners();
+
   return () => {
     unsubOracle();
     unsubFlushSaves();
+    unsubDurableChanges();
     window.removeEventListener("vault-switched", hydrateCloudBackup);
     cloudBackupStore.destroy();
     window.removeEventListener("error", handleGlobalError);

@@ -6,7 +6,10 @@ import {
 } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
-import { importTemplatePackage } from "@codex/stat-sheet-engine";
+import {
+  importTemplatePackage,
+  validateFieldKeys,
+} from "@codex/stat-sheet-engine";
 import type { PublicTemplatePackage } from "schema";
 
 /**
@@ -1038,6 +1041,9 @@ export class StatSheetTemplateStore {
   ): Promise<StatSheetTemplate | null> {
     const vaultId = vaultRegistry.activeVaultId;
     if (!vaultId) return null;
+    // #3180: never persist duplicate/malformed keys — the editor blocks
+    // these at input time, this is the backstop for programmatic callers.
+    if (validateFieldKeys(fields).length > 0) return null;
 
     const template: StatSheetTemplate = {
       id: `template-${this.idGenerator.uuid()}`,
@@ -1151,6 +1157,8 @@ export class StatSheetTemplateStore {
     const vaultId = vaultRegistry.activeVaultId;
     const existing = this.templates.find((t) => t.id === id);
     if (!vaultId || !existing) return false;
+    // #3180 backstop, mirroring saveAsTemplate.
+    if (validateFieldKeys(fields).length > 0) return false;
 
     const updated: StatSheetTemplate = {
       ...$state.snapshot(existing),

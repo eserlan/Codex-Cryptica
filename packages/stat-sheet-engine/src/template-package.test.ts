@@ -35,6 +35,40 @@ describe("template package", () => {
     ).toThrow("system or entity category");
   });
 
+  it("carries field keys through project → validate → import (#3180)", async () => {
+    const { importTemplatePackage } = await import("./import");
+    const projected = projectTemplatePackage(
+      {
+        id: "local",
+        name: "Local",
+        fields: [
+          {
+            id: "field-abc",
+            key: "strength",
+            label: "Strength",
+            type: "number",
+          },
+          { id: "hp", label: "HP", type: "counter" },
+        ],
+      },
+      { system: "Homebrew" },
+    );
+    const validated = validateTemplatePackage(
+      JSON.parse(JSON.stringify(projected)),
+    );
+    expect(validated.template.fields[0]).toMatchObject({
+      id: "field-abc",
+      key: "strength",
+    });
+    const imported = importTemplatePackage(validated, {
+      id: "imported",
+      name: "Imported",
+    });
+    expect(imported.fields.find((f) => f.id === "field-abc")?.key).toBe(
+      "strength",
+    );
+  });
+
   it("projects local values and collapsed UI state out of a template", () => {
     const result = projectTemplatePackage(
       {

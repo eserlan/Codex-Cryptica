@@ -11,7 +11,6 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "idb": "^8.0.3",
     "schema": "workspace:*"
   },
   "devDependencies": {

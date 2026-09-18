@@ -7,84 +7,104 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
   question: "What RPG system is good for solo play?",
   kind: "comparison",
   shortAnswer:
-    "The best RPG for solo play depends on whether you want a narrative game built from the ground up for a lone adventurer, a tactical dungeon crawl driven by procedural tables, a reflective journalling game, or an external emulator that lets you run an existing traditional ruleset alone. For dark fantasy questing with built-in oracle moves, Ironsworn provides the most cohesive dedicated solo engine; for space exploration, Starforged expands that core into starships and planet discovery; for procedural dungeon crawling with four characters and almost zero story interpretation, Four Against Darkness runs as a tactical survival game; for introspective character tragedy, Thousand Year Old Vampire uses structured memory decay; and for running your favourite group RPG alone, Mythic Game Master Emulator Second Edition replaces the GM with probability charts and scene modifiers. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.",
+    "The best RPG for solo play depends less on genre than on how you want the game to feel mechanically. If you want narrative momentum driven by quest vows and built-in oracles, Ironsworn provides the most cohesive dedicated engine. If you prefer procedural dungeon crawling without story writing, your choice scales by mechanical crunch: Four Against Darkness offers light party survival, 2D6 Dungeon adds character depth, D100 Dungeon delivers crunchy simulation with optional overland hexcrawling, and Ker Nethalas provides dark atmospheric survival in a vast necropolis. Players wanting the feel of a traditional RPG with built-in solo support can look to tactical systems such as Riftbreakers Second Edition or the sci-fi derelict horror of Across a Thousand Dead Worlds, while those wishing to run classic old-school modules alone can use Scarlet Heroes as a dedicated solo engine or as an overlay for sandbox systems like Worlds Without Number. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.",
   sections: [
     {
       kind: "list",
-      heading: "If you want...",
+      heading: "Choose by mechanical feel and play style",
       intro:
-        "Match the system to the kind of play experience you want at the table, rather than picking by general popularity:",
+        "Recommendations expanded following feedback from experienced solo players. Match your system to the specific cognitive and mechanical work you want to do at the table:",
       items: [
         {
-          term: "Narrative fantasy adventure built for a lone hero",
-          text: "Ironsworn. Designed entirely around solo and cooperative play, it integrates action resolution, sworn vows, progress tracks, and thematic oracle tables into a single loop. Success with complications and momentum management keep the fiction moving without an external referee.",
+          term: "Light procedural dungeon crawl",
+          text: "Four Against Darkness. Control a party of four classic adventurers rolling on tables for room shapes, monsters, and loot. Fast, pen-and-paper resource management with minimal narrative interpretation.",
         },
         {
-          term: "Sci-fi exploration and sector discovery",
-          text: "Starforged. Building on the Ironsworn chassis, Starforged adapts the core moves to galactic exploration, derelict salvaging, alien contact, and starship asset cards. It suits players who want long campaign arcs driven by expedition tracks.",
+          term: "Deeper procedural crawl with character progression",
+          text: "2D6 Dungeon. A dedicated single-character dungeon crawler offering greater mechanical weight, tactical grid combat, and steady equipment levelling without requiring an oracle.",
         },
         {
-          term: "Tactical dungeon crawling with low narrative interpretation",
-          text: "Four Against Darkness. A pen-and-paper dungeon crawl where you control a party of four classic adventurers rolling on dice tables for room shapes, monsters, traps, and treasure. The focus is resource management and tactical survival rather than storytelling.",
+          term: "Crunchy simulation crawl with overland exploration",
+          text: "D100 Dungeon. A detailed percentile dungeon crawl featuring item damage, survival tracking, and extensive loot tables. The D100 Dungeon: World Builder expansion extends this engine into overland hexcrawling.",
         },
         {
-          term: "Introspective journalling and character tragedy",
-          text: "Thousand Year Old Vampire. A prompt-driven journalling game that tracks a vampire across centuries. As new prompts force you to record fresh experiences, older memories and connections are struck out and forgotten, creating an emotional solo experience with no tactical combat.",
+          term: "Atmospheric survival horror in a necropolis",
+          text: "Ker Nethalas: Into the Midnight Throne. A dark, doom-laden dungeon crawl focusing on scavenging, stealth, and tense survival rules in an endless subterranean domain.",
         },
         {
-          term: "Playing your favourite traditional RPG alone",
-          text: "Mythic Game Master Emulator Second Edition. A dedicated oracle engine rather than a standalone RPG. It layers fate charts, chaos factors, and meaning tables over any existing ruleset, handling world reactions while you resolve actions using your chosen system's dice.",
+          term: "Narrative questing driven by sworn vows",
+          text: "Ironsworn. A dedicated solo and co-op fantasy engine combining action rolls with narrative complications and momentum. To add structured site expeditions into ruined strongholds, combine it with the Ironsworn: Delve expansion. For space exploration with the same core philosophy, play Starforged, which also pairs with the Sundered Isles expansion for age-of-sail seafaring.",
+        },
+        {
+          term: "Traditional RPG mechanics with built-in solo tools",
+          text: "Riftbreakers Second Edition or Across a Thousand Dead Worlds. For high fantasy with tactical combat and guild contracts, Riftbreakers provides built-in oracles and dungeon generation on a traditional chassis. For grim sci-fi horror exploring alien derelicts, Across a Thousand Dead Worlds delivers tactical action-point combat, alien discovery tables, and solo AI procedures. Far-future feudal space opera can look to Machine Gods of the Noxian Expanse on a lighter rules chassis, while Choir of Flesh offers grotesque medieval survival horror.",
+        },
+        {
+          term: "Solo old-school d20 adventures and OSR modules",
+          text: "Scarlet Heroes. Designed specifically to run classic TSR-era and OSR adventures with a single heroic character using an ingenious damage conversion mechanic. It includes complete urban, wilderness, and dungeon solo oracles, and serves as an ideal solo translation overlay for Kevin Crawford's wider Sine Nomine sandbox games such as Worlds Without Number or Stars Without Number (which contain brilliant GM worldbuilding tools but lack built-in solo engines of their own).",
+        },
+        {
+          term: "Running your existing favourite group RPG alone",
+          text: "Mythic Game Master Emulator Second Edition. An external oracle engine rather than a standalone game. It layers fate charts, chaos factors, and meaning tables over any existing ruleset, adjudicating the world while you resolve actions using your chosen system.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "Built for solo vs adapted for solo",
+      heading: "The four styles of solo play",
       paragraphs: [
-        "The most fundamental split in solo gaming is between games written specifically for a lone player and conventional group games adapted with an oracle or emulator. Dedicated solo systems such as Ironsworn or Thousand Year Old Vampire intertwine action resolution with narrative generation. When you roll dice in Ironsworn, the mechanics simultaneously tell you whether your swing connected and whether a new complication entered the scene. You never leave the game's core rules to consult a separate referee system.",
-        "By contrast, adapting a traditional RPG such as D&D, Call of Cthulhu, or Traveller requires two distinct mental gears. Your chosen RPG rules resolve whether your character picks a lock or dodges a bullet, while an oracle emulator such as Mythic GME acts as the GM, answering questions about the environment, NPC attitudes, and unexpected scene interruptions. This separation allows you to play any system you already love, but demands greater discipline: you must manage character sheets and run the world at the same time.",
+        "Solo RPGs are often sorted by setting, but setting matters far less than what the rules ask you to do between rolls. The primary distinction lies across four mechanical styles: procedural dungeon crawlers, narrative vow engines, traditional RPGs with built-in solo toolsets, and external oracle emulators.",
+        "Procedural crawlers such as Four Against Darkness, 2D6 Dungeon, and D100 Dungeon treat the game as an unfolding tactical puzzle. You roll dice to map rooms, generate threats, and manage consumables. There is little creative writing required; the joy comes from outlasting the dungeon's maths. Adding atmospheric identity, as in Ker Nethalas, layers survival dread over the procedural loop without changing its hands-on mechanical nature.",
+        "Narrative-first games such as Ironsworn ask for creative interpretation. When you roll a weak hit, the rules demand a fiction-first consequence: your shield splinters, your mount bolts, or a guard hears your boots. This loop thrives on interpretive energy, keeping your focus on personal drama rather than inventory spreadsheets.",
+        "Traditional games with built-in solo tools (such as Riftbreakers 2e and Across a Thousand Dead Worlds) and OSR bridges (like Scarlet Heroes) fill the middle ground. They retain familiar character sheets, combat grids, and tactical abilities, but integrate automated enemy behaviour and prompt tables directly into the rulebook so you never need to invent a separate GM emulator.",
       ],
     },
     {
       kind: "prose",
-      heading: "Narrative interpretation vs procedural generation",
+      heading: "Adapting existing games vs dedicated solo engines",
       paragraphs: [
-        "Solo systems place different demands on your imagination. Games that rely on abstract word-pair oracles, including Mythic and Ironsworn, generate sparks such as 'oppose tradition' or 'hollow sanctuary'. Turning those prompts into immediate threats, dialogue, or scenery requires creative writing energy. If you sit down exhausted after work, interpreting three consecutive vague oracle results can bring a session to a dead halt.",
-        "Procedural systems such as Four Against Darkness remove that interpretive burden by providing concrete results: a corridor contains two wandering skeletons, a locked wooden chest, and an iron portcullis. The cognitive work shifts from creative writing to mechanical puzzle solving. Decide early whether you want an evening spent discovering a story through evocative prompts or testing your party's survival against strict tables and dice.",
+        "Many players begin solo gaming hoping to run their favourite multiplayer game, such as Dungeons & Dragons, Call of Cthulhu, or Pathfinder. Doing so requires an emulator like Mythic GME Second Edition, which functions as an impartial referee answering questions with probability dice. While this gives you total freedom over setting and system, it requires juggling two jobs: playing your character and adjudicating the world.",
+        "By contrast, dedicated solo designs combine adjudication and resolution into one action. In Ironsworn, a combat roll simultaneously determines whether you inflict harm and what the enemy does in response. In Scarlet Heroes, a built-in fray die allows a single first-level hero to survive encounters written for an entire four-player party without altering the published adventure module. If you find yourself burning out from tracking multiple character sheets and consultation tables simultaneously, switch to a game engineered specifically for a single mind.",
+        "Similarly, renowned sandbox toolkits like Sine Nomine's Worlds Without Number or Stars Without Number are legendary for their system-neutral faction rules and GM tables, but they are written for group play. Experienced solo players pair them with Scarlet Heroes or Mythic to provide the moment-to-moment solo engine while the Without Number tables generate the overarching world.",
       ],
     },
     {
       kind: "example",
-      heading: "Two solo players, two different right answers",
+      heading: "Matching mechanical appetite to player energy",
       paragraphs: [
-        "Two players seeking solo games with contrasting expectations and free time.",
+        "Three solo players with identical budgets but completely different cognitive limits after a long working week.",
       ],
       items: [
         {
-          term: "The narrative explorer",
-          text: "A player who wants a focused story about a lone ranger travelling across a grim frontier. They initially tried running a four-character party in a crunchy tactical d20 game with an oracle, but spent forty minutes managing initiative orders and stat blocks for a minor skirmish. Switching to Ironsworn, their vows established clear quest goals, progress tracks replaced monster stat blocks, and every move generated narrative momentum. One character sheet and built-in oracles let them finish a complete scene in forty-five minutes.",
+          term: "The tired tactician",
+          text: "Wants to roll dice, draw a dungeon corridor on graph paper, and fight monsters without writing dialogue or interpreting abstract prompts. After struggling to stay engaged with prompt-based journalling, they picked up 2D6 Dungeon and later D100 Dungeon. The structured room tables, weapon tracks, and tactical combat gave them an immediate mechanical game loop that required zero creative writing.",
         },
         {
-          term: "The tactical dungeon crawler",
-          text: "A player who spends all day writing and wants to play a game without doing any creative prose interpretation. They tried a prompt-driven journalling game and felt drained after writing two journal entries. Switching to Four Against Darkness, they drew grid maps, tracked torches, rolled on wandering monster tables, and engaged in quick d6 combat. The strict procedural rules provided tactical satisfaction and genuine surprise without requiring story invention.",
+          term: "The heroic storyteller",
+          text: "Wants a campaign with emotional stakes, personal oaths, and evolving relationships. They started with Ironsworn, swearing an iron vow to find a stolen relic. When a perilous expedition took them underground, they used the Ironsworn: Delve expansion to generate thematic hazards and discoveries, finishing a three-session story arc with a vivid narrative log.",
+        },
+        {
+          term: "The classic module explorer",
+          text: "Wants to play classic B/X and OSR dungeon modules from their shelf without controlling a four-character party or altering module stats. They used Scarlet Heroes as an overlay. The game's damage conversion rules and built-in urban and dungeon oracles let their lone thief explore an old TSR adventure module smoothly in two-hour evening sessions.",
         },
         {
           term: "Why it works",
-          text: "Neither player picked the most celebrated title on a forum; they identified where their mental energy lay. The first wanted narrative momentum without multi-character bookkeeping; the second wanted tactile mechanics without story interpretation. Both found an engaging game because their choice matched how much creative effort they wanted to invest.",
+          text: "None of these players asked what the most popular solo game was on social media. They diagnosed what kind of work they wanted the system to perform: procedural generation, fiction-first momentum, or classic module adaptation.",
         },
       ],
     },
     {
       kind: "checklist",
-      heading: "Before you choose a solo RPG",
+      heading: "Evaluating a solo RPG before you buy",
       intro:
-        "Check these practical constraints before buying books or starting your first campaign:",
+        "Run through these mechanical questions to select the right system for your play habits:",
       items: [
-        "Identify your preferred output: deciding whether you want a handwritten journal, a completed graph of connected clues, or a gridded dungeon map narrows the field immediately.",
-        "Assess your creative energy: if turning abstract prompts into fictional scenes sounds exhausting, choose a procedural game with explicit tables over an open-ended oracle.",
-        "Start with a single character: piloting an entire four-person party through a conventional RPG while also acting as the GM is the fastest way to burn out on solo play.",
-        "Establish a clear inciting goal: an explicit quest or sworn vow keeps oracle answers anchored to something that matters to the character.",
-        "Separate play from polished writing: record quick bullet points, sketch maps, and mechanical outcomes during play, rather than stopping the action to draft prose.",
+        "Determine your writing appetite: if turning abstract word pairs like 'defiant shadow' into scenery sounds tiring, pick a procedural crawler with concrete result tables.",
+        "Check party size requirements: games requiring you to pilot four distinct tactical characters increase mental overhead drastically compared to single-protagonist designs.",
+        "Verify built-in vs emulator requirements: confirm whether the rulebook contains its own oracles and reaction tables, or whether you will need an external tool like Mythic GME.",
+        "Distinguish base games from expansions: ensure you have the required foundation, such as Ironsworn for the Delve site-crawling supplement, or Starforged for the Sundered Isles seafaring rules.",
+        "Consider atmospheric weight: games like Ker Nethalas and Across a Thousand Dead Worlds bring deliberate survival horror and bleak tones that feel very different from heroic fantasy.",
+        "Start with focused scopes: pick a system that supports a tight introductory quest or a single five-room delve before attempting a sprawling multi-sector campaign.",
       ],
     },
   ],
@@ -92,32 +112,44 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     {
       system: "Ironsworn",
       rationale:
-        "An integrated solo PbtA engine with sworn vows, momentum tracks, and built-in oracle tables that resolve action and narrative complication in a single roll.",
+        "An integrated solo engine with sworn vows, momentum tracks, and thematic oracle tables resolving narrative complications in a single roll.",
       href: "https://tomkinpress.com/pages/ironsworn",
     },
     {
-      system: "Ironsworn: Starforged",
+      system: "Four Against Darkness",
       rationale:
-        "Adapts dedicated solo narrative procedures to sci-fi exploration with expedition progress tracks, sector generation tables, and starship asset cards.",
-      href: "https://tomkinpress.com/pages/ironsworn-starforged",
+        "A procedural solo dungeon-crawling engine using deterministic dice tables for map generation, monster encounters, and resource tracking to minimise interpretation overhead.",
+      href: "https://www.drivethrurpg.com/product/180588/Four-Against-Darkness",
+    },
+    {
+      system: "Scarlet Heroes",
+      rationale:
+        "A dedicated solo OSR engine featuring a fray die and damage conversion table to run standard TSR-era modules with a single character.",
+      href: "https://www.drivethrurpg.com/product/127180/Scarlet-Heroes",
+    },
+    {
+      system: "Ker Nethalas: Into the Midnight Throne",
+      rationale:
+        "A dark solo dungeon-crawling ruleset combining procedural room generation with tense stealth, domain exploration, and survival horror mechanics.",
+      href: "https://kernethalas.com/ker-nethalas-into-the-midnight-throne",
+    },
+    {
+      system: "2D6 Dungeon",
+      rationale:
+        "A classic solo dungeon crawl using 2d6 tables, tactical grid combat, and detailed character sheet levelling.",
+      href: "https://drgames.co.uk/",
+    },
+    {
+      system: "Across a Thousand Dead Worlds",
+      rationale:
+        "A sci-fi horror solo game featuring tactical action-point combat, alien derelict exploration, and automated enemy behaviour tables.",
+      href: "https://blackoathgames.com/store/p/across-a-thousand-dead-worlds",
     },
     {
       system: "Mythic Game Master Emulator Second Edition",
       rationale:
         "A standalone oracle system using fate questions, a dynamic chaos factor, and meaning tables to emulate GM adjudication for any existing tabletop RPG.",
       href: "https://www.wordmillgames.com/mythic-gme.html",
-    },
-    {
-      system: "Four Against Darkness",
-      rationale:
-        "A procedural solo dungeon-crawling engine that uses deterministic dice tables for map generation, monster encounters, and loot to eliminate story interpretation overhead.",
-      href: "https://www.drivethrurpg.com/product/180588/Four-Against-Darkness",
-    },
-    {
-      system: "Thousand Year Old Vampire",
-      rationale:
-        "A prompt-driven journalling ruleset that uses escalating historical prompts and strict memory-slot limitations to simulate the psychological decay of an immortal.",
-      href: "https://thousandyearoldvampire.com/",
     },
   ],
   codexConnection: {
@@ -171,6 +203,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+    "what-rpg-feels-like-dnd-but-is-simpler",
   ],
   discovery: {
     id: "answer-solo-rpg-system-selection",
@@ -187,7 +220,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
       "solo rpg recommendations",
     ],
     uniqueValue:
-      "Compares built-for-solo engines, procedural dungeon crawlers, prompt journalling, and external GM emulators by interpretation burden and play experience rather than popularity.",
+      "Compares built-for-solo engines, procedural dungeon crawlers across crunch levels, traditional systems with built-in oracles, and emulator overlays by mechanical feel rather than popularity.",
     userJob: "evaluate",
     relatedIntents: [
       "answer-system-selection",
@@ -210,12 +243,17 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
         reason:
           "That page evaluates group systems for fantasy dungeon crawling; this page evaluates systems and emulators specifically for solo play across all genres.",
       },
+      {
+        with: "answer-simpler-dnd-alternative",
+        reason:
+          "That page evaluates group systems for simpler fantasy adventure; this page evaluates systems and emulators specifically for solo play.",
+      },
     ],
   },
   seo: {
     title: "What RPG system is good for solo play? | Codex Cryptica",
     description:
-      "Compare built-for-solo narrative systems, procedural dungeon crawlers, journalling games, and oracle emulators to find the right tabletop RPG to play alone.",
+      "Compare procedural dungeon crawlers, narrative engines, traditional RPGs with built-in oracles, and emulator overlays to find the right solo tabletop RPG for your play style.",
     image:
       "https://assets.codexcryptica.com/og/what-rpg-system-is-good-for-solo-play.jpg",
     imageAlt:

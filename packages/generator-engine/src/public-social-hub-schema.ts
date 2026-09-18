@@ -6,7 +6,7 @@
  * 2. Tavern: settlementType -> tavernType -> wealthLevel -> atmosphere -> clientele -> trouble -> namingDirective
  */
 
-import { socialHubConfig } from "./public-social-hub";
+import { socialHubConfig } from "./public-social-hub-config";
 import {
   VENUE_TYPE_TRAITS,
   ATMOSPHERE_TRAITS,

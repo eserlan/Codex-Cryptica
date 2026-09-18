@@ -1,0 +1,71 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "workspaces": {
+    "patterns": ["apps/*", "apps/workers/*", "packages/*"]
+  },
+  "entry": [
+    "apps/web/src/routes/**/+*.{js,ts,svelte}",
+    "apps/web/src/hooks.client.ts",
+    "apps/web/src/hooks.server.ts",
+    "apps/workers/*/src/index.ts",
+    "packages/*/src/index.ts",
+    "scripts/**/*.{js,mjs,ts}"
+  ],
+  "audit": {
+    "gate": "new-only",
+    "css": true
+  },
+  "boundaries": {
+    "zones": [
+      {
+        "name": "schema",
+        "patterns": ["packages/schema/**"]
+      },
+      {
+        "name": "packages",
+        "patterns": ["packages/**", "!packages/schema/**"]
+      },
+      {
+        "name": "workers",
+        "patterns": ["apps/workers/**"]
+      },
+      {
+        "name": "public-generators",
+        "patterns": [
+          "apps/web/src/routes/(marketing)/generators/**",
+          "apps/web/src/lib/content/generators/**"
+        ]
+      },
+      {
+        "name": "vault-internals",
+        "patterns": [
+          "apps/web/src/lib/stores/vault/**",
+          "apps/web/src/lib/stores/vault.svelte.ts"
+        ]
+      },
+      {
+        "name": "web-app",
+        "patterns": ["apps/web/**"]
+      }
+    ],
+    "rules": [
+      {
+        "from": "schema",
+        "allow": []
+      },
+      {
+        "from": "packages",
+        "allow": ["schema", "packages"]
+      },
+      {
+        "from": "workers",
+        "allow": ["schema"]
+      },
+      {
+        "from": "public-generators",
+        "allow": ["web-app", "packages", "schema"],
+        "allowTypeOnly": ["vault-internals"]
+      }
+    ]
+  }
+}

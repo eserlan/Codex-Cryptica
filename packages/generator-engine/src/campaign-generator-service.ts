@@ -21,9 +21,12 @@ import {
   type GeneratorPromptMetrics,
   type GeneratorOutput,
   type GeneratorRunRequest,
-  type SuggestedConnection,
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
+// #3184: lives in ./campaign-connections so council-vote generation can use
+// it without a service ↔ generation cycle; re-exported to preserve imports.
+import { parseConnections } from "./campaign-connections";
+export { parseConnections };
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import type { StarSystemBody } from "./public-star-system";
 import { parseLanguageResponse } from "./public-language";
@@ -140,29 +143,6 @@ function promptMetrics(params: {
       estimatedFullPromptTokens - estimatedSentPromptTokens,
     ),
   };
-}
-
-/** Validate and normalise the model's "connections" array. */
-export function parseConnections(
-  value: unknown,
-): SuggestedConnection[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const out = value
-    .filter(
-      (c): c is SuggestedConnection =>
-        !!c &&
-        typeof c === "object" &&
-        typeof (c as SuggestedConnection).targetTitle === "string" &&
-        (c as SuggestedConnection).targetTitle.trim().length > 0,
-    )
-    .map((c) => ({
-      targetTitle: c.targetTitle.trim(),
-      relationship:
-        typeof c.relationship === "string" && c.relationship.trim()
-          ? c.relationship.trim()
-          : "related",
-    }));
-  return out.length ? out : undefined;
 }
 
 /**

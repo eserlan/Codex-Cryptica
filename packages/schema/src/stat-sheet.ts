@@ -12,8 +12,25 @@ export const StatSheetFieldTypeSchema = z.enum([
 
 export type StatSheetFieldType = z.infer<typeof StatSheetFieldTypeSchema>;
 
+/**
+ * User-friendly field key (#3180): an optional human-readable alias for the
+ * immutable internal `id` (e.g. key `strength` for a `field-<uuid>` id).
+ * Authoring surfaces accept either and resolve to the id, so renaming a key
+ * can never corrupt stored references. Keys are unique within their template
+ * scope.
+ */
+export const StatSheetFieldKeySchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(
+    /^[A-Za-z_][A-Za-z0-9_]*$/,
+    "Key must start with a letter or underscore and contain only letters, numbers, and underscores",
+  );
+
 export const StatSheetFieldSchema = z.object({
   id: z.string().min(1),
+  key: StatSheetFieldKeySchema.optional(),
   label: z.string().min(1),
   type: StatSheetFieldTypeSchema,
   value: z.union([z.number(), z.string(), z.boolean()]).optional(),

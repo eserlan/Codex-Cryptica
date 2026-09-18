@@ -455,6 +455,28 @@ describe("StatSheetTemplateStore", () => {
     expect(store.templates).toHaveLength(0);
   });
 
+  it("refuses to save a template with duplicate field keys (#3180)", async () => {
+    const result = await store.saveAsTemplate("Dupes", [
+      { id: "a", key: "hp", label: "HP", type: "counter" },
+      { id: "b", key: "hp", label: "Hit Points", type: "counter" },
+    ] as any);
+
+    expect(result).toBeNull();
+    expect(store.templates).toHaveLength(0);
+  });
+
+  it("refuses to update template fields with a malformed key (#3180)", async () => {
+    const saved = await store.saveAsTemplate("Temp", []);
+    expect(saved).not.toBeNull();
+
+    const result = await store.updateTemplateFields(saved!.id, [
+      { id: "a", key: "hit-points", label: "Hit Points", type: "counter" },
+    ] as any);
+
+    expect(result).toBe(false);
+    expect(store.templates.find((t) => t.id === saved!.id)?.fields).toEqual([]);
+  });
+
   it("returns null and does not throw when saving a template fails (e.g. IDB error)", async () => {
     const db = await getDB();
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
