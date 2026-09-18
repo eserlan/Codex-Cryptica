@@ -185,6 +185,51 @@ describe("EntityTable", () => {
     });
   });
 
+  describe("host mode zen modal in-place (#3204)", () => {
+    it("opens zen mode in place on row double-click and title click in host mode", async () => {
+      sessionModeStore.isGuestMode = false;
+      const openZenMode = vi
+        .spyOn(modalUIStore, "openZenMode")
+        .mockImplementation(() => {});
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+      });
+
+      // Double-click row background opens Zen Mode
+      await fireEvent.dblClick(screen.getAllByTestId("entity-table-row")[0]);
+      expect(openZenMode).toHaveBeenCalledWith("e1");
+      expect(vault.selectedEntityId).toBe("e1");
+
+      // Clicking title link opens Zen Mode without full-page navigation
+      await fireEvent.click(screen.getByText("Brindlewood"));
+      expect(openZenMode).toHaveBeenCalledWith("e2");
+      expect(vault.selectedEntityId).toBe("e2");
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    it("preserves default navigation when title link is clicked with modifier keys", async () => {
+      sessionModeStore.isGuestMode = false;
+      const openZenMode = vi
+        .spyOn(modalUIStore, "openZenMode")
+        .mockImplementation(() => {});
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+      });
+
+      // Ctrl+click or Cmd+click for open in new tab
+      const link = screen.getByText("Aldric");
+      const event = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        ctrlKey: true,
+      });
+      link.dispatchEvent(event);
+
+      expect(openZenMode).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
+    });
+  });
+
   it("calls onSort with the column key when a sortable header is clicked", async () => {
     const onSort = vi.fn<(key: SortKey) => void>();
     render(EntityTable, {

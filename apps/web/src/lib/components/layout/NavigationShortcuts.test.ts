@@ -34,6 +34,7 @@ vi.mock("$lib/stores/navigation/NavigationHistoryStore.svelte", () => ({
 }));
 
 import { navigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
+import { beforeNavigate } from "$app/navigation";
 
 describe("NavigationShortcuts", () => {
   const historyStore = navigationHistoryStore as any;
@@ -128,5 +129,22 @@ describe("NavigationShortcuts", () => {
 
     await fireEvent.keyDown(window, { key: "ArrowRight", shiftKey: true });
     expect(historyStore.forward).toHaveBeenCalled();
+  });
+
+  it("records lastAppPath in modalUIStore when navigating from non-entity route", () => {
+    let navigateCallback: (nav: any) => void = () => {};
+    vi.mocked(beforeNavigate).mockImplementation((cb: any) => {
+      navigateCallback = cb;
+    });
+
+    render(NavigationShortcuts);
+
+    navigateCallback({
+      from: { url: new URL("https://example.com/table?q=Aldric") },
+      to: { url: new URL("https://example.com/vault/v1/entity/e1") },
+      type: "link",
+    });
+
+    expect(modalUIStore.lastAppPath).toBe("/table?q=Aldric");
   });
 });

@@ -84,7 +84,14 @@
     }
   }
 
+  const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
+
   beforeNavigate((navigation) => {
+    const fromUrl = navigation.from?.url;
+    if (fromUrl && !ENTITY_ROUTE.test(fromUrl.pathname)) {
+      modalUIStore.lastAppPath = `${fromUrl.pathname}${fromUrl.search || ""}`;
+    }
+
     if (navigation.type === "popstate" && navigation.delta !== undefined) {
       if (navigation.delta < 0) {
         const newId = navigationHistoryStore.back(isValidEntity);

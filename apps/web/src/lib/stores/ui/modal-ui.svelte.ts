@@ -60,6 +60,7 @@ export class ModalUIStore {
 
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
+  lastAppPath = $state<string | null>(null);
   zenModeActiveTab = $state<
     | "overview"
     | "connections"
