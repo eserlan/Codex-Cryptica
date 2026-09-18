@@ -6,8 +6,8 @@ import {
   generateTavernLocal,
   parseSocialHubResponse,
   parseTavernResponse,
-  socialHubConfig,
 } from "./public-social-hub";
+import { socialHubConfig } from "./public-social-hub-config";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
 function seededRng(seed = 1): () => number {

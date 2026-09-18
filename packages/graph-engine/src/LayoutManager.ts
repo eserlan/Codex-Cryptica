@@ -1,12 +1,9 @@
 import type { Core } from "cytoscape";
 import type { Entity } from "schema";
-import {
-  getDynamicLayoutOptions,
-  getTimelineLayout,
-  setCentralNode,
-  hasTimelineDate,
-  type GraphNode,
-} from "./index";
+import { getDynamicLayoutOptions } from "./defaults";
+import { getTimelineLayout, hasTimelineDate } from "./layouts/timeline";
+import { setCentralNode } from "./layouts/orbit";
+import type { GraphNode } from "./transformer";
 import { isLayoutCollinear } from "./geometry";
 
 export interface LayoutOptions {
