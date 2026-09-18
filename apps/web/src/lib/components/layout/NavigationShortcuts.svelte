@@ -86,12 +86,18 @@
 
   const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
 
-  beforeNavigate((navigation) => {
+  type BeforeNavigateNavigation = Parameters<
+    Parameters<typeof beforeNavigate>[0]
+  >[0];
+
+  function rememberLastAppPath(navigation: BeforeNavigateNavigation) {
     const fromUrl = navigation.from?.url;
     if (fromUrl && !ENTITY_ROUTE.test(fromUrl.pathname)) {
       modalUIStore.lastAppPath = `${fromUrl.pathname}${fromUrl.search || ""}`;
     }
+  }
 
+  function handlePopstateNavigation(navigation: BeforeNavigateNavigation) {
     if (navigation.type === "popstate" && navigation.delta !== undefined) {
       if (navigation.delta < 0) {
         const newId = navigationHistoryStore.back(isValidEntity);
@@ -107,6 +113,11 @@
         }
       }
     }
+  }
+
+  beforeNavigate((navigation) => {
+    rememberLastAppPath(navigation);
+    handlePopstateNavigation(navigation);
   });
 </script>
 
