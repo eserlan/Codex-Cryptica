@@ -1,5 +1,10 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
+const onlineState = vi.hoisted(() => ({ current: true }));
+vi.mock("$lib/stores/online.svelte", () => ({
+  onlineStatus: onlineState,
+}));
+
 vi.mock("./vault/events.svelte", () => {
   const listeners: ((event: unknown) => void)[] = [];
   return {
@@ -32,9 +37,12 @@ const MANIFEST = {
 
 function harness(
   responses: { ok: boolean; status: number; body: unknown }[] = [],
+  extraDeps: Record<string, unknown> = {},
+  statusResponses: { ok: boolean; status: number; body: unknown }[] = [],
 ) {
   const calls: string[] = [];
   const queue = [...responses];
+  const statusQueue = [...statusResponses];
   const storage = createMemoryStorage();
   const restoreLog: string[] = [];
   const store = new CloudBackupStore();
@@ -45,11 +53,20 @@ function harness(
       storage,
       fetch: (async (url: string) => {
         calls.push(url);
-        const next = queue.shift() ?? {
-          ok: true,
-          status: 200,
-          body: { manifest: MANIFEST },
-        };
+        // Guard reads hit /status: default to a matching stamp so
+        // conflict-guard tests opt into divergence explicitly.
+        const next =
+          url.endsWith("/status") && !url.includes("/assets/")
+            ? (statusQueue.shift() ?? {
+                ok: true,
+                status: 200,
+                body: { lastPushedAt: MANIFEST.lastPushedAt },
+              })
+            : (queue.shift() ?? {
+                ok: true,
+                status: 200,
+                body: { manifest: MANIFEST },
+              });
         return {
           ok: next.ok,
           status: next.status,
@@ -63,6 +80,7 @@ function harness(
       bundle: { entities: [] },
     }),
     activeVaultId: () => "v-1",
+    ...extraDeps,
     restore: {
       createVault: async (name: string) => {
         restoreLog.push(`createVault:${name}`);
@@ -486,5 +504,173 @@ describe("recovery key", () => {
     const { store } = harness();
     await store.loadKnownBackups();
     expect(store.knownBackups).toEqual([]);
+  });
+});
+
+describe("automatic background sync (#3189)", () => {
+  beforeEach(() => {
+    onlineState.current = true;
+    localStorage.clear();
+  });
+
+  /** Enables backup, then wires tiny debounce/retry windows for tests. */
+  async function enabledHarness(
+    responses: { ok: boolean; status: number; body: unknown }[] = [],
+    statusResponses: { ok: boolean; status: number; body: unknown }[] = [],
+  ) {
+    const h = harness(
+      [ENABLE, ...responses],
+      {
+        debounceMs: 20,
+        retryMs: 30,
+      },
+      statusResponses,
+    );
+    await h.store.enable("v-1");
+    return h;
+  }
+
+  it("pushes a debounced guarded sync after a local change", async () => {
+    const { store, calls } = await enabledHarness();
+    calls.length = 0;
+
+    store.notifyLocalChange("v-1");
+    expect(store.autoState).toBe("pending");
+    expect(calls).toEqual([]);
+
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(calls.some((url) => url.endsWith("/commit"))).toBe(true);
+    expect(store.autoState).toBe("saved");
+  });
+
+  it("coalesces rapid changes into a single push", async () => {
+    const { store, calls } = await enabledHarness();
+    calls.length = 0;
+
+    store.notifyLocalChange("v-1");
+    store.notifyLocalChange("v-1");
+    store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(1);
+  });
+
+  it("sends nothing while backup is off, even when notified", async () => {
+    const { store, calls } = harness();
+    await store.hydrate("v-1");
+
+    store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(store.status).toBe("off");
+    expect(store.autoState).toBe("idle");
+    expect(calls).toEqual([]);
+  });
+
+  it("waits offline and syncs on reconnect without losing the change", async () => {
+    const { store, calls } = await enabledHarness();
+    calls.length = 0;
+    onlineState.current = false;
+
+    store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(store.autoState).toBe("offline");
+    expect(calls).toEqual([]);
+
+    onlineState.current = true;
+    await store.flushAutoSync();
+
+    expect(calls.some((url) => url.endsWith("/commit"))).toBe(true);
+    expect(store.autoState).toBe("saved");
+  });
+
+  it("retries a failed push with backoff and keeps local data", async () => {
+    const { store, calls } = await enabledHarness(
+      [],
+      [{ ok: false, status: 503, body: {} }],
+    );
+    calls.length = 0;
+
+    store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(25);
+
+    expect(store.autoState).toBe("retrying");
+    const firstAttempts = calls.filter((url) => url.endsWith("/commit")).length;
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(
+      calls.filter((url) => url.endsWith("/commit")).length,
+    ).toBeGreaterThan(firstAttempts);
+    expect(store.autoState).toBe("saved");
+  });
+
+  it("pauses on a newer remote without uploading, and keep-mine resolves", async () => {
+    const { store, calls } = await enabledHarness();
+    calls.length = 0;
+
+    // Guard read reports a newer remote commit from another device.
+    const fetchMock = vi.fn(async (url: string) => {
+      calls.push(url);
+      if (url.endsWith("/status")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ lastPushedAt: "2026-09-01T10:00:00.000Z" }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ manifest: MANIFEST }),
+      };
+    });
+    (store as any).deps.runtime.fetch = fetchMock;
+
+    await store.flushAutoSync();
+
+    expect(store.autoState).toBe("conflict");
+    expect(store.autoConflictRemoteAt).toBe("2026-09-01T10:00:00.000Z");
+    expect(calls.filter((url) => url.includes("/assets/"))).toHaveLength(0);
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(0);
+
+    // Further edits must not queue an overwrite while paused.
+    store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(100);
+    expect(store.autoState).toBe("conflict");
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(0);
+
+    // Explicit keep-mine pushes unguarded and resumes automation.
+    const kept = await store.resolveConflictKeepMine();
+    expect(kept).toBe(true);
+    expect(store.autoState).toBe("saved");
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(1);
+  });
+
+  it("manual save satisfies pending autosync and clears conflict", async () => {
+    const { store, calls } = await enabledHarness();
+    (store as any).autoState = "conflict";
+    (store as any).autoPending = true;
+    calls.length = 0;
+
+    const ok = await store.backUpNow();
+
+    expect(ok).toBe(true);
+    expect(store.autoState).toBe("saved");
+    expect(store.autoConflictRemoteAt).toBeNull();
+  });
+
+  it("disable() cancels pending automation cold", async () => {
+    const { store, calls } = await enabledHarness();
+    calls.length = 0;
+
+    store.notifyLocalChange("v-1");
+    await store.disable("v-1");
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(store.autoState).toBe("idle");
+    expect(calls).toEqual([]);
   });
 });
