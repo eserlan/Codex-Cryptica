@@ -227,7 +227,6 @@ export {
   parseTavernResponse,
   generateTavernLocal,
   resolveTavern,
-  socialHubConfig,
   type SocialHubGeneratorOptions,
   type SocialHubPrompt,
   type ResolvedSocialHub,
@@ -235,6 +234,7 @@ export {
   type TavernPrompt,
   type ResolvedTavern,
 } from "./public-social-hub";
+export { socialHubConfig } from "./public-social-hub-config";
 export {
   buildSocialHubSchema,
   buildTavernSchema,

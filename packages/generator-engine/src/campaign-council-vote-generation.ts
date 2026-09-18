@@ -7,7 +7,7 @@ import {
   SYSTEM_INSTRUCTION,
 } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
-import { parseConnections } from "./campaign-generator-service";
+import { parseConnections } from "./campaign-connections";
 import type {
   AIGeneratorChatSession,
   AIGeneratorGateway,
