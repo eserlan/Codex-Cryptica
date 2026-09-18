@@ -44,15 +44,17 @@ export function uniqueFieldKey(
   return `${base}_${n}`;
 }
 
-/** Finds a field by key first, then by id. Returns undefined when neither matches. */
+/** Finds a field by id first, then by key. Returns undefined when neither matches. */
 export function resolveFieldByKeyOrId(
   fields: readonly Pick<StatSheetField, "id" | "key">[],
   ref: string,
 ): StatSheetField | undefined {
   const trimmed = ref.trim();
   if (!trimmed) return undefined;
-  return (fields as readonly StatSheetField[]).find(
-    (f) => f.key === trimmed || f.id === trimmed,
+  const fieldList = fields as readonly StatSheetField[];
+  return (
+    fieldList.find((f) => f.id === trimmed) ??
+    fieldList.find((f) => f.key === trimmed)
   );
 }
 
@@ -72,6 +74,15 @@ export function validateFieldKeys(
     const formatError = validateFieldKeyFormat(field.key);
     if (formatError) {
       errors.push(`"${label}" key: ${formatError}.`);
+      return;
+    }
+    const idClash = fields.some(
+      (other) => other.id !== field.id && other.id === field.key,
+    );
+    if (idClash) {
+      errors.push(
+        `"${label}" key "${field.key}" conflicts with another field's stable ID. Keys must not reuse field IDs.`,
+      );
       return;
     }
     const clash = seen.get(field.key);

@@ -72,7 +72,7 @@
     // sheet); the immutable id stays the stored identifier.
     const key = uniqueFieldKey(
       slugifyFieldKey("New Field"),
-      fields.map((f) => f.key).filter((k) => k !== undefined),
+      fields.flatMap((f) => (f.key ? [f.key, f.id] : [f.id])),
     );
     persist([
       ...fields,
@@ -98,7 +98,9 @@
       keyErrors = { ...keyErrors, [field.id]: formatError };
       return;
     }
-    const clash = fields.some((f) => f.id !== field.id && f.key === key);
+    const clash = fields.some(
+      (f) => f.id !== field.id && (f.key === key || f.id === key),
+    );
     if (clash) {
       keyErrors = {
         ...keyErrors,
@@ -414,7 +416,7 @@
             handleKeyInput(field, (e.target as HTMLInputElement).value)}
         />
         <span
-          class="truncate font-mono text-theme-muted/70"
+          class="min-w-0 flex-1 truncate font-mono text-theme-muted/70"
           title={`Internal ID: ${field.id} (stable, never shown in references)`}
         >
           {field.id}

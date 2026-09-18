@@ -56,10 +56,18 @@ describe("resolveFieldByKeyOrId", () => {
     { id: "hp", label: "HP", type: "counter" },
   ] as any[];
 
-  it("prefers the key and falls back to the id", () => {
+  it("prefers the stable id and falls back to the key", () => {
     expect(resolveFieldByKeyOrId(fields, "strength")?.id).toBe("field-abc");
     expect(resolveFieldByKeyOrId(fields, "field-abc")?.id).toBe("field-abc");
     expect(resolveFieldByKeyOrId(fields, "hp")?.id).toBe("hp");
+  });
+
+  it("keeps stable IDs authoritative when a malformed key collides", () => {
+    const collidingFields = [
+      { id: "hp", label: "HP", type: "number" },
+      { id: "other", key: "hp", label: "Other", type: "number" },
+    ] as any[];
+    expect(resolveFieldByKeyOrId(collidingFields, "hp")?.id).toBe("hp");
   });
 
   it("returns undefined for unknown or blank refs", () => {
@@ -94,5 +102,14 @@ describe("validateFieldKeys", () => {
     ] as any[]);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain('"Hit Points"');
+  });
+
+  it("rejects keys that reuse another field's stable ID", () => {
+    const errors = validateFieldKeys([
+      { id: "hp", label: "HP" },
+      { id: "other", key: "hp", label: "Other" },
+    ] as any[]);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("stable ID");
   });
 });

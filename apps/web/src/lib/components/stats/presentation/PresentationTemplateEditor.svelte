@@ -37,6 +37,7 @@
     walkPresentationNodes,
     computeSectionKeys,
     DISPLAY_MODES_BY_FIELD_TYPE,
+    resolveFieldByKeyOrId,
   } from "@codex/stat-sheet-engine";
   import type {
     MissingFieldNode,
@@ -289,6 +290,7 @@
   // saved overrides on the next visual edit.
   function deriveFieldDisplayOverrides(
     src: string,
+    schemaFields: StatSheetField[] = [],
   ): Record<string, { displayMode?: string; hideLabel?: boolean }> {
     const result = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
     if (!result.ok) return {};
@@ -298,7 +300,9 @@
     > = {};
     walkPresentationNodes(result.ast, (node) => {
       if (node.type !== "field-reference") return;
-      const fieldId = node.fieldId as string;
+      const rawFieldId = node.fieldId as string;
+      const fieldId =
+        resolveFieldByKeyOrId(schemaFields, rawFieldId)?.id ?? rawFieldId;
       const displayMode = node.displayMode as string | undefined;
       const hideLabel = node.hideLabel as boolean | undefined;
       if (displayMode || hideLabel) {
@@ -313,7 +317,7 @@
 
   let fieldDisplayOverrides = $state<
     Record<string, { displayMode?: string; hideLabel?: boolean }>
-  >(deriveFieldDisplayOverrides(source));
+  >(deriveFieldDisplayOverrides(source, schema.fields));
   let chipContextMenu = $state<{
     x: number;
     y: number;
@@ -470,9 +474,14 @@
     schema.fields.filter(
       (f) =>
         f.id.toLowerCase().includes(autocompleteFilter.toLowerCase()) ||
+        (f.key?.toLowerCase().includes(autocompleteFilter.toLowerCase()) ??
+          false) ||
         f.label.toLowerCase().includes(autocompleteFilter.toLowerCase()),
     ),
   );
+
+  const fieldReference = (field: StatSheetField): string =>
+    field.key ?? field.id;
 
   function insertSnippet(snippet: string, cursorOffset?: number) {
     const el = textareaEl;
@@ -491,7 +500,7 @@
   }
 
   function insertFieldReference(field: StatSheetField) {
-    insertSnippet(`{{stat.${field.id}}}`);
+    insertSnippet(`{{stat.${fieldReference(field)}}}`);
     showAutocomplete = false;
     autocompleteFilter = "";
   }
@@ -513,13 +522,13 @@
           inCard = true;
         }
         if (f.type === "counter") {
-          text += `{{stat.${f.id} display="current-max"}}\n`;
+          text += `{{stat.${fieldReference(f)} display="current-max"}}\n`;
         } else if (f.type === "dice") {
-          text += `{{stat.${f.id} display="plain"}}\n`;
+          text += `{{stat.${fieldReference(f)} display="plain"}}\n`;
         } else if (f.type === "number") {
-          text += `{{stat.${f.id} display="prominent"}}\n`;
+          text += `{{stat.${fieldReference(f)} display="prominent"}}\n`;
         } else {
-          text += `{{stat.${f.id}}}\n`;
+          text += `{{stat.${fieldReference(f)}}}\n`;
         }
       }
     }
@@ -674,6 +683,10 @@
                 onclick={() => {
                   if (editorMode !== "visual") {
                     visualCards = parseCardsFromSource(source, schema?.fields);
+                    fieldDisplayOverrides = deriveFieldDisplayOverrides(
+                      source,
+                      schema.fields,
+                    );
                     editorMode = "visual";
                   }
                 }}
@@ -779,7 +792,9 @@
                               data-testid="presentation-editor-autocomplete-option"
                             >
                               {field.label}
-                              <span class="text-theme-muted">({field.id})</span>
+                              <span class="text-theme-muted"
+                                >({fieldReference(field)})</span
+                              >
                             </button>
                           </li>
                         {/each}

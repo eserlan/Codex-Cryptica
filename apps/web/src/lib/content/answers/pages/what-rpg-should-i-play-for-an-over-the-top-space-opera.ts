@@ -188,6 +188,11 @@ export const whatRpgShouldIPlayForAnOverTheTopSpaceOpera: AnswerConfigInput = {
         reason:
           "That page evaluates systems and emulators for solitary play; this page evaluates systems for over-the-top space opera multiplayer group campaigns.",
       },
+      {
+        with: "answer-simpler-dnd-alternative",
+        reason:
+          "That page evaluates rules-light fantasy systems that feel like D&D; this page matches over-the-top space opera multiplayer campaigns.",
+      },
     ],
   },
   seo: {

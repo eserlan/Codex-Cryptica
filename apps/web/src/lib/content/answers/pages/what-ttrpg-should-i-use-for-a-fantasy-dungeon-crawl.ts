@@ -173,6 +173,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
     "what-rpg-system-is-good-for-solo-play",
     "how-do-you-build-a-point-crawl-for-an-rpg",
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+    "what-rpg-feels-like-dnd-but-is-simpler",
   ],
   discovery: {
     id: "answer-dungeon-crawl-system-selection",
