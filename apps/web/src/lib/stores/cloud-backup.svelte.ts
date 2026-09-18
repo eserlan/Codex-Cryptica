@@ -449,57 +449,74 @@ export class CloudBackupStore {
    * in-flight push chains the pending work in its `finally`).
    */
   async flushAutoSync(): Promise<boolean> {
-    if (!this.deps || this.autoState === "conflict") return false;
-    const vaultId = this.deps.activeVaultId();
-    if (!vaultId || this.status === "off") return false;
+    const vaultId = this.autoSyncVaultId();
+    if (!vaultId) return false;
     if (!onlineStatus.current) {
-      this.autoState = "offline";
-      this.autoPending = true;
-      return false;
+      return this.deferAutoSyncOffline();
     }
     if (this.pushing) {
-      this.autoPending = true;
-      if (this.autoState !== "saving") this.autoState = "pending";
-      return false;
+      return this.deferAutoSyncWhilePushing();
     }
     this.clearAutoTimer();
     this.pushing = true;
     this.autoState = "saving";
     try {
-      const out = await this.pushSnapshot(vaultId, { guarded: true });
-      if (out.ok) {
-        this.autoPending = false;
-        this.autoState = "saved";
-        this.status = "idle";
-        this.errorMessage = null;
-        return true;
-      }
-      if (out.conflict) {
-        this.autoPending = false;
-        this.autoState = "conflict";
-        this.autoConflictRemoteAt = out.remoteAt ?? null;
-        this.errorMessage = out.error ?? "Cloud backup failed.";
-        return false;
-      }
-      // Ordinary failure: local data is untouched; stay pending and retry
-      // with backoff. Offline flips to the offline state instead.
-      this.autoPending = true;
-      this.autoState = onlineStatus.current ? "retrying" : "offline";
-      this.errorMessage = out.error ?? "Cloud backup failed.";
-      this.scheduleAutoPush(this.deps.retryMs ?? AUTO_SYNC_RETRY_MS);
-      return false;
+      return await this.completeAutoSync(vaultId);
     } finally {
-      this.pushing = false;
-      this.uploadProgress = null;
-      // Chain work that arrived mid-push — unless a retry timer is already
-      // armed (scheduling again would replace the backoff with the debounce).
-      if (
-        this.autoPending &&
-        !this.autoTimer &&
-        this.autoState !== "conflict"
-      ) {
-        this.scheduleAutoPush();
-      }
+      this.finishAutoSyncPush();
+    }
+  }
+
+  private autoSyncVaultId(): string | null {
+    if (!this.deps || this.autoState === "conflict") return null;
+    const vaultId = this.deps.activeVaultId();
+    return vaultId && this.status !== "off" ? vaultId : null;
+  }
+
+  private deferAutoSyncOffline(): false {
+    this.autoState = "offline";
+    this.autoPending = true;
+    return false;
+  }
+
+  private deferAutoSyncWhilePushing(): false {
+    this.autoPending = true;
+    if (this.autoState !== "saving") this.autoState = "pending";
+    return false;
+  }
+
+  private async completeAutoSync(vaultId: string): Promise<boolean> {
+    const out = await this.pushSnapshot(vaultId, { guarded: true });
+    if (out.ok) {
+      this.autoPending = false;
+      this.autoState = "saved";
+      this.status = "idle";
+      this.errorMessage = null;
+      return true;
+    }
+    if (out.conflict) {
+      this.autoPending = false;
+      this.autoState = "conflict";
+      this.autoConflictRemoteAt = out.remoteAt ?? null;
+      this.errorMessage = out.error ?? "Cloud backup failed.";
+      return false;
+    }
+    // Ordinary failure: local data is untouched; stay pending and retry
+    // with backoff. Offline flips to the offline state instead.
+    this.autoPending = true;
+    this.autoState = onlineStatus.current ? "retrying" : "offline";
+    this.errorMessage = out.error ?? "Cloud backup failed.";
+    this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+    return false;
+  }
+
+  private finishAutoSyncPush(): void {
+    this.pushing = false;
+    this.uploadProgress = null;
+    // Chain work that arrived mid-push — unless a retry timer is already
+    // armed (scheduling again would replace the backoff with the debounce).
+    if (this.autoPending && !this.autoTimer && this.autoState !== "conflict") {
+      this.scheduleAutoPush();
     }
   }
 
