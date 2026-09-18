@@ -1,7 +1,4 @@
-import {
-  type VisualCard,
-  parseCardsFromSource,
-} from "./visual-card-parser";
+import { type VisualCard, parseCardsFromSource } from "./visual-card-parser";
 import {
   addVisualCard as addVisualCardOp,
   updateCardColumns as updateCardColumnsOp,
@@ -29,10 +26,15 @@ export function useVisualLayout({
 }: {
   source: () => string;
   schemaFields: () => StatSheetField[];
-  fieldDisplayOverrides: () => Record<string, { displayMode?: string; hideLabel?: boolean }>;
+  fieldDisplayOverrides: () => Record<
+    string,
+    { displayMode?: string; hideLabel?: boolean }
+  >;
   onSourceUpdate: (newSource: string) => void;
 }) {
-  let localCards = $state<VisualCard[]>(parseCardsFromSource(source(), schemaFields()));
+  let localCards = $state<VisualCard[]>(
+    parseCardsFromSource(source(), schemaFields()),
+  );
 
   let lastSyncedSource = $state(source());
 
@@ -56,7 +58,11 @@ export function useVisualLayout({
   }
 
   function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
-    const newSource = syncSourceFromVisualCards(cards, schemaFields(), fieldDisplayOverrides());
+    const newSource = syncSourceFromVisualCards(
+      cards,
+      schemaFields(),
+      fieldDisplayOverrides(),
+    );
     lastSyncedSource = newSource;
     onSourceUpdate(newSource);
   }
@@ -71,7 +77,11 @@ export function useVisualLayout({
     handleSyncSourceFromVisualCards(localCards);
   }
 
-  function updateTableHeader(cardId: string, headerIndex: number, value: string) {
+  function updateTableHeader(
+    cardId: string,
+    headerIndex: number,
+    value: string,
+  ) {
     localCards = updateTableHeaderOp(localCards, cardId, headerIndex, value);
     handleSyncSourceFromVisualCards(localCards);
   }
@@ -91,7 +101,11 @@ export function useVisualLayout({
     handleSyncSourceFromVisualCards(localCards);
   }
 
-  function addFieldToCardRow(cardId: string, rowIndex: number, fieldId: string) {
+  function addFieldToCardRow(
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
     localCards = addFieldToCardRowOp(localCards, cardId, rowIndex, fieldId);
     handleSyncSourceFromVisualCards(localCards);
   }
@@ -101,18 +115,47 @@ export function useVisualLayout({
     handleSyncSourceFromVisualCards(localCards);
   }
 
-  function updateValueInTableRow(cardId: string, rowIndex: number, cellIndex: number, value: string) {
-    localCards = updateValueInTableRowOp(localCards, cardId, rowIndex, cellIndex, value);
+  function updateValueInTableRow(
+    cardId: string,
+    rowIndex: number,
+    cellIndex: number,
+    value: string,
+  ) {
+    localCards = updateValueInTableRowOp(
+      localCards,
+      cardId,
+      rowIndex,
+      cellIndex,
+      value,
+    );
     handleSyncSourceFromVisualCards(localCards);
   }
 
-  function removeValueFromTableRow(cardId: string, rowIndex: number, cellIndex: number) {
-    localCards = removeValueFromTableRowOp(localCards, cardId, rowIndex, cellIndex);
+  function removeValueFromTableRow(
+    cardId: string,
+    rowIndex: number,
+    cellIndex: number,
+  ) {
+    localCards = removeValueFromTableRowOp(
+      localCards,
+      cardId,
+      rowIndex,
+      cellIndex,
+    );
     handleSyncSourceFromVisualCards(localCards);
   }
 
-  function removeFieldFromCardRow(cardId: string, rowIndex: number, fieldId: string) {
-    localCards = removeFieldFromCardRowOp(localCards, cardId, rowIndex, fieldId);
+  function removeFieldFromCardRow(
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
+    localCards = removeFieldFromCardRowOp(
+      localCards,
+      cardId,
+      rowIndex,
+      fieldId,
+    );
     handleSyncSourceFromVisualCards(localCards);
   }
 
@@ -137,7 +180,12 @@ export function useVisualLayout({
     draggedCardIndex = null;
   }
 
-  function handleFieldDragStart(e: DragEvent, cardId: string, rowIndex: number, fieldId: string) {
+  function handleFieldDragStart(
+    e: DragEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
     e.stopPropagation();
     draggedField = { type: "move", cardId, rowIndex, fieldId };
   }
@@ -147,7 +195,11 @@ export function useVisualLayout({
     draggedField = { type: "sidebar", fieldId };
   }
 
-  function handleFieldDropRow(e: DragEvent, targetCardId: string, targetRowIndex: number) {
+  function handleFieldDropRow(
+    e: DragEvent,
+    targetCardId: string,
+    targetRowIndex: number,
+  ) {
     e.preventDefault();
     e.stopPropagation();
     if (!draggedField) return;
@@ -174,9 +226,15 @@ export function useVisualLayout({
   }
 
   return {
-    get visualCards() { return localCards; },
-    get draggedCardIndex() { return draggedCardIndex; },
-    get draggedField() { return draggedField; },
+    get visualCards() {
+      return localCards;
+    },
+    get draggedCardIndex() {
+      return draggedCardIndex;
+    },
+    get draggedField() {
+      return draggedField;
+    },
     resetFromSource,
     handleSyncSourceFromVisualCards,
     addVisualCard,
