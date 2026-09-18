@@ -85,7 +85,9 @@
     source: () => source,
     schemaFields: () => schema.fields,
     fieldDisplayOverrides: () => fieldDisplayOverrides,
-    onSourceUpdate: (newSource: string) => { source = newSource; },
+    onSourceUpdate: (newSource: string) => {
+      source = newSource;
+    },
   });
   let isSaving = $state(false);
   let saveError = $state("");
@@ -649,10 +651,11 @@
                 <div class="flex flex-col gap-1.5 mt-1">
                   {#each schema?.fields?.filter((f) => f.type !== "heading") ?? [] as f (f.id)}
                     <div
-                                role="button"
-                                tabindex="0"
-                                draggable="true"
-                      ondragstart={(e) => visualLayout.handleSidebarFieldDragStart(e, f.id)}
+                      role="button"
+                      tabindex="0"
+                      draggable="true"
+                      ondragstart={(e) =>
+                        visualLayout.handleSidebarFieldDragStart(e, f.id)}
                       class="flex items-center justify-between gap-1 rounded border border-theme-border/70 bg-theme-bg px-2 py-1.5 text-xs text-theme-text font-medium cursor-grab active:cursor-grabbing hover:border-theme-primary/80 hover:bg-theme-primary/5 transition-all shadow-xs"
                     >
                       <div class="flex items-center gap-1.5 min-w-0">
@@ -677,9 +680,9 @@
               >
                 {#each visualLayout.visualCards as card, idx (card.id)}
                   <div
-                                role="button"
-                                tabindex="0"
-                                draggable="true"
+                    role="button"
+                    tabindex="0"
+                    draggable="true"
                     ondragstart={() => visualLayout.handleCardDragStart(idx)}
                     ondragover={(e) => visualLayout.handleCardDragOver(e, idx)}
                     ondragend={visualLayout.handleCardDragEnd}
@@ -717,7 +720,9 @@
                             : "Section Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
-                            visualLayout.handleSyncSourceFromVisualCards(visualLayout.visualCards);
+                            visualLayout.handleSyncSourceFromVisualCards(
+                              visualLayout.visualCards,
+                            );
                           }}
                         />
                       </div>
@@ -816,7 +821,8 @@
                             tabindex="-1"
                             class="flex flex-1 flex-wrap items-center gap-1.5 min-h-[36px] rounded border border-dashed border-theme-border/60 bg-theme-bg/40 p-1.5 transition-colors"
                             ondragover={(e) => e.preventDefault()}
-                            ondrop={(e) => visualLayout.handleFieldDropRow(e, card.id, rIdx)}
+                            ondrop={(e) =>
+                              visualLayout.handleFieldDropRow(e, card.id, rIdx)}
                           >
                             {#each rowFields as cell, cIdx (`${cell.kind}-${cIdx}`)}
                               {#if cell.kind === "field"}
@@ -947,7 +953,11 @@
                                   const val = (e.target as HTMLSelectElement)
                                     .value;
                                   if (val)
-                                    visualLayout.addFieldToCardRow(card.id, rIdx, val);
+                                    visualLayout.addFieldToCardRow(
+                                      card.id,
+                                      rIdx,
+                                      val,
+                                    );
                                   (e.target as HTMLSelectElement).value = "";
                                 }}
                               >
@@ -964,7 +974,10 @@
                                 type="button"
                                 class="rounded border border-dashed border-amber-500/40 px-1.5 py-0.5 text-xs text-amber-700 hover:border-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
                                 onclick={() =>
-                                  visualLayout.addValueToTableRow(card.id, rIdx)}
+                                  visualLayout.addValueToTableRow(
+                                    card.id,
+                                    rIdx,
+                                  )}
                                 data-testid="presentation-editor-add-table-value"
                               >
                                 + Add Value
@@ -975,7 +988,8 @@
                             <button
                               type="button"
                               class="rounded px-1.5 py-1 text-[10px] text-theme-muted hover:text-red-400"
-                              onclick={() => visualLayout.removeRowFromCard(card.id, rIdx)}
+                              onclick={() =>
+                                visualLayout.removeRowFromCard(card.id, rIdx)}
                               title="Delete Row"
                             >
                               ✕
