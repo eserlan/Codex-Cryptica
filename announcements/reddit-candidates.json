@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789721746,
+  "updated_at": 1789723051,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -22,14 +22,14 @@
       "created_at": 1789719348
     },
     {
-      "id": "reddit-35012185144-four-color-dawn-and-midnight-patrol-supe",
-      "title": "Four-Color Dawn and Midnight Patrol: superhero pages finally look like comic books",
-      "body": "Superhero generators used to sit in Modern or Workspace chrome. Blue grays and plain sans serif after you just generated a cape story. It worked, but it did not feel like the genre at all.\n\nSuperhero generator pages and worlds now get their own skin, Four-Color Dawn for light and Midnight Patrol for dark.\n\nSee it here: https://codexcryptica.com/generators/dungeon-generator\n\nWhat changed:\n- Bangers for headers and Comic Neue for body, instead of the workspace defaults\n- light palette with clear four-color pops and a dark noir palette for night patrol\n- panels, borders and graph edges re-tinted so maps and canvas still read cleanly\n- saves as a world theme, not just per-generator chrome\n\nI pushed the contrast louder than my other themes on purpose, so if you prefer subtle parchment or terminal minimalism this one will feel intentionally bold.\n\nDo you picture your table more in daytime four-color or night-time noir, and which half of this pair would you actually keep on?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35012185144-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35012185144 -->",
-      "url": "https://codexcryptica.com/generators/dungeon-generator",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35012185144-1.png",
+      "id": "reddit-35012185144-more-instant-tokens-sci-fi-and-fantasy-i",
+      "title": "More instant tokens: sci-fi and fantasy items and notes get dedicated silhouettes",
+      "body": "If you drop a token on the map, canvas or in notes without uploading art, characters usually got a good match and items or notes often fell back to a generic placeholder. For sci-fi crates and fantasy scrolls that meant an extra upload every time.\n\nI expanded the silhouette library so sci-fi and fantasy items and notes get dedicated vector art with no upload step.\n\nExample outputs here: https://codexcryptica.com/generators/item\n\nYou will notice:\n- sci-fi items like cargo crates, datapads and field gear that match without searching icons\n- fantasy notes like scrolls, sigils and bound tomes that sit well on parchment themes\n- auto-matching by genre and tags, tinted by your active theme color\n- still served as lightweight vectors from R2, so no extra weight in your vault\n\nThese are still silhouettes, not full illustrations, so they fix token clarity fast but will not replace a hero piece when you want one.\n\nWhich item or note type in your vault most often ends up as a blank token, and would a dedicated silhouette actually save you an upload?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35012185144-3.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35012185144 -->",
+      "url": "https://codexcryptica.com/silhouettes",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35012185144-3.png",
       "source_id": "35012185144",
       "status": "approved",
-      "created_at": 1789721746
+      "created_at": 1789723051
     }
   ]
 }
