@@ -25,7 +25,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
         },
         {
           term: "Crunchy simulation crawl with overland exploration",
-          text: "D100 Dungeon. A detailed percentile dungeon crawl featuring item damage, tracking tracks, and extensive loot tables. The Adventurers Companion expansion extends this engine into overland hexcrawling.",
+          text: "D100 Dungeon. A detailed percentile dungeon crawl featuring item damage, survival tracking, and extensive loot tables. The D100 Dungeon: World Builder expansion extends this engine into overland hexcrawling.",
         },
         {
           term: "Atmospheric survival horror in a necropolis",
