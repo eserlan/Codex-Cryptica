@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789719348,
+  "updated_at": 1789719967,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -20,6 +20,16 @@
       "source_id": "35234873859",
       "status": "approved",
       "created_at": 1789719348
+    },
+    {
+      "id": "reddit-35012185144-superhero-as-a-first-class-genre-villain",
+      "title": "Superhero as a first-class genre: villain schemes, secret identities and lair dungeons",
+      "body": "Running supers with fantasy tables means you are always reskinning. You generate a tavern quest and rewrite it as a downtown bank heist, or swap a crypt for a villain lab by hand. It gets the job done but never feels built for capes.\n\nI built Superhero / Comic Book as a first-class genre so you can run comic-book campaigns natively.\n\nTry it here: https://codexcryptica.com/generators/adventure-generator\n\nIt now covers:\n- adventures driven by villain schemes, public reputation and secret-identity stakes\n- dungeons as villain lairs with labs, vaults, security layers and escape routes\n- factions that act like super-teams, agencies and media networks instead of guilds and courts\n- quest, villain and secret society tables flavored for powered heists, cover identities and city-wide fallout\n\nI biased the first pass toward classic four-color tropes rather than deconstruction or horror-supers, so street-level to city-wide feels immediate and very cosmic teams will still want to tune power scale themselves.\n\nWhat kind of supers game are you running right now, street-level vigilantes or a full cape team, and what villain scheme would you actually need first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35012185144-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35012185144 -->",
+      "url": "https://codexcryptica.com/generators/adventure-generator",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35012185144-0.png",
+      "source_id": "35012185144",
+      "status": "approved",
+      "created_at": 1789719967
     }
   ]
 }
