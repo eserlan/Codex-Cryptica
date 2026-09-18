@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789719967,
+  "updated_at": 1789721746,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -22,14 +22,14 @@
       "created_at": 1789719348
     },
     {
-      "id": "reddit-35012185144-superhero-as-a-first-class-genre-villain",
-      "title": "Superhero as a first-class genre: villain schemes, secret identities and lair dungeons",
-      "body": "Running supers with fantasy tables means you are always reskinning. You generate a tavern quest and rewrite it as a downtown bank heist, or swap a crypt for a villain lab by hand. It gets the job done but never feels built for capes.\n\nI built Superhero / Comic Book as a first-class genre so you can run comic-book campaigns natively.\n\nTry it here: https://codexcryptica.com/generators/adventure-generator\n\nIt now covers:\n- adventures driven by villain schemes, public reputation and secret-identity stakes\n- dungeons as villain lairs with labs, vaults, security layers and escape routes\n- factions that act like super-teams, agencies and media networks instead of guilds and courts\n- quest, villain and secret society tables flavored for powered heists, cover identities and city-wide fallout\n\nI biased the first pass toward classic four-color tropes rather than deconstruction or horror-supers, so street-level to city-wide feels immediate and very cosmic teams will still want to tune power scale themselves.\n\nWhat kind of supers game are you running right now, street-level vigilantes or a full cape team, and what villain scheme would you actually need first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35012185144-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35012185144 -->",
-      "url": "https://codexcryptica.com/generators/adventure-generator",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35012185144-0.png",
+      "id": "reddit-35012185144-four-color-dawn-and-midnight-patrol-supe",
+      "title": "Four-Color Dawn and Midnight Patrol: superhero pages finally look like comic books",
+      "body": "Superhero generators used to sit in Modern or Workspace chrome. Blue grays and plain sans serif after you just generated a cape story. It worked, but it did not feel like the genre at all.\n\nSuperhero generator pages and worlds now get their own skin, Four-Color Dawn for light and Midnight Patrol for dark.\n\nSee it here: https://codexcryptica.com/generators/dungeon-generator\n\nWhat changed:\n- Bangers for headers and Comic Neue for body, instead of the workspace defaults\n- light palette with clear four-color pops and a dark noir palette for night patrol\n- panels, borders and graph edges re-tinted so maps and canvas still read cleanly\n- saves as a world theme, not just per-generator chrome\n\nI pushed the contrast louder than my other themes on purpose, so if you prefer subtle parchment or terminal minimalism this one will feel intentionally bold.\n\nDo you picture your table more in daytime four-color or night-time noir, and which half of this pair would you actually keep on?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35012185144-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35012185144 -->",
+      "url": "https://codexcryptica.com/generators/dungeon-generator",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35012185144-1.png",
       "source_id": "35012185144",
       "status": "approved",
-      "created_at": 1789719967
+      "created_at": 1789721746
     }
   ]
 }
