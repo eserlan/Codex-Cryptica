@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789731420,
+  "updated_at": 1789747981,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -40,6 +40,16 @@
       "source_id": "35336173337",
       "status": "approved",
       "created_at": 1789731420
+    },
+    {
+      "id": "reddit-35366852566-table-view-now-keeps-your-place-when-you",
+      "title": "Table view now keeps your place when you open an entity",
+      "body": "If you browse a big vault in table view you know this one. You filter down to the right set, scroll to the row you want, open it to check a detail, and when you close you are back at the top with the filter gone and you have to find your place again.\n\nI changed it so opening an entity from a table opens the zen detail view right over the table. When you close, you are back in the same filtered and scrolled table exactly where you left it.\n\nNo new setting for this one, it just works in tables:\n\n- no need to re-apply filters or sort after checking a row\n- long lists keep their scroll, so you can work through rows one by one\n- the row you opened stays selected so you do not lose your spot\n- close with Esc, the X, or clicking outside, all return to the same view\n\nTradeoff I kept for now: this overlay only applies when you open from a table. Opening from search or nav still navigates as before. Not sure if search should get the same treatment or if that would feel weird.\n\nWhich table do you get bounced out of most often, and does this fix how you actually move through it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/zen-mode.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35366852566 -->",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/zen-mode.png",
+      "source_id": "35366852566",
+      "status": "approved",
+      "created_at": 1789747980
     }
   ]
 }
