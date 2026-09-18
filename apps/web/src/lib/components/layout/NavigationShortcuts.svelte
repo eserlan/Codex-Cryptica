@@ -93,6 +93,8 @@
   }
 
   function handleHistoryPop(delta: number, cancel: () => void) {
+    if (delta === 0) return;
+
     const newId =
       delta < 0
         ? navigationHistoryStore.back(isValidEntity)
