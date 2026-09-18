@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789728443,
+  "updated_at": 1789730156,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -32,14 +32,14 @@
       "created_at": 1789723051
     },
     {
-      "id": "reddit-35336173337-cloud-save-now-pushes-itself-in-the-back",
-      "title": "Cloud Save now pushes itself in the background",
-      "body": "I kept closing a tab after a late session and realizing I never hit Save to Cloud. The vault was fine locally, but the backup was a day behind.\n\nWhen Cloud Save is enabled, vault changes now push automatically in the background. I built it to trigger on going online and on tab hide, so the normal way you leave the app is what saves it.\n\nYou can enable it in Settings and keep working the way you already do:\nhttps://codexcryptica.com/\n\nIt will:\n- push when you come back online or hide the tab, not on a timer\n- skip re-uploading unchanged assets by hash so big image vaults do not re-upload everything\n- keep a best-effort conflict guard so a stale tab does not quietly overwrite newer work\n- fall back to your manual Save when you want an explicit checkpoint\n\nThe tradeoff is that automatic means less explicit control. If you do a big lore rewrite you might want to pause and check the backup, automatic will still push the intermediate state.\n\nDo you prefer backups you never have to think about, or do you want a manual gate for big rewrites?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/sync.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35336173337 -->",
-      "url": "https://codexcryptica.com/help/gdrive-cloud-sync",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/sync.png",
+      "id": "reddit-35336173337-stat-sheets-now-use-readable-field-keys-",
+      "title": "Stat Sheets now use readable field keys like strength",
+      "body": "Building a Stat Sheet meant writing templates and formulas against internal ids that were stable but unreadable. A simple Strength check ended up looking like code, not like the sheet you were trying to make.\n\nCreators can now author with human-friendly keys like strength alongside the stable internal id. I wanted templates to read the way a player reads a sheet.\n\nTry it in the Stat Sheet editor:\nhttps://codexcryptica.com/templates\n\nThis makes it easier to:\n- write presentation templates with strength, dexterity, hp instead of hashed ids\n- write formulas that other creators can actually follow\n- rename a key without corrupting characters already saved with that sheet\n- keep existing sheets working, since the readable key maps to the stable id underneath\n\nIt is not a rename of the underlying storage, it is an alias layer. If you built tooling that reads raw ids directly, that still works, but you will see two names for the same field and need to pick one.\n\nWhat key names have you been wishing you could use in your sheets that the old ids made awkward?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35336173337 -->",
+      "url": "https://codexcryptica.com/blog/custom-stat-sheet-templates",
+      "image_url": "https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png",
       "source_id": "35336173337",
       "status": "approved",
-      "created_at": 1789728443
+      "created_at": 1789730156
     }
   ]
 }
