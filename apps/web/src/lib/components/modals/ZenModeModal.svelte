@@ -21,9 +21,11 @@
   // Zen mode closed), leaving the user on a blank screen.
   let lastAppPath: string | null = null;
   beforeNavigate((nav) => {
-    const fromPath = nav.from?.url.pathname;
-    if (fromPath && !ENTITY_ROUTE.test(fromPath)) {
-      lastAppPath = fromPath;
+    const fromUrl = nav.from?.url;
+    if (fromUrl && !ENTITY_ROUTE.test(fromUrl.pathname)) {
+      const path = `${fromUrl.pathname}${fromUrl.search || ""}`;
+      lastAppPath = path;
+      modalUIStore.lastAppPath = path;
     }
   });
 
@@ -51,7 +53,7 @@
       setTimeout(() => {
         if (typeof window !== "undefined" && window.closed) return;
         modalUIStore.closeZenMode();
-        void goto(lastAppPath ?? `${base}/`);
+        void goto(modalUIStore.lastAppPath ?? lastAppPath ?? `${base}/`);
       }, 50);
       return;
     }

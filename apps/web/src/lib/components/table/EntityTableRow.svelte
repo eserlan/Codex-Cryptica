@@ -1,6 +1,5 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { goto } from "$app/navigation";
   import type { Entity } from "schema";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -71,17 +70,11 @@
     });
   }
 
-  // Guest snapshots have no vault entity route; open the zen detail view
-  // in place instead (same view the host route ends up in).
+  // Open the zen detail view in place so closing it returns directly to the
+  // active table view with filters, scroll, and selection intact (#3204).
   function openEntity() {
-    if (sessionModeStore.isGuestMode) {
-      // Keep the selection in sync so the guest page's sidebar and ?entity=
-      // deep-link URL reflect what was opened, matching deep-link behavior.
-      vault.selectedEntityId = entity.id;
-      modalUIStore.openZenMode(entity.id);
-      return;
-    }
-    void goto(href);
+    vault.selectedEntityId = entity.id;
+    modalUIStore.openZenMode(entity.id);
   }
 
   // Whole-row selection toggle
@@ -106,10 +99,8 @@
       // Let the browser handle modifier-clicks (open in new tab/window).
       return;
     }
-    if (sessionModeStore.isGuestMode) {
-      event.preventDefault();
-      openEntity();
-    }
+    event.preventDefault();
+    openEntity();
   }
 
   function handleContextMenu(event: MouseEvent) {

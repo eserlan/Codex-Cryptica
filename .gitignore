@@ -1,6 +1,9 @@
 # Secrets (never commit)
 .secrets/
 
+# dev-agents daemon runtime state (live SQLite DBs, agent logs, generated art)
+.dev-agents/
+
 # Node.js
 node_modules/
 dist/
