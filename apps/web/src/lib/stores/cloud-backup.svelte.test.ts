@@ -649,6 +649,75 @@ describe("automatic background sync (#3189)", () => {
     expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(1);
   });
 
+  it("retries a failed keep-mine instead of stranding the retrying label", async () => {
+    const { store, calls } = await enabledHarness();
+    calls.length = 0;
+
+    const fetchMock = vi.fn(async (url: string) => {
+      calls.push(url);
+      if (url.endsWith("/status")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ lastPushedAt: "2026-09-01T10:00:00.000Z" }),
+        };
+      }
+      if (url.endsWith("/commit")) {
+        return { ok: false, status: 500, json: async () => ({}) };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ manifest: MANIFEST }),
+      };
+    });
+    (store as any).deps.runtime.fetch = fetchMock;
+
+    await store.flushAutoSync();
+    expect(store.autoState).toBe("conflict");
+
+    // The choice stands but the commit fails: automation must stay pending
+    // with a real retry scheduled.
+    const kept = await store.resolveConflictKeepMine();
+    expect(kept).toBe(false);
+    expect(store.autoState).toBe("retrying");
+
+    const commitsBefore = calls.filter((url) => url.endsWith("/commit")).length;
+    await vi.advanceTimersByTimeAsync(50);
+
+    // The retry re-guards, sees the still-newer remote, and pauses again —
+    // nothing uploaded, and no retry storm follows.
+    expect(store.autoState).toBe("conflict");
+    expect(calls.filter((url) => url.endsWith("/commit"))).toHaveLength(
+      commitsBefore,
+    );
+    expect(
+      calls.filter((url) => url.endsWith("/status")).length,
+    ).toBeGreaterThan(1);
+  });
+
+  it("skips close-time flushes when nothing is pending", async () => {
+    const { store, calls } = await enabledHarness();
+    store.startAutoSyncListeners();
+    try {
+      calls.length = 0;
+      window.dispatchEvent(new Event("pagehide"));
+      await vi.advanceTimersByTimeAsync(0);
+      // No pending queue: no guard read, no commit — closing the tab must
+      // not manufacture a fresh remote timestamp for other devices to trip
+      // over.
+      expect(calls).toEqual([]);
+
+      // A pending queue still flushes on close.
+      (store as any).autoPending = true;
+      window.dispatchEvent(new Event("pagehide"));
+      await vi.advanceTimersByTimeAsync(50);
+      expect(calls.some((url) => url.endsWith("/status"))).toBe(true);
+    } finally {
+      store.stopAutoSyncListeners();
+    }
+  });
+
   it("manual save satisfies pending autosync and clears conflict", async () => {
     const { store, calls } = await enabledHarness();
     (store as any).autoState = "conflict";

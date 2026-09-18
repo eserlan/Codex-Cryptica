@@ -164,6 +164,38 @@ describe("pushVaultToCloudBackup conflict guard (#3189)", () => {
     expect(calls.filter((c) => c.url.endsWith("/commit"))).toHaveLength(0);
   });
 
+  it("treats a non-string remote timestamp as missing, pausing instead of mis-comparing", async () => {
+    const { runtime, calls } = await enabledVault("2026-08-31T10:00:00.000Z");
+    // Server JSON is untrusted: a garbage stamp must degrade to "no
+    // timestamp" (divergence pauses) rather than a mis-compared overwrite.
+    (runtime.fetch as any).mockImplementationOnce(async (url: string) => {
+      calls.push({ url });
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ lastPushedAt: 12345 }),
+      };
+    });
+    const result = await pushVaultToCloudBackup(
+      runtime,
+      "v-1",
+      {
+        ...PAYLOAD,
+        assets: [
+          { assetId: "a", bytes: new Uint8Array([1]), mimeType: "image/png" },
+        ],
+      },
+      undefined,
+      { expectLastPushedAt: "2026-08-31T10:00:00.000Z" },
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.conflict).toBe(true);
+    expect(result.remoteLastPushedAt).toBeNull();
+    expect(calls.filter((c) => c.url.includes("/assets/"))).toHaveLength(0);
+    expect(calls.filter((c) => c.url.endsWith("/commit"))).toHaveLength(0);
+  });
+
   it("skips PUTs for known-unchanged assets but still commits them", async () => {
     const { runtime, calls } = await enabledVault();
     const seen: string[] = [];

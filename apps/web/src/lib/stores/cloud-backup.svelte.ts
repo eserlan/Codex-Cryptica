@@ -510,6 +510,13 @@ export class CloudBackupStore {
     return false;
   }
 
+  private deferConflictRetry(error?: string): void {
+    this.autoPending = true;
+    this.autoState = "retrying";
+    this.errorMessage = error ?? "Cloud backup failed.";
+    this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+  }
+
   private finishAutoSyncPush(): void {
     this.pushing = false;
     this.uploadProgress = null;
@@ -534,8 +541,9 @@ export class CloudBackupStore {
     try {
       const out = await this.pushSnapshot(vaultId, { guarded: false });
       if (!out.ok) {
-        this.autoState = "retrying";
-        this.errorMessage = out.error ?? "Cloud backup failed.";
+        // The choice stands but the push failed: stay pending and retry with
+        // backoff, or "retrying" is a label for a retry that never comes.
+        this.deferConflictRetry(out.error);
         return false;
       }
       this.autoConflictRemoteAt = null;
@@ -577,14 +585,19 @@ export class CloudBackupStore {
   private handleVisibility = (): void => {
     if (
       typeof document !== "undefined" &&
-      document.visibilityState === "hidden"
+      document.visibilityState === "hidden" &&
+      this.autoPending
     ) {
       void this.flushAutoSync();
     }
   };
 
   private handlePageHide = (): void => {
-    void this.flushAutoSync();
+    // Only a pending queue justifies close-time work: an unconditional flush
+    // would write a fresh commit (and a new remote timestamp) on every tab
+    // hide, manufacturing cross-device divergence for other devices to trip
+    // over. Matches the handleOnline gate.
+    if (this.autoPending) void this.flushAutoSync();
   };
 
   private scheduleAutoPush(

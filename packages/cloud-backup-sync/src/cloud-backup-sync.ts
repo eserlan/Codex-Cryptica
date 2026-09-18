@@ -408,9 +408,16 @@ async function readRemoteLastPushedAt(
     };
   }
   const body = (await response.json().catch(() => null)) as {
-    lastPushedAt?: string | null;
+    lastPushedAt?: unknown;
   } | null;
-  return { ok: true, value: body?.lastPushedAt ?? null };
+  // The timestamp is untrusted server JSON: only a string participates in
+  // the guard. Anything else degrades to "no timestamp" (first push wins /
+  // divergence pauses), never to a mis-compared overwrite.
+  const lastPushedAt = body?.lastPushedAt;
+  return {
+    ok: true,
+    value: typeof lastPushedAt === "string" ? lastPushedAt : null,
+  };
 }
 
 export async function getCloudBackupStatus(
