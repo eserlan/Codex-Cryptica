@@ -33,14 +33,25 @@
   };
 
   const progress = $derived(cloudBackupStore.uploadProgress);
+  const autoState = $derived(cloudBackupStore.autoState);
+  const AUTO_STATUS_LABEL: Record<string, string> = {
+    pending: "Changes pending…",
+    saving: "Saving…",
+    saved: "Saved to cloud",
+    offline: "Offline — changes will sync later",
+    retrying: "Sync failed — retrying…",
+    conflict: "Sync paused — another device updated this backup",
+  };
   /**
    * Media uploads one file at a time, so a big vault would otherwise sit on
-   * "Saving…" with nothing moving.
+   * "Saving…" with nothing moving. Automatic-sync states (#3189) take
+   * precedence over the persisted status once automation has run.
    */
   const statusText = $derived(
     progress && progress.total > 0
       ? `Saving ${progress.uploaded} of ${progress.total} files…`
-      : STATUS_LABEL[status],
+      : (autoState !== "idle" && AUTO_STATUS_LABEL[autoState]) ||
+          STATUS_LABEL[status],
   );
 
   const handleConsentKeydown = (event: KeyboardEvent) => {
@@ -251,8 +262,8 @@
       </h3>
       <p class="mt-1 text-sm text-theme-muted">
         Keep a copy of this vault in Codex Cryptica Cloud, so you can get it
-        back if you lose this device. Off unless you turn it on, and it only
-        uploads when you press Save.
+        back if you lose this device. Off unless you turn it on; while on, your
+        changes sync automatically a few seconds after editing settles.
       </p>
     </div>
 
@@ -282,16 +293,37 @@
     <div class="flex flex-col gap-2 border border-theme-border p-4">
       <p class="text-sm text-theme-muted">
         {#if lastPushed}
-          Last saved {lastPushed}. Press Save to cloud whenever you want to
-          update the stored copy.
+          Last saved {lastPushed}. Changes sync automatically while backup is on
+          — Save to cloud pushes immediately.
         {:else}
-          Not saved yet.
+          Not saved yet. Changes will sync automatically once the first save
+          completes.
         {/if}
       </p>
       {#if status === "error" && cloudBackupStore.errorMessage}
         <p class="text-sm text-red-400" role="alert">
           {cloudBackupStore.errorMessage}
         </p>
+      {/if}
+      {#if autoState === "conflict"}
+        <div class="border border-red-400/40 p-3">
+          <p class="text-sm text-red-400" role="alert">
+            {cloudBackupStore.errorMessage ??
+              "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
+          </p>
+          <p class="mt-1 text-sm text-theme-muted">
+            Keep editing safely: nothing will upload until you choose. To see
+            the cloud version, restore it into a new vault from the recovery key
+            below.
+          </p>
+          <button
+            type="button"
+            onclick={() => void cloudBackupStore.resolveConflictKeepMine()}
+            class="mt-2 bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90"
+          >
+            Keep my version
+          </button>
+        </div>
       {/if}
 
       {#if codeVisible && cloudBackupStore.recoveryKey}

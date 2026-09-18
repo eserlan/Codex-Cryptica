@@ -9,12 +9,14 @@ import {
   getCloudBackupOwnershipCode,
   formatRecoveryKey,
   listKnownCloudBackups,
+  planAssetUploads,
   type KnownCloudBackup,
   createMemoryStorage,
   type CloudBackupRuntime,
   type VaultBundlePayload,
 } from "@codex/cloud-backup-sync";
 import type { LocalCloudBackupRecord } from "schema";
+import { onlineStatus } from "./online.svelte";
 
 /**
  * Cloud Backup status store (spec 162, issue #2593).
@@ -23,22 +25,40 @@ import type { LocalCloudBackupRecord } from "schema";
  * What this owns is the app-side wiring — reading the record back on load,
  * mirroring status for Settings, and turning vault saves into pushes.
  *
- * **Backing up is a deliberate act.** Save and load are both explicit buttons,
- * mirroring how the Google Drive mirror already works: the user chooses when a
- * copy goes up and when one comes down. Nothing is uploaded on a timer, on a
- * save, or in the background.
+ * **Automatic background sync when enabled (#3189).** Enabling Cloud Save now
+ * implies continuous backup: durable local writes schedule a debounced push a
+ * few seconds after editing settles, offline changes wait for connectivity,
+ * and closing or hiding the tab flushes a final sync where practical. Manual
+ * "Save to cloud" remains as an explicit fallback that pushes immediately,
+ * unguarded.
  *
- * That is a change from the spec's original FR-018, which called for automatic
- * push-on-save on the stated grounds that Drive already worked that way. It
- * does not — Drive has explicit Save and Load buttons — and the intended
- * behaviour here was always the Drive model.
- *
- * **Nothing happens at all when backup is off.** No subscription, no request —
- * "off by default" has to be true of the machinery, not just the UI
+ * The earlier manual-only model ("backing up is a deliberate act") was
+ * reversed because an enabled-but-stale backup reads as protection that is
+ * not there. The deliberate act is now *enabling*; everything after that is
+ * automatic, and "off" still means absolutely nothing leaves the device
  * (FR-001, FR-003, SC-002).
+ *
+ * Conflict safety is best-effort client-side: an auto-push reads the remote
+ * state first and aborts — uploading nothing — when another device committed
+ * since our last push, preserving both versions for the user to reconcile.
+ * A true race still needs server revisions (follow-up, documented in #3189).
  */
 
 export type CloudBackupStatus = "off" | "idle" | "syncing" | "error";
+
+/**
+ * Ephemeral automatic-sync state (#3189), separate from the persisted
+ * `CloudBackupStatus`. Shown in Settings as: Saving… / Saved to cloud /
+ * Offline — changes will sync later / Sync failed — retrying, plus a
+ * conflict state that pauses automation until the user reconciles.
+ */
+export type CloudAutoSyncState =
+  "idle" | "pending" | "saving" | "saved" | "offline" | "retrying" | "conflict";
+
+/** Quiet period after editing settles before an auto-push (default 5s). */
+export const AUTO_SYNC_DEBOUNCE_MS = 5000;
+/** Wait before retrying a failed auto-push (default 30s). */
+export const AUTO_SYNC_RETRY_MS = 30000;
 
 export interface CloudBackupDeps {
   runtime: CloudBackupRuntime;
@@ -63,6 +83,10 @@ export interface CloudBackupDeps {
       mimeType: string,
     ) => Promise<void>;
   };
+  /** Quiet period before an auto-push; overridable in tests. */
+  debounceMs?: number;
+  /** Wait before retrying a failed auto-push; overridable in tests. */
+  retryMs?: number;
 }
 
 export class CloudBackupStore {
@@ -89,9 +113,21 @@ export class CloudBackupStore {
   uploadProgress = $state<{ uploaded: number; total: number } | null>(null);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
+  /** Ephemeral automatic-sync state (#3189); never persisted. */
+  autoState = $state<CloudAutoSyncState>("idle");
+  /**
+   * Remote timestamp that conflicted with our push, if any. Set only in the
+   * conflict state: automation stays paused until the user reconciles, and
+   * both versions are preserved (local untouched, remote untouched).
+   */
+  autoConflictRemoteAt = $state<string | null>(null);
 
   private deps: CloudBackupDeps | null = null;
   private pushing = false;
+  private autoPending = false;
+  private autoTimer: ReturnType<typeof setTimeout> | null = null;
+  private autoListenersAttached = false;
+  private hashCache: Record<string, string> = {};
 
   /** Wires the store up. Called once from app init with the real runtime. */
   configure(deps: CloudBackupDeps) {
@@ -107,9 +143,17 @@ export class CloudBackupStore {
     // Clear the previous vault's state, so the status on screen never keeps
     // describing the vault the user has left.
     this.errorMessage = null;
+    this.clearAutoTimer();
+    this.autoPending = false;
+    this.autoConflictRemoteAt = null;
+    this.autoState = "idle";
 
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
     this.applyRecord(record);
+    this.loadHashCache(vaultId);
+    // Catch-up: sync resumes when the user returns, guarded so a newer
+    // remote can never be overwritten by a stale return.
+    if (this.status !== "off") this.notifyLocalChange(vaultId);
   }
 
   private applyRecord(record: LocalCloudBackupRecord | null) {
@@ -154,6 +198,12 @@ export class CloudBackupStore {
 
   /** Stops future pushes. Local only — the remote copy is untouched (FR-009). */
   async disable(vaultId: string) {
+    // Disabling stops automation cold: no pending push may survive it, or
+    // "off" would stop meaning "nothing leaves the device".
+    this.clearAutoTimer();
+    this.autoPending = false;
+    this.autoConflictRemoteAt = null;
+    this.autoState = "idle";
     if (!this.deps) return;
     await disableCloudBackup(this.deps.runtime, vaultId);
     this.status = "off";
@@ -323,7 +373,9 @@ export class CloudBackupStore {
    *
    * Explicit — the user presses "Save to cloud". Never throws and never reports
    * success it did not have: a failure becomes a visible error state and the
-   * local vault is entirely unaffected (FR-011, FR-019).
+   * local vault is entirely unaffected (FR-011, FR-019). A successful manual
+   * save also satisfies pending autosync and explicitly resolves a conflict
+   * (the user chose to overwrite by pressing the button).
    */
   async backUpNow(): Promise<boolean> {
     if (!this.deps || this.pushing) return false;
@@ -333,32 +385,22 @@ export class CloudBackupStore {
     this.pushing = true;
     this.status = "syncing";
     try {
-      const payload = await this.deps.buildPayload(vaultId);
-      this.skippedAssets =
-        (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
-      this.skippedEntities =
-        (payload as { skippedEntities?: string[] }).skippedEntities ?? [];
-      const result = await pushVaultToCloudBackup(
-        this.deps.runtime,
-        vaultId,
-        payload,
-        (progress) => {
-          this.uploadProgress = progress;
-        },
-      );
-      if (!result.ok) {
+      const out = await this.pushSnapshot(vaultId, { guarded: false });
+      if (!out.ok) {
+        if (out.notEnabled) {
+          // Not enabled for this vault — nothing was sent.
+          this.status = "off";
+          return false;
+        }
         this.status = "error";
-        this.errorMessage = result.error;
-        return false;
-      }
-      if (!result.value) {
-        // Not enabled for this vault — nothing was sent.
-        this.status = "off";
+        this.errorMessage = out.error ?? "Cloud backup failed.";
         return false;
       }
       this.status = "idle";
       this.errorMessage = null;
-      this.lastPushedAt = result.value.lastPushedAt;
+      this.autoPending = false;
+      this.autoConflictRemoteAt = null;
+      if (this.autoState !== "idle") this.autoState = "saved";
       return true;
     } catch (error) {
       // Reading the vault can fail; the caller drives a button state off this.
@@ -369,12 +411,293 @@ export class CloudBackupStore {
     } finally {
       this.pushing = false;
       this.uploadProgress = null;
+      if (this.autoPending && !this.autoTimer) this.scheduleAutoPush();
     }
   }
 
   /** Releases the injected dependencies; used on teardown and in tests. */
   destroy() {
+    this.stopAutoSyncListeners();
+    this.clearAutoTimer();
     this.deps = null;
+  }
+
+  // ------------------------------------------------------------------
+  // Automatic background sync (#3189)
+  // ------------------------------------------------------------------
+
+  /**
+   * Called when a durable local write lands (wired once from app init via
+   * `onDurableVaultChange`). Schedules a debounced guarded push when backup
+   * is enabled; never uploads anything synchronously and never throws.
+   */
+  notifyLocalChange(vaultId?: string): void {
+    if (!this.deps) return;
+    const active = vaultId ?? this.deps.activeVaultId();
+    if (!active || this.status === "off") return;
+    // A conflict pauses automation until the user reconciles — further edits
+    // must not silently queue an overwrite.
+    if (this.autoState === "conflict") return;
+    this.autoPending = true;
+    this.autoState = onlineStatus.current ? "pending" : "offline";
+    this.scheduleAutoPush();
+  }
+
+  /**
+   * Attempts an immediate auto-push (lifecycle flushes, reconnects, tests).
+   * No-op when backup is off, conflict-paused, or already pushing (the
+   * in-flight push chains the pending work in its `finally`).
+   */
+  async flushAutoSync(): Promise<boolean> {
+    const vaultId = this.autoSyncVaultId();
+    if (!vaultId) return false;
+    if (!onlineStatus.current) {
+      return this.deferAutoSyncOffline();
+    }
+    if (this.pushing) {
+      return this.deferAutoSyncWhilePushing();
+    }
+    this.clearAutoTimer();
+    this.pushing = true;
+    this.autoState = "saving";
+    try {
+      return await this.completeAutoSync(vaultId);
+    } finally {
+      this.finishAutoSyncPush();
+    }
+  }
+
+  private autoSyncVaultId(): string | null {
+    if (!this.deps || this.autoState === "conflict") return null;
+    const vaultId = this.deps.activeVaultId();
+    return vaultId && this.status !== "off" ? vaultId : null;
+  }
+
+  private deferAutoSyncOffline(): false {
+    this.autoState = "offline";
+    this.autoPending = true;
+    return false;
+  }
+
+  private deferAutoSyncWhilePushing(): false {
+    this.autoPending = true;
+    if (this.autoState !== "saving") this.autoState = "pending";
+    return false;
+  }
+
+  private async completeAutoSync(vaultId: string): Promise<boolean> {
+    const out = await this.pushSnapshot(vaultId, { guarded: true });
+    if (out.ok) {
+      this.autoPending = false;
+      this.autoState = "saved";
+      this.status = "idle";
+      this.errorMessage = null;
+      return true;
+    }
+    if (out.conflict) {
+      this.autoPending = false;
+      this.autoState = "conflict";
+      this.autoConflictRemoteAt = out.remoteAt ?? null;
+      this.errorMessage = out.error ?? "Cloud backup failed.";
+      return false;
+    }
+    // Ordinary failure: local data is untouched; stay pending and retry
+    // with backoff. Offline flips to the offline state instead.
+    this.autoPending = true;
+    this.autoState = onlineStatus.current ? "retrying" : "offline";
+    this.errorMessage = out.error ?? "Cloud backup failed.";
+    this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+    return false;
+  }
+
+  private deferConflictRetry(error?: string): void {
+    this.autoPending = true;
+    this.autoState = "retrying";
+    this.errorMessage = error ?? "Cloud backup failed.";
+    this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+  }
+
+  private finishAutoSyncPush(): void {
+    this.pushing = false;
+    this.uploadProgress = null;
+    // Chain work that arrived mid-push — unless a retry timer is already
+    // armed (scheduling again would replace the backoff with the debounce).
+    if (this.autoPending && !this.autoTimer && this.autoState !== "conflict") {
+      this.scheduleAutoPush();
+    }
+  }
+
+  /**
+   * Conflict resolution: push the local vault over the remote ("keep mine").
+   * Explicit and unguarded — the user has seen both versions and chosen.
+   * Clears the conflict state on success.
+   */
+  async resolveConflictKeepMine(): Promise<boolean> {
+    if (!this.deps || this.autoState !== "conflict") return false;
+    const vaultId = this.deps.activeVaultId();
+    if (!vaultId || this.status === "off" || this.pushing) return false;
+    this.pushing = true;
+    this.autoState = "saving";
+    try {
+      const out = await this.pushSnapshot(vaultId, { guarded: false });
+      if (!out.ok) {
+        // The choice stands but the push failed: stay pending and retry with
+        // backoff, or "retrying" is a label for a retry that never comes.
+        this.deferConflictRetry(out.error);
+        return false;
+      }
+      this.autoConflictRemoteAt = null;
+      this.autoPending = false;
+      this.autoState = "saved";
+      this.status = "idle";
+      this.errorMessage = null;
+      return true;
+    } finally {
+      this.pushing = false;
+      this.uploadProgress = null;
+    }
+  }
+
+  /** Attaches online/visibility/close flush triggers. Idempotent. */
+  startAutoSyncListeners(): void {
+    if (this.autoListenersAttached || typeof window === "undefined") return;
+    this.autoListenersAttached = true;
+    window.addEventListener("online", this.handleOnline);
+    document.addEventListener("visibilitychange", this.handleVisibility);
+    // Best effort: the page may die mid-flight, which just leaves the
+    // pending flag set for the next startup catch-up.
+    window.addEventListener("pagehide", this.handlePageHide);
+  }
+
+  /** Detaches lifecycle triggers; used on teardown and in tests. */
+  stopAutoSyncListeners(): void {
+    if (!this.autoListenersAttached || typeof window === "undefined") return;
+    this.autoListenersAttached = false;
+    window.removeEventListener("online", this.handleOnline);
+    document.removeEventListener("visibilitychange", this.handleVisibility);
+    window.removeEventListener("pagehide", this.handlePageHide);
+  }
+
+  private handleOnline = (): void => {
+    if (this.autoPending) void this.flushAutoSync();
+  };
+
+  private handleVisibility = (): void => {
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "hidden" &&
+      this.autoPending
+    ) {
+      void this.flushAutoSync();
+    }
+  };
+
+  private handlePageHide = (): void => {
+    // Only a pending queue justifies close-time work: an unconditional flush
+    // would write a fresh commit (and a new remote timestamp) on every tab
+    // hide, manufacturing cross-device divergence for other devices to trip
+    // over. Matches the handleOnline gate.
+    if (this.autoPending) void this.flushAutoSync();
+  };
+
+  private scheduleAutoPush(
+    delayMs = this.deps?.debounceMs ?? AUTO_SYNC_DEBOUNCE_MS,
+  ): void {
+    this.clearAutoTimer();
+    this.autoTimer = setTimeout(() => {
+      this.autoTimer = null;
+      void this.flushAutoSync();
+    }, delayMs);
+  }
+
+  private clearAutoTimer(): void {
+    if (this.autoTimer) {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = null;
+    }
+  }
+
+  /**
+   * Shared snapshot push for manual and automatic paths. Manual callers pass
+   * `guarded: false` (explicit user act, current behaviour); automatic
+   * callers pass `guarded: true` (abort on remote divergence). Unchanged
+   * media bytes are skipped in both cases via the content-hash cache.
+   */
+  private async pushSnapshot(
+    vaultId: string,
+    opts: { guarded: boolean },
+  ): Promise<{
+    ok: boolean;
+    notEnabled?: boolean;
+    conflict?: boolean;
+    remoteAt?: string | null;
+    error?: string;
+  }> {
+    const deps = this.deps!;
+    const payload = await deps.buildPayload(vaultId);
+    this.skippedAssets =
+      (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
+    this.skippedEntities =
+      (payload as { skippedEntities?: string[] }).skippedEntities ?? [];
+    let skipAssetUploadIds: string[] = [];
+    let freshHashes: Record<string, string> = {};
+    try {
+      const plan = await planAssetUploads(payload.assets ?? [], this.hashCache);
+      skipAssetUploadIds = plan.skippedIds;
+      freshHashes = plan.hashes;
+    } catch {
+      // Hashing unavailable (no WebCrypto): upload everything, as before.
+    }
+    const result = await pushVaultToCloudBackup(
+      deps.runtime,
+      vaultId,
+      payload,
+      (progress) => {
+        this.uploadProgress = progress;
+      },
+      {
+        skipAssetUploadIds,
+        ...(opts.guarded ? { expectLastPushedAt: this.lastPushedAt } : {}),
+      },
+    );
+    if (!result.ok) {
+      return {
+        ok: false,
+        conflict: result.conflict,
+        remoteAt: result.remoteLastPushedAt,
+        error: result.error,
+      };
+    }
+    if (!result.value)
+      return { ok: false, notEnabled: true, error: "Cloud backup is off." };
+    this.hashCache = freshHashes;
+    this.saveHashCache(vaultId);
+    this.lastPushedAt = result.value.lastPushedAt;
+    return { ok: true };
+  }
+
+  private hashCacheKey(vaultId: string): string {
+    return `codex.cloud-backup-hashes.${vaultId}`;
+  }
+
+  private loadHashCache(vaultId: string): void {
+    try {
+      const raw = localStorage.getItem(this.hashCacheKey(vaultId));
+      this.hashCache = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch {
+      this.hashCache = {};
+    }
+  }
+
+  private saveHashCache(vaultId: string): void {
+    try {
+      localStorage.setItem(
+        this.hashCacheKey(vaultId),
+        JSON.stringify(this.hashCache),
+      );
+    } catch {
+      // Storage blocked: uploads just get more expensive, never broken.
+    }
   }
 }
 

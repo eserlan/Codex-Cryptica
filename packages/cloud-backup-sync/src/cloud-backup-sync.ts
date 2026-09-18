@@ -21,6 +21,7 @@ import {
 } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { formatRecoveryKey } from "./recovery-key";
+import { detectConflict } from "./auto-sync";
 
 export interface VaultBundlePayload {
   vaultTitle: string;
@@ -40,7 +41,19 @@ export interface UploadProgress {
 }
 
 export type CloudBackupOutcome<T> =
-  { ok: true; value: T } | { ok: false; error: string; status?: number };
+  | { ok: true; value: T }
+  | {
+      ok: false;
+      error: string;
+      status?: number;
+      /**
+       * Set on the conflict path (#3189): the remote changed since our last
+       * push, so nothing was uploaded. The caller must preserve local data
+       * and surface the conflict instead of retrying blindly.
+       */
+      conflict?: boolean;
+      remoteLastPushedAt?: string | null;
+    };
 
 function nowIso(runtime: CloudBackupRuntime): string {
   return (runtime.now?.() ?? new Date()).toISOString();
@@ -219,33 +232,46 @@ export async function enableCloudBackup(
  * A failed asset aborts before the commit, which leaves the previous snapshot
  * whole rather than half-replaced.
  */
+export interface SnapshotUploadOptions {
+  /**
+   * Asset ids whose bytes the server already holds (#3189 autosync): their
+   * PUT is skipped but they are still listed in the commit, so nothing is
+   * pruned. Skipped assets count as uploaded for progress purposes.
+   */
+  skipAssetUploadIds?: ReadonlySet<string> | readonly string[];
+}
+
 async function uploadSnapshot(
   runtime: CloudBackupRuntime,
   record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
   payload: VaultBundlePayload,
   onProgress?: (progress: UploadProgress) => void,
+  options?: SnapshotUploadOptions,
 ): Promise<CloudBackupOutcome<CloudBackupManifest>> {
   const assets = payload.assets ?? [];
   const auth = `Bearer ${record.ownerCode}`;
+  const skip = new Set(options?.skipAssetUploadIds ?? []);
 
   for (const [index, asset] of assets.entries()) {
-    const response = await runtime.fetch(
-      `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": asset.mimeType || "application/octet-stream",
-          Authorization: auth,
+    if (!skip.has(asset.assetId)) {
+      const response = await runtime.fetch(
+        `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": asset.mimeType || "application/octet-stream",
+            Authorization: auth,
+          },
+          body: asset.bytes,
         },
-        body: asset.bytes,
-      },
-    );
-    if (!response.ok) {
-      return {
-        ok: false,
-        error: await errorFrom(response),
-        status: response.status,
-      };
+      );
+      if (!response.ok) {
+        return {
+          ok: false,
+          error: await errorFrom(response),
+          status: response.status,
+        };
+      }
     }
     onProgress?.({ uploaded: index + 1, total: assets.length });
   }
@@ -288,18 +314,56 @@ async function uploadSnapshot(
   return { ok: true, value: manifest };
 }
 
+export interface PushVaultOptions extends SnapshotUploadOptions {
+  /**
+   * Optimistic-concurrency guard (#3189): when set, the remote state is read
+   * first and the push aborts — uploading nothing — if the remote
+   * lastPushedAt differs, meaning another device committed since. Best
+   * effort only: a true race needs server revisions (follow-up).
+   */
+  expectLastPushedAt?: string | null;
+}
+
 export async function pushVaultToCloudBackup(
   runtime: CloudBackupRuntime,
   vaultId: string,
   payload: VaultBundlePayload,
   onProgress?: (progress: UploadProgress) => void,
+  options?: PushVaultOptions,
 ): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
   const record = await readRecord(runtime, vaultId);
   if (!record || !record.enabled) return { ok: true, value: null };
 
+  if (options?.expectLastPushedAt !== undefined) {
+    const remote = await readRemoteLastPushedAt(runtime, record);
+    if (!remote.ok) {
+      await runtime.storage.write(vaultId, { ...record, status: "error" });
+      return remote;
+    }
+    // Any divergence aborts: a newer remote is a conflict, while an older
+    // or missing remote means our record is stale and must not overwrite.
+    if (remote.value !== options.expectLastPushedAt) {
+      await runtime.storage.write(vaultId, { ...record, status: "error" });
+      const newerRemote = detectConflict(
+        options.expectLastPushedAt,
+        remote.value,
+      );
+      return {
+        ok: false,
+        error: newerRemote
+          ? "Another device updated this backup. Automatic sync paused so nothing is overwritten."
+          : "The cloud backup changed unexpectedly. Automatic sync paused.",
+        conflict: true,
+        remoteLastPushedAt: remote.value,
+      };
+    }
+  }
+
   await runtime.storage.write(vaultId, { ...record, status: "syncing" });
 
-  const result = await uploadSnapshot(runtime, record, payload, onProgress);
+  const result = await uploadSnapshot(runtime, record, payload, onProgress, {
+    skipAssetUploadIds: options?.skipAssetUploadIds,
+  });
   if (!result.ok) {
     // Visible failure, never a silent stale success (FR-011). The local save
     // has already happened and is untouched by this.
@@ -317,6 +381,45 @@ export async function pushVaultToCloudBackup(
   return { ok: true, value: result.value };
 }
 
+/**
+ * Reads just the remote lastPushedAt for the optimistic-concurrency guard.
+ * Returns null (not an error) when the remote has no timestamp yet.
+ */
+async function fetchBackupStatus(
+  runtime: CloudBackupRuntime,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+): Promise<Awaited<ReturnType<CloudBackupRuntime["fetch"]>>> {
+  return runtime.fetch(
+    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
+    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
+  );
+}
+
+async function readRemoteLastPushedAt(
+  runtime: CloudBackupRuntime,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+): Promise<CloudBackupOutcome<string | null>> {
+  const response = await fetchBackupStatus(runtime, record);
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: await errorFrom(response),
+      status: response.status,
+    };
+  }
+  const body = (await response.json().catch(() => null)) as {
+    lastPushedAt?: unknown;
+  } | null;
+  // The timestamp is untrusted server JSON: only a string participates in
+  // the guard. Anything else degrades to "no timestamp" (first push wins /
+  // divergence pauses), never to a mis-compared overwrite.
+  const lastPushedAt = body?.lastPushedAt;
+  return {
+    ok: true,
+    value: typeof lastPushedAt === "string" ? lastPushedAt : null,
+  };
+}
+
 export async function getCloudBackupStatus(
   runtime: CloudBackupRuntime,
   vaultId: string,
@@ -331,10 +434,7 @@ export async function getCloudBackupStatus(
   if (!record)
     return { ok: false, error: "Cloud backup is not set up for this vault." };
 
-  const response = await runtime.fetch(
-    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
-    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
-  );
+  const response = await fetchBackupStatus(runtime, record);
   if (!response.ok) {
     return {
       ok: false,

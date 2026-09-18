@@ -110,6 +110,38 @@ export async function updateLastInternalChange(id: string): Promise<void> {
 
     // Trigger debounced refresh
     triggerRefresh();
+    notifyDurableChangeListeners(id);
+  }
+}
+
+export type DurableVaultChangeListener = (vaultId: string) => void;
+
+const durableChangeListeners = new Set<DurableVaultChangeListener>();
+
+/**
+ * Subscribes to durable vault writes (#3189). Every caller of
+ * `updateLastInternalChange` — entity, map, and canvas persistence — funnels
+ * through here, so this is the single observation point for automatic cloud
+ * sync. Listeners run fire-and-forget after the write completes; a throwing
+ * listener is isolated and can never break persistence. Returns an
+ * unsubscribe function.
+ */
+export function onDurableVaultChange(
+  listener: DurableVaultChangeListener,
+): () => void {
+  durableChangeListeners.add(listener);
+  return () => {
+    durableChangeListeners.delete(listener);
+  };
+}
+
+function notifyDurableChangeListeners(vaultId: string): void {
+  for (const listener of durableChangeListeners) {
+    try {
+      listener(vaultId);
+    } catch (error) {
+      console.error("[vault-registry] Durable-change listener failed", error);
+    }
   }
 }
 

@@ -39,6 +39,7 @@
     "@codex/ai-engine": "workspace:*",
     "@codex/audio-engine": "workspace:*",
     "@codex/canvas-engine": "workspace:*",
+    "@codex/cloud-backup-sync": "workspace:*",
     "@codex/content-packs": "workspace:*",
     "@codex/entity-shelf": "workspace:*",
     "@codex/events": "workspace:*",
