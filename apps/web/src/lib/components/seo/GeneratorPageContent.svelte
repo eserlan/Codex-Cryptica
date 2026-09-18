@@ -130,6 +130,10 @@
     resolveInitialActiveTheme,
     resolveSupportedHubGenre,
   } from "./generator-page-hub-state";
+  import {
+    createKnownGenreThemeChangeHandler,
+    createMappedThemeChangeHandler,
+  } from "./generator-page-form-theme";
 
   let {
     slug,
@@ -701,6 +705,40 @@
   );
   let lastSlug = $state(_initialSlug);
 
+  const setActiveTheme = (theme: string) => (activeTheme = theme);
+  const handlePersonalityGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    personalityConfig.genres,
+  );
+  const handleRumourGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    rumourConfig.genres,
+  );
+  const handlePuzzleGenreChange = createKnownGenreThemeChangeHandler(
+    setActiveTheme,
+    puzzleConfig.genres,
+  );
+  const handleShipGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapShipGenreToTheme,
+  );
+  const handleWorldGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapWorldGenreToTheme,
+  );
+  const handleStarSystemGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapStarSystemGenreToTheme,
+  );
+  const handleAlienRaceGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    mapAlienRaceGenreToTheme,
+  );
+  const handleCreatureGenreChange = createMappedThemeChangeHandler(
+    setActiveTheme,
+    (genre) => genre,
+  );
+
   $effect(() => {
     if (slug !== lastSlug) {
       lastSlug = slug;
@@ -1061,13 +1099,7 @@
         bind:relationshipContext={personality.relationshipContext}
         bind:concept={personality.concept}
         bind:campaignContext={personality.campaignContext}
-        onGenreChange={(genre) => {
-          // Custom genre text still flavors the output, but only established
-          // CC themes can select a visual skin.
-          if ((personalityConfig.genres as readonly string[]).includes(genre)) {
-            activeTheme = genre;
-          }
-        }}
+        onGenreChange={handlePersonalityGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "rumour"}
@@ -1078,13 +1110,7 @@
         bind:subjectFocus={rumour.subjectFocus}
         bind:locationContext={rumour.locationContext}
         bind:campaignContext={rumour.campaignContext}
-        onGenreChange={(genre) => {
-          // Custom genre text still flavors the output, but only established
-          // CC themes can select a visual skin.
-          if ((rumourConfig.genres as readonly string[]).includes(genre)) {
-            activeTheme = genre;
-          }
-        }}
+        onGenreChange={handleRumourGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "encounter"}
@@ -1111,13 +1137,7 @@
         bind:system={puzzle.system}
         bind:downstreamConsequence={puzzle.downstreamConsequence}
         bind:campaignContext={puzzle.campaignContext}
-        onGenreChange={(genre) => {
-          // Custom genre text still flavors the output, but only established
-          // CC themes can select a visual skin.
-          if ((puzzleConfig.genres as readonly string[]).includes(genre)) {
-            activeTheme = genre;
-          }
-        }}
+        onGenreChange={handlePuzzleGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "council-vote"}
@@ -1270,10 +1290,7 @@
         bind:condition={ship.condition}
         bind:tone={ship.tone}
         bind:campaignContext={ship.campaignContext}
-        onGenreChange={(genre) => {
-          const mappedTheme = mapShipGenreToTheme(genre);
-          if (mappedTheme) activeTheme = mappedTheme;
-        }}
+        onGenreChange={handleShipGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "language-generator"}
@@ -1378,9 +1395,7 @@
         bind:campaignPressure={world.campaignPressure}
         bind:dominantFeature={world.dominantFeature}
         bind:campaignContext={world.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = mapWorldGenreToTheme(genre);
-        }}
+        onGenreChange={handleWorldGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "star-system"}
@@ -1391,9 +1406,7 @@
         bind:systemCharacter={starSystem.systemCharacter}
         bind:scientificRealism={starSystem.scientificRealism}
         bind:campaignContext={starSystem.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = mapStarSystemGenreToTheme(genre);
-        }}
+        onGenreChange={handleStarSystemGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "constellation"}
@@ -1417,9 +1430,7 @@
         bind:technologyLevel={alienRace.technologyLevel}
         bind:relationToOutsiders={alienRace.relationToOutsiders}
         bind:campaignContext={alienRace.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = mapAlienRaceGenreToTheme(genre);
-        }}
+        onGenreChange={handleAlienRaceGenreChange}
         onSurprise={trigger}
       />
     {:else if slug === "creature"}
@@ -1432,9 +1443,7 @@
         bind:habitat={creature.habitat}
         bind:ecologicalRole={creature.ecologicalRole}
         bind:campaignContext={creature.campaignContext}
-        onGenreChange={(genre) => {
-          activeTheme = genre;
-        }}
+        onGenreChange={handleCreatureGenreChange}
         onSurprise={trigger}
       />
     {/if}
