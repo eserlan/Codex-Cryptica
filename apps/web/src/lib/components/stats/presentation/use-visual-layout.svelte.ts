@@ -32,9 +32,18 @@ export function useVisualLayout({
   fieldDisplayOverrides: () => Record<string, { displayMode?: string; hideLabel?: boolean }>;
   onSourceUpdate: (newSource: string) => void;
 }) {
-  let visualCards = $state<VisualCard[]>(
-    parseCardsFromSource(source(), schemaFields())
-  );
+  // In tests, we need the initial parsed cards before sourceUpdate gets called, and we also need to allow the local builder methods to mutate this array temporarily before syncing back to source.
+  let localCards = $state<VisualCard[]>(parseCardsFromSource(source(), schemaFields()));
+
+  // To handle the visual builder resetting cleanly from an external source edit (like the code tab), we track the last synced source.
+  let lastSyncedSource = $state(source());
+
+  $effect(() => {
+    if (source() !== lastSyncedSource) {
+      localCards = parseCardsFromSource(source(), schemaFields());
+      lastSyncedSource = source();
+    }
+  });
 
   let draggedCardIndex = $state<number | null>(null);
 
@@ -45,71 +54,73 @@ export function useVisualLayout({
   >(null);
 
   function resetFromSource() {
-    visualCards = parseCardsFromSource(source(), schemaFields());
+    localCards = parseCardsFromSource(source(), schemaFields());
   }
 
   function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
-    onSourceUpdate(syncSourceFromVisualCards(cards, schemaFields(), fieldDisplayOverrides()));
+    const newSource = syncSourceFromVisualCards(cards, schemaFields(), fieldDisplayOverrides());
+    lastSyncedSource = newSource;
+    onSourceUpdate(newSource);
   }
 
   function addVisualCard(mode: "grid" | "table" = "grid") {
-    visualCards = addVisualCardOp(visualCards, mode);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = addVisualCardOp(localCards, mode);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function updateCardColumns(cardId: string, value: number) {
-    visualCards = updateCardColumnsOp(visualCards, cardId, value);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = updateCardColumnsOp(localCards, cardId, value);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function updateTableHeader(cardId: string, headerIndex: number, value: string) {
-    visualCards = updateTableHeaderOp(visualCards, cardId, headerIndex, value);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = updateTableHeaderOp(localCards, cardId, headerIndex, value);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function removeVisualCard(cardId: string) {
-    visualCards = removeVisualCardOp(visualCards, cardId);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = removeVisualCardOp(localCards, cardId);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function addRowToCard(cardId: string) {
-    visualCards = addRowToCardOp(visualCards, cardId);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = addRowToCardOp(localCards, cardId);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function removeRowFromCard(cardId: string, rowIndex: number) {
-    visualCards = removeRowFromCardOp(visualCards, cardId, rowIndex);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = removeRowFromCardOp(localCards, cardId, rowIndex);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function addFieldToCardRow(cardId: string, rowIndex: number, fieldId: string) {
-    visualCards = addFieldToCardRowOp(visualCards, cardId, rowIndex, fieldId);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = addFieldToCardRowOp(localCards, cardId, rowIndex, fieldId);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function addValueToTableRow(cardId: string, rowIndex: number) {
-    visualCards = addValueToTableRowOp(visualCards, cardId, rowIndex);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = addValueToTableRowOp(localCards, cardId, rowIndex);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function updateValueInTableRow(cardId: string, rowIndex: number, cellIndex: number, value: string) {
-    visualCards = updateValueInTableRowOp(visualCards, cardId, rowIndex, cellIndex, value);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = updateValueInTableRowOp(localCards, cardId, rowIndex, cellIndex, value);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function removeValueFromTableRow(cardId: string, rowIndex: number, cellIndex: number) {
-    visualCards = removeValueFromTableRowOp(visualCards, cardId, rowIndex, cellIndex);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = removeValueFromTableRowOp(localCards, cardId, rowIndex, cellIndex);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function removeFieldFromCardRow(cardId: string, rowIndex: number, fieldId: string) {
-    visualCards = removeFieldFromCardRowOp(visualCards, cardId, rowIndex, fieldId);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = removeFieldFromCardRowOp(localCards, cardId, rowIndex, fieldId);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function moveCard(index: number, direction: -1 | 1) {
-    visualCards = moveCardOp(visualCards, index, direction);
-    handleSyncSourceFromVisualCards(visualCards);
+    localCards = moveCardOp(localCards, index, direction);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function handleCardDragStart(index: number) {
@@ -119,9 +130,9 @@ export function useVisualLayout({
   function handleCardDragOver(e: DragEvent, index: number) {
     if (draggedCardIndex === null || draggedCardIndex === index) return;
     e.preventDefault();
-    visualCards = reorderCardsOp(visualCards, draggedCardIndex, index);
+    localCards = reorderCardsOp(localCards, draggedCardIndex, index);
     draggedCardIndex = index;
-    handleSyncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   function handleCardDragEnd() {
@@ -153,19 +164,19 @@ export function useVisualLayout({
     const { cardId: srcCardId, rowIndex: srcRowIndex, fieldId } = draggedField;
     draggedField = null;
 
-    visualCards = moveFieldBetweenRowsOp(
-      visualCards,
+    localCards = moveFieldBetweenRowsOp(
+      localCards,
       srcCardId,
       srcRowIndex,
       fieldId,
       targetCardId,
       targetRowIndex,
     );
-    handleSyncSourceFromVisualCards(visualCards);
+    handleSyncSourceFromVisualCards(localCards);
   }
 
   return {
-    get visualCards() { return visualCards; },
+    get visualCards() { return localCards; },
     get draggedCardIndex() { return draggedCardIndex; },
     get draggedField() { return draggedField; },
     resetFromSource,
