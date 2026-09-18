@@ -213,5 +213,6 @@
 **Action:** Inject `idGenerator` via a dependencies object, falling back to `systemIdGenerator.uuid` from `@codex/runtime` for a sensible default.
 
 ## $(date +%Y-%m-%d) - DI on Importers
+
 **Learning:** Replaced a hard-coded infrastructure dependency (`crypto.randomUUID()`) inside `OracleAnalyzer` with an injected `IdGenerator`. By providing a default argument (`systemIdGenerator`), the refactoring was achieved safely, keeping production behavior the same.
 **Action:** Always verify if a dependency can be injected, especially those touching time, ids and browser-only globals. Make sure to define it as a class property to avoid TS compilation errors.
