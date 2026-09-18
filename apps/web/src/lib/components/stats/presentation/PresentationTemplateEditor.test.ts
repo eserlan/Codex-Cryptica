@@ -470,4 +470,33 @@ describe("PresentationTemplateEditor", () => {
       screen.getAllByDisplayValue(/Section \d+/).length,
     ).toBeGreaterThanOrEqual(1);
   });
+
+  it("resynchronizes the visual builder after valid and invalid code edits", async () => {
+    render(PresentationTemplateEditor, {
+      schema,
+      template: {
+        ...builtIn,
+        id: "presentation-code-edit",
+        isBuiltIn: false,
+        source: ":::card\n[hp]\n:::",
+      },
+    });
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-tab-code"));
+    const textarea = screen.getByTestId("presentation-editor-source");
+    await fireEvent.input(textarea, {
+      target: { value: "### Vitality\n\n:::card\n[hp]\n:::" },
+    });
+    await fireEvent.click(screen.getByTestId("presentation-editor-tab-visual"));
+
+    expect(screen.getByDisplayValue("Vitality")).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-tab-code"));
+    await fireEvent.input(textarea, { target: { value: ":::invalid" } });
+    await fireEvent.click(screen.getByTestId("presentation-editor-tab-visual"));
+
+    expect(screen.queryByDisplayValue("Vitality")).toBeNull();
+    await fireEvent.click(screen.getByTestId("presentation-editor-add-card"));
+    expect(screen.getByDisplayValue("Section 1")).toBeTruthy();
+  });
 });

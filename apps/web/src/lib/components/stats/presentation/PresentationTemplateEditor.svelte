@@ -648,11 +648,14 @@
                   Drag fields into any card row. You can reuse a field multiple
                   times!
                 </p>
-                <div class="flex flex-col gap-1.5 mt-1">
+                <div
+                  role="list"
+                  aria-label="Available stat sheet fields"
+                  class="flex flex-col gap-1.5 mt-1"
+                >
                   {#each schema?.fields?.filter((f) => f.type !== "heading") ?? [] as f (f.id)}
                     <div
-                      role="button"
-                      tabindex="0"
+                      role="listitem"
                       draggable="true"
                       ondragstart={(e) =>
                         visualLayout.handleSidebarFieldDragStart(e, f.id)}
@@ -676,12 +679,13 @@
 
               <!-- Main Canvas: Section Cards & Rows -->
               <div
+                role="list"
+                aria-label="Visual layout sections"
                 class="flex flex-1 flex-col gap-3 overflow-y-auto rounded border border-theme-border bg-theme-bg/30 p-2"
               >
                 {#each visualLayout.visualCards as card, idx (card.id)}
                   <div
-                    role="button"
-                    tabindex="0"
+                    role="listitem"
                     draggable="true"
                     ondragstart={() => visualLayout.handleCardDragStart(idx)}
                     ondragover={(e) => visualLayout.handleCardDragOver(e, idx)}
@@ -817,8 +821,8 @@
                             >Row {rIdx + 1}</span
                           >
                           <div
-                            role="list"
-                            tabindex="-1"
+                            role="group"
+                            aria-label={`Drop fields into row ${rIdx + 1} of ${card.title || (card.mode === "table" ? "table" : "section")}`}
                             class="flex flex-1 flex-wrap items-center gap-1.5 min-h-[36px] rounded border border-dashed border-theme-border/60 bg-theme-bg/40 p-1.5 transition-colors"
                             ondragover={(e) => e.preventDefault()}
                             ondrop={(e) =>
