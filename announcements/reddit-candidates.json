@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789723051,
+  "updated_at": 1789728443,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -30,6 +30,16 @@
       "source_id": "35012185144",
       "status": "approved",
       "created_at": 1789723051
+    },
+    {
+      "id": "reddit-35336173337-cloud-save-now-pushes-itself-in-the-back",
+      "title": "Cloud Save now pushes itself in the background",
+      "body": "I kept closing a tab after a late session and realizing I never hit Save to Cloud. The vault was fine locally, but the backup was a day behind.\n\nWhen Cloud Save is enabled, vault changes now push automatically in the background. I built it to trigger on going online and on tab hide, so the normal way you leave the app is what saves it.\n\nYou can enable it in Settings and keep working the way you already do:\nhttps://codexcryptica.com/\n\nIt will:\n- push when you come back online or hide the tab, not on a timer\n- skip re-uploading unchanged assets by hash so big image vaults do not re-upload everything\n- keep a best-effort conflict guard so a stale tab does not quietly overwrite newer work\n- fall back to your manual Save when you want an explicit checkpoint\n\nThe tradeoff is that automatic means less explicit control. If you do a big lore rewrite you might want to pause and check the backup, automatic will still push the intermediate state.\n\nDo you prefer backups you never have to think about, or do you want a manual gate for big rewrites?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/sync.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35336173337 -->",
+      "url": "https://codexcryptica.com/help/gdrive-cloud-sync",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/sync.png",
+      "source_id": "35336173337",
+      "status": "approved",
+      "created_at": 1789728443
     }
   ]
 }
