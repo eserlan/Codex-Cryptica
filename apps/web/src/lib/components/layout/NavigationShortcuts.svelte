@@ -86,38 +86,30 @@
 
   const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
 
-  type BeforeNavigateNavigation = Parameters<
-    Parameters<typeof beforeNavigate>[0]
-  >[0];
-
-  function rememberLastAppPath(navigation: BeforeNavigateNavigation) {
-    const fromUrl = navigation.from?.url;
+  function trackOriginPath(fromUrl: URL | null | undefined) {
     if (fromUrl && !ENTITY_ROUTE.test(fromUrl.pathname)) {
       modalUIStore.lastAppPath = `${fromUrl.pathname}${fromUrl.search || ""}`;
     }
   }
 
-  function handlePopstateNavigation(navigation: BeforeNavigateNavigation) {
-    if (navigation.type === "popstate" && navigation.delta !== undefined) {
-      if (navigation.delta < 0) {
-        const newId = navigationHistoryStore.back(isValidEntity);
-        if (newId) {
-          navigation.cancel();
-          applyNewEntity(newId);
-        }
-      } else if (navigation.delta > 0) {
-        const newId = navigationHistoryStore.forward(isValidEntity);
-        if (newId) {
-          navigation.cancel();
-          applyNewEntity(newId);
-        }
-      }
+  function handleHistoryPop(delta: number, cancel: () => void) {
+    const newId =
+      delta < 0
+        ? navigationHistoryStore.back(isValidEntity)
+        : navigationHistoryStore.forward(isValidEntity);
+
+    if (newId) {
+      cancel();
+      applyNewEntity(newId);
     }
   }
 
   beforeNavigate((navigation) => {
-    rememberLastAppPath(navigation);
-    handlePopstateNavigation(navigation);
+    trackOriginPath(navigation.from?.url);
+
+    if (navigation.type === "popstate" && navigation.delta !== undefined) {
+      handleHistoryPop(navigation.delta, () => navigation.cancel());
+    }
   });
 </script>
 
