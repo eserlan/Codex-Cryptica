@@ -5,28 +5,9 @@
     type StatSheetField,
     type PresentationTemplate,
   } from "schema";
-  import {
-    type VisualCard,
-    getUnusedFields,
-    parseCardsFromSource,
-  } from "./visual-card-parser";
-  import {
-    addVisualCard as addVisualCardOp,
-    updateCardColumns as updateCardColumnsOp,
-    updateTableHeader as updateTableHeaderOp,
-    removeVisualCard as removeVisualCardOp,
-    addRowToCard as addRowToCardOp,
-    removeRowFromCard as removeRowFromCardOp,
-    addFieldToCardRow as addFieldToCardRowOp,
-    removeFieldFromCardRow as removeFieldFromCardRowOp,
-    addValueToTableRow as addValueToTableRowOp,
-    updateValueInTableRow as updateValueInTableRowOp,
-    removeValueFromTableRow as removeValueFromTableRowOp,
-    moveCard as moveCardOp,
-    reorderCards as reorderCardsOp,
-    moveFieldBetweenRows as moveFieldBetweenRowsOp,
-  } from "./visual-card-operations";
-  import { syncSourceFromVisualCards } from "./visual-card-serializer";
+  import { getUnusedFields } from "./visual-card-parser";
+  // We accidentally lost use-visual-layout during a git checkout earlier because it wasn't tracked.
+import { useVisualLayout } from "./use-visual-layout.svelte";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
@@ -101,181 +82,12 @@
 
   // Visual layout builder state derived from AST or built interactively
 
-  let visualCards = $state<VisualCard[]>(
-    parseCardsFromSource(source, schema?.fields),
-  );
-
-  function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
-    source = syncSourceFromVisualCards(
-      cards,
-      schema?.fields ?? [],
-      fieldDisplayOverrides,
-    );
-  }
-
-  function addVisualCard(mode: "grid" | "table" = "grid") {
-    visualCards = addVisualCardOp(visualCards, mode);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function updateCardColumns(cardId: string, value: number) {
-    visualCards = updateCardColumnsOp(visualCards, cardId, value);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function updateTableHeader(
-    cardId: string,
-    headerIndex: number,
-    value: string,
-  ) {
-    visualCards = updateTableHeaderOp(visualCards, cardId, headerIndex, value);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function removeVisualCard(cardId: string) {
-    visualCards = removeVisualCardOp(visualCards, cardId);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function addRowToCard(cardId: string) {
-    visualCards = addRowToCardOp(visualCards, cardId);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function removeRowFromCard(cardId: string, rowIndex: number) {
-    visualCards = removeRowFromCardOp(visualCards, cardId, rowIndex);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function addFieldToCardRow(
-    cardId: string,
-    rowIndex: number,
-    fieldId: string,
-  ) {
-    visualCards = addFieldToCardRowOp(visualCards, cardId, rowIndex, fieldId);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function addValueToTableRow(cardId: string, rowIndex: number) {
-    visualCards = addValueToTableRowOp(visualCards, cardId, rowIndex);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function updateValueInTableRow(
-    cardId: string,
-    rowIndex: number,
-    cellIndex: number,
-    value: string,
-  ) {
-    visualCards = updateValueInTableRowOp(
-      visualCards,
-      cardId,
-      rowIndex,
-      cellIndex,
-      value,
-    );
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function removeValueFromTableRow(
-    cardId: string,
-    rowIndex: number,
-    cellIndex: number,
-  ) {
-    visualCards = removeValueFromTableRowOp(
-      visualCards,
-      cardId,
-      rowIndex,
-      cellIndex,
-    );
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function removeFieldFromCardRow(
-    cardId: string,
-    rowIndex: number,
-    fieldId: string,
-  ) {
-    visualCards = removeFieldFromCardRowOp(
-      visualCards,
-      cardId,
-      rowIndex,
-      fieldId,
-    );
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  function moveCard(index: number, direction: -1 | 1) {
-    visualCards = moveCardOp(visualCards, index, direction);
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-
-  let draggedCardIndex = $state<number | null>(null);
-
-  function handleCardDragStart(index: number) {
-    draggedCardIndex = index;
-  }
-  function handleCardDragOver(e: DragEvent, index: number) {
-    if (draggedCardIndex === null || draggedCardIndex === index) return;
-    e.preventDefault();
-    visualCards = reorderCardsOp(visualCards, draggedCardIndex, index);
-    draggedCardIndex = index;
-    handleSyncSourceFromVisualCards(visualCards);
-  }
-  function handleCardDragEnd() {
-    draggedCardIndex = null;
-  }
-
-  let draggedField = $state<
-    | { type: "move"; cardId: string; rowIndex: number; fieldId: string }
-    | { type: "sidebar"; fieldId: string }
-    | null
-  >(null);
-
-  function handleFieldDragStart(
-    e: DragEvent,
-    cardId: string,
-    rowIndex: number,
-    fieldId: string,
-  ) {
-    e.stopPropagation();
-    draggedField = { type: "move", cardId, rowIndex, fieldId };
-  }
-
-  function handleSidebarFieldDragStart(e: DragEvent, fieldId: string) {
-    e.stopPropagation();
-    draggedField = { type: "sidebar", fieldId };
-  }
-
-  function handleFieldDropRow(
-    e: DragEvent,
-    targetCardId: string,
-    targetRowIndex: number,
-  ) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!draggedField) return;
-
-    if (draggedField.type === "sidebar") {
-      const fieldId = draggedField.fieldId;
-      draggedField = null;
-      addFieldToCardRow(targetCardId, targetRowIndex, fieldId);
-      return;
-    }
-
-    const { cardId: srcCardId, rowIndex: srcRowIndex, fieldId } = draggedField;
-    draggedField = null;
-
-    visualCards = moveFieldBetweenRowsOp(
-      visualCards,
-      srcCardId,
-      srcRowIndex,
-      fieldId,
-      targetCardId,
-      targetRowIndex,
-    );
-    handleSyncSourceFromVisualCards(visualCards);
-  }
+  let visualLayout = useVisualLayout({
+    source: () => source,
+    schemaFields: () => schema.fields,
+    fieldDisplayOverrides: () => fieldDisplayOverrides,
+    onSourceUpdate: (newSource: string) => { source = newSource; },
+  });
   let isSaving = $state(false);
   let saveError = $state("");
   let showAutocomplete = $state(false);
@@ -285,7 +97,7 @@
 
   // Reconstructs per-field overrides (hide-label, non-default display mode)
   // from the raw saved source so reopening the visual editor doesn't start
-  // from a blank slate — handleSyncSourceFromVisualCards() regenerates the whole
+  // from a blank slate — visualLayout.handleSyncSourceFromVisualCards() regenerates the whole
   // template from this map, so a stale/empty seed silently drops previously
   // saved overrides on the next visual edit.
   function deriveFieldDisplayOverrides(
@@ -315,6 +127,7 @@
     return overrides;
   }
 
+  // svelte-ignore state_referenced_locally
   let fieldDisplayOverrides = $state<
     Record<string, { displayMode?: string; hideLabel?: boolean }>
   >(deriveFieldDisplayOverrides(source, schema.fields));
@@ -370,7 +183,7 @@
       ...fieldDisplayOverrides[fieldId],
       displayMode,
     };
-    handleSyncSourceFromVisualCards(visualCards);
+    visualLayout.handleSyncSourceFromVisualCards(visualLayout.visualCards);
     closeChipContextMenu();
   }
 
@@ -380,7 +193,7 @@
       ...fieldDisplayOverrides[fieldId],
       hideLabel: !current,
     };
-    handleSyncSourceFromVisualCards(visualCards);
+    visualLayout.handleSyncSourceFromVisualCards(visualLayout.visualCards);
     closeChipContextMenu();
   }
 
@@ -682,7 +495,7 @@
                   : "rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
                 onclick={() => {
                   if (editorMode !== "visual") {
-                    visualCards = parseCardsFromSource(source, schema?.fields);
+                    visualLayout.resetFromSource();
                     fieldDisplayOverrides = deriveFieldDisplayOverrides(
                       source,
                       schema.fields,
@@ -837,8 +650,10 @@
                 <div class="flex flex-col gap-1.5 mt-1">
                   {#each schema?.fields?.filter((f) => f.type !== "heading") ?? [] as f (f.id)}
                     <div
-                      draggable="true"
-                      ondragstart={(e) => handleSidebarFieldDragStart(e, f.id)}
+                                role="button"
+                                tabindex="0"
+                                draggable="true"
+                      ondragstart={(e) => visualLayout.handleSidebarFieldDragStart(e, f.id)}
                       class="flex items-center justify-between gap-1 rounded border border-theme-border/70 bg-theme-bg px-2 py-1.5 text-xs text-theme-text font-medium cursor-grab active:cursor-grabbing hover:border-theme-primary/80 hover:bg-theme-primary/5 transition-all shadow-xs"
                     >
                       <div class="flex items-center gap-1.5 min-w-0">
@@ -861,12 +676,14 @@
               <div
                 class="flex flex-1 flex-col gap-3 overflow-y-auto rounded border border-theme-border bg-theme-bg/30 p-2"
               >
-                {#each visualCards as card, idx (card.id)}
+                {#each visualLayout.visualCards as card, idx (card.id)}
                   <div
-                    draggable="true"
-                    ondragstart={() => handleCardDragStart(idx)}
-                    ondragover={(e) => handleCardDragOver(e, idx)}
-                    ondragend={handleCardDragEnd}
+                                role="button"
+                                tabindex="0"
+                                draggable="true"
+                    ondragstart={() => visualLayout.handleCardDragStart(idx)}
+                    ondragover={(e) => visualLayout.handleCardDragOver(e, idx)}
+                    ondragend={visualLayout.handleCardDragEnd}
                     class="flex flex-col gap-2 rounded border border-theme-border bg-theme-surface p-2.5 shadow-sm transition-shadow cursor-grab active:cursor-grabbing hover:border-theme-primary/50"
                   >
                     <div class="flex items-center justify-between gap-2">
@@ -901,7 +718,7 @@
                             : "Section Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
-                            handleSyncSourceFromVisualCards(visualCards);
+                            visualLayout.handleSyncSourceFromVisualCards(visualLayout.visualCards);
                           }}
                         />
                       </div>
@@ -920,7 +737,7 @@
                             class="w-12 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
                             value={card.columns}
                             oninput={(event) => {
-                              updateCardColumns(
+                              visualLayout.updateCardColumns(
                                 card.id,
                                 Number(
                                   (event.target as HTMLInputElement).value,
@@ -933,7 +750,7 @@
                           type="button"
                           class="rounded px-1 text-xs text-theme-muted hover:text-theme-text"
                           disabled={idx === 0}
-                          onclick={() => moveCard(idx, -1)}
+                          onclick={() => visualLayout.moveCard(idx, -1)}
                           title="Move Up"
                         >
                           ▲
@@ -941,8 +758,8 @@
                         <button
                           type="button"
                           class="rounded px-1 text-xs text-theme-muted hover:text-theme-text"
-                          disabled={idx === visualCards.length - 1}
-                          onclick={() => moveCard(idx, 1)}
+                          disabled={idx === visualLayout.visualCards.length - 1}
+                          onclick={() => visualLayout.moveCard(idx, 1)}
                           title="Move Down"
                         >
                           ▼
@@ -950,7 +767,7 @@
                         <button
                           type="button"
                           class="rounded px-1 text-xs text-red-400 hover:text-red-300"
-                          onclick={() => removeVisualCard(card.id)}
+                          onclick={() => visualLayout.removeVisualCard(card.id)}
                           title="Remove Card"
                         >
                           ✕
@@ -975,7 +792,7 @@
                             aria-label={`Header ${headerIndex + 1} for ${card.title || "table"}`}
                             placeholder={`Column ${headerIndex + 1}`}
                             oninput={(event) =>
-                              updateTableHeader(
+                              visualLayout.updateTableHeader(
                                 card.id,
                                 headerIndex,
                                 (event.target as HTMLInputElement).value,
@@ -996,9 +813,11 @@
                             >Row {rIdx + 1}</span
                           >
                           <div
-                            class="flex flex-1 flex-wrap items-center gap-1.5 min-h-[36px] rounded border border-dashed border-theme-border/60 bg-theme-bg/40 p-1.5 transition-colors"
-                            ondragover={(e) => e.preventDefault()}
-                            ondrop={(e) => handleFieldDropRow(e, card.id, rIdx)}
+                              role="list"
+                              tabindex="-1"
+                              class="flex flex-1 flex-wrap items-center gap-1.5 min-h-[36px] rounded border border-dashed border-theme-border/60 bg-theme-bg/40 p-1.5 transition-colors"
+                              ondragover={(e) => e.preventDefault()}
+                            ondrop={(e) => visualLayout.handleFieldDropRow(e, card.id, rIdx)}
                           >
                             {#each rowFields as cell, cIdx (`${cell.kind}-${cIdx}`)}
                               {#if cell.kind === "field"}
@@ -1016,7 +835,7 @@
                                     type="button"
                                     draggable="true"
                                     ondragstart={(e) =>
-                                      handleFieldDragStart(
+                                      visualLayout.handleFieldDragStart(
                                         e,
                                         card.id,
                                         rIdx,
@@ -1076,7 +895,7 @@
                                     type="button"
                                     class="ml-0.5 text-[10px] text-theme-muted hover:text-red-400"
                                     onclick={() =>
-                                      removeFieldFromCardRow(
+                                      visualLayout.removeFieldFromCardRow(
                                         card.id,
                                         rIdx,
                                         fid,
@@ -1097,7 +916,7 @@
                                     aria-label={`Value for table row ${rIdx + 1}`}
                                     placeholder="Table value"
                                     oninput={(event) =>
-                                      updateValueInTableRow(
+                                      visualLayout.updateValueInTableRow(
                                         card.id,
                                         rIdx,
                                         cIdx,
@@ -1109,7 +928,7 @@
                                     type="button"
                                     class="text-[10px] text-theme-muted hover:text-red-400"
                                     onclick={() =>
-                                      removeValueFromTableRow(
+                                      visualLayout.removeValueFromTableRow(
                                         card.id,
                                         rIdx,
                                         cIdx,
@@ -1121,7 +940,7 @@
                                 </div>
                               {/if}
                             {/each}
-                            {#if hasTableCapacity && getUnusedFields(visualCards, schema?.fields).length > 0}
+                            {#if hasTableCapacity && getUnusedFields(visualLayout.visualCards, schema?.fields).length > 0}
                               <select
                                 class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-muted hover:text-theme-text"
                                 value=""
@@ -1129,14 +948,14 @@
                                   const val = (e.target as HTMLSelectElement)
                                     .value;
                                   if (val)
-                                    addFieldToCardRow(card.id, rIdx, val);
+                                    visualLayout.addFieldToCardRow(card.id, rIdx, val);
                                   (e.target as HTMLSelectElement).value = "";
                                 }}
                               >
                                 <option value="" disabled selected
                                   >+ Add Field...</option
                                 >
-                                {#each getUnusedFields(visualCards, schema?.fields) as uf (uf.id)}
+                                {#each getUnusedFields(visualLayout.visualCards, schema?.fields) as uf (uf.id)}
                                   <option value={uf.id}>{uf.label}</option>
                                 {/each}
                               </select>
@@ -1146,7 +965,7 @@
                                 type="button"
                                 class="rounded border border-dashed border-amber-500/40 px-1.5 py-0.5 text-xs text-amber-700 hover:border-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
                                 onclick={() =>
-                                  addValueToTableRow(card.id, rIdx)}
+                                  visualLayout.addValueToTableRow(card.id, rIdx)}
                                 data-testid="presentation-editor-add-table-value"
                               >
                                 + Add Value
@@ -1157,7 +976,7 @@
                             <button
                               type="button"
                               class="rounded px-1.5 py-1 text-[10px] text-theme-muted hover:text-red-400"
-                              onclick={() => removeRowFromCard(card.id, rIdx)}
+                              onclick={() => visualLayout.removeRowFromCard(card.id, rIdx)}
                               title="Delete Row"
                             >
                               ✕
@@ -1168,7 +987,7 @@
                       <button
                         type="button"
                         class="self-start rounded border border-theme-border/60 px-2 py-0.5 text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-                        onclick={() => addRowToCard(card.id)}
+                        onclick={() => visualLayout.addRowToCard(card.id)}
                       >
                         + Add Row to {card.mode === "table" ? "Table" : "Card"}
                       </button>
@@ -1180,7 +999,7 @@
                   <button
                     type="button"
                     class="flex-1 rounded border border-dashed border-theme-border p-2 text-center text-xs font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-                    onclick={() => addVisualCard("grid")}
+                    onclick={() => visualLayout.addVisualCard("grid")}
                     data-testid="presentation-editor-add-card"
                   >
                     + Add Grid Section
@@ -1188,7 +1007,7 @@
                   <button
                     type="button"
                     class="flex-1 rounded border border-dashed border-theme-border p-2 text-center text-xs font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-                    onclick={() => addVisualCard("table")}
+                    onclick={() => visualLayout.addVisualCard("table")}
                     data-testid="presentation-editor-add-table"
                   >
                     + Add Table Section
