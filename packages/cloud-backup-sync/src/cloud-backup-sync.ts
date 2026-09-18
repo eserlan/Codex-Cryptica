@@ -385,14 +385,21 @@ export async function pushVaultToCloudBackup(
  * Reads just the remote lastPushedAt for the optimistic-concurrency guard.
  * Returns null (not an error) when the remote has no timestamp yet.
  */
+async function fetchBackupStatus(
+  runtime: CloudBackupRuntime,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+): Promise<Awaited<ReturnType<CloudBackupRuntime["fetch"]>>> {
+  return runtime.fetch(
+    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
+    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
+  );
+}
+
 async function readRemoteLastPushedAt(
   runtime: CloudBackupRuntime,
   record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
 ): Promise<CloudBackupOutcome<string | null>> {
-  const response = await runtime.fetch(
-    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
-    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
-  );
+  const response = await fetchBackupStatus(runtime, record);
   if (!response.ok) {
     return {
       ok: false,
@@ -420,10 +427,7 @@ export async function getCloudBackupStatus(
   if (!record)
     return { ok: false, error: "Cloud backup is not set up for this vault." };
 
-  const response = await runtime.fetch(
-    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
-    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
-  );
+  const response = await fetchBackupStatus(runtime, record);
   if (!response.ok) {
     return {
       ok: false,
