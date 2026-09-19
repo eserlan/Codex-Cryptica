@@ -13,7 +13,6 @@
     x,
     y,
     columnFilters,
-    _allLabels = [],
     onUpdateFilters,
     onClose,
   }: {
@@ -22,7 +21,6 @@
     x: number;
     y: number;
     columnFilters: TableColumnFilters;
-    _allLabels?: string[];
     onUpdateFilters: (filters: TableColumnFilters) => void;
     onClose: () => void;
   } = $props();

@@ -462,6 +462,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/starship-campaigns</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/traveller</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -657,6 +662,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-you-run-a-chase-in-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-you-run-a-conspiracy-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -787,6 +797,21 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-rpg-feels-like-dnd-but-is-simpler</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-rpg-should-i-play-for-an-over-the-top-space-opera</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-rpg-system-is-good-for-solo-play</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -803,6 +828,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1050,13 +1080,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>

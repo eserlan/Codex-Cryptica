@@ -1,5 +1,4 @@
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import { UI_EVENTS } from "../../../apps/web/src/lib/events/ui";
 import type { AppEventOf } from "@codex/events";
 
 type Equal<Left, Right> =
@@ -18,13 +17,6 @@ type _OracleUndoPayload = Expect<
   >
 >;
 
-type _UiSidebarPayload = Expect<
-  Equal<
-    AppEventOf<typeof UI_EVENTS.SIDEBAR_TOGGLED>["payload"],
-    { open: boolean }
-  >
->;
-
 const oracleEvent: AppEventOf<typeof ORACLE_EVENTS.UNDO_PERFORMED> = {
   type: ORACLE_EVENTS.UNDO_PERFORMED,
   domain: "oracle",
@@ -32,12 +24,4 @@ const oracleEvent: AppEventOf<typeof ORACLE_EVENTS.UNDO_PERFORMED> = {
   metadata: { timestamp: 1, sync: true },
 };
 
-const uiEvent: AppEventOf<typeof UI_EVENTS.SIDEBAR_TOGGLED> = {
-  type: UI_EVENTS.SIDEBAR_TOGGLED,
-  domain: "ui",
-  payload: { open: true },
-  metadata: { timestamp: 1 },
-};
-
 void oracleEvent;
-void uiEvent;

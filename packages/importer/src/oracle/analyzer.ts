@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import { EXTRACTION_PROMPT } from "./prompt-factory";
 import { splitTextIntoChunks, mergeEntities } from "../utils";
+import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
@@ -18,6 +19,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
   private modelFactory: (
     modelName: string,
   ) => GenerativeModel | Promise<GenerativeModel>;
+  private idGenerator: IdGenerator;
 
   /**
    * @param apiKeyOrFactory Either a Google Gemini API key string, or a factory function that returns a GenerativeModel.
@@ -26,7 +28,9 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     apiKeyOrFactory:
       | string
       | ((modelName: string) => GenerativeModel | Promise<GenerativeModel>),
+    idGenerator: IdGenerator = systemIdGenerator,
   ) {
+    this.idGenerator = idGenerator;
     if (typeof apiKeyOrFactory === "string") {
       const genAI = new GoogleGenerativeAI(apiKeyOrFactory);
       this.modelFactory = (modelName: string) =>
@@ -178,7 +182,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
           }
 
           return {
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             suggestedTitle: title,
             suggestedType: item.type,
             chronicle: item.chronicle || item.content || "",

@@ -1,19 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  CLUSTER_TARGETS,
-  CRAWLER_READINESS_DISCLAIMER,
-  discoverClusterTargetRoutes,
   downgradeKnownGaps,
-  evaluateClusterLinks,
-  evaluateClusterRouteResponse,
   evaluateCrawlResponse,
   expectationFor,
-  extractOutgoingClusterLinks,
   extractSitemapPaths,
   findSearchCrawler,
   findDisallowedSitemapPaths,
-  formatClusterFailureDetail,
-  formatClusterSummaryTable,
   isDisallowedSitemapPath,
   isPathAllowed,
   OAI_SEARCHBOT_TOKEN,
@@ -23,10 +15,20 @@ import {
   PRIVATE_ROUTE_SAMPLES,
   SEARCH_CRAWLERS,
   selectRobotsGroup,
-  validateSingleH1,
-  validateStructuredData,
   type CrawlResponse,
 } from "./crawler-access";
+import {
+  CLUSTER_TARGETS,
+  CRAWLER_READINESS_DISCLAIMER,
+  discoverClusterTargetRoutes,
+  evaluateClusterLinks,
+  evaluateClusterRouteResponse,
+  extractOutgoingClusterLinks,
+  formatClusterFailureDetail,
+  formatClusterSummaryTable,
+  validateSingleH1,
+  validateStructuredData,
+} from "./crawler-access-clusters";
 
 describe("search crawler definitions", () => {
   it("defines every crawler the production workflow verifies", () => {

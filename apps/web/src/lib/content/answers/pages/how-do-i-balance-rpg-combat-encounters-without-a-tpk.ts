@@ -139,6 +139,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-much-rule-of-cool-should-a-dm-allow",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "what-rpg-should-i-use-for-tactical-combat",
   ],
   discovery: {
     id: "answer-encounter-balance",

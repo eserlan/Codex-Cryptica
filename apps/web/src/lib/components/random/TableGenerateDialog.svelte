@@ -13,8 +13,6 @@
     open = false,
     mode = "new",
     existingTableName,
-    selectionMode = "weighted",
-    existingRowCount: _existingRowCount = 0,
     onAccept,
     onClose,
     generatorService = defaultGeneratorService,
@@ -23,8 +21,6 @@
     open?: boolean;
     mode?: "new" | "append";
     existingTableName?: string;
-    selectionMode?: "weighted" | "ranged";
-    existingRowCount?: number;
     onAccept: (
       entries: CandidateTableEntry[],
       tableTitle?: string,
@@ -283,7 +279,6 @@
           {/if}
           <TableStagingPreview
             {candidates}
-            {selectionMode}
             onAccept={handleAcceptPreview}
             onCancel={() => (step = "setup")}
           />

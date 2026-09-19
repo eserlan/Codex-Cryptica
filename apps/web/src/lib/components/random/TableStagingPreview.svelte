@@ -3,12 +3,10 @@
 
   let {
     candidates: initialCandidates,
-    selectionMode: _selectionMode = "weighted",
     onAccept,
     onCancel,
   }: {
     candidates: CandidateTableEntry[];
-    selectionMode?: "weighted" | "ranged";
     onAccept: (selectedEntries: CandidateTableEntry[]) => void;
     onCancel: () => void;
   } = $props();

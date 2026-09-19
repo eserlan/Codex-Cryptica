@@ -24,7 +24,6 @@ describe("TableStagingPreview", () => {
     render(TableStagingPreview, {
       props: {
         candidates: initialCandidates,
-        selectionMode: "weighted",
         onAccept: vi.fn(),
         onCancel: vi.fn(),
       },
@@ -45,7 +44,6 @@ describe("TableStagingPreview", () => {
     render(TableStagingPreview, {
       props: {
         candidates: initialCandidates,
-        selectionMode: "weighted",
         onAccept: vi.fn(),
         onCancel: vi.fn(),
       },
@@ -69,7 +67,6 @@ describe("TableStagingPreview", () => {
     render(TableStagingPreview, {
       props: {
         candidates: initialCandidates,
-        selectionMode: "weighted",
         onAccept,
         onCancel: vi.fn(),
       },
