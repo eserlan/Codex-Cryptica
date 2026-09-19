@@ -214,6 +214,6 @@ export const whatRpgShouldIUseForTacticalCombat: AnswerConfigInput = {
     image:
       "https://assets.codexcryptica.com/og/what-rpg-should-i-use-for-tactical-combat.jpg",
     imageAlt:
-      "Armoured adventurers and a mech positioned across a gridded battlefield map with miniatures and dice",
+      "An adventuring party executing a coordinated tactical combat formation amid fortress ruins with a runic shield, elevated archery, and glowing geometric spell wards",
   },
 };
