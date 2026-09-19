@@ -1,9 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import type { Entity } from "schema";
-
-// The module imports the vault singleton for its default dep; stub it so the
-// import graph stays light. All tests pass an explicit fake vault.
-vi.mock("../vault.svelte", () => ({ vault: { entities: {} } }));
 
 import {
   addFamilyLink,

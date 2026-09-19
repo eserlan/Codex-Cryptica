@@ -623,8 +623,3 @@ export function findDisallowedSitemapPaths(sitemapXml: string): string[] {
   const paths = extractSitemapPaths(sitemapXml);
   return [...new Set(paths.filter(isDisallowedSitemapPath))].sort();
 }
-/**
- * Re-export content cluster crawler readiness verification (#2861).
- * Decomposed into ./crawler-access-clusters.ts per Constitution Principle XIV (Bounded Responsibility).
- */
-export * from "./crawler-access-clusters";
