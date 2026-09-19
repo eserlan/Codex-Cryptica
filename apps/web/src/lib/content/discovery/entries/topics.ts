@@ -33,4 +33,29 @@ export const topicEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "topic-puzzles",
+    pageKind: "hub",
+    canonicalPath: "/topics/puzzles",
+    primaryIntent: "tabletop rpg puzzle hub and resources",
+    intentAliases: [
+      "rpg puzzle topic hub",
+      "tabletop puzzle resources",
+      "designing and running rpg puzzles",
+      "ttrpg puzzle hub",
+      "rpg puzzle guides and generators",
+    ],
+    userJob: "navigate",
+    uniqueValue:
+      "Curates the RPG puzzle cluster in one crawlable hub, connecting the stall-proof design guide, the hint ladder, genre-specific worked examples with alternate solutions, and the puzzle generator.",
+    parentCluster: "puzzle-design",
+    clusters: ["puzzle"],
+    relatedIntents: [
+      "generator-puzzle",
+      "answer-rpg-puzzles",
+      "answer-rpg-puzzle-hints",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

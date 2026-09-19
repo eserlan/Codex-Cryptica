@@ -114,6 +114,12 @@ export const howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer: AnswerCo
     },
     relatedTools: [
       {
+        title: "Puzzle topic hub",
+        description:
+          "The complete RPG puzzle cluster: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
+        href: "/topics/puzzles",
+      },
+      {
         title: "Puzzle generator",
         description:
           "Free, no login. Every output includes its own escalating hint ladder in the GM rail.",

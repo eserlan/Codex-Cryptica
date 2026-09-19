@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { HEIST_TOPIC_CONFIG } from "./heists";
-import {
-  buildHeistTopicBreadcrumbJsonLd,
-  buildHeistTopicJsonLd,
-} from "./json-ld";
+import { buildTopicBreadcrumbJsonLd, buildTopicJsonLd } from "./json-ld";
+
+const buildHeistTopicJsonLd = () => buildTopicJsonLd(HEIST_TOPIC_CONFIG);
+const buildHeistTopicBreadcrumbJsonLd = () =>
+  buildTopicBreadcrumbJsonLd(HEIST_TOPIC_CONFIG);
 
 const sectionLinks = () => [
   ...HEIST_TOPIC_CONFIG.coreGuides,

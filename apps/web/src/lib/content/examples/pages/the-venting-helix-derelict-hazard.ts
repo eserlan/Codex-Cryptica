@@ -175,6 +175,14 @@ export const theVentingHelix: ExampleConfigInput = {
       href: "/generators/ship-generator",
     },
   ],
+  relatedTopics: [
+    {
+      title: "RPG Puzzles Topic Hub",
+      description:
+        "The central cluster hub for tabletop RPG puzzles: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
+      href: "/topics/puzzles",
+    },
+  ],
   relatedAnswers: [
     {
       title: "How do you design RPG puzzles that do not stall the game?",

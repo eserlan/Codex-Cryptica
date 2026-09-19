@@ -214,6 +214,13 @@
           icon: "icon-[lucide--lock]",
         },
         {
+          href: "/topics/puzzles",
+          label: "RPG Puzzles Hub",
+          summary:
+            "Stall-proof design, hint ladders, worked examples with alternate solutions, and a puzzle generator.",
+          icon: "icon-[lucide--puzzle]",
+        },
+        {
           href: "/my-stuff",
           label: "My Stuff",
           summary:

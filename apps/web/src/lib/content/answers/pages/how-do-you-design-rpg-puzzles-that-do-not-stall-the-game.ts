@@ -112,6 +112,12 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
     },
     relatedTools: [
       {
+        title: "Puzzle topic hub",
+        description:
+          "The complete RPG puzzle cluster: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
+        href: "/topics/puzzles",
+      },
+      {
         title: "Puzzle generator",
         description:
           "Free, no login. Mechanisms and riddles you can hang alternative routes off.",

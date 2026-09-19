@@ -1,47 +1,23 @@
-export interface TopicImage {
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  caption?: string;
-}
+import type {
+  TopicExampleLink,
+  TopicGuideLink,
+  TopicHubConfig,
+  TopicImage,
+  TopicToolLink,
+  TopicWorkflowStep,
+} from "./types";
 
-export interface TopicGuideLink {
-  title: string;
-  href: string;
-  description: string;
-  focus: string;
-}
-
-export interface TopicExampleLink {
-  title: string;
-  href: string;
-  genre: string;
-  description: string;
-  highlight: string;
-  image?: TopicImage;
-}
-
-export interface TopicToolLink {
-  title: string;
-  href: string;
-  description: string;
-  badge?: string;
-  image?: TopicImage;
-}
-
-export interface TopicWorkflowStep {
-  step: number;
-  title: string;
-  description: string;
-  recommendedResource: {
-    title: string;
-    href: string;
-  };
-}
+export type {
+  TopicExampleLink,
+  TopicGuideLink,
+  TopicImage,
+  TopicToolLink,
+  TopicWorkflowStep,
+} from "./types";
 
 export const HEIST_TOPIC_CONFIG = {
   slug: "heists",
+  label: "heist",
   canonicalPath: "/topics/heists",
   title: "Running and Designing RPG Heists",
   metaTitle: "Running and Designing RPG Heists | Codex Cryptica",
@@ -63,6 +39,34 @@ export const HEIST_TOPIC_CONFIG = {
     width: 1376,
     height: 768,
   } satisfies TopicImage,
+
+  copy: {
+    thesisHeading: "Why heists play differently",
+    learnHeading: "Learn the framework",
+    learnIntro:
+      "Start here. These guides cover running the operation at the table and designing a prize worth stealing.",
+    examplesHeading: "See a score, start to finish",
+    examplesIntro:
+      "Worked examples show the framework under load. Each one runs a different genre and a different kind of prize, so pick the one closest to your table.",
+    exampleHighlightLabel: "Why run it:",
+    toolsHeading: "Generate the score",
+    toolsIntro:
+      "Roll a complete, table-ready operation in seconds, then flesh out its defenders, locks and getaway with the supporting tools.",
+    workflowHeading: "Run one tonight",
+    workflowIntro:
+      "Four steps from blank page to getaway. Each step points at the single resource that carries it.",
+    relatedHeading: "Keep exploring",
+  },
+
+  structuredData: {
+    aboutName: "Tabletop RPG Heists",
+    aboutDescription:
+      "Designing, preparing, and running heist adventures in tabletop roleplaying games.",
+    itemListName: "RPG Heist Resources & Tools",
+    itemListDescription:
+      "Curated collection of RPG heist frameworks, target design checklists, worked examples, and generation tools.",
+    breadcrumbLabel: "RPG Heists Topic Hub",
+  },
 
   thesisPoints: [
     {
@@ -248,7 +252,7 @@ export const HEIST_TOPIC_CONFIG = {
   relatedTopics: [
     {
       title: "RPG Puzzles",
-      href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+      href: "/topics/puzzles",
       description:
         "Vault locks, arcane seals, and security bypasses that reward player ingenuity without causing dead-ends.",
     },
@@ -265,4 +269,4 @@ export const HEIST_TOPIC_CONFIG = {
         "Browse every guide, generator, and worked example tagged #heist across the Codex Cryptica discovery graph.",
     },
   ],
-};
+} satisfies TopicHubConfig;
